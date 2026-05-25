@@ -1,0 +1,7 @@
+namespace TheLongestYear.Core;
+
+/// <summary>Root config object read by the mod via SMAPI. All tuning dials hang off this.</summary>
+public sealed class GameplayConfig
+{
+    public JpSettings Jp { get; set; } = new JpSettings();
+}
