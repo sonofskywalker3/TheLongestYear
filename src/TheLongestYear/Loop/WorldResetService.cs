@@ -15,11 +15,19 @@ namespace TheLongestYear.Loop
     internal sealed class WorldResetService
     {
         private readonly IMonitor _monitor;
+        private readonly TheLongestYear.Core.MetaState _meta;
 
-        public WorldResetService(IMonitor monitor) => _monitor = monitor;
+        public WorldResetService(IMonitor monitor, TheLongestYear.Core.MetaState meta)
+        {
+            _monitor = monitor;
+            _meta = meta;
+        }
 
         public void PerformReset(int startingMoney)
         {
+            // One-time safety backup before the first destructive reset (throws if it fails -> reset aborts).
+            SaveBackup.BackupOnce(_meta, _monitor);
+
             _monitor.Log("In-place reset: starting.", LogLevel.Info);
 
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
