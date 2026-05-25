@@ -1,6 +1,7 @@
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using TheLongestYear.Core;
+using TheLongestYear.Loop;
 
 namespace TheLongestYear
 {
@@ -8,17 +9,20 @@ namespace TheLongestYear
     {
         private GameplayConfig _config;
         private MetaStore _meta;
+        private WorldResetService _reset;
 
         public override void Entry(IModHelper helper)
         {
             _config = helper.ReadConfig<GameplayConfig>();
             _meta = new MetaStore(helper.Data);
+            _reset = new WorldResetService(this.Monitor);
 
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
 
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
+            helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -69,6 +73,17 @@ namespace TheLongestYear
 
             _meta.State.JunimoPoints += amount;
             this.Monitor.Log($"JP is now {_meta.State.JunimoPoints} (in memory — persists on next save).", LogLevel.Info);
+        }
+
+        private void ForceReset(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            _reset.PerformReset(_config.StartingMoney);
         }
     }
 }
