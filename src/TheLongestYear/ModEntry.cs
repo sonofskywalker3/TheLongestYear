@@ -15,8 +15,6 @@ namespace TheLongestYear
         {
             _config = helper.ReadConfig<GameplayConfig>();
             _meta = new MetaStore(helper.Data);
-            _reset = new WorldResetService(this.Monitor);
-
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
 
@@ -32,6 +30,7 @@ namespace TheLongestYear
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             _meta.Load();
+            _reset = new WorldResetService(this.Monitor, _meta.State);
             this.Monitor.Log(
                 $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
                 LogLevel.Info);
