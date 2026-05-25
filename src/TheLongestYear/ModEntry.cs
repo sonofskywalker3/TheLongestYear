@@ -23,6 +23,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
+            helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -84,6 +85,33 @@ namespace TheLongestYear
             }
 
             _reset.PerformReset(_config.StartingMoney);
+        }
+
+        private void LeakTest(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            _reset.PerformReset(_config.StartingMoney);
+            var first = WorldStateProbe.Capture();
+
+            _reset.PerformReset(_config.StartingMoney);
+            var second = WorldStateProbe.Capture();
+
+            var diff = first.Diff(second);
+            if (diff.Count == 0)
+            {
+                this.Monitor.Log("Leak test PASSED: two consecutive resets produced an identical baseline.", LogLevel.Info);
+            }
+            else
+            {
+                this.Monitor.Log($"Leak test FAILED: {diff.Count} field(s) leaked between runs:", LogLevel.Error);
+                foreach (string d in diff)
+                    this.Monitor.Log($"  - {d}", LogLevel.Error);
+            }
         }
     }
 }
