@@ -27,7 +27,9 @@ namespace TheLongestYear
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             _meta.Load();
-            this.Monitor.Log($"Run loaded. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Info);
+            this.Monitor.Log(
+                $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
+                LogLevel.Info);
         }
 
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
