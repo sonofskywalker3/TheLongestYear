@@ -4,7 +4,7 @@
 
 **Goal:** Stand up a buildable, loadable SMAPI mod whose meta-state (Junimo Points, owned upgrades, stash tier) persists across game restarts, with the loop's pure math (calendar, JP scoring, gate evaluation) fully unit-tested.
 
-**Architecture:** Three projects in one solution — `TheLongestYear.Core` (pure C#, **zero** references to StardewValley/SMAPI, holds all testable logic), `TheLongestYear` (the SMAPI mod: reads config, persists meta via SMAPI global data, exposes debug console commands), and `TheLongestYear.Tests` (xUnit against Core). Game-integration code is verified in-game; pure logic is verified by `dotnet test`.
+**Architecture:** Three projects in one solution — `TheLongestYear.Core` (pure C#, **zero** references to StardewValley/SMAPI, holds all testable logic), `TheLongestYear` (the SMAPI mod: reads config, persists meta as per-save data on the game's Saving event, exposes debug console commands), and `TheLongestYear.Tests` (xUnit against Core). Game-integration code is verified in-game; pure logic is verified by `dotnet test`.
 
 **Tech Stack:** C# / .NET 6, SMAPI 4.x via `Pathoschild.Stardew.ModBuildConfig` 4.*, Harmony (enabled but unused in this plan), xUnit.
 
@@ -623,8 +623,9 @@ using System.Collections.Generic;
 namespace TheLongestYear.Core;
 
 /// <summary>
-/// Everything that survives a loop reset ("banked forever").
-/// Persisted via SMAPI global data, so it lives outside any single save.
+/// Everything that survives a loop reset ("banked forever"): banked Junimo Points,
+/// purchased upgrades, and the Junimo Stash tier. Stored as per-save data and
+/// committed with the game's own save (see MetaStore) — scoped to one playthrough.
 /// </summary>
 public sealed class MetaState
 {
@@ -675,7 +676,7 @@ git commit -m "feat(core): add MetaState (banked progress) and GameplayConfig"
 - Create: `src/TheLongestYear/MetaStore.cs`
 - Create: `src/TheLongestYear/ModEntry.cs`
 
-This task is verified in-game (SMAPI global-data persistence can't be unit-tested without the game). The acceptance check is: the mod loads, `tly_addjp` mutates and saves JP, and the value survives a full game restart — proving the "banked forever" persistence the whole design depends on.
+This task is verified in-game (SMAPI per-save persistence can't be unit-tested without the game). Meta-state is stored as **per-save data** and committed **only in the game's `Saving` event** — never eagerly — so banked progress and run state persist atomically with the save (no save-scumming JP out of a doomed run). The acceptance check: the mod loads; on a loaded save `tly_addjp` mutates JP in memory; after the game saves (sleep) and a restart, the value persists.
 
 - [ ] **Step 1: Create the manifest**
 
@@ -704,21 +705,24 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear
 {
-    /// <summary>Loads and persists <see cref="MetaState"/> via SMAPI global data (outlives any save).</summary>
+    /// <summary>
+    /// Loads and persists <see cref="MetaState"/> as per-save data, so banked progress is
+    /// scoped to one playthrough and commits as part of the game's own save (never eagerly).
+    /// </summary>
     internal sealed class MetaStore
     {
         private const string DataKey = "meta-state";
         private readonly IDataHelper _data;
 
-        public MetaState State { get; private set; }
+        public MetaState State { get; private set; } = new MetaState();
 
-        public MetaStore(IDataHelper data)
-        {
-            _data = data;
-            State = _data.ReadGlobalData<MetaState>(DataKey) ?? new MetaState();
-        }
+        public MetaStore(IDataHelper data) => _data = data;
 
-        public void Save() => _data.WriteGlobalData(DataKey, State);
+        /// <summary>Load this playthrough's banked progress. Call when a save is loaded.</summary>
+        public void Load() => State = _data.ReadSaveData<MetaState>(DataKey) ?? new MetaState();
+
+        /// <summary>Commit banked progress into the save. Call from the game's Saving event.</summary>
+        public void Save() => _data.WriteSaveData(DataKey, State);
     }
 }
 ```
@@ -729,6 +733,7 @@ Create `src/TheLongestYear/ModEntry.cs`:
 
 ```csharp
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using TheLongestYear.Core;
 
 namespace TheLongestYear
@@ -743,16 +748,37 @@ namespace TheLongestYear
             _config = helper.ReadConfig<GameplayConfig>();
             _meta = new MetaStore(helper.Data);
 
-            this.Monitor.Log(
-                $"The Longest Year loaded. JP banked: {_meta.State.JunimoPoints}.",
-                LogLevel.Info);
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.GameLoop.Saving += this.OnSaving;
 
-            helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state.", this.PrintMeta);
-            helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points (debug). Usage: tly_addjp <amount>", this.AddJp);
+            helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
+            helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
+
+            this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
+        }
+
+        /// <summary>Load this playthrough's banked progress when a save opens.</summary>
+        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
+        {
+            _meta.Load();
+            this.Monitor.Log($"Run loaded. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Info);
+        }
+
+        /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
+        private void OnSaving(object sender, SavingEventArgs e)
+        {
+            _meta.Save();
+            this.Monitor.Log($"Meta-state saved with the game. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Trace);
         }
 
         private void PrintMeta(string command, string[] args)
         {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
             MetaState s = _meta.State;
             this.Monitor.Log(
                 $"JP={s.JunimoPoints}, StashTier={s.StashCapacityTier}, Upgrades=[{string.Join(", ", s.OwnedUpgrades)}]",
@@ -761,6 +787,12 @@ namespace TheLongestYear
 
         private void AddJp(string command, string[] args)
         {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
             if (args.Length < 1 || !long.TryParse(args[0], out long amount))
             {
                 this.Monitor.Log("Usage: tly_addjp <amount>", LogLevel.Warn);
@@ -768,8 +800,7 @@ namespace TheLongestYear
             }
 
             _meta.State.JunimoPoints += amount;
-            _meta.Save();
-            this.Monitor.Log($"JP is now {_meta.State.JunimoPoints} (saved).", LogLevel.Info);
+            this.Monitor.Log($"JP is now {_meta.State.JunimoPoints} (in memory — persists on next save).", LogLevel.Info);
         }
     }
 }
@@ -782,19 +813,20 @@ Expected: build succeeds with no manifest warning; ModBuildConfig reports copyin
 
 - [ ] **Step 5: In-game persistence check (manual)**
 
-1. Launch the game through SMAPI (`StardewModdingAPI.exe`).
-2. In the SMAPI console, run `tly_meta` → expect `JP=0, StashTier=0, Upgrades=[]`.
-3. Run `tly_addjp 50` → expect `JP is now 50 (saved).`
-4. **Fully quit** the game, relaunch through SMAPI.
-5. Confirm the startup log line reads `JP banked: 50`, and `tly_meta` again shows `JP=50`.
+1. Launch the game through SMAPI (`StardewModdingAPI.exe`) and **load a save**.
+2. After load, the log shows `Run loaded. JP banked: 0.`; `tly_meta` → `JP=0, StashTier=0, Upgrades=[]`.
+3. Run `tly_addjp 50` → expect `JP is now 50 (in memory — persists on next save).`
+4. **Save the game** (sleep / end the day), then **fully quit** and relaunch, reloading the same save.
+5. Confirm the log reads `Run loaded. JP banked: 50`, and `tly_meta` shows `JP=50`.
+6. (Anti-exploit check) Add more JP, then quit WITHOUT saving; on reload the extra JP is gone — proving nothing banks outside a game save.
 
-This proves global-data persistence survives a restart — the foundation of "Junimo Points are banked forever."
+This proves per-save persistence committed with the game save — the foundation of "Junimo Points are banked forever."
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add -A
-git commit -m "feat(mod): load config, persist meta via global data, add debug commands"
+git commit -m "feat(mod): load config, persist meta as per-save data on Saving, add debug commands"
 ```
 
 ---
@@ -803,7 +835,7 @@ git commit -m "feat(mod): load config, persist meta via global data, add debug c
 
 - `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj` is green (Calendar, JP, Gate, MetaState).
 - `dotnet build src/TheLongestYear/TheLongestYear.csproj` succeeds and deploys to the Mods folder.
-- In-game: JP added via `tly_addjp` survives a full game restart.
+- In-game: JP added via `tly_addjp` persists through the game's save + a restart, and is discarded if you quit without saving.
 - The Core library has **no** reference to StardewValley or SMAPI assemblies (keeps the loop math unit-testable).
 
 ## Self-review notes (spec coverage)
@@ -811,6 +843,6 @@ git commit -m "feat(mod): load config, persist meta via global data, add debug c
 - **Calendar / 16-week structure** (spec §3) → Task 2.
 - **JP economy: rarity-scaled per-item + bundle/room bonuses, no contract reward** (spec §8) → Task 3 (`JpCalculator` takes bundle/room counts only; contracts never feed it).
 - **Weekly + monthly gates, Winter→win** (spec §5) → Task 4 (`GateEvaluator`).
-- **Banked-forever meta-state: JP, upgrades, stash tier** (spec §7) → Tasks 5 + 6 (`MetaState` + `MetaStore` global data).
+- **Banked-forever meta-state: JP, upgrades, stash tier** (spec §7) → Tasks 5 + 6 (`MetaState` + `MetaStore`, per-save data committed on `Saving`).
 - **Config in one place** (workspace rule) → `GameplayConfig` (Task 5).
 - Deferred to later plans by design: contract generation/solvability (Plan 02), reset/leak test (Plan 03), donations wiring (Plan 04), UI (Plan 05), upgrades/obtainability/foresight (Plan 06), stash contents + narrative (Plan 07).

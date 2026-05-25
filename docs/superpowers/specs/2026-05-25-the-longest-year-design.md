@@ -70,6 +70,8 @@ On failure: award JP (see §8), perform the **in-place reset** (§7), re-roll th
 - Purchased upgrades (cumulative / permanent).
 - The **Junimo Stash**: capacity tier + contents.
 
+**Storage mechanism (important):** meta-state is stored as **per-save data** (SMAPI `ReadSaveData`/`WriteSaveData`), scoped to a single playthrough — a brand-new farm starts the roguelite fresh. It is **committed only in the game's `Saving` event**, never written eagerly on mutation. This is deliberate: it makes meta-state and run-state persist atomically with the game save, so you cannot bank Junimo Points without the game also saving (no save-scum: earn JP late in a doomed run, force-quit to undo the run, keep the JP). In the real loop this is automatic — JP is only ever awarded at run-end (day 28 sleep), which *is* a save.
+
 **Reset on run-fail (in-place reset to a Spring-1 / week-1 baseline):**
 - Calendar → Spring 1.
 - World: crops, terrain features, placed objects, farm buildings → baseline.

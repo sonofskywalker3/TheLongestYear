@@ -3,8 +3,9 @@ using System.Collections.Generic;
 namespace TheLongestYear.Core;
 
 /// <summary>
-/// Everything that survives a loop reset ("banked forever").
-/// Persisted via SMAPI global data, so it lives outside any single save.
+/// Everything that survives a loop reset ("banked forever"): banked Junimo Points,
+/// purchased upgrades, and the Junimo Stash tier. Stored as per-save data and
+/// committed with the game's own save (see MetaStore) — scoped to one playthrough.
 /// </summary>
 public sealed class MetaState
 {
