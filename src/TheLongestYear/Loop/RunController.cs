@@ -88,6 +88,7 @@ namespace TheLongestYear.Loop
 
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
+            AwardChampionContractBonusIfDue();
             RunAction action = _runManager.EvaluateDayEnd(Run, _catalog);
             switch (action)
             {
@@ -204,6 +205,27 @@ namespace TheLongestYear.Loop
             _store.State.JunimoPoints += awarded;
             _monitor.Log(
                 $"Interim JP for {reason}: +{awarded} (now {_store.State.JunimoPoints}). Persists on this day's save.",
+                LogLevel.Info);
+        }
+
+        /// <summary>
+        /// If the player has a championed theme this week and its contract is satisfied by current
+        /// donations, award the (season-scaled) CompletedContractBonus once per week. Plan 06 will
+        /// wire this to the real "championed contract just cleared" event; here we check on day-end.
+        /// </summary>
+        private void AwardChampionContractBonusIfDue()
+        {
+            if (!Run.CurrentChampion.HasValue || _plan == null) return;
+            if (Run.AwardedChampionWeeks.Contains(Run.WeekOfYear)) return;
+
+            Contract contract = _plan.Get(Run.Season, Run.CurrentChampion.Value);
+            if (!contract.IsSatisfiedBy(Run.DonatedSet())) return;
+
+            long bonus = _jp.CompletedContractBonus(Run.WeekOfYear);
+            _store.State.JunimoPoints += bonus;
+            Run.AwardedChampionWeeks.Add(Run.WeekOfYear);
+            _monitor.Log(
+                $"Championed {Run.CurrentChampion} contract complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
         }
 
