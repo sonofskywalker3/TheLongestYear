@@ -6,29 +6,16 @@ using StardewValley.Menus;
 namespace TheLongestYear.Donations
 {
     /// <summary>
-    /// Harmony postfixes on the vanilla Community Center donation path. We only observe — vanilla still
-    /// consumes the item, marks the bundle, and grants the in-run room reward.
+    /// Harmony postfixes on the vanilla Community Center bundle/room completion path. Per-item
+    /// donations are NOT patched here — the 2026-05-26 playtest showed that path never fired
+    /// against real CC deposits, so <see cref="DonationObserver"/> watches each
+    /// <see cref="JunimoNoteMenu"/> session and awards JP via diff-on-completed instead.
+    /// We keep these completion-bonus patches because they sit on different methods that
+    /// weren't observed misbehaving; if either turns out to break the same way, move the
+    /// detection into the observer.
     /// </summary>
     internal static class DonationPatches
     {
-        /// <summary>After an item is deposited into a bundle slot: award per-item JP + ledger.</summary>
-        [HarmonyPatch(typeof(Bundle), nameof(Bundle.tryToDepositThisItem))]
-        internal static class DepositPatch
-        {
-            // Capture the stack before deposit so the postfix can compute how many were consumed.
-            private static void Prefix(Item item, out int __state) => __state = item?.Stack ?? 0;
-
-            private static void Postfix(Item item, int __state)
-            {
-                if (DonationService.Active == null || item == null)
-                    return;
-
-                int consumed = __state - item.Stack;
-                if (consumed > 0)
-                    DonationService.Active.OnItemDonated(item.QualifiedItemId, consumed);
-            }
-        }
-
         /// <summary>After the menu confirms a bundle is complete: award the bundle bonus.</summary>
         [HarmonyPatch(typeof(JunimoNoteMenu), "checkIfBundleIsComplete")]
         internal static class BundleCompletePatch
