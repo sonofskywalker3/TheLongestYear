@@ -5,11 +5,11 @@ using System.Linq;
 namespace TheLongestYear.Core;
 
 /// <summary>
-/// Produces the weekly 1-of-2 champion offer (spec §4). The offer is a pure, deterministic function of
-/// the run's seed, the current week-of-year, and which themes are already championed this month — so it
-/// is stable across re-queries within a week and across reloads.
+/// Produces the weekly 1-of-2 selection offer (spec §4). The offer is a pure, deterministic
+/// function of the run's seed, the current week-of-year, and which themes are already selected
+/// this month — so it is stable across re-queries within a week and across reloads.
 /// </summary>
-public static class ChampionService
+public static class SelectionService
 {
     private const int WeekSaltPrime = 7919;
 
@@ -17,29 +17,29 @@ public static class ChampionService
     public const int OfferSize = 2;
 
     /// <summary>
-    /// Up to <see cref="OfferSize"/> distinct themes not yet championed this month, seeded-deterministic.
-    /// Convenience overload that reads (seed, week, championing) from the run.
+    /// Up to <see cref="OfferSize"/> distinct themes not yet selected this month,
+    /// seeded-deterministic. Convenience overload that reads (seed, week, selections) from the run.
     /// </summary>
     public static IReadOnlyList<Theme> OfferForWeek(RunState run)
     {
         if (run is null) throw new ArgumentNullException(nameof(run));
-        return OfferForWeek(run.Seed, run.WeekOfYear, run.ChampionedThemesThisMonth);
+        return OfferForWeek(run.Seed, run.WeekOfYear, run.SelectedThemesThisMonth);
     }
 
     /// <summary>
     /// Explicit form for the Sunday-night cross-month case: the caller can pass
-    /// <c>weekOfYear + 1</c> and an empty <paramref name="alreadyChampionedThisMonth"/> so the
+    /// <c>weekOfYear + 1</c> and an empty <paramref name="alreadySelectedThisMonth"/> so the
     /// offer for next week of next month is fresh (no current-month exclusions).
     /// </summary>
     public static IReadOnlyList<Theme> OfferForWeek(
-        int seed, int weekOfYear, IReadOnlyCollection<Theme> alreadyChampionedThisMonth)
+        int seed, int weekOfYear, IReadOnlyCollection<Theme> alreadySelectedThisMonth)
     {
-        var championed = alreadyChampionedThisMonth ?? Array.Empty<Theme>();
-        var championedSet = new HashSet<Theme>(championed);
+        var selected = alreadySelectedThisMonth ?? Array.Empty<Theme>();
+        var selectedSet = new HashSet<Theme>(selected);
 
         List<Theme> candidates = Enum.GetValues(typeof(Theme))
             .Cast<Theme>()
-            .Where(t => !championedSet.Contains(t))
+            .Where(t => !selectedSet.Contains(t))
             .OrderBy(t => (int)t)
             .ToList();
 

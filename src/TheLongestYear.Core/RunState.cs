@@ -9,7 +9,7 @@ namespace TheLongestYear.Core;
 /// </summary>
 public sealed class RunState
 {
-    /// <summary>Per-run RNG seed (used by ChampionService + BonusItemSampler).
+    /// <summary>Per-run RNG seed (used by SelectionService + BonusItemSampler).
     /// Stored so reload reproduces this week's offer and bonus samples.</summary>
     public int Seed { get; set; }
 
@@ -24,29 +24,29 @@ public sealed class RunState
     public List<string> DonatedItemIds { get; set; } = new();
 
     /// <summary>
-    /// The active week's bonus-item sample (qualified ids) for the championed theme. Populated
-    /// at championing time from <see cref="BonusItemSampler"/>; donating any of these earns the
-    /// 1.5× ChampionBonusMultiplier. Cleared on <see cref="BeginNewMonth"/> and
-    /// <see cref="BeginNewRun"/> so a fresh month/run starts with no active bonuses.
+    /// The active week's bonus-item sample (qualified ids) for the selected theme. Populated at
+    /// selection time from <see cref="BonusItemSampler"/>; donating any of these earns the 1.5×
+    /// SelectionBonusMultiplier. Cleared on <see cref="BeginNewMonth"/> and <see cref="BeginNewRun"/>
+    /// so a fresh month/run starts with no active bonuses.
     /// </summary>
     public List<string> CurrentWeekBonusItems { get; set; } = new();
 
-    /// <summary>Themes championed in the current month (cleared each month). The 5th is never championed.</summary>
-    public List<Theme> ChampionedThemesThisMonth { get; set; } = new();
+    /// <summary>Themes already selected this month (cleared each month). The 5th is never selected.</summary>
+    public List<Theme> SelectedThemesThisMonth { get; set; } = new();
 
-    /// <summary>The theme championed this week, whose bonus/liability are active. Null between weeks.</summary>
-    public Theme? CurrentChampion { get; set; }
+    /// <summary>The theme selected this week, whose bonus/liability are active. Null between weeks.</summary>
+    public Theme? CurrentSelection { get; set; }
 
     /// <summary>
     /// Pre-pick for the FIRST week of the upcoming month, set on day 28's Sunday-night planning
     /// hub. <see cref="BeginNewMonth"/> consumes this (if present) to seed the new month's
-    /// <see cref="CurrentChampion"/> so the day-28 pick survives the cross-season boundary.
+    /// <see cref="CurrentSelection"/> so the day-28 pick survives the cross-season boundary.
     /// Null on a fresh run / after consumption.
     /// </summary>
-    public Theme? NextMonthChampion { get; set; }
+    public Theme? NextMonthSelection { get; set; }
 
     /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
-    /// Used so a re-trigger mid-week (e.g. via hotkey) is a no-op — the hub only opens at week-start.</summary>
+    /// Used so a re-trigger mid-week is a no-op — the hub only opens once per target week.</summary>
     public int OfferPresentedWeek { get; set; } = -1;
 
     /// <summary>Bundle indices whose completion JP bonus has already been awarded this run.</summary>
@@ -66,7 +66,7 @@ public sealed class RunState
 
     public int WeekInMonth => Calendar.WeekInMonth(DayOfMonth);
 
-    public bool IsChampioned(Theme theme) => ChampionedThemesThisMonth.Contains(theme);
+    public bool IsSelected(Theme theme) => SelectedThemesThisMonth.Contains(theme);
 
     /// <summary>Record a bundle-completion award; returns false if it was already awarded this run.</summary>
     public bool TryMarkBundleAwarded(int bundleIndex)
@@ -93,39 +93,39 @@ public sealed class RunState
             DonatedItemIds.Add(itemId);
     }
 
-    /// <summary>The donation ledger as a set, for Contract.IsSatisfiedBy.</summary>
+    /// <summary>The donation ledger as a set, for the gate evaluator.</summary>
     public ISet<string> DonatedSet() => new HashSet<string>(DonatedItemIds);
 
-    /// <summary>Champion a theme for this week: set current and add to the month's championed set.</summary>
-    public void Champion(Theme theme)
+    /// <summary>Select a theme for this week: set current and add to the month's selections set.</summary>
+    public void Select(Theme theme)
     {
-        CurrentChampion = theme;
-        if (!ChampionedThemesThisMonth.Contains(theme))
-            ChampionedThemesThisMonth.Add(theme);
+        CurrentSelection = theme;
+        if (!SelectedThemesThisMonth.Contains(theme))
+            SelectedThemesThisMonth.Add(theme);
     }
 
-    /// <summary>Advance to a new month: change season, reset to day 1, clear championing. Donations
-    /// persist. If <see cref="NextMonthChampion"/> was set (Sunday-night day-28 pre-pick), apply
-    /// it as the new month's week-1 champion before clearing.</summary>
+    /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
+    /// persist. If <see cref="NextMonthSelection"/> was set (Sunday-night day-28 pre-pick), apply
+    /// it as the new month's week-1 selection before clearing.</summary>
     public void BeginNewMonth(Season season)
     {
         Season = season;
         DayOfMonth = 1;
-        ChampionedThemesThisMonth.Clear();
-        CurrentChampion = null;
+        SelectedThemesThisMonth.Clear();
+        CurrentSelection = null;
         CurrentWeekBonusItems.Clear();
 
         // Consume the day-28 pre-pick (if any). The controller still needs to call
-        // PopulateBonusItemsForCurrentChampion AFTER this so the new month's bonus list
+        // PopulateBonusItemsForCurrentSelection AFTER this so the new month's bonus list
         // matches the new season — see RunController.OnDayStarted.
-        if (NextMonthChampion.HasValue)
+        if (NextMonthSelection.HasValue)
         {
-            Champion(NextMonthChampion.Value);
-            NextMonthChampion = null;
+            Select(NextMonthSelection.Value);
+            NextMonthSelection = null;
         }
     }
 
-    /// <summary>Start a fresh loop attempt: reset to Spring 1, wipe ledger + championing, set the new seed.</summary>
+    /// <summary>Start a fresh loop attempt: reset to Spring 1, wipe ledger + selections, set the new seed.</summary>
     public void BeginNewRun(int seed)
     {
         RunNumber += 1;
@@ -133,9 +133,9 @@ public sealed class RunState
         Season = Season.Spring;
         DayOfMonth = 1;
         DonatedItemIds.Clear();
-        ChampionedThemesThisMonth.Clear();
-        CurrentChampion = null;
-        NextMonthChampion = null;
+        SelectedThemesThisMonth.Clear();
+        CurrentSelection = null;
+        NextMonthSelection = null;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
         VaultBundlesPaid.Clear();

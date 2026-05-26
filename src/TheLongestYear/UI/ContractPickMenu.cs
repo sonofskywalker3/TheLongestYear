@@ -14,10 +14,10 @@ using CoreSeason = TheLongestYear.Core.Season;
 namespace TheLongestYear.UI
 {
     /// <summary>
-    /// The weekly planning hub: champion-offer cards (1 of 2). Each card shows the theme's
+    /// The weekly planning hub: selection-offer cards (1 of 2). Each card shows the theme's
     /// bundles with "donated / X" progress + a per-season gate badge, and the per-week bonus-item
     /// preview the player would activate if they picked that card. Opened automatically on
-    /// DayStarted at week-start; modal (no close until a theme is picked).
+    /// Sunday-night DayEnding; modal (no close until a theme is picked).
     ///
     /// Plan 06+ will add weather + cart foresight rows (currently hidden via config); the layout
     /// already reserves vertical space.
@@ -63,13 +63,13 @@ namespace TheLongestYear.UI
         private readonly IReadOnlyList<BundleRequirement> _requirements;
 
         /// <summary>Season the menu's bundle progress + bonus preview reflect. May be NEXT season
-        /// (Sunday-night day-28 case) — see <see cref="_isPreChampionForNextMonth"/>.</summary>
+        /// (Sunday-night day-28 case) — see <see cref="_isPreSelectForNextMonth"/>.</summary>
         private readonly CoreSeason _offerSeason;
 
         /// <summary>True when this hub is for next-month's week 1 (player is pre-picking before
-        /// sleeping on day 28). The pick routes through <see cref="RunController.PreChampionForNextMonth"/>
-        /// rather than the normal current-week champion path.</summary>
-        private readonly bool _isPreChampionForNextMonth;
+        /// sleeping on day 28). The pick routes through <see cref="RunController.PreSelectForNextMonth"/>
+        /// rather than the normal current-week selection path.</summary>
+        private readonly bool _isPreSelectForNextMonth;
 
         private IReadOnlyList<Theme> _offer;
 
@@ -93,7 +93,7 @@ namespace TheLongestYear.UI
 
         public ContractPickMenu(IMonitor monitor, RunController runController, GameplayConfig config,
             RunState run, IReadOnlyList<BundleRequirement> requirements, IReadOnlyList<Theme> offer,
-            CoreSeason? offerSeason = null, bool isPreChampionForNextMonth = false)
+            CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
         {
             _monitor = monitor;
@@ -103,7 +103,7 @@ namespace TheLongestYear.UI
             _requirements = requirements ?? new List<BundleRequirement>();
             _offer = offer ?? new List<Theme>();
             _offerSeason = offerSeason ?? run.Season;
-            _isPreChampionForNextMonth = isPreChampionForNextMonth;
+            _isPreSelectForNextMonth = isPreSelectForNextMonth;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
             catch (Exception) { _junimoTexture = null; }
@@ -129,8 +129,8 @@ namespace TheLongestYear.UI
         {
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
-                if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmChampion(_offer[0]); return; }
-                if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmChampion(_offer[1]); return; }
+                if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmSelection(_offer[0]); return; }
+                if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmSelection(_offer[1]); return; }
             }
             if (b == Microsoft.Xna.Framework.Input.Buttons.B && !_themePicked) return;
             base.receiveGamePadButton(b);
@@ -164,7 +164,7 @@ namespace TheLongestYear.UI
 
             int maxCount = _runController.BonusListSizeForCurrentSeason();
             // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
-            int week = _isPreChampionForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
             IReadOnlyList<string> sample = BonusItemSampler.SampleForTheme(
                 _run.Seed, week,
                 theme.Value, _offerSeason,
@@ -330,18 +330,18 @@ namespace TheLongestYear.UI
             base.receiveLeftClick(x, y, playSound);
 
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
-                ConfirmChampion(_offer[0]);
+                ConfirmSelection(_offer[0]);
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
-                ConfirmChampion(_offer[1]);
+                ConfirmSelection(_offer[1]);
         }
 
-        private void ConfirmChampion(Theme theme)
+        private void ConfirmSelection(Theme theme)
         {
             _themePicked = true;
-            if (_isPreChampionForNextMonth)
-                _runController.PreChampionForNextMonth(theme);
+            if (_isPreSelectForNextMonth)
+                _runController.PreSelectForNextMonth(theme);
             else
-                _runController.ChampionByName(theme.ToString());
+                _runController.SelectByName(theme.ToString());
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }

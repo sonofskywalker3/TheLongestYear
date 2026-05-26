@@ -15,8 +15,8 @@ public class RunStateTests
         Assert.Equal(1, run.WeekOfYear);
         Assert.Equal(1, run.RunNumber);
         Assert.Empty(run.DonatedItemIds);
-        Assert.Empty(run.ChampionedThemesThisMonth);
-        Assert.Null(run.CurrentChampion);
+        Assert.Empty(run.SelectedThemesThisMonth);
+        Assert.Null(run.CurrentSelection);
     }
 
     [Fact]
@@ -37,28 +37,28 @@ public class RunStateTests
     }
 
     [Fact]
-    public void Champion_records_current_and_adds_to_month_set()
+    public void Select_records_current_and_adds_to_month_set()
     {
         var run = new RunState();
-        run.Champion(Theme.Mining);
-        Assert.Equal(Theme.Mining, run.CurrentChampion);
-        Assert.True(run.IsChampioned(Theme.Mining));
-        run.Champion(Theme.Mining); // re-championing same theme does not duplicate
-        Assert.Single(run.ChampionedThemesThisMonth);
+        run.Select(Theme.Mining);
+        Assert.Equal(Theme.Mining, run.CurrentSelection);
+        Assert.True(run.IsSelected(Theme.Mining));
+        run.Select(Theme.Mining); // re-selecting same theme does not duplicate
+        Assert.Single(run.SelectedThemesThisMonth);
     }
 
     [Fact]
-    public void BeginNewMonth_advances_season_and_clears_championing_only()
+    public void BeginNewMonth_advances_season_and_clears_selections_only()
     {
         var run = new RunState();
         run.RecordDonation("Parsnip");
-        run.Champion(Theme.Mining);
+        run.Select(Theme.Mining);
         run.BeginNewMonth(Season.Summer);
 
         Assert.Equal(Season.Summer, run.Season);
         Assert.Equal(1, run.DayOfMonth);
-        Assert.Empty(run.ChampionedThemesThisMonth);
-        Assert.Null(run.CurrentChampion);
+        Assert.Empty(run.SelectedThemesThisMonth);
+        Assert.Null(run.CurrentSelection);
         Assert.Contains("Parsnip", run.DonatedSet()); // donations are cumulative across months
     }
 
@@ -67,7 +67,7 @@ public class RunStateTests
     {
         var run = new RunState { RunNumber = 3 };
         run.RecordDonation("Parsnip");
-        run.Champion(Theme.Mining);
+        run.Select(Theme.Mining);
         run.Season = Season.Winter;
         run.DayOfMonth = 28;
 
@@ -78,8 +78,8 @@ public class RunStateTests
         Assert.Equal(Season.Spring, run.Season);
         Assert.Equal(1, run.DayOfMonth);
         Assert.Empty(run.DonatedItemIds);
-        Assert.Empty(run.ChampionedThemesThisMonth);
-        Assert.Null(run.CurrentChampion);
+        Assert.Empty(run.SelectedThemesThisMonth);
+        Assert.Null(run.CurrentSelection);
     }
 
     [Fact]
@@ -89,8 +89,8 @@ public class RunStateTests
         {
             Seed = 42, RunNumber = 2, Season = Season.Fall, DayOfMonth = 15,
             DonatedItemIds = { "Parsnip", "CopperBar" },
-            ChampionedThemesThisMonth = { Theme.Mining },
-            CurrentChampion = Theme.Mining
+            SelectedThemesThisMonth = { Theme.Mining },
+            CurrentSelection = Theme.Mining
         };
 
         string json = JsonSerializer.Serialize(run);
@@ -101,8 +101,8 @@ public class RunStateTests
         Assert.Equal(Season.Fall, restored.Season);
         Assert.Equal(15, restored.DayOfMonth);
         Assert.Equal(new[] { "Parsnip", "CopperBar" }, restored.DonatedItemIds);
-        Assert.Equal(new[] { Theme.Mining }, restored.ChampionedThemesThisMonth);
-        Assert.Equal(Theme.Mining, restored.CurrentChampion);
+        Assert.Equal(new[] { Theme.Mining }, restored.SelectedThemesThisMonth);
+        Assert.Equal(Theme.Mining, restored.CurrentSelection);
     }
 
     [Fact]
@@ -179,34 +179,34 @@ public class RunStateTests
     }
 
     [Fact]
-    public void BeginNewMonth_consumes_NextMonthChampion_as_current()
+    public void BeginNewMonth_consumes_NextMonthSelection_as_current()
     {
-        // Day 28 pre-pick -> NextMonthChampion. Tomorrow's OnDayStarted calls BeginNewMonth,
-        // which should promote it to CurrentChampion and clear NextMonthChampion.
+        // Day 28 pre-pick -> NextMonthSelection. Tomorrow's OnDayStarted calls BeginNewMonth,
+        // which should promote it to CurrentSelection and clear NextMonthSelection.
         var run = new RunState { Season = Season.Spring };
-        run.NextMonthChampion = Theme.Fishing;
+        run.NextMonthSelection = Theme.Fishing;
 
         run.BeginNewMonth(Season.Summer);
 
-        Assert.Equal(Theme.Fishing, run.CurrentChampion);
-        Assert.Contains(Theme.Fishing, run.ChampionedThemesThisMonth);
-        Assert.Null(run.NextMonthChampion);
+        Assert.Equal(Theme.Fishing, run.CurrentSelection);
+        Assert.Contains(Theme.Fishing, run.SelectedThemesThisMonth);
+        Assert.Null(run.NextMonthSelection);
     }
 
     [Fact]
-    public void BeginNewMonth_with_no_NextMonthChampion_leaves_current_null()
+    public void BeginNewMonth_with_no_NextMonthSelection_leaves_current_null()
     {
         var run = new RunState { Season = Season.Spring };
-        run.CurrentChampion = Theme.Foraging; // last month's champion
+        run.CurrentSelection = Theme.Foraging; // last month's selection
         run.BeginNewMonth(Season.Summer);
-        Assert.Null(run.CurrentChampion);
+        Assert.Null(run.CurrentSelection);
     }
 
     [Fact]
-    public void BeginNewRun_clears_NextMonthChampion()
+    public void BeginNewRun_clears_NextMonthSelection()
     {
-        var run = new RunState { NextMonthChampion = Theme.Mining };
+        var run = new RunState { NextMonthSelection = Theme.Mining };
         run.BeginNewRun(seed: 1);
-        Assert.Null(run.NextMonthChampion);
+        Assert.Null(run.NextMonthSelection);
     }
 }

@@ -6,8 +6,8 @@ namespace TheLongestYear.Core;
 
 /// <summary>
 /// Per-(run, week, theme) random sample of "items in play this week" from the theme's bundles —
-/// the bonus list that earns the 1.5× ChampionBonusMultiplier when donated. Pure and
-/// seed-deterministic, so the planning hub's per-card preview and the championing-time commit
+/// the bonus list that earns the 1.5× SelectionBonusMultiplier when donated. Pure and
+/// seed-deterministic, so the planning hub's per-card preview and the selection-time commit
 /// produce the same list for the same (seed, week, theme).
 ///
 /// Sampling rule (per bundle, see <see cref="BundleRequirement.InPlayItemsFor"/>):

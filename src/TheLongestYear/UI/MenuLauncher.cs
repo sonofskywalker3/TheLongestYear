@@ -32,24 +32,24 @@ namespace TheLongestYear.UI
 
         /// <summary>Open the planning hub. If <paramref name="seasonOverride"/> is set (Sunday-night
         /// day-28 case), the menu shows next season's bundles + bonus preview and routes the pick
-        /// to <see cref="RunState.NextMonthChampion"/> rather than CurrentChampion.</summary>
+        /// to <see cref="RunState.NextMonthSelection"/> rather than CurrentSelection.</summary>
         public void OpenWeeklyHub(CoreSeason? seasonOverride = null)
         {
             if (!CanOpen()) return;
 
             CoreSeason offerSeason = seasonOverride ?? _store.Run.Season;
-            // Offer pool: for cross-month, ignore current month's championing (empty list).
-            var championingForOffer = seasonOverride.HasValue
+            // Offer pool: for cross-month, ignore current month's selections (empty list).
+            var selectionsForOffer = seasonOverride.HasValue
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
-                : _store.Run.ChampionedThemesThisMonth;
-            var offer = ChampionService.OfferForWeek(
+                : _store.Run.SelectedThemesThisMonth;
+            var offer = SelectionService.OfferForWeek(
                 _store.Run.Seed,
                 seasonOverride.HasValue ? _store.Run.WeekOfYear + 1 : _store.Run.WeekOfYear,
-                championingForOffer);
+                selectionsForOffer);
 
             Game1.activeClickableMenu = new ContractPickMenu(
                 _monitor, _runController, _config, _store.Run, _runController.Requirements,
-                offer, offerSeason, isPreChampionForNextMonth: seasonOverride.HasValue);
+                offer, offerSeason, isPreSelectForNextMonth: seasonOverride.HasValue);
             _monitor.Log(
                 $"Opened planning hub (week {_store.Run.WeekOfYear}{(seasonOverride.HasValue ? $" → {offerSeason}" : "")}, " +
                 $"offer: {string.Join(",", offer)}).",

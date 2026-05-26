@@ -10,7 +10,7 @@ public enum RunAction
     Continue,
     /// <summary>A gate failed — perform the in-place reset and start a fresh run.</summary>
     FailReset,
-    /// <summary>Month cleared (not Winter) — let the game advance; clear this month's championing.</summary>
+    /// <summary>Month cleared (not Winter) — let the game advance; clear this month's selections.</summary>
     AdvanceMonth,
     /// <summary>Winter cleared with the whole CC done — the loop breaks.</summary>
     Win
