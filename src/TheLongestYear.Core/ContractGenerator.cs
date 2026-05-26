@@ -11,20 +11,18 @@ namespace TheLongestYear.Core;
 /// items get pushed to later seasons where the player has had time to invest in coops/barns/
 /// preserves-jars/etc.
 ///
-/// Algorithm (post-playtest 2026-05-26):
+/// Algorithm (post-playtest 2026-05-26, revised same-day):
 ///   1. Shuffle item order by seed so different seeds yield different partitions.
 ///   2. Sort by ObtainableSeasons.Count ASC, then Rarity DESC. Single-season items go first
 ///      (no choice where they land), then multi-season items rare-first (so the rare ones
 ///      claim their preferred slot before the commons fill).
-///   3. For each item, prefer the LATEST candidate season that's still under cap.
-///      - This naturally pushes multi-season items (egg, milk, jelly, year-round forage) to
-///        later seasons. Spring fills mostly with single-season-Spring items (the easy stuff).
+///   3. For each item, pick the LEAST-LOADED under-cap candidate season; ties go to the LATER
+///      season. This spreads year-round items across the year (so Spring Mining isn't empty
+///      while Winter Mining stacks up) while preserving the gentle bias toward later seasons.
 ///   4. If no candidate is under cap:
 ///        - Single-season item → force-place anyway (we can't drop CC items with no alternative).
 ///        - Multi-season item → DROP it. The user said this is OK ("It's ok to leave out some
 ///          of the items for the early season as long as they are available in later seasons").
-///   5. Dropped items are logged via the returned YearPlan's metadata (none right now —
-///      we just emit them silently; if the user wants to see counts we can add a side-channel).
 /// </summary>
 public sealed class ContractGenerator
 {
@@ -87,33 +85,39 @@ public sealed class ContractGenerator
     }
 
     /// <summary>
-    /// Choose the season this item should go in. Prefers the LATEST under-cap candidate so
-    /// multi-season items push toward later seasons (where the player has investment). Returns
-    /// false for multi-season items whose every candidate is at cap — they get dropped.
-    /// Single-season items are force-placed (we never drop CC items with no alternative season).
+    /// Choose the season this item should go in. Picks the LEAST-LOADED under-cap candidate;
+    /// ties resolve to the LATER season. Result: year-round items spread across seasons
+    /// (post-playtest 2026-05-26: previously they all stacked into Winter, leaving early
+    /// seasons of low-spread themes like Mining empty). Single-season items are force-placed
+    /// when all candidates are at cap. Multi-season items with no room anywhere get dropped.
     /// </summary>
     private bool TryChooseSeason(
         CcItem item,
         IReadOnlyDictionary<(Season, Theme), List<string>> grouped,
         out Season chosen)
     {
-        // Stable candidate order (earliest → latest) for determinism.
+        // Stable candidate order (earliest → latest) for determinism. Iterating in this
+        // order and using `<=` on the load comparison gives latest-wins on ties for free.
         var candidates = item.ObtainableSeasons.OrderBy(s => (int)s).ToList();
 
-        // Find the LATEST under-cap candidate. Iterating earliest→latest and keeping the last
-        // hit gives us the latest match in one pass.
-        Season? latestUnderCap = null;
+        Season? best = null;
+        int bestLoad = int.MaxValue;
         foreach (Season s in candidates)
         {
             int load = grouped[(s, item.Theme)].Count;
             int cap = _capBySeason[(int)s];
-            if (load < cap)
-                latestUnderCap = s;
+            if (load >= cap)
+                continue;
+            if (load <= bestLoad)   // <= so later seasons win ties
+            {
+                best = s;
+                bestLoad = load;
+            }
         }
 
-        if (latestUnderCap.HasValue)
+        if (best.HasValue)
         {
-            chosen = latestUnderCap.Value;
+            chosen = best.Value;
             return true;
         }
 
