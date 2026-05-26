@@ -36,7 +36,7 @@ namespace TheLongestYear.UI
 
             var offer = ChampionService.OfferForWeek(_store.Run);
             Game1.activeClickableMenu = new ContractPickMenu(
-                _monitor, _runController, _config, _store.Run, _runController.CurrentPlan, offer);
+                _monitor, _runController, _config, _store.Run, _runController.Requirements, offer);
             _monitor.Log($"Opened planning hub (week {_store.Run.WeekOfYear}, offer: {string.Join(",", offer)}).",
                 LogLevel.Info);
         }
