@@ -37,6 +37,7 @@ namespace TheLongestYear.Donations
             var items = new List<CcItem>();
             var seen = new HashSet<string>();
             int categorySkipped = 0;
+            int unresolvedSkipped = 0;
 
             Dictionary<string, string> bundleData = Game1.netWorldState.Value.BundleData;
             foreach (KeyValuePair<string, string> kvp in bundleData)
@@ -59,6 +60,20 @@ namespace TheLongestYear.Donations
                     if (!seen.Add(id))
                         continue;
 
+                    // Probe ItemRegistry: an id that can't be resolved into an Item shouldn't make it
+                    // into the catalog -- the donation surface and UI both expect Create() to succeed.
+                    // (Diagnoses the v3.X "hay + grey squares" Mixed-contract bug.)
+                    Item probe = ItemRegistry.Create(id, 1, 0, allowNull: true);
+                    if (probe == null)
+                    {
+                        _monitor.Log(
+                            $"BundleCatalogBuilder: ItemRegistry returned null for '{id}' " +
+                            $"(bundle '{bundle.Name}', room '{bundle.Room}') -- excluding from catalog.",
+                            LogLevel.Warn);
+                        unresolvedSkipped++;
+                        continue;
+                    }
+
                     Rarity rarity = ItemRarityResolver.Resolve(id, _thresholds);
                     IReadOnlySet<CoreSeason> seasons = _seasons.SeasonsFor(id);
                     items.Add(new CcItem(id, theme, rarity, seasons));
@@ -67,7 +82,7 @@ namespace TheLongestYear.Donations
 
             _monitor.Log(
                 $"Bundle catalog built: {items.Count} concrete CC items " +
-                $"({categorySkipped} category ingredients skipped).",
+                $"({categorySkipped} category ingredients skipped, {unresolvedSkipped} unresolved ids skipped).",
                 LogLevel.Info);
             return items;
         }

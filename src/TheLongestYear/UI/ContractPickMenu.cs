@@ -522,8 +522,19 @@ namespace TheLongestYear.UI
                 }
                 else
                 {
-                    // Placeholder rectangle for unresolved items.
-                    b.Draw(Game1.fadeToBlackRect, bounds, Color.Gray * 0.5f);
+                    // Unresolved item: draw the vanilla "?" icon (Game1.mouseCursors 403,496,5,7)
+                    // centred in the 64x64 slot at 6x scale -> 30x42 px. Belt-and-suspenders for
+                    // anything BundleCatalogBuilder's pre-filter let through (e.g. mod-removed ids
+                    // after a save was created).
+                    var qSrc = new Rectangle(403, 496, 5, 7);
+                    const int qScale = 6;
+                    int qW = qSrc.Width * qScale;
+                    int qH = qSrc.Height * qScale;
+                    var dest = new Rectangle(
+                        bounds.X + (bounds.Width - qW) / 2,
+                        bounds.Y + (bounds.Height - qH) / 2,
+                        qW, qH);
+                    b.Draw(Game1.mouseCursors, dest, qSrc, Color.White);
                 }
             }
 
