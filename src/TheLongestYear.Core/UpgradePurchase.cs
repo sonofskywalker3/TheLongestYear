@@ -17,6 +17,9 @@ public static class UpgradePurchase
         AlreadyOwned,
         /// <summary>The upgrade has a prerequisite the player does not yet own.</summary>
         PrerequisiteMissing,
+        /// <summary>The upgrade requires a meta-state condition the player has not satisfied
+        /// (e.g. "Start with Chicken" requires ever having owned a chicken).</summary>
+        MetaRequirementMissing,
         /// <summary>The player does not have enough Junimo Points.</summary>
         NotEnoughJp
     }
@@ -29,6 +32,8 @@ public static class UpgradePurchase
             return PurchaseResult.AlreadyOwned;
         if (definition.PrerequisiteId != null && !state.HasUpgrade(definition.PrerequisiteId))
             return PurchaseResult.PrerequisiteMissing;
+        if (!state.MeetsMetaRequirement(definition.MetaRequirement))
+            return PurchaseResult.MetaRequirementMissing;
         if (state.JunimoPoints < definition.Cost)
             return PurchaseResult.NotEnoughJp;
 

@@ -115,10 +115,11 @@ public sealed class GameplayConfig
     public string WeeklyHubHotkey { get; set; } = "P";
 
     /// <summary>
-    /// Per-season maximum items per (season, theme) contract slot. Indices match Season enum:
-    /// [0]=Spring, [1]=Summer, [2]=Fall, [3]=Winter. The cap creates a roguelite difficulty curve —
-    /// early weeks have fewer required items, later weeks have more. Multi-season items overflow to
-    /// later seasons preferentially; single-season items override the cap (we never drop CC items).
+    /// Per-(season, theme) cap kept as a structural safety net rather than a difficulty knob —
+    /// JP upgrades carry the difficulty curve now (spec 2026-05-26 round 3). Defaults are
+    /// generous enough that no realistic vanilla / SVE catalog hits them; the cap mostly
+    /// prevents pathological "all 50 items in Spring Foraging" placements when the algorithm's
+    /// least-loaded fallback hits an edge case. User SeasonOverrides ignore the cap by design.
     /// </summary>
-    public int[] ContractItemCapBySeason { get; set; } = new[] { 4, 5, 6, 9 };
+    public int[] ContractItemCapBySeason { get; set; } = new[] { 15, 15, 15, 15 };
 }

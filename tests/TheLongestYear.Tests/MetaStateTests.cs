@@ -51,4 +51,38 @@ public class MetaStateTests
         MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
         Assert.True(restored.BackupDone);
     }
+
+    [Fact]
+    public void MeetsMetaRequirement_null_or_empty_is_always_true()
+    {
+        var s = new MetaState();
+        Assert.True(s.MeetsMetaRequirement(null));
+        Assert.True(s.MeetsMetaRequirement(""));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_species_checks_ever_owned()
+    {
+        var s = new MetaState { AnimalSpeciesEverOwned = { "Chicken", "Duck" } };
+        Assert.True(s.MeetsMetaRequirement("species:Chicken"));
+        Assert.True(s.MeetsMetaRequirement("species:Duck"));
+        Assert.False(s.MeetsMetaRequirement("species:Pig"));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_unknown_namespace_returns_false()
+    {
+        var s = new MetaState();
+        Assert.False(s.MeetsMetaRequirement("completed:GingerIsland"));
+        Assert.False(s.MeetsMetaRequirement("malformed-no-colon"));
+    }
+
+    [Fact]
+    public void AnimalSpeciesEverOwned_round_trips_through_json()
+    {
+        var original = new MetaState { AnimalSpeciesEverOwned = { "Chicken", "Cow" } };
+        string json = System.Text.Json.JsonSerializer.Serialize(original);
+        MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
+        Assert.Equal(new[] { "Chicken", "Cow" }, restored.AnimalSpeciesEverOwned);
+    }
 }

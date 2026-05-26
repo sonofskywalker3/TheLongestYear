@@ -5,8 +5,8 @@ namespace TheLongestYear.Tests;
 
 public class UpgradePurchaseTests
 {
-    private static UpgradeDefinition Def(string id, long cost = 100, string? prereq = null)
-        => new UpgradeDefinition(id, UpgradeCategory.Loadout, id + "-name", "desc", cost, prereq);
+    private static UpgradeDefinition Def(string id, long cost = 100, string? prereq = null, string? meta = null)
+        => new UpgradeDefinition(id, UpgradeCategory.Loadout, id + "-name", "desc", cost, prereq, meta);
 
     [Fact]
     public void Success_deducts_cost_and_records_ownership()
@@ -77,5 +77,62 @@ public class UpgradePurchaseTests
         Assert.Equal(UpgradePurchase.PurchaseResult.Success,
             UpgradePurchase.TryPurchase(state, Def("backpack_1", 100)));
         Assert.Equal(0, state.JunimoPoints);
+    }
+
+    [Fact]
+    public void MetaRequirementMissing_when_species_not_ever_owned()
+    {
+        var state = new MetaState { JunimoPoints = 500 };
+        var result = UpgradePurchase.TryPurchase(
+            state, Def("start_chicken", 400, meta: "species:Chicken"));
+        Assert.Equal(UpgradePurchase.PurchaseResult.MetaRequirementMissing, result);
+        Assert.Equal(500, state.JunimoPoints);
+    }
+
+    [Fact]
+    public void MetaRequirementMet_lets_purchase_succeed()
+    {
+        var state = new MetaState
+        {
+            JunimoPoints = 500,
+            AnimalSpeciesEverOwned = { "Chicken" }
+        };
+        var result = UpgradePurchase.TryPurchase(
+            state, Def("start_chicken", 400, meta: "species:Chicken"));
+        Assert.Equal(UpgradePurchase.PurchaseResult.Success, result);
+        Assert.Equal(100, state.JunimoPoints);
+        Assert.Contains("start_chicken", state.OwnedUpgrades);
+    }
+
+    [Fact]
+    public void Meta_species_match_is_case_insensitive()
+    {
+        var state = new MetaState
+        {
+            JunimoPoints = 500,
+            AnimalSpeciesEverOwned = { "chicken" }   // lowercase
+        };
+        var result = UpgradePurchase.TryPurchase(
+            state, Def("start_chicken", 400, meta: "species:Chicken"));   // mixed case requirement
+        Assert.Equal(UpgradePurchase.PurchaseResult.Success, result);
+    }
+
+    [Fact]
+    public void Prerequisite_checked_before_meta_requirement()
+    {
+        // No coop owned yet AND no chicken ever owned -> the missing prerequisite reports first.
+        var state = new MetaState { JunimoPoints = 500 };
+        var def = Def("start_chicken", 400, prereq: "keep_coop", meta: "species:Chicken");
+        Assert.Equal(UpgradePurchase.PurchaseResult.PrerequisiteMissing,
+            UpgradePurchase.TryPurchase(state, def));
+    }
+
+    [Fact]
+    public void Unknown_meta_namespace_treats_requirement_as_unmet()
+    {
+        var state = new MetaState { JunimoPoints = 500 };
+        var def = Def("future_upgrade", 400, meta: "completed:GingerIsland");
+        Assert.Equal(UpgradePurchase.PurchaseResult.MetaRequirementMissing,
+            UpgradePurchase.TryPurchase(state, def));
     }
 }
