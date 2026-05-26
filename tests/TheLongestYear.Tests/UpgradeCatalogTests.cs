@@ -21,8 +21,32 @@ public class UpgradeCatalogTests
     [InlineData(UpgradeCategory.Obtainability)]
     [InlineData(UpgradeCategory.Foresight)]
     [InlineData(UpgradeCategory.Stash)]
+    [InlineData(UpgradeCategory.Buildings)]
     public void Every_category_has_at_least_one_entry(UpgradeCategory category)
         => Assert.NotEmpty(UpgradeCatalog.ByCategory(category));
+
+    [Fact]
+    public void Start_with_animal_upgrades_carry_a_species_meta_requirement()
+    {
+        var starters = UpgradeCatalog.All
+            .Where(u => u.Id.StartsWith("start_"))
+            .ToList();
+        Assert.NotEmpty(starters);
+        foreach (UpgradeDefinition u in starters)
+            Assert.StartsWith("species:", u.MetaRequirement ?? "");
+    }
+
+    [Fact]
+    public void Start_with_animal_upgrades_require_corresponding_housing()
+    {
+        // Every Start with [animal] entry must list a Keep [Coop|Barn] upgrade as its prerequisite
+        // (the player can't keep an animal without first paying for the building).
+        foreach (UpgradeDefinition u in UpgradeCatalog.All.Where(u => u.Id.StartsWith("start_")))
+        {
+            Assert.NotNull(u.PrerequisiteId);
+            Assert.StartsWith("keep_", u.PrerequisiteId!);
+        }
+    }
 
     [Fact]
     public void Every_prerequisite_points_to_a_real_upgrade_id()

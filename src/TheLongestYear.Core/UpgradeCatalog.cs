@@ -85,6 +85,49 @@ public static class UpgradeCatalog
         new UpgradeDefinition("stash_1", UpgradeCategory.Stash, "Junimo Stash I",
             "Unlock the Junimo Stash with 4 slots (carries items across runs).", 300),
         new UpgradeDefinition("stash_2", UpgradeCategory.Stash, "Junimo Stash II",
-            "Expand the Junimo Stash to 8 slots.", 675, "stash_1")
+            "Expand the Junimo Stash to 8 slots.", 675, "stash_1"),
+
+        // Buildings — Keep [X] chain. Effects (actually pre-build the structure on run start)
+        // are deferred to a later plan; here we only record the entitlement.
+        // Coop chain: ~5 runs to bank Keep Coop, more to upgrade.
+        new UpgradeDefinition("keep_coop", UpgradeCategory.Buildings, "Keep Coop",
+            "Start each run with a Coop already built.", 600),
+        new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, "Keep Big Coop",
+            "Start each run with a Big Coop instead of a Coop.", 1200, "keep_coop"),
+        new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, "Keep Deluxe Coop",
+            "Start each run with a Deluxe Coop.", 2000, "keep_big_coop"),
+        new UpgradeDefinition("keep_barn", UpgradeCategory.Buildings, "Keep Barn",
+            "Start each run with a Barn already built.", 600),
+        new UpgradeDefinition("keep_big_barn", UpgradeCategory.Buildings, "Keep Big Barn",
+            "Start each run with a Big Barn.", 1200, "keep_barn"),
+        new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, "Keep Deluxe Barn",
+            "Start each run with a Deluxe Barn.", 2000, "keep_big_barn"),
+        new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
+            "Start each run with the Kitchen house upgrade (cooking accessible day 1).", 800),
+
+        // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
+        // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
+        // Coop birds:
+        new UpgradeDefinition("start_chicken", UpgradeCategory.Buildings, "Start with Chicken",
+            "Start each run with a Chicken in your Coop.", 400, "keep_coop", "species:Chicken"),
+        new UpgradeDefinition("start_void_chicken", UpgradeCategory.Buildings, "Start with Void Chicken",
+            "Start each run with a Void Chicken (any Coop tier).", 600, "keep_coop", "species:VoidChicken"),
+        new UpgradeDefinition("start_duck", UpgradeCategory.Buildings, "Start with Duck",
+            "Start each run with a Duck (Big Coop or better).", 500, "keep_big_coop", "species:Duck"),
+        new UpgradeDefinition("start_dinosaur", UpgradeCategory.Buildings, "Start with Dinosaur",
+            "Start each run with a Dinosaur (Big Coop or better).", 900, "keep_big_coop", "species:Dinosaur"),
+        new UpgradeDefinition("start_rabbit", UpgradeCategory.Buildings, "Start with Rabbit",
+            "Start each run with a Rabbit (Deluxe Coop).", 700, "keep_deluxe_coop", "species:Rabbit"),
+        new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, "Start with Ostrich",
+            "Start each run with an Ostrich (Deluxe Coop).", 1500, "keep_deluxe_coop", "species:Ostrich"),
+        // Barn animals:
+        new UpgradeDefinition("start_cow", UpgradeCategory.Buildings, "Start with Cow",
+            "Start each run with a Cow in your Barn.", 400, "keep_barn", "species:Cow"),
+        new UpgradeDefinition("start_goat", UpgradeCategory.Buildings, "Start with Goat",
+            "Start each run with a Goat (Big Barn or better).", 500, "keep_big_barn", "species:Goat"),
+        new UpgradeDefinition("start_sheep", UpgradeCategory.Buildings, "Start with Sheep",
+            "Start each run with a Sheep (Deluxe Barn).", 600, "keep_deluxe_barn", "species:Sheep"),
+        new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, "Start with Pig",
+            "Start each run with a Pig (Deluxe Barn).", 700, "keep_deluxe_barn", "species:Pig"),
     };
 }
