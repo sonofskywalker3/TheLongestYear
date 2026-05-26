@@ -21,25 +21,34 @@ namespace TheLongestYear.UI
     /// </summary>
     internal sealed class ContractPickMenu : IClickableMenu
     {
-        private const int CardWidth = 520;
-        private const int CardHeight = 320;
+        private const int CardWidth = 560;
+        private const int CardHeight = 360;
         private const int CardSpacing = 32;
         private const int PreviewRowHeight = 44;
         private const int PreviewSpacing = 8;
-        private const int PanelPadding = 40;
-        private const int JunimoSpriteSize = 64;
+        private const int PanelPadding = 48;
+        private const int JunimoSpriteSize = 96;       // 4x scaled (24px) → bigger, more presence
 
         private const int CardIdLeft = 5100;
         private const int CardIdRight = 5101;
         private const int WeatherIdBase = 5200;
         private const int CartIdBase = 5300;
 
-        // Icon grid constants: 3 columns x 2 rows = 6 max visible items
-        private const int IconGridCols = 3;
+        // Icon grid: 6 columns x 2 rows = 12 max visible items, 2x scale (32px each).
+        // The grid feels lighter at 2x — vanilla inventory tiles also draw items at this scale.
+        private const int IconGridCols = 6;
         private const int IconGridRows = 2;
         private const int MaxIcons = IconGridCols * IconGridRows;
-        private const int IconSize = 64;
-        private const int IconGap = 16;
+        private const int IconScale = 2;
+        private const int IconSize = 16 * IconScale;   // 32px
+        private const int IconGap = 14;
+
+        // Card body vertical layout
+        private const int CardInnerPad = 28;
+        private const int ThemeNameLineHeight = 48;    // dialogueFont line height (approx)
+        private const int BodyLineHeight = 28;         // smallFont line height with breathing room
+        private const int RequiredHeaderGap = 12;
+        private const int IconBlockGap = 20;
 
         private readonly IMonitor _monitor;
         private readonly RunController _runController;
@@ -80,10 +89,10 @@ namespace TheLongestYear.UI
             _plan = plan;
             _offer = offer ?? new List<Theme>();
 
-            // Load Junimo sprite; fall back gracefully if the asset is unavailable.
+            // Load Junimo sprite (Characters\Junimo, 16x16 frames; frame 0 is a standing green Junimo).
             try
             {
-                _junimoTexture = Game1.content.Load<Texture2D>("LooseSprites\\Junimo");
+                _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo");
             }
             catch (Exception)
             {
@@ -171,8 +180,8 @@ namespace TheLongestYear.UI
                 ? 0
                 : (previewRows * PreviewRowHeight) + ((previewRows - 1) * PreviewSpacing) + PanelPadding;
 
-            // Title area: Junimo sprite (JunimoSpriteSize) + gap (8) + title text line (~40) + gap (16)
-            int titleBlock = (_junimoTexture != null ? JunimoSpriteSize + 8 : 0) + 40 + 16;
+            // Title area: top pad (24) + Junimo sprite (if loaded) + gap (12) + title text line (~48) + gap (20)
+            int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 20;
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
             height = titleBlock + CardHeight + previewBlock + PanelPadding;
@@ -262,9 +271,17 @@ namespace TheLongestYear.UI
             bounds.Clear();
             if (card == null) return;
 
-            // Icons start after: card padding (24) + theme name line (~40) + bonus line (~24) + liability line (~24) + "Required:" line (~24) + gap (8)
-            int iconStartX = card.bounds.X + 24;
-            int iconStartY = card.bounds.Y + 24 + 40 + 24 + 24 + 24 + 8;
+            // Icon grid sits below: inner-pad + theme name + bonus + liability + required header + gap.
+            // Centred horizontally inside the card so the grid looks balanced under the header text.
+            int gridWidth = IconGridCols * IconSize + (IconGridCols - 1) * IconGap;
+            int iconStartX = card.bounds.X + (card.bounds.Width - gridWidth) / 2;
+            int iconStartY = card.bounds.Y + CardInnerPad
+                           + ThemeNameLineHeight
+                           + BodyLineHeight    // Bonus line
+                           + BodyLineHeight    // Liability line
+                           + RequiredHeaderGap
+                           + BodyLineHeight    // "Required:" line
+                           + IconBlockGap;
 
             for (int row = 0; row < IconGridRows; row++)
             {
@@ -348,9 +365,9 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             int panelCenterX = xPositionOnScreen + width / 2;
-            int drawY = yPositionOnScreen + 16;
+            int drawY = yPositionOnScreen + 24;
 
-            // Junimo sprite centred above the title.
+            // Junimo sprite centred above the title (Characters\Junimo, 16x16 frame 0 → 96px at 6× scale).
             if (_junimoTexture != null)
             {
                 int junimoX = panelCenterX - JunimoSpriteSize / 2;
@@ -358,12 +375,12 @@ namespace TheLongestYear.UI
                     new Rectangle(junimoX, drawY, JunimoSpriteSize, JunimoSpriteSize),
                     new Rectangle(0, 0, 16, 16),
                     Color.White);
-                drawY += JunimoSpriteSize + 8;
+                drawY += JunimoSpriteSize + 12;
             }
 
             // Title.
             SpriteText.drawStringHorizontallyCenteredAt(b, "Pick a theme", panelCenterX, drawY);
-            drawY += 40 + 16;
+            drawY += 48 + 20;
 
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftItems, _leftOverflow, _leftIconBounds);
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightItems, _rightOverflow, _rightIconBounds);
@@ -405,29 +422,33 @@ namespace TheLongestYear.UI
             string bonusName = ThemeModifiers.DisplayNameFor(bonus);
             string liabilityName = ThemeModifiers.DisplayNameFor(liability);
 
-            int textX = card.bounds.X + 24;
-            int textY = card.bounds.Y + 24;
+            int textX = card.bounds.X + CardInnerPad;
+            int textY = card.bounds.Y + CardInnerPad;
 
-            // Theme name
-            Utility.drawTextWithShadow(b, theme.Value.ToString(), Game1.smallFont,
-                new Vector2(textX, textY), Game1.textColor);
-            textY += 40;
+            // Theme name in the big dialogue font, centred horizontally for visual weight.
+            string themeName = theme.Value.ToString();
+            Vector2 nameSize = Game1.dialogueFont.MeasureString(themeName);
+            float nameX = card.bounds.X + (card.bounds.Width - nameSize.X) / 2f;
+            Utility.drawTextWithShadow(b, themeName, Game1.dialogueFont,
+                new Vector2(nameX, textY), Game1.textColor);
+            textY += ThemeNameLineHeight;
 
-            // Bonus / liability
-            Utility.drawTextWithShadow(b, $"Bonus: {bonusName}", Game1.smallFont,
-                new Vector2(textX, textY), Game1.textColor);
-            textY += 24;
+            // Bonus (green) and liability (red) in smallFont — colour-coded so they read at a glance.
+            Color bonusColor = new Color(34, 110, 34);     // forest green
+            Color liabilityColor = new Color(160, 34, 34); // muted crimson
+            Utility.drawTextWithShadow(b, "+ " + bonusName, Game1.smallFont,
+                new Vector2(textX, textY), bonusColor);
+            textY += BodyLineHeight;
 
-            Utility.drawTextWithShadow(b, $"Liability: {liabilityName}", Game1.smallFont,
-                new Vector2(textX, textY), Game1.textColor);
-            textY += 24;
+            Utility.drawTextWithShadow(b, "− " + liabilityName, Game1.smallFont,
+                new Vector2(textX, textY), liabilityColor);
+            textY += BodyLineHeight + RequiredHeaderGap;
 
             // Required items section header
             Utility.drawTextWithShadow(b, "Required:", Game1.smallFont,
                 new Vector2(textX, textY), Game1.textColor);
-            textY += 24 + 8;
 
-            // Draw icon grid
+            // Draw icon grid (positions pre-computed in ComputeIconBounds).
             DrawIconGrid(b, items, overflow, iconBounds);
         }
 
@@ -441,7 +462,7 @@ namespace TheLongestYear.UI
 
                 if (item != null)
                 {
-                    item.drawInMenu(b, pos, 4f, 1f, 0.86f, StackDrawType.Hide, Color.White, false);
+                    item.drawInMenu(b, pos, (float)IconScale, 1f, 0.86f, StackDrawType.Hide, Color.White, false);
                 }
                 else
                 {
