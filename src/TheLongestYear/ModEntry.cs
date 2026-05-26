@@ -8,6 +8,7 @@ using StardewModdingAPI.Events;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
 using TheLongestYear.Loop;
+using TheLongestYear.UI;
 
 namespace TheLongestYear
 {
@@ -17,6 +18,8 @@ namespace TheLongestYear
         private MetaStore _meta;
         private WorldResetService _reset;
         private RunController _runController;
+        private UpgradePurchaseService _purchases;
+        private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
 
@@ -51,6 +54,10 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
+            helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
+            helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
+            helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
+            helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -67,6 +74,9 @@ namespace TheLongestYear
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog);
             _runController.OnRunLoaded();
+            _purchases = new UpgradePurchaseService(this.Monitor, _meta);
+            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, this.Helper.Events);
+            _runController.AttachLauncher(_launcher);
             this.Monitor.Log(
                 $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
                 LogLevel.Info);
@@ -211,6 +221,10 @@ namespace TheLongestYear
                 case "tly_runstate": this.CmdRunState(command, args); break;
                 case "tly_catalog": this.CmdCatalog(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
+                case "tly_openhub": this.CmdOpenHub(command, args); break;
+                case "tly_openshop": this.CmdOpenShop(command, args); break;
+                case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
+                case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
@@ -263,6 +277,41 @@ namespace TheLongestYear
 
             int count = args.Length > 1 && int.TryParse(args[1], out int c) ? c : 1;
             DonationService.Active?.OnItemDonated(args[0], count);
+        }
+
+        private void CmdOpenHub(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _launcher?.OpenWeeklyHub();
+        }
+
+        private void CmdOpenShop(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _launcher?.OpenShrineShop();
+        }
+
+        private void CmdListUpgrades(string command, string[] args)
+        {
+            this.Monitor.Log($"Upgrade catalog: {TheLongestYear.Core.UpgradeCatalog.All.Count} entries.", LogLevel.Info);
+            foreach (TheLongestYear.Core.UpgradeCategory cat in System.Enum.GetValues(typeof(TheLongestYear.Core.UpgradeCategory)))
+            {
+                var rows = TheLongestYear.Core.UpgradeCatalog.ByCategory(cat);
+                this.Monitor.Log($"  {cat} ({rows.Count}):", LogLevel.Info);
+                foreach (var u in rows)
+                {
+                    string owned = _meta != null && _meta.State.HasUpgrade(u.Id) ? " [OWNED]" : "";
+                    string prereq = u.PrerequisiteId != null ? $" (req {u.PrerequisiteId})" : "";
+                    this.Monitor.Log($"    - {u.Id}: {u.DisplayName} — {u.Cost} JP{prereq}{owned}", LogLevel.Info);
+                }
+            }
+        }
+
+        private void CmdBuyUpgrade(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_buyupgrade <id>", LogLevel.Warn); return; }
+            _purchases?.TryPurchase(args[0]);
         }
     }
 }
