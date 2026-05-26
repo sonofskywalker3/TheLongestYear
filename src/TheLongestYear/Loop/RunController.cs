@@ -24,6 +24,7 @@ namespace TheLongestYear.Loop
         private readonly RunManager _runManager = new RunManager(new GateEvaluator());
         private readonly JpCalculator _jp;
         private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
+        private readonly System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
 
         private YearPlan _plan;
         private bool _pendingReset;
@@ -32,8 +33,12 @@ namespace TheLongestYear.Loop
         /// <summary>The current run's contract plan; exposed for the UI layer (Plan 05).</summary>
         public YearPlan CurrentPlan => _plan;
 
+        /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
+        public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
+
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
-            System.Collections.Generic.IReadOnlyList<CcItem> catalog)
+            System.Collections.Generic.IReadOnlyList<CcItem> catalog,
+            System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null)
         {
             _monitor = monitor;
             _store = store;
@@ -41,6 +46,7 @@ namespace TheLongestYear.Loop
             _reset = reset;
             _jp = new JpCalculator(config.Jp);
             _catalog = (catalog != null && catalog.Count > 0) ? catalog : CcItemCatalog.Items;
+            _requirements = requirements ?? new System.Collections.Generic.List<BundleRequirement>();
         }
 
         private RunState Run => _store.Run;
@@ -92,7 +98,7 @@ namespace TheLongestYear.Loop
         {
             AwardChampionContractBonusIfDue();
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
-            RunAction action = _runManager.EvaluateDayEnd(Run, _plan, _catalog, vaultGateSatisfied);
+            RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)
             {
                 case RunAction.Continue:

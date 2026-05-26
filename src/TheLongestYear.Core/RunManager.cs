@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace TheLongestYear.Core;
 
@@ -18,12 +17,11 @@ public enum RunAction
 }
 
 /// <summary>
-/// The day-end decision maker. Spec 2026-05-26 round 3: at day 28, both gates must pass:
-///   (a) every item the YearPlan placed in this season is donated, AND
-///   (b) the season's Vault bundle is paid (or keep_bus_unlocked is owned — see VaultRules).
-/// Multi-season items are pinned at generator time, so "easy fish in two seasons is still
-/// required in the first" is enforced before the gate ever runs. End-of-Winter additionally
-/// requires fullCcDone (catalog-side belt-and-suspenders).
+/// The day-end decision maker. Spec round 7 (2026-05-26): gate is per-bundle now, not pooled
+/// per (season, theme) contract. At day 28, every <see cref="BundleRequirement"/>'s
+/// <see cref="BundleRequirement.IsSatisfiedAtSeasonEnd"/> must pass for the current season AND
+/// the vault gate (paid bundle or keep_bus_unlocked upgrade) must be satisfied. End-of-Winter
+/// additionally demands every bundle be fully complete (X distinct ingredients donated).
 /// </summary>
 public sealed class RunManager
 {
@@ -31,25 +29,28 @@ public sealed class RunManager
 
     public RunManager(GateEvaluator gate) => _gate = gate ?? throw new ArgumentNullException(nameof(gate));
 
+    /// <summary>
+    /// Evaluate the end-of-day gate. Returns the action the controller should take.
+    /// </summary>
+    /// <param name="run">Live run state — only Season, DayOfMonth, and DonatedItemIds are read.</param>
+    /// <param name="bundles">Classified bundle requirements (from <c>BundleCatalogBuilder.BuildRequirements</c>).</param>
+    /// <param name="vaultGateSatisfied">True if this season's vault bundle is paid, or
+    /// the player owns the keep_bus_unlocked meta upgrade — see <see cref="VaultRules"/>.</param>
     public RunAction EvaluateDayEnd(
         RunState run,
-        YearPlan plan,
-        IReadOnlyList<CcItem> catalog,
+        IReadOnlyList<BundleRequirement> bundles,
         bool vaultGateSatisfied)
     {
         if (run is null) throw new ArgumentNullException(nameof(run));
-        if (plan is null) throw new ArgumentNullException(nameof(plan));
-        if (catalog is null) throw new ArgumentNullException(nameof(catalog));
+        if (bundles is null) throw new ArgumentNullException(nameof(bundles));
 
         ISet<string> donated = run.DonatedSet();
 
-        bool itemsGatePassed = plan.ForSeason(run.Season).All(c => c.IsSatisfiedBy(donated));
+        // Bundle gate (AND with vault) only matters at month-end; off-month days short-circuit true.
+        bool monthlyGatePasses = !Calendar.IsMonthEnd(run.DayOfMonth)
+            || BundleGate.IsSatisfied(run.Season, donated, bundles, vaultGateSatisfied);
 
-        // Both gates must pass at month-end. Off-month days short-circuit true.
-        bool monthlyGatePasses = !Calendar.IsMonthEnd(run.DayOfMonth) ||
-            (itemsGatePassed && vaultGateSatisfied);
-
-        bool fullCcDone = catalog.All(i => donated.Contains(i.Id));
+        bool fullCcDone = BundleGate.IsFullyDone(donated, bundles);
 
         GateResult result = _gate.EvaluateDayEnd(
             run.DayOfMonth, (int)run.Season, monthlyGatePasses, fullCcDone);
