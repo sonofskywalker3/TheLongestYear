@@ -28,6 +28,9 @@ namespace TheLongestYear.Loop
         private YearPlan _plan;
         private bool _pendingReset;
 
+        /// <summary>The current run's contract plan; exposed for the UI layer (Plan 05).</summary>
+        public YearPlan CurrentPlan => _plan;
+
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
             System.Collections.Generic.IReadOnlyList<CcItem> catalog)
         {
