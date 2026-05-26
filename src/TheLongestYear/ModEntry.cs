@@ -61,6 +61,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_reroll", "Re-roll the year plan (new seed) and re-open the planning hub (debug).", this.CmdReroll);
             helper.ConsoleCommands.Add("tly_dumpplan", "Dump the per-(season,theme) item assignment table to the log.", this.CmdDumpPlan);
+            helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -234,6 +235,7 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_reroll": this.CmdReroll(command, args); break;
                 case "tly_dumpplan": this.CmdDumpPlan(command, args); break;
+                case "tly_payvault": this.CmdPayVault(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
@@ -333,6 +335,37 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _runController?.DumpAssignmentTable("on demand");
+        }
+
+        private void CmdPayVault(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1)
+            {
+                this.Monitor.Log("Usage: tly_payvault <Spring|Summer|Fall|Winter|34|35|36|37>", LogLevel.Warn);
+                return;
+            }
+
+            int bundleIndex;
+            if (int.TryParse(args[0], out bundleIndex))
+            {
+                // direct index
+            }
+            else if (System.Enum.TryParse(args[0], ignoreCase: true, out TheLongestYear.Core.Season s))
+            {
+                bundleIndex = TheLongestYear.Core.VaultRules.BundleIndexForSeason(s);
+            }
+            else
+            {
+                this.Monitor.Log($"Unknown argument '{args[0]}'.", LogLevel.Warn);
+                return;
+            }
+
+            if (!_meta.Run.VaultBundlesPaid.Contains(bundleIndex))
+                _meta.Run.VaultBundlesPaid.Add(bundleIndex);
+            this.Monitor.Log(
+                $"Vault bundle {bundleIndex} marked paid. Paid this run: [{string.Join(", ", _meta.Run.VaultBundlesPaid)}]",
+                LogLevel.Info);
         }
 
         /// <summary>Merge GameplayConfig.DefaultThemeOverrides + user ThemeOverrides for the catalog builder.</summary>

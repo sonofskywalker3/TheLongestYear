@@ -21,27 +21,28 @@ public class RunManagerTests
         Item("year-round",  Theme.Mixed,    Season.Spring, Season.Summer, Season.Fall, Season.Winter),
     };
 
-    /// <summary>Build a plan from the catalog using the live generator (deterministic).</summary>
     private static YearPlan PlanFor(List<CcItem> catalog)
         => new ContractGenerator().Generate(catalog, seed: 0);
 
     private static RunManager Mgr() => new RunManager(new GateEvaluator());
+
+    // Default vaultGateSatisfied=true for tests that don't care about the vault gate.
+    private const bool VaultOk = true;
 
     [Fact]
     public void Midweek_continues()
     {
         var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 3 };
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, VaultOk));
     }
 
     [Fact]
     public void Week_end_without_champion_continues()
     {
-        // Spec change 2026-05-26: no weekly fail.
         var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 7 };
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, VaultOk));
     }
 
     [Fact]
@@ -50,57 +51,64 @@ public class RunManagerTests
         var catalog = Catalog();
         var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        // Donate everything the plan assigned to Spring.
         foreach (var c in plan.ForSeason(Season.Spring))
             foreach (var id in c.RequiredItemIds)
                 run.RecordDonation(id);
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, plan, catalog));
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, plan, catalog, VaultOk));
     }
 
     [Fact]
     public void Month_end_missing_a_spring_assigned_item_fails()
     {
-        // "spring-only" is necessarily in the Spring contract; not donating it fails the gate.
         var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog));
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, VaultOk));
     }
 
     [Fact]
-    public void Spring_gate_does_not_require_summer_or_later_items()
+    public void Month_end_with_items_done_but_vault_unpaid_fails()
     {
+        // Item gate passes but vault gate (2,500g for Spring) hasn't been satisfied -> FailReset.
         var catalog = Catalog();
         var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
         foreach (var c in plan.ForSeason(Season.Spring))
             foreach (var id in c.RequiredItemIds)
                 run.RecordDonation(id);
-        // Summer/Fall/Winter assigned items NOT donated yet — Spring still advances.
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, plan, catalog));
+        Assert.Equal(RunAction.FailReset,
+            Mgr().EvaluateDayEnd(run, plan, catalog, vaultGateSatisfied: false));
     }
 
     [Fact]
-    public void Winter_end_with_full_cc_wins()
+    public void Midweek_with_vault_unpaid_still_continues()
+    {
+        // Vault gate only applies at month-end; mid-month days never fail on vault.
+        var catalog = Catalog();
+        var run = new RunState { Season = Season.Spring, DayOfMonth = 14 };
+        Assert.Equal(RunAction.Continue,
+            Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, vaultGateSatisfied: false));
+    }
+
+    [Fact]
+    public void Winter_end_with_full_cc_and_vault_wins()
     {
         var catalog = Catalog();
         var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
         foreach (var item in catalog)
             run.RecordDonation(item.Id);
-        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, plan, catalog));
+        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, plan, catalog, VaultOk));
     }
 
     [Fact]
-    public void Winter_end_missing_a_winter_assigned_item_fails()
+    public void Winter_end_with_full_cc_but_vault_unpaid_fails()
     {
         var catalog = Catalog();
         var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        // Donate everything except items assigned to Winter contracts.
-        var winterIds = plan.ForSeason(Season.Winter).SelectMany(c => c.RequiredItemIds).ToHashSet();
         foreach (var item in catalog)
-            if (!winterIds.Contains(item.Id))
-                run.RecordDonation(item.Id);
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, plan, catalog));
+            run.RecordDonation(item.Id);
+        Assert.Equal(RunAction.FailReset,
+            Mgr().EvaluateDayEnd(run, plan, catalog, vaultGateSatisfied: false));
     }
 }

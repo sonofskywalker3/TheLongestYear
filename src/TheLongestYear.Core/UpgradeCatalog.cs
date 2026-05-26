@@ -105,6 +105,13 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
             "Start each run with the Kitchen house upgrade (cooking accessible day 1).", 800),
 
+        // Vault — pre-pay all four bus bundles once and keep them paid across resets.
+        // Without this upgrade the player has to pay the season's Vault bundle every run by day 28
+        // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).
+        new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, "Keep Bus Unlocked",
+            "Start each run with all four Vault bundles already paid — the bus is restored from day 1.",
+            1500),
+
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
         // Coop birds:

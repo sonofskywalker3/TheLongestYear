@@ -136,6 +136,18 @@ public class RunStateTests
     }
 
     [Fact]
+    public void BeginNewRun_clears_vault_payments()
+    {
+        var run = new RunState();
+        run.VaultBundlesPaid.Add(VaultRules.Vault2500);
+        run.VaultBundlesPaid.Add(VaultRules.Vault5000);
+
+        run.BeginNewRun(seed: 5);
+
+        Assert.Empty(run.VaultBundlesPaid);
+    }
+
+    [Fact]
     public void OfferPresentedWeek_defaults_to_negative_one()
         => Assert.Equal(-1, new RunState().OfferPresentedWeek);
 
