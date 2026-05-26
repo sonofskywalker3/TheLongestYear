@@ -86,8 +86,6 @@ namespace TheLongestYear
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
-            // DonationService needs the live YearPlan to look up bonus items; RunController owns it.
-            DonationService.Active.CurrentPlanProvider = () => _runController.CurrentPlan;
             _runController.OnRunLoaded();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
