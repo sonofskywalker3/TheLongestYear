@@ -74,7 +74,9 @@ namespace TheLongestYear
             _reset = new WorldResetService(this.Monitor, _meta.State, _ccUnlock);
 
             _seasonResolver = new SeasonResolver();
-            _catalog = new BundleCatalogBuilder(_config.RarityThresholds, _seasonResolver, this.Monitor).Build();
+            _catalog = new BundleCatalogBuilder(
+                _config.RarityThresholds, _seasonResolver, this.Monitor,
+                ParseThemeOverrides()).Build();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog);
@@ -331,6 +333,31 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _runController?.DumpAssignmentTable("on demand");
+        }
+
+        /// <summary>Merge GameplayConfig.DefaultThemeOverrides + user ThemeOverrides for the catalog builder.</summary>
+        private System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Theme> ParseThemeOverrides()
+        {
+            var merged = new System.Collections.Generic.Dictionary<string, TheLongestYear.Core.Theme>();
+
+            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultThemeOverrides)
+                if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Theme t))
+                    merged[kv.Key] = t;
+
+            if (_config?.ThemeOverrides != null)
+            {
+                foreach (var kv in _config.ThemeOverrides)
+                {
+                    if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Theme t))
+                        merged[kv.Key] = t;
+                    else
+                        this.Monitor.Log(
+                            $"ThemeOverrides: '{kv.Value}' is not a valid theme for id '{kv.Key}' — ignoring.",
+                            LogLevel.Warn);
+                }
+            }
+
+            return merged;
         }
     }
 }
