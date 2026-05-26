@@ -36,6 +36,24 @@ namespace TheLongestYear.Loop
         /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
         public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
 
+        /// <summary>CcItem catalog (rarity/season/theme metadata); exposed so the UI can look up
+        /// per-season obtainability when computing the bonus-item preview per card.</summary>
+        public System.Collections.Generic.IReadOnlyList<CcItem> Catalog => _catalog;
+
+        /// <summary>How big the per-card bonus-item preview list should be for the season.
+        /// Mirrors <c>PopulateBonusItemsForCurrentChampion</c>'s cap so the championing UI
+        /// preview and the resulting CurrentWeekBonusItems list are the same size.</summary>
+        public int BonusListSizeForCurrentSeason()
+        {
+            int[] cfg = _config.BonusListSizeBySeason;
+            return cfg != null && cfg.Length > (int)Run.Season ? cfg[(int)Run.Season] : 5;
+        }
+
+        /// <summary>Mirror of <c>IsObtainableInCurrentSeason</c> for callers (the UI) that need
+        /// to invoke <see cref="BonusItemSampler"/> with the same predicate the runtime uses.</summary>
+        public bool IsObtainableForCurrentSeason(string itemId)
+            => IsObtainableInCurrentSeason(itemId);
+
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
             System.Collections.Generic.IReadOnlyList<CcItem> catalog,
             System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null)
