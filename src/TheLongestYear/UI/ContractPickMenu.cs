@@ -51,15 +51,21 @@ namespace TheLongestYear.UI
         private const int RequiredHeaderGap = 12;
         private const int IconBlockGap = 20;
 
+        private const int RefreshButtonId = 5050;
+        private const int RefreshButtonSize = 56;
+
         private readonly IMonitor _monitor;
         private readonly RunController _runController;
         private readonly GameplayConfig _config;
         private readonly RunState _run;
-        private readonly YearPlan _plan;
-        private readonly IReadOnlyList<Theme> _offer;
+
+        // Not readonly — the refresh button regenerates the plan and re-reads the offer in place.
+        private YearPlan _plan;
+        private IReadOnlyList<Theme> _offer;
 
         private ClickableComponent _leftCard;
         private ClickableComponent _rightCard;
+        private ClickableTextureComponent _refreshButton;
         private readonly List<ClickableComponent> _weatherRows = new List<ClickableComponent>();
         private readonly List<ClickableComponent> _cartRows = new List<ClickableComponent>();
 
@@ -127,6 +133,7 @@ namespace TheLongestYear.UI
         {
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
+                if (currentlySnappedComponent == _refreshButton) { DoRefresh(); return; }
                 if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmChampion(_offer[0]); return; }
                 if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmChampion(_offer[1]); return; }
             }
@@ -199,6 +206,7 @@ namespace TheLongestYear.UI
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
+                upNeighborID = RefreshButtonId,
                 downNeighborID = FirstRowIdBelowCards()
             };
 
@@ -249,22 +257,49 @@ namespace TheLongestYear.UI
                 rowY += PreviewRowHeight + PreviewSpacing;
             }
 
-            this.initializeUpperRightCloseButton();
+            // Refresh button — top-right corner of the panel. Debug-only re-roll: regenerates the
+            // year plan with a new seed without closing/reopening the menu (so we can step through
+            // partitions to evaluate contract balance).
+            _refreshButton = new ClickableTextureComponent(
+                name: "refresh",
+                bounds: new Rectangle(
+                    xPositionOnScreen + width - PanelPadding - RefreshButtonSize,
+                    yPositionOnScreen + 16,
+                    RefreshButtonSize, RefreshButtonSize),
+                label: null,
+                hoverText: "Refresh (re-roll plan, debug)",
+                texture: Game1.mouseCursors,
+                sourceRect: new Rectangle(381, 361, 10, 11),    // circular-arrow refresh icon
+                scale: 4f);
+            _refreshButton.myID = RefreshButtonId;
+            _refreshButton.leftNeighborID = CardIdRight;
 
             // Base populateClickableComponentList uses GetType().GetFields() which defaults to PUBLIC only,
             // so our private fields would be skipped. Build the list ourselves.
             allClickableComponents = new List<ClickableComponent>();
             allClickableComponents.Add(_leftCard);
             allClickableComponents.Add(_rightCard);
+            allClickableComponents.Add(_refreshButton);
             allClickableComponents.AddRange(_weatherRows);
             allClickableComponents.AddRange(_cartRows);
-            // upperRightCloseButton is null (showUpperRightCloseButton: false) — no-op, but left for clarity.
-            if (upperRightCloseButton != null)
-                allClickableComponents.Add(upperRightCloseButton);
 
             // Pre-compute icon bounds for hover detection (based on card positions).
             ComputeIconBounds(_leftCard, _leftIconBounds);
             ComputeIconBounds(_rightCard, _rightIconBounds);
+        }
+
+        /// <summary>
+        /// Refresh button handler: ask the controller to re-roll the year plan, then re-read it
+        /// (and the offer) in-place so the menu shows the new partition without flicker.
+        /// </summary>
+        private void DoRefresh()
+        {
+            _runController.RerollPlan();
+            _plan = _runController.CurrentPlan;
+            _offer = ChampionService.OfferForWeek(_run);
+            ResolveItemLists();
+            RecomputeBoundsAndLayout();
+            Game1.playSound("button1");
         }
 
         private void ComputeIconBounds(ClickableComponent card, List<Rectangle> bounds)
@@ -321,6 +356,13 @@ namespace TheLongestYear.UI
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
                 _hoverText = DescribeCard(_offer[1]);
 
+            // Refresh button hover.
+            if (_refreshButton != null && _refreshButton.containsPoint(x, y))
+            {
+                _hoverText = _refreshButton.hoverText;
+                _refreshButton.tryHover(x, y);
+            }
+
             // Check icon hover for item display name tooltip (overrides card description if more specific).
             CheckIconHover(x, y, _leftItems, _leftIconBounds);
             CheckIconHover(x, y, _rightItems, _rightIconBounds);
@@ -341,6 +383,8 @@ namespace TheLongestYear.UI
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             base.receiveLeftClick(x, y, playSound);
+
+            if (_refreshButton != null && _refreshButton.containsPoint(x, y)) { DoRefresh(); return; }
 
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
                 ConfirmChampion(_offer[0]);
@@ -385,6 +429,16 @@ namespace TheLongestYear.UI
 
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftItems, _leftOverflow, _leftIconBounds);
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightItems, _rightOverflow, _rightIconBounds);
+
+            // Refresh button (top-right). The texture-box behind it makes it readable on the panel.
+            if (_refreshButton != null)
+            {
+                IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
+                    _refreshButton.bounds.X - 8, _refreshButton.bounds.Y - 8,
+                    _refreshButton.bounds.Width + 16, _refreshButton.bounds.Height + 16,
+                    Color.White * 0.85f, 1f, false);
+                _refreshButton.draw(b);
+            }
 
             for (int i = 0; i < _weatherRows.Count; i++)
                 DrawPreviewRow(b, _weatherRows[i], $"Weather, day {i + 1}: ???   (Weather Sage tier {i + 1} reveals this)");
@@ -434,14 +488,15 @@ namespace TheLongestYear.UI
                 new Vector2(nameX, textY), Game1.textColor);
             textY += ThemeNameLineHeight;
 
-            // Bonus (green) and liability (red) in smallFont — colour-coded so they read at a glance.
+            // Bonus (green) and liability (red) in smallFont — colour alone differentiates them.
+            // The display names already carry the directional info (e.g. "+25% Foraging Yield").
             Color bonusColor = new Color(34, 110, 34);     // forest green
             Color liabilityColor = new Color(160, 34, 34); // muted crimson
-            Utility.drawTextWithShadow(b, "+ " + bonusName, Game1.smallFont,
+            Utility.drawTextWithShadow(b, bonusName, Game1.smallFont,
                 new Vector2(textX, textY), bonusColor);
             textY += BodyLineHeight;
 
-            Utility.drawTextWithShadow(b, "− " + liabilityName, Game1.smallFont,
+            Utility.drawTextWithShadow(b, liabilityName, Game1.smallFont,
                 new Vector2(textX, textY), liabilityColor);
             textY += BodyLineHeight + RequiredHeaderGap;
 
