@@ -27,6 +27,8 @@ public class ThemeModifiersTests
     [InlineData("fish_bite_up", "+30% Fish Bite Rate")]
     [InlineData("mine_drops_up", "+30% Mine Drops")]
     [InlineData("mine_drops_off", "Mine Drops Disabled")]
+    [InlineData("all_drops_up", "+10% All Drops")]
+    [InlineData("all_sell_prices_down", "−50% All Sell Prices")]
     [InlineData("shop_discount", "−15% Shop Prices")]
     [InlineData("stamina_drain_up", "+30% Stamina Drain")]
     public void DisplayNameFor_maps_known_ids(string id, string expected)

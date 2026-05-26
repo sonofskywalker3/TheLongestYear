@@ -15,7 +15,9 @@ public static class ThemeModifiers
         Theme.Farming  => ("crop_growth_up", "forage_drops_off"),
         Theme.Fishing  => ("fish_bite_up", "crop_growth_down"),
         Theme.Mining   => ("mine_drops_up", "forage_drops_off"),
-        Theme.Mixed    => ("shop_discount", "stamina_drain_up"),
+        // Mixed: "+10% all drops, −50% all sell prices" — a generalist boost paired with a sharp
+        // economic squeeze. (Replaces the prior shop-discount/stamina-drain pairing per playtest.)
+        Theme.Mixed    => ("all_drops_up", "all_sell_prices_down"),
         _ => throw new ArgumentOutOfRangeException(nameof(theme), theme, null)
     };
 
@@ -28,15 +30,18 @@ public static class ThemeModifiers
     /// </summary>
     public static string DisplayNameFor(string modifierId) => modifierId switch
     {
-        "forage_yield_up"     => "+25% Foraging Yield",
-        "forage_drops_off"    => "Foraging Disabled",
-        "crop_growth_up"      => "+25% Crop Growth",
-        "crop_growth_down"    => "−25% Crop Growth",
-        "fish_bite_up"        => "+30% Fish Bite Rate",
-        "mine_drops_up"       => "+30% Mine Drops",
-        "mine_drops_off"      => "Mine Drops Disabled",
-        "shop_discount"       => "−15% Shop Prices",
-        "stamina_drain_up"    => "+30% Stamina Drain",
+        "forage_yield_up"        => "+25% Foraging Yield",
+        "forage_drops_off"       => "Foraging Disabled",
+        "crop_growth_up"         => "+25% Crop Growth",
+        "crop_growth_down"       => "−25% Crop Growth",
+        "fish_bite_up"           => "+30% Fish Bite Rate",
+        "mine_drops_up"          => "+30% Mine Drops",
+        "mine_drops_off"         => "Mine Drops Disabled",
+        "all_drops_up"           => "+10% All Drops",
+        "all_sell_prices_down"   => "−50% All Sell Prices",
+        // Legacy / unused-in-v1 — kept so old config files don't show raw ids if loaded.
+        "shop_discount"          => "−15% Shop Prices",
+        "stamina_drain_up"       => "+30% Stamina Drain",
         _ => modifierId
     };
 }

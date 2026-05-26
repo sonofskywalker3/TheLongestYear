@@ -6,19 +6,25 @@ namespace TheLongestYear.Core;
 
 /// <summary>
 /// Builds a run's <see cref="YearPlan"/> by partitioning the CC ground truth into
-/// (season, theme) contracts using a rarity-weighted, capped placement so early-season contracts
-/// are tractable and difficulty ramps up across the year — a classic roguelite progression curve
-/// (spec §10 + post-playtest 2026-05-26 refinement).
+/// (season, theme) contracts. Difficulty ramps UP across the year (classic roguelite curve):
+/// early-season contracts get the few items that ONLY exist in early seasons, multi-season
+/// items get pushed to later seasons where the player has had time to invest in coops/barns/
+/// preserves-jars/etc.
 ///
-/// Algorithm:
-///   1. Shuffle item processing order by seed (so different seeds yield different valid partitions).
-///   2. Sort by Rarity descending (rarest first) so picky items claim their preferred slot first.
-///   3. For each item, score each candidate season as:
-///        score = -currentLoad[(season,theme)] + bias(rarity) * seasonIndex
-///      where bias is negative for Common (prefer earlier) and positive for Rare/VeryRare (prefer
-///      later). Per-(season,theme) load count dominates when caps are unsaturated.
-///   4. Respect per-season caps when possible; override caps only when the item is single-season
-///      (i.e. no alternative is permitted).
+/// Algorithm (post-playtest 2026-05-26):
+///   1. Shuffle item order by seed so different seeds yield different partitions.
+///   2. Sort by ObtainableSeasons.Count ASC, then Rarity DESC. Single-season items go first
+///      (no choice where they land), then multi-season items rare-first (so the rare ones
+///      claim their preferred slot before the commons fill).
+///   3. For each item, prefer the LATEST candidate season that's still under cap.
+///      - This naturally pushes multi-season items (egg, milk, jelly, year-round forage) to
+///        later seasons. Spring fills mostly with single-season-Spring items (the easy stuff).
+///   4. If no candidate is under cap:
+///        - Single-season item → force-place anyway (we can't drop CC items with no alternative).
+///        - Multi-season item → DROP it. The user said this is OK ("It's ok to leave out some
+///          of the items for the early season as long as they are available in later seasons").
+///   5. Dropped items are logged via the returned YearPlan's metadata (none right now —
+///      we just emit them silently; if the user wants to see counts we can add a side-channel).
 /// </summary>
 public sealed class ContractGenerator
 {
@@ -49,20 +55,24 @@ public sealed class ContractGenerator
             foreach (Theme t in Enum.GetValues(typeof(Theme)))
                 grouped[(s, t)] = new List<string>();
 
-        // Stable then shuffled order, then re-sorted by rarity DESC so picky items go first.
+        // Stable, shuffled by seed, then re-sorted: single-season-FIRST (they have no choice),
+        // then rare-DESC inside each season-count tier so picky items claim their preferred slot
+        // before the commons.
         var ordered = ccItems
             .OrderBy(i => i.Id, StringComparer.Ordinal)
             .ToList();
         Shuffle(ordered, rng);
         ordered = ordered
-            .OrderByDescending(i => RaritySortKey(i.Rarity))
+            .OrderBy(i => i.ObtainableSeasons.Count)
+            .ThenByDescending(i => RaritySortKey(i.Rarity))
             .ThenBy(i => i.Id, StringComparer.Ordinal)
             .ToList();
 
         foreach (CcItem item in ordered)
         {
-            Season chosen = ChooseSeason(item, grouped);
-            grouped[(chosen, item.Theme)].Add(item.Id);
+            if (TryChooseSeason(item, grouped, out Season chosen))
+                grouped[(chosen, item.Theme)].Add(item.Id);
+            // else: multi-season item, all candidates over cap → silently dropped
         }
 
         var contracts = new List<Contract>(grouped.Count);
@@ -76,50 +86,49 @@ public sealed class ContractGenerator
         return new YearPlan(contracts);
     }
 
-    private Season ChooseSeason(CcItem item, IReadOnlyDictionary<(Season, Theme), List<string>> grouped)
+    /// <summary>
+    /// Choose the season this item should go in. Prefers the LATEST under-cap candidate so
+    /// multi-season items push toward later seasons (where the player has investment). Returns
+    /// false for multi-season items whose every candidate is at cap — they get dropped.
+    /// Single-season items are force-placed (we never drop CC items with no alternative season).
+    /// </summary>
+    private bool TryChooseSeason(
+        CcItem item,
+        IReadOnlyDictionary<(Season, Theme), List<string>> grouped,
+        out Season chosen)
     {
-        // Stable candidate order for determinism.
+        // Stable candidate order (earliest → latest) for determinism.
         var candidates = item.ObtainableSeasons.OrderBy(s => (int)s).ToList();
 
-        double bias = RarityBias(item.Rarity);
-
-        // First pass: scores for under-cap candidates only.
-        Season? bestUnderCap = null;
-        double bestUnderCapScore = double.NegativeInfinity;
-        Season bestOverall = candidates[0];
-        double bestOverallScore = double.NegativeInfinity;
-
+        // Find the LATEST under-cap candidate. Iterating earliest→latest and keeping the last
+        // hit gives us the latest match in one pass.
+        Season? latestUnderCap = null;
         foreach (Season s in candidates)
         {
             int load = grouped[(s, item.Theme)].Count;
             int cap = _capBySeason[(int)s];
-            double score = -load + bias * (int)s;
-
-            if (score > bestOverallScore)
-            {
-                bestOverall = s;
-                bestOverallScore = score;
-            }
-
-            if (load < cap && score > bestUnderCapScore)
-            {
-                bestUnderCap = s;
-                bestUnderCapScore = score;
-            }
+            if (load < cap)
+                latestUnderCap = s;
         }
 
-        // Prefer a season that's still under the cap; otherwise accept the overflow.
-        return bestUnderCap ?? bestOverall;
-    }
+        if (latestUnderCap.HasValue)
+        {
+            chosen = latestUnderCap.Value;
+            return true;
+        }
 
-    private static double RarityBias(Rarity rarity) => rarity switch
-    {
-        Rarity.Common    => -0.5,
-        Rarity.Uncommon  => -0.25,
-        Rarity.Rare      => 0.25,
-        Rarity.VeryRare  => 1.0,
-        _ => 0.0
-    };
+        // Every candidate season is at cap.
+        if (candidates.Count == 1)
+        {
+            // Single-season item — accept overflow (we can't drop it; the season is its only home).
+            chosen = candidates[0];
+            return true;
+        }
+
+        // Multi-season item with no room anywhere → drop it.
+        chosen = default;
+        return false;
+    }
 
     private static int RaritySortKey(Rarity rarity) => rarity switch
     {
