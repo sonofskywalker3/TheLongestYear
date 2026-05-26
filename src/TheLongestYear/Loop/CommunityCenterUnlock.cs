@@ -1,12 +1,13 @@
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Locations;
 
 namespace TheLongestYear.Loop
 {
     /// <summary>
     /// Skips the vanilla CC unlock cutscene chain (Demetrius visit → Wizard reveal) so the
-    /// Community Center is accessible from day 1 of every run. Called on save load and after
-    /// every in-place world reset.
+    /// Community Center is accessible from day 1 of every run, and pre-discovers every inner
+    /// room's Junimo Note so all six bundle areas are donatable on Spring 1.
     ///
     /// v1 simplification: replace the cutscenes with nothing (silent unlock). Plan 06+ will
     /// add a proper narrative beat ("the Junimos enlist you on day 1") — for now, the door
@@ -22,6 +23,10 @@ namespace TheLongestYear.Loop
     ///                                        (JunimoNoteMenu.cs:390). GameMenu CC tab gate (GameMenu.cs:121).
     ///   - mailReceived "seenJunimoNote"   — Set by JunimoNoteMenu.setUpMenu when first opened; pre-setting
     ///                                        it suppresses the first-time Junimo-note intro flow.
+    ///
+    /// Per-room note visibility is overridden by <see cref="ShouldNoteAppearPatch"/>; after setting
+    /// flags we trigger <c>MakeMapModifications</c> on the loaded CC location so any newly-visible
+    /// notes appear immediately (otherwise the player would have to leave and re-enter the CC).
     /// </summary>
     internal sealed class CommunityCenterUnlock
     {
@@ -46,8 +51,19 @@ namespace TheLongestYear.Loop
             p.mailReceived.Add("canReadJunimoText"); // bundles show real names (not "???")
             p.mailReceived.Add("seenJunimoNote");    // suppresses the first-open intro flow
 
+            // Place all six Junimo Notes if the CC location is already loaded. (On a fresh
+            // SaveLoaded this is always the case — Game1.locations is populated by then.)
+            CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
+            if (cc != null && cc.Map != null)
+            {
+                // ShouldNoteAppearPatch makes shouldNoteAppearInArea return true for every
+                // incomplete area in [0, 5]; MakeMapModifications iterates areas and calls
+                // addJunimoNote for any that don't already have one (CommunityCenter.cs:614).
+                cc.MakeMapModifications(force: true);
+            }
+
             _monitor.Log(
-                "CommunityCenterUnlock: set eventsSeen {191393, 112} + mailReceived {ccDoorUnlock, canReadJunimoText, seenJunimoNote}. CC accessible from day 1.",
+                "CommunityCenterUnlock: door + canReadJunimoText set, all 6 Junimo Notes revealed.",
                 LogLevel.Info);
         }
     }
