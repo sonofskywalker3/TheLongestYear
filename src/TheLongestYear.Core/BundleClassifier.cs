@@ -11,9 +11,14 @@ namespace TheLongestYear.Core;
 ///
 /// Decision order (the first match wins):
 ///   1. Name matches "(Spring|Summer|Fall|Winter) (Foraging|Crops)" → <see cref="BundleKind.Seasonal"/>.
-///   2. Name has an entry in <paramref name="bundleQuotas"/> → <see cref="BundleKind.Percentage"/>.
-///   3. X == Y (every slot must be filled) → <see cref="BundleKind.PerItem"/>.
-///   4. Otherwise → returns null (caller should skip + warn).
+///   2. Name has an entry in <paramref name="bundleQuotas"/> AND X &lt; Y after dedup
+///      → <see cref="BundleKind.Percentage"/>. (X &gt;= Y is structurally impossible for a
+///      Percentage quota — fall through to PerItem.)
+///   3. X &gt;= Y after dedup (every distinct ingredient must be donated)
+///      → <see cref="BundleKind.PerItem"/>. Vanilla Construction lists Wood twice (X=4, Y=3
+///      deduped); the set-based donation ledger doesn't differentiate stack counts, so
+///      donating Wood once satisfies all wood slots.
+///   4. Otherwise (X &lt; Y, no quota) → returns null (caller should skip + warn).
 ///
 /// Ingredients are normalized via <see cref="BundleParsing.NormalizeItemId"/> and de-duplicated
 /// to match the donation-ledger model (one set entry per qualified id).
@@ -56,8 +61,13 @@ public static class BundleClassifier
             return BundleRequirement.CreateSeasonal(name, theme, ingredients, season);
         }
 
-        // KIND 3: Percentage — has a named quota override.
-        if (bundleQuotas.TryGetValue(name, out int[]? quota) && quota != null)
+        // KIND 3: Percentage — has a named quota override, BUT only when X < Y after dedup.
+        // SVE-edited save data can inflate the bundle's slot count so X >= Y even when the
+        // bundle is in the quota table (e.g. Chef's with the SVE Candy entry baked in:
+        // X=Y=7 instead of vanilla X=10, Y=6). In that case the Percentage model doesn't
+        // apply — fall through to PerItem.
+        if (parsed.NumberOfSlots < ingredients.Count
+            && bundleQuotas.TryGetValue(name, out int[]? quota) && quota != null)
         {
             // numberOfSlots = X (the parsed bundle's slot count), ingredients = Y (deduped list).
             // CreatePercentage validates X < Y and Y entries within [0..X].
@@ -67,8 +77,11 @@ public static class BundleClassifier
                 cumulativeRequiredBySeason: quota);
         }
 
-        // KIND 2: PerItem — every slot must be filled (X == Y after dedup).
-        if (parsed.NumberOfSlots == ingredients.Count)
+        // KIND 2: PerItem — every distinct ingredient must be donated. The structural rule is
+        // X >= Y (the slot list covers each ingredient at least once). Vanilla Construction
+        // lists Wood twice (X=4, Y=3 deduped); the set-based donation ledger satisfies the
+        // duplicate slot implicitly when wood is donated once.
+        if (parsed.NumberOfSlots >= ingredients.Count)
         {
             // Pull pins for THIS bundle's ingredients only. Unpinned items don't gate any
             // season but still count toward IsFullyComplete.

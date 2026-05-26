@@ -80,19 +80,38 @@ public class BundleClassifierTests
     }
 
     [Fact]
-    public void Quota_lookup_takes_precedence_over_x_equals_y_perItem()
+    public void Quota_lookup_with_X_GE_Y_falls_through_to_perItem()
     {
-        // Even if X==Y, a name in the quota table wins. (Defensive — shouldn't happen for
-        // vanilla bundles, but if a config override pinned a quota on an X=Y bundle, the
-        // user's intent should override the structural classification.)
-        var parsed = Make("Custom", 3, "(O)1", "(O)2", "(O)3");
-        var quotas = new Dictionary<string, int[]> { ["Custom"] = new[] { 0, 1, 2, 3 } };
+        // CB2: SVE-edited save data can leave a Chef's-style bundle with X=Y=7 (quota table
+        // matches by name but the structural Percentage shape — X < Y — no longer holds).
+        // The classifier must fall through to PerItem instead of throwing.
+        var parsed = Make("Chef's", 7,
+            "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6", "(O)7");
+        var quotas = new Dictionary<string, int[]> { ["Chef's"] = new[] { 1, 2, 3, 4 } };
 
-        // X<Y is the normal Percentage shape; this also exercises the path where someone
-        // explicitly registered an X=Y bundle as Percentage. The factory throws if X >= Y,
-        // so this combination is actually invalid — we expect Classify to surface the throw.
-        Assert.Throws<System.ArgumentException>(() =>
-            BundleClassifier.Classify(parsed, Theme.Mixed, NoPins, quotas));
+        var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, quotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Equal(7, req.NumberOfSlots);
+        Assert.Equal(7, req.Ingredients.Count);
+        // Quota array is ignored on the PerItem path.
+        Assert.Null(req.CumulativeRequiredBySeason);
+    }
+
+    [Fact]
+    public void Quota_lookup_with_X_LT_Y_still_classifies_as_percentage()
+    {
+        // Defensive: the X < Y path still picks the quota when present (the vanilla case).
+        var parsed = Make("Crab Pot", 5,
+            "(O)715", "(O)372", "(O)717", "(O)718", "(O)719",
+            "(O)720", "(O)721", "(O)716");
+        var quotas = new Dictionary<string, int[]> { ["Crab Pot"] = new[] { 1, 3, 5, 5 } };
+
+        var req = BundleClassifier.Classify(parsed, Theme.Fishing, NoPins, quotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.Percentage, req!.Kind);
     }
 
     // ----- KIND 2 (PerItem) by X == Y -----
@@ -158,6 +177,31 @@ public class BundleClassifierTests
         Assert.Contains("(O)388", req.Ingredients);
         Assert.Contains("(O)390", req.Ingredients);
         Assert.Contains("(O)709", req.Ingredients);
+    }
+
+    [Fact]
+    public void Vanilla_construction_with_X_gt_Y_classifies_as_perItem()
+    {
+        // CB1: vanilla Data/Bundles Construction is `(O)388 99 0 (O)388 99 0 (O)390 99 0 (O)709 10 0`
+        // — 4 raw slots, Wood listed twice, deduping to 3 distinct ingredients. parsed.NumberOfSlots
+        // is 4 (parser preserves the raw slot count); ingredients.Count is 3 (deduped). The
+        // structural PerItem condition is "X >= Y", which holds here. Before the fix this fell
+        // through to "didn't match any classification rule" because the strict X==Y check failed.
+        var parsed = Make("Construction", 4, "(O)388", "(O)388", "(O)390", "(O)709");
+        var pins = new Dictionary<string, Season>
+        {
+            ["(O)388"] = Season.Spring,
+            ["(O)390"] = Season.Spring,
+            ["(O)709"] = Season.Summer
+        };
+
+        var req = BundleClassifier.Classify(parsed, Theme.Foraging, pins, NoQuotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        // numberOfSlots is the deduped ingredient count (set-based donation ledger).
+        Assert.Equal(3, req.NumberOfSlots);
+        Assert.Equal(3, req.Ingredients.Count);
     }
 
     // ----- Skip cases -----
