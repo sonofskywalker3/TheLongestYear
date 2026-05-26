@@ -24,6 +24,7 @@ namespace TheLongestYear
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
+        private DonationObserver _donationObserver;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -43,6 +44,11 @@ namespace TheLongestYear
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
+
+            // Observation-based donation detector. See DonationObserver.cs for why we can't rely
+            // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
+            // showed it didn't fire on real CC deposits).
+            _donationObserver = new DonationObserver(helper, this.Monitor);
 
             _commandFilePath = Path.Combine(helper.DirectoryPath, DebugCommandFileName);
 
