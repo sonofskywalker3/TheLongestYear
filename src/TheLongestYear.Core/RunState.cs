@@ -38,6 +38,10 @@ public sealed class RunState
     /// <summary>Room/area numbers whose completion JP bonus has already been awarded this run.</summary>
     public List<int> AwardedRoomCompletions { get; set; } = new();
 
+    /// <summary>Week-of-year values for which the championed-contract JP bonus has been awarded.
+    /// Stops double-award if the contract stays satisfied across multiple day-end ticks.</summary>
+    public List<int> AwardedChampionWeeks { get; set; } = new();
+
     public int WeekOfYear => Calendar.WeekOfYear((int)Season, DayOfMonth);
 
     public int WeekInMonth => Calendar.WeekInMonth(DayOfMonth);
@@ -101,6 +105,7 @@ public sealed class RunState
         CurrentChampion = null;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
+        AwardedChampionWeeks.Clear();
         OfferPresentedWeek = -1;
     }
 }

@@ -44,27 +44,29 @@ namespace TheLongestYear.Donations
                 LogLevel.Info);
         }
 
-        /// <summary>A bundle just completed — award its one-time completion bonus.</summary>
+        /// <summary>A bundle just completed — award its one-time completion bonus (season-scaled).</summary>
         public void OnBundleCompleted(int bundleIndex)
         {
             if (!Run.TryMarkBundleAwarded(bundleIndex))
                 return;
 
-            _store.State.JunimoPoints += _config.Jp.BundleCompletionBonus;
+            long bonus = _jp.BundleBonus(Run.WeekOfYear);
+            _store.State.JunimoPoints += bonus;
             _monitor.Log(
-                $"Bundle {bundleIndex} complete -> +{_config.Jp.BundleCompletionBonus} JP (now {_store.State.JunimoPoints}).",
+                $"Bundle {bundleIndex} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
         }
 
-        /// <summary>A room/area just completed — award its one-time completion bonus.</summary>
+        /// <summary>A room/area just completed — award its one-time completion bonus (season-scaled).</summary>
         public void OnRoomCompleted(int area)
         {
             if (!Run.TryMarkRoomAwarded(area))
                 return;
 
-            _store.State.JunimoPoints += _config.Jp.RoomCompletionBonus;
+            long bonus = _jp.RoomBonus(Run.WeekOfYear);
+            _store.State.JunimoPoints += bonus;
             _monitor.Log(
-                $"Room {area} complete -> +{_config.Jp.RoomCompletionBonus} JP (now {_store.State.JunimoPoints}).",
+                $"Room {area} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
         }
     }
