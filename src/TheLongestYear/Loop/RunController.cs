@@ -90,7 +90,8 @@ namespace TheLongestYear.Loop
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
             AwardChampionContractBonusIfDue();
-            RunAction action = _runManager.EvaluateDayEnd(Run, _plan, _catalog);
+            bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
+            RunAction action = _runManager.EvaluateDayEnd(Run, _plan, _catalog, vaultGateSatisfied);
             switch (action)
             {
                 case RunAction.Continue:

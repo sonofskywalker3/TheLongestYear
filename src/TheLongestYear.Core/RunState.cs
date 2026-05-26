@@ -42,6 +42,13 @@ public sealed class RunState
     /// Stops double-award if the contract stays satisfied across multiple day-end ticks.</summary>
     public List<int> AwardedChampionWeeks { get; set; } = new();
 
+    /// <summary>
+    /// Vault bundle indices paid this run (vanilla 1.6: 34=2500g, 35=5000g, 36=10000g, 37=25000g).
+    /// Each season's gate requires the bundle of matching tier to be paid by day 28; missing it
+    /// fails the run. The keep_bus_unlocked Buildings upgrade auto-satisfies all four.
+    /// </summary>
+    public List<int> VaultBundlesPaid { get; set; } = new();
+
     public int WeekOfYear => Calendar.WeekOfYear((int)Season, DayOfMonth);
 
     public int WeekInMonth => Calendar.WeekInMonth(DayOfMonth);
@@ -106,6 +113,7 @@ public sealed class RunState
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
         AwardedChampionWeeks.Clear();
+        VaultBundlesPaid.Clear();
         OfferPresentedWeek = -1;
     }
 }

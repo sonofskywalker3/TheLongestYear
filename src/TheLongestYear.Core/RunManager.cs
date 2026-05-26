@@ -18,11 +18,12 @@ public enum RunAction
 }
 
 /// <summary>
-/// The day-end decision maker. Spec 2026-05-26 round 2: the gate is now per-contract-assignment.
-/// At day 28, every item the YearPlan placed in this season must be in the run's donation ledger;
-/// missing any one fails the run. Multi-season items are pinned at generator time (not at gate
-/// time), so the rule "easy fish in two seasons is still required in the first" is enforced
-/// before the gate ever runs. End-of-Winter additionally requires fullCcDone (belt-and-suspenders).
+/// The day-end decision maker. Spec 2026-05-26 round 3: at day 28, both gates must pass:
+///   (a) every item the YearPlan placed in this season is donated, AND
+///   (b) the season's Vault bundle is paid (or keep_bus_unlocked is owned — see VaultRules).
+/// Multi-season items are pinned at generator time, so "easy fish in two seasons is still
+/// required in the first" is enforced before the gate ever runs. End-of-Winter additionally
+/// requires fullCcDone (catalog-side belt-and-suspenders).
 /// </summary>
 public sealed class RunManager
 {
@@ -30,7 +31,11 @@ public sealed class RunManager
 
     public RunManager(GateEvaluator gate) => _gate = gate ?? throw new ArgumentNullException(nameof(gate));
 
-    public RunAction EvaluateDayEnd(RunState run, YearPlan plan, IReadOnlyList<CcItem> catalog)
+    public RunAction EvaluateDayEnd(
+        RunState run,
+        YearPlan plan,
+        IReadOnlyList<CcItem> catalog,
+        bool vaultGateSatisfied)
     {
         if (run is null) throw new ArgumentNullException(nameof(run));
         if (plan is null) throw new ArgumentNullException(nameof(plan));
@@ -38,10 +43,11 @@ public sealed class RunManager
 
         ISet<string> donated = run.DonatedSet();
 
-        // Monthly gate: every contract assigned to this season is satisfied. (Off-month days
-        // short-circuit true so they don't gate mid-month.)
+        bool itemsGatePassed = plan.ForSeason(run.Season).All(c => c.IsSatisfiedBy(donated));
+
+        // Both gates must pass at month-end. Off-month days short-circuit true.
         bool monthlyGatePasses = !Calendar.IsMonthEnd(run.DayOfMonth) ||
-            plan.ForSeason(run.Season).All(c => c.IsSatisfiedBy(donated));
+            (itemsGatePassed && vaultGateSatisfied);
 
         bool fullCcDone = catalog.All(i => donated.Contains(i.Id));
 
