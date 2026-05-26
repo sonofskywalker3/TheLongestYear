@@ -88,7 +88,7 @@ namespace TheLongestYear.Loop
 
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
-            RunAction action = _runManager.EvaluateDayEnd(Run, _plan);
+            RunAction action = _runManager.EvaluateDayEnd(Run, _catalog);
             switch (action)
             {
                 case RunAction.Continue:

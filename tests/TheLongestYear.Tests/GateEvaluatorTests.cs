@@ -10,35 +10,42 @@ public class GateEvaluatorTests
     [Fact]
     public void Midweek_day_always_continues()
         => Assert.Equal(GateResult.Continue,
-            E().EvaluateDayEnd(dayOfMonth: 3, monthIndex: 0, championedComplete: false, allFiveComplete: false));
+            E().EvaluateDayEnd(dayOfMonth: 3, monthIndex: 0, monthlyGatePasses: false, fullCcDone: false));
 
     [Fact]
-    public void Week_end_with_incomplete_champion_fails_weekly()
-        => Assert.Equal(GateResult.WeeklyFail,
-            E().EvaluateDayEnd(7, 0, championedComplete: false, allFiveComplete: false));
-
-    [Fact]
-    public void Week_end_with_complete_champion_continues()
+    public void Week_end_that_is_not_month_end_always_continues()
+        // Spec change 2026-05-26: no weekly fail; championing is opt-in.
         => Assert.Equal(GateResult.Continue,
-            E().EvaluateDayEnd(7, 0, championedComplete: true, allFiveComplete: false));
+            E().EvaluateDayEnd(7, 0, monthlyGatePasses: false, fullCcDone: false));
 
     [Fact]
-    public void Month_end_missing_fifth_contract_fails_monthly()
+    public void Day_14_with_failing_gate_continues()
+        => Assert.Equal(GateResult.Continue,
+            E().EvaluateDayEnd(14, 0, monthlyGatePasses: false, fullCcDone: false));
+
+    [Fact]
+    public void Month_end_with_failing_gate_fails_monthly()
         => Assert.Equal(GateResult.MonthlyFail,
-            E().EvaluateDayEnd(28, 0, championedComplete: true, allFiveComplete: false));
+            E().EvaluateDayEnd(28, 0, monthlyGatePasses: false, fullCcDone: false));
 
     [Fact]
-    public void Month_end_all_complete_advances_when_not_winter()
+    public void Month_end_with_passing_gate_continues_when_not_winter()
         => Assert.Equal(GateResult.Continue,
-            E().EvaluateDayEnd(28, 0, championedComplete: true, allFiveComplete: true));
+            E().EvaluateDayEnd(28, 0, monthlyGatePasses: true, fullCcDone: false));
 
     [Fact]
-    public void Winter_end_all_complete_wins()
+    public void Winter_end_with_full_cc_done_wins()
         => Assert.Equal(GateResult.Win,
-            E().EvaluateDayEnd(28, 3, championedComplete: true, allFiveComplete: true));
+            E().EvaluateDayEnd(28, 3, monthlyGatePasses: true, fullCcDone: true));
 
     [Fact]
-    public void Month_end_incomplete_champion_fails_weekly_first()
-        => Assert.Equal(GateResult.WeeklyFail,
-            E().EvaluateDayEnd(28, 3, championedComplete: false, allFiveComplete: true));
+    public void Winter_end_with_passing_gate_but_cc_incomplete_fails()
+        // Multi-season items left over at end of Winter can never be donated later -> fail.
+        => Assert.Equal(GateResult.MonthlyFail,
+            E().EvaluateDayEnd(28, 3, monthlyGatePasses: true, fullCcDone: false));
+
+    [Fact]
+    public void Winter_end_with_failing_gate_fails()
+        => Assert.Equal(GateResult.MonthlyFail,
+            E().EvaluateDayEnd(28, 3, monthlyGatePasses: false, fullCcDone: false));
 }
