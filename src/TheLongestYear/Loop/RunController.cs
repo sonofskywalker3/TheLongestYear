@@ -151,17 +151,28 @@ namespace TheLongestYear.Loop
         public void AttachLauncher(TheLongestYear.UI.MenuLauncher launcher) => _launcher = launcher;
 
         /// <summary>
-        /// Debug-only: pick a new seed, regenerate the year plan, clear the per-week presentation guard,
-        /// and re-open the planning hub so you can step through many partitions in a row.
+        /// Pick a new seed and regenerate the year plan. Does NOT touch the active menu — callers
+        /// that want to re-open the hub should call <see cref="Reroll"/> instead. The planning hub's
+        /// refresh button calls this directly so the menu can re-read CurrentPlan without flicker.
         /// </summary>
-        public void Reroll()
+        public void RerollPlan()
         {
             int newSeed = NewSeed();
             Run.Seed = newSeed;
             _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
-            Run.OfferPresentedWeek = -1;     // clear the per-week guard
             Run.CurrentChampion = null;      // clear last week's pick so the offer is fresh
-            _monitor.Log($"Reroll: new seed {newSeed}; plan regenerated. Re-opening hub.", LogLevel.Info);
+            _monitor.Log($"Reroll: new seed {newSeed}; plan regenerated.", LogLevel.Info);
+        }
+
+        /// <summary>
+        /// Debug-only: reroll + clear the per-week presentation guard + (re)open the planning hub.
+        /// Used by the tly_reroll bridge command path. The in-menu refresh button uses
+        /// <see cref="RerollPlan"/> directly to avoid menu re-open flicker.
+        /// </summary>
+        public void Reroll()
+        {
+            RerollPlan();
+            Run.OfferPresentedWeek = -1;
             _launcher?.OpenWeeklyHub();
         }
 

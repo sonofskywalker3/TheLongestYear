@@ -20,15 +20,15 @@ public class ThemeModifiersTests
     }
 
     [Theory]
-    [InlineData("forage_yield_up", "Foraging Yield +")]
-    [InlineData("forage_drops_off", "No Forage Drops")]
-    [InlineData("crop_growth_up", "Crop Growth +")]
-    [InlineData("crop_growth_down", "Crop Growth −")]
-    [InlineData("fish_bite_up", "Fish Bite +")]
-    [InlineData("mine_drops_up", "Mine Drops +")]
-    [InlineData("mine_drops_off", "No Mine Drops")]
-    [InlineData("shop_discount", "Shop Discount")]
-    [InlineData("stamina_drain_up", "Stamina Drains Faster")]
+    [InlineData("forage_yield_up", "+25% Foraging Yield")]
+    [InlineData("forage_drops_off", "Foraging Disabled")]
+    [InlineData("crop_growth_up", "+25% Crop Growth")]
+    [InlineData("crop_growth_down", "−25% Crop Growth")]
+    [InlineData("fish_bite_up", "+30% Fish Bite Rate")]
+    [InlineData("mine_drops_up", "+30% Mine Drops")]
+    [InlineData("mine_drops_off", "Mine Drops Disabled")]
+    [InlineData("shop_discount", "−15% Shop Prices")]
+    [InlineData("stamina_drain_up", "+30% Stamina Drain")]
     public void DisplayNameFor_maps_known_ids(string id, string expected)
         => Assert.Equal(expected, ThemeModifiers.DisplayNameFor(id));
 

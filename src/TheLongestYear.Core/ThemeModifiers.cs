@@ -20,21 +20,23 @@ public static class ThemeModifiers
     };
 
     /// <summary>
-    /// Human-readable display name for a bonus/liability id. Used by the planning hub UI (Plan 05).
-    /// The id strings themselves remain stable so the effect layer (Plan 06) can switch on them.
+    /// Human-readable display name with the numeric value for a bonus/liability id. Used by the
+    /// planning hub UI (Plan 05). The id strings themselves remain stable so the effect layer
+    /// (Plan 06) can switch on them. Numbers here are the v1 baselines; Plan 06 will read them
+    /// from <see cref="GameplayConfig"/> so they can be tuned without redeploying.
     /// Falls back to the raw id if unmapped (defensive — easy to spot in-game if a new id is missed).
     /// </summary>
     public static string DisplayNameFor(string modifierId) => modifierId switch
     {
-        "forage_yield_up" => "Foraging Yield +",
-        "forage_drops_off" => "No Forage Drops",
-        "crop_growth_up" => "Crop Growth +",
-        "crop_growth_down" => "Crop Growth −",
-        "fish_bite_up" => "Fish Bite +",
-        "mine_drops_up" => "Mine Drops +",
-        "mine_drops_off" => "No Mine Drops",
-        "shop_discount" => "Shop Discount",
-        "stamina_drain_up" => "Stamina Drains Faster",
+        "forage_yield_up"     => "+25% Foraging Yield",
+        "forage_drops_off"    => "Foraging Disabled",
+        "crop_growth_up"      => "+25% Crop Growth",
+        "crop_growth_down"    => "−25% Crop Growth",
+        "fish_bite_up"        => "+30% Fish Bite Rate",
+        "mine_drops_up"       => "+30% Mine Drops",
+        "mine_drops_off"      => "Mine Drops Disabled",
+        "shop_discount"       => "−15% Shop Prices",
+        "stamina_drain_up"    => "+30% Stamina Drain",
         _ => modifierId
     };
 }
