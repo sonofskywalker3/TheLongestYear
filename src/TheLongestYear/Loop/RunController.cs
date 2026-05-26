@@ -153,13 +153,19 @@ namespace TheLongestYear.Loop
         /// <summary>Log this week's champion offer (driven by the UI in Plan 05; debug command + week-start now).</summary>
         public void PresentOffer()
         {
+            // The hub opens at most once per week. OfferPresentedWeek tracks the last week we presented.
+            if (Run.OfferPresentedWeek == Run.WeekOfYear)
+            {
+                _monitor.Log($"PresentOffer: already shown this week ({Run.WeekOfYear}), skipping.", LogLevel.Trace);
+                return;
+            }
+
             var offer = ChampionService.OfferForWeek(Run);
             _monitor.Log(
-                $"Week {Run.WeekOfYear} champion offer: {string.Join(" OR ", offer)} " +
-                $"(opening planning hub; fallback: 'tly_champion <theme>').",
+                $"Week {Run.WeekOfYear} champion offer: {string.Join(" OR ", offer)} (opening planning hub).",
                 LogLevel.Info);
 
-            // Plan 05: open the visual planning hub when one exists; fall through to log-only otherwise.
+            Run.OfferPresentedWeek = Run.WeekOfYear;
             _launcher?.OpenWeeklyHub();
         }
 
