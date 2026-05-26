@@ -34,13 +34,14 @@ namespace TheLongestYear.UI
         private const int WeatherIdBase = 5200;
         private const int CartIdBase = 5300;
 
-        // Icon grid: 6 columns x 2 rows = 12 max visible items, 2x scale (32px each).
-        // The grid feels lighter at 2x — vanilla inventory tiles also draw items at this scale.
+        // Icon grid: 6 columns x 2 rows = 12 max visible items, at the vanilla inventory
+        // size — Item.drawInMenu(..., scaleSize: 1f, ...) renders the 16px sprite at 4x = 64px,
+        // matching what an inventory slot looks like in-game.
         private const int IconGridCols = 6;
         private const int IconGridRows = 2;
         private const int MaxIcons = IconGridCols * IconGridRows;
-        private const int IconScale = 2;
-        private const int IconSize = 16 * IconScale;   // 32px
+        private const float IconScale = 1f;
+        private const int IconSize = 64;               // drawInMenu scaleSize 1f → 64px on screen
         private const int IconGap = 14;
 
         // Card body vertical layout

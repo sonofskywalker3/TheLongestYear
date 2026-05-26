@@ -10,3 +10,7 @@ obj/
 # OS
 Thumbs.db
 .DS_Store
+
+# Local screenshots + log captures (not part of the repo)
+screenshot*.png
+SMAPI-latest.txt
