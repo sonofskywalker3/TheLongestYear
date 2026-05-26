@@ -22,6 +22,14 @@ public sealed class RunState
     /// <summary>Cumulative donated item ids this run (consumed-on-donate; quantities/JP land in Plan 04).</summary>
     public List<string> DonatedItemIds { get; set; } = new();
 
+    /// <summary>
+    /// The active week's bonus-item sample (qualified ids) for the championed theme. Populated
+    /// at championing time from <see cref="BonusItemSampler"/>; donating any of these earns the
+    /// 1.5× ChampionBonusMultiplier. Cleared on <see cref="BeginNewMonth"/> and
+    /// <see cref="BeginNewRun"/> so a fresh month/run starts with no active bonuses.
+    /// </summary>
+    public List<string> CurrentWeekBonusItems { get; set; } = new();
+
     /// <summary>Themes championed in the current month (cleared each month). The 5th is never championed.</summary>
     public List<Theme> ChampionedThemesThisMonth { get; set; } = new();
 
@@ -98,6 +106,7 @@ public sealed class RunState
         DayOfMonth = 1;
         ChampionedThemesThisMonth.Clear();
         CurrentChampion = null;
+        CurrentWeekBonusItems.Clear();
     }
 
     /// <summary>Start a fresh loop attempt: reset to Spring 1, wipe ledger + championing, set the new seed.</summary>
@@ -114,6 +123,7 @@ public sealed class RunState
         AwardedRoomCompletions.Clear();
         AwardedChampionWeeks.Clear();
         VaultBundlesPaid.Clear();
+        CurrentWeekBonusItems.Clear();
         OfferPresentedWeek = -1;
     }
 }

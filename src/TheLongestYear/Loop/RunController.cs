@@ -136,8 +136,46 @@ namespace TheLongestYear.Loop
             }
 
             Run.Champion(theme);
+            PopulateBonusItemsForCurrentChampion();
             var (bonus, liability) = ThemeModifiers.For(theme);
-            _monitor.Log($"Championed {theme} (bonus {bonus}, liability {liability}). Required: {RequiredFor(theme)}.", LogLevel.Info);
+            _monitor.Log(
+                $"Championed {theme} (bonus {bonus}, liability {liability}). " +
+                $"Bonus items this week: [{string.Join(", ", Run.CurrentWeekBonusItems)}].",
+                LogLevel.Info);
+        }
+
+        /// <summary>Sample the per-week bonus list for the current champion and store it on RunState.
+        /// Uses the live CcItem catalog for in-season obtainability lookups.</summary>
+        private void PopulateBonusItemsForCurrentChampion()
+        {
+            Run.CurrentWeekBonusItems.Clear();
+            if (!Run.CurrentChampion.HasValue) return;
+
+            int maxCount = _config.BonusListSizeBySeason != null
+                && _config.BonusListSizeBySeason.Length > (int)Run.Season
+                    ? _config.BonusListSizeBySeason[(int)Run.Season]
+                    : 5;
+
+            var sample = BonusItemSampler.SampleForTheme(
+                Run.Seed, Run.WeekOfYear,
+                Run.CurrentChampion.Value, Run.Season,
+                _requirements,
+                IsObtainableInCurrentSeason,
+                maxCount);
+
+            Run.CurrentWeekBonusItems.AddRange(sample);
+        }
+
+        /// <summary>Obtainability predicate for the sampler: looks up the item in the CcItem
+        /// catalog and tests against this season's ObtainableSeasons. Items not in the catalog
+        /// (rare — e.g. SVE additions that didn't classify) default to obtainable so the player
+        /// isn't silently denied a bonus opportunity.</summary>
+        private bool IsObtainableInCurrentSeason(string itemId)
+        {
+            foreach (var item in _catalog)
+                if (item.Id == itemId)
+                    return item.ObtainableSeasons.Contains(Run.Season);
+            return true;
         }
 
         /// <summary>Simulate a CC donation (the real donation surface is Plan 04).</summary>
