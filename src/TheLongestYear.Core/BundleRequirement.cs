@@ -62,12 +62,26 @@ public sealed class BundleRequirement
             cumulativeRequiredBySeason: null);
     }
 
+    /// <summary>Convenience: pins become the ingredient list. Use when every ingredient is pinned.</summary>
     public static BundleRequirement CreatePerItem(
         string name, Theme theme, IReadOnlyDictionary<string, Season> itemSeasonPins)
     {
         if (itemSeasonPins == null || itemSeasonPins.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one pinned ingredient.", nameof(itemSeasonPins));
-        var ingredients = itemSeasonPins.Keys.ToList();
+        return CreatePerItem(name, theme, itemSeasonPins.Keys.ToList(), itemSeasonPins);
+    }
+
+    /// <summary>Full form: ingredients listed explicitly; pins are an optional subset. Unpinned
+    /// ingredients don't gate any season but still count toward <see cref="IsFullyComplete"/>.</summary>
+    public static BundleRequirement CreatePerItem(
+        string name, Theme theme,
+        IReadOnlyList<string> ingredients,
+        IReadOnlyDictionary<string, Season> itemSeasonPins)
+    {
+        if (ingredients == null || ingredients.Count == 0)
+            throw new ArgumentException("PerItem bundle needs at least one ingredient.", nameof(ingredients));
+        if (itemSeasonPins == null)
+            throw new ArgumentNullException(nameof(itemSeasonPins));
         return new BundleRequirement(
             name, theme, BundleKind.PerItem,
             ingredients, ingredients.Count,

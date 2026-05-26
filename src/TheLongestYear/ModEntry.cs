@@ -23,6 +23,7 @@ namespace TheLongestYear
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
+        private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -75,9 +76,13 @@ namespace TheLongestYear
             _reset = new WorldResetService(this.Monitor, _meta.State, _ccUnlock);
 
             _seasonResolver = new SeasonResolver();
-            _catalog = new BundleCatalogBuilder(
+            var builder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
-                ParseThemeOverrides()).Build();
+                ParseThemeOverrides(),
+                ParseItemSeasonPins(),
+                ParseBundleQuotas());
+            _catalog = builder.Build();
+            _requirements = builder.BuildRequirements();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog);
@@ -368,6 +373,60 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"Vault bundle {bundleIndex} marked paid. Paid this run: [{string.Join(", ", _meta.Run.VaultBundlesPaid)}]",
                 LogLevel.Info);
+        }
+
+        /// <summary>Merge GameplayConfig.DefaultItemSeasonPins + user ItemSeasonPins. User wins on conflict.
+        /// Invalid season strings in user config are logged and skipped.</summary>
+        private System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> ParseItemSeasonPins()
+        {
+            var merged = new System.Collections.Generic.Dictionary<string, TheLongestYear.Core.Season>();
+
+            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultItemSeasonPins)
+                if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Season s))
+                    merged[kv.Key] = s;
+
+            if (_config?.ItemSeasonPins != null)
+            {
+                foreach (var kv in _config.ItemSeasonPins)
+                {
+                    if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Season s))
+                        merged[kv.Key] = s;
+                    else
+                        this.Monitor.Log(
+                            $"ItemSeasonPins: '{kv.Value}' is not a valid season for id '{kv.Key}' — ignoring.",
+                            LogLevel.Warn);
+                }
+            }
+
+            return merged;
+        }
+
+        /// <summary>Merge GameplayConfig.DefaultBundleQuotas + user BundleQuotas. User wins on conflict.
+        /// Malformed user arrays (wrong length, negative values) are logged and skipped.</summary>
+        private System.Collections.Generic.IReadOnlyDictionary<string, int[]> ParseBundleQuotas()
+        {
+            var merged = new System.Collections.Generic.Dictionary<string, int[]>();
+
+            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultBundleQuotas)
+                merged[kv.Key] = (int[])kv.Value.Clone();
+
+            if (_config?.BundleQuotas != null)
+            {
+                foreach (var kv in _config.BundleQuotas)
+                {
+                    if (kv.Value == null || kv.Value.Length != TheLongestYear.Core.Calendar.MonthsPerYear)
+                    {
+                        this.Monitor.Log(
+                            $"BundleQuotas: '{kv.Key}' needs a 4-int cumulative array; got length " +
+                            $"{kv.Value?.Length ?? 0} — ignoring.",
+                            LogLevel.Warn);
+                        continue;
+                    }
+                    merged[kv.Key] = (int[])kv.Value.Clone();
+                }
+            }
+
+            return merged;
         }
 
         /// <summary>Merge GameplayConfig.DefaultThemeOverrides + user ThemeOverrides for the catalog builder.</summary>
