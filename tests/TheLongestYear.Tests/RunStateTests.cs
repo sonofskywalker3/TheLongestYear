@@ -104,4 +104,34 @@ public class RunStateTests
         Assert.Equal(new[] { Theme.Mining }, restored.ChampionedThemesThisMonth);
         Assert.Equal(Theme.Mining, restored.CurrentChampion);
     }
+
+    [Fact]
+    public void TryMarkBundleAwarded_is_true_once_then_false()
+    {
+        var run = new RunState();
+        Assert.True(run.TryMarkBundleAwarded(7));
+        Assert.False(run.TryMarkBundleAwarded(7));
+        Assert.True(run.TryMarkBundleAwarded(8));
+    }
+
+    [Fact]
+    public void TryMarkRoomAwarded_is_true_once_then_false()
+    {
+        var run = new RunState();
+        Assert.True(run.TryMarkRoomAwarded(0));
+        Assert.False(run.TryMarkRoomAwarded(0));
+    }
+
+    [Fact]
+    public void BeginNewRun_clears_completion_awards()
+    {
+        var run = new RunState();
+        run.TryMarkBundleAwarded(1);
+        run.TryMarkRoomAwarded(2);
+
+        run.BeginNewRun(seed: 5);
+
+        Assert.True(run.TryMarkBundleAwarded(1)); // awardable again in the fresh run
+        Assert.True(run.TryMarkRoomAwarded(2));
+    }
 }
