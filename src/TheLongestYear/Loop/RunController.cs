@@ -177,21 +177,34 @@ namespace TheLongestYear.Loop
                 .Generate(_catalog, Run.Seed);
         }
 
+        /// <summary>
+        /// Merge GameplayConfig.DefaultSeasonOverrides with the user's loaded config overrides
+        /// (user wins on conflict). Both maps are validated against the Season enum; unparseable
+        /// values are skipped with a Warn so a typo in config.json doesn't kill the load.
+        /// </summary>
         private System.Collections.Generic.IReadOnlyDictionary<string, CoreSeason> ParseSeasonOverrides(
             System.Collections.Generic.Dictionary<string, string> raw)
         {
-            var parsed = new System.Collections.Generic.Dictionary<string, CoreSeason>();
-            if (raw == null) return parsed;
-            foreach (var kv in raw)
-            {
+            var merged = new System.Collections.Generic.Dictionary<string, CoreSeason>();
+
+            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultSeasonOverrides)
                 if (Enum.TryParse(kv.Value, ignoreCase: true, out CoreSeason s))
-                    parsed[kv.Key] = s;
-                else
-                    _monitor.Log(
-                        $"SeasonOverrides: '{kv.Value}' is not a valid season for id '{kv.Key}' — ignoring.",
-                        LogLevel.Warn);
+                    merged[kv.Key] = s;
+
+            if (raw != null)
+            {
+                foreach (var kv in raw)
+                {
+                    if (Enum.TryParse(kv.Value, ignoreCase: true, out CoreSeason s))
+                        merged[kv.Key] = s;        // user wins
+                    else
+                        _monitor.Log(
+                            $"SeasonOverrides: '{kv.Value}' is not a valid season for id '{kv.Key}' — ignoring.",
+                            LogLevel.Warn);
+                }
             }
-            return parsed;
+
+            return merged;
         }
 
         /// <summary>Log the (season, theme) → required-items table for review.</summary>

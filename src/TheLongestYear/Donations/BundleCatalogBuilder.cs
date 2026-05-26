@@ -24,12 +24,18 @@ namespace TheLongestYear.Donations
         private readonly RarityThresholds _thresholds;
         private readonly SeasonResolver _seasons;
         private readonly IMonitor _monitor;
+        private readonly IReadOnlyDictionary<string, Theme> _themeOverrides;
 
-        public BundleCatalogBuilder(RarityThresholds thresholds, SeasonResolver seasons, IMonitor monitor)
+        public BundleCatalogBuilder(
+            RarityThresholds thresholds,
+            SeasonResolver seasons,
+            IMonitor monitor,
+            IReadOnlyDictionary<string, Theme> themeOverrides = null)
         {
             _thresholds = thresholds;
             _seasons = seasons;
             _monitor = monitor;
+            _themeOverrides = themeOverrides ?? new Dictionary<string, Theme>();
         }
 
         public IReadOnlyList<CcItem> Build()
@@ -76,7 +82,10 @@ namespace TheLongestYear.Donations
 
                     Rarity rarity = ItemRarityResolver.Resolve(id, _thresholds);
                     IReadOnlySet<CoreSeason> seasons = _seasons.SeasonsFor(id);
-                    items.Add(new CcItem(id, theme, rarity, seasons));
+                    Theme finalTheme = _themeOverrides.TryGetValue(id, out Theme pinnedTheme)
+                        ? pinnedTheme
+                        : theme;
+                    items.Add(new CcItem(id, finalTheme, rarity, seasons));
                 }
             }
 
