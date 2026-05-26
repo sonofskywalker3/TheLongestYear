@@ -28,11 +28,35 @@ public sealed class RunState
     /// <summary>The theme championed this week, whose bonus/liability are active. Null between weeks.</summary>
     public Theme? CurrentChampion { get; set; }
 
+    /// <summary>Bundle indices whose completion JP bonus has already been awarded this run.</summary>
+    public List<int> AwardedBundleCompletions { get; set; } = new();
+
+    /// <summary>Room/area numbers whose completion JP bonus has already been awarded this run.</summary>
+    public List<int> AwardedRoomCompletions { get; set; } = new();
+
     public int WeekOfYear => Calendar.WeekOfYear((int)Season, DayOfMonth);
 
     public int WeekInMonth => Calendar.WeekInMonth(DayOfMonth);
 
     public bool IsChampioned(Theme theme) => ChampionedThemesThisMonth.Contains(theme);
+
+    /// <summary>Record a bundle-completion award; returns false if it was already awarded this run.</summary>
+    public bool TryMarkBundleAwarded(int bundleIndex)
+    {
+        if (AwardedBundleCompletions.Contains(bundleIndex))
+            return false;
+        AwardedBundleCompletions.Add(bundleIndex);
+        return true;
+    }
+
+    /// <summary>Record a room-completion award; returns false if it was already awarded this run.</summary>
+    public bool TryMarkRoomAwarded(int area)
+    {
+        if (AwardedRoomCompletions.Contains(area))
+            return false;
+        AwardedRoomCompletions.Add(area);
+        return true;
+    }
 
     /// <summary>Add a donated item id; idempotent so re-donating the same id is a no-op in the ledger.</summary>
     public void RecordDonation(string itemId)
@@ -71,5 +95,7 @@ public sealed class RunState
         DonatedItemIds.Clear();
         ChampionedThemesThisMonth.Clear();
         CurrentChampion = null;
+        AwardedBundleCompletions.Clear();
+        AwardedRoomCompletions.Clear();
     }
 }

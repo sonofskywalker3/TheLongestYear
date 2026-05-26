@@ -23,17 +23,20 @@ namespace TheLongestYear.Loop
         private readonly WorldResetService _reset;
         private readonly RunManager _runManager = new RunManager(new GateEvaluator());
         private readonly JpCalculator _jp;
+        private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
 
         private YearPlan _plan;
         private bool _pendingReset;
 
-        public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset)
+        public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
+            System.Collections.Generic.IReadOnlyList<CcItem> catalog)
         {
             _monitor = monitor;
             _store = store;
             _config = config;
             _reset = reset;
             _jp = new JpCalculator(config.Jp);
+            _catalog = (catalog != null && catalog.Count > 0) ? catalog : CcItemCatalog.Items;
         }
 
         private RunState Run => _store.Run;
@@ -46,7 +49,7 @@ namespace TheLongestYear.Loop
 
             Run.Season = (CoreSeason)(int)Game1.season;
             Run.DayOfMonth = Game1.dayOfMonth;
-            _plan = new ContractGenerator().Generate(CcItemCatalog.Items, Run.Seed);
+            _plan = new ContractGenerator().Generate(_catalog, Run.Seed);
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
         }
@@ -58,7 +61,7 @@ namespace TheLongestYear.Loop
                 _pendingReset = false;
                 _reset.PerformReset(_config.StartingMoney);
                 Run.BeginNewRun(NewSeed());
-                _plan = new ContractGenerator().Generate(CcItemCatalog.Items, Run.Seed);
+                _plan = new ContractGenerator().Generate(_catalog, Run.Seed);
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
                 return;
             }
