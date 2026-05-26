@@ -21,10 +21,6 @@ namespace TheLongestYear.Donations
         private readonly GameplayConfig _config;
         private readonly JpCalculator _jp;
 
-        /// <summary>Optional callback that returns the current YearPlan. Wired by ModEntry/RunController
-        /// after construction so DonationService can look up the championed contract's bonus list.</summary>
-        public Func<YearPlan> CurrentPlanProvider { get; set; }
-
         public DonationService(IMonitor monitor, MetaStore store, GameplayConfig config)
         {
             _monitor = monitor;
@@ -60,15 +56,14 @@ namespace TheLongestYear.Donations
                 LogLevel.Info);
         }
 
-        /// <summary>True if the player has a championed theme this week, the YearPlan is available,
-        /// and the donated id is in that (season, theme) contract's bonus list.</summary>
+        /// <summary>True if the player has a championed theme this week AND the donated id is
+        /// in this week's sampled bonus list (see <see cref="BonusItemSampler"/>). The list is
+        /// populated by <c>RunController.PopulateBonusItemsForCurrentChampion</c> at championing
+        /// time and persists in <see cref="RunState.CurrentWeekBonusItems"/>.</summary>
         private bool IsChampionedBonusItem(string itemId)
         {
             if (!Run.CurrentChampion.HasValue) return false;
-            YearPlan plan = CurrentPlanProvider?.Invoke();
-            if (plan == null) return false;
-            Contract contract = plan.Get(Run.Season, Run.CurrentChampion.Value);
-            return contract.BonusItemIds.Contains(itemId);
+            return Run.CurrentWeekBonusItems.Contains(itemId);
         }
 
         /// <summary>A bundle just completed — award its one-time completion bonus (season-scaled).</summary>
