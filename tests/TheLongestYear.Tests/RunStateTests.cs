@@ -134,4 +134,26 @@ public class RunStateTests
         Assert.True(run.TryMarkBundleAwarded(1)); // awardable again in the fresh run
         Assert.True(run.TryMarkRoomAwarded(2));
     }
+
+    [Fact]
+    public void OfferPresentedWeek_defaults_to_negative_one()
+        => Assert.Equal(-1, new RunState().OfferPresentedWeek);
+
+    [Fact]
+    public void BeginNewRun_resets_OfferPresentedWeek()
+    {
+        var run = new RunState();
+        run.OfferPresentedWeek = 5;
+        run.BeginNewRun(seed: 1);
+        Assert.Equal(-1, run.OfferPresentedWeek);
+    }
+
+    [Fact]
+    public void OfferPresentedWeek_round_trips_through_json()
+    {
+        var run = new RunState { OfferPresentedWeek = 7 };
+        string json = System.Text.Json.JsonSerializer.Serialize(run);
+        RunState restored = System.Text.Json.JsonSerializer.Deserialize<RunState>(json)!;
+        Assert.Equal(7, restored.OfferPresentedWeek);
+    }
 }

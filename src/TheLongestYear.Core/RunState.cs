@@ -28,6 +28,10 @@ public sealed class RunState
     /// <summary>The theme championed this week, whose bonus/liability are active. Null between weeks.</summary>
     public Theme? CurrentChampion { get; set; }
 
+    /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
+    /// Used so a re-trigger mid-week (e.g. via hotkey) is a no-op — the hub only opens at week-start.</summary>
+    public int OfferPresentedWeek { get; set; } = -1;
+
     /// <summary>Bundle indices whose completion JP bonus has already been awarded this run.</summary>
     public List<int> AwardedBundleCompletions { get; set; } = new();
 
@@ -97,5 +101,6 @@ public sealed class RunState
         CurrentChampion = null;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
+        OfferPresentedWeek = -1;
     }
 }
