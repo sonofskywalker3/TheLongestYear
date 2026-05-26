@@ -19,6 +19,7 @@ public sealed class GameplayConfig
     /// (count = 0); Plan 06 will compute this dynamically from owned Cart Whisperer tiers.</summary>
     public int DefaultCartPreviewSlots { get; set; } = 0;
 
-    /// <summary>SButton name (parsed mod-side) for the hotkey that reopens the weekly planning hub. Default: 'P'.</summary>
+    /// <summary>SButton name (parsed mod-side) for the hotkey that reopens the weekly planning hub. Default: 'P'.
+    /// (unused in v1; Plan 06 will re-enable the hotkey)</summary>
     public string WeeklyHubHotkey { get; set; } = "P";
 }

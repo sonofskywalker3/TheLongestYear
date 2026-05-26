@@ -78,7 +78,7 @@ namespace TheLongestYear
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog);
             _runController.OnRunLoaded();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
-            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, this.Helper.Events);
+            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
             this.Monitor.Log(
                 $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
