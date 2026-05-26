@@ -80,7 +80,7 @@ public class ContractGeneratorTests
     }
 
     [Fact]
-    public void Common_items_lean_toward_earlier_seasons_when_year_round()
+    public void Multi_season_items_lean_toward_later_seasons()
     {
         // 8 year-round common items of the same theme.
         var items = new List<CcItem>();
@@ -93,11 +93,13 @@ public class ContractGeneratorTests
         var byItem = ByItem(plan);
 
         // Count how many ended up in the Spring half (Spring + Summer) vs. Fall half (Fall + Winter).
+        // Post-playtest 2026-05-26: ALL multi-season items lean LATER (progression-friendlier),
+        // not just rare ones. So even common year-round items push to Fall/Winter.
         int earlyCount = items.Count(i => (int)byItem[i.Id].Season < 2);
         int lateCount  = items.Count(i => (int)byItem[i.Id].Season >= 2);
 
-        Assert.True(earlyCount >= lateCount,
-            $"Common year-round items should bias toward earlier seasons; got early={earlyCount}, late={lateCount}.");
+        Assert.True(lateCount >= earlyCount,
+            $"Multi-season items (any rarity) should bias toward later seasons; got early={earlyCount}, late={lateCount}.");
     }
 
     [Fact]
