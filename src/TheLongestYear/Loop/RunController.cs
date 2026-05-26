@@ -150,6 +150,21 @@ namespace TheLongestYear.Loop
         /// <summary>Wired by ModEntry after the launcher is constructed (it needs CurrentPlan, which we own).</summary>
         public void AttachLauncher(TheLongestYear.UI.MenuLauncher launcher) => _launcher = launcher;
 
+        /// <summary>
+        /// Debug-only: pick a new seed, regenerate the year plan, clear the per-week presentation guard,
+        /// and re-open the planning hub so you can step through many partitions in a row.
+        /// </summary>
+        public void Reroll()
+        {
+            int newSeed = NewSeed();
+            Run.Seed = newSeed;
+            _plan = new ContractGenerator().Generate(_catalog, Run.Seed);
+            Run.OfferPresentedWeek = -1;     // clear the per-week guard
+            Run.CurrentChampion = null;      // clear last week's pick so the offer is fresh
+            _monitor.Log($"Reroll: new seed {newSeed}; plan regenerated. Re-opening hub.", LogLevel.Info);
+            _launcher?.OpenWeeklyHub();
+        }
+
         /// <summary>Log this week's champion offer (driven by the UI in Plan 05; debug command + week-start now).</summary>
         public void PresentOffer()
         {
