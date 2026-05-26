@@ -293,10 +293,10 @@ namespace TheLongestYear
 
         private void CmdListUpgrades(string command, string[] args)
         {
-            this.Monitor.Log($"Upgrade catalog: {TheLongestYear.Core.UpgradeCatalog.All.Count} entries.", LogLevel.Info);
-            foreach (TheLongestYear.Core.UpgradeCategory cat in System.Enum.GetValues(typeof(TheLongestYear.Core.UpgradeCategory)))
+            this.Monitor.Log($"Upgrade catalog: {UpgradeCatalog.All.Count} entries.", LogLevel.Info);
+            foreach (UpgradeCategory cat in Enum.GetValues(typeof(UpgradeCategory)))
             {
-                var rows = TheLongestYear.Core.UpgradeCatalog.ByCategory(cat);
+                var rows = UpgradeCatalog.ByCategory(cat);
                 this.Monitor.Log($"  {cat} ({rows.Count}):", LogLevel.Info);
                 foreach (var u in rows)
                 {
