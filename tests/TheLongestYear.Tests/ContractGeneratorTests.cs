@@ -154,6 +154,28 @@ public class ContractGeneratorTests
     }
 
     [Fact]
+    public void Multi_season_items_distribute_across_seasons()
+    {
+        // 16 year-round common items of the same theme + equal caps. Pre-fix, all 16 stacked
+        // into Winter and the earlier seasons were empty. Now least-loaded-then-latest spreads
+        // them roughly evenly across the four seasons.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 16; i++)
+            items.Add(new CcItem(
+                $"flex-{i}", Theme.Mining, Rarity.Common,
+                new HashSet<Season> { Season.Spring, Season.Summer, Season.Fall, Season.Winter }));
+
+        var plan = new ContractGenerator(new[] { 10, 10, 10, 10 }).Generate(items, seed: 1);
+
+        foreach (Season s in System.Enum.GetValues(typeof(Season)))
+        {
+            int count = plan.Get(s, Theme.Mining).RequiredItemIds.Count;
+            Assert.True(count >= 3,
+                $"{s} Mining should have at least floor(16/4)-1 = 3 items; got {count}.");
+        }
+    }
+
+    [Fact]
     public void Custom_cap_array_is_respected()
     {
         // Lower-than-default caps should still kick in.
