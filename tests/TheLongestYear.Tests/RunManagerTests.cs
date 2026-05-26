@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using Xunit;
@@ -6,19 +7,18 @@ namespace TheLongestYear.Tests;
 
 public class RunManagerTests
 {
-    // A YearPlan where, per season, Mining requires "ore" and the other four themes require nothing.
-    private static YearPlan PlanRequiringMiningOre()
+    private static CcItem Item(string id, Theme theme, params Season[] seasons)
+        => new CcItem(id, theme, Rarity.Common, new HashSet<Season>(seasons));
+
+    /// <summary>Catalog with one single-season item per season + one year-round multi-season item.</summary>
+    private static List<CcItem> Catalog() => new()
     {
-        var contracts = new List<Contract>();
-        foreach (Season s in System.Enum.GetValues(typeof(Season)))
-            foreach (Theme t in System.Enum.GetValues(typeof(Theme)))
-            {
-                var required = t == Theme.Mining ? new[] { "ore" } : System.Array.Empty<string>();
-                var (b, l) = ThemeModifiers.For(t);
-                contracts.Add(new Contract(s, t, required, b, l));
-            }
-        return new YearPlan(contracts);
-    }
+        Item("spring-only", Theme.Foraging, Season.Spring),
+        Item("summer-only", Theme.Farming,  Season.Summer),
+        Item("fall-only",   Theme.Fishing,  Season.Fall),
+        Item("winter-only", Theme.Mining,   Season.Winter),
+        Item("year-round",  Theme.Mixed,    Season.Spring, Season.Summer, Season.Fall, Season.Winter),
+    };
 
     private static RunManager Mgr() => new RunManager(new GateEvaluator());
 
@@ -26,59 +26,87 @@ public class RunManagerTests
     public void Midweek_continues()
     {
         var run = new RunState { Season = Season.Spring, DayOfMonth = 3 };
-        run.Champion(Theme.Mining);
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, Catalog()));
     }
 
     [Fact]
-    public void Week_end_with_satisfied_champion_continues()
+    public void Week_end_without_champion_now_continues()
     {
+        // Spec change 2026-05-26: no weekly fail; an un-championed week 7/14/21 is fine.
         var run = new RunState { Season = Season.Spring, DayOfMonth = 7 };
-        run.Champion(Theme.Mining);
-        run.RecordDonation("ore");
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, Catalog()));
     }
 
     [Fact]
-    public void Week_end_with_unsatisfied_champion_fails()
-    {
-        var run = new RunState { Season = Season.Spring, DayOfMonth = 7 };
-        run.Champion(Theme.Mining); // "ore" not donated
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
-    }
-
-    [Fact]
-    public void Week_end_with_no_champion_fails()
-    {
-        var run = new RunState { Season = Season.Spring, DayOfMonth = 7 }; // never championed
-        run.RecordDonation("ore");
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
-    }
-
-    [Fact]
-    public void Month_end_all_five_done_not_winter_advances_month()
+    public void Month_end_with_single_season_donated_advances()
     {
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        run.Champion(Theme.Mining);
-        run.RecordDonation("ore"); // only Mining requires anything; all five now satisfied
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
+        run.RecordDonation("spring-only");
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, Catalog()));
     }
 
     [Fact]
-    public void Month_end_missing_required_item_fails()
+    public void Month_end_missing_single_season_fails()
     {
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        run.Champion(Theme.Foraging); // champion an empty contract -> championed-complete is true
-        // "ore" NOT donated, so the (unchampioned) Mining contract is incomplete -> monthly fail.
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
+        // "spring-only" not donated
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, Catalog()));
     }
 
     [Fact]
-    public void Winter_end_all_done_wins()
+    public void Month_end_only_needs_this_season_items()
+    {
+        // Summer-only / Fall-only / Winter-only not donated yet — Spring shouldn't care.
+        var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
+        run.RecordDonation("spring-only");
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, Catalog()));
+    }
+
+    [Fact]
+    public void Month_end_does_not_require_multi_season_until_winter()
+    {
+        // "year-round" not donated — passes Spring/Summer/Fall gates.
+        var run = new RunState { Season = Season.Fall, DayOfMonth = 28 };
+        run.RecordDonation("spring-only");
+        run.RecordDonation("summer-only");
+        run.RecordDonation("fall-only");
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, Catalog()));
+    }
+
+    [Fact]
+    public void Winter_end_with_full_cc_wins()
     {
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        run.Champion(Theme.Mining);
-        run.RecordDonation("ore");
-        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, PlanRequiringMiningOre()));
+        run.RecordDonation("spring-only");
+        run.RecordDonation("summer-only");
+        run.RecordDonation("fall-only");
+        run.RecordDonation("winter-only");
+        run.RecordDonation("year-round");
+        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, Catalog()));
+    }
+
+    [Fact]
+    public void Winter_end_missing_multi_season_fails()
+    {
+        // Winter passes its single-season gate but "year-round" was never donated -> no future
+        // season for it to land in -> fail.
+        var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
+        run.RecordDonation("spring-only");
+        run.RecordDonation("summer-only");
+        run.RecordDonation("fall-only");
+        run.RecordDonation("winter-only");
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, Catalog()));
+    }
+
+    [Fact]
+    public void Winter_end_missing_winter_only_fails()
+    {
+        var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
+        run.RecordDonation("spring-only");
+        run.RecordDonation("summer-only");
+        run.RecordDonation("fall-only");
+        run.RecordDonation("year-round");
+        // "winter-only" missing
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, Catalog()));
     }
 }
