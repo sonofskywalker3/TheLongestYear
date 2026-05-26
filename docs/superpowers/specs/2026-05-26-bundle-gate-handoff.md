@@ -20,6 +20,24 @@ The gate model has been rewritten in spec (round 7), foundation classes are in p
 
 ### What is STILL TODO (in order)
 
+0. **Pre-unlock ALL CC rooms** (`src/TheLongestYear/Loop/CommunityCenterUnlock.cs`)
+   - Vanilla unlocks rooms sequentially: completing a room's bundles unlocks the
+     next. With our mod's 16-week parallel-attack design, every room must be
+     donatable on Spring 1.
+   - Current `CommunityCenterUnlock` only opens the CC door — extend it to
+     pre-discover every inner room's Junimo Note.
+   - Investigate in the decompile:
+     - `CommunityCenter.areaToRestore` / `areasComplete` (per-area state)
+     - mailReceived flags `ccCraftsRoom`, `ccPantry`, `ccFishTank`,
+       `ccBoilerRoom`, `ccBulletinAvailable`, `ccVault` (these typically gate
+       note visibility)
+     - `eventsSeen` entries for the "Junimo wanders in and shows you the note"
+       reveal events per area
+   - Manual playtest: enter CC on Spring 1, confirm all 6 Junimo notes are
+     visible and clickable.
+   - **This is a prerequisite for the gate model** — the gate is meaningless if
+     the player physically can't reach the bundles.
+
 1. **`BundleCatalogBuilder` rewrite** (mod side, `src/TheLongestYear/Donations/BundleCatalogBuilder.cs`)
    - Currently returns `IReadOnlyList<CcItem>` (still useful for season-resolver / rarity metadata).
    - Add a new return type or sibling builder that produces `IReadOnlyList<BundleRequirement>`.
