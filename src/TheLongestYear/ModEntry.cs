@@ -16,6 +16,7 @@ namespace TheLongestYear
     {
         private GameplayConfig _config;
         private MetaStore _meta;
+        private CommunityCenterUnlock _ccUnlock;
         private WorldResetService _reset;
         private RunController _runController;
         private UpgradePurchaseService _purchases;
@@ -66,7 +67,9 @@ namespace TheLongestYear
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             _meta.Load();
-            _reset = new WorldResetService(this.Monitor, _meta.State);
+            _ccUnlock = new CommunityCenterUnlock(this.Monitor);
+            _ccUnlock.Apply();
+            _reset = new WorldResetService(this.Monitor, _meta.State, _ccUnlock);
 
             _seasonResolver = new SeasonResolver();
             _catalog = new BundleCatalogBuilder(_config.RarityThresholds, _seasonResolver, this.Monitor).Build();

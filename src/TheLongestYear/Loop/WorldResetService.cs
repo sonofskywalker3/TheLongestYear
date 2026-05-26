@@ -16,11 +16,13 @@ namespace TheLongestYear.Loop
     {
         private readonly IMonitor _monitor;
         private readonly TheLongestYear.Core.MetaState _meta;
+        private readonly CommunityCenterUnlock _ccUnlock;
 
-        public WorldResetService(IMonitor monitor, TheLongestYear.Core.MetaState meta)
+        public WorldResetService(IMonitor monitor, TheLongestYear.Core.MetaState meta, CommunityCenterUnlock ccUnlock)
         {
             _monitor = monitor;
             _meta = meta;
+            _ccUnlock = ccUnlock;
         }
 
         public void PerformReset(int startingMoney)
@@ -56,6 +58,9 @@ namespace TheLongestYear.Loop
             Game1.currentLocation = home;
             Game1.player.Position = new Vector2(9f, 9f) * 64f;
             home.resetForPlayerEntry();
+
+            // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
+            _ccUnlock.Apply();
 
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}.",
