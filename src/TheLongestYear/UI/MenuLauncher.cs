@@ -3,6 +3,7 @@ using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
 using TheLongestYear.Loop;
+using CoreSeason = TheLongestYear.Core.Season;
 
 namespace TheLongestYear.UI
 {
@@ -29,15 +30,29 @@ namespace TheLongestYear.UI
             _purchases = purchases;
         }
 
-        public void OpenWeeklyHub()
+        /// <summary>Open the planning hub. If <paramref name="seasonOverride"/> is set (Sunday-night
+        /// day-28 case), the menu shows next season's bundles + bonus preview and routes the pick
+        /// to <see cref="RunState.NextMonthChampion"/> rather than CurrentChampion.</summary>
+        public void OpenWeeklyHub(CoreSeason? seasonOverride = null)
         {
-            if (!CanOpen())
-                return;
+            if (!CanOpen()) return;
 
-            var offer = ChampionService.OfferForWeek(_store.Run);
+            CoreSeason offerSeason = seasonOverride ?? _store.Run.Season;
+            // Offer pool: for cross-month, ignore current month's championing (empty list).
+            var championingForOffer = seasonOverride.HasValue
+                ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
+                : _store.Run.ChampionedThemesThisMonth;
+            var offer = ChampionService.OfferForWeek(
+                _store.Run.Seed,
+                seasonOverride.HasValue ? _store.Run.WeekOfYear + 1 : _store.Run.WeekOfYear,
+                championingForOffer);
+
             Game1.activeClickableMenu = new ContractPickMenu(
-                _monitor, _runController, _config, _store.Run, _runController.Requirements, offer);
-            _monitor.Log($"Opened planning hub (week {_store.Run.WeekOfYear}, offer: {string.Join(",", offer)}).",
+                _monitor, _runController, _config, _store.Run, _runController.Requirements,
+                offer, offerSeason, isPreChampionForNextMonth: seasonOverride.HasValue);
+            _monitor.Log(
+                $"Opened planning hub (week {_store.Run.WeekOfYear}{(seasonOverride.HasValue ? $" → {offerSeason}" : "")}, " +
+                $"offer: {string.Join(",", offer)}).",
                 LogLevel.Info);
         }
 
