@@ -78,8 +78,9 @@ namespace TheLongestYear.Loop
             Run.Season = season;
             Run.DayOfMonth = Game1.dayOfMonth;
 
-            // Only at week start: the previous week's champion expires and a fresh offer is presented.
-            // (Mid-week reloads keep the persisted CurrentChampion, so the day-7 gate still sees it.)
+            // Hub on Monday morning at week-start. TODO(2026-05-26): move to Sunday night per
+            // user request; needs careful handling of day-28 cross-season transitions so the
+            // hub picks for next season's offer pool rather than the (already-championed) current.
             if (IsWeekStart(Run.DayOfMonth))
             {
                 Run.CurrentChampion = null;

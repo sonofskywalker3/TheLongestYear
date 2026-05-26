@@ -12,7 +12,7 @@ public class YearPlanTests
         var contracts = new List<Contract>();
         foreach (Season s in System.Enum.GetValues(typeof(Season)))
             foreach (Theme t in System.Enum.GetValues(typeof(Theme)))
-                contracts.Add(new Contract(s, t, new string[0], "b", "l"));
+                contracts.Add(new Contract(s, t, new string[0], 0, new string[0], "b", "l"));
         return new YearPlan(contracts);
     }
 
@@ -38,7 +38,7 @@ public class YearPlanTests
     [Fact]
     public void Constructor_rejects_a_plan_missing_a_season_theme_slot()
     {
-        var contracts = new List<Contract> { new Contract(Season.Spring, Theme.Mining, new string[0], "b", "l") };
+        var contracts = new List<Contract> { new Contract(Season.Spring, Theme.Mining, new string[0], 0, new string[0], "b", "l") };
         Assert.Throws<System.ArgumentException>(() => new YearPlan(contracts));
     }
 }
