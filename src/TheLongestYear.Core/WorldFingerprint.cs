@@ -17,7 +17,13 @@ public sealed class WorldFingerprint
     public int InventoryItemCount { get; set; }
     public int TotalSkillXp { get; set; }
     public int CropCount { get; set; }
+
+    /// <summary>
+    /// Total placed objects across all locations. Captured for logging but NOT used in <see cref="Diff"/>:
+    /// vanilla world-gen + mods (FTM/SVE) spawn objects non-deterministically, so it is not a leak signal.
+    /// </summary>
     public int PlacedObjectCount { get; set; }
+
     public int BuildingCount { get; set; }
     public int CompletedBundleCount { get; set; }
     public int FriendshipCount { get; set; }
@@ -42,7 +48,8 @@ public sealed class WorldFingerprint
         Cmp(nameof(InventoryItemCount), InventoryItemCount, other.InventoryItemCount);
         Cmp(nameof(TotalSkillXp), TotalSkillXp, other.TotalSkillXp);
         Cmp(nameof(CropCount), CropCount, other.CropCount);
-        Cmp(nameof(PlacedObjectCount), PlacedObjectCount, other.PlacedObjectCount);
+        // PlacedObjectCount intentionally excluded — non-deterministic world-gen/mod spawning (observed
+        // bouncing +3/-9/-5 between clean resets), so comparing it produces false positives, not leaks.
         Cmp(nameof(BuildingCount), BuildingCount, other.BuildingCount);
         Cmp(nameof(CompletedBundleCount), CompletedBundleCount, other.CompletedBundleCount);
         Cmp(nameof(FriendshipCount), FriendshipCount, other.FriendshipCount);
