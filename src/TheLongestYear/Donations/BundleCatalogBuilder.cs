@@ -7,17 +7,23 @@ using CoreSeason = TheLongestYear.Core.Season;
 namespace TheLongestYear.Donations
 {
     /// <summary>
-    /// Builds the run's CC ground truth from the live vanilla bundle definitions. Each concrete-item
-    /// requirement becomes one <see cref="CcItem"/> (vanilla qualified id, so it matches donated item ids),
-    /// tagged with its room's theme, price-derived rarity, and crop/forage-derived (else year-round) seasons.
-    /// Category ingredients and non-item rooms (Vault, Joja) are skipped — see plan v1 simplifications.
+    /// Builds the run's CC ground truth from the live vanilla bundle definitions. Two outputs:
+    /// <list type="bullet">
+    ///   <item><see cref="Build"/> — flat <see cref="CcItem"/> list (per-item rarity / season /
+    ///         theme metadata), still consumed by the rarity resolver, season pin merger, and
+    ///         the bonus-list sampler's obtainability lookup.</item>
+    ///   <item><see cref="BuildRequirements"/> — bundle-level <see cref="BundleRequirement"/>
+    ///         list (Seasonal / PerItem / Percentage gates), consumed by <see cref="BundleGate"/>
+    ///         to evaluate the day-28 win/fail condition.</item>
+    /// </list>
+    /// Category ingredients and the Vault / Joja rooms are skipped — see plan v1 simplifications.
     ///
-    /// Design note (post-playtest, 2026-05-26): we do NOT filter by current-availability. An item like
-    /// Cactus Fruit (Desert) or Rabbit's Foot (Deluxe Coop animal) is a valid contract target — the
-    /// player just has to invest in the unlock during the run. The catalog reflects what the CC needs;
-    /// the player decides how hard a contract is worth chasing. Real seasonality (Nautilus Shell = winter
-    /// beach, Red Mushroom = summer/fall forage) still applies via SeasonResolver so contracts don't ask
-    /// for an item that literally does not exist in the assigned season.
+    /// Design note (post-playtest, 2026-05-26): we do NOT filter by current-availability. An item
+    /// like Cactus Fruit (Desert) or Rabbit's Foot (Deluxe Coop animal) is a valid bundle target —
+    /// the player just has to invest in the unlock during the run. The catalog reflects what the
+    /// CC needs; the player decides how hard a bundle is worth chasing. Real seasonality (Nautilus
+    /// Shell = winter beach, Red Mushroom = summer/fall forage) still applies via SeasonResolver
+    /// so bonus-list samples don't suggest an item that literally does not exist in the season.
     /// </summary>
     internal sealed class BundleCatalogBuilder
     {
@@ -25,17 +31,23 @@ namespace TheLongestYear.Donations
         private readonly SeasonResolver _seasons;
         private readonly IMonitor _monitor;
         private readonly IReadOnlyDictionary<string, Theme> _themeOverrides;
+        private readonly IReadOnlyDictionary<string, CoreSeason> _itemSeasonPins;
+        private readonly IReadOnlyDictionary<string, int[]> _bundleQuotas;
 
         public BundleCatalogBuilder(
             RarityThresholds thresholds,
             SeasonResolver seasons,
             IMonitor monitor,
-            IReadOnlyDictionary<string, Theme> themeOverrides = null)
+            IReadOnlyDictionary<string, Theme> themeOverrides = null,
+            IReadOnlyDictionary<string, CoreSeason> itemSeasonPins = null,
+            IReadOnlyDictionary<string, int[]> bundleQuotas = null)
         {
             _thresholds = thresholds;
             _seasons = seasons;
             _monitor = monitor;
             _themeOverrides = themeOverrides ?? new Dictionary<string, Theme>();
+            _itemSeasonPins = itemSeasonPins ?? new Dictionary<string, CoreSeason>();
+            _bundleQuotas = bundleQuotas ?? new Dictionary<string, int[]>();
         }
 
         public IReadOnlyList<CcItem> Build()
@@ -94,6 +106,70 @@ namespace TheLongestYear.Donations
                 $"({categorySkipped} category ingredients skipped, {unresolvedSkipped} unresolved ids skipped).",
                 LogLevel.Info);
             return items;
+        }
+
+        /// <summary>
+        /// Produce one <see cref="BundleRequirement"/> per classifiable vanilla bundle, skipping
+        /// the Vault/Joja rooms (no item theme) and any bundle whose name doesn't match a known
+        /// rule. Each requirement carries its kind-specific gate (Seasonal/PerItem/Percentage)
+        /// and is consumed by <see cref="BundleGate"/> at season-end.
+        /// </summary>
+        public IReadOnlyList<BundleRequirement> BuildRequirements()
+        {
+            var reqs = new List<BundleRequirement>();
+            int categorySkipped = 0;
+            int unclassifiedSkipped = 0;
+
+            Dictionary<string, string> bundleData = Game1.netWorldState.Value.BundleData;
+            foreach (KeyValuePair<string, string> kvp in bundleData)
+            {
+                ParsedBundle bundle = BundleParsing.Parse(kvp.Key, kvp.Value);
+                if (!RoomThemeMap.TryGetTheme(bundle.Room, out Theme theme))
+                    continue;
+
+                BundleRequirement req;
+                try
+                {
+                    req = BundleClassifier.Classify(bundle, theme, _itemSeasonPins, _bundleQuotas);
+                }
+                catch (System.Exception ex)
+                {
+                    _monitor.Log(
+                        $"BundleCatalogBuilder: classification threw for bundle '{bundle.Name}' " +
+                        $"(room '{bundle.Room}'): {ex.Message} -- skipping.",
+                        LogLevel.Warn);
+                    unclassifiedSkipped++;
+                    continue;
+                }
+
+                if (req == null)
+                {
+                    // Either an all-category bundle or an X<Y bundle with no quota entry.
+                    if (bundle.Ingredients.Count > 0 &&
+                        System.Linq.Enumerable.All(bundle.Ingredients, i => BundleParsing.IsCategoryRef(i.ItemRef)))
+                    {
+                        categorySkipped++;
+                    }
+                    else
+                    {
+                        _monitor.Log(
+                            $"BundleCatalogBuilder: bundle '{bundle.Name}' (room '{bundle.Room}', " +
+                            $"X={bundle.NumberOfSlots}, Y={bundle.Ingredients.Count}) didn't match " +
+                            $"any classification rule. Add a DefaultBundleQuotas entry or skip.",
+                            LogLevel.Warn);
+                        unclassifiedSkipped++;
+                    }
+                    continue;
+                }
+
+                reqs.Add(req);
+            }
+
+            _monitor.Log(
+                $"Bundle requirements built: {reqs.Count} classified " +
+                $"({categorySkipped} category-only skipped, {unclassifiedSkipped} unclassified skipped).",
+                LogLevel.Info);
+            return reqs;
         }
     }
 }

@@ -94,6 +94,125 @@ public sealed class GameplayConfig
             ["CaveCarrot"] = "Mining",
         };
 
+    /// <summary>
+    /// User-configurable per-item bundle pins. Keyed by qualified item id ("(O)24"); value is a
+    /// season name. Used by KIND 2 PerItem bundles only — see <see cref="BundleKind.PerItem"/>.
+    /// User entries OVERRIDE <see cref="DefaultItemSeasonPins"/> on conflict.
+    /// </summary>
+    public Dictionary<string, string> ItemSeasonPins { get; set; } = new();
+
+    /// <summary>
+    /// User-configurable per-bundle cumulative quotas. Keyed by bundle name (vanilla
+    /// Data/Bundles "name" field, e.g. "Crab Pot", "Artisan"); value is a 4-int array of
+    /// cumulative donations required by [Spring, Summer, Fall, Winter] day 28. Used by KIND 3
+    /// Percentage bundles only — see <see cref="BundleKind.Percentage"/>. User entries OVERRIDE
+    /// <see cref="DefaultBundleQuotas"/> on conflict.
+    /// </summary>
+    public Dictionary<string, int[]> BundleQuotas { get; set; } = new();
+
+    /// <summary>
+    /// Design-default per-item season pins for KIND 2 PerItem bundles. Sourced from the
+    /// bundle-gate handoff doc (2026-05-26) — each pin reflects a realistic obtainability
+    /// expectation that an early-run player can hit without late-game investment.
+    /// User <see cref="ItemSeasonPins"/> entries win on conflict.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> DefaultItemSeasonPins { get; } =
+        new Dictionary<string, string>
+        {
+            // --- Construction (Crafts Room, X=Y) ---
+            ["(O)388"] = "Spring",   // Wood
+            ["(O)390"] = "Spring",   // Stone
+            ["(O)709"] = "Summer",   // Hardwood — need an axe upgrade or secret-woods access
+
+            // --- Blacksmith's (Boiler Room, X=Y) ---
+            ["(O)334"] = "Spring",   // Copper Bar
+            ["(O)335"] = "Summer",   // Iron Bar
+            ["(O)336"] = "Fall",     // Gold Bar  — aligns with smelter progression
+
+            // --- Geologist's (Boiler Room, X=Y) ---
+            ["(O)80"]  = "Spring",   // Quartz
+            ["(O)86"]  = "Spring",   // Earth Crystal
+            ["(O)84"]  = "Summer",   // Frozen Tear
+            ["(O)82"]  = "Fall",     // Fire Quartz
+
+            // --- River Fish (Fish Tank, X=Y) ---
+            ["(O)145"] = "Spring",   // Sunfish
+            ["(O)706"] = "Summer",   // Shad
+            ["(O)699"] = "Fall",     // Tiger Trout
+            ["(O)143"] = "Spring",   // Catfish
+
+            // --- Lake Fish (Fish Tank, X=Y) ---
+            ["(O)136"] = "Spring",   // Largemouth Bass
+            ["(O)142"] = "Summer",   // Carp
+            ["(O)700"] = "Fall",     // Bullhead
+            ["(O)698"] = "Summer",   // Sturgeon
+
+            // --- Ocean Fish (Fish Tank, X=Y) ---
+            ["(O)131"] = "Spring",   // Sardine
+            ["(O)130"] = "Summer",   // Tuna
+            ["(O)150"] = "Summer",   // Red Snapper
+            ["(O)701"] = "Fall",     // Tilapia
+
+            // --- Night Fishing (Fish Tank, X=Y) ---
+            ["(O)132"] = "Summer",   // Bream
+            ["(O)140"] = "Fall",     // Walleye
+            ["(O)148"] = "Fall",     // Eel
+
+            // --- Specialty Fish (Fish Tank, X=Y) ---
+            ["(O)128"] = "Summer",   // Pufferfish
+            ["(O)156"] = "Summer",   // Ghostfish — caught in Mines L20+; Spring is tight w/o JP
+            ["(O)164"] = "Fall",     // Sandfish
+            ["(O)734"] = "Summer",   // Woodskip
+
+            // --- Dye (Bulletin, X=Y) ---
+            ["(O)420"] = "Summer",   // Red Mushroom
+            ["(O)397"] = "Spring",   // Sea Urchin
+            ["(O)421"] = "Summer",   // Sunflower
+            ["(O)444"] = "Summer",   // Duck Feather
+            ["(O)62"]  = "Summer",   // Aquamarine
+            ["(O)266"] = "Summer",   // Red Cabbage
+
+            // --- Field Research (Bulletin, X=Y) ---
+            ["(O)422"] = "Winter",   // Purple Mushroom
+            ["(O)392"] = "Winter",   // Nautilus Shell
+            ["(O)702"] = "Spring",   // Chub
+            ["(O)536"] = "Summer",   // Frozen Geode
+
+            // --- Fodder (Bulletin, X=Y) ---
+            ["(O)262"] = "Summer",   // Wheat
+            ["(O)178"] = "Spring",   // Hay
+            ["(O)613"] = "Fall",     // Apple
+
+            // --- Enchanter's (Bulletin, X=Y) ---
+            ["(O)725"] = "Summer",   // Oak Resin
+            ["(O)348"] = "Fall",     // Wine
+            ["(O)446"] = "Fall",     // Rabbit's Foot
+            ["(O)637"] = "Fall",     // Pomegranate
+        };
+
+    /// <summary>
+    /// Design-default cumulative quotas for KIND 3 Percentage bundles. Keyed by vanilla bundle
+    /// name; value is [Spring, Summer, Fall, Winter] day-28 cumulative donation thresholds.
+    /// Each value must be ≤ that bundle's X (numberOfSlots). User <see cref="BundleQuotas"/>
+    /// entries win on conflict.
+    /// </summary>
+    public static IReadOnlyDictionary<string, int[]> DefaultBundleQuotas { get; } =
+        new Dictionary<string, int[]>
+        {
+            // Crafts Room
+            ["Exotic Foraging"] = new[] { 1, 3, 5, 5 },   // X=5 of Y=9
+            // Pantry
+            ["Quality Crops"]   = new[] { 1, 2, 3, 3 },   // X=3 of Y=4
+            ["Animal"]          = new[] { 1, 3, 5, 5 },   // X=5 of Y=6
+            ["Artisan"]         = new[] { 1, 2, 4, 6 },   // X=6 of Y=12
+            // Fish Tank
+            ["Crab Pot"]        = new[] { 1, 3, 5, 5 },   // X=5 of Y=10
+            // Boiler Room
+            ["Adventurer's"]    = new[] { 0, 1, 2, 2 },   // X=2 of Y=5
+            // Bulletin Board
+            ["Chef's"]          = new[] { 0, 1, 2, 3 },   // X=3 of Y=6  — lean-late ramp (user)
+        };
+
     public JpSettings Jp { get; set; } = new JpSettings();
 
     /// <summary>Gold the farmer starts each run with after a reset.</summary>
