@@ -14,7 +14,7 @@ public class GateEvaluatorTests
 
     [Fact]
     public void Week_end_that_is_not_month_end_always_continues()
-        // Spec change 2026-05-26: no weekly fail; championing is opt-in.
+        // Spec change 2026-05-26: no weekly fail; selection is opt-in.
         => Assert.Equal(GateResult.Continue,
             E().EvaluateDayEnd(7, 0, monthlyGatePasses: false, fullCcDone: false));
 

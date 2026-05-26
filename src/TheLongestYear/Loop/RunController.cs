@@ -10,10 +10,10 @@ using CoreSeason = TheLongestYear.Core.Season;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Drives the run loop: syncs RunState from the game date, offers the weekly champion at
-    /// Sunday-night planning, evaluates the day-end gate via RunManager + bundle requirements,
-    /// and executes the action (fail → reset next morning, advance month → consume any day-28
-    /// pre-pick, win → log). Interim JP is banked on run end.
+    /// Drives the run loop: syncs RunState from the game date, opens the Sunday-night planning
+    /// hub with the weekly selection offer, evaluates the day-end gate via RunManager + bundle
+    /// requirements, and executes the action (fail → reset next morning, advance month → consume
+    /// any day-28 pre-pick, win → log). Interim JP is banked on run end.
     /// </summary>
     internal sealed class RunController
     {
@@ -74,19 +74,20 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            // Sync state from the game date; a new month clears championing (the previous-day's
-            // Sunday-night day-28 pre-pick is consumed inside BeginNewMonth → CurrentChampion).
+            // Sync state from the game date; a new month clears the month's selections (the
+            // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
+            // CurrentSelection).
             var season = (CoreSeason)(int)Game1.season;
             if (season != Run.Season)
             {
                 Run.BeginNewMonth(season);
-                // BeginNewMonth may have just installed NextMonthChampion as CurrentChampion;
+                // BeginNewMonth may have just installed NextMonthSelection as CurrentSelection;
                 // the bonus list still reflects last month's season, so re-sample now.
-                if (Run.CurrentChampion.HasValue)
+                if (Run.CurrentSelection.HasValue)
                 {
-                    PopulateBonusItemsForCurrentChampion();
+                    PopulateBonusItemsForCurrentSelection();
                     _monitor.Log(
-                        $"Day-28 pre-pick applied: {Run.CurrentChampion} is the week-1 champion of {season}.",
+                        $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
                         LogLevel.Info);
                 }
             }
@@ -94,9 +95,9 @@ namespace TheLongestYear.Loop
             Run.DayOfMonth = Game1.dayOfMonth;
 
             // Safety net for the FIRST day of a fresh run (Spring 1 of a new run has no previous
-            // day-28 to trigger Sunday-night planning, and the player has no champion yet).
+            // day-28 to trigger Sunday-night planning, and the player has no selection yet).
             if (Run.DayOfMonth == 1 && Run.Season == CoreSeason.Spring
-                && !Run.CurrentChampion.HasValue && Run.OfferPresentedWeek != Run.WeekOfYear)
+                && !Run.CurrentSelection.HasValue && Run.OfferPresentedWeek != Run.WeekOfYear)
             {
                 PresentOffer(targetWeekOfYear: Run.WeekOfYear);
             }
@@ -113,7 +114,7 @@ namespace TheLongestYear.Loop
 
                 case RunAction.AdvanceMonth:
                     _monitor.Log($"Month cleared ({Run.Season}). Advancing.", LogLevel.Info);
-                    break; // game advances the date; OnDayStarted clears championing
+                    break; // game advances the date; OnDayStarted clears the month's selections
 
                 case RunAction.FailReset:
                     AwardInterimJp("run failed");
@@ -128,7 +129,7 @@ namespace TheLongestYear.Loop
             // Sunday-night planning: open the hub at week-end so the player picks for the
             // upcoming week before sleeping. Day-28 case crosses to next season — the hub
             // shows next season's bundles + bonus preview, and the pick is stored on
-            // RunState.NextMonthChampion which BeginNewMonth consumes on tomorrow's
+            // RunState.NextMonthSelection which BeginNewMonth consumes on tomorrow's
             // OnDayStarted. Suppressed on a pending reset (the run is about to end anyway).
             if (!_pendingReset && action != RunAction.Win && Calendar.IsWeekEnd(Run.DayOfMonth))
             {
@@ -151,8 +152,8 @@ namespace TheLongestYear.Loop
             _ => CoreSeason.Spring
         };
 
-        /// <summary>Champion one of this week's offered themes (driven by the UI in Plan 05; debug command now).</summary>
-        public void ChampionByName(string themeName)
+        /// <summary>Select one of this week's offered themes (driven by the UI; debug command + UI).</summary>
+        public void SelectByName(string themeName)
         {
             if (!Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
             {
@@ -160,32 +161,32 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            var offer = ChampionService.OfferForWeek(Run);
+            var offer = SelectionService.OfferForWeek(Run);
             if (!offer.Contains(theme))
             {
                 _monitor.Log($"{theme} is not offered this week. Offer: {string.Join(", ", offer)}.", LogLevel.Warn);
                 return;
             }
 
-            Run.Champion(theme);
-            PopulateBonusItemsForCurrentChampion();
+            Run.Select(theme);
+            PopulateBonusItemsForCurrentSelection();
             var (bonus, liability) = ThemeModifiers.For(theme);
             _monitor.Log(
-                $"Championed {theme} (bonus {bonus}, liability {liability}). " +
+                $"Selected {theme} (bonus {bonus}, liability {liability}). " +
                 $"Bonus items this week: [{string.Join(", ", Run.CurrentWeekBonusItems)}].",
                 LogLevel.Info);
         }
 
-        /// <summary>Sample the per-week bonus list for the current champion and store it on RunState.</summary>
-        private void PopulateBonusItemsForCurrentChampion()
+        /// <summary>Sample the per-week bonus list for the current selection and store it on RunState.</summary>
+        private void PopulateBonusItemsForCurrentSelection()
         {
             Run.CurrentWeekBonusItems.Clear();
-            if (!Run.CurrentChampion.HasValue) return;
+            if (!Run.CurrentSelection.HasValue) return;
 
             int maxCount = BonusListSizeForCurrentSeason();
             var sample = BonusItemSampler.SampleForTheme(
                 Run.Seed, Run.WeekOfYear,
-                Run.CurrentChampion.Value, Run.Season,
+                Run.CurrentSelection.Value, Run.Season,
                 _requirements,
                 IsObtainableInCurrentSeason,
                 maxCount);
@@ -219,11 +220,11 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.</summary>
-        public void PreChampionForNextMonth(Theme theme)
+        public void PreSelectForNextMonth(Theme theme)
         {
-            Run.NextMonthChampion = theme;
+            Run.NextMonthSelection = theme;
             _monitor.Log(
-                $"Pre-pick set: {theme} will be the week-1 champion of {NextSeason(Run.Season)}.",
+                $"Pre-pick set: {theme} will be the week-1 selection of {NextSeason(Run.Season)}.",
                 LogLevel.Info);
         }
 
@@ -238,8 +239,8 @@ namespace TheLongestYear.Loop
         {
             _monitor.Log(
                 $"Run {Run.RunNumber}: {Run.Season} day {Run.DayOfMonth} (week {Run.WeekOfYear}). " +
-                $"Champion={Run.CurrentChampion?.ToString() ?? "none"}, " +
-                $"championedThisMonth=[{string.Join(",", Run.ChampionedThemesThisMonth)}], " +
+                $"Selection={Run.CurrentSelection?.ToString() ?? "none"}, " +
+                $"selectedThisMonth=[{string.Join(",", Run.SelectedThemesThisMonth)}], " +
                 $"donated={Run.DonatedItemIds.Count}, JP banked={_store.State.JunimoPoints}.",
                 LogLevel.Info);
         }
@@ -260,14 +261,14 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            var championingThisOfferMonth = seasonOverride.HasValue
+            var selectionsForOffer = seasonOverride.HasValue
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
-                : Run.ChampionedThemesThisMonth;
-            var offer = ChampionService.OfferForWeek(Run.Seed, week, championingThisOfferMonth);
+                : Run.SelectedThemesThisMonth;
+            var offer = SelectionService.OfferForWeek(Run.Seed, week, selectionsForOffer);
 
             string seasonTag = seasonOverride.HasValue ? $" (for {seasonOverride.Value})" : "";
             _monitor.Log(
-                $"Week {week}{seasonTag} champion offer: {string.Join(" OR ", offer)} (opening planning hub).",
+                $"Week {week}{seasonTag} selection offer: {string.Join(" OR ", offer)} (opening planning hub).",
                 LogLevel.Info);
 
             Run.OfferPresentedWeek = week;

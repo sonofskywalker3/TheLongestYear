@@ -14,7 +14,7 @@ public enum GateResult
 
 /// <summary>
 /// Decides, at the end of a day, whether the run continues, fails, or wins.
-/// Spec change 2026-05-26: there is no weekly fail anymore (championing is now JP-bonus opt-in,
+/// Spec change 2026-05-26: there is no weekly fail anymore (selection is now JP-bonus opt-in,
 /// not a gate). The only gate is monthly: at day 28, every CC item whose obtainable seasons are
 /// EXACTLY {thisSeason} must be donated. Multi-season items don't gate any month except Winter —
 /// at end of Winter there's no future season, so a missing item (single- or multi-season) is fatal.

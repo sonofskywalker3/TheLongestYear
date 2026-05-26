@@ -164,5 +164,5 @@ public sealed class GameplayConfig
     public string WeeklyHubHotkey { get; set; } = "P";
 
     /// <summary>JP multiplier applied to bonus-list items donated during their selected week.</summary>
-    public double ChampionBonusMultiplier { get; set; } = 1.5;
+    public double SelectionBonusMultiplier { get; set; } = 1.5;
 }

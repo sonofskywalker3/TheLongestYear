@@ -50,8 +50,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
-            helper.ConsoleCommands.Add("tly_champion", "Champion one of this week's offered themes. Usage: tly_champion <theme>", this.CmdChampion);
-            helper.ConsoleCommands.Add("tly_offer", "Show this week's champion offer.", this.CmdOffer);
+            helper.ConsoleCommands.Add("tly_select", "Select one of this week's offered themes. Usage: tly_select <theme>", this.CmdSelect);
+            helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
@@ -226,7 +226,7 @@ namespace TheLongestYear
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
                 case "tly_leaktest": this.LeakTest(command, args); break;
-                case "tly_champion": this.CmdChampion(command, args); break;
+                case "tly_select": this.CmdSelect(command, args); break;
                 case "tly_offer": this.CmdOffer(command, args); break;
                 case "tly_donate": this.CmdDonate(command, args); break;
                 case "tly_runstate": this.CmdRunState(command, args); break;
@@ -243,11 +243,11 @@ namespace TheLongestYear
             }
         }
 
-        private void CmdChampion(string command, string[] args)
+        private void CmdSelect(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            if (args.Length < 1) { this.Monitor.Log("Usage: tly_champion <theme>", LogLevel.Warn); return; }
-            _runController.ChampionByName(args[0]);
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme>", LogLevel.Warn); return; }
+            _runController.SelectByName(args[0]);
         }
 
         private void CmdOffer(string command, string[] args)

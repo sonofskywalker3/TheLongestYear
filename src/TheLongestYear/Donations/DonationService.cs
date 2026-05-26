@@ -7,8 +7,8 @@ namespace TheLongestYear.Donations
 {
     /// <summary>
     /// Applies the JP economy to real Community Center activity: rarity-scaled JP per donated item,
-    /// the donated id into the run ledger (so contracts/gates respond), one-time bundle/room
-    /// completion bonuses, and the championship bonus-list multiplier. JP lands in MetaState
+    /// the donated id into the run ledger (so the gate responds), one-time bundle/room
+    /// completion bonuses, and the weekly-selection bonus-list multiplier. JP lands in MetaState
     /// (committed with the next save — never eagerly).
     /// </summary>
     internal sealed class DonationService
@@ -32,8 +32,8 @@ namespace TheLongestYear.Donations
         private RunState Run => _store.Run;
 
         /// <summary>A successful donation of <paramref name="count"/> of an item to the CC.
-        /// Pays base rarity JP; if the player has a championed theme this week AND the donated
-        /// id is in that contract's bonus list, the JP is multiplied by ChampionBonusMultiplier.</summary>
+        /// Pays base rarity JP; if the player has a selected theme this week AND the donated id
+        /// is in that week's bonus list, the JP is multiplied by SelectionBonusMultiplier.</summary>
         public void OnItemDonated(string qualifiedItemId, int count)
         {
             if (string.IsNullOrEmpty(qualifiedItemId) || count <= 0)
@@ -42,27 +42,27 @@ namespace TheLongestYear.Donations
             Rarity rarity = ItemRarityResolver.Resolve(qualifiedItemId, _config.RarityThresholds);
             long baseJp = _jp.PerItem(rarity, Run.WeekOfYear) * count;
 
-            bool bonusApplies = IsChampionedBonusItem(qualifiedItemId);
+            bool bonusApplies = IsSelectedBonusItem(qualifiedItemId);
             long awarded = bonusApplies
-                ? (long)Math.Round(baseJp * _config.ChampionBonusMultiplier, MidpointRounding.AwayFromZero)
+                ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;
 
             _store.State.JunimoPoints += awarded;
             Run.RecordDonation(qualifiedItemId);
 
-            string bonusTag = bonusApplies ? $" (bonus x{_config.ChampionBonusMultiplier})" : "";
+            string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier})" : "";
             _monitor.Log(
                 $"Donated {count}x {qualifiedItemId} ({rarity}) -> +{awarded} JP{bonusTag} (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
         }
 
-        /// <summary>True if the player has a championed theme this week AND the donated id is
-        /// in this week's sampled bonus list (see <see cref="BonusItemSampler"/>). The list is
-        /// populated by <c>RunController.PopulateBonusItemsForCurrentChampion</c> at championing
+        /// <summary>True if the player has a selected theme this week AND the donated id is in
+        /// this week's sampled bonus list (see <see cref="BonusItemSampler"/>). The list is
+        /// populated by <c>RunController.PopulateBonusItemsForCurrentSelection</c> at selection
         /// time and persists in <see cref="RunState.CurrentWeekBonusItems"/>.</summary>
-        private bool IsChampionedBonusItem(string itemId)
+        private bool IsSelectedBonusItem(string itemId)
         {
-            if (!Run.CurrentChampion.HasValue) return false;
+            if (!Run.CurrentSelection.HasValue) return false;
             return Run.CurrentWeekBonusItems.Contains(itemId);
         }
 
