@@ -38,6 +38,17 @@ public class WorldFingerprintTests
     }
 
     [Fact]
+    public void PlacedObjectCount_difference_is_ignored_world_gen_is_nondeterministic()
+    {
+        var a = Baseline();
+        var b = Baseline();
+        b.PlacedObjectCount = a.PlacedObjectCount + 9; // world-gen/mod spawn noise, not a leak
+
+        Assert.Empty(a.Diff(b));
+        Assert.True(a.Matches(b));
+    }
+
+    [Fact]
     public void Multiple_differences_are_all_named()
     {
         var a = Baseline();

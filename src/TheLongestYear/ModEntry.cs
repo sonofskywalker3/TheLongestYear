@@ -121,6 +121,10 @@ namespace TheLongestYear
             _reset.PerformReset(_config.StartingMoney);
             var second = WorldStateProbe.Capture();
 
+            this.Monitor.Log(
+                $"Leak test object counts (informational, non-deterministic world-gen): {first.PlacedObjectCount} vs {second.PlacedObjectCount}.",
+                LogLevel.Info);
+
             var diff = first.Diff(second);
             if (diff.Count == 0)
             {
