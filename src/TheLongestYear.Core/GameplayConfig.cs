@@ -4,4 +4,7 @@ namespace TheLongestYear.Core;
 public sealed class GameplayConfig
 {
     public JpSettings Jp { get; set; } = new JpSettings();
+
+    /// <summary>Gold the farmer starts each run with after a reset.</summary>
+    public int StartingMoney { get; set; } = 500;
 }

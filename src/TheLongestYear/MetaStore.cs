@@ -4,22 +4,33 @@ using TheLongestYear.Core;
 namespace TheLongestYear
 {
     /// <summary>
-    /// Loads and persists <see cref="MetaState"/> as per-save data, so banked progress is
-    /// scoped to one playthrough and commits as part of the game's own save (never eagerly).
+    /// Loads and persists both banked meta-state and the active run-state as per-save data, scoped to
+    /// one playthrough and committed as part of the game's own save (never eagerly) — so neither can be
+    /// save-scummed.
     /// </summary>
     internal sealed class MetaStore
     {
-        private const string DataKey = "meta-state";
+        private const string MetaDataKey = "meta-state";
+        private const string RunDataKey = "run-state";
         private readonly IDataHelper _data;
 
         public MetaState State { get; private set; } = new MetaState();
+        public RunState Run { get; private set; } = new RunState();
 
         public MetaStore(IDataHelper data) => _data = data;
 
-        /// <summary>Load this playthrough's banked progress. Call when a save is loaded.</summary>
-        public void Load() => State = _data.ReadSaveData<MetaState>(DataKey) ?? new MetaState();
+        /// <summary>Load this playthrough's banked progress and active run. Call when a save is loaded.</summary>
+        public void Load()
+        {
+            State = _data.ReadSaveData<MetaState>(MetaDataKey) ?? new MetaState();
+            Run = _data.ReadSaveData<RunState>(RunDataKey) ?? new RunState();
+        }
 
-        /// <summary>Commit banked progress into the save. Call from the game's Saving event.</summary>
-        public void Save() => _data.WriteSaveData(DataKey, State);
+        /// <summary>Commit banked progress and run-state into the save. Call from the game's Saving event.</summary>
+        public void Save()
+        {
+            _data.WriteSaveData(MetaDataKey, State);
+            _data.WriteSaveData(RunDataKey, Run);
+        }
     }
 }

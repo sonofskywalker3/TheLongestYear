@@ -40,4 +40,15 @@ public class MetaStateTests
         Assert.True(s.HasUpgrade("horse_early"));
         Assert.False(s.HasUpgrade("backpack_1"));
     }
+
+    [Fact]
+    public void BackupDone_round_trips_and_defaults_false()
+    {
+        Assert.False(new MetaState().BackupDone);
+
+        var original = new MetaState { BackupDone = true };
+        string json = System.Text.Json.JsonSerializer.Serialize(original);
+        MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
+        Assert.True(restored.BackupDone);
+    }
 }
