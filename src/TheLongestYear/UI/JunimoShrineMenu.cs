@@ -34,6 +34,9 @@ namespace TheLongestYear.UI
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
 
+        // Cached at class load time so the gamepad-button handler doesn't have to recount on every press.
+        private static readonly int CategoryCount = Enum.GetValues(typeof(UpgradeCategory)).Length;
+
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
         private readonly UpgradePurchaseService _purchases;
@@ -206,7 +209,7 @@ namespace TheLongestYear.UI
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
-                if (id >= TabIdBase && id < TabIdBase + 6) { SetActiveCategory((UpgradeCategory)(id - TabIdBase)); return; }
+                if (id >= TabIdBase && id < TabIdBase + CategoryCount) { SetActiveCategory((UpgradeCategory)(id - TabIdBase)); return; }
                 if (id == ScrollUpId) { Scroll(-1); return; }
                 if (id == ScrollDownId) { Scroll(+1); return; }
                 if (id >= RowIdBase && id < RowIdBase + _rowsPerPage)
