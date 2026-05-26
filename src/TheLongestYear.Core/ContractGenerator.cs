@@ -5,48 +5,59 @@ using System.Linq;
 namespace TheLongestYear.Core;
 
 /// <summary>
-/// Builds a run's <see cref="YearPlan"/> by partitioning the CC ground truth into
-/// (season, theme) contracts. Spec change 2026-05-26 (round 2): placement is now a HARD
-/// per-item assignment (every CC item has one assigned season, decided here), and the gate
-/// requires every item assigned to a season to be donated by that season's end.
+/// Builds a run's <see cref="YearPlan"/>. Two-stage process:
 ///
-/// Algorithm:
-///   1. Per-item override (config.SeasonOverrides): if a pinned season is in the item's
-///      obtainable set, use it unconditionally. Otherwise:
-///   2. Sort items deterministically — single-season first (force-placed in their only season),
-///      then multi-season items in COMMON-first rarity order, with id alpha as the final tie.
-///      Common-first means easy items claim earlier seasons; rarer items get pushed later
-///      by the cap.
-///   3. Place each item in its LEAST-LOADED under-cap obtainable season; on a tie go to the
-///      EARLIEST candidate. This spreads year-round items across the year (so "copper bar
-///      Spring, iron Summer, gold Fall" falls out for free given the rarity-ASC sort and
-///      enough Mining items already present).
-///   4. If every candidate is at cap, place in the EARLIEST obtainable season anyway. We never
-///      drop items: every CC item MUST land somewhere or Win becomes unreachable.
+///   1. <b>Per-item pinning (deterministic).</b> Sort items single-season-first then common-first
+///      by rarity, place each into its least-loaded under-cap obtainable season; ties go to the
+///      earliest candidate; force-place in earliest when all candidates are at cap. Seed is
+///      ignored for placement. Overrides win over the algorithm if the pinned season is
+///      obtainable for the item.
 ///
-/// Determinism: the seed parameter is unused for placement (kept in the API so the existing
-/// reroll plumbing still compiles). Two callers with the same catalog + overrides get the
-/// same plan. The user reviews the assignment via the dump-plan log emitted by RunController.
+///   2. <b>Per-contract bonus sample (seed-driven).</b> For each (season, theme) pool, randomly
+///      sample <c>BonusListSizeBySeason[season]</c> items as the per-run bonus list. The sample
+///      re-rolls every reset (RunController calls Generate with a fresh seed), which is the
+///      "bundle shuffle" the user asked for.
+///
+/// Gate requirement (how many pool items the player needs to donate to clear the contract) is
+/// set from <see cref="GameplayConfig.GateRequirementBySeason"/> and capped at pool size.
 /// </summary>
 public sealed class ContractGenerator
 {
-    private static readonly int[] DefaultCapBySeason = { 4, 5, 6, 9 };
+    private static readonly int[] DefaultCapBySeason = { 15, 15, 15, 15 };
+    private static readonly int[] DefaultGateBySeason = { 2, 3, 4, 4 };
+    private static readonly int[] DefaultBonusBySeason = { 4, 5, 6, 7 };
     private static readonly IReadOnlyDictionary<string, Season> EmptyOverrides =
         new Dictionary<string, Season>();
 
     private readonly int[] _capBySeason;
+    private readonly int[] _gateBySeason;
+    private readonly int[] _bonusBySeason;
     private readonly IReadOnlyDictionary<string, Season> _overrides;
 
-    public ContractGenerator() : this(DefaultCapBySeason, EmptyOverrides) { }
+    public ContractGenerator()
+        : this(DefaultCapBySeason, DefaultGateBySeason, DefaultBonusBySeason, EmptyOverrides) { }
 
-    public ContractGenerator(int[] capBySeason) : this(capBySeason, EmptyOverrides) { }
+    public ContractGenerator(int[] capBySeason)
+        : this(capBySeason, DefaultGateBySeason, DefaultBonusBySeason, EmptyOverrides) { }
 
     public ContractGenerator(int[] capBySeason, IReadOnlyDictionary<string, Season> overrides)
+        : this(capBySeason, DefaultGateBySeason, DefaultBonusBySeason, overrides) { }
+
+    public ContractGenerator(
+        int[] capBySeason,
+        int[] gateBySeason,
+        int[] bonusBySeason,
+        IReadOnlyDictionary<string, Season> overrides)
     {
         if (capBySeason == null || capBySeason.Length != Calendar.MonthsPerYear)
-            throw new ArgumentException(
-                $"capBySeason must be length {Calendar.MonthsPerYear}.", nameof(capBySeason));
+            throw new ArgumentException($"capBySeason must be length {Calendar.MonthsPerYear}.", nameof(capBySeason));
+        if (gateBySeason == null || gateBySeason.Length != Calendar.MonthsPerYear)
+            throw new ArgumentException($"gateBySeason must be length {Calendar.MonthsPerYear}.", nameof(gateBySeason));
+        if (bonusBySeason == null || bonusBySeason.Length != Calendar.MonthsPerYear)
+            throw new ArgumentException($"bonusBySeason must be length {Calendar.MonthsPerYear}.", nameof(bonusBySeason));
         _capBySeason = capBySeason;
+        _gateBySeason = gateBySeason;
+        _bonusBySeason = bonusBySeason;
         _overrides = overrides ?? EmptyOverrides;
     }
 
@@ -55,15 +66,11 @@ public sealed class ContractGenerator
         if (ccItems is null)
             throw new ArgumentNullException(nameof(ccItems));
 
-        // Empty (season, theme) bins.
         var grouped = new Dictionary<(Season, Theme), List<string>>();
         foreach (Season s in Enum.GetValues(typeof(Season)))
             foreach (Theme t in Enum.GetValues(typeof(Theme)))
                 grouped[(s, t)] = new List<string>();
 
-        // Deterministic order: single-season-first (no flexibility), then COMMON-first by rarity
-        // (easy items earlier), with id alpha as the final tie. No seed-driven shuffle — every
-        // run with the same catalog + overrides gets the same partition (spec 2026-05-26).
         var ordered = ccItems
             .OrderBy(i => i.ObtainableSeasons.Count)
             .ThenBy(i => RaritySortKey(i.Rarity))
@@ -76,31 +83,29 @@ public sealed class ContractGenerator
             grouped[(chosen, item.Theme)].Add(item.Id);
         }
 
+        // Bonus sample is seed-driven so each reset re-rolls the bonus visibility.
+        var rng = new Random(seed);
         var contracts = new List<Contract>(grouped.Count);
         foreach (var kvp in grouped)
         {
             var (season, theme) = kvp.Key;
-            var (bonus, liability) = ThemeModifiers.For(theme);
-            contracts.Add(new Contract(season, theme, kvp.Value, bonus, liability));
+            var (bonusModId, liabilityModId) = ThemeModifiers.For(theme);
+            int seasonIdx = (int)season;
+            int gate = _gateBySeason[seasonIdx];
+            int bonusSize = _bonusBySeason[seasonIdx];
+            var bonusSample = SampleWithoutReplacement(kvp.Value, bonusSize, rng);
+            contracts.Add(new Contract(season, theme, kvp.Value, gate, bonusSample, bonusModId, liabilityModId));
         }
 
         return new YearPlan(contracts);
     }
 
-    /// <summary>
-    /// Pick the season for this item: pinned override wins; otherwise least-loaded under-cap
-    /// candidate (earliest on tie); fallback to earliest obtainable if all over cap. Single-
-    /// season items collapse to their only candidate naturally.
-    /// </summary>
     private Season ChooseSeason(
         CcItem item,
         IReadOnlyDictionary<(Season, Theme), List<string>> grouped)
     {
-        // Stable candidate order (earliest → latest). Using `<` in the load comparison keeps
-        // the FIRST (earliest) match on ties.
         var candidates = item.ObtainableSeasons.OrderBy(s => (int)s).ToList();
 
-        // Pinned override?
         if (_overrides.TryGetValue(item.Id, out Season pinned) && candidates.Contains(pinned))
             return pinned;
 
@@ -112,7 +117,7 @@ public sealed class ContractGenerator
             int cap = _capBySeason[(int)s];
             if (load >= cap)
                 continue;
-            if (load < bestLoad)         // strict < so the EARLIEST tied load wins
+            if (load < bestLoad)
             {
                 best = s;
                 bestLoad = load;
@@ -122,8 +127,23 @@ public sealed class ContractGenerator
         if (best.HasValue)
             return best.Value;
 
-        // Every candidate is at cap — never drop. Force-place in the earliest obtainable season.
         return candidates[0];
+    }
+
+    /// <summary>Fisher-Yates partial shuffle: returns up to <paramref name="n"/> random items
+    /// from <paramref name="source"/> without replacement.</summary>
+    private static List<string> SampleWithoutReplacement(List<string> source, int n, Random rng)
+    {
+        if (n <= 0 || source.Count == 0)
+            return new List<string>();
+        n = Math.Min(n, source.Count);
+        var pool = new List<string>(source);
+        for (int i = 0; i < n; i++)
+        {
+            int j = i + rng.Next(pool.Count - i);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+        return pool.GetRange(0, n);
     }
 
     private static int RaritySortKey(Rarity rarity) => rarity switch

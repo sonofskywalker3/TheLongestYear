@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using Xunit;
@@ -29,29 +30,72 @@ public class CcItemTests
 
 public class ContractSatisfactionTests
 {
-    private static Contract Make(params string[] required)
-        => new Contract(Season.Spring, Theme.Farming, required, "crop_growth_up", "forage_drops_off");
+    private static Contract Make(int gate, IEnumerable<string>? bonus = null, params string[] pool)
+        => new Contract(
+            Season.Spring, Theme.Farming, pool, gate,
+            bonus ?? Array.Empty<string>(),
+            "crop_growth_up", "forage_drops_off");
 
     [Fact]
-    public void Contract_is_satisfied_when_all_required_ids_donated()
+    public void Contract_is_satisfied_when_gate_count_of_pool_donated()
     {
-        var c = Make("Parsnip", "Potato");
-        var donated = new HashSet<string> { "Parsnip", "Potato", "Daffodil" };
+        var c = Make(gate: 2, pool: new[] { "Parsnip", "Potato", "Daffodil", "Tulip" });
+        var donated = new HashSet<string> { "Parsnip", "Potato" };
         Assert.True(c.IsSatisfiedBy(donated));
     }
 
     [Fact]
-    public void Contract_is_not_satisfied_when_an_item_is_missing()
+    public void Contract_satisfied_with_one_extra_pool_item_donated()
     {
-        var c = Make("Parsnip", "Potato");
+        var c = Make(gate: 2, pool: new[] { "Parsnip", "Potato", "Daffodil", "Tulip" });
+        var donated = new HashSet<string> { "Parsnip", "Potato", "Tulip" };
+        Assert.True(c.IsSatisfiedBy(donated));
+    }
+
+    [Fact]
+    public void Contract_not_satisfied_below_gate_count()
+    {
+        var c = Make(gate: 2, pool: new[] { "Parsnip", "Potato", "Daffodil" });
         var donated = new HashSet<string> { "Parsnip" };
         Assert.False(c.IsSatisfiedBy(donated));
     }
 
     [Fact]
-    public void Empty_contract_is_always_satisfied()
+    public void Donations_outside_pool_dont_count()
     {
-        var c = Make();
+        var c = Make(gate: 2, pool: new[] { "Parsnip", "Potato" });
+        var donated = new HashSet<string> { "Parsnip", "Salmon", "CopperBar" };   // only Parsnip is in pool
+        Assert.False(c.IsSatisfiedBy(donated));
+    }
+
+    [Fact]
+    public void Empty_pool_is_trivially_satisfied()
+    {
+        var c = Make(gate: 0);   // pool also empty
         Assert.True(c.IsSatisfiedBy(new HashSet<string>()));
+    }
+
+    [Fact]
+    public void Gate_caps_at_pool_size()
+    {
+        // Configured gate of 5 but only 2 items in pool -> effective gate is 2.
+        var c = Make(gate: 5, pool: new[] { "Parsnip", "Potato" });
+        Assert.Equal(2, c.GateRequirement);
+        var donated = new HashSet<string> { "Parsnip", "Potato" };
+        Assert.True(c.IsSatisfiedBy(donated));
+    }
+
+    [Fact]
+    public void Bonus_items_default_to_empty_when_omitted()
+    {
+        var c = Make(gate: 1, pool: new[] { "Parsnip" });
+        Assert.Empty(c.BonusItemIds);
+    }
+
+    [Fact]
+    public void Bonus_items_carry_through_constructor()
+    {
+        var c = Make(gate: 1, bonus: new[] { "Daffodil" }, pool: new[] { "Parsnip", "Daffodil" });
+        Assert.Contains("Daffodil", c.BonusItemIds);
     }
 }

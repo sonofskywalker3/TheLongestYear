@@ -145,7 +145,8 @@ public class ContractGeneratorTests
             items.Add(new CcItem(
                 $"flex-{i}", Theme.Foraging, Rarity.Common, AllYear()));
 
-        var plan = new ContractGenerator().Generate(items, seed: 1);
+        // Explicit cap of 4 for Spring (default is now {15,15,15,15} - structural only).
+        var plan = new ContractGenerator(new[] { 4, 5, 6, 9 }).Generate(items, seed: 1);
         int springForagingCount = plan.Get(Season.Spring, Theme.Foraging).RequiredItemIds.Count;
         Assert.True(springForagingCount <= 4,
             $"Spring Foraging should respect the cap (4); got {springForagingCount}.");
@@ -224,6 +225,76 @@ public class ContractGeneratorTests
         var plan = new ContractGenerator(new[] { 4, 5, 6, 9 }, overrides).Generate(items, seed: 1);
 
         Assert.Contains("ginger", plan.Get(Season.Fall, Theme.Foraging).RequiredItemIds);
+    }
+
+    [Fact]
+    public void Gate_requirement_set_per_season_from_config()
+    {
+        // Use a catalog with > N items per (season, theme) so the cap doesn't shrink the gate.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 16; i++)
+            items.Add(new CcItem($"flex-{i}", Theme.Foraging, Rarity.Common, AllYear()));
+        var plan = new ContractGenerator(
+            new[] { 15, 15, 15, 15 },
+            new[] { 2, 3, 4, 4 },
+            new[] { 4, 5, 6, 7 },
+            new Dictionary<string, Season>()
+        ).Generate(items, seed: 1);
+
+        Assert.Equal(2, plan.Get(Season.Spring, Theme.Foraging).GateRequirement);
+        Assert.Equal(3, plan.Get(Season.Summer, Theme.Foraging).GateRequirement);
+        Assert.Equal(4, plan.Get(Season.Fall, Theme.Foraging).GateRequirement);
+        Assert.Equal(4, plan.Get(Season.Winter, Theme.Foraging).GateRequirement);
+    }
+
+    [Fact]
+    public void Bonus_list_size_scales_by_season_and_caps_at_pool_size()
+    {
+        // 16 items year-round Foraging spread ~4 per season -> bonus sample request {4,5,6,7}
+        // gets clamped to the pool size in each case.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 16; i++)
+            items.Add(new CcItem($"flex-{i}", Theme.Foraging, Rarity.Common, AllYear()));
+        var plan = new ContractGenerator().Generate(items, seed: 1);
+
+        // Pool is ~4 per season, so bonus list is min(configured, pool) = min(4..7, 4) = 4.
+        foreach (Season s in Enum.GetValues(typeof(Season)))
+        {
+            var c = plan.Get(s, Theme.Foraging);
+            Assert.True(c.BonusItemIds.Count <= c.RequiredItemIds.Count,
+                $"{s} bonus ({c.BonusItemIds.Count}) exceeds pool ({c.RequiredItemIds.Count}).");
+        }
+    }
+
+    [Fact]
+    public void Bonus_items_are_a_subset_of_the_pool()
+    {
+        var items = new List<CcItem>();
+        for (int i = 0; i < 16; i++)
+            items.Add(new CcItem($"flex-{i}", Theme.Foraging, Rarity.Common, AllYear()));
+        var plan = new ContractGenerator().Generate(items, seed: 1);
+
+        foreach (var c in plan.Contracts)
+            foreach (var bonus in c.BonusItemIds)
+                Assert.Contains(bonus, c.RequiredItemIds);
+    }
+
+    [Fact]
+    public void Bonus_sample_changes_with_seed()
+    {
+        // Per-run shuffle: different seeds produce different bonus samples (placement unchanged).
+        var items = new List<CcItem>();
+        for (int i = 0; i < 30; i++)
+            items.Add(new CcItem($"flex-{i}", Theme.Foraging, Rarity.Common, AllYear()));
+
+        var a = new ContractGenerator().Generate(items, seed: 1);
+        var b = new ContractGenerator().Generate(items, seed: 2);
+
+        string SerializeBonus(YearPlan p) => string.Join("|", p.Contracts
+            .OrderBy(c => (int)c.Season).ThenBy(c => (int)c.Theme)
+            .Select(c => $"{c.Season}.{c.Theme}:{string.Join(",", c.BonusItemIds)}"));
+
+        Assert.NotEqual(SerializeBonus(a), SerializeBonus(b));
     }
 
     private static HashSet<Season> AllYear()

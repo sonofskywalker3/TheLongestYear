@@ -122,4 +122,24 @@ public sealed class GameplayConfig
     /// least-loaded fallback hits an edge case. User SeasonOverrides ignore the cap by design.
     /// </summary>
     public int[] ContractItemCapBySeason { get; set; } = new[] { 15, 15, 15, 15 };
+
+    /// <summary>
+    /// How many items from a (season, theme) contract pool the player must donate to clear that
+    /// contract's gate. Indices match Season enum. Spec 2026-05-26 round 5: gate moved from
+    /// "all pool items required" to "N from pool"; harder seasons demand more. Each contract
+    /// caps its effective N at the pool size, so tiny pools (e.g. Winter Mining with 2 items)
+    /// stay satisfiable even if the configured N is larger.
+    /// </summary>
+    public int[] GateRequirementBySeason { get; set; } = new[] { 2, 3, 4, 4 };
+
+    /// <summary>
+    /// How many bonus items per (season, theme) contract are shown on the planning hub. These
+    /// items pay the championship JP multiplier when donated during their championed week.
+    /// Defaults scale +1 per season so the player sees more bonus options later in the year.
+    /// Each contract caps its effective sample at the pool size.
+    /// </summary>
+    public int[] BonusListSizeBySeason { get; set; } = new[] { 4, 5, 6, 7 };
+
+    /// <summary>JP multiplier applied to bonus-list items donated during their championed week.</summary>
+    public double ChampionBonusMultiplier { get; set; } = 1.5;
 }
