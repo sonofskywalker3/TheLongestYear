@@ -168,4 +168,45 @@ public class RunStateTests
         RunState restored = System.Text.Json.JsonSerializer.Deserialize<RunState>(json)!;
         Assert.Equal(7, restored.OfferPresentedWeek);
     }
+
+    [Fact]
+    public void BeginNewMonth_clears_CurrentWeekBonusItems()
+    {
+        var run = new RunState { Season = Season.Spring };
+        run.CurrentWeekBonusItems.Add("(O)24");
+        run.BeginNewMonth(Season.Summer);
+        Assert.Empty(run.CurrentWeekBonusItems);
+    }
+
+    [Fact]
+    public void BeginNewMonth_consumes_NextMonthChampion_as_current()
+    {
+        // Day 28 pre-pick -> NextMonthChampion. Tomorrow's OnDayStarted calls BeginNewMonth,
+        // which should promote it to CurrentChampion and clear NextMonthChampion.
+        var run = new RunState { Season = Season.Spring };
+        run.NextMonthChampion = Theme.Fishing;
+
+        run.BeginNewMonth(Season.Summer);
+
+        Assert.Equal(Theme.Fishing, run.CurrentChampion);
+        Assert.Contains(Theme.Fishing, run.ChampionedThemesThisMonth);
+        Assert.Null(run.NextMonthChampion);
+    }
+
+    [Fact]
+    public void BeginNewMonth_with_no_NextMonthChampion_leaves_current_null()
+    {
+        var run = new RunState { Season = Season.Spring };
+        run.CurrentChampion = Theme.Foraging; // last month's champion
+        run.BeginNewMonth(Season.Summer);
+        Assert.Null(run.CurrentChampion);
+    }
+
+    [Fact]
+    public void BeginNewRun_clears_NextMonthChampion()
+    {
+        var run = new RunState { NextMonthChampion = Theme.Mining };
+        run.BeginNewRun(seed: 1);
+        Assert.Null(run.NextMonthChampion);
+    }
 }

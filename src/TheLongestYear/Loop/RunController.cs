@@ -54,6 +54,26 @@ namespace TheLongestYear.Loop
         public bool IsObtainableForCurrentSeason(string itemId)
             => IsObtainableInCurrentSeason(itemId);
 
+        /// <summary>Like <see cref="IsObtainableForCurrentSeason"/> but for an arbitrary season —
+        /// used by the Sunday-night day-28 hub when previewing NEXT season's bonus pool.</summary>
+        public bool IsObtainableInSeason(string itemId, CoreSeason season)
+        {
+            foreach (var item in _catalog)
+                if (item.Id == itemId)
+                    return item.ObtainableSeasons.Contains(season);
+            return true;
+        }
+
+        /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.
+        /// <see cref="RunState.BeginNewMonth"/> consumes this on tomorrow's OnDayStarted.</summary>
+        public void PreChampionForNextMonth(Theme theme)
+        {
+            Run.NextMonthChampion = theme;
+            _monitor.Log(
+                $"Pre-pick set: {theme} will be the week-1 champion of {NextSeason(Run.Season)}.",
+                LogLevel.Info);
+        }
+
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
             System.Collections.Generic.IReadOnlyList<CcItem> catalog,
             System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null)
@@ -95,20 +115,32 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            // Sync state from the game date; a new month clears championing (incl. the current champion).
+            // Sync state from the game date; a new month clears championing (the previous-day's
+            // Sunday-night day-28 pre-pick is consumed inside BeginNewMonth → CurrentChampion).
             var season = (CoreSeason)(int)Game1.season;
             if (season != Run.Season)
+            {
                 Run.BeginNewMonth(season);
+                // BeginNewMonth may have just installed NextMonthChampion as CurrentChampion;
+                // the bonus list still reflects last month's season, so re-sample now.
+                if (Run.CurrentChampion.HasValue)
+                {
+                    PopulateBonusItemsForCurrentChampion();
+                    _monitor.Log(
+                        $"Day-28 pre-pick applied: {Run.CurrentChampion} is the week-1 champion of {season}.",
+                        LogLevel.Info);
+                }
+            }
             Run.Season = season;
             Run.DayOfMonth = Game1.dayOfMonth;
 
-            // Hub on Monday morning at week-start. TODO(2026-05-26): move to Sunday night per
-            // user request; needs careful handling of day-28 cross-season transitions so the
-            // hub picks for next season's offer pool rather than the (already-championed) current.
-            if (IsWeekStart(Run.DayOfMonth))
+            // Safety net for the FIRST day of a fresh run (Spring 1 of a new run has no previous
+            // day-28 to trigger Sunday-night planning, and the player has no champion yet). Only
+            // open here if this is week 1 day 1 AND no champion is set yet.
+            if (Run.DayOfMonth == 1 && Run.Season == CoreSeason.Spring
+                && !Run.CurrentChampion.HasValue && Run.OfferPresentedWeek != Run.WeekOfYear)
             {
-                Run.CurrentChampion = null;
-                PresentOffer();
+                PresentOffer(targetWeekOfYear: Run.WeekOfYear);
             }
         }
 
@@ -135,7 +167,32 @@ namespace TheLongestYear.Loop
                     AwardInterimJp("run WON — loop broken");
                     break;
             }
+
+            // Sunday-night planning: open the hub at week-end so the player picks for the
+            // upcoming week before sleeping. Day-28 case crosses to next season — the hub
+            // shows next season's bundles + bonus preview, and the pick is stored on
+            // RunState.NextMonthChampion which BeginNewMonth consumes on tomorrow's
+            // OnDayStarted. Suppressed on a pending reset (the run is about to end anyway).
+            if (!_pendingReset && action != RunAction.Win && Calendar.IsWeekEnd(Run.DayOfMonth))
+            {
+                bool isMonthEnd = Calendar.IsMonthEnd(Run.DayOfMonth);
+                CoreSeason? seasonOverride = isMonthEnd ? (CoreSeason?)NextSeason(Run.Season) : null;
+                // Next week-of-year — for day 28 of Winter we'd cross past the year so skip.
+                int? targetWeek = isMonthEnd
+                    ? (Run.Season == CoreSeason.Winter ? (int?)null : Run.WeekOfYear + 1)
+                    : Run.WeekOfYear + 1;
+                if (targetWeek.HasValue)
+                    PresentOffer(targetWeekOfYear: targetWeek.Value, seasonOverride: seasonOverride);
+            }
         }
+
+        private static CoreSeason NextSeason(CoreSeason s) => s switch
+        {
+            CoreSeason.Spring => CoreSeason.Summer,
+            CoreSeason.Summer => CoreSeason.Fall,
+            CoreSeason.Fall => CoreSeason.Winter,
+            _ => CoreSeason.Spring
+        };
 
         /// <summary>Champion one of this week's offered themes (driven by the UI in Plan 05; debug command now).</summary>
         public void ChampionByName(string themeName)
@@ -304,23 +361,34 @@ namespace TheLongestYear.Loop
             _launcher?.OpenWeeklyHub();
         }
 
-        /// <summary>Log this week's champion offer (driven by the UI in Plan 05; debug command + week-start now).</summary>
-        public void PresentOffer()
+        /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
+        /// <c>Run.WeekOfYear + 1</c> (and a <paramref name="seasonOverride"/> on day 28) so the
+        /// offer pool reflects what the player is actually choosing for.</summary>
+        public void PresentOffer(int? targetWeekOfYear = null, CoreSeason? seasonOverride = null)
         {
-            // The hub opens at most once per week. OfferPresentedWeek tracks the last week we presented.
-            if (Run.OfferPresentedWeek == Run.WeekOfYear)
+            int week = targetWeekOfYear ?? Run.WeekOfYear;
+
+            // Guard: at most one presentation per target week. Refresh-button reroll uses Reroll()
+            // which sets OfferPresentedWeek = -1 to bypass this.
+            if (Run.OfferPresentedWeek == week)
             {
-                _monitor.Log($"PresentOffer: already shown this week ({Run.WeekOfYear}), skipping.", LogLevel.Trace);
+                _monitor.Log($"PresentOffer: already shown for week {week}, skipping.", LogLevel.Trace);
                 return;
             }
 
-            var offer = ChampionService.OfferForWeek(Run);
+            // For cross-season (day 28) the new month's championing slate is empty.
+            var championingThisOfferMonth = seasonOverride.HasValue
+                ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
+                : Run.ChampionedThemesThisMonth;
+            var offer = ChampionService.OfferForWeek(Run.Seed, week, championingThisOfferMonth);
+
+            string seasonTag = seasonOverride.HasValue ? $" (for {seasonOverride.Value})" : "";
             _monitor.Log(
-                $"Week {Run.WeekOfYear} champion offer: {string.Join(" OR ", offer)} (opening planning hub).",
+                $"Week {week}{seasonTag} champion offer: {string.Join(" OR ", offer)} (opening planning hub).",
                 LogLevel.Info);
 
-            Run.OfferPresentedWeek = Run.WeekOfYear;
-            _launcher?.OpenWeeklyHub();
+            Run.OfferPresentedWeek = week;
+            _launcher?.OpenWeeklyHub(seasonOverride);
         }
 
         private void AwardInterimJp(string reason)

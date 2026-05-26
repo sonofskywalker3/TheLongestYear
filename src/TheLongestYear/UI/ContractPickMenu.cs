@@ -9,6 +9,7 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Loop;
+using CoreSeason = TheLongestYear.Core.Season;
 
 namespace TheLongestYear.UI
 {
@@ -63,6 +64,15 @@ namespace TheLongestYear.UI
         private readonly RunState _run;
         private readonly IReadOnlyList<BundleRequirement> _requirements;
 
+        /// <summary>Season the menu's bundle progress + bonus preview reflect. May be NEXT season
+        /// (Sunday-night day-28 case) — see <see cref="_isPreChampionForNextMonth"/>.</summary>
+        private readonly CoreSeason _offerSeason;
+
+        /// <summary>True when this hub is for next-month's week 1 (player is pre-picking before
+        /// sleeping on day 28). The pick routes through <see cref="RunController.PreChampionForNextMonth"/>
+        /// rather than the normal current-week champion path.</summary>
+        private readonly bool _isPreChampionForNextMonth;
+
         private IReadOnlyList<Theme> _offer;
 
         private ClickableComponent _leftCard;
@@ -85,7 +95,8 @@ namespace TheLongestYear.UI
         private bool _themePicked = false;
 
         public ContractPickMenu(IMonitor monitor, RunController runController, GameplayConfig config,
-            RunState run, IReadOnlyList<BundleRequirement> requirements, IReadOnlyList<Theme> offer)
+            RunState run, IReadOnlyList<BundleRequirement> requirements, IReadOnlyList<Theme> offer,
+            CoreSeason? offerSeason = null, bool isPreChampionForNextMonth = false)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
         {
             _monitor = monitor;
@@ -94,6 +105,8 @@ namespace TheLongestYear.UI
             _run = run;
             _requirements = requirements ?? new List<BundleRequirement>();
             _offer = offer ?? new List<Theme>();
+            _offerSeason = offerSeason ?? run.Season;
+            _isPreChampionForNextMonth = isPreChampionForNextMonth;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
             catch (Exception) { _junimoTexture = null; }
@@ -154,11 +167,13 @@ namespace TheLongestYear.UI
             if (theme == null) return;
 
             int maxCount = _runController.BonusListSizeForCurrentSeason();
+            // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
+            int week = _isPreChampionForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
             IReadOnlyList<string> sample = BonusItemSampler.SampleForTheme(
-                _run.Seed, _run.WeekOfYear,
-                theme.Value, _run.Season,
+                _run.Seed, week,
+                theme.Value, _offerSeason,
                 _requirements,
-                _runController.IsObtainableForCurrentSeason,
+                id => _runController.IsObtainableInSeason(id, _offerSeason),
                 maxCount);
 
             foreach (string id in sample)
@@ -362,7 +377,10 @@ namespace TheLongestYear.UI
         private void ConfirmChampion(Theme theme)
         {
             _themePicked = true;
-            _runController.ChampionByName(theme.ToString());
+            if (_isPreChampionForNextMonth)
+                _runController.PreChampionForNextMonth(theme);
+            else
+                _runController.ChampionByName(theme.ToString());
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }
@@ -470,7 +488,7 @@ namespace TheLongestYear.UI
                 string badge = BundleSeasonBadge(br, donated);
 
                 string line = $"  {br.Name}  {have}/{need}";
-                Color rowColor = br.IsSatisfiedAtSeasonEnd(_run.Season, donated)
+                Color rowColor = br.IsSatisfiedAtSeasonEnd(_offerSeason, donated)
                     ? Game1.textColor
                     : liabilityColor;
                 Utility.drawTextWithShadow(b, line, Game1.smallFont,
@@ -497,15 +515,14 @@ namespace TheLongestYear.UI
             DrawBonusIcons(b, bonus, bonusBounds);
         }
 
-        /// <summary>Status text for a bundle at the current season — e.g. "needs 1 more for Spring"
-        /// or empty if the gate is already passed at the current season's checkpoint.</summary>
+        /// <summary>Status text for a bundle at <see cref="_offerSeason"/> — e.g. "needs 1 more
+        /// for Spring" or empty if the gate is already passed at that season's checkpoint.</summary>
         private string BundleSeasonBadge(BundleRequirement br, ISet<string> donated)
         {
             switch (br.Kind)
             {
                 case BundleKind.Seasonal:
-                    // If this is the season's bundle, show what's missing.
-                    if (br.SeasonalSeason == _run.Season)
+                    if (br.SeasonalSeason == _offerSeason)
                     {
                         int missing = br.Ingredients.Count(i => !donated.Contains(i));
                         if (missing > 0) return $"  ← needs {missing} this month";
@@ -513,17 +530,16 @@ namespace TheLongestYear.UI
                     return "";
 
                 case BundleKind.PerItem:
-                    // Items pinned ≤ current season and undonated.
                     int dueMissing = br.ItemSeasonPins!.Count(kv =>
-                        (int)kv.Value <= (int)_run.Season && !donated.Contains(kv.Key));
+                        (int)kv.Value <= (int)_offerSeason && !donated.Contains(kv.Key));
                     if (dueMissing > 0) return $"  ← needs {dueMissing} this month";
                     return "";
 
                 case BundleKind.Percentage:
-                    int required = br.CumulativeRequiredBySeason![(int)_run.Season];
+                    int required = br.CumulativeRequiredBySeason![(int)_offerSeason];
                     int have = br.Ingredients.Count(donated.Contains);
                     int delta = required - have;
-                    if (delta > 0) return $"  ← needs {delta} more by {_run.Season}";
+                    if (delta > 0) return $"  ← needs {delta} more by {_offerSeason}";
                     return "";
 
                 default:

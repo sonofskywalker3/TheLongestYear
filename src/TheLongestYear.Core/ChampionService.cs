@@ -18,21 +18,32 @@ public static class ChampionService
 
     /// <summary>
     /// Up to <see cref="OfferSize"/> distinct themes not yet championed this month, seeded-deterministic.
-    /// (Plan 06 will further restrict to themes completable that week.)
+    /// Convenience overload that reads (seed, week, championing) from the run.
     /// </summary>
     public static IReadOnlyList<Theme> OfferForWeek(RunState run)
     {
-        if (run is null)
-            throw new ArgumentNullException(nameof(run));
+        if (run is null) throw new ArgumentNullException(nameof(run));
+        return OfferForWeek(run.Seed, run.WeekOfYear, run.ChampionedThemesThisMonth);
+    }
 
-        // Stable candidate order, then a seeded shuffle keyed by (seed, week).
+    /// <summary>
+    /// Explicit form for the Sunday-night cross-month case: the caller can pass
+    /// <c>weekOfYear + 1</c> and an empty <paramref name="alreadyChampionedThisMonth"/> so the
+    /// offer for next week of next month is fresh (no current-month exclusions).
+    /// </summary>
+    public static IReadOnlyList<Theme> OfferForWeek(
+        int seed, int weekOfYear, IReadOnlyCollection<Theme> alreadyChampionedThisMonth)
+    {
+        var championed = alreadyChampionedThisMonth ?? Array.Empty<Theme>();
+        var championedSet = new HashSet<Theme>(championed);
+
         List<Theme> candidates = Enum.GetValues(typeof(Theme))
             .Cast<Theme>()
-            .Where(t => !run.IsChampioned(t))
+            .Where(t => !championedSet.Contains(t))
             .OrderBy(t => (int)t)
             .ToList();
 
-        var rng = new Random(run.Seed ^ (run.WeekOfYear * WeekSaltPrime));
+        var rng = new Random(seed ^ (weekOfYear * WeekSaltPrime));
         for (int i = candidates.Count - 1; i > 0; i--)
         {
             int j = rng.Next(i + 1);

@@ -36,6 +36,14 @@ public sealed class RunState
     /// <summary>The theme championed this week, whose bonus/liability are active. Null between weeks.</summary>
     public Theme? CurrentChampion { get; set; }
 
+    /// <summary>
+    /// Pre-pick for the FIRST week of the upcoming month, set on day 28's Sunday-night planning
+    /// hub. <see cref="BeginNewMonth"/> consumes this (if present) to seed the new month's
+    /// <see cref="CurrentChampion"/> so the day-28 pick survives the cross-season boundary.
+    /// Null on a fresh run / after consumption.
+    /// </summary>
+    public Theme? NextMonthChampion { get; set; }
+
     /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
     /// Used so a re-trigger mid-week (e.g. via hotkey) is a no-op — the hub only opens at week-start.</summary>
     public int OfferPresentedWeek { get; set; } = -1;
@@ -99,7 +107,9 @@ public sealed class RunState
             ChampionedThemesThisMonth.Add(theme);
     }
 
-    /// <summary>Advance to a new month: change season, reset to day 1, clear championing. Donations persist.</summary>
+    /// <summary>Advance to a new month: change season, reset to day 1, clear championing. Donations
+    /// persist. If <see cref="NextMonthChampion"/> was set (Sunday-night day-28 pre-pick), apply
+    /// it as the new month's week-1 champion before clearing.</summary>
     public void BeginNewMonth(Season season)
     {
         Season = season;
@@ -107,6 +117,15 @@ public sealed class RunState
         ChampionedThemesThisMonth.Clear();
         CurrentChampion = null;
         CurrentWeekBonusItems.Clear();
+
+        // Consume the day-28 pre-pick (if any). The controller still needs to call
+        // PopulateBonusItemsForCurrentChampion AFTER this so the new month's bonus list
+        // matches the new season — see RunController.OnDayStarted.
+        if (NextMonthChampion.HasValue)
+        {
+            Champion(NextMonthChampion.Value);
+            NextMonthChampion = null;
+        }
     }
 
     /// <summary>Start a fresh loop attempt: reset to Spring 1, wipe ledger + championing, set the new seed.</summary>
@@ -119,6 +138,7 @@ public sealed class RunState
         DonatedItemIds.Clear();
         ChampionedThemesThisMonth.Clear();
         CurrentChampion = null;
+        NextMonthChampion = null;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
         AwardedChampionWeeks.Clear();
