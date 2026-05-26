@@ -9,7 +9,8 @@ namespace TheLongestYear.Core;
 /// </summary>
 public sealed class RunState
 {
-    /// <summary>Seed used to generate this run's YearPlan; stored so a reload reproduces the plan.</summary>
+    /// <summary>Per-run RNG seed (used by ChampionService + BonusItemSampler).
+    /// Stored so reload reproduces this week's offer and bonus samples.</summary>
     public int Seed { get; set; }
 
     /// <summary>1-based attempt counter (loop number), for logging and the narrative layer.</summary>
@@ -53,10 +54,6 @@ public sealed class RunState
 
     /// <summary>Room/area numbers whose completion JP bonus has already been awarded this run.</summary>
     public List<int> AwardedRoomCompletions { get; set; } = new();
-
-    /// <summary>Week-of-year values for which the championed-contract JP bonus has been awarded.
-    /// Stops double-award if the contract stays satisfied across multiple day-end ticks.</summary>
-    public List<int> AwardedChampionWeeks { get; set; } = new();
 
     /// <summary>
     /// Vault bundle indices paid this run (vanilla 1.6: 34=2500g, 35=5000g, 36=10000g, 37=25000g).
@@ -141,7 +138,6 @@ public sealed class RunState
         NextMonthChampion = null;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
-        AwardedChampionWeeks.Clear();
         VaultBundlesPaid.Clear();
         CurrentWeekBonusItems.Clear();
         OfferPresentedWeek = -1;

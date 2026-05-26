@@ -8,10 +8,8 @@ public readonly record struct DonationLine(Rarity Rarity, int Count);
 
 /// <summary>
 /// Computes Junimo Points. Per-item JP scales by rarity and the season multiplier
-/// (spec 2026-05-26: Spring 1.0×, Summer 1.5×, Fall 2.5×, Winter 4.0×). Bundle, room,
-/// and championed-contract completion bonuses scale by the same multiplier.
-/// Completion bonuses attach to vanilla bundles/rooms only — never to contracts/gates,
-/// except the explicit CompletedContractBonus path for a championed contract.
+/// (spec 2026-05-26: Spring 1.0×, Summer 1.5×, Fall 2.5×, Winter 4.0×). Bundle and room
+/// completion bonuses scale by the same multiplier and attach to vanilla bundles/rooms.
 /// </summary>
 public sealed class JpCalculator
 {
@@ -33,8 +31,6 @@ public sealed class JpCalculator
     public long BundleBonus(int weekOfYear) => Scale(_s.BundleCompletionBonus, weekOfYear);
 
     public long RoomBonus(int weekOfYear) => Scale(_s.RoomCompletionBonus, weekOfYear);
-
-    public long CompletedContractBonus(int weekOfYear) => Scale(_s.CompletedContractBonus, weekOfYear);
 
     public long ForDonationBatch(
         IEnumerable<DonationLine> lines,

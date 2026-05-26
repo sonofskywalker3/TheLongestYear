@@ -32,27 +32,6 @@ public class CcItemCatalogTests
     }
 
     [Fact]
-    public void Catalog_generates_a_solvable_year_plan()
-    {
-        var plan = new ContractGenerator().Generate(CcItemCatalog.Items, seed: 1);
-        var assigned = plan.Contracts.SelectMany(c => c.RequiredItemIds).ToList();
-
-        // Full coverage: every catalog item assigned exactly once.
-        Assert.Equal(CcItemCatalog.Items.Count, assigned.Count);
-        Assert.Equal(CcItemCatalog.Items.Select(i => i.Id).OrderBy(x => x),
-                     assigned.OrderBy(x => x));
-
-        // Season-validity + theme-correctness for every placed item.
-        var byId = CcItemCatalog.Items.ToDictionary(i => i.Id);
-        foreach (var c in plan.Contracts)
-            foreach (var id in c.RequiredItemIds)
-            {
-                Assert.Equal(byId[id].Theme, c.Theme);
-                Assert.True(byId[id].IsObtainableIn(c.Season));
-            }
-    }
-
-    [Fact]
     public void RarityOf_returns_the_items_rarity_and_a_default_for_unknown()
     {
         var sample = CcItemCatalog.Items.First();
