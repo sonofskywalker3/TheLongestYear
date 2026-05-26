@@ -53,7 +53,7 @@ namespace TheLongestYear.Loop
 
             Run.Season = (CoreSeason)(int)Game1.season;
             Run.DayOfMonth = Game1.dayOfMonth;
-            _plan = new ContractGenerator().Generate(_catalog, Run.Seed);
+            _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
         }
@@ -65,7 +65,7 @@ namespace TheLongestYear.Loop
                 _pendingReset = false;
                 _reset.PerformReset(_config.StartingMoney);
                 Run.BeginNewRun(NewSeed());
-                _plan = new ContractGenerator().Generate(_catalog, Run.Seed);
+                _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
                 return;
             }
@@ -158,7 +158,7 @@ namespace TheLongestYear.Loop
         {
             int newSeed = NewSeed();
             Run.Seed = newSeed;
-            _plan = new ContractGenerator().Generate(_catalog, Run.Seed);
+            _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
             Run.OfferPresentedWeek = -1;     // clear the per-week guard
             Run.CurrentChampion = null;      // clear last week's pick so the offer is fresh
             _monitor.Log($"Reroll: new seed {newSeed}; plan regenerated. Re-opening hub.", LogLevel.Info);

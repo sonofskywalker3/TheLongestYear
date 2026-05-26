@@ -79,6 +79,95 @@ public class ContractGeneratorTests
         Assert.Equal(liability, mining.LiabilityId);
     }
 
+    [Fact]
+    public void Common_items_lean_toward_earlier_seasons_when_year_round()
+    {
+        // 8 year-round common items of the same theme.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 8; i++)
+            items.Add(new CcItem(
+                $"common-{i}", Theme.Foraging, Rarity.Common,
+                new HashSet<Season> { Season.Spring, Season.Summer, Season.Fall, Season.Winter }));
+
+        var plan = new ContractGenerator().Generate(items, seed: 1);
+        var byItem = ByItem(plan);
+
+        // Count how many ended up in the Spring half (Spring + Summer) vs. Fall half (Fall + Winter).
+        int earlyCount = items.Count(i => (int)byItem[i.Id].Season < 2);
+        int lateCount  = items.Count(i => (int)byItem[i.Id].Season >= 2);
+
+        Assert.True(earlyCount >= lateCount,
+            $"Common year-round items should bias toward earlier seasons; got early={earlyCount}, late={lateCount}.");
+    }
+
+    [Fact]
+    public void Very_rare_items_lean_toward_later_seasons_when_year_round()
+    {
+        // 8 year-round VeryRare items of the same theme.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 8; i++)
+            items.Add(new CcItem(
+                $"vrare-{i}", Theme.Mining, Rarity.VeryRare,
+                new HashSet<Season> { Season.Spring, Season.Summer, Season.Fall, Season.Winter }));
+
+        var plan = new ContractGenerator().Generate(items, seed: 1);
+        var byItem = ByItem(plan);
+
+        int earlyCount = items.Count(i => (int)byItem[i.Id].Season < 2);
+        int lateCount  = items.Count(i => (int)byItem[i.Id].Season >= 2);
+
+        Assert.True(lateCount >= earlyCount,
+            $"VeryRare year-round items should bias toward later seasons; got early={earlyCount}, late={lateCount}.");
+    }
+
+    [Fact]
+    public void Spring_contracts_stay_within_cap_for_multi_season_items()
+    {
+        // 20 multi-season common items — without a cap they'd flood Spring.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 20; i++)
+            items.Add(new CcItem(
+                $"flex-{i}", Theme.Foraging, Rarity.Common,
+                new HashSet<Season> { Season.Spring, Season.Summer, Season.Fall, Season.Winter }));
+
+        var plan = new ContractGenerator().Generate(items, seed: 1);
+        int springForagingCount = plan.Get(Season.Spring, Theme.Foraging).RequiredItemIds.Count;
+        Assert.True(springForagingCount <= 4,
+            $"Spring Foraging should respect the cap (4); got {springForagingCount}.");
+    }
+
+    [Fact]
+    public void Single_season_items_override_cap_when_needed()
+    {
+        // 6 Spring-only common items — must all land in Spring even though cap is 4.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 6; i++)
+            items.Add(new CcItem(
+                $"spring-only-{i}", Theme.Foraging, Rarity.Common,
+                new HashSet<Season> { Season.Spring }));
+
+        var plan = new ContractGenerator().Generate(items, seed: 1);
+        int springForagingCount = plan.Get(Season.Spring, Theme.Foraging).RequiredItemIds.Count;
+        Assert.Equal(6, springForagingCount); // overflow accepted — items can't move
+    }
+
+    [Fact]
+    public void Custom_cap_array_is_respected()
+    {
+        // Lower-than-default caps should still kick in.
+        var items = new List<CcItem>();
+        for (int i = 0; i < 12; i++)
+            items.Add(new CcItem(
+                $"flex-{i}", Theme.Mining, Rarity.Common,
+                new HashSet<Season> { Season.Spring, Season.Summer, Season.Fall, Season.Winter }));
+
+        var customCaps = new[] { 2, 2, 2, 6 };
+        var plan = new ContractGenerator(customCaps).Generate(items, seed: 1);
+        Assert.True(plan.Get(Season.Spring, Theme.Mining).RequiredItemIds.Count <= 2);
+        Assert.True(plan.Get(Season.Summer, Theme.Mining).RequiredItemIds.Count <= 2);
+        Assert.True(plan.Get(Season.Fall, Theme.Mining).RequiredItemIds.Count <= 2);
+    }
+
     private static string Serialize(YearPlan plan)
         => string.Join("|", plan.Contracts
             .OrderBy(c => (int)c.Season).ThenBy(c => (int)c.Theme)
