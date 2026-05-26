@@ -53,9 +53,10 @@ namespace TheLongestYear.Loop
 
             Run.Season = (CoreSeason)(int)Game1.season;
             Run.DayOfMonth = Game1.dayOfMonth;
-            _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
+            _plan = BuildPlan();
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
+            DumpAssignmentTable("OnRunLoaded");
         }
 
         public void OnDayStarted(object sender, DayStartedEventArgs e)
@@ -65,7 +66,7 @@ namespace TheLongestYear.Loop
                 _pendingReset = false;
                 _reset.PerformReset(_config.StartingMoney);
                 Run.BeginNewRun(NewSeed());
-                _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
+                _plan = BuildPlan();
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
                 return;
             }
@@ -89,7 +90,7 @@ namespace TheLongestYear.Loop
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
             AwardChampionContractBonusIfDue();
-            RunAction action = _runManager.EvaluateDayEnd(Run, _catalog);
+            RunAction action = _runManager.EvaluateDayEnd(Run, _plan, _catalog);
             switch (action)
             {
                 case RunAction.Continue:
@@ -160,9 +161,58 @@ namespace TheLongestYear.Loop
         {
             int newSeed = NewSeed();
             Run.Seed = newSeed;
-            _plan = new ContractGenerator(_config.ContractItemCapBySeason).Generate(_catalog, Run.Seed);
+            _plan = BuildPlan();
             Run.CurrentChampion = null;      // clear last week's pick so the offer is fresh
-            _monitor.Log($"Reroll: new seed {newSeed}; plan regenerated.", LogLevel.Info);
+            _monitor.Log(
+                $"Reroll: new seed {newSeed}; plan regenerated " +
+                "(placement is deterministic — partition will match unless catalog/overrides changed).",
+                LogLevel.Info);
+        }
+
+        /// <summary>Build a plan from the live catalog and the user's season overrides.</summary>
+        private TheLongestYear.Core.YearPlan BuildPlan()
+        {
+            var overrides = ParseSeasonOverrides(_config.SeasonOverrides);
+            return new ContractGenerator(_config.ContractItemCapBySeason, overrides)
+                .Generate(_catalog, Run.Seed);
+        }
+
+        private System.Collections.Generic.IReadOnlyDictionary<string, CoreSeason> ParseSeasonOverrides(
+            System.Collections.Generic.Dictionary<string, string> raw)
+        {
+            var parsed = new System.Collections.Generic.Dictionary<string, CoreSeason>();
+            if (raw == null) return parsed;
+            foreach (var kv in raw)
+            {
+                if (Enum.TryParse(kv.Value, ignoreCase: true, out CoreSeason s))
+                    parsed[kv.Key] = s;
+                else
+                    _monitor.Log(
+                        $"SeasonOverrides: '{kv.Value}' is not a valid season for id '{kv.Key}' — ignoring.",
+                        LogLevel.Warn);
+            }
+            return parsed;
+        }
+
+        /// <summary>Log the (season, theme) → required-items table for review.</summary>
+        public void DumpAssignmentTable(string reason)
+        {
+            if (_plan == null) return;
+            _monitor.Log($"--- Year assignment table ({reason}) ---", LogLevel.Info);
+            foreach (CoreSeason s in Enum.GetValues(typeof(CoreSeason)))
+            {
+                int seasonTotal = _plan.ForSeason(s).Sum(c => c.RequiredItemIds.Count);
+                _monitor.Log($"{s} (total {seasonTotal}):", LogLevel.Info);
+                foreach (Theme t in Enum.GetValues(typeof(Theme)))
+                {
+                    var c = _plan.Get(s, t);
+                    string items = c.RequiredItemIds.Count == 0
+                        ? "(empty)"
+                        : string.Join(", ", c.RequiredItemIds);
+                    _monitor.Log($"  {t} ({c.RequiredItemIds.Count}): {items}", LogLevel.Info);
+                }
+            }
+            _monitor.Log("--- end assignment table ---", LogLevel.Info);
         }
 
         /// <summary>

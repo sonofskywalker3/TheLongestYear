@@ -1,8 +1,18 @@
+using System.Collections.Generic;
+
 namespace TheLongestYear.Core;
 
 /// <summary>Root config object read by the mod via SMAPI. All tuning dials hang off this.</summary>
 public sealed class GameplayConfig
 {
+    /// <summary>
+    /// Per-item season pins. Key is the qualified item id ("(O)24"), value is a season name
+    /// ("Spring"/"Summer"/"Fall"/"Winter"). When the generator places an item, an override here
+    /// wins over the algorithm IF the pinned season is one of the item's obtainable seasons.
+    /// Use this to dial specific placements after reviewing the dumped assignment table.
+    /// </summary>
+    public Dictionary<string, string> SeasonOverrides { get; set; } = new();
+
     public JpSettings Jp { get; set; } = new JpSettings();
 
     /// <summary>Gold the farmer starts each run with after a reset.</summary>

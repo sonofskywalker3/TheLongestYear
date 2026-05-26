@@ -60,6 +60,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_reroll", "Re-roll the year plan (new seed) and re-open the planning hub (debug).", this.CmdReroll);
+            helper.ConsoleCommands.Add("tly_dumpplan", "Dump the per-(season,theme) item assignment table to the log.", this.CmdDumpPlan);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -230,6 +231,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_reroll": this.CmdReroll(command, args); break;
+                case "tly_dumpplan": this.CmdDumpPlan(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
@@ -323,6 +325,12 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _runController?.Reroll();
+        }
+
+        private void CmdDumpPlan(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _runController?.DumpAssignmentTable("on demand");
         }
     }
 }

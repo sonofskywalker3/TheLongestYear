@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -20,93 +21,86 @@ public class RunManagerTests
         Item("year-round",  Theme.Mixed,    Season.Spring, Season.Summer, Season.Fall, Season.Winter),
     };
 
+    /// <summary>Build a plan from the catalog using the live generator (deterministic).</summary>
+    private static YearPlan PlanFor(List<CcItem> catalog)
+        => new ContractGenerator().Generate(catalog, seed: 0);
+
     private static RunManager Mgr() => new RunManager(new GateEvaluator());
 
     [Fact]
     public void Midweek_continues()
     {
+        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 3 };
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, Catalog()));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog));
     }
 
     [Fact]
-    public void Week_end_without_champion_now_continues()
+    public void Week_end_without_champion_continues()
     {
-        // Spec change 2026-05-26: no weekly fail; an un-championed week 7/14/21 is fine.
+        // Spec change 2026-05-26: no weekly fail.
+        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 7 };
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, Catalog()));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog));
     }
 
     [Fact]
-    public void Month_end_with_single_season_donated_advances()
+    public void Month_end_with_all_assigned_items_donated_advances()
     {
+        var catalog = Catalog();
+        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        run.RecordDonation("spring-only");
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, Catalog()));
+        // Donate everything the plan assigned to Spring.
+        foreach (var c in plan.ForSeason(Season.Spring))
+            foreach (var id in c.RequiredItemIds)
+                run.RecordDonation(id);
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, plan, catalog));
     }
 
     [Fact]
-    public void Month_end_missing_single_season_fails()
+    public void Month_end_missing_a_spring_assigned_item_fails()
     {
+        // "spring-only" is necessarily in the Spring contract; not donating it fails the gate.
+        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        // "spring-only" not donated
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, Catalog()));
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog));
     }
 
     [Fact]
-    public void Month_end_only_needs_this_season_items()
+    public void Spring_gate_does_not_require_summer_or_later_items()
     {
-        // Summer-only / Fall-only / Winter-only not donated yet — Spring shouldn't care.
+        var catalog = Catalog();
+        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        run.RecordDonation("spring-only");
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, Catalog()));
-    }
-
-    [Fact]
-    public void Month_end_does_not_require_multi_season_until_winter()
-    {
-        // "year-round" not donated — passes Spring/Summer/Fall gates.
-        var run = new RunState { Season = Season.Fall, DayOfMonth = 28 };
-        run.RecordDonation("spring-only");
-        run.RecordDonation("summer-only");
-        run.RecordDonation("fall-only");
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, Catalog()));
+        foreach (var c in plan.ForSeason(Season.Spring))
+            foreach (var id in c.RequiredItemIds)
+                run.RecordDonation(id);
+        // Summer/Fall/Winter assigned items NOT donated yet — Spring still advances.
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, plan, catalog));
     }
 
     [Fact]
     public void Winter_end_with_full_cc_wins()
     {
+        var catalog = Catalog();
+        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        run.RecordDonation("spring-only");
-        run.RecordDonation("summer-only");
-        run.RecordDonation("fall-only");
-        run.RecordDonation("winter-only");
-        run.RecordDonation("year-round");
-        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, Catalog()));
+        foreach (var item in catalog)
+            run.RecordDonation(item.Id);
+        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, plan, catalog));
     }
 
     [Fact]
-    public void Winter_end_missing_multi_season_fails()
+    public void Winter_end_missing_a_winter_assigned_item_fails()
     {
-        // Winter passes its single-season gate but "year-round" was never donated -> no future
-        // season for it to land in -> fail.
+        var catalog = Catalog();
+        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        run.RecordDonation("spring-only");
-        run.RecordDonation("summer-only");
-        run.RecordDonation("fall-only");
-        run.RecordDonation("winter-only");
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, Catalog()));
-    }
-
-    [Fact]
-    public void Winter_end_missing_winter_only_fails()
-    {
-        var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        run.RecordDonation("spring-only");
-        run.RecordDonation("summer-only");
-        run.RecordDonation("fall-only");
-        run.RecordDonation("year-round");
-        // "winter-only" missing
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, Catalog()));
+        // Donate everything except items assigned to Winter contracts.
+        var winterIds = plan.ForSeason(Season.Winter).SelectMany(c => c.RequiredItemIds).ToHashSet();
+        foreach (var item in catalog)
+            if (!winterIds.Contains(item.Id))
+                run.RecordDonation(item.Id);
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, plan, catalog));
     }
 }
