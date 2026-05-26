@@ -1,0 +1,168 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace TheLongestYear.Core;
+
+/// <summary>
+/// One vanilla CC bundle with its kind-specific gate metadata. Used by <see cref="BundleGate"/>
+/// to evaluate "is this bundle's contribution to season N satisfied?" and by the win check.
+/// Constructors are kind-specific so invalid combinations are unrepresentable.
+/// </summary>
+public sealed class BundleRequirement
+{
+    public string Name { get; }
+    public Theme Theme { get; }
+    public BundleKind Kind { get; }
+
+    /// <summary>The Y ingredient ids (qualified id form, e.g. "(O)24"). Player donates from these.</summary>
+    public IReadOnlyList<string> Ingredients { get; }
+
+    /// <summary>The X slots — number of distinct ingredients required for full completion.</summary>
+    public int NumberOfSlots { get; }
+
+    // ---------- KIND 1 (Seasonal) ----------
+    public Season? SeasonalSeason { get; }
+
+    // ---------- KIND 2 (PerItem) ----------
+    public IReadOnlyDictionary<string, Season>? ItemSeasonPins { get; }
+
+    // ---------- KIND 3 (Percentage) ----------
+    /// <summary>Cumulative donations required by [Spring, Summer, Fall, Winter] day 28.
+    /// Length 4. Each entry must be ≤ <see cref="NumberOfSlots"/>.</summary>
+    public IReadOnlyList<int>? CumulativeRequiredBySeason { get; }
+
+    private BundleRequirement(
+        string name, Theme theme, BundleKind kind,
+        IReadOnlyList<string> ingredients, int numberOfSlots,
+        Season? seasonalSeason,
+        IReadOnlyDictionary<string, Season>? itemSeasonPins,
+        IReadOnlyList<int>? cumulativeRequiredBySeason)
+    {
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Theme = theme;
+        Kind = kind;
+        Ingredients = ingredients;
+        NumberOfSlots = numberOfSlots;
+        SeasonalSeason = seasonalSeason;
+        ItemSeasonPins = itemSeasonPins;
+        CumulativeRequiredBySeason = cumulativeRequiredBySeason;
+    }
+
+    public static BundleRequirement CreateSeasonal(
+        string name, Theme theme, IReadOnlyList<string> ingredients, Season season)
+    {
+        if (ingredients == null || ingredients.Count == 0)
+            throw new ArgumentException("Seasonal bundle needs at least one ingredient.", nameof(ingredients));
+        return new BundleRequirement(
+            name, theme, BundleKind.Seasonal,
+            ingredients, ingredients.Count,
+            seasonalSeason: season,
+            itemSeasonPins: null,
+            cumulativeRequiredBySeason: null);
+    }
+
+    public static BundleRequirement CreatePerItem(
+        string name, Theme theme, IReadOnlyDictionary<string, Season> itemSeasonPins)
+    {
+        if (itemSeasonPins == null || itemSeasonPins.Count == 0)
+            throw new ArgumentException("PerItem bundle needs at least one pinned ingredient.", nameof(itemSeasonPins));
+        var ingredients = itemSeasonPins.Keys.ToList();
+        return new BundleRequirement(
+            name, theme, BundleKind.PerItem,
+            ingredients, ingredients.Count,
+            seasonalSeason: null,
+            itemSeasonPins: itemSeasonPins,
+            cumulativeRequiredBySeason: null);
+    }
+
+    public static BundleRequirement CreatePercentage(
+        string name, Theme theme,
+        IReadOnlyList<string> ingredients, int numberOfSlots,
+        IReadOnlyList<int> cumulativeRequiredBySeason)
+    {
+        if (ingredients == null || ingredients.Count <= numberOfSlots)
+            throw new ArgumentException(
+                $"Percentage bundle needs Y > X; got Y={ingredients?.Count}, X={numberOfSlots}.",
+                nameof(ingredients));
+        if (cumulativeRequiredBySeason == null || cumulativeRequiredBySeason.Count != Calendar.MonthsPerYear)
+            throw new ArgumentException(
+                $"cumulativeRequiredBySeason must be length {Calendar.MonthsPerYear}.",
+                nameof(cumulativeRequiredBySeason));
+        foreach (int n in cumulativeRequiredBySeason)
+            if (n < 0 || n > numberOfSlots)
+                throw new ArgumentOutOfRangeException(nameof(cumulativeRequiredBySeason),
+                    $"Each cumulative requirement must be in [0..{numberOfSlots}]; got {n}.");
+        return new BundleRequirement(
+            name, theme, BundleKind.Percentage,
+            ingredients, numberOfSlots,
+            seasonalSeason: null,
+            itemSeasonPins: null,
+            cumulativeRequiredBySeason: cumulativeRequiredBySeason);
+    }
+
+    /// <summary>True if this bundle's contribution to <paramref name="currentSeason"/>'s
+    /// day-28 gate is satisfied by the run's donation ledger.</summary>
+    public bool IsSatisfiedAtSeasonEnd(Season currentSeason, ISet<string> donated)
+    {
+        switch (Kind)
+        {
+            case BundleKind.Seasonal:
+                // Not yet due if its named season is later than current.
+                if ((int)SeasonalSeason!.Value > (int)currentSeason) return true;
+                return Ingredients.All(donated.Contains);
+
+            case BundleKind.PerItem:
+                foreach (KeyValuePair<string, Season> kv in ItemSeasonPins!)
+                {
+                    if ((int)kv.Value <= (int)currentSeason && !donated.Contains(kv.Key))
+                        return false;
+                }
+                return true;
+
+            case BundleKind.Percentage:
+                int required = CumulativeRequiredBySeason![(int)currentSeason];
+                int count = 0;
+                foreach (string id in Ingredients)
+                    if (donated.Contains(id) && ++count >= required)
+                        return true;
+                return required == 0;   // an explicit-zero quota is trivially met
+
+            default:
+                throw new InvalidOperationException($"Unknown bundle kind: {Kind}");
+        }
+    }
+
+    /// <summary>True if this bundle is fully complete (≥ X ingredients donated).</summary>
+    public bool IsFullyComplete(ISet<string> donated)
+        => Ingredients.Count(donated.Contains) >= NumberOfSlots;
+
+    /// <summary>Ingredients that are "in play" for the given season — these become the candidate
+    /// pool for the planning-hub bonus list.
+    /// <list type="bullet">
+    ///   <item>Seasonal: all ingredients, but only when its season is the current season.</item>
+    ///   <item>PerItem: ingredients pinned to the current season.</item>
+    ///   <item>Percentage: ingredients that pass the <paramref name="obtainablePredicate"/>
+    ///         (typically checking if the item is obtainable in <paramref name="season"/>).</item>
+    /// </list>
+    /// </summary>
+    public IEnumerable<string> InPlayItemsFor(Season season, Func<string, bool> obtainablePredicate)
+    {
+        switch (Kind)
+        {
+            case BundleKind.Seasonal:
+                return SeasonalSeason!.Value == season
+                    ? Ingredients
+                    : Enumerable.Empty<string>();
+
+            case BundleKind.PerItem:
+                return ItemSeasonPins!.Where(kv => kv.Value == season).Select(kv => kv.Key);
+
+            case BundleKind.Percentage:
+                return Ingredients.Where(obtainablePredicate);
+
+            default:
+                return Enumerable.Empty<string>();
+        }
+    }
+}
