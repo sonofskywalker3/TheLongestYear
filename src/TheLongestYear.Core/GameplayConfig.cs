@@ -7,4 +7,7 @@ public sealed class GameplayConfig
 
     /// <summary>Gold the farmer starts each run with after a reset.</summary>
     public int StartingMoney { get; set; } = 500;
+
+    /// <summary>Price cutoffs used to derive an item's rarity (and thus its JP value).</summary>
+    public RarityThresholds RarityThresholds { get; set; } = new RarityThresholds();
 }
