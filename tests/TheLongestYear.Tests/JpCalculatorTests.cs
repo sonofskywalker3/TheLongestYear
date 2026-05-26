@@ -48,15 +48,6 @@ public class JpCalculatorTests
     }
 
     [Fact]
-    public void CompletedContractBonus_scales_by_season()
-    {
-        Assert.Equal(50, Make().CompletedContractBonus(1));     // Spring 50 * 1.0
-        Assert.Equal(75, Make().CompletedContractBonus(5));     // Summer 50 * 1.5
-        Assert.Equal(125, Make().CompletedContractBonus(9));    // Fall   50 * 2.5
-        Assert.Equal(200, Make().CompletedContractBonus(13));   // Winter 50 * 4.0
-    }
-
-    [Fact]
     public void ForDonationBatch_sums_items_and_bundle_bonus_at_spring_rate()
     {
         // Spring (mult 1.0): 2 Rare * 10 + 3 Common * 1 + 1 bundle * 15 = 38.

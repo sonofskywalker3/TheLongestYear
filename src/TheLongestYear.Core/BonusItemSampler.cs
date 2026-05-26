@@ -23,6 +23,14 @@ public static class BonusItemSampler
     private const int ThemeSaltPrime = 1031;
 
     /// <summary>
+    /// How many bonus items to show per (season, theme) preview card. Scales +1 per season so the
+    /// player sees more bonus options later in the year. Indices match the <see cref="Season"/>
+    /// enum (Spring=0..Winter=3). Spec round 6 lived in <c>GameplayConfig.BonusListSizeBySeason</c>;
+    /// moved here in spec round 7 so the sampler owns its own default cap.
+    /// </summary>
+    public static readonly IReadOnlyList<int> DefaultMaxCountBySeason = new[] { 4, 5, 6, 7 };
+
+    /// <summary>
     /// Sample up to <paramref name="maxCount"/> bonus items for <paramref name="theme"/> in
     /// <paramref name="currentSeason"/>. Returns a stable order for a given (seed, week, theme).
     /// If the pool is smaller than <paramref name="maxCount"/>, returns the whole pool (shuffled).

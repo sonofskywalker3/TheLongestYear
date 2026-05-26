@@ -60,8 +60,6 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
-            helper.ConsoleCommands.Add("tly_reroll", "Re-roll the year plan (new seed) and re-open the planning hub (debug).", this.CmdReroll);
-            helper.ConsoleCommands.Add("tly_dumpplan", "Dump the per-(season,theme) item assignment table to the log.", this.CmdDumpPlan);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
@@ -238,8 +236,6 @@ namespace TheLongestYear
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
-                case "tly_reroll": this.CmdReroll(command, args); break;
-                case "tly_dumpplan": this.CmdDumpPlan(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
@@ -328,18 +324,6 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_buyupgrade <id>", LogLevel.Warn); return; }
             _purchases?.TryPurchase(args[0]);
-        }
-
-        private void CmdReroll(string command, string[] args)
-        {
-            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            _runController?.Reroll();
-        }
-
-        private void CmdDumpPlan(string command, string[] args)
-        {
-            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            _runController?.DumpAssignmentTable("on demand");
         }
 
         private void CmdPayVault(string command, string[] args)

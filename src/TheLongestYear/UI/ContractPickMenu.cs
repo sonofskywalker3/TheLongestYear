@@ -55,8 +55,6 @@ namespace TheLongestYear.UI
         private const int CardIdRight = 5101;
         private const int WeatherIdBase = 5200;
         private const int CartIdBase = 5300;
-        private const int RefreshButtonId = 5050;
-        private const int RefreshButtonSize = 56;
 
         private readonly IMonitor _monitor;
         private readonly RunController _runController;
@@ -77,7 +75,6 @@ namespace TheLongestYear.UI
 
         private ClickableComponent _leftCard;
         private ClickableComponent _rightCard;
-        private ClickableTextureComponent _refreshButton;
         private readonly List<ClickableComponent> _weatherRows = new List<ClickableComponent>();
         private readonly List<ClickableComponent> _cartRows = new List<ClickableComponent>();
 
@@ -132,7 +129,6 @@ namespace TheLongestYear.UI
         {
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
-                if (currentlySnappedComponent == _refreshButton) { DoRefresh(); return; }
                 if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmChampion(_offer[0]); return; }
                 if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmChampion(_offer[1]); return; }
             }
@@ -217,7 +213,6 @@ namespace TheLongestYear.UI
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
-                upNeighborID = RefreshButtonId,
                 downNeighborID = FirstRowIdBelowCards()
             };
             _rightCard = new ClickableComponent(new Rectangle(cardsRightX, cardsY, CardWidth, CardHeight),
@@ -266,24 +261,9 @@ namespace TheLongestYear.UI
                 rowY += PreviewRowHeight + PreviewSpacing;
             }
 
-            _refreshButton = new ClickableTextureComponent(
-                name: "refresh",
-                bounds: new Rectangle(
-                    xPositionOnScreen + width - PanelPadding - RefreshButtonSize,
-                    yPositionOnScreen + 16,
-                    RefreshButtonSize, RefreshButtonSize),
-                label: null,
-                hoverText: "Refresh (re-roll plan, debug)",
-                texture: Game1.mouseCursors,
-                sourceRect: new Rectangle(381, 361, 10, 11),
-                scale: 4f);
-            _refreshButton.myID = RefreshButtonId;
-            _refreshButton.leftNeighborID = CardIdRight;
-
             allClickableComponents = new List<ClickableComponent>();
             allClickableComponents.Add(_leftCard);
             allClickableComponents.Add(_rightCard);
-            allClickableComponents.Add(_refreshButton);
             allClickableComponents.AddRange(_weatherRows);
             allClickableComponents.AddRange(_cartRows);
 
@@ -317,17 +297,6 @@ namespace TheLongestYear.UI
             this.snapCursorToCurrentSnappedComponent();
         }
 
-        // ---------- refresh ----------
-
-        private void DoRefresh()
-        {
-            _runController.RerollPlan();
-            _offer = ChampionService.OfferForWeek(_run);
-            ResolvePerCardData();
-            RecomputeBoundsAndLayout();
-            Game1.playSound("button1");
-        }
-
         // ---------- input ----------
 
         public override void performHoverAction(int x, int y)
@@ -339,12 +308,6 @@ namespace TheLongestYear.UI
                 _hoverText = DescribeCard(_offer[0]);
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
                 _hoverText = DescribeCard(_offer[1]);
-
-            if (_refreshButton != null && _refreshButton.containsPoint(x, y))
-            {
-                _hoverText = _refreshButton.hoverText;
-                _refreshButton.tryHover(x, y);
-            }
 
             CheckBonusIconHover(x, y, _leftBonus, _leftBonusBounds);
             CheckBonusIconHover(x, y, _rightBonus, _rightBonusBounds);
@@ -365,8 +328,6 @@ namespace TheLongestYear.UI
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             base.receiveLeftClick(x, y, playSound);
-
-            if (_refreshButton != null && _refreshButton.containsPoint(x, y)) { DoRefresh(); return; }
 
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
                 ConfirmChampion(_offer[0]);
@@ -408,15 +369,6 @@ namespace TheLongestYear.UI
 
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBundles, _leftBonus, _leftBonusBounds);
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBundles, _rightBonus, _rightBonusBounds);
-
-            if (_refreshButton != null)
-            {
-                IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
-                    _refreshButton.bounds.X - 8, _refreshButton.bounds.Y - 8,
-                    _refreshButton.bounds.Width + 16, _refreshButton.bounds.Height + 16,
-                    Color.White * 0.85f, 1f, false);
-                _refreshButton.draw(b);
-            }
 
             for (int i = 0; i < _weatherRows.Count; i++)
                 DrawPreviewRow(b, _weatherRows[i], $"Weather, day {i + 1}: ???   (Weather Sage tier {i + 1} reveals this)");

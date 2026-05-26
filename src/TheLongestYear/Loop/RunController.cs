@@ -10,10 +10,10 @@ using CoreSeason = TheLongestYear.Core.Season;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Drives the run loop: builds the YearPlan from the run seed, syncs RunState from the game date,
-    /// offers the weekly champion, evaluates the day-end gate via RunManager, and executes the action
-    /// (fail -> reset next morning, advance month -> clear championing, win -> log). Interim JP is banked
-    /// on run end (full JP + donation surface are Plan 04).
+    /// Drives the run loop: syncs RunState from the game date, offers the weekly champion at
+    /// Sunday-night planning, evaluates the day-end gate via RunManager + bundle requirements,
+    /// and executes the action (fail → reset next morning, advance month → consume any day-28
+    /// pre-pick, win → log). Interim JP is banked on run end.
     /// </summary>
     internal sealed class RunController
     {
@@ -26,12 +26,8 @@ namespace TheLongestYear.Loop
         private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
         private readonly System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
 
-        private YearPlan _plan;
         private bool _pendingReset;
         private TheLongestYear.UI.MenuLauncher _launcher;
-
-        /// <summary>The current run's contract plan; exposed for the UI layer (Plan 05).</summary>
-        public YearPlan CurrentPlan => _plan;
 
         /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
         public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
@@ -39,40 +35,6 @@ namespace TheLongestYear.Loop
         /// <summary>CcItem catalog (rarity/season/theme metadata); exposed so the UI can look up
         /// per-season obtainability when computing the bonus-item preview per card.</summary>
         public System.Collections.Generic.IReadOnlyList<CcItem> Catalog => _catalog;
-
-        /// <summary>How big the per-card bonus-item preview list should be for the season.
-        /// Mirrors <c>PopulateBonusItemsForCurrentChampion</c>'s cap so the championing UI
-        /// preview and the resulting CurrentWeekBonusItems list are the same size.</summary>
-        public int BonusListSizeForCurrentSeason()
-        {
-            int[] cfg = _config.BonusListSizeBySeason;
-            return cfg != null && cfg.Length > (int)Run.Season ? cfg[(int)Run.Season] : 5;
-        }
-
-        /// <summary>Mirror of <c>IsObtainableInCurrentSeason</c> for callers (the UI) that need
-        /// to invoke <see cref="BonusItemSampler"/> with the same predicate the runtime uses.</summary>
-        public bool IsObtainableForCurrentSeason(string itemId)
-            => IsObtainableInCurrentSeason(itemId);
-
-        /// <summary>Like <see cref="IsObtainableForCurrentSeason"/> but for an arbitrary season —
-        /// used by the Sunday-night day-28 hub when previewing NEXT season's bonus pool.</summary>
-        public bool IsObtainableInSeason(string itemId, CoreSeason season)
-        {
-            foreach (var item in _catalog)
-                if (item.Id == itemId)
-                    return item.ObtainableSeasons.Contains(season);
-            return true;
-        }
-
-        /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.
-        /// <see cref="RunState.BeginNewMonth"/> consumes this on tomorrow's OnDayStarted.</summary>
-        public void PreChampionForNextMonth(Theme theme)
-        {
-            Run.NextMonthChampion = theme;
-            _monitor.Log(
-                $"Pre-pick set: {theme} will be the week-1 champion of {NextSeason(Run.Season)}.",
-                LogLevel.Info);
-        }
 
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
             System.Collections.Generic.IReadOnlyList<CcItem> catalog,
@@ -89,7 +51,7 @@ namespace TheLongestYear.Loop
 
         private RunState Run => _store.Run;
 
-        /// <summary>Called from OnSaveLoaded: ensure the run has a seed and build its plan.</summary>
+        /// <summary>Called from OnSaveLoaded: ensure the run has a seed.</summary>
         public void OnRunLoaded()
         {
             if (Run.Seed == 0)
@@ -97,10 +59,8 @@ namespace TheLongestYear.Loop
 
             Run.Season = (CoreSeason)(int)Game1.season;
             Run.DayOfMonth = Game1.dayOfMonth;
-            _plan = BuildPlan();
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
-            DumpAssignmentTable("OnRunLoaded");
         }
 
         public void OnDayStarted(object sender, DayStartedEventArgs e)
@@ -110,7 +70,6 @@ namespace TheLongestYear.Loop
                 _pendingReset = false;
                 _reset.PerformReset(_config.StartingMoney);
                 Run.BeginNewRun(NewSeed());
-                _plan = BuildPlan();
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
                 return;
             }
@@ -135,8 +94,7 @@ namespace TheLongestYear.Loop
             Run.DayOfMonth = Game1.dayOfMonth;
 
             // Safety net for the FIRST day of a fresh run (Spring 1 of a new run has no previous
-            // day-28 to trigger Sunday-night planning, and the player has no champion yet). Only
-            // open here if this is week 1 day 1 AND no champion is set yet.
+            // day-28 to trigger Sunday-night planning, and the player has no champion yet).
             if (Run.DayOfMonth == 1 && Run.Season == CoreSeason.Spring
                 && !Run.CurrentChampion.HasValue && Run.OfferPresentedWeek != Run.WeekOfYear)
             {
@@ -146,7 +104,6 @@ namespace TheLongestYear.Loop
 
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
-            AwardChampionContractBonusIfDue();
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)
@@ -219,18 +176,13 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>Sample the per-week bonus list for the current champion and store it on RunState.
-        /// Uses the live CcItem catalog for in-season obtainability lookups.</summary>
+        /// <summary>Sample the per-week bonus list for the current champion and store it on RunState.</summary>
         private void PopulateBonusItemsForCurrentChampion()
         {
             Run.CurrentWeekBonusItems.Clear();
             if (!Run.CurrentChampion.HasValue) return;
 
-            int maxCount = _config.BonusListSizeBySeason != null
-                && _config.BonusListSizeBySeason.Length > (int)Run.Season
-                    ? _config.BonusListSizeBySeason[(int)Run.Season]
-                    : 5;
-
+            int maxCount = BonusListSizeForCurrentSeason();
             var sample = BonusItemSampler.SampleForTheme(
                 Run.Seed, Run.WeekOfYear,
                 Run.CurrentChampion.Value, Run.Season,
@@ -241,19 +193,41 @@ namespace TheLongestYear.Loop
             Run.CurrentWeekBonusItems.AddRange(sample);
         }
 
+        /// <summary>How big the per-card bonus-item preview list should be for the season.
+        /// Lives in <see cref="BonusItemSampler.DefaultMaxCountBySeason"/>.</summary>
+        public int BonusListSizeForCurrentSeason()
+            => BonusItemSampler.DefaultMaxCountBySeason[(int)Run.Season];
+
         /// <summary>Obtainability predicate for the sampler: looks up the item in the CcItem
         /// catalog and tests against this season's ObtainableSeasons. Items not in the catalog
-        /// (rare — e.g. SVE additions that didn't classify) default to obtainable so the player
-        /// isn't silently denied a bonus opportunity.</summary>
+        /// default to obtainable so SVE/mod additions aren't silently excluded.</summary>
         private bool IsObtainableInCurrentSeason(string itemId)
+            => IsObtainableInSeason(itemId, Run.Season);
+
+        /// <summary>Mirror for the UI: same predicate, callable from the menu's bonus-preview path.</summary>
+        public bool IsObtainableForCurrentSeason(string itemId)
+            => IsObtainableInCurrentSeason(itemId);
+
+        /// <summary>Same predicate but for an arbitrary season — used by the Sunday-night day-28
+        /// hub when previewing NEXT season's bonus pool.</summary>
+        public bool IsObtainableInSeason(string itemId, CoreSeason season)
         {
             foreach (var item in _catalog)
                 if (item.Id == itemId)
-                    return item.ObtainableSeasons.Contains(Run.Season);
+                    return item.ObtainableSeasons.Contains(season);
             return true;
         }
 
-        /// <summary>Simulate a CC donation (the real donation surface is Plan 04).</summary>
+        /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.</summary>
+        public void PreChampionForNextMonth(Theme theme)
+        {
+            Run.NextMonthChampion = theme;
+            _monitor.Log(
+                $"Pre-pick set: {theme} will be the week-1 champion of {NextSeason(Run.Season)}.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Simulate a CC donation (the real donation surface is via DonationService).</summary>
         public void Donate(string itemId)
         {
             Run.RecordDonation(itemId);
@@ -270,96 +244,8 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>Wired by ModEntry after the launcher is constructed (it needs CurrentPlan, which we own).</summary>
+        /// <summary>Wired by ModEntry after the launcher is constructed.</summary>
         public void AttachLauncher(TheLongestYear.UI.MenuLauncher launcher) => _launcher = launcher;
-
-        /// <summary>
-        /// Pick a new seed and regenerate the year plan. Does NOT touch the active menu — callers
-        /// that want to re-open the hub should call <see cref="Reroll"/> instead. The planning hub's
-        /// refresh button calls this directly so the menu can re-read CurrentPlan without flicker.
-        /// </summary>
-        public void RerollPlan()
-        {
-            int newSeed = NewSeed();
-            Run.Seed = newSeed;
-            _plan = BuildPlan();
-            Run.CurrentChampion = null;      // clear last week's pick so the offer is fresh
-            _monitor.Log(
-                $"Reroll: new seed {newSeed}; plan regenerated " +
-                "(placement is deterministic — partition will match unless catalog/overrides changed).",
-                LogLevel.Info);
-        }
-
-        /// <summary>Build a plan from the live catalog and the user's season overrides.</summary>
-        private TheLongestYear.Core.YearPlan BuildPlan()
-        {
-            var overrides = ParseSeasonOverrides(_config.SeasonOverrides);
-            return new ContractGenerator(_config.ContractItemCapBySeason, overrides)
-                .Generate(_catalog, Run.Seed);
-        }
-
-        /// <summary>
-        /// Merge GameplayConfig.DefaultSeasonOverrides with the user's loaded config overrides
-        /// (user wins on conflict). Both maps are validated against the Season enum; unparseable
-        /// values are skipped with a Warn so a typo in config.json doesn't kill the load.
-        /// </summary>
-        private System.Collections.Generic.IReadOnlyDictionary<string, CoreSeason> ParseSeasonOverrides(
-            System.Collections.Generic.Dictionary<string, string> raw)
-        {
-            var merged = new System.Collections.Generic.Dictionary<string, CoreSeason>();
-
-            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultSeasonOverrides)
-                if (Enum.TryParse(kv.Value, ignoreCase: true, out CoreSeason s))
-                    merged[kv.Key] = s;
-
-            if (raw != null)
-            {
-                foreach (var kv in raw)
-                {
-                    if (Enum.TryParse(kv.Value, ignoreCase: true, out CoreSeason s))
-                        merged[kv.Key] = s;        // user wins
-                    else
-                        _monitor.Log(
-                            $"SeasonOverrides: '{kv.Value}' is not a valid season for id '{kv.Key}' — ignoring.",
-                            LogLevel.Warn);
-                }
-            }
-
-            return merged;
-        }
-
-        /// <summary>Log the (season, theme) → required-items table for review.</summary>
-        public void DumpAssignmentTable(string reason)
-        {
-            if (_plan == null) return;
-            _monitor.Log($"--- Year assignment table ({reason}) ---", LogLevel.Info);
-            foreach (CoreSeason s in Enum.GetValues(typeof(CoreSeason)))
-            {
-                int seasonTotal = _plan.ForSeason(s).Sum(c => c.RequiredItemIds.Count);
-                _monitor.Log($"{s} (total {seasonTotal}):", LogLevel.Info);
-                foreach (Theme t in Enum.GetValues(typeof(Theme)))
-                {
-                    var c = _plan.Get(s, t);
-                    string items = c.RequiredItemIds.Count == 0
-                        ? "(empty)"
-                        : string.Join(", ", c.RequiredItemIds);
-                    _monitor.Log($"  {t} ({c.RequiredItemIds.Count}): {items}", LogLevel.Info);
-                }
-            }
-            _monitor.Log("--- end assignment table ---", LogLevel.Info);
-        }
-
-        /// <summary>
-        /// Debug-only: reroll + clear the per-week presentation guard + (re)open the planning hub.
-        /// Used by the tly_reroll bridge command path. The in-menu refresh button uses
-        /// <see cref="RerollPlan"/> directly to avoid menu re-open flicker.
-        /// </summary>
-        public void Reroll()
-        {
-            RerollPlan();
-            Run.OfferPresentedWeek = -1;
-            _launcher?.OpenWeeklyHub();
-        }
 
         /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
         /// <c>Run.WeekOfYear + 1</c> (and a <paramref name="seasonOverride"/> on day 28) so the
@@ -368,15 +254,12 @@ namespace TheLongestYear.Loop
         {
             int week = targetWeekOfYear ?? Run.WeekOfYear;
 
-            // Guard: at most one presentation per target week. Refresh-button reroll uses Reroll()
-            // which sets OfferPresentedWeek = -1 to bypass this.
             if (Run.OfferPresentedWeek == week)
             {
                 _monitor.Log($"PresentOffer: already shown for week {week}, skipping.", LogLevel.Trace);
                 return;
             }
 
-            // For cross-season (day 28) the new month's championing slate is empty.
             var championingThisOfferMonth = seasonOverride.HasValue
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
                 : Run.ChampionedThemesThisMonth;
@@ -403,36 +286,7 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>
-        /// If the player has a championed theme this week and its contract is satisfied by current
-        /// donations, award the (season-scaled) CompletedContractBonus once per week. Plan 06 will
-        /// wire this to the real "championed contract just cleared" event; here we check on day-end.
-        /// </summary>
-        private void AwardChampionContractBonusIfDue()
-        {
-            if (!Run.CurrentChampion.HasValue || _plan == null) return;
-            if (Run.AwardedChampionWeeks.Contains(Run.WeekOfYear)) return;
-
-            Contract contract = _plan.Get(Run.Season, Run.CurrentChampion.Value);
-            if (!contract.IsSatisfiedBy(Run.DonatedSet())) return;
-
-            long bonus = _jp.CompletedContractBonus(Run.WeekOfYear);
-            _store.State.JunimoPoints += bonus;
-            Run.AwardedChampionWeeks.Add(Run.WeekOfYear);
-            _monitor.Log(
-                $"Championed {Run.CurrentChampion} contract complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
-                LogLevel.Info);
-        }
-
-        private string RequiredFor(Theme theme)
-        {
-            var items = _plan.Get(Run.Season, theme).RequiredItemIds;
-            return items.Count == 0 ? "(nothing)" : string.Join(", ", items);
-        }
-
         private string DescribeWeek() => $"{Run.Season} day {Run.DayOfMonth} (week {Run.WeekOfYear}).";
-
-        private static bool IsWeekStart(int dayOfMonth) => (dayOfMonth - 1) % Calendar.DaysPerWeek == 0;
 
         private static int NewSeed() => Guid.NewGuid().GetHashCode();
     }
