@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using TheLongestYear.Core;
+using TheLongestYear.Donations;
 using TheLongestYear.Loop;
 
 namespace TheLongestYear
@@ -14,6 +17,8 @@ namespace TheLongestYear
         private MetaStore _meta;
         private WorldResetService _reset;
         private RunController _runController;
+        private SeasonResolver _seasonResolver;
+        private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -31,6 +36,9 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
 
+            var harmony = new Harmony(this.ModManifest.UniqueID);
+            harmony.PatchAll();
+
             _commandFilePath = Path.Combine(helper.DirectoryPath, DebugCommandFileName);
 
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
@@ -41,6 +49,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_offer", "Show this week's champion offer.", this.CmdOffer);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
+            helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
+            helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -50,7 +60,12 @@ namespace TheLongestYear
         {
             _meta.Load();
             _reset = new WorldResetService(this.Monitor, _meta.State);
-            _runController = new RunController(this.Monitor, _meta, _config, _reset);
+
+            _seasonResolver = new SeasonResolver();
+            _catalog = new BundleCatalogBuilder(_config.RarityThresholds, _seasonResolver, this.Monitor).Build();
+            DonationService.Active = new DonationService(this.Monitor, _meta, _config);
+
+            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog);
             _runController.OnRunLoaded();
             this.Monitor.Log(
                 $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
@@ -194,6 +209,8 @@ namespace TheLongestYear
                 case "tly_offer": this.CmdOffer(command, args); break;
                 case "tly_donate": this.CmdDonate(command, args); break;
                 case "tly_runstate": this.CmdRunState(command, args); break;
+                case "tly_catalog": this.CmdCatalog(command, args); break;
+                case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
@@ -224,6 +241,28 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _runController.PrintRunState();
+        }
+
+        private void CmdCatalog(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            var byTheme = new Dictionary<TheLongestYear.Core.Theme, int>();
+            foreach (CcItem item in _catalog)
+                byTheme[item.Theme] = byTheme.TryGetValue(item.Theme, out int n) ? n + 1 : 1;
+
+            this.Monitor.Log($"CC catalog: {_catalog.Count} items.", LogLevel.Info);
+            foreach (var kvp in byTheme)
+                this.Monitor.Log($"  {kvp.Key}: {kvp.Value}", LogLevel.Info);
+        }
+
+        private void CmdTestDonate(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_testdonate <qualifiedId> [count]", LogLevel.Warn); return; }
+
+            int count = args.Length > 1 && int.TryParse(args[1], out int c) ? c : 1;
+            DonationService.Active?.OnItemDonated(args[0], count);
         }
     }
 }
