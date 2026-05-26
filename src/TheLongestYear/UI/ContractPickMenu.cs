@@ -61,7 +61,6 @@ namespace TheLongestYear.UI
 
             if (Game1.options.snappyMenus && Game1.options.gamepadControls)
             {
-                this.populateClickableComponentList();
                 this.snapToDefaultClickableComponent();
             }
         }
@@ -145,7 +144,16 @@ namespace TheLongestYear.UI
             }
 
             this.initializeUpperRightCloseButton();
-            this.populateClickableComponentList();
+
+            // Base populateClickableComponentList uses GetType().GetFields() which defaults to PUBLIC only,
+            // so our private fields would be skipped. Build the list ourselves.
+            allClickableComponents = new List<ClickableComponent>();
+            allClickableComponents.Add(_leftCard);
+            allClickableComponents.Add(_rightCard);
+            allClickableComponents.AddRange(_weatherRows);
+            allClickableComponents.AddRange(_cartRows);
+            if (upperRightCloseButton != null)
+                allClickableComponents.Add(upperRightCloseButton);
         }
 
         private int FirstRowIdBelowCards()
