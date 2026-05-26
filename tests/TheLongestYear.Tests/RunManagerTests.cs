@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -8,107 +6,108 @@ namespace TheLongestYear.Tests;
 
 public class RunManagerTests
 {
-    private static CcItem Item(string id, Theme theme, params Season[] seasons)
-        => new CcItem(id, theme, Rarity.Common, new HashSet<Season>(seasons));
-
-    /// <summary>Catalog with one single-season item per season + one year-round multi-season item.</summary>
-    private static List<CcItem> Catalog() => new()
+    // A canonical 4-bundle requirement set: one Seasonal per season, all year-round coverage.
+    // Enough to exercise the season-gate, vault-gate, and end-of-Winter full-CC paths.
+    private static IReadOnlyList<BundleRequirement> SimpleBundles() => new[]
     {
-        Item("spring-only", Theme.Foraging, Season.Spring),
-        Item("summer-only", Theme.Farming,  Season.Summer),
-        Item("fall-only",   Theme.Fishing,  Season.Fall),
-        Item("winter-only", Theme.Mining,   Season.Winter),
-        Item("year-round",  Theme.Mixed,    Season.Spring, Season.Summer, Season.Fall, Season.Winter),
+        BundleRequirement.CreateSeasonal("Spring Foraging", Theme.Foraging,
+            new[] { "spring-1", "spring-2" }, Season.Spring),
+        BundleRequirement.CreateSeasonal("Summer Foraging", Theme.Foraging,
+            new[] { "summer-1" }, Season.Summer),
+        BundleRequirement.CreateSeasonal("Fall Foraging",   Theme.Foraging,
+            new[] { "fall-1" }, Season.Fall),
+        BundleRequirement.CreatePerItem("Winter Group", Theme.Mining,
+            new Dictionary<string, Season>
+            {
+                ["winter-1"] = Season.Winter,
+                ["winter-2"] = Season.Winter
+            })
     };
-
-    private static YearPlan PlanFor(List<CcItem> catalog)
-        => new ContractGenerator().Generate(catalog, seed: 0);
 
     private static RunManager Mgr() => new RunManager(new GateEvaluator());
 
-    // Default vaultGateSatisfied=true for tests that don't care about the vault gate.
     private const bool VaultOk = true;
 
     [Fact]
     public void Midweek_continues()
     {
-        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 3 };
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, VaultOk));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, SimpleBundles(), VaultOk));
     }
 
     [Fact]
-    public void Week_end_without_champion_continues()
+    public void Week_end_off_month_continues()
     {
-        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 7 };
-        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, VaultOk));
+        Assert.Equal(RunAction.Continue, Mgr().EvaluateDayEnd(run, SimpleBundles(), VaultOk));
     }
 
     [Fact]
-    public void Month_end_with_all_assigned_items_donated_advances()
+    public void Month_end_with_all_in_season_items_donated_advances()
     {
-        var catalog = Catalog();
-        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        foreach (var c in plan.ForSeason(Season.Spring))
-            foreach (var id in c.RequiredItemIds)
-                run.RecordDonation(id);
-        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, plan, catalog, VaultOk));
+        // Spring requires only the Seasonal Spring bundle (2 items).
+        run.RecordDonation("spring-1");
+        run.RecordDonation("spring-2");
+        Assert.Equal(RunAction.AdvanceMonth, Mgr().EvaluateDayEnd(run, SimpleBundles(), VaultOk));
     }
 
     [Fact]
-    public void Month_end_missing_a_spring_assigned_item_fails()
+    public void Month_end_missing_a_seasonal_item_fails()
     {
-        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, VaultOk));
+        run.RecordDonation("spring-1"); // missing spring-2
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, SimpleBundles(), VaultOk));
     }
 
     [Fact]
     public void Month_end_with_items_done_but_vault_unpaid_fails()
     {
-        // Item gate passes but vault gate (2,500g for Spring) hasn't been satisfied -> FailReset.
-        var catalog = Catalog();
-        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
-        foreach (var c in plan.ForSeason(Season.Spring))
-            foreach (var id in c.RequiredItemIds)
-                run.RecordDonation(id);
+        run.RecordDonation("spring-1");
+        run.RecordDonation("spring-2");
         Assert.Equal(RunAction.FailReset,
-            Mgr().EvaluateDayEnd(run, plan, catalog, vaultGateSatisfied: false));
+            Mgr().EvaluateDayEnd(run, SimpleBundles(), vaultGateSatisfied: false));
     }
 
     [Fact]
     public void Midweek_with_vault_unpaid_still_continues()
     {
         // Vault gate only applies at month-end; mid-month days never fail on vault.
-        var catalog = Catalog();
         var run = new RunState { Season = Season.Spring, DayOfMonth = 14 };
         Assert.Equal(RunAction.Continue,
-            Mgr().EvaluateDayEnd(run, PlanFor(catalog), catalog, vaultGateSatisfied: false));
+            Mgr().EvaluateDayEnd(run, SimpleBundles(), vaultGateSatisfied: false));
     }
 
     [Fact]
     public void Winter_end_with_full_cc_and_vault_wins()
     {
-        var catalog = Catalog();
-        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        foreach (var item in catalog)
-            run.RecordDonation(item.Id);
-        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, plan, catalog, VaultOk));
+        // Every bundle's distinct ingredients donated -> fullCcDone = true.
+        foreach (string id in new[] { "spring-1", "spring-2", "summer-1", "fall-1", "winter-1", "winter-2" })
+            run.RecordDonation(id);
+        Assert.Equal(RunAction.Win, Mgr().EvaluateDayEnd(run, SimpleBundles(), VaultOk));
     }
 
     [Fact]
     public void Winter_end_with_full_cc_but_vault_unpaid_fails()
     {
-        var catalog = Catalog();
-        var plan = PlanFor(catalog);
         var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
-        foreach (var item in catalog)
-            run.RecordDonation(item.Id);
+        foreach (string id in new[] { "spring-1", "spring-2", "summer-1", "fall-1", "winter-1", "winter-2" })
+            run.RecordDonation(id);
         Assert.Equal(RunAction.FailReset,
-            Mgr().EvaluateDayEnd(run, plan, catalog, vaultGateSatisfied: false));
+            Mgr().EvaluateDayEnd(run, SimpleBundles(), vaultGateSatisfied: false));
+    }
+
+    [Fact]
+    public void Winter_end_with_one_seasonal_item_missing_fails_even_with_vault_ok()
+    {
+        // Spring Foraging passed in Spring but we never donated spring-2 by Winter day 28 ->
+        // BundleGate.IsSatisfied(Winter, ...) returns false because Spring's gate (long
+        // past due) still needs both ingredients.
+        var run = new RunState { Season = Season.Winter, DayOfMonth = 28 };
+        foreach (string id in new[] { "spring-1", "summer-1", "fall-1", "winter-1", "winter-2" })
+            run.RecordDonation(id);
+        Assert.Equal(RunAction.FailReset, Mgr().EvaluateDayEnd(run, SimpleBundles(), VaultOk));
     }
 }

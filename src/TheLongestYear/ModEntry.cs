@@ -85,7 +85,7 @@ namespace TheLongestYear
             _requirements = builder.BuildRequirements();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
-            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog);
+            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
             // DonationService needs the live YearPlan to look up bonus items; RunController owns it.
             DonationService.Active.CurrentPlanProvider = () => _runController.CurrentPlan;
             _runController.OnRunLoaded();
