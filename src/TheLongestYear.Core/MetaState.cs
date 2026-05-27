@@ -54,6 +54,30 @@ public sealed class MetaState
     public bool HasUpgrade(string id) => OwnedUpgrades.Contains(id);
 
     /// <summary>
+    /// Return the highest integer N such that an upgrade with id "<paramref name="prefix"/>{N}"
+    /// is owned, where 1 ≤ N ≤ <paramref name="maxTier"/>. Returns 0 if none in range are
+    /// owned. Used by the reset baseline builder to find the highest "keep" tier the player
+    /// has banked for a given tool/skill/floor chain — the cap-not-grant model.
+    /// </summary>
+    public int HighestKeptTier(string prefix, int maxTier)
+    {
+        int best = 0;
+        foreach (string id in OwnedUpgrades)
+        {
+            if (!id.StartsWith(prefix, StringComparison.Ordinal))
+                continue;
+            string suffix = id.Substring(prefix.Length);
+            if (!int.TryParse(suffix, out int n))
+                continue;
+            if (n < 1 || n > maxTier)
+                continue;
+            if (n > best)
+                best = n;
+        }
+        return best;
+    }
+
+    /// <summary>
     /// Evaluate a meta-requirement string against current banked state. Format is "ns:value".
     /// Recognised namespaces:
     /// <list type="bullet">
