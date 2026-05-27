@@ -90,9 +90,16 @@ namespace TheLongestYear.UI
                 _monitor.Log("Cannot open menu: another menu is already open.", LogLevel.Trace);
                 return false;
             }
-            if (Game1.eventUp || !Game1.player.CanMove)
+            // Only block on an active event — NOT on !Game1.player.CanMove. SMAPI fires
+            // DayStarted before the wake-up animation finishes clearing input locks, so on
+            // day 8+ wake-ups CanMove is still false at the moment OnDayStarted calls us,
+            // and the hub silently swallows itself ("Cannot open menu: cutscene or input
+            // lock" trace in the 2026-05-26 night-2 playtest log, lines 278-279). eventUp
+            // is the cutscene-real check; CanMove was an over-defensive guard added earlier.
+            // Day-1 fresh-run path is unaffected: CanMove is already true on fresh load.
+            if (Game1.eventUp)
             {
-                _monitor.Log("Cannot open menu: cutscene or input lock.", LogLevel.Trace);
+                _monitor.Log("Cannot open menu: cutscene active (eventUp).", LogLevel.Trace);
                 return false;
             }
             return true;
