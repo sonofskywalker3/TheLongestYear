@@ -51,16 +51,30 @@ namespace TheLongestYear.Loop
                 // Per-area completion. NetArray<bool> sets each entry directly.
                 for (int i = 0; i < cc.areasComplete.Count; i++)
                     cc.areasComplete[i] = false;
-                // Mail flags that vanilla sets on room completion. These also gate the
-                // "you completed the Community Center" achievement + the Joja lightning scene.
-                Game1.MasterPlayer.mailReceived.Remove("ccBoilerRoom");
-                Game1.MasterPlayer.mailReceived.Remove("ccCraftsRoom");
-                Game1.MasterPlayer.mailReceived.Remove("ccPantry");
-                Game1.MasterPlayer.mailReceived.Remove("ccFishTank");
-                Game1.MasterPlayer.mailReceived.Remove("ccVault");
-                Game1.MasterPlayer.mailReceived.Remove("ccBulletin");
-                Game1.MasterPlayer.mailReceived.Remove("ccIsComplete");
-                _monitor.Log("In-place reset: cleared CC bundles + areasComplete + completion mail.", LogLevel.Trace);
+                // Mail flags that vanilla sets on room completion + post-completion world
+                // changes. These gate (a) hasCompletedCommunityCenter() + the "you completed
+                // the Community Center" achievement, (b) the JojaMart-closed visual + door
+                // (abandonedJojaMartAccessible — verified via Town.cs:580 +
+                // WorldChangeEvent.cs:283, the lightning strike adds this mail for tomorrow),
+                // (c) the Joja-path branch (JojaMember + jojaMember + the per-room ccXxx
+                // Joja-path flags). User feedback 2026-05-26 round 2: "Joja is still closed
+                // day 1" after reset confirmed these were sticking — the prior reset only
+                // cleared in-memory bundle state.
+                string[] mailToClear =
+                {
+                    "ccBoilerRoom", "ccCraftsRoom", "ccPantry", "ccFishTank",
+                    "ccVault", "ccBulletin", "ccIsComplete",
+                    "abandonedJojaMartAccessible", "ccMovieTheater",
+                    "JojaMember", "jojaMember",
+                    "ccBoilerRoomJoja", "ccCraftsRoomJoja", "ccPantryJoja",
+                    "ccFishTankJoja", "ccVaultJoja", "ccBulletinJoja",
+                };
+                foreach (string flag in mailToClear)
+                    Game1.MasterPlayer.mailReceived.Remove(flag);
+                Game1.MasterPlayer.mailForTomorrow.Remove("abandonedJojaMartAccessible");
+                _monitor.Log(
+                    $"In-place reset: cleared CC bundles + areasComplete + {mailToClear.Length} completion/joja mail flags.",
+                    LogLevel.Trace);
             }
 
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
