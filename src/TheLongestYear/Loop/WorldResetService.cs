@@ -57,14 +57,17 @@ namespace TheLongestYear.Loop
                 // Now zero each per-slot completion array WITHOUT clearing the keys — vanilla
                 // does bundles[bundleIndex] lookups (CC.cs:585), KeyNotFoundException there is
                 // what crashed JunimoNoteMenu.setUpMenu in round 3.
-                foreach (var kvp in Game1.netWorldState.Value.Bundles.Pairs)
+                // FieldDict exposes the underlying Dictionary<int, NetArray<bool, NetBool>> so we
+                // can mutate the NetArray entries in-place (the .Pairs projection only gives a
+                // bool[] snapshot, mutating that wouldn't sync).
+                foreach (var kvp in Game1.netWorldState.Value.Bundles.FieldDict)
                 {
-                    Netcode.NetArray<bool, Netcode.NetBool> arr = kvp.Value;
+                    var arr = kvp.Value;
                     for (int i = 0; i < arr.Length; i++)
                         arr[i] = false;
                 }
-                foreach (var kvp in Game1.netWorldState.Value.BundleRewards.Pairs)
-                    Game1.netWorldState.Value.BundleRewards[kvp.Key] = false;
+                foreach (var kvp in Game1.netWorldState.Value.BundleRewards.FieldDict)
+                    kvp.Value.Value = false;
                 for (int i = 0; i < cc.areasComplete.Count; i++)
                     cc.areasComplete[i] = false;
                 // Mail flags that vanilla sets on room completion + post-completion world
