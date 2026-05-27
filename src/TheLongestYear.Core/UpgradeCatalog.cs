@@ -39,11 +39,8 @@ public static class UpgradeCatalog
         new UpgradeDefinition("starter_gold_2", UpgradeCategory.Loadout, "Seed Money II",
             "Start each run with +1500g (instead of +500g).", 300, "starter_gold_1"),
 
-        // Carryover
-        new UpgradeDefinition("carry_xp_25", UpgradeCategory.Carryover, "Carryover XP I",
-            "Retain 25% of your peak skill XP across runs.", 225),
-        new UpgradeDefinition("carry_xp_50", UpgradeCategory.Carryover, "Carryover XP II",
-            "Retain 50% of your peak skill XP across runs.", 600, "carry_xp_25"),
+        // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
+        // programmatically-generated keep_<skill>_level_N entries below.)
 
         // Efficiency
         new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Early Horse",

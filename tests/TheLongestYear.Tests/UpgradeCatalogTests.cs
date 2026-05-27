@@ -201,4 +201,11 @@ public class UpgradeCatalogTests
             prev = cost;
         }
     }
+
+    [Fact]
+    public void Deprecated_carry_xp_entries_have_been_removed()
+    {
+        Assert.Null(UpgradeCatalog.TryGet("carry_xp_25"));
+        Assert.Null(UpgradeCatalog.TryGet("carry_xp_50"));
+    }
 }
