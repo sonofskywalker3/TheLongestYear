@@ -98,22 +98,22 @@ public class BonusItemSamplerTests
     {
         var bundles = new[]
         {
-            // Summer quota = 1 so the bundle's items ARE in play; the predicate then narrows the
-            // pool to seasonally-obtainable items.
             BundleRequirement.CreatePercentage("Crab Pot", Theme.Fishing,
                 new[] { "crab-spring", "crab-summer", "crab-yearround" },
                 numberOfSlots: 2,
                 cumulativeRequiredBySeason: new[] { 0, 1, 2, 2 })
         };
-        // Only crab-summer and crab-yearround are obtainable in Summer.
+        // Only crab-spring and crab-yearround are obtainable in Spring (per the predicate).
+        // Spring quota = 0 no longer excludes the bundle — items are always in play, with
+        // rarity weighting controlling how often hard ones appear.
         var sample = BonusItemSampler.SampleForTheme(
-            42, 0, Theme.Fishing, Season.Summer, bundles,
-            isObtainableInSeason: id => id != "crab-spring",
+            42, 0, Theme.Fishing, Season.Spring, bundles,
+            isObtainableInSeason: id => id != "crab-summer",
             rarityOf: AllCommon,
             maxCount: 10);
 
         Assert.Equal(2, sample.Count);
-        Assert.Contains("crab-summer", sample);
+        Assert.Contains("crab-spring", sample);
         Assert.Contains("crab-yearround", sample);
     }
 
@@ -134,10 +134,13 @@ public class BonusItemSamplerTests
     // ----- UX4: rarity weighting + zero-quota Percentage exclusion -----
 
     [Fact]
-    public void Zero_quota_Percentage_bundle_drops_out_of_the_pool()
+    public void Zero_quota_Percentage_bundle_still_contributes_to_the_pool()
     {
-        // Adventurer's-style: Spring quota = 0 means the bundle isn't gated this season —
-        // its items should NOT appear in Spring's bonus sample.
+        // UX4 (corrected): Adventurer's Spring quota = 0 does NOT exclude its items from the
+        // Mining bonus pool. Inclusion is the right behaviour — the rarity weighting (Common=8,
+        // VeryRare=1) handles "make hard items show up less often", and skipping them entirely
+        // would deprive the player of their pick at all in seasons where the bundle isn't gated
+        // yet. The earlier handoff round suggested exclusion; the actual ask was just weighting.
         var bundles = new[]
         {
             BundleRequirement.CreatePercentage("Adventurer", Theme.Mining,
@@ -147,12 +150,7 @@ public class BonusItemSamplerTests
         };
         var sample = BonusItemSampler.SampleForTheme(
             42, 0, Theme.Mining, Season.Spring, bundles, _ => true, AllCommon, maxCount: 10);
-        Assert.Empty(sample);
-
-        // Same bundle queried in Summer (quota=1) — items now in play.
-        var summer = BonusItemSampler.SampleForTheme(
-            42, 0, Theme.Mining, Season.Summer, bundles, _ => true, AllCommon, maxCount: 10);
-        Assert.Equal(3, summer.Count);
+        Assert.Equal(3, sample.Count);
     }
 
     [Fact]
