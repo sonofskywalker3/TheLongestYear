@@ -56,6 +56,12 @@ namespace TheLongestYear.Loop
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
             if (cc != null && cc.Map != null)
             {
+                // Defensive: a prior buggy reset (round-3 playtest) may have left
+                // netWorldState.Value.Bundles with missing keys, which crashes
+                // JunimoNoteMenu.setUpMenu on '[0]'. SetBundleData is idempotent for existing
+                // keys and ADDS any missing ones — safe to call on every load.
+                Game1.netWorldState.Value.SetBundleData(Game1.netWorldState.Value.BundleData);
+
                 // ShouldNoteAppearPatch makes shouldNoteAppearInArea return true for every
                 // incomplete area in [0, 5]; MakeMapModifications iterates areas and calls
                 // addJunimoNote for any that don't already have one (CommunityCenter.cs:614).

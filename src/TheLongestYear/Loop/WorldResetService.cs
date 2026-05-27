@@ -45,10 +45,26 @@ namespace TheLongestYear.Loop
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
             if (cc != null)
             {
-                // Per-slot bundle completion. NetBundles inherits NetIntDictionary so Clear() works.
-                Game1.netWorldState.Value.Bundles.Clear();
-                Game1.netWorldState.Value.BundleRewards.Clear();
-                // Per-area completion. NetArray<bool> sets each entry directly.
+                // Force-repopulate Bundles + BundleRewards FIRST. Necessary because (a) a prior
+                // broken reset may have Clear()ed the dict (2026-05-26 round-3 crash) leaving
+                // bundlesDict()[0] missing, and (b) NetWorldState.BundleData's lazy SetBundleData
+                // only fires when netBundleData is empty — once it's populated, missing Bundles
+                // entries aren't restored automatically. SetBundleData is idempotent for
+                // existing keys (only ADDS missing), so calling it here is safe regardless of
+                // current state.
+                Game1.netWorldState.Value.SetBundleData(Game1.netWorldState.Value.BundleData);
+
+                // Now zero each per-slot completion array WITHOUT clearing the keys — vanilla
+                // does bundles[bundleIndex] lookups (CC.cs:585), KeyNotFoundException there is
+                // what crashed JunimoNoteMenu.setUpMenu in round 3.
+                foreach (var kvp in Game1.netWorldState.Value.Bundles.Pairs)
+                {
+                    Netcode.NetArray<bool, Netcode.NetBool> arr = kvp.Value;
+                    for (int i = 0; i < arr.Length; i++)
+                        arr[i] = false;
+                }
+                foreach (var kvp in Game1.netWorldState.Value.BundleRewards.Pairs)
+                    Game1.netWorldState.Value.BundleRewards[kvp.Key] = false;
                 for (int i = 0; i < cc.areasComplete.Count; i++)
                     cc.areasComplete[i] = false;
                 // Mail flags that vanilla sets on room completion + post-completion world
