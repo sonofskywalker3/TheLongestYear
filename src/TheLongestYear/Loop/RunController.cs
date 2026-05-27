@@ -71,7 +71,9 @@ namespace TheLongestYear.Loop
                 _reset.PerformReset(_config.StartingMoney);
                 Run.BeginNewRun(NewSeed());
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
-                return;
+                // Fall through so the Spring 1 hub fires immediately — PerformReset put us
+                // back on day 1, BeginNewRun cleared OfferPresentedWeek to -1, and the
+                // week-start trigger below should open the hub right away.
             }
 
             // Sync state from the game date; a new month clears the month's selections (the
@@ -94,11 +96,22 @@ namespace TheLongestYear.Loop
             Run.Season = season;
             Run.DayOfMonth = Game1.dayOfMonth;
 
-            // Safety net for the FIRST day of a fresh run (Spring 1 of a new run has no previous
-            // day-28 to trigger Sunday-night planning, and the player has no selection yet).
-            if (Run.DayOfMonth == 1 && Run.Season == CoreSeason.Spring
-                && !Run.CurrentSelection.HasValue && Run.OfferPresentedWeek != Run.WeekOfYear)
+            // Open the weekly planning hub on every week-start morning (days 1, 8, 15, 22).
+            // This replaces the prior Sunday-night DayEnding trigger, which fired during the
+            // sleep/save sequence when Game1.player.CanMove == false — MenuLauncher.CanOpen
+            // blocked the menu and the hub never appeared (2026-05-26 playtest:
+            // "Cannot open menu: cutscene or input lock" right before "starting spring 8").
+            // OnDayStarted runs after the wake-up cutscene resolves, so the menu opens cleanly.
+            //
+            // OfferPresentedWeek guards against re-firing within the same week (e.g. if the
+            // player saves + reloads on day 8 morning).
+            if (Calendar.IsWeekStart(Run.DayOfMonth)
+                && Run.OfferPresentedWeek != Run.WeekOfYear)
             {
+                // CurrentSelection from a previous week intentionally persists until the next
+                // pick overwrites it — the hub still opens to let the player choose this week's
+                // theme. OfferPresentedWeek is per-week + persists across save reload, so the
+                // hub fires exactly once per week (no repeat on load).
                 PresentOffer(targetWeekOfYear: Run.WeekOfYear);
             }
         }
@@ -125,23 +138,8 @@ namespace TheLongestYear.Loop
                     AwardInterimJp("run WON — loop broken");
                     break;
             }
-
-            // Sunday-night planning: open the hub at week-end so the player picks for the
-            // upcoming week before sleeping. Day-28 case crosses to next season — the hub
-            // shows next season's bundles + bonus preview, and the pick is stored on
-            // RunState.NextMonthSelection which BeginNewMonth consumes on tomorrow's
-            // OnDayStarted. Suppressed on a pending reset (the run is about to end anyway).
-            if (!_pendingReset && action != RunAction.Win && Calendar.IsWeekEnd(Run.DayOfMonth))
-            {
-                bool isMonthEnd = Calendar.IsMonthEnd(Run.DayOfMonth);
-                CoreSeason? seasonOverride = isMonthEnd ? (CoreSeason?)NextSeason(Run.Season) : null;
-                // Next week-of-year — for day 28 of Winter we'd cross past the year so skip.
-                int? targetWeek = isMonthEnd
-                    ? (Run.Season == CoreSeason.Winter ? (int?)null : Run.WeekOfYear + 1)
-                    : Run.WeekOfYear + 1;
-                if (targetWeek.HasValue)
-                    PresentOffer(targetWeekOfYear: targetWeek.Value, seasonOverride: seasonOverride);
-            }
+            // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
+            // DayEnding fires while the player can't open menus.
         }
 
         private static CoreSeason NextSeason(CoreSeason s) => s switch
