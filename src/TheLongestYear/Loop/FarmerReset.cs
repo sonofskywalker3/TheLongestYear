@@ -13,8 +13,16 @@ namespace TheLongestYear.Loop
         {
             p.Money = startingMoney;
 
-            // Inventory — wipe entirely for now (Stash preservation is Plan 07).
+            // Inventory — wipe CONTENTS but preserve the slot count (Stash preservation is Plan 07).
+            // p.Items.Clear() removes the slot list itself, which leaves MaxItems lookups
+            // returning 0 → addItemToInventory always fails with "inventory full" (2026-05-26
+            // round-3 playtest: 'I tried to pick up a daffodil and it said my inventory was
+            // full, but it's empty'). Reset the backpack to the 12-slot baseline + null each
+            // slot's contents.
+            p.MaxItems = 12;
             p.Items.Clear();
+            for (int i = 0; i < p.MaxItems; i++)
+                p.Items.Add(null);
 
             // Skills: XP array + the six derived levels.
             for (int i = 0; i < p.experiencePoints.Count; i++)

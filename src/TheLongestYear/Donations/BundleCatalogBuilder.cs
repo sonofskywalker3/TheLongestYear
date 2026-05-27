@@ -171,5 +171,36 @@ namespace TheLongestYear.Donations
                 LogLevel.Info);
             return reqs;
         }
+
+        /// <summary>
+        /// Build a (qualified item id → stack required) lookup across every classifiable bundle
+        /// ingredient. Used by the planning-hub bonus-item icons so the player sees the actual
+        /// quantity needed for a slot (e.g. Wood = 99, not just "1"). When the same item appears
+        /// in multiple bundles with different stack requirements (rare but possible), we keep the
+        /// MAX — that's the largest amount the player would need to fill any one slot, which is
+        /// the safer "make sure you have enough" framing.
+        /// </summary>
+        public IReadOnlyDictionary<string, int> BuildIngredientStacks()
+        {
+            var stacks = new Dictionary<string, int>(System.StringComparer.Ordinal);
+            Dictionary<string, string> bundleData = Game1.netWorldState.Value.BundleData;
+            foreach (KeyValuePair<string, string> kvp in bundleData)
+            {
+                ParsedBundle bundle = BundleParsing.Parse(kvp.Key, kvp.Value);
+                if (!RoomThemeMap.TryGetTheme(bundle.Room, out _))
+                    continue;
+
+                foreach (BundleIngredient ing in bundle.Ingredients)
+                {
+                    if (BundleParsing.IsCategoryRef(ing.ItemRef))
+                        continue;
+                    string id = BundleParsing.NormalizeItemId(ing.ItemRef);
+                    int stack = ing.Stack > 0 ? ing.Stack : 1;
+                    if (!stacks.TryGetValue(id, out int existing) || stack > existing)
+                        stacks[id] = stack;
+                }
+            }
+            return stacks;
+        }
     }
 }

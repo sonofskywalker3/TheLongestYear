@@ -160,8 +160,9 @@ namespace TheLongestYear.UI
 
             foreach (string id in sample)
             {
+                int stack = _runController.GetStackForIngredient(id);
                 Item item = null;
-                try { item = ItemRegistry.Create(id, 1, 0, allowNull: true); }
+                try { item = ItemRegistry.Create(id, stack, 0, allowNull: true); }
                 catch (Exception) { item = null; }
                 dest.Add(item);
             }
@@ -305,7 +306,10 @@ namespace TheLongestYear.UI
             {
                 if (items[i] != null && bounds[i].Contains(x, y))
                 {
-                    _hoverText = $"{items[i].DisplayName} (1.5x)";
+                    // Show quantity in the hover so the player sees "Wood x99 (1.5x)" not just "Wood (1.5x)".
+                    int hoverStack = items[i].Stack;
+                    string qty = hoverStack > 1 ? $" x{hoverStack}" : "";
+                    _hoverText = $"{items[i].DisplayName}{qty} (1.5x)";
                     return;
                 }
             }
@@ -430,7 +434,10 @@ namespace TheLongestYear.UI
                 Vector2 pos = new Vector2(slot.X, slot.Y);
                 if (item != null)
                 {
-                    item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Hide, Color.White, false);
+                    // StackDrawType.Draw renders the stack number badge over the icon — needed
+                    // so the player sees the actual donation quantity (e.g. Wood = 99, not "1").
+                    // The Item is created with Stack=GetStackForIngredient(id) above.
+                    item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
                 }
                 else
                 {
