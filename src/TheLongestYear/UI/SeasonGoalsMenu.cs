@@ -31,11 +31,14 @@ namespace TheLongestYear.UI
 
         // Normal Stardew inventory icon size = 64px (16px sprite × 4 scale). The row needs to
         // fit a header line + a row of 64px icons + padding above & below.
-        private const int RowHeight = 128;
-        private const int RowSpacing = 8;
+        // Gap is intentionally wide (24px) — Item.drawInMenu's stack-count badge renders
+        // beyond the icon's bottom-right corner; an 8px gap was letting "99" of one icon
+        // collide with the next icon's left edge.
+        private const int RowHeight = 144;
+        private const int RowSpacing = 10;
         private const int IngredientIconSize = 64;
-        private const int IngredientIconGap = 8;
-        private const int IngredientIconY = 56;        // offset from row top (below the header line)
+        private const int IngredientIconGap = 24;
+        private const int IngredientIconY = 64;        // offset from row top (below the header line)
 
         private const int RowIdBase = 8000;
         private const int ScrollUpId = 8900;
