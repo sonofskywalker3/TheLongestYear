@@ -62,6 +62,19 @@ public sealed class RunState
     /// </summary>
     public List<int> VaultBundlesPaid { get; set; } = new();
 
+    /// <summary>Deepest mine floor reached this run. Used by RunBaseline to cap the
+    /// restored mine elevator floor on reset (cap-not-grant). Updated by
+    /// PeakMineFloorTracker (mod-side) on Player.Warped into a MineShaft.</summary>
+    public int PeakMineFloor { get; set; }
+
+    /// <summary>Record having reached the given floor this run. Idempotent for shallower
+    /// floors — only deeper reaches update the peak.</summary>
+    public void RecordMineFloor(int floor)
+    {
+        if (floor > PeakMineFloor)
+            PeakMineFloor = floor;
+    }
+
     public int WeekOfYear => Calendar.WeekOfYear((int)Season, DayOfMonth);
 
     public int WeekInMonth => Calendar.WeekInMonth(DayOfMonth);
@@ -141,5 +154,6 @@ public sealed class RunState
         VaultBundlesPaid.Clear();
         CurrentWeekBonusItems.Clear();
         OfferPresentedWeek = -1;
+        PeakMineFloor = 0;
     }
 }

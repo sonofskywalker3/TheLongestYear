@@ -209,4 +209,36 @@ public class RunStateTests
         run.BeginNewRun(seed: 1);
         Assert.Null(run.NextMonthSelection);
     }
+
+    [Fact]
+    public void PeakMineFloor_defaults_to_zero_and_round_trips_through_json()
+    {
+        var fresh = new RunState();
+        Assert.Equal(0, fresh.PeakMineFloor);
+
+        var original = new RunState { PeakMineFloor = 65 };
+        string json = System.Text.Json.JsonSerializer.Serialize(original);
+        RunState restored = System.Text.Json.JsonSerializer.Deserialize<RunState>(json)!;
+        Assert.Equal(65, restored.PeakMineFloor);
+    }
+
+    [Fact]
+    public void BeginNewRun_resets_PeakMineFloor()
+    {
+        var run = new RunState { PeakMineFloor = 90 };
+        run.BeginNewRun(seed: 42);
+        Assert.Equal(0, run.PeakMineFloor);
+    }
+
+    [Fact]
+    public void RecordMineFloor_takes_the_max_and_ignores_shallower_floors()
+    {
+        var run = new RunState();
+        run.RecordMineFloor(20);
+        Assert.Equal(20, run.PeakMineFloor);
+        run.RecordMineFloor(10);
+        Assert.Equal(20, run.PeakMineFloor);
+        run.RecordMineFloor(45);
+        Assert.Equal(45, run.PeakMineFloor);
+    }
 }
