@@ -140,6 +140,7 @@ public static class UpgradeCatalog
             "Start each run with a Pig (Deluxe Barn).", 700, "keep_deluxe_barn", "species:Pig"),
         };
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
+        entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
         return entries;
     }
 }
