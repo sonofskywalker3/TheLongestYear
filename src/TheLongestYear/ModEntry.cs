@@ -130,6 +130,7 @@ namespace TheLongestYear
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
             _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);
             this.Helper.Events.Player.Warped += _peakMineFloorTracker.OnWarped;
+            _reset.RegisterIndicators();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
