@@ -51,6 +51,30 @@ public sealed class MetaState
     /// </summary>
     public List<string> MailFlagsEverReceived { get; set; } = new();
 
+    /// <summary>
+    /// Cooking recipe IDs banked in the Cookbook across runs. Keys match
+    /// <c>Farmer.cookingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Fried_Egg").
+    /// On reset, every entry is re-granted to <c>Farmer.cookingRecipes[id] = 0</c>
+    /// (the vanilla "learned but never cooked" marker). Slot count is controlled by
+    /// which Cookbook I/II/III upgrades the player owns.
+    /// </summary>
+    public List<string> CookbookRecipes { get; set; } = new();
+
+    /// <summary>
+    /// Crafting recipe IDs banked in the Craftbook across runs. Keys match
+    /// <c>Farmer.craftingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Wood Fence").
+    /// On reset, every entry is re-granted to <c>Farmer.craftingRecipes[id] = 0</c>.
+    /// </summary>
+    public List<string> CraftbookRecipes { get; set; } = new();
+
+    /// <summary>
+    /// String IDs of indicator bubbles the player has already dismissed. Prevents the ?/!
+    /// bubble from re-appearing after a reset. Values are "tly.cookbook", "tly.craftbook",
+    /// and "tly.fireplace". Using <see cref="HashSet{T}"/> so duplicate dismissals are
+    /// idempotent; the JSON serializer preserves this as a unique array.
+    /// </summary>
+    public HashSet<string> DismissedIndicators { get; set; } = new();
+
     public bool HasUpgrade(string id) => OwnedUpgrades.Contains(id);
 
     /// <summary>

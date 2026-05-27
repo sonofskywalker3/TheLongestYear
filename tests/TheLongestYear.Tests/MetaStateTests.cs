@@ -206,4 +206,39 @@ public class MetaStateTests
         var s = new MetaState { OwnedUpgrades = { "keep_hoe_iridium", "keep_hoe_2" } };
         Assert.Equal(2, s.HighestKeptTier("keep_hoe_", maxTier: 4));
     }
+
+    [Fact]
+    public void New_meta_state_has_empty_cookbook_craftbook_and_dismissed_indicators()
+    {
+        var s = new MetaState();
+        Assert.Empty(s.CookbookRecipes);
+        Assert.Empty(s.CraftbookRecipes);
+        Assert.Empty(s.DismissedIndicators);
+    }
+
+    [Fact]
+    public void Cookbook_craftbook_dismissed_indicators_round_trip_through_json()
+    {
+        var original = new MetaState
+        {
+            CookbookRecipes      = { "Fried_Egg", "Bread", "Salad" },
+            CraftbookRecipes     = { "Wood_Fence", "Chest" },
+            DismissedIndicators  = { "tly.cookbook", "tly.fireplace" }
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(original);
+        MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
+
+        Assert.Equal(new[] { "Fried_Egg", "Bread", "Salad" }, restored.CookbookRecipes);
+        Assert.Equal(new[] { "Wood_Fence", "Chest" }, restored.CraftbookRecipes);
+        Assert.Equal(new HashSet<string> { "tly.cookbook", "tly.fireplace" }, restored.DismissedIndicators);
+    }
+
+    [Fact]
+    public void DismissedIndicators_is_a_hashset_and_deduplicates()
+    {
+        var s = new MetaState();
+        s.DismissedIndicators.Add("tly.cookbook");
+        s.DismissedIndicators.Add("tly.cookbook");   // duplicate
+        Assert.Single(s.DismissedIndicators);
+    }
 }
