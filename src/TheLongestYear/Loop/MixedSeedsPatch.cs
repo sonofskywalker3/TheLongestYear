@@ -21,7 +21,7 @@ namespace TheLongestYear.Loop
         public static System.Func<string, bool> HasUpgrade;
     }
 
-    [HarmonyPatch(typeof(Crop), "getRandomWildCropForSeason")]
+    [HarmonyPatch(typeof(Crop), "getRandomWildCropForSeason", new System.Type[] { typeof(bool) })]
     internal static class MixedSeedsPatch
     {
         private static void Postfix(ref string __result)
@@ -34,7 +34,7 @@ namespace TheLongestYear.Loop
                 && UpgradeChecker.HasUpgrade("cult_red_cabbage")
                 && Game1.random.NextDouble() < 0.10)
             {
-                __result = "(O)398"; // Starfruit seed id
+                __result = "(O)398"; // Starfruit item id (produce — passed to ItemRegistry.Create<Object> for the harvested crop)
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace TheLongestYear.Loop
             if (UpgradeChecker.HasUpgrade("cult_red_cabbage")
                 && Game1.random.NextDouble() < 0.10)
             {
-                __result = "(O)266"; // Red Cabbage seed id
+                __result = "(O)266"; // Red Cabbage item id (produce — same path as Starfruit above)
             }
         }
     }
