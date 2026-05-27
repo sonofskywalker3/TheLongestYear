@@ -160,4 +160,50 @@ public class MetaStateTests
         Assert.False(s.MeetsMetaRequirement("future:something"));
         Assert.False(s.MeetsMetaRequirement("malformed-no-colon"));
     }
+
+    [Fact]
+    public void HighestKeptTier_returns_zero_when_no_keep_upgrades_owned()
+    {
+        var s = new MetaState();
+        Assert.Equal(0, s.HighestKeptTier("keep_hoe_", maxTier: 4));
+    }
+
+    [Fact]
+    public void HighestKeptTier_returns_the_highest_owned_tier()
+    {
+        var s = new MetaState
+        {
+            OwnedUpgrades = { "keep_hoe_1", "keep_hoe_2", "keep_hoe_3", "backpack_1" }
+        };
+        Assert.Equal(3, s.HighestKeptTier("keep_hoe_", maxTier: 4));
+    }
+
+    [Fact]
+    public void HighestKeptTier_ignores_non_matching_prefixes()
+    {
+        var s = new MetaState { OwnedUpgrades = { "keep_axe_4", "keep_hoe_1" } };
+        Assert.Equal(1, s.HighestKeptTier("keep_hoe_", maxTier: 4));
+    }
+
+    [Fact]
+    public void HighestKeptTier_caps_at_maxTier_and_ignores_higher_owned_ids()
+    {
+        // Defensive: if a hand-edited save somehow has keep_hoe_99, we cap at maxTier.
+        var s = new MetaState { OwnedUpgrades = { "keep_hoe_99" } };
+        Assert.Equal(0, s.HighestKeptTier("keep_hoe_", maxTier: 4));
+    }
+
+    [Fact]
+    public void HighestKeptTier_includes_the_exact_maxTier()
+    {
+        var s = new MetaState { OwnedUpgrades = { "keep_hoe_4" } };
+        Assert.Equal(4, s.HighestKeptTier("keep_hoe_", maxTier: 4));
+    }
+
+    [Fact]
+    public void HighestKeptTier_skips_non_numeric_suffixes()
+    {
+        var s = new MetaState { OwnedUpgrades = { "keep_hoe_iridium", "keep_hoe_2" } };
+        Assert.Equal(2, s.HighestKeptTier("keep_hoe_", maxTier: 4));
+    }
 }
