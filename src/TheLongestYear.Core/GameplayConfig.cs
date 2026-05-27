@@ -163,10 +163,14 @@ public sealed class GameplayConfig
     /// (unused in v1; Plan 06 will re-enable the hotkey)</summary>
     public string WeeklyHubHotkey { get; set; } = "P";
 
-    /// <summary>SButton name for the hotkey that opens the Season Goals tracker (per-bundle
-    /// progress + missing-items list). Default: F8. Empty / unparseable string disables the
-    /// hotkey entirely.</summary>
-    public string SeasonGoalsHotkey { get; set; } = "F8";
+    /// <summary>X tile coordinate of the Season Goals board inside the Community Center.
+    /// Default: 45 (one tile west of the Bulletin Board room's Junimo Note at (46,11)).
+    /// The Action tile property is painted onto whatever Buildings-layer tile sits at this
+    /// coord, so picking an empty coord won't work — choose a wall/decoration tile.</summary>
+    public int SeasonGoalsBoardTileX { get; set; } = 45;
+
+    /// <summary>Y tile coordinate of the Season Goals board inside the Community Center.</summary>
+    public int SeasonGoalsBoardTileY { get; set; } = 11;
 
     /// <summary>JP multiplier applied to bonus-list items donated during their selected week.</summary>
     public double SelectionBonusMultiplier { get; set; } = 1.5;
