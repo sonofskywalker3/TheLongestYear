@@ -25,6 +25,7 @@ namespace TheLongestYear
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
+        private IReadOnlyDictionary<string, int> _ingredientStacks = new Dictionary<string, int>();
         private DonationObserver _donationObserver;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
@@ -97,9 +98,10 @@ namespace TheLongestYear
                 ParseBundleQuotas());
             _catalog = builder.Build();
             _requirements = builder.BuildRequirements();
+            _ingredientStacks = builder.BuildIngredientStacks();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
-            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
+            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements, _ingredientStacks);
             _runController.OnRunLoaded();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);

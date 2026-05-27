@@ -25,6 +25,7 @@ namespace TheLongestYear.Loop
         private readonly JpCalculator _jp;
         private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
         private readonly System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
+        private readonly System.Collections.Generic.IReadOnlyDictionary<string, int> _ingredientStacks;
 
         private bool _pendingReset;
         private TheLongestYear.UI.MenuLauncher _launcher;
@@ -38,7 +39,8 @@ namespace TheLongestYear.Loop
 
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
             System.Collections.Generic.IReadOnlyList<CcItem> catalog,
-            System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null)
+            System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null,
+            System.Collections.Generic.IReadOnlyDictionary<string, int> ingredientStacks = null)
         {
             _monitor = monitor;
             _store = store;
@@ -47,7 +49,14 @@ namespace TheLongestYear.Loop
             _jp = new JpCalculator(config.Jp);
             _catalog = (catalog != null && catalog.Count > 0) ? catalog : CcItemCatalog.Items;
             _requirements = requirements ?? new System.Collections.Generic.List<BundleRequirement>();
+            _ingredientStacks = ingredientStacks ?? new System.Collections.Generic.Dictionary<string, int>();
         }
+
+        /// <summary>Quantity required for a bonus item's bundle slot, used by the hub UI so the
+        /// icon shows the actual donation count (e.g. Wood = 99). Falls back to 1 for unknown ids
+        /// (SVE additions etc.) so the display never crashes.</summary>
+        public int GetStackForIngredient(string itemId)
+            => _ingredientStacks.TryGetValue(itemId, out int stack) ? stack : 1;
 
         private RunState Run => _store.Run;
 
