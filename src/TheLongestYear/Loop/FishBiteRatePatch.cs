@@ -20,6 +20,10 @@ namespace TheLongestYear.Loop
             if (ActiveEffectsProvider.ActiveBonus("fish_bite_up"))
                 __result *= 0.77f;  // ~30% faster bite
 
+            // fortune_rare_fish upgrade (permanent, not theme-gated): additional 25% faster bite.
+            if (UpgradeChecker.HasUpgrade != null && UpgradeChecker.HasUpgrade("fortune_rare_fish"))
+                __result *= 0.75f;
+
             if (ActiveEffectsProvider.ActiveLiability("fish_bite_down"))
                 __result *= 1.43f;  // ~30% slower bite (Farming liability)
         }
