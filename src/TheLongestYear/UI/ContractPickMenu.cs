@@ -319,7 +319,7 @@ namespace TheLongestYear.UI
             {
                 if (items[i] != null && bounds[i].Contains(x, y))
                 {
-                    _hoverText = $"{items[i].DisplayName} (1.5×)";
+                    _hoverText = $"{items[i].DisplayName} (1.5x)";
                     return;
                 }
             }
@@ -460,42 +460,51 @@ namespace TheLongestYear.UI
 
             // Bonus header above the icon row (which is anchored to the card bottom).
             int bonusHeaderY = card.bounds.Y + card.bounds.Height - CardInnerPad - BonusIconSize - BodyLineHeight - 4;
-            Utility.drawTextWithShadow(b, "Bonus this week (1.5×):", Game1.smallFont,
+            Utility.drawTextWithShadow(b, "Bonus this week (1.5x):", Game1.smallFont,
                 new Vector2(textX, bonusHeaderY), Game1.textColor);
 
             // Bonus item icons (pre-computed bounds).
             DrawBonusIcons(b, bonus, bonusBounds);
         }
 
-        /// <summary>Status text for a bundle at <see cref="_offerSeason"/> — e.g. "needs 1 more
-        /// for Spring" or empty if the gate is already passed at that season's checkpoint.</summary>
+        /// <summary>Status text for a bundle at <see cref="_offerSeason"/> — e.g.
+        /// "needs 1 before Summer 1", or empty if the gate is already passed at that season's
+        /// checkpoint. Unified pattern across all three bundle kinds (UX3): "needs N before
+        /// {NextSeason} 1" gives the player a concrete next-season day-1 deadline.
+        /// Winter has no next season inside the run (day-28 = run end), so the badge is
+        /// suppressed there — the run-end gate is what matters, not a per-bundle countdown.
+        /// Plain ASCII only — Stardew's smallFont is missing U+2190 (← arrow) and U+00D7
+        /// (× multiplication sign), which render as tofu/missing-glyph boxes (UX1).</summary>
         private string BundleSeasonBadge(BundleRequirement br, ISet<string> donated)
+        {
+            int missing = MissingForOfferSeason(br, donated);
+            if (missing <= 0) return "";
+            if (_offerSeason == CoreSeason.Winter) return "";   // run-end checkpoint; no "before Spring 1"
+            CoreSeason next = (CoreSeason)((int)_offerSeason + 1);
+            return $"  needs {missing} before {next} 1";
+        }
+
+        /// <summary>Per-kind count of slots still needed to satisfy this bundle's contribution
+        /// to <see cref="_offerSeason"/>'s checkpoint. Returns 0 when already satisfied.</summary>
+        private int MissingForOfferSeason(BundleRequirement br, ISet<string> donated)
         {
             switch (br.Kind)
             {
                 case BundleKind.Seasonal:
-                    if (br.SeasonalSeason == _offerSeason)
-                    {
-                        int missing = br.Ingredients.Count(i => !donated.Contains(i));
-                        if (missing > 0) return $"  ← needs {missing} this month";
-                    }
-                    return "";
+                    if (br.SeasonalSeason != _offerSeason) return 0;
+                    return br.Ingredients.Count(i => !donated.Contains(i));
 
                 case BundleKind.PerItem:
-                    int dueMissing = br.ItemSeasonPins!.Count(kv =>
+                    return br.ItemSeasonPins!.Count(kv =>
                         (int)kv.Value <= (int)_offerSeason && !donated.Contains(kv.Key));
-                    if (dueMissing > 0) return $"  ← needs {dueMissing} this month";
-                    return "";
 
                 case BundleKind.Percentage:
                     int required = br.CumulativeRequiredBySeason![(int)_offerSeason];
                     int have = br.Ingredients.Count(donated.Contains);
-                    int delta = required - have;
-                    if (delta > 0) return $"  ← needs {delta} more by {_offerSeason}";
-                    return "";
+                    return required - have;
 
                 default:
-                    return "";
+                    return 0;
             }
         }
 
