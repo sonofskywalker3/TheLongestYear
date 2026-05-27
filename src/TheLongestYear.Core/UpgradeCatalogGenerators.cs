@@ -58,4 +58,45 @@ internal static class UpgradeCatalogGenerators
                 "Start each run with your Fishing Rod at this tier (capped at your in-run reach).",
                 cost, prereq);
     }
+
+    // Skill level keep costs, indexed [1..10]. Levels 5 and 10 jump because they
+    // also re-trigger the profession picker (Phase A persistence design §B), so the
+    // player is really buying both the level AND the profession-pick option.
+    private static readonly long[] SkillLevelCosts =
+    {
+        0,         // index 0 unused
+        50, 100, 175, 275,        // L1–L4
+        500,                       // L5 — profession unlock
+        650, 800, 1000, 1250,      // L6–L9
+        2000                       // L10 — final profession unlock
+    };
+
+    private static readonly (string IdSlug, string DisplayName)[] SkillKinds =
+    {
+        ("farming",  "Farming"),
+        ("mining",   "Mining"),
+        ("foraging", "Foraging"),
+        ("fishing",  "Fishing"),
+        ("combat",   "Combat"),
+    };
+
+    /// <summary>Yield all 50 Carryover keep-skill-level entries.</summary>
+    public static IEnumerable<UpgradeDefinition> CarryoverSkillLevelKeeps()
+    {
+        foreach (var (slug, displayName) in SkillKinds)
+            for (int level = 1; level <= 10; level++)
+            {
+                string id = $"keep_{slug}_level_{level}";
+                string? prereq = level == 1 ? null : $"keep_{slug}_level_{level - 1}";
+                string name = $"Keep {displayName} Level {level}";
+                string desc = $"Start each run at {displayName} Level {level} (or whatever lower " +
+                              "level you actually reached). XP is set to the level threshold — no " +
+                              "half-progress preserved." +
+                              (level == 5 || level == 10
+                                ? $" Re-triggers the profession picker for Level {level}."
+                                : "");
+                yield return new UpgradeDefinition(
+                    id, UpgradeCategory.Carryover, name, desc, SkillLevelCosts[level], prereq);
+            }
+    }
 }

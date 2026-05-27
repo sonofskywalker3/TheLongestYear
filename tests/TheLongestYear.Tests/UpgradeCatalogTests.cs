@@ -130,4 +130,41 @@ public class UpgradeCatalogTests
                 $"{prefix} costs must strictly increase: got {c1},{c2},{c3},{c4}");
         }
     }
+
+    [Theory]
+    [InlineData("keep_farming_level_")]
+    [InlineData("keep_mining_level_")]
+    [InlineData("keep_foraging_level_")]
+    [InlineData("keep_fishing_level_")]
+    [InlineData("keep_combat_level_")]
+    public void Skill_level_keep_chains_have_ten_tiers_chained(string prefix)
+    {
+        for (int level = 1; level <= 10; level++)
+        {
+            var def = UpgradeCatalog.TryGet(prefix + level);
+            Assert.NotNull(def);
+            Assert.Equal(UpgradeCategory.Carryover, def!.Category);
+            Assert.Equal(
+                level == 1 ? null : prefix + (level - 1),
+                def.PrerequisiteId);
+        }
+    }
+
+    [Fact]
+    public void Skill_level_keep_chains_add_fifty_total_entries()
+    {
+        int count = UpgradeCatalog.All.Count(u => u.Id.Contains("_level_"));
+        Assert.Equal(50, count);
+    }
+
+    [Fact]
+    public void Skill_level_keep_costs_climb_monotonically_and_jump_at_5_and_10()
+    {
+        long c4 = UpgradeCatalog.TryGet("keep_farming_level_4")!.Cost;
+        long c5 = UpgradeCatalog.TryGet("keep_farming_level_5")!.Cost;
+        long c9 = UpgradeCatalog.TryGet("keep_farming_level_9")!.Cost;
+        long c10 = UpgradeCatalog.TryGet("keep_farming_level_10")!.Cost;
+        Assert.True(c5 > c4 * 1.5, $"L5 should noticeably exceed L4 (profession unlock): {c4} → {c5}");
+        Assert.True(c10 > c9 * 1.5, $"L10 should noticeably exceed L9 (profession unlock): {c9} → {c10}");
+    }
 }
