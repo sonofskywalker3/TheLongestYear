@@ -43,6 +43,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
+            helper.Events.Display.RenderedHud += this.OnRenderedHud;
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -301,6 +302,17 @@ namespace TheLongestYear
                 foreach (string d in diff)
                     this.Monitor.Log($"  - {d}", LogLevel.Error);
             }
+        }
+
+        /// <summary>Re-draw the clock/date/money HUD during festivals. Vanilla's drawHUD
+        /// short-circuits on eventUp (Game1.cs:15410) so only the menu button is drawn during
+        /// festivals — that was sensible when time was frozen, but with FestivalTimeFlow
+        /// active the clock actually means something so the user wants to see it.</summary>
+        private void OnRenderedHud(object sender, StardewModdingAPI.Events.RenderedHudEventArgs e)
+        {
+            if (!Game1.isFestival() || Game1.dayTimeMoneyBox == null)
+                return;
+            Game1.dayTimeMoneyBox.draw(e.SpriteBatch);
         }
 
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)

@@ -107,6 +107,39 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>
+        /// Walking off the festival map normally pops a <see cref="ConfirmationDialog"/>
+        /// ("Are you sure you want to leave [Festival Name]?") so the player doesn't
+        /// accidentally end the day. With <see cref="FestivalTimeFlow"/> active the festival
+        /// no longer ends the day — leaving just leaves — so the warning is misleading. Skip
+        /// the prompt entirely and call <see cref="Event.forceEndFestival"/> directly.
+        /// Multiplayer's ReadyCheckDialog is also skipped; v1 is single-player only.
+        /// </summary>
+        [HarmonyPatch(typeof(Event), nameof(Event.TryStartEndFestivalDialogue))]
+        internal static class SkipExitFestivalPromptPatch
+        {
+            // ReSharper disable once InconsistentNaming — Harmony convention.
+            // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
+            private static bool Prefix(Event __instance, Farmer who, ref bool __result)
+            {
+                if (__instance == null || who == null || !who.IsLocalPlayer || !__instance.isFestival)
+                {
+                    __result = false;
+                    return false; // mirror vanilla's early-out
+                }
+
+                // Mirror vanilla's halt-and-snap-back-to-last-position so the player doesn't
+                // walk into the off-map collision area, then exit straight away. (PC vanilla
+                // doesn't have GameLocation.tapToMove — that field is Android-only — so we
+                // skip the touch-input reset that vanilla Android does here.)
+                who.Halt();
+                who.Position = who.lastPosition;
+                __instance.forceEndFestival(who);
+                __result = true;
+                return false; // skip vanilla — no dialog
+            }
+        }
+
+        /// <summary>
         /// Restores <see cref="Game1.timeOfDayAfterFade"/> to the actual in-game time at the
         /// moment the festival was exited, undoing vanilla's hard-coded jump to 2200 / 2400.
         /// Uses Harmony __state to pass the captured time from prefix → postfix. The state is
