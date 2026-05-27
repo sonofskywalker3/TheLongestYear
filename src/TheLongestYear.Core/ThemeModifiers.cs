@@ -27,20 +27,22 @@ public static class ThemeModifiers
     /// (Plan 06) can switch on them. Numbers here are the v1 baselines; Plan 06 will read them
     /// from <see cref="GameplayConfig"/> so they can be tuned without redeploying.
     /// Falls back to the raw id if unmapped (defensive — easy to spot in-game if a new id is missed).
+    /// Plain ASCII only (no U+2212 minus sign) — Stardew's smallFont doesn't include the
+    /// typographic minus and renders it as tofu.
     /// </summary>
     public static string DisplayNameFor(string modifierId) => modifierId switch
     {
         "forage_yield_up"        => "+25% Foraging Yield",
         "forage_drops_off"       => "Foraging Disabled",
         "crop_growth_up"         => "+25% Crop Growth",
-        "crop_growth_down"       => "−25% Crop Growth",
+        "crop_growth_down"       => "-25% Crop Growth",
         "fish_bite_up"           => "+30% Fish Bite Rate",
         "mine_drops_up"          => "+30% Mine Drops",
         "mine_drops_off"         => "Mine Drops Disabled",
         "all_drops_up"           => "+10% All Drops",
-        "all_sell_prices_down"   => "−50% All Sell Prices",
+        "all_sell_prices_down"   => "-50% All Sell Prices",
         // Legacy / unused-in-v1 — kept so old config files don't show raw ids if loaded.
-        "shop_discount"          => "−15% Shop Prices",
+        "shop_discount"          => "-15% Shop Prices",
         "stamina_drain_up"       => "+30% Stamina Drain",
         _ => modifierId
     };
