@@ -110,4 +110,54 @@ public class MetaStateTests
         Assert.Equal(new[] { "quest_a", "quest_b" }, restored.CompletedQuestsEver);
         Assert.Equal(new[] { "ccPantry", "JojaMember" }, restored.MailFlagsEverReceived);
     }
+
+    [Fact]
+    public void MeetsMetaRequirement_upgrade_returns_true_when_owned()
+    {
+        var s = new MetaState { OwnedUpgrades = { "backpack_1" } };
+        Assert.True(s.MeetsMetaRequirement("upgrade:backpack_1"));
+        Assert.False(s.MeetsMetaRequirement("upgrade:backpack_2"));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_quest_checks_CompletedQuestsEver()
+    {
+        var s = new MetaState { CompletedQuestsEver = { "quest_a" } };
+        Assert.True(s.MeetsMetaRequirement("quest:quest_a"));
+        Assert.False(s.MeetsMetaRequirement("quest:never_done"));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_mail_checks_MailFlagsEverReceived_case_insensitive()
+    {
+        var s = new MetaState { MailFlagsEverReceived = { "ccPantry" } };
+        Assert.True(s.MeetsMetaRequirement("mail:ccPantry"));
+        Assert.True(s.MeetsMetaRequirement("mail:ccpantry"));   // case-insensitive like species:
+        Assert.False(s.MeetsMetaRequirement("mail:JojaMember"));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_season_compares_int_threshold_to_CompletedResets()
+    {
+        var s = new MetaState { CompletedResets = 3 };
+        Assert.True(s.MeetsMetaRequirement("season:0"));
+        Assert.True(s.MeetsMetaRequirement("season:3"));
+        Assert.False(s.MeetsMetaRequirement("season:4"));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_season_returns_false_when_value_is_not_an_int()
+    {
+        var s = new MetaState { CompletedResets = 5 };
+        Assert.False(s.MeetsMetaRequirement("season:abc"));
+        Assert.False(s.MeetsMetaRequirement("season:"));
+    }
+
+    [Fact]
+    public void MeetsMetaRequirement_unknown_namespace_still_returns_false()
+    {
+        var s = new MetaState();
+        Assert.False(s.MeetsMetaRequirement("future:something"));
+        Assert.False(s.MeetsMetaRequirement("malformed-no-colon"));
+    }
 }
