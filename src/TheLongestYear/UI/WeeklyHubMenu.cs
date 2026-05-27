@@ -14,19 +14,21 @@ using CoreSeason = TheLongestYear.Core.Season;
 namespace TheLongestYear.UI
 {
     /// <summary>
-    /// The weekly planning hub: selection-offer cards (1 of 2). Each card shows the theme's
-    /// bundles with "donated / X" progress + a per-season gate badge, and the per-week bonus-item
-    /// preview the player would activate if they picked that card. Opened automatically on
-    /// Sunday-night DayEnding; modal (no close until a theme is picked).
+    /// The weekly planning hub. Two cards (selection-offer themes) each showing theme name,
+    /// bonus + liability lines, and the per-week bonus-item preview that picking would activate.
+    /// Bundle progress lives in <see cref="SeasonGoalsMenu"/> instead — the hub is the selection
+    /// decision surface; goal tracking is a separate menu the player opens at will (UX2).
+    /// Opened automatically on Sunday-night DayEnding; modal (no close until a theme is picked).
     ///
     /// Plan 06+ will add weather + cart foresight rows (currently hidden via config); the layout
     /// already reserves vertical space.
     /// </summary>
-    internal sealed class ContractPickMenu : IClickableMenu
+    internal sealed class WeeklyHubMenu : IClickableMenu
     {
         // ---------- Card dimensions ----------
         private const int CardWidth = 560;
-        private const int CardHeight = 460;            // taller than v1 to fit the bundle list
+        // Trimmed back to ~v1 height now that bundle-progress rows live in SeasonGoalsMenu.
+        private const int CardHeight = 360;
         private const int CardSpacing = 32;
         private const int CardInnerPad = 28;
         private const int PanelPadding = 48;
@@ -35,9 +37,6 @@ namespace TheLongestYear.UI
         private const int ThemeNameLineHeight = 48;
         private const int BodyLineHeight = 28;
         private const int SectionGap = 12;
-
-        // ---------- Bundle progress section ----------
-        private const int BundleRowHeight = 28;
 
         // ---------- Bonus item icons ----------
         // Smaller than the v1 icon grid — bonus row needs to fit up to 7 icons in CardWidth-pad.
@@ -81,8 +80,6 @@ namespace TheLongestYear.UI
         private readonly Texture2D _junimoTexture;
 
         // Per-card derived data (recomputed on construct + refresh).
-        private List<BundleRequirement> _leftBundles = new List<BundleRequirement>();
-        private List<BundleRequirement> _rightBundles = new List<BundleRequirement>();
         private List<Item> _leftBonus = new List<Item>();
         private List<Item> _rightBonus = new List<Item>();
         private readonly List<Rectangle> _leftBonusBounds = new List<Rectangle>();
@@ -91,7 +88,7 @@ namespace TheLongestYear.UI
         private string _hoverText = "";
         private bool _themePicked = false;
 
-        public ContractPickMenu(IMonitor monitor, RunController runController, GameplayConfig config,
+        public WeeklyHubMenu(IMonitor monitor, RunController runController, GameplayConfig config,
             RunState run, IReadOnlyList<BundleRequirement> requirements, IReadOnlyList<Theme> offer,
             CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
@@ -138,23 +135,11 @@ namespace TheLongestYear.UI
 
         // ---------- per-card data ----------
 
-        /// <summary>Fill in _leftBundles/_rightBundles + bonus-item previews for the current offer.</summary>
+        /// <summary>Resolve the bonus-item preview for each card's theme from the current offer.</summary>
         private void ResolvePerCardData()
         {
-            ResolveBundlesForTheme(_offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBundles);
-            ResolveBundlesForTheme(_offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBundles);
-
             ResolveBonusItemsForTheme(_offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus);
             ResolveBonusItemsForTheme(_offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus);
-        }
-
-        private void ResolveBundlesForTheme(Theme? theme, List<BundleRequirement> dest)
-        {
-            dest.Clear();
-            if (theme == null) return;
-            foreach (var b in _requirements)
-                if (b.Theme == theme.Value)
-                    dest.Add(b);
         }
 
         private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest)
@@ -368,8 +353,8 @@ namespace TheLongestYear.UI
 
             SpriteText.drawStringHorizontallyCenteredAt(b, "Pick a theme", panelCenterX, drawY);
 
-            DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBundles, _leftBonus, _leftBonusBounds);
-            DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBundles, _rightBonus, _rightBonusBounds);
+            DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds);
+            DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds);
 
             for (int i = 0; i < _weatherRows.Count; i++)
                 DrawPreviewRow(b, _weatherRows[i], $"Weather, day {i + 1}: ???   (Weather Sage tier {i + 1} reveals this)");
@@ -386,7 +371,7 @@ namespace TheLongestYear.UI
         }
 
         private void DrawCard(SpriteBatch b, ClickableComponent card, Theme? theme,
-            List<BundleRequirement> bundles, List<Item> bonus, List<Rectangle> bonusBounds)
+            List<Item> bonus, List<Rectangle> bonusBounds)
         {
             if (card == null) return;
 
@@ -427,38 +412,6 @@ namespace TheLongestYear.UI
                 new Vector2(textX, textY), liabilityColor);
             textY += BodyLineHeight + SectionGap;
 
-            // Bundles header.
-            Utility.drawTextWithShadow(b, "Bundles:", Game1.smallFont,
-                new Vector2(textX, textY), Game1.textColor);
-            textY += BodyLineHeight;
-
-            // Bundle progress rows: "<name>  N/X  [season badge]".
-            ISet<string> donated = _run.DonatedSet();
-            foreach (var br in bundles)
-            {
-                int have = br.Ingredients.Count(donated.Contains);
-                int need = br.NumberOfSlots;
-                string badge = BundleSeasonBadge(br, donated);
-
-                string line = $"  {br.Name}  {have}/{need}";
-                Color rowColor = br.IsSatisfiedAtSeasonEnd(_offerSeason, donated)
-                    ? Game1.textColor
-                    : liabilityColor;
-                Utility.drawTextWithShadow(b, line, Game1.smallFont,
-                    new Vector2(textX, textY), rowColor);
-
-                if (!string.IsNullOrEmpty(badge))
-                {
-                    // Badge sits to the right of the line, in the liability colour for "needs more"
-                    // and dimmed for "satisfied later this year."
-                    Vector2 lineSize = Game1.smallFont.MeasureString(line);
-                    Utility.drawTextWithShadow(b, badge, Game1.smallFont,
-                        new Vector2(textX + lineSize.X + 8, textY),
-                        rowColor);
-                }
-                textY += BundleRowHeight;
-            }
-
             // Bonus header above the icon row (which is anchored to the card bottom).
             int bonusHeaderY = card.bounds.Y + card.bounds.Height - CardInnerPad - BonusIconSize - BodyLineHeight - 4;
             Utility.drawTextWithShadow(b, "Bonus this week (1.5x):", Game1.smallFont,
@@ -466,47 +419,6 @@ namespace TheLongestYear.UI
 
             // Bonus item icons (pre-computed bounds).
             DrawBonusIcons(b, bonus, bonusBounds);
-        }
-
-        /// <summary>Status text for a bundle at <see cref="_offerSeason"/> — e.g.
-        /// "needs 1 before Summer 1", or empty if the gate is already passed at that season's
-        /// checkpoint. Unified pattern across all three bundle kinds (UX3): "needs N before
-        /// {NextSeason} 1" gives the player a concrete next-season day-1 deadline.
-        /// Winter has no next season inside the run (day-28 = run end), so the badge is
-        /// suppressed there — the run-end gate is what matters, not a per-bundle countdown.
-        /// Plain ASCII only — Stardew's smallFont is missing U+2190 (← arrow) and U+00D7
-        /// (× multiplication sign), which render as tofu/missing-glyph boxes (UX1).</summary>
-        private string BundleSeasonBadge(BundleRequirement br, ISet<string> donated)
-        {
-            int missing = MissingForOfferSeason(br, donated);
-            if (missing <= 0) return "";
-            if (_offerSeason == CoreSeason.Winter) return "";   // run-end checkpoint; no "before Spring 1"
-            CoreSeason next = (CoreSeason)((int)_offerSeason + 1);
-            return $"  needs {missing} before {next} 1";
-        }
-
-        /// <summary>Per-kind count of slots still needed to satisfy this bundle's contribution
-        /// to <see cref="_offerSeason"/>'s checkpoint. Returns 0 when already satisfied.</summary>
-        private int MissingForOfferSeason(BundleRequirement br, ISet<string> donated)
-        {
-            switch (br.Kind)
-            {
-                case BundleKind.Seasonal:
-                    if (br.SeasonalSeason != _offerSeason) return 0;
-                    return br.Ingredients.Count(i => !donated.Contains(i));
-
-                case BundleKind.PerItem:
-                    return br.ItemSeasonPins!.Count(kv =>
-                        (int)kv.Value <= (int)_offerSeason && !donated.Contains(kv.Key));
-
-                case BundleKind.Percentage:
-                    int required = br.CumulativeRequiredBySeason![(int)_offerSeason];
-                    int have = br.Ingredients.Count(donated.Contains);
-                    return required - have;
-
-                default:
-                    return 0;
-            }
         }
 
         private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds)
