@@ -172,6 +172,20 @@ public sealed class GameplayConfig
     /// <summary>Y tile coordinate of the Season Goals board inside the Community Center.</summary>
     public int SeasonGoalsBoardTileY { get; set; } = 11;
 
+    /// <summary>X tile coordinate of the Cookbook interactable inside the FarmHouse (kitchen counter).
+    /// Default (0,0) disables the interaction — set via tly_setcookbook in-game.</summary>
+    public int CookbookTileX { get; set; } = 0;
+
+    /// <summary>Y tile coordinate of the Cookbook interactable inside the FarmHouse (kitchen counter).</summary>
+    public int CookbookTileY { get; set; } = 0;
+
+    /// <summary>X tile coordinate of the Craftbook interactable inside the FarmHouse (main table).
+    /// Default (0,0) disables the interaction — set via tly_setcraftbook in-game.</summary>
+    public int CraftbookTileX { get; set; } = 0;
+
+    /// <summary>Y tile coordinate of the Craftbook interactable inside the FarmHouse (main table).</summary>
+    public int CraftbookTileY { get; set; } = 0;
+
     /// <summary>JP multiplier applied to bonus-list items donated during their selected week.</summary>
     public double SelectionBonusMultiplier { get; set; } = 1.5;
 }

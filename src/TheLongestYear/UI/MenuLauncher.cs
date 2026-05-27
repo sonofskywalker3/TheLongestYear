@@ -65,6 +65,20 @@ namespace TheLongestYear.UI
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
         }
 
+        public void OpenCookbook()
+        {
+            if (!CanOpen()) return;
+            Game1.activeClickableMenu = new CookbookMenu(_monitor, _store.State);
+            _monitor.Log("Opened Cookbook menu.", LogLevel.Info);
+        }
+
+        public void OpenCraftbook()
+        {
+            if (!CanOpen()) return;
+            Game1.activeClickableMenu = new CraftbookMenu(_monitor, _store.State);
+            _monitor.Log("Opened Craftbook menu.", LogLevel.Info);
+        }
+
         /// <summary>UX2: per-season goal tracker, separate from the weekly hub selection surface.
         /// Opened on demand via the SeasonGoalsHotkey config.</summary>
         public void OpenSeasonGoals()
