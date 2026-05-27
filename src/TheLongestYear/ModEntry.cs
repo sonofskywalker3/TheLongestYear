@@ -45,6 +45,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
             helper.Events.Display.RenderedHud += this.OnRenderedHud;
+            helper.Events.Display.RenderedWorld += IndicatorRegistry.OnRenderedWorld;
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -88,6 +89,8 @@ namespace TheLongestYear
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             _meta.Load();
+            IndicatorRegistry.Attach(_meta.State);
+            IndicatorRegistry.ClearRegistrations();
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
             var farmerReset = new FarmerReset(this.Monitor);
