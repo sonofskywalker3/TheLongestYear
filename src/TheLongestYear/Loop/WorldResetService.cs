@@ -49,10 +49,31 @@ namespace TheLongestYear.Loop
             // so changing the ID would create a new folder on next save (orphaning the existing
             // one). After changing the ID we rename the on-disk folder to match the new path so
             // the save stays a single folder.
+            //
+            // First attempt at this used Constants.CurrentSavePath both before AND after the ID
+            // change, but SMAPI caches CurrentSavePath at SaveLoaded time — it does NOT recompute
+            // when uniqueIDForThisGame changes mid-session. That made oldSavePath == newSavePath,
+            // so the rename condition was false and we silently produced an orphan folder
+            // (user playtest 2026-05-27: "I've still got 2 saves"). Compute the new folder name
+            // ourselves from the old path: keep everything before the last underscore (the player
+            // name component), append the new uniqueID.
             string oldSavePath = Constants.CurrentSavePath;
             Game1.uniqueIDForThisGame = Utility.NewUniqueIdForThisGame();
             Game1.weatherForTomorrow = "Sun";
-            string newSavePath = Constants.CurrentSavePath; // recomputed from the new ID
+
+            string newSavePath = null;
+            if (!string.IsNullOrEmpty(oldSavePath))
+            {
+                string oldFolder = Path.GetFileName(oldSavePath);
+                int splitAt = oldFolder.LastIndexOf('_');
+                if (splitAt > 0)
+                {
+                    string playerNamePart = oldFolder.Substring(0, splitAt);
+                    string newFolder = $"{playerNamePart}_{Game1.uniqueIDForThisGame}";
+                    newSavePath = Path.Combine(Path.GetDirectoryName(oldSavePath), newFolder);
+                }
+            }
+
             if (!string.IsNullOrEmpty(oldSavePath) && !string.IsNullOrEmpty(newSavePath)
                 && oldSavePath != newSavePath && Directory.Exists(oldSavePath) && !Directory.Exists(newSavePath))
             {
