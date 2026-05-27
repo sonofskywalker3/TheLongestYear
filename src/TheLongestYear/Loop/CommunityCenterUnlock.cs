@@ -62,6 +62,28 @@ namespace TheLongestYear.Loop
                 cc.MakeMapModifications(force: true);
             }
 
+            // Diagnostic for the 2026-05-26 'CC marked complete on day 2' bug. If any
+            // areasComplete[i] is true on a fresh save load, that's the state vanilla is
+            // reading when it fires the Junimo-returns cutscene + lightning strike. Logging
+            // both the per-area flags AND the related mail / event-completion flags so we can
+            // diagnose without another playtest round.
+            if (cc != null)
+            {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                for (int i = 0; i < cc.areasComplete.Count; i++)
+                    sb.Append(cc.areasComplete[i] ? "T" : "F");
+                bool hasCcIsComplete = p.mailReceived.Contains("ccIsComplete");
+                bool hasJojaMember = p.mailReceived.Contains("JojaMember");
+                bool vanillaCcDone = p.hasCompletedCommunityCenter();
+                _monitor.Log(
+                    $"CC state on load: areasComplete=[{sb}], " +
+                    $"ccIsComplete={hasCcIsComplete}, JojaMember={hasJojaMember}, " +
+                    $"hasCompletedCommunityCenter={vanillaCcDone}, " +
+                    $"numberOfCompleteBundles={cc.numberOfCompleteBundles()}, " +
+                    $"areAllAreasComplete={cc.areAllAreasComplete()}.",
+                    LogLevel.Info);
+            }
+
             _monitor.Log(
                 "CommunityCenterUnlock: door + canReadJunimoText set, all 6 Junimo Notes revealed.",
                 LogLevel.Info);

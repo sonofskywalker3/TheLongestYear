@@ -75,9 +75,6 @@ namespace TheLongestYear.UI
         private readonly IMonitor _monitor;
         private readonly Func<MenuLauncher> _launcherAccessor;
 
-        // Pre-loaded textures (loaded lazily so we don't touch Game1.content before the game's ready).
-        private Texture2D _signTexture;
-
         public SeasonGoalsBoardInstance(IMonitor monitor, GameplayConfig config,
             Func<MenuLauncher> launcherAccessor)
         {

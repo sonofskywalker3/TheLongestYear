@@ -62,6 +62,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
+            helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select one of this week's offered themes. Usage: tly_select <theme>", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
@@ -145,6 +146,38 @@ namespace TheLongestYear
             this.Monitor.Log($"JP is now {_meta.State.JunimoPoints} (in memory — persists on next save).", LogLevel.Info);
         }
 
+        /// <summary>Reset only if the loaded save's farmer name matches the argument. Used by the
+        /// debug-command-file bridge to queue a "reset on next load of save X" without affecting
+        /// other saves (e.g. write 'tly_resetif puffpuff' before exit, then loading puffpuff
+        /// resets it but loading any other save is a no-op).</summary>
+        private void ResetIfNameMatches(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            if (args.Length < 1)
+            {
+                this.Monitor.Log("Usage: tly_resetif <farmerName>", LogLevel.Warn);
+                return;
+            }
+
+            string target = args[0];
+            string current = Game1.player?.Name ?? "";
+            if (!string.Equals(current, target, StringComparison.OrdinalIgnoreCase))
+            {
+                this.Monitor.Log(
+                    $"tly_resetif: current save is '{current}', not '{target}'. Skipping reset.",
+                    LogLevel.Info);
+                return;
+            }
+
+            this.Monitor.Log($"tly_resetif: name matches '{target}', resetting.", LogLevel.Info);
+            FullResetAndPresentOffer();
+        }
+
         private void ForceReset(string command, string[] args)
         {
             if (!Context.IsWorldReady)
@@ -153,8 +186,28 @@ namespace TheLongestYear
                 return;
             }
 
-            _reset.PerformReset(_config.StartingMoney);
+            FullResetAndPresentOffer();
         }
+
+        /// <summary>Full reset: rebuild the world (PerformReset), wipe RunState (BeginNewRun),
+        /// and fire the Spring 1 hub so the player gets a fresh selection. Used by both
+        /// <see cref="ForceReset"/> and <see cref="ResetIfNameMatches"/> — neither caller goes
+        /// through the OnDayStarted _pendingReset path that BeginNewRun normally rides on,
+        /// so we do it inline.</summary>
+        private void FullResetAndPresentOffer()
+        {
+            _reset.PerformReset(_config.StartingMoney);
+            _meta.Run.BeginNewRun(NewRunSeed());
+            this.Monitor.Log(
+                $"Reset complete. Run {_meta.Run.RunNumber} begins (seed {_meta.Run.Seed}). " +
+                "Opening week 1 hub.",
+                LogLevel.Info);
+            _runController?.PresentOffer(targetWeekOfYear: 1);
+        }
+
+        /// <summary>Pure-random reset seed for inline resets (the OnDayStarted reset path uses its
+        /// own seed via RunController.NewSeed; this is the simpler external entry point).</summary>
+        private static int NewRunSeed() => new Random().Next();
 
         private void LeakTest(string command, string[] args)
         {

@@ -21,6 +21,9 @@ public static class Calendar
 
     public static bool IsWeekEnd(int dayOfMonth) => dayOfMonth % DaysPerWeek == 0;
 
+    /// <summary>True on days 1, 8, 15, 22 — the morning of each in-month week.</summary>
+    public static bool IsWeekStart(int dayOfMonth) => dayOfMonth % DaysPerWeek == 1;
+
     public static bool IsMonthEnd(int dayOfMonth) => dayOfMonth == DaysPerMonth;
 
     /// <summary>Week index across the whole year (1-16). monthIndex: Spring=0..Winter=3.</summary>
