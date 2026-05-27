@@ -1,73 +1,80 @@
 using System;
 using HarmonyLib;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
-using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Locations;
-using StardewValley.Menus;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.UI
 {
     /// <summary>
-    /// In-world interactable that opens <see cref="SeasonGoalsMenu"/> when the player presses the
-    /// action button on a chosen tile inside the Community Center.
+    /// In-world interactable that opens <see cref="SeasonGoalsMenu"/> when the player presses
+    /// the action button on a configured tile inside the Community Center. The user wants this
+    /// anchored to the CC's fireplace (or similarly fixed landmark) — no visual cue here, the
+    /// player just knows from in-story dialogue (Plan 06+) that the board is above the fireplace.
     ///
-    /// First version tried <c>GameLocation.RegisterTileAction</c> + painting an "Action" tile
-    /// property — but vanilla's <c>checkAction</c> only reads that property off an EXISTING tile
-    /// at the coord (GameLocation.cs:7776-7779). The default tile (45,11) is open floor with no
-    /// Buildings-layer tile to paint, so the property never landed and the action never fired
-    /// (2026-05-26 playtest: "I see the icon, but it's just a bouncing yellow bit, and I can't
-    /// click on anything").
-    ///
-    /// This version skips tile properties entirely and uses a Harmony prefix on
-    /// <c>GameLocation.checkAction</c> instead. The prefix intercepts the action *before* vanilla
-    /// looks for any tile property, so it fires regardless of map contents — anywhere the player
-    /// presses Action on (X,Y) in the Community Center will open the goals menu.
+    /// Patching strategy: <see cref="CommunityCenter.checkAction"/> overrides the base virtual
+    /// method and dispatches on tile-index FIRST (Bulletin Board note = 1799 → vanilla 3-bundle
+    /// gate; Junimo Notes 1824-1833 → checkBundle; default → base). A Harmony prefix on the
+    /// override runs before the switch, so we get a chance to handle the configured tile
+    /// regardless of what's underneath it. Same prefix also bypasses the 3-bundle gate on
+    /// tile 1799 (it would otherwise leave the Bulletin Board Junimo Note un-interactable on a
+    /// fresh run, which the 2026-05-26 playtest surfaced).
     /// </summary>
     internal static class SeasonGoalsBoard
     {
-        /// <summary>Active board instance — populated by <see cref="ConnectTo"/> at mod entry, read
-        /// by the static Harmony prefix and the RenderedWorld handler. We can't pass instance
-        /// state through Harmony's static patch methods, so we store it here.</summary>
         private static SeasonGoalsBoardInstance _instance;
 
-        /// <summary>Build the board, wire its lifecycle events, and register the static Harmony
-        /// patch handle so <see cref="CheckActionPrefix"/> can reach it.</summary>
+        /// <summary>Tile index of the Bulletin Board Junimo Note per the decompile
+        /// (CommunityCenter.checkAction:375). Vanilla gates its interaction on
+        /// numberOfCompleteBundles() > 2; we bypass that since our run model can have an
+        /// empty CC at any point and the player still needs to read the bundle.</summary>
+        private const int BulletinBoardNoteTileIndex = 1799;
+
         public static void ConnectTo(IModHelper helper, IMonitor monitor, GameplayConfig config,
             Func<MenuLauncher> launcherAccessor)
         {
             _instance = new SeasonGoalsBoardInstance(monitor, config, launcherAccessor);
-            helper.Events.Display.RenderedWorld += _instance.OnRenderedWorld;
         }
 
-        /// <summary>Harmony prefix on <c>GameLocation.checkAction</c>. Fires for every action-button
-        /// press anywhere in the world; we filter to the CC + the configured board tile and short-
-        /// circuit vanilla when it's our tile.</summary>
-        [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.checkAction))]
+        [HarmonyPatch(typeof(CommunityCenter), nameof(CommunityCenter.checkAction))]
         internal static class CheckActionPatch
         {
-            // ReSharper disable once InconsistentNaming — Harmony parameter convention.
-            private static bool Prefix(GameLocation __instance, xTile.Dimensions.Location tileLocation,
-                Farmer who, ref bool __result)
+            // ReSharper disable once InconsistentNaming — Harmony convention.
+            private static bool Prefix(CommunityCenter __instance, xTile.Dimensions.Location tileLocation,
+                xTile.Dimensions.Rectangle viewport, Farmer who, ref bool __result)
             {
                 if (_instance == null) return true;
-                if (__instance is not CommunityCenter) return true;
-                if (tileLocation.X != _instance.Config.SeasonGoalsBoardTileX) return true;
-                if (tileLocation.Y != _instance.Config.SeasonGoalsBoardTileY) return true;
 
-                _instance.OpenGoals();
-                __result = true;
-                return false;    // skip the rest of vanilla checkAction for this tile press
+                // 1. Configured Season Goals tile (e.g. above the fireplace) → open the menu.
+                if (tileLocation.X == _instance.Config.SeasonGoalsBoardTileX
+                    && tileLocation.Y == _instance.Config.SeasonGoalsBoardTileY)
+                {
+                    _instance.OpenGoals();
+                    __result = true;
+                    return false;
+                }
+
+                // 2. Bulletin Board Junimo Note (vanilla gates on >2 complete bundles). Bypass
+                // the gate so a fresh-run player can read the bundle even before completing
+                // other rooms.
+                int tileIndex = __instance.getTileIndexAt(
+                    new xTile.Dimensions.Location(tileLocation.X, tileLocation.Y),
+                    "Buildings", "indoors");
+                if (tileIndex == BulletinBoardNoteTileIndex)
+                {
+                    __instance.checkBundle(5);
+                    __result = true;
+                    return false;
+                }
+
+                return true;   // fall through to vanilla
             }
         }
     }
 
-    /// <summary>Instance-side state for the board. Holds config/monitor/launcher refs and owns the
-    /// RenderedWorld overlay. Separated from <see cref="SeasonGoalsBoard"/> so the Harmony patch
-    /// class stays purely static (Harmony's PatchAll only discovers attributed types).</summary>
+    /// <summary>Instance state for the board: config/monitor/launcher accessor. Separate class so
+    /// <see cref="SeasonGoalsBoard"/> can stay a pure static type for Harmony's PatchAll discovery.</summary>
     internal sealed class SeasonGoalsBoardInstance
     {
         public GameplayConfig Config { get; }
@@ -83,10 +90,6 @@ namespace TheLongestYear.UI
             _launcherAccessor = launcherAccessor;
         }
 
-        // ---------- action ----------
-
-        /// <summary>Open the goals menu. Called from the Harmony prefix when the player presses
-        /// Action on the configured tile.</summary>
         public void OpenGoals()
         {
             MenuLauncher launcher = _launcherAccessor();
@@ -96,68 +99,6 @@ namespace TheLongestYear.UI
                 return;
             }
             launcher.OpenSeasonGoals();
-        }
-
-        // ---------- visual hint ----------
-
-        /// <summary>Draw a parchment-style notice board at the configured tile so the player can
-        /// find it. Without an overlay the tile would be invisible — vanilla doesn't draw anything
-        /// for an Action property alone, and our prefix-based detection doesn't put anything on
-        /// the map either.</summary>
-        public void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            if (Game1.currentLocation is not CommunityCenter) return;
-
-            int tileX = Config.SeasonGoalsBoardTileX;
-            int tileY = Config.SeasonGoalsBoardTileY;
-
-            // World pixel coord of the tile's top-left → viewport-local pixel coord for drawing.
-            Vector2 worldPos = new Vector2(tileX * Game1.tileSize, tileY * Game1.tileSize);
-            Vector2 screenPos = Game1.GlobalToLocal(Game1.viewport, worldPos);
-
-            // Subtle vertical bob so the eye catches it.
-            float bob = (float)Math.Sin(Game1.currentGameTime.TotalGameTime.TotalSeconds * 2.5) * 3f;
-
-            // Sign body: 64px wide, ~52px tall, sitting just above the tile so it doesn't bury
-            // any decoration on the tile itself.
-            const int signW = 64;
-            const int signH = 52;
-            int signX = (int)screenPos.X + (Game1.tileSize - signW) / 2;
-            int signY = (int)screenPos.Y - signH + (int)bob;
-
-            SpriteBatch b = e.SpriteBatch;
-
-            // Drop shadow for legibility against the wall behind it.
-            b.Draw(Game1.staminaRect, new Rectangle(signX + 4, signY + 4, signW, signH),
-                Color.Black * 0.4f);
-
-            // Parchment fill + dark border (mimics the in-game notice-paper look).
-            Color parchment = new Color(245, 222, 179);   // wheat / parchment
-            Color border = new Color(99, 64, 32);         // dark brown
-            b.Draw(Game1.staminaRect, new Rectangle(signX, signY, signW, signH), border);
-            b.Draw(Game1.staminaRect, new Rectangle(signX + 3, signY + 3, signW - 6, signH - 6),
-                parchment);
-
-            // Label. smallFont is missing the ASCII subset on some assets — use plain "Goals"
-            // (4 chars × ~10px = ~40px, fits in 64px sign with margin).
-            const string label = "Goals";
-            Vector2 size = Game1.smallFont.MeasureString(label);
-            Vector2 labelPos = new Vector2(
-                signX + (signW - size.X) / 2f,
-                signY + (signH - size.Y) / 2f);
-            Utility.drawTextWithShadow(b, label, Game1.smallFont, labelPos, border);
-
-            // Small downward-pointing arrow connecting sign to tile, so it's obvious "this floor
-            // tile is the interactable, not the sign itself."
-            int arrowCx = (int)screenPos.X + Game1.tileSize / 2;
-            int arrowTop = signY + signH;
-            int arrowBottom = (int)screenPos.Y + 4;
-            if (arrowBottom > arrowTop)
-            {
-                b.Draw(Game1.staminaRect, new Rectangle(arrowCx - 2, arrowTop, 4, arrowBottom - arrowTop),
-                    border * 0.6f);
-            }
         }
     }
 }

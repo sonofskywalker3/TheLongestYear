@@ -35,6 +35,34 @@ namespace TheLongestYear.Loop
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
+            // 1a. Defensive bundle / area-completion wipe. CommunityCenter.bundles is a PROPERTY
+            // pointing at Game1.netWorldState.Value.Bundles (CommunityCenter.cs:104) — a NetCollection
+            // at world-state level, not on the CC instance. The 2026-05-26 round-2 playtest showed
+            // donations surviving tly_reset even after loadForNewGame (user: "the reset didn't
+            // remove the foraging items I had donated, even though it switched which items were
+            // required for it"). Re-clearing here regardless of whether loadForNewGame already
+            // touched it — costs nothing and guarantees a clean slate.
+            CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
+            if (cc != null)
+            {
+                // Per-slot bundle completion. NetBundles inherits NetIntDictionary so Clear() works.
+                Game1.netWorldState.Value.Bundles.Clear();
+                Game1.netWorldState.Value.BundleRewards.Clear();
+                // Per-area completion. NetArray<bool> sets each entry directly.
+                for (int i = 0; i < cc.areasComplete.Count; i++)
+                    cc.areasComplete[i] = false;
+                // Mail flags that vanilla sets on room completion. These also gate the
+                // "you completed the Community Center" achievement + the Joja lightning scene.
+                Game1.MasterPlayer.mailReceived.Remove("ccBoilerRoom");
+                Game1.MasterPlayer.mailReceived.Remove("ccCraftsRoom");
+                Game1.MasterPlayer.mailReceived.Remove("ccPantry");
+                Game1.MasterPlayer.mailReceived.Remove("ccFishTank");
+                Game1.MasterPlayer.mailReceived.Remove("ccVault");
+                Game1.MasterPlayer.mailReceived.Remove("ccBulletin");
+                Game1.MasterPlayer.mailReceived.Remove("ccIsComplete");
+                _monitor.Log("In-place reset: cleared CC bundles + areasComplete + completion mail.", LogLevel.Trace);
+            }
+
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
             Game1.year = 1;
             Game1.season = Season.Spring;
