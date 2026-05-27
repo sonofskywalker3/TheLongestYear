@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
@@ -38,14 +39,38 @@ namespace TheLongestYear.Loop
             _monitor.Log("In-place reset: starting.", LogLevel.Info);
 
             // 0. Fresh world seed BEFORE loadForNewGame. Game1.uniqueIDForThisGame is the master
-            // seed used by Utility.CreateDaySaveRandom (weather + farm-event picks) and forage
-            // spawn randoms across locations. loadForNewGame does NOT touch it — the user
-            // reported a dandelion in the same spot on day 1 and rain on day 3 across multiple
-            // resets, both of which trace back to the seed being stable across runs. New ID
-            // per reset breaks both patterns. We also clear weatherForTomorrow so the first-day
-            // weather isn't carried over from the previous run's pre-reset evening.
+            // seed used by Utility.CreateDaySaveRandom and per-location forage-spawn randoms.
+            // loadForNewGame does NOT touch it; without this, day-1 forage placement is
+            // identical across runs (user playtest 2026-05-27: "always a dandelion in the same
+            // place on day 1"). Reset weatherForTomorrow so the previous run's evening doesn't
+            // bleed into Spring 1.
+            //
+            // SIDE-EFFECT: Stardew's save folder name is "<FarmerName>_<uniqueIDForThisGame>",
+            // so changing the ID would create a new folder on next save (orphaning the existing
+            // one). After changing the ID we rename the on-disk folder to match the new path so
+            // the save stays a single folder.
+            string oldSavePath = Constants.CurrentSavePath;
             Game1.uniqueIDForThisGame = Utility.NewUniqueIdForThisGame();
             Game1.weatherForTomorrow = "Sun";
+            string newSavePath = Constants.CurrentSavePath; // recomputed from the new ID
+            if (!string.IsNullOrEmpty(oldSavePath) && !string.IsNullOrEmpty(newSavePath)
+                && oldSavePath != newSavePath && Directory.Exists(oldSavePath) && !Directory.Exists(newSavePath))
+            {
+                try
+                {
+                    Directory.Move(oldSavePath, newSavePath);
+                    _monitor.Log(
+                        $"In-place reset: renamed save folder to match new uniqueID ({Path.GetFileName(newSavePath)}).",
+                        LogLevel.Trace);
+                }
+                catch (IOException ex)
+                {
+                    _monitor.Log(
+                        $"In-place reset: could NOT rename save folder ({ex.Message}). " +
+                        "Next save will create a new folder; the previous one will appear as a duplicate on the title screen.",
+                        LogLevel.Warn);
+                }
+            }
             _monitor.Log(
                 $"In-place reset: new uniqueIDForThisGame={Game1.uniqueIDForThisGame}.",
                 LogLevel.Trace);
