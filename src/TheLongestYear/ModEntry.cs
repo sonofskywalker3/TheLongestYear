@@ -246,14 +246,19 @@ namespace TheLongestYear
         }
 
         /// <summary>Full reset: rebuild the world (PerformReset), wipe RunState (BeginNewRun),
-        /// and fire the Spring 1 hub so the player gets a fresh selection. Used by both
-        /// <see cref="ForceReset"/> and <see cref="ResetIfNameMatches"/> — neither caller goes
-        /// through the OnDayStarted _pendingReset path that BeginNewRun normally rides on,
-        /// so we do it inline.</summary>
+        /// and fire the Spring 1 hub. Used by both <see cref="ForceReset"/> and
+        /// <see cref="ResetIfNameMatches"/>.
+        ///
+        /// 2026-05-26 round-2 bug: log showed a deferred SaveLoaded event firing AFTER this
+        /// method returned, which called <c>_meta.Load()</c> and overwrote our in-memory
+        /// BeginNewRun with the stale on-disk state ("the reset didn't remove the foraging
+        /// items I had donated"). Fix: commit the cleared state to disk immediately after
+        /// BeginNewRun so the subsequent SaveLoaded's Load reads the post-reset state.</summary>
         private void FullResetAndPresentOffer()
         {
             _reset.PerformReset(_config.StartingMoney);
             _meta.Run.BeginNewRun(NewRunSeed());
+            _meta.Save();   // persist the cleared state so deferred SaveLoaded can't revert it
             this.Monitor.Log(
                 $"Reset complete. Run {_meta.Run.RunNumber} begins (seed {_meta.Run.Seed}). " +
                 "Opening week 1 hub.",
@@ -348,6 +353,7 @@ namespace TheLongestYear
                 case "tly_meta": this.PrintMeta(command, args); break;
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
+                case "tly_resetif": this.ResetIfNameMatches(command, args); break;
                 case "tly_leaktest": this.LeakTest(command, args); break;
                 case "tly_select": this.CmdSelect(command, args); break;
                 case "tly_offer": this.CmdOffer(command, args); break;
@@ -360,6 +366,8 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
+                case "tly_here": this.CmdHere(command, args); break;
+                case "tly_setboard": this.CmdSetBoard(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
