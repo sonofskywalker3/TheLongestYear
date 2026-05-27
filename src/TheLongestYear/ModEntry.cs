@@ -60,6 +60,8 @@ namespace TheLongestYear
             // the instance — the Harmony prefix on GameLocation.checkAction resolves it just-
             // in-time. PatchAll() above already discovered the board's static checkAction patch.
             SeasonGoalsBoard.ConnectTo(helper, this.Monitor, _config, () => _launcher);
+            CookbookInteractable.ConnectTo(this.Monitor, _config, _meta);
+            CraftbookInteractable.ConnectTo(this.Monitor, _config, _meta);
 
             _commandFilePath = Path.Combine(helper.DirectoryPath, DebugCommandFileName);
 
@@ -81,6 +83,18 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_setboard", "Anchor the Season Goals board to the player's current tile inside the CC. Writes config.json.", this.CmdSetBoard);
+            helper.ConsoleCommands.Add("tly_setcookbook",
+                "Anchor the Cookbook to the tile you are facing in the FarmHouse. Writes config.json.",
+                this.CmdSetCookbook);
+            helper.ConsoleCommands.Add("tly_setcraftbook",
+                "Anchor the Craftbook to the tile you are facing in the FarmHouse. Writes config.json.",
+                this.CmdSetCraftbook);
+            helper.ConsoleCommands.Add("tly_opencookbook",
+                "Open the Cookbook menu directly (debug).",
+                this.CmdOpenCookbook);
+            helper.ConsoleCommands.Add("tly_opencraftbook",
+                "Open the Craftbook menu directly (debug).",
+                this.CmdOpenCraftbook);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -249,6 +263,50 @@ namespace TheLongestYear
                 LogLevel.Info);
         }
 
+        private void CmdSetCookbook(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.currentLocation is not StardewValley.Locations.FarmHouse)
+            {
+                this.Monitor.Log("tly_setcookbook: stand inside the FarmHouse first.", LogLevel.Warn);
+                return;
+            }
+            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
+            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
+            _config.CookbookTileX = (int)Game1.player.Tile.X + dx;
+            _config.CookbookTileY = (int)Game1.player.Tile.Y + dy;
+            this.Helper.WriteConfig(_config);
+            this.Monitor.Log($"Cookbook anchored to ({_config.CookbookTileX}, {_config.CookbookTileY}). Saved to config.json.", LogLevel.Info);
+        }
+
+        private void CmdSetCraftbook(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.currentLocation is not StardewValley.Locations.FarmHouse)
+            {
+                this.Monitor.Log("tly_setcraftbook: stand inside the FarmHouse first.", LogLevel.Warn);
+                return;
+            }
+            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
+            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
+            _config.CraftbookTileX = (int)Game1.player.Tile.X + dx;
+            _config.CraftbookTileY = (int)Game1.player.Tile.Y + dy;
+            this.Helper.WriteConfig(_config);
+            this.Monitor.Log($"Craftbook anchored to ({_config.CraftbookTileX}, {_config.CraftbookTileY}). Saved to config.json.", LogLevel.Info);
+        }
+
+        private void CmdOpenCookbook(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _launcher?.OpenCookbook();
+        }
+
+        private void CmdOpenCraftbook(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _launcher?.OpenCraftbook();
+        }
+
         private void ForceReset(string command, string[] args)
         {
             if (!Context.IsWorldReady)
@@ -406,6 +464,10 @@ namespace TheLongestYear
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_setboard": this.CmdSetBoard(command, args); break;
+                case "tly_setcookbook":   this.CmdSetCookbook(command, args); break;
+                case "tly_setcraftbook":  this.CmdSetCraftbook(command, args); break;
+                case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
+                case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
