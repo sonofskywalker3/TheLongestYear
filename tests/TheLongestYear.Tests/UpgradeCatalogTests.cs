@@ -167,4 +167,38 @@ public class UpgradeCatalogTests
         Assert.True(c5 > c4 * 1.5, $"L5 should noticeably exceed L4 (profession unlock): {c4} → {c5}");
         Assert.True(c10 > c9 * 1.5, $"L10 should noticeably exceed L9 (profession unlock): {c9} → {c10}");
     }
+
+    [Fact]
+    public void Mine_elevator_keep_chain_has_twelve_entries_in_steps_of_ten()
+    {
+        for (int floor = 10; floor <= 120; floor += 10)
+        {
+            var def = UpgradeCatalog.TryGet($"keep_mine_elevator_{floor}");
+            Assert.NotNull(def);
+            Assert.Equal(UpgradeCategory.Carryover, def!.Category);
+        }
+        Assert.Equal(12, UpgradeCatalog.All.Count(u => u.Id.StartsWith("keep_mine_elevator_")));
+    }
+
+    [Fact]
+    public void Mine_elevator_keep_chain_is_prerequisite_chained()
+    {
+        Assert.Null(UpgradeCatalog.TryGet("keep_mine_elevator_10")!.PrerequisiteId);
+        for (int floor = 20; floor <= 120; floor += 10)
+            Assert.Equal(
+                $"keep_mine_elevator_{floor - 10}",
+                UpgradeCatalog.TryGet($"keep_mine_elevator_{floor}")!.PrerequisiteId);
+    }
+
+    [Fact]
+    public void Mine_elevator_keep_costs_climb_monotonically()
+    {
+        long prev = 0;
+        for (int floor = 10; floor <= 120; floor += 10)
+        {
+            long cost = UpgradeCatalog.TryGet($"keep_mine_elevator_{floor}")!.Cost;
+            Assert.True(cost > prev, $"floor {floor} cost {cost} should exceed prev {prev}");
+            prev = cost;
+        }
+    }
 }

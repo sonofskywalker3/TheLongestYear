@@ -99,4 +99,25 @@ internal static class UpgradeCatalogGenerators
                     id, UpgradeCategory.Carryover, name, desc, SkillLevelCosts[level], prereq);
             }
     }
+
+    /// <summary>Yield all 12 Carryover keep-mine-elevator-floor entries (10–120 step 10).</summary>
+    public static IEnumerable<UpgradeDefinition> CarryoverMineElevatorKeeps()
+    {
+        for (int floor = 10; floor <= 120; floor += 10)
+        {
+            string id = $"keep_mine_elevator_{floor}";
+            string? prereq = floor == 10 ? null : $"keep_mine_elevator_{floor - 10}";
+            // Cost ramp: 75 JP for floor 10, +100 per 10 floors → 1175 JP for floor 120.
+            // Early floors are cheap (sub-Copper-tool territory); deep floors (90+) match or
+            // exceed the Iridium-tool tier, reflecting that skipping most of the mines is a
+            // major time save. Buy shallow elevator keeps early, deep ones after tool chains.
+            long cost = 75 + ((floor - 10) / 10) * 100;
+            yield return new UpgradeDefinition(
+                id, UpgradeCategory.Carryover,
+                $"Keep Mine Elevator Floor {floor}",
+                $"Start each run with the mine elevator accessible to floor {floor} (or your " +
+                "in-run deepest floor, whichever is shallower).",
+                cost, prereq);
+        }
+    }
 }
