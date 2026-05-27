@@ -76,4 +76,58 @@ public class UpgradeCatalogTests
             .ToList();
         Assert.Equal(7, weather.Count);
     }
+
+    [Theory]
+    [InlineData("keep_hoe_")]
+    [InlineData("keep_pickaxe_")]
+    [InlineData("keep_axe_")]
+    [InlineData("keep_watering_can_")]
+    public void Tool_keep_chains_have_four_tiers_each(string prefix)
+    {
+        var rows = UpgradeCatalog.All.Where(u => u.Id.StartsWith(prefix)).ToList();
+        Assert.Equal(4, rows.Count);
+        Assert.Equal(new[] { prefix + "1", prefix + "2", prefix + "3", prefix + "4" },
+            rows.Select(r => r.Id));
+        Assert.All(rows, r => Assert.Equal(UpgradeCategory.Loadout, r.Category));
+    }
+
+    [Theory]
+    [InlineData("keep_hoe_")]
+    [InlineData("keep_pickaxe_")]
+    [InlineData("keep_axe_")]
+    [InlineData("keep_watering_can_")]
+    public void Tool_keep_chains_are_prerequisite_chained(string prefix)
+    {
+        Assert.Null(UpgradeCatalog.TryGet(prefix + "1")!.PrerequisiteId);
+        Assert.Equal(prefix + "1", UpgradeCatalog.TryGet(prefix + "2")!.PrerequisiteId);
+        Assert.Equal(prefix + "2", UpgradeCatalog.TryGet(prefix + "3")!.PrerequisiteId);
+        Assert.Equal(prefix + "3", UpgradeCatalog.TryGet(prefix + "4")!.PrerequisiteId);
+    }
+
+    [Fact]
+    public void Fishing_rod_keep_chain_has_two_tiers_chained()
+    {
+        var t1 = UpgradeCatalog.TryGet("keep_fishing_rod_1");
+        var t2 = UpgradeCatalog.TryGet("keep_fishing_rod_2");
+        Assert.NotNull(t1);
+        Assert.NotNull(t2);
+        Assert.Null(t1!.PrerequisiteId);
+        Assert.Equal("keep_fishing_rod_1", t2!.PrerequisiteId);
+        Assert.Equal(UpgradeCategory.Loadout, t1.Category);
+        Assert.Equal(UpgradeCategory.Loadout, t2.Category);
+    }
+
+    [Fact]
+    public void Tool_keep_tier_costs_climb_monotonically()
+    {
+        foreach (string prefix in new[] { "keep_hoe_", "keep_pickaxe_", "keep_axe_", "keep_watering_can_" })
+        {
+            long c1 = UpgradeCatalog.TryGet(prefix + "1")!.Cost;
+            long c2 = UpgradeCatalog.TryGet(prefix + "2")!.Cost;
+            long c3 = UpgradeCatalog.TryGet(prefix + "3")!.Cost;
+            long c4 = UpgradeCatalog.TryGet(prefix + "4")!.Cost;
+            Assert.True(c1 < c2 && c2 < c3 && c3 < c4,
+                $"{prefix} costs must strictly increase: got {c1},{c2},{c3},{c4}");
+        }
+    }
 }

@@ -25,8 +25,10 @@ public static class UpgradeCatalog
     public static UpgradeDefinition? TryGet(string id)
         => id != null && _byId.TryGetValue(id, out UpgradeDefinition? u) ? u : null;
 
-    private static IReadOnlyList<UpgradeDefinition> Build() => new List<UpgradeDefinition>
+    private static IReadOnlyList<UpgradeDefinition> Build()
     {
+        var entries = new List<UpgradeDefinition>
+        {
         // Loadout
         new UpgradeDefinition("backpack_1", UpgradeCategory.Loadout, "Backpack I",
             "Start each run with the 24-slot backpack.", 150),
@@ -136,5 +138,8 @@ public static class UpgradeCatalog
             "Start each run with a Sheep (Deluxe Barn).", 600, "keep_deluxe_barn", "species:Sheep"),
         new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, "Start with Pig",
             "Start each run with a Pig (Deluxe Barn).", 700, "keep_deluxe_barn", "species:Pig"),
-    };
+        };
+        entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
+        return entries;
+    }
 }
