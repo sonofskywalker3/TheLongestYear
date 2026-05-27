@@ -32,6 +32,19 @@ namespace TheLongestYear.Loop
 
             _monitor.Log("In-place reset: starting.", LogLevel.Info);
 
+            // 0. Fresh world seed BEFORE loadForNewGame. Game1.uniqueIDForThisGame is the master
+            // seed used by Utility.CreateDaySaveRandom (weather + farm-event picks) and forage
+            // spawn randoms across locations. loadForNewGame does NOT touch it — the user
+            // reported a dandelion in the same spot on day 1 and rain on day 3 across multiple
+            // resets, both of which trace back to the seed being stable across runs. New ID
+            // per reset breaks both patterns. We also clear weatherForTomorrow so the first-day
+            // weather isn't carried over from the previous run's pre-reset evening.
+            Game1.uniqueIDForThisGame = Utility.NewUniqueIdForThisGame();
+            Game1.weatherForTomorrow = "Sun";
+            _monitor.Log(
+                $"In-place reset: new uniqueIDForThisGame={Game1.uniqueIDForThisGame}.",
+                LogLevel.Trace);
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
