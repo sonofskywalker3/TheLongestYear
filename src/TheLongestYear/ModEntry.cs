@@ -26,7 +26,6 @@ namespace TheLongestYear
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
         private DonationObserver _donationObserver;
-        private SeasonGoalsBoard _seasonGoalsBoard;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -54,8 +53,9 @@ namespace TheLongestYear
 
             // Interactable Season Goals board inside the Community Center. MenuLauncher isn't
             // constructed until OnSaveLoaded, so we hand the board a lazy accessor instead of
-            // the instance — the action handler resolves it just-in-time.
-            _seasonGoalsBoard = new SeasonGoalsBoard(helper, this.Monitor, _config, () => _launcher);
+            // the instance — the Harmony prefix on GameLocation.checkAction resolves it just-
+            // in-time. PatchAll() above already discovered the board's static checkAction patch.
+            SeasonGoalsBoard.ConnectTo(helper, this.Monitor, _config, () => _launcher);
 
             _commandFilePath = Path.Combine(helper.DirectoryPath, DebugCommandFileName);
 
