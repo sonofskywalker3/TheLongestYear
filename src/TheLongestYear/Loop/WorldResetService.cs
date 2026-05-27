@@ -17,18 +17,23 @@ namespace TheLongestYear.Loop
         private readonly IMonitor _monitor;
         private readonly TheLongestYear.Core.MetaState _meta;
         private readonly CommunityCenterUnlock _ccUnlock;
+        private readonly string _modDirectory;
 
-        public WorldResetService(IMonitor monitor, TheLongestYear.Core.MetaState meta, CommunityCenterUnlock ccUnlock)
+        public WorldResetService(IMonitor monitor, TheLongestYear.Core.MetaState meta, CommunityCenterUnlock ccUnlock,
+            string modDirectory)
         {
             _monitor = monitor;
             _meta = meta;
             _ccUnlock = ccUnlock;
+            _modDirectory = modDirectory;
         }
 
         public void PerformReset(int startingMoney)
         {
             // One-time safety backup before the first destructive reset (throws if it fails -> reset aborts).
-            SaveBackup.BackupOnce(_meta, _monitor);
+            // Lands inside the mod folder (not in Stardew's Saves dir) so it doesn't appear as a second
+            // save on the title screen.
+            SaveBackup.BackupOnce(_meta, _monitor, _modDirectory);
 
             _monitor.Log("In-place reset: starting.", LogLevel.Info);
 
