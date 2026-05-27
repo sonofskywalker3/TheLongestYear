@@ -52,22 +52,22 @@ Implementation sketch (not yet a plan):
 
   | Theme | Bonus | Liability |
   |---|---|---|
-  | Foraging | 25% chance forage drops +1 (excludes stone/wood) | **Mines Closed** — elevator + ladder from entrance don't function |
+  | Foraging | 25% chance for +1 on any forage drop (incl. stone/wood) | **Mines Closed** — elevator + ladder from entrance don't function |
   | Farming | +25% Crop Growth | -30% Fish Bite Rate |
   | Fishing | +30% Fish Bite Rate | -25% Crop Growth |
-  | Mining | 30% chance mine drops +1 (excludes stone — applies to ore, coal, geodes) | **Forage Off** — no wild produce / mushrooms (incl. mines) / fiddleheads spawn |
-  | Mixed | 10% chance for +1 drop on anything (works on trees & stone too) | -50% All Sell Prices |
+  | Mining | 30% chance for +1 on any mine drop (incl. stone) | **Forage Off** — no wild produce / mushrooms (incl. mines) / fiddleheads spawn |
+  | Mixed | 10% chance for +1 on any drop | -50% All Sell Prices |
 
   Design principles:
-  - No "rounds to zero" — every bonus is a +1 probability so single-drop
+  - No "rounds to zero" — every bonus is a +1-probability so single-drop
     nodes (seeds, ore, coal, most forage) aren't no-ops.
+  - +1 (not double) means multi-drop nodes like trees stay balanced
+    even when included — a tree dropping 8 wood instead of 7 once in
+    a while is small relative to the day's total. So no exclusions
+    needed.
   - Each liability hurts an activity the focused player WASN'T going to
     prioritize that week. Quarry + skull-cavern setups become a hedge
     against Mines Closed.
-  - Foraging bonus excludes stone/wood (would be OP on multi-drop trees).
-  - Mining bonus excludes stone (same reason).
-  - Mixed bonus stays small (+1, not double) because it applies to
-    everything including trees.
 
   Implementation notes for the effects layer:
   - **`forage_yield_up` (Foraging bonus):** per-drop 25% roll on
