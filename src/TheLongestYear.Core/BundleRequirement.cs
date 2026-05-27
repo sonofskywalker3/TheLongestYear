@@ -156,11 +156,11 @@ public sealed class BundleRequirement
     /// <list type="bullet">
     ///   <item>Seasonal: all ingredients, but only when its season is the current season.</item>
     ///   <item>PerItem: ingredients pinned to the current season.</item>
-    ///   <item>Percentage: ingredients that pass the <paramref name="obtainablePredicate"/>
-    ///         — but ONLY if this bundle has a non-zero cumulative quota due by the end of
-    ///         <paramref name="season"/>. A zero-quota Percentage bundle isn't gated this
-    ///         season, so its items shouldn't flood the bonus-list pool (e.g. Adventurer's items
-    ///         with Spring quota=0 shouldn't dominate the Mining sample on Spring).</item>
+    ///   <item>Percentage: ingredients that pass the <paramref name="obtainablePredicate"/>.
+    ///         The bundle's cumulative quota does NOT gate inclusion — rare items still appear,
+    ///         just much less often than common items via the sampler's inverse-rarity weighting
+    ///         (Common×8 vs VeryRare×1). The original UX4 spec only asked for weighting, not
+    ///         exclusion; an earlier handoff round overshot the ask.</item>
     /// </list>
     /// </summary>
     public IEnumerable<string> InPlayItemsFor(Season season, Func<string, bool> obtainablePredicate)
@@ -176,9 +176,6 @@ public sealed class BundleRequirement
                 return ItemSeasonPins!.Where(kv => kv.Value == season).Select(kv => kv.Key);
 
             case BundleKind.Percentage:
-                // Zero quota this season → bundle isn't urgent → keep its items out of the pool.
-                if (CumulativeRequiredBySeason![(int)season] == 0)
-                    return Enumerable.Empty<string>();
                 return Ingredients.Where(obtainablePredicate);
 
             default:
