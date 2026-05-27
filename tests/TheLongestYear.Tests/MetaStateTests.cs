@@ -85,4 +85,29 @@ public class MetaStateTests
         MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
         Assert.Equal(new[] { "Chicken", "Cow" }, restored.AnimalSpeciesEverOwned);
     }
+
+    [Fact]
+    public void New_meta_state_starts_with_zero_completed_resets_and_empty_quest_mail_lists()
+    {
+        var s = new MetaState();
+        Assert.Equal(0, s.CompletedResets);
+        Assert.Empty(s.CompletedQuestsEver);
+        Assert.Empty(s.MailFlagsEverReceived);
+    }
+
+    [Fact]
+    public void New_tracking_fields_round_trip_through_json()
+    {
+        var original = new MetaState
+        {
+            CompletedResets = 7,
+            CompletedQuestsEver = { "quest_a", "quest_b" },
+            MailFlagsEverReceived = { "ccPantry", "JojaMember" }
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(original);
+        MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
+        Assert.Equal(7, restored.CompletedResets);
+        Assert.Equal(new[] { "quest_a", "quest_b" }, restored.CompletedQuestsEver);
+        Assert.Equal(new[] { "ccPantry", "JojaMember" }, restored.MailFlagsEverReceived);
+    }
 }
