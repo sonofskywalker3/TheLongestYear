@@ -54,9 +54,17 @@ public sealed class MetaState
     public bool HasUpgrade(string id) => OwnedUpgrades.Contains(id);
 
     /// <summary>
-    /// Evaluate a meta-requirement string against current banked state. Format is "ns:value";
-    /// only "species:&lt;name&gt;" is recognised today. Unknown namespaces return false (treated
-    /// as "requirement not met") so future-added requirements default-deny on older code paths.
+    /// Evaluate a meta-requirement string against current banked state. Format is "ns:value".
+    /// Recognised namespaces:
+    /// <list type="bullet">
+    ///   <item><term>species:&lt;name&gt;</term><description>Animal species ever owned (case-insensitive). Vanilla Stardew is inconsistent about casing in Data/FarmAnimals vs FarmAnimal.type.</description></item>
+    ///   <item><term>upgrade:&lt;id&gt;</term><description>Permanently purchased upgrade id (case-sensitive; our own lowercase ids).</description></item>
+    ///   <item><term>quest:&lt;id&gt;</term><description>Quest id ever completed across all runs (case-sensitive; vanilla quest ids are lowercase by convention).</description></item>
+    ///   <item><term>mail:&lt;flag&gt;</term><description>Mail flag ever received across all runs (case-insensitive). Vanilla CC code uses mixed casing for mail flags.</description></item>
+    ///   <item><term>season:&lt;n&gt;</term><description>True when CompletedResets &gt;= n. "season" here means run-number / number of completed resets, NOT the in-game calendar season (Spring/Summer/Fall/Winter).</description></item>
+    /// </list>
+    /// Unknown namespaces return false (default-deny) so future-added namespaces remain
+    /// forward-compatible with older code paths.
     /// </summary>
     public bool MeetsMetaRequirement(string? requirement)
     {
@@ -70,6 +78,11 @@ public sealed class MetaState
         return ns switch
         {
             "species" => AnimalSpeciesEverOwned.Contains(value, StringComparer.OrdinalIgnoreCase),
+            "upgrade" => OwnedUpgrades.Contains(value, StringComparer.Ordinal),
+            "quest"   => CompletedQuestsEver.Contains(value, StringComparer.Ordinal),
+            "mail"    => MailFlagsEverReceived.Contains(value, StringComparer.OrdinalIgnoreCase),
+            // "season" = run number (CompletedResets), NOT the in-game calendar season.
+            "season"  => int.TryParse(value, out int threshold) && CompletedResets >= threshold,
             _ => false
         };
     }
