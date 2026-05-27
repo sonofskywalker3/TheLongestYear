@@ -1,8 +1,8 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-05-27 (after Plan 06B landed)
-**Branch:** `feat/v1-plan-06b-cookbook-craftbook`
-**Tests:** 292 passing, 0 failing
+**Last updated:** 2026-05-27 (after Plan 06 landed)
+**Branch:** `feat/v1-plan-06-theme-effects`
+**Tests:** 320 passing, 0 failing
 **Build:** clean (0 warnings, 0 errors)
 
 ## What v1 means
@@ -22,35 +22,22 @@ either ships in v1 or is explicitly deferred.
 | **Festival fixes** | `feat/v1-plan-05-ui` | Time flows during festivals, exit at real in-game time, auto-eject at festival end, HUD redraw during festivals, "Are you sure" suppression, day-8 hub unblock, day-3 forced rain removed, RNG re-seed on reset, Joja root-cause fix. |
 | **Plan 06A — Persistence effects + per-stat keep upgrades** | `feat/v1-plan-06a-persistence-effects` | Wires `OwnedUpgrades` into reset effects (backpack, gold, kept coops/barns, kitchen, vault bus, horse, starting animals). Adds 80 chained keep entries (16 tool tiers + 2 rods + 50 skill levels + 12 mine elevator floors). Cap-not-grant via `PlayerSnapshot` (in-run peak captured pre-wipe) + `RunState.PeakMineFloor`. Profession picker re-fires for kept L5/L10 skills. Shrine UI hides locked entries. Generalised `MeetsMetaRequirement` (upgrade/quest/mail/season). |
 | **Plan 06B — Cookbook + Craftbook** | `feat/v1-plan-06b-cookbook-craftbook` | 6 Carryover catalog entries (Cookbook/Craftbook I/II/III @ 150/350/700 JP, 5/10/20 slots). `CookbookMenu` + `CraftbookMenu` slot-grid IClickableMenus with sub-mode recipe picker (currently-known only) and confirm-remove dialog. `FarmHouse.checkAction` Harmony patches open menus on configurable tile coords (`tly_setcookbook`/`tly_setcraftbook`). `IndicatorRegistry` for reusable ?/! bubbles over world tiles. Quest intros via vanilla `Quest` on first reset after purchase. Recipe re-grant on `FarmerReset.Apply`. `MetaState` extended with `CookbookRecipes`/`CraftbookRecipes` (List<string>) + `DismissedIndicators` (HashSet<string>). |
+| **Plan 06 — Theme effects layer** | `feat/v1-plan-06-theme-effects` | `ThemeModifiers` ids corrected to match signed-off spec (mines_closed / fish_bite_down / forage_off). `ActiveEffectsProvider` + `BonusDropResolver` Core types wired through `RunController` (Set/Clear on theme select + reset). 6 Harmony patch files implementing all 10 bonus/liability effects: forage_yield_up / forage_off / crop_growth_up / crop_growth_down / fish_bite_up / fish_bite_down / mine_drops_up / mines_closed / all_drops_up / all_sell_prices_down. `MixedSeedsPatch` injects Red Cabbage / Starfruit per cultivation upgrades (bool overload pinned). `fortune_rare_fish` gives +25% bite rate. `WeatherForecast` + `CartStockPreview` Core types deliver real foresight data to `WeeklyHubMenu` per owned Weather Sage / Cart Whisperer tiers. `tly_activeeffects` debug command. |
 
 ## Pending for v1
 
-These two blocks remain. After they ship, v1 is ready for a meaningful playtest.
+One block remains. After it ships, v1 is ready for a meaningful playtest.
 
-### Plan 06 — Theme effects layer (designed, awaiting sign-off)
+### Plan 07 — Junimo Stash (user direction received, ready to plan)
 
-Bonus/liability mapping per theme (see `TODO.md`):
+Per design spec §9 + user direction 2026-05-27: "a specific chest with limited slots they can interact with anytime."
 
-| Theme | Bonus | Liability |
-|---|---|---|
-| Foraging | 25% chance for +1 on any forage drop | **Mines Closed** |
-| Farming | +25% Crop Growth | -30% Fish Bite Rate |
-| Fishing | +30% Fish Bite Rate | -25% Crop Growth |
-| Mining | 30% chance for +1 on any mine drop | **Forage Off** |
-| Mixed | 10% chance for +1 on any drop | -50% All Sell Prices |
+- World-object chest on the farm at a configurable tile (same pattern as cookbook/craftbook: `tly_setstash` debug command).
+- Slot cap from existing `stash_1` (4 slots) and `stash_2` (8 slots) upgrades (already in Plan 05 UpgradeCatalog).
+- Anytime interaction during run — reuse vanilla `Chest` UI with a Harmony slot-cap enforcement patch.
+- Items survive reset — chest contents banked into MetaState on close + restored on next run start.
 
-Plus obtainability effects (Cultivation: Red Cabbage / Starfruit / Mixed Seeds injection,
-Fortune: Rare Fish catch boost) and foresight data delivery (Weather Sage actual data,
-Cart Whisperer actual data).
-
-Status: catalog entries exist (Plan 05 + Plan 06A), but no gameplay effect wired. Design table needs user sign-off before implementation plan can be written.
-
-### Plan 07 — Junimo Stash (designed in §9, needs implementation plan)
-
-Per design spec §9: scarce slots, expandable via tier upgrades, cross-run item carryover.
-The "strategic engine" — the meta-skill of opportunistic hoarding.
-
-Status: high-level design exists; UI layout, content-selection rules, end-of-run interaction, item picker need spec sign-off.
+Status: design surfaced + signed off. Implementation plan not yet written.
 
 ## Deferred beyond v1
 
@@ -63,10 +50,15 @@ Status: high-level design exists; UI layout, content-selection rules, end-of-run
 - **SVE compatibility pass** — most pieces are SVE-safe already (see future-expansions notes).
 - **LY2 / LY3** — Year 2/3 ultimate-perfection content, separate JP economies, possibly separate mods.
 
-## Known playtest carryovers from 06B
+## Known playtest carryovers
 
+From 06B:
 - **Indicator `?` source rect** `(397, 489, 10, 10)` in `IndicatorRegistry` is approximate; visually verify the right sprite renders. One-line constant fix if wrong.
 - **Indicator tile coords** start at `(0, 0)` (= disabled). After buying `cookbook_1` / `craftbook_1`, the player needs to run `tly_setcookbook` / `tly_setcraftbook` once each to anchor the interactable + bubble.
+
+From 06:
+- **`forage_off` over-suppression (JC-4)** — Mining liability also blocks weeds/stones via `spawnObjects`. Flag for playtest to assess if too punishing.
+- **`fortune_rare_fish` is a 0.75× bite-rate multiplier (JC-2)** — v1 approximation for rare-fish boost (true rarity intercept requires deeper Stardew internals investigation).
 
 ## Small follow-ups (not blocking v1, can land any time)
 
