@@ -89,7 +89,11 @@ namespace TheLongestYear
             _meta.Load();
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
-            _reset = new WorldResetService(this.Monitor, _meta.State, _ccUnlock, this.Helper.DirectoryPath);
+            var farmerReset = new FarmerReset(this.Monitor);
+            var professionPicker = new ProfessionPickerScheduler(this.Monitor);
+            _reset = new WorldResetService(
+                this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
+                this.Helper.DirectoryPath, farmerReset, professionPicker);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
@@ -259,7 +263,8 @@ namespace TheLongestYear
         /// BeginNewRun so the subsequent SaveLoaded's Load reads the post-reset state.</summary>
         private void FullResetAndPresentOffer()
         {
-            _reset.PerformReset(_config.StartingMoney);
+            _reset.PerformReset();
+            _reset.ProfessionPicker.DrainOnDayStart();
             _meta.Run.BeginNewRun(NewRunSeed());
             _meta.Save();   // persist the cleared state so deferred SaveLoaded can't revert it
             this.Monitor.Log(
@@ -281,10 +286,12 @@ namespace TheLongestYear
                 return;
             }
 
-            _reset.PerformReset(_config.StartingMoney);
+            _reset.PerformReset();
+            _reset.ProfessionPicker.DrainOnDayStart();
             var first = WorldStateProbe.Capture();
 
-            _reset.PerformReset(_config.StartingMoney);
+            _reset.PerformReset();
+            _reset.ProfessionPicker.DrainOnDayStart();
             var second = WorldStateProbe.Capture();
 
             this.Monitor.Log(

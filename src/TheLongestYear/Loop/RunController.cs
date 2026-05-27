@@ -77,7 +77,8 @@ namespace TheLongestYear.Loop
             if (_pendingReset)
             {
                 _pendingReset = false;
-                _reset.PerformReset(_config.StartingMoney);
+                _reset.PerformReset();
+                _reset.ProfessionPicker.DrainOnDayStart();
                 Run.BeginNewRun(NewSeed());
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
                 // Fall through so the Spring 1 hub fires immediately — PerformReset put us
