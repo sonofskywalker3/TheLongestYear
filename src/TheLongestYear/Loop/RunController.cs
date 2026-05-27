@@ -70,6 +70,17 @@ namespace TheLongestYear.Loop
             Run.DayOfMonth = Game1.dayOfMonth;
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
+
+            // Restore active effects from persisted selection (if any).
+            if (Run.CurrentSelection.HasValue)
+            {
+                var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
+                ActiveEffectsProvider.Set(bonus, liability);
+            }
+            else
+            {
+                ActiveEffectsProvider.Clear();
+            }
         }
 
         public void OnDayStarted(object sender, DayStartedEventArgs e)
@@ -80,6 +91,7 @@ namespace TheLongestYear.Loop
                 _reset.PerformReset();
                 _reset.ProfessionPicker.DrainOnDayStart();
                 Run.BeginNewRun(NewSeed());
+                ActiveEffectsProvider.Clear();
                 _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
                 // Fall through so the Spring 1 hub fires immediately — PerformReset put us
                 // back on day 1, BeginNewRun cleared OfferPresentedWeek to -1, and the
@@ -179,6 +191,7 @@ namespace TheLongestYear.Loop
             Run.Select(theme);
             PopulateBonusItemsForCurrentSelection();
             var (bonus, liability) = ThemeModifiers.For(theme);
+            ActiveEffectsProvider.Set(bonus, liability);
             _monitor.Log(
                 $"Selected {theme} (bonus {bonus}, liability {liability}). " +
                 $"Bonus items this week: [{string.Join(", ", Run.CurrentWeekBonusItems)}].",
