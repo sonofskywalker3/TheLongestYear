@@ -351,9 +351,12 @@ namespace TheLongestYear.Loop
 
             foreach (var animal in animals)
             {
-                Building housing = farm.buildings.FirstOrDefault(
-                    b => b.buildingType.Value == animal.HousingType
-                      || ChainTier(b.buildingType.Value) >= ChainTier(animal.HousingType));
+                var requiredInfo = ChainInfo(animal.HousingType);
+                Building housing = farm.buildings.FirstOrDefault(b =>
+                {
+                    var info = ChainInfo(b.buildingType.Value);
+                    return info.Family == requiredInfo.Family && info.Tier >= requiredInfo.Tier;
+                });
                 if (housing == null)
                 {
                     _monitor.Log(
@@ -385,18 +388,19 @@ namespace TheLongestYear.Loop
             }
         }
 
-        // Rank Coop=1, Big Coop=2, Deluxe Coop=3 (and same for Barn). "Or better" check
-        // for animal placement — a Big Coop satisfies "needs Coop", a Deluxe Coop
-        // satisfies "needs Big Coop", etc.
-        private static int ChainTier(string blueprint) => blueprint switch
+        // Coop chain (chickens, ducks, etc.) and Barn chain (cows, goats, etc.) both
+        // have tier 1/2/3 housing — but a Coop must not satisfy a Cow placement and
+        // vice versa. The family string segregates the two chains; tier comparison
+        // only happens within a family.
+        private static (string Family, int Tier) ChainInfo(string blueprint) => blueprint switch
         {
-            "Coop"         => 1,
-            "Big Coop"     => 2,
-            "Deluxe Coop"  => 3,
-            "Barn"         => 1,
-            "Big Barn"     => 2,
-            "Deluxe Barn"  => 3,
-            _ => 0
+            "Coop"         => ("coop", 1),
+            "Big Coop"     => ("coop", 2),
+            "Deluxe Coop"  => ("coop", 3),
+            "Barn"         => ("barn", 1),
+            "Big Barn"     => ("barn", 2),
+            "Deluxe Barn"  => ("barn", 3),
+            _ => ("", 0)
         };
     }
 }
