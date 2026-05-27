@@ -88,7 +88,7 @@ namespace TheLongestYear
             _meta.Load();
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
-            _reset = new WorldResetService(this.Monitor, _meta.State, _ccUnlock);
+            _reset = new WorldResetService(this.Monitor, _meta.State, _ccUnlock, this.Helper.DirectoryPath);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
