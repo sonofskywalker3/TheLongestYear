@@ -316,7 +316,16 @@ namespace TheLongestYear
         /// </summary>
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (!Context.IsWorldReady || !e.IsMultipleOf(DebugPollTicks))
+            if (!Context.IsWorldReady)
+                return;
+
+            // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
+            // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
+            // festival's end time rather than up to 30 ticks (~500ms) later.
+            if (FestivalTimeFlow.ShouldAutoEnd())
+                FestivalTimeFlow.ForceEnd(this.Monitor);
+
+            if (!e.IsMultipleOf(DebugPollTicks))
                 return;
             if (string.IsNullOrEmpty(_commandFilePath) || !File.Exists(_commandFilePath))
                 return;
