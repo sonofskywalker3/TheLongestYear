@@ -31,6 +31,26 @@ public sealed class MetaState
     /// </summary>
     public List<string> AnimalSpeciesEverOwned { get; set; } = new();
 
+    /// <summary>
+    /// Number of completed resets in this playthrough. Incremented inside
+    /// WorldResetService.PerformReset (Plan 06A). Backs the season:&lt;n&gt; meta-requirement
+    /// namespace (player has done at least N resets).
+    /// </summary>
+    public int CompletedResets { get; set; }
+
+    /// <summary>
+    /// Quest ids the player has completed across all runs in this playthrough. Backs the
+    /// quest:&lt;id&gt; meta-requirement namespace. Producer is part of a later plan; declared
+    /// here so future plans don't have to touch the state class.
+    /// </summary>
+    public List<string> CompletedQuestsEver { get; set; } = new();
+
+    /// <summary>
+    /// Mail flags the player has ever received across all runs in this playthrough. Backs
+    /// the mail:&lt;flag&gt; meta-requirement namespace. Producer is part of a later plan.
+    /// </summary>
+    public List<string> MailFlagsEverReceived { get; set; } = new();
+
     public bool HasUpgrade(string id) => OwnedUpgrades.Contains(id);
 
     /// <summary>
