@@ -6,6 +6,43 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Seed-driven weather scheduler with per-season minimums
+Source: 2026-05-27 playtest. User asked for "at least 2 days of rain
+every season, at least 2 storms in summer, but mix them up every new
+seed."
+
+Why this isn't a 10-line patch: vanilla rolls weather day-by-day with
+no per-season guarantees, and the hardcoded forced days (Spring 3 =
+Rain, Summer 13/26 = Storm) repeat every loop. Stripping the hardcoded
+days AND guaranteeing minimums needs a custom scheduler:
+
+- At each season transition, deterministically schedule the season's
+  weather from `(uniqueIDForThisGame, season#)`.
+- Per-season constraints (v1 sketch):
+  - Spring: ≥2 rain days; no storms.
+  - Summer: ≥2 storms; ≥2 rain days (storms count as rain).
+  - Fall: ≥2 rain days.
+  - Winter: ≥2 snow days.
+- Constraints exclude festival days + days 1–2 (forced sun) so we don't
+  schedule rain on a Festival/Sun-forced day.
+- Harmony patch on `Game1.getWeatherModificationsForDate` (or
+  `Utility.PickWeatherForLocation`) returns the scheduled value.
+- Day-3 forced rain already patched out
+  (`WeatherModificationsPatch`). Summer 13/26 forced storms still
+  active and would need to be subsumed by the new scheduler.
+
+Status: plan-worthy on its own. Coordinate with effects layer (Plan 06)
+since some liabilities key off weather.
+
+### Wipe-meta debug command (`tly_wipemeta`)
+Source: 2026-05-27 playtest. User noticed JP banked = 8 after a reset
+and asked "how do I have JP banked? I didn't donate anything." Banked
+JP is meta-state from earlier sessions, intentionally preserved by
+`tly_reset`. For testing a true clean-slate run without deleting the
+save, add a debug command that wipes `MetaState` (JP, owned upgrades,
+backup-done flag) while keeping the save. Cheap: replace
+`_meta.State` with `new MetaState()` + `_meta.Save()`.
+
 ### Weekly Theme Journal entry (active quest for bonus items)
 Source: 2026-05-26 playtest discussion with user.
 
