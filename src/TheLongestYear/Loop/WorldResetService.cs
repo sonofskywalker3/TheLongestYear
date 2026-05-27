@@ -201,7 +201,9 @@ namespace TheLongestYear.Loop
             // 4. Build the reset baseline + apply Farmer-side state (gold, items, tool
             //    tiers, skill levels, kitchen flag).
             RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _config.StartingMoney);
-            _farmerReset.Apply(Game1.player, baseline);
+            _farmerReset.Apply(Game1.player, baseline,
+                _meta.CookbookRecipes,
+                _meta.CraftbookRecipes);
 
             // 5. Profession picker re-trigger queue. Enqueued here; the actual menus
             //    surface on the next DayStarted (RunController drains after reset).
