@@ -87,6 +87,13 @@ namespace TheLongestYear.UI
                 .OrderBy(b => b.Theme)
                 .ThenBy(b => b.Name, StringComparer.Ordinal))
             {
+                // Only show bundles with an obligation due BY this season's checkpoint —
+                // Seasonal bundles for the current season, PerItem bundles with any pin
+                // due ≤ current, Percentage bundles with a non-zero quota this season.
+                // Past-season Seasonal and future-only PerItem bundles are hidden; this is
+                // the "what do I owe THIS season" tracker, not a year-wide overview.
+                if (!IsRelevantForCurrentSeason(br)) continue;
+
                 int have = br.Ingredients.Count(donated.Contains);
                 int need = br.NumberOfSlots;
 
@@ -94,6 +101,26 @@ namespace TheLongestYear.UI
                 int missingCount = missingThisSeason.Count;
 
                 _entries.Add(new BundleEntry(br, have, need, missingCount, missingThisSeason));
+            }
+        }
+
+        /// <summary>True if this bundle has any obligation that's due BY the current season's
+        /// day-28 checkpoint. Mirrors the kind-specific shape:
+        /// Seasonal — its season matches the current one.
+        /// PerItem — at least one pin has season ≤ current.
+        /// Percentage — cumulative quota for the current season is &gt; 0.</summary>
+        private bool IsRelevantForCurrentSeason(BundleRequirement br)
+        {
+            switch (br.Kind)
+            {
+                case BundleKind.Seasonal:
+                    return br.SeasonalSeason!.Value == _season;
+                case BundleKind.PerItem:
+                    return br.ItemSeasonPins!.Any(kv => (int)kv.Value <= (int)_season);
+                case BundleKind.Percentage:
+                    return br.CumulativeRequiredBySeason![(int)_season] > 0;
+                default:
+                    return false;
             }
         }
 
