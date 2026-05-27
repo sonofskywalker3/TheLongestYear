@@ -236,6 +236,22 @@ namespace TheLongestYear.Loop
         public int BonusListSizeForCurrentSeason()
             => BonusItemSampler.DefaultMaxCountBySeason[(int)Run.Season];
 
+        /// <summary>
+        /// Number of weather preview slots to show on the planning hub this week.
+        /// Equals the highest Weather Sage tier owned (weather_sage_1 through weather_sage_7).
+        /// Returns 0 if none owned.
+        /// </summary>
+        public int WeatherSageTier()
+            => _store.State.HighestKeptTier("weather_sage_", 7);
+
+        /// <summary>
+        /// Number of Traveling Cart item slots to preview on the planning hub.
+        /// Equals 2 * highest Cart Whisperer tier owned (cart_whisper_1 through cart_whisper_3).
+        /// Returns 0 if none owned.
+        /// </summary>
+        public int CartPreviewSlots()
+            => CartStockPreview.SlotsToReveal(_store.State.HighestKeptTier("cart_whisper_", 10));
+
         /// <summary>Obtainability predicate for the sampler: looks up the item in the CcItem
         /// catalog and tests against this season's ObtainableSeasons. Items not in the catalog
         /// default to obtainable so SVE/mod additions aren't silently excluded.</summary>
