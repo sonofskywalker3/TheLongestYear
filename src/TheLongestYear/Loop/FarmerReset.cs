@@ -19,7 +19,9 @@ namespace TheLongestYear.Loop
 
         public FarmerReset(IMonitor monitor) => _monitor = monitor;
 
-        public void Apply(Farmer p, RunBaseline baseline)
+        public void Apply(Farmer p, RunBaseline baseline,
+            IReadOnlyList<string> cookbookRecipes,
+            IReadOnlyList<string> craftbookRecipes)
         {
             p.Money = baseline.StartingGold;
 
@@ -78,12 +80,35 @@ namespace TheLongestYear.Loop
             if (baseline.KitchenOnDay1)
                 p.HouseUpgradeLevel = 1;
 
+            // Re-grant banked cooking recipes. Value 0 = vanilla "learned but never cooked".
+            // Do this AFTER clearing mail/events so the "you learned a recipe" pop-up doesn't
+            // fire for each one (the pop-up reads mailReceived for the "gotRecipe_X" flags;
+            // clearing mail first means no duplicate notification on the first morning).
+            // NetStringDictionary<int, NetInt> does not implement IDictionary<string,int> —
+            // use its ContainsKey + indexer directly.
+            GrantBankedRecipes(p.cookingRecipes, cookbookRecipes);
+            GrantBankedRecipes(p.craftingRecipes, craftbookRecipes);
+
             _monitor.Log(
                 $"FarmerReset: gold={baseline.StartingGold}, slots={baseline.MaxItems}, " +
                 $"tools=[{string.Join(",", baseline.ToolTiers)}], " +
                 $"skills=[{string.Join(",", baseline.SkillLevels)}], " +
-                $"kitchen={baseline.KitchenOnDay1}.",
+                $"kitchen={baseline.KitchenOnDay1}, " +
+                $"cookRecipes={cookbookRecipes.Count}, craftRecipes={craftbookRecipes.Count}.",
                 LogLevel.Trace);
+        }
+
+        private static void GrantBankedRecipes(
+            StardewValley.Network.NetStringDictionary<int, Netcode.NetInt> farmerDict,
+            IReadOnlyList<string> banked)
+        {
+            foreach (string recipeId in banked)
+            {
+                // 0 = "learned but never cooked/crafted". Don't overwrite a higher count
+                // if the player somehow already has it (idempotent add).
+                if (!farmerDict.ContainsKey(recipeId))
+                    farmerDict[recipeId] = 0;
+            }
         }
 
         private static void SetSkillLevel(Farmer p, int skillIndex, int level)
