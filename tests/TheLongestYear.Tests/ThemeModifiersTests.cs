@@ -20,19 +20,35 @@ public class ThemeModifiersTests
     }
 
     [Theory]
-    [InlineData("forage_yield_up", "+25% Foraging Yield")]
-    [InlineData("forage_drops_off", "Foraging Disabled")]
-    [InlineData("crop_growth_up", "+25% Crop Growth")]
-    [InlineData("crop_growth_down", "-25% Crop Growth")]
-    [InlineData("fish_bite_up", "+30% Fish Bite Rate")]
-    [InlineData("mine_drops_up", "+30% Mine Drops")]
-    [InlineData("mine_drops_off", "Mine Drops Disabled")]
-    [InlineData("all_drops_up", "+10% All Drops")]
+    [InlineData("forage_yield_up",      "+25% Foraging Yield")]
+    [InlineData("forage_off",           "Forage Off")]
+    [InlineData("crop_growth_up",       "+25% Crop Growth")]
+    [InlineData("crop_growth_down",     "-25% Crop Growth")]
+    [InlineData("fish_bite_up",         "+30% Fish Bite Rate")]
+    [InlineData("fish_bite_down",       "-30% Fish Bite Rate")]
+    [InlineData("mine_drops_up",        "+30% Mine Drops")]
+    [InlineData("mines_closed",         "Mines Closed")]
+    [InlineData("all_drops_up",         "+10% All Drops")]
     [InlineData("all_sell_prices_down", "-50% All Sell Prices")]
-    [InlineData("shop_discount", "-15% Shop Prices")]
-    [InlineData("stamina_drain_up", "+30% Stamina Drain")]
+    [InlineData("forage_drops_off",     "Foraging Disabled (legacy)")]
+    [InlineData("mine_drops_off",       "Mine Drops Disabled (legacy)")]
+    [InlineData("shop_discount",        "-15% Shop Prices")]
+    [InlineData("stamina_drain_up",     "+30% Stamina Drain")]
     public void DisplayNameFor_maps_known_ids(string id, string expected)
         => Assert.Equal(expected, ThemeModifiers.DisplayNameFor(id));
+
+    [Theory]
+    [InlineData(Theme.Foraging, "forage_yield_up", "mines_closed")]
+    [InlineData(Theme.Farming,  "crop_growth_up",  "fish_bite_down")]
+    [InlineData(Theme.Fishing,  "fish_bite_up",    "crop_growth_down")]
+    [InlineData(Theme.Mining,   "mine_drops_up",   "forage_off")]
+    [InlineData(Theme.Mixed,    "all_drops_up",    "all_sell_prices_down")]
+    public void For_returns_correct_signed_off_ids(Theme theme, string expectedBonus, string expectedLiability)
+    {
+        var (bonus, liability) = ThemeModifiers.For(theme);
+        Assert.Equal(expectedBonus, bonus);
+        Assert.Equal(expectedLiability, liability);
+    }
 
     [Fact]
     public void DisplayNameFor_falls_through_to_raw_id_when_unknown()
