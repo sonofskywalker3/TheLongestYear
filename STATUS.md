@@ -1,8 +1,8 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-05-27 (after Plan 06A landed)
-**Branch:** `feat/v1-plan-06a-persistence-effects`
-**Tests:** 280 passing, 0 failing
+**Last updated:** 2026-05-27 (after Plan 06B landed)
+**Branch:** `feat/v1-plan-06b-cookbook-craftbook`
+**Tests:** 292 passing, 0 failing
 **Build:** clean (0 warnings, 0 errors)
 
 ## What v1 means
@@ -21,23 +21,11 @@ either ships in v1 or is explicitly deferred.
 | **Plan 05 — UI** | `feat/v1-plan-05-ui` | `WeeklyHubMenu` (planning hub), `JunimoShrineMenu` (upgrade shop), `MenuLauncher`, `SeasonGoalsBoard` (CC interactable), `UpgradeCatalog` + `UpgradePurchaseService`. |
 | **Festival fixes** | `feat/v1-plan-05-ui` | Time flows during festivals, exit at real in-game time, auto-eject at festival end, HUD redraw during festivals, "Are you sure" suppression, day-8 hub unblock, day-3 forced rain removed, RNG re-seed on reset, Joja root-cause fix. |
 | **Plan 06A — Persistence effects + per-stat keep upgrades** | `feat/v1-plan-06a-persistence-effects` | Wires `OwnedUpgrades` into reset effects (backpack, gold, kept coops/barns, kitchen, vault bus, horse, starting animals). Adds 80 chained keep entries (16 tool tiers + 2 rods + 50 skill levels + 12 mine elevator floors). Cap-not-grant via `PlayerSnapshot` (in-run peak captured pre-wipe) + `RunState.PeakMineFloor`. Profession picker re-fires for kept L5/L10 skills. Shrine UI hides locked entries. Generalised `MeetsMetaRequirement` (upgrade/quest/mail/season). |
+| **Plan 06B — Cookbook + Craftbook** | `feat/v1-plan-06b-cookbook-craftbook` | 6 Carryover catalog entries (Cookbook/Craftbook I/II/III @ 150/350/700 JP, 5/10/20 slots). `CookbookMenu` + `CraftbookMenu` slot-grid IClickableMenus with sub-mode recipe picker (currently-known only) and confirm-remove dialog. `FarmHouse.checkAction` Harmony patches open menus on configurable tile coords (`tly_setcookbook`/`tly_setcraftbook`). `IndicatorRegistry` for reusable ?/! bubbles over world tiles. Quest intros via vanilla `Quest` on first reset after purchase. Recipe re-grant on `FarmerReset.Apply`. `MetaState` extended with `CookbookRecipes`/`CraftbookRecipes` (List<string>) + `DismissedIndicators` (HashSet<string>). |
 
 ## Pending for v1
 
-These three blocks remain. After they ship, v1 is ready for a meaningful playtest.
-
-### Plan 06B — Cookbook + Craftbook (next; signed off, ready to plan)
-
-Phase B of the persistence + meta-progression design (`docs/superpowers/specs/2026-05-27-persistence-meta-progression-design.md`).
-
-- World objects: Cookbook on the kitchen counter, Craftbook on the farmhouse table.
-- Slot-based recipe banking with the "currently-known only" rule.
-- Indicator bubble system (?/! over interactable world objects).
-- Quest intros via vanilla `Quest`.
-- Recipe re-grant on `FarmerReset`.
-- New `MetaState` fields: `CookbookRecipes`, `CraftbookRecipes`, `DismissedIndicators`.
-
-Status: spec signed off; implementation plan not yet written.
+These two blocks remain. After they ship, v1 is ready for a meaningful playtest.
 
 ### Plan 06 — Theme effects layer (designed, awaiting sign-off)
 
@@ -74,6 +62,11 @@ Status: high-level design exists; UI layout, content-selection rules, end-of-run
 - **Advanced contract modifiers** — per-run "blessings" etc.
 - **SVE compatibility pass** — most pieces are SVE-safe already (see future-expansions notes).
 - **LY2 / LY3** — Year 2/3 ultimate-perfection content, separate JP economies, possibly separate mods.
+
+## Known playtest carryovers from 06B
+
+- **Indicator `?` source rect** `(397, 489, 10, 10)` in `IndicatorRegistry` is approximate; visually verify the right sprite renders. One-line constant fix if wrong.
+- **Indicator tile coords** start at `(0, 0)` (= disabled). After buying `cookbook_1` / `craftbook_1`, the player needs to run `tly_setcookbook` / `tly_setcraftbook` once each to anchor the interactable + bubble.
 
 ## Small follow-ups (not blocking v1, can land any time)
 
