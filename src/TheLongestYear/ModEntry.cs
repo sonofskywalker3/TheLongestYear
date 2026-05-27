@@ -75,6 +75,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
+            helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
+            helper.ConsoleCommands.Add("tly_setboard", "Anchor the Season Goals board to the player's current tile inside the CC. Writes config.json.", this.CmdSetBoard);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -176,6 +178,60 @@ namespace TheLongestYear
 
             this.Monitor.Log($"tly_resetif: name matches '{target}', resetting.", LogLevel.Info);
             FullResetAndPresentOffer();
+        }
+
+        /// <summary>Print the player's current tile coordinate. Used for tuning interactable
+        /// tile coords (e.g. finding the fireplace before running tly_setboard).</summary>
+        private void CmdHere(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            int x = (int)Game1.player.Tile.X;
+            int y = (int)Game1.player.Tile.Y;
+            string loc = Game1.currentLocation?.Name ?? "?";
+            this.Monitor.Log($"Player at tile ({x}, {y}) in '{loc}'.", LogLevel.Info);
+        }
+
+        /// <summary>Anchor the Season Goals board to the tile the player is currently FACING
+        /// (not standing on — vanilla checkAction dispatches based on the faced tile, so we
+        /// record that one so the player can stand next to e.g. the fireplace, face it, and
+        /// press the action button to open the menu). Writes config.json so the anchor
+        /// persists across launches. Refuses to set outside the CC — the board only fires there.</summary>
+        private void CmdSetBoard(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            if (Game1.currentLocation is not StardewValley.Locations.CommunityCenter)
+            {
+                this.Monitor.Log(
+                    "tly_setboard: stand inside the Community Center first — the board only " +
+                    "fires there.",
+                    LogLevel.Warn);
+                return;
+            }
+
+            // Compute the tile the player is facing. Facing direction is 0=up, 1=right, 2=down, 3=left.
+            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
+            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
+            int x = (int)Game1.player.Tile.X + dx;
+            int y = (int)Game1.player.Tile.Y + dy;
+
+            _config.SeasonGoalsBoardTileX = x;
+            _config.SeasonGoalsBoardTileY = y;
+            this.Helper.WriteConfig(_config);
+
+            this.Monitor.Log(
+                $"Season Goals board anchored to ({x}, {y}) — the tile you were facing. " +
+                "Saved to config.json. Stand in the same spot and press action to test.",
+                LogLevel.Info);
         }
 
         private void ForceReset(string command, string[] args)
