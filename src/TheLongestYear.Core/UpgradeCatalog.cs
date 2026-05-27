@@ -25,6 +25,31 @@ public static class UpgradeCatalog
     public static UpgradeDefinition? TryGet(string id)
         => id != null && _byId.TryGetValue(id, out UpgradeDefinition? u) ? u : null;
 
+    /// <summary>
+    /// Total cooking recipe slots granted by the highest owned Cookbook tier.
+    /// Tier 0 = no Cookbook purchased = 0 slots. Tier 1 = 5, Tier 2 = 10, Tier 3 = 20.
+    /// The highest tier wins — owning II gives 10 slots, not 5+10=15.
+    /// </summary>
+    public static int CookbookSlotCount(int highestOwnedTier) => highestOwnedTier switch
+    {
+        1 => 5,
+        2 => 10,
+        3 => 20,
+        _ => 0
+    };
+
+    /// <summary>
+    /// Total crafting recipe slots granted by the highest owned Craftbook tier.
+    /// Same slot counts as <see cref="CookbookSlotCount"/> — mirrors Cookbook by design.
+    /// </summary>
+    public static int CraftbookSlotCount(int highestOwnedTier) => highestOwnedTier switch
+    {
+        1 => 5,
+        2 => 10,
+        3 => 20,
+        _ => 0
+    };
+
     private static IReadOnlyList<UpgradeDefinition> Build()
     {
         var entries = new List<UpgradeDefinition>
@@ -41,6 +66,29 @@ public static class UpgradeCatalog
 
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
+
+        // Carryover — Cookbook + Craftbook (recipe banking across runs).
+        // Tier determines the slot pool size. Highest owned tier wins (owning III = 20 slots).
+        // Cookbook: gated by kitchen (HouseUpgradeLevel >= 1) at interaction time, not at purchase.
+        // Craftbook: no in-run prereq — available from day 1 of the run after purchase.
+        new UpgradeDefinition("cookbook_1", UpgradeCategory.Carryover, "Cookbook I",
+            "Bank up to 5 cooking recipes across runs. The Junimos leave a cookbook on your kitchen counter.",
+            150),
+        new UpgradeDefinition("cookbook_2", UpgradeCategory.Carryover, "Cookbook II",
+            "Expand your cookbook to 10 recipe slots.",
+            350, "cookbook_1"),
+        new UpgradeDefinition("cookbook_3", UpgradeCategory.Carryover, "Cookbook III",
+            "Expand your cookbook to 20 recipe slots.",
+            700, "cookbook_2"),
+        new UpgradeDefinition("craftbook_1", UpgradeCategory.Carryover, "Craftbook I",
+            "Bank up to 5 crafting recipes across runs. The Junimos leave a craftbook on your farmhouse table.",
+            150),
+        new UpgradeDefinition("craftbook_2", UpgradeCategory.Carryover, "Craftbook II",
+            "Expand your craftbook to 10 recipe slots.",
+            350, "craftbook_1"),
+        new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, "Craftbook III",
+            "Expand your craftbook to 20 recipe slots.",
+            700, "craftbook_2"),
 
         // Efficiency
         new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Early Horse",

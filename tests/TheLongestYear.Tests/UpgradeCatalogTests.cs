@@ -208,4 +208,45 @@ public class UpgradeCatalogTests
         Assert.Null(UpgradeCatalog.TryGet("carry_xp_25"));
         Assert.Null(UpgradeCatalog.TryGet("carry_xp_50"));
     }
+
+    [Theory]
+    [InlineData("cookbook_1", "Cookbook I",   UpgradeCategory.Carryover, 150, null)]
+    [InlineData("cookbook_2", "Cookbook II",  UpgradeCategory.Carryover, 350, "cookbook_1")]
+    [InlineData("cookbook_3", "Cookbook III", UpgradeCategory.Carryover, 700, "cookbook_2")]
+    [InlineData("craftbook_1", "Craftbook I",   UpgradeCategory.Carryover, 150, null)]
+    [InlineData("craftbook_2", "Craftbook II",  UpgradeCategory.Carryover, 350, "craftbook_1")]
+    [InlineData("craftbook_3", "Craftbook III", UpgradeCategory.Carryover, 700, "craftbook_2")]
+    public void Cookbook_craftbook_entries_have_correct_id_name_category_cost_prereq(
+        string id, string name, UpgradeCategory category, long cost, string? prereqId)
+    {
+        var def = UpgradeCatalog.TryGet(id);
+        Assert.NotNull(def);
+        Assert.Equal(name,     def!.DisplayName);
+        Assert.Equal(category, def.Category);
+        Assert.Equal(cost,     def.Cost);
+        Assert.Equal(prereqId, def.PrerequisiteId);
+    }
+
+    [Fact]
+    public void CookbookSlotCount_returns_5_10_20_for_tiers_1_2_3()
+    {
+        Assert.Equal(5,  UpgradeCatalog.CookbookSlotCount(1));
+        Assert.Equal(10, UpgradeCatalog.CookbookSlotCount(2));
+        Assert.Equal(20, UpgradeCatalog.CookbookSlotCount(3));
+    }
+
+    [Fact]
+    public void CraftbookSlotCount_returns_5_10_20_for_tiers_1_2_3()
+    {
+        Assert.Equal(5,  UpgradeCatalog.CraftbookSlotCount(1));
+        Assert.Equal(10, UpgradeCatalog.CraftbookSlotCount(2));
+        Assert.Equal(20, UpgradeCatalog.CraftbookSlotCount(3));
+    }
+
+    [Fact]
+    public void CookbookSlotCount_returns_zero_for_tier_zero()
+    {
+        Assert.Equal(0, UpgradeCatalog.CookbookSlotCount(0));
+        Assert.Equal(0, UpgradeCatalog.CraftbookSlotCount(0));
+    }
 }
