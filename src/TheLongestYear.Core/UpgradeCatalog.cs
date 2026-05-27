@@ -141,6 +141,7 @@ public static class UpgradeCatalog
         };
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
+        entries.AddRange(UpgradeCatalogGenerators.CarryoverMineElevatorKeeps());
         return entries;
     }
 }
