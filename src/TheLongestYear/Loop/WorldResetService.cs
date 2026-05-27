@@ -8,7 +8,9 @@ using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Characters;
 using StardewValley.Locations;
+using StardewValley.Quests;
 using TheLongestYear.Core;
+using TheLongestYear.UI;
 
 namespace TheLongestYear.Loop
 {
@@ -247,7 +249,13 @@ namespace TheLongestYear.Loop
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
 
-            // 12. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
+            // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
+            FireBookQuestIntros();
+
+            // 13. Re-register indicators for the new run's location objects.
+            RegisterIndicators();
+
+            // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up
             //     the kitchen if the baseline set it.
             GameLocation home = Utility.getHomeOfFarmer(Game1.player);
@@ -404,5 +412,86 @@ namespace TheLongestYear.Loop
             "Deluxe Barn"  => ("barn", 3),
             _ => ("", 0)
         };
+
+        /// <summary>
+        /// Adds a vanilla Quest to the questLog for the Cookbook and/or Craftbook the first
+        /// time they appear (i.e. the upgrade was just purchased, or it's the first reset after
+        /// purchase). "First time" = the indicator has not yet been dismissed.
+        /// Re-registering the quest on every reset is prevented by the DismissedIndicators guard.
+        /// </summary>
+        private void FireBookQuestIntros()
+        {
+            if (_meta.HasUpgrade("cookbook_1")
+                && Game1.player.HouseUpgradeLevel >= 1
+                && !_meta.DismissedIndicators.Contains("tly.cookbook"))
+            {
+                AddIntroQuest(
+                    id: "tly.-9001",
+                    title: "A gift from the Junimos",
+                    description: "The Junimos left a cookbook on your kitchen counter — go have a look.");
+            }
+
+            if (_meta.HasUpgrade("craftbook_1")
+                && !_meta.DismissedIndicators.Contains("tly.craftbook"))
+            {
+                AddIntroQuest(
+                    id: "tly.-9002",
+                    title: "A gift from the Junimos",
+                    description: "The Junimos left a craftbook on your kitchen table — go have a look.");
+            }
+        }
+
+        private void AddIntroQuest(string id, string title, string description)
+        {
+            // Don't add duplicate if already in the log (idempotent across same-day resets).
+            foreach (var existing in Game1.player.questLog)
+                if (existing.id.Value == id) return;
+
+            var q = new Quest();
+            q.questType.Value = Quest.type_basic;
+            q.questTitle = title;
+            q.currentObjective = description;
+            q.questDescription = description;
+            q.dayQuestAccepted.Value = Game1.Date.TotalDays;
+            q.daysLeft.Value = -1;          // no time limit
+            q.id.Value = id;
+            Game1.player.questLog.Add(q);
+
+            _monitor.Log($"WorldResetService: added quest intro '{title}' (id {id}).", LogLevel.Trace);
+        }
+
+        /// <summary>
+        /// Re-registers indicators for the current run's FarmHouse location.
+        /// Called at the end of PerformReset so the location reference is fresh.
+        /// The fireplace indicator is registered here too (retroactive — it should
+        /// have been shown since Plan 05 but was missing until now).
+        /// </summary>
+        internal void RegisterIndicators()
+        {
+            IndicatorRegistry.ClearRegistrations();
+
+            // Community Center fireplace / Season Goals board.
+            CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
+            if (cc != null)
+            {
+                IndicatorRegistry.Register("tly.fireplace", cc,
+                    new Vector2(_config.SeasonGoalsBoardTileX, _config.SeasonGoalsBoardTileY),
+                    IndicatorKind.Question);
+            }
+
+            FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.player) as FarmHouse;
+            if (farmHouse != null)
+            {
+                if (_meta.HasUpgrade("cookbook_1"))
+                    IndicatorRegistry.Register("tly.cookbook", farmHouse,
+                        new Vector2(_config.CookbookTileX, _config.CookbookTileY),
+                        IndicatorKind.Question);
+
+                if (_meta.HasUpgrade("craftbook_1"))
+                    IndicatorRegistry.Register("tly.craftbook", farmHouse,
+                        new Vector2(_config.CraftbookTileX, _config.CraftbookTileY),
+                        IndicatorKind.Question);
+            }
+        }
     }
 }
