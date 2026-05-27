@@ -482,15 +482,21 @@ namespace TheLongestYear.Loop
             FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.player) as FarmHouse;
             if (farmHouse != null)
             {
-                if (_meta.HasUpgrade("cookbook_1"))
+                if (_meta.HasUpgrade("cookbook_1")
+                    && (_config.CookbookTileX != 0 || _config.CookbookTileY != 0))
+                {
                     IndicatorRegistry.Register("tly.cookbook", farmHouse,
                         new Vector2(_config.CookbookTileX, _config.CookbookTileY),
                         IndicatorKind.Question);
+                }
 
-                if (_meta.HasUpgrade("craftbook_1"))
+                if (_meta.HasUpgrade("craftbook_1")
+                    && (_config.CraftbookTileX != 0 || _config.CraftbookTileY != 0))
+                {
                     IndicatorRegistry.Register("tly.craftbook", farmHouse,
                         new Vector2(_config.CraftbookTileX, _config.CraftbookTileY),
                         IndicatorKind.Question);
+                }
             }
         }
     }
