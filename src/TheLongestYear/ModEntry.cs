@@ -27,6 +27,7 @@ namespace TheLongestYear
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
         private IReadOnlyDictionary<string, int> _ingredientStacks = new Dictionary<string, int>();
         private DonationObserver _donationObserver;
+        private PeakMineFloorTracker _peakMineFloorTracker;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -108,6 +109,10 @@ namespace TheLongestYear
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements, _ingredientStacks);
             _runController.OnRunLoaded();
+            if (_peakMineFloorTracker != null)
+                this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
+            _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);
+            this.Helper.Events.Player.Warped += _peakMineFloorTracker.OnWarped;
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
