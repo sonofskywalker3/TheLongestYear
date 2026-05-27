@@ -95,6 +95,9 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_opencraftbook",
                 "Open the Craftbook menu directly (debug).",
                 this.CmdOpenCraftbook);
+            helper.ConsoleCommands.Add("tly_activeeffects",
+                "Print the currently active theme bonus and liability.",
+                this.CmdActiveEffects);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -309,6 +312,16 @@ namespace TheLongestYear
             _launcher?.OpenCraftbook();
         }
 
+        private void CmdActiveEffects(string command, string[] args)
+        {
+            string bonus = TheLongestYear.Core.ActiveEffectsProvider.BonusId ?? "(none)";
+            string liability = TheLongestYear.Core.ActiveEffectsProvider.LiabilityId ?? "(none)";
+            this.Monitor.Log(
+                $"Active effects: bonus={bonus}, liability={liability}. " +
+                $"Selection={_meta?.Run.CurrentSelection?.ToString() ?? "none"}.",
+                LogLevel.Info);
+        }
+
         private void ForceReset(string command, string[] args)
         {
             if (!Context.IsWorldReady)
@@ -470,6 +483,7 @@ namespace TheLongestYear
                 case "tly_setcraftbook":  this.CmdSetCraftbook(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
+                case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
