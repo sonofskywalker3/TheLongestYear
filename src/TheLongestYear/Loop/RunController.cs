@@ -110,6 +110,8 @@ namespace TheLongestYear.Loop
                 if (Run.CurrentSelection.HasValue)
                 {
                     PopulateBonusItemsForCurrentSelection();
+                    var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
+                    ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(
                         $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
                         LogLevel.Info);
@@ -250,7 +252,7 @@ namespace TheLongestYear.Loop
         /// Returns 0 if none owned.
         /// </summary>
         public int CartPreviewSlots()
-            => CartStockPreview.SlotsToReveal(_store.State.HighestKeptTier("cart_whisper_", 10));
+            => CartStockPreview.SlotsToReveal(_store.State.HighestKeptTier("cart_whisper_", 3));
 
         /// <summary>Obtainability predicate for the sampler: looks up the item in the CcItem
         /// catalog and tests against this season's ObtainableSeasons. Items not in the catalog

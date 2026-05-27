@@ -46,6 +46,11 @@ namespace TheLongestYear.Loop
             if (!ActiveEffectsProvider.ActiveLiability("mines_closed"))
                 return true;
 
+            // Vanilla only activates the elevator on floors <= 120; tile 112 is inert otherwise.
+            // Don't show our spurious dialogue when vanilla would have ignored the interaction.
+            if (__instance.mineLevel > 120)
+                return true;
+
             int tileIndex = __instance.getTileIndexAt(tileLocation, "Buildings", "mine");
 
             // Tile 112 = elevator, tile 173 = descend ladder.
