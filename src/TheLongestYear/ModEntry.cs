@@ -103,6 +103,7 @@ namespace TheLongestYear
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             _meta.Load();
+            UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             IndicatorRegistry.Attach(_meta.State);
             IndicatorRegistry.ClearRegistrations();
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
