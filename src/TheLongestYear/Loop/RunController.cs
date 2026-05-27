@@ -189,10 +189,26 @@ namespace TheLongestYear.Loop
                 Run.CurrentSelection.Value, Run.Season,
                 _requirements,
                 IsObtainableInCurrentSeason,
+                RarityForItem,
                 maxCount);
 
             Run.CurrentWeekBonusItems.AddRange(sample);
         }
+
+        /// <summary>Rarity lookup for the bonus sampler: pull from the pre-built CcItem catalog so
+        /// the hot path doesn't re-resolve via ItemRegistry per call. Unknown ids default to Common
+        /// (full weight) so SVE/mod additions still surface in the bonus pool.</summary>
+        private Rarity RarityForItem(string itemId)
+        {
+            foreach (var item in _catalog)
+                if (item.Id == itemId)
+                    return item.Rarity;
+            return Rarity.Common;
+        }
+
+        /// <summary>Public mirror so the planning-hub UI's preview path uses the exact same rarity
+        /// lookup as the selection-time commit. Keeps the two samples deterministically aligned.</summary>
+        public Rarity GetRarityForItem(string itemId) => RarityForItem(itemId);
 
         /// <summary>How big the per-card bonus-item preview list should be for the season.
         /// Lives in <see cref="BonusItemSampler.DefaultMaxCountBySeason"/>.</summary>

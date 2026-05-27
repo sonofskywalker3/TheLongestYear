@@ -170,6 +170,7 @@ namespace TheLongestYear.UI
                 theme.Value, _offerSeason,
                 _requirements,
                 id => _runController.IsObtainableInSeason(id, _offerSeason),
+                _runController.GetRarityForItem,
                 maxCount);
 
             foreach (string id in sample)

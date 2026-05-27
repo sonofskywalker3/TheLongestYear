@@ -14,8 +14,15 @@ namespace TheLongestYear.Core;
 /// <list type="bullet">
 ///   <item>Seasonal: all ingredients when the season matches; nothing otherwise.</item>
 ///   <item>PerItem: ingredients pinned to this season.</item>
-///   <item>Percentage: ingredients that pass the obtainability predicate (CcItem.IsObtainableIn).</item>
+///   <item>Percentage: ingredients that pass the obtainability predicate, but only when the
+///         bundle's quota is non-zero for this season (zero-quota bundles aren't urgent and
+///         shouldn't pollute the sample — e.g. Adventurer's items on Spring).</item>
 /// </list>
+///
+/// Rarity weighting (UX4 from the 2026-05-26 playtest): the planning-hub's bonus preview should
+/// surface easier items more often. Each pool member is weighted inverse to its rarity (see
+/// <see cref="WeightFor"/>) and picks are weighted-draws-without-replacement. Determinism is
+/// preserved: same (seed, week, theme, pool, weights) → same picks.
 /// </summary>
 public static class BonusItemSampler
 {
@@ -31,9 +38,24 @@ public static class BonusItemSampler
     public static readonly IReadOnlyList<int> DefaultMaxCountBySeason = new[] { 4, 5, 6, 7 };
 
     /// <summary>
+    /// Inverse-rarity weight: Common shows up most often, VeryRare least. Tuned per the 2026-05-26
+    /// playtest feedback (user expected Chub/Sardine to dominate Spring fishing samples, not Crab
+    /// Pot items; expected to NOT see Solar/Void essences in Spring mining samples).
+    /// </summary>
+    public static int WeightFor(Rarity r) => r switch
+    {
+        Rarity.Common   => 8,
+        Rarity.Uncommon => 4,
+        Rarity.Rare     => 2,
+        Rarity.VeryRare => 1,
+        _ => 1
+    };
+
+    /// <summary>
     /// Sample up to <paramref name="maxCount"/> bonus items for <paramref name="theme"/> in
-    /// <paramref name="currentSeason"/>. Returns a stable order for a given (seed, week, theme).
-    /// If the pool is smaller than <paramref name="maxCount"/>, returns the whole pool (shuffled).
+    /// <paramref name="currentSeason"/>. Returns a stable order for a given (seed, week, theme,
+    /// pool, weights). If the pool is smaller than <paramref name="maxCount"/>, returns the
+    /// whole pool (order is the weighted-draw order, not input order).
     /// </summary>
     public static IReadOnlyList<string> SampleForTheme(
         int runSeed, int weekOfYear,
@@ -41,33 +63,53 @@ public static class BonusItemSampler
         Season currentSeason,
         IReadOnlyList<BundleRequirement> bundles,
         Func<string, bool> isObtainableInSeason,
+        Func<string, Rarity> rarityOf,
         int maxCount)
     {
         if (bundles is null) throw new ArgumentNullException(nameof(bundles));
         if (isObtainableInSeason is null) throw new ArgumentNullException(nameof(isObtainableInSeason));
+        if (rarityOf is null) throw new ArgumentNullException(nameof(rarityOf));
         if (maxCount <= 0) return Array.Empty<string>();
 
-        // Pool: distinct in-play items across the theme's bundles.
-        HashSet<string> pool = new HashSet<string>();
+        // Pool: distinct in-play items across the theme's bundles, tagged with rarity weight.
+        Dictionary<string, int> poolWeights = new(StringComparer.Ordinal);
         foreach (BundleRequirement b in bundles)
         {
             if (b.Theme != theme) continue;
             foreach (string id in b.InPlayItemsFor(currentSeason, isObtainableInSeason))
-                pool.Add(id);
+                poolWeights[id] = WeightFor(rarityOf(id));
         }
 
-        if (pool.Count == 0) return Array.Empty<string>();
+        if (poolWeights.Count == 0) return Array.Empty<string>();
 
-        // Deterministic shuffle keyed by (runSeed, week, theme). Sorting first gives a stable
-        // pre-shuffle order so the seeded shuffle reproduces across runs of the same input.
-        List<string> ordered = pool.OrderBy(s => s, StringComparer.Ordinal).ToList();
+        // Stable input order keyed by id so the seeded weighted draws are reproducible.
+        List<(string Id, int Weight)> remaining = poolWeights
+            .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => (kv.Key, kv.Value))
+            .ToList();
+
         Random rng = new Random(runSeed ^ (weekOfYear * WeekSaltPrime) ^ ((int)theme * ThemeSaltPrime));
-        for (int i = ordered.Count - 1; i > 0; i--)
+        int take = Math.Min(maxCount, remaining.Count);
+        List<string> result = new(take);
+        for (int n = 0; n < take; n++)
         {
-            int j = rng.Next(i + 1);
-            (ordered[i], ordered[j]) = (ordered[j], ordered[i]);
+            int totalWeight = 0;
+            for (int i = 0; i < remaining.Count; i++) totalWeight += remaining[i].Weight;
+
+            int draw = rng.Next(totalWeight);
+            int cum = 0;
+            for (int i = 0; i < remaining.Count; i++)
+            {
+                cum += remaining[i].Weight;
+                if (draw < cum)
+                {
+                    result.Add(remaining[i].Id);
+                    remaining.RemoveAt(i);
+                    break;
+                }
+            }
         }
 
-        return ordered.Take(maxCount).ToList();
+        return result;
     }
 }

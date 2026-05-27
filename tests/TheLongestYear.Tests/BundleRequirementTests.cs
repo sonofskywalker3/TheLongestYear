@@ -175,4 +175,19 @@ public class BundleRequirementTests
         var inPlay = System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Summer, id => id == "Honey"));
         Assert.Equal(new[] { "Honey" }, inPlay);
     }
+
+    [Fact]
+    public void Percentage_in_play_items_are_empty_when_season_quota_is_zero()
+    {
+        // UX4: Adventurer's-style Spring quota = 0 means the bundle isn't urgent this season;
+        // its items must not flood the bonus-sample pool. (Pre-fix the obtainability predicate
+        // was the only filter; Solar/Void Essence + Bat Wing all dominated Spring Mining samples.)
+        var b = BundleRequirement.CreatePercentage("Adventurer", Theme.Mining,
+            new[] { "solar-essence", "void-essence", "bat-wing" },
+            numberOfSlots: 2,
+            cumulativeRequiredBySeason: new[] { 0, 1, 2, 2 });
+        Assert.Empty(b.InPlayItemsFor(Season.Spring, _ => true));
+        // Same bundle in Summer (quota=1) — items now in play.
+        Assert.Equal(3, System.Linq.Enumerable.Count(b.InPlayItemsFor(Season.Summer, _ => true)));
+    }
 }
