@@ -1,0 +1,288 @@
+[08:16:03 INFO  SMAPI] SMAPI 4.4.0 with Stardew Valley 1.6.15 build 24356 on Windows 11 (10.0.26200.0)
+[08:16:03 INFO  SMAPI] Mods go here: C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods
+[08:16:03 TRACE SMAPI] Log started at 2026-05-27T12:16:03 UTC
+[08:16:06 DEBUG SMAPI] Waiting for game to launch...
+[08:16:07 TRACE game] Instance_Initialize() finished, elapsed = '00:00:00.3824106'
+[08:16:07 DEBUG SMAPI] Loading mod metadata...
+[08:16:07 TRACE SMAPI]   Ignored loose files: vortex.deployment.json
+[08:16:07 TRACE SMAPI]   Skipped Mods\.Grandpa's Farm (folder name starts with a dot).
+[08:16:07 TRACE SMAPI]   Skipped Mods\.Stardew Valley Expanded (folder name starts with a dot).
+[08:16:07 DEBUG SMAPI] Loading mods...
+[08:16:07 TRACE SMAPI]    Console Commands (from Mods\ConsoleCommands\ConsoleCommands.dll, ID: SMAPI.ConsoleCommands, assembly version: 4.4.0)...
+[08:16:07 TRACE SMAPI]    Content Patcher (from Mods\ContentPatcher\ContentPatcher.dll, ID: Pathoschild.ContentPatcher, assembly version: 2.9.0)...
+[08:16:08 TRACE SMAPI]    Generic Mod Config Menu (from Mods\GenericModConfigMenu\GenericModConfigMenu.dll, ID: spacechase0.GenericModConfigMenu, assembly version: 1.0.0)...
+[08:16:08 TRACE SMAPI]    Farm Type Manager (FTM) (from Mods\FarmTypeManager\FarmTypeManager.dll, ID: Esca.FarmTypeManager, assembly version: 1.26.1)...
+[08:16:08 TRACE SMAPI]       Detected game patcher in assembly FarmTypeManager.dll.
+[08:16:08 TRACE SMAPI]    Nap Time (from Mods\NapTime\NapTime.dll, ID: sonofskywalker3.NapTime, assembly version: 1.0.0)...
+[08:16:08 TRACE SMAPI]       Detected game patcher in assembly NapTime.dll.
+[08:16:08 TRACE SMAPI]    Save Backup (from Mods\SaveBackup\SaveBackup.dll, ID: SMAPI.SaveBackup, assembly version: 4.4.0)...
+[08:16:08 TRACE SMAPI]       Detected direct console access (System.Console type) in assembly SaveBackup.dll.
+[08:16:08 TRACE SMAPI]    Stardew Delivery Service (from Mods\StardewDeliveryService\StardewDeliveryService.dll, ID: sonofskywalker3.StardewDeliveryService, assembly version: 1.0.0)...
+[08:16:08 TRACE SMAPI]       Detected game patcher in assembly StardewDeliveryService.dll.
+[08:16:09 TRACE SMAPI]    The Longest Year (from Mods\TheLongestYear\TheLongestYear.dll, ID: sonofskywalker3.TheLongestYear, assembly version: 1.0.0)...
+[08:16:09 TRACE SMAPI]       Loading assembly 'TheLongestYear.Core.dll'...
+[08:16:09 TRACE SMAPI]       Detected game patcher in assembly TheLongestYear.dll.
+[08:16:09 TRACE SMAPI]       Loading assembly 'TheLongestYear.dll'...
+[08:16:09 INFO  SMAPI] Loaded 8 mods:
+[08:16:09 INFO  SMAPI]    Console Commands 4.4.0 by SMAPI | Adds SMAPI console commands that let you manipulate the game.
+[08:16:09 INFO  SMAPI]    Content Patcher 2.9.0 by Pathoschild | Loads content packs which edit game data, images, and maps without changing the game files.
+[08:16:09 INFO  SMAPI]    Farm Type Manager (FTM) 1.26.1 by Esca | Allows custom spawning of content from each farm type: forage, large objects, ore, and monsters
+[08:16:09 INFO  SMAPI]    Generic Mod Config Menu 1.16.0-android.18 by spacechase0 (Android fork by sonofskywalker3) | Adds an in-game UI to configure mods. Android fork with controller navigation.
+[08:16:09 INFO  SMAPI]    Nap Time 1.0.1 by sonofskywalker3 | Sleep in your bed to regain energy by napping until a calculated wake-up time, instead of ending the day.
+[08:16:09 INFO  SMAPI]    Save Backup 4.4.0 by SMAPI | Automatically backs up all your saves once per day into its folder.
+[08:16:09 INFO  SMAPI]    Stardew Delivery Service 0.7.0 by sonofskywalker3 | Pulls building/trade materials from your chests when you're short, plus a chest browser accessible from your inventory.
+[08:16:09 INFO  SMAPI]    The Longest Year 0.1.0 by sonofskywalker3 | Roguelite time-loop: restore the Community Center within the year, or the Junimos rewind it and you try again, stronger.
+
+[08:16:09 INFO  SMAPI]    Patched game code
+[08:16:09 INFO  SMAPI]    --------------------------------------------------
+[08:16:09 INFO  SMAPI]       These mods directly change the game code. They're more likely to cause errors or bugs in-game; if
+[08:16:09 INFO  SMAPI]       your game has issues, try removing these first. Otherwise you can ignore this warning.
+
+[08:16:09 INFO  SMAPI]       - Farm Type Manager (FTM)
+[08:16:09 INFO  SMAPI]       - Nap Time
+[08:16:09 INFO  SMAPI]       - Stardew Delivery Service
+[08:16:09 INFO  SMAPI]       - The Longest Year
+
+[08:16:09 TRACE SMAPI]    Direct console access
+[08:16:09 TRACE SMAPI]    --------------------------------------------------
+[08:16:09 TRACE SMAPI]       These mods access the SMAPI console window directly. This is more fragile, and their output may not
+[08:16:09 TRACE SMAPI]       be logged by SMAPI.
+
+[08:16:09 TRACE SMAPI]       - Save Backup
+
+[08:16:09 DEBUG SMAPI]    No update keys
+[08:16:09 DEBUG SMAPI]    --------------------------------------------------
+[08:16:09 DEBUG SMAPI]       These mods have no update keys in their manifest. SMAPI may not notify you about updates for these
+[08:16:09 DEBUG SMAPI]       mods. Consider notifying the mod authors about this problem.
+
+[08:16:09 DEBUG SMAPI]       - Generic Mod Config Menu
+[08:16:09 DEBUG SMAPI]       - Nap Time
+[08:16:09 DEBUG SMAPI]       - Stardew Delivery Service
+[08:16:09 DEBUG SMAPI]       - The Longest Year
+
+[08:16:09 DEBUG SMAPI] Launching mods...
+[08:16:09 TRACE SMAPI]    Found mod-provided API (ContentPatcher.Framework.ContentPatcherAPI).
+[08:16:09 TRACE game] Registered trigger action handler 'spacechase0.GenericModConfigMenu_OpenModConfig'.
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_DisableFurniturePickup": postfixing 3 implementations of SDV method "Furniture.canBeRemoved(Farmer)".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_InstantKillImmunity": prefixing SDV method "HungryFrogCompanion.tongueReachedMonster".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_OptimizeMonsterCode": prefixing SDV method "GameLocation.isCollidingPosition".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_OptimizeMonsterCode": prefixing SDV method "Monster.findPlayer".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_OptimizeMonsterCode": postfixing SDV method "Monster.findPlayer".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_StunImmunity": prefixing SDV method "DebuffingProjectile.behaviorOnCollisionWithMonster".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_ToggleExtraLoot": postfixing 12 implementations of SDV method "Monster.getExtraDropitems()".
+[08:16:09 TRACE Farm Type Manager (FTM)] Applying Harmony patch "HarmonyPatch_UpdateCursorOverPlacedItem": postfixing SDV method "Utility.canGrabSomethingFromHere(int, int, Farmer)".
+[08:16:09 TRACE Save Backup] Already backed up today.
+[08:16:10 INFO  Stardew Delivery Service] Stardew Delivery Service loaded
+[08:16:10 INFO  The Longest Year] The Longest Year loaded.
+[08:16:10 DEBUG SMAPI] Mods loaded and ready!
+[08:16:10 TRACE SMAPI] Checking for known software conflicts...
+[08:16:10 TRACE SMAPI]    None found!
+[08:16:10 TRACE SMAPI] Checking for updates...
+[08:16:10 ALERT SMAPI] You can update SMAPI to 4.5.2: https://smapi.io
+[08:16:10 TRACE SMAPI]    Checking for updates to 6 mods...
+
+[08:16:10 ALERT SMAPI] You can update 2 mods:
+[08:16:10 ALERT SMAPI]    Content Patcher 2.9.1: https://www.nexusmods.com/stardewvalley/mods/1915 (you have 2.9.0)
+[08:16:10 ALERT SMAPI]    Generic Mod Config Menu 1.16.0: https://www.nexusmods.com/stardewvalley/mods/5098 (you have 1.16.0-android.18)
+[08:16:10 TRACE SMAPI]    Mod blacklist OK.
+[08:16:10 TRACE game] setGameMode( 'titleScreenGameMode (0)' )
+[08:16:10 TRACE SMAPI] Running on GPU: NVIDIA GeForce RTX 3070/PCIe/SSE2
+[08:16:10 TRACE game] Instance_LoadContent() finished, elapsed = '00:00:03.3657758'
+[08:16:10 TRACE game] Steam logged on: True
+[08:16:10 TRACE game] Initializing GalaxySDK
+[08:16:10 TRACE game] Requesting Steam app ticket
+[08:16:11 INFO  SMAPI] Type 'help' for help, or 'help <cmd>' for a command's usage
+[08:16:11 TRACE Farm Type Manager (FTM)] Accessed mod-provided API (GenericModConfigMenu.Framework.Api) for Generic Mod Config Menu.
+[08:16:11 TRACE Farm Type Manager (FTM)] Optional API found: Generic Mod Config Menu (GMCM).
+[08:16:11 TRACE Farm Type Manager (FTM)] API not found: Expanded Preconditions Utility (EPU).
+[08:16:11 TRACE Farm Type Manager (FTM)] API not found: Dynamic Game Assets (DGA).
+[08:16:11 TRACE Farm Type Manager (FTM)] Accessed mod-provided API (ContentPatcher.Framework.ContentPatcherAPI) for Content Patcher.
+[08:16:11 TRACE Farm Type Manager (FTM)] API found: Content Patcher (CP).
+[08:16:11 TRACE Farm Type Manager (FTM)] Mod not found: Monsters The Framework (MTF).
+[08:16:11 TRACE Farm Type Manager (FTM)] Optional API not found: Item Extensions.
+[08:16:11 TRACE Nap Time] Accessed mod-provided API (GenericModConfigMenu.Framework.Api) for Generic Mod Config Menu.
+[08:16:11 TRACE Stardew Delivery Service] Accessed mod-provided API (GenericModConfigMenu.Framework.Api) for Generic Mod Config Menu.
+[08:16:11 TRACE game] Signing into GalaxySDK
+[08:16:11 TRACE Content Patcher] Farm Type Manager (FTM) added a custom token with prefix 'Esca.FarmTypeManager/': NumberOfMonsters.
+[08:16:11 TRACE game] Registered trigger action handler 'Pathoschild.ContentPatcher_MigrateIds'.
+[08:16:11 TRACE SMAPI] Generic Mod Config Menu loaded asset 'Mods/GenericModConfigMenu/ConfigButton'.
+[08:16:11 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1280 Y:720 Width:1280 Height:720}
+[08:16:12 TRACE game] Galaxy auth success
+[08:16:12 TRACE game] Galaxy signed in
+[08:16:12 TRACE game] Galaxy logged on
+[08:16:12 TRACE game] Successfully set GOG Galaxy profile name.
+[08:19:56 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:-2079 Y:882 Width:1280 Height:720}
+[08:34:17 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:34:20 TRACE SMAPI] Synchronizing 'Find Save Games' task...
+[08:34:20 TRACE SMAPI]    task complete.
+[08:34:20 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:34:20 TRACE game] Successfully loaded ContentHashes.json containing 3560 file(s);
+[08:34:20 TRACE game] EnsureManifestInitialized() finished, elapsed = '00:00:00.0051960'
+[08:34:29 TRACE SMAPI] Synchronizing 'Farm_Delete' task...
+[08:34:29 TRACE SMAPI]    task complete.
+[08:34:34 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:34:34 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:34:37 TRACE SMAPI] Synchronizing 'Find Save Games' task...
+[08:34:37 TRACE SMAPI]    task complete.
+[08:34:37 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:34:37 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:36:55 TRACE game] gameMode was 'titleScreenGameMode (0)', set to 'loadingMode (6)'.
+[08:36:55 TRACE SMAPI] Game loader synchronizing...
+[08:36:55 TRACE game] getLoadEnumerator('PuffPuff2_439513392')
+[08:36:55 TRACE SMAPI] Synchronizing 'Load_ReadSave' task...
+[08:36:56 TRACE SMAPI]    task complete.
+[08:36:56 TRACE SMAPI] Synchronizing 'Load_LoadForNewGame' task...
+[08:36:57 TRACE SMAPI]    task complete.
+[08:36:57 TRACE SMAPI] Synchronizing 'Load_Farmer' task...
+[08:36:57 TRACE SMAPI]    task complete.
+[08:36:57 TRACE SMAPI] Synchronizing 'Load_Locations' task...
+[08:36:57 TRACE SMAPI]    task complete.
+[08:36:57 TRACE game] gameMode was 'loadingMode (6)', set to 'playingGameMode (3)'.
+[08:36:57 TRACE game] getLoadEnumerator() exited, elapsed = '00:00:02.1897189'
+[08:36:57 TRACE game] setGameMode( 'playingGameMode (3)' )
+[08:36:57 TRACE SMAPI] Game loader done.
+[08:36:57 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:36:57 TRACE SMAPI] Context: loaded save 'PuffPuff2_439513392', starting spring 2 Y1, locale set to . Single-player.
+[08:36:57 TRACE Stardew Delivery Service] Delivery state loaded: Provider=None, UnlockPlayed=False, JojaPlayed=False, ShanePlayed=False
+[08:36:57 INFO  The Longest Year] CC state on load: areasComplete=[FFFFFF], ccIsComplete=False, JojaMember=False, hasCompletedCommunityCenter=False, numberOfCompleteBundles=0, areAllAreasComplete=False.
+[08:36:57 INFO  The Longest Year] CommunityCenterUnlock: door + canReadJunimoText set, all 6 Junimo Notes revealed.
+[08:36:58 INFO  The Longest Year] Bundle catalog built: 100 concrete CC items (0 category ingredients skipped, 0 unresolved ids skipped).
+[08:36:58 INFO  The Longest Year] Bundle requirements built: 26 classified (0 category-only skipped, 0 unclassified skipped).
+[08:36:58 INFO  The Longest Year] Run 1 ready (seed -2087238504). Spring day 2 (week 1).
+[08:36:58 INFO  The Longest Year] Run 1 loaded (Spring 2). JP banked: 8.
+[08:36:58 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:36:58 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:36:58 INFO  The Longest Year] Debug bridge: executing 'tly_resetif puffpuff'.
+[08:36:58 INFO  The Longest Year] tly_resetif: current save is 'Jorf', not 'puffpuff'. Skipping reset.
+[08:37:10 TRACE game] Warping to Farm
+[08:37:41 INFO  The Longest Year] Debug bridge: executing 'tly_reset'.
+[08:37:41 INFO  The Longest Year] One-time save backup written to: C:\Users\Jeff\AppData\Roaming\StardewValley\Saves\PuffPuff2_439513392_TLY_BACKUP_20260527-083741
+[08:37:41 INFO  The Longest Year] In-place reset: starting.
+[08:37:42 TRACE The Longest Year] In-place reset: cleared CC bundles + areasComplete + 17 completion/joja mail flags.
+[08:37:42 INFO  The Longest Year] CC state on load: areasComplete=[FFFFFF], ccIsComplete=False, JojaMember=False, hasCompletedCommunityCenter=False, numberOfCompleteBundles=0, areAllAreasComplete=False.
+[08:37:42 INFO  The Longest Year] CommunityCenterUnlock: door + canReadJunimoText set, all 6 Junimo Notes revealed.
+[08:37:42 INFO  The Longest Year] In-place reset: complete. Spring 1, money 500.
+[08:37:42 INFO  The Longest Year] Reset complete. Run 2 begins (seed 516821202). Opening week 1 hub.
+[08:37:42 INFO  The Longest Year] Week 1 selection offer: Mining OR Fishing (opening planning hub).
+[08:37:42 INFO  The Longest Year] Opened planning hub (week 1, offer: Mining,Fishing).
+[08:37:42 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:37:42 TRACE SMAPI] Context: loaded save 'PuffPuff2_439513392', starting spring 1 Y1, locale set to . Single-player.
+[08:37:42 TRACE Stardew Delivery Service] Delivery state loaded: Provider=None, UnlockPlayed=False, JojaPlayed=False, ShanePlayed=False
+[08:37:42 INFO  The Longest Year] CC state on load: areasComplete=[FFFFFF], ccIsComplete=False, JojaMember=False, hasCompletedCommunityCenter=False, numberOfCompleteBundles=0, areAllAreasComplete=False.
+[08:37:42 INFO  The Longest Year] CommunityCenterUnlock: door + canReadJunimoText set, all 6 Junimo Notes revealed.
+[08:37:42 INFO  The Longest Year] Bundle catalog built: 100 concrete CC items (0 category ingredients skipped, 0 unresolved ids skipped).
+[08:37:42 INFO  The Longest Year] Bundle requirements built: 26 classified (0 category-only skipped, 0 unclassified skipped).
+[08:37:42 INFO  The Longest Year] Run 2 ready (seed 516821202). Spring day 1 (week 1).
+[08:37:42 INFO  The Longest Year] Run 2 loaded (Spring 1). JP banked: 8.
+[08:37:42 INFO  The Longest Year] Week 1 selection offer: Mining OR Fishing (opening planning hub).
+[08:37:42 TRACE The Longest Year] Cannot open menu: another menu is already open.
+[08:37:42 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:37:42 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:37:42 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:1270 Y:709 Width:1280 Height:720}
+[08:39:22 INFO  The Longest Year] Selected Fishing (bonus fish_bite_up, liability crop_growth_down). Bonus items this week: [(O)136, (O)721, (O)720, (O)145].
+[08:39:25 TRACE game] Warping to Farm
+[08:39:30 TRACE game] Warping to BusStop
+[08:39:38 TRACE game] Warping to Town
+[08:39:53 TRACE game] Window_ClientSizeChanged(); Window.ClientBounds={X:0 Y:34 Width:3840 Height:2054}
+[08:40:16 TRACE game] Warping to BusStop
+[08:40:24 TRACE game] Warping to Farm
+[08:40:30 TRACE game] Warping to FarmHouse
+[08:40:37 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:40:37 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:40:38 TRACE SMAPI]    task complete.
+[08:40:38 TRACE SMAPI] Context: before save.
+[08:40:38 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:40:38 TRACE game] SaveGame.Save() called.
+[08:40:38 TRACE SMAPI] Synchronizing 'Save' task...
+[08:40:38 TRACE game] Saving without compression...
+[08:40:38 TRACE SMAPI]    task complete.
+[08:40:38 TRACE game] SaveGame.Save() completed without exceptions.
+[08:40:39 TRACE SMAPI] Context: after save, starting spring 2 Y1.
+[08:40:39 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:40:39 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:40:43 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:40:43 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:40:43 TRACE SMAPI]    task complete.
+[08:42:02 TRACE game] Warping to FarmHouse
+[08:42:02 TRACE SMAPI] Context: before save.
+[08:42:02 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:42:02 TRACE game] SaveGame.Save() called.
+[08:42:02 TRACE SMAPI] Synchronizing 'Save' task...
+[08:42:02 TRACE game] Saving without compression...
+[08:42:02 TRACE SMAPI]    task complete.
+[08:42:02 TRACE game] SaveGame.Save() completed without exceptions.
+[08:43:41 TRACE SMAPI] Context: after save, starting spring 3 Y1.
+[08:43:41 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:43:41 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:43:46 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:43:46 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:43:46 TRACE SMAPI]    task complete.
+[08:43:46 TRACE SMAPI] Context: before save.
+[08:43:46 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:43:46 TRACE game] SaveGame.Save() called.
+[08:43:46 TRACE SMAPI] Synchronizing 'Save' task...
+[08:43:46 TRACE game] Saving without compression...
+[08:43:46 TRACE SMAPI]    task complete.
+[08:43:46 TRACE game] SaveGame.Save() completed without exceptions.
+[08:43:48 TRACE SMAPI] Context: after save, starting spring 4 Y1.
+[08:43:48 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:43:48 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:45:13 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:45:13 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:45:13 TRACE SMAPI]    task complete.
+[08:45:13 TRACE SMAPI] Context: before save.
+[08:45:13 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:45:13 TRACE game] SaveGame.Save() called.
+[08:45:13 TRACE SMAPI] Synchronizing 'Save' task...
+[08:45:13 TRACE game] Saving without compression...
+[08:45:13 TRACE SMAPI]    task complete.
+[08:45:13 TRACE game] SaveGame.Save() completed without exceptions.
+[08:45:15 TRACE SMAPI] Context: after save, starting spring 5 Y1.
+[08:45:15 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:45:15 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:45:19 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:45:19 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:45:19 TRACE SMAPI]    task complete.
+[08:45:19 TRACE SMAPI] Context: before save.
+[08:45:19 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:45:19 TRACE game] SaveGame.Save() called.
+[08:45:19 TRACE SMAPI] Synchronizing 'Save' task...
+[08:45:19 TRACE game] Saving without compression...
+[08:45:19 TRACE SMAPI]    task complete.
+[08:45:19 TRACE game] SaveGame.Save() completed without exceptions.
+[08:45:21 TRACE SMAPI] Context: after save, starting spring 6 Y1.
+[08:45:21 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:45:21 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:45:25 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:45:25 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:45:25 TRACE SMAPI]    task complete.
+[08:45:25 TRACE SMAPI] Context: before save.
+[08:45:25 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:45:25 TRACE game] SaveGame.Save() called.
+[08:45:25 TRACE SMAPI] Synchronizing 'Save' task...
+[08:45:25 TRACE game] Saving without compression...
+[08:45:25 TRACE SMAPI]    task complete.
+[08:45:25 TRACE game] SaveGame.Save() completed without exceptions.
+[08:45:27 TRACE SMAPI] Context: after save, starting spring 7 Y1.
+[08:45:27 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:45:27 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:45:31 TRACE Farm Type Manager (FTM)] Day is ending. Processing save data and object expiration settings.
+[08:45:31 TRACE SMAPI] Synchronizing 'NewDay' task...
+[08:45:31 TRACE SMAPI]    task complete.
+[08:45:31 TRACE SMAPI] Context: before save.
+[08:45:31 TRACE The Longest Year] Meta-state saved with the game. JP banked: 8.
+[08:45:31 TRACE game] SaveGame.Save() called.
+[08:45:31 TRACE SMAPI] Synchronizing 'Save' task...
+[08:45:31 TRACE game] Saving without compression...
+[08:45:31 TRACE SMAPI]    task complete.
+[08:45:31 TRACE game] SaveGame.Save() completed without exceptions.
+[08:45:33 TRACE SMAPI] Context: after save, starting spring 8 Y1.
+[08:45:33 INFO  The Longest Year] Week 2 selection offer: Farming OR Foraging (opening planning hub).
+[08:45:33 INFO  The Longest Year] Opened planning hub (week 2, offer: Farming,Foraging).
+[08:45:33 TRACE Farm Type Manager (FTM)] Loading content packs and local data files.
+[08:45:33 TRACE Farm Type Manager (FTM)] Checking for saved objects that need to be respawned overnight or after loading.
+[08:45:42 INFO  The Longest Year] Selected Foraging (bonus forage_yield_up, liability mine_drops_off). Bonus items this week: [(O)420, (O)725, (O)18, (O)78].
+[08:45:44 TRACE game] Warping to Farm
+[08:46:14 TRACE game] Disconnected: ClosedGame
+[08:46:14 TRACE SMAPI] Disposing...
+[08:46:14 TRACE SMAPI] Disposing the content coordinator. Content managers will no longer be usable after this point.
