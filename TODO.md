@@ -47,6 +47,53 @@ Implementation sketch (not yet a plan):
   `fish_bite_*` / `mine_drops_*` / `all_drops_up` / `all_sell_prices_down`
   to actual gameplay effects. Currently display-only via
   `ThemeModifiers.DisplayNameFor`.
+
+  ### Liability/bonus mapping (designed 2026-05-26, awaiting sign-off)
+
+  | Theme | Bonus | Liability |
+  |---|---|---|
+  | Foraging | 25% chance forage drops +1 (excludes stone/wood) | **Mines Closed** — elevator + ladder from entrance don't function |
+  | Farming | +25% Crop Growth | -30% Fish Bite Rate |
+  | Fishing | +30% Fish Bite Rate | -25% Crop Growth |
+  | Mining | 30% chance mine drops +1 (excludes stone — applies to ore, coal, geodes) | **Forage Off** — no wild produce / mushrooms (incl. mines) / fiddleheads spawn |
+  | Mixed | 10% chance for +1 drop on anything (works on trees & stone too) | -50% All Sell Prices |
+
+  Design principles:
+  - No "rounds to zero" — every bonus is a +1 probability so single-drop
+    nodes (seeds, ore, coal, most forage) aren't no-ops.
+  - Each liability hurts an activity the focused player WASN'T going to
+    prioritize that week. Quarry + skull-cavern setups become a hedge
+    against Mines Closed.
+  - Foraging bonus excludes stone/wood (would be OP on multi-drop trees).
+  - Mining bonus excludes stone (same reason).
+  - Mixed bonus stays small (+1, not double) because it applies to
+    everything including trees.
+
+  Implementation notes for the effects layer:
+  - **`forage_yield_up` (Foraging bonus):** per-drop 25% roll on
+    `Object.cutWeed/ShakeFromTree/forage spawn` paths; +1 the drop.
+    Exclude qualified-item-id matches for stone (390) and wood (388).
+  - **`mines_closed` (Foraging liability):** patch
+    `MineShaft.checkAction` (the ladder/elevator) to no-op; patch
+    `Mine.checkAction` for the entrance ladder. Maybe show a "the
+    cave entrance is collapsed" message.
+  - **`crop_growth_up/down`:** patch `HoeDirt.dayUpdate` growth-rate
+    multiplier. Down = roll a per-crop chance to skip the day's tick.
+  - **`fish_bite_up/down`:** patch `BobberBar.update` /
+    `FishingRod.startFishing` bite-timer multiplier.
+  - **`mine_drops_up`:** per-drop 30% roll on `MineShaft` /
+    `ResourceClump.performToolAction` ore/coal/geode drops; exclude
+    stone (390). Quarry is technically separate location so quarry
+    drops aren't affected unless we want them to be.
+  - **`forage_off` (Mining liability):** patch the forage-spawn
+    routines for outdoor maps + `MineShaft`'s mushroom spawn to
+    return early when active. Includes fiddleheads in secret woods,
+    cave carrots, etc.
+  - **`all_drops_up` (Mixed bonus):** per-drop 10% roll, +1, on EVERY
+    drop path. Stone and wood included.
+  - **`all_sell_prices_down`:** patch `Object.sellToStorePrice` with
+    0.5× multiplier.
+
 - **UX6 — always-on JP HUD.** Small corner counter showing banked JP +
   this week's selection + bonus-multiplier indicator.
 
