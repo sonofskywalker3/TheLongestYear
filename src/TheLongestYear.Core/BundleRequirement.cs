@@ -32,12 +32,27 @@ public sealed class BundleRequirement
     /// Length 4. Each entry must be ≤ <see cref="NumberOfSlots"/>.</summary>
     public IReadOnlyList<int>? CumulativeRequiredBySeason { get; }
 
+    // ---------- Per-ingredient display data (optional) ----------
+    /// <summary>Stack required for each ingredient id (e.g. (O)388 Wood → 99). Empty if the
+    /// caller didn't supply per-ingredient details — the value 1 is the safe default the UI
+    /// uses on lookup miss. Per-bundle (different bundles may require different stacks for
+    /// the same id).</summary>
+    public IReadOnlyDictionary<string, int> IngredientStacks { get; }
+
+    /// <summary>Minimum quality required for each ingredient id (0=basic, 1=silver, 2=gold,
+    /// 4=iridium per Stardew's quality scale). Empty if not supplied — default 0. Same
+    /// per-bundle scope as <see cref="IngredientStacks"/>; Quality Crops needs gold-star,
+    /// Pantry's Fall Crops needs basic, both are "(O)24 Parsnip" but with different qualities.</summary>
+    public IReadOnlyDictionary<string, int> IngredientQualities { get; }
+
     private BundleRequirement(
         string name, Theme theme, BundleKind kind,
         IReadOnlyList<string> ingredients, int numberOfSlots,
         Season? seasonalSeason,
         IReadOnlyDictionary<string, Season>? itemSeasonPins,
-        IReadOnlyList<int>? cumulativeRequiredBySeason)
+        IReadOnlyList<int>? cumulativeRequiredBySeason,
+        IReadOnlyDictionary<string, int>? ingredientStacks,
+        IReadOnlyDictionary<string, int>? ingredientQualities)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Theme = theme;
@@ -47,10 +62,14 @@ public sealed class BundleRequirement
         SeasonalSeason = seasonalSeason;
         ItemSeasonPins = itemSeasonPins;
         CumulativeRequiredBySeason = cumulativeRequiredBySeason;
+        IngredientStacks = ingredientStacks ?? new Dictionary<string, int>();
+        IngredientQualities = ingredientQualities ?? new Dictionary<string, int>();
     }
 
     public static BundleRequirement CreateSeasonal(
-        string name, Theme theme, IReadOnlyList<string> ingredients, Season season)
+        string name, Theme theme, IReadOnlyList<string> ingredients, Season season,
+        IReadOnlyDictionary<string, int>? ingredientStacks = null,
+        IReadOnlyDictionary<string, int>? ingredientQualities = null)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("Seasonal bundle needs at least one ingredient.", nameof(ingredients));
@@ -59,16 +78,21 @@ public sealed class BundleRequirement
             ingredients, ingredients.Count,
             seasonalSeason: season,
             itemSeasonPins: null,
-            cumulativeRequiredBySeason: null);
+            cumulativeRequiredBySeason: null,
+            ingredientStacks: ingredientStacks,
+            ingredientQualities: ingredientQualities);
     }
 
     /// <summary>Convenience: pins become the ingredient list. Use when every ingredient is pinned.</summary>
     public static BundleRequirement CreatePerItem(
-        string name, Theme theme, IReadOnlyDictionary<string, Season> itemSeasonPins)
+        string name, Theme theme, IReadOnlyDictionary<string, Season> itemSeasonPins,
+        IReadOnlyDictionary<string, int>? ingredientStacks = null,
+        IReadOnlyDictionary<string, int>? ingredientQualities = null)
     {
         if (itemSeasonPins == null || itemSeasonPins.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one pinned ingredient.", nameof(itemSeasonPins));
-        return CreatePerItem(name, theme, itemSeasonPins.Keys.ToList(), itemSeasonPins);
+        return CreatePerItem(name, theme, itemSeasonPins.Keys.ToList(), itemSeasonPins,
+            ingredientStacks, ingredientQualities);
     }
 
     /// <summary>Full form: ingredients listed explicitly; pins are an optional subset. Unpinned
@@ -76,7 +100,9 @@ public sealed class BundleRequirement
     public static BundleRequirement CreatePerItem(
         string name, Theme theme,
         IReadOnlyList<string> ingredients,
-        IReadOnlyDictionary<string, Season> itemSeasonPins)
+        IReadOnlyDictionary<string, Season> itemSeasonPins,
+        IReadOnlyDictionary<string, int>? ingredientStacks = null,
+        IReadOnlyDictionary<string, int>? ingredientQualities = null)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one ingredient.", nameof(ingredients));
@@ -87,13 +113,17 @@ public sealed class BundleRequirement
             ingredients, ingredients.Count,
             seasonalSeason: null,
             itemSeasonPins: itemSeasonPins,
-            cumulativeRequiredBySeason: null);
+            cumulativeRequiredBySeason: null,
+            ingredientStacks: ingredientStacks,
+            ingredientQualities: ingredientQualities);
     }
 
     public static BundleRequirement CreatePercentage(
         string name, Theme theme,
         IReadOnlyList<string> ingredients, int numberOfSlots,
-        IReadOnlyList<int> cumulativeRequiredBySeason)
+        IReadOnlyList<int> cumulativeRequiredBySeason,
+        IReadOnlyDictionary<string, int>? ingredientStacks = null,
+        IReadOnlyDictionary<string, int>? ingredientQualities = null)
     {
         if (ingredients == null || ingredients.Count <= numberOfSlots)
             throw new ArgumentException(
@@ -112,7 +142,9 @@ public sealed class BundleRequirement
             ingredients, numberOfSlots,
             seasonalSeason: null,
             itemSeasonPins: null,
-            cumulativeRequiredBySeason: cumulativeRequiredBySeason);
+            cumulativeRequiredBySeason: cumulativeRequiredBySeason,
+            ingredientStacks: ingredientStacks,
+            ingredientQualities: ingredientQualities);
     }
 
     /// <summary>True if this bundle's contribution to <paramref name="currentSeason"/>'s

@@ -29,11 +29,13 @@ namespace TheLongestYear.UI
         private const int PanelPadding = 32;
         private const int TitleBarHeight = 80;
 
-        private const int RowHeight = 84;
+        // Normal Stardew inventory icon size = 64px (16px sprite × 4 scale). The row needs to
+        // fit a header line + a row of 64px icons + padding above & below.
+        private const int RowHeight = 128;
         private const int RowSpacing = 8;
-        private const int IngredientIconSize = 36;
-        private const int IngredientIconGap = 4;
-        private const int IngredientIconY = 44;        // offset from row top
+        private const int IngredientIconSize = 64;
+        private const int IngredientIconGap = 8;
+        private const int IngredientIconY = 56;        // offset from row top (below the header line)
 
         private const int RowIdBase = 8000;
         private const int ScrollUpId = 8900;
@@ -97,8 +99,7 @@ namespace TheLongestYear.UI
                 int have = br.Ingredients.Count(donated.Contains);
                 int need = br.NumberOfSlots;
 
-                IReadOnlyList<string> missingThisSeason = MissingForSeason(br, donated, _season);
-                int missingCount = missingThisSeason.Count;
+                var (missingCount, missingThisSeason) = MissingForSeason(br, donated, _season);
 
                 _entries.Add(new BundleEntry(br, have, need, missingCount, missingThisSeason));
             }
@@ -124,36 +125,46 @@ namespace TheLongestYear.UI
             }
         }
 
-        /// <summary>Ingredients that this bundle still owes for the <paramref name="season"/>
-        /// checkpoint (the predicate <see cref="BundleRequirement.IsSatisfiedAtSeasonEnd"/> spelled out).
-        /// Returns IDs in a stable order so the icon row position is consistent.</summary>
-        private static IReadOnlyList<string> MissingForSeason(
+        /// <summary>For the <paramref name="season"/> checkpoint, returns (count of donations
+        /// still needed, list of items that could satisfy them). The two are NOT the same for
+        /// Percentage bundles — Quality Crops needs 1 of 4 in Spring, so count=1 but the list
+        /// has up to 4 options the player can pick from. For Seasonal/PerItem the count equals
+        /// the list length (each missing ingredient is required).</summary>
+        private static (int Count, IReadOnlyList<string> Items) MissingForSeason(
             BundleRequirement br, ISet<string> donated, CoreSeason season)
         {
             switch (br.Kind)
             {
                 case BundleKind.Seasonal:
-                    if (br.SeasonalSeason!.Value != season) return Array.Empty<string>();
-                    return br.Ingredients.Where(i => !donated.Contains(i))
+                    if (br.SeasonalSeason!.Value != season)
+                        return (0, Array.Empty<string>());
+                    var sItems = br.Ingredients.Where(i => !donated.Contains(i))
                         .OrderBy(s => s, StringComparer.Ordinal).ToList();
+                    return (sItems.Count, sItems);
 
                 case BundleKind.PerItem:
-                    return br.ItemSeasonPins!
+                    var pItems = br.ItemSeasonPins!
                         .Where(kv => (int)kv.Value <= (int)season && !donated.Contains(kv.Key))
                         .Select(kv => kv.Key)
                         .OrderBy(s => s, StringComparer.Ordinal)
                         .ToList();
+                    return (pItems.Count, pItems);
 
                 case BundleKind.Percentage:
                     int required = br.CumulativeRequiredBySeason![(int)season];
                     int have = br.Ingredients.Count(donated.Contains);
-                    if (have >= required) return Array.Empty<string>();
-                    // Show the not-yet-donated ones — player can choose any to satisfy quota.
-                    return br.Ingredients.Where(i => !donated.Contains(i))
+                    int countNeeded = Math.Max(0, required - have);
+                    if (countNeeded == 0) return (0, Array.Empty<string>());
+                    // Count is "how many donations needed" (required - have). Items list is
+                    // "what could you donate" (not-yet-donated ingredients) — typically more
+                    // than countNeeded for Percentage bundles. e.g. Quality Crops Spring needs
+                    // 1 donation but the player can pick from any of the 4 ingredients.
+                    var qItems = br.Ingredients.Where(i => !donated.Contains(i))
                         .OrderBy(s => s, StringComparer.Ordinal).ToList();
+                    return (countNeeded, qItems);
 
                 default:
-                    return Array.Empty<string>();
+                    return (0, Array.Empty<string>());
             }
         }
 
@@ -248,8 +259,13 @@ namespace TheLongestYear.UI
                         iconRowY, IngredientIconSize, IngredientIconSize);
                     if (iconRect.Contains(x, y))
                     {
-                        Item probe = ResolveItem(e.MissingItems[k]);
-                        _hoverText = probe?.DisplayName ?? e.MissingItems[k];
+                        string itemId = e.MissingItems[k];
+                        int stack = e.Bundle.IngredientStacks.TryGetValue(itemId, out int s) ? s : 1;
+                        int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
+                        Item probe = ResolveItem(itemId, stack, quality);
+                        string qty = stack > 1 ? $" x{stack}" : "";
+                        string qStr = quality switch { 1 => " (silver)", 2 => " (gold)", 4 => " (iridium)", _ => "" };
+                        _hoverText = (probe?.DisplayName ?? itemId) + qty + qStr;
                         return;
                     }
                 }
@@ -358,14 +374,20 @@ namespace TheLongestYear.UI
             int drawCount = Math.Min(e.MissingItems.Count, maxIcons);
             for (int k = 0; k < drawCount; k++)
             {
-                Item probe = ResolveItem(e.MissingItems[k]);
+                string itemId = e.MissingItems[k];
+                // Pull stack + quality from THIS bundle's ingredient data so the icon
+                // renders the donation count badge + the right-tier quality star
+                // (Quality Crops needs gold, Pantry crops need basic, same id different shape).
+                int stack = e.Bundle.IngredientStacks.TryGetValue(itemId, out int s) ? s : 1;
+                int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
+                Item probe = ResolveItem(itemId, stack, quality);
                 var pos = new Vector2(
                     iconRowX + k * (IngredientIconSize + IngredientIconGap),
                     iconRowY);
                 if (probe != null)
                 {
                     probe.drawInMenu(b, pos, IngredientIconSize / 64f, 1f, 0.86f,
-                        StackDrawType.Hide, Color.White, false);
+                        StackDrawType.Draw, Color.White, drawShadow: true);
                 }
                 else
                 {
@@ -385,7 +407,7 @@ namespace TheLongestYear.UI
                 string more = $"+{e.MissingItems.Count - drawCount} more";
                 Utility.drawTextWithShadow(b, more, Game1.smallFont,
                     new Vector2(iconRowX + drawCount * (IngredientIconSize + IngredientIconGap),
-                                iconRowY + 8),
+                                iconRowY + 20),
                     Game1.textColor);
             }
         }
@@ -400,9 +422,9 @@ namespace TheLongestYear.UI
             return $"needs {e.MissingThisSeasonCount} before {(CoreSeason)((int)_season + 1)} 1";
         }
 
-        private static Item ResolveItem(string id)
+        private static Item ResolveItem(string id, int stack = 1, int quality = 0)
         {
-            try { return ItemRegistry.Create(id, 1, 0, allowNull: true); }
+            try { return ItemRegistry.Create(id, stack, quality, allowNull: true); }
             catch (Exception) { return null; }
         }
 

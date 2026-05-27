@@ -53,12 +53,30 @@ public static class BundleClassifier
         if (ingredients.Count == 0)
             return null;
 
+        // Per-ingredient display data (stack required + minimum quality) — passed to the
+        // BundleRequirement so the season-goals UI can render the correct quantity badge +
+        // quality star on each icon. Uses MAX across duplicate entries (Construction lists
+        // Wood twice with stack 99; max of 99 is the safe "what fits any slot" reading).
+        Dictionary<string, int> ingredientStacks = new();
+        Dictionary<string, int> ingredientQualities = new();
+        foreach (BundleIngredient ing in parsed.Ingredients)
+        {
+            if (BundleParsing.IsCategoryRef(ing.ItemRef)) continue;
+            string id = BundleParsing.NormalizeItemId(ing.ItemRef);
+            int stack = ing.Stack > 0 ? ing.Stack : 1;
+            if (!ingredientStacks.TryGetValue(id, out int existingStack) || stack > existingStack)
+                ingredientStacks[id] = stack;
+            if (!ingredientQualities.TryGetValue(id, out int existingQ) || ing.Quality > existingQ)
+                ingredientQualities[id] = ing.Quality;
+        }
+
         // KIND 1: Seasonal — bundle name like "Spring Foraging" / "Fall Crops".
         Match seasonalMatch = SeasonalNamePattern.Match(name);
         if (seasonalMatch.Success)
         {
             Season season = ParseSeason(seasonalMatch.Groups["season"].Value);
-            return BundleRequirement.CreateSeasonal(name, theme, ingredients, season);
+            return BundleRequirement.CreateSeasonal(name, theme, ingredients, season,
+                ingredientStacks, ingredientQualities);
         }
 
         // KIND 3: Percentage — has a named quota override, BUT only when X < Y after dedup.
@@ -74,7 +92,9 @@ public static class BundleClassifier
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
-                cumulativeRequiredBySeason: quota);
+                cumulativeRequiredBySeason: quota,
+                ingredientStacks: ingredientStacks,
+                ingredientQualities: ingredientQualities);
         }
 
         // KIND 2: PerItem — every distinct ingredient must be donated. The structural rule is
@@ -89,7 +109,8 @@ public static class BundleClassifier
             foreach (string id in ingredients)
                 if (itemSeasonPins.TryGetValue(id, out Season s))
                     pins[id] = s;
-            return BundleRequirement.CreatePerItem(name, theme, ingredients, pins);
+            return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
+                ingredientStacks, ingredientQualities);
         }
 
         // X < Y with no named quota — caller logs and skips.
