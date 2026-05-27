@@ -49,7 +49,9 @@ namespace TheLongestYear.UI
 
             Game1.activeClickableMenu = new WeeklyHubMenu(
                 _monitor, _runController, _config, _store.Run, _runController.Requirements,
-                offer, offerSeason, isPreSelectForNextMonth: seasonOverride.HasValue);
+                offer, offerSeason, isPreSelectForNextMonth: seasonOverride.HasValue,
+                weatherSageSlots: _runController.WeatherSageTier(),
+                cartPreviewSlots: _runController.CartPreviewSlots());
             _monitor.Log(
                 $"Opened planning hub (week {_store.Run.WeekOfYear}{(seasonOverride.HasValue ? $" → {offerSeason}" : "")}, " +
                 $"offer: {string.Join(",", offer)}).",

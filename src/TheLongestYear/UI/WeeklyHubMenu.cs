@@ -77,6 +77,9 @@ namespace TheLongestYear.UI
         private readonly List<ClickableComponent> _weatherRows = new List<ClickableComponent>();
         private readonly List<ClickableComponent> _cartRows = new List<ClickableComponent>();
 
+        private string[] _weatherForecast;
+        private System.Collections.Generic.List<StardewValley.ISalable> _cartItems;
+
         private readonly Texture2D _junimoTexture;
 
         // Per-card derived data (recomputed on construct + refresh).
@@ -87,10 +90,13 @@ namespace TheLongestYear.UI
 
         private string _hoverText = "";
         private bool _themePicked = false;
+        private readonly int _weatherSageSlots;
+        private readonly int _cartPreviewSlots;
 
         public WeeklyHubMenu(IMonitor monitor, RunController runController, GameplayConfig config,
             RunState run, IReadOnlyList<BundleRequirement> requirements, IReadOnlyList<Theme> offer,
-            CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false)
+            CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false,
+            int weatherSageSlots = 0, int cartPreviewSlots = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
         {
             _monitor = monitor;
@@ -101,9 +107,40 @@ namespace TheLongestYear.UI
             _offer = offer ?? new List<Theme>();
             _offerSeason = offerSeason ?? run.Season;
             _isPreSelectForNextMonth = isPreSelectForNextMonth;
+            _weatherSageSlots = weatherSageSlots;
+            _cartPreviewSlots = cartPreviewSlots;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
             catch (Exception) { _junimoTexture = null; }
+
+            _weatherForecast = _weatherSageSlots > 0
+                ? WeatherForecast.Build(
+                    (int)Game1.uniqueIDForThisGame,
+                    (int)Game1.stats.DaysPlayed,
+                    Game1.dayOfMonth,
+                    (int)Game1.season,
+                    _weatherSageSlots)
+                : System.Array.Empty<string>();
+
+            _cartItems = new System.Collections.Generic.List<StardewValley.ISalable>();
+            if (_cartPreviewSlots > 0)
+            {
+                try
+                {
+                    var stock = StardewValley.Internal.ShopBuilder.GetShopStock("Traveler");
+                    int taken = 0;
+                    foreach (var pair in stock)
+                    {
+                        if (taken >= _cartPreviewSlots) break;
+                        _cartItems.Add(pair.Key);
+                        taken++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"WeeklyHubMenu: failed to build cart preview: {ex.Message}", LogLevel.Warn);
+                }
+            }
 
             ResolvePerCardData();
             RecomputeBoundsAndLayout();
@@ -178,7 +215,7 @@ namespace TheLongestYear.UI
 
         private void RecomputeBoundsAndLayout()
         {
-            int previewRows = _config.DefaultWeatherPreviewSlots + _config.DefaultCartPreviewSlots;
+            int previewRows = _weatherSageSlots + _cartPreviewSlots;
             int previewBlock = previewRows == 0
                 ? 0
                 : (previewRows * PreviewRowHeight) + ((previewRows - 1) * PreviewSpacing) + PanelPadding;
@@ -217,32 +254,32 @@ namespace TheLongestYear.UI
             int rowWidth = width - (PanelPadding * 2);
             int rowY = cardsY + CardHeight + PanelPadding;
 
-            for (int i = 0; i < _config.DefaultWeatherPreviewSlots; i++)
+            for (int i = 0; i < _weatherSageSlots; i++)
             {
                 var row = new ClickableComponent(new Rectangle(rowX, rowY, rowWidth, PreviewRowHeight),
                     "weather-" + i)
                 {
                     myID = WeatherIdBase + i,
                     upNeighborID = i == 0 ? CardIdLeft : (WeatherIdBase + i - 1),
-                    downNeighborID = i == _config.DefaultWeatherPreviewSlots - 1
-                        ? (_config.DefaultCartPreviewSlots > 0 ? CartIdBase : -1)
+                    downNeighborID = i == _weatherSageSlots - 1
+                        ? (_cartPreviewSlots > 0 ? CartIdBase : -1)
                         : (WeatherIdBase + i + 1)
                 };
                 _weatherRows.Add(row);
                 rowY += PreviewRowHeight + PreviewSpacing;
             }
-            for (int i = 0; i < _config.DefaultCartPreviewSlots; i++)
+            for (int i = 0; i < _cartPreviewSlots; i++)
             {
                 var row = new ClickableComponent(new Rectangle(rowX, rowY, rowWidth, PreviewRowHeight),
                     "cart-" + i)
                 {
                     myID = CartIdBase + i,
                     upNeighborID = i == 0
-                        ? (_config.DefaultWeatherPreviewSlots > 0
-                            ? (WeatherIdBase + _config.DefaultWeatherPreviewSlots - 1)
+                        ? (_weatherSageSlots > 0
+                            ? (WeatherIdBase + _weatherSageSlots - 1)
                             : CardIdLeft)
                         : (CartIdBase + i - 1),
-                    downNeighborID = i == _config.DefaultCartPreviewSlots - 1 ? -1 : (CartIdBase + i + 1)
+                    downNeighborID = i == _cartPreviewSlots - 1 ? -1 : (CartIdBase + i + 1)
                 };
                 _cartRows.Add(row);
                 rowY += PreviewRowHeight + PreviewSpacing;
@@ -273,8 +310,8 @@ namespace TheLongestYear.UI
 
         private int FirstRowIdBelowCards()
         {
-            if (_config.DefaultWeatherPreviewSlots > 0) return WeatherIdBase;
-            if (_config.DefaultCartPreviewSlots > 0) return CartIdBase;
+            if (_weatherSageSlots > 0) return WeatherIdBase;
+            if (_cartPreviewSlots > 0) return CartIdBase;
             return -1;
         }
 
@@ -361,9 +398,17 @@ namespace TheLongestYear.UI
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds);
 
             for (int i = 0; i < _weatherRows.Count; i++)
-                DrawPreviewRow(b, _weatherRows[i], $"Weather, day {i + 1}: ???   (Weather Sage tier {i + 1} reveals this)");
+            {
+                string label = (i < _weatherForecast.Length) ? _weatherForecast[i] : "?";
+                DrawPreviewRow(b, _weatherRows[i], $"Day {i + 1}: {label}");
+            }
             for (int i = 0; i < _cartRows.Count; i++)
-                DrawPreviewRow(b, _cartRows[i], $"Cart slot {i + 1}: ???   (Cart Whisperer reveals this)");
+            {
+                string label = (i < _cartItems.Count && _cartItems[i] != null)
+                    ? _cartItems[i].DisplayName
+                    : "?";
+                DrawPreviewRow(b, _cartRows[i], $"Cart: {label}");
+            }
 
             base.draw(b);
 
