@@ -14,8 +14,6 @@ namespace TheLongestYear.Loop
     /// just opens and the bundles are readable immediately.
     ///
     /// Flags sourced from the 1.6 Android decompile:
-    ///   - eventsSeen "191393"        — Demetrius-visit event; Game1.isLocationAccessible("CommunityCenter")
-    ///                                  returns true only when this is seen (Game1.cs:13121).
     ///   - eventsSeen "112"           — Wizard-reveal event (WizardHouse); endBehaviors adds
     ///                                  canReadJunimoText (Event.cs:10788).
     ///   - mailReceived "ccDoorUnlock"     — GameLocation WarpCommunityCenter action gate (GameLocation.cs:9340).
@@ -23,6 +21,12 @@ namespace TheLongestYear.Loop
     ///                                        (JunimoNoteMenu.cs:390). GameMenu CC tab gate (GameMenu.cs:121).
     ///   - mailReceived "seenJunimoNote"   — Set by JunimoNoteMenu.setUpMenu when first opened; pre-setting
     ///                                        it suppresses the first-time Junimo-note intro flow.
+    ///
+    /// CC accessibility itself is handled by <see cref="CcLocationAccessiblePatch"/> — a Harmony
+    /// patch on <c>Game1.isLocationAccessible</c> that returns true for "CommunityCenter". Earlier
+    /// versions of this class added event 191393 to <c>MasterPlayer.eventsSeen</c> as a shortcut,
+    /// but that flag also gates Joja's lightning-destruction <c>WorldChangeEvent(12)</c> + the
+    /// destroyed-Joja visual + the Pierre Wednesday closure — all unwanted in v1.
     ///
     /// Per-room note visibility is overridden by <see cref="ShouldNoteAppearPatch"/>; after setting
     /// flags we trigger <c>MakeMapModifications</c> on the loaded CC location so any newly-visible
@@ -42,8 +46,10 @@ namespace TheLongestYear.Loop
         {
             Farmer p = Game1.MasterPlayer;
 
-            // Gate: events that trigger the cutscene chain must be pre-seen.
-            p.eventsSeen.Add("191393"); // Demetrius visit → CC becomes accessible
+            // Gate: pre-mark only the Wizard-reveal event. We deliberately do NOT add 191393
+            // (Demetrius visit) — see CcLocationAccessiblePatch for why; the lightning event +
+            // destroyed-Joja visual + Pierre Wednesday closure all key off 191393, so we
+            // satisfy the CC-accessibility check via a Harmony patch instead of the flag.
             p.eventsSeen.Add("112");    // Wizard reveals Junimo text
 
             // Gate: door, bundle readability, and first-note intro.
