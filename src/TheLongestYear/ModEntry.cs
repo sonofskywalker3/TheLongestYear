@@ -5,6 +5,7 @@ using System.Linq;
 using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
 using TheLongestYear.Loop;
@@ -41,6 +42,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
+            helper.Events.Input.ButtonPressed += this.OnButtonPressed;
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -185,6 +187,19 @@ namespace TheLongestYear
 
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
             => _runController?.OnDayEnding(sender, e);
+
+        /// <summary>SeasonGoalsHotkey opens the per-season bundle tracker (UX2 from the
+        /// 2026-05-26 playtest). Empty / unparseable string in config disables the hotkey.</summary>
+        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
+        {
+            if (!Context.IsWorldReady || _launcher == null) return;
+            if (string.IsNullOrEmpty(_config.SeasonGoalsHotkey)) return;
+            if (!Enum.TryParse(_config.SeasonGoalsHotkey, ignoreCase: true, out SButton bound)) return;
+            if (e.Button != bound) return;
+            // Skip when a menu is already up (CanOpen guards anyway, but suppress the click sound).
+            if (Game1.activeClickableMenu != null) return;
+            _launcher.OpenSeasonGoals();
+        }
 
         /// <summary>
         /// Poll the debug command file (mod folder) and execute any queued lines once. Lets the developer

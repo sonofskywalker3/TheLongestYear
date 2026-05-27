@@ -47,7 +47,7 @@ namespace TheLongestYear.UI
                 seasonOverride.HasValue ? _store.Run.WeekOfYear + 1 : _store.Run.WeekOfYear,
                 selectionsForOffer);
 
-            Game1.activeClickableMenu = new ContractPickMenu(
+            Game1.activeClickableMenu = new WeeklyHubMenu(
                 _monitor, _runController, _config, _store.Run, _runController.Requirements,
                 offer, offerSeason, isPreSelectForNextMonth: seasonOverride.HasValue);
             _monitor.Log(
@@ -63,6 +63,19 @@ namespace TheLongestYear.UI
 
             Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
+        }
+
+        /// <summary>UX2: per-season goal tracker, separate from the weekly hub selection surface.
+        /// Opened on demand via the SeasonGoalsHotkey config.</summary>
+        public void OpenSeasonGoals()
+        {
+            if (!CanOpen()) return;
+
+            Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _runController.Requirements);
+            _monitor.Log(
+                $"Opened Season Goals ({_store.Run.Season} day {_store.Run.DayOfMonth}, " +
+                $"{_runController.Requirements.Count} bundles tracked).",
+                LogLevel.Info);
         }
 
         private bool CanOpen()
