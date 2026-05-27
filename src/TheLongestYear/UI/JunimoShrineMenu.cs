@@ -176,8 +176,7 @@ namespace TheLongestYear.UI
                 if (_rowSlots[i].containsPoint(x, y))
                 {
                     UpgradeDefinition def = rows[i];
-                    _hoverText = $"{def.DisplayName}\n{def.Description}\nCost: {def.Cost} JP"
-                        + (def.PrerequisiteId != null ? $"\nRequires: {def.PrerequisiteId}" : "");
+                    _hoverText = $"{def.DisplayName}\n{def.Description}\nCost: {def.Cost} JP";
                     return;
                 }
             }
@@ -245,9 +244,32 @@ namespace TheLongestYear.UI
                 Game1.playSound("shwip");
         }
 
+        /// <summary>
+        /// All catalog entries in the active category that should be VISIBLE in the shrine
+        /// shop: not owned, prereq satisfied (or no prereq), meta-requirement satisfied
+        /// (or no meta-requirement). Chain-locked rows disappear entirely — the player only
+        /// sees the next purchasable tier in each chain.
+        /// </summary>
+        private IReadOnlyList<UpgradeDefinition> VisibleCatalogForActiveCategory()
+        {
+            MetaState state = _store.State;
+            var visible = new List<UpgradeDefinition>();
+            foreach (UpgradeDefinition def in UpgradeCatalog.ByCategory(_activeCategory))
+            {
+                if (state.HasUpgrade(def.Id))
+                    continue;
+                if (def.PrerequisiteId != null && !state.HasUpgrade(def.PrerequisiteId))
+                    continue;
+                if (!state.MeetsMetaRequirement(def.MetaRequirement))
+                    continue;
+                visible.Add(def);
+            }
+            return visible;
+        }
+
         private void ClampScroll()
         {
-            int total = UpgradeCatalog.ByCategory(_activeCategory).Count;
+            int total = VisibleCatalogForActiveCategory().Count;
             int maxStart = Math.Max(0, total - _rowsPerPage);
             if (_scrollIndex < 0) _scrollIndex = 0;
             if (_scrollIndex > maxStart) _scrollIndex = maxStart;
@@ -255,7 +277,7 @@ namespace TheLongestYear.UI
 
         private IReadOnlyList<UpgradeDefinition> VisibleRows(out int total, out int startIndex)
         {
-            IReadOnlyList<UpgradeDefinition> all = UpgradeCatalog.ByCategory(_activeCategory);
+            IReadOnlyList<UpgradeDefinition> all = VisibleCatalogForActiveCategory();
             total = all.Count;
             startIndex = _scrollIndex;
             int count = Math.Min(_rowsPerPage, total - startIndex);
@@ -309,14 +331,9 @@ namespace TheLongestYear.UI
 
         private void DrawRow(SpriteBatch b, ClickableComponent slot, UpgradeDefinition def)
         {
-            bool owned = _store.State.HasUpgrade(def.Id);
-            bool affordable = !owned && _store.State.JunimoPoints >= def.Cost;
-            bool prereqOk = def.PrerequisiteId == null || _store.State.HasUpgrade(def.PrerequisiteId);
-            bool buyable = !owned && prereqOk && affordable;
+            bool affordable = _store.State.JunimoPoints >= def.Cost;
 
-            Color tint = owned ? Color.LightGreen * 0.9f
-                       : buyable ? Color.White
-                       : Color.White * 0.55f;
+            Color tint = affordable ? Color.White : Color.White * 0.55f;
 
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, tint, 1f, false);
@@ -324,12 +341,10 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, def.DisplayName, Game1.dialogueFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), Game1.textColor);
 
-            string statusLine = owned ? "OWNED"
-                : !prereqOk ? $"Requires: {def.PrerequisiteId}"
-                : $"Cost: {def.Cost} JP" + (!affordable ? "  (insufficient)" : "");
+            string statusLine = $"Cost: {def.Cost} JP" + (!affordable ? "  (insufficient)" : "");
             Utility.drawTextWithShadow(b, statusLine, Game1.smallFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 56),
-                owned ? Color.DarkGreen : (affordable ? Game1.textColor : Color.Red));
+                affordable ? Game1.textColor : Color.Red);
         }
     }
 }
