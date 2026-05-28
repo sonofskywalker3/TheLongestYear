@@ -58,10 +58,14 @@ namespace TheLongestYear
                 _config.StashTileX = 72; _config.StashTileY = 12; migrated = true;
             }
             if (migrated)
-            {
-                helper.WriteConfig(_config);
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
-            }
+
+            // Always write the config back on Entry so any newly-added fields (Enabled, new
+            // tile defaults, future tuning knobs) become visible in config.json for the
+            // player to edit. Existing customizations were already deserialized into _config
+            // and are preserved by the write. SMAPI's WriteConfig is idempotent for
+            // unchanged values.
+            helper.WriteConfig(_config);
 
             _meta = new MetaStore(helper.Data);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
