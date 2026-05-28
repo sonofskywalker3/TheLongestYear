@@ -177,18 +177,20 @@ public class BundleRequirementTests
     }
 
     [Fact]
-    public void Percentage_in_play_items_include_obtainable_even_when_season_quota_is_zero()
+    public void Percentage_in_play_items_excluded_when_season_quota_is_zero()
     {
-        // UX4 (corrected): the bonus pool should INCLUDE Percentage items regardless of this
-        // season's cumulative quota — rarity weighting in the sampler is what makes harder
-        // items appear sparsely, not exclusion. Adventurer's Spring quota = 0 doesn't keep
-        // Solar Essence out of the Mining bonus pool; the Common=8 / VeryRare=1 weighting
-        // ensures Quartz outshows essences ~8× when both are in play.
+        // 2026-05-28 reversal of the prior decision: zero-quota Percentage bundles return an
+        // empty in-play set so their ingredients don't pollute the bonus pool. Rarity-only
+        // weighting (Common×8 vs VeryRare×1) can't keep deep-mine essences out of Spring
+        // Mining when essences are priced as Common (Solar 40g) / Uncommon (Void 50g) —
+        // playtest confirmed Solar+Void Essence appeared in Spring W1 Mining bonus. A
+        // non-zero quota means the bundle is on the critical path this season, so its items
+        // are fair game.
         var b = BundleRequirement.CreatePercentage("Adventurer", Theme.Mining,
             new[] { "solar-essence", "void-essence", "bat-wing" },
             numberOfSlots: 2,
             cumulativeRequiredBySeason: new[] { 0, 1, 2, 2 });
-        Assert.Equal(3, System.Linq.Enumerable.Count(b.InPlayItemsFor(Season.Spring, _ => true)));
-        Assert.Equal(3, System.Linq.Enumerable.Count(b.InPlayItemsFor(Season.Summer, _ => true)));
+        Assert.Empty(b.InPlayItemsFor(Season.Spring, _ => true)); // quota 0 -> excluded
+        Assert.Equal(3, System.Linq.Enumerable.Count(b.InPlayItemsFor(Season.Summer, _ => true))); // quota 1 -> included
     }
 }

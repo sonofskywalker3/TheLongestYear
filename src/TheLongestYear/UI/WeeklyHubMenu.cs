@@ -484,33 +484,12 @@ namespace TheLongestYear.UI
         {
             if (card == null) return;
 
-            bool isFocused = currentlySnappedComponent == card;
-
-            // Visible focus: a 4-pixel yellow inset border on the snapped card. The prior 10%
-            // tint difference was too subtle to register as "this is the one you're picking" —
-            // the 2026-05-27 playtest reported "controller can't pick between themes" partly
-            // because the player couldn't see which card was selected.
-            if (isFocused)
-            {
-                const int borderInset = -8;
-                const int borderThickness = 4;
-                Color borderColor = Color.Gold;
-                Rectangle r = new Rectangle(
-                    card.bounds.X + borderInset,
-                    card.bounds.Y + borderInset,
-                    card.bounds.Width - borderInset * 2,
-                    card.bounds.Height - borderInset * 2);
-                // Top / bottom / left / right.
-                b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, r.Width, borderThickness), borderColor);
-                b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Bottom - borderThickness, r.Width, borderThickness), borderColor);
-                b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, borderThickness, r.Height), borderColor);
-                b.Draw(Game1.staminaRect, new Rectangle(r.Right - borderThickness, r.Y, borderThickness, r.Height), borderColor);
-            }
-
-            Color tint = isFocused ? Color.White : Color.White * 0.7f;
+            // 2026-05-28 playtest: "don't need the yellow highlight on the picker, the cursor
+            // is plenty." Both cards now render with the same plain white tint — the snappy-mode
+            // finger cursor already shows the player which card has focus.
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 card.bounds.X, card.bounds.Y, card.bounds.Width, card.bounds.Height,
-                tint, 1f, false);
+                Color.White, 1f, false);
 
             if (theme == null)
             {

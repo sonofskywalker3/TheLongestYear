@@ -23,6 +23,74 @@ public static class CcItemCatalog
     public static Rarity RarityOf(string itemId)
         => _rarityById.TryGetValue(itemId, out Rarity r) ? r : Rarity.Common;
 
+    /// <summary>
+    /// Qualified item ids that are NOT realistically obtainable in weeks 1-2 of a run regardless
+    /// of season, because they require significant in-run infrastructure investment that takes
+    /// most of a season to set up. The <see cref="BonusItemSampler"/> excludes these from the
+    /// bonus pool during early weeks.
+    ///
+    /// 2026-05-28 playtest feedback: "Got Cheese in Spring W1 — no way I can do that run one,
+    /// won't be able to get a barn and raise cows far enough, plus get cheese presses."
+    ///
+    /// Categories (with notes on the infrastructure gate):
+    ///   - Animal artisan goods (cow + barn + cheese press / sheep + loom / etc.)
+    ///   - Keg/preserve goods (keg ~30 wood + copper bar + 8 days fermenting)
+    ///   - Fruit tree fruits (28-day sapling growth + season-locked harvest window)
+    ///   - Deep mine drops (floor 40+ for essences/iron, floor 80+ for fire quartz/iridium)
+    ///   - Calico Desert items (bus repair quest gates Oasis/Skull Cavern access)
+    ///
+    /// Rarity weighting alone can't keep these out — Solar Essence is 40g (Common-priced)
+    /// despite being a deep-mine drop, so it scores Common×8 weight in the sampler.
+    /// </summary>
+    public static readonly IReadOnlySet<string> EarlyGameAvoid = new HashSet<string>(StringComparer.Ordinal)
+    {
+        // ----- Animal artisan (cow + cheese press / sheep + loom / etc.) -----
+        "(O)424", // Cheese          — cow + cheese press
+        "(O)426", // Goat Cheese     — goat + cheese press
+        "(O)428", // Cloth           — sheep wool + loom
+        "(O)440", // Wool            — sheep + barn upgrade
+        "(O)436", // Goat Milk       — goat + Big Barn
+        "(O)438", // Large Goat Milk — goat + max hearts
+        "(O)442", // Duck Egg        — Big Coop
+        "(O)444", // Duck Feather    — Big Coop + duck max hearts
+        "(O)446", // Rabbit's Foot   — Deluxe Coop + rabbit max hearts
+        "(O)306", // Mayonnaise      — chicken + mayo machine (achievable but tight)
+        "(O)307", // Duck Mayonnaise — Big Coop + duck + mayo machine
+        "(O)308", // Void Mayonnaise — void chicken (witch quest)
+
+        // ----- Keg / preserve goods -----
+        "(O)348", // Wine            — keg + fruit (7 days fermenting)
+        "(O)346", // Beer            — keg + wheat (1.75 days)
+        "(O)459", // Mead            — keg + honey
+        "(O)303", // Pale Ale        — keg + hops
+        "(O)350", // Juice           — keg + vegetable
+        "(O)344", // Jelly           — preserves jar
+        "(O)342", // Pickles         — preserves jar
+
+        // ----- Fruit tree fruits (28-day sapling + seasonal bloom) -----
+        "(O)613", // Apple           — Fall fruit tree
+        "(O)634", // Apricot         — Spring fruit tree (28-day sapling, then mature 28-day grow)
+        "(O)635", // Orange          — Summer fruit tree
+        "(O)636", // Peach           — Summer fruit tree
+        "(O)637", // Pomegranate     — Fall fruit tree
+        "(O)638", // Cherry          — Spring fruit tree
+
+        // ----- Deep mine / late-game minerals -----
+        "(O)768", // Solar Essence   — floor 40+ (rainbow / mummy / metal head drops)
+        "(O)769", // Void Essence    — floor 80+ (shadow brutes / Witch's Swamp)
+        "(O)337", // Iridium Bar     — floor 120+ iridium ore + furnace
+        "(O)386", // Iridium Ore     — Skull Cavern / floor 120+
+        "(O)82",  // Fire Quartz     — floor 80+ Mines
+        "(O)422", // Purple Mushroom — Mines floor 80+ / Skull Cavern
+        "(O)336", // Gold Bar        — floor 80+ gold ore + furnace (tight even by Fall)
+        "(O)74",  // Prismatic Shard — extremely rare deep-mine drop
+
+        // ----- Calico Desert / bus-locked -----
+        "(O)164", // Sandfish        — Sandy's Oasis pond (bus required)
+        "(O)165", // Scorpion Carp   — Calico Desert
+        "(O)252", // Rhubarb         — Sandy's Oasis
+    };
+
     private static CcItem Item(string id, Theme theme, Rarity rarity, params Season[] seasons)
         => new CcItem(id, theme, rarity, new HashSet<Season>(seasons));
 

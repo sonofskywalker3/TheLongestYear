@@ -1,6 +1,7 @@
 using HarmonyLib;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Menus;
 using StardewValley.Objects;
 using TheLongestYear.Core;
 using TheLongestYear.UI;
@@ -83,7 +84,12 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>
-    /// Dismisses the "tly.stash" indicator the first time the player opens the stash chest.
+    /// Dismisses the "tly.stash" indicator the first time the player opens the stash chest,
+    /// and strips the chest-tint color picker from the opened ItemGrabMenu. Vanilla ItemGrabMenu
+    /// shows the color picker for any Chest whose <c>SpecialChestType</c> is None or BigChest —
+    /// our stash chest is forced to SpecialChestType.None (to keep local per-save inventory
+    /// instead of the team-shared Junimo Chest pool), which would normally surface the picker.
+    /// The 2026-05-28 playtest explicitly asked for it to be hidden.
     /// </summary>
     [HarmonyPatch(typeof(Chest), nameof(Chest.ShowMenu))]
     internal static class JunimoStashShowMenuPatch
@@ -91,8 +97,23 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(Chest __instance)
         {
-            if (__instance.modData.ContainsKey(JunimoStashService.StashModDataKey))
-                IndicatorRegistry.Dismiss("tly.stash");
+            if (!__instance.modData.ContainsKey(JunimoStashService.StashModDataKey))
+                return;
+
+            IndicatorRegistry.Dismiss("tly.stash");
+
+            // Strip the color picker from the freshly-opened menu. ShowMenu sets
+            // Game1.activeClickableMenu = new ItemGrabMenu(...); at this postfix point the
+            // menu is fully constructed (the constructor finished allocating chestColorPicker
+            // + colorPickerToggleButton). Nulling the fields hides the swatch row and toggle
+            // button — Draw and click handlers no-op on null.
+            if (Game1.activeClickableMenu is ItemGrabMenu igm)
+            {
+                igm.chestColorPicker = null;
+                igm.colorPickerToggleButton = null;
+                igm.discreteColorPickerCC = null;
+                Game1.player.showChestColorPicker = false;
+            }
         }
     }
 
