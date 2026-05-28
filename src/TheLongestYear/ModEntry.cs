@@ -177,8 +177,16 @@ namespace TheLongestYear
             }
 
             MetaState s = _meta.State;
+            int stashSlots = s.StashSlotCount;
+            int stashItems = s.StashItems.Count;
+            string stashTile = (_config.StashTileX == 0 && _config.StashTileY == 0)
+                ? "not configured"
+                : $"({_config.StashTileX}, {_config.StashTileY})";
+
             this.Monitor.Log(
-                $"JP={s.JunimoPoints}, StashTier={s.StashCapacityTier}, Upgrades=[{string.Join(", ", s.OwnedUpgrades)}]",
+                $"JP={s.JunimoPoints}, " +
+                $"StashTier={s.HighestKeptTier("stash_", 2)} ({stashSlots} slots, {stashItems} items banked, tile {stashTile}), " +
+                $"Upgrades=[{string.Join(", ", s.OwnedUpgrades)}]",
                 LogLevel.Info);
         }
 
