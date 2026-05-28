@@ -150,6 +150,20 @@ namespace TheLongestYear
                 return;
             }
 
+            // Standard farm only. Tile defaults + building placement coords assume
+            // the Standard farm layout. Other farm types (Riverland, Forest, Beach, etc.)
+            // would land the stash chest / cookbook / craftbook / pre-built coops + barns
+            // in unpredictable places (or in water). Skip setup with a clear log message.
+            if (Game1.whichFarm != 0)
+            {
+                this.Monitor.Log(
+                    $"TLY only supports the Standard farm (Game1.whichFarm == 0). " +
+                    $"Current farm type is {Game1.whichFarm}. Skipping all setup. " +
+                    $"To use TLY, start a new game on the Standard farm.",
+                    LogLevel.Info);
+                return;
+            }
+
             _meta.Load();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             IndicatorRegistry.Attach(_meta.State);
