@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Reflection;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -6,33 +8,47 @@ using StardewValley.Menus;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Forces every new TLY game onto the Standard farm (Game1.whichFarm == 0). TLY's tile
-    /// defaults, kept-building placement coords, and stash auto-pick all assume Standard farm
-    /// geometry — running on Riverland / Forest / Hilltop / etc. lands buildings in water or
-    /// leaves the stash chest invisible. Rather than bailing at save-load (which leaves the
-    /// player with a half-broken save and no idea why), we override the farm choice during
-    /// character creation so a Standard farm is the only outcome.
+    /// Forces every new TLY game onto the Standard farm. TLY's tile defaults, kept-building
+    /// placement coords, and stash auto-pick all assume Standard farm geometry — running on
+    /// Riverland / Forest / Hilltop / etc. lands buildings in water or leaves the stash chest
+    /// invisible. Rather than bailing at save-load (the c4af752 approach, which left the player
+    /// hunting for a non-existent chest with no in-game explanation), we strip every non-Standard
+    /// option out of the farm-type tab of <see cref="CharacterCustomization"/> so the only
+    /// outcome is a Standard farm.
     ///
-    /// Implementation:
-    ///   - Every UpdateTicked while <see cref="CharacterCustomization"/> is the active menu,
-    ///     reset Game1.whichFarm to 0. The CC preview snaps back to Standard on any click,
-    ///     making it obvious that other farm types are disallowed (a more discoverable signal
-    ///     than a silent override on save creation alone).
-    ///   - On <c>GameLoop.SaveCreating</c> (just before the save folder is written), force
-    ///     whichFarm = 0 as a belt-and-braces guard — covers any edge case where the per-tick
-    ///     reset missed a frame and the player committed a non-Standard choice.
+    /// Implementation (reflection-driven because PC CharacterCustomization fields differ
+    /// from the Android decompile, and Harmony patches against private fields are fragile
+    /// across game updates):
+    ///   1. On every UpdateTicked while no save is loaded (Context.IsWorldReady = false),
+    ///      walk the menu chain (activeClickableMenu, plus TitleMenu.subMenu when the active
+    ///      menu is TitleMenu) looking for the PC <c>CharacterCustomization</c> instance.
+    ///   2. Once found (and once per CharacterCustomization session), trim the parallel
+    ///      farm-type lists down to just the first entry (Standard) and reset pagination:
+    ///        - farmTypeButtons      (List&lt;ClickableTextureComponent&gt;)
+    ///        - farmTypeButtonNames  (List&lt;string&gt;)
+    ///        - farmTypeIcons        (List&lt;Texture2D&gt;)
+    ///        - farmTypeHoverText    (List&lt;string&gt;)
+    ///        - _farmPages = 1, _currentFarmPage = 0
+    ///   3. Snap <c>Game1.whichFarm</c> back to 0 every frame as a belt-and-braces guard
+    ///      against any code path that could have committed a different value before step 2
+    ///      ran (e.g. last-pressed state lingering from a prior CC session).
+    ///   4. <c>GameLoop.SaveCreating</c> handler: final whichFarm = 0 force just before the
+    ///      save folder is written.
     ///
     /// Disabled when <see cref="GameplayConfig.Enabled"/> is false so the player can run the
     /// game with TLY off and pick any farm type they want.
     /// </summary>
     internal sealed class StandardFarmEnforcer
     {
+        private const BindingFlags FieldFlags
+            = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
         private readonly IMonitor _monitor;
         private readonly TheLongestYear.Core.GameplayConfig _config;
 
-        /// <summary>True once we have logged the "forcing Standard farm" notice for the current
-        /// CharacterCustomization session. Resets when the menu closes so a reopen relogs.</summary>
-        private bool _loggedThisSession;
+        /// <summary>The CharacterCustomization instance currently scrubbed (or null). Tracked
+        /// per-instance so a reopened menu (with a fresh button list) gets re-scrubbed.</summary>
+        private IClickableMenu _scrubbedInstance;
 
         public StandardFarmEnforcer(IMonitor monitor, TheLongestYear.Core.GameplayConfig config)
         {
@@ -51,34 +67,27 @@ namespace TheLongestYear.Loop
             if (!_config.Enabled)
                 return;
 
-            bool inCharCustom = Game1.activeClickableMenu is CharacterCustomization;
-            if (!inCharCustom)
-            {
-                _loggedThisSession = false;
-                return;
-            }
-
-            // Only enforce during the title-screen new-game flow. CharacterCustomization is
-            // ALSO opened mid-game by the Dresser (clothing dye) and the Wizard (sex/appearance
-            // change) — both of those run with a save loaded, and resetting whichFarm mid-session
-            // would corrupt the loaded farm's spawn logic + tile properties. Context.IsWorldReady
-            // is the cleanest "are we in a loaded save?" signal SMAPI exposes.
+            // CharacterCustomization is ALSO opened mid-game by the Dresser and the Wizard,
+            // both of which run with a save loaded. Skipping when a save is loaded keeps us out
+            // of those flows.
             if (Context.IsWorldReady)
                 return;
 
-            if (Game1.whichFarm != 0)
+            IClickableMenu cc = FindCharacterCustomization();
+            if (cc == null)
             {
-                Game1.whichFarm = 0;
-                if (!_loggedThisSession)
-                {
-                    _monitor.Log(
-                        "StandardFarmEnforcer: snapped farm selection back to Standard. " +
-                        "TLY only supports the Standard farm; disable TLY in GMCM (or config.json) " +
-                        "if you want to pick a different farm type.",
-                        LogLevel.Info);
-                    _loggedThisSession = true;
-                }
+                _scrubbedInstance = null;
+                return;
             }
+
+            if (!ReferenceEquals(_scrubbedInstance, cc))
+            {
+                ScrubFarmTypeOptions(cc);
+                _scrubbedInstance = cc;
+            }
+
+            if (Game1.whichFarm != 0)
+                Game1.whichFarm = 0;
         }
 
         private void OnSaveCreating(object sender, SaveCreatingEventArgs e)
@@ -94,6 +103,93 @@ namespace TheLongestYear.Loop
                     LogLevel.Warn);
                 Game1.whichFarm = 0;
             }
+        }
+
+        /// <summary>
+        /// Locate the CharacterCustomization menu in the current menu chain. PC's new-game flow
+        /// nests it inside <see cref="TitleMenu"/>.<c>subMenu</c>; the Android port also exposes
+        /// it as <c>Game1.activeClickableMenu</c> directly.
+        /// </summary>
+        private static IClickableMenu FindCharacterCustomization()
+        {
+            IClickableMenu active = Game1.activeClickableMenu;
+            if (active is CharacterCustomization)
+                return active;
+
+            if (active is TitleMenu)
+            {
+                IClickableMenu sub = TitleMenu.subMenu;
+                if (sub is CharacterCustomization)
+                    return sub;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Trim the farm-type parallel lists down to just the first entry (Standard) and reset
+        /// pagination so the next/prev page buttons can't surface the removed entries.
+        /// </summary>
+        private void ScrubFarmTypeOptions(IClickableMenu cc)
+        {
+            System.Type type = cc.GetType();
+
+            int beforeCount = TrimList(type, cc, "farmTypeButtons");
+            TrimList(type, cc, "farmTypeButtonNames");
+            TrimList(type, cc, "farmTypeIcons");
+            TrimList(type, cc, "farmTypeHoverText");
+
+            // Reset pagination so any UI that reads page-count to draw prev/next buttons
+            // doesn't render a teaser for the removed options.
+            FieldInfo pages = type.GetField("_farmPages", FieldFlags);
+            FieldInfo current = type.GetField("_currentFarmPage", FieldFlags);
+            pages?.SetValue(cc, 1);
+            current?.SetValue(cc, 0);
+
+            // Sanity check: if the trim didn't happen (field names changed across game versions),
+            // log loudly so the next playtest's log diagnoses the failure mode.
+            int afterCount = ReadListCount(type, cc, "farmTypeButtons");
+            if (afterCount > 1)
+            {
+                _monitor.Log(
+                    $"StandardFarmEnforcer: tried to trim farmTypeButtons but {afterCount} entries " +
+                    "remain — field name may have changed. Per-tick whichFarm=0 reset is still active.",
+                    LogLevel.Warn);
+            }
+            else
+            {
+                _monitor.Log(
+                    $"StandardFarmEnforcer: scrubbed CharacterCustomization farm-type list " +
+                    $"(was {beforeCount} options, now {afterCount}). Standard farm forced.",
+                    LogLevel.Info);
+            }
+
+            // Ensure whichFarm is 0 immediately — a prior CC session may have left it non-zero.
+            Game1.whichFarm = 0;
+        }
+
+        /// <summary>Trim a parallel List&lt;T&gt; field down to at most one entry. Returns the
+        /// count BEFORE trimming (or -1 if the field doesn't exist).</summary>
+        private static int TrimList(System.Type type, object instance, string fieldName)
+        {
+            FieldInfo field = type.GetField(fieldName, FieldFlags);
+            if (field == null) return -1;
+
+            if (field.GetValue(instance) is IList list)
+            {
+                int before = list.Count;
+                while (list.Count > 1)
+                    list.RemoveAt(list.Count - 1);
+                return before;
+            }
+            return -1;
+        }
+
+        private static int ReadListCount(System.Type type, object instance, string fieldName)
+        {
+            FieldInfo field = type.GetField(fieldName, FieldFlags);
+            if (field == null) return -1;
+            return field.GetValue(instance) is IList list ? list.Count : -1;
         }
     }
 }
