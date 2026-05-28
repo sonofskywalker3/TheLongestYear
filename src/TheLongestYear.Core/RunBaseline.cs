@@ -43,8 +43,17 @@ public sealed class RunBaseline
     /// <summary>True if the player gets the Kitchen house upgrade on day 1.</summary>
     public bool KitchenOnDay1 { get; init; }
 
+    /// <summary>True if the player gets the full L3 farmhouse (kitchen + kids' room + cellar)
+    /// on day 1. Implies <see cref="KitchenOnDay1"/> — L3 can't exist without L1 + L2 in
+    /// vanilla data, and the catalog enforces this via the keep_kitchen prerequisite.</summary>
+    public bool BasementOnDay1 { get; init; }
+
     /// <summary>True if the four Vault bundles should be marked paid (bus restored).</summary>
     public bool BusUnlocked { get; init; }
+
+    /// <summary>True if Robin's map-shortcut community upgrade should be pre-applied on day 1
+    /// (single mail flag <c>communityUpgradeShortcuts</c> covers all five shortcuts).</summary>
+    public bool ShortcutsUnlocked { get; init; }
 
     /// <summary>True if the early-horse upgrade should spawn a horse + stable on day 1.</summary>
     public bool EarlyHorse { get; init; }

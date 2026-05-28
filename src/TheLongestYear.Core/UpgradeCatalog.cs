@@ -153,6 +153,12 @@ public static class UpgradeCatalog
             "Start each run with a Deluxe Barn.", 2000, "keep_big_barn"),
         new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
             "Start each run with the Kitchen house upgrade (cooking accessible day 1).", 800),
+        new UpgradeDefinition("keep_basement", UpgradeCategory.Buildings, "Keep Basement",
+            "Start each run with the full L3 farmhouse (kitchen, kids' room, cellar with 33 cask slots) " +
+            "and the Cask recipe.", 1800, "keep_kitchen"),
+        new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, "Keep Map Shortcuts",
+            "Start each run with all five of Robin's map shortcuts pre-built (Town fence, bus tunnel, " +
+            "forest stump bridge, Mountain→Quarry, Mountain→Town).", 900),
 
         // Vault — pre-pay all four bus bundles once and keep them paid across resets.
         // Without this upgrade the player has to pay the season's Vault bundle every run by day 28

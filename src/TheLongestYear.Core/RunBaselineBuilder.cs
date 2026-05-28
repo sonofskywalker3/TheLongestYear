@@ -151,6 +151,8 @@ public static class RunBaselineBuilder
             ProfessionPickerSkillsToRequeue = requeue,
             MineElevatorFloor = cappedFloor,
             KitchenOnDay1 = meta.HasUpgrade("keep_kitchen"),
+            BasementOnDay1 = meta.HasUpgrade("keep_basement"),
+            ShortcutsUnlocked = meta.HasUpgrade("keep_shortcuts"),
             BusUnlocked = meta.HasUpgrade(VaultRules.KeepBusUnlockedId),
             EarlyHorse = meta.HasUpgrade("early_horse"),
             KeptBuildings = keptBuildings,
