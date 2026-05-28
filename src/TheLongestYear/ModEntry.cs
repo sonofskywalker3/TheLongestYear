@@ -151,6 +151,11 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_stashclear",
                 "Clear all items from the Junimo Stash MetaState (debug — DESTRUCTIVE).",
                 this.CmdStashClear);
+            helper.ConsoleCommands.Add("tly_wipemeta",
+                "Wipe MetaState (JP, owned upgrades, stash contents, dismissed indicators) without " +
+                "deleting the save. Persists immediately. Reload the save to fully apply " +
+                "(some services cache the MetaState reference). DESTRUCTIVE.",
+                this.CmdWipeMeta);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -456,6 +461,30 @@ namespace TheLongestYear
             this.Monitor.Log("Junimo Stash MetaState cleared (in memory — persists on next save).", LogLevel.Warn);
         }
 
+        /// <summary>
+        /// Wipe MetaState (JP, owned upgrades, stash items, dismissed indicators, kept tools/skills/
+        /// buildings, completed-resets counter) without deleting the save file. Persisted
+        /// immediately so a save reload picks up the clean slate. Intended for playtest iteration —
+        /// "I want to test a fresh-save run without redoing character creation."
+        /// </summary>
+        private void CmdWipeMeta(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            long oldJp = _meta.State.JunimoPoints;
+            int oldUpgrades = _meta.State.OwnedUpgrades.Count;
+            int oldStashItems = _meta.State.StashItems.Count;
+
+            _meta.WipeMeta();
+
+            this.Monitor.Log(
+                $"tly_wipemeta: MetaState wiped (was JP={oldJp}, upgrades={oldUpgrades}, " +
+                $"stash items={oldStashItems}). Persisted to save. " +
+                "Reload the save (or run tly_reset) to apply — some services hold the old " +
+                "MetaState reference until OnSaveLoaded re-attaches them.",
+                LogLevel.Warn);
+        }
+
         private void CmdActiveEffects(string command, string[] args)
         {
             string bonus = TheLongestYear.Core.ActiveEffectsProvider.BonusId ?? "(none)";
@@ -656,6 +685,7 @@ namespace TheLongestYear
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
                 case "tly_stashclear": this.CmdStashClear(command, args); break;
+                case "tly_wipemeta":   this.CmdWipeMeta(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
