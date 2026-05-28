@@ -42,12 +42,18 @@ public static class ThemeModifiers
     {
         "forage_yield_up"        => "25% chance to find an extra foraged item",
         "forage_off"             => "All foraging items removed",
-        "crop_growth_up"         => "Crops grow 25% faster",
-        "crop_growth_down"       => "Crops grow 25% slower",
+        // crop_growth_* uses a deterministic 2-days-per-week rule (CropGrowthPatch). The
+        // 2026-05-28 audit replaced the prior probabilistic "25% chance per day" wiring
+        // because the display read as a flat rate but the implementation was per-day RNG.
+        "crop_growth_up"         => "Crops gain 2 growth days per week",
+        "crop_growth_down"       => "Crops miss 2 growth days per week",
         "fish_bite_up"           => "Fish bite 30% sooner",
         "fish_bite_down"         => "Fish bite 30% slower",
         "mine_drops_up"          => "30% chance for mined resources to drop +1",
-        "mines_closed"           => "Mine entrance blocked all week",
+        // 2026-05-28 audit: prior "Mine entrance blocked" was inaccurate — the patch blocks
+        // elevator + descent ladder INSIDE the mine, so the player can enter floor 1 but
+        // can't descend. Matching the display to what actually happens.
+        "mines_closed"           => "Mine descent blocked all week",
         "all_drops_up"           => "10% chance for any drop to be +1",
         "all_sell_prices_down"   => "All sell prices cut in half",
         // Legacy / unused-in-v1 -- kept so old config files don't show raw ids if loaded.
