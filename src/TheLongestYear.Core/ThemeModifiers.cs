@@ -22,31 +22,39 @@ public static class ThemeModifiers
     };
 
     /// <summary>
-    /// Human-readable display name with the numeric value for a bonus/liability id. Used by the
-    /// planning hub UI (Plan 05). The id strings themselves remain stable so the effect layer
-    /// (Plan 06) can switch on them. Numbers here are the v1 baselines; Plan 06 will read them
-    /// from <see cref="GameplayConfig"/> so they can be tuned without redeploying.
-    /// Falls back to the raw id if unmapped (defensive — easy to spot in-game if a new id is missed).
-    /// Plain ASCII only (no U+2212 minus sign) — Stardew's smallFont doesn't include the
-    /// typographic minus and renders it as tofu.
+    /// Human-readable description of what a bonus/liability id actually DOES in plain English.
+    /// 2026-05-28 playtest feedback: the prior "+30% Mine Drops" style was a number without a
+    /// mechanic — the player had to hover the card for the tooltip to learn what it meant.
+    /// New phrasing spells out the in-world effect ("30% chance for mined resources to drop
+    /// +1", "All foraging items removed") so the planning-hub card stands on its own without
+    /// a tooltip. Strings are sized to fit a 460px-wide card with smallFont after
+    /// <c>Game1.parseText</c> word-wrapping; keep new entries concise enough to wrap to two
+    /// lines max.
+    ///
+    /// The id strings themselves remain stable so the effect layer (Plan 06) can switch on
+    /// them. Numbers here are the v1 baselines; Plan 06 will read them from
+    /// <see cref="GameplayConfig"/> so they can be tuned without redeploying.
+    /// Falls back to the raw id if unmapped (defensive — easy to spot in-game if a new id is
+    /// missed). Plain ASCII only (no U+2212 minus sign) — Stardew's smallFont doesn't include
+    /// the typographic minus and renders it as tofu.
     /// </summary>
     public static string DisplayNameFor(string modifierId) => modifierId switch
     {
-        "forage_yield_up"        => "+25% Foraging Yield",
-        "forage_off"             => "Forage Off",
-        "crop_growth_up"         => "+25% Crop Growth",
-        "crop_growth_down"       => "-25% Crop Growth",
-        "fish_bite_up"           => "+30% Fish Bite Rate",
-        "fish_bite_down"         => "-30% Fish Bite Rate",
-        "mine_drops_up"          => "+30% Mine Drops",
-        "mines_closed"           => "Mines Closed",
-        "all_drops_up"           => "+10% All Drops",
-        "all_sell_prices_down"   => "-50% All Sell Prices",
+        "forage_yield_up"        => "25% chance to find an extra foraged item",
+        "forage_off"             => "All foraging items removed",
+        "crop_growth_up"         => "Crops grow 25% faster",
+        "crop_growth_down"       => "Crops grow 25% slower",
+        "fish_bite_up"           => "Fish bite 30% sooner",
+        "fish_bite_down"         => "Fish bite 30% slower",
+        "mine_drops_up"          => "30% chance for mined resources to drop +1",
+        "mines_closed"           => "Mine entrance blocked all week",
+        "all_drops_up"           => "10% chance for any drop to be +1",
+        "all_sell_prices_down"   => "All sell prices cut in half",
         // Legacy / unused-in-v1 -- kept so old config files don't show raw ids if loaded.
-        "forage_drops_off"       => "Foraging Disabled (legacy)",
-        "mine_drops_off"         => "Mine Drops Disabled (legacy)",
-        "shop_discount"          => "-15% Shop Prices",
-        "stamina_drain_up"       => "+30% Stamina Drain",
+        "forage_drops_off"       => "Foraging disabled (legacy)",
+        "mine_drops_off"         => "Mine drops disabled (legacy)",
+        "shop_discount"          => "Shop prices 15% lower",
+        "stamina_drain_up"       => "Tools drain 30% more stamina",
         _ => modifierId
     };
 }

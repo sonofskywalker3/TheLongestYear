@@ -26,19 +26,24 @@ namespace TheLongestYear.UI
         private static readonly Rectangle ExclamationSourceRect = new Rectangle(410, 501, 10, 10);
 
         private const float Scale   = 3f;  // renders at 30×30 px at 100% zoom
-        private const int   OffsetY = 32;  // pixels above tile top edge (world-space pre-zoom)
+        // Default pixels above tile top edge for the bubble. Flat tiles (counter, board) need
+        // only ~32; tall objects like Chests draw above the tile so they need a bigger offset.
+        // Per-entry override available via Register's pixelOffset param.
+        private const int   DefaultOffsetY = 32;
 
         private sealed class Entry
         {
             public GameLocation Location { get; }
             public Vector2 Tile { get; }
             public IndicatorKind Kind { get; }
+            public int PixelOffsetY { get; }
 
-            public Entry(GameLocation location, Vector2 tile, IndicatorKind kind)
+            public Entry(GameLocation location, Vector2 tile, IndicatorKind kind, int pixelOffsetY)
             {
                 Location = location;
                 Tile     = tile;
                 Kind     = kind;
+                PixelOffsetY = pixelOffsetY;
             }
         }
 
@@ -53,10 +58,13 @@ namespace TheLongestYear.UI
         public static void ClearRegistrations() => _entries.Clear();
 
         /// <summary>Register a bubble for the given id, location, and tile. Safe to call multiple
-        /// times — re-registration updates the entry (e.g. location object changes after reset).</summary>
-        public static void Register(string id, GameLocation location, Vector2 tile, IndicatorKind kind)
+        /// times — re-registration updates the entry (e.g. location object changes after reset).
+        /// <paramref name="pixelOffsetY"/> overrides the default 32px lift — pass ~80 for tall
+        /// objects like Chests whose sprite renders above the tile origin.</summary>
+        public static void Register(string id, GameLocation location, Vector2 tile,
+            IndicatorKind kind, int pixelOffsetY = DefaultOffsetY)
         {
-            _entries[id] = new Entry(location, tile, kind);
+            _entries[id] = new Entry(location, tile, kind, pixelOffsetY);
         }
 
         /// <summary>Dismiss this indicator. Writes to <see cref="MetaState.DismissedIndicators"/>
@@ -89,18 +97,18 @@ namespace TheLongestYear.UI
                 if (_meta.DismissedIndicators.Contains(id)) continue;
                 if (Game1.currentLocation != entry.Location) continue;
 
-                DrawBubble(e.SpriteBatch, entry.Tile, entry.Kind);
+                DrawBubble(e.SpriteBatch, entry.Tile, entry.Kind, entry.PixelOffsetY);
             }
         }
 
-        private static void DrawBubble(SpriteBatch b, Vector2 tile, IndicatorKind kind)
+        private static void DrawBubble(SpriteBatch b, Vector2 tile, IndicatorKind kind, int pixelOffsetY)
         {
             Rectangle src = kind == IndicatorKind.Question ? QuestionSourceRect : ExclamationSourceRect;
 
             // Convert tile coords to screen coords: tile * tileSize → world coords
             // → subtract viewport origin → apply zoom.
             float worldX = tile.X * Game1.tileSize + (Game1.tileSize / 2f) - (src.Width * Scale / 2f);
-            float worldY = tile.Y * Game1.tileSize - OffsetY;
+            float worldY = tile.Y * Game1.tileSize - pixelOffsetY;
 
             Vector2 screenPos = new Vector2(
                 (worldX - Game1.viewport.X) * Game1.options.zoomLevel,

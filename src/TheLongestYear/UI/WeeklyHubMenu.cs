@@ -26,17 +26,19 @@ namespace TheLongestYear.UI
     internal sealed class WeeklyHubMenu : IClickableMenu
     {
         // ---------- Card dimensions ----------
-        private const int CardWidth = 560;
-        // Trimmed back to ~v1 height now that bundle-progress rows live in SeasonGoalsMenu.
-        private const int CardHeight = 360;
-        private const int CardSpacing = 32;
-        private const int CardInnerPad = 28;
-        private const int PanelPadding = 48;
+        // Trimmed 2026-05-28 per playtest UI polish — the prior 560x360 left a lot of empty
+        // whitespace between the bonus/liability lines and the icon row. Tighter sizing also
+        // gets the panel onto smaller monitors without scrollbars.
+        private const int CardWidth = 480;
+        private const int CardHeight = 300;
+        private const int CardSpacing = 24;
+        private const int CardInnerPad = 20;
+        private const int PanelPadding = 32;
 
         // ---------- Inner card layout ----------
-        private const int ThemeNameLineHeight = 48;
-        private const int BodyLineHeight = 28;
-        private const int SectionGap = 12;
+        private const int ThemeNameLineHeight = 44;
+        private const int BodyLineHeight = 26;
+        private const int SectionGap = 8;
 
         // ---------- Bonus item icons ----------
         // Smaller than the v1 icon grid — bonus row needs to fit up to 7 icons in CardWidth-pad.
@@ -174,13 +176,57 @@ namespace TheLongestYear.UI
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
-            if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
+            var btn = b;
+            if (btn == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmSelection(_offer[0]); return; }
                 if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmSelection(_offer[1]); return; }
             }
-            if (b == Microsoft.Xna.Framework.Input.Buttons.B && !_themePicked) return;
+            if (btn == Microsoft.Xna.Framework.Input.Buttons.B && !_themePicked) return;
+
+            // Drive snap navigation directly from DPad / left-thumbstick events. Vanilla's
+            // IClickableMenu.receiveKeyPress only routes to applyMovementKey when
+            // snappyMenus = true, but we ALWAYS seed currentlySnappedComponent (so A picks
+            // works regardless of the snappy toggle) and want directional input to follow
+            // suit. 2026-05-28 playtest: "finger cursor is stuck on the left option and
+            // won't move, though A will select it" — root cause was the snappy gate.
+            // applyMovementKey directions: 0=up, 1=right, 2=down, 3=left.
+            switch (btn)
+            {
+                case Microsoft.Xna.Framework.Input.Buttons.DPadLeft:
+                case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickLeft:
+                    this.applyMovementKey(3);
+                    return;
+                case Microsoft.Xna.Framework.Input.Buttons.DPadRight:
+                case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickRight:
+                    this.applyMovementKey(1);
+                    return;
+                case Microsoft.Xna.Framework.Input.Buttons.DPadUp:
+                case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickUp:
+                    this.applyMovementKey(0);
+                    return;
+                case Microsoft.Xna.Framework.Input.Buttons.DPadDown:
+                case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickDown:
+                    this.applyMovementKey(2);
+                    return;
+            }
+
             base.receiveGamePadButton(b);
+        }
+
+        /// <summary>
+        /// Block vanilla's reflection-driven repopulation of <c>allClickableComponents</c>.
+        /// The base implementation uses <c>GetType().GetFields()</c> (public-only by default)
+        /// to discover ClickableComponent fields; our <c>_leftCard</c> / <c>_rightCard</c> are
+        /// private, so the reflection finds nothing and wipes the list we built manually in
+        /// <see cref="RecomputeBoundsAndLayout"/>. Empty allClickableComponents = no snap nav,
+        /// which is exactly the 2026-05-28 "DPad stuck on left card" bug.
+        /// </summary>
+        public override void populateClickableComponentList()
+        {
+            // Intentionally no-op. RecomputeBoundsAndLayout populates allClickableComponents
+            // with the cards + preview rows in the correct order, and the contents are stable
+            // until the next window-resize (which calls RecomputeBoundsAndLayout again).
         }
 
         // ---------- per-card data ----------
@@ -341,10 +387,11 @@ namespace TheLongestYear.UI
             base.performHoverAction(x, y);
             _hoverText = "";
 
-            if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
-                _hoverText = DescribeCard(_offer[0]);
-            else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
-                _hoverText = DescribeCard(_offer[1]);
+            // No card-hover tooltip — the bonus/liability text on the card itself is now
+            // self-explanatory (2026-05-28 playtest: "remove the tooltip for the benefit
+            // section, and just be very clear about what the benefit and drawback are").
+            // Per-item bonus-icon tooltips still surface below so the player can see the
+            // exact donation quantities.
 
             CheckBonusIconHover(x, y, _leftBonus, _leftBonusBounds);
             CheckBonusIconHover(x, y, _rightBonus, _rightBonusBounds);
@@ -478,6 +525,7 @@ namespace TheLongestYear.UI
 
             int textX = card.bounds.X + CardInnerPad;
             int textY = card.bounds.Y + CardInnerPad;
+            int textWidth = card.bounds.Width - CardInnerPad * 2;
 
             // Theme name (big, centred).
             string themeName = theme.Value.ToString();
@@ -487,15 +535,21 @@ namespace TheLongestYear.UI
                 new Vector2(nameX, textY), Game1.textColor);
             textY += ThemeNameLineHeight;
 
-            // Bonus + liability lines.
+            // Bonus + liability lines, word-wrapped to the card's inner width so the plain-
+            // English modifier descriptions ("30% chance for mined resources to drop +1") can
+            // span 1-2 lines without overflowing the card edge.
             Color bonusColor = new Color(34, 110, 34);
             Color liabilityColor = new Color(160, 34, 34);
-            Utility.drawTextWithShadow(b, bonusName, Game1.smallFont,
+
+            string bonusWrapped = Game1.parseText(bonusName, Game1.smallFont, textWidth);
+            Utility.drawTextWithShadow(b, bonusWrapped, Game1.smallFont,
                 new Vector2(textX, textY), bonusColor);
-            textY += BodyLineHeight;
-            Utility.drawTextWithShadow(b, liabilityName, Game1.smallFont,
+            textY += (int)Game1.smallFont.MeasureString(bonusWrapped).Y + 2;
+
+            string liabilityWrapped = Game1.parseText(liabilityName, Game1.smallFont, textWidth);
+            Utility.drawTextWithShadow(b, liabilityWrapped, Game1.smallFont,
                 new Vector2(textX, textY), liabilityColor);
-            textY += BodyLineHeight + SectionGap;
+            textY += (int)Game1.smallFont.MeasureString(liabilityWrapped).Y + SectionGap;
 
             // Bonus header above the icon row (which is anchored to the card bottom).
             int bonusHeaderY = card.bounds.Y + card.bounds.Height - CardInnerPad - BonusIconSize - BodyLineHeight - 4;
@@ -543,12 +597,5 @@ namespace TheLongestYear.UI
                 new Vector2(row.bounds.X + 16, row.bounds.Y + 12), Game1.textColor);
         }
 
-        private string DescribeCard(Theme theme)
-        {
-            var (bonus, liability) = ThemeModifiers.For(theme);
-            string bonusName = ThemeModifiers.DisplayNameFor(bonus);
-            string liabilityName = ThemeModifiers.DisplayNameFor(liability);
-            return $"{theme}\nBonus: {bonusName}\nLiability: {liabilityName}";
-        }
     }
 }
