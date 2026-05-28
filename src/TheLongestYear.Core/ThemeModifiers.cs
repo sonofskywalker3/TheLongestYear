@@ -42,11 +42,11 @@ public static class ThemeModifiers
     {
         "forage_yield_up"        => "25% chance to find an extra foraged item",
         "forage_off"             => "All foraging items removed",
-        // crop_growth_* uses a deterministic 2-days-per-week rule (CropGrowthPatch). The
-        // 2026-05-28 audit replaced the prior probabilistic "25% chance per day" wiring
-        // because the display read as a flat rate but the implementation was per-day RNG.
-        "crop_growth_up"         => "Crops gain 2 growth days per week",
-        "crop_growth_down"       => "Crops miss 2 growth days per week",
+        // crop_growth_* is implemented deterministically via a 2-of-7-days rule in
+        // CropGrowthPatch (~28.6% effective). Display rounds back to the spec'd 25% — the
+        // exact integer count of skipped/extra days isn't player-facing.
+        "crop_growth_up"         => "Crops grow 25% faster",
+        "crop_growth_down"       => "Crops grow 25% slower",
         "fish_bite_up"           => "Fish bite 30% sooner",
         "fish_bite_down"         => "Fish bite 30% slower",
         "mine_drops_up"          => "30% chance for mined resources to drop +1",
