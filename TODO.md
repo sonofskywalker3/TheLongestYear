@@ -99,44 +99,6 @@ save, add a debug command that wipes `MetaState` (JP, owned upgrades,
 backup-done flag) while keeping the save. Cheap: replace
 `_meta.State` with `new MetaState()` + `_meta.Save()`.
 
-### Weekly Theme Journal entry (active quest for bonus items)
-Source: 2026-05-26 playtest discussion with user. User asked "when does
-that get built?" during 2026-05-27 playtest — confirmed deferred to v1.1
-(not blocking; player can still pick themes via the planning hub and
-read the bonus list there). Implementation sketch below.
-
-Each week's selected theme creates a Stardew Valley journal entry (the
-quest log, accessible via the bookmark icon on the menu). The entry:
-- Lists the 4 bonus items for that week (uses the same sample as the hub
-  card so it stays consistent).
-- Marks each item as "donated" when the player donates one to the CC.
-- Completes when all 4 are donated.
-- **On completion, suppresses that week's liability for the remaining
-  days of the week.** The bonus stays active either way.
-
-Goals served:
-1. Harder push to chase the bonus items — completing the journal gives
-   the player a tangible "I beat the liability" payoff beyond the 1.5×
-   JP per item.
-2. Reminder UI — if the player puts the game down mid-week and comes
-   back, the journal entry tells them what the bonus items were
-   without having to re-open the hub.
-
-Implementation sketch (not yet a plan):
-- Hook into vanilla's `Quest` system OR build a custom journal entry
-  via Content Patcher / SMAPI.
-- New `RunState.LiabilitySuppressedThisWeek` flag (bool, cleared on week
-  transition in `OnDayStarted`).
-- The effects layer (Plan 06, currently deferred) reads the flag and
-  skips applying the liability when true.
-- A donation observer (we already have one — `DonationObserver`) can
-  flip the per-item completion state; when all 4 are flagged, set the
-  liability-suppressed flag.
-- Edge case: if one of the 4 bonus items is in a bundle that's already
-  fully complete (no slot to donate into), the quest is unachievable.
-  Either pick replacement items at sample time (skip already-satisfied
-  bundles), or accept incompleteness and document it.
-
 ## Deferred to Plan 06
 
 - **UX5 — effects layer.** Wire `forage_yield_*` / `crop_growth_*` /
@@ -195,4 +157,8 @@ Implementation sketch (not yet a plan):
 
 ## Resolved / closed
 
-(empty — items move here after they're shipped)
+- **Weekly Theme Journal entry** — shipped 2026-05-28 as `WeeklyThemeQuestService`.
+  Creates a vanilla Quest on theme select with a 4-item checklist; each CC donation
+  ticks a box; on completion awards +N JP (season-scaled) and suppresses the week's
+  liability via `ActiveEffectsProvider.SuppressLiability`. Bonus stays active.
+  Persisted via `RunState.LiabilitySuppressedThisWeek`. Commits 5bdb8f6 + 13776ed.
