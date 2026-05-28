@@ -448,6 +448,17 @@ namespace TheLongestYear.Loop
                     title: "A gift from the Junimos",
                     description: "The Junimos left a craftbook on your kitchen table — go have a look.");
             }
+
+            if (_meta.HasUpgrade("stash_1")
+                && (_config.StashTileX != 0 || _config.StashTileY != 0)
+                && !_meta.DismissedIndicators.Contains("tly.stash"))
+            {
+                AddIntroQuest(
+                    id: "tly.-9003",
+                    title: "A gift from the Junimos",
+                    description: "The Junimos placed a special chest on your farm — it will survive the seasons. " +
+                                 "Find it and use it wisely; it has very limited space.");
+            }
         }
 
         private void AddIntroQuest(string id, string title, string description)
