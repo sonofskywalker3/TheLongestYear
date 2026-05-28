@@ -32,6 +32,7 @@ namespace TheLongestYear
         private DonationObserver _donationObserver;
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
+        private WeeklyThemeQuestService _questService;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -207,7 +208,15 @@ namespace TheLongestYear
             _ingredientStacks = builder.BuildIngredientStacks();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
+            _questService = new WeeklyThemeQuestService(
+                this.Monitor, _meta,
+                stackForIngredient: id => _ingredientStacks.TryGetValue(id, out int s) ? s : 1);
+            // Wire the post-donation callback so each CC deposit refreshes the quest's progress
+            // text (and auto-completes when every bonus item this week has been donated).
+            DonationService.Active.AfterDonation = _questService.OnItemDonated;
+
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements, _ingredientStacks);
+            _runController.AttachQuestService(_questService);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
