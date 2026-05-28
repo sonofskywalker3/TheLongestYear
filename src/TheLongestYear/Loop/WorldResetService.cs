@@ -31,6 +31,7 @@ namespace TheLongestYear.Loop
         private readonly GameplayConfig _config;
         private readonly FarmerReset _farmerReset;
         private readonly ProfessionPickerScheduler _professionPicker;
+        private readonly JunimoStashService _stashService;
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
@@ -42,7 +43,8 @@ namespace TheLongestYear.Loop
             CommunityCenterUnlock ccUnlock,
             string modDirectory,
             FarmerReset farmerReset,
-            ProfessionPickerScheduler professionPicker)
+            ProfessionPickerScheduler professionPicker,
+            JunimoStashService stashService)
         {
             _monitor = monitor;
             _meta = meta;
@@ -52,6 +54,7 @@ namespace TheLongestYear.Loop
             _modDirectory = modDirectory;
             _farmerReset = farmerReset;
             _professionPicker = professionPicker;
+            _stashService = stashService;
         }
 
         public void PerformReset()
@@ -254,6 +257,12 @@ namespace TheLongestYear.Loop
 
             // 13. Re-register indicators for the new run's location objects.
             RegisterIndicators();
+
+            // 13b. Place the Junimo Stash chest on the Farm and populate from MetaState.
+            //      Must run after RegisterIndicators (so the farm location is fully resolved)
+            //      and before the player is warped home.
+            _stashService?.PlaceChest();
+            _stashService?.PopulateFromMeta();
 
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up
@@ -498,6 +507,9 @@ namespace TheLongestYear.Loop
                         IndicatorKind.Question);
                 }
             }
+
+            // Stash chest indicator — registered here so it re-appears correctly on each reset.
+            _stashService?.RegisterIndicator();
         }
     }
 }

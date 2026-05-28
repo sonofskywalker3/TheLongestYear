@@ -28,6 +28,7 @@ namespace TheLongestYear
         private IReadOnlyDictionary<string, int> _ingredientStacks = new Dictionary<string, int>();
         private DonationObserver _donationObserver;
         private PeakMineFloorTracker _peakMineFloorTracker;
+        private JunimoStashService _stashService;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -98,6 +99,15 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_activeeffects",
                 "Print the currently active theme bonus and liability.",
                 this.CmdActiveEffects);
+            helper.ConsoleCommands.Add("tly_setstash",
+                "Anchor the Junimo Stash chest to the tile you are facing on the Farm. Writes config.json.",
+                this.CmdSetStash);
+            helper.ConsoleCommands.Add("tly_openstash",
+                "Open the Junimo Stash chest directly (debug).",
+                this.CmdOpenStash);
+            helper.ConsoleCommands.Add("tly_stashclear",
+                "Clear all items from the Junimo Stash MetaState (debug — DESTRUCTIVE).",
+                this.CmdStashClear);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -113,9 +123,13 @@ namespace TheLongestYear
             _ccUnlock.Apply();
             var farmerReset = new FarmerReset(this.Monitor);
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
+            _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
+            _meta.AttachStashService(_stashService);
+            JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
-                this.Helper.DirectoryPath, farmerReset, professionPicker);
+                this.Helper.DirectoryPath, farmerReset, professionPicker,
+                _stashService);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
@@ -135,6 +149,10 @@ namespace TheLongestYear
             _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);
             this.Helper.Events.Player.Warped += _peakMineFloorTracker.OnWarped;
             _reset.RegisterIndicators();
+            // Restore stash chest on every save load (not just after reset), so a
+            // save-and-reload mid-run re-places the chest correctly.
+            _stashService.PlaceChest();
+            _stashService.PopulateFromMeta();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
@@ -312,6 +330,49 @@ namespace TheLongestYear
             _launcher?.OpenCraftbook();
         }
 
+        private void CmdSetStash(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.currentLocation is not Farm)
+            {
+                this.Monitor.Log("tly_setstash: stand on the Farm first.", LogLevel.Warn);
+                return;
+            }
+            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
+            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
+            _config.StashTileX = (int)Game1.player.Tile.X + dx;
+            _config.StashTileY = (int)Game1.player.Tile.Y + dy;
+            this.Helper.WriteConfig(_config);
+            this.Monitor.Log(
+                $"Junimo Stash anchored to ({_config.StashTileX}, {_config.StashTileY}). Saved to config.json.",
+                LogLevel.Info);
+            // Immediately re-place the chest at the new tile.
+            _stashService?.PlaceChest();
+            _stashService?.PopulateFromMeta();
+        }
+
+        private void CmdOpenStash(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var chest = _stashService?.FindStashChest();
+            if (chest == null)
+            {
+                this.Monitor.Log("No stash chest found. Own stash_1 and run tly_setstash first.", LogLevel.Warn);
+                return;
+            }
+            chest.ShowMenu();
+        }
+
+        private void CmdStashClear(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _meta.State.StashItems.Clear();
+            var chest = _stashService?.FindStashChest();
+            if (chest != null)
+                chest.Items.Clear();
+            this.Monitor.Log("Junimo Stash MetaState cleared (in memory — persists on next save).", LogLevel.Warn);
+        }
+
         private void CmdActiveEffects(string command, string[] args)
         {
             string bonus = TheLongestYear.Core.ActiveEffectsProvider.BonusId ?? "(none)";
@@ -484,6 +545,9 @@ namespace TheLongestYear
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
+                case "tly_setstash":  this.CmdSetStash(command, args); break;
+                case "tly_openstash": this.CmdOpenStash(command, args); break;
+                case "tly_stashclear": this.CmdStashClear(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
