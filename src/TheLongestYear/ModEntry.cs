@@ -94,6 +94,11 @@ namespace TheLongestYear
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
 
+            // Activate the seed-driven weather scheduler. Toggled at Entry rather than
+            // OnSaveLoaded so the override is in place for the very first day's weather
+            // resolution (which happens during save creation, before SaveLoaded fires).
+            WeatherModificationsPatch.Enabled = _config.Enabled;
+
             // Observation-based donation detector. See DonationObserver.cs for why we can't rely
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
             // showed it didn't fire on real CC deposits).
