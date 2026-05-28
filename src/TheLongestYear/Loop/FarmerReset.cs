@@ -74,10 +74,14 @@ namespace TheLongestYear.Loop
             p.stamina = p.maxStamina.Value;
             p.health = p.maxHealth;
 
-            // House upgrade — set Kitchen on day 1 if kept_kitchen owned. The actual
-            // FarmHouse layout switch happens in WorldResetService (it has to resetForPlayerEntry
-            // after setting the level so the kitchen tiles appear).
-            if (baseline.KitchenOnDay1)
+            // House upgrade — pick the highest tier owned. The FarmHouse layout switch happens
+            // in WorldResetService (it has to resetForPlayerEntry after setting the level so the
+            // kitchen/kids-room/cellar-entrance tiles appear). L3 also triggers FarmHouse's
+            // built-in AddCellarTiles + createCellarWarps + "Cask" recipe grant inside
+            // setMapForUpgradeLevel — see decompile FarmHouse.cs:934-939.
+            if (baseline.BasementOnDay1)
+                p.HouseUpgradeLevel = 3;
+            else if (baseline.KitchenOnDay1)
                 p.HouseUpgradeLevel = 1;
 
             // Re-grant banked cooking recipes. Value 0 = vanilla "learned but never cooked".
@@ -93,7 +97,8 @@ namespace TheLongestYear.Loop
                 $"FarmerReset: gold={baseline.StartingGold}, slots={baseline.MaxItems}, " +
                 $"tools=[{string.Join(",", baseline.ToolTiers)}], " +
                 $"skills=[{string.Join(",", baseline.SkillLevels)}], " +
-                $"kitchen={baseline.KitchenOnDay1}, " +
+                $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
+                $"shortcuts={baseline.ShortcutsUnlocked}, " +
                 $"cookRecipes={cookbookRecipes.Count}, craftRecipes={craftbookRecipes.Count}.",
                 LogLevel.Trace);
         }

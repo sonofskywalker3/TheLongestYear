@@ -238,6 +238,27 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
+    public void Basement_and_shortcuts_track_their_owned_upgrades()
+    {
+        var meta = new MetaState
+        {
+            OwnedUpgrades = { "keep_kitchen", "keep_basement", "keep_shortcuts" }
+        };
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.True(b.KitchenOnDay1);
+        Assert.True(b.BasementOnDay1);
+        Assert.True(b.ShortcutsUnlocked);
+    }
+
+    [Fact]
+    public void Basement_and_shortcuts_default_false_without_owned_upgrades()
+    {
+        var b = RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.False(b.BasementOnDay1);
+        Assert.False(b.ShortcutsUnlocked);
+    }
+
+    [Fact]
     public void KeptBuildings_uses_highest_owned_tier_per_housing_chain()
     {
         var meta = new MetaState

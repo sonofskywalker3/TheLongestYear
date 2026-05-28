@@ -241,6 +241,27 @@ namespace TheLongestYear.Loop
                 _run.VaultBundlesPaid.Add(VaultRules.Vault25000);
             }
 
+            // 7b. Robin's community-upgrade map shortcuts — single mail flag controls all five
+            //     (Town fence, bus tunnel, forest stump bridge, Mountain quarry path, Mountain
+            //     side route). Vanilla reads this flag in Forest.cs:421, Mountain.cs:177,
+            //     Town.cs:589, Beach.cs:468, BeachNightMarket.cs:235 and on GameLocation map
+            //     overrides — adding the flag here is sufficient; the per-location code re-applies
+            //     map overrides on first entry of each location this run.
+            if (baseline.ShortcutsUnlocked)
+                Game1.MasterPlayer.mailReceived.Add("communityUpgradeShortcuts");
+
+            // 7c. Cellar location for kept_basement. loadForNewGame doesn't include the Cellar
+            //     location unless the player previously had an L3 house at save creation. With
+            //     HouseUpgradeLevel = 3 forced by FarmerReset, the FarmHouse warp tile will try
+            //     to teleport into a non-existent "Cellar" location. Create it on demand here
+            //     before resetForPlayerEntry runs the warp setup. updateCellarAssignments
+            //     binds the cellar to the master player.
+            if (baseline.BasementOnDay1 && Game1.getLocationFromName("Cellar") == null)
+            {
+                Game1.locations.Add(new StardewValley.Locations.Cellar("Maps\\Cellar", "Cellar"));
+                Game1.updateCellarAssignments();
+            }
+
             // 8. Pre-build kept buildings on the Farm. Coords are deterministic — we always
             //    use the same tiles so subsequent runs land buildings in the same spots.
             ApplyKeptBuildings(baseline.KeptBuildings);
