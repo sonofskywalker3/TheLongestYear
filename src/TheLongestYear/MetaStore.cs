@@ -40,5 +40,22 @@ namespace TheLongestYear
             _data.WriteSaveData(MetaDataKey, State);
             _data.WriteSaveData(RunDataKey, Run);
         }
+
+        /// <summary>
+        /// Reset <see cref="State"/> to a fresh <see cref="MetaState"/> and persist immediately
+        /// (so a save reload picks up the wipe). Used by the <c>tly_wipemeta</c> debug command
+        /// — lets the user test a true clean-slate run without deleting the underlying save file.
+        /// <para>
+        /// Side effect: external consumers that captured a direct reference to the old
+        /// <see cref="State"/> instance (IndicatorRegistry, JunimoStashCapPatch, etc.) hold
+        /// stale pointers after this call. The caller is expected to log a "reload the save"
+        /// instruction so the user gets fresh service wiring.
+        /// </para>
+        /// </summary>
+        public void WipeMeta()
+        {
+            State = new MetaState();
+            Save();
+        }
     }
 }
