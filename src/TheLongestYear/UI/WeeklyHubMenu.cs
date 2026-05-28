@@ -76,8 +76,16 @@ namespace TheLongestYear.UI
 
         private ClickableComponent _leftCard;
         private ClickableComponent _rightCard;
+        private ClickableComponent _rerollButton;
+        private int _rerollCounter;
         private readonly List<ClickableComponent> _weatherRows = new List<ClickableComponent>();
         private readonly List<ClickableComponent> _cartRows = new List<ClickableComponent>();
+
+        // ---------- Reroll debug button ----------
+        private const int RerollButtonId = 5102;
+        private const int RerollButtonWidth = 200;
+        private const int RerollButtonHeight = 56;
+        private const int RerollSaltPrime = 1399;
 
         private string[] _weatherForecast;
         private System.Collections.Generic.List<StardewValley.ISalable> _cartItems;
@@ -282,7 +290,9 @@ namespace TheLongestYear.UI
             int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 20;
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
-            height = titleBlock + CardHeight + previewBlock + PanelPadding;
+            // Reserve space for the reroll debug button row below preview rows / cards.
+            int rerollBlock = RerollButtonHeight + 24;
+            height = titleBlock + CardHeight + previewBlock + rerollBlock + PanelPadding;
 
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
@@ -296,14 +306,14 @@ namespace TheLongestYear.UI
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
-                downNeighborID = FirstRowIdBelowCards()
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : RerollButtonId
             };
             _rightCard = new ClickableComponent(new Rectangle(cardsRightX, cardsY, CardWidth, CardHeight),
                 _offer.Count > 1 ? _offer[1].ToString() : "right-card")
             {
                 myID = CardIdRight,
                 leftNeighborID = CardIdLeft,
-                downNeighborID = FirstRowIdBelowCards()
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : RerollButtonId
             };
 
             _weatherRows.Clear();
@@ -344,11 +354,25 @@ namespace TheLongestYear.UI
                 rowY += PreviewRowHeight + PreviewSpacing;
             }
 
+            // Reroll debug button — centred horizontally, sits in the bottom strip of the
+            // panel just above its border. Lets the playtester cycle through theme offers
+            // without resetting the run. Not gameplay-balanced; meant for QA use.
+            int rerollX = xPositionOnScreen + (width - RerollButtonWidth) / 2;
+            int rerollY = yPositionOnScreen + height - RerollButtonHeight - 16;
+            _rerollButton = new ClickableComponent(
+                new Rectangle(rerollX, rerollY, RerollButtonWidth, RerollButtonHeight),
+                "reroll")
+            {
+                myID = RerollButtonId,
+                upNeighborID = CardIdLeft,
+            };
+
             allClickableComponents = new List<ClickableComponent>();
             allClickableComponents.Add(_leftCard);
             allClickableComponents.Add(_rightCard);
             allClickableComponents.AddRange(_weatherRows);
             allClickableComponents.AddRange(_cartRows);
+            allClickableComponents.Add(_rerollButton);
 
             ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds);
             ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds);
@@ -416,10 +440,51 @@ namespace TheLongestYear.UI
         {
             base.receiveLeftClick(x, y, playSound);
 
+            if (_rerollButton != null && _rerollButton.containsPoint(x, y))
+            {
+                RerollOffer();
+                Game1.playSound("smallSelect");
+                return;
+            }
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
                 ConfirmSelection(_offer[0]);
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
                 ConfirmSelection(_offer[1]);
+        }
+
+        /// <summary>
+        /// Debug-only: regenerate the offer pool with fresh randomness so the playtester can
+        /// cycle through theme combinations without resetting the run. Salt the underlying seed
+        /// with an incrementing counter — keeps the offer deterministic-for-debug (same counter
+        /// produces same offer) but moves the picker off the originally-rolled pair. Does NOT
+        /// change <c>_run.Seed</c> or any persisted state; closing the menu without picking
+        /// loses the rerolled offer (next open shows whatever <see cref="SelectionService"/>
+        /// would have produced).
+        /// </summary>
+        private void RerollOffer()
+        {
+            _rerollCounter++;
+            var selectedSet = new HashSet<Theme>(_run.SelectedThemesThisMonth);
+            List<Theme> candidates = System.Enum.GetValues(typeof(Theme))
+                .Cast<Theme>()
+                .Where(t => !selectedSet.Contains(t))
+                .OrderBy(t => (int)t)
+                .ToList();
+
+            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+            var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
+            for (int i = candidates.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+            }
+
+            _offer = candidates.Take(SelectionService.OfferSize).ToList();
+            ResolvePerCardData();
+            RecomputeBoundsAndLayout();
+            _monitor.Log(
+                $"WeeklyHubMenu reroll #{_rerollCounter}: offer = [{string.Join(", ", _offer)}].",
+                LogLevel.Info);
         }
 
         private void ConfirmSelection(Theme theme)
@@ -470,6 +535,8 @@ namespace TheLongestYear.UI
                 DrawPreviewRow(b, _cartRows[i], $"Cart: {label}");
             }
 
+            DrawRerollButton(b);
+
             base.draw(b);
 
             if (!string.IsNullOrEmpty(_hoverText))
@@ -477,6 +544,25 @@ namespace TheLongestYear.UI
 
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
+        }
+
+        /// <summary>Render the playtester-only reroll button below the cards / preview rows.
+        /// Plain texture-box + centred label; click rerolls the theme offer in place.</summary>
+        private void DrawRerollButton(SpriteBatch b)
+        {
+            if (_rerollButton == null) return;
+
+            IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
+                _rerollButton.bounds.X, _rerollButton.bounds.Y,
+                _rerollButton.bounds.Width, _rerollButton.bounds.Height,
+                Color.White, 1f, false);
+
+            string label = _rerollCounter == 0 ? "Re-roll Themes" : $"Re-roll ({_rerollCounter})";
+            Vector2 size = Game1.smallFont.MeasureString(label);
+            float labelX = _rerollButton.bounds.X + (_rerollButton.bounds.Width - size.X) / 2f;
+            float labelY = _rerollButton.bounds.Y + (_rerollButton.bounds.Height - size.Y) / 2f;
+            Utility.drawTextWithShadow(b, label, Game1.smallFont,
+                new Vector2(labelX, labelY), Game1.textColor);
         }
 
         private void DrawCard(SpriteBatch b, ClickableComponent card, Theme? theme,
