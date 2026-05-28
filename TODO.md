@@ -99,63 +99,18 @@ save, add a debug command that wipes `MetaState` (JP, owned upgrades,
 backup-done flag) while keeping the save. Cheap: replace
 `_meta.State` with `new MetaState()` + `_meta.Save()`.
 
-## Deferred to Plan 06
-
-- **UX5 — effects layer.** Wire `forage_yield_*` / `crop_growth_*` /
-  `fish_bite_*` / `mine_drops_*` / `all_drops_up` / `all_sell_prices_down`
-  to actual gameplay effects. Currently display-only via
-  `ThemeModifiers.DisplayNameFor`.
-
-  ### Liability/bonus mapping (designed 2026-05-26, awaiting sign-off)
-
-  | Theme | Bonus | Liability |
-  |---|---|---|
-  | Foraging | 25% chance for +1 on any forage drop (incl. stone/wood) | **Mines Closed** — elevator + ladder from entrance don't function |
-  | Farming | +25% Crop Growth | -30% Fish Bite Rate |
-  | Fishing | +30% Fish Bite Rate | -25% Crop Growth |
-  | Mining | 30% chance for +1 on any mine drop (incl. stone) | **Forage Off** — no wild produce / mushrooms (incl. mines) / fiddleheads spawn |
-  | Mixed | 10% chance for +1 on any drop | -50% All Sell Prices |
-
-  Design principles:
-  - No "rounds to zero" — every bonus is a +1-probability so single-drop
-    nodes (seeds, ore, coal, most forage) aren't no-ops.
-  - +1 (not double) means multi-drop nodes like trees stay balanced
-    even when included — a tree dropping 8 wood instead of 7 once in
-    a while is small relative to the day's total. So no exclusions
-    needed.
-  - Each liability hurts an activity the focused player WASN'T going to
-    prioritize that week. Quarry + skull-cavern setups become a hedge
-    against Mines Closed.
-
-  Implementation notes for the effects layer:
-  - **`forage_yield_up` (Foraging bonus):** per-drop 25% roll on
-    `Object.cutWeed/ShakeFromTree/forage spawn` paths; +1 the drop.
-    Exclude qualified-item-id matches for stone (390) and wood (388).
-  - **`mines_closed` (Foraging liability):** patch
-    `MineShaft.checkAction` (the ladder/elevator) to no-op; patch
-    `Mine.checkAction` for the entrance ladder. Maybe show a "the
-    cave entrance is collapsed" message.
-  - **`crop_growth_up/down`:** patch `HoeDirt.dayUpdate` growth-rate
-    multiplier. Down = roll a per-crop chance to skip the day's tick.
-  - **`fish_bite_up/down`:** patch `BobberBar.update` /
-    `FishingRod.startFishing` bite-timer multiplier.
-  - **`mine_drops_up`:** per-drop 30% roll on `MineShaft` /
-    `ResourceClump.performToolAction` ore/coal/geode drops; exclude
-    stone (390). Quarry is technically separate location so quarry
-    drops aren't affected unless we want them to be.
-  - **`forage_off` (Mining liability):** patch the forage-spawn
-    routines for outdoor maps + `MineShaft`'s mushroom spawn to
-    return early when active. Includes fiddleheads in secret woods,
-    cave carrots, etc.
-  - **`all_drops_up` (Mixed bonus):** per-drop 10% roll, +1, on EVERY
-    drop path. Stone and wood included.
-  - **`all_sell_prices_down`:** patch `Object.sellToStorePrice` with
-    0.5× multiplier.
-
-- **UX6 — always-on JP HUD.** Small corner counter showing banked JP +
-  this week's selection + bonus-multiplier indicator.
+### UX6 — always-on JP HUD
+Small corner counter showing banked JP + this week's selection + bonus
+multiplier indicator. Plan-worthy on its own (small footprint).
 
 ## Resolved / closed
+
+- **Plan 06 effects layer (UX5)** — ALL ten modifier ids wired with real
+  Harmony patches: `forage_yield_up` (ForageYieldPatch), `mines_closed` +
+  `mine_drops_up` (MineDropsPatch), `crop_growth_up/down` (CropGrowthPatch),
+  `fish_bite_up/down` (FishBiteRatePatch), `forage_off` (ForageOffPatch),
+  `all_drops_up` + `all_sell_prices_down` (AllDropsPatch). Liability/bonus
+  mapping table preserved in design-spec docs.
 
 - **Weekly Theme Journal entry** — shipped 2026-05-28 as `WeeklyThemeQuestService`.
   Creates a vanilla Quest on theme select with a 4-item checklist; each CC donation
