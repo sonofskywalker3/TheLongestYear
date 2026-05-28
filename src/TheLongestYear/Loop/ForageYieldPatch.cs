@@ -49,7 +49,12 @@ namespace TheLongestYear.Loop
                     clone.IsSpawnedObject = true;
                     clone.CanBeGrabbed = true;
                     if (__instance.dropObject(clone, candidate * 64f, Game1.viewport, initialPlacement: true))
+                    {
+                        PatchLog.Info(
+                            $"forage_yield_up: +1 '{obj.QualifiedItemId}' at ({(int)candidate.X}, " +
+                            $"{(int)candidate.Y}) on {__instance.NameOrUniqueName}.");
                         break;
+                    }
                 }
             }
         }

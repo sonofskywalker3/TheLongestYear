@@ -549,8 +549,11 @@ namespace TheLongestYear.Loop
                 }
             }
 
-            // Stash chest indicator — registered here so it re-appears correctly on each reset.
-            _stashService?.RegisterIndicator();
+            // 2026-05-28 playtest round 4: stash chest indicator removed. The Junimo Chest
+            // sprite is already plainly visible on the Farm — no need to call attention to it.
+            // Also fixed a secondary nit (the bubble was landing inside the farmhouse porch
+            // when the auto-pick fallback resolved to (66, 17)).
+            // _stashService?.RegisterIndicator();
         }
     }
 }
