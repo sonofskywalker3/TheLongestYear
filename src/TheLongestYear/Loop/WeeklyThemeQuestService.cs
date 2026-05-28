@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Quests;
+using StardewValley.Menus;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -40,13 +41,15 @@ namespace TheLongestYear.Loop
 
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
+        private readonly JpCalculator _jp;
         private readonly Func<string, int> _stackForIngredient;
 
         public WeeklyThemeQuestService(IMonitor monitor, MetaStore store,
-            Func<string, int> stackForIngredient)
+            GameplayConfig config, Func<string, int> stackForIngredient)
         {
             _monitor = monitor;
             _store = store;
+            _jp = new JpCalculator(config.Jp);
             _stackForIngredient = stackForIngredient ?? (_ => 1);
         }
 
@@ -137,15 +140,43 @@ namespace TheLongestYear.Loop
 
             q.currentObjective = $"Donated {doneCount}/{bonusItems.Count}:\n" + string.Join("\n", lines);
 
-            // Auto-complete when every bonus item has been donated this run (idempotent — the
-            // questComplete call no-ops if already completed).
+            // Auto-complete when every bonus item has been donated this run. Two rewards land:
+            //   1) A flat JP bonus (season-scaled like the bundle/room completion bonuses).
+            //   2) The week's liability is lifted for the remaining days (bonus stays active).
+            //      RunState.LiabilitySuppressedThisWeek persists the lifted state so a reload
+            //      doesn't snap the liability back on; ActiveEffectsProvider.SuppressLiability
+            //      drives the live patches (ForageOffPatch et al.) to short-circuit to false.
             if (bonusItems.Count > 0 && doneCount == bonusItems.Count && !q.completed.Value)
             {
                 q.questComplete();
-                _monitor.Log(
-                    $"WeeklyThemeQuestService: all {doneCount} bonus items donated — quest complete.",
-                    LogLevel.Info);
+                AwardCompletionRewards();
             }
+        }
+
+        private void AwardCompletionRewards()
+        {
+            // Idempotency guard: if the persisted flag is already set, the rewards already
+            // landed in a prior session — don't double-pay JP on a save+reload.
+            if (Run.LiabilitySuppressedThisWeek)
+                return;
+
+            long bonus = _jp.WeeklyQuestBonus(Run.WeekOfYear);
+            _store.State.JunimoPoints += bonus;
+            Run.LiabilitySuppressedThisWeek = true;
+            ActiveEffectsProvider.SuppressLiability();
+
+            string liabilityName = Run.CurrentSelection.HasValue
+                ? ThemeModifiers.DisplayNameFor(ThemeModifiers.For(Run.CurrentSelection.Value).LiabilityId)
+                : "drawback";
+
+            Game1.addHUDMessage(new HUDMessage(
+                $"Weekly theme complete! +{bonus} JP, drawback lifted.",
+                HUDMessage.achievement_type));
+
+            _monitor.Log(
+                $"WeeklyThemeQuest complete: +{bonus} JP (now {_store.State.JunimoPoints}), " +
+                $"liability '{liabilityName}' suppressed for the rest of the week.",
+                LogLevel.Info);
         }
 
         /// <summary>Resolve a qualified item id to "DisplayName xStack" or fall back to the raw id.

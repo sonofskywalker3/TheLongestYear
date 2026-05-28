@@ -67,6 +67,12 @@ public sealed class RunState
     /// PeakMineFloorTracker (mod-side) on Player.Warped into a MineShaft.</summary>
     public int PeakMineFloor { get; set; }
 
+    /// <summary>True when this week's theme quest has been completed (all 4 bonus items
+    /// donated) and the liability is lifted for the rest of the week. Reset on theme select,
+    /// month transition, and run reset. Persisted via MetaStore so a save+reload mid-week
+    /// keeps the lifted state.</summary>
+    public bool LiabilitySuppressedThisWeek { get; set; }
+
     /// <summary>Record having reached the given floor this run. Idempotent for shallower
     /// floors — only deeper reaches update the peak.</summary>
     public void RecordMineFloor(int floor)
@@ -109,12 +115,16 @@ public sealed class RunState
     /// <summary>The donation ledger as a set, for the gate evaluator.</summary>
     public ISet<string> DonatedSet() => new HashSet<string>(DonatedItemIds);
 
-    /// <summary>Select a theme for this week: set current and add to the month's selections set.</summary>
+    /// <summary>Select a theme for this week: set current and add to the month's selections set.
+    /// Also clears <see cref="LiabilitySuppressedThisWeek"/> — a fresh pick must always start
+    /// with the liability active, otherwise the player could keep cycling themes to skip
+    /// drawbacks entirely.</summary>
     public void Select(Theme theme)
     {
         CurrentSelection = theme;
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
+        LiabilitySuppressedThisWeek = false;
     }
 
     /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
@@ -127,6 +137,7 @@ public sealed class RunState
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
         CurrentWeekBonusItems.Clear();
+        LiabilitySuppressedThisWeek = false;
 
         // Consume the day-28 pre-pick (if any). The controller still needs to call
         // PopulateBonusItemsForCurrentSelection AFTER this so the new month's bonus list
@@ -155,5 +166,6 @@ public sealed class RunState
         CurrentWeekBonusItems.Clear();
         OfferPresentedWeek = -1;
         PeakMineFloor = 0;
+        LiabilitySuppressedThisWeek = false;
     }
 }

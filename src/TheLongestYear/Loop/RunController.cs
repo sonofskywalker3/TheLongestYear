@@ -78,10 +78,15 @@ namespace TheLongestYear.Loop
                 var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
                 ActiveEffectsProvider.Set(bonus, liability);
 
-                // Sweep pre-spawned forage if the restored liability is forage_off — vanilla
-                // newDay/dayUpdate may have placed forage during save load before this point,
-                // and the ForageOffPatch only catches future spawns, not the already-placed items.
-                if (liability == "forage_off")
+                // Sync the persisted "quest complete = liability lifted" state — the provider
+                // resets to unsuppressed on Set above, so re-apply if the run-state flag is on.
+                if (Run.LiabilitySuppressedThisWeek)
+                    ActiveEffectsProvider.SuppressLiability();
+
+                // Sweep pre-spawned forage if forage_off is currently active (i.e. not yet
+                // suppressed by quest completion). Vanilla newDay/dayUpdate may have placed
+                // forage during save load before this point.
+                if (liability == "forage_off" && !Run.LiabilitySuppressedThisWeek)
                     SweepExistingForage();
             }
             else

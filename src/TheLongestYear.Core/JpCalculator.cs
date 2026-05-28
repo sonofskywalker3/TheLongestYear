@@ -32,6 +32,9 @@ public sealed class JpCalculator
 
     public long RoomBonus(int weekOfYear) => Scale(_s.RoomCompletionBonus, weekOfYear);
 
+    /// <summary>Bonus JP awarded on weekly theme quest completion.</summary>
+    public long WeeklyQuestBonus(int weekOfYear) => Scale(_s.WeeklyQuestCompletionBonus, weekOfYear);
+
     public long ForDonationBatch(
         IEnumerable<DonationLine> lines,
         int weekOfYear,

@@ -19,6 +19,11 @@ public sealed class JpSettings
     public int BundleCompletionBonus { get; set; } = 15;
     public int RoomCompletionBonus { get; set; } = 60;
 
+    /// <summary>Bonus JP awarded when the player completes the weekly theme quest by
+    /// donating every bonus item this week. Scales by season multiplier like the bundle/
+    /// room completion bonuses.</summary>
+    public int WeeklyQuestCompletionBonus { get; set; } = 30;
+
     public int BaseFor(Rarity rarity) => rarity switch
     {
         Rarity.Common => CommonJp,
