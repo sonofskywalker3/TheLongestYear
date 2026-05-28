@@ -20,6 +20,7 @@ namespace TheLongestYear
         private MetaStore _meta;
         private CommunityCenterUnlock _ccUnlock;
         private MountainUnlock _mountainUnlock;
+        private StandardFarmEnforcer _standardFarmEnforcer;
         private WorldResetService _reset;
         private RunController _runController;
         private UpgradePurchaseService _purchases;
@@ -82,6 +83,12 @@ namespace TheLongestYear
             helper.Events.Display.RenderedHud += this.OnRenderedHud;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.Display.RenderedWorld += IndicatorRegistry.OnRenderedWorld;
+
+            // Force every new TLY game onto the Standard farm. Wired here (not in OnSaveLoaded)
+            // because the enforcer needs to fire on the title screen / character-creation flow,
+            // which is before any save is loaded.
+            _standardFarmEnforcer = new StandardFarmEnforcer(this.Monitor, _config);
+            _standardFarmEnforcer.Attach(helper);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
