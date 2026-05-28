@@ -297,11 +297,15 @@ public class MetaStateTests
     }
 
     [Fact]
-    public void GameplayConfig_stash_tile_defaults_to_open_farm_tile()
+    public void GameplayConfig_stash_tile_defaults_to_auto_pick_sentinel()
     {
+        // 2026-05-28: (72, 12) was a bad hardcoded default — landed under the
+        // farmhouse roof on the user's playtest save. New default is the (0, 0)
+        // sentinel, which tells JunimoStashService to auto-pick relative to the
+        // FarmHouse entry at runtime. See JunimoStashService.AutoTile.
         var c = new GameplayConfig();
-        Assert.Equal(72, c.StashTileX);
-        Assert.Equal(12, c.StashTileY);
+        Assert.Equal(0, c.StashTileX);
+        Assert.Equal(0, c.StashTileY);
     }
 
     [Fact]

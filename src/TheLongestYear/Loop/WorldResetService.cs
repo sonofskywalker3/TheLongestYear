@@ -32,6 +32,7 @@ namespace TheLongestYear.Loop
         private readonly FarmerReset _farmerReset;
         private readonly ProfessionPickerScheduler _professionPicker;
         private readonly JunimoStashService _stashService;
+        private readonly MountainUnlock _mountainUnlock;
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
@@ -44,7 +45,8 @@ namespace TheLongestYear.Loop
             string modDirectory,
             FarmerReset farmerReset,
             ProfessionPickerScheduler professionPicker,
-            JunimoStashService stashService)
+            JunimoStashService stashService,
+            MountainUnlock mountainUnlock)
         {
             _monitor = monitor;
             _meta = meta;
@@ -55,6 +57,7 @@ namespace TheLongestYear.Loop
             _farmerReset = farmerReset;
             _professionPicker = professionPicker;
             _stashService = stashService;
+            _mountainUnlock = mountainUnlock;
         }
 
         public void PerformReset()
@@ -255,14 +258,15 @@ namespace TheLongestYear.Loop
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();
 
-            // 13. Re-register indicators for the new run's location objects.
-            RegisterIndicators();
-
-            // 13b. Place the Junimo Stash chest on the Farm and populate from MetaState.
-            //      Must run after RegisterIndicators (so the farm location is fully resolved)
-            //      and before the player is warped home.
+            // 13a. Place the Junimo Stash chest on the Farm and populate from MetaState.
+            //      Must run BEFORE RegisterIndicators — the stash indicator targets the
+            //      actually-placed tile (which may differ from config when auto-pick / fallback
+            //      kicked in), so the placement has to happen first.
             _stashService?.PlaceChest();
             _stashService?.PopulateFromMeta();
+
+            // 13b. Re-register indicators for the new run's location objects.
+            RegisterIndicators();
 
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up
@@ -275,6 +279,10 @@ namespace TheLongestYear.Loop
 
             // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
             _ccUnlock.Apply();
+
+            // Re-clear the Mountain landslide. loadForNewGame rebuilt every location, so the
+            // Mountain ctor saw DaysPlayed = 1 and re-initialised landslide.Value = true.
+            _mountainUnlock?.Apply();
 
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
@@ -449,8 +457,10 @@ namespace TheLongestYear.Loop
                     description: "The Junimos left a craftbook on your kitchen table — go have a look.");
             }
 
-            if ((_config.StashTileX != 0 || _config.StashTileY != 0)
-                && !_meta.DismissedIndicators.Contains("tly.stash"))
+            // Stash quest always fires — the chest is placed unconditionally now (auto-pick when
+            // config is (0,0)). The DismissedIndicators guard still suppresses the quest once
+            // the player interacts with the indicator.
+            if (!_meta.DismissedIndicators.Contains("tly.stash"))
             {
                 AddIntroQuest(
                     id: "tly.-9003",

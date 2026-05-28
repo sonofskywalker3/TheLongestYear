@@ -76,11 +76,54 @@ namespace TheLongestYear.Loop
             {
                 var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
                 ActiveEffectsProvider.Set(bonus, liability);
+
+                // Sweep pre-spawned forage if the restored liability is forage_off — vanilla
+                // newDay/dayUpdate may have placed forage during save load before this point,
+                // and the ForageOffPatch only catches future spawns, not the already-placed items.
+                if (liability == "forage_off")
+                    SweepExistingForage();
             }
             else
             {
                 ActiveEffectsProvider.Clear();
             }
+        }
+
+        /// <summary>
+        /// Remove already-spawned wild forage from every outdoor non-mine location. Called when
+        /// the active liability becomes forage_off, since vanilla's per-day forage spawn runs
+        /// during newDay/save-load BEFORE the player picks the week's theme — meaning ForageOffPatch
+        /// (which suppresses future spawns) can't catch day-1 forage. Without this sweep, the
+        /// 2026-05-27 playtest found leek + horseradish on Spring 1 even after picking Mining.
+        /// </summary>
+        private void SweepExistingForage()
+        {
+            int removed = 0;
+            int locationsTouched = 0;
+            foreach (var loc in Game1.locations)
+            {
+                if (loc is StardewValley.Locations.MineShaft) continue;
+                if (!loc.IsOutdoors) continue;
+
+                var toRemove = new System.Collections.Generic.List<Microsoft.Xna.Framework.Vector2>();
+                foreach (var pair in loc.objects.Pairs)
+                {
+                    if (pair.Value.IsSpawnedObject && pair.Value.isForage())
+                        toRemove.Add(pair.Key);
+                }
+                foreach (var tile in toRemove)
+                    loc.objects.Remove(tile);
+
+                if (toRemove.Count > 0)
+                {
+                    locationsTouched++;
+                    removed += toRemove.Count;
+                }
+            }
+
+            _monitor.Log(
+                $"forage_off sweep: removed {removed} spawned-forage objects from {locationsTouched} locations.",
+                LogLevel.Info);
         }
 
         public void OnDayStarted(object sender, DayStartedEventArgs e)
@@ -115,6 +158,11 @@ namespace TheLongestYear.Loop
                     _monitor.Log(
                         $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
                         LogLevel.Info);
+
+                    // Same reasoning as SelectByName/OnRunLoaded: vanilla already ran the day's
+                    // spawnObjects pass, so a freshly-activated forage_off has to clean up.
+                    if (liability == "forage_off")
+                        SweepExistingForage();
                 }
             }
             Run.Season = season;
@@ -198,6 +246,13 @@ namespace TheLongestYear.Loop
                 $"Selected {theme} (bonus {bonus}, liability {liability}). " +
                 $"Bonus items this week: [{string.Join(", ", Run.CurrentWeekBonusItems)}].",
                 LogLevel.Info);
+
+            // Sweep already-spawned forage if forage_off just activated — vanilla's day-start
+            // spawnObjects already ran on each outdoor location during the load/sleep sequence
+            // (well before the player got to the planning hub), so the Harmony prefix on
+            // future spawnObjects calls is too late for today's wild forage on the maps.
+            if (liability == "forage_off")
+                SweepExistingForage();
         }
 
         /// <summary>Sample the per-week bonus list for the current selection and store it on RunState.</summary>

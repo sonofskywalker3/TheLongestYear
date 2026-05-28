@@ -194,12 +194,15 @@ public sealed class GameplayConfig
     public int CraftbookTileY { get; set; } = 4;
 
     /// <summary>X tile coordinate on the Farm where the Junimo Stash chest is placed.
-    /// Default (72,12) is an educated guess for an open area on the Standard farm.
-    /// Use tly_setstash in-game to override if wrong for your farm layout.</summary>
-    public int StashTileX { get; set; } = 72;
+    /// Sentinel <c>(0, 0)</c> means "auto-pick relative to the FarmHouse entry tile" — the
+    /// stash service places the chest two tiles east + one tile south of where the player
+    /// spawns when exiting the farmhouse, which is always visible on Standard farm.
+    /// Use tly_setstash in-game to anchor to a specific tile.</summary>
+    public int StashTileX { get; set; } = 0;
 
-    /// <summary>Y tile coordinate on the Farm where the Junimo Stash chest is placed.</summary>
-    public int StashTileY { get; set; } = 12;
+    /// <summary>Y tile coordinate on the Farm where the Junimo Stash chest is placed.
+    /// See <see cref="StashTileX"/>. <c>(0, 0)</c> = auto-pick.</summary>
+    public int StashTileY { get; set; } = 0;
 
     /// <summary>JP multiplier applied to bonus-list items donated during their selected week.</summary>
     public double SelectionBonusMultiplier { get; set; } = 1.5;
