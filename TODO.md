@@ -44,7 +44,10 @@ backup-done flag) while keeping the save. Cheap: replace
 `_meta.State` with `new MetaState()` + `_meta.Save()`.
 
 ### Weekly Theme Journal entry (active quest for bonus items)
-Source: 2026-05-26 playtest discussion with user.
+Source: 2026-05-26 playtest discussion with user. User asked "when does
+that get built?" during 2026-05-27 playtest — confirmed deferred to v1.1
+(not blocking; player can still pick themes via the planning hub and
+read the bonus list there). Implementation sketch below.
 
 Each week's selected theme creates a Stardew Valley journal entry (the
 quest log, accessible via the bookmark icon on the menu). The entry:

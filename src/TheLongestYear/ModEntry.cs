@@ -19,6 +19,7 @@ namespace TheLongestYear
         private GameplayConfig _config;
         private MetaStore _meta;
         private CommunityCenterUnlock _ccUnlock;
+        private MountainUnlock _mountainUnlock;
         private WorldResetService _reset;
         private RunController _runController;
         private UpgradePurchaseService _purchases;
@@ -53,9 +54,14 @@ namespace TheLongestYear
             {
                 _config.CraftbookTileX = 10; _config.CraftbookTileY = 4; migrated = true;
             }
-            if (_config.StashTileX == 0 && _config.StashTileY == 0)
+            // 2026-05-28 second-pass migration for the stash tile:
+            // The first migration set (72,12) as a hardcoded default, but the 2026-05-27 playtest
+            // showed that tile is invisible on the Standard farm (under the farmhouse roof on
+            // the user's save). Reset to (0,0) so JunimoStashService.PlaceChest auto-picks
+            // relative to the FarmHouse entry instead.
+            if (_config.StashTileX == 72 && _config.StashTileY == 12)
             {
-                _config.StashTileX = 72; _config.StashTileY = 12; migrated = true;
+                _config.StashTileX = 0; _config.StashTileY = 0; migrated = true;
             }
             if (migrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
@@ -170,6 +176,8 @@ namespace TheLongestYear
             IndicatorRegistry.ClearRegistrations();
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
+            _mountainUnlock = new MountainUnlock(this.Monitor);
+            _mountainUnlock.Apply();
             var farmerReset = new FarmerReset(this.Monitor);
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
@@ -178,7 +186,7 @@ namespace TheLongestYear
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
-                _stashService);
+                _stashService, _mountainUnlock);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
@@ -197,11 +205,12 @@ namespace TheLongestYear
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
             _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);
             this.Helper.Events.Player.Warped += _peakMineFloorTracker.OnWarped;
-            _reset.RegisterIndicators();
             // Restore stash chest on every save load (not just after reset), so a
-            // save-and-reload mid-run re-places the chest correctly.
+            // save-and-reload mid-run re-places the chest correctly. Done BEFORE
+            // RegisterIndicators so the stash indicator can target the actually-placed tile.
             _stashService.PlaceChest();
             _stashService.PopulateFromMeta();
+            _reset.RegisterIndicators();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
@@ -229,7 +238,7 @@ namespace TheLongestYear
             int stashSlots = s.StashSlotCount;
             int stashItems = s.StashItems.Count;
             string stashTile = (_config.StashTileX == 0 && _config.StashTileY == 0)
-                ? "not configured"
+                ? "auto (relative to farmhouse entry)"
                 : $"({_config.StashTileX}, {_config.StashTileY})";
 
             this.Monitor.Log(
