@@ -89,6 +89,27 @@ public static class CcItemCatalog
         "(O)164", // Sandfish        — Sandy's Oasis pond (bus required)
         "(O)165", // Scorpion Carp   — Calico Desert
         "(O)252", // Rhubarb         — Sandy's Oasis
+        "(O)88",  // Coconut         — Calico Desert forage
+        "(O)90",  // Cactus Fruit    — Calico Desert forage
+
+        // ----- Animal-locked staples beyond the cheese/wine list (2026-05-28 playtest:
+        //       Farming week 1 surfaced "2 Large Eggs + Honey" with no path to obtain them) -----
+        "(O)174", // Large Egg       — chicken at 5 hearts (~12+ days)
+        "(O)182", // Large Brown Egg — brown chicken at 5 hearts
+        "(O)176", // Egg             — coop + chicken (~5 days at minimum, then daily lay)
+        "(O)180", // Brown Egg       — coop + brown chicken
+        "(O)340", // Honey           — bee house + adjacent flower (Farming 8 to craft, 4 days)
+        "(O)432", // Truffle Oil     — pig + oil maker (Deluxe Barn → pig → outdoor truffle)
+        "(O)167", // Truffle         — pig only (Deluxe Barn gate)
+
+        // ----- Tap / hardwood-locked forage (2026-05-28 playtest: Foraging surfaced Morel
+        //       and Cactus Fruit on week 1 with no way to reach either) -----
+        "(O)257", // Morel           — Secret Woods (needs steel axe + hardwood logs cleared)
+        "(O)281", // Chanterelle     — Secret Woods (fall) — same axe gate
+        "(O)420", // Red Mushroom    — Secret Woods or mines floor 50+ (mines_closed week blocked)
+        "(O)724", // Maple Syrup     // requires tapper (copper bar) + 9 days on a maple tree
+        "(O)725", // Oak Resin       // requires tapper + 7 days on an oak tree
+        "(O)726", // Pine Tar        // requires tapper + 5 days on a pine tree
     };
 
     private static CcItem Item(string id, Theme theme, Rarity rarity, params Season[] seasons)

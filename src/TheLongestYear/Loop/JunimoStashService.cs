@@ -72,14 +72,26 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            // Remove any stale tagged chest at the resolved tile (idempotency).
-            if (farm.objects.ContainsKey(tile)
-                && farm.objects[tile] is Chest existing
-                && existing.modData.ContainsKey(StashModDataKey))
+            // Sweep the entire Farm for any tagged stash chest and remove it before placing
+            // the new one. Removing only the resolved-tile chest (the old behaviour) was not
+            // idempotent: when the auto-pick fallback ladder resolved to a different tile than
+            // a chest left over from a prior session (e.g. ladder picked (66,18) but an earlier
+            // build had placed at (66,17)), the old chest was stranded on the Farm and the
+            // player ended up with two — see the 2026-05-28 playtest report.
+            var staleTiles = new List<Vector2>();
+            foreach (var pair in farm.objects.Pairs)
             {
-                farm.objects.Remove(tile);
+                if (pair.Value is Chest existing
+                    && existing.modData.ContainsKey(StashModDataKey))
+                {
+                    staleTiles.Add(pair.Key);
+                }
+            }
+            foreach (Vector2 staleTile in staleTiles)
+            {
+                farm.objects.Remove(staleTile);
                 _monitor.Log(
-                    $"JunimoStashService: removed stale stash chest at ({tile.X}, {tile.Y}).",
+                    $"JunimoStashService: removed stale stash chest at ({staleTile.X}, {staleTile.Y}).",
                     LogLevel.Trace);
             }
 
