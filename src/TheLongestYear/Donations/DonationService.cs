@@ -21,6 +21,12 @@ namespace TheLongestYear.Donations
         private readonly GameplayConfig _config;
         private readonly JpCalculator _jp;
 
+        /// <summary>Fires after a successful CC donation has been recorded to the ledger + JP
+        /// awarded. WeeklyThemeQuestService subscribes to refresh the per-week quest's progress
+        /// text (and auto-complete when all 4 bonus items are donated). Kept as an Action rather
+        /// than a typed event so the donation layer stays free of cross-package references.</summary>
+        public Action AfterDonation;
+
         public DonationService(IMonitor monitor, MetaStore store, GameplayConfig config)
         {
             _monitor = monitor;
@@ -54,6 +60,8 @@ namespace TheLongestYear.Donations
             _monitor.Log(
                 $"Donated {count}x {qualifiedItemId} ({rarity}) -> +{awarded} JP{bonusTag} (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
+
+            AfterDonation?.Invoke();
         }
 
         /// <summary>True if the player has a selected theme this week AND the donated id is in

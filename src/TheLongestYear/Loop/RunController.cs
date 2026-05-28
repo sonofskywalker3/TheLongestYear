@@ -29,6 +29,7 @@ namespace TheLongestYear.Loop
 
         private bool _pendingReset;
         private TheLongestYear.UI.MenuLauncher _launcher;
+        private WeeklyThemeQuestService _questService;
 
         /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
         public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
@@ -87,6 +88,10 @@ namespace TheLongestYear.Loop
             {
                 ActiveEffectsProvider.Clear();
             }
+
+            // Refresh the weekly quest's objective text against the restored ledger so a
+            // save+reload mid-week reflects already-donated items.
+            _questService?.OnRunLoaded();
         }
 
         /// <summary>
@@ -158,6 +163,9 @@ namespace TheLongestYear.Loop
                     _monitor.Log(
                         $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
                         LogLevel.Info);
+
+                    // Spawn the weekly tracker for the freshly-activated pre-pick.
+                    _questService?.OnThemeSelected();
 
                     // Same reasoning as SelectByName/OnRunLoaded: vanilla already ran the day's
                     // spawnObjects pass, so a freshly-activated forage_off has to clean up.
@@ -246,6 +254,9 @@ namespace TheLongestYear.Loop
                 $"Selected {theme} (bonus {bonus}, liability {liability}). " +
                 $"Bonus items this week: [{string.Join(", ", Run.CurrentWeekBonusItems)}].",
                 LogLevel.Info);
+
+            // Surface the weekly theme + bonus checklist as a quest entry.
+            _questService?.OnThemeSelected();
 
             // Sweep already-spawned forage if forage_off just activated — vanilla's day-start
             // spawnObjects already ran on each outdoor location during the load/sleep sequence
@@ -357,6 +368,11 @@ namespace TheLongestYear.Loop
 
         /// <summary>Wired by ModEntry after the launcher is constructed.</summary>
         public void AttachLauncher(TheLongestYear.UI.MenuLauncher launcher) => _launcher = launcher;
+
+        /// <summary>Wired by ModEntry after the quest service is constructed. Drives the per-week
+        /// quest in the player's quest log — created on theme selection, refreshed on donation,
+        /// auto-completed when all bonus items donated.</summary>
+        public void AttachQuestService(WeeklyThemeQuestService quest) => _questService = quest;
 
         /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
         /// <c>Run.WeekOfYear + 1</c> (and a <paramref name="seasonOverride"/> on day 28) so the
