@@ -3,6 +3,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Objects;
 using TheLongestYear.Core;
+using TheLongestYear.UI;
 
 namespace TheLongestYear.Loop
 {
@@ -78,6 +79,20 @@ namespace TheLongestYear.Loop
             _monitor?.Log(
                 $"JunimoStashCapPatch: rejected item '{item.QualifiedItemId}' — stash at cap ({cap}).",
                 LogLevel.Trace);
+        }
+    }
+
+    /// <summary>
+    /// Dismisses the "tly.stash" indicator the first time the player opens the stash chest.
+    /// </summary>
+    [HarmonyPatch(typeof(Chest), nameof(Chest.ShowMenu))]
+    internal static class JunimoStashShowMenuPatch
+    {
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Postfix(Chest __instance)
+        {
+            if (__instance.modData.ContainsKey(JunimoStashService.StashModDataKey))
+                IndicatorRegistry.Dismiss("tly.stash");
         }
     }
 }
