@@ -190,6 +190,7 @@ namespace TheLongestYear
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
+            JunimoStashCapacityPatch.Connect(_meta.State);
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,

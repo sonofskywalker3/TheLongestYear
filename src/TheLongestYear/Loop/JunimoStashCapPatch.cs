@@ -95,4 +95,52 @@ namespace TheLongestYear.Loop
                 IndicatorRegistry.Dismiss("tly.stash");
         }
     }
+
+    /// <summary>
+    /// Caps the stash chest's <see cref="Chest.GetActualCapacity"/> at the current
+    /// <see cref="MetaState.StashSlotCount"/> (4 base + 4 per stash_1/2/3 upgrade owned). This is
+    /// what controls how many slots ItemGrabMenu draws on open — a non-upgraded stash shows 4
+    /// slots, fully upgraded shows 16. Without this patch the chest opens with the full vanilla
+    /// 36-slot grid (the JunimoStashCapPatch still REJECTS over-cap deposits, but the UI lies
+    /// about the available space).
+    /// </summary>
+    [HarmonyPatch(typeof(Chest), nameof(Chest.GetActualCapacity))]
+    internal static class JunimoStashCapacityPatch
+    {
+        private static MetaState _meta;
+
+        public static void Connect(MetaState meta) => _meta = meta;
+
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Postfix(Chest __instance, ref int __result)
+        {
+            if (_meta == null) return;
+            if (!__instance.modData.ContainsKey(JunimoStashService.StashModDataKey)) return;
+
+            int cap = _meta.StashSlotCount;
+            if (cap > 0)
+                __result = cap;
+        }
+    }
+
+    /// <summary>
+    /// Prevents the player from picking up the stash chest with a pickaxe or axe. The stash is
+    /// part of the run loop (placed on every save load, populated from MetaState) — letting the
+    /// player pick it up would put a regular-chest copy in their inventory that wouldn't sync
+    /// with the meta layer + would leak the modData tag onto a portable chest. Returning false
+    /// from performToolAction matches the vanilla semantics for "the tool didn't break this."
+    /// </summary>
+    [HarmonyPatch(typeof(Chest), nameof(Chest.performToolAction))]
+    internal static class JunimoStashImmovablePatch
+    {
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static bool Prefix(Chest __instance, ref bool __result)
+        {
+            if (!__instance.modData.ContainsKey(JunimoStashService.StashModDataKey))
+                return true; // run original
+
+            __result = false;
+            return false; // skip original
+        }
+    }
 }

@@ -83,9 +83,18 @@ namespace TheLongestYear.Loop
                     LogLevel.Trace);
             }
 
-            // Place a new player chest (playerChest = true enables the vanilla 36-slot layout;
-            // we cap via JunimoStashCapPatch, not by changing the chest's internal size).
-            var chest = new Chest(playerChest: true, tile);
+            // Place a new player chest with the vanilla Junimo Chest sprite (BC 256) so it
+            // reads as visually distinct from a regular wood chest. The constructor sees
+            // itemId "256" and sets SpecialChestType = JunimoChest, which would link this chest
+            // to the team-shared "JunimoChests" global inventory — not what we want (the stash
+            // is per-save, persisted via MetaState). Reset SpecialChestType to None after
+            // construction; that strips the shared-inventory behaviour but the visual stays
+            // (sprite is keyed on ParentSheetIndex / itemId, not SpecialChestType).
+            //
+            // GetActualCapacity is patched separately (JunimoStashCapacityPatch) to return the
+            // current StashSlotCount so the ItemGrabMenu only shows the unlocked slot count.
+            var chest = new Chest(playerChest: true, tile, itemId: "256");
+            chest.SpecialChestType = Chest.SpecialChestTypes.None;
             chest.modData[StashModDataKey] = "1";
             farm.objects[tile] = chest;
             _placedTile = tile;
@@ -255,6 +264,9 @@ namespace TheLongestYear.Loop
         /// <summary>
         /// Register the stash indicator bubble on the Farm at the placed tile.
         /// Called from WorldResetService.RegisterIndicators after the chest is placed.
+        /// Uses an 80px vertical offset because Chest sprites render ABOVE the tile origin —
+        /// the default 32px offset (suited to flat counter/board tiles) left the bubble sitting
+        /// INSIDE the chest visual per 2026-05-28 playtest.
         /// </summary>
         public void RegisterIndicator()
         {
@@ -263,7 +275,8 @@ namespace TheLongestYear.Loop
 
             Farm farm = Game1.getFarm();
             if (farm == null) return;
-            IndicatorRegistry.Register("tly.stash", farm, _placedTile.Value, IndicatorKind.Question);
+            IndicatorRegistry.Register("tly.stash", farm, _placedTile.Value,
+                IndicatorKind.Question, pixelOffsetY: 80);
         }
 
         /// <summary>
