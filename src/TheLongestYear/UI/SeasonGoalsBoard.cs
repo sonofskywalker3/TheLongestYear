@@ -31,6 +31,14 @@ namespace TheLongestYear.UI
         /// empty CC at any point and the player still needs to read the bundle.</summary>
         private const int BulletinBoardNoteTileIndex = 1799;
 
+        /// <summary>Half-width (and half-height) of the rectangular hit area centered on the
+        /// configured Season Goals tile. 2026-05-28 user ask: "the spot for checking the
+        /// bundle data is a little off to the left of the center space on the fireplace,
+        /// could you make it work anywhere on the fireplace?" Half-extent = 1 gives a 3x3
+        /// tile area, which covers a typical CC fireplace footprint regardless of how the
+        /// player anchored the center tile with tly_setboard.</summary>
+        private const int SeasonGoalsHitRadius = 1;
+
         public static void ConnectTo(IModHelper helper, IMonitor monitor, GameplayConfig config,
             Func<MenuLauncher> launcherAccessor)
         {
@@ -47,8 +55,13 @@ namespace TheLongestYear.UI
                 if (_instance == null) return true;
 
                 // 1. Configured Season Goals tile (e.g. above the fireplace) → open the menu.
-                if (tileLocation.X == _instance.Config.SeasonGoalsBoardTileX
-                    && tileLocation.Y == _instance.Config.SeasonGoalsBoardTileY)
+                // 3x3 hit area centered on the configured tile so any part of the fireplace
+                // sprite triggers the menu (player can stand anywhere along the hearth and
+                // press action). See SeasonGoalsHitRadius for the rationale.
+                int dx = tileLocation.X - _instance.Config.SeasonGoalsBoardTileX;
+                int dy = tileLocation.Y - _instance.Config.SeasonGoalsBoardTileY;
+                if (System.Math.Abs(dx) <= SeasonGoalsHitRadius
+                    && System.Math.Abs(dy) <= SeasonGoalsHitRadius)
                 {
                     _instance.OpenGoals();
                     __result = true;
