@@ -1,5 +1,6 @@
 using StardewModdingAPI;
 using TheLongestYear.Core;
+using TheLongestYear.Loop;
 
 namespace TheLongestYear
 {
@@ -13,11 +14,16 @@ namespace TheLongestYear
         private const string MetaDataKey = "meta-state";
         private const string RunDataKey = "run-state";
         private readonly IDataHelper _data;
+        private JunimoStashService _stashService;
 
         public MetaState State { get; private set; } = new MetaState();
         public RunState Run { get; private set; } = new RunState();
 
         public MetaStore(IDataHelper data) => _data = data;
+
+        /// <summary>Connect the stash service so BankToMeta fires before each save.</summary>
+        public void AttachStashService(JunimoStashService service)
+            => _stashService = service;
 
         /// <summary>Load this playthrough's banked progress and active run. Call when a save is loaded.</summary>
         public void Load()
@@ -29,6 +35,8 @@ namespace TheLongestYear
         /// <summary>Commit banked progress and run-state into the save. Call from the game's Saving event.</summary>
         public void Save()
         {
+            // Capture chest contents into MetaState before serialising.
+            _stashService?.BankToMeta();
             _data.WriteSaveData(MetaDataKey, State);
             _data.WriteSaveData(RunDataKey, Run);
         }
