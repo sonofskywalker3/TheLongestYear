@@ -83,11 +83,15 @@ namespace TheLongestYear.Loop
                 if (Run.LiabilitySuppressedThisWeek)
                     ActiveEffectsProvider.SuppressLiability();
 
-                // Sweep pre-spawned forage if forage_off is currently active (i.e. not yet
-                // suppressed by quest completion). Vanilla newDay/dayUpdate may have placed
-                // forage during save load before this point.
-                if (liability == "forage_off" && !Run.LiabilitySuppressedThisWeek)
-                    SweepExistingForage();
+                // 2026-05-28 fix: do NOT re-sweep on save load even if forage_off is active.
+                // The sweep only needs to run when the theme is FRESHLY selected (via
+                // SelectByName or BeginNewMonth's pre-pick activation) — that's when vanilla
+                // has just spawned forage that we need to clean up. On a save reload the
+                // forage state already reflects whatever was on the map at save time, and
+                // ForageOffPatch's per-spawn suppression continues to block future spawns.
+                // Re-sweeping on reload destroyed a user's intent to re-pick the week's
+                // theme: they reloaded Spring 1 to switch from Mining → Foraging, but the
+                // sweep had already wiped forage from a prior Mining-pick session.
             }
             else
             {
