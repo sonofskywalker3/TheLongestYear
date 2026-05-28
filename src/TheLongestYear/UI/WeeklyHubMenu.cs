@@ -493,7 +493,11 @@ namespace TheLongestYear.UI
             if (_isPreSelectForNextMonth)
                 _runController.PreSelectForNextMonth(theme);
             else
-                _runController.SelectByName(theme.ToString());
+                // skipOfferCheck whenever the menu has rerolled so picks off the rerolled
+                // offer aren't rejected by RunController's canonical OfferForWeek validation.
+                // The reroll path already excludes already-selected-this-month themes, so the
+                // gameplay rule that matters is preserved.
+                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0);
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }
