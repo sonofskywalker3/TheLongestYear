@@ -102,17 +102,29 @@ namespace TheLongestYear.Loop
 
             IndicatorRegistry.Dismiss("tly.stash");
 
-            // Strip the color picker swatch row but KEEP the toggle button visible. The
-            // first pass nulled colorPickerToggleButton too, which removed the right-column
-            // icon and left an empty 64×64 hole in the button stack (2026-05-28 playtest:
-            // "the color picker icon is gone but the space is still there"). Leaving the
-            // toggle button in place fills that hole; clicking it flips the unused
-            // showChestColorPicker flag harmlessly because chestColorPicker is null so
-            // ItemGrabMenu.draw's `if (chestColorPicker != null)` guard skips the swatches.
+            // Strip the color picker entirely (toggle button + swatch row) AND slide the
+            // remaining right-column buttons down so they fill the toggle's old slot — the
+            // 2026-05-28 playtest specifically asked for the buttons to redistribute rather
+            // than leave a hole or a vestigial no-op icon. The vanilla right column stacks
+            // top→bottom as organize, fillStacks, colorPickerToggle; we move fillStacks down
+            // to the toggle's Y and organize down to the old fillStacks Y. The empty slot ends
+            // up at the top of the column, which abuts the chest inventory grid and reads as
+            // intentional spacing rather than a gap between two visible buttons.
             if (Game1.activeClickableMenu is ItemGrabMenu igm)
             {
-                igm.chestColorPicker = null;
-                igm.discreteColorPickerCC = null;
+                if (igm.colorPickerToggleButton != null
+                    && igm.fillStacksButton != null
+                    && igm.organizeButton != null)
+                {
+                    int toggleY = igm.colorPickerToggleButton.bounds.Y;
+                    int fillY   = igm.fillStacksButton.bounds.Y;
+                    igm.fillStacksButton.bounds.Y = toggleY;
+                    igm.organizeButton.bounds.Y   = fillY;
+                }
+
+                igm.chestColorPicker         = null;
+                igm.colorPickerToggleButton  = null;
+                igm.discreteColorPickerCC    = null;
                 Game1.player.showChestColorPicker = false;
             }
         }
