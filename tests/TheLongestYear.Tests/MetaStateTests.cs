@@ -241,4 +241,51 @@ public class MetaStateTests
         s.DismissedIndicators.Add("tly.cookbook");   // duplicate
         Assert.Single(s.DismissedIndicators);
     }
+
+    [Fact]
+    public void StashItems_defaults_empty_and_round_trips_through_json()
+    {
+        var s = new MetaState();
+        Assert.Empty(s.StashItems);
+
+        var original = new MetaState
+        {
+            StashItems =
+            {
+                new StashItemRecord("(O)24", 2, 0),
+                new StashItemRecord("(O)698", 1, 4)
+            }
+        };
+        string json = JsonSerializer.Serialize(original);
+        MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
+
+        Assert.Equal(2, restored.StashItems.Count);
+        Assert.Equal("(O)24", restored.StashItems[0].ItemId);
+        Assert.Equal(2, restored.StashItems[0].Quantity);
+        Assert.Equal(0, restored.StashItems[0].Quality);
+        Assert.Equal("(O)698", restored.StashItems[1].ItemId);
+        Assert.Equal(1, restored.StashItems[1].Quantity);
+        Assert.Equal(4, restored.StashItems[1].Quality);
+    }
+
+    [Fact]
+    public void StashSlotCount_returns_zero_when_no_stash_upgrade_owned()
+    {
+        var s = new MetaState();
+        Assert.Equal(0, s.StashSlotCount);
+    }
+
+    [Fact]
+    public void StashSlotCount_returns_4_when_stash_1_owned()
+    {
+        var s = new MetaState { OwnedUpgrades = { "stash_1" } };
+        Assert.Equal(4, s.StashSlotCount);
+    }
+
+    [Fact]
+    public void StashSlotCount_returns_8_when_stash_2_owned()
+    {
+        var s = new MetaState { OwnedUpgrades = { "stash_1", "stash_2" } };
+        Assert.Equal(8, s.StashSlotCount);
+    }
 }

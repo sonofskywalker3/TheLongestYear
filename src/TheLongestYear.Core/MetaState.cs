@@ -75,6 +75,24 @@ public sealed class MetaState
     /// </summary>
     public HashSet<string> DismissedIndicators { get; set; } = new();
 
+    /// <summary>
+    /// Items banked in the Junimo Stash across runs. Serialized as part of MetaState
+    /// on the game's Saving event (never eagerly). Restored into the world chest on
+    /// every reset by <c>JunimoStashService.PopulateFromMeta</c>.
+    /// </summary>
+    public List<StashItemRecord> StashItems { get; set; } = new();
+
+    /// <summary>
+    /// Current slot capacity of the Junimo Stash, derived from the highest owned
+    /// stash upgrade tier: 0 = not unlocked, 4 = stash_1, 8 = stash_2.
+    /// </summary>
+    public int StashSlotCount => HighestKeptTier("stash_", 2) switch
+    {
+        1 => 4,
+        2 => 8,
+        _ => 0
+    };
+
     public bool HasUpgrade(string id) => OwnedUpgrades.Contains(id);
 
     /// <summary>
