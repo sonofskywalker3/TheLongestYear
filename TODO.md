@@ -62,48 +62,22 @@ JP cost ballpark (relative to bus repair = 100 JP):
 Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
-### Seed-driven weather scheduler with per-season minimums
-Source: 2026-05-27 playtest. User asked for "at least 2 days of rain
-every season, at least 2 storms in summer, but mix them up every new
-seed."
-
-Why this isn't a 10-line patch: vanilla rolls weather day-by-day with
-no per-season guarantees, and the hardcoded forced days (Spring 3 =
-Rain, Summer 13/26 = Storm) repeat every loop. Stripping the hardcoded
-days AND guaranteeing minimums needs a custom scheduler:
-
-- At each season transition, deterministically schedule the season's
-  weather from `(uniqueIDForThisGame, season#)`.
-- Per-season constraints (v1 sketch):
-  - Spring: ≥2 rain days; no storms.
-  - Summer: ≥2 storms; ≥2 rain days (storms count as rain).
-  - Fall: ≥2 rain days.
-  - Winter: ≥2 snow days.
-- Constraints exclude festival days + days 1–2 (forced sun) so we don't
-  schedule rain on a Festival/Sun-forced day.
-- Harmony patch on `Game1.getWeatherModificationsForDate` (or
-  `Utility.PickWeatherForLocation`) returns the scheduled value.
-- Day-3 forced rain already patched out
-  (`WeatherModificationsPatch`). Summer 13/26 forced storms still
-  active and would need to be subsumed by the new scheduler.
-
-Status: plan-worthy on its own. Coordinate with effects layer (Plan 06)
-since some liabilities key off weather.
-
-### Wipe-meta debug command (`tly_wipemeta`)
-Source: 2026-05-27 playtest. User noticed JP banked = 8 after a reset
-and asked "how do I have JP banked? I didn't donate anything." Banked
-JP is meta-state from earlier sessions, intentionally preserved by
-`tly_reset`. For testing a true clean-slate run without deleting the
-save, add a debug command that wipes `MetaState` (JP, owned upgrades,
-backup-done flag) while keeping the save. Cheap: replace
-`_meta.State` with `new MetaState()` + `_meta.Save()`.
-
-### UX6 — always-on JP HUD
-Small corner counter showing banked JP + this week's selection + bonus
-multiplier indicator. Plan-worthy on its own (small footprint).
-
 ## Resolved / closed
+
+- **Seed-driven weather scheduler** — shipped 2026-05-28 as
+  `WeatherScheduler` + `WeatherModificationsPatch`. Per-season minimums
+  (≥2 rain Spring/Fall, ≥2 storm + ≥2 rain Summer, ≥2 snow Winter),
+  deterministic from `(uniqueIDForThisGame, seasonIndex)`. Subsumes
+  the prior day-3 forced-rain bypass + Summer 13/26 hardcoded storms.
+  Commit 14322d4.
+
+- **`tly_wipemeta` debug command** — shipped 2026-05-28 as
+  `MetaStore.WipeMeta()` + `CmdWipeMeta`. Replaces State with a fresh
+  MetaState() and persists immediately. Commit 61ab125.
+
+- **UX6 — always-on JP HUD** — shipped 2026-05-28 as `DrawJpHud` on the
+  existing `Display.RenderedHud` hook. Top-right corner, 2 lines (banked
+  JP + active theme + 1.5×/lifted suffix). GMCM toggle. Commit 1a8e2b2.
 
 - **Plan 06 effects layer (UX5)** — ALL ten modifier ids wired with real
   Harmony patches: `forage_yield_up` (ForageYieldPatch), `mines_closed` +
