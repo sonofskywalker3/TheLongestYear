@@ -51,6 +51,11 @@ public static class BonusItemSampler
         _ => 1
     };
 
+    /// <summary>Weeks 1-2 of a run get the EarlyGameAvoid filter — items requiring significant
+    /// infrastructure (cheese press, keg, fruit trees, deep mines, Calico Desert) are unrealistic
+    /// for a player on their first run with no kept upgrades. Week 3+ unlocks the full pool.</summary>
+    private const int EarlyGameMaxWeek = 2;
+
     /// <summary>
     /// Sample up to <paramref name="maxCount"/> bonus items for <paramref name="theme"/> in
     /// <paramref name="currentSeason"/>. Returns a stable order for a given (seed, week, theme,
@@ -78,6 +83,21 @@ public static class BonusItemSampler
             if (b.Theme != theme) continue;
             foreach (string id in b.InPlayItemsFor(currentSeason, isObtainableInSeason))
                 poolWeights[id] = WeightFor(rarityOf(id));
+        }
+
+        // Week 1-2: drop late-game-infrastructure items (cheese, wine, fruit-tree fruits, deep
+        // mine essences, Calico Desert) so the bonus card shows things the player can plausibly
+        // donate within the week. If the filter drops the pool to empty (e.g. a theme that only
+        // has infrastructure items pinned this season), fall back to the unfiltered pool rather
+        // than ship an empty card.
+        if (weekOfYear <= EarlyGameMaxWeek && poolWeights.Count > 0)
+        {
+            var filtered = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var kv in poolWeights)
+                if (!CcItemCatalog.EarlyGameAvoid.Contains(kv.Key))
+                    filtered[kv.Key] = kv.Value;
+            if (filtered.Count > 0)
+                poolWeights = filtered;
         }
 
         if (poolWeights.Count == 0) return Array.Empty<string>();

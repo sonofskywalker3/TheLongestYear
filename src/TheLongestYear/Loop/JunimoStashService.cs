@@ -276,7 +276,7 @@ namespace TheLongestYear.Loop
             Farm farm = Game1.getFarm();
             if (farm == null) return;
             IndicatorRegistry.Register("tly.stash", farm, _placedTile.Value,
-                IndicatorKind.Question, pixelOffsetY: 80);
+                IndicatorKind.Question, pixelOffsetY: 128);
         }
 
         /// <summary>

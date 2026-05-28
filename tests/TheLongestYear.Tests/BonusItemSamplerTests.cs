@@ -101,11 +101,11 @@ public class BonusItemSamplerTests
             BundleRequirement.CreatePercentage("Crab Pot", Theme.Fishing,
                 new[] { "crab-spring", "crab-summer", "crab-yearround" },
                 numberOfSlots: 2,
-                cumulativeRequiredBySeason: new[] { 0, 1, 2, 2 })
+                // Spring quota set to 1 so the bundle is in-play for Spring; the obtainability
+                // predicate is what we're testing here.
+                cumulativeRequiredBySeason: new[] { 1, 1, 2, 2 })
         };
         // Only crab-spring and crab-yearround are obtainable in Spring (per the predicate).
-        // Spring quota = 0 no longer excludes the bundle — items are always in play, with
-        // rarity weighting controlling how often hard ones appear.
         var sample = BonusItemSampler.SampleForTheme(
             42, 0, Theme.Fishing, Season.Spring, bundles,
             isObtainableInSeason: id => id != "crab-summer",
@@ -134,13 +134,57 @@ public class BonusItemSamplerTests
     // ----- UX4: rarity weighting + zero-quota Percentage exclusion -----
 
     [Fact]
-    public void Zero_quota_Percentage_bundle_still_contributes_to_the_pool()
+    public void EarlyGameAvoid_filters_pool_in_weeks_1_and_2()
     {
-        // UX4 (corrected): Adventurer's Spring quota = 0 does NOT exclude its items from the
-        // Mining bonus pool. Inclusion is the right behaviour — the rarity weighting (Common=8,
-        // VeryRare=1) handles "make hard items show up less often", and skipping them entirely
-        // would deprive the player of their pick at all in seasons where the bundle isn't gated
-        // yet. The earlier handoff round suggested exclusion; the actual ask was just weighting.
+        // Spring Mining bundle containing (O)80 Quartz (early-game OK) + (O)768 Solar Essence
+        // (deep-mine, in EarlyGameAvoid). In weeks 1-2 the avoid set kicks in and Solar Essence
+        // is filtered out; in week 3+ both items are eligible.
+        var bundles = new[]
+        {
+            BundleRequirement.CreatePercentage("Geologist", Theme.Mining,
+                new[] { "(O)80", "(O)768" }, // Quartz, Solar Essence
+                numberOfSlots: 1,
+                cumulativeRequiredBySeason: new[] { 1, 1, 1, 1 })
+        };
+
+        // Week 1: Solar Essence filtered out, only Quartz remains.
+        var w1 = BonusItemSampler.SampleForTheme(
+            42, 1, Theme.Mining, Season.Spring, bundles, _ => true, AllCommon, maxCount: 10);
+        Assert.Equal(new[] { "(O)80" }, w1.ToArray());
+
+        // Week 3: full pool, both items present.
+        var w3 = BonusItemSampler.SampleForTheme(
+            42, 3, Theme.Mining, Season.Spring, bundles, _ => true, AllCommon, maxCount: 10);
+        Assert.Equal(2, w3.Count);
+        Assert.Contains("(O)80", w3);
+        Assert.Contains("(O)768", w3);
+    }
+
+    [Fact]
+    public void EarlyGameAvoid_falls_back_to_full_pool_when_filter_empties_it()
+    {
+        // Pool consists entirely of EarlyGameAvoid items — would normally produce an empty
+        // bonus card in early weeks. Sampler falls back to the unfiltered pool so the player
+        // still sees a card (even if it lists hard items).
+        var bundles = new[]
+        {
+            BundleRequirement.CreatePercentage("All Hard", Theme.Mining,
+                new[] { "(O)768", "(O)769" }, // Solar + Void Essence both in EarlyGameAvoid
+                numberOfSlots: 1,
+                cumulativeRequiredBySeason: new[] { 1, 1, 1, 1 })
+        };
+        var sample = BonusItemSampler.SampleForTheme(
+            42, 1, Theme.Mining, Season.Spring, bundles, _ => true, AllCommon, maxCount: 10);
+        Assert.Equal(2, sample.Count);
+    }
+
+    [Fact]
+    public void Zero_quota_Percentage_bundle_is_excluded_from_the_pool()
+    {
+        // 2026-05-28 reversal: zero-quota Percentage bundles return EMPTY for the bonus pool.
+        // Adventurer's Spring quota = 0, so Solar/Void Essence (priced as Common/Uncommon)
+        // should not appear in Spring Mining bonus picks. Rarity-only weighting can't keep
+        // them out — both essences price as Common-tier, matching Quartz's weight 1:1.
         var bundles = new[]
         {
             BundleRequirement.CreatePercentage("Adventurer", Theme.Mining,
@@ -148,9 +192,15 @@ public class BonusItemSamplerTests
                 numberOfSlots: 2,
                 cumulativeRequiredBySeason: new[] { 0, 1, 2, 2 })
         };
-        var sample = BonusItemSampler.SampleForTheme(
+        // Sampled in Spring (quota = 0): empty.
+        var springSample = BonusItemSampler.SampleForTheme(
             42, 0, Theme.Mining, Season.Spring, bundles, _ => true, AllCommon, maxCount: 10);
-        Assert.Equal(3, sample.Count);
+        Assert.Empty(springSample);
+
+        // Sampled in Summer (quota = 1): full pool.
+        var summerSample = BonusItemSampler.SampleForTheme(
+            42, 0, Theme.Mining, Season.Summer, bundles, _ => true, AllCommon, maxCount: 10);
+        Assert.Equal(3, summerSample.Count);
     }
 
     [Fact]

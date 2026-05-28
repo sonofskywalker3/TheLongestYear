@@ -188,11 +188,15 @@ public sealed class BundleRequirement
     /// <list type="bullet">
     ///   <item>Seasonal: all ingredients, but only when its season is the current season.</item>
     ///   <item>PerItem: ingredients pinned to the current season.</item>
-    ///   <item>Percentage: ingredients that pass the <paramref name="obtainablePredicate"/>.
-    ///         The bundle's cumulative quota does NOT gate inclusion — rare items still appear,
-    ///         just much less often than common items via the sampler's inverse-rarity weighting
-    ///         (Common×8 vs VeryRare×1). The original UX4 spec only asked for weighting, not
-    ///         exclusion; an earlier handoff round overshot the ask.</item>
+    ///   <item>Percentage: ingredients that pass the <paramref name="obtainablePredicate"/>,
+    ///         but ONLY when the bundle's cumulative quota for this season is non-zero. A
+    ///         zero-quota bundle isn't urgent this season — its items shouldn't pollute the
+    ///         bonus pool. 2026-05-28 playtest: Adventurer's Spring quota = 0 was leaking
+    ///         Solar/Void Essence into Spring Mining bonus picks because the prior rule only
+    ///         filtered by per-item obtainability. The earlier rationale ("rarity weighting
+    ///         keeps essences sparse") doesn't hold when both essences are priced as Common
+    ///         (40g) / Uncommon (50g) — their rarity matches Quartz so weighting can't keep
+    ///         them out.</item>
     /// </list>
     /// </summary>
     public IEnumerable<string> InPlayItemsFor(Season season, Func<string, bool> obtainablePredicate)
@@ -208,6 +212,8 @@ public sealed class BundleRequirement
                 return ItemSeasonPins!.Where(kv => kv.Value == season).Select(kv => kv.Key);
 
             case BundleKind.Percentage:
+                if (CumulativeRequiredBySeason![(int)season] == 0)
+                    return Enumerable.Empty<string>();
                 return Ingredients.Where(obtainablePredicate);
 
             default:
