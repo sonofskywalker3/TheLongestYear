@@ -288,4 +288,12 @@ public class MetaStateTests
         var s = new MetaState { OwnedUpgrades = { "stash_1", "stash_2" } };
         Assert.Equal(8, s.StashSlotCount);
     }
+
+    [Fact]
+    public void GameplayConfig_stash_tile_defaults_to_zero_zero()
+    {
+        var c = new GameplayConfig();
+        Assert.Equal(0, c.StashTileX);
+        Assert.Equal(0, c.StashTileY);
+    }
 }
