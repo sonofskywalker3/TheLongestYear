@@ -1,9 +1,10 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-05-27 (after Plan 06 landed)
-**Branch:** `feat/v1-plan-06-theme-effects`
-**Tests:** 320 passing, 0 failing
+**Last updated:** 2026-05-27 (after Plan 07 landed — v1 implementation COMPLETE)
+**Branch:** `feat/v1-plan-07-junimo-stash`
+**Tests:** 328 passing, 0 failing
 **Build:** clean (0 warnings, 0 errors)
+**Status:** v1 ready for first meaningful playtest
 
 ## What v1 means
 
@@ -23,21 +24,23 @@ either ships in v1 or is explicitly deferred.
 | **Plan 06A — Persistence effects + per-stat keep upgrades** | `feat/v1-plan-06a-persistence-effects` | Wires `OwnedUpgrades` into reset effects (backpack, gold, kept coops/barns, kitchen, vault bus, horse, starting animals). Adds 80 chained keep entries (16 tool tiers + 2 rods + 50 skill levels + 12 mine elevator floors). Cap-not-grant via `PlayerSnapshot` (in-run peak captured pre-wipe) + `RunState.PeakMineFloor`. Profession picker re-fires for kept L5/L10 skills. Shrine UI hides locked entries. Generalised `MeetsMetaRequirement` (upgrade/quest/mail/season). |
 | **Plan 06B — Cookbook + Craftbook** | `feat/v1-plan-06b-cookbook-craftbook` | 6 Carryover catalog entries (Cookbook/Craftbook I/II/III @ 150/350/700 JP, 5/10/20 slots). `CookbookMenu` + `CraftbookMenu` slot-grid IClickableMenus with sub-mode recipe picker (currently-known only) and confirm-remove dialog. `FarmHouse.checkAction` Harmony patches open menus on configurable tile coords (`tly_setcookbook`/`tly_setcraftbook`). `IndicatorRegistry` for reusable ?/! bubbles over world tiles. Quest intros via vanilla `Quest` on first reset after purchase. Recipe re-grant on `FarmerReset.Apply`. `MetaState` extended with `CookbookRecipes`/`CraftbookRecipes` (List<string>) + `DismissedIndicators` (HashSet<string>). |
 | **Plan 06 — Theme effects layer** | `feat/v1-plan-06-theme-effects` | `ThemeModifiers` ids corrected to match signed-off spec (mines_closed / fish_bite_down / forage_off). `ActiveEffectsProvider` + `BonusDropResolver` Core types wired through `RunController` (Set/Clear on theme select + reset). 6 Harmony patch files implementing all 10 bonus/liability effects: forage_yield_up / forage_off / crop_growth_up / crop_growth_down / fish_bite_up / fish_bite_down / mine_drops_up / mines_closed / all_drops_up / all_sell_prices_down. `MixedSeedsPatch` injects Red Cabbage / Starfruit per cultivation upgrades (bool overload pinned). `fortune_rare_fish` gives +25% bite rate. `WeatherForecast` + `CartStockPreview` Core types deliver real foresight data to `WeeklyHubMenu` per owned Weather Sage / Cart Whisperer tiers. `tly_activeeffects` debug command. |
+| **Plan 07 — Junimo Stash** | `feat/v1-plan-07-junimo-stash` | Pure Core: `StashItemRecord` POCO + `MetaState.StashItems` + `MetaState.StashSlotCount` (0/4/8 from `stash_1`/`stash_2`) + `GameplayConfig.StashTileX/Y`. Mod-side: `JunimoStashService` manages the tagged Chest lifecycle (place + populate + bank + register indicator + find), `JunimoStashCapPatch` enforces the slot cap via `Chest.addItem` postfix (HUD message on rejection), `JunimoStashShowMenuPatch` dismisses the `tly.stash` indicator on first open. Wired into `WorldResetService.PerformReset` step 13b, `MetaStore.Save` (anti-save-scum invariant preserved), and `ModEntry.OnSaveLoaded` (mid-run save-load safety). Quest intro `tly.-9003` fires on first run after stash_1 + tile configured. Debug commands: `tly_setstash`, `tly_openstash`, `tly_stashclear`. `tly_meta` extended with stash summary. |
 
-## Pending for v1
+## v1 implementation complete
 
-One block remains. After it ships, v1 is ready for a meaningful playtest.
+All §14 v1-scope items shipped. Ready for first meaningful playtest.
 
-### Plan 07 — Junimo Stash (user direction received, ready to plan)
+**Pre-playtest setup checklist (debug-only, no in-game onboarding for v1):**
 
-Per design spec §9 + user direction 2026-05-27: "a specific chest with limited slots they can interact with anytime."
-
-- World-object chest on the farm at a configurable tile (same pattern as cookbook/craftbook: `tly_setstash` debug command).
-- Slot cap from existing `stash_1` (4 slots) and `stash_2` (8 slots) upgrades (already in Plan 05 UpgradeCatalog).
-- Anytime interaction during run — reuse vanilla `Chest` UI with a Harmony slot-cap enforcement patch.
-- Items survive reset — chest contents banked into MetaState on close + restored on next run start.
-
-Status: design surfaced + signed off. Implementation plan not yet written.
+1. Build + deploy the mod (build is clean as of branch `feat/v1-plan-07-junimo-stash`).
+2. Load a save.
+3. Anchor the interactable world tiles via debug commands — each requires standing on/facing the target tile:
+   - `tly_setboard` (Season Goals board, inside CC)
+   - `tly_setcookbook` (kitchen counter)
+   - `tly_setcraftbook` (farmhouse table)
+   - `tly_setstash` (any farm tile)
+4. Purchase upgrades via `tly_addjp 5000` + `tly_buyupgrade <id>` for the features to verify.
+5. `tly_reset` to land on Spring 1 with the configured surfaces active.
 
 ## Deferred beyond v1
 
