@@ -206,4 +206,8 @@ public sealed class GameplayConfig
 
     /// <summary>JP multiplier applied to bonus-list items donated during their selected week.</summary>
     public double SelectionBonusMultiplier { get; set; } = 1.5;
+
+    /// <summary>Always-on top-right corner HUD showing banked JP + the current week's theme +
+    /// the 1.5× / drawback-lifted state. Toggle off to hide.</summary>
+    public bool ShowJpHud { get; set; } = true;
 }

@@ -565,15 +565,80 @@ namespace TheLongestYear
             }
         }
 
-        /// <summary>Re-draw the clock/date/money HUD during festivals. Vanilla's drawHUD
-        /// short-circuits on eventUp (Game1.cs:15410) so only the menu button is drawn during
-        /// festivals — that was sensible when time was frozen, but with FestivalTimeFlow
-        /// active the clock actually means something so the user wants to see it.</summary>
+        /// <summary>Re-draw the clock/date/money HUD during festivals + draw the always-on JP
+        /// HUD. Vanilla's drawHUD short-circuits on eventUp (Game1.cs:15410) so the festival
+        /// re-draw is needed for the clock when FestivalTimeFlow is active; the JP HUD piggy-
+        /// backs on the same event hook with its own visibility gating.</summary>
         private void OnRenderedHud(object sender, StardewModdingAPI.Events.RenderedHudEventArgs e)
         {
-            if (!Game1.isFestival() || Game1.dayTimeMoneyBox == null)
-                return;
-            Game1.dayTimeMoneyBox.draw(e.SpriteBatch);
+            if (Game1.isFestival() && Game1.dayTimeMoneyBox != null)
+                Game1.dayTimeMoneyBox.draw(e.SpriteBatch);
+
+            DrawJpHud(e.SpriteBatch);
+        }
+
+        /// <summary>
+        /// Always-on top-right HUD showing banked JP + the current week's theme. Two lines max:
+        /// <c>JP: 123</c> on top, <c>Mining (1.5x)</c> (or <c>Mining (1.5x, lifted)</c> when the
+        /// weekly theme quest is complete and the drawback is suppressed) on the bottom.
+        /// Positioned directly below the vanilla day/time/money box so it doesn't fight other
+        /// HUD elements for screen space. Hidden when the player has toggled the HUD off
+        /// (<c>Game1.displayHUD</c>), during cutscenes (<c>Game1.eventUp</c>), or when the
+        /// mod-side toggle <see cref="GameplayConfig.ShowJpHud"/> is off.
+        /// </summary>
+        private void DrawJpHud(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
+        {
+            if (_meta == null) return;
+            if (!Context.IsWorldReady) return;
+            if (!_config.ShowJpHud) return;
+            if (!Game1.displayHUD) return;
+            if (Game1.eventUp) return;
+
+            long jp = _meta.State.JunimoPoints;
+            TheLongestYear.Core.RunState run = _meta.Run;
+
+            var lines = new System.Collections.Generic.List<string> { $"JP: {jp}" };
+            if (run.CurrentSelection.HasValue)
+            {
+                string theme = run.CurrentSelection.Value.ToString();
+                string suffix = run.LiabilitySuppressedThisWeek ? "(1.5x, lifted)" : "(1.5x)";
+                lines.Add($"{theme} {suffix}");
+            }
+
+            const int Padding = 12;
+            const int LineGap = 4;
+            var font = Game1.smallFont;
+
+            float maxWidth = 0f;
+            float totalHeight = 0f;
+            foreach (string line in lines)
+            {
+                Microsoft.Xna.Framework.Vector2 size = font.MeasureString(line);
+                if (size.X > maxWidth) maxWidth = size.X;
+                totalHeight += size.Y;
+            }
+            if (lines.Count > 1) totalHeight += LineGap * (lines.Count - 1);
+
+            int boxWidth = (int)maxWidth + Padding * 2;
+            int boxHeight = (int)totalHeight + Padding * 2;
+
+            // Position: top-right, just under the vanilla day/time/money box. The money box's
+            // sprite is ~128px tall — fixed offset is robust (the inherited `height` const isn't
+            // an instance member, and querying via the type would couple us to a particular SDV
+            // version's IClickableMenu static layout).
+            int x = Game1.uiViewport.Width - boxWidth - 8;
+            int y = (Game1.dayTimeMoneyBox?.yPositionOnScreen ?? 16) + 140;
+
+            StardewValley.Menus.IClickableMenu.drawTextureBox(b, x, y, boxWidth, boxHeight,
+                Microsoft.Xna.Framework.Color.White);
+
+            int textY = y + Padding;
+            foreach (string line in lines)
+            {
+                StardewValley.Utility.drawTextWithShadow(b, line, font,
+                    new Microsoft.Xna.Framework.Vector2(x + Padding, textY), Game1.textColor);
+                textY += (int)font.MeasureString(line).Y + LineGap;
+            }
         }
 
         private void OnGameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
@@ -597,6 +662,12 @@ namespace TheLongestYear
                 getValue: () => _config.Enabled,
                 setValue: v => _config.Enabled = v,
                 name: () => "Enabled");
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.ShowJpHud,
+                setValue: v => _config.ShowJpHud = v,
+                name: () => "Show JP HUD",
+                tooltip: () => "Always-on corner counter showing banked JP and the current week's theme.");
 
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
