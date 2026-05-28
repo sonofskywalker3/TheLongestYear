@@ -11,9 +11,16 @@ public class WeatherForecastTests
         // Spring day 1 = forced Sun regardless of seed.
         var forecast = WeatherForecast.Build(uniqueId: 123456, daysPlayedToday: 5,
             currentDayOfMonth: 28, currentSeasonIndex: 0, slotsToReveal: 7);
-        // Next week starts on day 1 of next season — verify slot 0 is Sun.
-        // DayOfMonth advances: from day 28, next day is 1 (new season).
         // forecast[0] = tomorrow = day 1 of Summer = "Sun"
+        Assert.Equal("Sun", forecast[0]);
+    }
+
+    [Fact]
+    public void Day2_of_any_season_is_always_Sun()
+    {
+        var forecast = WeatherForecast.Build(uniqueId: 42, daysPlayedToday: 1,
+            currentDayOfMonth: 1, currentSeasonIndex: 0, slotsToReveal: 1);
+        // forecast[0] = day 2 = Sun
         Assert.Equal("Sun", forecast[0]);
     }
 
@@ -34,21 +41,16 @@ public class WeatherForecastTests
     }
 
     [Fact]
-    public void Summer_storm_day_returns_Storm()
+    public void Forecast_returns_concrete_weather_for_open_days()
     {
-        // Summer day 13 % 13 == 0 => Storm. Build from Summer day 12.
-        // seasonIndex 1 = Summer.
-        var forecast = WeatherForecast.Build(1, 40, 12, 1, 2);
-        // forecast[0] = Summer day 13 = Storm
-        Assert.Equal("Storm", forecast[0]);
-    }
-
-    [Fact]
-    public void Slots_beyond_forced_rules_return_unknown_marker()
-    {
-        // Spring day 2: no forced rule. Should be "?".
-        var forecast = WeatherForecast.Build(42, 1, 1, 0, 3);
-        // forecast[0] = Spring day 2 = no forced rule = "?"
-        Assert.Equal("?", forecast[0]);
+        // The scheduler determines every day's weather seed-deterministically. No "?" markers
+        // remain in the forecast — any non-festival day is one of Sun/Rain/Storm/Snow.
+        var forecast = WeatherForecast.Build(uniqueId: 99, daysPlayedToday: 1,
+            currentDayOfMonth: 2, currentSeasonIndex: 0, slotsToReveal: 5);
+        foreach (string day in forecast)
+        {
+            Assert.NotEqual("?", day);
+            Assert.Contains(day, new[] { "Sun", "Rain", "Storm", "Snow", "Festival" });
+        }
     }
 }

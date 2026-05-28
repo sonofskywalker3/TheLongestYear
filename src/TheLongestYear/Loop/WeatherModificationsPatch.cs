@@ -1,43 +1,52 @@
 using HarmonyLib;
 using StardewValley;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Vanilla <c>Game1.getWeatherModificationsForDate</c> hard-codes Spring day 3 of every
-    /// new save to "Rain" (Game1.cs:9557-9560 — the override that introduces the Demetrius
-    /// rain-barrel beat). In a time-loop run, the calendar resets to Spring 1 every reset and
-    /// <c>stats.DaysPlayed</c> is rewound to 1, so the same forced rain hits day 3 of every
-    /// loop — defeating the variety the player expects across runs (user playtest note
-    /// 2026-05-27: "it always rains on day 3").
+    /// Replaces vanilla's day-by-day weather rolling with the seed-driven
+    /// <see cref="WeatherScheduler"/>. Each season's schedule guarantees minimums (≥2 rain
+    /// in Spring/Fall, ≥2 storm + ≥2 rain in Summer, ≥2 snow in Winter) and varies across
+    /// loops because the reset rotates <c>Game1.uniqueIDForThisGame</c>.
     ///
-    /// Postfix restores the seed-driven default when the only reason rain was picked is the
-    /// day-3 override. We keep vanilla's other forced rules intact: forced sun on days 1-2
-    /// (so the loop opens calm), green-rain, festival, summer storms. Just the one branch is
-    /// suppressed.
+    /// 2026-05-27 playtest ask: "at least 2 days of rain every season, at least 2 storms in
+    /// summer, but mix them up every new seed." Also subsumes the prior day-3 forced-rain
+    /// revert (Game1.cs:9557 — the rain-barrel intro override that repeated every loop) and
+    /// the Summer 13/26 forced storms — the scheduler chooses those days itself.
+    ///
+    /// Postfix runs after every vanilla override has been applied. It returns the scheduler's
+    /// choice unconditionally for non-festival days; festival days fall through with vanilla's
+    /// result intact so per-festival weather (which can vary by festival) stays correct.
+    ///
+    /// Gated on <see cref="Enabled"/> — toggled by ModEntry from <c>_config.Enabled</c> so the
+    /// player can disable TLY entirely without lingering weather overrides.
     /// </summary>
     [HarmonyPatch(typeof(Game1), nameof(Game1.getWeatherModificationsForDate))]
     internal static class WeatherModificationsPatch
     {
+        /// <summary>Master toggle, set from ModEntry. False keeps vanilla weather behaviour.</summary>
+        public static bool Enabled;
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(WorldDate date, string default_weather, ref string __result)
         {
-            // Mirror vanilla's day-3 condition exactly (line 9557): DaysPlayed + (date - today) == 3.
-            int delta = date.TotalDays - Game1.Date.TotalDays;
-            bool wouldHitDay3Rule = (Game1.stats.DaysPlayed + delta) == 3;
-            if (!wouldHitDay3Rule || __result != "Rain")
-                return;
+            if (!Enabled) return;
 
-            // The day-3 rule fired. But: it might still be the right answer if a LATER vanilla
-            // override (green rain / festival / passive festival sun) intentionally chose Rain
-            // for this day — extremely unlikely on Spring 3 Y1 since those don't apply, but be
-            // defensive. Only revert when the seed-driven default is something other than Rain;
-            // if the seed itself rolled Rain we let it stand.
-            if (default_weather == "Rain")
-                return;
+            int seasonIndex = (int)date.Season;
+            int dayOfMonth = date.DayOfMonth;
+            int uniqueId = unchecked((int)Game1.uniqueIDForThisGame);
 
-            __result = default_weather;
+            string scheduled = WeatherScheduler.WeatherFor(uniqueId, seasonIndex, dayOfMonth);
+            if (scheduled == null) return;
+
+            // Festival days: leave vanilla's per-festival weather alone (the scheduler stores
+            // "Festival" as a sentinel for those days, but vanilla returns the actual weather
+            // string the festival prefers — Sun, Rain, etc. — and we don't want to overwrite it).
+            if (scheduled == "Festival") return;
+
+            __result = scheduled;
         }
     }
 }
