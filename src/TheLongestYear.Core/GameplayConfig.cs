@@ -163,6 +163,11 @@ public sealed class GameplayConfig
     /// (unused in v1; Plan 06 will re-enable the hotkey)</summary>
     public string WeeklyHubHotkey { get; set; } = "P";
 
+    /// <summary>Master switch for The Longest Year. When false, TLY does no setup at SaveLoaded
+    /// and no game effects fire. Use the in-game GMCM (if installed) to toggle, or edit
+    /// config.json directly. Toggling takes effect on next save load.</summary>
+    public bool Enabled { get; set; } = true;
+
     /// <summary>X tile coordinate of the Season Goals board inside the Community Center.
     /// Default: 45 (one tile west of the Bulletin Board room's Junimo Note at (46,11)).
     /// The Action tile property is painted onto whatever Buildings-layer tile sits at this
@@ -173,25 +178,28 @@ public sealed class GameplayConfig
     public int SeasonGoalsBoardTileY { get; set; } = 11;
 
     /// <summary>X tile coordinate of the Cookbook interactable inside the FarmHouse (kitchen counter).
-    /// Default (0,0) disables the interaction — set via tly_setcookbook in-game.</summary>
-    public int CookbookTileX { get; set; } = 0;
+    /// Default (4,4) is an educated guess for the Standard farm + upgraded FarmHouse kitchen counter.
+    /// Use tly_setcookbook in-game to override if wrong for your layout.</summary>
+    public int CookbookTileX { get; set; } = 4;
 
     /// <summary>Y tile coordinate of the Cookbook interactable inside the FarmHouse (kitchen counter).</summary>
-    public int CookbookTileY { get; set; } = 0;
+    public int CookbookTileY { get; set; } = 4;
 
     /// <summary>X tile coordinate of the Craftbook interactable inside the FarmHouse (main table).
-    /// Default (0,0) disables the interaction — set via tly_setcraftbook in-game.</summary>
-    public int CraftbookTileX { get; set; } = 0;
+    /// Default (10,4) is an educated guess for the Standard farm + upgraded FarmHouse table.
+    /// Use tly_setcraftbook in-game to override if wrong for your layout.</summary>
+    public int CraftbookTileX { get; set; } = 10;
 
     /// <summary>Y tile coordinate of the Craftbook interactable inside the FarmHouse (main table).</summary>
-    public int CraftbookTileY { get; set; } = 0;
+    public int CraftbookTileY { get; set; } = 4;
 
     /// <summary>X tile coordinate on the Farm where the Junimo Stash chest is placed.
-    /// Default (0,0) disables placement — set via tly_setstash in-game.</summary>
-    public int StashTileX { get; set; } = 0;
+    /// Default (72,12) is an educated guess for an open area on the Standard farm.
+    /// Use tly_setstash in-game to override if wrong for your farm layout.</summary>
+    public int StashTileX { get; set; } = 72;
 
     /// <summary>Y tile coordinate on the Farm where the Junimo Stash chest is placed.</summary>
-    public int StashTileY { get; set; } = 0;
+    public int StashTileY { get; set; } = 12;
 
     /// <summary>JP multiplier applied to bonus-list items donated during their selected week.</summary>
     public double SelectionBonusMultiplier { get; set; } = 1.5;

@@ -46,9 +46,6 @@ namespace TheLongestYear.Loop
             if (_config.StashTileX == 0 && _config.StashTileY == 0)
                 return;
 
-            if (_meta.StashSlotCount == 0)
-                return;
-
             Farm farm = Game1.getFarm();
             Vector2 tile = new Vector2(_config.StashTileX, _config.StashTileY);
 
@@ -143,8 +140,6 @@ namespace TheLongestYear.Loop
         public void RegisterIndicator()
         {
             if (_config.StashTileX == 0 && _config.StashTileY == 0)
-                return;
-            if (_meta.StashSlotCount == 0)
                 return;
 
             Farm farm = Game1.getFarm();

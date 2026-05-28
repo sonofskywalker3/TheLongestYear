@@ -8,6 +8,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
+using TheLongestYear.Integration;
 using TheLongestYear.Loop;
 using TheLongestYear.UI;
 
@@ -39,6 +40,29 @@ namespace TheLongestYear
         public override void Entry(IModHelper helper)
         {
             _config = helper.ReadConfig<GameplayConfig>();
+
+            // One-shot config migration: pre-v1-ship configs had (0,0) tile defaults that disabled
+            // the interactables. If we see those, replace with the new working defaults so the mod
+            // just works after upgrading.
+            bool migrated = false;
+            if (_config.CookbookTileX == 0 && _config.CookbookTileY == 0)
+            {
+                _config.CookbookTileX = 4; _config.CookbookTileY = 4; migrated = true;
+            }
+            if (_config.CraftbookTileX == 0 && _config.CraftbookTileY == 0)
+            {
+                _config.CraftbookTileX = 10; _config.CraftbookTileY = 4; migrated = true;
+            }
+            if (_config.StashTileX == 0 && _config.StashTileY == 0)
+            {
+                _config.StashTileX = 72; _config.StashTileY = 12; migrated = true;
+            }
+            if (migrated)
+            {
+                helper.WriteConfig(_config);
+                this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
+            }
+
             _meta = new MetaStore(helper.Data);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
@@ -46,6 +70,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
             helper.Events.Display.RenderedHud += this.OnRenderedHud;
+            helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.Display.RenderedWorld += IndicatorRegistry.OnRenderedWorld;
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
@@ -115,6 +140,12 @@ namespace TheLongestYear
         /// <summary>Load this playthrough's banked progress when a save opens.</summary>
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
+            if (!_config.Enabled)
+            {
+                this.Monitor.Log("TLY disabled in config — skipping all save-load setup.", LogLevel.Info);
+                return;
+            }
+
             _meta.Load();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             IndicatorRegistry.Attach(_meta.State);
@@ -185,7 +216,7 @@ namespace TheLongestYear
 
             this.Monitor.Log(
                 $"JP={s.JunimoPoints}, " +
-                $"StashTier={s.HighestKeptTier("stash_", 2)} ({stashSlots} slots, {stashItems} items banked, tile {stashTile}), " +
+                $"StashTier={s.HighestKeptTier("stash_", 3)} ({stashSlots} slots, {stashItems} items banked, tile {stashTile}), " +
                 $"Upgrades=[{string.Join(", ", s.OwnedUpgrades)}]",
                 LogLevel.Info);
         }
@@ -470,6 +501,31 @@ namespace TheLongestYear
             if (!Game1.isFestival() || Game1.dayTimeMoneyBox == null)
                 return;
             Game1.dayTimeMoneyBox.draw(e.SpriteBatch);
+        }
+
+        private void OnGameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
+        {
+            var gmcm = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+            if (gmcm == null)
+            {
+                this.Monitor.Log("GMCM not installed — config edits via config.json only.", LogLevel.Trace);
+                return;
+            }
+
+            gmcm.Register(this.ModManifest,
+                reset: () => _config = new GameplayConfig(),
+                save: () => this.Helper.WriteConfig(_config));
+
+            gmcm.AddSectionTitle(this.ModManifest, () => "The Longest Year");
+            gmcm.AddParagraph(this.ModManifest,
+                () => "Master switch. When off, TLY skips all setup at save load and no effects fire. " +
+                      "Toggling takes effect on the next save load.");
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Enabled,
+                setValue: v => _config.Enabled = v,
+                name: () => "Enabled");
+
+            this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
 
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)

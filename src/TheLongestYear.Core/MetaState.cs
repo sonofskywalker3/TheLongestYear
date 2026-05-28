@@ -83,15 +83,11 @@ public sealed class MetaState
     public List<StashItemRecord> StashItems { get; set; } = new();
 
     /// <summary>
-    /// Current slot capacity of the Junimo Stash, derived from the highest owned
-    /// stash upgrade tier: 0 = not unlocked, 4 = stash_1, 8 = stash_2.
+    /// Current slot capacity of the Junimo Stash. Every save gets 4 slots from day 1
+    /// (the Junimos bring the chest with them); each owned stash_N upgrade adds 4 more.
+    /// stash_1 / stash_2 / stash_3 → 8 / 12 / 16 slots total.
     /// </summary>
-    public int StashSlotCount => HighestKeptTier("stash_", 2) switch
-    {
-        1 => 4,
-        2 => 8,
-        _ => 0
-    };
+    public int StashSlotCount => 4 + HighestKeptTier("stash_", 3) * 4;
 
     public bool HasUpgrade(string id) => OwnedUpgrades.Contains(id);
 

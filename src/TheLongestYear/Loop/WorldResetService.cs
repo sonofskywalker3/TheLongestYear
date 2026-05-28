@@ -449,8 +449,7 @@ namespace TheLongestYear.Loop
                     description: "The Junimos left a craftbook on your kitchen table — go have a look.");
             }
 
-            if (_meta.HasUpgrade("stash_1")
-                && (_config.StashTileX != 0 || _config.StashTileY != 0)
+            if ((_config.StashTileX != 0 || _config.StashTileY != 0)
                 && !_meta.DismissedIndicators.Contains("tly.stash"))
             {
                 AddIntroQuest(
