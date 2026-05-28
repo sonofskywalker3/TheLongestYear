@@ -627,12 +627,25 @@ namespace TheLongestYear
             int boxWidth = (int)maxWidth + Padding * 2;
             int boxHeight = (int)totalHeight + Padding * 2;
 
-            // Position: top-right, just under the vanilla day/time/money box. The money box's
-            // sprite is ~128px tall — fixed offset is robust (the inherited `height` const isn't
-            // an instance member, and querying via the type would couple us to a particular SDV
-            // version's IClickableMenu static layout).
+            // Position: top-right, BELOW the vanilla day/time/money box AND its quest-log button.
+            // The previous fixed +140 offset put the HUD inside the box's money line (2026-05-28
+            // playtest). On the PC DLL, DayTimeMoneyBox hides IClickableMenu.height with its own
+            // static (≈228 in 1.6) — read it via reflection so we don't depend on either shape
+            // (PC=static, Android=instance). Pad 80px more to clear the quest-log icon that
+            // sits directly under the box.
             int x = Game1.uiViewport.Width - boxWidth - 8;
-            int y = (Game1.dayTimeMoneyBox?.yPositionOnScreen ?? 16) + 140;
+            int boxTopY = Game1.dayTimeMoneyBox?.yPositionOnScreen ?? 0;
+            int hudBoxHeight = 228;
+            var hf = typeof(StardewValley.Menus.DayTimeMoneyBox).GetField("height",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static
+                | System.Reflection.BindingFlags.FlattenHierarchy);
+            if (hf != null)
+            {
+                object hv = hf.IsStatic ? hf.GetValue(null) : hf.GetValue(Game1.dayTimeMoneyBox);
+                if (hv is int hi && hi > 0) hudBoxHeight = hi;
+            }
+            int y = boxTopY + hudBoxHeight + 80;
 
             StardewValley.Menus.IClickableMenu.drawTextureBox(b, x, y, boxWidth, boxHeight,
                 Microsoft.Xna.Framework.Color.White);

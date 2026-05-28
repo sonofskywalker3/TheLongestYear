@@ -102,15 +102,16 @@ namespace TheLongestYear.Loop
 
             IndicatorRegistry.Dismiss("tly.stash");
 
-            // Strip the color picker from the freshly-opened menu. ShowMenu sets
-            // Game1.activeClickableMenu = new ItemGrabMenu(...); at this postfix point the
-            // menu is fully constructed (the constructor finished allocating chestColorPicker
-            // + colorPickerToggleButton). Nulling the fields hides the swatch row and toggle
-            // button — Draw and click handlers no-op on null.
+            // Strip the color picker swatch row but KEEP the toggle button visible. The
+            // first pass nulled colorPickerToggleButton too, which removed the right-column
+            // icon and left an empty 64×64 hole in the button stack (2026-05-28 playtest:
+            // "the color picker icon is gone but the space is still there"). Leaving the
+            // toggle button in place fills that hole; clicking it flips the unused
+            // showChestColorPicker flag harmlessly because chestColorPicker is null so
+            // ItemGrabMenu.draw's `if (chestColorPicker != null)` guard skips the swatches.
             if (Game1.activeClickableMenu is ItemGrabMenu igm)
             {
                 igm.chestColorPicker = null;
-                igm.colorPickerToggleButton = null;
                 igm.discreteColorPickerCC = null;
                 Game1.player.showChestColorPicker = false;
             }

@@ -57,6 +57,15 @@ namespace TheLongestYear.Loop
             p.mailReceived.Add("canReadJunimoText"); // bundles show real names (not "???")
             p.mailReceived.Add("seenJunimoNote");    // suppresses the first-open intro flow
 
+            // Block the stale Wizard letter. JunimoNoteMenu.setUpMenu queues
+            // "wizardJunimoNote" for tomorrow's mail the first time the player opens a CC
+            // note, unless it's already in mailReceived. In TLY the player can be donating
+            // on day 1 — the letter ("come see me, I sense the Junimos") arrives days
+            // later, well after they've already met the Junimos. Pre-marking it as received
+            // suppresses the addMailForTomorrow call entirely; the Wizard's tower also
+            // becomes accessible immediately (Forest.isWizardHouseUnlocked keys off this).
+            p.mailReceived.Add("wizardJunimoNote");
+
             // Place all six Junimo Notes if the CC location is already loaded. (On a fresh
             // SaveLoaded this is always the case — Game1.locations is populated by then.)
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;

@@ -50,10 +50,11 @@ public static class ThemeModifiers
         "fish_bite_up"           => "Fish bite 30% sooner",
         "fish_bite_down"         => "Fish bite 30% slower",
         "mine_drops_up"          => "30% chance for mined resources to drop +1",
-        // 2026-05-28 audit: prior "Mine entrance blocked" was inaccurate — the patch blocks
-        // elevator + descent ladder INSIDE the mine, so the player can enter floor 1 but
-        // can't descend. Matching the display to what actually happens.
-        "mines_closed"           => "Mine descent blocked all week",
+        // 2026-05-28 playtest round 2: user requested a HARD entrance block — "floor 1 needs
+        // to be blocked, floor 0 is accessible." MinesEntranceClosedPatch now intercepts the
+        // performAction("Mine"/"NextMineLevel"/"MineElevator") verbs so the player can walk to
+        // the mine entrance in Mountain but cannot enter the shaft at all.
+        "mines_closed"           => "Mine entrance closed all week",
         "all_drops_up"           => "10% chance for any drop to be +1",
         "all_sell_prices_down"   => "All sell prices cut in half",
         // Legacy / unused-in-v1 -- kept so old config files don't show raw ids if loaded.

@@ -60,8 +60,13 @@ namespace TheLongestYear.Loop
                 }
             }
 
+            // noLetter: true — set the flag silently. The visible "we cleared the boulder"
+            // letter is stale every loop in TLY (it lands days after the player has already
+            // walked the cleared path), reported by the 2026-05-28 playtest as "the joja
+            // 'we cleared the rocks' mail." Nothing in 1.6 vanilla gates on the LETTER
+            // arriving — only the flag — so suppressing the letter is safe.
             if (!Game1.MasterPlayer.hasOrWillReceiveMail("landslideDone"))
-                Game1.addMail("landslideDone", noLetter: false, sendToEveryone: true);
+                Game1.addMail("landslideDone", noLetter: true, sendToEveryone: true);
         }
     }
 }

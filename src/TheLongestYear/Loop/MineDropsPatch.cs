@@ -64,4 +64,43 @@ namespace TheLongestYear.Loop
             return true;
         }
     }
+
+    /// <summary>
+    /// Foraging liability (mines_closed) — entrance block.
+    ///
+    /// 2026-05-28 playtest correction: the prior implementation blocked elevator + descent
+    /// ladder INSIDE the mine, but let the player enter floor 1 freely. User: "floor 1 needs
+    /// to be blocked, floor 0 is accessible" — i.e. the player should be able to walk up to
+    /// the Mountain mine entrance but NOT enter the mineshaft at all.
+    ///
+    /// Intercepts <see cref="GameLocation.performAction(string[], Farmer, Location)"/> for the
+    /// action verbs that warp a player INTO the mineshaft from outside: "Mine" and
+    /// "NextMineLevel" (the Mountain mine-entrance tile and any vanilla NextMineLevel
+    /// staircase), and "MineElevator" (the elevator tile in Mountain that would skip floors).
+    /// Blocking all three keeps the player in Mountain regardless of which Mountain tile they
+    /// click. The internal-descent patch <see cref="MinesClosedPatch"/> above remains the
+    /// fallback for any path that's already inside the shaft.
+    /// </summary>
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performAction), new System.Type[] { typeof(string[]), typeof(Farmer), typeof(xTile.Dimensions.Location) })]
+    internal static class MinesEntranceClosedPatch
+    {
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static bool Prefix(string[] action, Farmer who, ref bool __result)
+        {
+            if (!ActiveEffectsProvider.ActiveLiability("mines_closed"))
+                return true;
+            if (action == null || action.Length == 0)
+                return true;
+            if (!who.IsLocalPlayer)
+                return true;
+
+            string verb = action[0];
+            if (verb != "Mine" && verb != "NextMineLevel" && verb != "MineElevator")
+                return true;
+
+            Game1.drawObjectDialogue("The mines feel uneasy this week. The entrance has been closed off.");
+            __result = true;
+            return false; // skip original — no warp into the shaft
+        }
+    }
 }
