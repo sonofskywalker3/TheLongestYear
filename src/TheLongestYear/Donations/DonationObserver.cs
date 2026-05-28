@@ -34,6 +34,15 @@ namespace TheLongestYear.Donations
         /// deposit fires exactly once.</summary>
         private readonly Dictionary<int, bool[]> _snapshot = new();
 
+        /// <summary>bundleIndex → snapshot of <c>Bundle.complete</c> at menu open. Diff-on-tick
+        /// awards the bundle bonus the moment the slots all flip. 2026-05-28 round 4: the
+        /// Harmony postfix on <c>JunimoNoteMenu.checkIfBundleIsComplete</c> wasn't firing for
+        /// the playtester ("I completed a bundle and didn't get any extra jp for doing so"),
+        /// same shape as the per-item patch that motivated the observer in the first place.
+        /// Move detection here so both per-slot AND bundle-complete bonuses follow the same
+        /// reliable diff path.</summary>
+        private readonly Dictionary<int, bool> _bundleCompleteSnapshot = new();
+
         private bool _menuOpen;
 
         public DonationObserver(IModHelper helper, IMonitor monitor)
@@ -56,6 +65,7 @@ namespace TheLongestYear.Donations
                 DiffAndAward(oldJnm);
                 _menuOpen = false;
                 _snapshot.Clear();
+                _bundleCompleteSnapshot.Clear();
             }
         }
 
@@ -67,6 +77,7 @@ namespace TheLongestYear.Donations
                 // Menu was swapped out without MenuChanged catching it (rare — defensive).
                 _menuOpen = false;
                 _snapshot.Clear();
+                _bundleCompleteSnapshot.Clear();
                 return;
             }
             DiffAndAward(jnm);
@@ -75,15 +86,20 @@ namespace TheLongestYear.Donations
         private void CaptureSnapshot(JunimoNoteMenu jnm)
         {
             _snapshot.Clear();
+            _bundleCompleteSnapshot.Clear();
             if (jnm.bundles == null) return;
             foreach (Bundle b in jnm.bundles)
             {
-                if (b?.ingredients == null) continue;
-                int n = b.ingredients.Count;
-                bool[] state = new bool[n];
-                for (int i = 0; i < n; i++)
-                    state[i] = b.ingredients[i].completed;
-                _snapshot[b.bundleIndex] = state;
+                if (b == null) continue;
+                if (b.ingredients != null)
+                {
+                    int n = b.ingredients.Count;
+                    bool[] state = new bool[n];
+                    for (int i = 0; i < n; i++)
+                        state[i] = b.ingredients[i].completed;
+                    _snapshot[b.bundleIndex] = state;
+                }
+                _bundleCompleteSnapshot[b.bundleIndex] = b.complete;
             }
         }
 
@@ -120,6 +136,23 @@ namespace TheLongestYear.Donations
                         // stays in scope (e.g. player completes another slot on the same bundle).
                         prev[i] = true;
                     }
+                }
+
+                // Bundle completion: false → true on Bundle.complete fires OnBundleCompleted.
+                // TryMarkBundleAwarded inside DonationService is idempotent, so even if the
+                // Harmony postfix on checkIfBundleIsComplete eventually fires too, only the
+                // first call pays.
+                if (_bundleCompleteSnapshot.TryGetValue(b.bundleIndex, out bool wasComplete))
+                {
+                    if (!wasComplete && b.complete)
+                    {
+                        DonationService.Active.OnBundleCompleted(b.bundleIndex);
+                        _bundleCompleteSnapshot[b.bundleIndex] = true;
+                    }
+                }
+                else
+                {
+                    _bundleCompleteSnapshot[b.bundleIndex] = b.complete;
                 }
             }
         }

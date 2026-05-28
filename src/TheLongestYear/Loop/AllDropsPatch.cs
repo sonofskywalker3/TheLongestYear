@@ -26,6 +26,11 @@ namespace TheLongestYear.Loop
                 (int)__instance.TileLocation.X,
                 (int)__instance.TileLocation.Y,
                 Game1.player.UniqueMultiplayerID);
+
+            PatchLog.Info(
+                $"all_drops_up: +1 '{__instance.QualifiedItemId}' at " +
+                $"({(int)__instance.TileLocation.X}, {(int)__instance.TileLocation.Y}) on " +
+                $"{Game1.currentLocation?.NameOrUniqueName}.");
         }
     }
 

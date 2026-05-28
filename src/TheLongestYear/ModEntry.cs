@@ -202,6 +202,7 @@ namespace TheLongestYear
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
+            PatchLog.Connect(this.Monitor);
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
@@ -610,9 +611,12 @@ namespace TheLongestYear
                 lines.Add($"{theme} {suffix}");
             }
 
-            const int Padding = 12;
-            const int LineGap = 4;
-            var font = Game1.smallFont;
+            const int Padding = 16;
+            const int LineGap = 6;
+            // 2026-05-28 playtest round 4: "a little too small and a little too low." Step up
+            // from smallFont to dialogueFont — same font Stardew uses for dialogue boxes, so it
+            // reads as in-world rather than tooltip-scale.
+            var font = Game1.dialogueFont;
 
             float maxWidth = 0f;
             float totalHeight = 0f;
@@ -627,12 +631,11 @@ namespace TheLongestYear
             int boxWidth = (int)maxWidth + Padding * 2;
             int boxHeight = (int)totalHeight + Padding * 2;
 
-            // Position: top-right, BELOW the vanilla day/time/money box AND its quest-log button.
-            // The previous fixed +140 offset put the HUD inside the box's money line (2026-05-28
-            // playtest). On the PC DLL, DayTimeMoneyBox hides IClickableMenu.height with its own
-            // static (≈228 in 1.6) — read it via reflection so we don't depend on either shape
-            // (PC=static, Android=instance). Pad 80px more to clear the quest-log icon that
-            // sits directly under the box.
+            // Position: top-right, BELOW the vanilla day/time/money box. 2026-05-28 round 4:
+            // user reported the HUD sat "a little too low" — dropped the spacer from 80px to
+            // 24px so it nests just under the box without leaving a visible gap. Read the
+            // box's height via reflection (DayTimeMoneyBox.height is a static on PC, instance
+            // on Android — same field name, different shape).
             int x = Game1.uiViewport.Width - boxWidth - 8;
             int boxTopY = Game1.dayTimeMoneyBox?.yPositionOnScreen ?? 0;
             int hudBoxHeight = 228;
@@ -645,7 +648,7 @@ namespace TheLongestYear
                 object hv = hf.IsStatic ? hf.GetValue(null) : hf.GetValue(Game1.dayTimeMoneyBox);
                 if (hv is int hi && hi > 0) hudBoxHeight = hi;
             }
-            int y = boxTopY + hudBoxHeight + 80;
+            int y = boxTopY + hudBoxHeight + 24;
 
             StardewValley.Menus.IClickableMenu.drawTextureBox(b, x, y, boxWidth, boxHeight,
                 Microsoft.Xna.Framework.Color.White);
