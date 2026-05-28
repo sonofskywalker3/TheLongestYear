@@ -240,7 +240,7 @@ namespace TheLongestYear.Loop
         };
 
         /// <summary>Select one of this week's offered themes (driven by the UI; debug command + UI).</summary>
-        public void SelectByName(string themeName)
+        public void SelectByName(string themeName, bool skipOfferCheck = false)
         {
             if (!Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
             {
@@ -248,11 +248,19 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            var offer = SelectionService.OfferForWeek(Run);
-            if (!offer.Contains(theme))
+            // skipOfferCheck = true: invoked from the playtest re-roll path on the hub. The
+            // canonical OfferForWeek is seeded-deterministic and reflects only the originally
+            // rolled pair, so a rerolled theme would always be rejected here. The reroll path
+            // already filters against SelectedThemesThisMonth, so the only invariant we'd
+            // lose by skipping is "the theme was in this week's official offer" — by design.
+            if (!skipOfferCheck)
             {
-                _monitor.Log($"{theme} is not offered this week. Offer: {string.Join(", ", offer)}.", LogLevel.Warn);
-                return;
+                var offer = SelectionService.OfferForWeek(Run);
+                if (!offer.Contains(theme))
+                {
+                    _monitor.Log($"{theme} is not offered this week. Offer: {string.Join(", ", offer)}.", LogLevel.Warn);
+                    return;
+                }
             }
 
             Run.Select(theme);
