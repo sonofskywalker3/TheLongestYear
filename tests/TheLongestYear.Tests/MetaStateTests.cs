@@ -269,31 +269,45 @@ public class MetaStateTests
     }
 
     [Fact]
-    public void StashSlotCount_returns_zero_when_no_stash_upgrade_owned()
+    public void StashSlotCount_returns_4_when_no_stash_upgrade_owned()
     {
         var s = new MetaState();
-        Assert.Equal(0, s.StashSlotCount);
-    }
-
-    [Fact]
-    public void StashSlotCount_returns_4_when_stash_1_owned()
-    {
-        var s = new MetaState { OwnedUpgrades = { "stash_1" } };
         Assert.Equal(4, s.StashSlotCount);
     }
 
     [Fact]
-    public void StashSlotCount_returns_8_when_stash_2_owned()
+    public void StashSlotCount_returns_8_when_stash_1_owned()
     {
-        var s = new MetaState { OwnedUpgrades = { "stash_1", "stash_2" } };
+        var s = new MetaState { OwnedUpgrades = { "stash_1" } };
         Assert.Equal(8, s.StashSlotCount);
     }
 
     [Fact]
-    public void GameplayConfig_stash_tile_defaults_to_zero_zero()
+    public void StashSlotCount_returns_12_when_stash_2_owned()
+    {
+        var s = new MetaState { OwnedUpgrades = { "stash_1", "stash_2" } };
+        Assert.Equal(12, s.StashSlotCount);
+    }
+
+    [Fact]
+    public void StashSlotCount_returns_16_when_stash_3_owned()
+    {
+        var s = new MetaState { OwnedUpgrades = { "stash_1", "stash_2", "stash_3" } };
+        Assert.Equal(16, s.StashSlotCount);
+    }
+
+    [Fact]
+    public void GameplayConfig_stash_tile_defaults_to_open_farm_tile()
     {
         var c = new GameplayConfig();
-        Assert.Equal(0, c.StashTileX);
-        Assert.Equal(0, c.StashTileY);
+        Assert.Equal(72, c.StashTileX);
+        Assert.Equal(12, c.StashTileY);
+    }
+
+    [Fact]
+    public void GameplayConfig_Enabled_defaults_to_true()
+    {
+        var c = new GameplayConfig();
+        Assert.True(c.Enabled);
     }
 }

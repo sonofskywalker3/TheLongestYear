@@ -130,9 +130,11 @@ public static class UpgradeCatalog
 
         // Stash
         new UpgradeDefinition("stash_1", UpgradeCategory.Stash, "Junimo Stash I",
-            "Unlock the Junimo Stash with 4 slots (carries items across runs).", 300),
+            "Expand the Junimo Stash from 4 to 8 slots.", 300),
         new UpgradeDefinition("stash_2", UpgradeCategory.Stash, "Junimo Stash II",
-            "Expand the Junimo Stash to 8 slots.", 675, "stash_1"),
+            "Expand the Junimo Stash from 8 to 12 slots.", 675, "stash_1"),
+        new UpgradeDefinition("stash_3", UpgradeCategory.Stash, "Junimo Stash III",
+            "Expand the Junimo Stash from 12 to 16 slots.", 1200, "stash_2"),
 
         // Buildings — Keep [X] chain. Effects (actually pre-build the structure on run start)
         // are deferred to a later plan; here we only record the entitlement.
