@@ -121,18 +121,26 @@ namespace TheLongestYear.Loop
             if (IsTilePlaceable(farm, desired))
                 return desired;
 
-            // Configured tile is blocked. Try auto fallback (skip if already auto).
-            if (!isAuto)
+            // Configured tile (or first auto candidate) is blocked. Walk the auto candidate
+            // ladder looking for a clear tile near the farmhouse before falling back.
+            Point? entryPoint = TryGetFarmHouseEntry(farm);
+            if (entryPoint.HasValue)
             {
-                Vector2 auto = AutoTile(farm);
-                if (auto != Vector2.Zero && IsTilePlaceable(farm, auto))
+                foreach (Vector2 candidate in AutoCandidates(entryPoint.Value))
                 {
+                    if (candidate == desired) continue;  // already tried
+                    if (!IsTilePlaceable(farm, candidate)) continue;
+
+                    string source = isAuto
+                        ? $"first auto candidate ({desired.X}, {desired.Y}) blocked by " +
+                          $"{DescribeBlocker(farm, desired)}"
+                        : $"configured tile ({desired.X}, {desired.Y}) blocked by " +
+                          $"{DescribeBlocker(farm, desired)}";
                     _monitor.Log(
-                        $"JunimoStashService: configured tile ({desired.X}, {desired.Y}) is blocked " +
-                        $"({DescribeBlocker(farm, desired)}); falling back to auto tile ({auto.X}, {auto.Y}). " +
-                        "Run tly_setstash to anchor a different tile if this doesn't fit your farm.",
-                        LogLevel.Warn);
-                    return auto;
+                        $"JunimoStashService: {source}; using fallback tile ({candidate.X}, {candidate.Y}). " +
+                        "Run tly_setstash to anchor a different tile.",
+                        LogLevel.Info);
+                    return candidate;
                 }
             }
 
@@ -149,15 +157,48 @@ namespace TheLongestYear.Loop
         /// walking out the door cannot miss. Returns Vector2.Zero if the entry is unavailable.</summary>
         private static Vector2 AutoTile(Farm farm)
         {
-            try
+            Point? entry = TryGetFarmHouseEntry(farm);
+            return entry.HasValue
+                ? new Vector2(entry.Value.X + 2, entry.Value.Y + 1)
+                : Vector2.Zero;
+        }
+
+        /// <summary>
+        /// Ordered list of fallback candidate offsets relative to the farmhouse entry tile.
+        /// The first candidate is the original "+2, +1" choice; subsequent entries are biased
+        /// SOUTH and AWAY (-/+ X) of the entry so they clear the Farmhouse building footprint
+        /// — the 2026-05-28 playtest showed (+2, +1) lands on the porch which intersects the
+        /// Building.intersects rect. Tiles are tried in order; first one that <c>IsTilePlaceable</c>
+        /// wins.
+        /// </summary>
+        private static System.Collections.Generic.IEnumerable<Vector2> AutoCandidates(Point entry)
+        {
+            // (dx, dy) offsets — south of entry first (clears the porch), then sweep horizontally.
+            (int dx, int dy)[] offsets =
             {
-                Point entry = farm.GetMainFarmHouseEntry();
-                return new Vector2(entry.X + 2, entry.Y + 1);
-            }
-            catch
-            {
-                return Vector2.Zero;
-            }
+                ( 2, 1),  // original: SE shoulder of the doormat
+                ( 2, 2),  // one tile further south
+                ( 0, 2),  // straight south of entry
+                (-2, 2),  // SW corner — same Y, mirror X
+                ( 3, 2),  // wider east
+                (-3, 2),  // wider west
+                ( 2, 3),  // deeper south
+                ( 0, 3),
+                (-2, 3),
+                ( 4, 2),
+                (-4, 2),
+            };
+
+            foreach (var (dx, dy) in offsets)
+                yield return new Vector2(entry.X + dx, entry.Y + dy);
+        }
+
+        /// <summary>Safe wrapper around <c>Farm.GetMainFarmHouseEntry</c> — returns null if the
+        /// farmhouse isn't resolvable yet (very early load, degenerate state).</summary>
+        private static Point? TryGetFarmHouseEntry(Farm farm)
+        {
+            try { return farm.GetMainFarmHouseEntry(); }
+            catch { return null; }
         }
 
         /// <summary>
