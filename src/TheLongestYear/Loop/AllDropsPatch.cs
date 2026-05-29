@@ -43,29 +43,29 @@ namespace TheLongestYear.Loop
             if (loc?.debris == null) return;
             if (Game1.random.NextDouble() >= 0.10) return;
 
-            // Snapshot items added between prefix and postfix, then clone each.
-            var added = new System.Collections.Generic.List<Item>();
+            // See MineOreDropBonus for the round-12 root cause: vanilla Object debris has
+            // .item == null and stores the id only in Debris.itemId.Value. Read the string id
+            // and clone via createObjectDebris.
+            int tx = (int)__instance.TileLocation.X;
+            int ty = (int)__instance.TileLocation.Y;
+            int doubled = 0;
             int total = loc.debris.Count;
             for (int i = __state; i < total; i++)
             {
                 var d = loc.debris[i];
-                if (d?.item != null) added.Add(d.item.getOne());
-            }
-            if (added.Count == 0) return;
+                string id = d?.item?.QualifiedItemId;
+                if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
+                if (string.IsNullOrEmpty(id)) continue;
 
-            int tx = (int)__instance.TileLocation.X;
-            int ty = (int)__instance.TileLocation.Y;
-            foreach (Item item in added)
-            {
-                Game1.createItemDebris(item,
-                    new Microsoft.Xna.Framework.Vector2(tx, ty) * 64f, -1, loc, -1);
+                Game1.createObjectDebris(id, tx, ty, loc);
+                doubled++;
             }
+            if (doubled == 0) return;
+
             BonusDropEffects.Play(loc, tx, ty);
-
             PatchLog.Info(
-                $"all_drops_up: source '{__instance.QualifiedItemId}' → doubled {added.Count} " +
-                $"drop(s) at ({tx}, {ty}) on {loc.NameOrUniqueName}: " +
-                $"[{string.Join(", ", added.ConvertAll(it => it.QualifiedItemId))}].");
+                $"all_drops_up: source '{__instance.QualifiedItemId}' → doubled {doubled} " +
+                $"drop(s) at ({tx}, {ty}) on {loc.NameOrUniqueName}.");
         }
     }
 
