@@ -6,6 +6,38 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Co-opted day-1 intro cutscene (replaces vanilla 191393)
+Source: 2026-05-29 playtest. User saw vanilla event 191393 (Demetrius +
+Lewis CC intro) fire on Spring 5 of a TLY loop. Suppressed for now via
+`EventSuppressionPatch` (returns `-1` from `checkEventPrecondition` for
+the 191393 key). The eventual replacement is a TLY-specific intro that
+RE-USES the 191393 staging (Lewis at Town near the CC) with new
+dialogue:
+
+1. Plays the FIRST time on a new save, on day 1 — **before** the
+   weekly-theme picker opens. (Currently the picker opens immediately
+   on `SaveLoaded` if it's a new run.)
+2. Lewis explains the Joja takeover threat in TLY terms (the year-loop
+   stakes — Junimos rewinding the year if the CC isn't restored).
+3. Lewis walks off; the player walks into the CC; a Junimo pops up to
+   explain the loop mechanic (themes, donations, Junimo Points).
+4. Must fire on a new save **even if the player skips the intro on the
+   first try** — track a `MetaState.HasSeenIntro` flag, set only after
+   the intro completes OR after the picker is shown post-intro.
+5. Skippable on first run (vanilla `Esc` / B). Auto-skipped on every
+   subsequent loop (the meta-state flag is preserved across resets).
+
+Implementation surface:
+- New cutscene script in a custom `Data/Events/TLYIntro` or appended to
+  Town events.
+- Hook `OnSaveLoaded` (existing TLY entry point) to play the intro
+  before the picker the first time only.
+- `WeeklyThemeQuestService` should know to wait for the intro to finish.
+- Junimo NPC sprite already in `Characters/Junimo` (used by hub menu);
+  reuse for the loop-explainer beat.
+
+Status: spec'd, not planned. Will be one of the v1.1 narrative tasks.
+
 ### JP upgrades: keep kitchen / keep basement / keep shortcuts
 Source: 2026-05-28 playtest. User correction after a first-pass sketch
 that bundled all Robin-related kept-state into one upgrade: "NO don't
