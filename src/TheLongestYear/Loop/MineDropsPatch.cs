@@ -6,56 +6,86 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Mining bonus (mine_drops_up): 30% extra drop on ore/coal hits inside MineShaft.
-    /// Applied as a postfix on Object.performToolAction — fires only when the object was
-    /// destroyed (returns true) and the location is a MineShaft.
+    /// Mining bonus (mine_drops_up): 30% chance — when a rock is destroyed in a MineShaft —
+    /// to DOUBLE every item the destruction dropped (ore, coal, geode, gems, all of it).
+    /// Mixed bonus (all_drops_up): 10% chance, same doubling, but anywhere a stone breaks
+    /// (Mines, Farm, Quarry, …).
+    ///
+    /// 2026-05-29 playtest evolution: the first cut returned a fixed +1 ore keyed by stoneId,
+    /// but stones in the mines drop a *variable* set (a single plain stone can yield stone +
+    /// coal + ore + a random gem on the same destruction). User: "I want everything it drops
+    /// to be doubled if you roll right." Implementation now patches
+    /// <see cref="GameLocation.OnStoneDestroyed"/> with a prefix that snapshots
+    /// <c>__instance.debris.Count</c> and a postfix that, on a successful roll, iterates the
+    /// newly-added debris and clones each item back into the location. That captures the
+    /// vanilla drop set exactly, so the doubling tracks every special-case branch
+    /// (DROP_QI_BEANS, frozen geodes on 343/450, mystic-stone gems, ladder fragments) without
+    /// us having to mirror each one.
     ///
     /// Foraging liability (mines_closed — HARD): blocks mine elevator + descent ladder.
     /// Applied as a prefix on MineShaft.checkAction — swallows the action for tile 112
     /// (elevator) and tile 173 (descend ladder) and shows an info dialogue.
     /// This is a hard block: no mine progress is possible this week for Foraging theme.
     /// </summary>
-    [HarmonyPatch(typeof(Object), nameof(Object.performToolAction))]
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.OnStoneDestroyed))]
     internal static class MineOreDropBonus
     {
-        // ReSharper disable once InconsistentNaming — Harmony convention.
-        private static void Postfix(Object __instance, bool __result)
+        // ReSharper disable InconsistentNaming — Harmony convention.
+
+        /// <summary>Snapshot the debris count before vanilla runs so the postfix can diff for
+        /// items added by this destruction. Stored in Harmony's per-call __state.</summary>
+        private static void Prefix(GameLocation __instance, out int __state)
         {
-            // 2026-05-29: TRACE-log every postfix entry while mine_drops_up is active, so we can
-            // diagnose whether the patch is firing at all (the 2026-05-29 morning playtest spent
-            // ~8 min in the mines on a Mining-themed week and produced zero mine_drops_up log
-            // lines — either the patch isn't being applied, the postfix isn't reaching the gate,
-            // or __result is never true for ore destruction).
-            if (ActiveEffectsProvider.ActiveBonus("mine_drops_up")
-                && Game1.currentLocation is MineShaft)
+            __state = __instance?.debris?.Count ?? -1;
+        }
+
+        private static void Postfix(GameLocation __instance, string stoneId, int x, int y,
+            Farmer who, int __state)
+        {
+            if (string.IsNullOrEmpty(stoneId)) return;
+            if (__state < 0 || __instance?.debris == null) return;
+
+            bool mineBonus = ActiveEffectsProvider.ActiveBonus("mine_drops_up")
+                             && __instance is MineShaft;
+            bool allBonus  = ActiveEffectsProvider.ActiveBonus("all_drops_up");
+            if (!mineBonus && !allBonus) return;
+
+            // Tier the roll: mine_drops_up takes priority at 30%; falls back to all_drops_up
+            // at 10% when only Mixed is picked. Single roll covers ALL drops added by this
+            // destruction — user spec is "everything doubled" on a successful roll, not
+            // per-item independent rolls.
+            string firingBonus;
+            double threshold;
+            if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.30; }
+            else           { firingBonus = "all_drops_up";  threshold = 0.10; }
+            if (Game1.random.NextDouble() >= threshold) return;
+
+            // Snapshot the items added during the original call. Net-side mutation while
+            // iterating the live debris collection would be unsafe; materialise the item
+            // references first, then drop fresh debris for each.
+            var added = new System.Collections.Generic.List<Item>();
+            // The debris collection is a Netcode list; iterate by index from __state to
+            // current count.
+            int total = __instance.debris.Count;
+            for (int i = __state; i < total; i++)
             {
-                PatchLog.Trace(
-                    $"MineOreDropBonus.Postfix entered: instance='{__instance?.QualifiedItemId}', " +
-                    $"__result={__result}, location={Game1.currentLocation?.NameOrUniqueName}.");
+                var d = __instance.debris[i];
+                if (d?.item != null) added.Add(d.item.getOne());
             }
+            if (added.Count == 0) return;
 
-            if (!__result) return; // object not destroyed
-            if (!ActiveEffectsProvider.ActiveBonus("mine_drops_up")) return;
-            if (!(Game1.currentLocation is MineShaft)) return;
-            // 2026-05-29 playtest fix: never bonus on weeds/twigs. The mine floor weed sprites
-            // (Object IDs 313-316, 674-679, etc.) hit performToolAction with __result=true and
-            // were granting +1 of the WEED OBJECT itself — user reported "somehow I picked up
-            // weeds." Vanilla weed loot (fiber/mixed seeds/sap) ships through a different path
-            // we don't (and shouldn't) touch.
-            if (__instance.IsWeeds() || __instance.IsTwig()) return;
-
-            string qid = __instance.QualifiedItemId;
-            // Apply to ore and coal; stone (390) and wood (388) excluded by resolver.
-            if (!BonusDropResolver.ShouldGrantExtraDrop("mine_drops_up", qid, Game1.random))
-                return;
-
-            int tx = (int)__instance.TileLocation.X;
-            int ty = (int)__instance.TileLocation.Y;
-            Game1.createObjectDebris(qid, tx, ty, Game1.player.UniqueMultiplayerID);
-            BonusDropEffects.Play(Game1.currentLocation, tx, ty);
+            long whichPlayer = who?.UniqueMultiplayerID ?? Game1.player.UniqueMultiplayerID;
+            foreach (Item item in added)
+            {
+                Game1.createItemDebris(item, new Microsoft.Xna.Framework.Vector2(x, y) * 64f,
+                    -1, __instance, -1);
+            }
+            BonusDropEffects.Play(__instance, x, y);
 
             PatchLog.Info(
-                $"mine_drops_up: +1 '{qid}' at ({tx}, {ty}) on {Game1.currentLocation?.NameOrUniqueName}.");
+                $"{firingBonus}: stone '{stoneId}' destroyed → doubled {added.Count} drop(s) at " +
+                $"({x}, {y}) on {__instance.NameOrUniqueName}: " +
+                $"[{string.Join(", ", added.ConvertAll(it => it.QualifiedItemId))}].");
         }
     }
 
