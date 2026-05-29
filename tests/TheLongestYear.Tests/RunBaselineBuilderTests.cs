@@ -41,19 +41,31 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
-    public void Starter_gold_1_adds_500g_to_default()
+    public void Starter_gold_1_adds_1000g_to_default()
     {
         var meta = new MetaState { OwnedUpgrades = { "starter_gold_1" } };
         var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
-        Assert.Equal(1000, b.StartingGold);
+        Assert.Equal(1500, b.StartingGold);
     }
 
     [Fact]
-    public void Starter_gold_2_replaces_starter_gold_1_for_a_total_of_2000g()
+    public void Starter_gold_2_replaces_starter_gold_1_for_a_total_of_3000g()
     {
         var meta = new MetaState { OwnedUpgrades = { "starter_gold_1", "starter_gold_2" } };
         var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
-        Assert.Equal(2000, b.StartingGold);
+        Assert.Equal(3000, b.StartingGold);
+    }
+
+    [Fact]
+    public void Starter_gold_5_grants_max_bonus_of_25000g()
+    {
+        var meta = new MetaState
+        {
+            OwnedUpgrades = { "starter_gold_1", "starter_gold_2", "starter_gold_3",
+                              "starter_gold_4", "starter_gold_5" }
+        };
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Equal(25500, b.StartingGold);
     }
 
     [Fact]

@@ -68,9 +68,12 @@ namespace TheLongestYear.Loop
             // at 10% when only Mixed is picked. Single roll covers ALL drops added by this
             // destruction — user spec is "everything doubled" on a successful roll, not
             // per-item independent rolls.
+            // 2026-05-29 user spec rebalance: mine_drops_up 30% → 20%. all_drops_up
+            // (Mixed) stays at 10% — generalist, fires on every Object.performToolAction
+            // too.
             string firingBonus;
             double threshold;
-            if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.30; }
+            if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.20; }
             else           { firingBonus = "all_drops_up";  threshold = 0.10; }
 
             // 2026-05-29 round 12: log the actual rolled value on every event so we can

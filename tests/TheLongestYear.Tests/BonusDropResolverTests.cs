@@ -29,21 +29,22 @@ public class BonusDropResolverTests
     }
 
     [Fact]
-    public void ForageYieldUp_fires_at_25pct_for_forage_item()
+    public void ForageYieldUp_fires_at_20pct_for_forage_item()
     {
-        // Over 10000 samples the hit rate should be 0.25 ± 0.01.
+        // Over 10000 samples the hit rate should be 0.20 ± 0.02 (rebalanced 25% → 20%).
         int hits = 0;
         var rng = new System.Random(42);
         for (int i = 0; i < 10000; i++)
             if (BonusDropResolver.ShouldGrantExtraDrop("forage_yield_up", "(O)281", rng))
                 hits++;
         double rate = hits / 10000.0;
-        Assert.InRange(rate, 0.23, 0.27);
+        Assert.InRange(rate, 0.18, 0.22);
     }
 
     [Fact]
-    public void MineDropsUp_fires_at_30pct_excludes_stone()
+    public void MineDropsUp_fires_at_20pct_excludes_stone()
     {
+        // Rebalanced 30% → 20% per user spec.
         for (int seed = 0; seed < 100; seed++)
         {
             var rng = new System.Random(seed);
@@ -55,7 +56,7 @@ public class BonusDropResolverTests
             if (BonusDropResolver.ShouldGrantExtraDrop("mine_drops_up", "(O)378", rng2))
                 hits++;
         double rate = hits / 10000.0;
-        Assert.InRange(rate, 0.28, 0.32);
+        Assert.InRange(rate, 0.18, 0.22);
     }
 
     [Fact]

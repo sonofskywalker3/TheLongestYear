@@ -1,9 +1,35 @@
 using HarmonyLib;
 using StardewValley;
+using StardewValley.Menus;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
+    /// <summary>Shop Discount (shop_discount_1..5): permanent X% discount on gold shop
+    /// purchases (5/10/15/20/25% by tier). Patches the static <c>ShopMenu.chargePlayer</c>
+    /// which is the single chokepoint every vanilla shop screen routes its
+    /// "subtract gold from player" call through. Currency-type gate (only 0 = gold)
+    /// keeps it from affecting Casino tokens / festival score / club coins / QiGems.
+    /// Negative-amount gate keeps it from boosting sell prices (the sell path calls
+    /// the same method with a negative amount to ADD gold).</summary>
+    [HarmonyPatch(typeof(ShopMenu), nameof(ShopMenu.chargePlayer))]
+    internal static class ShopDiscountPatch
+    {
+        // ReSharper disable InconsistentNaming — Harmony convention.
+        private static void Prefix(Farmer who, int currencyType, ref int amount)
+        {
+            if (currencyType != 0) return;
+            if (amount <= 0) return;
+
+            int tier = UpgradeChecker.GetTier("shop_discount", 5);
+            if (tier == 0) return;
+
+            double discount = tier * 0.05;
+            amount = (int)System.Math.Round(amount * (1.0 - discount),
+                System.MidpointRounding.AwayFromZero);
+        }
+    }
+
     /// <summary>
     /// Tiered passive accelerators (added 2026-05-29) — three independent 5-tier chains in
     /// the Obtainability category that grant flat +5%-per-tier (max +25%) chances on the

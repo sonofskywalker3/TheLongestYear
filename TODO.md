@@ -6,6 +6,28 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Continue-after-victory mode
+Source: 2026-05-29 playtest spec. After the win condition fires (CC restored,
+year complete, all bundles), the player should have the option to keep
+playing the same run instead of being forced into a reset. Currently the
+reset-trigger fires automatically at year-end on a completed CC.
+
+Implementation notes:
+- New flag in `MetaState` or `RunState` — `VictoryAcknowledged` — set when the
+  player picks "continue" on the post-win screen.
+- `WorldResetService` checks the flag before scheduling a reset; if set, the
+  current run keeps going indefinitely (next month, next season, no roll-over).
+- Acknowledgement UI: the existing JunimoShrineMenu or a one-off "you won"
+  modal with "New loop" / "Keep playing" options.
+- The player can still trigger a manual reset later via the shrine — the
+  acknowledgement isn't permanent, just defers the auto-reset.
+- JP banking can keep accruing during the continued run; donations after win
+  still award JP at the usual season-multiplier, no special bonus.
+
+Status: spec'd, not planned. Tagged as v1.x polish (the auto-reset isn't a
+blocker — the player can manually save before the auto-reset hits if they
+want to keep their post-win state preserved on a backup save).
+
 ### Co-opted day-1 intro cutscene (replaces vanilla 191393)
 Source: 2026-05-29 playtest. User saw vanilla event 191393 (Demetrius +
 Lewis CC intro) fire on Spring 5 of a TLY loop. Suppressed for now via
