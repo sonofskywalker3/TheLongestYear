@@ -40,16 +40,16 @@ public static class ThemeModifiers
     /// </summary>
     public static string DisplayNameFor(string modifierId) => modifierId switch
     {
-        "forage_yield_up"        => "25% chance to find an extra foraged item",
+        "forage_yield_up"        => "20% chance to find an extra foraged item",
         "forage_off"             => "All foraging items removed",
-        // crop_growth_* is implemented deterministically via a 2-of-7-days rule in
-        // CropGrowthPatch (~28.6% effective). Display rounds back to the spec'd 25% — the
-        // exact integer count of skipped/extra days isn't player-facing.
-        "crop_growth_up"         => "Crops grow 25% faster",
-        "crop_growth_down"       => "Crops grow 25% slower",
+        // 2026-05-29 user spec: crop_growth_up/down switched from deterministic (days 2+5
+        // every week) to probabilistic (20% per watered crop per day) — distributes the
+        // bonus/penalty across the whole week instead of concentrating on two days.
+        "crop_growth_up"         => "20% chance per crop per day to grow an extra day",
+        "crop_growth_down"       => "20% chance per crop per day to grow nothing",
         "fish_bite_up"           => "Fish bite 30% sooner",
         "fish_bite_down"         => "Fish bite 30% slower",
-        "mine_drops_up"          => "30% chance for mined resources to drop +1",
+        "mine_drops_up"          => "20% chance for mined resources to drop +1",
         // 2026-05-28 playtest round 2: user requested a HARD entrance block — "floor 1 needs
         // to be blocked, floor 0 is accessible." MinesEntranceClosedPatch now intercepts the
         // performAction("Mine"/"NextMineLevel"/"MineElevator") verbs so the player can walk to

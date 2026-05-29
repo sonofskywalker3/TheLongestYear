@@ -160,7 +160,7 @@ namespace TheLongestYear.Loop
             if (Run.LiabilitySuppressedThisWeek)
                 return;
 
-            long bonus = _jp.WeeklyQuestBonus(Run.WeekOfYear);
+            long bonus = JpBoostHelper.Apply(_store.State, _jp.WeeklyQuestBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
             Run.LiabilitySuppressedThisWeek = true;
             ActiveEffectsProvider.SuppressLiability();

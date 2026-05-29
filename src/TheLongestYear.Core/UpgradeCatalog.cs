@@ -59,10 +59,22 @@ public static class UpgradeCatalog
             "Start each run with the 24-slot backpack.", 150),
         new UpgradeDefinition("backpack_2", UpgradeCategory.Loadout, "Backpack II",
             "Start each run with the 36-slot backpack.", 375, "backpack_1"),
+
+        // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
+        // 5-tier with a more generous floor and ceiling per user feedback). Each tier
+        // sets the TOTAL starting-gold bonus to its amount (not additive — owning II
+        // means +2500g, not +1000+2500). Highest owned tier wins, same as backpack.
+        // Costs match the shop-discount curve since both are similar early-run impact.
         new UpgradeDefinition("starter_gold_1", UpgradeCategory.Loadout, "Seed Money I",
-            "Start each run with +500g.", 125),
+            "Start each run with +1,000g. (Permanent — applies every run.)", 75),
         new UpgradeDefinition("starter_gold_2", UpgradeCategory.Loadout, "Seed Money II",
-            "Start each run with +1500g (instead of +500g).", 300, "starter_gold_1"),
+            "Start each run with +2,500g instead of +1,000g.", 175, "starter_gold_1"),
+        new UpgradeDefinition("starter_gold_3", UpgradeCategory.Loadout, "Seed Money III",
+            "Start each run with +5,000g.", 350, "starter_gold_2"),
+        new UpgradeDefinition("starter_gold_4", UpgradeCategory.Loadout, "Seed Money IV",
+            "Start each run with +10,000g.", 600, "starter_gold_3"),
+        new UpgradeDefinition("starter_gold_5", UpgradeCategory.Loadout, "Seed Money V",
+            "Start each run with +25,000g.", 900, "starter_gold_4"),
 
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
@@ -93,8 +105,39 @@ public static class UpgradeCatalog
         // Efficiency
         new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Early Horse",
             "Start each run with the horse and stable.", 450),
-        new UpgradeDefinition("shop_discount_5", UpgradeCategory.Efficiency, "Shop Discount I",
-            "5% off all shop purchases this run.", 275),
+
+        // Shop Discount — 5-tier chain (2026-05-29 rebalance: was single-tier 5%, now
+        // 5/10/15/20/25%. Renamed from shop_discount_5 → shop_discount_1..5; the prior
+        // ID's "5" meant the percent and was confusing alongside the chain numbering).
+        // Effect applies EVERY run (permanent), not just this run — earlier wording
+        // implied single-use. Same cost curve as starter_gold; both are early-run cushion.
+        new UpgradeDefinition("shop_discount_1", UpgradeCategory.Efficiency, "Shop Discount I",
+            "5% off all shop purchases. (Permanent — applies every run.)", 75),
+        new UpgradeDefinition("shop_discount_2", UpgradeCategory.Efficiency, "Shop Discount II",
+            "10% off all shop purchases.", 175, "shop_discount_1"),
+        new UpgradeDefinition("shop_discount_3", UpgradeCategory.Efficiency, "Shop Discount III",
+            "15% off all shop purchases.", 350, "shop_discount_2"),
+        new UpgradeDefinition("shop_discount_4", UpgradeCategory.Efficiency, "Shop Discount IV",
+            "20% off all shop purchases.", 600, "shop_discount_3"),
+        new UpgradeDefinition("shop_discount_5", UpgradeCategory.Efficiency, "Shop Discount V",
+            "25% off all shop purchases.", 900, "shop_discount_4"),
+
+        // JP Boost — 5-tier chain. Multiplies ALL JP-awarding sources (item donations,
+        // bundle completions, room completions, weekly theme quests, interim run-end
+        // awards). Premium pricing relative to accelerators because the effect compounds:
+        // every JP earned after purchase is bigger, including the JP that will fund the
+        // next upgrade. Tier 1 (100) is the most expensive starter T1; full chain (3000)
+        // is the most expensive Obtainability chain.
+        new UpgradeDefinition("jp_boost_1", UpgradeCategory.Efficiency, "Junimo Favor I",
+            "All Junimo Point gains increased by 5%. (Permanent — compounds with itself.)", 100),
+        new UpgradeDefinition("jp_boost_2", UpgradeCategory.Efficiency, "Junimo Favor II",
+            "All Junimo Point gains increased by 10%.", 250, "jp_boost_1"),
+        new UpgradeDefinition("jp_boost_3", UpgradeCategory.Efficiency, "Junimo Favor III",
+            "All Junimo Point gains increased by 15%.", 500, "jp_boost_2"),
+        new UpgradeDefinition("jp_boost_4", UpgradeCategory.Efficiency, "Junimo Favor IV",
+            "All Junimo Point gains increased by 20%.", 850, "jp_boost_3"),
+        new UpgradeDefinition("jp_boost_5", UpgradeCategory.Efficiency, "Junimo Favor V",
+            "All Junimo Point gains increased by 25%.", 1300, "jp_boost_4"),
 
         // Obtainability
         new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, "Cultivation: Red Cabbage",
@@ -104,52 +147,54 @@ public static class UpgradeCatalog
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, "Fortune: Rare Fish",
             "Rare fish catch chance increased by 25%.", 525),
 
-        // Obtainability — Passive Accelerators (added 2026-05-29)
+        // Obtainability — Passive Accelerators (added 2026-05-29, cost-tuned 2026-05-29)
         //
-        // Three 5-tier chains at +5% per tier (max 25%) intended as cheap early-game upgrades
-        // for players struggling to bank enough JP for the bigger Keep/Cultivation purchases.
-        // Each tier adds 5 percentage points; chains are independent of theme weeks so they
-        // STACK with the matching weekly bonus (e.g. Green Thumb V on a Farming week = +25%
-        // passive + the week's +1 growth tick on days 2/5). Cost curve picked to make tier 1
-        // genuinely cheap (75 JP, cheapest entry in the catalog) so players can grab it in
-        // their first run, then escalate gently: 75 → 150 → 250 → 400 → 600 = 1475 JP full
-        // chain, ~equivalent to one Cookbook III.
+        // Three 5-tier chains at +5% per tier (max 25%) — cheap early-run upgrades for
+        // players still ramping up JP banking. Curve is 50 / 125 / 250 / 425 / 650 per
+        // tier (sum 1500 per chain). Tier 1 (50 JP) is now the cheapest entry in the
+        // catalog — first-run target is to bank ~100-150 JP and buy 2-3 of these, OR
+        // one Keep Copper Pickaxe (150), OR one Seed Money I (75). All three chains are
+        // permanent passives that stack with the matching theme-week bonus.
+        //
+        // 2026-05-29 user balance feedback: "13 JP after a week, hoping for ~100 by end
+        // of month" — prior 75-JP tier was on the edge of "feasible after one run"; 50 JP
+        // makes the first purchase a sure thing even on a casual first-run pace.
 
         // Green Thumb — % chance per watered crop per night to gain an extra growth day.
         new UpgradeDefinition("green_thumb_1", UpgradeCategory.Obtainability, "Green Thumb I",
-            "Each watered crop has a 5% chance per day to gain an extra day of growth.", 75),
+            "Each watered crop has a 5% chance per day to gain an extra day of growth.", 50),
         new UpgradeDefinition("green_thumb_2", UpgradeCategory.Obtainability, "Green Thumb II",
-            "Each watered crop has a 10% chance per day to gain an extra day of growth.", 150, "green_thumb_1"),
+            "Each watered crop has a 10% chance per day to gain an extra day of growth.", 125, "green_thumb_1"),
         new UpgradeDefinition("green_thumb_3", UpgradeCategory.Obtainability, "Green Thumb III",
             "Each watered crop has a 15% chance per day to gain an extra day of growth.", 250, "green_thumb_2"),
         new UpgradeDefinition("green_thumb_4", UpgradeCategory.Obtainability, "Green Thumb IV",
-            "Each watered crop has a 20% chance per day to gain an extra day of growth.", 400, "green_thumb_3"),
+            "Each watered crop has a 20% chance per day to gain an extra day of growth.", 425, "green_thumb_3"),
         new UpgradeDefinition("green_thumb_5", UpgradeCategory.Obtainability, "Green Thumb V",
-            "Each watered crop has a 25% chance per day to gain an extra day of growth.", 600, "green_thumb_4"),
+            "Each watered crop has a 25% chance per day to gain an extra day of growth.", 650, "green_thumb_4"),
 
         // Coal Vein — % chance per destroyed stone to drop +1 coal.
         new UpgradeDefinition("coal_vein_1", UpgradeCategory.Obtainability, "Coal Vein I",
-            "Each stone you destroy has a 5% chance to drop an extra coal.", 75),
+            "Each stone you destroy has a 5% chance to drop an extra coal.", 50),
         new UpgradeDefinition("coal_vein_2", UpgradeCategory.Obtainability, "Coal Vein II",
-            "Each stone you destroy has a 10% chance to drop an extra coal.", 150, "coal_vein_1"),
+            "Each stone you destroy has a 10% chance to drop an extra coal.", 125, "coal_vein_1"),
         new UpgradeDefinition("coal_vein_3", UpgradeCategory.Obtainability, "Coal Vein III",
             "Each stone you destroy has a 15% chance to drop an extra coal.", 250, "coal_vein_2"),
         new UpgradeDefinition("coal_vein_4", UpgradeCategory.Obtainability, "Coal Vein IV",
-            "Each stone you destroy has a 20% chance to drop an extra coal.", 400, "coal_vein_3"),
+            "Each stone you destroy has a 20% chance to drop an extra coal.", 425, "coal_vein_3"),
         new UpgradeDefinition("coal_vein_5", UpgradeCategory.Obtainability, "Coal Vein V",
-            "Each stone you destroy has a 25% chance to drop an extra coal.", 600, "coal_vein_4"),
+            "Each stone you destroy has a 25% chance to drop an extra coal.", 650, "coal_vein_4"),
 
         // Forager's Eye — % chance per overnight forage spawn to be doubled.
         new UpgradeDefinition("foragers_eye_1", UpgradeCategory.Obtainability, "Forager's Eye I",
-            "Each overnight forage spawn has a 5% chance to be doubled.", 75),
+            "Each overnight forage spawn has a 5% chance to be doubled.", 50),
         new UpgradeDefinition("foragers_eye_2", UpgradeCategory.Obtainability, "Forager's Eye II",
-            "Each overnight forage spawn has a 10% chance to be doubled.", 150, "foragers_eye_1"),
+            "Each overnight forage spawn has a 10% chance to be doubled.", 125, "foragers_eye_1"),
         new UpgradeDefinition("foragers_eye_3", UpgradeCategory.Obtainability, "Forager's Eye III",
             "Each overnight forage spawn has a 15% chance to be doubled.", 250, "foragers_eye_2"),
         new UpgradeDefinition("foragers_eye_4", UpgradeCategory.Obtainability, "Forager's Eye IV",
-            "Each overnight forage spawn has a 20% chance to be doubled.", 400, "foragers_eye_3"),
+            "Each overnight forage spawn has a 20% chance to be doubled.", 425, "foragers_eye_3"),
         new UpgradeDefinition("foragers_eye_5", UpgradeCategory.Obtainability, "Forager's Eye V",
-            "Each overnight forage spawn has a 25% chance to be doubled.", 600, "foragers_eye_4"),
+            "Each overnight forage spawn has a 25% chance to be doubled.", 650, "foragers_eye_4"),
 
         // Foresight — Weather Sage chain (7 tiers per spec §11)
         new UpgradeDefinition("weather_sage_1", UpgradeCategory.Foresight, "Weather Sage I",

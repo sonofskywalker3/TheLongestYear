@@ -70,9 +70,15 @@ public static class RunBaselineBuilder
 
     public static RunBaseline Build(MetaState meta, RunState run, PlayerSnapshot peaks, int defaultStartingMoney)
     {
+        // Seed Money — 5-tier chain, highest owned tier wins (the dollar amount is the
+        // total bonus, not additive across tiers). Values bumped 2026-05-29 per user
+        // "more generous" feedback: 500/1500 → 1000/2500/5000/10000/25000.
         int gold = defaultStartingMoney
-            + (meta.HasUpgrade("starter_gold_2") ? 1500
-               : meta.HasUpgrade("starter_gold_1") ? 500
+            + (meta.HasUpgrade("starter_gold_5") ? 25000
+               : meta.HasUpgrade("starter_gold_4") ? 10000
+               : meta.HasUpgrade("starter_gold_3") ? 5000
+               : meta.HasUpgrade("starter_gold_2") ? 2500
+               : meta.HasUpgrade("starter_gold_1") ? 1000
                : 0);
 
         int maxItems = meta.HasUpgrade("backpack_2") ? 36

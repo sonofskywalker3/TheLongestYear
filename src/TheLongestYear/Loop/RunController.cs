@@ -428,7 +428,9 @@ namespace TheLongestYear.Loop
             var lines = Run.DonatedItemIds
                 .GroupBy(CcItemCatalog.RarityOf)
                 .Select(g => new DonationLine(g.Key, g.Count()));
-            long awarded = _jp.ForDonationBatch(lines, Run.WeekOfYear, bundlesCompleted: 0, roomsCompleted: 0);
+            long awarded = JpBoostHelper.Apply(
+                _store.State,
+                _jp.ForDonationBatch(lines, Run.WeekOfYear, bundlesCompleted: 0, roomsCompleted: 0));
             _store.State.JunimoPoints += awarded;
             _monitor.Log(
                 $"Interim JP for {reason}: +{awarded} (now {_store.State.JunimoPoints}). Persists on this day's save.",

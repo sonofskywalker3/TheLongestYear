@@ -20,13 +20,13 @@ public class ThemeModifiersTests
     }
 
     [Theory]
-    [InlineData("forage_yield_up",      "25% chance to find an extra foraged item")]
+    [InlineData("forage_yield_up",      "20% chance to find an extra foraged item")]
     [InlineData("forage_off",           "All foraging items removed")]
-    [InlineData("crop_growth_up",       "Crops grow 25% faster")]
-    [InlineData("crop_growth_down",     "Crops grow 25% slower")]
+    [InlineData("crop_growth_up",       "20% chance per crop per day to grow an extra day")]
+    [InlineData("crop_growth_down",     "20% chance per crop per day to grow nothing")]
     [InlineData("fish_bite_up",         "Fish bite 30% sooner")]
     [InlineData("fish_bite_down",       "Fish bite 30% slower")]
-    [InlineData("mine_drops_up",        "30% chance for mined resources to drop +1")]
+    [InlineData("mine_drops_up",        "20% chance for mined resources to drop +1")]
     [InlineData("mines_closed",         "Mine entrance closed all week")]
     [InlineData("all_drops_up",         "10% chance for any drop to be +1")]
     [InlineData("all_sell_prices_down", "All sell prices cut in half")]

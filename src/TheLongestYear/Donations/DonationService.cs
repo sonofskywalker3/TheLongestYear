@@ -52,13 +52,16 @@ namespace TheLongestYear.Donations
             long awarded = bonusApplies
                 ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;
+            awarded = JpBoostHelper.Apply(_store.State, awarded);
 
             _store.State.JunimoPoints += awarded;
             Run.RecordDonation(qualifiedItemId);
 
             string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier})" : "";
+            int jpBoostTier = JpBoostHelper.HighestTier(_store.State);
+            string boostTag = jpBoostTier > 0 ? $" (jp_boost tier {jpBoostTier})" : "";
             _monitor.Log(
-                $"Donated {count}x {qualifiedItemId} ({rarity}) -> +{awarded} JP{bonusTag} (now {_store.State.JunimoPoints}).",
+                $"Donated {count}x {qualifiedItemId} ({rarity}) -> +{awarded} JP{bonusTag}{boostTag} (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
 
             AfterDonation?.Invoke();
@@ -80,7 +83,7 @@ namespace TheLongestYear.Donations
             if (!Run.TryMarkBundleAwarded(bundleIndex))
                 return;
 
-            long bonus = _jp.BundleBonus(Run.WeekOfYear);
+            long bonus = JpBoostHelper.Apply(_store.State, _jp.BundleBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
             _monitor.Log(
                 $"Bundle {bundleIndex} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
@@ -93,7 +96,7 @@ namespace TheLongestYear.Donations
             if (!Run.TryMarkRoomAwarded(area))
                 return;
 
-            long bonus = _jp.RoomBonus(Run.WeekOfYear);
+            long bonus = JpBoostHelper.Apply(_store.State, _jp.RoomBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
             _monitor.Log(
                 $"Room {area} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",

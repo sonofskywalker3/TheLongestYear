@@ -23,11 +23,14 @@ public static class BonusDropResolver
         if (bonusId == null) return false;
         return bonusId switch
         {
+            // 2026-05-29 user spec rebalance: 25%/30% → 20% for both themed roll-ins.
+            // all_drops_up (Mixed) stays at 10% — it's a generalist that fires on every
+            // tool action, including ones the dedicated themes don't cover.
             "forage_yield_up" => itemQualifiedId != Stone
                                  && itemQualifiedId != Wood
-                                 && rng.NextDouble() < 0.25,
+                                 && rng.NextDouble() < 0.20,
             "mine_drops_up"   => itemQualifiedId != Stone
-                                 && rng.NextDouble() < 0.30,
+                                 && rng.NextDouble() < 0.20,
             "all_drops_up"    => rng.NextDouble() < 0.10,
             _                 => false
         };
