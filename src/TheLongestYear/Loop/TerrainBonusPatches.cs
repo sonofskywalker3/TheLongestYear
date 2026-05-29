@@ -32,24 +32,26 @@ namespace TheLongestYear.Loop
             if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return false;
             if (Game1.random.NextDouble() >= 0.10) return false;
 
-            var added = new System.Collections.Generic.List<Item>();
+            // See MineOreDropBonus for the round-12 root cause: vanilla Object debris has
+            // .item == null and stores the id in Debris.itemId.Value. Clone via the string id.
+            int doubled = 0;
             int total = loc.debris.Count;
             for (int i = startDebrisCount; i < total; i++)
             {
                 var d = loc.debris[i];
-                if (d?.item != null) added.Add(d.item.getOne());
-            }
-            if (added.Count == 0) return false;
+                string id = d?.item?.QualifiedItemId;
+                if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
+                if (string.IsNullOrEmpty(id)) continue;
 
-            foreach (Item item in added)
-            {
-                Game1.createItemDebris(item, new Vector2(tileX, tileY) * 64f, -1, loc, -1);
+                Game1.createObjectDebris(id, tileX, tileY, loc);
+                doubled++;
             }
+            if (doubled == 0) return false;
+
             BonusDropEffects.Play(loc, tileX, tileY);
             PatchLog.Info(
-                $"all_drops_up (terrain): doubled {added.Count} drop(s) at ({tileX}, {tileY}) on " +
-                $"{loc.NameOrUniqueName}: " +
-                $"[{string.Join(", ", added.ConvertAll(it => it.QualifiedItemId))}].");
+                $"all_drops_up (terrain): doubled {doubled} drop(s) at ({tileX}, {tileY}) on " +
+                $"{loc.NameOrUniqueName}.");
             return true;
         }
     }

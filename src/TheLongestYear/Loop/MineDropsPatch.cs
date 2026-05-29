@@ -86,35 +86,38 @@ namespace TheLongestYear.Loop
 
             try
             {
-                // Snapshot the items added during the original call. Net-side mutation while
-                // iterating the live debris collection would be unsafe; materialise the item
-                // references first, then drop fresh debris for each.
-                var added = new System.Collections.Generic.List<Item>();
-                // The debris collection is a Netcode list; iterate by index from __state to
-                // current count.
+                // Round-12 root cause: vanilla creates Object-bearing debris (stone, ore, coal,
+                // copper, iron, …) via Game1.createObjectDebris(string id, …) which routes to
+                // Debris.InitializeItem. InitializeItem sets itemId.Value = "(O)390" etc. but
+                // ONLY assigns .item for *non-Object* types (Archaeology / Fish) — for every
+                // ore/stone debris .item stays null. The prior `d?.item != null` filter
+                // therefore dropped 100% of vanilla mining drops; the gate rolled in 7 times
+                // across the round-12 playtest log and silently saw "empty diff" every time.
+                // Fix: snapshot by Debris.itemId.Value (string) and clone via
+                // Game1.createObjectDebris which uses the same Debris(string, …) constructor.
+                int doubled = 0;
                 int total = __instance.debris.Count;
                 for (int i = __state; i < total; i++)
                 {
                     var d = __instance.debris[i];
-                    if (d?.item != null) added.Add(d.item.getOne());
+                    string id = d?.item?.QualifiedItemId;
+                    if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
+                    if (string.IsNullOrEmpty(id)) continue;
+
+                    Game1.createObjectDebris(id, x, y, __instance);
+                    doubled++;
                 }
-                if (added.Count == 0)
+                if (doubled == 0)
                 {
-                    PatchLog.Trace($"{firingBonus}: rolled in but debris-diff was empty (snapshot={__state}, total={total}).");
+                    PatchLog.Trace($"{firingBonus}: rolled in but no item-bearing debris in diff (snapshot={__state}, total={total}).");
                     return;
                 }
 
-                foreach (Item item in added)
-                {
-                    Game1.createItemDebris(item, new Microsoft.Xna.Framework.Vector2(x, y) * 64f,
-                        -1, __instance, -1);
-                }
                 BonusDropEffects.Play(__instance, x, y);
 
                 PatchLog.Info(
-                    $"{firingBonus}: stone '{stoneId}' destroyed → doubled {added.Count} drop(s) at " +
-                    $"({x}, {y}) on {__instance.NameOrUniqueName}: " +
-                    $"[{string.Join(", ", added.ConvertAll(it => it.QualifiedItemId))}].");
+                    $"{firingBonus}: stone '{stoneId}' destroyed → doubled {doubled} drop(s) at " +
+                    $"({x}, {y}) on {__instance.NameOrUniqueName}.");
             }
             catch (System.Exception ex)
             {
