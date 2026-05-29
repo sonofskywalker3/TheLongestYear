@@ -143,9 +143,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, "Cultivation: Red Cabbage",
             "Red Cabbage can appear from Mixed Seeds in Summer.", 750),
         // 2026-05-29 user spec: starfruit decoupled from red cabbage — picker should be able
-        // to grab either independently. Cost held at 1125 ("have it cost the same").
+        // to grab either independently. Cost dropped 1125 → 750 to match cult_red_cabbage
+        // ("change the starfruit cost to the same cost as the red cabbage").
         new UpgradeDefinition("cult_starfruit", UpgradeCategory.Obtainability, "Cultivation: Starfruit",
-            "Starfruit can appear from Mixed Seeds in Summer.", 1125),
+            "Starfruit can appear from Mixed Seeds in Summer.", 750),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, "Fortune: Rare Fish",
             "Rare fish catch chance increased by 25%.", 525),
 
