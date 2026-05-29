@@ -268,6 +268,14 @@ public static class UpgradeCatalog
             "Start each run with all five of Robin's map shortcuts pre-built (Town fence, bus tunnel, " +
             "forest stump bridge, Mountain→Quarry, Mountain→Town).", 900),
 
+        // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
+        // across loops. 2026-05-29 spec: sentimental upgrade, not progression-gating —
+        // pets don't produce anything you'd ship or donate, so the cost reflects "mostly
+        // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
+        // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
+        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, "Keep Pet",
+            "Your pet returns at the start of every loop with its name and friendship hearts intact.", 75),
+
         // Vault — pre-pay all four bus bundles once and keep them paid across resets.
         // Without this upgrade the player has to pay the season's Vault bundle every run by day 28
         // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).

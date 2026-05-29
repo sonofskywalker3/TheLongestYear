@@ -79,7 +79,10 @@ Implementation surface:
 
 Status: spec'd, not planned. Will be one of the v1.1 narrative tasks.
 
-### JP upgrade: `keep_pet` — pet persists with hearts
+### ~~JP upgrade: `keep_pet`~~ — SHIPPED 2026-05-29
+See Resolved section below. Cost landed at 75 JP, sentimental tier.
+
+### (closed) JP upgrade: `keep_pet` — pet persists with hearts
 Source: 2026-05-29 playtest. New JP upgrade in the Animals / Buildings
 category that preserves the player's pet (cat / dog / turtle) AND its
 friendship hearts across loops, so a long-tenured pet stays maxed out
@@ -168,6 +171,14 @@ Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
 ## Resolved / closed
+
+- **`keep_pet` upgrade** — shipped 2026-05-29 as `PetCarryoverService`
+  + `MetaState.PetState` + `PetSnapshot` record. 75 JP, Buildings
+  category. Snapshots kind / breed / name / friendship before
+  `loadForNewGame`, restores at the Farm porch after starting-animal
+  placement, sets the `MarniePetAdoption` mail flag to suppress
+  vanilla's day-1 adoption offer. Barn/coop animals still start fresh
+  (0 hearts) per spec — only the pet carries hearts.
 
 - **Seed-driven weather scheduler** — shipped 2026-05-28 as
   `WeatherScheduler` + `WeatherModificationsPatch`. Per-season minimums

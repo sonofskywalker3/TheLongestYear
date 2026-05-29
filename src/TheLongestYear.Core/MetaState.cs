@@ -48,6 +48,15 @@ public sealed class MetaState
     public bool VictoryAcknowledged { get; set; }
 
     /// <summary>
+    /// Snapshot of the player's pet (kind, breed, name, friendship) captured before a loop
+    /// reset and restored after, when the <c>keep_pet</c> upgrade is owned. Null when the
+    /// upgrade isn't owned, when there was no pet to snapshot, or for the very first run
+    /// (no prior reset has populated it). See <see cref="PetSnapshot"/> for field meanings.
+    /// 2026-05-29 spec: sentimental upgrade only — barn/coop animals stay 0-hearts every loop.
+    /// </summary>
+    public PetSnapshot? PetState { get; set; }
+
+    /// <summary>
     /// Quest ids the player has completed across all runs in this playthrough. Backs the
     /// quest:&lt;id&gt; meta-requirement namespace. Producer is part of a later plan; declared
     /// here so future plans don't have to touch the state class.

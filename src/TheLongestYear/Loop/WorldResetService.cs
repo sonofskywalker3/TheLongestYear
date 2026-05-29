@@ -127,6 +127,11 @@ namespace TheLongestYear.Loop
                 $"In-place reset: new uniqueIDForThisGame={Game1.uniqueIDForThisGame}.",
                 LogLevel.Trace);
 
+            // 0a. Capture the player's pet (kind, breed, name, friendship) BEFORE loadForNewGame
+            // wipes it. Gated on the keep_pet upgrade — owners get a sentimental pet-survives-
+            // resets carryover; non-owners skip the snapshot and the pet is wiped normally.
+            PetCarryoverService.SnapshotPet(_meta, _monitor);
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -272,6 +277,12 @@ namespace TheLongestYear.Loop
 
             // 10. Place starting animals into matching housing.
             ApplyStartingAnimals(baseline.StartingAnimals);
+
+            // 10a. Restore the snapshotted pet on the Farm (keep_pet upgrade). Runs after
+            // starting animals so the Farm.characters collection is already settled. No-op
+            // when the upgrade isn't owned or no prior snapshot exists. Also sets the
+            // MarniePetAdoption mail flag so vanilla's day-1 adoption offer is suppressed.
+            PetCarryoverService.RestorePet(_meta, _monitor);
 
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
