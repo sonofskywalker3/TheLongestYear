@@ -22,14 +22,14 @@ namespace TheLongestYear.Loop
             if (!BonusDropResolver.ShouldGrantExtraDrop("all_drops_up", __instance.QualifiedItemId, Game1.random))
                 return;
 
-            Game1.createObjectDebris(__instance.QualifiedItemId,
-                (int)__instance.TileLocation.X,
-                (int)__instance.TileLocation.Y,
+            int tx = (int)__instance.TileLocation.X;
+            int ty = (int)__instance.TileLocation.Y;
+            Game1.createObjectDebris(__instance.QualifiedItemId, tx, ty,
                 Game1.player.UniqueMultiplayerID);
+            BonusDropEffects.Play(Game1.currentLocation, tx, ty);
 
             PatchLog.Info(
-                $"all_drops_up: +1 '{__instance.QualifiedItemId}' at " +
-                $"({(int)__instance.TileLocation.X}, {(int)__instance.TileLocation.Y}) on " +
+                $"all_drops_up: +1 '{__instance.QualifiedItemId}' at ({tx}, {ty}) on " +
                 $"{Game1.currentLocation?.NameOrUniqueName}.");
         }
     }
