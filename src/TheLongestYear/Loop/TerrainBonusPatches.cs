@@ -141,4 +141,48 @@ namespace TheLongestYear.Loop
             TerrainBonusPatches.TryDoubleNewDrops(__instance, __state, x / 64, y / 64);
         }
     }
+
+    /// <summary>Fish caught — fishing-rod catch on a 10% roll spawns +1 of the same fish at the
+    /// same quality directly into the player's inventory. Pond auto-produce skipped (those
+    /// aren't player-effort catches). Treasure chest contents NOT covered — treasure is itself
+    /// a rare-roll bonus already (treasureCaught flag, openChestEndFunction delivery), and
+    /// doubling it would feel like double-dipping on its rarity premium.
+    ///
+    /// Mine bonus (mine_drops_up) intentionally NOT applied — even when fishing inside the
+    /// mines, the catch is a fishing reward, not a mining drop.</summary>
+    [HarmonyPatch(typeof(StardewValley.Tools.FishingRod), nameof(StardewValley.Tools.FishingRod.pullFishFromWater))]
+    internal static class FishAllDropsBonusPatch
+    {
+        // ReSharper disable InconsistentNaming — Harmony convention.
+        private static void Postfix(StardewValley.Tools.FishingRod __instance, string fishId,
+            int fishQuality, bool fromFishPond)
+        {
+            if (fromFishPond) return;
+            if (string.IsNullOrEmpty(fishId)) return;
+            if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return;
+            if (Game1.random.NextDouble() >= 0.10) return;
+
+            var player = Game1.player;
+            if (player == null) return;
+
+            try
+            {
+                Item extra = StardewValley.ItemRegistry.Create(fishId, 1, fishQuality, allowNull: true);
+                if (extra == null) return;
+                player.addItemToInventoryBool(extra);
+
+                GameLocation loc = player.currentLocation;
+                int tx = (int)player.Tile.X;
+                int ty = (int)player.Tile.Y;
+                if (loc != null) BonusDropEffects.Play(loc, tx, ty);
+                PatchLog.Info(
+                    $"all_drops_up (fish): +1 '{fishId}' (Q{fishQuality}) into inventory at " +
+                    $"({tx}, {ty}) on {loc?.NameOrUniqueName}.");
+            }
+            catch (System.Exception ex)
+            {
+                PatchLog.Trace($"all_drops_up (fish): threw {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+    }
 }
