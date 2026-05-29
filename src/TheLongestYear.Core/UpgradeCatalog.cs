@@ -142,8 +142,10 @@ public static class UpgradeCatalog
         // Obtainability
         new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, "Cultivation: Red Cabbage",
             "Red Cabbage can appear from Mixed Seeds in Summer.", 750),
+        // 2026-05-29 user spec: starfruit decoupled from red cabbage — picker should be able
+        // to grab either independently. Cost held at 1125 ("have it cost the same").
         new UpgradeDefinition("cult_starfruit", UpgradeCategory.Obtainability, "Cultivation: Starfruit",
-            "Starfruit can appear from Mixed Seeds in Summer.", 1125, "cult_red_cabbage"),
+            "Starfruit can appear from Mixed Seeds in Summer.", 1125),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, "Fortune: Rare Fish",
             "Rare fish catch chance increased by 25%.", 525),
 
@@ -195,6 +197,19 @@ public static class UpgradeCatalog
             "Each overnight forage spawn has a 20% chance to be doubled.", 425, "foragers_eye_3"),
         new UpgradeDefinition("foragers_eye_5", UpgradeCategory.Obtainability, "Forager's Eye V",
             "Each overnight forage spawn has a 25% chance to be doubled.", 650, "foragers_eye_4"),
+
+        // Quick Bite — % faster fish bite per tier. Stacks multiplicatively with the Fishing
+        // theme bonus (0.70x): Quick Bite V on Fishing week = 0.70 × 0.75 = ~47.5% sooner total.
+        new UpgradeDefinition("quick_bite_1", UpgradeCategory.Obtainability, "Quick Bite I",
+            "Fish bite 5% sooner.", 50),
+        new UpgradeDefinition("quick_bite_2", UpgradeCategory.Obtainability, "Quick Bite II",
+            "Fish bite 10% sooner.", 125, "quick_bite_1"),
+        new UpgradeDefinition("quick_bite_3", UpgradeCategory.Obtainability, "Quick Bite III",
+            "Fish bite 15% sooner.", 250, "quick_bite_2"),
+        new UpgradeDefinition("quick_bite_4", UpgradeCategory.Obtainability, "Quick Bite IV",
+            "Fish bite 20% sooner.", 425, "quick_bite_3"),
+        new UpgradeDefinition("quick_bite_5", UpgradeCategory.Obtainability, "Quick Bite V",
+            "Fish bite 25% sooner.", 650, "quick_bite_4"),
 
         // Foresight — Weather Sage chain (7 tiers per spec §11)
         new UpgradeDefinition("weather_sage_1", UpgradeCategory.Foresight, "Weather Sage I",

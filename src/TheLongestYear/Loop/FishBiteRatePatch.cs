@@ -30,6 +30,14 @@ namespace TheLongestYear.Loop
 
             if (ActiveEffectsProvider.ActiveLiability("fish_bite_down"))
                 __result *= 1.30f;  // 30% slower (Farming liability)
+
+            // Quick Bite passive accelerator (quick_bite_1..5): 5% faster per tier, max 25%.
+            // Stacks multiplicatively with the theme bonus — Quick Bite V on a Fishing week
+            // = 0.70 × 0.75 = ~47.5% sooner total. Intentional: the whole point of the
+            // accelerator chains is to compound with the matching theme week.
+            int tier = TheLongestYear.Loop.UpgradeChecker.GetTier("quick_bite", 5);
+            if (tier > 0)
+                __result *= (float)(1.0 - 0.05 * tier);
         }
     }
 

@@ -23,6 +23,13 @@ Implementation notes:
   acknowledgement isn't permanent, just defers the auto-reset.
 - JP banking can keep accruing during the continued run; donations after win
   still award JP at the usual season-multiplier, no special bonus.
+- **JP-spend dialog at the end of the win scene.** Whether the player picks
+  "New loop" or "Keep playing", surface the same Junimo Shrine purchase menu
+  one more time so they can dump their banked JP on whatever upgrades they
+  want active for the infinite run (or for the next loop) before the choice
+  finalises. Reuses the existing `JunimoShrineMenu` — no new UI to design.
+  Important: the menu has to fire AFTER the victory cutscene is fully closed,
+  not stack on top of it, or controller focus + drawing layer get fighting.
 
 Status: spec'd, not planned. Tagged as v1.x polish (the auto-reset isn't a
 blocker — the player can manually save before the auto-reset hits if they

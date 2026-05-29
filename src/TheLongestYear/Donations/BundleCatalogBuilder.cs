@@ -202,5 +202,37 @@ namespace TheLongestYear.Donations
             }
             return stacks;
         }
+
+        /// <summary>
+        /// Build a (qualified item id → minimum quality required) lookup, same MAX-aggregation
+        /// pattern as <see cref="BuildIngredientStacks"/>. Added 2026-05-29 to fix a bonus-item
+        /// preview bug — Quality Crops needs gold-star Parsnips but the hub was rendering them
+        /// as regular quality (no gold star). Pulling the max across every bundle this id
+        /// appears in surfaces the strictest quality the player would need to plan for; same
+        /// id with lower quality elsewhere still satisfies, so MAX is the safer framing.
+        /// Quality scale matches Stardew: 0=basic, 1=silver, 2=gold, 4=iridium.
+        /// </summary>
+        public IReadOnlyDictionary<string, int> BuildIngredientQualities()
+        {
+            var qualities = new Dictionary<string, int>(System.StringComparer.Ordinal);
+            Dictionary<string, string> bundleData = Game1.netWorldState.Value.BundleData;
+            foreach (KeyValuePair<string, string> kvp in bundleData)
+            {
+                ParsedBundle bundle = BundleParsing.Parse(kvp.Key, kvp.Value);
+                if (!RoomThemeMap.TryGetTheme(bundle.Room, out _))
+                    continue;
+
+                foreach (BundleIngredient ing in bundle.Ingredients)
+                {
+                    if (BundleParsing.IsCategoryRef(ing.ItemRef))
+                        continue;
+                    string id = BundleParsing.NormalizeItemId(ing.ItemRef);
+                    int quality = ing.Quality;
+                    if (!qualities.TryGetValue(id, out int existing) || quality > existing)
+                        qualities[id] = quality;
+                }
+            }
+            return qualities;
+        }
     }
 }

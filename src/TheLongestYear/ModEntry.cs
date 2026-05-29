@@ -248,6 +248,7 @@ namespace TheLongestYear
             _catalog = builder.Build();
             _requirements = builder.BuildRequirements();
             _ingredientStacks = builder.BuildIngredientStacks();
+            var ingredientQualities = builder.BuildIngredientQualities();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _questService = new WeeklyThemeQuestService(
@@ -257,7 +258,7 @@ namespace TheLongestYear
             // text (and auto-completes when every bonus item this week has been donated).
             DonationService.Active.AfterDonation = _questService.OnItemDonated;
 
-            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements, _ingredientStacks);
+            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements, _ingredientStacks, ingredientQualities);
             _runController.AttachQuestService(_questService);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
