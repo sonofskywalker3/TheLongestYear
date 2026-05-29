@@ -81,7 +81,12 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
-            helper.Events.Display.RenderedHud += this.OnRenderedHud;
+            // 2026-05-29 round 10: switched RenderedHud → RenderingHud so the journal-icon
+            // hover tooltip (drawn by vanilla as part of the regular HUD pass) lands ON TOP
+            // of the JP HUD instead of being hidden behind it. Vanilla HUD elements like the
+            // day/time/money box still cover our box at any overlap, but the position is
+            // already below the box so no visual overlap there.
+            helper.Events.Display.RenderingHud += this.OnRenderedHud;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
             helper.Events.Display.RenderedWorld += IndicatorRegistry.OnRenderedWorld;
 
@@ -575,7 +580,7 @@ namespace TheLongestYear
         /// HUD. Vanilla's drawHUD short-circuits on eventUp (Game1.cs:15410) so the festival
         /// re-draw is needed for the clock when FestivalTimeFlow is active; the JP HUD piggy-
         /// backs on the same event hook with its own visibility gating.</summary>
-        private void OnRenderedHud(object sender, StardewModdingAPI.Events.RenderedHudEventArgs e)
+        private void OnRenderedHud(object sender, StardewModdingAPI.Events.RenderingHudEventArgs e)
         {
             if (Game1.isFestival() && Game1.dayTimeMoneyBox != null)
                 Game1.dayTimeMoneyBox.draw(e.SpriteBatch);
