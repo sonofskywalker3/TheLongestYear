@@ -30,6 +30,18 @@ Implementation notes:
   finalises. Reuses the existing `JunimoShrineMenu` — no new UI to design.
   Important: the menu has to fire AFTER the victory cutscene is fully closed,
   not stack on top of it, or controller focus + drawing layer get fighting.
+- **JP-spend dialog ALSO pops on every natural loop reset** (Winter 28 → next
+  Spring 1). User clarification 2026-05-29: "it's going to pop when you reset
+  the loop or when you complete it, that's it." Same menu, two trigger paths.
+  Important: must fire BEFORE `WorldResetService.PerformReset` commits, since
+  the reset zeroes run-state (but MetaState.JunimoPoints survives the reset,
+  so the spending CAN happen here — the constraint is purely UX, not data).
+- **~~Remove the in-world JP shrine tile interactable.~~** Audited
+  2026-05-29: no tile interactable was ever shipped. Plan 05 docs reference
+  it as a design intent, but `JunimoShrineMenu` is only opened by
+  `MenuLauncher.OpenShrineShop()`, which is in turn only called by the new
+  reset/win popup paths and by the `tly_openshop` debug command. No tile
+  removal needed.
 
 Status: spec'd, not planned. Tagged as v1.x polish (the auto-reset isn't a
 blocker — the player can manually save before the auto-reset hits if they
