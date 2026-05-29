@@ -27,7 +27,8 @@ namespace TheLongestYear.Loop
     /// (elevator) and tile 173 (descend ladder) and shows an info dialogue.
     /// This is a hard block: no mine progress is possible this week for Foraging theme.
     /// </summary>
-    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.OnStoneDestroyed))]
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.OnStoneDestroyed),
+        new System.Type[] { typeof(string), typeof(int), typeof(int), typeof(Farmer) })]
     internal static class MineOreDropBonus
     {
         // ReSharper disable InconsistentNaming — Harmony convention.
@@ -42,6 +43,17 @@ namespace TheLongestYear.Loop
         private static void Postfix(GameLocation __instance, string stoneId, int x, int y,
             Farmer who, int __state)
         {
+            // 2026-05-29 round 9: unconditional trace so we can confirm the patch is wired.
+            // The prior round confirmed Object.performToolAction was firing but never saw
+            // ore destruction; we then moved to OnStoneDestroyed but a full mining run
+            // produced zero bonus log lines. Trace will tell us whether the postfix is
+            // entering at all and what the debris-diff looks like.
+            int newCount = (__instance?.debris?.Count ?? 0) - System.Math.Max(0, __state);
+            PatchLog.Trace(
+                $"OnStoneDestroyed postfix: stoneId='{stoneId}', loc='{__instance?.NameOrUniqueName}', " +
+                $"newDebrisAdded={newCount}, mineBonus={ActiveEffectsProvider.ActiveBonus("mine_drops_up")}, " +
+                $"allBonus={ActiveEffectsProvider.ActiveBonus("all_drops_up")}.");
+
             if (string.IsNullOrEmpty(stoneId)) return;
             if (__state < 0 || __instance?.debris == null) return;
 
