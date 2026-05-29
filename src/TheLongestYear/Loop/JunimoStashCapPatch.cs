@@ -90,6 +90,18 @@ namespace TheLongestYear.Loop
     /// our stash chest is forced to SpecialChestType.None (to keep local per-save inventory
     /// instead of the team-shared Junimo Chest pool), which would normally surface the picker.
     /// The 2026-05-28 playtest explicitly asked for it to be hidden.
+    ///
+    /// 2026-05-29 round 13: user reported the picker reappearing after adding an item to the
+    /// stash. Root cause: <c>Chest.grabItemFromInventory</c> calls <c>ShowMenu()</c> AGAIN
+    /// after each item transfer, which constructs a fresh ItemGrabMenu (picker included).
+    /// Our ShowMenu postfix DID strip that — but vanilla's
+    /// <c>grabItemFromInventory</c> then snaps the cursor to the previously-snapped component
+    /// ID, and the stale fillStacks <c>upNeighborID</c> (still pointing at the now-null toggle
+    /// at ID 27346) lets controller navigation flash phantom-pointer the picker location.
+    /// Belt-and-suspenders fix: (1) reset fillStacks.upNeighborID to -500 after the strip so
+    /// no neighbor points at the dead toggle; (2) <see cref="JunimoStashColorPickerScrubPatch"/>
+    /// re-runs the strip on every update tick for any open stash menu, catching ANY path
+    /// (window resize, setSourceItem, future SMAPI mod interaction) that might recreate it.
     /// </summary>
     [HarmonyPatch(typeof(Chest), nameof(Chest.ShowMenu))]
     internal static class JunimoStashShowMenuPatch
@@ -102,31 +114,68 @@ namespace TheLongestYear.Loop
 
             IndicatorRegistry.Dismiss("tly.stash");
 
-            // Strip the color picker entirely (toggle button + swatch row) AND slide the
-            // remaining right-column buttons down so they fill the toggle's old slot — the
-            // 2026-05-28 playtest specifically asked for the buttons to redistribute rather
-            // than leave a hole or a vestigial no-op icon. The vanilla right column stacks
-            // top→bottom as organize, fillStacks, colorPickerToggle; we move fillStacks down
-            // to the toggle's Y and organize down to the old fillStacks Y. The empty slot ends
-            // up at the top of the column, which abuts the chest inventory grid and reads as
-            // intentional spacing rather than a gap between two visible buttons.
             if (Game1.activeClickableMenu is ItemGrabMenu igm)
-            {
-                if (igm.colorPickerToggleButton != null
-                    && igm.fillStacksButton != null
-                    && igm.organizeButton != null)
-                {
-                    int toggleY = igm.colorPickerToggleButton.bounds.Y;
-                    int fillY   = igm.fillStacksButton.bounds.Y;
-                    igm.fillStacksButton.bounds.Y = toggleY;
-                    igm.organizeButton.bounds.Y   = fillY;
-                }
+                StripColorPicker(igm);
+        }
 
-                igm.chestColorPicker         = null;
-                igm.colorPickerToggleButton  = null;
-                igm.discreteColorPickerCC    = null;
-                Game1.player.showChestColorPicker = false;
+        /// <summary>Strip the color picker UI from a stash menu — toggle button + swatch row
+        /// nulled, right-column buttons shifted down to fill the toggle's old slot, fillStacks'
+        /// stale upNeighborID cleared. Idempotent: safe to call repeatedly on the same menu.
+        /// </summary>
+        internal static void StripColorPicker(ItemGrabMenu igm)
+        {
+            // Shift the right column down so the empty slot ends up at the top of the column,
+            // abutting the inventory grid (reads as intentional spacing rather than a gap).
+            // Vanilla column top→bottom: organize, fillStacks, colorPickerToggle.
+            if (igm.colorPickerToggleButton != null
+                && igm.fillStacksButton != null
+                && igm.organizeButton != null)
+            {
+                int toggleY = igm.colorPickerToggleButton.bounds.Y;
+                int fillY   = igm.fillStacksButton.bounds.Y;
+                igm.fillStacksButton.bounds.Y = toggleY;
+                igm.organizeButton.bounds.Y   = fillY;
             }
+
+            // Kill the picker components.
+            igm.chestColorPicker         = null;
+            igm.colorPickerToggleButton  = null;
+            igm.discreteColorPickerCC    = null;
+            Game1.player.showChestColorPicker = false;
+
+            // Clear the stale upNeighborID on fillStacks — vanilla wired it to 27346 (the toggle
+            // ID) at construction. Now that the toggle is null, controller-up from fillStacks
+            // would target a phantom and could (depending on the controller-nav fallback)
+            // re-acquire showChestColorPicker behaviour or visually flash on the dead spot.
+            if (igm.fillStacksButton != null)
+                igm.fillStacksButton.upNeighborID = -500;
+        }
+    }
+
+    /// <summary>
+    /// Round-13 belt-and-suspenders for the picker-reappears-on-item-add bug. On every
+    /// ItemGrabMenu update tick, if the menu's sourceItem is our stash chest AND any color
+    /// picker component is still present, strip it again. Cheap (one ref check + three null
+    /// comparisons per tick when active), idempotent, and catches any code path that
+    /// recreates the picker after our initial strip.
+    /// </summary>
+    [HarmonyPatch(typeof(ItemGrabMenu), nameof(ItemGrabMenu.update),
+        new System.Type[] { typeof(Microsoft.Xna.Framework.GameTime) })]
+    internal static class JunimoStashColorPickerScrubPatch
+    {
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Postfix(ItemGrabMenu __instance)
+        {
+            if (__instance == null) return;
+            // Fast-path: nothing to strip means nothing to do.
+            if (__instance.chestColorPicker == null
+                && __instance.colorPickerToggleButton == null
+                && __instance.discreteColorPickerCC == null)
+                return;
+            if (!(__instance.sourceItem is Chest chest)) return;
+            if (!chest.modData.ContainsKey(JunimoStashService.StashModDataKey)) return;
+
+            JunimoStashShowMenuPatch.StripColorPicker(__instance);
         }
     }
 

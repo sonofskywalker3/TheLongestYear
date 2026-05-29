@@ -41,9 +41,11 @@ namespace TheLongestYear.Loop
             if (UpgradeChecker.HasUpgrade == null) return;
             if (Game1.season != StardewValley.Season.Summer) return;
 
-            // Try Starfruit first (requires Red Cabbage as prereq).
+            // 2026-05-29 user spec: starfruit no longer requires cult_red_cabbage — each
+            // cultivation upgrade is independent. Either-or order preserved (Starfruit first
+            // when both owned) so a player who bought both doesn't see Starfruit roll get
+            // suppressed by an earlier Red Cabbage hit.
             if (UpgradeChecker.HasUpgrade("cult_starfruit")
-                && UpgradeChecker.HasUpgrade("cult_red_cabbage")
                 && Game1.random.NextDouble() < 0.10)
             {
                 __result = "(O)398"; // Starfruit item id (produce — passed to ItemRegistry.Create<Object> for the harvested crop)

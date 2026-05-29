@@ -265,8 +265,13 @@ namespace TheLongestYear.UI
             foreach (string id in sample)
             {
                 int stack = _runController.GetStackForIngredient(id);
+                // 2026-05-29 user playtest: Quality Crops bundle's Parsnips were rendering
+                // without a gold star on the week-2 farming card. Pull the per-id MAX quality
+                // (0=basic, 1=silver, 2=gold, 4=iridium) so ItemRegistry.Create stamps the
+                // correct quality badge on the bonus icon.
+                int quality = _runController.GetQualityForIngredient(id);
                 Item item = null;
-                try { item = ItemRegistry.Create(id, stack, 0, allowNull: true); }
+                try { item = ItemRegistry.Create(id, stack, quality, allowNull: true); }
                 catch (Exception) { item = null; }
                 dest.Add(item);
             }
