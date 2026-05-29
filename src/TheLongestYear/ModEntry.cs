@@ -96,8 +96,34 @@ namespace TheLongestYear
             _standardFarmEnforcer = new StandardFarmEnforcer(this.Monitor, _config);
             _standardFarmEnforcer.Attach(helper);
 
+            // 2026-05-29 round 11: PatchAll iterates [HarmonyPatch] classes in assembly order,
+            // and a SINGLE bad attribute (e.g. ambiguous method match) throws and aborts the
+            // rest of the iteration — that's how the round-8 EventSuppressionPatch silently
+            // killed every later patch including the bonus-drop and stash-capacity ones. Walk
+            // the patch classes ourselves and isolate each one so a single failure logs +
+            // continues instead of cratering the whole pass.
             var harmony = new Harmony(this.ModManifest.UniqueID);
-            harmony.PatchAll();
+            int patched = 0, failed = 0;
+            foreach (var type in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if (type.GetCustomAttributes(typeof(HarmonyPatch), false).Length == 0) continue;
+                try
+                {
+                    new PatchClassProcessor(harmony, type).Patch();
+                    patched++;
+                }
+                catch (System.Exception ex)
+                {
+                    failed++;
+                    this.Monitor.Log(
+                        $"Harmony patch '{type.FullName}' failed to apply: {ex.GetType().Name}: {ex.Message}. " +
+                        "Other patches will continue.",
+                        LogLevel.Error);
+                }
+            }
+            this.Monitor.Log(
+                $"Harmony: {patched} patch class(es) applied, {failed} failed.",
+                failed > 0 ? LogLevel.Warn : LogLevel.Info);
 
             // Activate the seed-driven weather scheduler. Toggled at Entry rather than
             // OnSaveLoaded so the override is in place for the very first day's weather

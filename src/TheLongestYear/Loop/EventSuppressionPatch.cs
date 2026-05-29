@@ -17,7 +17,14 @@ namespace TheLongestYear.Loop
     /// Spec'd to be co-opted as TLY's day-1 narrative intro in a later pass (see TODO.md) —
     /// for now it's just turned off.
     /// </summary>
-    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.checkEventPrecondition))]
+    // 2026-05-29 round 11 fix: PC's GameLocation has two checkEventPrecondition overloads —
+    // (string) and (string, bool check_seen). Patching by name alone threw AmbiguousMatchException
+    // during PatchAll, which aborted EVERY downstream Harmony patch (OnStoneDestroyed,
+    // GetActualCapacity, the rest of MineDropsPatch, AllDropsPatch, TerrainBonusPatches, …) —
+    // a single round-8 oversight quietly cratered three rounds of bonus-drop work. Pin the
+    // single-string overload explicitly so PatchAll resolves cleanly.
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.checkEventPrecondition),
+        new System.Type[] { typeof(string) })]
     internal static class EventSuppressionPatch
     {
         // Event keys can appear as "191393" or "191393/precondition1/precondition2/..."
