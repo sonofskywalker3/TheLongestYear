@@ -32,9 +32,9 @@ namespace TheLongestYear.Loop
             if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return false;
             if (Game1.random.NextDouble() >= 0.10) return false;
 
-            // See MineOreDropBonus for the round-12 root cause: vanilla Object debris has
-            // .item == null and stores the id in Debris.itemId.Value. Clone via the string id.
-            int doubled = 0;
+            // Round-13 spec: +1 from the rolled set, not full set doubled. See
+            // MineOreDropBonus for rationale + the Debris.itemId.Value read path.
+            var candidates = new System.Collections.Generic.List<string>();
             int total = loc.debris.Count;
             for (int i = startDebrisCount; i < total; i++)
             {
@@ -42,15 +42,16 @@ namespace TheLongestYear.Loop
                 string id = d?.item?.QualifiedItemId;
                 if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
                 if (string.IsNullOrEmpty(id)) continue;
-
-                Game1.createObjectDebris(id, tileX, tileY, loc);
-                doubled++;
+                candidates.Add(id);
             }
-            if (doubled == 0) return false;
+            if (candidates.Count == 0) return false;
 
+            string pickedId = candidates[Game1.random.Next(candidates.Count)];
+            Game1.createObjectDebris(pickedId, tileX, tileY, loc);
             BonusDropEffects.Play(loc, tileX, tileY);
             PatchLog.Info(
-                $"all_drops_up (terrain): doubled {doubled} drop(s) at ({tileX}, {tileY}) on " +
+                $"all_drops_up (terrain): +1 '{pickedId}' " +
+                $"(picked from {candidates.Count} vanilla drop(s)) at ({tileX}, {tileY}) on " +
                 $"{loc.NameOrUniqueName}.");
             return true;
         }
