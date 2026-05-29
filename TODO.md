@@ -38,6 +38,37 @@ Implementation surface:
 
 Status: spec'd, not planned. Will be one of the v1.1 narrative tasks.
 
+### JP upgrade: `keep_pet` — pet persists with hearts
+Source: 2026-05-29 playtest. New JP upgrade in the Animals / Buildings
+category that preserves the player's pet (cat / dog / turtle) AND its
+friendship hearts across loops, so a long-tenured pet stays maxed out
+between runs.
+
+Implementation notes:
+- Pet is a `Pet` instance hanging off `Game1.player.activePet` (or the
+  per-Farm `Farm.characters`). On reset (`loadForNewGame`) the pet is
+  typically wiped along with the rest of the world.
+- Need to snapshot in MetaState: pet kind (which species), name, water
+  bowl state, and `friendshipTowardFarmer.Value`.
+- On reset, re-instantiate the pet of the saved kind, set hearts, place
+  in the farmhouse / on the porch the way vanilla day-1 adoption does.
+
+**Critical contrast — barn/coop animals (the existing `keep_*_animal`
+upgrades) must continue to start each loop at 0 hearts.** User spec:
+"the 'keep 1 cow' should still start over with 0 hearts so they can't
+be getting large milk day 1. same for all barn/coop animals." The
+existing `WorldResetService.ApplyStartingAnimals` builds fresh
+`FarmAnimal` instances each reset (friendshipTowardFarmer defaults
+to 0), which already matches this requirement — but call this out in
+the `keep_pet` design so future cleanup doesn't accidentally unify the
+two paths and start propagating animal hearts too.
+
+JP cost ballpark: ~300 JP (pet hearts take 200+ in-game days to
+gold-max; preserving them is a meaningful run-saver, but not on the
+order of basement / cellar infrastructure).
+
+Status: spec'd, not planned.
+
 ### JP upgrades: keep kitchen / keep basement / keep shortcuts
 Source: 2026-05-28 playtest. User correction after a first-pass sketch
 that bundled all Robin-related kept-state into one upgrade: "NO don't
