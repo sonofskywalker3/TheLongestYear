@@ -77,6 +77,11 @@ namespace TheLongestYear.Loop
             {
                 var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
                 ActiveEffectsProvider.Set(bonus, liability);
+                _monitor.Log(
+                    $"Restored active effects for week {Run.WeekOfYear}: theme={Run.CurrentSelection}, " +
+                    $"bonus={bonus}, liability={liability}" +
+                    (Run.LiabilitySuppressedThisWeek ? " (suppressed)" : ""),
+                    LogLevel.Info);
 
                 // Sync the persisted "quest complete = liability lifted" state — the provider
                 // resets to unsuppressed on Set above, so re-apply if the run-state flag is on.

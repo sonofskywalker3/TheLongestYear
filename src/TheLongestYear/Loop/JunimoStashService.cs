@@ -62,22 +62,11 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            Vector2 tile = ResolveTile(farm);
-            if (tile == Vector2.Zero)
-            {
-                _monitor.Log(
-                    "JunimoStashService: could not resolve a valid tile — chest NOT placed. " +
-                    "Use tly_setstash to anchor it manually.",
-                    LogLevel.Warn);
-                return;
-            }
-
-            // Sweep the entire Farm for any tagged stash chest and remove it before placing
-            // the new one. Removing only the resolved-tile chest (the old behaviour) was not
-            // idempotent: when the auto-pick fallback ladder resolved to a different tile than
-            // a chest left over from a prior session (e.g. ladder picked (66,18) but an earlier
-            // build had placed at (66,17)), the old chest was stranded on the Farm and the
-            // player ended up with two — see the 2026-05-28 playtest report.
+            // 2026-05-29 round 9: sweep BEFORE ResolveTile, not after. The previous order made
+            // ResolveTile see the old chest as a blocking object at the desired tile, falling
+            // through to the next ladder candidate even when the desired tile was the only
+            // problem — the keeper-save reload landed at (67, 18) instead of (67, 17) because
+            // the old chest was still at (67, 17) when ResolveTile ran.
             var staleTiles = new List<Vector2>();
             foreach (var pair in farm.objects.Pairs)
             {
@@ -93,6 +82,16 @@ namespace TheLongestYear.Loop
                 _monitor.Log(
                     $"JunimoStashService: removed stale stash chest at ({staleTile.X}, {staleTile.Y}).",
                     LogLevel.Trace);
+            }
+
+            Vector2 tile = ResolveTile(farm);
+            if (tile == Vector2.Zero)
+            {
+                _monitor.Log(
+                    "JunimoStashService: could not resolve a valid tile — chest NOT placed. " +
+                    "Use tly_setstash to anchor it manually.",
+                    LogLevel.Warn);
+                return;
             }
 
             // Place a new player chest with the vanilla Junimo Chest sprite (BC 256) so it
