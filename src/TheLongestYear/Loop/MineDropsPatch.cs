@@ -45,8 +45,10 @@ namespace TheLongestYear.Loop
             if (string.IsNullOrEmpty(stoneId)) return;
             if (__state < 0 || __instance?.debris == null) return;
 
-            bool mineBonus = ActiveEffectsProvider.ActiveBonus("mine_drops_up")
-                             && __instance is MineShaft;
+            // 2026-05-29 round 7: mine_drops_up fires on rocks/nodes ANYWHERE — overworld
+            // (Farm, Quarry, Backwoods boulder) AND inside MineShaft. User: "only rocks and
+            // nodes, whether in the overworld or the mine." Dropping the prior MineShaft gate.
+            bool mineBonus = ActiveEffectsProvider.ActiveBonus("mine_drops_up");
             bool allBonus  = ActiveEffectsProvider.ActiveBonus("all_drops_up");
             if (!mineBonus && !allBonus) return;
 
