@@ -63,9 +63,10 @@ to 0), which already matches this requirement — but call this out in
 the `keep_pet` design so future cleanup doesn't accidentally unify the
 two paths and start propagating animal hearts too.
 
-JP cost ballpark: ~300 JP (pet hearts take 200+ in-game days to
-gold-max; preserving them is a meaningful run-saver, but not on the
-order of basement / cellar infrastructure).
+JP cost ballpark: 50–100 JP. User: "they can't do much for a run, it's
+mostly for feelings." Pet doesn't gate a measurable progression vector
+(no Large Milk, no shipping value) so the cost should reflect that
+sentimental-only payoff rather than a typical run-saver price.
 
 Status: spec'd, not planned.
 
