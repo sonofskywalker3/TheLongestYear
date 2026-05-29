@@ -165,13 +165,17 @@ namespace TheLongestYear.Loop
             return desired;
         }
 
-        /// <summary>Pick a tile two east + one south of the farmhouse entry — the spot a player
-        /// walking out the door cannot miss. Returns Vector2.Zero if the entry is unavailable.</summary>
+        /// <summary>Pick a tile four east + two south of the farmhouse entry. The 2026-05-28
+        /// playtest's (entry+2,+1) anchor and its (entry+2,+2) ladder fallback both landed
+        /// directly in the player's walking path out of the farmhouse door ("directly in
+        /// front of the exit of my farm"); shifting two more tiles east clears the doormat
+        /// corridor while still placing the chest within a step of the house. Returns
+        /// Vector2.Zero if the entry is unavailable.</summary>
         private static Vector2 AutoTile(Farm farm)
         {
             Point? entry = TryGetFarmHouseEntry(farm);
             return entry.HasValue
-                ? new Vector2(entry.Value.X + 2, entry.Value.Y + 1)
+                ? new Vector2(entry.Value.X + 4, entry.Value.Y + 2)
                 : Vector2.Zero;
         }
 
@@ -185,20 +189,21 @@ namespace TheLongestYear.Loop
         /// </summary>
         private static System.Collections.Generic.IEnumerable<Vector2> AutoCandidates(Point entry)
         {
-            // (dx, dy) offsets — south of entry first (clears the porch), then sweep horizontally.
+            // (dx, dy) offsets — 2026-05-29 reorder: clear-of-the-doormat candidates first
+            // (the 2026-05-28 ladder put the chest in the player's exit-path). Wider east of
+            // the doorway leads, then deeper south, then west fallbacks.
             (int dx, int dy)[] offsets =
             {
-                ( 2, 1),  // original: SE shoulder of the doormat
-                ( 2, 2),  // one tile further south
-                ( 0, 2),  // straight south of entry
-                (-2, 2),  // SW corner — same Y, mirror X
-                ( 3, 2),  // wider east
-                (-3, 2),  // wider west
-                ( 2, 3),  // deeper south
-                ( 0, 3),
-                (-2, 3),
-                ( 4, 2),
-                (-4, 2),
+                ( 4, 2),  // new default — east of the doormat, clears the walking path
+                ( 4, 1),  // same column, one closer to the house
+                ( 4, 3),  // same column, one further south
+                ( 5, 2),  // a tile further east
+                ( 3, 2),  // one tile west of the new default
+                ( 2, 3),  // SE, deeper south than the old default
+                ( 0, 3),  // straight south, far enough to clear porch
+                (-2, 3),  // SW corner, deep south
+                (-3, 2),  // wider west fallback
+                (-4, 2),  // widest west fallback
             };
 
             foreach (var (dx, dy) in offsets)

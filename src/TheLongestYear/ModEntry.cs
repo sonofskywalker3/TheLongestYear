@@ -601,15 +601,11 @@ namespace TheLongestYear
             if (Game1.eventUp) return;
 
             long jp = _meta.State.JunimoPoints;
-            TheLongestYear.Core.RunState run = _meta.Run;
-
+            // 2026-05-29 playtest: theme line removed. The current theme + lifted/active state
+            // already shows on the WeeklyThemeQuest entry in the player's quest log, so the
+            // HUD echoing it was redundant and made the box too tall after the dialogueFont
+            // bump. Keep this minimal — just the banked JP count.
             var lines = new System.Collections.Generic.List<string> { $"JP: {jp}" };
-            if (run.CurrentSelection.HasValue)
-            {
-                string theme = run.CurrentSelection.Value.ToString();
-                string suffix = run.LiabilitySuppressedThisWeek ? "(1.5x, lifted)" : "(1.5x)";
-                lines.Add($"{theme} {suffix}");
-            }
 
             const int Padding = 16;
             const int LineGap = 6;
