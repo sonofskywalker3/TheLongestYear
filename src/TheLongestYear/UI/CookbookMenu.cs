@@ -17,7 +17,8 @@ namespace TheLongestYear.UI
     /// Slot count = <see cref="UpgradeCatalog.CookbookSlotCount"/> of the highest owned Cookbook tier.
     /// Empty slot click → inline recipe picker (currently-known, unslotted recipes only).
     /// Filled slot click → confirm-removal dialog.
-    /// On dismiss, <see cref="IndicatorRegistry.Dismiss"/> fires for "tly.cookbook".
+    /// On dismiss, <c>MetaState.DismissedIndicators</c> gets "tly.cookbook" so the one-time
+    /// cookbook intro quest doesn't re-fire on subsequent loop resets.
     /// </summary>
     internal sealed class CookbookMenu : IClickableMenu
     {
@@ -245,13 +246,13 @@ namespace TheLongestYear.UI
         public override void emergencyShutDown()
         {
             base.emergencyShutDown();
-            IndicatorRegistry.Dismiss("tly.cookbook");
+            _meta.DismissedIndicators.Add("tly.cookbook");
         }
 
         protected override void cleanupBeforeExit()
         {
             base.cleanupBeforeExit();
-            IndicatorRegistry.Dismiss("tly.cookbook");
+            _meta.DismissedIndicators.Add("tly.cookbook");
         }
 
         public override void draw(SpriteBatch b)

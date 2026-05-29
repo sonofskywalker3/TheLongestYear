@@ -17,7 +17,8 @@ namespace TheLongestYear.UI
     /// Slot count = <see cref="UpgradeCatalog.CraftbookSlotCount"/> of the highest owned Craftbook tier.
     /// Empty slot click → inline recipe picker (currently-known, unslotted recipes only).
     /// Filled slot click → confirm-removal dialog.
-    /// On dismiss, <see cref="IndicatorRegistry.Dismiss"/> fires for "tly.craftbook".
+    /// On dismiss, <c>MetaState.DismissedIndicators</c> gets "tly.craftbook" so the one-time
+    /// craftbook intro quest doesn't re-fire on subsequent loop resets.
     /// </summary>
     internal sealed class CraftbookMenu : IClickableMenu
     {
@@ -245,13 +246,13 @@ namespace TheLongestYear.UI
         public override void emergencyShutDown()
         {
             base.emergencyShutDown();
-            IndicatorRegistry.Dismiss("tly.craftbook");
+            _meta.DismissedIndicators.Add("tly.craftbook");
         }
 
         protected override void cleanupBeforeExit()
         {
             base.cleanupBeforeExit();
-            IndicatorRegistry.Dismiss("tly.craftbook");
+            _meta.DismissedIndicators.Add("tly.craftbook");
         }
 
         public override void draw(SpriteBatch b)
