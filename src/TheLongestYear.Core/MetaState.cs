@@ -39,6 +39,15 @@ public sealed class MetaState
     public int CompletedResets { get; set; }
 
     /// <summary>
+    /// True once the player has chosen "Keep playing" after winning the loop (CC restored on
+    /// Winter 28). Set inside the post-win JP-spend → choice flow; when true, the Winter 28
+    /// Win evaluation skips the JP-spend popup AND the choice dialog so the player can play
+    /// indefinitely without being asked again. Manual <c>tly_reset</c> still works.
+    /// 2026-05-29 spec: continue-after-victory mode.
+    /// </summary>
+    public bool VictoryAcknowledged { get; set; }
+
+    /// <summary>
     /// Quest ids the player has completed across all runs in this playthrough. Backs the
     /// quest:&lt;id&gt; meta-requirement namespace. Producer is part of a later plan; declared
     /// here so future plans don't have to touch the state class.

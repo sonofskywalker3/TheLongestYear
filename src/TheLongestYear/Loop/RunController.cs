@@ -29,6 +29,11 @@ namespace TheLongestYear.Loop
         private readonly System.Collections.Generic.IReadOnlyDictionary<string, int> _ingredientQualities;
 
         private bool _pendingReset;
+        /// <summary>Set in OnDayEnding's Win branch when the loop is completed (CC restored on
+        /// Winter 28). Consumed on the next OnDayStarted: opens the JP-spend shrine, then asks
+        /// the player to choose "Start a new loop" or "Keep playing this run". Suppressed when
+        /// <c>MetaState.VictoryAcknowledged</c> is already set (player previously chose Keep).</summary>
+        private bool _pendingWinChoice;
         private TheLongestYear.UI.MenuLauncher _launcher;
         private WeeklyThemeQuestService _questService;
 
@@ -161,16 +166,114 @@ namespace TheLongestYear.Loop
             if (_pendingReset)
             {
                 _pendingReset = false;
-                _reset.PerformReset();
-                _reset.ProfessionPicker.DrainOnDayStart();
-                Run.BeginNewRun(NewSeed());
-                ActiveEffectsProvider.Clear();
-                _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
-                // Fall through so the Spring 1 hub fires immediately — PerformReset put us
-                // back on day 1, BeginNewRun cleared OfferPresentedWeek to -1, and the
-                // week-start trigger below should open the hub right away.
+                // 2026-05-29 spec: JP-spend popup pops on every natural loop reset so the
+                // player can dump banked JP on whatever upgrades they want active for the
+                // next loop. Menu's exitFunction continues with PerformReset + the rest of
+                // OnDayStarted. If the menu can't open (active event / existing menu), fall
+                // through to immediate reset — UX miss but never a lost reset.
+                // Manual tly_reset intentionally NOT routed through here (debug stays raw).
+                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                return;
             }
 
+            if (_pendingWinChoice)
+            {
+                _pendingWinChoice = false;
+                // 2026-05-29 spec: on the morning after winning the loop, pop the JP-spend
+                // shrine first (the player has a fresh JP bonus from the win), then ask
+                // them whether to start a new loop or keep playing this run.
+                TryOpenShrineThenContinue(ShowKeepPlayingChoice);
+                return;
+            }
+
+            DoDayStartSeasonAndHub();
+        }
+
+        /// <summary>Post-win choice dialog: after the shrine menu closes, ask the player
+        /// whether to start a new loop (triggers PerformReset) or keep playing this run
+        /// indefinitely (sets VictoryAcknowledged + falls through to the normal day-start
+        /// flow with no reset). Uses vanilla's <c>createQuestionDialogue</c> so the prompt
+        /// renders identically to other in-world Y/N choices the player has seen.</summary>
+        private void ShowKeepPlayingChoice()
+        {
+            var responses = new[]
+            {
+                new StardewValley.Response("newLoop",     "Start a new loop"),
+                new StardewValley.Response("keepPlaying", "Keep playing this run")
+            };
+            string prompt =
+                "The Junimos sing! The Community Center is restored.\n" +
+                "Do you want to begin a new loop now, or keep playing this run?";
+
+            GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
+            if (loc == null)
+            {
+                // Defensive: no location to host the dialogue. Default to keep-playing
+                // (the safer choice — never destroys the won run's state silently).
+                _monitor.Log("Post-win choice: no currentLocation available, defaulting to 'Keep playing'.", LogLevel.Warn);
+                ApplyKeepPlaying();
+                return;
+            }
+
+            loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
+            {
+                if (key == "newLoop")
+                {
+                    _monitor.Log("Post-win choice: 'Start a new loop' — triggering reset.", LogLevel.Info);
+                    ContinueAfterResetSpend();
+                }
+                else
+                {
+                    _monitor.Log("Post-win choice: 'Keep playing this run' — VictoryAcknowledged set.", LogLevel.Info);
+                    ApplyKeepPlaying();
+                }
+            });
+        }
+
+        /// <summary>"Keep playing" branch of the post-win choice. Marks VictoryAcknowledged
+        /// (suppresses the popup on subsequent Winter 28 wins) and runs the normal day-start
+        /// flow so the player lands on Spring 1 Year 2 with the planning hub.</summary>
+        private void ApplyKeepPlaying()
+        {
+            _store.State.VictoryAcknowledged = true;
+            _store.Save();   // persist immediately — no save-scum revert
+            DoDayStartSeasonAndHub();
+        }
+
+        /// <summary>Try to open the Junimo Shrine menu; on close, run <paramref name="onContinue"/>.
+        /// If the menu can't open (cutscene blocking, already-open menu), run onContinue
+        /// immediately so the gameplay path never gets stranded waiting for a missed popup.</summary>
+        private void TryOpenShrineThenContinue(System.Action onContinue)
+        {
+            _launcher?.OpenShrineShop();
+            if (Game1.activeClickableMenu is TheLongestYear.UI.JunimoShrineMenu shrine)
+            {
+                shrine.exitFunction = () => onContinue();
+                return;
+            }
+            // Menu didn't open — fall through.
+            onContinue();
+        }
+
+        /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
+        /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
+        private void ContinueAfterResetSpend()
+        {
+            _reset.PerformReset();
+            _reset.ProfessionPicker.DrainOnDayStart();
+            Run.BeginNewRun(NewSeed());
+            ActiveEffectsProvider.Clear();
+            _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
+            DoDayStartSeasonAndHub();
+        }
+
+        /// <summary>The post-reset (or no-reset-this-day) day-start work: sync season from
+        /// Game1.season, advance month if it changed, fire the week-start planning hub if
+        /// it's a week-start morning. Extracted 2026-05-29 so the reset path can defer
+        /// through a JP-spend popup and still re-enter this same logic via the menu's
+        /// exitFunction callback.</summary>
+        private void DoDayStartSeasonAndHub()
+        {
             // Sync state from the game date; a new month clears the month's selections (the
             // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
             // CurrentSelection).
@@ -240,7 +343,16 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.Win:
-                    AwardInterimJp("run WON — loop broken");
+                    // 2026-05-29 continue-after-victory: only award the win-JP + queue the
+                    // post-win choice popup on the FIRST win this playthrough. Subsequent
+                    // Winter 28 wins (after the player chose Keep playing) re-fire RunAction.Win
+                    // but should be silent — we don't want to double-pay JP or re-ask the
+                    // question we already answered.
+                    if (!_store.State.VictoryAcknowledged)
+                    {
+                        AwardInterimJp("run WON — loop broken");
+                        _pendingWinChoice = true;
+                    }
                     break;
             }
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
