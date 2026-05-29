@@ -104,6 +104,53 @@ public static class UpgradeCatalog
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, "Fortune: Rare Fish",
             "Rare fish catch chance increased by 25%.", 525),
 
+        // Obtainability — Passive Accelerators (added 2026-05-29)
+        //
+        // Three 5-tier chains at +5% per tier (max 25%) intended as cheap early-game upgrades
+        // for players struggling to bank enough JP for the bigger Keep/Cultivation purchases.
+        // Each tier adds 5 percentage points; chains are independent of theme weeks so they
+        // STACK with the matching weekly bonus (e.g. Green Thumb V on a Farming week = +25%
+        // passive + the week's +1 growth tick on days 2/5). Cost curve picked to make tier 1
+        // genuinely cheap (75 JP, cheapest entry in the catalog) so players can grab it in
+        // their first run, then escalate gently: 75 → 150 → 250 → 400 → 600 = 1475 JP full
+        // chain, ~equivalent to one Cookbook III.
+
+        // Green Thumb — % chance per watered crop per night to gain an extra growth day.
+        new UpgradeDefinition("green_thumb_1", UpgradeCategory.Obtainability, "Green Thumb I",
+            "Each watered crop has a 5% chance per day to gain an extra day of growth.", 75),
+        new UpgradeDefinition("green_thumb_2", UpgradeCategory.Obtainability, "Green Thumb II",
+            "Each watered crop has a 10% chance per day to gain an extra day of growth.", 150, "green_thumb_1"),
+        new UpgradeDefinition("green_thumb_3", UpgradeCategory.Obtainability, "Green Thumb III",
+            "Each watered crop has a 15% chance per day to gain an extra day of growth.", 250, "green_thumb_2"),
+        new UpgradeDefinition("green_thumb_4", UpgradeCategory.Obtainability, "Green Thumb IV",
+            "Each watered crop has a 20% chance per day to gain an extra day of growth.", 400, "green_thumb_3"),
+        new UpgradeDefinition("green_thumb_5", UpgradeCategory.Obtainability, "Green Thumb V",
+            "Each watered crop has a 25% chance per day to gain an extra day of growth.", 600, "green_thumb_4"),
+
+        // Coal Vein — % chance per destroyed stone to drop +1 coal.
+        new UpgradeDefinition("coal_vein_1", UpgradeCategory.Obtainability, "Coal Vein I",
+            "Each stone you destroy has a 5% chance to drop an extra coal.", 75),
+        new UpgradeDefinition("coal_vein_2", UpgradeCategory.Obtainability, "Coal Vein II",
+            "Each stone you destroy has a 10% chance to drop an extra coal.", 150, "coal_vein_1"),
+        new UpgradeDefinition("coal_vein_3", UpgradeCategory.Obtainability, "Coal Vein III",
+            "Each stone you destroy has a 15% chance to drop an extra coal.", 250, "coal_vein_2"),
+        new UpgradeDefinition("coal_vein_4", UpgradeCategory.Obtainability, "Coal Vein IV",
+            "Each stone you destroy has a 20% chance to drop an extra coal.", 400, "coal_vein_3"),
+        new UpgradeDefinition("coal_vein_5", UpgradeCategory.Obtainability, "Coal Vein V",
+            "Each stone you destroy has a 25% chance to drop an extra coal.", 600, "coal_vein_4"),
+
+        // Forager's Eye — % chance per overnight forage spawn to be doubled.
+        new UpgradeDefinition("foragers_eye_1", UpgradeCategory.Obtainability, "Forager's Eye I",
+            "Each overnight forage spawn has a 5% chance to be doubled.", 75),
+        new UpgradeDefinition("foragers_eye_2", UpgradeCategory.Obtainability, "Forager's Eye II",
+            "Each overnight forage spawn has a 10% chance to be doubled.", 150, "foragers_eye_1"),
+        new UpgradeDefinition("foragers_eye_3", UpgradeCategory.Obtainability, "Forager's Eye III",
+            "Each overnight forage spawn has a 15% chance to be doubled.", 250, "foragers_eye_2"),
+        new UpgradeDefinition("foragers_eye_4", UpgradeCategory.Obtainability, "Forager's Eye IV",
+            "Each overnight forage spawn has a 20% chance to be doubled.", 400, "foragers_eye_3"),
+        new UpgradeDefinition("foragers_eye_5", UpgradeCategory.Obtainability, "Forager's Eye V",
+            "Each overnight forage spawn has a 25% chance to be doubled.", 600, "foragers_eye_4"),
+
         // Foresight — Weather Sage chain (7 tiers per spec §11)
         new UpgradeDefinition("weather_sage_1", UpgradeCategory.Foresight, "Weather Sage I",
             "Reveal 1 day of next week's weather on the planning hub.", 150),

@@ -19,6 +19,18 @@ namespace TheLongestYear.Loop
     {
         /// <summary>Set by ModEntry.OnSaveLoaded: returns true if the given upgrade id is owned.</summary>
         public static System.Func<string, bool> HasUpgrade;
+
+        /// <summary>Highest owned tier in a "<prefix>_<n>" chain (e.g. "green_thumb_1".."green_thumb_5").
+        /// Returns 0 if no tier is owned. Walks top-down so newest tier wins when chained linearly.</summary>
+        public static int GetTier(string prefix, int maxTier)
+        {
+            if (HasUpgrade == null) return 0;
+            for (int t = maxTier; t >= 1; t--)
+            {
+                if (HasUpgrade(prefix + "_" + t)) return t;
+            }
+            return 0;
+        }
     }
 
     [HarmonyPatch(typeof(Crop), "getRandomWildCropForSeason", new System.Type[] { typeof(bool) })]
