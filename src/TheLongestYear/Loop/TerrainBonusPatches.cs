@@ -95,4 +95,50 @@ namespace TheLongestYear.Loop
                 __instance.Location, __state, (int)tileLocation.X, (int)tileLocation.Y);
         }
     }
+
+    /// <summary>Shaken trees — walking into a tree may drop a seed (and on rare rolls a Mystery
+    /// Box / Qi Bean / rare-object-table item). Vanilla creates these via Game1.createItemDebris
+    /// inside <see cref="Tree.shake"/>. User asked 2026-05-29 whether shake seeds were getting
+    /// the all_drops_up bonus — they weren't (the existing TreeAllDropsBonusPatch covers
+    /// performToolAction only, i.e. chopping). Same snapshot-diff +1 on a 10% roll.</summary>
+    [HarmonyPatch(typeof(Tree), nameof(Tree.shake))]
+    internal static class TreeShakeAllDropsBonusPatch
+    {
+        // ReSharper disable InconsistentNaming — Harmony convention.
+        private static void Prefix(Tree __instance, out int __state)
+        {
+            __state = __instance?.Location?.debris?.Count ?? -1;
+        }
+
+        private static void Postfix(Tree __instance, Vector2 tileLocation, int __state)
+        {
+            if (__instance == null) return;
+            TerrainBonusPatches.TryDoubleNewDrops(
+                __instance.Location, __state, (int)tileLocation.X, (int)tileLocation.Y);
+        }
+    }
+
+    /// <summary>Monster drops — slimes/dust spirits/bats/etc dropping their loot on death.
+    /// Vanilla resolves the drop list in <see cref="GameLocation.monsterDrop"/> and adds each
+    /// to <c>location.debris</c>. User asked 2026-05-29 whether monster drops were covered by
+    /// all_drops_up — they weren't. Same snapshot-diff +1 on a 10% roll. Mining bonus
+    /// (mine_drops_up) intentionally NOT applied here — "mined resources" reads as
+    /// rocks/nodes, not creatures.</summary>
+    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.monsterDrop))]
+    internal static class MonsterDropAllDropsBonusPatch
+    {
+        // ReSharper disable InconsistentNaming — Harmony convention.
+        private static void Prefix(GameLocation __instance, out int __state)
+        {
+            __state = __instance?.debris?.Count ?? -1;
+        }
+
+        private static void Postfix(GameLocation __instance, int x, int y, int __state)
+        {
+            if (__instance == null) return;
+            // The (x, y) here are pixel coords from monsterDrop — convert back to tile coords
+            // for TryDoubleNewDrops' BonusDropEffects.Play (which itself converts tile → pixel).
+            TerrainBonusPatches.TryDoubleNewDrops(__instance, __state, x / 64, y / 64);
+        }
+    }
 }
