@@ -19,6 +19,10 @@ namespace TheLongestYear.Loop
         {
             if (!__result) return;
             if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return;
+            // 2026-05-29 playtest fix: never bonus on weeds/twigs (same rationale as
+            // mine_drops_up — see MineDropsPatch.cs). all_drops_up was also dropping +1 of
+            // the source object instead of the actual loot for these.
+            if (__instance.IsWeeds() || __instance.IsTwig()) return;
             if (!BonusDropResolver.ShouldGrantExtraDrop("all_drops_up", __instance.QualifiedItemId, Game1.random))
                 return;
 
