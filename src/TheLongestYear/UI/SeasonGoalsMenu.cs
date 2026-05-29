@@ -46,6 +46,7 @@ namespace TheLongestYear.UI
 
         private readonly IMonitor _monitor;
         private readonly RunState _run;
+        private readonly MetaState _meta;
         private readonly IReadOnlyList<BundleRequirement> _requirements;
         private readonly CoreSeason _season;
 
@@ -59,11 +60,13 @@ namespace TheLongestYear.UI
 
         private string _hoverText = "";
 
-        public SeasonGoalsMenu(IMonitor monitor, RunState run, IReadOnlyList<BundleRequirement> requirements)
+        public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
+            IReadOnlyList<BundleRequirement> requirements)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _monitor = monitor;
             _run = run;
+            _meta = meta;
             _requirements = requirements ?? new List<BundleRequirement>();
             _season = run.Season;
 
@@ -78,6 +81,18 @@ namespace TheLongestYear.UI
         {
             base.gameWindowSizeChanged(oldBounds, newBounds);
             RecomputeBoundsAndLayout();
+        }
+
+        public override void emergencyShutDown()
+        {
+            base.emergencyShutDown();
+            _meta?.DismissedIndicators.Add("tly.fireplace");
+        }
+
+        protected override void cleanupBeforeExit()
+        {
+            base.cleanupBeforeExit();
+            _meta?.DismissedIndicators.Add("tly.fireplace");
         }
 
         // ---------- data ----------

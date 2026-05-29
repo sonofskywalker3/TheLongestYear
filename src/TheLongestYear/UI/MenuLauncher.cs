@@ -87,7 +87,7 @@ namespace TheLongestYear.UI
         {
             if (!CanOpen()) return;
 
-            Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _runController.Requirements);
+            Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _store.State, _runController.Requirements);
             _monitor.Log(
                 $"Opened Season Goals ({_store.Run.Season} day {_store.Run.DayOfMonth}, " +
                 $"{_runController.Requirements.Count} bundles tracked).",

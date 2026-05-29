@@ -457,12 +457,19 @@ namespace TheLongestYear.Loop
         };
 
         /// <summary>
-        /// Adds a vanilla Quest to the questLog for the Cookbook and/or Craftbook the first
-        /// time they appear (i.e. the upgrade was just purchased, or it's the first reset after
-        /// purchase). "First time" = the indicator has not yet been dismissed.
-        /// Re-registering the quest on every reset is prevented by the DismissedIndicators guard.
+        /// Adds vanilla Quests to the player's questLog for each TLY interactable the first
+        /// time it appears for them (Cookbook, Craftbook, Stash, Season Goals fireplace board).
+        /// "First time" = the dismissal flag in <see cref="MetaState.DismissedIndicators"/>
+        /// has not been set yet (which happens when the player opens the matching menu).
+        /// AddIntroQuest is idempotent against the questLog so calling this on every save
+        /// load + every reset is safe — no duplicates land.
+        ///
+        /// Made <c>internal</c> 2026-05-29 so ModEntry can also fire it on save load — that
+        /// way the quests appear on existing playthroughs that pre-date a given intro
+        /// (e.g. the fireplace board added in this round) rather than waiting for the next
+        /// loop reset to surface them.
         /// </summary>
-        private void FireBookQuestIntros()
+        internal void FireBookQuestIntros()
         {
             if (_meta.HasUpgrade("cookbook_1")
                 && Game1.player.HouseUpgradeLevel >= 1
@@ -493,6 +500,18 @@ namespace TheLongestYear.Loop
                     title: "A gift from the Junimos",
                     description: "The Junimos placed a special chest on your farm — it will survive the seasons. " +
                                  "Find it and use it wisely; it has very limited space.");
+            }
+
+            // Season Goals fireplace board — added 2026-05-29. Always-on (board is at the CC
+            // from day 1 of every run, no upgrade prerequisite). Dismissed when the player
+            // opens the board the first time.
+            if (!_meta.DismissedIndicators.Contains("tly.fireplace"))
+            {
+                AddIntroQuest(
+                    id: "tly.-9004",
+                    title: "A gift from the Junimos",
+                    description: "There's a notice board by the Community Center fireplace " +
+                                 "that tracks this season's goals — go have a look.");
             }
         }
 

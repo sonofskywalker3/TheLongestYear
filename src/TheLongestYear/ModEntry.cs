@@ -269,6 +269,12 @@ namespace TheLongestYear
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
+            // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
+            // not just after reset. AddIntroQuest is idempotent against the questLog, so this
+            // safely surfaces quests added in code rounds that pre-date this save (e.g. the
+            // fireplace board intro added 2026-05-29 — without this call, current playthroughs
+            // would have to roll over a full year before seeing it).
+            _reset.FireBookQuestIntros();
             this.Monitor.Log(
                 $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
                 LogLevel.Info);
