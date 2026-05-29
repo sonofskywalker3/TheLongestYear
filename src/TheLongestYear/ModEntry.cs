@@ -607,18 +607,19 @@ namespace TheLongestYear
             // bump. Keep this minimal — just the banked JP count.
             var lines = new System.Collections.Generic.List<string> { $"JP: {jp}" };
 
-            const int Padding = 16;
+            const int Padding = 14;
             const int LineGap = 6;
-            // 2026-05-28 playtest round 4: "a little too small and a little too low." Step up
-            // from smallFont to dialogueFont — same font Stardew uses for dialogue boxes, so it
-            // reads as in-world rather than tooltip-scale.
+            // dialogueFont scaled to 0.95 — the unscaled version was "about 5% too big" per
+            // the 2026-05-29 playtest. Padding also pulled back from 16 → 14 to match the
+            // tighter text bounds.
             var font = Game1.dialogueFont;
+            const float TextScale = 0.95f;
 
             float maxWidth = 0f;
             float totalHeight = 0f;
             foreach (string line in lines)
             {
-                Microsoft.Xna.Framework.Vector2 size = font.MeasureString(line);
+                Microsoft.Xna.Framework.Vector2 size = font.MeasureString(line) * TextScale;
                 if (size.X > maxWidth) maxWidth = size.X;
                 totalHeight += size.Y;
             }
@@ -653,8 +654,9 @@ namespace TheLongestYear
             foreach (string line in lines)
             {
                 StardewValley.Utility.drawTextWithShadow(b, line, font,
-                    new Microsoft.Xna.Framework.Vector2(x + Padding, textY), Game1.textColor);
-                textY += (int)font.MeasureString(line).Y + LineGap;
+                    new Microsoft.Xna.Framework.Vector2(x + Padding, textY), Game1.textColor,
+                    scale: TextScale);
+                textY += (int)(font.MeasureString(line).Y * TextScale) + LineGap;
             }
         }
 

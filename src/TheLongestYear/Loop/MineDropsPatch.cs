@@ -21,6 +21,19 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(Object __instance, bool __result)
         {
+            // 2026-05-29: TRACE-log every postfix entry while mine_drops_up is active, so we can
+            // diagnose whether the patch is firing at all (the 2026-05-29 morning playtest spent
+            // ~8 min in the mines on a Mining-themed week and produced zero mine_drops_up log
+            // lines — either the patch isn't being applied, the postfix isn't reaching the gate,
+            // or __result is never true for ore destruction).
+            if (ActiveEffectsProvider.ActiveBonus("mine_drops_up")
+                && Game1.currentLocation is MineShaft)
+            {
+                PatchLog.Trace(
+                    $"MineOreDropBonus.Postfix entered: instance='{__instance?.QualifiedItemId}', " +
+                    $"__result={__result}, location={Game1.currentLocation?.NameOrUniqueName}.");
+            }
+
             if (!__result) return; // object not destroyed
             if (!ActiveEffectsProvider.ActiveBonus("mine_drops_up")) return;
             if (!(Game1.currentLocation is MineShaft)) return;
@@ -30,14 +43,13 @@ namespace TheLongestYear.Loop
             if (!BonusDropResolver.ShouldGrantExtraDrop("mine_drops_up", qid, Game1.random))
                 return;
 
-            Game1.createObjectDebris(qid,
-                (int)__instance.TileLocation.X,
-                (int)__instance.TileLocation.Y,
-                Game1.player.UniqueMultiplayerID);
+            int tx = (int)__instance.TileLocation.X;
+            int ty = (int)__instance.TileLocation.Y;
+            Game1.createObjectDebris(qid, tx, ty, Game1.player.UniqueMultiplayerID);
+            BonusDropEffects.Play(Game1.currentLocation, tx, ty);
 
             PatchLog.Info(
-                $"mine_drops_up: +1 '{qid}' at ({(int)__instance.TileLocation.X}, " +
-                $"{(int)__instance.TileLocation.Y}) on {Game1.currentLocation?.NameOrUniqueName}.");
+                $"mine_drops_up: +1 '{qid}' at ({tx}, {ty}) on {Game1.currentLocation?.NameOrUniqueName}.");
         }
     }
 
