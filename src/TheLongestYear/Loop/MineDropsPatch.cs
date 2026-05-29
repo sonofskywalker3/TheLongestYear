@@ -86,16 +86,17 @@ namespace TheLongestYear.Loop
 
             try
             {
-                // Round-12 root cause: vanilla creates Object-bearing debris (stone, ore, coal,
-                // copper, iron, …) via Game1.createObjectDebris(string id, …) which routes to
-                // Debris.InitializeItem. InitializeItem sets itemId.Value = "(O)390" etc. but
-                // ONLY assigns .item for *non-Object* types (Archaeology / Fish) — for every
-                // ore/stone debris .item stays null. The prior `d?.item != null` filter
-                // therefore dropped 100% of vanilla mining drops; the gate rolled in 7 times
-                // across the round-12 playtest log and silently saw "empty diff" every time.
-                // Fix: snapshot by Debris.itemId.Value (string) and clone via
-                // Game1.createObjectDebris which uses the same Debris(string, …) constructor.
-                int doubled = 0;
+                // Round-13 spec correction: user playtest confirmed +1 per successful roll,
+                // NOT the full drop set doubled. Doubling a loaded node (stone + coal +
+                // copper + gem on one swing) into 8 items reads as OP; +1 picked at random
+                // from what vanilla rolled keeps the bonus felt without snowballing.
+                //
+                // Round-12 root cause for the read path (still applies): vanilla creates
+                // Object-bearing debris via Game1.createObjectDebris(string id, …) which
+                // leaves Debris.item null and stores the id in Debris.itemId.Value. Read
+                // the string id; clone via Game1.createObjectDebris which uses the same
+                // constructor vanilla used so the visual + collection behaviour matches.
+                var candidates = new System.Collections.Generic.List<string>();
                 int total = __instance.debris.Count;
                 for (int i = __state; i < total; i++)
                 {
@@ -103,21 +104,22 @@ namespace TheLongestYear.Loop
                     string id = d?.item?.QualifiedItemId;
                     if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
                     if (string.IsNullOrEmpty(id)) continue;
-
-                    Game1.createObjectDebris(id, x, y, __instance);
-                    doubled++;
+                    candidates.Add(id);
                 }
-                if (doubled == 0)
+                if (candidates.Count == 0)
                 {
                     PatchLog.Trace($"{firingBonus}: rolled in but no item-bearing debris in diff (snapshot={__state}, total={total}).");
                     return;
                 }
 
+                string pickedId = candidates[Game1.random.Next(candidates.Count)];
+                Game1.createObjectDebris(pickedId, x, y, __instance);
                 BonusDropEffects.Play(__instance, x, y);
 
                 PatchLog.Info(
-                    $"{firingBonus}: stone '{stoneId}' destroyed → doubled {doubled} drop(s) at " +
-                    $"({x}, {y}) on {__instance.NameOrUniqueName}.");
+                    $"{firingBonus}: stone '{stoneId}' destroyed → +1 '{pickedId}' " +
+                    $"(picked from {candidates.Count} vanilla drop(s)) at ({x}, {y}) on " +
+                    $"{__instance.NameOrUniqueName}.");
             }
             catch (System.Exception ex)
             {
