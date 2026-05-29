@@ -72,34 +72,54 @@ namespace TheLongestYear.Loop
             double threshold;
             if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.30; }
             else           { firingBonus = "all_drops_up";  threshold = 0.10; }
-            if (Game1.random.NextDouble() >= threshold) return;
 
-            // Snapshot the items added during the original call. Net-side mutation while
-            // iterating the live debris collection would be unsafe; materialise the item
-            // references first, then drop fresh debris for each.
-            var added = new System.Collections.Generic.List<Item>();
-            // The debris collection is a Netcode list; iterate by index from __state to
-            // current count.
-            int total = __instance.debris.Count;
-            for (int i = __state; i < total; i++)
+            // 2026-05-29 round 12: log the actual rolled value on every event so we can
+            // disambiguate "bad luck", "RNG always >= threshold" (broken random), and
+            // "rolled in but bonus path threw" (exception swallowed by Harmony).
+            double roll = Game1.random.NextDouble();
+            if (roll >= threshold)
             {
-                var d = __instance.debris[i];
-                if (d?.item != null) added.Add(d.item.getOne());
+                PatchLog.Trace($"{firingBonus}: roll={roll:F3} >= {threshold:F2} → no bonus.");
+                return;
             }
-            if (added.Count == 0) return;
+            PatchLog.Trace($"{firingBonus}: roll={roll:F3} < {threshold:F2} → bonus rolling in.");
 
-            long whichPlayer = who?.UniqueMultiplayerID ?? Game1.player.UniqueMultiplayerID;
-            foreach (Item item in added)
+            try
             {
-                Game1.createItemDebris(item, new Microsoft.Xna.Framework.Vector2(x, y) * 64f,
-                    -1, __instance, -1);
-            }
-            BonusDropEffects.Play(__instance, x, y);
+                // Snapshot the items added during the original call. Net-side mutation while
+                // iterating the live debris collection would be unsafe; materialise the item
+                // references first, then drop fresh debris for each.
+                var added = new System.Collections.Generic.List<Item>();
+                // The debris collection is a Netcode list; iterate by index from __state to
+                // current count.
+                int total = __instance.debris.Count;
+                for (int i = __state; i < total; i++)
+                {
+                    var d = __instance.debris[i];
+                    if (d?.item != null) added.Add(d.item.getOne());
+                }
+                if (added.Count == 0)
+                {
+                    PatchLog.Trace($"{firingBonus}: rolled in but debris-diff was empty (snapshot={__state}, total={total}).");
+                    return;
+                }
 
-            PatchLog.Info(
-                $"{firingBonus}: stone '{stoneId}' destroyed → doubled {added.Count} drop(s) at " +
-                $"({x}, {y}) on {__instance.NameOrUniqueName}: " +
-                $"[{string.Join(", ", added.ConvertAll(it => it.QualifiedItemId))}].");
+                foreach (Item item in added)
+                {
+                    Game1.createItemDebris(item, new Microsoft.Xna.Framework.Vector2(x, y) * 64f,
+                        -1, __instance, -1);
+                }
+                BonusDropEffects.Play(__instance, x, y);
+
+                PatchLog.Info(
+                    $"{firingBonus}: stone '{stoneId}' destroyed → doubled {added.Count} drop(s) at " +
+                    $"({x}, {y}) on {__instance.NameOrUniqueName}: " +
+                    $"[{string.Join(", ", added.ConvertAll(it => it.QualifiedItemId))}].");
+            }
+            catch (System.Exception ex)
+            {
+                PatchLog.Trace($"{firingBonus}: bonus path THREW after successful roll: {ex.GetType().Name}: {ex.Message}");
+            }
         }
     }
 
