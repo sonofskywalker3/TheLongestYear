@@ -180,6 +180,35 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>
+    /// Round-14 fix for the 1-frame picker flash on item add/remove. The update-tick scrub
+    /// runs every frame but vanilla's frame order is update → draw, so any recreation that
+    /// happens BETWEEN ticks (e.g. inside Chest.grabItemFromInventory's mid-frame ShowMenu
+    /// call) gets one draw frame to flash the picker before the next update scrubs it.
+    /// Prefixing draw runs synchronously immediately before the menu renders — guaranteed
+    /// stripped state at every render, no flash possible. Adds one cast + three null checks
+    /// per draw call when active; the redundant work with the update scrub is intentional
+    /// (defense in depth).
+    /// </summary>
+    [HarmonyPatch(typeof(ItemGrabMenu), nameof(ItemGrabMenu.draw),
+        new System.Type[] { typeof(Microsoft.Xna.Framework.Graphics.SpriteBatch) })]
+    internal static class JunimoStashColorPickerDrawGuardPatch
+    {
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Prefix(ItemGrabMenu __instance)
+        {
+            if (__instance == null) return;
+            if (__instance.chestColorPicker == null
+                && __instance.colorPickerToggleButton == null
+                && __instance.discreteColorPickerCC == null)
+                return;
+            if (!(__instance.sourceItem is Chest chest)) return;
+            if (!chest.modData.ContainsKey(JunimoStashService.StashModDataKey)) return;
+
+            JunimoStashShowMenuPatch.StripColorPicker(__instance);
+        }
+    }
+
+    /// <summary>
     /// Caps the stash chest's <see cref="Chest.GetActualCapacity"/> at the current
     /// <see cref="MetaState.StashSlotCount"/> (4 base + 4 per stash_1/2/3 upgrade owned). This is
     /// what controls how many slots ItemGrabMenu draws on open — a non-upgraded stash shows 4
