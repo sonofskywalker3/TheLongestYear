@@ -37,6 +37,12 @@ namespace TheLongestYear.Loop
             if (!__result) return; // object not destroyed
             if (!ActiveEffectsProvider.ActiveBonus("mine_drops_up")) return;
             if (!(Game1.currentLocation is MineShaft)) return;
+            // 2026-05-29 playtest fix: never bonus on weeds/twigs. The mine floor weed sprites
+            // (Object IDs 313-316, 674-679, etc.) hit performToolAction with __result=true and
+            // were granting +1 of the WEED OBJECT itself — user reported "somehow I picked up
+            // weeds." Vanilla weed loot (fiber/mixed seeds/sap) ships through a different path
+            // we don't (and shouldn't) touch.
+            if (__instance.IsWeeds() || __instance.IsTwig()) return;
 
             string qid = __instance.QualifiedItemId;
             // Apply to ore and coal; stone (390) and wood (388) excluded by resolver.
