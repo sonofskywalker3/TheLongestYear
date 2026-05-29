@@ -165,17 +165,21 @@ namespace TheLongestYear.Loop
             return desired;
         }
 
-        /// <summary>Pick a tile four east + two south of the farmhouse entry. The 2026-05-28
-        /// playtest's (entry+2,+1) anchor and its (entry+2,+2) ladder fallback both landed
-        /// directly in the player's walking path out of the farmhouse door ("directly in
-        /// front of the exit of my farm"); shifting two more tiles east clears the doormat
-        /// corridor while still placing the chest within a step of the house. Returns
-        /// Vector2.Zero if the entry is unavailable.</summary>
+        /// <summary>Pick a tile three east + two south of the farmhouse entry. Path through
+        /// the 2026-05-28 / 2026-05-29 playtests:
+        ///   - (entry+2,+1)  : original — landed on the porch (blocked by Farmhouse building)
+        ///   - (entry+2,+2)  : 2026-05-28 ladder fallback — "directly in front of the exit"
+        ///   - (entry+4,+2)  : 2026-05-29 first retry — "in front of the mailbox" (which sits
+        ///                     at (68, 16) on the Standard farm per Farm.cs:1483, so the
+        ///                     chest at (68, 17) was the mail-reading tile)
+        ///   - (entry+3,+2)  : current — splits the difference, one tile east of the doormat
+        ///                     corridor and one tile west of the mailbox column. Returns
+        ///                     Vector2.Zero if the entry is unavailable.</summary>
         private static Vector2 AutoTile(Farm farm)
         {
             Point? entry = TryGetFarmHouseEntry(farm);
             return entry.HasValue
-                ? new Vector2(entry.Value.X + 4, entry.Value.Y + 2)
+                ? new Vector2(entry.Value.X + 3, entry.Value.Y + 2)
                 : Vector2.Zero;
         }
 
@@ -189,16 +193,16 @@ namespace TheLongestYear.Loop
         /// </summary>
         private static System.Collections.Generic.IEnumerable<Vector2> AutoCandidates(Point entry)
         {
-            // (dx, dy) offsets — 2026-05-29 reorder: clear-of-the-doormat candidates first
-            // (the 2026-05-28 ladder put the chest in the player's exit-path). Wider east of
-            // the doorway leads, then deeper south, then west fallbacks.
+            // (dx, dy) offsets — 2026-05-29 v2: skip the dx=4 column (mailbox front at
+            // (entry+4, +1) on Standard farm) and the dx=2 column (in the exit corridor per
+            // earlier playtest). New default (dx=3, dy=2) leads; fallbacks stay close to it.
             (int dx, int dy)[] offsets =
             {
-                ( 4, 2),  // new default — east of the doormat, clears the walking path
-                ( 4, 1),  // same column, one closer to the house
-                ( 4, 3),  // same column, one further south
-                ( 5, 2),  // a tile further east
-                ( 3, 2),  // one tile west of the new default
+                ( 3, 2),  // new default — between doormat path and mailbox column
+                ( 3, 3),  // same column, one further south
+                ( 3, 1),  // same column, closer to the house
+                ( 5, 2),  // jump past the mailbox column (skipping +4 = mailbox front)
+                ( 5, 3),
                 ( 2, 3),  // SE, deeper south than the old default
                 ( 0, 3),  // straight south, far enough to clear porch
                 (-2, 3),  // SW corner, deep south
