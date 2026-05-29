@@ -6,7 +6,32 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### Continue-after-victory mode
+### Co-opted day-1 intro cutscene (replaces vanilla 191393)
+SEE BELOW for full spec — still genuinely open, v1.1 narrative tier.
+
+### Small playtest carryovers (from STATUS.md)
+Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
+2026-05-27) so these were drifting:
+
+- **Festival exit to host map** — `Event.endBehaviors` currently warps to
+  the farm entry; should land on the festival's host map (Town for
+  Egg/Fair/Spirit's Eve; Beach for Luau/Jellies; Forest for Flower
+  Dance). ~20 lines (endBehaviors postfix or transpiler).
+- **Indicator `?` source rect** `(397, 489, 10, 10)` in
+  `IndicatorRegistry` is approximate — visually verify the right sprite
+  renders. One-line constant fix if wrong.
+- **`forage_off` over-suppression (JC-4)** — Mining liability also
+  blocks weeds/stones via `spawnObjects`. Flag for a playtest to assess
+  whether this reads as "too punishing"; no code change planned yet.
+- **`fortune_rare_fish` is a 0.75× bite-rate multiplier (JC-2)** — v1
+  approximation. True rarity intercept (the spec'd "rare fish catch
+  chance increased by 25%" reading) needs deeper Stardew internals
+  investigation — patching whatever rolls the fish-rarity table rather
+  than the bite-rate path. Currently piggybacks on Curiosity Lure
+  semantics via `FishRareLurePatch`.
+
+### (closed — moved here from "Open" 2026-05-29 audit)
+### ~~Continue-after-victory mode~~ — SHIPPED 2026-05-29 as `5959de0`
 Source: 2026-05-29 playtest spec. After the win condition fires (CC restored,
 year complete, all bundles), the player should have the option to keep
 playing the same run instead of being forced into a reset. Currently the
@@ -114,7 +139,21 @@ sentimental-only payoff rather than a typical run-saver price.
 
 Status: spec'd, not planned.
 
-### JP upgrades: keep kitchen / keep basement / keep shortcuts
+### ~~JP upgrades: keep kitchen / keep basement / keep shortcuts~~ — SHIPPED
+Audited 2026-05-29: all three are wired end-to-end. Catalog entries:
+`keep_kitchen` (800 JP), `keep_basement` (1800 JP, requires keep_kitchen),
+`keep_shortcuts` (900 JP). Effects:
+- `RunBaselineBuilder` reads them into `KitchenOnDay1` / `BasementOnDay1`
+  / `ShortcutsUnlocked`.
+- `FarmerReset` forces `HouseUpgradeLevel = 1` or `3` accordingly.
+- `WorldResetService` step 7b adds the `communityUpgradeShortcuts` mail
+  flag (vanilla reads it in Forest/Mountain/Town/Beach for the five
+  shortcut tile overrides). Step 7c creates the `Cellar` location for
+  L3-house resets so the FarmHouse warp doesn't dead-end.
+
+(Original spec preserved below for design history.)
+
+### (original spec, kept for design history) JP upgrades: keep kitchen / keep basement / keep shortcuts
 Source: 2026-05-28 playtest. User correction after a first-pass sketch
 that bundled all Robin-related kept-state into one upgrade: "NO don't
 bundle robin's upgrades, I want one for keeping the kitchen, one for
@@ -171,6 +210,19 @@ Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
 ## Resolved / closed
+
+- **Continue-after-victory mode** — shipped 2026-05-29 as commit `5959de0`.
+  JP-spend popup pops on both reset AND win paths; post-win choice
+  dialog ("Start a new loop" / "Keep playing this run") sets
+  `MetaState.VictoryAcknowledged` on Keep, which suppresses the popup on
+  subsequent Winter 28 wins. Manual `tly_reset` stays raw (debug path).
+  Plan-05 in-world shrine tile was never actually shipped — no removal
+  needed.
+
+- **`keep_kitchen` / `keep_basement` / `keep_shortcuts`** — shipped
+  earlier; audit 2026-05-29 confirmed all three are wired end-to-end
+  (RunBaselineBuilder → FarmerReset HouseUpgradeLevel + WorldResetService
+  cellar/mail-flag step). TODO entry above kept for design history.
 
 - **`keep_pet` upgrade** — shipped 2026-05-29 as `PetCarryoverService`
   + `MetaState.PetState` + `PetSnapshot` record. 75 JP, Buildings
