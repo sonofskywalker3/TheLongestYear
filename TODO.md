@@ -17,12 +17,16 @@ Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
   the farm entry; should land on the festival's host map (Town for
   Egg/Fair/Spirit's Eve; Beach for Luau/Jellies; Forest for Flower
   Dance). ~20 lines (endBehaviors postfix or transpiler).
-- **Indicator `?` source rect** `(397, 489, 10, 10)` in
-  `IndicatorRegistry` is approximate — visually verify the right sprite
-  renders. One-line constant fix if wrong.
-- **`forage_off` over-suppression (JC-4)** — Mining liability also
-  blocks weeds/stones via `spawnObjects`. Flag for a playtest to assess
-  whether this reads as "too punishing"; no code change planned yet.
+- ~~**Indicator `?` source rect**~~ — closed 2026-05-29. User feedback:
+  "you never got the indicator right, so just remove it and close it."
+  `IndicatorRegistry` deleted; `Dismiss` calls in CookbookMenu /
+  CraftbookMenu / JunimoStashShowMenuPatch now write directly to
+  `MetaState.DismissedIndicators` to preserve the one-time intro-quest
+  gating. `WorldResetService.RegisterIndicators` + the SMAPI
+  RenderedWorld hook + `JunimoStashService.RegisterIndicator` all gone.
+- ~~**`forage_off` over-suppression (JC-4)**~~ — closed 2026-05-29.
+  User: "it's not an issue." Current behaviour (Mining liability also
+  blocks weeds/stones overnight via spawnObjects) stays.
 - **`fortune_rare_fish` is a 0.75× bite-rate multiplier (JC-2)** — v1
   approximation. True rarity intercept (the spec'd "rare fish catch
   chance increased by 25%" reading) needs deeper Stardew internals

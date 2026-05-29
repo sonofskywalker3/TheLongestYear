@@ -23,7 +23,9 @@ namespace TheLongestYear.Loop
     internal static class JunimoStashCapPatch
     {
         private static IMonitor _monitor;
-        private static MetaState _meta;
+        // ReSharper disable once MemberCanBePrivate.Global — read by JunimoStashShowMenuPatch
+        // in the same file for the stash-intro-quest dismissal write.
+        internal static MetaState _meta;
 
         public static void Connect(IMonitor monitor, MetaState meta)
         {
@@ -112,7 +114,11 @@ namespace TheLongestYear.Loop
             if (!__instance.modData.ContainsKey(JunimoStashService.StashModDataKey))
                 return;
 
-            IndicatorRegistry.Dismiss("tly.stash");
+            // Mark the stash intro quest as "seen" so it doesn't re-fire on the next reset.
+            // Same DismissedIndicators set the cookbook/craftbook menus write to — the
+            // visual ? indicator was removed 2026-05-29 per user, but the dismissal-tracking
+            // semantic was preserved to keep one-time intro quests one-time.
+            JunimoStashCapPatch._meta?.DismissedIndicators.Add("tly.stash");
 
             if (Game1.activeClickableMenu is ItemGrabMenu igm)
                 StripColorPicker(igm);

@@ -88,7 +88,6 @@ namespace TheLongestYear
             // already below the box so no visual overlap there.
             helper.Events.Display.RenderingHud += this.OnRenderedHud;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
-            helper.Events.Display.RenderedWorld += IndicatorRegistry.OnRenderedWorld;
 
             // Force every new TLY game onto the Standard farm. Wired here (not in OnSaveLoaded)
             // because the enforcer needs to fire on the title screen / character-creation flow,
@@ -221,8 +220,6 @@ namespace TheLongestYear
 
             _meta.Load();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
-            IndicatorRegistry.Attach(_meta.State);
-            IndicatorRegistry.ClearRegistrations();
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
             _mountainUnlock = new MountainUnlock(this.Monitor);
@@ -266,11 +263,9 @@ namespace TheLongestYear
             _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);
             this.Helper.Events.Player.Warped += _peakMineFloorTracker.OnWarped;
             // Restore stash chest on every save load (not just after reset), so a
-            // save-and-reload mid-run re-places the chest correctly. Done BEFORE
-            // RegisterIndicators so the stash indicator can target the actually-placed tile.
+            // save-and-reload mid-run re-places the chest correctly.
             _stashService.PlaceChest();
             _stashService.PopulateFromMeta();
-            _reset.RegisterIndicators();
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);

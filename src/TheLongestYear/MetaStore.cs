@@ -47,9 +47,9 @@ namespace TheLongestYear
         /// — lets the user test a true clean-slate run without deleting the underlying save file.
         /// <para>
         /// Side effect: external consumers that captured a direct reference to the old
-        /// <see cref="State"/> instance (IndicatorRegistry, JunimoStashCapPatch, etc.) hold
-        /// stale pointers after this call. The caller is expected to log a "reload the save"
-        /// instruction so the user gets fresh service wiring.
+        /// <see cref="State"/> instance (JunimoStashCapPatch, etc.) hold stale pointers after
+        /// this call. The caller is expected to log a "reload the save" instruction so the
+        /// user gets fresh service wiring.
         /// </para>
         /// </summary>
         public void WipeMeta()

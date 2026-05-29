@@ -290,15 +290,9 @@ namespace TheLongestYear.Loop
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();
 
-            // 13a. Place the Junimo Stash chest on the Farm and populate from MetaState.
-            //      Must run BEFORE RegisterIndicators — the stash indicator targets the
-            //      actually-placed tile (which may differ from config when auto-pick / fallback
-            //      kicked in), so the placement has to happen first.
+            // 13. Place the Junimo Stash chest on the Farm and populate from MetaState.
             _stashService?.PlaceChest();
             _stashService?.PopulateFromMeta();
-
-            // 13b. Re-register indicators for the new run's location objects.
-            RegisterIndicators();
 
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up
@@ -521,50 +515,5 @@ namespace TheLongestYear.Loop
             _monitor.Log($"WorldResetService: added quest intro '{title}' (id {id}).", LogLevel.Trace);
         }
 
-        /// <summary>
-        /// Re-registers indicators for the current run's FarmHouse location.
-        /// Called at the end of PerformReset so the location reference is fresh.
-        /// The fireplace indicator is registered here too (retroactive — it should
-        /// have been shown since Plan 05 but was missing until now).
-        /// </summary>
-        internal void RegisterIndicators()
-        {
-            IndicatorRegistry.ClearRegistrations();
-
-            // Community Center fireplace / Season Goals board.
-            CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
-            if (cc != null)
-            {
-                IndicatorRegistry.Register("tly.fireplace", cc,
-                    new Vector2(_config.SeasonGoalsBoardTileX, _config.SeasonGoalsBoardTileY),
-                    IndicatorKind.Question);
-            }
-
-            FarmHouse farmHouse = Utility.getHomeOfFarmer(Game1.player) as FarmHouse;
-            if (farmHouse != null)
-            {
-                if (_meta.HasUpgrade("cookbook_1")
-                    && (_config.CookbookTileX != 0 || _config.CookbookTileY != 0))
-                {
-                    IndicatorRegistry.Register("tly.cookbook", farmHouse,
-                        new Vector2(_config.CookbookTileX, _config.CookbookTileY),
-                        IndicatorKind.Question);
-                }
-
-                if (_meta.HasUpgrade("craftbook_1")
-                    && (_config.CraftbookTileX != 0 || _config.CraftbookTileY != 0))
-                {
-                    IndicatorRegistry.Register("tly.craftbook", farmHouse,
-                        new Vector2(_config.CraftbookTileX, _config.CraftbookTileY),
-                        IndicatorKind.Question);
-                }
-            }
-
-            // 2026-05-28 playtest round 4: stash chest indicator removed. The Junimo Chest
-            // sprite is already plainly visible on the Farm — no need to call attention to it.
-            // Also fixed a secondary nit (the bubble was landing inside the farmhouse porch
-            // when the auto-pick fallback resolved to (66, 17)).
-            // _stashService?.RegisterIndicator();
-        }
     }
 }

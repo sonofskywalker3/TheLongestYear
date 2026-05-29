@@ -325,24 +325,6 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>
-        /// Register the stash indicator bubble on the Farm at the placed tile.
-        /// Called from WorldResetService.RegisterIndicators after the chest is placed.
-        /// Uses an 80px vertical offset because Chest sprites render ABOVE the tile origin —
-        /// the default 32px offset (suited to flat counter/board tiles) left the bubble sitting
-        /// INSIDE the chest visual per 2026-05-28 playtest.
-        /// </summary>
-        public void RegisterIndicator()
-        {
-            if (_placedTile == null)
-                return;
-
-            Farm farm = Game1.getFarm();
-            if (farm == null) return;
-            IndicatorRegistry.Register("tly.stash", farm, _placedTile.Value,
-                IndicatorKind.Question, pixelOffsetY: 128);
-        }
-
-        /// <summary>
         /// Find the stash Chest in the current Farm's object layer. Returns null if not found.
         /// </summary>
         public Chest FindStashChest()
