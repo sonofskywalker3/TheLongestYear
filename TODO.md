@@ -13,17 +13,22 @@ SEE BELOW for full spec — still genuinely open, v1.1 narrative tier.
 Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 2026-05-27) so these were drifting:
 
-- ~~**Festival exit to host map**~~ — shipped 2026-05-29 as
-  `FestivalExitPatch`. Postfix on `Event.endBehaviors` pulls
-  `festivalData["conditions"]` via reflection, extracts the host map
-  from the first `/`-separated segment, and replaces the vanilla
-  unconditional warp-to-Farm with `setExitLocation(hostMap,
-  player.Tile.X, player.Tile.Y)` — land the player at their CURRENT
-  tile on the real host map. The festival's temporaryLocation is a
-  clone of the host map with identical geometry, so the same tile
-  coords are always valid. User refinement: "just let me exit like
-  there wasn't a festival going on at all" — not at an entrance the
-  player wasn't anywhere near.
+- ~~**Festival exit to host map**~~ — closed 2026-05-29. The TODO
+  entry described a behaviour that conflicted with what was already
+  shipped. `FestivalTimeFlow.cs` (Plan 06A) handles festival exits
+  end-to-end via `SkipExitFestivalPromptPatch` (skips the "are you
+  ready?" prompt and runs `forceEndFestival` directly) +
+  `EndBehaviorsPatch` (preserves `timeOfDayAfterFade` to the actual
+  in-game time at exit, undoing vanilla's hard-coded 2200 jump).
+  Result: walk into a map-edge warp → festival ends silently, player
+  lands at the Farm porch, time stays whatever it was when you walked
+  out — which is the behaviour the user identified as the desired one:
+  "I'd walk out it would work me to the farm it would be the same time
+  it was when I walked out and I could walk all the way back to town
+  and be at the festival again." Briefly tried an alternative (host-map
+  exit / direct warp through edge / two-patch combo) in `b49bf5b`; the
+  user pushed back to restore the FestivalTimeFlow behaviour, so
+  reverted. No new patch needed.
 - ~~**Indicator `?` source rect**~~ — closed 2026-05-29. User feedback:
   "you never got the indicator right, so just remove it and close it."
   `IndicatorRegistry` deleted; `Dismiss` calls in CookbookMenu /
