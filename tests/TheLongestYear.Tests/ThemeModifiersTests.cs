@@ -28,7 +28,7 @@ public class ThemeModifiersTests
     [InlineData("fish_bite_down",       "Fish bite 30% slower")]
     [InlineData("mine_drops_up",        "20% chance for mined resources to drop +1")]
     [InlineData("mines_closed",         "Mine entrance closed all week")]
-    [InlineData("all_drops_up",         "50% chance for any drop to be +1")]
+    [InlineData("all_drops_up",         "10% chance for any drop to be +1")]
     [InlineData("all_sell_prices_down", "All sell prices cut in half")]
     [InlineData("forage_drops_off",     "Foraging disabled (legacy)")]
     [InlineData("mine_drops_off",       "Mine drops disabled (legacy)")]
