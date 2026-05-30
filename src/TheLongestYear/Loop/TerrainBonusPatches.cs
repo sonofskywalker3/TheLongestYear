@@ -16,7 +16,7 @@ namespace TheLongestYear.Loop
     /// Same snapshot-diff pattern as <see cref="MineOreDropBonus"/> and
     /// <see cref="AllDropsBonusPatch"/>: prefix records <c>Location.debris.Count</c>, postfix
     /// iterates the new debris added during this tool-action and clones each item on a
-    /// successful 10% roll. That captures whatever vanilla actually dropped — wood + sap +
+    /// successful Mixed all_drops_up roll. That captures whatever vanilla actually dropped — wood + sap +
     /// seeds for a tree, hardwood + coal for a big stump, gold/iridium for a meteorite, etc.
     /// — without us mirroring each branch.
     /// </summary>
@@ -31,7 +31,8 @@ namespace TheLongestYear.Loop
 
         /// <summary>Shared roll + double helper. Routes by <see cref="ActiveEffectsProvider.BonusId"/>:
         /// <list type="bullet">
-        ///   <item><c>all_drops_up</c> (Mixed): 10% chance to clone one of the new drops, no filter.</item>
+        ///   <item><c>all_drops_up</c> (Mixed): <see cref="BonusDropResolver.MixedAllDropsChance"/>
+        ///     chance to clone one of the new drops, no filter.</item>
         ///   <item><c>forage_yield_up</c> (Foraging): 20% chance to clone one of the new drops,
         ///     stone/wood excluded — applied ONLY when the caller passes
         ///     <paramref name="applyForageYieldUp"/>=true. 2026-05-29 user report: tree-shake
@@ -72,7 +73,7 @@ namespace TheLongestYear.Loop
             string label;
             if (mixedActive)
             {
-                rate = 0.10;
+                rate = BonusDropResolver.MixedAllDropsChance;
                 label = "all_drops_up";
             }
             else
@@ -98,7 +99,7 @@ namespace TheLongestYear.Loop
         }
     }
 
-    /// <summary>Tree chopping — doubles wood/sap/seeds/whatever drops on the 10% Mixed roll.</summary>
+    /// <summary>Tree chopping — doubles wood/sap/seeds/whatever drops on the Mixed all_drops_up roll.</summary>
     [HarmonyPatch(typeof(Tree), nameof(Tree.performToolAction))]
     internal static class TreeAllDropsBonusPatch
     {
@@ -118,7 +119,7 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>Large resource clumps — big stumps, big logs, boulders, quartz/topaz/jade/
-    /// amethyst clusters, meteorites. Same snapshot-diff doubling on the 10% Mixed roll.</summary>
+    /// amethyst clusters, meteorites. Same snapshot-diff doubling on the Mixed all_drops_up roll.</summary>
     [HarmonyPatch(typeof(ResourceClump), nameof(ResourceClump.performToolAction))]
     internal static class ResourceClumpAllDropsBonusPatch
     {
@@ -141,7 +142,7 @@ namespace TheLongestYear.Loop
     /// Box / Qi Bean / rare-object-table item). Vanilla creates these via Game1.createItemDebris
     /// inside <see cref="Tree.shake"/>. User asked 2026-05-29 whether shake seeds were getting
     /// the all_drops_up bonus — they weren't (the existing TreeAllDropsBonusPatch covers
-    /// performToolAction only, i.e. chopping). Same snapshot-diff +1 on a 10% roll.</summary>
+    /// performToolAction only, i.e. chopping). Same snapshot-diff +1 on a Mixed all_drops_up roll.</summary>
     [HarmonyPatch(typeof(Tree), nameof(Tree.shake))]
     internal static class TreeShakeAllDropsBonusPatch
     {
@@ -168,7 +169,7 @@ namespace TheLongestYear.Loop
     /// <summary>Monster drops — slimes/dust spirits/bats/etc dropping their loot on death.
     /// Vanilla resolves the drop list in <see cref="GameLocation.monsterDrop"/> and adds each
     /// to <c>location.debris</c>. User asked 2026-05-29 whether monster drops were covered by
-    /// all_drops_up — they weren't. Same snapshot-diff +1 on a 10% roll. Mining bonus
+    /// all_drops_up — they weren't. Same snapshot-diff +1 on a Mixed all_drops_up roll. Mining bonus
     /// (mine_drops_up) intentionally NOT applied here — "mined resources" reads as
     /// rocks/nodes, not creatures.</summary>
     [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.monsterDrop))]
@@ -189,7 +190,7 @@ namespace TheLongestYear.Loop
         }
     }
 
-    /// <summary>Fish caught — fishing-rod catch on a 10% roll spawns +1 of the same fish at the
+    /// <summary>Fish caught — fishing-rod catch on a Mixed all_drops_up roll spawns +1 of the same fish at the
     /// same quality directly into the player's inventory. Pond auto-produce skipped (those
     /// aren't player-effort catches). Treasure chest contents NOT covered — treasure is itself
     /// a rare-roll bonus already (treasureCaught flag, openChestEndFunction delivery), and
@@ -207,7 +208,7 @@ namespace TheLongestYear.Loop
             if (fromFishPond) return;
             if (string.IsNullOrEmpty(fishId)) return;
             if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return;
-            if (Game1.random.NextDouble() >= 0.10) return;
+            if (Game1.random.NextDouble() >= BonusDropResolver.MixedAllDropsChance) return;
 
             var player = Game1.player;
             if (player == null) return;

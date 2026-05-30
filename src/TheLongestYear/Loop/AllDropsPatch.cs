@@ -5,7 +5,8 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Mixed bonus (all_drops_up): 10% chance — when ANY tool-destroyed Object yields drops
+    /// Mixed bonus (all_drops_up): <see cref="BonusDropResolver.MixedAllDropsChance"/> — when
+    /// ANY tool-destroyed Object yields drops
     /// (weeds → fiber/seeds/moss, twigs → wood, machines → the machine, crops → harvest) — to
     /// DOUBLE every item the destruction produced. Stone/ore destruction routes through
     /// <see cref="GameLocation.OnStoneDestroyed"/> instead and is handled by
@@ -41,7 +42,7 @@ namespace TheLongestYear.Loop
             if (__instance == null || __state < 0) return;
             GameLocation loc = __instance.Location;
             if (loc?.debris == null) return;
-            if (Game1.random.NextDouble() >= 0.10) return;
+            if (Game1.random.NextDouble() >= BonusDropResolver.MixedAllDropsChance) return;
 
             // Round-13 spec: +1 from the rolled set, not full set doubled. See
             // MineOreDropBonus for the +1 rationale and the round-12 Debris.itemId.Value

@@ -6,10 +6,10 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Mining bonus (mine_drops_up): 30% chance — when a rock is destroyed in a MineShaft —
+    /// Mining bonus (mine_drops_up): 20% chance — when a rock is destroyed in a MineShaft —
     /// to DOUBLE every item the destruction dropped (ore, coal, geode, gems, all of it).
-    /// Mixed bonus (all_drops_up): 10% chance, same doubling, but anywhere a stone breaks
-    /// (Mines, Farm, Quarry, …).
+    /// Mixed bonus (all_drops_up): <see cref="BonusDropResolver.MixedAllDropsChance"/>, same
+    /// doubling, but anywhere a stone breaks (Mines, Farm, Quarry, …).
     ///
     /// 2026-05-29 playtest evolution: the first cut returned a fixed +1 ore keyed by stoneId,
     /// but stones in the mines drop a *variable* set (a single plain stone can yield stone +
@@ -64,17 +64,17 @@ namespace TheLongestYear.Loop
             bool allBonus  = ActiveEffectsProvider.ActiveBonus("all_drops_up");
             if (!mineBonus && !allBonus) return;
 
-            // Tier the roll: mine_drops_up takes priority at 30%; falls back to all_drops_up
-            // at 10% when only Mixed is picked. Single roll covers ALL drops added by this
+            // Tier the roll: mine_drops_up takes priority at 20%; falls back to all_drops_up
+            // when only Mixed is picked. Single roll covers ALL drops added by this
             // destruction — user spec is "everything doubled" on a successful roll, not
             // per-item independent rolls.
-            // 2026-05-29 user spec rebalance: mine_drops_up 30% → 20%. all_drops_up
-            // (Mixed) stays at 10% — generalist, fires on every Object.performToolAction
-            // too.
+            // 2026-05-29 user spec rebalance: mine_drops_up 30% → 20%.
+            // 2026-05-30 user spec rebalance: all_drops_up (Mixed) 10% → 50%
+            // (see BonusDropResolver.MixedAllDropsChance).
             string firingBonus;
             double threshold;
             if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.20; }
-            else           { firingBonus = "all_drops_up";  threshold = 0.10; }
+            else           { firingBonus = "all_drops_up";  threshold = BonusDropResolver.MixedAllDropsChance; }
 
             // 2026-05-29 round 12: log the actual rolled value on every event so we can
             // disambiguate "bad luck", "RNG always >= threshold" (broken random), and
