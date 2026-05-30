@@ -2,6 +2,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Intro;
 
 namespace TheLongestYear.Integration
 {
@@ -31,15 +32,17 @@ namespace TheLongestYear.Integration
     /// </summary>
     internal sealed class IntroEventInjector
     {
+        // Ids + mail flags are owned by TheLongestYear.Core.Intro.IntroEventKeys (the single
+        // source of truth, unit-tested). Aliased here so the existing references read cleanly.
         // Event ids — string ids work in 1.6+ and live alongside vanilla numeric ids in eventsSeen.
-        private const string PorchEventId = "tly_intro_porch";
-        private const string CcEventId    = "tly_intro_cc";
+        private const string PorchEventId = IntroEventKeys.PorchEventId;
+        private const string CcEventId    = IntroEventKeys.CcEventId;
 
         // Mail flags. Per-run lifecycle: wiped by FarmerReset.loadForNewGame; persists within a
         // single loop via Farmer.mailReceived (which is part of the save).
-        private const string PorchSeenMail = "tly_intro_porch_seen";
-        private const string CcSeenMail    = "tly_intro_cc_seen";
-        private const string IntroDoneMail = "tly_intro_done";
+        private const string PorchSeenMail = IntroEventKeys.PorchSeenMail;
+        private const string CcSeenMail    = IntroEventKeys.CcSeenMail;
+        private const string IntroDoneMail = IntroEventKeys.IntroDoneMail;
 
         // Asset names. SMAPI's NameWithoutLocale comparison is case-insensitive on these.
         private const string FarmEventsAsset = "Data/Events/Farm";
@@ -135,20 +138,20 @@ namespace TheLongestYear.Integration
 
         // ---- Event script authoring --------------------------------------------------------
 
-        /// <summary>Porch event key with preconditions. Slash-separated: id then prereqs.
-        ///   D 1            — day 1
-        ///   s spring       — spring season (TLY resets the calendar so this re-evaluates true on every loop start)
-        ///   !m porch_seen  — not already seen this run (porch event end adds this flag, so a save+reload mid-run won't refire)
-        ///   !m intro_done  — cross-run gate; set on save load when MetaState.HasSeenIntro is true
+        /// <summary>Porch event key with preconditions (id + slash-separated prereqs):
+        ///   u 1            — day-of-month 1
+        ///   Season spring  — spring season (TLY resets the calendar so this re-evaluates true on every loop start)
+        ///   !n porch_seen  — not already seen this run (porch event end adds this flag, so a save+reload mid-run won't refire)
+        ///   !n intro_done  — cross-run gate; set on save load when MetaState.HasSeenIntro is true
+        /// Keys built in <see cref="IntroEventKeys"/> so the precondition letters are unit-tested
+        /// (the original D/s/m were Dating/Shipped/EarnedMoney — every check failed and nothing fired).
         /// </summary>
-        private static string PorchEventKey()
-            => $"{PorchEventId}/D 1/s spring/!m {PorchSeenMail}/!m {IntroDoneMail}";
+        private static string PorchEventKey() => IntroEventKeys.PorchKey;
 
         /// <summary>CC event key. Gates on porch event having fired this run (so the chain is
         /// forward-only — player has to go through Lewis first), plus the same cross-run done flag.
         /// </summary>
-        private static string CcEventKey()
-            => $"{CcEventId}/m {PorchSeenMail}/!m {CcSeenMail}/!m {IntroDoneMail}";
+        private static string CcEventKey() => IntroEventKeys.CcKey;
 
         /// <summary>Porch event. Lewis spawns south of the standard farmhouse, welcomes the
         /// player, frames the Joja deadline + historical-landmark protection, hands over the
