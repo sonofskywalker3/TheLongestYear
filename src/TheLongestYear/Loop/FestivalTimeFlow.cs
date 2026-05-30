@@ -147,6 +147,15 @@ namespace TheLongestYear.Loop
                     }
                 }
 
+                // Capture the walking direction BEFORE Halt() so we can carry it through the
+                // exit-warp. Vanilla's Game1.cs:7986 reads player.orientationBeforeEvent for
+                // the post-warp facing direction; Event.setUpCharacters seeded that field
+                // with the festival-entry orientation (usually facing an NPC). For an edge-
+                // warp continuation we want the direction the player was MOVING when they
+                // hit the warp, so a south walk out of Town lands them facing south into
+                // Forest, not facing north back at Town.
+                int walkingDirection = who.FacingDirection;
+
                 // Mirror vanilla's halt-and-snap-back-to-last-position so the player doesn't
                 // walk into the off-map collision area, then exit straight away. (PC vanilla
                 // doesn't have GameLocation.tapToMove — that field is Android-only — so we
@@ -161,7 +170,10 @@ namespace TheLongestYear.Loop
                 // on BusStop, etc — like vanilla non-festival movement. 2026-05-29 user
                 // request: "not warped me to the farm when I walk out of a festival."
                 if (targetWarp != null)
+                {
                     __instance.setExitLocation(targetWarp.TargetName, targetWarp.TargetX, targetWarp.TargetY);
+                    Game1.player.orientationBeforeEvent = walkingDirection;
+                }
 
                 __result = true;
                 return false; // skip vanilla — no dialog
