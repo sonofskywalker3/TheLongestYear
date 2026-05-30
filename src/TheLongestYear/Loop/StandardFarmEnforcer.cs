@@ -90,6 +90,11 @@ namespace TheLongestYear.Loop
 
             if (Game1.whichFarm != 0)
                 Game1.whichFarm = 0;
+
+            // Re-force skip-intro EVERY tick (silently). A one-time set isn't durable: the menu
+            // re-lays-out on window resize (rebuilding the button) and a click toggles the flag.
+            // Re-applying keeps the toggle on and the button unclickable for good.
+            ApplySkipIntro(cc.GetType(), cc, log: false);
         }
 
         private void OnSaveCreating(object sender, SaveCreatingEventArgs e)
@@ -169,15 +174,17 @@ namespace TheLongestYear.Loop
             // Ensure whichFarm is 0 immediately — a prior CC session may have left it non-zero.
             Game1.whichFarm = 0;
 
-            // Same menu, same lifecycle: force the intro skipped + hide its toggle.
-            ForceSkipIntro(type, cc);
+            // Same menu, same lifecycle: force the intro skipped + hide its toggle (logged once).
+            ApplySkipIntro(type, cc, log: true);
         }
 
-        /// <summary>Force the skip-intro toggle on and hide its button so the vanilla bus-drive
-        /// intro never plays — TLY's own Lewis->Junimo chain is the intro. PC field names differ
-        /// from the Android decompile (MobileCustomizer.skipIntro / skipIntroButton), so reflect
-        /// and log loudly if a field is absent.</summary>
-        private void ForceSkipIntro(System.Type type, IClickableMenu cc)
+        /// <summary>Force the skip-intro toggle on and neutralise its button so the vanilla
+        /// bus-drive intro never plays — TLY's own Lewis->Junimo chain is the intro. Zeroing the
+        /// button's bounds makes it both invisible and unclickable, which survives the menu's
+        /// resize-rebuild (setting only <c>visible=false</c> did not). PC field names differ from
+        /// the Android decompile (MobileCustomizer.skipIntro / skipIntroButton), so reflect and
+        /// log loudly if a field is absent. Called every tick with <paramref name="log"/> false.</summary>
+        private void ApplySkipIntro(System.Type type, IClickableMenu cc, bool log)
         {
             FieldInfo skipFlag = type.GetField("skipIntro", FieldFlags);
             if (skipFlag != null && skipFlag.FieldType == typeof(bool))
@@ -187,10 +194,17 @@ namespace TheLongestYear.Loop
             object button = skipButton?.GetValue(cc);
             if (button != null)
             {
-                // ClickableComponent.visible is a public field; setting false hides + unsnaps it.
+                // Zero the hit-rect: containsPoint() returns false (unclickable) and nothing draws.
+                FieldInfo bounds = button.GetType().GetField("bounds", FieldFlags);
+                if (bounds != null && bounds.FieldType == typeof(Microsoft.Xna.Framework.Rectangle))
+                    bounds.SetValue(button, default(Microsoft.Xna.Framework.Rectangle));
+
                 FieldInfo visible = button.GetType().GetField("visible", FieldFlags);
                 visible?.SetValue(button, false);
             }
+
+            if (!log)
+                return;
 
             if (skipFlag == null && skipButton == null)
             {
@@ -201,7 +215,7 @@ namespace TheLongestYear.Loop
             }
             else
             {
-                _monitor.Log("StandardFarmEnforcer: forced skip-intro on and hid the skip-intro button.", LogLevel.Info);
+                _monitor.Log("StandardFarmEnforcer: forced skip-intro on and neutralised the skip-intro button.", LogLevel.Info);
             }
         }
 
