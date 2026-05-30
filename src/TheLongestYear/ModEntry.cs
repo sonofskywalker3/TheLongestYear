@@ -34,6 +34,7 @@ namespace TheLongestYear
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
         private IntroEventInjector _introInjector;
+        private IntroSequenceDriver _introDriver;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -82,6 +83,10 @@ namespace TheLongestYear
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires
             // later in OnSaveLoaded / OnSaving once a save is open.
             _introInjector = new IntroEventInjector(this.Monitor, _meta, helper);
+            // Drives the Lewis->Junimo cutscenes before player control on a fresh run, then opens
+            // the picker. _launcher isn't built until OnSaveLoaded, so hand it a lazy accessor.
+            _introDriver = new IntroSequenceDriver(this.Monitor, _meta, _config);
+            _introDriver.Attach(helper, () => _launcher);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
