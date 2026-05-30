@@ -86,13 +86,33 @@ namespace TheLongestYear.UI
         public override void emergencyShutDown()
         {
             base.emergencyShutDown();
-            _meta?.DismissedIndicators.Add("tly.fireplace");
+            CompleteFireplaceIntroQuest();
         }
 
         protected override void cleanupBeforeExit()
         {
             base.cleanupBeforeExit();
+            CompleteFireplaceIntroQuest();
+        }
+
+        /// <summary>Mark the fireplace intro quest (tly.-9004) complete in the questLog the
+        /// first time the player opens this menu — vanilla's <see cref="StardewValley.Quests.Quest.questComplete"/>
+        /// fires the "Quest Complete!" notification and the quest gets removed from the
+        /// active list. Also adds the dismissal to <see cref="MetaState.DismissedIndicators"/>
+        /// so the intro doesn't re-add on the next save load / reset (matches the cookbook /
+        /// craftbook / stash pattern). Idempotent — questComplete bails on already-completed.</summary>
+        private void CompleteFireplaceIntroQuest()
+        {
             _meta?.DismissedIndicators.Add("tly.fireplace");
+            if (Game1.player?.questLog == null) return;
+            foreach (var q in Game1.player.questLog)
+            {
+                if (q != null && q.id.Value == "tly.-9004")
+                {
+                    q.questComplete();
+                    break;
+                }
+            }
         }
 
         // ---------- data ----------
@@ -101,11 +121,14 @@ namespace TheLongestYear.UI
         {
             ISet<string> donated = _run.DonatedSet();
             _entries.Clear();
-            // Order by theme then bundle name so the same physical menu position holds the same
-            // bundle session-over-session (less scanning churn for the player).
-            foreach (var br in _requirements
-                .OrderBy(b => b.Theme)
-                .ThenBy(b => b.Name, StringComparer.Ordinal))
+
+            // Collect first, then sort. Completed bundles (Have >= Need) sink to the bottom
+            // so the active obligations stay at the top where the player scans first
+            // (2026-05-29 user feedback). Within each completion bucket, order by theme then
+            // bundle name so the same physical menu position holds the same bundle
+            // session-over-session (less scanning churn).
+            var candidates = new List<BundleEntry>();
+            foreach (var br in _requirements)
             {
                 // Only show bundles with an obligation due BY this season's checkpoint —
                 // Seasonal bundles for the current season, PerItem bundles with any pin
@@ -119,8 +142,13 @@ namespace TheLongestYear.UI
 
                 var (missingCount, missingThisSeason) = MissingForSeason(br, donated, _season);
 
-                _entries.Add(new BundleEntry(br, have, need, missingCount, missingThisSeason));
+                candidates.Add(new BundleEntry(br, have, need, missingCount, missingThisSeason));
             }
+
+            _entries.AddRange(candidates
+                .OrderBy(e => e.Have >= e.Need ? 1 : 0)
+                .ThenBy(e => e.Bundle.Theme)
+                .ThenBy(e => e.Bundle.Name, StringComparer.Ordinal));
         }
 
         /// <summary>True if this bundle has any obligation that's due BY the current season's
