@@ -157,10 +157,12 @@ namespace TheLongestYear.Integration
         /// player, frames the Joja deadline + historical-landmark protection, hands over the
         /// key, walks off south. Player remains on the farm to walk to town. Ends with the
         /// porch_seen mail flag so the CC event becomes eligible.</summary>
-        private static string PorchEventScript() => string.Join("/", new[]
+        /// <summary>The porch (Lewis) event script value. Exposed so <see cref="IntroSequenceDriver"/>
+        /// can start it explicitly (auto-fire-on-warp proved unreliable for the chained CC event).</summary>
+        internal static string PorchEventScript() => string.Join("/", new[]
         {
             "none",                                  // music: keep current (or none)
-            "-1500 -2000",                           // viewport: don't move
+            "66 18",                                 // viewport: center on the porch (valid tile — -1500 -2000 pointed off-map → black screen)
             "farmer 66 18 1 Lewis 68 18 3",          // actors: player at (66,18) facing east; Lewis at (68,18) facing west
             "skippable",
             "pause 1200",
@@ -181,8 +183,8 @@ namespace TheLongestYear.Integration
             "pause 800",
             "speak Lewis \"Good luck out there, @. Pelican Town's rooting for you.$h\"",
             "pause 500",
-            "move Lewis 0 4 2 true",
-            "move Lewis -10 0 3 false",
+            "faceDirection Lewis 2",                 // Lewis turns to head off — no walk command (a blocked `move` hangs the event)
+            "pause 600",
             $"addMailReceived {PorchSeenMail}",
             "end"
         });
@@ -192,16 +194,16 @@ namespace TheLongestYear.Integration
         /// in from the north, gives the bundle pitch + the loop-rewind framing, hops away.
         /// Ends with the cc_seen mail flag — which MarkIntroSeenIfApplicable promotes to
         /// MetaState.HasSeenIntro on the next save.</summary>
-        private static string CcEventScript() => string.Join("/", new[]
+        /// <summary>The CC (Junimo) event script value. Exposed for <see cref="IntroSequenceDriver"/>
+        /// to start explicitly.</summary>
+        internal static string CcEventScript() => string.Join("/", new[]
         {
             "none",
-            "-1500 -2000",
-            "farmer 32 22 0",                                    // player just inside south door
+            "32 14",                                             // viewport: center on the hall (valid tile — was -1500 -2000 → black)
+            "farmer 32 16 0",                                    // player stands in the hall facing north (no `move` — a blocked move hangs the event)
             "skippable",
             "addTemporaryActor Junimo 16 16 32 11 2 false character Junimo",
             "pause 1000",
-            "move farmer 0 -3 0 true",
-            "pause 500",
             "faceDirection farmer 1",
             "pause 400",
             "faceDirection farmer 3",
@@ -209,9 +211,7 @@ namespace TheLongestYear.Integration
             "faceDirection farmer 0",
             "pause 800",
             "playSound junimoMeep1",
-            "pause 200",
-            "move Junimo 0 4 2 false",
-            "pause 300",
+            "pause 400",
             "speak Junimo \"Hi! We are the Junimos.#$b#We've lived here since the founders built the Center, ages ago.$h\"",
             "pause 200",
             "speak Junimo \"We helped them keep the valley alive. They brought us Bundles — gifts of crops, fish, fiber, food — and we channeled the seasons back through the land.$h\"",
@@ -235,8 +235,7 @@ namespace TheLongestYear.Integration
             "speak Junimo \"Good luck, @. Spring 1 is yours.$h\"",
             "pause 600",
             "playSound junimoMeep1",
-            "move Junimo 0 -5 0 true",
-            "pause 1500",
+            "pause 1200",
             $"addMailReceived {CcSeenMail}",
             "end"
         });
