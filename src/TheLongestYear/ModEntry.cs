@@ -33,6 +33,7 @@ namespace TheLongestYear
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
+        private IntroEventInjector _introInjector;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -76,6 +77,11 @@ namespace TheLongestYear
             helper.WriteConfig(_config);
 
             _meta = new MetaStore(helper.Data);
+            // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
+            // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
+            // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires
+            // later in OnSaveLoaded / OnSaving once a save is open.
+            _introInjector = new IntroEventInjector(this.Monitor, _meta, helper);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
@@ -191,6 +197,10 @@ namespace TheLongestYear
                 "deleting the save. Persists immediately. Reload the save to fully apply " +
                 "(some services cache the MetaState reference). DESTRUCTIVE.",
                 this.CmdWipeMeta);
+            helper.ConsoleCommands.Add("tly_replayintro",
+                "Clear MetaState.HasSeenIntro + per-run intro mail flags so the day-1 Lewis+Junimo " +
+                "intro chain re-fires on the next Spring 1. Pair with tly_reset to test immediately.",
+                this.CmdReplayIntro);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -219,6 +229,9 @@ namespace TheLongestYear
             }
 
             _meta.Load();
+            // Inject the tly_intro_done mail flag now if the player has already seen the intro
+            // on a prior loop — that's what suppresses both intro events for years 2+.
+            _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
@@ -283,6 +296,10 @@ namespace TheLongestYear
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
         private void OnSaving(object sender, SavingEventArgs e)
         {
+            // Promote per-run tly_intro_cc_seen mail to cross-run MetaState.HasSeenIntro BEFORE
+            // we persist, so a save+reset can't lose the flag (mailReceived gets wiped by
+            // FarmerReset.loadForNewGame, MetaState doesn't).
+            _introInjector?.MarkIntroSeenIfApplicable();
             _meta.Save();
             this.Monitor.Log($"Meta-state saved with the game. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Trace);
         }
@@ -522,6 +539,12 @@ namespace TheLongestYear
                 "Reload the save (or run tly_reset) to apply — some services hold the old " +
                 "MetaState reference until OnSaveLoaded re-attaches them.",
                 LogLevel.Warn);
+        }
+
+        private void CmdReplayIntro(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _introInjector?.ClearIntroState();
         }
 
         private void CmdActiveEffects(string command, string[] args)
@@ -809,6 +832,7 @@ namespace TheLongestYear
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
                 case "tly_stashclear": this.CmdStashClear(command, args); break;
                 case "tly_wipemeta":   this.CmdWipeMeta(command, args); break;
+                case "tly_replayintro": this.CmdReplayIntro(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;

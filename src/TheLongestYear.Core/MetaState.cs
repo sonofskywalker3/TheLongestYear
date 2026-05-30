@@ -48,6 +48,16 @@ public sealed class MetaState
     public bool VictoryAcknowledged { get; set; }
 
     /// <summary>
+    /// True once the player has completed the day-1 Lewis-porch + CC-Junimo intro cutscene
+    /// (or skipped it via Esc). Set by <c>IntroEventInjector</c> in <c>OnSaving</c> whenever
+    /// the per-run mail flag <c>tly_intro_cc_seen</c> is present, then suppresses the intro
+    /// on every subsequent loop reset via the <c>tly_intro_done</c> mail flag injected on
+    /// save load. 2026-05-29 spec: v1.1 narrative tier — see TODO.md "Co-opted day-1 intro
+    /// cutscene" entry for the full beat list.
+    /// </summary>
+    public bool HasSeenIntro { get; set; }
+
+    /// <summary>
     /// Snapshot of the player's pet (kind, breed, name, friendship) captured before a loop
     /// reset and restored after, when the <c>keep_pet</c> upgrade is owned. Null when the
     /// upgrade isn't owned, when there was no pet to snapshot, or for the very first run
