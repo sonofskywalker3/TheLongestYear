@@ -510,7 +510,7 @@ namespace TheLongestYear.Loop
                 AddIntroQuest(
                     id: "tly.-9004",
                     title: "A gift from the Junimos",
-                    description: "There's a notice board by the Community Center fireplace " +
+                    description: "There's a notice board above the Community Center fireplace " +
                                  "that tracks this season's goals — go have a look.");
             }
         }
