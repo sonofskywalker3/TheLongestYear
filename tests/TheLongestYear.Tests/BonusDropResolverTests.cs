@@ -60,8 +60,10 @@ public class BonusDropResolverTests
     }
 
     [Fact]
-    public void AllDropsUp_fires_at_10pct_including_stone_and_wood()
+    public void AllDropsUp_fires_at_50pct_including_stone_and_wood()
     {
+        // 2026-05-30 user rebalance: Mixed all_drops_up 10% → 50%
+        // (BonusDropResolver.MixedAllDropsChance). Stone/wood are NOT excluded for Mixed.
         int stoneHits = 0, woodHits = 0;
         var rng = new System.Random(42);
         for (int i = 0; i < 10000; i++)
@@ -71,8 +73,8 @@ public class BonusDropResolverTests
         for (int i = 0; i < 10000; i++)
             if (BonusDropResolver.ShouldGrantExtraDrop("all_drops_up", "(O)388", rng))
                 woodHits++;
-        Assert.InRange(stoneHits / 10000.0, 0.08, 0.12);
-        Assert.InRange(woodHits / 10000.0, 0.08, 0.12);
+        Assert.InRange(stoneHits / 10000.0, 0.48, 0.52);
+        Assert.InRange(woodHits / 10000.0, 0.48, 0.52);
     }
 
     [Fact]
