@@ -15,7 +15,7 @@ public static class ThemeModifiers
         Theme.Farming  => ("crop_growth_up", "fish_bite_down"),
         Theme.Fishing  => ("fish_bite_up", "crop_growth_down"),
         Theme.Mining   => ("mine_drops_up", "forage_off"),
-        // Mixed: "+50% all drops, -50% all sell prices" — a generalist boost paired with a sharp
+        // Mixed: "+10% all drops, -50% all sell prices" — a generalist boost paired with a sharp
         // economic squeeze. (Replaces the prior shop-discount/stamina-drain pairing per playtest.)
         Theme.Mixed    => ("all_drops_up", "all_sell_prices_down"),
         _ => throw new ArgumentOutOfRangeException(nameof(theme), theme, null)
@@ -55,7 +55,7 @@ public static class ThemeModifiers
         // performAction("Mine"/"NextMineLevel"/"MineElevator") verbs so the player can walk to
         // the mine entrance in Mountain but cannot enter the shaft at all.
         "mines_closed"           => "Mine entrance closed all week",
-        "all_drops_up"           => "50% chance for any drop to be +1",
+        "all_drops_up"           => "10% chance for any drop to be +1",
         "all_sell_prices_down"   => "All sell prices cut in half",
         // Legacy / unused-in-v1 -- kept so old config files don't show raw ids if loaded.
         "forage_drops_off"       => "Foraging disabled (legacy)",

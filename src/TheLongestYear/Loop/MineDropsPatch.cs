@@ -69,8 +69,7 @@ namespace TheLongestYear.Loop
             // destruction — user spec is "everything doubled" on a successful roll, not
             // per-item independent rolls.
             // 2026-05-29 user spec rebalance: mine_drops_up 30% → 20%.
-            // 2026-05-30 user spec rebalance: all_drops_up (Mixed) 10% → 50%
-            // (see BonusDropResolver.MixedAllDropsChance).
+            // all_drops_up (Mixed) uses BonusDropResolver.MixedAllDropsChance (10% baseline).
             string firingBonus;
             double threshold;
             if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.20; }

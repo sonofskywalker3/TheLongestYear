@@ -17,10 +17,11 @@ public static class BonusDropResolver
     /// Mixed-week <c>all_drops_up</c> roll chance — the single source of truth for the
     /// generalist "+1 any drop" bonus, referenced by every patch that applies it
     /// (AllDropsPatch, MineDropsPatch fallback, TerrainBonusPatches tree/clump/monster/fish).
-    /// 2026-05-30 user rebalance: 10% → 50% ("shaking dozens of trees ... hoping for the
-    /// bonus is a lot" — the Mixed generalist now fires on half of all eligible drops).
+    /// 10% is the v1 baseline. (Briefly bumped to 50% on 2026-05-30 to sanity-test the wiring,
+    /// then reverted to 10% the same session — the constant stays so the rate can't drift
+    /// across the five call sites again.)
     /// </summary>
-    public const double MixedAllDropsChance = 0.50;
+    public const double MixedAllDropsChance = 0.10;
 
     /// <summary>
     /// Roll for an extra drop. Returns true when the extra drop should fire.
@@ -33,7 +34,7 @@ public static class BonusDropResolver
         return bonusId switch
         {
             // 2026-05-29 user spec rebalance: 25%/30% → 20% for both themed roll-ins.
-            // all_drops_up (Mixed) bumped 10% → 50% on 2026-05-30 (see MixedAllDropsChance).
+            // all_drops_up (Mixed) uses MixedAllDropsChance (10% baseline).
             "forage_yield_up" => itemQualifiedId != Stone
                                  && itemQualifiedId != Wood
                                  && rng.NextDouble() < 0.20,
