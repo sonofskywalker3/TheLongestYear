@@ -517,9 +517,25 @@ namespace TheLongestYear.Loop
 
         private void AddIntroQuest(string id, string title, string description)
         {
-            // Don't add duplicate if already in the log (idempotent across same-day resets).
+            // Idempotent across same-day resets: if the quest already exists, don't add a
+            // duplicate — but DO refresh its text. A quest created on an earlier playthrough
+            // (before a wording fix shipped) keeps its old text baked into the save; this
+            // rewrites it to the current copy so deployed text fixes reach existing runs.
             foreach (var existing in Game1.player.questLog)
-                if (existing.id.Value == id) return;
+            {
+                if (existing.id.Value != id) continue;
+
+                if (existing.questTitle != title
+                    || existing.questDescription != description
+                    || existing.currentObjective != description)
+                {
+                    existing.questTitle = title;
+                    existing.currentObjective = description;
+                    existing.questDescription = description;
+                    _monitor.Log($"WorldResetService: refreshed text for existing quest (id {id}).", LogLevel.Trace);
+                }
+                return;
+            }
 
             var q = new Quest();
             q.questType.Value = Quest.type_basic;
