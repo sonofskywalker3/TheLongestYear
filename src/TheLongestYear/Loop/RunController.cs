@@ -313,7 +313,14 @@ namespace TheLongestYear.Loop
             //
             // OfferPresentedWeek guards against re-firing within the same week (e.g. if the
             // player saves + reloads on day 8 morning).
-            if (Calendar.IsWeekStart(Run.DayOfMonth)
+            // On the fresh-run intro morning the IntroSequenceDriver opens the picker at the end
+            // of the Lewis->Junimo chain. Suppress the normal auto-open here so it doesn't pop on
+            // the black save-creation screen (and so it isn't opened twice).
+            bool introWillOpenPicker = TheLongestYear.Core.Intro.IntroGate.IsFreshIntroMorning(
+                _store.State.HasSeenIntro, Run.Season, Run.DayOfMonth);
+
+            if (!introWillOpenPicker
+                && Calendar.IsWeekStart(Run.DayOfMonth)
                 && Run.OfferPresentedWeek != Run.WeekOfYear)
             {
                 // CurrentSelection from a previous week intentionally persists until the next
