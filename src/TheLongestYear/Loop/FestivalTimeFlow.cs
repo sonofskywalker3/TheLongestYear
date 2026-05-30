@@ -127,6 +127,26 @@ namespace TheLongestYear.Loop
                     return false; // mirror vanilla's early-out
                 }
 
+                // Identify the warp the player was about to step through. vanilla's
+                // MovePositionImpl (Farmer.cs:8619) just established a collision via
+                // isCollidingWithWarp; we pick the warp nearest the player's current pixel
+                // position so the post-end-festival exit goes through THAT edge instead of
+                // vanilla's hard-coded "Farm" warp. Done BEFORE Halt() so who.Position is
+                // still at the about-to-warp tile.
+                Warp targetWarp = null;
+                if (who.currentLocation?.warps != null)
+                {
+                    float minSq = float.MaxValue;
+                    foreach (Warp w in who.currentLocation.warps)
+                    {
+                        if (w == null || w.npcOnly.Value) continue;
+                        float dx = w.X * 64f - who.Position.X;
+                        float dy = w.Y * 64f - who.Position.Y;
+                        float sq = dx * dx + dy * dy;
+                        if (sq < minSq) { minSq = sq; targetWarp = w; }
+                    }
+                }
+
                 // Mirror vanilla's halt-and-snap-back-to-last-position so the player doesn't
                 // walk into the off-map collision area, then exit straight away. (PC vanilla
                 // doesn't have GameLocation.tapToMove — that field is Android-only — so we
@@ -134,6 +154,15 @@ namespace TheLongestYear.Loop
                 who.Halt();
                 who.Position = who.lastPosition;
                 __instance.forceEndFestival(who);
+
+                // forceEndFestival → endBehaviors sets exitLocation to ("Farm", main farm-
+                // house entry). Override that with the warp the player actually walked into,
+                // so a festival exit on Town's south edge lands them on Forest, north edge
+                // on BusStop, etc — like vanilla non-festival movement. 2026-05-29 user
+                // request: "not warped me to the farm when I walk out of a festival."
+                if (targetWarp != null)
+                    __instance.setExitLocation(targetWarp.TargetName, targetWarp.TargetX, targetWarp.TargetY);
+
                 __result = true;
                 return false; // skip vanilla — no dialog
             }
