@@ -135,6 +135,13 @@ namespace TheLongestYear.Loop
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
+            // 1-seeds. First-loop-only starting seeds: loadForNewGame rebuilds the FarmHouse, whose
+            // constructor (AddStarterGiftBox) drops a starter gift box of 15 parsnip seeds. FarmerReset
+            // wipes the inventory but not this placed box, so it reappears every loop. PerformReset only
+            // runs on resets (never the first new game), so removing it here means run 1 keeps the
+            // vanilla nudge and every loop after gets none.
+            RemoveStarterGiftBox();
+
             // 1a. Defensive bundle / area-completion wipe. CommunityCenter.bundles is a PROPERTY
             // pointing at Game1.netWorldState.Value.Bundles (CommunityCenter.cs:104) — a NetCollection
             // at world-state level, not on the CC instance. The 2026-05-26 round-2 playtest showed
@@ -314,6 +321,29 @@ namespace TheLongestYear.Loop
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
                 LogLevel.Info);
+        }
+
+        /// <summary>Remove the vanilla starter gift box (15 parsnip seeds) that the rebuilt
+        /// FarmHouse drops on every loadForNewGame. Identified by Chest.giftboxIsStarterGift so
+        /// we never touch other gift boxes (e.g. the Adventurer's Guild Marlon book).</summary>
+        private void RemoveStarterGiftBox()
+        {
+            GameLocation farmHouse = Game1.getLocationFromName("FarmHouse");
+            if (farmHouse == null) return;
+
+            var toRemove = new List<Vector2>();
+            foreach (var kv in farmHouse.objects.Pairs)
+            {
+                if (kv.Value is StardewValley.Objects.Chest c && c.giftboxIsStarterGift.Value)
+                    toRemove.Add(kv.Key);
+            }
+            foreach (var tile in toRemove)
+                farmHouse.objects.Remove(tile);
+
+            if (toRemove.Count > 0)
+                _monitor.Log($"In-place reset: removed {toRemove.Count} starter gift box(es) from the FarmHouse (first-loop-only seeds).", LogLevel.Info);
+            else
+                _monitor.Log("In-place reset: no starter gift box found in the FarmHouse to remove.", LogLevel.Trace);
         }
 
         // Read in-run peaks from the live player so the baseline builder can apply
