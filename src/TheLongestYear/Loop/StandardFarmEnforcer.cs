@@ -8,7 +8,9 @@ using StardewValley.Menus;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Forces every new TLY game onto the Standard farm. TLY's tile defaults, kept-building
+    /// Forces every new TLY game onto the Standard farm AND force-skips the vanilla intro
+    /// cutscene (hiding its toggle), by scrubbing the relevant options out of CharacterCustomization
+    /// — TLY's own Lewis->Junimo chain is the intro. TLY's tile defaults, kept-building
     /// placement coords, and stash auto-pick all assume Standard farm geometry — running on
     /// Riverland / Forest / Hilltop / etc. lands buildings in water or leaves the stash chest
     /// invisible. Rather than bailing at save-load (the c4af752 approach, which left the player
@@ -166,6 +168,41 @@ namespace TheLongestYear.Loop
 
             // Ensure whichFarm is 0 immediately — a prior CC session may have left it non-zero.
             Game1.whichFarm = 0;
+
+            // Same menu, same lifecycle: force the intro skipped + hide its toggle.
+            ForceSkipIntro(type, cc);
+        }
+
+        /// <summary>Force the skip-intro toggle on and hide its button so the vanilla bus-drive
+        /// intro never plays — TLY's own Lewis->Junimo chain is the intro. PC field names differ
+        /// from the Android decompile (MobileCustomizer.skipIntro / skipIntroButton), so reflect
+        /// and log loudly if a field is absent.</summary>
+        private void ForceSkipIntro(System.Type type, IClickableMenu cc)
+        {
+            FieldInfo skipFlag = type.GetField("skipIntro", FieldFlags);
+            if (skipFlag != null && skipFlag.FieldType == typeof(bool))
+                skipFlag.SetValue(cc, true);
+
+            FieldInfo skipButton = type.GetField("skipIntroButton", FieldFlags);
+            object button = skipButton?.GetValue(cc);
+            if (button != null)
+            {
+                // ClickableComponent.visible is a public field; setting false hides + unsnaps it.
+                FieldInfo visible = button.GetType().GetField("visible", FieldFlags);
+                visible?.SetValue(button, false);
+            }
+
+            if (skipFlag == null && skipButton == null)
+            {
+                _monitor.Log(
+                    "StandardFarmEnforcer: skipIntro/skipIntroButton not found on CharacterCustomization — " +
+                    "field names may have changed; vanilla intro will play. Farm-type scrub is unaffected.",
+                    LogLevel.Warn);
+            }
+            else
+            {
+                _monitor.Log("StandardFarmEnforcer: forced skip-intro on and hid the skip-intro button.", LogLevel.Info);
+            }
         }
 
         /// <summary>Trim a parallel List&lt;T&gt; field down to at most one entry. Returns the
