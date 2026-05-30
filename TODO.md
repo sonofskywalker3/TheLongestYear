@@ -16,11 +16,14 @@ Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 - ~~**Festival exit to host map**~~ — shipped 2026-05-29 as
   `FestivalExitPatch`. Postfix on `Event.endBehaviors` pulls
   `festivalData["conditions"]` via reflection, extracts the host map
-  from the first `/`-separated segment, and overrides the vanilla
-  unconditional warp-to-Farm with the host map's first non-NPC warp
-  point. Egg / Fair / Spirit's Eve / Winter Star → Town entrance;
-  Luau / Jellies / Night Market → Beach entrance; Flower Dance /
-  Festival of Ice → Forest entrance.
+  from the first `/`-separated segment, and replaces the vanilla
+  unconditional warp-to-Farm with `setExitLocation(hostMap,
+  player.Tile.X, player.Tile.Y)` — land the player at their CURRENT
+  tile on the real host map. The festival's temporaryLocation is a
+  clone of the host map with identical geometry, so the same tile
+  coords are always valid. User refinement: "just let me exit like
+  there wasn't a festival going on at all" — not at an entrance the
+  player wasn't anywhere near.
 - ~~**Indicator `?` source rect**~~ — closed 2026-05-29. User feedback:
   "you never got the indicator right, so just remove it and close it."
   `IndicatorRegistry` deleted; `Dismiss` calls in CookbookMenu /

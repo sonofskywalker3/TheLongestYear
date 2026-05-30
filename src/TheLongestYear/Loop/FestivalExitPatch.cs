@@ -20,12 +20,16 @@ namespace TheLongestYear.Loop
     ///   }
     /// We reach in via reflection on the private <c>festivalData</c> field to look up
     /// <c>data["conditions"]</c> — that string's first segment is the host map name (see
-    /// <c>Game1.cs:6619</c>, <c>DebugCommands.cs:2965</c> for canonical parsing). Then we
-    /// call <see cref="Event.setExitLocation(Warp)"/> with the host map's first non-NPC
-    /// warp tile so the player lands at the natural map entrance instead of the farm.
+    /// <c>Game1.cs:6619</c>, <c>DebugCommands.cs:2965</c> for canonical parsing).
     ///
-    /// 2026-05-29 STATUS.md small-followup item — was tagged as ~20 lines (endBehaviors
-    /// postfix or transpiler); postfix path was the cleaner option.
+    /// 2026-05-29 user spec refinement: land the player AT THEIR CURRENT TILE on the real
+    /// host map — not at the map's pedestrian entrance. The user's framing was "just let me
+    /// exit like there wasn't a festival going on at all." During a festival the player
+    /// stands on a temporary cloned location (<c>temporaryLocation</c> at Event.cs:2773);
+    /// the cloned map has identical tile geometry to the real one, so the same (X, Y) is
+    /// always a valid landing position. Walking off the south Town edge after the Egg
+    /// Festival should drop you at south Town, not at "Town's first non-NPC warp" which
+    /// might be the bus stop entrance on the other side of the map.
     /// </summary>
     [HarmonyPatch(typeof(Event), nameof(Event.endBehaviors),
         new System.Type[] { typeof(string[]), typeof(GameLocation) })]
@@ -65,13 +69,16 @@ namespace TheLongestYear.Loop
             GameLocation host = Game1.getLocationFromName(hostMap);
             if (host == null) return;
 
-            // Use the first non-NPC warp on the host map as the entry point — that's
-            // typically the map's natural pedestrian entrance (south Town, south Beach,
-            // north Forest, etc).
-            Warp entry = host.GetFirstPlayerWarp();
-            if (entry == null) return;
-
-            __instance.setExitLocation(hostMap, entry.X, entry.Y);
+            // Land the player at their current tile on the real host map. The festival's
+            // temporaryLocation is a clone of the host map with identical geometry, so
+            // whatever tile the player was standing on when the festival closed (typically
+            // wherever they happened to be when the auto-fade fired at 22:00, or wherever
+            // they walked off the map edge) is a valid tile on the real one too. This is
+            // the "exit like there wasn't a festival going on at all" behaviour the user
+            // asked for — no forced warp to an entrance the player wasn't anywhere near.
+            int tileX = (int)Game1.player.Tile.X;
+            int tileY = (int)Game1.player.Tile.Y;
+            __instance.setExitLocation(hostMap, tileX, tileY);
         }
     }
 }
