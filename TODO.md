@@ -6,9 +6,6 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### Co-opted day-1 intro cutscene (replaces vanilla 191393)
-SEE BELOW for full spec — still genuinely open, v1.1 narrative tier.
-
 ### Small playtest carryovers (from STATUS.md)
 Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 2026-05-27) so these were drifting:
@@ -92,7 +89,17 @@ Status: spec'd, not planned. Tagged as v1.x polish (the auto-reset isn't a
 blocker — the player can manually save before the auto-reset hits if they
 want to keep their post-win state preserved on a backup save).
 
-### Co-opted day-1 intro cutscene (replaces vanilla 191393)
+### ~~Co-opted day-1 intro cutscene (replaces vanilla 191393)~~ — SHIPPED 2026-05-30 as `85b029b`, PENDING PLAYTEST
+Shipped this session: `tly_intro_porch` (Lewis on the Farm porch, Joja
+threat + Winter 28 deadline + landmark protection + hands over key) and
+`tly_intro_cc` (Junimo loop-explainer inside the CC), injected via
+`IntroEventInjector` asset edits and prepended to win first-match. Per-run
+mail-flag chaining + cross-run `MetaState.HasSeenIntro` (set in OnSaving,
+promoted to `tly_intro_done` on every load) gate the events. Retest via
+`tly_replayintro` + `tly_reset`. Dialogue is one-pass, unreviewed — polish
+deferred unless the user comments. Original spec preserved below for history.
+
+(original spec)
 Source: 2026-05-29 playtest. User saw vanilla event 191393 (Demetrius +
 Lewis CC intro) fire on Spring 5 of a TLY loop. Suppressed for now via
 `EventSuppressionPatch` (returns `-1` from `checkEventPrecondition` for
