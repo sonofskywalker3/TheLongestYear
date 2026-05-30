@@ -53,6 +53,15 @@ namespace TheLongestYear.Loop
     /// faster bite — confused rarity with timing. The Curiosity Lure boost is closer to a flat
     /// +40% potency than a precise 25% rarity bump, but it's the cleanest mechanism that
     /// actually targets rare fish.
+    ///
+    /// 2026-05-29 design decision (closes the TODO "fortune_rare_fish exact rarity rewire"
+    /// item): Stardew has no abstract "rare fish" concept — rarity lives inside per-spawn
+    /// <c>SpawnFishData.GetChance(hasCuriosityLure, …)</c> thresholds (GameLocation.cs:13797).
+    /// The Curiosity Lure piggyback IS vanilla's canonical "increase rare fish odds" pathway;
+    /// any "exact 25%" rewire would require reimplementing the entire spawn table from scratch
+    /// (the spawn data ships as game-content JSON keyed off precedence + chance modifiers).
+    /// Treating the Curiosity Lure piggyback as the canonical implementation, not an
+    /// approximation pending later replacement.
     /// </summary>
     [HarmonyPatch(typeof(FishingRod), nameof(FishingRod.HasCuriosityLure))]
     internal static class FishRareLurePatch

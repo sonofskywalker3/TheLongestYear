@@ -13,10 +13,14 @@ SEE BELOW for full spec — still genuinely open, v1.1 narrative tier.
 Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 2026-05-27) so these were drifting:
 
-- **Festival exit to host map** — `Event.endBehaviors` currently warps to
-  the farm entry; should land on the festival's host map (Town for
-  Egg/Fair/Spirit's Eve; Beach for Luau/Jellies; Forest for Flower
-  Dance). ~20 lines (endBehaviors postfix or transpiler).
+- ~~**Festival exit to host map**~~ — shipped 2026-05-29 as
+  `FestivalExitPatch`. Postfix on `Event.endBehaviors` pulls
+  `festivalData["conditions"]` via reflection, extracts the host map
+  from the first `/`-separated segment, and overrides the vanilla
+  unconditional warp-to-Farm with the host map's first non-NPC warp
+  point. Egg / Fair / Spirit's Eve / Winter Star → Town entrance;
+  Luau / Jellies / Night Market → Beach entrance; Flower Dance /
+  Festival of Ice → Forest entrance.
 - ~~**Indicator `?` source rect**~~ — closed 2026-05-29. User feedback:
   "you never got the indicator right, so just remove it and close it."
   `IndicatorRegistry` deleted; `Dismiss` calls in CookbookMenu /
@@ -27,12 +31,16 @@ Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 - ~~**`forage_off` over-suppression (JC-4)**~~ — closed 2026-05-29.
   User: "it's not an issue." Current behaviour (Mining liability also
   blocks weeds/stones overnight via spawnObjects) stays.
-- **`fortune_rare_fish` is a 0.75× bite-rate multiplier (JC-2)** — v1
-  approximation. True rarity intercept (the spec'd "rare fish catch
-  chance increased by 25%" reading) needs deeper Stardew internals
-  investigation — patching whatever rolls the fish-rarity table rather
-  than the bite-rate path. Currently piggybacks on Curiosity Lure
-  semantics via `FishRareLurePatch`.
+- ~~**`fortune_rare_fish` is a 0.75× bite-rate multiplier (JC-2)**~~ —
+  stale note, closed 2026-05-29. The 0.75× bite-rate wiring was already
+  replaced by the Curiosity Lure piggyback in `FishRareLurePatch` per
+  the 2026-05-28 audit. The "true rarity intercept" follow-up is the
+  canonical implementation by design — Stardew has no abstract "rare
+  fish" concept, rarity lives inside per-spawn `SpawnFishData.GetChance`
+  thresholds (GameLocation.cs:13797). Curiosity Lure IS vanilla's
+  rare-fish boost pathway; any further rewire would require
+  reimplementing the spawn table. See expanded comment block on
+  `FishRareLurePatch` for the full design rationale.
 
 ### (closed — moved here from "Open" 2026-05-29 audit)
 ### ~~Continue-after-victory mode~~ — SHIPPED 2026-05-29 as `5959de0`
