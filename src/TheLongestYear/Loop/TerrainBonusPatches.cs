@@ -22,15 +22,37 @@ namespace TheLongestYear.Loop
     /// </summary>
     internal static class TerrainBonusPatches
     {
-        /// <summary>Shared roll + double helper. Returns true when bonus fired (caller may
-        /// then trigger the audio/visual effect). Returns false if the bonus was inactive,
-        /// the roll missed, no new debris were added, or any required reference was null.</summary>
+        // Vanilla object qualified ids that BonusDropResolver excludes from forage_yield_up.
+        // Stone and wood drop in bulk from resource clumps already, so adding a 20% extra
+        // would feel runaway. Tree-shake usually drops neither (seeds), so this exclusion is
+        // a no-op for the shake path but kept consistent with ForageYieldPatch + MineDropsPatch.
+        private const string Stone = "(O)390";
+        private const string Wood  = "(O)388";
+
+        /// <summary>Shared roll + double helper. Routes by <see cref="ActiveEffectsProvider.BonusId"/>:
+        /// <list type="bullet">
+        ///   <item><c>all_drops_up</c> (Mixed): 10% chance to clone one of the new drops, no filter.</item>
+        ///   <item><c>forage_yield_up</c> (Foraging): 20% chance to clone one of the new drops,
+        ///     stone/wood excluded — applied ONLY when the caller passes
+        ///     <paramref name="applyForageYieldUp"/>=true. 2026-05-29 user report: tree-shake
+        ///     drops felt invisible on Foraging week, since shake debris bypasses the
+        ///     spawnObjects path that <see cref="ForageYieldPatch"/> covers. TreeShake passes
+        ///     true so its seed drops also fire on Foraging weeks; ResourceClump and
+        ///     MonsterDrop don't (their drops aren't forage-adjacent — wood/stone/coal/slime).</item>
+        /// </list>
+        /// Returns true when the bonus fired (caller may then trigger the audio/visual effect).
+        /// Returns false if the active bonus doesn't apply to this caller, the roll missed,
+        /// no new debris were added, or any required reference was null.
+        /// </summary>
         public static bool TryDoubleNewDrops(GameLocation loc, int startDebrisCount,
-            int tileX, int tileY)
+            int tileX, int tileY, bool applyForageYieldUp = false)
         {
             if (loc?.debris == null || startDebrisCount < 0) return false;
-            if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return false;
-            if (Game1.random.NextDouble() >= 0.10) return false;
+
+            string bonusId = ActiveEffectsProvider.BonusId;
+            bool mixedActive = bonusId == "all_drops_up";
+            bool forageActive = applyForageYieldUp && bonusId == "forage_yield_up";
+            if (!mixedActive && !forageActive) return false;
 
             // Round-13 spec: +1 from the rolled set, not full set doubled. See
             // MineOreDropBonus for rationale + the Debris.itemId.Value read path.
@@ -46,11 +68,30 @@ namespace TheLongestYear.Loop
             }
             if (candidates.Count == 0) return false;
 
+            double rate;
+            string label;
+            if (mixedActive)
+            {
+                rate = 0.10;
+                label = "all_drops_up";
+            }
+            else
+            {
+                // Foraging path: filter stone/wood out of the candidate pool (BonusDropResolver
+                // policy — shared with ForageYieldPatch + MineDropsPatch).
+                candidates.RemoveAll(id => id == Stone || id == Wood);
+                if (candidates.Count == 0) return false;
+                rate = 0.20;
+                label = "forage_yield_up";
+            }
+
+            if (Game1.random.NextDouble() >= rate) return false;
+
             string pickedId = candidates[Game1.random.Next(candidates.Count)];
             Game1.createObjectDebris(pickedId, tileX, tileY, loc);
             BonusDropEffects.Play(loc, tileX, tileY);
             PatchLog.Info(
-                $"all_drops_up (terrain): +1 '{pickedId}' " +
+                $"{label} (terrain): +1 '{pickedId}' " +
                 $"(picked from {candidates.Count} vanilla drop(s)) at ({tileX}, {tileY}) on " +
                 $"{loc.NameOrUniqueName}.");
             return true;
@@ -113,8 +154,14 @@ namespace TheLongestYear.Loop
         private static void Postfix(Tree __instance, Vector2 tileLocation, int __state)
         {
             if (__instance == null) return;
+            // Tree shake is the ONE caller that opts into the forage_yield_up extension —
+            // shake debris is conceptually forage-adjacent (acorns/maple/pine cones/mahogany
+            // seeds + the rare mystery box) and bypasses the spawnObjects path that
+            // ForageYieldPatch covers. 2026-05-29 user report: "I shook a bunch of trees and
+            // never hit" on Foraging week.
             TerrainBonusPatches.TryDoubleNewDrops(
-                __instance.Location, __state, (int)tileLocation.X, (int)tileLocation.Y);
+                __instance.Location, __state, (int)tileLocation.X, (int)tileLocation.Y,
+                applyForageYieldUp: true);
         }
     }
 
