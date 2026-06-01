@@ -11,9 +11,9 @@ namespace TheLongestYear.Integration
     internal static class RunReachEvaluator
     {
         /// <summary>Null/empty requirement ⇒ always met (non-reach upgrades). Unknown metric ⇒ false.</summary>
-        public static bool Meets(string? requirement)
+        public static bool Meets(string requirement)
         {
-            RunReachRequirement? r = RunReachRequirement.Parse(requirement);
+            RunReachRequirement r = RunReachRequirement.Parse(requirement);
             if (r == null)
                 return string.IsNullOrWhiteSpace(requirement);   // no requirement = met; malformed = not
             Farmer p = Game1.player;
@@ -33,7 +33,7 @@ namespace TheLongestYear.Integration
             return actual >= 0 && r.IsMet(actual);
         }
 
-        private static int ToolLevel(Farmer p, string? kind)
+        private static int ToolLevel(Farmer p, string kind)
         {
             foreach (Item it in p.Items)
             {
@@ -63,7 +63,7 @@ namespace TheLongestYear.Integration
             _     => 0,
         };
 
-        private static int SkillLevel(Farmer p, string? name) => name switch
+        private static int SkillLevel(Farmer p, string name) => name switch
         {
             "farming"  => p.farmingLevel.Value,
             "mining"   => p.miningLevel.Value,
