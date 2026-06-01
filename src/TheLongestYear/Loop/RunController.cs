@@ -476,12 +476,12 @@ namespace TheLongestYear.Loop
             => BonusItemSampler.DefaultMaxCountBySeason[(int)Run.Season];
 
         /// <summary>
-        /// Number of weather preview slots to show on the planning hub this week.
-        /// Equals the highest Weather Sage tier owned (weather_sage_1 through weather_sage_7).
+        /// Number of weather preview days to reveal (the next N days, starting tomorrow).
+        /// Equals the highest Weather Sage tier owned (weather_sage_1 through weather_sage_6).
         /// Returns 0 if none owned.
         /// </summary>
         public int WeatherSageTier()
-            => _store.State.HighestKeptTier("weather_sage_", 7);
+            => _store.State.HighestKeptTier("weather_sage_", 6);
 
         /// <summary>
         /// Number of Traveling Cart item slots to preview on the planning hub.
