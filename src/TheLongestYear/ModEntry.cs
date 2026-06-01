@@ -157,6 +157,7 @@ namespace TheLongestYear
 
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
+            helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
@@ -347,6 +348,26 @@ namespace TheLongestYear
 
             _meta.State.JunimoPoints += amount;
             this.Monitor.Log($"JP is now {_meta.State.JunimoPoints} (in memory — persists on next save).", LogLevel.Info);
+        }
+
+        /// <summary>Debug: add gold to the loaded farmer. Mirrors <see cref="AddJp"/>; used for
+        /// playtest setup (e.g. enough to upgrade the farmhouse). Usage: tly_addmoney &lt;amount&gt;.</summary>
+        private void AddMoney(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            if (args.Length < 1 || !int.TryParse(args[0], out int amount))
+            {
+                this.Monitor.Log("Usage: tly_addmoney <amount>", LogLevel.Warn);
+                return;
+            }
+
+            Game1.player.Money += amount;
+            this.Monitor.Log($"Gold is now {Game1.player.Money}.", LogLevel.Info);
         }
 
         /// <summary>Reset only if the loaded save's farmer name matches the argument. Used by the
@@ -812,6 +833,7 @@ namespace TheLongestYear
             {
                 case "tly_meta": this.PrintMeta(command, args); break;
                 case "tly_addjp": this.AddJp(command, args); break;
+                case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
                 case "tly_resetif": this.ResetIfNameMatches(command, args); break;
                 case "tly_leaktest": this.LeakTest(command, args); break;
