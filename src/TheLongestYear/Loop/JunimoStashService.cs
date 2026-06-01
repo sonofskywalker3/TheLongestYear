@@ -98,19 +98,16 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            // Place a new player chest with the vanilla Junimo Chest sprite (BC 256) so it
-            // reads as visually distinct from a regular wood chest. The constructor sees
-            // itemId "256" and sets SpecialChestType = JunimoChest, which would link this chest
-            // to the team-shared "JunimoChests" global inventory — not what we want (the stash
-            // is per-save, persisted via MetaState). Reset SpecialChestType to None after
-            // construction; that strips the shared-inventory behaviour but the visual stays
-            // (sprite is keyed on ParentSheetIndex / itemId, not SpecialChestType).
+            // Place a regular colorable player chest (BC 130) and tint it purple so the stash is
+            // visually distinct from a plain wood chest. Only the colorable chest types
+            // ("(BC)130", "(BC)232", "(BC)BigChest", "(BC)BigStoneChest" — see Chest.draw) honour
+            // playerChoiceColor; the Junimo Chest (BC 256) we used before ignores it and always
+            // drew green, so the tint never showed. 130 is the type the vanilla color picker uses.
             //
             // GetActualCapacity is patched separately (JunimoStashCapacityPatch) to return the
             // current StashSlotCount so the ItemGrabMenu only shows the unlocked slot count.
-            var chest = new Chest(playerChest: true, tile, itemId: "256");
-            chest.SpecialChestType = Chest.SpecialChestTypes.None;
-            // Distinct purple/gold tint so the stash is never confused with a vanilla Junimo Chest.
+            var chest = new Chest(playerChest: true, tile, itemId: "130");
+            // Distinct purple tint so the stash is never confused with a vanilla wood chest.
             chest.playerChoiceColor.Value = new Microsoft.Xna.Framework.Color(150, 90, 200);
             chest.modData[StashModDataKey] = "1";
             farm.objects[tile] = chest;
