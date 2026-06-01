@@ -85,7 +85,10 @@ namespace TheLongestYear.Integration
             "none",                                  // music
             "8 8",                                   // initial viewport (farmhouse) — changeLocation follows at once
             "farmer 8 8 2",                          // farmer in the farmhouse; repositioned per-scene below
-            "skippable",
+            // NOT skippable: the opening intro carries the only explanation of the loop, and a skip
+            // bypasses the end command that sets the cc-seen flag — leaving CcSeen false so the
+            // driver re-fires the event, closing+reopening the dialog forever (2026-06-01 playtest).
+            // Omitting "skippable" makes the event play through to its addMailReceived/"end".
 
             // ---- Scene 1: the farm porch (Lewis) ----
             "changeLocation Farm",

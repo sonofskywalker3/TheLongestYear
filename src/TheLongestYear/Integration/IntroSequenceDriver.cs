@@ -26,6 +26,7 @@ namespace TheLongestYear.Integration
         private System.Func<MenuLauncher> _launcher;
 
         private bool _finished;
+        private bool _introStartedThisMorning;
         private int _cooldownUntilTick;
 
         public IntroSequenceDriver(IMonitor monitor, MetaStore meta, GameplayConfig config)
@@ -46,7 +47,10 @@ namespace TheLongestYear.Integration
         {
             // Re-arm for a (possibly replayed) fresh morning.
             if (IntroGate.IsFreshIntroMorning(_meta.State.HasSeenIntro, _meta.Run.Season, _meta.Run.DayOfMonth))
+            {
                 _finished = false;
+                _introStartedThisMorning = false;
+            }
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -76,8 +80,21 @@ namespace TheLongestYear.Integration
                     var loc = Game1.currentLocation;
                     if (loc != null && Game1.activeClickableMenu == null)
                     {
+                        if (_introStartedThisMorning)
+                        {
+                            // We already started the intro this morning, yet the decider is asking
+                            // to start it again — meaning the event ended WITHOUT setting the cc-seen
+                            // flag (an interrupted/edge-case end; a skip is no longer possible since
+                            // the event isn't skippable). Force the flag so we proceed to the picker
+                            // instead of re-firing forever (the 2026-06-01 dialog-loop guard).
+                            _monitor.Log("Intro: event ended without the cc-seen flag — forcing it to avoid a re-fire loop.", LogLevel.Warn);
+                            p.mailReceived.Add(IntroEventKeys.CcSeenMail);
+                            Bump();
+                            break;
+                        }
                         _monitor.Log("Intro: starting the Lewis -> Junimo cutscene.", LogLevel.Info);
                         loc.startEvent(new Event(IntroEventInjector.BuildIntroEvent(), null, IntroEventKeys.IntroEventId));
+                        _introStartedThisMorning = true;
                         Bump();
                     }
                     break;

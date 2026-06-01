@@ -15,5 +15,8 @@ Thumbs.db
 screenshot*.png
 SMAPI-latest.txt
 
+# Local save-file backups (user save data captured during recovery — never commit)
+save-recovery-backup/
+
 # Sprite generator zoomed previews (not shipped)
 tools/preview/
