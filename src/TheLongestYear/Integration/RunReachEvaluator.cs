@@ -1,3 +1,4 @@
+using System;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Tools;
@@ -28,6 +29,9 @@ namespace TheLongestYear.Integration
                 "mine"     => p.deepestMineLevel,
                 "mastery"  => MasteryTrackerMenu.getCurrentMasteryLevel(),
                 "scythe"   => p.mailReceived.Contains("gotGoldenScythe") ? 1 : 0,
+                "building" => HasBuildingAtLeast(r.Key) ? 1 : 0,
+                "house"    => p.HouseUpgradeLevel,
+                "pet"      => p.hasPet() ? 1 : 0,
                 _          => -1,   // unknown metric fails closed
             };
             return actual >= 0 && r.IsMet(actual);
@@ -72,5 +76,31 @@ namespace TheLongestYear.Integration
             "combat"   => p.combatLevel.Value,
             _          => 0,
         };
+
+        // Housing chains — a higher tier satisfies the reach for a lower one (a Deluxe Coop
+        // counts as having reached "Coop"/"Big Coop"). Upgrading a building changes its
+        // buildingType in place, so the farm holds one entry at the current tier.
+        private static readonly string[] CoopChain = { "Coop", "Big Coop", "Deluxe Coop" };
+        private static readonly string[] BarnChain = { "Barn", "Big Barn", "Deluxe Barn" };
+
+        /// <summary>True if the farm has a building of <paramref name="type"/> or a higher tier in
+        /// the same chain.</summary>
+        private static bool HasBuildingAtLeast(string type)
+        {
+            string[] chain = Array.IndexOf(CoopChain, type) >= 0 ? CoopChain
+                           : Array.IndexOf(BarnChain, type) >= 0 ? BarnChain
+                           : null;
+            if (chain == null) return false;
+            int need = Array.IndexOf(chain, type);
+
+            Farm farm = Game1.getFarm();
+            if (farm == null) return false;
+            foreach (StardewValley.Buildings.Building b in farm.buildings)
+            {
+                int have = Array.IndexOf(chain, b.buildingType.Value);
+                if (have >= need) return true;
+            }
+            return false;
+        }
     }
 }
