@@ -94,8 +94,17 @@ run 1) + banked. Cleanest impl: capture the starting recipe set on the first run
 then on reset set `cookingRecipes`/`craftingRecipes` = baseline + banked. MetaState.CraftbookRecipes
 already documents the intended "re-granted on reset" contract — the wipe half is just missing.
 
-## 6. Bed blocks the door after reset
+## 6. Furniture not handled correctly when the house resets/downgrades
 
-`loadForNewGame` rebuilds the FarmHouse with default furniture; the player's run-1 arrangement is
-lost and, in an upgraded (larger) layout, the default bed can block the door. Investigate
-repositioning the bed to the upgrade-correct spot (or preserving/clearing furniture).
+The reset rebuilds the FarmHouse and (now) downgrades `HouseUpgradeLevel` to 0 (the cabin), so
+built-in furniture has to be repositioned for the new layout. Two confirmed symptoms:
+- **Bed:** earlier (when the house stayed large) the bed ended up blocking the door.
+- **Fireplace MISSING after reset (2026-06-01):** after the house resets to the cabin the fireplace
+  is gone — user's read: it wasn't moved back from the larger-house layout the way the bed was, so
+  it's stranded out-of-bounds / not placed in the cabin's fireplace spot.
+
+So the fix isn't just the bed — the reset needs to restore the FarmHouse's built-in furniture
+(bed + fireplace, at minimum) to the correct positions for the post-reset `HouseUpgradeLevel`.
+Check how vanilla `FarmHouse.setMapForUpgradeLevel` / `resetForPlayerEntry` (decompile) places the
+fireplace + bed for a fresh cabin, and ensure the reset path reproduces that rather than leaving
+furniture at upgraded-layout coordinates.

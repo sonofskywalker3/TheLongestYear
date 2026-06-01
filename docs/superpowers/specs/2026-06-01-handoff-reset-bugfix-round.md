@@ -64,8 +64,13 @@ The user asked to switch to a proper brainstorm → spec before more code. Items
    wipe→regrant on reset.
 5. **Weather/Cart on the planning shrine** — surface Weather Sage forecast + Cart Whisperer stock on
    the read-only shrine board (`ShrinePreviewMenu`/`PlanningShrineService`), gated on owned tier.
+6. **FarmHouse furniture on reset/downgrade** — now that the house resets to the cabin, built-in
+   furniture must be repositioned for the new layout. Confirmed: the **fireplace is MISSING** after
+   reset (not moved back from the larger-house layout, like the bed previously blocked the door).
+   Restore bed + fireplace to the cabin's correct spots (check `FarmHouse.setMapForUpgradeLevel` /
+   `resetForPlayerEntry` in the decompile). Details in notes §6.
 
-Recommended order: brainstorm the **loop/reset flow** first (anchors 1–4), then fold in 5.
+Recommended order: brainstorm the **loop/reset flow** first (anchors 1–4 and §6), then fold in 5.
 
 ## Operational notes
 - **Typing into the SMAPI console programmatically** (the user expects this; it works): the game
