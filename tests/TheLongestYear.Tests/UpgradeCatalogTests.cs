@@ -105,14 +105,18 @@ public class UpgradeCatalogTests
     }
 
     [Fact]
-    public void Fishing_rod_keep_chain_has_two_tiers_chained()
+    public void Fishing_rod_keep_chain_has_three_tiers_chained()
     {
+        var t0 = UpgradeCatalog.TryGet("keep_fishing_rod_0");
         var t1 = UpgradeCatalog.TryGet("keep_fishing_rod_1");
         var t2 = UpgradeCatalog.TryGet("keep_fishing_rod_2");
+        Assert.NotNull(t0);
         Assert.NotNull(t1);
         Assert.NotNull(t2);
-        Assert.Null(t1!.PrerequisiteId);
+        Assert.Null(t0!.PrerequisiteId);
+        Assert.Equal("keep_fishing_rod_0", t1!.PrerequisiteId);
         Assert.Equal("keep_fishing_rod_1", t2!.PrerequisiteId);
+        Assert.Equal(UpgradeCategory.Loadout, t0.Category);
         Assert.Equal(UpgradeCategory.Loadout, t1.Category);
         Assert.Equal(UpgradeCategory.Loadout, t2.Category);
     }
@@ -277,5 +281,24 @@ public class UpgradeCatalogTests
     {
         foreach (UpgradeDefinition u in UpgradeCatalog.All.Where(u => u.Id.StartsWith("keep_mine_elevator_")))
             Assert.Equal($"mine:{u.Id.Substring("keep_mine_elevator_".Length)}", u.RunReachRequirement);
+    }
+
+    [Fact]
+    public void Fishing_rod_chain_starts_with_bamboo_and_is_reach_gated()
+    {
+        UpgradeDefinition bamboo = UpgradeCatalog.TryGet("keep_fishing_rod_0")!;
+        Assert.NotNull(bamboo);
+        Assert.Equal("Keep Bamboo Pole", bamboo.DisplayName);
+        Assert.Equal(25, bamboo.Cost);
+        Assert.Null(bamboo.PrerequisiteId);
+        Assert.Equal("rod:1", bamboo.RunReachRequirement);
+
+        UpgradeDefinition fiberglass = UpgradeCatalog.TryGet("keep_fishing_rod_1")!;
+        Assert.Equal("keep_fishing_rod_0", fiberglass.PrerequisiteId);
+        Assert.Equal("rod:2", fiberglass.RunReachRequirement);
+
+        UpgradeDefinition iridium = UpgradeCatalog.TryGet("keep_fishing_rod_2")!;
+        Assert.Equal("keep_fishing_rod_1", iridium.PrerequisiteId);
+        Assert.Equal("rod:3", iridium.RunReachRequirement);
     }
 }

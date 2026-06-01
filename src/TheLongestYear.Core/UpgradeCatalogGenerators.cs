@@ -28,13 +28,14 @@ internal static class UpgradeCatalogGenerators
     // (StardewValley\StardewValley\Tool.cs:167) which is 0=base/rusty, 1=copper, ...
     private static readonly string[] TierNames = { "Copper", "Steel", "Gold", "Iridium" };
 
-    // Fishing rod has just two upgrade tiers worth keeping (training rod is L0,
-    // bamboo rod is L1 — the player gets a bamboo rod from Willy day 2 of every
-    // run so there's no value in a "keep bamboo" entry).
-    private static readonly (string Id, string DisplayName, long Cost, string? Prereq)[] FishingRodTiers =
+    // Fishing rod chain. 2026-06-01 (Spec A): added the Bamboo Pole root so the rod
+    // chain mirrors the tool chains; reach gating (rod:N where 1=bamboo, 2=fiberglass,
+    // 3=iridium = FishingRod.UpgradeLevel) keeps un-earned tiers out of the shop.
+    private static readonly (string Id, string DisplayName, long Cost, string? Prereq, string Reach)[] FishingRodTiers =
     {
-        ("keep_fishing_rod_1", "Keep Fiberglass Rod", 150, null),
-        ("keep_fishing_rod_2", "Keep Iridium Rod",    425, "keep_fishing_rod_1"),
+        ("keep_fishing_rod_0", "Keep Bamboo Pole",     25,  null,                 "rod:1"),
+        ("keep_fishing_rod_1", "Keep Fiberglass Rod",  150, "keep_fishing_rod_0", "rod:2"),
+        ("keep_fishing_rod_2", "Keep Iridium Rod",     425, "keep_fishing_rod_1", "rod:3"),
     };
 
     /// <summary>Yield all Loadout keep-tier entries (16 tools + 2 fishing rod = 18 rows).</summary>
@@ -53,11 +54,11 @@ internal static class UpgradeCatalogGenerators
                     metaRequirement: null, runReachRequirement: $"tool:{slug}:{tier}");
             }
 
-        foreach (var (id, name, cost, prereq) in FishingRodTiers)
+        foreach (var (id, name, cost, prereq, reach) in FishingRodTiers)
             yield return new UpgradeDefinition(
                 id, UpgradeCategory.Loadout, name,
                 "Start each run with your Fishing Rod at this tier (capped at your in-run reach).",
-                cost, prereq);
+                cost, prereq, metaRequirement: null, runReachRequirement: reach);
     }
 
     // Skill level keep costs, indexed [1..10]. Levels 5 and 10 jump because they
