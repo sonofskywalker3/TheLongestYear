@@ -30,6 +30,10 @@ public sealed class UpgradeDefinition
     /// <summary>Meta-state condition ("species:Chicken") the player must satisfy, or null if none.</summary>
     public string? MetaRequirement { get; }
 
+    /// <summary>Live in-run reach gate (e.g. "tool:watering_can:2"), or null if the upgrade is
+    /// not reach-gated. Parsed/evaluated separately (see RunReachRequirement + RunReachEvaluator).</summary>
+    public string? RunReachRequirement { get; }
+
     public UpgradeDefinition(
         string id,
         UpgradeCategory category,
@@ -37,7 +41,8 @@ public sealed class UpgradeDefinition
         string description,
         long cost,
         string? prerequisiteId = null,
-        string? metaRequirement = null)
+        string? metaRequirement = null,
+        string? runReachRequirement = null)
     {
         if (string.IsNullOrWhiteSpace(id))
             throw new ArgumentException("Id must be non-empty.", nameof(id));
@@ -53,5 +58,6 @@ public sealed class UpgradeDefinition
         Cost = cost;
         PrerequisiteId = prerequisiteId;
         MetaRequirement = metaRequirement;
+        RunReachRequirement = runReachRequirement;
     }
 }
