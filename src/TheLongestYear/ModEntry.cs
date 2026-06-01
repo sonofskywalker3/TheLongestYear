@@ -277,6 +277,7 @@ namespace TheLongestYear
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
+            TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
             _bookFurniture.ReconcileInventory();
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
