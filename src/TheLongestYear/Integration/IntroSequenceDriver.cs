@@ -60,6 +60,11 @@ namespace TheLongestYear.Integration
         {
             if (!_config.Enabled || _finished) return;
             if (!Context.IsWorldReady || Game1.currentMinigame != null) return;
+            // Only act on a settled frame. Warping during the new-game load fade fights the game's
+            // own player placement — the warp never sticks and the driver re-warps every cooldown
+            // (the "disco" flicker). Waiting for the fade to clear costs a brief farmhouse-interior
+            // glimpse but makes every warp land.
+            if (Game1.fadeToBlackAlpha > 0f) return;
             if (Game1.ticks < _cooldownUntilTick) return;
 
             var p = Game1.player;
@@ -81,8 +86,7 @@ namespace TheLongestYear.Integration
             switch (IntroSequenceDecider.Next(snap))
             {
                 case IntroAction.StartPorch:
-                    // Warp to the Farm first (immediately, even mid-fade, to hide the farmhouse
-                    // interior), then start the porch event once the world is settled.
+                    // Warp to the Farm first, then start the porch event once we're there.
                     if (loc?.Name != "Farm")
                     {
                         _monitor.Log("Intro: warping to Farm for the porch (Lewis) event.", LogLevel.Info);
