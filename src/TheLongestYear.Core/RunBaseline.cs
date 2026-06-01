@@ -65,6 +65,13 @@ public sealed class RunBaseline
     /// <summary>Animal species + count to place into the matching housing on day 1.
     /// Tuple = (vanilla animal type string, building blueprint required).</summary>
     public IReadOnlyList<StartingAnimal> StartingAnimals { get; init; } = new List<StartingAnimal>();
+
+    /// <summary>Mastery level to restore at run start (0 = none). Permanent floor — owning the
+    /// keep_mastery_N tiers always restores level N, not capped at in-run reach.</summary>
+    public int MasteryLevel { get; init; }
+
+    /// <summary>Grant the Golden Scythe instead of the basic scythe each run (Keep Golden Scythe).</summary>
+    public bool GrantGoldenScythe { get; init; }
 }
 
 /// <summary>One starting-animal entry. The reset code finds a building of <c>HousingType</c>
