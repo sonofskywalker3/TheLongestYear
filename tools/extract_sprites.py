@@ -135,8 +135,8 @@ def recolor_shrine(img):
             if a == 0:
                 continue
             _, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
-            if y < 17:                                  # star -> gold
-                hue, s = 0.12, min(1.0, s * 0.45 + 0.55)
+            if y < 17:                                  # star -> bright gold/yellow
+                hue, s, v = 0.135, min(1.0, s * 0.35 + 0.70), min(1.0, v * 1.20 + 0.12)
             else:                                       # junimo body -> green
                 hue, s = 0.30, min(1.0, s * 0.75 + 0.28)
             nr, ng, nb = colorsys.hsv_to_rgb(hue, s, v)
