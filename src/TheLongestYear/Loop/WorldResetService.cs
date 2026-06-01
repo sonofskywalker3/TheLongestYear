@@ -511,28 +511,11 @@ namespace TheLongestYear.Loop
         /// </summary>
         internal void FireBookQuestIntros()
         {
-            if (_meta.HasUpgrade("cookbook_1")
-                && Game1.player.HouseUpgradeLevel >= 1
-                && !_meta.DismissedIndicators.Contains("tly.cookbook"))
-            {
-                AddIntroQuest(
-                    id: "tly.-9001",
-                    title: "A gift from the Junimos",
-                    description: "The Junimos left a cookbook on your kitchen counter — go have a look.");
-            }
+            // The Cookbook, Craftbook, and Bundle-log are carried book items now (see
+            // BookFurniture) — they arrive in the inventory each loop, so no "go find it" quest.
 
-            if (_meta.HasUpgrade("craftbook_1")
-                && !_meta.DismissedIndicators.Contains("tly.craftbook"))
-            {
-                AddIntroQuest(
-                    id: "tly.-9002",
-                    title: "A gift from the Junimos",
-                    description: "The Junimos left a craftbook on your kitchen table — go have a look.");
-            }
-
-            // Stash quest always fires — the chest is placed unconditionally now (auto-pick when
-            // config is (0,0)). The DismissedIndicators guard still suppresses the quest once
-            // the player interacts with the indicator.
+            // Stash quest always fires — the chest is placed unconditionally (auto-pick when
+            // config is (0,0)). The DismissedIndicators guard suppresses it once interacted with.
             if (!_meta.DismissedIndicators.Contains("tly.stash"))
             {
                 AddIntroQuest(
@@ -542,16 +525,14 @@ namespace TheLongestYear.Loop
                                  "Find it and use it wisely; it has very limited space.");
             }
 
-            // Season Goals fireplace board — added 2026-05-29. Always-on (board is at the CC
-            // from day 1 of every run, no upgrade prerequisite). Dismissed when the player
-            // opens the board the first time.
-            if (!_meta.DismissedIndicators.Contains("tly.fireplace"))
+            // Planning shrine — a view-only board just left of the farmhouse, present from loop 1.
+            if (!_meta.DismissedIndicators.Contains("tly.shrine"))
             {
                 AddIntroQuest(
-                    id: "tly.-9004",
-                    title: "A gift from the Junimos",
-                    description: "There's a notice board above the Community Center fireplace " +
-                                 "that tracks this season's goals — go have a look.");
+                    id: "tly.-9005",
+                    title: "The Junimo Shrine",
+                    description: "There's a small Junimo shrine just left of your farmhouse. " +
+                                 "Check it to see what you've unlocked and what you can plan for next loop.");
             }
         }
 
