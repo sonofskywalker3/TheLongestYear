@@ -9,6 +9,7 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
+using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
 {
@@ -251,21 +252,7 @@ namespace TheLongestYear.UI
         /// sees the next purchasable tier in each chain.
         /// </summary>
         private IReadOnlyList<UpgradeDefinition> VisibleCatalogForActiveCategory()
-        {
-            MetaState state = _store.State;
-            var visible = new List<UpgradeDefinition>();
-            foreach (UpgradeDefinition def in UpgradeCatalog.ByCategory(_activeCategory))
-            {
-                if (state.HasUpgrade(def.Id))
-                    continue;
-                if (def.PrerequisiteId != null && !state.HasUpgrade(def.PrerequisiteId))
-                    continue;
-                if (!state.MeetsMetaRequirement(def.MetaRequirement))
-                    continue;
-                visible.Add(def);
-            }
-            return visible;
-        }
+            => KeepShopFilter.BuyableInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets);
 
         private void ClampScroll()
         {
