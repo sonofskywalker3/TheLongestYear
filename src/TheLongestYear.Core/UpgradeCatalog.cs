@@ -215,21 +215,20 @@ public static class UpgradeCatalog
         new UpgradeDefinition("quick_bite_5", UpgradeCategory.Obtainability, "Quick Bite V",
             "Fish bite 25% sooner.", 650, "quick_bite_4"),
 
-        // Foresight — Weather Sage chain (7 tiers per spec §11)
+        // Foresight — Weather Sage chain (6 tiers; tier N reveals the next N days, max 6 —
+        // today is excluded since its weather is already locked in).
         new UpgradeDefinition("weather_sage_1", UpgradeCategory.Foresight, "Weather Sage I",
-            "Reveal 1 day of next week's weather on the planning hub.", 150),
+            "Reveal the next day's weather.", 150),
         new UpgradeDefinition("weather_sage_2", UpgradeCategory.Foresight, "Weather Sage II",
-            "Reveal 2 days of next week's weather.", 275, "weather_sage_1"),
+            "Reveal the next 2 days' weather.", 275, "weather_sage_1"),
         new UpgradeDefinition("weather_sage_3", UpgradeCategory.Foresight, "Weather Sage III",
-            "Reveal 3 days of next week's weather.", 375, "weather_sage_2"),
+            "Reveal the next 3 days' weather.", 375, "weather_sage_2"),
         new UpgradeDefinition("weather_sage_4", UpgradeCategory.Foresight, "Weather Sage IV",
-            "Reveal 4 days of next week's weather.", 525, "weather_sage_3"),
+            "Reveal the next 4 days' weather.", 525, "weather_sage_3"),
         new UpgradeDefinition("weather_sage_5", UpgradeCategory.Foresight, "Weather Sage V",
-            "Reveal 5 days of next week's weather.", 725, "weather_sage_4"),
+            "Reveal the next 5 days' weather.", 725, "weather_sage_4"),
         new UpgradeDefinition("weather_sage_6", UpgradeCategory.Foresight, "Weather Sage VI",
-            "Reveal 6 days of next week's weather.", 950, "weather_sage_5"),
-        new UpgradeDefinition("weather_sage_7", UpgradeCategory.Foresight, "Weather Sage VII",
-            "Reveal the full 7-day forecast.", 1200, "weather_sage_6"),
+            "Reveal the full next 6 days' weather.", 950, "weather_sage_5"),
 
         // Foresight — Cart Whisperer (first 3 of 10 tiers in v1; rest in Plan 06)
         new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer I",

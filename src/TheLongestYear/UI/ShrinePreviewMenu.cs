@@ -21,6 +21,10 @@ namespace TheLongestYear.UI
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
 
+        // Pinned foresight panel (Weather Sage + Cart Whisperer), drawn above the scrolling list.
+        private const int ForesightLineHeight = 30;
+        private const int ForesightBottomGap = 16;
+
         private sealed class Row
         {
             public bool IsHeader;
@@ -31,6 +35,10 @@ namespace TheLongestYear.UI
 
         private readonly MetaState _state;
         private readonly List<Row> _rows = new();
+
+        // Foresight lines computed at open time (rolling): each is a label + whether it's a
+        // section header. Reads live Game1 state so the shrine always shows "from tomorrow".
+        private readonly List<(string Text, bool IsHeader)> _foresightLines = new();
 
         private int _scrollIndex;
         private int _rowsPerPage;
@@ -45,8 +53,72 @@ namespace TheLongestYear.UI
         {
             _state = state;
             BuildRows();
+            BuildForesight();
             RecomputeBoundsAndLayout();
         }
+
+        /// <summary>Compute the pinned foresight panel (Weather Sage + Cart Whisperer) from the
+        /// owned tiers and live game date. Rolling: slot 0 is always tomorrow, so re-opening the
+        /// shrine on a later day shows a later window. Empty when no foresight tier is owned.</summary>
+        private void BuildForesight()
+        {
+            _foresightLines.Clear();
+
+            int weatherTier = _state.HighestKeptTier("weather_sage_", 6);
+            if (weatherTier > 0)
+            {
+                ForecastDay[] forecast = WeatherForecast.Build(
+                    (int)Game1.uniqueIDForThisGame, (int)Game1.stats.DaysPlayed,
+                    Game1.dayOfMonth, (int)Game1.season, weatherTier);
+                _foresightLines.Add(("Weather", true));
+                foreach (ForecastDay fd in forecast)
+                    _foresightLines.Add(($"Day {fd.DayOfMonth}: {fd.Weather}", false));
+            }
+
+            int cartSlots = CartStockPreview.SlotsToReveal(_state.HighestKeptTier("cart_whisper_", 3));
+            if (cartSlots > 0)
+            {
+                var names = new List<string>();
+                try
+                {
+                    var stock = StardewValley.Internal.ShopBuilder.GetShopStock("Traveler");
+                    int taken = 0;
+                    foreach (var pair in stock)
+                    {
+                        if (taken >= cartSlots) break;
+                        names.Add(pair.Key?.DisplayName ?? "?");
+                        taken++;
+                    }
+                }
+                catch (System.Exception)
+                {
+                    // Preview only — if the cart stock can't be built, just omit the cart block.
+                }
+
+                if (names.Count > 0)
+                {
+                    _foresightLines.Add(($"Cart (next visit: Day {NextCartVisitDay(Game1.dayOfMonth)})", true));
+                    foreach (string n in names)
+                        _foresightLines.Add((n, false));
+                }
+            }
+        }
+
+        /// <summary>Day-of-month of the next Traveling Cart visit strictly after <paramref name="today"/>,
+        /// wrapping across the 28-day month. The cart visits on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
+        private static int NextCartVisitDay(int today)
+        {
+            for (int off = 1; off <= WeatherScheduler.DaysPerMonth; off++)
+            {
+                int dom = ((today - 1 + off) % WeatherScheduler.DaysPerMonth) + 1;
+                if (dom % 7 % 5 == 0)
+                    return dom;
+            }
+            return today; // unreachable — a visit day always exists within 28 days.
+        }
+
+        private int ForesightPanelHeight()
+            => _foresightLines.Count == 0 ? 0 : _foresightLines.Count * ForesightLineHeight + ForesightBottomGap;
 
         /// <summary>Snapshot the buyable list (reach read live, at open time): for each category,
         /// a header followed by its next-purchasable tiers. Owned lower tiers are never listed.</summary>
@@ -93,7 +165,8 @@ namespace TheLongestYear.UI
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             _listX = xPositionOnScreen + 40;
-            _listY = yPositionOnScreen + 112;           // below title + JP line
+            // Below title + JP line, then below the pinned foresight panel (0 when no tier owned).
+            _listY = yPositionOnScreen + 112 + ForesightPanelHeight();
             _listWidth = width - 80;
             int listHeight = height - (_listY - yPositionOnScreen) - 40;
             _rowsPerPage = System.Math.Max(1, listHeight / RowHeight);
@@ -178,6 +251,19 @@ namespace TheLongestYear.UI
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
             Utility.drawTextWithShadow(b, $"Junimo Points banked: {_state.JunimoPoints}", Game1.smallFont,
                 new Vector2(xPositionOnScreen + 40, yPositionOnScreen + 80), Game1.textColor);
+
+            // Pinned foresight panel (above the scrolling upgrade list).
+            int foresightY = yPositionOnScreen + 112;
+            foreach (var (text, isHeader) in _foresightLines)
+            {
+                if (isHeader)
+                    Utility.drawTextWithShadow(b, text, Game1.dialogueFont,
+                        new Vector2(_listX, foresightY), Game1.textColor);
+                else
+                    Utility.drawTextWithShadow(b, text, Game1.smallFont,
+                        new Vector2(_listX + 24, foresightY + 4), Game1.textColor);
+                foresightY += ForesightLineHeight;
+            }
 
             if (_rows.Count == 0)
             {

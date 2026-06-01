@@ -87,7 +87,7 @@ namespace TheLongestYear.UI
         private const int RerollButtonHeight = 56;
         private const int RerollSaltPrime = 1399;
 
-        private string[] _weatherForecast;
+        private ForecastDay[] _weatherForecast;
         private System.Collections.Generic.List<StardewValley.ISalable> _cartItems;
 
         private readonly Texture2D _junimoTexture;
@@ -130,7 +130,7 @@ namespace TheLongestYear.UI
                     Game1.dayOfMonth,
                     (int)Game1.season,
                     _weatherSageSlots)
-                : System.Array.Empty<string>();
+                : System.Array.Empty<ForecastDay>();
 
             _cartItems = new System.Collections.Generic.List<StardewValley.ISalable>();
             if (_cartPreviewSlots > 0)
@@ -533,8 +533,10 @@ namespace TheLongestYear.UI
 
             for (int i = 0; i < _weatherRows.Count; i++)
             {
-                string label = (i < _weatherForecast.Length) ? _weatherForecast[i] : "?";
-                DrawPreviewRow(b, _weatherRows[i], $"Day {i + 1}: {label}");
+                string label = (i < _weatherForecast.Length)
+                    ? $"Day {_weatherForecast[i].DayOfMonth}: {_weatherForecast[i].Weather}"
+                    : "?";
+                DrawPreviewRow(b, _weatherRows[i], label);
             }
             for (int i = 0; i < _cartRows.Count; i++)
             {

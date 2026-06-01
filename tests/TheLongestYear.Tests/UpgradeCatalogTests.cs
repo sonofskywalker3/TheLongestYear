@@ -69,12 +69,14 @@ public class UpgradeCatalogTests
     }
 
     [Fact]
-    public void Weather_sage_chain_has_seven_tiers()
+    public void Weather_sage_chain_has_six_tiers()
     {
+        // Capped at 6: the first revealed day is tomorrow, so 6 days (days 2-7) is the full
+        // useful horizon. The old 7th "full week" tier was dropped.
         var weather = UpgradeCatalog.ByCategory(UpgradeCategory.Foresight)
             .Where(u => u.Id.StartsWith("weather_sage_"))
             .ToList();
-        Assert.Equal(7, weather.Count);
+        Assert.Equal(6, weather.Count);
     }
 
     [Theory]
