@@ -123,6 +123,27 @@ def recolor_hue(img, hue, sat_scale=0.7, sat_floor=0.20):
     return out
 
 
+def recolor_shrine(img):
+    """Stone Junimo -> green junimo body with a golden star. The star occupies the
+    top of the cell (rows < 17), the junimo body the rest (see the brightness map
+    in tools/)."""
+    out = img.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            _, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if y < 17:                                  # star -> gold
+                hue, s = 0.12, min(1.0, s * 0.45 + 0.55)
+            else:                                       # junimo body -> green
+                hue, s = 0.30, min(1.0, s * 0.75 + 0.28)
+            nr, ng, nb = colorsys.hsv_to_rgb(hue, s, v)
+            px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
+    return out
+
+
 def _save(img, asset_name, preview_name):
     img.save(os.path.join(ASSETS, asset_name))
     img.resize((img.width * 12, img.height * 12), Image.NEAREST).save(
@@ -140,12 +161,16 @@ if __name__ == "__main__":
         print(f"saved {name} (index {idx})")
 
     # --- Final mod assets: recolor the real sprites ---------------------------
-    # Stash chest: the green Junimo Chest, recolored purple.
-    chest = sheet.crop(big_craftable_rect(256, sheet.width))
-    _save(recolor_hue(chest, hue=0.78, sat_scale=0.85, sat_floor=0.22),
+    # Stash chest: the green Junimo Chest's full lid-animation frames (256..260),
+    # laid out as an 80x32 strip and recolored purple. The draw patch picks the
+    # frame matching the chest's currentLidFrame so it opens/closes like vanilla.
+    CHEST_FRAMES = list(range(256, 261))
+    strip = Image.new("RGBA", (16 * len(CHEST_FRAMES), 32), (0, 0, 0, 0))
+    for i, idx in enumerate(CHEST_FRAMES):
+        strip.paste(sheet.crop(big_craftable_rect(idx, sheet.width)), (i * 16, 0))
+    _save(recolor_hue(strip, hue=0.78, sat_scale=0.85, sat_floor=0.22),
           "junimo_stash.png", "junimo_stash_big.png")
-    # Planning shrine: the Stone Junimo, recolored to junimo-green.
+    # Planning shrine: the Stone Junimo — green body, golden star.
     junimo = sheet.crop(big_craftable_rect(55, sheet.width))
-    _save(recolor_hue(junimo, hue=0.30, sat_scale=0.75, sat_floor=0.28),
-          "shrine.png", "shrine_big.png")
-    print("wrote junimo_stash.png + shrine.png to assets")
+    _save(recolor_shrine(junimo), "shrine.png", "shrine_big.png")
+    print(f"wrote junimo_stash.png ({len(CHEST_FRAMES)} frames) + shrine.png to assets")

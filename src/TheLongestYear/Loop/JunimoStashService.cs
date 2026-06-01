@@ -372,24 +372,32 @@ namespace TheLongestYear.Loop
         /// <summary>Render the stash with our recolored purple Junimo-chest sprite. The chest is a
         /// plain BC 130 for behaviour; here we override only the world draw for the tagged chest,
         /// mirroring vanilla's big-craftable chest draw (16x32 sprite, 4x scale, top tile one row
-        /// up). Falls through to vanilla if the sprite isn't loaded yet (then the 130 + purple
-        /// playerChoiceColor fallback renders). Lid animation is intentionally skipped — the stash
-        /// opens straight into its menu.</summary>
+        /// up). junimo_stash.png is a horizontal strip of the chest's lid-animation frames; we pick
+        /// the column matching the chest's live <c>currentLidFrame</c> so it opens when the farmer
+        /// is near / accesses it and closes when they leave, exactly like the real Junimo Chest.
+        /// Falls through to vanilla if the sprite isn't loaded yet (then the 130 + purple
+        /// playerChoiceColor fallback renders).</summary>
         [HarmonyLib.HarmonyPatch(typeof(Chest), nameof(Chest.draw),
             new System.Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) })]
         internal static class StashDrawPatch
         {
+            // currentLidFrame is private on Chest; read it by ref to drive the open/close animation.
+            private static readonly HarmonyLib.AccessTools.FieldRef<Chest, int> _lidFrame =
+                HarmonyLib.AccessTools.FieldRefAccess<Chest, int>("currentLidFrame");
+
             private static bool Prefix(Chest __instance, SpriteBatch spriteBatch, int x, int y, float alpha)
             {
                 if (!__instance.modData.ContainsKey(StashModDataKey)) return true;
                 if (_stashTexture == null) _stashTexture = _loadStashTexture?.Invoke();
                 if (_stashTexture == null) return true;   // fall back to vanilla (purple-tinted 130)
 
+                int frames = System.Math.Max(1, _stashTexture.Width / 16);
+                int col = System.Math.Clamp(_lidFrame(__instance) - __instance.startingLidFrame.Value, 0, frames - 1);
                 float layerDepth = System.Math.Max(0f, ((y + 1) * 64f - 24f) / 10000f) + x * 1E-05f;
                 spriteBatch.Draw(
                     _stashTexture,
                     Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64f, (y - 1) * 64f)),
-                    new Rectangle(0, 0, 16, 32),
+                    new Rectangle(col * 16, 0, 16, 32),
                     Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth);
                 return false;
             }
