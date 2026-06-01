@@ -1,5 +1,6 @@
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using TheLongestYear.Core.Interactables;
 
@@ -112,6 +113,42 @@ namespace TheLongestYear.Integration
                     case BookKit.BundleLogId: launcher.OpenSeasonGoals(); __result = true; return false;
                     default: return true;
                 }
+            }
+        }
+
+        /// <summary>Draw the carried books at full inventory-slot scale. Vanilla caps a 1x1
+        /// furniture's menu icon at <c>getScaleSizeForMenu() == 2f</c> (a 16x16 sprite drawn at
+        /// 32px in a 64px slot), so the books looked tiny in the toolbar. For our three book ids
+        /// we render the sprite scaled to fill the slot like a normal item; everything else falls
+        /// through to vanilla.</summary>
+        [HarmonyLib.HarmonyPatch(typeof(StardewValley.Objects.Furniture), nameof(StardewValley.Objects.Furniture.drawInMenu),
+            new System.Type[] { typeof(SpriteBatch), typeof(Vector2), typeof(float), typeof(float), typeof(float),
+                typeof(StardewValley.StackDrawType), typeof(Color), typeof(bool) })]
+        internal static class DrawInMenuPatch
+        {
+            private static bool Prefix(StardewValley.Objects.Furniture __instance, SpriteBatch spriteBatch,
+                Vector2 location, float scaleSize, float transparency, float layerDepth, Color color)
+            {
+                switch (__instance.ItemId)
+                {
+                    case BookKit.CookbookId:
+                    case BookKit.CraftbookId:
+                    case BookKit.BundleLogId:
+                        break;
+                    default:
+                        return true;
+                }
+
+                StardewValley.ItemTypeDefinitions.ParsedItemData data =
+                    StardewValley.ItemRegistry.GetDataOrErrorItem(__instance.QualifiedItemId);
+                Texture2D tex = data.GetTexture();
+                Rectangle src = data.GetSourceRect();
+                // Scale the larger sprite dimension to the 64px slot (16x16 book -> 4x), matching
+                // how a normal Object icon fills the slot.
+                float scale = (64f / System.Math.Max(src.Width, src.Height)) * scaleSize;
+                spriteBatch.Draw(tex, location + new Vector2(32f, 32f), src, color * transparency, 0f,
+                    new Vector2(src.Width / 2f, src.Height / 2f), scale, SpriteEffects.None, layerDepth);
+                return false;
             }
         }
     }
