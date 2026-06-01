@@ -35,6 +35,7 @@ namespace TheLongestYear
         private WeeklyThemeQuestService _questService;
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
+        private BookFurniture _bookFurniture;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -87,6 +88,8 @@ namespace TheLongestYear
             // the picker. _launcher isn't built until OnSaveLoaded, so hand it a lazy accessor.
             _introDriver = new IntroSequenceDriver(this.Monitor, _meta, _config);
             _introDriver.Attach(helper, () => _launcher);
+            // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
+            _bookFurniture = new BookFurniture(this.Monitor, helper);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
