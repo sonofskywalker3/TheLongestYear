@@ -71,25 +71,25 @@ for i, base in enumerate(COVERS):
             for y in range(y0, y1 + 1):
                 put(books, ox + x, y, c)
 
-    cover_x0 = BX0 + SPINE_W       # 5
-    cover_x1 = BX1 - PAGE_W        # 11
+    # A closed hardcover seen front-on: full cover, a spine binding on the left
+    # (with raised cords), a framed title plate, and a thin sliver of closed pages
+    # along the bottom. No open-edge so it reads as shut, not ajar.
+    spine_x1 = BX0 + SPINE_W - 1    # 4
 
-    # Cover face.
-    bfill(cover_x0, cover_x1, BY0, BY1, base)
+    # Cover face fills the whole book; the spine then overpaints the left columns.
+    bfill(BX0, BX1, BY0, BY1, base)
+    bfill(BX0, spine_x1, BY0, BY1, spine)
+    for y in range(BY0, BY1 + 1):                 # hinge highlight beside the cover
+        bput(spine_x1, y, spine_hi)
+    for cy in (BY0 + 3, BY0 + 8):                 # raised cords across the spine
+        bfill(BX0, spine_x1, cy, cy, dark)
 
-    # Spine binding on the left, with a hinge highlight line beside the cover.
-    bfill(BX0, BX0 + SPINE_W - 1, BY0, BY1, spine)
-    for y in range(BY0, BY1 + 1):
-        bput(BX0 + SPINE_W - 1, y, spine_hi)
+    # Framed title plate centred on the cover.
+    bfill(spine_x1 + 2, BX1 - 1, BY0 + 3, BY0 + 7, light)
+    bfill(spine_x1 + 3, BX1 - 2, BY0 + 4, BY0 + 6, base)
 
-    # Fore-edge: stacked pages on the right, with a shaded bottom for thickness.
-    bfill(BX1 - PAGE_W + 1, BX1, BY0 + 1, BY1 - 1, PAGE)
-    for x in range(BX1 - PAGE_W + 1, BX1 + 1):
-        bput(x, BY1 - 1, PAGE_SHADOW)
-
-    # Title bands on the cover.
-    for ty in (BY0 + 3, BY0 + 6):
-        bfill(cover_x0 + 1, cover_x1 - 1, ty, ty, light)
+    # Thin closed-page sliver along the bottom of the cover.
+    bfill(spine_x1 + 1, BX1 - 1, BY1 - 1, BY1 - 1, PAGE)
 
     # Dark outline around the whole book.
     for x in range(BX0, BX1 + 1):
@@ -102,93 +102,8 @@ for i, base in enumerate(COVERS):
 books.save(os.path.join(OUT, "books.png"))
 save_preview(books, "books_preview.png")
 
-# ---------------------------------------------------------------------------
-# Shrine: 16x32. A green junimo statue (the classic round body + big dark eyes +
-# leaf sprout) sitting on a small stone altar. The junimo occupies the upper
-# 16px tile; the altar is the lower (footprint) tile.
-# ---------------------------------------------------------------------------
-STONE = (138, 132, 120)
-STONE_DK = (96, 90, 80)
-STONE_LT = (176, 170, 156)
-JUNI = (108, 196, 78)
-JUNI_DK = (60, 132, 52)
-JUNI_HI = (170, 226, 120)
-EYE = (28, 30, 30)
-EYE_HI = (235, 240, 235)
-LEAF = (86, 178, 70)
+# Note: shrine.png is no longer generated here — it's a recolored copy of the real
+# Stone Junimo sprite, produced by tools/extract_sprites.py. Likewise the stash
+# chest sprite (junimo_stash.png). This script now owns only the book covers.
 
-shrine = Image.new("RGBA", (16, 32), TRANSPARENT)
-
-
-def sput(x, y, c):
-    put(shrine, x, y, c)
-
-
-def sfill(x0, x1, y0, y1, c):
-    fill(shrine, x0, x1, y0, y1, c)
-
-
-# --- Stone altar (lower tile) -------------------------------------------------
-# Pillar.
-sfill(4, 11, 17, 25, STONE)
-# Top slab the junimo sits on.
-sfill(3, 12, 15, 16, STONE_LT)
-sfill(3, 12, 17, 17, STONE)
-# Stepped base.
-sfill(3, 12, 26, 27, STONE_DK)
-sfill(2, 13, 28, 29, STONE)
-sfill(2, 13, 30, 30, STONE_DK)
-# Side shading for volume.
-for y in range(17, 26):
-    sput(4, y, STONE_DK)
-    sput(11, y, STONE_LT)
-# A couple of carved seams.
-for y in (19, 22):
-    sfill(5, 10, y, y, STONE_DK)
-
-# --- Junimo statue (upper tile) ----------------------------------------------
-# Rounded dome body: per-row x-spans (narrow at top, full width, flat bottom).
-BODY_ROWS = {
-    2: (7, 8),
-    3: (6, 9),
-    4: (5, 10),
-    5: (4, 11),
-    6: (4, 11),
-    7: (3, 12),
-    8: (3, 12),
-    9: (3, 12),
-    10: (3, 12),
-    11: (3, 12),
-    12: (3, 12),
-    13: (4, 11),
-    14: (4, 11),
-}
-for y, (x0, x1) in BODY_ROWS.items():
-    sfill(x0, x1, y, y, JUNI)
-
-# Outline (darker green) around the body edge + bottom shadow.
-for y, (x0, x1) in BODY_ROWS.items():
-    sput(x0, y, JUNI_DK)
-    sput(x1, y, JUNI_DK)
-sfill(4, 11, 14, 14, JUNI_DK)         # grounded bottom edge
-for x in range(7, 9):                  # top cap outline
-    sput(x, 1, JUNI_DK)
-
-# Highlight on the upper-left for roundness.
-sfill(5, 6, 4, 5, JUNI_HI)
-sput(4, 6, JUNI_HI)
-
-# Leaf sprout on top.
-sput(8, 0, LEAF)
-sput(7, 1, LEAF)
-sput(9, 1, JUNI_DK)
-
-# Big dark eyes with a highlight glint.
-for ex in (5, 9):
-    sfill(ex, ex + 1, 8, 10, EYE)
-    sput(ex, 8, EYE_HI)
-
-shrine.save(os.path.join(OUT, "shrine.png"))
-save_preview(shrine, "shrine_preview.png")
-
-print("wrote books.png + shrine.png (+ previews in tools/preview/)")
+print("wrote books.png (+ preview in tools/preview/)")
