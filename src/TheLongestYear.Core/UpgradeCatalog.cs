@@ -75,9 +75,9 @@ public static class UpgradeCatalog
         // means +2500g, not +1000+2500). Highest owned tier wins, same as backpack.
         // Costs match the shop-discount curve since both are similar early-run impact.
         new UpgradeDefinition("starter_gold_1", UpgradeCategory.Loadout, "Seed Money I",
-            "Start each run with +1,000g. (Permanent — applies every run.)", 75),
+            "Start each run with +1,000g.", 75),
         new UpgradeDefinition("starter_gold_2", UpgradeCategory.Loadout, "Seed Money II",
-            "Start each run with +2,500g instead of +1,000g.", 175, "starter_gold_1"),
+            "Start each run with +2,500g.", 175, "starter_gold_1"),
         new UpgradeDefinition("starter_gold_3", UpgradeCategory.Loadout, "Seed Money III",
             "Start each run with +5,000g.", 350, "starter_gold_2"),
         new UpgradeDefinition("starter_gold_4", UpgradeCategory.Loadout, "Seed Money IV",
@@ -121,7 +121,7 @@ public static class UpgradeCatalog
         // Effect applies EVERY run (permanent), not just this run — earlier wording
         // implied single-use. Same cost curve as starter_gold; both are early-run cushion.
         new UpgradeDefinition("shop_discount_1", UpgradeCategory.Efficiency, "Shop Discount I",
-            "5% off all shop purchases. (Permanent — applies every run.)", 75),
+            "5% off all shop purchases.", 75),
         new UpgradeDefinition("shop_discount_2", UpgradeCategory.Efficiency, "Shop Discount II",
             "10% off all shop purchases.", 175, "shop_discount_1"),
         new UpgradeDefinition("shop_discount_3", UpgradeCategory.Efficiency, "Shop Discount III",
@@ -138,7 +138,7 @@ public static class UpgradeCatalog
         // next upgrade. Tier 1 (100) is the most expensive starter T1; full chain (3000)
         // is the most expensive Obtainability chain.
         new UpgradeDefinition("jp_boost_1", UpgradeCategory.Efficiency, "Junimo Favor I",
-            "All Junimo Point gains increased by 5%. (Permanent — compounds with itself.)", 100),
+            "All Junimo Point gains increased by 5%.", 100),
         new UpgradeDefinition("jp_boost_2", UpgradeCategory.Efficiency, "Junimo Favor II",
             "All Junimo Point gains increased by 10%.", 250, "jp_boost_1"),
         new UpgradeDefinition("jp_boost_3", UpgradeCategory.Efficiency, "Junimo Favor III",
@@ -260,7 +260,7 @@ public static class UpgradeCatalog
             "Start each run with a Coop already built.", 600,
             metaRequirement: null, runReachRequirement: "building:Coop"),
         new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, "Keep Big Coop",
-            "Start each run with a Big Coop instead of a Coop.", 1200, "keep_coop",
+            "Start each run with a Big Coop.", 1200, "keep_coop",
             metaRequirement: null, runReachRequirement: "building:Big Coop"),
         new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, "Keep Deluxe Coop",
             "Start each run with a Deluxe Coop.", 2000, "keep_big_coop",
@@ -282,7 +282,8 @@ public static class UpgradeCatalog
             "and the Cask recipe.", 1800, "keep_kitchen",
             metaRequirement: null, runReachRequirement: "house:3"),
         new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, "Keep Map Shortcuts",
-            "Start each run with all of Robin's map shortcuts pre-cleared.", 900),
+            "Start each run with all of Robin's map shortcuts pre-cleared.", 900,
+            metaRequirement: null, runReachRequirement: "shortcuts:1"),
 
         // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
         // across loops. 2026-05-29 spec: sentimental upgrade, not progression-gating —
@@ -298,7 +299,7 @@ public static class UpgradeCatalog
         // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, "Keep Bus Unlocked",
             "Start each run with all four Vault bundles already paid — the bus is restored from day 1.",
-            1500),
+            1500, metaRequirement: null, runReachRequirement: "bus:1"),
 
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).

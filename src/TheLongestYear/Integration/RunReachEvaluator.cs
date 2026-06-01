@@ -11,6 +11,11 @@ namespace TheLongestYear.Integration
     /// lives in the glue layer; the parse + threshold compare are in Core (RunReachRequirement).</summary>
     internal static class RunReachEvaluator
     {
+        // The "bus" reach is mod-tracked per-run state (vault bundles paid this run), not a
+        // simple Game1 read, so ModEntry wires a live RunState accessor.
+        private static System.Func<RunState> _runState;
+        public static void AttachRunState(System.Func<RunState> runState) => _runState = runState;
+
         /// <summary>Null/empty requirement ⇒ always met (non-reach upgrades). Unknown metric ⇒ false.</summary>
         public static bool Meets(string requirement)
         {
@@ -32,6 +37,8 @@ namespace TheLongestYear.Integration
                 "building" => HasBuildingAtLeast(r.Key) ? 1 : 0,
                 "house"    => p.HouseUpgradeLevel,
                 "pet"      => p.hasPet() ? 1 : 0,
+                "shortcuts" => Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts") ? 1 : 0,
+                "bus"      => (_runState?.Invoke()?.VaultBundlesPaid.Count ?? 0) > 0 ? 1 : 0,
                 _          => -1,   // unknown metric fails closed
             };
             return actual >= 0 && r.IsMet(actual);
