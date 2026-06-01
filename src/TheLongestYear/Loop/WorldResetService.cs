@@ -117,8 +117,19 @@ namespace TheLongestYear.Loop
                 try
                 {
                     Directory.Move(oldSavePath, newSavePath);
+
+                    // The folder is now named for the NEW uniqueID, but the save FILES inside still
+                    // carry the OLD id — Stardew only rewrites them on the next full sleep-save.
+                    // If the session is killed/crashes before that save, the load menu can't match
+                    // the inner file to the folder name and the save "vanishes" (2026-06-01: a
+                    // mid-window process kill bricked the None farm; data was intact but unlistable).
+                    // Rename the inner save files to match the folder so the save ALWAYS stays
+                    // loadable. The next full save overwrites them with correct content regardless,
+                    // so this is a no-op on the normal path and a save-saver on the kill path.
+                    RenameInnerSaveFiles(newSavePath, Path.GetFileName(oldSavePath), Path.GetFileName(newSavePath));
+
                     _monitor.Log(
-                        $"In-place reset: renamed save folder to match new uniqueID ({Path.GetFileName(newSavePath)}).",
+                        $"In-place reset: renamed save folder + inner files to match new uniqueID ({Path.GetFileName(newSavePath)}).",
                         LogLevel.Trace);
                 }
                 catch (IOException ex)
@@ -331,6 +342,34 @@ namespace TheLongestYear.Loop
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
                 LogLevel.Info);
+        }
+
+        /// <summary>Rename the main + "_old" save files inside a just-renamed save folder so their
+        /// names match the new folder (Stardew names both folder and save file
+        /// <c>&lt;FarmerName&gt;_&lt;uniqueID&gt;</c>). SaveGameInfo files are not id-named, so they're
+        /// left alone. Best-effort: a failure here only re-opens the "save bricks on mid-window kill"
+        /// gap, it never corrupts data.</summary>
+        private void RenameInnerSaveFiles(string folder, string oldBase, string newBase)
+        {
+            if (string.IsNullOrEmpty(oldBase) || string.IsNullOrEmpty(newBase) || oldBase == newBase)
+                return;
+
+            foreach (string suffix in new[] { "", "_old" })
+            {
+                string from = Path.Combine(folder, oldBase + suffix);
+                string to = Path.Combine(folder, newBase + suffix);
+                try
+                {
+                    if (File.Exists(from) && !File.Exists(to))
+                        File.Move(from, to);
+                }
+                catch (IOException ex)
+                {
+                    _monitor.Log(
+                        $"In-place reset: could not rename inner save file '{oldBase}{suffix}' -> '{newBase}{suffix}' ({ex.Message}).",
+                        LogLevel.Warn);
+                }
+            }
         }
 
         /// <summary>Remove the vanilla starter gift box (15 parsnip seeds) that the rebuilt

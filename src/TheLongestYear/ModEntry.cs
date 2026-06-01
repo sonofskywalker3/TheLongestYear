@@ -150,6 +150,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
+            helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select one of this week's offered themes. Usage: tly_select <theme>", this.CmdSelect);
@@ -514,6 +515,19 @@ namespace TheLongestYear
             }
 
             FullResetAndPresentOffer();
+        }
+
+        /// <summary>Debug: simulate a day-28 gate-miss reset (shrine-spend → reset → persist),
+        /// the natural loop-boundary path. See <see cref="RunController.DebugForceFailReset"/>.</summary>
+        private void CmdFailReset(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            _runController?.DebugForceFailReset();
         }
 
         /// <summary>Full reset: rebuild the world (PerformReset), wipe RunState (BeginNewRun),

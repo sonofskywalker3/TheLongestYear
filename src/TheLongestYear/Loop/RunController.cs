@@ -255,6 +255,18 @@ namespace TheLongestYear.Loop
             onContinue();
         }
 
+        /// <summary>Debug: fire the SAME fail-reset flow a day-28 gate miss triggers
+        /// (<see cref="OnDayStarted"/> line 175) — open the JP-spend shrine, then on close run
+        /// <see cref="ContinueAfterResetSpend"/> (PerformReset + persist). Lets a playtest exercise
+        /// the exact spend-at-shrine → reset → reload path without grinding to day 28. Unlike
+        /// <c>tly_reset</c> (which resets raw, no shrine), this reproduces the real loop-boundary
+        /// purchase flow that the JP-refund bug lived in.</summary>
+        public void DebugForceFailReset()
+        {
+            _monitor.Log("tly_failreset: simulating a day-28 gate-miss reset (shrine then reset).", LogLevel.Info);
+            TryOpenShrineThenContinue(ContinueAfterResetSpend);
+        }
+
         /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
         /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
         private void ContinueAfterResetSpend()
@@ -263,6 +275,13 @@ namespace TheLongestYear.Loop
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();
+            // Persist the post-reset meta (JP spent at the shrine, new OwnedUpgrades, the bumped
+            // run/reset counters) IMMEDIATELY. A deferred SaveLoaded fires after the in-place reset
+            // and calls MetaStore.Load(), which would otherwise overwrite our in-memory state with
+            // the stale on-disk meta from before the shrine was opened — refunding the JP the player
+            // just spent and dropping their purchases. ApplyKeepPlaying + ModEntry.FullResetAndPresentOffer
+            // guard the same way; this path was missing it (2026-06-01 playtest: "it refunded all my JP").
+            _store.Save();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
         }

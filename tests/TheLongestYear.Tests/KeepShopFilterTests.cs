@@ -56,4 +56,70 @@ public class KeepShopFilterTests
             .Select(d => d.Id).ToList();
         Assert.Contains("early_horse", buyable);
     }
+
+    // --- OwnedLeavesInCategory: the green "what you already own" rows ----------------
+    // A keep is shown as an owned leaf when it's owned, it's the TOP owned tier in its
+    // chain, and its next tier is not currently buyable (so the buyable list doesn't
+    // already represent the chain).
+
+    [Fact]
+    public void Owned_leaf_hidden_when_next_tier_is_buyable()
+    {
+        // Owns Copper can; this run reached Steel (tier 2) so keep_watering_can_2 is buyable.
+        var reached = new Dictionary<string, int> { ["tool:watering_can"] = 2 };
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("keep_watering_can_1");
+
+        var leaves = KeepShopFilter
+            .OwnedLeavesInCategory(UpgradeCategory.Loadout, meta, Reach(reached))
+            .Select(d => d.Id).ToList();
+
+        // The buyable _2 row already implies _1 is owned — don't double up.
+        Assert.DoesNotContain("keep_watering_can_1", leaves);
+    }
+
+    [Fact]
+    public void Owned_leaf_shown_when_next_tier_not_reachable()
+    {
+        // Owns Copper can but this run only reached tier 1, so _2 is NOT buyable.
+        var reached = new Dictionary<string, int> { ["tool:watering_can"] = 1 };
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("keep_watering_can_1");
+
+        var leaves = KeepShopFilter
+            .OwnedLeavesInCategory(UpgradeCategory.Loadout, meta, Reach(reached))
+            .Select(d => d.Id).ToList();
+
+        Assert.Contains("keep_watering_can_1", leaves);
+    }
+
+    [Fact]
+    public void Owned_leaf_shows_only_the_top_owned_tier_in_a_chain()
+    {
+        // Owns Copper + Steel; reached tier 2 so _3 is not buyable. Only _2 should show.
+        var reached = new Dictionary<string, int> { ["tool:watering_can"] = 2 };
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("keep_watering_can_1");
+        meta.OwnedUpgrades.Add("keep_watering_can_2");
+
+        var leaves = KeepShopFilter
+            .OwnedLeavesInCategory(UpgradeCategory.Loadout, meta, Reach(reached))
+            .Select(d => d.Id).ToList();
+
+        Assert.DoesNotContain("keep_watering_can_1", leaves);
+        Assert.Contains("keep_watering_can_2", leaves);
+    }
+
+    [Fact]
+    public void Owned_standalone_with_no_successor_is_always_a_leaf()
+    {
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("early_horse");
+
+        var leaves = KeepShopFilter
+            .OwnedLeavesInCategory(UpgradeCategory.Efficiency, meta, _ => true)
+            .Select(d => d.Id).ToList();
+
+        Assert.Contains("early_horse", leaves);
+    }
 }

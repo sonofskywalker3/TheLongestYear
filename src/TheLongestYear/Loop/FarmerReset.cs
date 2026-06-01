@@ -75,7 +75,7 @@ namespace TheLongestYear.Loop
             // Re-grant kept tool tiers: bump each basic tool's UpgradeLevel to the kept tier
             // (capped at the in-run peak by the baseline builder). Tools with no kept tier stay
             // basic. Tool.UpgradeLevel is settable directly (decompile: Tool.cs:167).
-            ApplyToolTiers(p, baseline.ToolTiers);
+            ApplyToolTiers(p, baseline.ToolTiers, _monitor);
 
             // Relationships, mail, events, quests.
             p.friendshipData.Clear();
@@ -99,6 +99,13 @@ namespace TheLongestYear.Loop
                 p.HouseUpgradeLevel = 3;
             else if (baseline.KitchenOnDay1)
                 p.HouseUpgradeLevel = 1;
+            else
+                // No house keep owned -> the farmhouse must revert to the starting cabin every
+                // loop. loadForNewGame keeps the persistent Farmer, so HouseUpgradeLevel survives
+                // unless we clear it; without this an upgraded house persisted across resets
+                // (2026-06-01 playtest: "the farmhouse did not reset"). WorldResetService's
+                // resetForPlayerEntry then rebuilds the small-house layout to match.
+                p.HouseUpgradeLevel = 0;
 
             // Re-grant banked cooking recipes. Value 0 = vanilla "learned but never cooked".
             // Do this AFTER clearing mail/events so the "you learned a recipe" pop-up doesn't
@@ -194,36 +201,79 @@ namespace TheLongestYear.Loop
                 if (p.Items[i] == null) { p.Items[i] = scythe; return; }
         }
 
-        private static void ApplyToolTiers(Farmer p, IReadOnlyDictionary<string, int> tiers)
+        // SDV 1.6 makes a tool's TIER its ItemId, not just its UpgradeLevel: a Copper Watering
+        // Can is the item "CopperWateringCan" (UpgradeLevel 1 comes with it from Data/Tools).
+        // Setting only UpgradeLevel bumps capacity/power but leaves the item — sprite, name,
+        // identity — basic (2026-06-01 playtest: "the game thinks it's copper but it's the basic
+        // can"). So we REPLACE the basic tool with the correct-tier item from the registry.
+        // ItemIds verified against the decompile's MigrateLegacyItemId switches.
+        private static readonly string[] MetalToolPrefixes = { "", "Copper", "Steel", "Gold", "Iridium" };
+        private static readonly Dictionary<string, string> BasicToolBaseId = new()
         {
-            // Find each basic tool in the player's toolList by type and bump UpgradeLevel.
-            // loadForNewGame gives the player a Hoe, Pickaxe, Axe, WateringCan, and
-            // Scythe (MeleeWeapon, no tier). NO FishingRod — vanilla Willy mails the
-            // bamboo rod on day 2 — so we handle that one separately below.
-            bool hasRodInInventory = false;
-            foreach (var item in p.Items)
+            ["hoe"] = "Hoe",
+            ["pickaxe"] = "Pickaxe",
+            ["axe"] = "Axe",
+            ["watering_can"] = "WateringCan",
+        };
+
+        // FishingRod tiers by UpgradeLevel (0 bamboo / 2 fiberglass / 3 iridium are the keeps;
+        // 1 training rod has no keep but is mapped for completeness).
+        private static string RodItemId(int upgradeLevel) => upgradeLevel switch
+        {
+            0 => "BambooPole",
+            1 => "TrainingRod",
+            2 => "FiberglassRod",
+            3 => "IridiumRod",
+            _ => "BambooPole",
+        };
+
+        private static void ApplyToolTiers(Farmer p, IReadOnlyDictionary<string, int> tiers, IMonitor monitor)
+        {
+            // loadForNewGame + EnsureBasicTools leave the player holding basic Hoe/Pickaxe/Axe/
+            // WateringCan/Scythe. NO FishingRod (vanilla Willy mails the bamboo rod on day 2), so
+            // we add that one if a rod keep is owned. Replace any basic tool that has a kept tier
+            // with the proper-tier ITEM (see note above).
+            var applied = new List<string>();
+            bool hasRod = false;
+
+            for (int i = 0; i < p.Items.Count; i++)
             {
-                if (item is Hoe         h  && tiers.TryGetValue("hoe",          out int ht)) h.UpgradeLevel  = ht;
-                if (item is Pickaxe     pk && tiers.TryGetValue("pickaxe",      out int pkt)) pk.UpgradeLevel = pkt;
-                if (item is Axe         a  && tiers.TryGetValue("axe",          out int at)) a.UpgradeLevel  = at;
-                if (item is WateringCan w  && tiers.TryGetValue("watering_can", out int wt)) w.UpgradeLevel  = wt;
-                if (item is FishingRod  fr)
+                Item it = p.Items[i];
+                if (it == null) continue;
+
+                if (it is FishingRod)
                 {
-                    hasRodInInventory = true;
-                    if (tiers.TryGetValue("fishing_rod", out int frt))
-                        fr.UpgradeLevel = frt;
+                    hasRod = true;
+                    if (tiers.TryGetValue("fishing_rod", out int rl))
+                    {
+                        string rid = RodItemId(rl);
+                        p.Items[i] = ItemRegistry.Create($"(T){rid}");
+                        applied.Add($"fishing_rod={rid}");
+                    }
+                    continue;
+                }
+
+                string slug =
+                    it is Hoe ? "hoe" :
+                    it is Pickaxe ? "pickaxe" :
+                    it is Axe ? "axe" :
+                    it is WateringCan ? "watering_can" : null;
+                if (slug == null) continue;
+
+                if (tiers.TryGetValue(slug, out int tier) && tier > 0 && tier < MetalToolPrefixes.Length)
+                {
+                    string itemId = MetalToolPrefixes[tier] + BasicToolBaseId[slug];
+                    p.Items[i] = ItemRegistry.Create($"(T){itemId}");
+                    applied.Add($"{slug}={itemId}");
                 }
             }
 
-            // Fishing rod: if we need to grant one and the player has no rod yet (the
-            // common day-1 case), create a fresh rod at the requested UpgradeLevel and
-            // slot it into the first empty inventory slot. Also pre-mail the "willyBackRoom"
-            // flag so Willy's day-2 bamboo-rod event doesn't fire on top of this.
-            if (!hasRodInInventory && tiers.TryGetValue("fishing_rod", out int rodLevel))
+            // Grant a fresh rod (at the kept tier) if none is held. Pre-mail "willyBackRoom" so
+            // Willy's day-2 bamboo-rod event doesn't fire on top of it.
+            if (!hasRod && tiers.TryGetValue("fishing_rod", out int rodLevel))
             {
-                var rod = new FishingRod { UpgradeLevel = rodLevel };
-                // Find the first null slot — p.Items has nulls between live items because
-                // FarmerReset re-padded them.
+                string rid = RodItemId(rodLevel);
+                Item rod = ItemRegistry.Create($"(T){rid}");
                 for (int i = 0; i < p.Items.Count; i++)
                 {
                     if (p.Items[i] == null)
@@ -233,7 +283,13 @@ namespace TheLongestYear.Loop
                     }
                 }
                 p.mailReceived.Add("willyBackRoom");
+                applied.Add($"fishing_rod={rid}(new)");
             }
+
+            monitor.Log(
+                $"ApplyToolTiers: requested=[{string.Join(",", tiers)}], applied=[{string.Join(",", applied)}], " +
+                $"rodAlreadyInInventory={hasRod}.",
+                LogLevel.Trace);
         }
     }
 }
