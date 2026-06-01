@@ -168,31 +168,6 @@ public sealed class GameplayConfig
     /// config.json directly. Toggling takes effect on next save load.</summary>
     public bool Enabled { get; set; } = true;
 
-    /// <summary>X tile coordinate of the Season Goals board inside the Community Center.
-    /// Default: 45 (one tile west of the Bulletin Board room's Junimo Note at (46,11)).
-    /// The Action tile property is painted onto whatever Buildings-layer tile sits at this
-    /// coord, so picking an empty coord won't work — choose a wall/decoration tile.</summary>
-    public int SeasonGoalsBoardTileX { get; set; } = 45;
-
-    /// <summary>Y tile coordinate of the Season Goals board inside the Community Center.</summary>
-    public int SeasonGoalsBoardTileY { get; set; } = 11;
-
-    /// <summary>X tile coordinate of the Cookbook interactable inside the FarmHouse (kitchen counter).
-    /// Default (4,4) is an educated guess for the Standard farm + upgraded FarmHouse kitchen counter.
-    /// Use tly_setcookbook in-game to override if wrong for your layout.</summary>
-    public int CookbookTileX { get; set; } = 4;
-
-    /// <summary>Y tile coordinate of the Cookbook interactable inside the FarmHouse (kitchen counter).</summary>
-    public int CookbookTileY { get; set; } = 4;
-
-    /// <summary>X tile coordinate of the Craftbook interactable inside the FarmHouse (main table).
-    /// Default (10,4) is an educated guess for the Standard farm + upgraded FarmHouse table.
-    /// Use tly_setcraftbook in-game to override if wrong for your layout.</summary>
-    public int CraftbookTileX { get; set; } = 10;
-
-    /// <summary>Y tile coordinate of the Craftbook interactable inside the FarmHouse (main table).</summary>
-    public int CraftbookTileY { get; set; } = 4;
-
     /// <summary>X tile coordinate on the Farm where the Junimo Stash chest is placed.
     /// Sentinel <c>(0, 0)</c> means "auto-pick relative to the FarmHouse entry tile" — the
     /// stash service places the chest two tiles east + one tile south of where the player

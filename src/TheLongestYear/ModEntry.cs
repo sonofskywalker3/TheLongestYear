@@ -47,18 +47,8 @@ namespace TheLongestYear
         {
             _config = helper.ReadConfig<GameplayConfig>();
 
-            // One-shot config migration: pre-v1-ship configs had (0,0) tile defaults that disabled
-            // the interactables. If we see those, replace with the new working defaults so the mod
-            // just works after upgrading.
+            // One-shot config migration.
             bool migrated = false;
-            if (_config.CookbookTileX == 0 && _config.CookbookTileY == 0)
-            {
-                _config.CookbookTileX = 4; _config.CookbookTileY = 4; migrated = true;
-            }
-            if (_config.CraftbookTileX == 0 && _config.CraftbookTileY == 0)
-            {
-                _config.CraftbookTileX = 10; _config.CraftbookTileY = 4; migrated = true;
-            }
             // 2026-05-28 second-pass migration for the stash tile:
             // The first migration set (72,12) as a hardcoded default, but the 2026-05-27 playtest
             // showed that tile is invisible on the Standard farm (under the farmhouse roof on
@@ -148,13 +138,8 @@ namespace TheLongestYear
             // showed it didn't fire on real CC deposits).
             _donationObserver = new DonationObserver(helper, this.Monitor);
 
-            // Interactable Season Goals board inside the Community Center. MenuLauncher isn't
-            // constructed until OnSaveLoaded, so we hand the board a lazy accessor instead of
-            // the instance — the Harmony prefix on GameLocation.checkAction resolves it just-
-            // in-time. PatchAll() above already discovered the board's static checkAction patch.
-            SeasonGoalsBoard.ConnectTo(helper, this.Monitor, _config, () => _launcher);
-            CookbookInteractable.ConnectTo(this.Monitor, _config, _meta);
-            CraftbookInteractable.ConnectTo(this.Monitor, _config, _meta);
+            // The Cookbook, Craftbook, and Bundle-log are placeable book furniture now
+            // (see BookFurniture) — no tile-anchored interactables.
 
             _commandFilePath = Path.Combine(helper.DirectoryPath, DebugCommandFileName);
 
@@ -176,13 +161,6 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
-            helper.ConsoleCommands.Add("tly_setboard", "Anchor the Season Goals board to the player's current tile inside the CC. Writes config.json.", this.CmdSetBoard);
-            helper.ConsoleCommands.Add("tly_setcookbook",
-                "Anchor the Cookbook to the tile you are facing in the FarmHouse. Writes config.json.",
-                this.CmdSetCookbook);
-            helper.ConsoleCommands.Add("tly_setcraftbook",
-                "Anchor the Craftbook to the tile you are facing in the FarmHouse. Writes config.json.",
-                this.CmdSetCraftbook);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
                 this.CmdOpenCookbook);
@@ -422,76 +400,6 @@ namespace TheLongestYear
             int y = (int)Game1.player.Tile.Y;
             string loc = Game1.currentLocation?.Name ?? "?";
             this.Monitor.Log($"Player at tile ({x}, {y}) in '{loc}'.", LogLevel.Info);
-        }
-
-        /// <summary>Anchor the Season Goals board to the tile the player is currently FACING
-        /// (not standing on — vanilla checkAction dispatches based on the faced tile, so we
-        /// record that one so the player can stand next to e.g. the fireplace, face it, and
-        /// press the action button to open the menu). Writes config.json so the anchor
-        /// persists across launches. Refuses to set outside the CC — the board only fires there.</summary>
-        private void CmdSetBoard(string command, string[] args)
-        {
-            if (!Context.IsWorldReady)
-            {
-                this.Monitor.Log("Load a save first.", LogLevel.Warn);
-                return;
-            }
-
-            if (Game1.currentLocation is not StardewValley.Locations.CommunityCenter)
-            {
-                this.Monitor.Log(
-                    "tly_setboard: stand inside the Community Center first — the board only " +
-                    "fires there.",
-                    LogLevel.Warn);
-                return;
-            }
-
-            // Compute the tile the player is facing. Facing direction is 0=up, 1=right, 2=down, 3=left.
-            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
-            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
-            int x = (int)Game1.player.Tile.X + dx;
-            int y = (int)Game1.player.Tile.Y + dy;
-
-            _config.SeasonGoalsBoardTileX = x;
-            _config.SeasonGoalsBoardTileY = y;
-            this.Helper.WriteConfig(_config);
-
-            this.Monitor.Log(
-                $"Season Goals board anchored to ({x}, {y}) — the tile you were facing. " +
-                "Saved to config.json. Stand in the same spot and press action to test.",
-                LogLevel.Info);
-        }
-
-        private void CmdSetCookbook(string command, string[] args)
-        {
-            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            if (Game1.currentLocation is not StardewValley.Locations.FarmHouse)
-            {
-                this.Monitor.Log("tly_setcookbook: stand inside the FarmHouse first.", LogLevel.Warn);
-                return;
-            }
-            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
-            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
-            _config.CookbookTileX = (int)Game1.player.Tile.X + dx;
-            _config.CookbookTileY = (int)Game1.player.Tile.Y + dy;
-            this.Helper.WriteConfig(_config);
-            this.Monitor.Log($"Cookbook anchored to ({_config.CookbookTileX}, {_config.CookbookTileY}). Saved to config.json.", LogLevel.Info);
-        }
-
-        private void CmdSetCraftbook(string command, string[] args)
-        {
-            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            if (Game1.currentLocation is not StardewValley.Locations.FarmHouse)
-            {
-                this.Monitor.Log("tly_setcraftbook: stand inside the FarmHouse first.", LogLevel.Warn);
-                return;
-            }
-            int dx = Game1.player.FacingDirection == 1 ? 1 : Game1.player.FacingDirection == 3 ? -1 : 0;
-            int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
-            _config.CraftbookTileX = (int)Game1.player.Tile.X + dx;
-            _config.CraftbookTileY = (int)Game1.player.Tile.Y + dy;
-            this.Helper.WriteConfig(_config);
-            this.Monitor.Log($"Craftbook anchored to ({_config.CraftbookTileX}, {_config.CraftbookTileY}). Saved to config.json.", LogLevel.Info);
         }
 
         private void CmdOpenCookbook(string command, string[] args)
@@ -855,9 +763,6 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
-                case "tly_setboard": this.CmdSetBoard(command, args); break;
-                case "tly_setcookbook":   this.CmdSetCookbook(command, args); break;
-                case "tly_setcraftbook":  this.CmdSetCraftbook(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
