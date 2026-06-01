@@ -34,6 +34,7 @@ namespace TheLongestYear.Loop
         private readonly JunimoStashService _stashService;
         private readonly MountainUnlock _mountainUnlock;
         private readonly TheLongestYear.Integration.BookFurniture _bookFurniture;
+        private readonly TheLongestYear.UI.PlanningShrineService _planningShrine;
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
@@ -48,7 +49,8 @@ namespace TheLongestYear.Loop
             ProfessionPickerScheduler professionPicker,
             JunimoStashService stashService,
             MountainUnlock mountainUnlock,
-            TheLongestYear.Integration.BookFurniture bookFurniture)
+            TheLongestYear.Integration.BookFurniture bookFurniture,
+            TheLongestYear.UI.PlanningShrineService planningShrine)
         {
             _monitor = monitor;
             _meta = meta;
@@ -61,6 +63,7 @@ namespace TheLongestYear.Loop
             _stashService = stashService;
             _mountainUnlock = mountainUnlock;
             _bookFurniture = bookFurniture;
+            _planningShrine = planningShrine;
         }
 
         public void PerformReset()
@@ -303,6 +306,7 @@ namespace TheLongestYear.Loop
             // 13. Place the Junimo Stash chest on the Farm and populate from MetaState.
             _stashService?.PlaceChest();
             _stashService?.PopulateFromMeta();
+            _planningShrine?.Place(_stashService?.LastPlacedTile);
 
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up

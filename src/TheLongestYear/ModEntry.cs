@@ -36,6 +36,7 @@ namespace TheLongestYear
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
         private BookFurniture _bookFurniture;
+        private UI.PlanningShrineService _planningShrine;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -80,6 +81,8 @@ namespace TheLongestYear
             _introDriver.Attach(helper, () => _launcher);
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
             _bookFurniture = new BookFurniture(this.Monitor, helper);
+            // View-only planning shrine — registers its furniture + auto-places near the stash.
+            _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
@@ -234,7 +237,7 @@ namespace TheLongestYear
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
-                _stashService, _mountainUnlock, _bookFurniture);
+                _stashService, _mountainUnlock, _bookFurniture, _planningShrine);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
@@ -266,10 +269,12 @@ namespace TheLongestYear
             // save-and-reload mid-run re-places the chest correctly.
             _stashService.PlaceChest();
             _stashService.PopulateFromMeta();
+            _planningShrine.Place(_stashService.LastPlacedTile);
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
+            _planningShrine.AttachState(() => _meta.State);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
             _bookFurniture.ReconcileInventory();
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
