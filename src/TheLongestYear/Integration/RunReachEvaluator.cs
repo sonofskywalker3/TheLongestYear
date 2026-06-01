@@ -52,8 +52,8 @@ namespace TheLongestYear.Integration
         {
             foreach (Item it in p.Items)
                 if (it is FishingRod rod)
-                    return rod.UpgradeLevel;   // 1 bamboo, 2 fiberglass, 3 iridium
-            return 0;
+                    return rod.UpgradeLevel;   // 0 bamboo, 2 fiberglass, 3 iridium (1 = training rod)
+            return -1;                          // no rod held — distinct from bamboo (UpgradeLevel 0)
         }
 
         private static int BackpackTier(Farmer p) => p.MaxItems switch

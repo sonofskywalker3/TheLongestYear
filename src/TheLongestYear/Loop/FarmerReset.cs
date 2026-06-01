@@ -114,7 +114,8 @@ namespace TheLongestYear.Loop
                 $"tools=[{string.Join(",", baseline.ToolTiers)}], " +
                 $"skills=[{string.Join(",", baseline.SkillLevels)}], " +
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
-                $"shortcuts={baseline.ShortcutsUnlocked}, " +
+                $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
+                $"goldenScythe={baseline.GrantGoldenScythe}, " +
                 $"cookRecipes={cookbookRecipes.Count}, craftRecipes={craftbookRecipes.Count}.",
                 LogLevel.Trace);
         }
