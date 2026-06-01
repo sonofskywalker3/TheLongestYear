@@ -301,4 +301,34 @@ public class UpgradeCatalogTests
         Assert.Equal("keep_fishing_rod_1", iridium.PrerequisiteId);
         Assert.Equal("rod:3", iridium.RunReachRequirement);
     }
+
+    [Fact]
+    public void Backpack_keeps_are_reach_gated()
+    {
+        Assert.Equal("backpack:1", UpgradeCatalog.TryGet("backpack_1")!.RunReachRequirement);
+        Assert.Equal("backpack:2", UpgradeCatalog.TryGet("backpack_2")!.RunReachRequirement);
+    }
+
+    [Fact]
+    public void Golden_scythe_keep_exists_and_is_reach_gated()
+    {
+        UpgradeDefinition gs = UpgradeCatalog.TryGet("keep_golden_scythe")!;
+        Assert.NotNull(gs);
+        Assert.Equal(UpgradeCategory.Loadout, gs.Category);
+        Assert.Null(gs.PrerequisiteId);
+        Assert.Equal("scythe:golden", gs.RunReachRequirement);
+    }
+
+    [Fact]
+    public void Mastery_chain_has_five_reach_gated_tiers()
+    {
+        for (int n = 1; n <= 5; n++)
+        {
+            UpgradeDefinition m = UpgradeCatalog.TryGet($"keep_mastery_{n}")!;
+            Assert.NotNull(m);
+            Assert.Equal(UpgradeCategory.Carryover, m.Category);
+            Assert.Equal($"mastery:{n}", m.RunReachRequirement);
+            Assert.Equal(n == 1 ? null : $"keep_mastery_{n - 1}", m.PrerequisiteId);
+        }
+    }
 }
