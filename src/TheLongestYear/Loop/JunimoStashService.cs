@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Objects;
@@ -24,6 +25,14 @@ namespace TheLongestYear.Loop
     internal sealed class JunimoStashService
     {
         internal const string StashModDataKey = "tly.junimo.stash";
+
+        /// <summary>Loads + caches the recolored purple Junimo-chest sprite drawn for the stash.
+        /// Set from ModEntry (where the mod helper is available); the draw patch pulls from it.</summary>
+        private static System.Func<Texture2D> _loadStashTexture;
+        private static Texture2D _stashTexture;
+
+        /// <summary>Wire the stash sprite loader (call once at startup with the mod content helper).</summary>
+        public static void SetTextureLoader(System.Func<Texture2D> loader) => _loadStashTexture = loader;
 
         private readonly IMonitor _monitor;
         private readonly MetaState _meta;
@@ -98,16 +107,17 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            // Place a regular colorable player chest (BC 130) and tint it purple so the stash is
-            // visually distinct from a plain wood chest. Only the colorable chest types
-            // ("(BC)130", "(BC)232", "(BC)BigChest", "(BC)BigStoneChest" — see Chest.draw) honour
-            // playerChoiceColor; the Junimo Chest (BC 256) we used before ignores it and always
-            // drew green, so the tint never showed. 130 is the type the vanilla color picker uses.
+            // Use a regular player chest (BC 130) for all behaviour (capacity, menu, persistence),
+            // and render it with our recolored purple Junimo-chest sprite via StashDrawPatch. The
+            // real Junimo Chest (BC 256) can't be tinted (it ignores playerChoiceColor — only the
+            // colorable types (BC)130/232/BigChest/BigStoneChest honour it), so we duplicated its
+            // sprite and recolored it purple offline (tools/extract_sprites.py -> junimo_stash.png).
+            // The purple playerChoiceColor below is only a fallback tint if that PNG fails to load
+            // (StashDrawPatch falls through to vanilla, which then draws a purple-tinted 130).
             //
             // GetActualCapacity is patched separately (JunimoStashCapacityPatch) to return the
             // current StashSlotCount so the ItemGrabMenu only shows the unlocked slot count.
             var chest = new Chest(playerChest: true, tile, itemId: "130");
-            // Distinct purple tint so the stash is never confused with a vanilla wood chest.
             chest.playerChoiceColor.Value = new Microsoft.Xna.Framework.Color(150, 90, 200);
             chest.modData[StashModDataKey] = "1";
             farm.objects[tile] = chest;
@@ -357,6 +367,32 @@ namespace TheLongestYear.Loop
             }
 
             return null;
+        }
+
+        /// <summary>Render the stash with our recolored purple Junimo-chest sprite. The chest is a
+        /// plain BC 130 for behaviour; here we override only the world draw for the tagged chest,
+        /// mirroring vanilla's big-craftable chest draw (16x32 sprite, 4x scale, top tile one row
+        /// up). Falls through to vanilla if the sprite isn't loaded yet (then the 130 + purple
+        /// playerChoiceColor fallback renders). Lid animation is intentionally skipped — the stash
+        /// opens straight into its menu.</summary>
+        [HarmonyLib.HarmonyPatch(typeof(Chest), nameof(Chest.draw),
+            new System.Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) })]
+        internal static class StashDrawPatch
+        {
+            private static bool Prefix(Chest __instance, SpriteBatch spriteBatch, int x, int y, float alpha)
+            {
+                if (!__instance.modData.ContainsKey(StashModDataKey)) return true;
+                if (_stashTexture == null) _stashTexture = _loadStashTexture?.Invoke();
+                if (_stashTexture == null) return true;   // fall back to vanilla (purple-tinted 130)
+
+                float layerDepth = System.Math.Max(0f, ((y + 1) * 64f - 24f) / 10000f) + x * 1E-05f;
+                spriteBatch.Draw(
+                    _stashTexture,
+                    Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64f, (y - 1) * 64f)),
+                    new Rectangle(0, 0, 16, 32),
+                    Color.White * alpha, 0f, Vector2.Zero, 4f, SpriteEffects.None, layerDepth);
+                return false;
+            }
         }
     }
 }

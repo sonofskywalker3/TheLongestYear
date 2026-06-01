@@ -230,6 +230,8 @@ namespace TheLongestYear
             var farmerReset = new FarmerReset(this.Monitor);
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
+            JunimoStashService.SetTextureLoader(
+                () => this.Helper.ModContent.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("assets/junimo_stash.png"));
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
