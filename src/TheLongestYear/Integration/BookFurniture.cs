@@ -38,34 +38,53 @@ namespace TheLongestYear.Integration
 
             foreach (string id in BookKit.AllBookQualifiedIds)
             {
-                // 1. Remove placed copies in every location (collect-then-remove by reference).
+                // Find every existing copy of this book: placed furniture in any location, plus
+                // inventory slots. The invariant is "exactly ONE copy exists somewhere" — a book
+                // the player placed in the world counts, so we must NOT sweep placed copies back
+                // into the inventory on every load (that yanked deliberately-placed books and,
+                // when the bag was full, silently destroyed the overflow).
+                var placed = new System.Collections.Generic.List<(StardewValley.GameLocation loc, StardewValley.Objects.Furniture f)>();
                 StardewValley.Utility.ForEachLocation(loc =>
                 {
-                    var placed = new System.Collections.Generic.List<StardewValley.Objects.Furniture>();
                     foreach (StardewValley.Objects.Furniture f in loc.furniture)
-                        if (f.ItemId == id) placed.Add(f);
-                    foreach (StardewValley.Objects.Furniture f in placed)
-                        loc.furniture.Remove(f);
+                        if (f.ItemId == id) placed.Add((loc, f));
                     return true;
                 });
-
-                // 2. Keep exactly one inventory copy; null out any extras.
-                int kept = 0;
+                var invSlots = new System.Collections.Generic.List<int>();
                 for (int i = 0; i < p.Items.Count; i++)
-                {
-                    if (p.Items[i] != null && p.Items[i].ItemId == id)
-                    {
-                        if (kept == 0) kept = 1;          // keep the first
-                        else p.Items[i] = null;           // drop duplicates
-                    }
-                }
+                    if (p.Items[i] != null && p.Items[i].ItemId == id) invSlots.Add(i);
 
-                // 3. Grant one if none was held (GrantCountToReachOne(0) == 1, (1) == 0).
-                if (BookKit.GrantCountToReachOne(kept) > 0)
-                    p.addItemToInventory(StardewValley.Objects.Furniture.GetFurnitureInstance(id));
+                int total = placed.Count + invSlots.Count;
+
+                if (total == 0)
+                {
+                    // None exists (e.g. just after a loop reset wiped the farm + inventory): grant one.
+                    GrantBookOrDrop(p, id);
+                }
+                else if (total > 1)
+                {
+                    // Duplicates: trim to exactly one. Prefer keeping a placed copy so a book the
+                    // player deliberately set down stays put; remove all the rest.
+                    bool keepPlaced = placed.Count > 0;
+                    for (int i = keepPlaced ? 1 : 0; i < placed.Count; i++)
+                        placed[i].loc.furniture.Remove(placed[i].f);
+                    for (int i = keepPlaced ? 0 : 1; i < invSlots.Count; i++)
+                        p.Items[invSlots[i]] = null;
+                }
+                // total == 1: exactly one exists (carried or placed) — leave it untouched.
             }
 
-            _monitor.Log("BookFurniture: reconciled the three books to exactly one each in inventory.", LogLevel.Info);
+            _monitor.Log("BookFurniture: reconciled books to exactly one of each (placed copies left in place).", LogLevel.Info);
+        }
+
+        /// <summary>Grant one book to the inventory; if the bag is full, drop it at the player's
+        /// feet so it can never be silently lost (the old addItemToInventory discarded overflow).</summary>
+        private static void GrantBookOrDrop(StardewValley.Farmer p, string id)
+        {
+            StardewValley.Objects.Furniture book = StardewValley.Objects.Furniture.GetFurnitureInstance(id);
+            if (!p.addItemToInventoryBool(book))
+                StardewValley.Game1.createItemDebris(
+                    book, new Vector2(p.StandingPixel.X, p.StandingPixel.Y), p.FacingDirection, p.currentLocation);
         }
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
