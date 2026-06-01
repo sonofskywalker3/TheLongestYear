@@ -56,9 +56,15 @@ namespace TheLongestYear.Loop
                 SetSkillLevel(p, skillIndex, level);
             }
 
-            // Re-grant kept tool tiers. Player's toolList still has the vanilla baseline
-            // tools (rusty); just bump their UpgradeLevel. Tool.UpgradeLevel is settable
-            // directly (decompile: StardewValley\StardewValley\Tool.cs:167).
+            // Every run starts with the 5 basic tools. The inventory wipe above removed them
+            // and loadForNewGame does NOT re-grant them (it keeps the existing player), so we
+            // re-add any that are missing here. Without this the player ends a reset toolless
+            // (ApplyToolTiers only BUMPS existing tools, it doesn't create the basics).
+            EnsureBasicTools(p);
+
+            // Re-grant kept tool tiers: bump each basic tool's UpgradeLevel to the kept tier
+            // (capped at the in-run peak by the baseline builder). Tools with no kept tier stay
+            // basic. Tool.UpgradeLevel is settable directly (decompile: Tool.cs:167).
             ApplyToolTiers(p, baseline.ToolTiers);
 
             // Relationships, mail, events, quests.
@@ -126,6 +132,37 @@ namespace TheLongestYear.Loop
                 case 3: p.miningLevel.Value = level; break;
                 case 4: p.combatLevel.Value = level; break;
                 // Luck (5) intentionally excluded — no level keeps for it per the design.
+            }
+        }
+
+        /// <summary>Guarantee the player holds the 5 starting tools (Axe, Hoe, Watering Can,
+        /// Pickaxe, Scythe). Adds any that are missing into the first empty slot, idempotent by
+        /// qualified item id so it never duplicates a tool that survived. Uses the game's own
+        /// <see cref="Farmer.initialTools"/> as the canonical list, so it tracks vanilla.</summary>
+        private static void EnsureBasicTools(Farmer p)
+        {
+            foreach (Item tool in Farmer.initialTools())
+            {
+                bool present = false;
+                foreach (Item held in p.Items)
+                {
+                    if (held != null && held.QualifiedItemId == tool.QualifiedItemId)
+                    {
+                        present = true;
+                        break;
+                    }
+                }
+                if (present)
+                    continue;
+
+                for (int i = 0; i < p.Items.Count; i++)
+                {
+                    if (p.Items[i] == null)
+                    {
+                        p.Items[i] = tool;
+                        break;
+                    }
+                }
             }
         }
 
