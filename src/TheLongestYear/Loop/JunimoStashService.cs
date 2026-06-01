@@ -34,6 +34,10 @@ namespace TheLongestYear.Loop
         /// the config when auto-pick or fallback kicked in).</summary>
         private Vector2? _placedTile;
 
+        /// <summary>The tile the stash was last placed at this session (null if not yet placed).
+        /// Used to position the planning shrine relative to the stash.</summary>
+        public Vector2? LastPlacedTile => _placedTile;
+
         public JunimoStashService(IMonitor monitor, MetaState meta, GameplayConfig config)
         {
             _monitor = monitor;
