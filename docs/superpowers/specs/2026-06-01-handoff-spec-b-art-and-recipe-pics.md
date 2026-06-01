@@ -61,6 +61,23 @@ Note: the books DO function (place + click opens the right menu) and the shrine
 works — only the sprites are bad. The custom-furniture format is therefore confirmed
 working at runtime (registration + interaction), which de-risks the rest of Spec B.
 
+### ShrinePreviewMenu issues found in playtest (2026-06-01)
+
+4. **Title renders ABOVE the box.** In `UI/ShrinePreviewMenu.cs`, the "Junimo Shrine
+   - Planning" title draws at `yPositionOnScreen + 48`, which sits above the dialogue
+   box's visible top. Fix the layout (push the title inside the box, or grow/raise the
+   box). Pure layout fix, independent of Spec A.
+5. **Shows upgrades the player hasn't unlocked in-run** (Loadout section especially),
+   and **6. does NOT show keep options for levels/tiers already gained.** Root cause:
+   the preview reuses only the existing prereq + `MetaRequirement` gating — it has no
+   notion of "what the player actually reached this run." Level/tool keeps are also
+   chain-locked (`keep_X_level_2` needs `keep_X_level_1`), so only tier-1 shows and the
+   reached tier doesn't surface. **These are exactly what Spec A's in-run gating fixes**
+   — build that gating, then have `ShrinePreviewMenu` (and `JunimoShrineMenu`) filter
+   "buyable" through it: only show a keep whose underlying thing the player has reached
+   this run, and surface the highest reached tier rather than chain-hiding it. Treat the
+   preview as a Spec A consumer; do Spec A's gating first, then re-derive the preview.
+
 ## STILL TO VERIFY (Spec B runtime — user is mid-test)
 
 - Books: 3 in inventory; place + click each opens the right menu; fireplace no longer
