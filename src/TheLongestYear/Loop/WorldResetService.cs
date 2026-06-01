@@ -33,6 +33,7 @@ namespace TheLongestYear.Loop
         private readonly ProfessionPickerScheduler _professionPicker;
         private readonly JunimoStashService _stashService;
         private readonly MountainUnlock _mountainUnlock;
+        private readonly TheLongestYear.Integration.BookFurniture _bookFurniture;
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
@@ -46,7 +47,8 @@ namespace TheLongestYear.Loop
             FarmerReset farmerReset,
             ProfessionPickerScheduler professionPicker,
             JunimoStashService stashService,
-            MountainUnlock mountainUnlock)
+            MountainUnlock mountainUnlock,
+            TheLongestYear.Integration.BookFurniture bookFurniture)
         {
             _monitor = monitor;
             _meta = meta;
@@ -58,6 +60,7 @@ namespace TheLongestYear.Loop
             _professionPicker = professionPicker;
             _stashService = stashService;
             _mountainUnlock = mountainUnlock;
+            _bookFurniture = bookFurniture;
         }
 
         public void PerformReset()
@@ -316,6 +319,9 @@ namespace TheLongestYear.Loop
             // Re-clear the Mountain landslide. loadForNewGame rebuilt every location, so the
             // Mountain ctor saw DaysPlayed = 1 and re-initialised landslide.Value = true.
             _mountainUnlock?.Apply();
+
+            // Books are inventory items wiped by FarmerReset; re-grant exactly one of each.
+            _bookFurniture?.ReconcileInventory();
 
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +

@@ -27,6 +27,46 @@ namespace TheLongestYear.Integration
         /// <see cref="CheckForActionPatch"/> to open the matching menu when a book is clicked.</summary>
         public void AttachLauncher(System.Func<TheLongestYear.UI.MenuLauncher> launcher) => _launcher = launcher;
 
+        /// <summary>Per-loop invariant: the player holds exactly one of each book. Remove every
+        /// instance from all locations + the inventory, then grant one back. Keeps the books from
+        /// multiplying or being lost wherever they were left.</summary>
+        public void ReconcileInventory()
+        {
+            StardewValley.Farmer p = StardewValley.Game1.player;
+            if (p == null) return;
+
+            foreach (string id in BookKit.AllBookQualifiedIds)
+            {
+                // 1. Remove placed copies in every location (collect-then-remove by reference).
+                StardewValley.Utility.ForEachLocation(loc =>
+                {
+                    var placed = new System.Collections.Generic.List<StardewValley.Objects.Furniture>();
+                    foreach (StardewValley.Objects.Furniture f in loc.furniture)
+                        if (f.ItemId == id) placed.Add(f);
+                    foreach (StardewValley.Objects.Furniture f in placed)
+                        loc.furniture.Remove(f);
+                    return true;
+                });
+
+                // 2. Keep exactly one inventory copy; null out any extras.
+                int kept = 0;
+                for (int i = 0; i < p.Items.Count; i++)
+                {
+                    if (p.Items[i] != null && p.Items[i].ItemId == id)
+                    {
+                        if (kept == 0) kept = 1;          // keep the first
+                        else p.Items[i] = null;           // drop duplicates
+                    }
+                }
+
+                // 3. Grant one if none was held (GrantCountToReachOne(0) == 1, (1) == 0).
+                if (BookKit.GrantCountToReachOne(kept) > 0)
+                    p.addItemToInventory(StardewValley.Objects.Furniture.GetFurnitureInstance(id));
+            }
+
+            _monitor.Log("BookFurniture: reconciled the three books to exactly one each in inventory.", LogLevel.Info);
+        }
+
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
             if (e.NameWithoutLocale.IsEquivalentTo(BookTextureAsset))
