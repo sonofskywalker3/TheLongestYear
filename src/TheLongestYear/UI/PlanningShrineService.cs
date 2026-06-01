@@ -76,6 +76,22 @@ namespace TheLongestYear.UI
                 if (__instance.ItemId != ShrineId) return true;
                 MetaState state = _state?.Invoke();
                 if (state == null) return true;
+
+                // First open: dismiss the indicator (so the intro quest won't re-add) and
+                // complete the shrine intro quest if it's still in the log.
+                state.DismissedIndicators.Add("tly.shrine");
+                if (Game1.player?.questLog != null)
+                {
+                    foreach (var q in Game1.player.questLog)
+                    {
+                        if (q != null && q.id.Value == "tly.-9005")
+                        {
+                            q.questComplete();
+                            break;
+                        }
+                    }
+                }
+
                 Game1.activeClickableMenu = new ShrinePreviewMenu(state);
                 __result = true;
                 return false;
