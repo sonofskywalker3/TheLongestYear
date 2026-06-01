@@ -49,7 +49,8 @@ internal static class UpgradeCatalogGenerators
                 string desc = $"Start each run with your {displayName} at the {TierNames[tier - 1]} tier " +
                               "or whatever lower tier you actually reached this run, whichever is lower.";
                 yield return new UpgradeDefinition(
-                    id, UpgradeCategory.Loadout, name, desc, ToolTierCosts[tier - 1], prereq);
+                    id, UpgradeCategory.Loadout, name, desc, ToolTierCosts[tier - 1], prereq,
+                    metaRequirement: null, runReachRequirement: $"tool:{slug}:{tier}");
             }
 
         foreach (var (id, name, cost, prereq) in FishingRodTiers)
@@ -96,7 +97,8 @@ internal static class UpgradeCatalogGenerators
                                 ? $" Re-triggers the profession picker for Level {level}."
                                 : "");
                 yield return new UpgradeDefinition(
-                    id, UpgradeCategory.Carryover, name, desc, SkillLevelCosts[level], prereq);
+                    id, UpgradeCategory.Carryover, name, desc, SkillLevelCosts[level], prereq,
+                    metaRequirement: null, runReachRequirement: $"skill:{slug}:{level}");
             }
     }
 
@@ -117,7 +119,7 @@ internal static class UpgradeCatalogGenerators
                 $"Keep Mine Elevator Floor {floor}",
                 $"Start each run with the mine elevator accessible to floor {floor} (or your " +
                 "in-run deepest floor, whichever is shallower).",
-                cost, prereq);
+                cost, prereq, metaRequirement: null, runReachRequirement: $"mine:{floor}");
         }
     }
 }
