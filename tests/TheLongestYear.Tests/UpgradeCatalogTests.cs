@@ -249,4 +249,33 @@ public class UpgradeCatalogTests
         Assert.Equal(0, UpgradeCatalog.CookbookSlotCount(0));
         Assert.Equal(0, UpgradeCatalog.CraftbookSlotCount(0));
     }
+
+    [Fact]
+    public void Tool_keeps_carry_a_tool_reach_requirement()
+    {
+        foreach (UpgradeDefinition u in UpgradeCatalog.All
+                     .Where(u => u.Id.StartsWith("keep_") &&
+                            (u.Id.StartsWith("keep_hoe_") || u.Id.StartsWith("keep_pickaxe_") ||
+                             u.Id.StartsWith("keep_axe_") || u.Id.StartsWith("keep_watering_can_"))))
+        {
+            Assert.NotNull(u.RunReachRequirement);
+            Assert.StartsWith("tool:", u.RunReachRequirement!);
+        }
+    }
+
+    [Fact]
+    public void Skill_level_keeps_carry_a_skill_reach_requirement()
+    {
+        var skillKeeps = UpgradeCatalog.All.Where(u => u.Id.Contains("_level_") && u.Id.StartsWith("keep_")).ToList();
+        Assert.NotEmpty(skillKeeps);
+        foreach (UpgradeDefinition u in skillKeeps)
+            Assert.StartsWith("skill:", u.RunReachRequirement ?? "");
+    }
+
+    [Fact]
+    public void Mine_elevator_keeps_carry_a_mine_reach_requirement()
+    {
+        foreach (UpgradeDefinition u in UpgradeCatalog.All.Where(u => u.Id.StartsWith("keep_mine_elevator_")))
+            Assert.Equal($"mine:{u.Id.Substring("keep_mine_elevator_".Length)}", u.RunReachRequirement);
+    }
 }
