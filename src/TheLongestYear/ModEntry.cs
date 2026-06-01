@@ -256,7 +256,7 @@ namespace TheLongestYear
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
-                _stashService, _mountainUnlock);
+                _stashService, _mountainUnlock, _bookFurniture);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
@@ -292,6 +292,8 @@ namespace TheLongestYear
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
+            // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
+            _bookFurniture.ReconcileInventory();
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
             // not just after reset. AddIntroQuest is idempotent against the questLog, so this
             // safely surfaces quests added in code rounds that pre-date this save (e.g. the
