@@ -48,7 +48,7 @@ internal static class UpgradeCatalogGenerators
                 string id = $"keep_{slug}_{tier}";
                 string? prereq = tier == 1 ? null : $"keep_{slug}_{tier - 1}";
                 string name = $"Keep {TierNames[tier - 1]} {displayName}";
-                string desc = $"Start each run with your {displayName} at the {TierNames[tier - 1]} tier.";
+                string desc = $"Start each loop with your {displayName} at the {TierNames[tier - 1]} tier.";
                 yield return new UpgradeDefinition(
                     id, UpgradeCategory.Loadout, name, desc, ToolTierCosts[tier - 1], prereq,
                     metaRequirement: null, runReachRequirement: $"tool:{slug}:{tier}");
@@ -57,7 +57,7 @@ internal static class UpgradeCatalogGenerators
         foreach (var (id, name, cost, prereq, reach) in FishingRodTiers)
             yield return new UpgradeDefinition(
                 id, UpgradeCategory.Loadout, name,
-                "Start each run with your Fishing Rod at this tier.",
+                "Start each loop with your Fishing Rod at this tier.",
                 cost, prereq, metaRequirement: null, runReachRequirement: reach);
     }
 
@@ -91,7 +91,7 @@ internal static class UpgradeCatalogGenerators
                 string id = $"keep_{slug}_level_{level}";
                 string? prereq = level == 1 ? null : $"keep_{slug}_level_{level - 1}";
                 string name = $"Keep {displayName} Level {level}";
-                string desc = $"Start each run at {displayName} Level {level}. XP is set to the level " +
+                string desc = $"Start each loop at {displayName} Level {level}. XP is set to the level " +
                               "threshold — no half-progress preserved." +
                               (level == 5 || level == 10
                                 ? $" Re-triggers the profession picker for Level {level}."
@@ -117,7 +117,7 @@ internal static class UpgradeCatalogGenerators
             yield return new UpgradeDefinition(
                 id, UpgradeCategory.Carryover,
                 $"Keep Mine Elevator Floor {floor}",
-                $"Start each run with the mine elevator accessible to floor {floor}.",
+                $"Start each loop with the mine elevator accessible to floor {floor}.",
                 cost, prereq, metaRequirement: null, runReachRequirement: $"mine:{floor}");
         }
     }
@@ -136,7 +136,7 @@ internal static class UpgradeCatalogGenerators
             string? prereq = level == 1 ? null : $"keep_mastery_{level - 1}";
             yield return new UpgradeDefinition(
                 id, UpgradeCategory.Carryover, $"Keep Mastery {level}",
-                $"Start each run at Mastery Level {level}. Persists across loops once kept.",
+                $"Start each loop at Mastery Level {level}. Persists across loops once kept.",
                 MasteryCosts[level], prereq, metaRequirement: null, runReachRequirement: $"mastery:{level}");
         }
     }

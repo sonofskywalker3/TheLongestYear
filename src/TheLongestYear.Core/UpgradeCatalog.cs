@@ -56,17 +56,17 @@ public static class UpgradeCatalog
         {
         // Loadout
         new UpgradeDefinition("backpack_1", UpgradeCategory.Loadout, "Backpack I",
-            "Start each run with the 24-slot backpack.", 150,
+            "Start each loop with the 24-slot backpack.", 150,
             metaRequirement: null, runReachRequirement: "backpack:1"),
         new UpgradeDefinition("backpack_2", UpgradeCategory.Loadout, "Backpack II",
-            "Start each run with the 36-slot backpack.", 375, "backpack_1",
+            "Start each loop with the 36-slot backpack.", 375, "backpack_1",
             metaRequirement: null, runReachRequirement: "backpack:2"),
 
         // Golden Scythe — a convenience keep. Reach-gated on having obtained the Golden
         // Scythe this run (mail "gotGoldenScythe"); once owned it is a permanent floor —
         // FarmerReset grants the Golden Scythe instead of the basic scythe every loop.
         new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, "Keep Golden Scythe",
-            "Start each run with the Golden Scythe instead of the basic scythe.", 250,
+            "Start each loop with the Golden Scythe instead of the basic scythe.", 250,
             metaRequirement: null, runReachRequirement: "scythe:golden"),
 
         // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
@@ -75,15 +75,15 @@ public static class UpgradeCatalog
         // means +2500g, not +1000+2500). Highest owned tier wins, same as backpack.
         // Costs match the shop-discount curve since both are similar early-run impact.
         new UpgradeDefinition("starter_gold_1", UpgradeCategory.Loadout, "Seed Money I",
-            "Start each run with +1,000g.", 75),
+            "Start each loop with +1,000g.", 75),
         new UpgradeDefinition("starter_gold_2", UpgradeCategory.Loadout, "Seed Money II",
-            "Start each run with +2,500g.", 175, "starter_gold_1"),
+            "Start each loop with +2,500g.", 175, "starter_gold_1"),
         new UpgradeDefinition("starter_gold_3", UpgradeCategory.Loadout, "Seed Money III",
-            "Start each run with +5,000g.", 350, "starter_gold_2"),
+            "Start each loop with +5,000g.", 350, "starter_gold_2"),
         new UpgradeDefinition("starter_gold_4", UpgradeCategory.Loadout, "Seed Money IV",
-            "Start each run with +10,000g.", 600, "starter_gold_3"),
+            "Start each loop with +10,000g.", 600, "starter_gold_3"),
         new UpgradeDefinition("starter_gold_5", UpgradeCategory.Loadout, "Seed Money V",
-            "Start each run with +25,000g.", 900, "starter_gold_4"),
+            "Start each loop with +25,000g.", 900, "starter_gold_4"),
 
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
@@ -93,27 +93,21 @@ public static class UpgradeCatalog
         // Cookbook: gated by kitchen (HouseUpgradeLevel >= 1) at interaction time, not at purchase.
         // Craftbook: no in-run prereq — available from day 1 of the run after purchase.
         new UpgradeDefinition("cookbook_1", UpgradeCategory.Carryover, "Cookbook I",
-            "Bank up to 5 cooking recipes across runs. The Junimos leave a cookbook on your kitchen counter.",
-            150),
+            "Bank up to 5 cooking recipes between loops.", 150),
         new UpgradeDefinition("cookbook_2", UpgradeCategory.Carryover, "Cookbook II",
-            "Expand your cookbook to 10 recipe slots.",
-            350, "cookbook_1"),
+            "Bank up to 10 cooking recipes between loops.", 350, "cookbook_1"),
         new UpgradeDefinition("cookbook_3", UpgradeCategory.Carryover, "Cookbook III",
-            "Expand your cookbook to 20 recipe slots.",
-            700, "cookbook_2"),
+            "Bank up to 20 cooking recipes between loops.", 700, "cookbook_2"),
         new UpgradeDefinition("craftbook_1", UpgradeCategory.Carryover, "Craftbook I",
-            "Bank up to 5 crafting recipes across runs. The Junimos leave a craftbook on your farmhouse table.",
-            150),
+            "Bank up to 5 crafting recipes between loops.", 150),
         new UpgradeDefinition("craftbook_2", UpgradeCategory.Carryover, "Craftbook II",
-            "Expand your craftbook to 10 recipe slots.",
-            350, "craftbook_1"),
+            "Bank up to 10 crafting recipes between loops.", 350, "craftbook_1"),
         new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, "Craftbook III",
-            "Expand your craftbook to 20 recipe slots.",
-            700, "craftbook_2"),
+            "Bank up to 20 crafting recipes between loops.", 700, "craftbook_2"),
 
         // Efficiency
         new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Early Horse",
-            "Start each run with the horse and stable.", 450),
+            "Start each loop with the horse and stable.", 450),
 
         // Shop Discount — 5-tier chain (2026-05-29 rebalance: was single-tier 5%, now
         // 5/10/15/20/25%. Renamed from shop_discount_5 → shop_discount_1..5; the prior
@@ -257,32 +251,32 @@ public static class UpgradeCatalog
         // are deferred to a later plan; here we only record the entitlement.
         // Coop chain: ~5 runs to bank Keep Coop, more to upgrade.
         new UpgradeDefinition("keep_coop", UpgradeCategory.Buildings, "Keep Coop",
-            "Start each run with a Coop already built.", 600,
+            "Start each loop with a Coop already built.", 600,
             metaRequirement: null, runReachRequirement: "building:Coop"),
         new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, "Keep Big Coop",
-            "Start each run with a Big Coop.", 1200, "keep_coop",
+            "Start each loop with a Big Coop.", 1200, "keep_coop",
             metaRequirement: null, runReachRequirement: "building:Big Coop"),
         new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, "Keep Deluxe Coop",
-            "Start each run with a Deluxe Coop.", 2000, "keep_big_coop",
+            "Start each loop with a Deluxe Coop.", 2000, "keep_big_coop",
             metaRequirement: null, runReachRequirement: "building:Deluxe Coop"),
         new UpgradeDefinition("keep_barn", UpgradeCategory.Buildings, "Keep Barn",
-            "Start each run with a Barn already built.", 600,
+            "Start each loop with a Barn already built.", 600,
             metaRequirement: null, runReachRequirement: "building:Barn"),
         new UpgradeDefinition("keep_big_barn", UpgradeCategory.Buildings, "Keep Big Barn",
-            "Start each run with a Big Barn.", 1200, "keep_barn",
+            "Start each loop with a Big Barn.", 1200, "keep_barn",
             metaRequirement: null, runReachRequirement: "building:Big Barn"),
         new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, "Keep Deluxe Barn",
-            "Start each run with a Deluxe Barn.", 2000, "keep_big_barn",
+            "Start each loop with a Deluxe Barn.", 2000, "keep_big_barn",
             metaRequirement: null, runReachRequirement: "building:Deluxe Barn"),
         new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
-            "Start each run with the Kitchen house upgrade (cooking accessible day 1).", 800,
+            "Start each loop with the Kitchen house upgrade (cooking accessible day 1).", 800,
             metaRequirement: null, runReachRequirement: "house:1"),
         new UpgradeDefinition("keep_basement", UpgradeCategory.Buildings, "Keep Basement",
-            "Start each run with the full L3 farmhouse (kitchen, kids' room, cellar with 33 cask slots) " +
+            "Start each loop with the full L3 farmhouse (kitchen, kids' room, cellar with 33 cask slots) " +
             "and the Cask recipe.", 1800, "keep_kitchen",
             metaRequirement: null, runReachRequirement: "house:3"),
         new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, "Keep Map Shortcuts",
-            "Start each run with all of Robin's map shortcuts pre-cleared.", 900,
+            "Start each loop with all of Robin's map shortcuts pre-cleared.", 900,
             metaRequirement: null, runReachRequirement: "shortcuts:1"),
 
         // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
@@ -298,33 +292,33 @@ public static class UpgradeCatalog
         // Without this upgrade the player has to pay the season's Vault bundle every run by day 28
         // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, "Keep Bus Unlocked",
-            "Start each run with all four Vault bundles already paid — the bus is restored from day 1.",
+            "Start each loop with all four Vault bundles already paid — the bus is restored from day 1.",
             1500, metaRequirement: null, runReachRequirement: "bus:1"),
 
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
         // Coop birds:
         new UpgradeDefinition("start_chicken", UpgradeCategory.Buildings, "Start with Chicken",
-            "Start each run with a Chicken in your Coop.", 400, "keep_coop", "species:Chicken"),
+            "Start each loop with a Chicken in your Coop.", 400, "keep_coop", "species:Chicken"),
         new UpgradeDefinition("start_void_chicken", UpgradeCategory.Buildings, "Start with Void Chicken",
-            "Start each run with a Void Chicken (any Coop tier).", 600, "keep_coop", "species:VoidChicken"),
+            "Start each loop with a Void Chicken (any Coop tier).", 600, "keep_coop", "species:VoidChicken"),
         new UpgradeDefinition("start_duck", UpgradeCategory.Buildings, "Start with Duck",
-            "Start each run with a Duck (Big Coop or better).", 500, "keep_big_coop", "species:Duck"),
+            "Start each loop with a Duck (Big Coop or better).", 500, "keep_big_coop", "species:Duck"),
         new UpgradeDefinition("start_dinosaur", UpgradeCategory.Buildings, "Start with Dinosaur",
-            "Start each run with a Dinosaur (Big Coop or better).", 900, "keep_big_coop", "species:Dinosaur"),
+            "Start each loop with a Dinosaur (Big Coop or better).", 900, "keep_big_coop", "species:Dinosaur"),
         new UpgradeDefinition("start_rabbit", UpgradeCategory.Buildings, "Start with Rabbit",
-            "Start each run with a Rabbit (Deluxe Coop).", 700, "keep_deluxe_coop", "species:Rabbit"),
+            "Start each loop with a Rabbit (Deluxe Coop).", 700, "keep_deluxe_coop", "species:Rabbit"),
         new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, "Start with Ostrich",
-            "Start each run with an Ostrich (Deluxe Coop).", 1500, "keep_deluxe_coop", "species:Ostrich"),
+            "Start each loop with an Ostrich (Deluxe Coop).", 1500, "keep_deluxe_coop", "species:Ostrich"),
         // Barn animals:
         new UpgradeDefinition("start_cow", UpgradeCategory.Buildings, "Start with Cow",
-            "Start each run with a Cow in your Barn.", 400, "keep_barn", "species:Cow"),
+            "Start each loop with a Cow in your Barn.", 400, "keep_barn", "species:Cow"),
         new UpgradeDefinition("start_goat", UpgradeCategory.Buildings, "Start with Goat",
-            "Start each run with a Goat (Big Barn or better).", 500, "keep_big_barn", "species:Goat"),
+            "Start each loop with a Goat (Big Barn or better).", 500, "keep_big_barn", "species:Goat"),
         new UpgradeDefinition("start_sheep", UpgradeCategory.Buildings, "Start with Sheep",
-            "Start each run with a Sheep (Deluxe Barn).", 600, "keep_deluxe_barn", "species:Sheep"),
+            "Start each loop with a Sheep (Deluxe Barn).", 600, "keep_deluxe_barn", "species:Sheep"),
         new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, "Start with Pig",
-            "Start each run with a Pig (Deluxe Barn).", 700, "keep_deluxe_barn", "species:Pig"),
+            "Start each loop with a Pig (Deluxe Barn).", 700, "keep_deluxe_barn", "species:Pig"),
         };
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
