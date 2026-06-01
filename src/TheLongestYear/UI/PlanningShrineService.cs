@@ -69,6 +69,18 @@ namespace TheLongestYear.UI
             _monitor.Log($"PlanningShrineService: placed planning shrine at ({tile.X}, {tile.Y}).", LogLevel.Info);
         }
 
+        /// <summary>Keep the shrine fixed in place (the player can't pick it up), matching the
+        /// home-anchored stash chest — they're both auto-placed fixtures, re-placed each loop.
+        /// canBeRemoved gates furniture pickup in GameLocation; force it false for our shrine.</summary>
+        [HarmonyLib.HarmonyPatch(typeof(StardewValley.Objects.Furniture), nameof(StardewValley.Objects.Furniture.canBeRemoved))]
+        internal static class ShrineCannotBeRemovedPatch
+        {
+            private static void Postfix(StardewValley.Objects.Furniture __instance, ref bool __result)
+            {
+                if (__instance.ItemId == ShrineId) __result = false;
+            }
+        }
+
         /// <summary>Opens the read-only planning menu when the shrine furniture is acted on.</summary>
         [HarmonyLib.HarmonyPatch(typeof(StardewValley.Objects.Furniture), nameof(StardewValley.Objects.Furniture.checkForAction))]
         internal static class ShrineActionPatch
