@@ -16,4 +16,9 @@
     <ProjectReference Include="..\TheLongestYear.Core\TheLongestYear.Core.csproj" />
   </ItemGroup>
 
+  <!-- Placeholder sprites for the placeable interactables (books, planning shrine). -->
+  <ItemGroup>
+    <Content Include="assets\**\*.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
