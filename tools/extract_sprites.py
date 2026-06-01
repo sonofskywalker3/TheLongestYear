@@ -161,16 +161,21 @@ if __name__ == "__main__":
         print(f"saved {name} (index {idx})")
 
     # --- Final mod assets: recolor the real sprites ---------------------------
-    # Stash chest: the green Junimo Chest's full lid-animation frames (256..260),
-    # laid out as an 80x32 strip and recolored purple. The draw patch picks the
-    # frame matching the chest's currentLidFrame so it opens/closes like vanilla.
-    CHEST_FRAMES = list(range(256, 261))
-    strip = Image.new("RGBA", (16 * len(CHEST_FRAMES), 32), (0, 0, 0, 0))
-    for i, idx in enumerate(CHEST_FRAMES):
-        strip.paste(sheet.crop(big_craftable_rect(idx, sheet.width)), (i * 16, 0))
+    # Stash chest: the green Junimo Chest, recolored purple. Vanilla draws a chest
+    # as base body (256) + a lid overlay (currentLidFrame); the overlay frames
+    # (257..261) have NO body of their own, so we composite each over the 256 body
+    # to get five complete frames (closed -> fully open). The draw patch then picks
+    # the frame matching the chest's currentLidFrame.
+    CHEST_OVERLAYS = list(range(257, 262))   # closed -> fully open
+    base = sheet.crop(big_craftable_rect(256, sheet.width))
+    strip = Image.new("RGBA", (16 * len(CHEST_OVERLAYS), 32), (0, 0, 0, 0))
+    for i, idx in enumerate(CHEST_OVERLAYS):
+        frame = base.copy()
+        frame.alpha_composite(sheet.crop(big_craftable_rect(idx, sheet.width)))
+        strip.paste(frame, (i * 16, 0))
     _save(recolor_hue(strip, hue=0.78, sat_scale=0.85, sat_floor=0.22),
           "junimo_stash.png", "junimo_stash_big.png")
     # Planning shrine: the Stone Junimo — green body, golden star.
     junimo = sheet.crop(big_craftable_rect(55, sheet.width))
     _save(recolor_shrine(junimo), "shrine.png", "shrine_big.png")
-    print(f"wrote junimo_stash.png ({len(CHEST_FRAMES)} frames) + shrine.png to assets")
+    print(f"wrote junimo_stash.png ({len(CHEST_OVERLAYS)} frames) + shrine.png to assets")

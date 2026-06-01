@@ -1,8 +1,9 @@
 namespace TheLongestYear.Core.Interactables
 {
     /// <summary>Identity + reconcile rules for the three carried "book" furniture items. The
-    /// per-loop invariant is "exactly one of each in the player's inventory"; the sweep removes
-    /// every world/inventory instance and then grants <see cref="GrantCountToReachOne"/>.</summary>
+    /// per-loop invariant is "exactly ONE copy of each exists" — counting both the inventory and
+    /// books placed in the world, so deliberately-placed books are left where they are. A copy is
+    /// granted only when none exists (e.g. after a loop reset); duplicates are trimmed to one.</summary>
     public static class BookKit
     {
         public const string CookbookId  = "sonofskywalker3.TheLongestYear_Cookbook";
