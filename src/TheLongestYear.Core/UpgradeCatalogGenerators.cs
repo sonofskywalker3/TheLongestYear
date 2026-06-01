@@ -123,4 +123,23 @@ internal static class UpgradeCatalogGenerators
                 cost, prereq, metaRequirement: null, runReachRequirement: $"mine:{floor}");
         }
     }
+
+    // Mastery keep costs, indexed [1..5]. End-game progression (post all-skills-10), so a
+    // steep ramp. Owning a tier is a PERMANENT floor (not in-run-peak capped like skill
+    // keeps) — mastery is hard-won and persists across loops once kept.
+    private static readonly long[] MasteryCosts = { 0, 1000, 1500, 2000, 2750, 3500 };
+
+    /// <summary>Yield the 5 Carryover Keep-Mastery tiers.</summary>
+    public static IEnumerable<UpgradeDefinition> CarryoverMasteryKeeps()
+    {
+        for (int level = 1; level <= 5; level++)
+        {
+            string id = $"keep_mastery_{level}";
+            string? prereq = level == 1 ? null : $"keep_mastery_{level - 1}";
+            yield return new UpgradeDefinition(
+                id, UpgradeCategory.Carryover, $"Keep Mastery {level}",
+                $"Start each run at Mastery Level {level}. Persists across loops once kept.",
+                MasteryCosts[level], prereq, metaRequirement: null, runReachRequirement: $"mastery:{level}");
+        }
+    }
 }

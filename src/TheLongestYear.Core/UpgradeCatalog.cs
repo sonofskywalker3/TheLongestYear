@@ -56,9 +56,18 @@ public static class UpgradeCatalog
         {
         // Loadout
         new UpgradeDefinition("backpack_1", UpgradeCategory.Loadout, "Backpack I",
-            "Start each run with the 24-slot backpack.", 150),
+            "Start each run with the 24-slot backpack.", 150,
+            metaRequirement: null, runReachRequirement: "backpack:1"),
         new UpgradeDefinition("backpack_2", UpgradeCategory.Loadout, "Backpack II",
-            "Start each run with the 36-slot backpack.", 375, "backpack_1"),
+            "Start each run with the 36-slot backpack.", 375, "backpack_1",
+            metaRequirement: null, runReachRequirement: "backpack:2"),
+
+        // Golden Scythe — a convenience keep. Reach-gated on having obtained the Golden
+        // Scythe this run (mail "gotGoldenScythe"); once owned it is a permanent floor —
+        // FarmerReset grants the Golden Scythe instead of the basic scythe every loop.
+        new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, "Keep Golden Scythe",
+            "Start each run with the Golden Scythe instead of the basic scythe.", 250,
+            metaRequirement: null, runReachRequirement: "scythe:golden"),
 
         // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
         // 5-tier with a more generous floor and ceiling per user feedback). Each tier
@@ -311,6 +320,7 @@ public static class UpgradeCatalog
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMineElevatorKeeps());
+        entries.AddRange(UpgradeCatalogGenerators.CarryoverMasteryKeeps());
         return entries;
     }
 }
