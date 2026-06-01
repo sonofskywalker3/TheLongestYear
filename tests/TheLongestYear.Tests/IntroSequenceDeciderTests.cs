@@ -5,10 +5,10 @@ namespace TheLongestYear.Tests;
 
 public class IntroSequenceDeciderTests
 {
-    private static IntroSnapshot Fresh(bool porch = false, bool cc = false, bool eventActive = false) =>
+    private static IntroSnapshot Fresh(bool cc = false, bool eventActive = false) =>
         new IntroSnapshot(
             HasSeenIntro: false, Season: Season.Spring, DayOfMonth: 1,
-            PorchSeen: porch, CcSeen: cc, EventActive: eventActive);
+            CcSeen: cc, EventActive: eventActive);
 
     [Fact]
     public void IsFreshIntroMorning_true_only_on_spring1_unseen()
@@ -27,18 +27,14 @@ public class IntroSequenceDeciderTests
     }
 
     [Fact]
-    public void Fresh_no_flags_starts_porch()
-        => Assert.Equal(IntroAction.StartPorch, IntroSequenceDecider.Next(Fresh()));
+    public void Fresh_no_flags_starts_intro()
+        => Assert.Equal(IntroAction.StartIntro, IntroSequenceDecider.Next(Fresh()));
 
     [Fact]
     public void Event_active_waits()
         => Assert.Equal(IntroAction.Waiting, IntroSequenceDecider.Next(Fresh(eventActive: true)));
 
     [Fact]
-    public void Porch_seen_warps_to_cc()
-        => Assert.Equal(IntroAction.WarpToCc, IntroSequenceDecider.Next(Fresh(porch: true)));
-
-    [Fact]
-    public void Both_seen_opens_picker()
-        => Assert.Equal(IntroAction.OpenPicker, IntroSequenceDecider.Next(Fresh(porch: true, cc: true)));
+    public void Cc_seen_opens_picker()
+        => Assert.Equal(IntroAction.OpenPicker, IntroSequenceDecider.Next(Fresh(cc: true)));
 }

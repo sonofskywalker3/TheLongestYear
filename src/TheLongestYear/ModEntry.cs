@@ -82,7 +82,7 @@ namespace TheLongestYear
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires
             // later in OnSaveLoaded / OnSaving once a save is open.
-            _introInjector = new IntroEventInjector(this.Monitor, _meta, helper);
+            _introInjector = new IntroEventInjector(this.Monitor, _meta);
             // Drives the Lewis->Junimo cutscenes before player control on a fresh run, then opens
             // the picker. _launcher isn't built until OnSaveLoaded, so hand it a lazy accessor.
             _introDriver = new IntroSequenceDriver(this.Monitor, _meta, _config);

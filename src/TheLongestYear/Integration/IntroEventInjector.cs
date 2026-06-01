@@ -1,5 +1,4 @@
 using StardewModdingAPI;
-using StardewModdingAPI.Events;
 using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Intro;
@@ -7,165 +6,94 @@ using TheLongestYear.Core.Intro;
 namespace TheLongestYear.Integration
 {
     /// <summary>
-    /// v1.1 narrative intro: replaces vanilla's day-1 Robin/Lewis welcome with a TLY-specific
-    /// Lewis-on-porch + Junimo-in-CC chain that frames the year-loop stakes (Joja deadline,
-    /// historical-landmark protection, Junimo rewind-on-failure mechanic).
+    /// v1.1 narrative intro content + cross-run bookkeeping. The intro is a SINGLE event the
+    /// <see cref="IntroSequenceDriver"/> starts once on the first morning of a fresh run. Rather
+    /// than warping the player around from the mod (which fights the engine), the event plays the
+    /// porch (Lewis) scene, then uses the vanilla in-event <c>changeLocation</c> command to move
+    /// itself + the player + the camera into the Community Center for the Junimo scene — exactly
+    /// how vanilla stages multi-location cutscenes. When it ends, the engine returns the player to
+    /// where it started (the farmhouse) and the driver opens the theme picker.
     ///
-    /// Two events are injected via SMAPI asset edits:
-    ///   - <c>tly_intro_porch</c> on Data/Events/Farm — Spring 1, Lewis welcomes the player
-    ///     and frames the Joja threat + gives the CC key.
-    ///   - <c>tly_intro_cc</c> on Data/Events/CommunityCenter — fires once the player walks
-    ///     into the CC, a Junimo appears and explains the bundle system + the rewind loop.
-    ///
-    /// Both events are PREPENDED to the dict so they win iteration order against any vanilla
-    /// day-1 farm event (e.g. event 60367 Robin arrival) that shares the Spring-1 precondition.
-    ///
-    /// Gating uses per-run mail flags so vanilla precondition syntax works:
-    ///   - <c>tly_intro_porch_seen</c> — added at end of porch event, gates the CC event in.
-    ///   - <c>tly_intro_cc_seen</c> — added at end of CC event, drives the cross-run flag.
-    ///   - <c>tly_intro_done</c> — injected on SaveLoaded when <see cref="MetaState.HasSeenIntro"/>
-    ///     is already true, suppressing both events on every subsequent loop.
-    ///
-    /// HasSeenIntro is the load-bearing cross-run gate. It's set in <see cref="MarkIntroSeenIfApplicable"/>
-    /// (called from <c>ModEntry.OnSaving</c>) whenever <c>tly_intro_cc_seen</c> is present on the
-    /// player. WorldResetService wipes mailReceived but never touches MetaState, so the flag survives.
+    /// Gating: the event adds <see cref="IntroEventKeys.CcSeenMail"/> at the end;
+    /// <see cref="MarkIntroSeenIfApplicable"/> (from <c>ModEntry.OnSaving</c>) promotes that to the
+    /// cross-run <c>MetaState.HasSeenIntro</c>, which survives resets and suppresses the intro on
+    /// every later loop. <c>tly_replayintro</c> clears it to retest.
     /// </summary>
     internal sealed class IntroEventInjector
     {
-        // Ids + mail flags are owned by TheLongestYear.Core.Intro.IntroEventKeys (the single
-        // source of truth, unit-tested). Aliased here so the existing references read cleanly.
-        // Event ids — string ids work in 1.6+ and live alongside vanilla numeric ids in eventsSeen.
-        private const string PorchEventId = IntroEventKeys.PorchEventId;
-        private const string CcEventId    = IntroEventKeys.CcEventId;
-
-        // Mail flags. Per-run lifecycle: wiped by FarmerReset.loadForNewGame; persists within a
-        // single loop via Farmer.mailReceived (which is part of the save).
-        private const string PorchSeenMail = IntroEventKeys.PorchSeenMail;
-        private const string CcSeenMail    = IntroEventKeys.CcSeenMail;
-        private const string IntroDoneMail = IntroEventKeys.IntroDoneMail;
-
-        // Asset names. SMAPI's NameWithoutLocale comparison is case-insensitive on these.
-        private const string FarmEventsAsset = "Data/Events/Farm";
-        private const string CcEventsAsset   = "Data/Events/CommunityCenter";
-
         private readonly IMonitor _monitor;
         private readonly MetaStore _meta;
 
-        public IntroEventInjector(IMonitor monitor, MetaStore meta, IModHelper helper)
+        public IntroEventInjector(IMonitor monitor, MetaStore meta)
         {
             _monitor = monitor;
             _meta = meta;
-            helper.Events.Content.AssetRequested += this.OnAssetRequested;
         }
 
-        /// <summary>Called from <c>ModEntry.OnSaveLoaded</c> after MetaStore.Load(). When the
-        /// player has already seen the intro on a prior loop, plant the <c>tly_intro_done</c>
-        /// mail flag so the two event preconditions fail and neither event fires.</summary>
+        /// <summary>Called from <c>ModEntry.OnSaveLoaded</c>. When the player has already seen the
+        /// intro on a prior loop, plant the legacy done flag (kept for replay bookkeeping).</summary>
         public void ApplyMailFlagsForRun()
         {
             if (!_meta.State.HasSeenIntro) return;
             if (Game1.player == null) return;
-            if (!Game1.player.mailReceived.Contains(IntroDoneMail))
-                Game1.player.mailReceived.Add(IntroDoneMail);
+            if (!Game1.player.mailReceived.Contains(IntroEventKeys.IntroDoneMail))
+                Game1.player.mailReceived.Add(IntroEventKeys.IntroDoneMail);
         }
 
-        /// <summary>Called from <c>ModEntry.OnSaving</c> just before persisting MetaState.
-        /// If the CC event has completed this run (its end-command adds the mail flag),
-        /// promote the run flag to the cross-run <see cref="MetaState.HasSeenIntro"/> so
-        /// the upcoming reset can't lose it.</summary>
+        /// <summary>Called from <c>ModEntry.OnSaving</c>. If the intro event finished this run (it
+        /// adds the cc-seen flag), promote it to the cross-run <see cref="MetaState.HasSeenIntro"/>
+        /// so the upcoming reset can't lose it.</summary>
         public void MarkIntroSeenIfApplicable()
         {
             if (_meta.State.HasSeenIntro) return;
             if (Game1.player == null) return;
-            if (Game1.player.mailReceived.Contains(CcSeenMail))
+            if (Game1.player.mailReceived.Contains(IntroEventKeys.CcSeenMail))
             {
                 _meta.State.HasSeenIntro = true;
                 _monitor.Log(
-                    "IntroEventInjector: tly_intro_cc_seen detected — promoting to MetaState.HasSeenIntro.",
+                    "IntroEventInjector: intro completed — promoting to MetaState.HasSeenIntro.",
                     LogLevel.Info);
             }
         }
 
-        /// <summary>Debug helper: clear MetaState.HasSeenIntro AND wipe the per-run mail flags
-        /// so a <c>tly_reset</c> back to Spring 1 re-fires the intro chain. Used by
-        /// <c>tly_replayintro</c>.</summary>
+        /// <summary>Debug helper for <c>tly_replayintro</c>: clear the cross-run flag + the per-run
+        /// mail/eventsSeen entries so a <c>tly_reset</c> back to Spring 1 re-fires the intro.</summary>
         public void ClearIntroState()
         {
             _meta.State.HasSeenIntro = false;
             if (Game1.player != null)
             {
-                Game1.player.mailReceived.Remove(PorchSeenMail);
-                Game1.player.mailReceived.Remove(CcSeenMail);
-                Game1.player.mailReceived.Remove(IntroDoneMail);
-                Game1.player.eventsSeen.Remove(PorchEventId);
-                Game1.player.eventsSeen.Remove(CcEventId);
+                Game1.player.mailReceived.Remove(IntroEventKeys.CcSeenMail);
+                Game1.player.mailReceived.Remove(IntroEventKeys.IntroDoneMail);
+                Game1.player.eventsSeen.Remove(IntroEventKeys.IntroEventId);
             }
             _monitor.Log(
-                "IntroEventInjector: cleared HasSeenIntro + porch/cc mail flags + eventsSeen entries. " +
-                "Run tly_reset and walk out of the farmhouse to retest the intro.",
+                "IntroEventInjector: cleared HasSeenIntro + intro mail/eventsSeen entries. " +
+                "Run tly_reset to retest the intro.",
                 LogLevel.Warn);
         }
 
-        private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
+        // ---- Event script ------------------------------------------------------------------
+
+        /// <summary>The combined intro event script (the value half of a Data/Events entry — no key
+        /// or preconditions, since the driver starts it explicitly). Scene 1 is the farm porch with
+        /// Lewis; <c>changeLocation CommunityCenter</c> carries the scene into the CC for the Junimo;
+        /// it ends by setting the cc-seen flag. No blocking <c>move</c> commands (a blocked move
+        /// hangs the event); actors are placed with <c>warp</c>/<c>addTemporaryActor</c> instead.</summary>
+        internal static string BuildIntroEvent() => string.Join("/", new[]
         {
-            if (e.NameWithoutLocale.IsEquivalentTo(FarmEventsAsset))
-            {
-                e.Edit(asset => PrependEntry(asset, PorchEventKey(), PorchEventScript()),
-                    AssetEditPriority.Default);
-            }
-            else if (e.NameWithoutLocale.IsEquivalentTo(CcEventsAsset))
-            {
-                e.Edit(asset => PrependEntry(asset, CcEventKey(), CcEventScript()),
-                    AssetEditPriority.Default);
-            }
-        }
-
-        /// <summary>Insert <paramref name="key"/>=<paramref name="value"/> at the FRONT of the
-        /// dict so vanilla's first-precondition-match-wins iteration picks our entry before
-        /// any vanilla day-1 event on the same location. Existing entries are re-added in
-        /// their original order behind ours.</summary>
-        private static void PrependEntry(IAssetData asset, string key, string value)
-        {
-            var data = asset.AsDictionary<string, string>().Data;
-            if (data.ContainsKey(key))
-                return; // already injected — idempotent across asset reloads
-            var existing = new System.Collections.Generic.Dictionary<string, string>(data);
-            data.Clear();
-            data[key] = value;
-            foreach (var kv in existing)
-                data[kv.Key] = kv.Value;
-        }
-
-        // ---- Event script authoring --------------------------------------------------------
-
-        /// <summary>Porch event key with preconditions (id + slash-separated prereqs):
-        ///   u 1            — day-of-month 1
-        ///   Season spring  — spring season (TLY resets the calendar so this re-evaluates true on every loop start)
-        ///   !n porch_seen  — not already seen this run (porch event end adds this flag, so a save+reload mid-run won't refire)
-        ///   !n intro_done  — cross-run gate; set on save load when MetaState.HasSeenIntro is true
-        /// Keys built in <see cref="IntroEventKeys"/> so the precondition letters are unit-tested
-        /// (the original D/s/m were Dating/Shipped/EarnedMoney — every check failed and nothing fired).
-        /// </summary>
-        private static string PorchEventKey() => IntroEventKeys.PorchKey;
-
-        /// <summary>CC event key. Gates on porch event having fired this run (so the chain is
-        /// forward-only — player has to go through Lewis first), plus the same cross-run done flag.
-        /// </summary>
-        private static string CcEventKey() => IntroEventKeys.CcKey;
-
-        /// <summary>Porch event. Lewis spawns south of the standard farmhouse, welcomes the
-        /// player, frames the Joja deadline + historical-landmark protection, hands over the
-        /// key, walks off south. Player remains on the farm to walk to town. Ends with the
-        /// porch_seen mail flag so the CC event becomes eligible.</summary>
-        /// <summary>The porch (Lewis) event script value. Exposed so <see cref="IntroSequenceDriver"/>
-        /// can start it explicitly (auto-fire-on-warp proved unreliable for the chained CC event).</summary>
-        internal static string PorchEventScript() => string.Join("/", new[]
-        {
-            "none",                                  // music: keep current (or none)
-            "66 18",                                 // viewport: center on the porch (valid tile — -1500 -2000 pointed off-map → black screen)
-            "farmer 66 18 1 Lewis 68 18 3",          // actors: player at (66,18) facing east; Lewis at (68,18) facing west
+            "none",                                  // music
+            "8 8",                                   // initial viewport (farmhouse) — changeLocation follows at once
+            "farmer 8 8 2",                          // farmer in the farmhouse; repositioned per-scene below
             "skippable",
-            "pause 1200",
+
+            // ---- Scene 1: the farm porch (Lewis) ----
+            "changeLocation Farm",
+            "warp farmer 66 18 true",
+            "addTemporaryActor Lewis 16 32 68 18 3 true Character",
+            "viewport 66 18 true",
+            "faceDirection farmer 1",
+            "pause 1000",
             "speak Lewis \"Hi there, @. Welcome to the valley.#$b#I'm Lewis — mayor of Pelican Town. I came up to greet you and your new farm.$h\"",
             "pause 200",
             "speak Lewis \"I wanted to be the first to say it... but I'm afraid I have to apologize for the timing.$s\"",
@@ -182,32 +110,13 @@ namespace TheLongestYear.Integration
             "playSound coin",
             "pause 800",
             "speak Lewis \"Good luck out there, @. Pelican Town's rooting for you.$h\"",
-            "pause 500",
-            "faceDirection Lewis 2",                 // Lewis turns to head off — no walk command (a blocked `move` hangs the event)
             "pause 600",
-            $"addMailReceived {PorchSeenMail}",
-            "end"
-        });
 
-        /// <summary>CC event. Player spawns just inside the south door, walks north into the
-        /// hall, looks around (faceDirection cycle stands in for an animation), a Junimo drops
-        /// in from the north, gives the bundle pitch + the loop-rewind framing, hops away.
-        /// Ends with the cc_seen mail flag — which MarkIntroSeenIfApplicable promotes to
-        /// MetaState.HasSeenIntro on the next save.</summary>
-        /// <summary>The CC (Junimo) event script value. Exposed for <see cref="IntroSequenceDriver"/>
-        /// to start explicitly.</summary>
-        internal static string CcEventScript() => string.Join("/", new[]
-        {
-            "none",
-            "32 14",                                             // viewport: center on the hall (valid tile — was -1500 -2000 → black)
-            "farmer 32 16 0",                                    // player stands in the hall facing north (no `move` — a blocked move hangs the event)
-            "skippable",
+            // ---- Scene 2: the Community Center (Junimo) ----
+            "changeLocation CommunityCenter",
+            "warp farmer 32 16 true",
             "addTemporaryActor Junimo 16 16 32 11 2 false character Junimo",
-            "pause 1000",
-            "faceDirection farmer 1",
-            "pause 400",
-            "faceDirection farmer 3",
-            "pause 400",
+            "viewport 32 14 true",
             "faceDirection farmer 0",
             "pause 800",
             "playSound junimoMeep1",
@@ -235,8 +144,8 @@ namespace TheLongestYear.Integration
             "speak Junimo \"Good luck, @. Spring 1 is yours.$h\"",
             "pause 600",
             "playSound junimoMeep1",
-            "pause 1200",
-            $"addMailReceived {CcSeenMail}",
+            "pause 1000",
+            $"addMailReceived {IntroEventKeys.CcSeenMail}",
             "end"
         });
     }

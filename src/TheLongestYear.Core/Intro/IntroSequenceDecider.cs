@@ -4,10 +4,9 @@ namespace TheLongestYear.Core.Intro
     public enum IntroAction
     {
         None,        // not a fresh-intro context — let the normal flow run
-        Waiting,     // a cutscene is playing — do nothing
-        StartPorch,  // warp to the Farm so the porch (Lewis) event fires
-        WarpToCc,    // porch done — warp into the Community Center so the Junimo event fires
-        OpenPicker   // both cutscenes done — warp home and open the theme picker
+        Waiting,     // an event is playing (or just ended) — do nothing
+        StartIntro,  // fresh morning, intro not played yet — start the combined intro event
+        OpenPicker   // intro done — open the theme picker
     }
 
     /// <summary>Immutable snapshot of the inputs the decider needs (no game refs).</summary>
@@ -15,7 +14,6 @@ namespace TheLongestYear.Core.Intro
         bool HasSeenIntro,
         Season Season,
         int DayOfMonth,
-        bool PorchSeen,
         bool CcSeen,
         bool EventActive);
 
@@ -26,7 +24,8 @@ namespace TheLongestYear.Core.Intro
             => !hasSeenIntro && season == Season.Spring && dayOfMonth == 1;
     }
 
-    /// <summary>Pure step machine. Mail flags (PorchSeen/CcSeen) are the progression state.</summary>
+    /// <summary>Pure step machine. The single intro event ends by setting CcSeen, which is how the
+    /// driver knows the cutscene is finished and the picker should open.</summary>
     public static class IntroSequenceDecider
     {
         public static IntroAction Next(IntroSnapshot s)
@@ -35,10 +34,8 @@ namespace TheLongestYear.Core.Intro
                 return IntroAction.None;
             if (s.EventActive)
                 return IntroAction.Waiting;
-            if (!s.PorchSeen)
-                return IntroAction.StartPorch;
             if (!s.CcSeen)
-                return IntroAction.WarpToCc;
+                return IntroAction.StartIntro;
             return IntroAction.OpenPicker;
         }
     }
