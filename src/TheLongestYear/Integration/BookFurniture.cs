@@ -15,12 +15,17 @@ namespace TheLongestYear.Integration
         internal const string BookTextureAsset = "Mods/sonofskywalker3.TheLongestYear/Books";
 
         private readonly IMonitor _monitor;
+        private static System.Func<TheLongestYear.UI.MenuLauncher> _launcher;
 
         public BookFurniture(IMonitor monitor, IModHelper helper)
         {
             _monitor = monitor;
             helper.Events.Content.AssetRequested += this.OnAssetRequested;
         }
+
+        /// <summary>Lazy launcher accessor (the launcher isn't built until OnSaveLoaded). Used by
+        /// <see cref="CheckForActionPatch"/> to open the matching menu when a book is clicked.</summary>
+        public void AttachLauncher(System.Func<TheLongestYear.UI.MenuLauncher> launcher) => _launcher = launcher;
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
@@ -41,6 +46,28 @@ namespace TheLongestYear.Integration
                     data[BookKit.CraftbookId] = $"Craftbook/decor/1 1/1 1/1/0/-1/The Longest Year Craftbook/1/{BookTextureAsset}";
                     data[BookKit.BundleLogId] = $"BundleLog/decor/1 1/1 1/1/0/-1/The Longest Year Bundle Log/2/{BookTextureAsset}";
                 }, AssetEditPriority.Default);
+            }
+        }
+
+        /// <summary>Open the matching menu when one of our book furniture items is acted on
+        /// (place it, then press the action button). Returns false to swallow vanilla furniture
+        /// behavior for our ids. Furniture's QualifiedItemId is "(F)" + ItemId.</summary>
+        [HarmonyLib.HarmonyPatch(typeof(StardewValley.Objects.Furniture), nameof(StardewValley.Objects.Furniture.checkForAction))]
+        internal static class CheckForActionPatch
+        {
+            private static bool Prefix(StardewValley.Objects.Furniture __instance, bool justCheckingForActivity, ref bool __result)
+            {
+                if (justCheckingForActivity) return true;
+                TheLongestYear.UI.MenuLauncher launcher = _launcher?.Invoke();
+                if (launcher == null) return true;
+
+                switch (__instance.ItemId)
+                {
+                    case BookKit.CookbookId:  launcher.OpenCookbook();    __result = true; return false;
+                    case BookKit.CraftbookId: launcher.OpenCraftbook();   __result = true; return false;
+                    case BookKit.BundleLogId: launcher.OpenSeasonGoals(); __result = true; return false;
+                    default: return true;
+                }
             }
         }
     }
