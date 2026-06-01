@@ -137,7 +137,7 @@ namespace TheLongestYear.Integration
             "pause 300",
             "speak Junimo \"When the year unwinds, all of it returns — the fields, the buildings, even the folk you have come to know.#$b#What you gathered in the world is lost.$s\"",
             "pause 300",
-            "speak Junimo \"But the strength of your own hands is not. The skill you earn and the tools you hone stay with you.#$b#And the work you give us feeds our power, which we pour back into each new turning.#$b#So every beginning is a little kinder than the last.$h\"",
+            "speak Junimo \"But the skills you have learned, and some of what you have done, need not be lost.#$b#The offerings you give us become our power...#$b#...and we will spend it to help you hold on to some of what you have gained, so each beginning is a little kinder than the last.$h\"",
             "pause 300",
             "speak Junimo \"We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Will you work the land with us, @?$h\"",
             "pause 800",
