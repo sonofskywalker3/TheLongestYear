@@ -56,11 +56,21 @@ namespace TheLongestYear.Loop
                 SetSkillLevel(p, skillIndex, level);
             }
 
+            // Mastery — permanent floor from Keep Mastery. Set the global MasteryExp stat to the
+            // threshold for the kept level so MasteryTrackerMenu.getCurrentMasteryLevel() reports it.
+            if (baseline.MasteryLevel > 0)
+            {
+                int needed = StardewValley.Menus.MasteryTrackerMenu.getMasteryExpNeededForLevel(baseline.MasteryLevel);
+                Game1.stats.Set("MasteryExp", needed);
+            }
+
             // Every run starts with the 5 basic tools. The inventory wipe above removed them
             // and loadForNewGame does NOT re-grant them (it keeps the existing player), so we
             // re-add any that are missing here. Without this the player ends a reset toolless
             // (ApplyToolTiers only BUMPS existing tools, it doesn't create the basics).
-            EnsureBasicTools(p);
+            EnsureBasicTools(p, skipBasicScythe: baseline.GrantGoldenScythe);
+            if (baseline.GrantGoldenScythe)
+                GrantGoldenScythe(p);
 
             // Re-grant kept tool tiers: bump each basic tool's UpgradeLevel to the kept tier
             // (capped at the in-run peak by the baseline builder). Tools with no kept tier stay
@@ -139,10 +149,15 @@ namespace TheLongestYear.Loop
         /// Pickaxe, Scythe). Adds any that are missing into the first empty slot, idempotent by
         /// qualified item id so it never duplicates a tool that survived. Uses the game's own
         /// <see cref="Farmer.initialTools"/> as the canonical list, so it tracks vanilla.</summary>
-        private static void EnsureBasicTools(Farmer p)
+        private static void EnsureBasicTools(Farmer p, bool skipBasicScythe = false)
         {
             foreach (Item tool in Farmer.initialTools())
             {
+                // The basic scythe is the MeleeWeapon in the initial-tools set; skip it when the
+                // player has Keep Golden Scythe (GrantGoldenScythe grants (W)53 instead).
+                if (skipBasicScythe && tool is StardewValley.Tools.MeleeWeapon)
+                    continue;
+
                 bool present = false;
                 foreach (Item held in p.Items)
                 {
@@ -164,6 +179,18 @@ namespace TheLongestYear.Loop
                     }
                 }
             }
+        }
+
+        /// <summary>Add the Golden Scythe (W)53 into the first empty slot if not already held.</summary>
+        private static void GrantGoldenScythe(Farmer p)
+        {
+            const string goldenScytheQid = "(W)53";
+            foreach (Item held in p.Items)
+                if (held != null && held.QualifiedItemId == goldenScytheQid)
+                    return;
+            Item scythe = StardewValley.ItemRegistry.Create(goldenScytheQid);
+            for (int i = 0; i < p.Items.Count; i++)
+                if (p.Items[i] == null) { p.Items[i] = scythe; return; }
         }
 
         private static void ApplyToolTiers(Farmer p, IReadOnlyDictionary<string, int> tiers)
