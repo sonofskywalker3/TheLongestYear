@@ -94,16 +94,19 @@ public static class RunBaselineBuilder
         }
 
         // Fishing rod — explicit keep-id → UpgradeLevel mapping (HighestKeptTier can't see the
-        // tier-0 Bamboo keep). 1=bamboo, 2=fiberglass, 3=iridium = FishingRod.UpgradeLevel.
+        // tier-0 Bamboo keep). FishingRod.UpgradeLevel: 0=bamboo, 2=fiberglass, 3=iridium
+        // (1=Training Rod, no keep). Bamboo legitimately maps to 0, so we use -1 as the
+        // "no rod keep owned" sentinel and a -1 rod-peak default ("no rod reached this run")
+        // — both distinct from a real bamboo (0).
         int rodUpgradeLevel =
             meta.HasUpgrade("keep_fishing_rod_2") ? 3 :
             meta.HasUpgrade("keep_fishing_rod_1") ? 2 :
-            meta.HasUpgrade("keep_fishing_rod_0") ? 1 : 0;
-        if (rodUpgradeLevel > 0)
+            meta.HasUpgrade("keep_fishing_rod_0") ? 0 : -1;
+        if (rodUpgradeLevel >= 0)
         {
-            int rodPeak = peaks.ToolTiers.TryGetValue("fishing_rod", out int rp) ? rp : 0;
+            int rodPeak = peaks.ToolTiers.TryGetValue("fishing_rod", out int rp) ? rp : -1;
             int rodCapped = System.Math.Min(rodUpgradeLevel, rodPeak);
-            if (rodCapped > 0)
+            if (rodCapped >= 0)
                 toolTiers["fishing_rod"] = rodCapped;
         }
 

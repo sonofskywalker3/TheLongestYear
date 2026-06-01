@@ -297,16 +297,36 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
-    public void Bamboo_rod_keep_grants_upgrade_level_1_capped_at_peak()
+    public void Bamboo_rod_keep_grants_upgrade_level_0_capped_at_peak()
     {
-        var meta = new MetaState { OwnedUpgrades = { "keep_fishing_rod_0" } };   // Bamboo
+        // Bamboo Pole = FishingRod.UpgradeLevel 0.
+        var meta = new MetaState { OwnedUpgrades = { "keep_fishing_rod_0" } };
         var peaks = new PlayerSnapshot
         {
-            ToolTiers = new Dictionary<string, int> { ["fishing_rod"] = 1 },     // reached bamboo this run
+            ToolTiers = new Dictionary<string, int> { ["fishing_rod"] = 0 },     // reached bamboo this run
         };
         var baseline = RunBaselineBuilder.Build(meta, new RunState(), peaks, 0);
         Assert.True(baseline.ToolTiers.TryGetValue("fishing_rod", out int lvl));
-        Assert.Equal(1, lvl);
+        Assert.Equal(0, lvl);
+    }
+
+    [Fact]
+    public void No_rod_keep_means_no_fishing_rod_in_baseline()
+    {
+        // No rod keep owned + no rod reached -> the builder writes nothing (the -1 sentinel
+        // is distinct from a real bamboo at UpgradeLevel 0).
+        var baseline = RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 0);
+        Assert.False(baseline.ToolTiers.ContainsKey("fishing_rod"));
+    }
+
+    [Fact]
+    public void Bamboo_keep_without_reaching_a_rod_grants_nothing()
+    {
+        // Owns the bamboo keep but reached no rod this run (empty peaks) -> not granted
+        // (capped against the in-run peak, which is "no rod").
+        var meta = new MetaState { OwnedUpgrades = { "keep_fishing_rod_0" } };
+        var baseline = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 0);
+        Assert.False(baseline.ToolTiers.ContainsKey("fishing_rod"));
     }
 
     [Fact]

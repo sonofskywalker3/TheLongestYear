@@ -291,7 +291,7 @@ public class UpgradeCatalogTests
         Assert.Equal("Keep Bamboo Pole", bamboo.DisplayName);
         Assert.Equal(25, bamboo.Cost);
         Assert.Null(bamboo.PrerequisiteId);
-        Assert.Equal("rod:1", bamboo.RunReachRequirement);
+        Assert.Equal("rod:0", bamboo.RunReachRequirement);
 
         UpgradeDefinition fiberglass = UpgradeCatalog.TryGet("keep_fishing_rod_1")!;
         Assert.Equal("keep_fishing_rod_0", fiberglass.PrerequisiteId);

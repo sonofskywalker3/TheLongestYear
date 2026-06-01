@@ -18,9 +18,10 @@ public sealed class RunBaseline
 
     /// <summary>Tool kind slug → <c>Tool.UpgradeLevel</c> the player starts the run holding.
     /// Slug list: <c>hoe</c>, <c>pickaxe</c>, <c>axe</c>, <c>watering_can</c> (0..4 each),
-    /// and <c>fishing_rod</c> (2 = Fiberglass, 3 = Iridium — bamboo at UpgradeLevel 1 is
-    /// vanilla Willy day-2 grant, not represented). Missing keys mean "leave at the vanilla
-    /// baseline that Game1.loadForNewGame produced" (rusty hoe/pickaxe/axe/watering can; no rod).</summary>
+    /// and <c>fishing_rod</c> (0 = Bamboo, 2 = Fiberglass, 3 = Iridium — UpgradeLevel 1 is the
+    /// Training Rod, which has no keep). A present <c>fishing_rod</c> key (even value 0) means
+    /// "grant that rod at run start"; a missing key means "leave at the vanilla baseline that
+    /// Game1.loadForNewGame produced" (rusty hoe/pickaxe/axe/watering can; no rod until Willy).</summary>
     public IReadOnlyDictionary<string, int> ToolTiers { get; init; }
         = new Dictionary<string, int>();
 

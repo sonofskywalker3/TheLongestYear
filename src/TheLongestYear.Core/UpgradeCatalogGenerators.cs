@@ -29,11 +29,12 @@ internal static class UpgradeCatalogGenerators
     private static readonly string[] TierNames = { "Copper", "Steel", "Gold", "Iridium" };
 
     // Fishing rod chain. 2026-06-01 (Spec A): added the Bamboo Pole root so the rod
-    // chain mirrors the tool chains; reach gating (rod:N where 1=bamboo, 2=fiberglass,
-    // 3=iridium = FishingRod.UpgradeLevel) keeps un-earned tiers out of the shop.
+    // chain mirrors the tool chains; reach gating (rod:N = FishingRod.UpgradeLevel, where
+    // 0=bamboo, 2=fiberglass, 3=iridium — UpgradeLevel 1 is the Training Rod, which has no
+    // keep) keeps un-earned tiers out of the shop.
     private static readonly (string Id, string DisplayName, long Cost, string? Prereq, string Reach)[] FishingRodTiers =
     {
-        ("keep_fishing_rod_0", "Keep Bamboo Pole",     25,  null,                 "rod:1"),
+        ("keep_fishing_rod_0", "Keep Bamboo Pole",     25,  null,                 "rod:0"),
         ("keep_fishing_rod_1", "Keep Fiberglass Rod",  150, "keep_fishing_rod_0", "rod:2"),
         ("keep_fishing_rod_2", "Keep Iridium Rod",     425, "keep_fishing_rod_1", "rod:3"),
     };
