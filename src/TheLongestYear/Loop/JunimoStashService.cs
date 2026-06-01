@@ -106,6 +106,8 @@ namespace TheLongestYear.Loop
             // current StashSlotCount so the ItemGrabMenu only shows the unlocked slot count.
             var chest = new Chest(playerChest: true, tile, itemId: "256");
             chest.SpecialChestType = Chest.SpecialChestTypes.None;
+            // Distinct purple/gold tint so the stash is never confused with a vanilla Junimo Chest.
+            chest.playerChoiceColor.Value = new Microsoft.Xna.Framework.Color(150, 90, 200);
             chest.modData[StashModDataKey] = "1";
             farm.objects[tile] = chest;
             _placedTile = tile;
