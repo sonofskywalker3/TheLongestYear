@@ -41,7 +41,10 @@ namespace TheLongestYear.UI
                 {
                     var data = asset.AsDictionary<string, string>().Data;
                     // 1x2 decoration (16x32 sprite), no placement restriction, free.
-                    data[ShrineId] = $"Planning Shrine/decor/1 2/1 1/1/0/-1/Junimo Planning Shrine/0/{ShrineTextureAsset}";
+                    // Texture path uses backslashes: Data/Furniture is split on '/', so a "Mods/.../Shrine"
+                    // path would be truncated to "Mods" in field 9. SMAPI normalizes '\' vs '/'.
+                    string tex = ShrineTextureAsset.Replace('/', '\\');
+                    data[ShrineId] = $"Planning Shrine/decor/1 2/1 1/1/0/-1/Junimo Planning Shrine/0/{tex}";
                 }, AssetEditPriority.Default);
             }
         }

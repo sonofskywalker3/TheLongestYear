@@ -82,9 +82,13 @@ namespace TheLongestYear.Integration
                     var data = asset.AsDictionary<string, string>().Data;
                     // Format: name/type/tilesheetSize/boundingBox/rotations/price/placementRestriction/DisplayName/spriteIndex/texture
                     // type "decor", 1x1 tile, 1 rotation, free, no placement restriction (-1).
-                    data[BookKit.CookbookId]  = $"Cookbook/decor/1 1/1 1/1/0/-1/The Longest Year Cookbook/0/{BookTextureAsset}";
-                    data[BookKit.CraftbookId] = $"Craftbook/decor/1 1/1 1/1/0/-1/The Longest Year Craftbook/1/{BookTextureAsset}";
-                    data[BookKit.BundleLogId] = $"BundleLog/decor/1 1/1 1/1/0/-1/The Longest Year Bundle Log/2/{BookTextureAsset}";
+                    // The texture asset path MUST use backslashes here: Data/Furniture is split on '/'
+                    // (FurnitureDataDefinition.GetRawData), so a "Mods/.../Books" path would be truncated
+                    // to "Mods" in field 9. SMAPI normalizes '\' vs '/', so it still matches registration.
+                    string tex = BookTextureAsset.Replace('/', '\\');
+                    data[BookKit.CookbookId]  = $"Cookbook/decor/1 1/1 1/1/0/-1/The Longest Year Cookbook/0/{tex}";
+                    data[BookKit.CraftbookId] = $"Craftbook/decor/1 1/1 1/1/0/-1/The Longest Year Craftbook/1/{tex}";
+                    data[BookKit.BundleLogId] = $"BundleLog/decor/1 1/1 1/1/0/-1/The Longest Year Bundle Log/2/{tex}";
                 }, AssetEditPriority.Default);
             }
         }
