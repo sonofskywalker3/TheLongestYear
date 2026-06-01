@@ -13,7 +13,7 @@ namespace TheLongestYear.UI
         private readonly List<string> _lines = new();
 
         public ShrinePreviewMenu(MetaState state)
-            : base(Game1.uiViewport.Width / 2 - 400, Game1.uiViewport.Height / 2 - 300, 800, 600, showUpperRightCloseButton: true)
+            : base(Game1.uiViewport.Width / 2 - 420, Game1.uiViewport.Height / 2 - 320, 840, 640, showUpperRightCloseButton: true)
         {
             _lines.Add($"Junimo Points banked: {state.JunimoPoints}");
             _lines.Add("");
@@ -21,15 +21,15 @@ namespace TheLongestYear.UI
             foreach (UpgradeCategory cat in System.Enum.GetValues(typeof(UpgradeCategory)))
             {
                 var owned = new List<string>();
-                var buyable = new List<string>();
                 foreach (UpgradeDefinition def in UpgradeCatalog.ByCategory(cat))
-                {
                     if (state.HasUpgrade(def.Id))
                         owned.Add($"   [x] {def.DisplayName}");
-                    else if ((def.PrerequisiteId == null || state.HasUpgrade(def.PrerequisiteId))
-                             && state.MeetsMetaRequirement(def.MetaRequirement))
-                        buyable.Add($"   [ ] {def.DisplayName}  ({def.Cost} JP)");
-                }
+
+                var buyable = new List<string>();
+                foreach (UpgradeDefinition def in
+                         KeepShopFilter.BuyableInCategory(cat, state, TheLongestYear.Integration.RunReachEvaluator.Meets))
+                    buyable.Add($"   [ ] {def.DisplayName}  ({def.Cost} JP)");
+
                 if (owned.Count == 0 && buyable.Count == 0)
                     continue;
                 _lines.Add($"{cat}:");
@@ -43,16 +43,20 @@ namespace TheLongestYear.UI
         {
             Game1.drawDialogueBox(xPositionOnScreen, yPositionOnScreen, width, height, speaker: false, drawOnlyBox: true);
             Utility.drawTextWithShadow(b, "Junimo Shrine - Planning", Game1.dialogueFont,
-                new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 48), Game1.textColor);
+                new Vector2(xPositionOnScreen + 80, yPositionOnScreen + 96), Game1.textColor);
 
-            int y = yPositionOnScreen + 110;
+            int y = yPositionOnScreen + 150;
             foreach (string line in _lines)
             {
                 Utility.drawTextWithShadow(b, line, Game1.smallFont,
-                    new Vector2(xPositionOnScreen + 64, y), Game1.textColor);
-                y += 30;
-                if (y > yPositionOnScreen + height - 80)
-                    break;   // simple clamp — the preview is a planning glance, not a full scroll list
+                    new Vector2(xPositionOnScreen + 80, y), Game1.textColor);
+                y += 28;
+                if (y > yPositionOnScreen + height - 90)
+                {
+                    Utility.drawTextWithShadow(b, "   …more (see the reset shrine)", Game1.smallFont,
+                        new Vector2(xPositionOnScreen + 80, y), Game1.textColor);
+                    break;   // planning glance; full list + purchasing is the loop-boundary shrine
+                }
             }
 
             base.draw(b);
