@@ -4,9 +4,10 @@ namespace TheLongestYear.Core;
 
 /// <summary>
 /// Pure builder that derives a <see cref="RunBaseline"/> from <see cref="MetaState"/> (banked
-/// upgrades), <see cref="RunState"/> (per-run peak for mine floor), and <see cref="PlayerSnapshot"/>
-/// (per-run peaks for tool tiers + skill levels). All three peak sources feed the cap-not-grant
-/// rule: a keep upgrade only restores what the player actually achieved this run. No game refs.
+/// upgrades). A keep is a PERMANENT floor: owning it always restores its tier/level. There is no
+/// per-run cap — the shrine already reach-gates PURCHASES (you can only buy a keep for a tier you
+/// actually reached this run), so a separate grant-time cap would be redundant. The <c>run</c> and
+/// <c>peaks</c> parameters are retained for signature stability but are no longer read. No game refs.
 /// </summary>
 public static class RunBaselineBuilder
 {
@@ -86,52 +87,35 @@ public static class RunBaselineBuilder
         foreach (string slug in ToolSlugs)
         {
             int owned = meta.HighestKeptTier($"keep_{slug}_", maxTier: 4);
-            if (owned <= 0) continue;
-            int peak = peaks.ToolTiers.TryGetValue(slug, out int p) ? p : 0;
-            int capped = System.Math.Min(owned, peak);
-            if (capped > 0)
-                toolTiers[slug] = capped;
+            if (owned > 0)
+                toolTiers[slug] = owned;
         }
 
         // Fishing rod — explicit keep-id → UpgradeLevel mapping (HighestKeptTier can't see the
         // tier-0 Bamboo keep). FishingRod.UpgradeLevel: 0=bamboo, 2=fiberglass, 3=iridium
-        // (1=Training Rod, no keep). Bamboo legitimately maps to 0, so we use -1 as the
-        // "no rod keep owned" sentinel and a -1 rod-peak default ("no rod reached this run")
-        // — both distinct from a real bamboo (0).
+        // (1=Training Rod, no keep). -1 is the "no rod keep owned" sentinel (distinct from bamboo 0).
         int rodUpgradeLevel =
             meta.HasUpgrade("keep_fishing_rod_2") ? 3 :
             meta.HasUpgrade("keep_fishing_rod_1") ? 2 :
             meta.HasUpgrade("keep_fishing_rod_0") ? 0 : -1;
         if (rodUpgradeLevel >= 0)
-        {
-            int rodPeak = peaks.ToolTiers.TryGetValue("fishing_rod", out int rp) ? rp : -1;
-            int rodCapped = System.Math.Min(rodUpgradeLevel, rodPeak);
-            if (rodCapped >= 0)
-                toolTiers["fishing_rod"] = rodCapped;
-        }
+            toolTiers["fishing_rod"] = rodUpgradeLevel;
 
-        // Skill levels + profession re-pick queue — capped at in-run peak per skill.
+        // Skill levels + profession re-pick queue.
         var skillLevels = new Dictionary<int, int>();
         var requeue = new List<int>();
         foreach (var (slug, skillIndex) in SkillSlugs)
         {
             int owned = meta.HighestKeptTier($"keep_{slug}_level_", maxTier: 10);
             if (owned <= 0) continue;
-            int peak = peaks.SkillLevels.TryGetValue(skillIndex, out int sp) ? sp : 0;
-            int capped = System.Math.Min(owned, peak);
-            if (capped <= 0) continue;
-
-            skillLevels[skillIndex] = capped;
-            // Profession picker fires for the L5 and L10 thresholds that the CAPPED
-            // level actually crosses. Owning keep_farming_level_5 but capped to L4
-            // means no profession picker for Farming this reset.
-            if (capped >= 5)
+            skillLevels[skillIndex] = owned;
+            // Profession picker fires for the L5 / L10 thresholds the kept level crosses.
+            if (owned >= 5)
                 requeue.Add(skillIndex);
         }
 
-        // Mine elevator floor (cap-not-grant against in-run peak from RunState).
+        // Mine elevator floor.
         int ownedFloor = HighestOwnedMineFloor(meta);
-        int cappedFloor = System.Math.Min(ownedFloor, FloorDown10(run.PeakMineFloor));
 
         // Kept buildings — highest tier per chain wins
         var keptBuildings = new List<string>();
@@ -154,7 +138,7 @@ public static class RunBaselineBuilder
             ToolTiers = toolTiers,
             SkillLevels = skillLevels,
             ProfessionPickerSkillsToRequeue = requeue,
-            MineElevatorFloor = cappedFloor,
+            MineElevatorFloor = ownedFloor,
             KitchenOnDay1 = meta.HasUpgrade("keep_kitchen"),
             BasementOnDay1 = meta.HasUpgrade("keep_basement"),
             ShortcutsUnlocked = meta.HasUpgrade("keep_shortcuts"),
@@ -166,12 +150,6 @@ public static class RunBaselineBuilder
             GrantGoldenScythe = meta.HasUpgrade("keep_golden_scythe"),
         };
     }
-
-    // Floors come in steps of 10 (keep_mine_elevator_10/20/30/…). Round PeakMineFloor
-    // DOWN to the nearest 10 so a player who reached floor 47 with keep_50 owned ends up
-    // at floor 40, not 47 (the elevator only stops at multiples of 5 in vanilla anyway —
-    // 5/10/15/… — but our keep tiers are documented as 10-step).
-    private static int FloorDown10(int floor) => (floor / 10) * 10;
 
     private static int HighestOwnedMineFloor(MetaState meta)
     {

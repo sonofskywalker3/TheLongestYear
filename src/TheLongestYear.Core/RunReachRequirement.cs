@@ -29,9 +29,10 @@ public sealed class RunReachRequirement
         if (string.IsNullOrWhiteSpace(raw))
             return null;
         string[] parts = raw.Split(':');
-        // Flag form: scythe:golden (treated as threshold 1; the evaluator supplies 0/1).
-        if (parts.Length == 2 && parts[0] == "scythe" && parts[1] == "golden")
-            return new RunReachRequirement("scythe", "golden", 1);
+        // Keyed-flag form for metrics whose value is a name, not a number (the evaluator
+        // supplies 0/1): scythe:golden, building:Coop, building:Big Coop, ...
+        if (parts.Length == 2 && parts[1].Length > 0 && (parts[0] == "scythe" || parts[0] == "building"))
+            return new RunReachRequirement(parts[0], parts[1], 1);
         // 2-part numeric: metric:threshold (rod / backpack / mine / mastery).
         if (parts.Length == 2 && parts[0].Length > 0 && int.TryParse(parts[1], out int t2))
             return new RunReachRequirement(parts[0], null, t2);

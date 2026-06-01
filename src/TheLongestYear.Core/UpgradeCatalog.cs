@@ -257,25 +257,32 @@ public static class UpgradeCatalog
         // are deferred to a later plan; here we only record the entitlement.
         // Coop chain: ~5 runs to bank Keep Coop, more to upgrade.
         new UpgradeDefinition("keep_coop", UpgradeCategory.Buildings, "Keep Coop",
-            "Start each run with a Coop already built.", 600),
+            "Start each run with a Coop already built.", 600,
+            metaRequirement: null, runReachRequirement: "building:Coop"),
         new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, "Keep Big Coop",
-            "Start each run with a Big Coop instead of a Coop.", 1200, "keep_coop"),
+            "Start each run with a Big Coop instead of a Coop.", 1200, "keep_coop",
+            metaRequirement: null, runReachRequirement: "building:Big Coop"),
         new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, "Keep Deluxe Coop",
-            "Start each run with a Deluxe Coop.", 2000, "keep_big_coop"),
+            "Start each run with a Deluxe Coop.", 2000, "keep_big_coop",
+            metaRequirement: null, runReachRequirement: "building:Deluxe Coop"),
         new UpgradeDefinition("keep_barn", UpgradeCategory.Buildings, "Keep Barn",
-            "Start each run with a Barn already built.", 600),
+            "Start each run with a Barn already built.", 600,
+            metaRequirement: null, runReachRequirement: "building:Barn"),
         new UpgradeDefinition("keep_big_barn", UpgradeCategory.Buildings, "Keep Big Barn",
-            "Start each run with a Big Barn.", 1200, "keep_barn"),
+            "Start each run with a Big Barn.", 1200, "keep_barn",
+            metaRequirement: null, runReachRequirement: "building:Big Barn"),
         new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, "Keep Deluxe Barn",
-            "Start each run with a Deluxe Barn.", 2000, "keep_big_barn"),
+            "Start each run with a Deluxe Barn.", 2000, "keep_big_barn",
+            metaRequirement: null, runReachRequirement: "building:Deluxe Barn"),
         new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
-            "Start each run with the Kitchen house upgrade (cooking accessible day 1).", 800),
+            "Start each run with the Kitchen house upgrade (cooking accessible day 1).", 800,
+            metaRequirement: null, runReachRequirement: "house:1"),
         new UpgradeDefinition("keep_basement", UpgradeCategory.Buildings, "Keep Basement",
             "Start each run with the full L3 farmhouse (kitchen, kids' room, cellar with 33 cask slots) " +
-            "and the Cask recipe.", 1800, "keep_kitchen"),
+            "and the Cask recipe.", 1800, "keep_kitchen",
+            metaRequirement: null, runReachRequirement: "house:3"),
         new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, "Keep Map Shortcuts",
-            "Start each run with all five of Robin's map shortcuts pre-built (Town fence, bus tunnel, " +
-            "forest stump bridge, Mountain→Quarry, Mountain→Town).", 900),
+            "Start each run with all of Robin's map shortcuts pre-cleared.", 900),
 
         // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
         // across loops. 2026-05-29 spec: sentimental upgrade, not progression-gating —
@@ -283,7 +290,8 @@ public static class UpgradeCatalog
         // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
         // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
         new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, "Keep Pet",
-            "Your pet returns at the start of every loop with its name and friendship hearts intact.", 75),
+            "Your pet returns at the start of every loop with its name and friendship hearts intact.", 75,
+            metaRequirement: null, runReachRequirement: "pet:1"),
 
         // Vault — pre-pay all four bus bundles once and keep them paid across resets.
         // Without this upgrade the player has to pay the season's Vault bundle every run by day 28

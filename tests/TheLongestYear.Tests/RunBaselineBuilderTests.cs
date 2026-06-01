@@ -87,30 +87,30 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
-    public void Tool_keep_tier_is_capped_at_in_run_peak()
+    public void Tool_keep_tier_is_granted_in_full_regardless_of_peak()
     {
-        // Player owns keep_hoe_1 through keep_hoe_4 (Iridium) but only reached
-        // Steel (UpgradeLevel 2) this run. Cap to Steel.
+        // Permanent floor: owning keep_hoe_4 (Iridium) always starts the run at Iridium.
+        // The in-run peak no longer caps the grant (the purchase was already reach-gated).
         var meta = new MetaState
         {
             OwnedUpgrades = { "keep_hoe_1", "keep_hoe_2", "keep_hoe_3", "keep_hoe_4" }
         };
         var snapshot = new PlayerSnapshot
         {
-            ToolTiers = new Dictionary<string, int> { ["hoe"] = 2 }
+            ToolTiers = new Dictionary<string, int> { ["hoe"] = 2 }   // ignored now
         };
         var b = RunBaselineBuilder.Build(meta, new RunState(), snapshot, 500);
-        Assert.Equal(2, b.ToolTiers["hoe"]);
+        Assert.Equal(4, b.ToolTiers["hoe"]);
     }
 
     [Fact]
-    public void Tool_keep_tier_with_zero_peak_yields_no_entry()
+    public void Tool_keep_tier_granted_even_with_zero_peak()
     {
-        // Owns keep_hoe_2 but somehow ended the run with no hoe upgrade (sold it?).
-        // Snapshot peak = 0 → no entry written, vanilla rusty hoe baseline.
+        // Owns keep_hoe_2; the grant no longer depends on the in-run peak, so the Steel hoe
+        // is restored regardless of what the player held at run end.
         var meta = new MetaState { OwnedUpgrades = { "keep_hoe_1", "keep_hoe_2" } };
         var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
-        Assert.False(b.ToolTiers.ContainsKey("hoe"));
+        Assert.Equal(2, b.ToolTiers["hoe"]);
     }
 
     [Fact]
@@ -140,20 +140,16 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
-    public void Skill_keep_level_appears_in_SkillLevels_capped_at_in_run_peak()
+    public void Skill_keep_level_appears_in_SkillLevels_in_full()
     {
+        // Owned keep levels are granted in full (no in-run-peak cap).
         var meta = new MetaState
         {
             OwnedUpgrades = { "keep_farming_level_1", "keep_farming_level_2", "keep_combat_level_5" }
         };
-        // Reached Farming 2 (capped), Combat 3 (cap kicks in below the kept L5).
-        var snapshot = new PlayerSnapshot
-        {
-            SkillLevels = new Dictionary<int, int> { [Farming] = 2, [Combat] = 3 }
-        };
-        var b = RunBaselineBuilder.Build(meta, new RunState(), snapshot, 500);
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
         Assert.Equal(2, b.SkillLevels[Farming]);
-        Assert.Equal(3, b.SkillLevels[Combat]);
+        Assert.Equal(5, b.SkillLevels[Combat]);
         Assert.DoesNotContain(Fishing, b.SkillLevels.Keys);
     }
 
@@ -185,10 +181,10 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
-    public void Profession_picker_skipped_when_peak_did_not_reach_the_threshold()
+    public void Profession_picker_requeues_for_owned_L5_regardless_of_peak()
     {
-        // Owns keep_farming_level_5 but only reached Farming 4 this run. Capped to 4,
-        // no profession picker queued.
+        // Owns keep_farming_level_5 -> Farming starts at L5 and the profession picker is
+        // requeued, independent of the in-run peak.
         var meta = new MetaState
         {
             OwnedUpgrades =
@@ -197,17 +193,13 @@ public class RunBaselineBuilderTests
                 "keep_farming_level_4", "keep_farming_level_5"
             }
         };
-        var snapshot = new PlayerSnapshot
-        {
-            SkillLevels = new Dictionary<int, int> { [Farming] = 4 }
-        };
-        var b = RunBaselineBuilder.Build(meta, new RunState(), snapshot, 500);
-        Assert.Equal(4, b.SkillLevels[Farming]);
-        Assert.DoesNotContain(Farming, b.ProfessionPickerSkillsToRequeue);
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Equal(5, b.SkillLevels[Farming]);
+        Assert.Contains(Farming, b.ProfessionPickerSkillsToRequeue);
     }
 
     [Fact]
-    public void Mine_elevator_keep_is_capped_at_in_run_peak_floor()
+    public void Mine_elevator_keep_grants_owned_floor_regardless_of_peak()
     {
         var meta = new MetaState
         {
@@ -218,11 +210,9 @@ public class RunBaselineBuilderTests
                 "keep_mine_elevator_70","keep_mine_elevator_80"   // owns up to F80
             }
         };
-        var run = new RunState { PeakMineFloor = 55 };  // only reached F55 this run
-
-        // Restored floor = floor down to the nearest 10 of min(80, 55) = 50.
+        var run = new RunState { PeakMineFloor = 55 };  // ignored now
         var b = RunBaselineBuilder.Build(meta, run, PlayerSnapshot.Empty, 500);
-        Assert.Equal(50, b.MineElevatorFloor);
+        Assert.Equal(80, b.MineElevatorFloor);
     }
 
     [Fact]
@@ -297,15 +287,11 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
-    public void Bamboo_rod_keep_grants_upgrade_level_0_capped_at_peak()
+    public void Bamboo_rod_keep_grants_upgrade_level_0()
     {
-        // Bamboo Pole = FishingRod.UpgradeLevel 0.
+        // Bamboo Pole = FishingRod.UpgradeLevel 0; permanent floor once owned.
         var meta = new MetaState { OwnedUpgrades = { "keep_fishing_rod_0" } };
-        var peaks = new PlayerSnapshot
-        {
-            ToolTiers = new Dictionary<string, int> { ["fishing_rod"] = 0 },     // reached bamboo this run
-        };
-        var baseline = RunBaselineBuilder.Build(meta, new RunState(), peaks, 0);
+        var baseline = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 0);
         Assert.True(baseline.ToolTiers.TryGetValue("fishing_rod", out int lvl));
         Assert.Equal(0, lvl);
     }
@@ -313,19 +299,9 @@ public class RunBaselineBuilderTests
     [Fact]
     public void No_rod_keep_means_no_fishing_rod_in_baseline()
     {
-        // No rod keep owned + no rod reached -> the builder writes nothing (the -1 sentinel
-        // is distinct from a real bamboo at UpgradeLevel 0).
+        // No rod keep owned -> the builder writes nothing (the -1 sentinel is distinct from
+        // a real bamboo at UpgradeLevel 0).
         var baseline = RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 0);
-        Assert.False(baseline.ToolTiers.ContainsKey("fishing_rod"));
-    }
-
-    [Fact]
-    public void Bamboo_keep_without_reaching_a_rod_grants_nothing()
-    {
-        // Owns the bamboo keep but reached no rod this run (empty peaks) -> not granted
-        // (capped against the in-run peak, which is "no rod").
-        var meta = new MetaState { OwnedUpgrades = { "keep_fishing_rod_0" } };
-        var baseline = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 0);
         Assert.False(baseline.ToolTiers.ContainsKey("fishing_rod"));
     }
 
