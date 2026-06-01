@@ -295,4 +295,33 @@ public class RunBaselineBuilderTests
         Assert.Contains(b.StartingAnimals, a => a.VanillaType == "White Chicken" && a.HousingType == "Coop");
         Assert.Contains(b.StartingAnimals, a => a.VanillaType == "White Cow" && a.HousingType == "Barn");
     }
+
+    [Fact]
+    public void Bamboo_rod_keep_grants_upgrade_level_1_capped_at_peak()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_fishing_rod_0" } };   // Bamboo
+        var peaks = new PlayerSnapshot
+        {
+            ToolTiers = new Dictionary<string, int> { ["fishing_rod"] = 1 },     // reached bamboo this run
+        };
+        var baseline = RunBaselineBuilder.Build(meta, new RunState(), peaks, 0);
+        Assert.True(baseline.ToolTiers.TryGetValue("fishing_rod", out int lvl));
+        Assert.Equal(1, lvl);
+    }
+
+    [Fact]
+    public void Golden_scythe_keep_sets_baseline_flag()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_golden_scythe" } };
+        var baseline = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 0);
+        Assert.True(baseline.GrantGoldenScythe);
+    }
+
+    [Fact]
+    public void Mastery_keep_sets_baseline_level_as_permanent_floor()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_mastery_1", "keep_mastery_2", "keep_mastery_3" } };
+        var baseline = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 0);
+        Assert.Equal(3, baseline.MasteryLevel);
+    }
 }

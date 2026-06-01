@@ -29,12 +29,6 @@ public static class RunBaselineBuilder
 
     private static readonly string[] ToolSlugs = { "hoe", "pickaxe", "axe", "watering_can" };
 
-    // Fishing rod chain offset: keep_fishing_rod_1 = Fiberglass = UpgradeLevel 2,
-    // keep_fishing_rod_2 = Iridium = UpgradeLevel 3. (UpgradeLevel 1 = bamboo, given
-    // by Willy on day 2 of vanilla — no keep needed.)
-    private const int FishingRodKeepToUpgradeLevelOffset = 1;
-    private const int FishingRodMaxKeepTier = 2;
-
     // Coop and Barn chains. Each entry: (keep_id, building blueprint name). The highest
     // owned in each chain wins.
     private static readonly (string UpgradeId, string Blueprint)[] CoopChain =
@@ -99,14 +93,16 @@ public static class RunBaselineBuilder
                 toolTiers[slug] = capped;
         }
 
-        // Fishing rod — translate keep-tier to UpgradeLevel (offset of 1) and cap at
-        // in-run peak's UpgradeLevel.
-        int rodKeep = meta.HighestKeptTier("keep_fishing_rod_", maxTier: FishingRodMaxKeepTier);
-        if (rodKeep > 0)
+        // Fishing rod — explicit keep-id → UpgradeLevel mapping (HighestKeptTier can't see the
+        // tier-0 Bamboo keep). 1=bamboo, 2=fiberglass, 3=iridium = FishingRod.UpgradeLevel.
+        int rodUpgradeLevel =
+            meta.HasUpgrade("keep_fishing_rod_2") ? 3 :
+            meta.HasUpgrade("keep_fishing_rod_1") ? 2 :
+            meta.HasUpgrade("keep_fishing_rod_0") ? 1 : 0;
+        if (rodUpgradeLevel > 0)
         {
-            int rodKeepAsUpgradeLevel = rodKeep + FishingRodKeepToUpgradeLevelOffset;
             int rodPeak = peaks.ToolTiers.TryGetValue("fishing_rod", out int rp) ? rp : 0;
-            int rodCapped = System.Math.Min(rodKeepAsUpgradeLevel, rodPeak);
+            int rodCapped = System.Math.Min(rodUpgradeLevel, rodPeak);
             if (rodCapped > 0)
                 toolTiers["fishing_rod"] = rodCapped;
         }
@@ -163,6 +159,8 @@ public static class RunBaselineBuilder
             EarlyHorse = meta.HasUpgrade("early_horse"),
             KeptBuildings = keptBuildings,
             StartingAnimals = startingAnimals,
+            MasteryLevel = MasteryFloor(meta),
+            GrantGoldenScythe = meta.HasUpgrade("keep_golden_scythe"),
         };
     }
 
@@ -193,5 +191,16 @@ public static class RunBaselineBuilder
                 output.Add(chain[i].Blueprint);
                 return;
             }
+    }
+
+    // Highest owned keep_mastery_N (1..5). Permanent floor — NOT capped at in-run peak,
+    // unlike skill/tool keeps (mastery is hard-won end-game progression).
+    private static int MasteryFloor(MetaState meta)
+    {
+        int best = 0;
+        for (int n = 1; n <= 5; n++)
+            if (meta.HasUpgrade($"keep_mastery_{n}"))
+                best = n;
+        return best;
     }
 }
