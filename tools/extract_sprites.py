@@ -106,6 +106,27 @@ def big_craftable_rect(index, sheet_w):
     return (x, y, x + 16, y + 32)
 
 
+def recolor_chest(img, hue=0.78, dark_cutoff=0.30):
+    """Purple-and-black recolor: bright/coloured pixels become purple, but DARK pixels
+    (outlines, shading, the chest's deep recesses) are kept neutral black instead of
+    being tinted purple — that's the 'purple and black' look the user wants."""
+    out = img.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            _, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if v < dark_cutoff:                       # dark -> neutral near-black (no purple tint)
+                nr, ng, nb = colorsys.hsv_to_rgb(0.0, 0.0, v * 0.8)
+            else:                                     # coloured -> purple, original shading kept
+                ns = min(1.0, s * 0.9 + 0.12)
+                nr, ng, nb = colorsys.hsv_to_rgb(hue, ns, v)
+            px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
+    return out
+
+
 def recolor_hue(img, hue, sat_scale=0.7, sat_floor=0.20):
     """Set every visible pixel to a fixed hue, keeping its brightness so the
     original sculpt/shading survives. Used to recolor real game sprites."""
@@ -173,8 +194,7 @@ if __name__ == "__main__":
         frame = base.copy()
         frame.alpha_composite(sheet.crop(big_craftable_rect(idx, sheet.width)))
         strip.paste(frame, (i * 16, 0))
-    _save(recolor_hue(strip, hue=0.78, sat_scale=0.85, sat_floor=0.22),
-          "junimo_stash.png", "junimo_stash_big.png")
+    _save(recolor_chest(strip), "junimo_stash.png", "junimo_stash_big.png")
     # Planning shrine: the Stone Junimo — green body, golden star.
     junimo = sheet.crop(big_craftable_rect(55, sheet.width))
     _save(recolor_shrine(junimo), "shrine.png", "shrine_big.png")
