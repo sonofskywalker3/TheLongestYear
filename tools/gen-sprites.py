@@ -103,15 +103,19 @@ books.save(os.path.join(OUT, "books.png"))
 save_preview(books, "books_preview.png")
 
 # ---------------------------------------------------------------------------
-# Shrine: 16x32 little stone altar with a glowing green junimo alcove and a
-# stepped stone base, so it reads as a shrine rather than a flat block.
+# Shrine: 16x32. A green junimo statue (the classic round body + big dark eyes +
+# leaf sprout) sitting on a small stone altar. The junimo occupies the upper
+# 16px tile; the altar is the lower (footprint) tile.
 # ---------------------------------------------------------------------------
-STONE = (132, 130, 138)
-STONE_DK = (92, 90, 100)
-STONE_LT = (170, 168, 176)
-GLOW = (96, 200, 96)
-GLOW_HI = (170, 240, 150)
-GLOW_DK = (40, 120, 50)
+STONE = (138, 132, 120)
+STONE_DK = (96, 90, 80)
+STONE_LT = (176, 170, 156)
+JUNI = (108, 196, 78)
+JUNI_DK = (60, 132, 52)
+JUNI_HI = (170, 226, 120)
+EYE = (28, 30, 30)
+EYE_HI = (235, 240, 235)
+LEAF = (86, 178, 70)
 
 shrine = Image.new("RGBA", (16, 32), TRANSPARENT)
 
@@ -124,31 +128,65 @@ def sfill(x0, x1, y0, y1, c):
     fill(shrine, x0, x1, y0, y1, c)
 
 
-# Pillar / shrine body (a rounded-top pedestal column).
-sfill(4, 11, 6, 26, STONE)
-# Rounded top: trim the top corners.
-for x, y in [(4, 6), (11, 6)]:
-    sput(x, y, TRANSPARENT)
-sput(5, 5, STONE)
-sput(6, 5, STONE_LT)
-sfill(7, 8, 4, 4, STONE_LT)  # crown highlight
-sfill(7, 8, 5, 5, STONE)
-
-# Glowing alcove where the junimo sits.
-sfill(6, 9, 10, 16, GLOW_DK)
-sfill(6, 9, 11, 15, GLOW)
-sfill(7, 8, 12, 14, GLOW_HI)
-
-# Left/right shading on the body for volume.
-for y in range(6, 27):
+# --- Stone altar (lower tile) -------------------------------------------------
+# Pillar.
+sfill(4, 11, 17, 25, STONE)
+# Top slab the junimo sits on.
+sfill(3, 12, 15, 16, STONE_LT)
+sfill(3, 12, 17, 17, STONE)
+# Stepped base.
+sfill(3, 12, 26, 27, STONE_DK)
+sfill(2, 13, 28, 29, STONE)
+sfill(2, 13, 30, 30, STONE_DK)
+# Side shading for volume.
+for y in range(17, 26):
     sput(4, y, STONE_DK)
     sput(11, y, STONE_LT)
+# A couple of carved seams.
+for y in (19, 22):
+    sfill(5, 10, y, y, STONE_DK)
 
-# Stepped base.
-sfill(3, 12, 27, 28, STONE_DK)
-sfill(2, 13, 29, 30, STONE)
-for x in range(2, 14):
-    sput(x, 30, STONE_DK)
+# --- Junimo statue (upper tile) ----------------------------------------------
+# Rounded dome body: per-row x-spans (narrow at top, full width, flat bottom).
+BODY_ROWS = {
+    2: (7, 8),
+    3: (6, 9),
+    4: (5, 10),
+    5: (4, 11),
+    6: (4, 11),
+    7: (3, 12),
+    8: (3, 12),
+    9: (3, 12),
+    10: (3, 12),
+    11: (3, 12),
+    12: (3, 12),
+    13: (4, 11),
+    14: (4, 11),
+}
+for y, (x0, x1) in BODY_ROWS.items():
+    sfill(x0, x1, y, y, JUNI)
+
+# Outline (darker green) around the body edge + bottom shadow.
+for y, (x0, x1) in BODY_ROWS.items():
+    sput(x0, y, JUNI_DK)
+    sput(x1, y, JUNI_DK)
+sfill(4, 11, 14, 14, JUNI_DK)         # grounded bottom edge
+for x in range(7, 9):                  # top cap outline
+    sput(x, 1, JUNI_DK)
+
+# Highlight on the upper-left for roundness.
+sfill(5, 6, 4, 5, JUNI_HI)
+sput(4, 6, JUNI_HI)
+
+# Leaf sprout on top.
+sput(8, 0, LEAF)
+sput(7, 1, LEAF)
+sput(9, 1, JUNI_DK)
+
+# Big dark eyes with a highlight glint.
+for ex in (5, 9):
+    sfill(ex, ex + 1, 8, 10, EYE)
+    sput(ex, 8, EYE_HI)
 
 shrine.save(os.path.join(OUT, "shrine.png"))
 save_preview(shrine, "shrine_preview.png")
