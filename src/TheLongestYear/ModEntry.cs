@@ -291,6 +291,7 @@ namespace TheLongestYear
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
+            _bookFurniture.AttachLauncher(() => _launcher);
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
             // not just after reset. AddIntroQuest is idempotent against the questLog, so this
             // safely surfaces quests added in code rounds that pre-date this save (e.g. the
