@@ -31,13 +31,13 @@ namespace TheLongestYear.UI
         /// empty CC at any point and the player still needs to read the bundle.</summary>
         private const int BulletinBoardNoteTileIndex = 1799;
 
-        /// <summary>Half-width (and half-height) of the rectangular hit area centered on the
-        /// configured Season Goals tile. 2026-05-28 user ask: "the spot for checking the
-        /// bundle data is a little off to the left of the center space on the fireplace,
-        /// could you make it work anywhere on the fireplace?" Half-extent = 1 gives a 3x3
-        /// tile area, which covers a typical CC fireplace footprint regardless of how the
-        /// player anchored the center tile with tly_setboard.</summary>
-        private const int SeasonGoalsHitRadius = 1;
+        /// <summary>Half-extents of the rectangular hit area centered on the configured Season
+        /// Goals tile. The CC fireplace is WIDE (and short), so a symmetric 3x3 (radius 1) left
+        /// the far-right hearth tile un-interactable (2026-06-01 playtest). Widen horizontally to
+        /// half-width 2 (a 5-tile-wide span) while keeping half-height 1 (3 tiles tall), so any
+        /// tile along the hearth opens the tracker without reaching into unrelated tiles above.</summary>
+        private const int SeasonGoalsHitHalfWidth  = 2;
+        private const int SeasonGoalsHitHalfHeight = 1;
 
         public static void ConnectTo(IModHelper helper, IMonitor monitor, GameplayConfig config,
             Func<MenuLauncher> launcherAccessor)
@@ -60,8 +60,8 @@ namespace TheLongestYear.UI
                 // press action). See SeasonGoalsHitRadius for the rationale.
                 int dx = tileLocation.X - _instance.Config.SeasonGoalsBoardTileX;
                 int dy = tileLocation.Y - _instance.Config.SeasonGoalsBoardTileY;
-                if (System.Math.Abs(dx) <= SeasonGoalsHitRadius
-                    && System.Math.Abs(dy) <= SeasonGoalsHitRadius)
+                if (System.Math.Abs(dx) <= SeasonGoalsHitHalfWidth
+                    && System.Math.Abs(dy) <= SeasonGoalsHitHalfHeight)
                 {
                     _instance.OpenGoals();
                     __result = true;
