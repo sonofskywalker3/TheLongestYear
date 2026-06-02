@@ -39,10 +39,10 @@ namespace TheLongestYear.UI
         private const int CartIconPx = 64;
         private const int CartIconRowH = 72;
 
-        // Full English weekday names, indexed by dayOfMonth % 7 (0 = Sunday, matching vanilla's
-        // shortDayDisplayNameFromDayOfSeason). Day 5 → Friday, day 7 → Sunday (the cart's days).
-        private static readonly string[] FullDayNames =
-            { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+        // Abbreviated weekday names, indexed by dayOfMonth % 7 (0 = Sunday, matching vanilla's
+        // shortDayDisplayNameFromDayOfSeason). Day 5 → Fri, day 7 → Sun (the cart's days).
+        private static readonly string[] ShortDayNames =
+            { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
         private sealed class Row
         {
@@ -119,11 +119,11 @@ namespace TheLongestYear.UI
                 }
 
                 if (_cartItems.Count > 0)
-                    _cartHeader = $"Traveling Cart - {FullDayName(NextCartVisitDay(Game1.dayOfMonth))}";
+                    _cartHeader = $"Traveling Cart - {ShortDayName(NextCartVisitDay(Game1.dayOfMonth))}";
             }
         }
 
-        private static string FullDayName(int dayOfMonth) => FullDayNames[dayOfMonth % 7];
+        private static string ShortDayName(int dayOfMonth) => ShortDayNames[dayOfMonth % 7];
 
         /// <summary>Day-of-month of the next Traveling Cart visit strictly after <paramref name="today"/>,
         /// wrapping across the 28-day month. The cart visits on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
@@ -408,6 +408,9 @@ namespace TheLongestYear.UI
                 int iconY = numY + WeatherNumberRowH;
                 foreach (var (bounds, day) in _weatherCells)
                 {
+                    // Faint calendar cell behind the number + icon (2px inset for gaps between days).
+                    DrawCell(b, new Rectangle(bounds.X + 2, bounds.Y, bounds.Width - 4, bounds.Height));
+
                     string num = day.DayOfMonth.ToString();
                     Vector2 ns = Game1.smallFont.MeasureString(num);
                     Utility.drawTextWithShadow(b, num, Game1.smallFont,
@@ -430,6 +433,19 @@ namespace TheLongestYear.UI
                         StackDrawType.Hide, Color.White, drawShadow: true);
                 }
             }
+        }
+
+        /// <summary>A faint filled cell with a thin border, drawn from the 1×1 white pixel
+        /// (<c>Game1.staminaRect</c>) — the calendar-grid backing for a weather column.</summary>
+        private static void DrawCell(SpriteBatch b, Rectangle r)
+        {
+            Color fill = Color.SaddleBrown * 0.10f;
+            Color border = Color.SaddleBrown * 0.40f;
+            b.Draw(Game1.staminaRect, r, fill);
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, r.Width, 2), border);            // top
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Bottom - 2, r.Width, 2), border);   // bottom
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, 2, r.Height), border);           // left
+            b.Draw(Game1.staminaRect, new Rectangle(r.Right - 2, r.Y, 2, r.Height), border);   // right
         }
     }
 }
