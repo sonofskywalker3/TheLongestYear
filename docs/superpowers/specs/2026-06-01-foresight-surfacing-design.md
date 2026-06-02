@@ -21,10 +21,19 @@ foresight on the read-only Junimo planning shrine — not just the once-a-week p
 
 ## Decisions (locked with user)
 
-- **Day label format:** day-number only — `Day 26: Rain`, `Day 1: Storm`. Numbers track the real
-  calendar, so a low number only appears when the window rolls into the next season.
-- **Shrine layout:** a **pinned foresight panel** at the top of `ShrinePreviewMenu`; the existing
-  buyable-upgrade list scrolls below it.
+- **Day label format:** day-number only. Numbers track the real calendar, so a low number only
+  appears when the window rolls into the next season.
+- **Shrine layout (revised after first look):** a **pinned calendar-style panel** at the top of
+  `ShrinePreviewMenu`, then the scrollable upgrade list below. The first attempt stacked one text
+  row per day, which ate the whole window — replaced with a compact horizontal calendar:
+  - **Weather:** a single `Weather` header, a row of day-of-month **numbers**, and beneath it a row
+    of the in-game **HUD weather icons** (from `LooseSprites\Cursors`, the same sprites the TV/HUD
+    use). Hover a column → `Day N - Weather` tooltip.
+  - **Cart:** a single header `Traveling Cart - <Weekday>` (the next visit's weekday *name*, e.g.
+    "Friday" — cart days are always Fri/Sun), then a horizontal row of the revealed item **icons**.
+    Hover an icon → name + cart price tooltip.
+  - The window is **~50% larger** (1260×1020, capped to viewport) so the calendar and the upgrade
+    list both have room.
 
 ## Behavior
 
@@ -53,15 +62,15 @@ foresight on the read-only Junimo planning shrine — not just the once-a-week p
 
 - **`WeeklyHubMenu`:** label weather rows `Day {ForecastDay.DayOfMonth}: {Weather}` from the new
   `ForecastDay[]`. Cart rows unchanged.
-- **`ShrinePreviewMenu`:** add a pinned foresight panel above the scrollable list. The menu already
-  holds `MetaState`, so it computes tiers itself via `HighestKeptTier("weather_sage_", 6)` /
-  `HighestKeptTier("cart_whisper_", 3)`, and reads live `Game1.uniqueIDForThisGame / dayOfMonth /
-  season` at construct (rolling per open). List area shrinks to fit below the panel.
-  - **Weather block** (Weather Sage ≥ 1): one `Day N: Weather` line per revealed day.
-  - **Cart block** (Cart Whisperer ≥ 1): a `Cart (next visit: Day X)` header + revealed stock item
-    names. Stock via `ShopBuilder.GetShopStock("Traveler")` inside the same try/catch the hub uses;
-    next-visit day via `CartStockPreview.CartVisitDaysInWeek`.
-  - Neither owned → no panel; list sits where it does today.
+- **`ShrinePreviewMenu`:** add the pinned calendar panel above the scrollable list (see revised
+  layout decision above). The menu already holds `MetaState`, so it computes tiers itself via
+  `HighestKeptTier("weather_sage_", 6)` / `HighestKeptTier("cart_whisper_", 3)`, and reads live
+  `Game1.uniqueIDForThisGame / dayOfMonth / season` at construct (rolling per open). Cart stock via
+  `ShopBuilder.GetShopStock("Traveler")` (the existing shop id) inside a try/catch; price from each
+  entry's `ItemStockInformation.Price`. Weather icons drawn from `Game1.mouseCursors` with the TV
+  source rects (Sun 413,333 / Rain 465,333 / Storm 413,346 / Snow 465,346 / Festival 413,372, 13px,
+  scaled 3×). Next cart weekday from `NextCartVisitDay` (`dayOfMonth % 7 % 5 == 0`). Neither tier
+  owned → no panel; list sits where it does today.
 
 ## Migration
 

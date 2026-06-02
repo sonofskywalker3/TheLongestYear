@@ -10,10 +10,11 @@ using TheLongestYear.Integration;
 namespace TheLongestYear.UI
 {
     /// <summary>Read-only "what could I buy next reset" planning board. No purchasing — that stays
-    /// on the loop-boundary shrine popup. Shows, for every category, only the next purchasable tier
-    /// of each chain (reach-gated, owned tiers hidden — seeing "Cookbook II" means you already own
-    /// I). Each row shows the cost; hovering shows the effect + what you currently own in that chain.
-    /// Fully scrollable so the whole buyable list is visible.</summary>
+    /// on the loop-boundary shrine popup. A pinned, calendar-style foresight panel sits on top
+    /// (Weather Sage forecast + Traveling Cart stock, both rolling off the live date), and below it
+    /// the buyable-upgrade list: for every category, only the next purchasable tier of each chain
+    /// (reach-gated, owned tiers hidden). Each upgrade row shows its cost; hovering shows the effect.
+    /// Fully scrollable.</summary>
     internal sealed class ShrinePreviewMenu : IClickableMenu
     {
         private const int RowHeight = 56;
@@ -21,9 +22,27 @@ namespace TheLongestYear.UI
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
 
-        // Pinned foresight panel (Weather Sage + Cart Whisperer), drawn above the scrolling list.
-        private const int ForesightLineHeight = 30;
-        private const int ForesightBottomGap = 16;
+        // ---- Foresight calendar panel (drawn above the scrolling upgrade list) ----
+        private const int ForesightTop = 112;          // below title + JP line
+        private const int ForesightBlockGap = 14;       // vertical gap after weather / cart blocks
+        // Weather: a "Weather" header, a row of day-of-month numbers, then a row of HUD weather icons.
+        private const int WeatherCellWidth = 64;
+        private const float WeatherIconScale = 3f;       // 13px source → 39px
+        private const int WeatherIconPx = 39;
+        private const int WeatherHeaderH = 40;
+        private const int WeatherNumberRowH = 30;
+        private const int WeatherIconRowH = 52;
+        // Cart: a "Traveling Cart - <Weekday>" header, then a row of hoverable item icons.
+        private const int CartHeaderH = 40;
+        private const int CartIconCell = 72;
+        private const float CartIconScale = 1f;          // drawInMenu 1f → 64px
+        private const int CartIconPx = 64;
+        private const int CartIconRowH = 72;
+
+        // Full English weekday names, indexed by dayOfMonth % 7 (0 = Sunday, matching vanilla's
+        // shortDayDisplayNameFromDayOfSeason). Day 5 → Friday, day 7 → Sunday (the cart's days).
+        private static readonly string[] FullDayNames =
+            { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 
         private sealed class Row
         {
@@ -36,9 +55,16 @@ namespace TheLongestYear.UI
         private readonly MetaState _state;
         private readonly List<Row> _rows = new();
 
-        // Foresight lines computed at open time (rolling): each is a label + whether it's a
-        // section header. Reads live Game1 state so the shrine always shows "from tomorrow".
-        private readonly List<(string Text, bool IsHeader)> _foresightLines = new();
+        // Foresight data, fetched once at open (rolling — reads live Game1 date so re-opening on a
+        // later day shows a later window). Bounds for hover/draw are computed in the layout pass.
+        private ForecastDay[] _weatherDays = System.Array.Empty<ForecastDay>();
+        private readonly List<(ISalable Item, int Price, string Name)> _cartItems = new();
+        private string _cartHeader;
+
+        private readonly List<(Rectangle Bounds, ForecastDay Day)> _weatherCells = new();
+        private readonly List<(Rectangle Bounds, ISalable Item, int Price, string Name)> _cartCells = new();
+        private int _weatherHeaderY = -1;
+        private int _cartHeaderY = -1;
 
         private int _scrollIndex;
         private int _rowsPerPage;
@@ -57,28 +83,23 @@ namespace TheLongestYear.UI
             RecomputeBoundsAndLayout();
         }
 
-        /// <summary>Compute the pinned foresight panel (Weather Sage + Cart Whisperer) from the
-        /// owned tiers and live game date. Rolling: slot 0 is always tomorrow, so re-opening the
-        /// shrine on a later day shows a later window. Empty when no foresight tier is owned.</summary>
+        /// <summary>Fetch the foresight data (Weather Sage forecast + Cart Whisperer stock) from the
+        /// owned tiers and the live game date. Slot 0 is always tomorrow, so the panel rolls forward
+        /// each day. Empty blocks when the relevant tier isn't owned.</summary>
         private void BuildForesight()
         {
-            _foresightLines.Clear();
-
             int weatherTier = _state.HighestKeptTier("weather_sage_", 6);
-            if (weatherTier > 0)
-            {
-                ForecastDay[] forecast = WeatherForecast.Build(
+            _weatherDays = weatherTier > 0
+                ? WeatherForecast.Build(
                     (int)Game1.uniqueIDForThisGame, (int)Game1.stats.DaysPlayed,
-                    Game1.dayOfMonth, (int)Game1.season, weatherTier);
-                _foresightLines.Add(("Weather", true));
-                foreach (ForecastDay fd in forecast)
-                    _foresightLines.Add(($"Day {fd.DayOfMonth}: {fd.Weather}", false));
-            }
+                    Game1.dayOfMonth, (int)Game1.season, weatherTier)
+                : System.Array.Empty<ForecastDay>();
 
+            _cartItems.Clear();
+            _cartHeader = null;
             int cartSlots = CartStockPreview.SlotsToReveal(_state.HighestKeptTier("cart_whisper_", 3));
             if (cartSlots > 0)
             {
-                var names = new List<string>();
                 try
                 {
                     var stock = StardewValley.Internal.ShopBuilder.GetShopStock("Traveler");
@@ -86,23 +107,23 @@ namespace TheLongestYear.UI
                     foreach (var pair in stock)
                     {
                         if (taken >= cartSlots) break;
-                        names.Add(pair.Key?.DisplayName ?? "?");
+                        if (pair.Key == null) continue;
+                        _cartItems.Add((pair.Key, pair.Value.Price, pair.Key.DisplayName));
                         taken++;
                     }
                 }
                 catch (System.Exception)
                 {
                     // Preview only — if the cart stock can't be built, just omit the cart block.
+                    _cartItems.Clear();
                 }
 
-                if (names.Count > 0)
-                {
-                    _foresightLines.Add(($"Cart (next visit: Day {NextCartVisitDay(Game1.dayOfMonth)})", true));
-                    foreach (string n in names)
-                        _foresightLines.Add((n, false));
-                }
+                if (_cartItems.Count > 0)
+                    _cartHeader = $"Traveling Cart - {FullDayName(NextCartVisitDay(Game1.dayOfMonth))}";
             }
         }
+
+        private static string FullDayName(int dayOfMonth) => FullDayNames[dayOfMonth % 7];
 
         /// <summary>Day-of-month of the next Traveling Cart visit strictly after <paramref name="today"/>,
         /// wrapping across the 28-day month. The cart visits on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
@@ -117,8 +138,26 @@ namespace TheLongestYear.UI
             return today; // unreachable — a visit day always exists within 28 days.
         }
 
+        /// <summary>Weather-icon source rect in <c>Game1.mouseCursors</c> (LooseSprites\Cursors),
+        /// matching the in-game TV/HUD icons. Unknown/Sun falls through to the sunny icon.</summary>
+        private static Rectangle WeatherIconSource(string weather) => weather switch
+        {
+            "Rain" => new Rectangle(465, 333, 13, 13),
+            "Storm" => new Rectangle(413, 346, 13, 13),
+            "Snow" => new Rectangle(465, 346, 13, 13),
+            "Festival" => new Rectangle(413, 372, 13, 13),
+            _ => new Rectangle(413, 333, 13, 13), // Sun / default
+        };
+
         private int ForesightPanelHeight()
-            => _foresightLines.Count == 0 ? 0 : _foresightLines.Count * ForesightLineHeight + ForesightBottomGap;
+        {
+            int h = 0;
+            if (_weatherDays.Length > 0)
+                h += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + ForesightBlockGap;
+            if (_cartItems.Count > 0)
+                h += CartHeaderH + CartIconRowH + ForesightBlockGap;
+            return h;
+        }
 
         /// <summary>Snapshot the buyable list (reach read live, at open time): for each category,
         /// a header followed by its next-purchasable tiers. Owned lower tiers are never listed.</summary>
@@ -159,15 +198,19 @@ namespace TheLongestYear.UI
 
         private void RecomputeBoundsAndLayout()
         {
-            width = System.Math.Min(840, Game1.uiViewport.Width - 64);
-            height = System.Math.Min(680, Game1.uiViewport.Height - 64);
+            // 50% larger than the original 840x680 board (capped to the viewport).
+            width = System.Math.Min(1260, Game1.uiViewport.Width - 64);
+            height = System.Math.Min(1020, Game1.uiViewport.Height - 64);
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             _listX = xPositionOnScreen + 40;
-            // Below title + JP line, then below the pinned foresight panel (0 when no tier owned).
-            _listY = yPositionOnScreen + 112 + ForesightPanelHeight();
             _listWidth = width - 80;
+
+            LayoutForesight();
+
+            // List sits below the foresight panel (or just below the JP line when no tier is owned).
+            _listY = yPositionOnScreen + ForesightTop + ForesightPanelHeight();
             int listHeight = height - (_listY - yPositionOnScreen) - 40;
             _rowsPerPage = System.Math.Max(1, listHeight / RowHeight);
 
@@ -193,6 +236,44 @@ namespace TheLongestYear.UI
                 allClickableComponents.Add(upperRightCloseButton);
 
             ClampScroll();
+        }
+
+        /// <summary>Position the weather + cart cells for the current window. Header Y values and the
+        /// per-cell hover/draw bounds are stored for both <see cref="draw"/> and hover hit-testing.</summary>
+        private void LayoutForesight()
+        {
+            _weatherCells.Clear();
+            _cartCells.Clear();
+            _weatherHeaderY = -1;
+            _cartHeaderY = -1;
+
+            int fy = yPositionOnScreen + ForesightTop;
+
+            if (_weatherDays.Length > 0)
+            {
+                _weatherHeaderY = fy;
+                int numY = fy + WeatherHeaderH;
+                for (int i = 0; i < _weatherDays.Length; i++)
+                {
+                    int cellX = _listX + i * WeatherCellWidth;
+                    // Hover region spans the number + icon rows of the column.
+                    var bounds = new Rectangle(cellX, numY, WeatherCellWidth, WeatherNumberRowH + WeatherIconRowH);
+                    _weatherCells.Add((bounds, _weatherDays[i]));
+                }
+                fy += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + ForesightBlockGap;
+            }
+
+            if (_cartItems.Count > 0)
+            {
+                _cartHeaderY = fy;
+                int iconY = fy + CartHeaderH;
+                for (int i = 0; i < _cartItems.Count; i++)
+                {
+                    int cellX = _listX + i * CartIconCell;
+                    var bounds = new Rectangle(cellX, iconY, CartIconPx, CartIconPx);
+                    _cartCells.Add((bounds, _cartItems[i].Item, _cartItems[i].Price, _cartItems[i].Name));
+                }
+            }
         }
 
         private int MaxScroll() => System.Math.Max(0, _rows.Count - _rowsPerPage);
@@ -229,6 +310,24 @@ namespace TheLongestYear.UI
         {
             base.performHoverAction(x, y);
             _hoverText = "";
+
+            foreach (var (bounds, item, price, name) in _cartCells)
+            {
+                if (bounds.Contains(x, y))
+                {
+                    _hoverText = $"{name}\n{price}g";
+                    return;
+                }
+            }
+            foreach (var (bounds, day) in _weatherCells)
+            {
+                if (bounds.Contains(x, y))
+                {
+                    _hoverText = $"Day {day.DayOfMonth} - {day.Weather}";
+                    return;
+                }
+            }
+
             for (int i = 0; i < _rowsPerPage; i++)
             {
                 int idx = _scrollIndex + i;
@@ -252,18 +351,7 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, $"Junimo Points banked: {_state.JunimoPoints}", Game1.smallFont,
                 new Vector2(xPositionOnScreen + 40, yPositionOnScreen + 80), Game1.textColor);
 
-            // Pinned foresight panel (above the scrolling upgrade list).
-            int foresightY = yPositionOnScreen + 112;
-            foreach (var (text, isHeader) in _foresightLines)
-            {
-                if (isHeader)
-                    Utility.drawTextWithShadow(b, text, Game1.dialogueFont,
-                        new Vector2(_listX, foresightY), Game1.textColor);
-                else
-                    Utility.drawTextWithShadow(b, text, Game1.smallFont,
-                        new Vector2(_listX + 24, foresightY + 4), Game1.textColor);
-                foresightY += ForesightLineHeight;
-            }
+            DrawForesight(b);
 
             if (_rows.Count == 0)
             {
@@ -306,6 +394,42 @@ namespace TheLongestYear.UI
                 IClickableMenu.drawHoverText(b, _hoverText, Game1.smallFont);
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
+        }
+
+        /// <summary>Draw the calendar-style foresight panel: weather number+icon rows and the cart's
+        /// hoverable item-icon row.</summary>
+        private void DrawForesight(SpriteBatch b)
+        {
+            if (_weatherCells.Count > 0)
+            {
+                Utility.drawTextWithShadow(b, "Weather", Game1.dialogueFont,
+                    new Vector2(_listX, _weatherHeaderY), Game1.textColor);
+                int numY = _weatherHeaderY + WeatherHeaderH;
+                int iconY = numY + WeatherNumberRowH;
+                foreach (var (bounds, day) in _weatherCells)
+                {
+                    string num = day.DayOfMonth.ToString();
+                    Vector2 ns = Game1.smallFont.MeasureString(num);
+                    Utility.drawTextWithShadow(b, num, Game1.smallFont,
+                        new Vector2(bounds.X + (WeatherCellWidth - ns.X) / 2f, numY), Game1.textColor);
+
+                    Rectangle src = WeatherIconSource(day.Weather);
+                    float iconX = bounds.X + (WeatherCellWidth - WeatherIconPx) / 2f;
+                    b.Draw(Game1.mouseCursors, new Vector2(iconX, iconY), src, Color.White, 0f,
+                        Vector2.Zero, WeatherIconScale, SpriteEffects.None, 0.9f);
+                }
+            }
+
+            if (_cartCells.Count > 0)
+            {
+                Utility.drawTextWithShadow(b, _cartHeader, Game1.dialogueFont,
+                    new Vector2(_listX, _cartHeaderY), Game1.textColor);
+                foreach (var (bounds, item, price, name) in _cartCells)
+                {
+                    item.drawInMenu(b, new Vector2(bounds.X, bounds.Y), CartIconScale, 1f, 0.9f,
+                        StackDrawType.Hide, Color.White, drawShadow: true);
+                }
+            }
         }
     }
 }
