@@ -769,6 +769,8 @@ namespace TheLongestYear
             TheLongestYear.Loop.CartCatalogIntegration.ModLoaded =
                 this.Helper.ModRegistry.IsLoaded(TheLongestYear.Loop.CartCatalogIntegration.ModId);
 
+            this.ApplyWindowSize();
+
             var gmcm = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (gmcm == null)
             {
@@ -796,6 +798,27 @@ namespace TheLongestYear
                 tooltip: () => "Always-on corner counter showing banked JP and the current week's theme.");
 
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
+        }
+
+        /// <summary>SDV doesn't persist a windowed width/height (it always boots at 1280×720 in
+        /// windowed mode), and the dev redeploy loop force-kills the game so it never saves one on
+        /// exit. When <see cref="GameplayConfig.WindowWidth"/>/<c>Height</c> are positive and the
+        /// game is NOT in fullscreen, nudge the window to that size once the game is up — the game's
+        /// own ClientSizeChanged handler then re-derives the viewport. 0 (either dim) = leave alone.</summary>
+        private void ApplyWindowSize()
+        {
+            int w = _config.WindowWidth, h = _config.WindowHeight;
+            if (w <= 0 || h <= 0)
+                return;
+            if (Game1.graphics == null || Game1.graphics.IsFullScreen)
+                return;
+            if (Game1.graphics.PreferredBackBufferWidth == w && Game1.graphics.PreferredBackBufferHeight == h)
+                return;
+
+            Game1.graphics.PreferredBackBufferWidth = w;
+            Game1.graphics.PreferredBackBufferHeight = h;
+            Game1.graphics.ApplyChanges();
+            this.Monitor.Log($"Window: set to {w}x{h} (config dial).", LogLevel.Info);
         }
 
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
