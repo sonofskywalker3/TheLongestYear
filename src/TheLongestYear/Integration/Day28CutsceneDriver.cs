@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -37,6 +38,22 @@ namespace TheLongestYear.Integration
         {
             _runController = runController;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+            helper.Events.Display.RenderedWorld += OnRenderedWorld;
+        }
+
+        /// <summary>Paint the whole screen black while OUR cutscene event is on, so it reads as an
+        /// in-bed black-background scene with neither the room, the farmer, nor a Junimo sprite
+        /// visible — only the dialogue box (drawn later, on top). Done here rather than with a
+        /// vanilla fade command because <c>fade</c> reveals the room and <c>globalFade</c> blinks
+        /// back (2026-06-03 playtests). RenderedWorld runs after the world is drawn (screen-space
+        /// SpriteBatch) and before the dialogue overlay, so the text stays readable on top.</summary>
+        private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        {
+            if (Game1.currentLocation?.currentEvent?.id != Day28CutsceneContent.EventId)
+                return;
+
+            Rectangle full = Game1.graphics.GraphicsDevice.Viewport.Bounds;
+            e.SpriteBatch.Draw(Game1.fadeToBlackRect, full, Color.Black);
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
