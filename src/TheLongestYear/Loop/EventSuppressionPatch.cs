@@ -1,5 +1,7 @@
 using HarmonyLib;
+using StardewModdingAPI;
 using StardewValley;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
@@ -49,6 +51,21 @@ namespace TheLongestYear.Loop
             {
                 __result = "-1";
                 return false; // skip the vanilla precondition logic entirely
+            }
+
+            // Event-gating Phase 2: hold jarring early events until Spring 5, and skip the furnace
+            // teach scene while the recipe is already known this run. Curated id sets live in
+            // EventGatingTables.Default — EMPTY until the tly_dumpevents audit fills them, so this is
+            // a safe pass-through no-op until those ids are wired in.
+            if (Context.IsWorldReady && Game1.player != null)
+            {
+                bool furnaceKnown = Game1.player.craftingRecipes.ContainsKey("Furnace");
+                if (EventGatingPolicy.Decide(eventId, (int)Game1.season, Game1.dayOfMonth, furnaceKnown,
+                        EventGatingTables.Default) == EventGatingDecision.Suppress)
+                {
+                    __result = "-1";
+                    return false;
+                }
             }
 
             return true; // every other event: defer to vanilla.

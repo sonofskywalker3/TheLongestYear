@@ -241,7 +241,8 @@ namespace TheLongestYear.Loop
             RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _config.StartingMoney);
             _farmerReset.Apply(Game1.player, baseline,
                 _meta.CookbookRecipes,
-                _meta.CraftbookRecipes);
+                _meta.CraftbookRecipes,
+                _meta.SeenEventsEver);
 
             // 5. Profession picker re-trigger queue. Enqueued here; the actual menus
             //    surface on the next DayStarted (RunController drains after reset).
