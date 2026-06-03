@@ -158,6 +158,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_removehorse", "Remove the stable + horse, clear the carryover snapshot, and drop the Keep Horse upgrade so it's re-buyable (debug — clean slate for a Keep-Horse carryover test).", this.CmdRemoveHorse);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
+            helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select one of this week's offered themes. Usage: tly_select <theme>", this.CmdSelect);
@@ -669,6 +670,19 @@ namespace TheLongestYear
             _runController?.DebugForceFailReset();
         }
 
+        /// <summary>Debug: open the basic win screen → JP shrine → keep-playing choice, the real
+        /// win-path flow. See <see cref="RunController.DebugForceWin"/>.</summary>
+        private void CmdForceWin(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            _runController?.DebugForceWin();
+        }
+
         /// <summary>Full reset: rebuild the world (PerformReset), wipe RunState (BeginNewRun),
         /// and fire the Spring 1 hub. Used by both <see cref="ForceReset"/> and
         /// <see cref="ResetIfNameMatches"/>.
@@ -939,6 +953,9 @@ namespace TheLongestYear
                 case "tly_additem": this.CmdAddItem(command, args); break;
                 case "tly_removehorse": this.CmdRemoveHorse(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
+                case "tly_win":
+                    if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
+                    _runController?.DebugForceWin(); break;
                 case "tly_failreset":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
