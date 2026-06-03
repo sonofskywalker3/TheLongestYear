@@ -51,6 +51,16 @@ namespace TheLongestYear.UI
         private const int PreviewSpacing = 8;
         private const int JunimoSpriteSize = 96;
 
+        // ---------- Weather foresight calendar (mirrors ShrinePreviewMenu's board) ----------
+        private const int WeatherCellWidth = 64;
+        private const float WeatherIconScale = 3f;   // 13px source → 39px
+        private const int WeatherIconPx = 39;
+        private const int WeatherHeaderH = 40;
+        private const int WeatherNumberRowH = 30;
+        private const int WeatherIconRowH = 52;
+        private int _weatherBlockX;
+        private int _weatherBlockY = -1;   // top of the weather calendar block (-1 when no weather)
+
         // ---------- Component IDs ----------
         private const int CardIdLeft = 5100;
         private const int CardIdRight = 5101;
@@ -287,10 +297,15 @@ namespace TheLongestYear.UI
 
         private void RecomputeBoundsAndLayout()
         {
-            int previewRows = _weatherSageSlots + _cartPreviewSlots;
-            int previewBlock = previewRows == 0
-                ? 0
-                : (previewRows * PreviewRowHeight) + ((previewRows - 1) * PreviewSpacing) + PanelPadding;
+            // Weather now reserves a fixed calendar strip (header + number row + icon row); cart
+            // (if ever shown) still uses stacked text rows below it.
+            int weatherBlockH = _weatherSageSlots > 0 ? (WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH) : 0;
+            int cartRowsH = _cartPreviewSlots > 0
+                ? (_cartPreviewSlots * PreviewRowHeight) + ((_cartPreviewSlots - 1) * PreviewSpacing)
+                : 0;
+            int previewBlock = (weatherBlockH > 0 || cartRowsH > 0)
+                ? weatherBlockH + (weatherBlockH > 0 && cartRowsH > 0 ? PreviewSpacing : 0) + cartRowsH + PanelPadding
+                : 0;
 
             int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 20;
 
@@ -329,20 +344,20 @@ namespace TheLongestYear.UI
             int rowWidth = width - (PanelPadding * 2);
             int rowY = cardsY + CardHeight + PanelPadding;
 
-            for (int i = 0; i < _weatherSageSlots; i++)
+            // Weather is now a non-interactive calendar block (day-number row + icon row), matching
+            // the planning-shrine board — not stacked text rows. Reserve its strip, then cart rows
+            // (if any) flow below it.
+            _weatherBlockX = rowX;
+            if (_weatherSageSlots > 0)
             {
-                var row = new ClickableComponent(new Rectangle(rowX, rowY, rowWidth, PreviewRowHeight),
-                    "weather-" + i)
-                {
-                    myID = WeatherIdBase + i,
-                    upNeighborID = i == 0 ? CardIdLeft : (WeatherIdBase + i - 1),
-                    downNeighborID = i == _weatherSageSlots - 1
-                        ? (_cartPreviewSlots > 0 ? CartIdBase : -1)
-                        : (WeatherIdBase + i + 1)
-                };
-                _weatherRows.Add(row);
-                rowY += PreviewRowHeight + PreviewSpacing;
+                _weatherBlockY = rowY;
+                rowY += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + PreviewSpacing;
             }
+            else
+            {
+                _weatherBlockY = -1;
+            }
+
             for (int i = 0; i < _cartPreviewSlots; i++)
             {
                 var row = new ClickableComponent(new Rectangle(rowX, rowY, rowWidth, PreviewRowHeight),
@@ -385,7 +400,6 @@ namespace TheLongestYear.UI
             allClickableComponents = new List<ClickableComponent>();
             allClickableComponents.Add(_leftCard);
             allClickableComponents.Add(_rightCard);
-            allClickableComponents.AddRange(_weatherRows);
             allClickableComponents.AddRange(_cartRows);
             if (_rerollButton != null)
                 allClickableComponents.Add(_rerollButton);
@@ -409,7 +423,7 @@ namespace TheLongestYear.UI
 
         private int FirstRowIdBelowCards()
         {
-            if (_weatherSageSlots > 0) return WeatherIdBase;
+            // Weather is a non-interactive calendar now; only cart rows (if any) are snap targets.
             if (_cartPreviewSlots > 0) return CartIdBase;
             return -1;
         }
@@ -542,13 +556,7 @@ namespace TheLongestYear.UI
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds);
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds);
 
-            for (int i = 0; i < _weatherRows.Count; i++)
-            {
-                string label = (i < _weatherForecast.Length)
-                    ? $"Day {_weatherForecast[i].DayOfMonth}: {_weatherForecast[i].Weather}"
-                    : "?";
-                DrawPreviewRow(b, _weatherRows[i], label);
-            }
+            DrawWeatherCalendar(b);
             for (int i = 0; i < _cartRows.Count; i++)
             {
                 string label = (i < _cartItems.Count && _cartItems[i] != null)
@@ -585,6 +593,60 @@ namespace TheLongestYear.UI
             float labelY = _rerollButton.bounds.Y + (_rerollButton.bounds.Height - size.Y) / 2f;
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
                 new Vector2(labelX, labelY), Game1.textColor);
+        }
+
+        /// <summary>Draw the weather foresight as a calendar strip (a "Weather" header, a row of
+        /// day-of-month numbers, then a row of HUD weather icons in faint cells) — the same look as
+        /// the planning-shrine board, so the two surfaces are visually consistent.</summary>
+        private void DrawWeatherCalendar(SpriteBatch b)
+        {
+            if (_weatherSageSlots <= 0 || _weatherBlockY < 0 || _weatherForecast.Length == 0)
+                return;
+
+            Utility.drawTextWithShadow(b, "Weather", Game1.dialogueFont,
+                new Vector2(_weatherBlockX, _weatherBlockY), Game1.textColor);
+
+            int numY = _weatherBlockY + WeatherHeaderH;
+            int iconY = numY + WeatherNumberRowH;
+            for (int i = 0; i < _weatherForecast.Length; i++)
+            {
+                int cellX = _weatherBlockX + i * WeatherCellWidth;
+                DrawWeatherCell(b, new Rectangle(cellX + 2, numY, WeatherCellWidth - 4, WeatherNumberRowH + WeatherIconRowH));
+
+                string num = _weatherForecast[i].DayOfMonth.ToString();
+                Vector2 ns = Game1.smallFont.MeasureString(num);
+                Utility.drawTextWithShadow(b, num, Game1.smallFont,
+                    new Vector2(cellX + (WeatherCellWidth - ns.X) / 2f, numY), Game1.textColor);
+
+                Rectangle src = WeatherIconSource(_weatherForecast[i].Weather);
+                float iconX = cellX + (WeatherCellWidth - WeatherIconPx) / 2f;
+                b.Draw(Game1.mouseCursors, new Vector2(iconX, iconY), src, Color.White, 0f,
+                    Vector2.Zero, WeatherIconScale, SpriteEffects.None, 0.9f);
+            }
+        }
+
+        /// <summary>Weather-icon source rect in <c>Game1.mouseCursors</c>, matching the TV/HUD icons
+        /// (same mapping as ShrinePreviewMenu). Unknown/Sun falls through to the sunny icon.</summary>
+        private static Rectangle WeatherIconSource(string weather) => weather switch
+        {
+            "Rain" => new Rectangle(465, 333, 13, 13),
+            "Storm" => new Rectangle(413, 346, 13, 13),
+            "Snow" => new Rectangle(465, 346, 13, 13),
+            "Festival" => new Rectangle(413, 372, 13, 13),
+            _ => new Rectangle(413, 333, 13, 13), // Sun / default
+        };
+
+        /// <summary>A faint filled cell with a thin border (the calendar-grid backing for a weather
+        /// column), drawn from the 1×1 white pixel — same styling as the shrine board.</summary>
+        private static void DrawWeatherCell(SpriteBatch b, Rectangle r)
+        {
+            Color fill = Color.SaddleBrown * 0.10f;
+            Color border = Color.SaddleBrown * 0.40f;
+            b.Draw(Game1.staminaRect, r, fill);
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, r.Width, 2), border);
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Bottom - 2, r.Width, 2), border);
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, 2, r.Height), border);
+            b.Draw(Game1.staminaRect, new Rectangle(r.Right - 2, r.Y, 2, r.Height), border);
         }
 
         private void DrawCard(SpriteBatch b, ClickableComponent card, Theme? theme,
