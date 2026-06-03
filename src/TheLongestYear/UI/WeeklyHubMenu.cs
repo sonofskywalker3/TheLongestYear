@@ -30,7 +30,7 @@ namespace TheLongestYear.UI
         // whitespace between the bonus/liability lines and the icon row. Tighter sizing also
         // gets the panel onto smaller monitors without scrollbars.
         private const int CardWidth = 480;
-        private const int CardHeight = 300;
+        private const int CardHeight = 344;   // taller so the bonus row clears both the text above and the frame below
         private const int CardSpacing = 24;
         private const int CardInnerPad = 20;
         private const int PanelPadding = 32;
@@ -45,6 +45,8 @@ namespace TheLongestYear.UI
         private const float BonusIconScale = 0.75f;
         private const int BonusIconSize = 48;
         private const int BonusIconGap = 10;
+        // Bottom margin for the bonus row (icons + their header), so they sit off the card frame.
+        private const int BonusBottomMargin = 34;
 
         // ---------- Preview rows (foresight, Plan 06) ----------
         private const int PreviewRowHeight = 44;
@@ -416,8 +418,7 @@ namespace TheLongestYear.UI
 
             int totalWidth = count * BonusIconSize + (count - 1) * BonusIconGap;
             int startX = card.bounds.X + (card.bounds.Width - totalWidth) / 2;
-            // Extra bottom margin so the icon row isn't crammed against the card's frame.
-            int y = card.bounds.Y + card.bounds.Height - (CardInnerPad + 18) - BonusIconSize;
+            int y = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize;
             for (int i = 0; i < count; i++)
                 bounds.Add(new Rectangle(startX + i * (BonusIconSize + BonusIconGap), y, BonusIconSize, BonusIconSize));
         }
@@ -701,8 +702,8 @@ namespace TheLongestYear.UI
                 new Vector2(textX, textY), liabilityColor);
             textY += (int)Game1.smallFont.MeasureString(liabilityWrapped).Y + SectionGap;
 
-            // Bonus header above the icon row (which is anchored to the card bottom).
-            int bonusHeaderY = card.bounds.Y + card.bounds.Height - CardInnerPad - BonusIconSize - BodyLineHeight - 4;
+            // Bonus header above the icon row (both share BonusBottomMargin so they move together).
+            int bonusHeaderY = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize - BodyLineHeight - 4;
             Utility.drawTextWithShadow(b, "Bonus this week (1.5x):", Game1.smallFont,
                 new Vector2(textX, bonusHeaderY), Game1.textColor);
 
