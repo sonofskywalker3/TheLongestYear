@@ -48,7 +48,12 @@ namespace TheLongestYear.Integration
 
             if (_opened) return;                                   // our menu is up (or its continuation)
             if (!Context.IsWorldReady || Game1.currentMinigame != null) return;
-            if (Game1.eventUp || Game1.fadeToBlackAlpha > 0f) return; // wait for a settled, event-free frame
+            // Open as soon as the night-save / new-day sequence is done, but WHILE the wake-up fade
+            // is still dark — so the black cutscene takes over before the farmhouse fades into view
+            // (2026-06-03 playtest: "it loads the new day, then blanks to the message"). A menu,
+            // unlike a vanilla event, doesn't fight the engine's player placement, so we don't need
+            // to wait for the fade to settle.
+            if (Game1.newDay || Game1.eventUp) return;             // let the save / new-day finish first
             if (Game1.activeClickableMenu != null) return;         // don't stack on another menu
 
             Day28Branch branch = rc.PendingCutscene;
