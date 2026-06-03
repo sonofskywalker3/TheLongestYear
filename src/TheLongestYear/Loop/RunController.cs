@@ -38,11 +38,6 @@ namespace TheLongestYear.Loop
 
         /// <summary>Exposed for the driver's per-tick decision.</summary>
         public Day28Branch PendingCutscene => _pendingCutscene;
-        /// <summary>Set in OnDayEnding's Win branch when the loop is completed (CC restored on
-        /// Winter 28). Consumed on the next OnDayStarted: opens the JP-spend shrine, then asks
-        /// the player to choose "Start a new loop" or "Keep playing this run". Suppressed when
-        /// <c>MetaState.VictoryAcknowledged</c> is already set (player previously chose Keep).</summary>
-        private bool _pendingWinChoice;
         private TheLongestYear.UI.MenuLauncher _launcher;
         private WeeklyThemeQuestService _questService;
 
@@ -85,6 +80,11 @@ namespace TheLongestYear.Loop
             => _ingredientQualities.TryGetValue(itemId, out int q) ? q : 0;
 
         private RunState Run => _store.Run;
+
+        /// <summary>The current attempt count (loop the player is on / won), surfaced so the
+        /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can pass it into the
+        /// <see cref="TheLongestYear.UI.VictoryMenu"/> loop-count line.</summary>
+        public int CurrentRunNumber => Run.RunNumber;
 
         /// <summary>Called from OnSaveLoaded: ensure the run has a seed.</summary>
         public void OnRunLoaded()
@@ -179,16 +179,6 @@ namespace TheLongestYear.Loop
                 // JP shop + reset (Fail) or roll into the next season (Continue). Suppress the
                 // normal season-sync/hub flow until the scene resolves — same shape as the old
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
-                return;
-            }
-
-            if (_pendingWinChoice)
-            {
-                _pendingWinChoice = false;
-                // 2026-05-29 spec: on the morning after winning the loop, pop the JP-spend
-                // shrine first (the player has a fresh JP bonus from the win), then ask
-                // them whether to start a new loop or keep playing this run.
-                TryOpenShrineThenContinue(ShowKeepPlayingChoice);
                 return;
             }
 
@@ -289,6 +279,12 @@ namespace TheLongestYear.Loop
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
                     break;
+                case Day28Branch.Win:
+                    // After the win screen closes: open the JP-spend shrine (the player has a fresh
+                    // win-JP bonus), then ask "start a new loop" vs "keep playing". Same order as the
+                    // old _pendingWinChoice path, with the win screen now in front of it.
+                    TryOpenShrineThenContinue(ShowKeepPlayingChoice);
+                    break;
                 case Day28Branch.None:
                 default:
                     // Defensive: driver fired with nothing queued. Fall back to the normal flow
@@ -321,6 +317,17 @@ namespace TheLongestYear.Loop
         {
             _monitor.Log("tly_day28continue: queuing the day-28 CONTINUE cutscene (Junimo → next season).", LogLevel.Info);
             _pendingCutscene = Day28Branch.Continue;
+        }
+
+        /// <summary>Debug: queue the WIN screen so a playtest can watch the win → shrine →
+        /// keep-playing flow without grinding to a real Winter-28 win. Sets the pending branch;
+        /// the Day28CutsceneDriver opens VictoryMenu this tick and OnCutsceneEnded opens the JP
+        /// shrine then the keep-playing choice. Bypasses the VictoryAcknowledged "first win only"
+        /// gate (that lives in OnDayEnding), so it is re-runnable from any loaded save.</summary>
+        public void DebugForceWin()
+        {
+            _monitor.Log("tly_win: queuing the WIN screen (Junimos → shrine → keep-playing choice).", LogLevel.Info);
+            _pendingCutscene = Day28Branch.Win;
         }
 
         /// <summary>Debug: jump the in-game date to <paramref name="day"/> of the current season so a
@@ -499,7 +506,11 @@ namespace TheLongestYear.Loop
                     if (!_store.State.VictoryAcknowledged)
                     {
                         AwardInterimJp("run WON — loop broken");
-                        _pendingWinChoice = true;
+                        // Queue the win screen for the morning. Routes through the same
+                        // Day28CutsceneDriver/OnCutsceneEnded path as Fail/Continue (the driver
+                        // opens VictoryMenu for the Win branch); OnCutsceneEnded then opens the
+                        // JP shrine and the keep-playing choice. Replaces the old _pendingWinChoice.
+                        _pendingCutscene = Day28Branch.Win;
                     }
                     break;
             }
