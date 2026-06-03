@@ -48,8 +48,9 @@ namespace TheLongestYear.UI
         {
             public bool IsHeader;
             public string Text;                  // header label (when IsHeader)
-            public UpgradeDefinition Def;        // the buyable upgrade (when !IsHeader)
+            public UpgradeDefinition Def;        // the upgrade (when !IsHeader)
             public string Tooltip;               // precomputed hover text (when !IsHeader)
+            public bool IsOwned;                 // owned leaf → green, no cost (vs buyable → cost)
         }
 
         private readonly MetaState _state;
@@ -166,11 +167,25 @@ namespace TheLongestYear.UI
             _rows.Clear();
             foreach (UpgradeCategory cat in System.Enum.GetValues(typeof(UpgradeCategory)))
             {
+                IReadOnlyList<UpgradeDefinition> owned =
+                    KeepShopFilter.OwnedLeavesInCategory(cat, _state, RunReachEvaluator.Meets);
                 IReadOnlyList<UpgradeDefinition> buyable =
                     KeepShopFilter.BuyableInCategory(cat, _state, RunReachEvaluator.Meets);
-                if (buyable.Count == 0)
+                if (owned.Count == 0 && buyable.Count == 0)
                     continue;
+
                 _rows.Add(new Row { IsHeader = true, Text = cat.ToString() });
+
+                // Owned leaves first (green, no cost) — "you already have this, nothing more to buy".
+                foreach (UpgradeDefinition def in owned)
+                    _rows.Add(new Row
+                    {
+                        Def = def,
+                        IsOwned = true,
+                        Tooltip = $"{def.Description}\nOwned.",
+                    });
+
+                // Then the next-purchasable tiers (with cost).
                 foreach (UpgradeDefinition def in buyable)
                     _rows.Add(new Row
                     {
@@ -369,6 +384,17 @@ namespace TheLongestYear.UI
                 {
                     Utility.drawTextWithShadow(b, row.Text, Game1.dialogueFont,
                         new Vector2(_listX, rowY + 6), Game1.textColor);
+                }
+                else if (row.IsOwned)
+                {
+                    // Owned leaf: name + "Owned" on the right, both green, no cost.
+                    Color green = new Color(30, 130, 30);
+                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
+                        new Vector2(_listX + 24, rowY + 6), green);
+                    const string ownedLabel = "Owned";
+                    Vector2 ownedSize = Game1.smallFont.MeasureString(ownedLabel);
+                    Utility.drawTextWithShadow(b, ownedLabel, Game1.smallFont,
+                        new Vector2(_listX + _listWidth - 64 - ownedSize.X, rowY + 6), green);
                 }
                 else
                 {
