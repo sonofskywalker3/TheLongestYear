@@ -271,9 +271,18 @@ namespace TheLongestYear.Loop
             Day28Branch branch = _pendingCutscene;
             _pendingCutscene = Day28Branch.None;
 
+            // The cutscene held the screen black via the globalFade command. Clear that hold now
+            // so the shop (Fail) / next-season world (Continue) is visible — the held black draws
+            // ON TOP of menus, so it must go before the shop opens. No-op if already clear.
+            Game1.globalFadeToClear();
+
             switch (branch)
             {
                 case Day28Branch.Fail:
+                    // Hide the day/time HUD across the shop → reset so the stale (pre-rewind)
+                    // calendar date isn't shown on the clock panel while the player shops.
+                    // ContinueAfterResetSpend restores it once the world is back on Spring 1.
+                    Game1.displayHUD = false;
                     TryOpenShrineThenContinue(ContinueAfterResetSpend);
                     break;
                 case Day28Branch.Continue:
@@ -331,6 +340,9 @@ namespace TheLongestYear.Loop
             ForceFullSave();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
+            // Restore the HUD hidden for the FAIL cutscene's shop→reset window (OnCutsceneEnded).
+            // Safe/no-op on the non-cutscene paths that also call this (post-win, fallback).
+            Game1.displayHUD = true;
         }
 
         /// <summary>Write a full game save right after the in-place reset so the on-disk save —
