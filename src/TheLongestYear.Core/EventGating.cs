@@ -46,12 +46,20 @@ public sealed class EventGatingTables
     public bool IsHeldUntilSpring5(string eventId) => _holdUntilSpring5.Contains(eventId);
     public bool IsFurnaceTeach(string eventId) => _furnace.Contains(eventId);
 
-    /// <summary>The live tables. EMPTY until the <c>tly_dumpevents</c> audit fills in the real
-    /// vanilla ids — empty means the policy is a pure pass-through (safe no-op).</summary>
+    // Real vanilla ids, confirmed via the tly_dumpevents audit (2026-06-03), both in
+    // Data/Events/Farm:
+    //   992553 — Clint teaches the Furnace recipe ("…you've been bringing copper ore…").
+    //   65     — Demetrius' cave choice (mushrooms vs fruit bats).
+    private const string FurnaceTeachEventId = "992553";
+    private const string DemetriusCaveEventId = "65";
+
+    /// <summary>The live tables, wired with the audited vanilla ids. Furnace + cave are replayable
+    /// (excluded from the seen re-seed); the cave is held to Spring 5; the furnace teach is gated on
+    /// the recipe being known this run.</summary>
     public static EventGatingTables Default { get; } = new EventGatingTables(
-        replayable: Array.Empty<string>(),
-        holdUntilSpring5: Array.Empty<string>(),
-        furnace: Array.Empty<string>());
+        replayable: new[] { FurnaceTeachEventId, DemetriusCaveEventId },
+        holdUntilSpring5: new[] { DemetriusCaveEventId },
+        furnace: new[] { FurnaceTeachEventId });
 }
 
 /// <summary>
