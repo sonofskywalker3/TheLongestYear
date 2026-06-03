@@ -271,11 +271,6 @@ namespace TheLongestYear.Loop
             Day28Branch branch = _pendingCutscene;
             _pendingCutscene = Day28Branch.None;
 
-            // The cutscene held the screen black via the globalFade command. Clear that hold now
-            // so the shop (Fail) / next-season world (Continue) is visible — the held black draws
-            // ON TOP of menus, so it must go before the shop opens. No-op if already clear.
-            Game1.globalFadeToClear();
-
             switch (branch)
             {
                 case Day28Branch.Fail:
