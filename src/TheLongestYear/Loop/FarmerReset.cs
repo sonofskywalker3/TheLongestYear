@@ -92,11 +92,14 @@ namespace TheLongestYear.Loop
             int reseeded = 0;
             foreach (string id in seenEventsEver)
             {
-                if (!EventGatingTables.Default.IsReplayable(id) && !p.eventsSeen.Contains(id))
-                {
-                    p.eventsSeen.Add(id);
-                    reseeded++;
-                }
+                // Replayable scenes (furnace/cave) and relationship/heart events stay eligible: the
+                // former are re-gated by EventGatingPolicy, the latter must re-fire as the player
+                // rebuilds friendships from zero each loop.
+                if (EventGatingTables.Default.IsReplayable(id)) continue;
+                if (RelationshipEventIndex.Contains(id)) continue;
+                if (p.eventsSeen.Contains(id)) continue;
+                p.eventsSeen.Add(id);
+                reseeded++;
             }
 
             // Suppress the vanilla intro cutscene from replaying every loop (matches TitleMenu's new-game path).
