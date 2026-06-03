@@ -62,6 +62,9 @@ namespace TheLongestYear.UI
         private const int WeatherIconRowH = 52;
         private int _weatherBlockX;
         private int _weatherBlockY = -1;   // top of the weather calendar block (-1 when no weather)
+        // Per-cell hover bounds (number+icon rows), so hovering a day shows "Day N - Weather"
+        // exactly like the planning-shrine board. Rebuilt in RecomputeBoundsAndLayout.
+        private readonly List<(Rectangle Bounds, ForecastDay Day)> _weatherCells = new List<(Rectangle, ForecastDay)>();
 
         // ---------- Component IDs ----------
         private const int CardIdLeft = 5100;
@@ -350,9 +353,19 @@ namespace TheLongestYear.UI
             // the planning-shrine board — not stacked text rows. Reserve its strip, then cart rows
             // (if any) flow below it.
             _weatherBlockX = rowX;
+            _weatherCells.Clear();
             if (_weatherSageSlots > 0)
             {
                 _weatherBlockY = rowY;
+                // Hover bounds span the number + icon rows of each day column (matches the shrine
+                // board), so the draw loop and the hover hit-test stay in lockstep.
+                int numY = _weatherBlockY + WeatherHeaderH;
+                for (int i = 0; i < _weatherForecast.Length; i++)
+                {
+                    int cellX = _weatherBlockX + i * WeatherCellWidth;
+                    var bounds = new Rectangle(cellX, numY, WeatherCellWidth, WeatherNumberRowH + WeatherIconRowH);
+                    _weatherCells.Add((bounds, _weatherForecast[i]));
+                }
                 rowY += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + PreviewSpacing;
             }
             else
@@ -451,6 +464,19 @@ namespace TheLongestYear.UI
 
             CheckBonusIconHover(x, y, _leftBonus, _leftBonusBounds);
             CheckBonusIconHover(x, y, _rightBonus, _rightBonusBounds);
+
+            // Weather calendar cells: "Day N - Weather", same as the planning-shrine board.
+            if (string.IsNullOrEmpty(_hoverText))
+            {
+                foreach (var (bounds, day) in _weatherCells)
+                {
+                    if (bounds.Contains(x, y))
+                    {
+                        _hoverText = $"Day {day.DayOfMonth} - {day.Weather}";
+                        return;
+                    }
+                }
+            }
         }
 
         private void CheckBonusIconHover(int x, int y, List<Item> items, List<Rectangle> bounds)
