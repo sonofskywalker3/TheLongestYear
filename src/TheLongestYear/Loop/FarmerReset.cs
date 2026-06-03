@@ -107,12 +107,19 @@ namespace TheLongestYear.Loop
                 // resetForPlayerEntry then rebuilds the small-house layout to match.
                 p.HouseUpgradeLevel = 0;
 
-            // Re-grant banked cooking recipes. Value 0 = vanilla "learned but never cooked".
-            // Do this AFTER clearing mail/events so the "you learned a recipe" pop-up doesn't
-            // fire for each one (the pop-up reads mailReceived for the "gotRecipe_X" flags;
-            // clearing mail first means no duplicate notification on the first morning).
-            // NetStringDictionary<int, NetInt> does not implement IDictionary<string,int> —
-            // use its ContainsKey + indexer directly.
+            // Reset recipes to the vanilla new-game baseline, THEN re-grant banked on top. Without
+            // the wipe, every recipe the player ever learned persisted across loops, so the cookbook/
+            // craftbook (whose whole point is banking recipes to KEEP them across loops) did nothing
+            // (2026-06-01 playtest: all crafting recipes retained with an empty craftbook; kept Fried
+            // Egg without banking it). Clear → LearnDefaultRecipes() re-seeds exactly the data-driven
+            // defaults (Data/CookingRecipes + CraftingRecipes entries whose unlock field == "default"),
+            // so run 2+ matches a clean run 1. Banked entries are then added at value 0 ("learned but
+            // never cooked"). Done AFTER clearing mail/events so no "you learned a recipe" pop-up fires
+            // (the pop-up reads mailReceived for the "gotRecipe_X" flags). NetStringDictionary does not
+            // implement IDictionary<string,int> — GrantBankedRecipes uses ContainsKey + indexer.
+            p.cookingRecipes.Clear();
+            p.craftingRecipes.Clear();
+            p.LearnDefaultRecipes();
             GrantBankedRecipes(p.cookingRecipes, cookbookRecipes);
             GrantBankedRecipes(p.craftingRecipes, craftbookRecipes);
 
@@ -123,7 +130,8 @@ namespace TheLongestYear.Loop
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
                 $"goldenScythe={baseline.GrantGoldenScythe}, " +
-                $"cookRecipes={cookbookRecipes.Count}, craftRecipes={craftbookRecipes.Count}.",
+                $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count}), " +
+                $"craftRecipes={craftbookRecipes.Count} banked (total {p.craftingRecipes.Count}).",
                 LogLevel.Trace);
         }
 
