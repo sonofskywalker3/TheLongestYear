@@ -21,8 +21,15 @@ namespace TheLongestYear.UI
     {
         private const string ContinueHint = "(click or press A to continue)";
 
+        // Junimo sprite drawn above the text. Source frame 0 of the 16×16 sheet, scaled up; the
+        // sheet is a white silhouette meant to be tinted, so we give it the classic Junimo green.
+        private const int JunimoFrame = 16;
+        private const float JunimoScale = 5f;
+        private static readonly Color JunimoTint = new Color(110, 200, 74);
+
         private readonly IReadOnlyList<string> _pages;
         private readonly Action _onComplete;
+        private readonly Texture2D _junimoTexture;
         private int _pageIndex;
         private bool _done;
 
@@ -34,6 +41,10 @@ namespace TheLongestYear.UI
                 : Day28CutsceneContent.ContinueDialogue;
             _pages = Day28DialogueScript.ToPages(raw, Game1.player?.Name ?? string.Empty);
             _onComplete = onComplete;
+
+            try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
+            catch (Exception) { _junimoTexture = null; }
+
             Game1.playSound("junimoMeep1");
         }
 
@@ -95,13 +106,24 @@ namespace TheLongestYear.UI
 
             b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, w, h), Color.Black);
 
+            // Junimo sprite, centered horizontally, sitting just above the text block.
+            float junimoSize = JunimoFrame * JunimoScale;
+            float junimoY = h * 0.34f;
+            if (_junimoTexture != null)
+            {
+                b.Draw(_junimoTexture,
+                    new Vector2((w - junimoSize) / 2f, junimoY),
+                    new Rectangle(0, 0, JunimoFrame, JunimoFrame),
+                    JunimoTint, 0f, Vector2.Zero, JunimoScale, SpriteEffects.None, 0.9f);
+            }
+
             string text = (_pageIndex >= 0 && _pageIndex < _pages.Count) ? _pages[_pageIndex] : string.Empty;
             if (text.Length > 0)
             {
-                int maxWidth = (int)(w * 0.6f);
+                int maxWidth = System.Math.Min(820, (int)(w * 0.55f));
                 string wrapped = Game1.parseText(text, Game1.dialogueFont, maxWidth);
                 Vector2 size = Game1.dialogueFont.MeasureString(wrapped);
-                Vector2 pos = new Vector2((w - size.X) / 2f, (h - size.Y) / 2f);
+                Vector2 pos = new Vector2((w - size.X) / 2f, junimoY + junimoSize + 32f);
                 Utility.drawTextWithShadow(b, wrapped, Game1.dialogueFont, pos, Color.White);
             }
 
