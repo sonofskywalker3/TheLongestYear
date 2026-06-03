@@ -150,6 +150,11 @@ namespace TheLongestYear.Loop
             // resets carryover; non-owners skip the snapshot and the pet is wiped normally.
             PetCarryoverService.SnapshotPet(_meta, _monitor);
 
+            // 0b. Capture the player's stable tile + horse (name/hat) BEFORE loadForNewGame wipes the
+            // buildings. Gated on early_horse ("Keep Horse"); restored after the rebuild at the same
+            // tile so the stable persists where the player built it.
+            HorseCarryoverService.SnapshotHorse(_meta, _monitor);
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -297,9 +302,10 @@ namespace TheLongestYear.Loop
             //    use the same tiles so subsequent runs land buildings in the same spots.
             ApplyKeptBuildings(baseline.KeptBuildings);
 
-            // 9. Early horse + stable.
-            if (baseline.EarlyHorse)
-                ApplyEarlyHorse();
+            // 9. Keep Horse — restore the player's stable + horse at its saved tile (pure carry-over;
+            //    no auto-build, so a player who hasn't built a stable yet has no horse this loop).
+            //    Gated on the upgrade + a prior snapshot inside the service.
+            HorseCarryoverService.RestoreHorse(_meta, _monitor);
 
             // 10. Place starting animals into matching housing.
             ApplyStartingAnimals(baseline.StartingAnimals);
@@ -483,8 +489,6 @@ namespace TheLongestYear.Loop
             ["Deluxe Barn"]  = new Vector2(62f, 12f),
         };
 
-        private static readonly Vector2 StableTile = new(48f, 7f);
-
         private void ApplyKeptBuildings(IReadOnlyList<string> buildings)
         {
             Farm farm = Game1.getFarm();
@@ -509,19 +513,6 @@ namespace TheLongestYear.Loop
             }
         }
 
-        private void ApplyEarlyHorse()
-        {
-            Farm farm = Game1.getFarm();
-            // Skip if stable already there (idempotent across re-resets).
-            if (farm.buildings.OfType<Stable>().Any())
-                return;
-
-            var stable = new Stable(StableTile);
-            stable.daysOfConstructionLeft.Value = 0;
-            stable.load();
-            farm.buildings.Add(stable);
-            stable.grabHorse();   // spawns the Horse NPC matched to the stable's HorseId
-        }
 
         private void ApplyStartingAnimals(IReadOnlyList<StartingAnimal> animals)
         {

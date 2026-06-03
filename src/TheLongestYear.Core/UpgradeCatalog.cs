@@ -106,8 +106,8 @@ public static class UpgradeCatalog
             "Bank up to 20 crafting recipes between loops.", 700, "craftbook_2"),
 
         // Efficiency
-        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Early Horse",
-            "Start each loop with the horse and stable.", 450),
+        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Keep Horse",
+            "Keep your stable and horse across loops (build it once, where you want it).", 450),
 
         // Shop Discount — 5-tier chain (2026-05-29 rebalance: was single-tier 5%, now
         // 5/10/15/20/25%. Renamed from shop_discount_5 → shop_discount_1..5; the prior
