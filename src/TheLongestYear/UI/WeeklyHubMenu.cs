@@ -55,7 +55,7 @@ namespace TheLongestYear.UI
         private const int WeatherCellWidth = 64;
         private const float WeatherIconScale = 3f;   // 13px source → 39px
         private const int WeatherIconPx = 39;
-        private const int WeatherHeaderH = 40;
+        private const int WeatherHeaderH = 60;        // header text + breathing room before the cells
         private const int WeatherNumberRowH = 30;
         private const int WeatherIconRowH = 52;
         private int _weatherBlockX;
@@ -416,7 +416,8 @@ namespace TheLongestYear.UI
 
             int totalWidth = count * BonusIconSize + (count - 1) * BonusIconGap;
             int startX = card.bounds.X + (card.bounds.Width - totalWidth) / 2;
-            int y = card.bounds.Y + card.bounds.Height - CardInnerPad - BonusIconSize;
+            // Extra bottom margin so the icon row isn't crammed against the card's frame.
+            int y = card.bounds.Y + card.bounds.Height - (CardInnerPad + 18) - BonusIconSize;
             for (int i = 0; i < count; i++)
                 bounds.Add(new Rectangle(startX + i * (BonusIconSize + BonusIconGap), y, BonusIconSize, BonusIconSize));
         }
