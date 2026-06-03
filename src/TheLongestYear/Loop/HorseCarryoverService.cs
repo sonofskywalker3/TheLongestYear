@@ -75,6 +75,13 @@ namespace TheLongestYear.Loop
                 stable.daysOfConstructionLeft.Value = 0;
                 stable.load();
                 farm.buildings.Add(stable);
+
+                // The farm was just regenerated (loadForNewGame), so the stable's tile may now have
+                // freshly-spawned weeds/stones/twigs/grass/clumps poking through it. Clear the
+                // footprint exactly as Robin's own build does, so the restored stable looks clean.
+                farm.removeObjectsAndSpawned(
+                    stable.tileX.Value, stable.tileY.Value, stable.tilesWide.Value, stable.tilesHigh.Value);
+
                 stable.grabHorse();
 
                 Horse horse = stable.getStableHorse();

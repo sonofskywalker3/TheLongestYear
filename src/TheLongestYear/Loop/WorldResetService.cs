@@ -508,6 +508,11 @@ namespace TheLongestYear.Loop
                 b.daysOfConstructionLeft.Value = 0;   // skip the construction animation
                 b.load();                              // initialises interior
                 farm.buildings.Add(b);
+
+                // Clear the footprint of any weeds/debris the farm regeneration spawned, the same
+                // way Robin's build does. These baseline tiles usually sit in the cleared starting
+                // area (a no-op), but this keeps the placement clean if the tile map ever changes.
+                farm.removeObjectsAndSpawned((int)tile.X, (int)tile.Y, b.tilesWide.Value, b.tilesHigh.Value);
             }
         }
 
