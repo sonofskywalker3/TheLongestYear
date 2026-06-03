@@ -2,14 +2,20 @@ using TheLongestYear.Core.Day28;
 
 namespace TheLongestYear.Integration
 {
-    /// <summary>Builds the day-28 bedtime cutscene as a vanilla Event script: fade the screen to
-    /// black and hold, a Junimo meep, one page of branch dialogue, then <c>end</c>. No
-    /// <c>changeLocation</c> — the scene plays wherever the player wakes (the FarmHouse). We use
-    /// <c>globalFade</c> (→ <c>Game1.globalFadeToBlack</c>), which fades to black and HOLDS it while
-    /// the event continues — so the dialogue renders over a true black screen and neither the
-    /// farmer nor the Junimo is visible. (The plain <c>fade</c> command sets <c>fadeIn</c> and
-    /// reveals the room instead — 2026-06-03 playtest: "I can see the farm and the tip of my head".)
-    /// The driver clears the hold (<c>Game1.globalFadeToClear</c>) after the event ends.
+    /// <summary>Builds the day-28 bedtime cutscene as a vanilla Event script: a Junimo meep, one
+    /// page of branch dialogue (shown with the portrait-less <c>message</c> box), then <c>end</c>.
+    /// Design decisions, each from a 2026-06-03 playtest:
+    /// <list type="bullet">
+    /// <item>No vanilla fade command — plain <c>fade</c> reveals the room and <c>globalFade</c>
+    ///   slow-fades then blinks back. Instead <see cref="Day28CutsceneDriver"/> paints a full-screen
+    ///   black rectangle every frame while this event is active (matched by its event id), so the
+    ///   dialogue renders over true black with neither the farmer nor a Junimo sprite visible.</item>
+    /// <item><c>message</c>, not <c>speak Junimo</c> — Junimo has no portrait asset, so
+    ///   <c>speak</c> made the dialogue box retry a portrait load every frame
+    ///   (<c>NPC.TryLoadPortraits</c> FileNotFoundException spam, "smapi going nuts"). <c>message</c>
+    ///   shows a plain text box with no speaker portrait; the meep SFX carry the Junimo voice. With
+    ///   no speaker we also don't need an <c>addTemporaryActor</c>.</item>
+    /// </list>
     /// Not skippable (no <c>skippable</c> token): the driver detects "scene ended" by the event
     /// going inactive, and a skip would race that.</summary>
     internal static class Day28CutsceneInjector
@@ -23,15 +29,13 @@ namespace TheLongestYear.Integration
             return string.Join("/", new[]
             {
                 "none",                         // music
-                "3 9",                          // initial viewport (FarmHouse interior; irrelevant once black)
+                "3 9",                          // initial viewport (FarmHouse interior; hidden by the black overlay)
                 "farmer 3 9 2",                 // place the farmer; hidden behind the black, restored on end
                 // (no "skippable" — forced scene)
-                "addTemporaryActor Junimo 16 16 5 9 2 false character Junimo",
-                "globalFade",                   // fade to black and HOLD while the event continues
                 "pause 700",
                 "playSound junimoMeep1",
                 "pause 400",
-                $"speak Junimo \"{line}\"",
+                $"message \"{line}\"",
                 "pause 500",
                 "playSound junimoMeep1",
                 "pause 900",
