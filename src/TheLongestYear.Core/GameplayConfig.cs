@@ -190,4 +190,13 @@ public sealed class GameplayConfig
     /// the week's theme offer in place. Off by default — the week's offer is meant to be fixed —
     /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
     public bool EnableThemeReroll { get; set; } = false;
+
+    /// <summary>Windowed width the mod forces on launch. SDV doesn't persist a windowed width/height
+    /// (it always boots at 1280×720 in windowed mode), and the dev redeploy loop force-kills the game
+    /// so it never saves one on exit — so the mod nudges the window to this size once the game is up.
+    /// Ignored in fullscreen. Set to 0 (either dimension) to leave the window untouched.</summary>
+    public int WindowWidth { get; set; } = 1920;
+
+    /// <summary>Windowed height the mod forces on launch. See <see cref="WindowWidth"/>.</summary>
+    public int WindowHeight { get; set; } = 1080;
 }
