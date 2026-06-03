@@ -21,7 +21,8 @@ namespace TheLongestYear.Loop
 
         public void Apply(Farmer p, RunBaseline baseline,
             IReadOnlyList<string> cookbookRecipes,
-            IReadOnlyList<string> craftbookRecipes)
+            IReadOnlyList<string> craftbookRecipes,
+            IReadOnlyList<string> seenEventsEver)
         {
             p.Money = baseline.StartingGold;
 
@@ -83,6 +84,21 @@ namespace TheLongestYear.Loop
             p.eventsSeen.Clear();
             p.questLog.Clear();
 
+            // Event-gating Phase 1: re-seed eventsSeen from the cross-loop "seen ever" memory rather
+            // than leaving it wiped, so a scene the player already watched stays suppressed by
+            // vanilla's own seen-check (the unconditional Clear() was the root cause of vanilla early
+            // scenes replaying every loop). Replayable ids (furnace teach, Demetrius cave, …) are
+            // excluded so they stay eligible to re-fire under EventGatingPolicy's finer gating.
+            int reseeded = 0;
+            foreach (string id in seenEventsEver)
+            {
+                if (!EventGatingTables.Default.IsReplayable(id) && !p.eventsSeen.Contains(id))
+                {
+                    p.eventsSeen.Add(id);
+                    reseeded++;
+                }
+            }
+
             // Suppress the vanilla intro cutscene from replaying every loop (matches TitleMenu's new-game path).
             p.eventsSeen.Add("60367");
 
@@ -131,7 +147,8 @@ namespace TheLongestYear.Loop
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
                 $"goldenScythe={baseline.GrantGoldenScythe}, " +
                 $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count}), " +
-                $"craftRecipes={craftbookRecipes.Count} banked (total {p.craftingRecipes.Count}).",
+                $"craftRecipes={craftbookRecipes.Count} banked (total {p.craftingRecipes.Count}), " +
+                $"eventsReseeded={reseeded} (of {seenEventsEver.Count} seen-ever).",
                 LogLevel.Trace);
         }
 

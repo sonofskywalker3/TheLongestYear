@@ -162,6 +162,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
+            helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
@@ -299,8 +300,84 @@ namespace TheLongestYear
             // we persist, so a save+reset can't lose the flag (mailReceived gets wiped by
             // FarmerReset.loadForNewGame, MetaState doesn't).
             _introInjector?.MarkIntroSeenIfApplicable();
+            RecordSeenEvents();
             _meta.Save();
             this.Monitor.Log($"Meta-state saved with the game. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Trace);
+        }
+
+        /// <summary>Merge the run's seen vanilla events into the cross-loop SeenEventsEver memory so a
+        /// scene watched in any run stays suppressed on later loops (event-gating Phase 1). Called
+        /// from OnSaving before the meta-state persists; FarmerReset re-seeds eventsSeen from it.</summary>
+        /// <summary>Scan Data/Events for the events whose scripts grant the Furnace recipe or run the
+        /// cave (bats/mushrooms) choice, logging their real ids + a snippet. The ids live in compiled
+        /// content (not in code), so this audit is how the EventGatingTables get real ids rather than
+        /// guesses. Loadable at the title or in-game.</summary>
+        private void CmdDumpEvents(string command, string[] args)
+        {
+            string[] locations =
+            {
+                "Farm", "FarmHouse", "Town", "Mountain", "Beach", "Forest", "BusStop", "Backwoods",
+                "Railroad", "Saloon", "SeedShop", "Blacksmith", "AnimalShop", "Hospital", "ScienceHouse",
+                "JoshHouse", "HaleyHouse", "SamHouse", "Tent", "Trailer", "ManorHouse", "WizardHouse",
+                "Sewer", "Mine", "Tunnel", "Woods", "CommunityCenter", "ArchaeologyHouse", "FishShop",
+                "Sunroom", "AdventureGuild", "Greenhouse", "Cellar", "Desert", "Summit",
+            };
+            string[] tokens = { "Furnace", "cave", "mushroom", "fruitBat", "caveChoice" };
+
+            int total = 0, hits = 0;
+            foreach (string loc in locations)
+            {
+                System.Collections.Generic.Dictionary<string, string> data;
+                try
+                {
+                    data = this.Helper.GameContent.Load<System.Collections.Generic.Dictionary<string, string>>($"Data/Events/{loc}");
+                }
+                catch (System.Exception)
+                {
+                    continue; // location has no event data file
+                }
+                if (data == null) continue;
+
+                foreach (System.Collections.Generic.KeyValuePair<string, string> kv in data)
+                {
+                    total++;
+                    string script = kv.Value ?? "";
+                    int slash = kv.Key.IndexOf('/');
+                    string id = slash < 0 ? kv.Key : kv.Key.Substring(0, slash);
+                    foreach (string tok in tokens)
+                    {
+                        if (script.IndexOf(tok, System.StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+                        hits++;
+                        string snippet = script.Length > 140 ? script.Substring(0, 140) : script;
+                        this.Monitor.Log($"[dumpevents] {loc} id={id} match='{tok}' :: {snippet}", LogLevel.Info);
+                        break;
+                    }
+                }
+            }
+            this.Monitor.Log(
+                $"[dumpevents] scanned {total} events across {locations.Length} locations; {hits} candidate(s) matched.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Merge the run's seen vanilla events into the cross-loop SeenEventsEver memory so a
+        /// scene watched in any run stays suppressed on later loops (event-gating Phase 1). Called
+        /// from OnSaving before the meta-state persists; FarmerReset re-seeds eventsSeen from it.</summary>
+        private void RecordSeenEvents()
+        {
+            if (!Context.IsWorldReady || Game1.player?.eventsSeen == null)
+                return;
+
+            System.Collections.Generic.List<string> seen = _meta.State.SeenEventsEver;
+            var known = new System.Collections.Generic.HashSet<string>(seen, System.StringComparer.Ordinal);
+            int added = 0;
+            foreach (string id in Game1.player.eventsSeen)
+                if (known.Add(id)) { seen.Add(id); added++; }
+
+            if (added > 0)
+                this.Monitor.Log(
+                    $"Recorded {added} newly-seen event id(s) to SeenEventsEver (total {seen.Count}).",
+                    LogLevel.Trace);
         }
 
         private void PrintMeta(string command, string[] args)

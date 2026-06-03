@@ -1,0 +1,86 @@
+using System;
+using System.Collections.Generic;
+
+namespace TheLongestYear.Core;
+
+/// <summary>Whether a candidate vanilla event should be allowed to run or suppressed this tick.</summary>
+public enum EventGatingDecision
+{
+    Allow,
+    Suppress
+}
+
+/// <summary>
+/// The curated event-id sets that drive <see cref="EventGatingPolicy"/>. Real vanilla ids are
+/// sourced from the <c>tly_dumpevents</c> runtime audit (the ids live in compiled Data/Events
+/// content, not in code) and wired into <see cref="Default"/> — never guessed.
+/// </summary>
+public sealed class EventGatingTables
+{
+    /// <summary>Spring is season index 0; the early-event hold only applies during Spring.</summary>
+    public const int SpringSeasonIndex = 0;
+
+    private readonly HashSet<string> _replayable;
+    private readonly HashSet<string> _holdUntilSpring5;
+    private readonly HashSet<string> _furnace;
+
+    /// <summary>Calendar day a held early event is released on (inclusive). Default Spring 5.</summary>
+    public int HoldThresholdDay { get; }
+
+    public EventGatingTables(
+        IEnumerable<string> replayable,
+        IEnumerable<string> holdUntilSpring5,
+        IEnumerable<string> furnace,
+        int holdThresholdDay = 5)
+    {
+        _replayable = new HashSet<string>(replayable, StringComparer.Ordinal);
+        _holdUntilSpring5 = new HashSet<string>(holdUntilSpring5, StringComparer.Ordinal);
+        _furnace = new HashSet<string>(furnace, StringComparer.Ordinal);
+        HoldThresholdDay = holdThresholdDay;
+    }
+
+    /// <summary>Events excluded from the cross-loop seen re-seed so they can fire again each loop.</summary>
+    public IReadOnlyCollection<string> ReplayableEventIds => _replayable;
+
+    public bool IsReplayable(string eventId) => _replayable.Contains(eventId);
+    public bool IsHeldUntilSpring5(string eventId) => _holdUntilSpring5.Contains(eventId);
+    public bool IsFurnaceTeach(string eventId) => _furnace.Contains(eventId);
+
+    /// <summary>The live tables. EMPTY until the <c>tly_dumpevents</c> audit fills in the real
+    /// vanilla ids — empty means the policy is a pure pass-through (safe no-op).</summary>
+    public static EventGatingTables Default { get; } = new EventGatingTables(
+        replayable: Array.Empty<string>(),
+        holdUntilSpring5: Array.Empty<string>(),
+        furnace: Array.Empty<string>());
+}
+
+/// <summary>
+/// Pure decision for whether a candidate event should run this tick, layered on top of vanilla's
+/// own seen-check + preconditions. Two rules:
+///   • Hold a jarring early event until Spring <see cref="EventGatingTables.HoldThresholdDay"/>.
+///   • Suppress an unlock-teach scene (furnace) while that unlock is already known this run.
+/// Everything else defers to vanilla.
+/// </summary>
+public static class EventGatingPolicy
+{
+    public static EventGatingDecision Decide(
+        string eventId, int seasonIndex, int dayOfMonth, bool furnaceKnownThisRun,
+        EventGatingTables tables)
+    {
+        if (string.IsNullOrEmpty(eventId))
+            return EventGatingDecision.Allow;
+
+        // Hold jarring early events: suppress only during Spring days before the threshold. Once
+        // it's Spring 5+ (or any later season — a loop always starts at Spring 1), it's released.
+        if (tables.IsHeldUntilSpring5(eventId)
+            && seasonIndex == EventGatingTables.SpringSeasonIndex
+            && dayOfMonth < tables.HoldThresholdDay)
+            return EventGatingDecision.Suppress;
+
+        // Furnace teach scene: only needed when the recipe isn't already in hand this run.
+        if (tables.IsFurnaceTeach(eventId) && furnaceKnownThisRun)
+            return EventGatingDecision.Suppress;
+
+        return EventGatingDecision.Allow;
+    }
+}

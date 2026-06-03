@@ -80,6 +80,15 @@ public sealed class MetaState
     public List<string> MailFlagsEverReceived { get; set; } = new();
 
     /// <summary>
+    /// Every vanilla event id the player has ever seen across all runs in this playthrough.
+    /// Producer is <c>ModEntry.OnSaving</c> (merges <c>Farmer.eventsSeen</c> in). On reset,
+    /// <c>FarmerReset</c> re-seeds <c>Farmer.eventsSeen</c> from this set (minus the replayable
+    /// ids in <see cref="EventGatingTables"/>) instead of clearing it, so a scene the player has
+    /// already watched never replays on a later loop (event-gating Phase 1).
+    /// </summary>
+    public List<string> SeenEventsEver { get; set; } = new();
+
+    /// <summary>
     /// Cooking recipe IDs banked in the Cookbook across runs. Keys match
     /// <c>Farmer.cookingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Fried_Egg").
     /// On reset, every entry is re-granted to <c>Farmer.cookingRecipes[id] = 0</c>
