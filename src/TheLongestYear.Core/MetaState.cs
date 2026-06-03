@@ -67,6 +67,14 @@ public sealed class MetaState
     public PetSnapshot? PetState { get; set; }
 
     /// <summary>
+    /// Snapshot of the player's stable + horse (tile, name, hat) captured before a loop reset and
+    /// restored after, when the <c>early_horse</c> ("Keep Horse") upgrade is owned. Null when the
+    /// upgrade isn't owned or no stable has been built yet — the upgrade is pure carry-over (no
+    /// auto-build), so the stable is only ever placed where the player built it.
+    /// </summary>
+    public HorseSnapshot? HorseState { get; set; }
+
+    /// <summary>
     /// Quest ids the player has completed across all runs in this playthrough. Backs the
     /// quest:&lt;id&gt; meta-requirement namespace. Producer is part of a later plan; declared
     /// here so future plans don't have to touch the state class.
