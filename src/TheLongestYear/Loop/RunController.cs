@@ -372,6 +372,11 @@ namespace TheLongestYear.Loop
                 _monitor.Log(
                     "Day-28 save: full save written post-reset — save folder is now consistent at Spring 1.",
                     LogLevel.Info);
+
+                // The new canonical save folder now exists on disk. Delete the pre-reset folder so
+                // the reset leaves exactly one save (no "None2_" duplicate). Done only here, after a
+                // confirmed save, so a failure/kill earlier never destroys the only loadable copy.
+                _reset.CleanupAbandonedSaveFolder();
             }
             catch (System.Exception ex)
             {
