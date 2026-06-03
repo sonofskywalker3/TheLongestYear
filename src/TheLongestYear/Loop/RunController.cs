@@ -6,6 +6,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using TheLongestYear.Core;
 using CoreSeason = TheLongestYear.Core.Season;
+using TheLongestYear.Core.Day28;
 
 namespace TheLongestYear.Loop
 {
@@ -28,7 +29,15 @@ namespace TheLongestYear.Loop
         private readonly System.Collections.Generic.IReadOnlyDictionary<string, int> _ingredientStacks;
         private readonly System.Collections.Generic.IReadOnlyDictionary<string, int> _ingredientQualities;
 
-        private bool _pendingReset;
+        /// <summary>Which day-28 bedtime cutscene is queued for the next morning (set in
+        /// OnDayEnding from the gate's RunAction). The <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/>
+        /// reads this, plays the in-bed Junimo scene, and calls <see cref="OnCutsceneEnded"/> when
+        /// it ends. None = no cutscene (normal day). Replaces the old _pendingReset bool: the reset
+        /// now runs AFTER the FAIL cutscene's JP shop instead of straight out of OnDayStarted.</summary>
+        private Day28Branch _pendingCutscene = Day28Branch.None;
+
+        /// <summary>Exposed for the driver's per-tick decision.</summary>
+        public Day28Branch PendingCutscene => _pendingCutscene;
         /// <summary>Set in OnDayEnding's Win branch when the loop is completed (CC restored on
         /// Winter 28). Consumed on the next OnDayStarted: opens the JP-spend shrine, then asks
         /// the player to choose "Start a new loop" or "Keep playing this run". Suppressed when
@@ -163,16 +172,13 @@ namespace TheLongestYear.Loop
 
         public void OnDayStarted(object sender, DayStartedEventArgs e)
         {
-            if (_pendingReset)
+            if (_pendingCutscene != Day28Branch.None)
             {
-                _pendingReset = false;
-                // 2026-05-29 spec: JP-spend popup pops on every natural loop reset so the
-                // player can dump banked JP on whatever upgrades they want active for the
-                // next loop. Menu's exitFunction continues with PerformReset + the rest of
-                // OnDayStarted. If the menu can't open (active event / existing menu), fall
-                // through to immediate reset — UX miss but never a lost reset.
-                // Manual tly_reset intentionally NOT routed through here (debug stays raw).
-                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                // A day-28 outcome is queued. The Day28CutsceneDriver plays the in-bed Junimo
+                // scene this morning (UpdateTicked), then calls OnCutsceneEnded() to open the
+                // JP shop + reset (Fail) or roll into the next season (Continue). Suppress the
+                // normal season-sync/hub flow until the scene resolves — same shape as the old
+                // _pendingReset early-return. Manual tly_reset intentionally stays raw.
                 return;
             }
 
@@ -255,6 +261,33 @@ namespace TheLongestYear.Loop
             onContinue();
         }
 
+        /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
+        /// day-28 bedtime cutscene has finished. Clears the pending branch and runs its
+        /// continuation: FAIL → JP shop, then on close PerformReset + forced full save
+        /// (ContinueAfterResetSpend); CONTINUE → roll straight into the next season's day-start
+        /// flow (no shop, no reset).</summary>
+        public void OnCutsceneEnded()
+        {
+            Day28Branch branch = _pendingCutscene;
+            _pendingCutscene = Day28Branch.None;
+
+            switch (branch)
+            {
+                case Day28Branch.Fail:
+                    TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    break;
+                case Day28Branch.Continue:
+                    DoDayStartSeasonAndHub();
+                    break;
+                case Day28Branch.None:
+                default:
+                    // Defensive: driver fired with nothing queued. Fall back to the normal flow
+                    // so the morning is never stranded.
+                    DoDayStartSeasonAndHub();
+                    break;
+            }
+        }
+
         /// <summary>Debug: fire the SAME fail-reset flow a day-28 gate miss triggers
         /// (<see cref="OnDayStarted"/> line 175) — open the JP-spend shrine, then on close run
         /// <see cref="ContinueAfterResetSpend"/> (PerformReset + persist). Lets a playtest exercise
@@ -263,8 +296,11 @@ namespace TheLongestYear.Loop
         /// purchase flow that the JP-refund bug lived in.</summary>
         public void DebugForceFailReset()
         {
-            _monitor.Log("tly_failreset: simulating a day-28 gate-miss reset (shrine then reset).", LogLevel.Info);
-            TryOpenShrineThenContinue(ContinueAfterResetSpend);
+            _monitor.Log("tly_failreset: queuing the day-28 FAIL cutscene (Junimo → shrine → reset).", LogLevel.Info);
+            // Set the pending branch so the Day28CutsceneDriver plays the real bedtime scene this
+            // tick (the driver polls UpdateTicked, not just DayStarted), exercising the full
+            // cutscene → shop → reset → forced-save path from anywhere. tly_reset stays raw.
+            _pendingCutscene = Day28Branch.Fail;
         }
 
         /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
@@ -282,8 +318,46 @@ namespace TheLongestYear.Loop
             // just spent and dropping their purchases. ApplyKeepPlaying + ModEntry.FullResetAndPresentOffer
             // guard the same way; this path was missing it (2026-06-01 playtest: "it refunded all my JP").
             _store.Save();
+            ForceFullSave();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
+        }
+
+        /// <summary>Write a full game save right after the in-place reset so the on-disk save —
+        /// whose folder + inner files PerformReset just renamed to the new uniqueID — holds the
+        /// consistent Spring 1 world NOW, closing the rename window the reset would otherwise leave
+        /// open until the next natural sleep (batch-B notes §4). <c>SaveGame.Save()</c> is an
+        /// enumerator that runs the write on a background task and yields until done, so we drain
+        /// it to completion. Guarded: SaveGame.Save no-ops while an event/minigame is up, and any
+        /// failure degrades to the existing inner-file-rename mitigation (the save stays loadable;
+        /// the next sleep rewrites it) rather than aborting the reset.</summary>
+        private void ForceFullSave()
+        {
+            try
+            {
+                if (Game1.eventUp || Game1.currentMinigame != null)
+                {
+                    _monitor.Log(
+                        "Day-28 save: skipped (event/minigame active). Save stays loadable via the " +
+                        "inner-file rename; the next sleep will rewrite it.",
+                        LogLevel.Warn);
+                    return;
+                }
+
+                var save = StardewValley.SaveGame.Save();
+                while (save.MoveNext()) { }
+
+                _monitor.Log(
+                    "Day-28 save: full save written post-reset — save folder is now consistent at Spring 1.",
+                    LogLevel.Info);
+            }
+            catch (System.Exception ex)
+            {
+                _monitor.Log(
+                    $"Day-28 save: forced save failed ({ex.Message}). Save remains loadable via the " +
+                    "inner-file rename; the next natural sleep will rewrite it.",
+                    LogLevel.Warn);
+            }
         }
 
         /// <summary>The post-reset (or no-reset-this-day) day-start work: sync season from
@@ -361,11 +435,15 @@ namespace TheLongestYear.Loop
 
                 case RunAction.AdvanceMonth:
                     _monitor.Log($"Month cleared ({Run.Season}). Advancing.", LogLevel.Info);
-                    break; // game advances the date; OnDayStarted clears the month's selections
+                    // Queue the "great job, next season" Junimo cutscene for the morning. The
+                    // game still advances the date; OnCutsceneEnded → DoDayStartSeasonAndHub
+                    // clears the month's selections and opens the planning hub after the scene.
+                    _pendingCutscene = Day28Branch.Continue;
+                    break;
 
                 case RunAction.FailReset:
                     AwardInterimJp("run failed");
-                    _pendingReset = true;
+                    _pendingCutscene = Day28Branch.Fail;
                     break;
 
                 case RunAction.Win:
