@@ -860,6 +860,12 @@ namespace TheLongestYear
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
+                case "tly_failreset":
+                    if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
+                    _runController?.DebugForceFailReset(); break;
+                case "tly_day28continue":
+                    if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
+                    _runController?.DebugForceContinueCutscene(); break;
                 case "tly_resetif": this.ResetIfNameMatches(command, args); break;
                 case "tly_leaktest": this.LeakTest(command, args); break;
                 case "tly_select": this.CmdSelect(command, args); break;

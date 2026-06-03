@@ -303,6 +303,16 @@ namespace TheLongestYear.Loop
             _pendingCutscene = Day28Branch.Fail;
         }
 
+        /// <summary>Debug: queue the CONTINUE (gate-passed) day-28 cutscene so a playtest can watch
+        /// the "great job, next season" branch without reaching a real passing day-28. Sets the
+        /// pending branch; the Day28CutsceneDriver plays the scene this tick and OnCutsceneEnded
+        /// rolls into DoDayStartSeasonAndHub (no shop, no reset).</summary>
+        public void DebugForceContinueCutscene()
+        {
+            _monitor.Log("tly_day28continue: queuing the day-28 CONTINUE cutscene (Junimo → next season).", LogLevel.Info);
+            _pendingCutscene = Day28Branch.Continue;
+        }
+
         /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
         /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
         private void ContinueAfterResetSpend()
