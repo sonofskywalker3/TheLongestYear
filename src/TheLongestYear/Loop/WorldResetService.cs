@@ -211,6 +211,19 @@ namespace TheLongestYear.Loop
             Game1.netWorldState.Value.Date.DayOfMonth = 1;
             Game1.stats.DaysPlayed = 1;
 
+            // The load-menu date label is read from the Farmer's *ForSaveGame display fields
+            // (LoadGameMenu uses dayOfMonthForSaveGame/seasonForSaveGame/yearForSaveGame), which
+            // vanilla refreshes during the normal sleep-save (Game1 sets player.*ForSaveGame). A
+            // direct post-reset SaveGame.Save doesn't run that step, so without this the slot kept
+            // the pre-reset date ("Day 5 of Spring" on a Spring-1 save — 2026-06-03 playtest). Set
+            // them to match the rewound date so the title screen shows Spring 1.
+            if (Game1.player != null)
+            {
+                Game1.player.dayOfMonthForSaveGame = Game1.dayOfMonth;
+                Game1.player.seasonForSaveGame = (int)Game1.season;
+                Game1.player.yearForSaveGame = Game1.year;
+            }
+
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
