@@ -866,6 +866,10 @@ namespace TheLongestYear
                 case "tly_day28continue":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceContinueCutscene(); break;
+                case "tly_setday":
+                    if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
+                    _runController?.DebugSetDay(args.Length > 0 && int.TryParse(args[0], out int d) ? d : 28);
+                    break;
                 case "tly_resetif": this.ResetIfNameMatches(command, args); break;
                 case "tly_leaktest": this.LeakTest(command, args); break;
                 case "tly_select": this.CmdSelect(command, args); break;

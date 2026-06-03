@@ -317,6 +317,22 @@ namespace TheLongestYear.Loop
             _pendingCutscene = Day28Branch.Continue;
         }
 
+        /// <summary>Debug: jump the in-game date to <paramref name="day"/> of the current season so a
+        /// playtest can sleep straight into the day-28 gate (and exercise the REAL sleep → morning
+        /// cutscene timing) without grinding a whole month. Sets both the game date and the run's
+        /// day so OnDayEnding's gate evaluates for the right day, plus the load-menu display field.</summary>
+        public void DebugSetDay(int day)
+        {
+            Run.DayOfMonth = day;
+            Game1.dayOfMonth = day;
+            Game1.netWorldState.Value.Date.DayOfMonth = day;
+            if (Game1.player != null)
+                Game1.player.dayOfMonthForSaveGame = day;
+            _monitor.Log(
+                $"tly_setday: date set to {Run.Season} {day}. Sleep to trigger the day-{day} gate.",
+                LogLevel.Info);
+        }
+
         /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
         /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
         private void ContinueAfterResetSpend()
