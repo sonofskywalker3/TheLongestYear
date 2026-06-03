@@ -149,8 +149,8 @@ namespace TheLongestYear.Loop
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
                 $"goldenScythe={baseline.GrantGoldenScythe}, " +
-                $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count}), " +
-                $"craftRecipes={craftbookRecipes.Count} banked (total {p.craftingRecipes.Count}), " +
+                $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count()}), " +
+                $"craftRecipes={craftbookRecipes.Count} banked (total {p.craftingRecipes.Count()}), " +
                 $"eventsReseeded={reseeded} (of {seenEventsEver.Count} seen-ever).",
                 LogLevel.Trace);
         }
