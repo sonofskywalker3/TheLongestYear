@@ -21,6 +21,10 @@ each loop, and the Junimo Stash can carry it across loops. No TLY-side coupling 
   which is the real cart on a visit day) is **bundle-relevant**. On non-visit days: "No cart in town
   today" + the next visit weekday.
 - Not predictive — it reads the real present-day stock and tells you whether a trip is worth it.
+- **Cart Catalog synergy:** if the player has Cart Whisperer **and** the Cart Catalog mod is merely
+  **installed** (`Helper.ModRegistry.IsLoaded(<CartCatalog uniqueID>)` — book ownership intentionally
+  NOT required, so seeing missed bundle items nudges a purchase), show today's bundle-relevant stock
+  **every day**, not just visit days. Degrades to visit-days-only when the mod isn't installed.
 
 ### Bundle-relevance set (data-driven, cached in Core)
 An item is relevant if it can contribute to **any** vanilla CC bundle, regardless of what's required

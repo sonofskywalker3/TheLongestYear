@@ -51,7 +51,8 @@ namespace TheLongestYear.UI
                 _monitor, _runController, _config, _store.Run, _runController.Requirements,
                 offer, offerSeason, isPreSelectForNextMonth: seasonOverride.HasValue,
                 weatherSageSlots: _runController.WeatherSageTier(),
-                cartPreviewSlots: _runController.CartPreviewSlots());
+                // Cart preview removed from the hub — Cart Whisperer is now bundle-sense on the shrine.
+                cartPreviewSlots: 0);
             _monitor.Log(
                 $"Opened planning hub (week {_store.Run.WeekOfYear}{(seasonOverride.HasValue ? $" → {offerSeason}" : "")}, " +
                 $"offer: {string.Join(",", offer)}).",
