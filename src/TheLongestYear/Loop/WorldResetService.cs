@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
@@ -328,6 +329,13 @@ namespace TheLongestYear.Loop
             Game1.player.Position = new Vector2(9f, 9f) * 64f;
             home.resetForPlayerEntry();
 
+            // 14a. Rebuild the FarmHouse's built-in furniture. After the loop's house downgrade the
+            //      cabin came back without its starter set (2026-06-01: fireplace MISSING, and earlier
+            //      a stale bed blocked the door). Clear the furniture and re-run vanilla's own
+            //      AddStarterFurniture so the FULL default set (bed, fireplace, rug, table+bowl, …) is
+            //      laid down at the correct positions for the current HouseUpgradeLevel.
+            RestoreFarmHouseFurniture(home);
+
             // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
             _ccUnlock.Apply();
 
@@ -342,6 +350,44 @@ namespace TheLongestYear.Loop
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
                 LogLevel.Info);
+        }
+
+        // Vanilla's private FarmHouse.AddStarterFurniture(Farm) — lays down the full level-aware
+        // default furniture set (bed, fireplace, rug, table+heldObject, chairs) for Game1.whichFarm.
+        // Reflected because it's private; reused directly so the set always matches the game's.
+        private static readonly System.Reflection.MethodInfo AddStarterFurnitureMethod =
+            AccessTools.Method(typeof(FarmHouse), "AddStarterFurniture");
+
+        /// <summary>Rebuild the FarmHouse's built-in furniture to vanilla's default starter set.
+        /// loadForNewGame + the house downgrade leave the cabin's furniture stale/missing (the
+        /// fireplace vanished; a bed once blocked the door). Clearing + re-invoking the game's own
+        /// AddStarterFurniture restores the complete set at the right tiles for the current upgrade
+        /// level. Best-effort: a reflection/placement failure is logged, never fatal to the reset.</summary>
+        private void RestoreFarmHouseFurniture(GameLocation home)
+        {
+            if (home is not FarmHouse fh)
+                return;
+            if (AddStarterFurnitureMethod == null)
+            {
+                _monitor.Log("RestoreFarmHouseFurniture: AddStarterFurniture not found via reflection; " +
+                    "skipping (cabin furniture may be stale).", LogLevel.Warn);
+                return;
+            }
+
+            try
+            {
+                int before = fh.furniture.Count;
+                fh.furniture.Clear();
+                AddStarterFurnitureMethod.Invoke(fh, new object[] { Game1.getFarm() });
+                _monitor.Log(
+                    $"RestoreFarmHouseFurniture: rebuilt starter furniture (house level {fh.upgradeLevel}); " +
+                    $"{before} → {fh.furniture.Count} pieces.",
+                    LogLevel.Trace);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"RestoreFarmHouseFurniture: failed: {(ex.InnerException ?? ex).Message}", LogLevel.Warn);
+            }
         }
 
         /// <summary>Rename the main + "_old" save files inside a just-renamed save folder so their
