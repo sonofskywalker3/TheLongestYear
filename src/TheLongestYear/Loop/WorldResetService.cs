@@ -37,6 +37,11 @@ namespace TheLongestYear.Loop
         private readonly TheLongestYear.Integration.BookFurniture _bookFurniture;
         private readonly TheLongestYear.UI.PlanningShrineService _planningShrine;
 
+        /// <summary>The pre-reset save folder recorded in <see cref="PerformReset"/>, deleted by
+        /// <see cref="CleanupAbandonedSaveFolder"/> only after the post-reset full save confirms the
+        /// new canonical folder. Null when there's nothing to clean up.</summary>
+        private string _abandonedSaveFolder;
+
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
         public WorldResetService(
@@ -99,48 +104,18 @@ namespace TheLongestYear.Loop
             Game1.uniqueIDForThisGame = Utility.NewUniqueIdForThisGame();
             Game1.weatherForTomorrow = "Sun";
 
-            string newSavePath = null;
-            if (!string.IsNullOrEmpty(oldSavePath))
-            {
-                string oldFolder = Path.GetFileName(oldSavePath);
-                int splitAt = oldFolder.LastIndexOf('_');
-                if (splitAt > 0)
-                {
-                    string playerNamePart = oldFolder.Substring(0, splitAt);
-                    string newFolder = $"{playerNamePart}_{Game1.uniqueIDForThisGame}";
-                    newSavePath = Path.Combine(Path.GetDirectoryName(oldSavePath), newFolder);
-                }
-            }
+            // Record the folder we're abandoning so it can be deleted AFTER the post-reset full save
+            // writes the new canonical folder (RunController.ForceFullSave → CleanupAbandonedSaveFolder).
+            // We deliberately DON'T rename it here: Stardew's SaveGame.Save writes to the CANONICAL
+            // "<farmName>_<uniqueID>" folder, but the on-disk folder may carry a non-canonical prefix
+            // (e.g. "None2_" from an earlier de-dup). Renaming by the old prefix produced a SECOND
+            // folder that disagreed with what the save actually wrote — two "None" farms on the title
+            // screen (2026-06-03 playtest). Leaving the old folder intact until the new save is
+            // confirmed also means a kill mid-reset degrades to a loadable stale folder, not a brick.
+            _abandonedSaveFolder = (!string.IsNullOrEmpty(oldSavePath) && Directory.Exists(oldSavePath))
+                ? oldSavePath
+                : null;
 
-            if (!string.IsNullOrEmpty(oldSavePath) && !string.IsNullOrEmpty(newSavePath)
-                && oldSavePath != newSavePath && Directory.Exists(oldSavePath) && !Directory.Exists(newSavePath))
-            {
-                try
-                {
-                    Directory.Move(oldSavePath, newSavePath);
-
-                    // The folder is now named for the NEW uniqueID, but the save FILES inside still
-                    // carry the OLD id — Stardew only rewrites them on the next full sleep-save.
-                    // If the session is killed/crashes before that save, the load menu can't match
-                    // the inner file to the folder name and the save "vanishes" (2026-06-01: a
-                    // mid-window process kill bricked the None farm; data was intact but unlistable).
-                    // Rename the inner save files to match the folder so the save ALWAYS stays
-                    // loadable. The next full save overwrites them with correct content regardless,
-                    // so this is a no-op on the normal path and a save-saver on the kill path.
-                    RenameInnerSaveFiles(newSavePath, Path.GetFileName(oldSavePath), Path.GetFileName(newSavePath));
-
-                    _monitor.Log(
-                        $"In-place reset: renamed save folder + inner files to match new uniqueID ({Path.GetFileName(newSavePath)}).",
-                        LogLevel.Trace);
-                }
-                catch (IOException ex)
-                {
-                    _monitor.Log(
-                        $"In-place reset: could NOT rename save folder ({ex.Message}). " +
-                        "Next save will create a new folder; the previous one will appear as a duplicate on the title screen.",
-                        LogLevel.Warn);
-                }
-            }
             _monitor.Log(
                 $"In-place reset: new uniqueIDForThisGame={Game1.uniqueIDForThisGame}.",
                 LogLevel.Trace);
@@ -402,26 +377,36 @@ namespace TheLongestYear.Loop
         /// <c>&lt;FarmerName&gt;_&lt;uniqueID&gt;</c>). SaveGameInfo files are not id-named, so they're
         /// left alone. Best-effort: a failure here only re-opens the "save bricks on mid-window kill"
         /// gap, it never corrupts data.</summary>
-        private void RenameInnerSaveFiles(string folder, string oldBase, string newBase)
+        /// <summary>Delete the pre-reset save folder recorded in <see cref="PerformReset"/>. Called
+        /// by RunController.ForceFullSave ONLY after the post-reset full save has written the new
+        /// canonical folder — deleting after the confirmed save guarantees we never remove the
+        /// player's only loadable copy (a kill before this point leaves the old folder intact).
+        /// The reset always changes <c>uniqueIDForThisGame</c>, so the abandoned folder is always a
+        /// different folder than the one just saved; a defensive id check skips it anyway.</summary>
+        public void CleanupAbandonedSaveFolder()
         {
-            if (string.IsNullOrEmpty(oldBase) || string.IsNullOrEmpty(newBase) || oldBase == newBase)
+            string old = _abandonedSaveFolder;
+            _abandonedSaveFolder = null;
+            if (string.IsNullOrEmpty(old) || !Directory.Exists(old))
                 return;
 
-            foreach (string suffix in new[] { "", "_old" })
+            // Defensive: never delete a folder named for the CURRENT (new) uniqueID.
+            if (Path.GetFileName(old).EndsWith(Game1.uniqueIDForThisGame.ToString(), StringComparison.Ordinal))
+                return;
+
+            try
             {
-                string from = Path.Combine(folder, oldBase + suffix);
-                string to = Path.Combine(folder, newBase + suffix);
-                try
-                {
-                    if (File.Exists(from) && !File.Exists(to))
-                        File.Move(from, to);
-                }
-                catch (IOException ex)
-                {
-                    _monitor.Log(
-                        $"In-place reset: could not rename inner save file '{oldBase}{suffix}' -> '{newBase}{suffix}' ({ex.Message}).",
-                        LogLevel.Warn);
-                }
+                Directory.Delete(old, recursive: true);
+                _monitor.Log(
+                    $"In-place reset: deleted the abandoned pre-reset save folder ({Path.GetFileName(old)}) — no duplicate left behind.",
+                    LogLevel.Info);
+            }
+            catch (IOException ex)
+            {
+                _monitor.Log(
+                    $"In-place reset: could not delete abandoned save folder '{Path.GetFileName(old)}' ({ex.Message}). " +
+                    "It may show as a duplicate on the title screen; it is safe to delete manually.",
+                    LogLevel.Warn);
             }
         }
 
