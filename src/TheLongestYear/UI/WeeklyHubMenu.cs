@@ -295,8 +295,9 @@ namespace TheLongestYear.UI
             int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 20;
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
-            // Reserve space for the reroll debug button row below preview rows / cards.
-            int rerollBlock = RerollButtonHeight + 24;
+            // Reserve space for the reroll debug button row below preview rows / cards — only when
+            // the button is enabled (config.EnableThemeReroll, off by default).
+            int rerollBlock = _config.EnableThemeReroll ? RerollButtonHeight + 24 : 0;
             height = titleBlock + CardHeight + previewBlock + rerollBlock + PanelPadding;
 
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
@@ -311,14 +312,14 @@ namespace TheLongestYear.UI
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
-                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : RerollButtonId
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
             };
             _rightCard = new ClickableComponent(new Rectangle(cardsRightX, cardsY, CardWidth, CardHeight),
                 _offer.Count > 1 ? _offer[1].ToString() : "right-card")
             {
                 myID = CardIdRight,
                 leftNeighborID = CardIdLeft,
-                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : RerollButtonId
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
             };
 
             _weatherRows.Clear();
@@ -361,23 +362,33 @@ namespace TheLongestYear.UI
 
             // Reroll debug button — centred horizontally, sits in the bottom strip of the
             // panel just above its border. Lets the playtester cycle through theme offers
-            // without resetting the run. Not gameplay-balanced; meant for QA use.
-            int rerollX = xPositionOnScreen + (width - RerollButtonWidth) / 2;
-            int rerollY = yPositionOnScreen + height - RerollButtonHeight - 16;
-            _rerollButton = new ClickableComponent(
-                new Rectangle(rerollX, rerollY, RerollButtonWidth, RerollButtonHeight),
-                "reroll")
+            // without resetting the run. Not gameplay-balanced; QA-only, gated behind
+            // config.EnableThemeReroll (off by default). When disabled it isn't built or added,
+            // so receiveLeftClick / DrawRerollButton (both null-guarded) skip it entirely.
+            if (_config.EnableThemeReroll)
             {
-                myID = RerollButtonId,
-                upNeighborID = CardIdLeft,
-            };
+                int rerollX = xPositionOnScreen + (width - RerollButtonWidth) / 2;
+                int rerollY = yPositionOnScreen + height - RerollButtonHeight - 16;
+                _rerollButton = new ClickableComponent(
+                    new Rectangle(rerollX, rerollY, RerollButtonWidth, RerollButtonHeight),
+                    "reroll")
+                {
+                    myID = RerollButtonId,
+                    upNeighborID = CardIdLeft,
+                };
+            }
+            else
+            {
+                _rerollButton = null;
+            }
 
             allClickableComponents = new List<ClickableComponent>();
             allClickableComponents.Add(_leftCard);
             allClickableComponents.Add(_rightCard);
             allClickableComponents.AddRange(_weatherRows);
             allClickableComponents.AddRange(_cartRows);
-            allClickableComponents.Add(_rerollButton);
+            if (_rerollButton != null)
+                allClickableComponents.Add(_rerollButton);
 
             ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds);
             ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds);

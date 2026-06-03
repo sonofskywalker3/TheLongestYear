@@ -185,4 +185,9 @@ public sealed class GameplayConfig
     /// <summary>Always-on top-right corner HUD showing banked JP + the current week's theme +
     /// the 1.5× / drawback-lifted state. Toggle off to hide.</summary>
     public bool ShowJpHud { get; set; } = true;
+
+    /// <summary>QA/debug: show the "Re-roll Themes" button on the planning hub, which regenerates
+    /// the week's theme offer in place. Off by default — the week's offer is meant to be fixed —
+    /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
+    public bool EnableThemeReroll { get; set; } = false;
 }
