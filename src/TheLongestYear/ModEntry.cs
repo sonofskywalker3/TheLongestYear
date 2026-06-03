@@ -35,6 +35,7 @@ namespace TheLongestYear
         private WeeklyThemeQuestService _questService;
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
+        private Day28CutsceneDriver _day28Driver;
         private BookFurniture _bookFurniture;
         private UI.PlanningShrineService _planningShrine;
 
@@ -79,6 +80,10 @@ namespace TheLongestYear
             // the picker. _launcher isn't built until OnSaveLoaded, so hand it a lazy accessor.
             _introDriver = new IntroSequenceDriver(this.Monitor, _meta, _config);
             _introDriver.Attach(helper, () => _launcher);
+            // Day-28 bedtime Junimo cutscene (FAIL → shop+reset, CONTINUE → next season). Attached
+            // once here; _runController is built on save load, so resolve it lazily like the picker.
+            _day28Driver = new Day28CutsceneDriver(this.Monitor);
+            _day28Driver.Attach(helper, () => _runController);
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
             _bookFurniture = new BookFurniture(this.Monitor, helper);
             // View-only planning shrine — registers its furniture + auto-places near the stash.
