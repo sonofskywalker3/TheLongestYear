@@ -230,13 +230,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition("weather_sage_6", UpgradeCategory.Foresight, "Weather Sage VI",
             "Reveal the full next 6 days' weather.", 950, "weather_sage_5"),
 
-        // Foresight — Cart Whisperer (first 3 of 10 tiers in v1; rest in Plan 06)
-        new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer I",
-            "Reveal 2 items from this week's Traveling Cart stock.", 200),
-        new UpgradeDefinition("cart_whisper_2", UpgradeCategory.Foresight, "Cart Whisperer II",
-            "Reveal 4 items from this week's Cart stock.", 350, "cart_whisper_1"),
-        new UpgradeDefinition("cart_whisper_3", UpgradeCategory.Foresight, "Cart Whisperer III",
-            "Reveal 6 items from this week's Cart stock.", 525, "cart_whisper_2"),
+        // Foresight — Cart Whisperer (single upgrade; never tier-numbered in UI). On a cart day the
+        // shrine flags which of the Traveling Cart's real stock can feed any CC bundle.
+        new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer",
+            "On the shrine, flags which Traveling Cart items can feed a Community Center bundle.", 350),
 
         // Stash
         new UpgradeDefinition("stash_1", UpgradeCategory.Stash, "Junimo Stash I",

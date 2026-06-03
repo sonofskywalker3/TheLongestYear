@@ -6,6 +6,7 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Integration;
+using TheLongestYear.Loop;
 
 namespace TheLongestYear.UI
 {
@@ -61,6 +62,8 @@ namespace TheLongestYear.UI
         private ForecastDay[] _weatherDays = System.Array.Empty<ForecastDay>();
         private readonly List<(ISalable Item, int Price, string Name)> _cartItems = new();
         private string _cartHeader;
+        private bool _showCartBlock;   // owns Cart Whisperer → show the cart bundle-sense block
+        private string _cartEmptyNote; // shown in the icon-row area when no relevant items today
 
         private readonly List<(Rectangle Bounds, ForecastDay Day)> _weatherCells = new();
         private readonly List<(Rectangle Bounds, ISalable Item, int Price, string Name)> _cartCells = new();
@@ -96,33 +99,50 @@ namespace TheLongestYear.UI
                     Game1.dayOfMonth, (int)Game1.season, weatherTier)
                 : System.Array.Empty<ForecastDay>();
 
+            // Cart Whisperer (single upgrade): on a cart day — or any day if the Cart Catalog mod lets
+            // you mail-order — flag which of the cart's REAL current stock can feed any CC bundle.
             _cartItems.Clear();
             _cartHeader = null;
-            int cartSlots = CartStockPreview.SlotsToReveal(_state.HighestKeptTier("cart_whisper_", 3));
-            if (cartSlots > 0)
+            _cartEmptyNote = null;
+            _showCartBlock = _state.HasUpgrade("cart_whisper_1");
+            if (_showCartBlock)
             {
+                bool catalogAnyDay = CartCatalogIntegration.Available(Game1.player);
+                bool cartInTown = TravelingCartVisitsToday(Game1.dayOfMonth);
+
+                if (!cartInTown && !catalogAnyDay)
+                {
+                    _cartHeader = $"Traveling Cart — not in town (next: {ShortDayName(NextCartVisitDay(Game1.dayOfMonth))})";
+                    _cartEmptyNote = "";
+                    return;
+                }
+
                 try
                 {
                     var stock = StardewValley.Internal.ShopBuilder.GetShopStock("Traveler");
-                    int taken = 0;
                     foreach (var pair in stock)
                     {
-                        if (taken >= cartSlots) break;
-                        if (pair.Key == null) continue;
+                        if (pair.Key is not Item item) continue;
+                        if (!BundleRelevanceIndex.IsRelevant(item)) continue;
                         _cartItems.Add((pair.Key, pair.Value.Price, pair.Key.DisplayName));
-                        taken++;
                     }
                 }
                 catch (System.Exception)
                 {
-                    // Preview only — if the cart stock can't be built, just omit the cart block.
                     _cartItems.Clear();
                 }
 
-                if (_cartItems.Count > 0)
-                    _cartHeader = $"Traveling Cart - {ShortDayName(NextCartVisitDay(Game1.dayOfMonth))}";
+                _cartHeader = (catalogAnyDay && !cartInTown)
+                    ? "Cart Catalog — bundle items today"
+                    : "Traveling Cart — bundle items today";
+                if (_cartItems.Count == 0)
+                    _cartEmptyNote = "Nothing here for a bundle today.";
             }
         }
+
+        /// <summary>The Traveling Cart is in town on days where <c>dayOfMonth % 7 % 5 == 0</c>
+        /// (Fri 5/12/19/26, Sun 7/14/21/28).</summary>
+        private static bool TravelingCartVisitsToday(int dayOfMonth) => dayOfMonth % 7 % 5 == 0;
 
         private static string ShortDayName(int dayOfMonth) => ShortDayNames[dayOfMonth % 7];
 
@@ -155,7 +175,7 @@ namespace TheLongestYear.UI
             int h = 0;
             if (_weatherDays.Length > 0)
                 h += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + ForesightBlockGap;
-            if (_cartItems.Count > 0)
+            if (_showCartBlock)
                 h += CartHeaderH + CartIconRowH + ForesightBlockGap;
             return h;
         }
@@ -278,7 +298,7 @@ namespace TheLongestYear.UI
                 fy += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + ForesightBlockGap;
             }
 
-            if (_cartItems.Count > 0)
+            if (_showCartBlock)
             {
                 _cartHeaderY = fy;
                 int iconY = fy + CartHeaderH;
@@ -449,14 +469,20 @@ namespace TheLongestYear.UI
                 }
             }
 
-            if (_cartCells.Count > 0)
+            if (_showCartBlock)
             {
                 Utility.drawTextWithShadow(b, _cartHeader, Game1.dialogueFont,
                     new Vector2(_listX, _cartHeaderY), Game1.textColor);
-                foreach (var (bounds, item, price, name) in _cartCells)
+                if (_cartCells.Count > 0)
                 {
-                    item.drawInMenu(b, new Vector2(bounds.X, bounds.Y), CartIconScale, 1f, 0.9f,
-                        StackDrawType.Hide, Color.White, drawShadow: true);
+                    foreach (var (bounds, item, price, name) in _cartCells)
+                        item.drawInMenu(b, new Vector2(bounds.X, bounds.Y), CartIconScale, 1f, 0.9f,
+                            StackDrawType.Hide, Color.White, drawShadow: true);
+                }
+                else if (!string.IsNullOrEmpty(_cartEmptyNote))
+                {
+                    Utility.drawTextWithShadow(b, _cartEmptyNote, Game1.smallFont,
+                        new Vector2(_listX + 24, _cartHeaderY + CartHeaderH + 8), Game1.textColor * 0.8f);
                 }
             }
         }

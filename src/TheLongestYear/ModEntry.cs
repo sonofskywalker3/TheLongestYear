@@ -200,6 +200,9 @@ namespace TheLongestYear
         /// <summary>Load this playthrough's banked progress when a save opens.</summary>
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
+            // Bundle-relevance set is per-save (bundle data can differ) — rebuild on the next use.
+            TheLongestYear.Loop.BundleRelevanceIndex.Invalidate();
+
             if (!_config.Enabled)
             {
                 this.Monitor.Log("TLY disabled in config — skipping all save-load setup.", LogLevel.Info);
@@ -757,6 +760,10 @@ namespace TheLongestYear
 
         private void OnGameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
+            // Cart Whisperer extends to every day when the standalone Cart Catalog mod is installed.
+            TheLongestYear.Loop.CartCatalogIntegration.ModLoaded =
+                this.Helper.ModRegistry.IsLoaded(TheLongestYear.Loop.CartCatalogIntegration.ModId);
+
             var gmcm = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (gmcm == null)
             {
