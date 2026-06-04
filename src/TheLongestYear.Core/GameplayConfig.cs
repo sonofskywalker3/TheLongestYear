@@ -191,6 +191,12 @@ public sealed class GameplayConfig
     /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
     public bool EnableThemeReroll { get; set; } = false;
 
+    /// <summary>Developer-only: poll the <c>tly_commands.txt</c> file in the mod folder and execute
+    /// the queued tly_ debug commands (including destructive ones like reset / wipe). Off by default
+    /// so a shipped build never watches the filesystem or runs commands the player didn't initiate;
+    /// the in-game SMAPI console commands stay available regardless. Toggle via config.json.</summary>
+    public bool EnableDebugCommandBridge { get; set; } = false;
+
     /// <summary>Windowed width the mod forces on launch. SDV doesn't persist a windowed width/height
     /// (it always boots at 1280×720 in windowed mode), and the dev redeploy loop force-kills the game
     /// so it never saves one on exit — so the mod nudges the window to this size once the game is up.

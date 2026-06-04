@@ -45,6 +45,12 @@ namespace TheLongestYear
         private const int DebugPollTicks = 30;
         private string _commandFilePath;
 
+        // True only once OnSaveLoaded has actually called _meta.Load() for the current save. Guards
+        // OnSaving: when a save opens with TLY disabled or on a non-Standard farm we skip Load (the
+        // early returns below), leaving MetaStore.State/Run at empty defaults — persisting those on the
+        // next save would overwrite the player's banked progression with nothing. Reset on every load.
+        private bool _metaLoaded;
+
         public override void Entry(IModHelper helper)
         {
             _config = helper.ReadConfig<GameplayConfig>();
@@ -211,6 +217,10 @@ namespace TheLongestYear
             // Bundle-relevance set is per-save (bundle data can differ) — rebuild on the next use.
             TheLongestYear.Loop.BundleRelevanceIndex.Invalidate();
 
+            // Cleared until _meta.Load() runs below, so the early-return paths leave OnSaving inert
+            // (it must not persist empty defaults over the player's banked progression).
+            _metaLoaded = false;
+
             if (!_config.Enabled)
             {
                 this.Monitor.Log("TLY disabled in config — skipping all save-load setup.", LogLevel.Info);
@@ -232,6 +242,7 @@ namespace TheLongestYear
             }
 
             _meta.Load();
+            _metaLoaded = true;
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
@@ -307,6 +318,12 @@ namespace TheLongestYear
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
         private void OnSaving(object sender, SavingEventArgs e)
         {
+            // If this save opened without TLY setup (disabled in config, or a non-Standard farm),
+            // _meta.Load() never ran and State/Run are empty defaults — persisting them would wipe
+            // the player's banked progression. Skip the save entirely in that case.
+            if (!_metaLoaded)
+                return;
+
             // Promote per-run tly_intro_cc_seen mail to cross-run MetaState.HasSeenIntro BEFORE
             // we persist, so a save+reset can't lose the flag (mailReceived gets wiped by
             // FarmerReset.loadForNewGame, MetaState doesn't).
@@ -910,6 +927,11 @@ namespace TheLongestYear
             // festival's end time rather than up to 30 ticks (~500ms) later.
             if (FestivalTimeFlow.ShouldAutoEnd())
                 FestivalTimeFlow.ForceEnd(this.Monitor);
+
+            // The file bridge is developer-only and off by default — a shipped build must not watch
+            // the filesystem or run queued tly_ commands (some destructive) the player never typed.
+            if (!_config.EnableDebugCommandBridge)
+                return;
 
             if (!e.IsMultipleOf(DebugPollTicks))
                 return;
