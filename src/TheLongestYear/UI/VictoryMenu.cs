@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.UI
 {
@@ -38,11 +39,7 @@ namespace TheLongestYear.UI
         public VictoryMenu(int runNumber, Action onComplete)
             : base(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height, showUpperRightCloseButton: false)
         {
-            // RunNumber is the attempt count (incremented only on a full loop reset), so it reads as
-            // "which loop you won on" — the roguelite payoff stat. Grammar-cased for loop 1.
-            _loopLine = runNumber <= 1
-                ? "You restored it on your very first loop!"
-                : $"It took {runNumber} loops.";
+            _loopLine = WinSummary.LoopLine(runNumber);
             _onComplete = onComplete;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
