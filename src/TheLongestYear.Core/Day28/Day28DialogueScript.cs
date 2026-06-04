@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace TheLongestYear.Core.Day28
 {
@@ -45,7 +46,8 @@ namespace TheLongestYear.Core.Day28
                     continue;
                 sb.Append(c);
             }
-            return sb.ToString().Replace("  ", " ");
+            // Collapse any run of 2+ spaces (stripping a code from between spaces can leave 3+) to one.
+            return Regex.Replace(sb.ToString(), " {2,}", " ");
         }
     }
 }
