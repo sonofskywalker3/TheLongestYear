@@ -197,11 +197,7 @@ namespace TheLongestYear.Loop
                 new StardewValley.Response("newLoop",     "Start a new loop"),
                 new StardewValley.Response("keepPlaying", "Keep playing this run")
             };
-            // RunNumber is the attempt count (incremented only on a full loop reset), so it reads
-            // as "which loop you won on" — the roguelite payoff stat. Grammar-cased for loop 1.
-            string loopLine = Run.RunNumber <= 1
-                ? "You restored it on your very first loop!"
-                : $"It took {Run.RunNumber} loops, but you restored it.";
+            string loopLine = WinSummary.LoopLine(Run.RunNumber);
             string prompt =
                 "The Junimos sing! The Community Center is restored.\n" +
                 loopLine + "\n" +
