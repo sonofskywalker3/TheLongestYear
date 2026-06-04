@@ -78,3 +78,7 @@ Core game logic lives in `TheLongestYear.Core` (pure, unit-tested); SMAPI/Harmon
 ## Credits
 
 By **sonofskywalker3**. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
+
+## License
+
+Released under the [MIT License](LICENSE).
