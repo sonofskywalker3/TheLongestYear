@@ -125,7 +125,10 @@ namespace TheLongestYear.Loop
         private void RefreshObjective(Quest q)
         {
             IList<string> bonusItems = Run.CurrentWeekBonusItems;
-            List<string> donated = Run.DonatedItemIds;
+            // Per-week ledger, NOT the run-cumulative DonatedItemIds: a bonus item re-sampled this week
+            // that was already donated in an earlier week must not count (or auto-complete the quest)
+            // until it is actually donated again this week. See RunState.DonatedThisWeekIds.
+            List<string> donated = Run.DonatedThisWeekIds;
             int doneCount = 0;
             var lines = new List<string>();
 

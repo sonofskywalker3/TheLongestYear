@@ -241,4 +241,60 @@ public class RunStateTests
         run.RecordMineFloor(45);
         Assert.Equal(45, run.PeakMineFloor);
     }
+
+    // ---- Per-week donation ledger (DonatedThisWeekIds) ----
+    // Backs the weekly theme quest's checklist so it counts only THIS week's donations, not the
+    // run-cumulative ledger (which would let a re-sampled, already-donated item auto-complete the
+    // quest for free). See WeeklyThemeQuestService.RefreshObjective.
+
+    [Fact]
+    public void New_run_state_starts_with_empty_week_donations()
+        => Assert.Empty(new RunState().DonatedThisWeekIds);
+
+    [Fact]
+    public void RecordDonation_adds_to_both_the_cumulative_and_per_week_ledgers()
+    {
+        var run = new RunState();
+        run.RecordDonation("Parsnip");
+        Assert.Contains("Parsnip", run.DonatedItemIds);
+        Assert.Contains("Parsnip", run.DonatedThisWeekIds);
+    }
+
+    [Fact]
+    public void RecordDonation_is_idempotent_in_the_per_week_ledger()
+    {
+        var run = new RunState();
+        run.RecordDonation("Parsnip");
+        run.RecordDonation("Parsnip");
+        Assert.Single(run.DonatedThisWeekIds);
+    }
+
+    [Fact]
+    public void Select_clears_the_per_week_ledger_but_keeps_the_cumulative_one()
+    {
+        var run = new RunState();
+        run.RecordDonation("Parsnip");
+        run.Select(Theme.Mining);
+        Assert.Empty(run.DonatedThisWeekIds);
+        Assert.Contains("Parsnip", run.DonatedItemIds);
+    }
+
+    [Fact]
+    public void BeginNewMonth_clears_the_per_week_ledger_but_keeps_the_cumulative_one()
+    {
+        var run = new RunState();
+        run.RecordDonation("Parsnip");
+        run.BeginNewMonth(Season.Summer);
+        Assert.Empty(run.DonatedThisWeekIds);
+        Assert.Contains("Parsnip", run.DonatedItemIds);
+    }
+
+    [Fact]
+    public void BeginNewRun_clears_the_per_week_ledger()
+    {
+        var run = new RunState();
+        run.RecordDonation("Parsnip");
+        run.BeginNewRun(seed: 7);
+        Assert.Empty(run.DonatedThisWeekIds);
+    }
 }

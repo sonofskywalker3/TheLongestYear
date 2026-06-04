@@ -24,6 +24,15 @@ public sealed class RunState
     public List<string> DonatedItemIds { get; set; } = new();
 
     /// <summary>
+    /// Donated item ids for the CURRENT week only. Cleared on every theme <see cref="Select"/>,
+    /// <see cref="BeginNewMonth"/>, and <see cref="BeginNewRun"/>. The weekly theme quest's checklist
+    /// reads this (not the cumulative <see cref="DonatedItemIds"/>) so a re-sampled bonus item that was
+    /// already donated in an EARLIER week doesn't auto-tick the box — or auto-complete the quest for a
+    /// free JP bonus + drawback lift — without a real donation this week.
+    /// </summary>
+    public List<string> DonatedThisWeekIds { get; set; } = new();
+
+    /// <summary>
     /// The active week's bonus-item sample (qualified ids) for the selected theme. Populated at
     /// selection time from <see cref="BonusItemSampler"/>; donating any of these earns the 1.5×
     /// SelectionBonusMultiplier. Cleared on <see cref="BeginNewMonth"/> and <see cref="BeginNewRun"/>
@@ -110,6 +119,8 @@ public sealed class RunState
     {
         if (!DonatedItemIds.Contains(itemId))
             DonatedItemIds.Add(itemId);
+        if (!DonatedThisWeekIds.Contains(itemId))
+            DonatedThisWeekIds.Add(itemId);
     }
 
     /// <summary>The donation ledger as a set, for the gate evaluator.</summary>
@@ -125,6 +136,8 @@ public sealed class RunState
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
+        // A fresh week's quest must start from zero donations this week (the cumulative ledger persists).
+        DonatedThisWeekIds.Clear();
     }
 
     /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
@@ -138,6 +151,7 @@ public sealed class RunState
         CurrentSelection = null;
         CurrentWeekBonusItems.Clear();
         LiabilitySuppressedThisWeek = false;
+        DonatedThisWeekIds.Clear();
 
         // Consume the day-28 pre-pick (if any). The controller still needs to call
         // PopulateBonusItemsForCurrentSelection AFTER this so the new month's bonus list
@@ -157,6 +171,7 @@ public sealed class RunState
         Season = Season.Spring;
         DayOfMonth = 1;
         DonatedItemIds.Clear();
+        DonatedThisWeekIds.Clear();
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
         NextMonthSelection = null;
