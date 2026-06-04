@@ -54,6 +54,11 @@ namespace TheLongestYear.Donations
                         $"Cannot purchase '{def.Id}': costs {def.Cost} JP, you have {_store.State.JunimoPoints}.",
                         LogLevel.Info);
                     break;
+                case UpgradePurchase.PurchaseResult.MetaRequirementMissing:
+                    _monitor.Log(
+                        $"Cannot purchase '{def.Id}': meta-requirement '{def.MetaRequirement}' not yet met.",
+                        LogLevel.Info);
+                    break;
             }
         }
     }
