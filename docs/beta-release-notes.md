@@ -1,4 +1,4 @@
-# The Longest Year — 1.0.0-beta.1 — Tester Guide
+# The Longest Year — 0.9.0 — Tester Guide
 
 Thanks for helping test! This is the first public beta. The systems are all in
 and stable; the goal now is to find out whether it's **fun and fairly balanced**.

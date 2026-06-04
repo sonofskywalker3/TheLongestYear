@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.0-beta.1 — 2026-06-01
+## 0.9.0 — 2026-06-01
 
 First public beta. Feature-complete for v1 ("prove it's fun & stable on PC").
 The focus for this beta is feedback on **difficulty, pricing, and pacing**.

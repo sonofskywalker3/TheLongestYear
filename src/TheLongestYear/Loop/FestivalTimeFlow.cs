@@ -98,6 +98,7 @@ namespace TheLongestYear.Loop
                 { __result = false; return false; } // pause for non-festival events even mid-festival map
                 if (Game1.activeClickableMenu != null && !(Game1.activeClickableMenu is BobberBar))
                 { __result = false; return false; }
+                if (Game1.player == null) { __result = false; return false; } // defensive: no player -> pause
                 if (!Game1.player.CanMove && !Game1.player.UsingTool)
                 { __result = Game1.player.forceTimePass; return false; }
 

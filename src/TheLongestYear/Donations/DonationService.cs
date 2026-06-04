@@ -60,9 +60,12 @@ namespace TheLongestYear.Donations
             string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier})" : "";
             int jpBoostTier = JpBoostHelper.HighestTier(_store.State);
             string boostTag = jpBoostTier > 0 ? $" (jp_boost tier {jpBoostTier})" : "";
+            // Per-item donation line is Trace: a full CC restoration donates dozens-to-hundreds of
+            // items per run, which would otherwise flood SMAPI-latest.txt (the log testers attach to
+            // bug reports). Milestone logs (bundle/room complete, run/month/reset) stay at Info.
             _monitor.Log(
                 $"Donated {count}x {qualifiedItemId} ({rarity}) -> +{awarded} JP{bonusTag}{boostTag} (now {_store.State.JunimoPoints}).",
-                LogLevel.Info);
+                LogLevel.Trace);
 
             AfterDonation?.Invoke();
         }
