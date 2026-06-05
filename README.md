@@ -1,18 +1,43 @@
 # The Longest Year
 
-> Roguelite time-loop for Stardew Valley: restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.
+**Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.**
+
+A roguelite time-loop for Stardew Valley (PC).
+
+⬇ **[Download on Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/47192)**
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.9.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.9.2`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
+
+## What's New in 0.9.2
+
+First public beta. The headlines:
+
+- **The full loop** — seasonal donation minimums, the year-rewind to Spring 1 on a miss, **Junimo Points** banked across loops, the **Junimo Shrine** upgrade shop, **weekly themes** (a paired bonus + liability), and on-farm carryover surfaces (Season Goals board, Cookbook/Craftbook, Junimo Stash).
+- **A real intro** — Lewis greets you on the porch, then a Junimo inside the Community Center frames the loop, before you take control.
+- **Win screen** — restore the Center within the year and the Junimos sing; then choose to keep playing that run or start a fresh loop.
+- **Fix (0.9.2)** — the weekly theme picker no longer goes missing when you start a new loop from the win screen.
+
+---
+
+## Features
+
+- **Seasonal time-loop.** Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
+- **Junimo Points.** Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
+- **The Junimo Shrine.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, and more.
+- **Weekly themes.** Each week, pick a theme that grants a bonus and a paired liability. Plan around it.
+- **Carryover surfaces.** A Season Goals tracker above the CC fireplace, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
+- **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
+- **Break the loop.** Finish the Center in a year to win — then keep playing or start fresh.
 
 ## Requirements
 
 - **Stardew Valley 1.6+** (PC — Windows/Linux/macOS)
 - **SMAPI 4.0.0** or newer
-- A **new save** on the **Standard farm** (see [Limitations](#limitations))
+- A **new save** on the **Standard farm** (see [Limitations](#limitations-beta))
 
 ## Install
 
@@ -64,7 +89,21 @@ What helps most right now:
 3. **Pacing** — how many loops before the run "clicked"? Did the carryover make later loops feel meaningfully stronger?
 4. **Bugs / crashes** — include your `SMAPI-latest.txt` (`Stardew Valley/ErrorLogs/`).
 
-See [`docs/beta-release-notes.md`](docs/beta-release-notes.md) for the tester guide.
+---
+
+## Also by this author
+
+- [**Android Consolizer**](https://www.nexusmods.com/stardewvalley/mods/41869) — Full console-style controller support for Stardew Valley on Android.
+- [**Cart Catalog**](https://www.nexusmods.com/stardewvalley/mods/47146) — Order from the Traveling Cart's daily stock; items arrive in a package on your porch the next morning.
+- [**Nap Time**](https://www.nexusmods.com/stardewvalley/mods/42616) — Nap in bed to recover energy without ending the day. Configurable rate and wake-up cap. PC + Android.
+
+## Source
+
+Open source (MIT) — [github.com/sonofskywalker3/TheLongestYear](https://github.com/sonofskywalker3/TheLongestYear)
+
+---
+
+<!-- GitHub-only appendix (not part of the Nexus description) -->
 
 ## Building from source
 
