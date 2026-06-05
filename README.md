@@ -89,6 +89,10 @@ What helps most right now:
 3. **Pacing** — how many loops before the run "clicked"? Did the carryover make later loops feel meaningfully stronger?
 4. **Bugs / crashes** — include your `SMAPI-latest.txt` (`Stardew Valley/ErrorLogs/`).
 
+## Art wanted
+
+I have no artistic ability — the banner is a plain placeholder and the mod leans on vanilla sprites throughout. If anyone would enjoy making proper **banner art**, or some custom **book / sprite artwork** (the Cookbook and Craftbook especially), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+
 ---
 
 ## Also by this author
