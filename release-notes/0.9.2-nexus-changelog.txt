@@ -1,0 +1,24 @@
+0.9.2 — First public beta
+
+The Longest Year turns Stardew's first year into a roguelite loop: restore the
+Community Center within a single year, or the Junimos rewind the seasons and you
+begin again — a little stronger.
+
+This beta is feature-complete for v1 and stable in testing. What it most needs now
+is feedback on difficulty, pricing, and pacing.
+
+What's in it
+- The full loop: seasonal donation minimums, the year-rewind to Spring 1 on a miss,
+  Junimo Points banked across loops, the Junimo Shrine upgrade shop, weekly themes
+  (a paired bonus + liability), and on-farm carryover surfaces (Season Goals board,
+  Cookbook/Craftbook, Junimo Stash).
+- A real intro: Lewis on the porch, then a Junimo inside the Community Center, before
+  you take control.
+- Win screen: restore the Center within the year and the Junimos sing; then keep
+  playing that run or start a fresh loop.
+
+Fixes since the internal build
+- The weekly theme picker no longer goes missing when you start a new loop from the
+  win screen.
+- Win-screen copy reworded to "You have restored the Community Center. The valley is
+  saved!"
