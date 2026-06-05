@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased (0.9.x dev)
+
+- **0.9.2 — Fixed: the weekly theme picker was lost when starting a new loop from
+  the win screen.** The "Start a new loop" choice is a question dialogue; its answer
+  callback ran the reset and tried to open the planning hub while that dialogue was
+  still the active menu, so the open was refused — and the week was marked "offered"
+  before the open was confirmed, so it never re-fired. The hub now marks the week
+  presented only on a confirmed open and retries the deferred open each tick once the
+  menu surface clears. Also hardens against the other "menu busy" cases.
+- **0.9.1 — Win-screen copy** reworded to "You have restored the Community Center.
+  The valley is saved!" (The jarring win → JP-shrine transition is deferred to the
+  real 1.0 ending — see `TODO.md`.)
+
 ## 0.9.0 — 2026-06-01
 
 First public beta. Feature-complete for v1 ("prove it's fun & stable on PC").
