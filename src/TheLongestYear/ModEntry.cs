@@ -922,6 +922,12 @@ namespace TheLongestYear
             if (!Context.IsWorldReady)
                 return;
 
+            // Re-attempt a planning-hub open that was deferred because the menu surface was busy
+            // (the post-win keep-playing dialogue still closing when the new loop's reset fired).
+            // Gate on a clear surface so the retry opens cleanly and doesn't re-log every tick.
+            if (Game1.activeClickableMenu == null && !Game1.eventUp)
+                _runController?.TryDrainDeferredOffer();
+
             // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
             // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
             // festival's end time rather than up to 30 ticks (~500ms) later.

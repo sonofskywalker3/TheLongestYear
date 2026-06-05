@@ -33,9 +33,12 @@ namespace TheLongestYear.UI
         /// <summary>Open the planning hub. If <paramref name="seasonOverride"/> is set (Sunday-night
         /// day-28 case), the menu shows next season's bundles + bonus preview and routes the pick
         /// to <see cref="RunState.NextMonthSelection"/> rather than CurrentSelection.</summary>
-        public void OpenWeeklyHub(CoreSeason? seasonOverride = null)
+        /// <returns><c>true</c> if the hub actually opened; <c>false</c> if it was blocked
+        /// (no save, a menu/cutscene already up). Callers use the result to decide whether the
+        /// week's offer counts as presented — see <see cref="RunController.PresentOffer"/>.</returns>
+        public bool OpenWeeklyHub(CoreSeason? seasonOverride = null)
         {
-            if (!CanOpen()) return;
+            if (!CanOpen()) return false;
 
             CoreSeason offerSeason = seasonOverride ?? _store.Run.Season;
             // Offer pool: for cross-month, ignore current month's selections (empty list).
@@ -57,6 +60,7 @@ namespace TheLongestYear.UI
                 $"Opened planning hub (week {_store.Run.WeekOfYear}{(seasonOverride.HasValue ? $" → {offerSeason}" : "")}, " +
                 $"offer: {string.Join(",", offer)}).",
                 LogLevel.Info);
+            return true;
         }
 
         public void OpenShrineShop()

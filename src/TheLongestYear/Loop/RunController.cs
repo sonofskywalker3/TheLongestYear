@@ -41,6 +41,12 @@ namespace TheLongestYear.Loop
         private TheLongestYear.UI.MenuLauncher _launcher;
         private WeeklyThemeQuestService _questService;
 
+        /// <summary>A planning-hub offer that couldn't open because the menu surface was busy
+        /// (e.g. the post-win keep-playing <c>DialogueBox</c> still closing when the new loop's
+        /// reset fired). Held here and re-attempted by <see cref="TryDrainDeferredOffer"/> once
+        /// the surface clears, so a blocked open is retried instead of silently lost.</summary>
+        private (int week, CoreSeason? season)? _deferredOffer;
+
         /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
         public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
 
@@ -697,8 +703,41 @@ namespace TheLongestYear.Loop
                 $"Week {week}{seasonTag} selection offer: {string.Join(" OR ", offer)} (opening planning hub).",
                 LogLevel.Info);
 
-            Run.OfferPresentedWeek = week;
-            _launcher?.OpenWeeklyHub(seasonOverride);
+            bool opened = _launcher?.OpenWeeklyHub(seasonOverride) ?? false;
+            if (opened)
+            {
+                // Mark the week presented ONLY once the hub is genuinely on screen. Advancing
+                // it before a confirmed open (the original bug) marks the week "offered" even
+                // when the open was refused, so the day-start guard never re-fires it and the
+                // theme picker is lost for the week (2026-06-05 playtest: win → "start a new
+                // loop" → no theme picker, because the keep-playing DialogueBox was still the
+                // active menu when this ran).
+                Run.OfferPresentedWeek = week;
+                _deferredOffer = null;
+            }
+            else
+            {
+                // Surface busy (menu/cutscene up). Keep OfferPresentedWeek unadvanced and stash
+                // the offer; TryDrainDeferredOffer re-attempts it once activeClickableMenu clears.
+                _deferredOffer = (week, seasonOverride);
+                _monitor.Log(
+                    $"Planning hub blocked (a menu/cutscene is up); deferring the week {week} offer to a free tick.",
+                    LogLevel.Trace);
+            }
+        }
+
+        /// <summary>Re-attempt a planning-hub open that <see cref="PresentOffer"/> deferred because
+        /// the menu surface was busy. ModEntry's update loop calls this each tick once
+        /// <c>Game1.activeClickableMenu</c> is clear; a no-op when nothing is pending.</summary>
+        public void TryDrainDeferredOffer()
+        {
+            if (_deferredOffer is not { } pending)
+                return;
+            // Clear first so a still-blocked re-open simply re-stashes via PresentOffer rather
+            // than looping. The week is not yet marked presented, so PresentOffer's own guard
+            // lets the retry through.
+            _deferredOffer = null;
+            PresentOffer(pending.week, pending.season);
         }
 
         private void AwardInterimJp(string reason)
