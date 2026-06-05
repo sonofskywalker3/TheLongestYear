@@ -16,7 +16,7 @@ namespace TheLongestYear.UI
     /// opens the JP shrine and the keep-playing choice). The elaborate payoff cutscene is deferred to 1.0.</summary>
     internal sealed class VictoryMenu : IClickableMenu
     {
-        private const string TitleLine = "The Junimos sing! You restored the Community Center.";
+        private const string TitleLine = "You have restored the Community Center. The valley is saved!";
         private const string ContinueHint = "(press A or click to continue)";
 
         // Junimo sprite: frame 0 of the 16×16 Characters\Junimo sheet (a white silhouette meant to be
