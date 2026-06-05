@@ -6,6 +6,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Win screen → JP shrine transition is jarring (defer to the real 1.0 ending)
+Playtest 2026-06-05: dismissing the 0.9 `VictoryMenu` cuts straight into the
+JP shrine store with no easing — visually abrupt. **Deliberately deferred** —
+the 0.9 win screen is a placeholder; the elaborate payoff cutscene is a 1.0
+item (see `VictoryMenu` class comment). Fold the transition polish into that
+real-ending work rather than patching the placeholder. No fix needed for the
+0.9.x beta.
+
 ### Small playtest carryovers (from STATUS.md)
 Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 2026-05-27) so these were drifting:
