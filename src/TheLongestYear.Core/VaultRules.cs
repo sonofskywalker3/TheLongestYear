@@ -1,24 +1,13 @@
 namespace TheLongestYear.Core;
 
-/// <summary>How this season's vault gate is currently satisfied — for UI display.</summary>
-public enum VaultGateStatus
-{
-    /// <summary>Neither paid this run nor covered by the keep upgrade — the gate will fail.</summary>
-    Unpaid,
-    /// <summary>The matching vault bundle has been paid this run.</summary>
-    PaidThisRun,
-    /// <summary>The keep_bus_unlocked upgrade is owned, so every season's gate is auto-satisfied.</summary>
-    KeptViaUpgrade
-}
-
 /// <summary>
-/// Maps a season to the vanilla 1.6 Vault bundle index it gates against.
-/// The keep_bus_unlocked Buildings upgrade short-circuits this gate (bus stays restored across
-/// runs, so vault payments aren't needed again).
+/// Vault (bus-repair) gate rules. Each season requires a cumulative, tier-agnostic minimum number
+/// of vanilla 1.6 Vault money bundles paid THIS run: at least the season ordinal (Spring 1,
+/// Summer 2, Fall 3, Winter 4). Paying all four in Spring pre-satisfies every season. The
+/// keep_bus_unlocked Buildings upgrade short-circuits the gate (bus stays restored across runs).
 ///
 /// Vanilla indices (Data/Bundles "Vault/N"):
-///   34 = 2,500g · 35 = 5,000g · 36 = 10,000g · 37 = 25,000g
-/// Total = 42,500g for full bus restoration over the year.
+///   34 = 2,500g · 35 = 5,000g · 36 = 10,000g · 37 = 25,000g  (42,500g total)
 /// </summary>
 public static class VaultRules
 {
@@ -30,7 +19,32 @@ public static class VaultRules
     public const int Vault10000  = 36;
     public const int Vault25000  = 37;
 
-    /// <summary>Which vault bundle gates the given season's monthly checkpoint.</summary>
+    /// <summary>The four vanilla vault bundle indices, low tier to high.</summary>
+    public static readonly int[] VaultIndices = { Vault2500, Vault5000, Vault10000, Vault25000 };
+
+    /// <summary>1-based count of vault bundles required by the given season's day-28 checkpoint
+    /// (Spring 1 … Winter 4).</summary>
+    public static int SeasonOrdinal(Season season) => (int)season + 1;
+
+    /// <summary>True if <paramref name="index"/> is one of the four vault bundle indices.</summary>
+    public static bool IsVaultIndex(int index) => index >= Vault2500 && index <= Vault25000;
+
+    /// <summary>The gold price of a given vault bundle index (drives the JP scaling).</summary>
+    public static int GoldForIndex(int index) => index switch
+    {
+        Vault2500  => 2500,
+        Vault5000  => 5000,
+        Vault10000 => 10000,
+        Vault25000 => 25000,
+        _ => 0
+    };
+
+    /// <summary>Number of distinct vault bundles paid this run.</summary>
+    public static int PaidCount(RunState run) => run.VaultBundlesPaid.Count;
+
+    /// <summary>Which vault bundle gates a season's monthly checkpoint. Kept for the tly_payvault
+    /// debug command (resolves a season name to an index); the live gate is count-based and does
+    /// NOT use this.</summary>
     public static int BundleIndexForSeason(Season season) => season switch
     {
         Season.Spring => Vault2500,
@@ -40,33 +54,12 @@ public static class VaultRules
         _ => -1
     };
 
-    /// <summary>The gold price of the season's vault bundle (2,500 / 5,000 / 10,000 / 25,000g).</summary>
-    public static int GoldCostForSeason(Season season) => season switch
-    {
-        Season.Spring => 2500,
-        Season.Summer => 5000,
-        Season.Fall   => 10000,
-        Season.Winter => 25000,
-        _ => 0
-    };
-
-    /// <summary>Classifies how (or whether) this season's vault gate is satisfied, for the
-    /// green-journal display. The keep upgrade takes precedence over a per-run payment.</summary>
-    public static VaultGateStatus DescribeGate(Season season, RunState run, MetaState meta)
-    {
-        if (meta.HasUpgrade(KeepBusUnlockedId))
-            return VaultGateStatus.KeptViaUpgrade;
-        return run.VaultBundlesPaid.Contains(BundleIndexForSeason(season))
-            ? VaultGateStatus.PaidThisRun
-            : VaultGateStatus.Unpaid;
-    }
-
-    /// <summary>True if the player has satisfied this season's vault gate (paid the bundle this run,
-    /// or owns the keep_bus_unlocked meta upgrade).</summary>
+    /// <summary>True if the player has satisfied this season's vault gate: owns keep_bus_unlocked,
+    /// or has paid at least <see cref="SeasonOrdinal"/> vault bundles this run (any tiers).</summary>
     public static bool IsVaultGateSatisfied(Season season, RunState run, MetaState meta)
     {
         if (meta.HasUpgrade(KeepBusUnlockedId))
             return true;
-        return run.VaultBundlesPaid.Contains(BundleIndexForSeason(season));
+        return run.VaultBundlesPaid.Count >= SeasonOrdinal(season);
     }
 }

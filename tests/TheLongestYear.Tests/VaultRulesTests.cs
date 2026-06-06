@@ -6,39 +6,70 @@ namespace TheLongestYear.Tests;
 public class VaultRulesTests
 {
     [Theory]
-    [InlineData(Season.Spring, VaultRules.Vault2500)]
-    [InlineData(Season.Summer, VaultRules.Vault5000)]
-    [InlineData(Season.Fall,   VaultRules.Vault10000)]
-    [InlineData(Season.Winter, VaultRules.Vault25000)]
-    public void BundleIndexForSeason_maps_each_season_to_its_gold_tier(Season season, int expectedIndex)
-        => Assert.Equal(expectedIndex, VaultRules.BundleIndexForSeason(season));
+    [InlineData(Season.Spring, 1)]
+    [InlineData(Season.Summer, 2)]
+    [InlineData(Season.Fall,   3)]
+    [InlineData(Season.Winter, 4)]
+    public void SeasonOrdinal_is_one_based(Season season, int expected)
+        => Assert.Equal(expected, VaultRules.SeasonOrdinal(season));
+
+    [Theory]
+    [InlineData(VaultRules.Vault2500,  2500)]
+    [InlineData(VaultRules.Vault5000,  5000)]
+    [InlineData(VaultRules.Vault10000, 10000)]
+    [InlineData(VaultRules.Vault25000, 25000)]
+    public void GoldForIndex_maps_each_index_to_its_price(int index, int gold)
+        => Assert.Equal(gold, VaultRules.GoldForIndex(index));
+
+    [Theory]
+    [InlineData(34, true)]
+    [InlineData(37, true)]
+    [InlineData(33, false)]
+    [InlineData(38, false)]
+    public void IsVaultIndex_only_true_for_34_to_37(int index, bool expected)
+        => Assert.Equal(expected, VaultRules.IsVaultIndex(index));
 
     [Fact]
-    public void Vault_gate_passes_when_the_season_bundle_is_paid()
+    public void Gate_needs_count_at_least_season_ordinal()
+    {
+        var run = new RunState();
+        var meta = new MetaState();
+
+        // Spring (ordinal 1): 0 paid fails, 1 paid passes — any tier.
+        Assert.False(VaultRules.IsVaultGateSatisfied(Season.Spring, run, meta));
+        run.VaultBundlesPaid.Add(VaultRules.Vault25000);   // tier doesn't matter
+        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Spring, run, meta));
+
+        // Summer (ordinal 2): still only 1 paid → fails until a second.
+        Assert.False(VaultRules.IsVaultGateSatisfied(Season.Summer, run, meta));
+        run.VaultBundlesPaid.Add(VaultRules.Vault2500);
+        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Summer, run, meta));
+    }
+
+    [Fact]
+    public void Paying_all_four_in_spring_satisfies_winter()
+    {
+        var run = new RunState();
+        run.VaultBundlesPaid.AddRange(new[]
+            { VaultRules.Vault2500, VaultRules.Vault5000, VaultRules.Vault10000, VaultRules.Vault25000 });
+        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Winter, run, new MetaState()));
+    }
+
+    [Fact]
+    public void Keep_bus_unlocked_short_circuits_with_zero_paid()
+    {
+        var run = new RunState();   // nothing paid
+        var meta = new MetaState { OwnedUpgrades = { VaultRules.KeepBusUnlockedId } };
+        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Winter, run, meta));
+    }
+
+    [Fact]
+    public void PaidCount_reflects_the_list()
     {
         var run = new RunState();
         run.VaultBundlesPaid.Add(VaultRules.Vault2500);
-        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Spring, run, new MetaState()));
-    }
-
-    [Fact]
-    public void Vault_gate_fails_when_paying_a_different_tier()
-    {
-        // Paying the 5,000g bundle (Summer) doesn't satisfy the Spring gate (2,500g).
-        var run = new RunState();
         run.VaultBundlesPaid.Add(VaultRules.Vault5000);
-        Assert.False(VaultRules.IsVaultGateSatisfied(Season.Spring, run, new MetaState()));
-    }
-
-    [Fact]
-    public void Keep_bus_unlocked_short_circuits_every_season()
-    {
-        var run = new RunState();   // no bundles paid this run
-        var meta = new MetaState { OwnedUpgrades = { VaultRules.KeepBusUnlockedId } };
-        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Spring, run, meta));
-        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Summer, run, meta));
-        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Fall,   run, meta));
-        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Winter, run, meta));
+        Assert.Equal(2, VaultRules.PaidCount(run));
     }
 
     [Fact]
@@ -47,48 +78,5 @@ public class VaultRulesTests
         UpgradeDefinition? def = UpgradeCatalog.TryGet(VaultRules.KeepBusUnlockedId);
         Assert.NotNull(def);
         Assert.Equal(UpgradeCategory.Buildings, def!.Category);
-    }
-
-    [Theory]
-    [InlineData(Season.Spring, 2500)]
-    [InlineData(Season.Summer, 5000)]
-    [InlineData(Season.Fall,   10000)]
-    [InlineData(Season.Winter, 25000)]
-    public void GoldCostForSeason_maps_each_season_to_its_vault_price(Season season, int expectedGold)
-        => Assert.Equal(expectedGold, VaultRules.GoldCostForSeason(season));
-
-    [Fact]
-    public void DescribeGate_is_Unpaid_when_nothing_paid_and_no_upgrade()
-    {
-        var run = new RunState();
-        Assert.Equal(VaultGateStatus.Unpaid,
-            VaultRules.DescribeGate(Season.Spring, run, new MetaState()));
-    }
-
-    [Fact]
-    public void DescribeGate_is_PaidThisRun_when_the_season_bundle_is_paid()
-    {
-        var run = new RunState();
-        run.VaultBundlesPaid.Add(VaultRules.Vault2500);
-        Assert.Equal(VaultGateStatus.PaidThisRun,
-            VaultRules.DescribeGate(Season.Spring, run, new MetaState()));
-    }
-
-    [Fact]
-    public void DescribeGate_is_Unpaid_when_a_different_tier_is_paid()
-    {
-        var run = new RunState();
-        run.VaultBundlesPaid.Add(VaultRules.Vault5000);   // Summer paid, asking about Spring
-        Assert.Equal(VaultGateStatus.Unpaid,
-            VaultRules.DescribeGate(Season.Spring, run, new MetaState()));
-    }
-
-    [Fact]
-    public void DescribeGate_is_KeptViaUpgrade_when_keep_bus_unlocked_is_owned()
-    {
-        var run = new RunState();   // no bundles paid this run
-        var meta = new MetaState { OwnedUpgrades = { VaultRules.KeepBusUnlockedId } };
-        Assert.Equal(VaultGateStatus.KeptViaUpgrade,
-            VaultRules.DescribeGate(Season.Winter, run, meta));
     }
 }
