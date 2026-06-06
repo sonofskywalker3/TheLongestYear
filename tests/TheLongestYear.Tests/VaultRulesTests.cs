@@ -48,4 +48,47 @@ public class VaultRulesTests
         Assert.NotNull(def);
         Assert.Equal(UpgradeCategory.Buildings, def!.Category);
     }
+
+    [Theory]
+    [InlineData(Season.Spring, 2500)]
+    [InlineData(Season.Summer, 5000)]
+    [InlineData(Season.Fall,   10000)]
+    [InlineData(Season.Winter, 25000)]
+    public void GoldCostForSeason_maps_each_season_to_its_vault_price(Season season, int expectedGold)
+        => Assert.Equal(expectedGold, VaultRules.GoldCostForSeason(season));
+
+    [Fact]
+    public void DescribeGate_is_Unpaid_when_nothing_paid_and_no_upgrade()
+    {
+        var run = new RunState();
+        Assert.Equal(VaultGateStatus.Unpaid,
+            VaultRules.DescribeGate(Season.Spring, run, new MetaState()));
+    }
+
+    [Fact]
+    public void DescribeGate_is_PaidThisRun_when_the_season_bundle_is_paid()
+    {
+        var run = new RunState();
+        run.VaultBundlesPaid.Add(VaultRules.Vault2500);
+        Assert.Equal(VaultGateStatus.PaidThisRun,
+            VaultRules.DescribeGate(Season.Spring, run, new MetaState()));
+    }
+
+    [Fact]
+    public void DescribeGate_is_Unpaid_when_a_different_tier_is_paid()
+    {
+        var run = new RunState();
+        run.VaultBundlesPaid.Add(VaultRules.Vault5000);   // Summer paid, asking about Spring
+        Assert.Equal(VaultGateStatus.Unpaid,
+            VaultRules.DescribeGate(Season.Spring, run, new MetaState()));
+    }
+
+    [Fact]
+    public void DescribeGate_is_KeptViaUpgrade_when_keep_bus_unlocked_is_owned()
+    {
+        var run = new RunState();   // no bundles paid this run
+        var meta = new MetaState { OwnedUpgrades = { VaultRules.KeepBusUnlockedId } };
+        Assert.Equal(VaultGateStatus.KeptViaUpgrade,
+            VaultRules.DescribeGate(Season.Winter, run, meta));
+    }
 }
