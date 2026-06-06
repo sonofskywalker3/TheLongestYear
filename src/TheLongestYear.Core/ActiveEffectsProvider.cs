@@ -48,12 +48,15 @@ public static class ActiveEffectsProvider
     }
 
     /// <summary>Returns true when the active bonus matches <paramref name="id"/>. The bonus is
-    /// never suppressed — it stays active for the whole week regardless of quest state.</summary>
-    public static bool ActiveBonus(string id) => _bonusId != null && _bonusId == id;
+    /// never suppressed — it stays active for the whole week regardless of quest state. Always
+    /// false while TLY is dormant (see <see cref="RunActivation"/>), so theme-effect patches
+    /// no-op on a non-TLY save even if stale selection state lingers from a prior save.</summary>
+    public static bool ActiveBonus(string id) => RunActivation.IsActive && _bonusId != null && _bonusId == id;
 
     /// <summary>Returns true when the active liability matches <paramref name="id"/> AND the
     /// quest hasn't been completed yet. Once <see cref="SuppressLiability"/> is called, all
-    /// liability checks short-circuit to false for the rest of the week.</summary>
+    /// liability checks short-circuit to false for the rest of the week. Always false while
+    /// TLY is dormant.</summary>
     public static bool ActiveLiability(string id)
-        => !_liabilitySuppressed && _liabilityId != null && _liabilityId == id;
+        => RunActivation.IsActive && !_liabilitySuppressed && _liabilityId != null && _liabilityId == id;
 }

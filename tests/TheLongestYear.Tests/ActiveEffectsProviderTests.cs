@@ -34,18 +34,35 @@ public class ActiveEffectsProviderTests
     [Fact]
     public void ActiveBonus_returns_true_for_current_id()
     {
+        RunActivation.Activate();
         ActiveEffectsProvider.Set("fish_bite_up", "crop_growth_down");
         Assert.True(ActiveEffectsProvider.ActiveBonus("fish_bite_up"));
         Assert.False(ActiveEffectsProvider.ActiveBonus("mine_drops_up"));
         ActiveEffectsProvider.Clear();
+        RunActivation.Deactivate();
     }
 
     [Fact]
     public void ActiveLiability_returns_true_for_current_id()
     {
+        RunActivation.Activate();
         ActiveEffectsProvider.Set("mine_drops_up", "forage_off");
         Assert.True(ActiveEffectsProvider.ActiveLiability("forage_off"));
         Assert.False(ActiveEffectsProvider.ActiveLiability("all_sell_prices_down"));
+        ActiveEffectsProvider.Clear();
+        RunActivation.Deactivate();
+    }
+
+    // The dormant gate: even with a selection set, no effect is "active" while TLY is dormant
+    // (a non-TLY save loaded with the mod installed). This is what keeps the gameplay patches
+    // inert on saves the mod never started.
+    [Fact]
+    public void When_dormant_no_effect_is_active_even_if_set()
+    {
+        RunActivation.Deactivate();
+        ActiveEffectsProvider.Set("fish_bite_up", "forage_off");
+        Assert.False(ActiveEffectsProvider.ActiveBonus("fish_bite_up"));
+        Assert.False(ActiveEffectsProvider.ActiveLiability("forage_off"));
         ActiveEffectsProvider.Clear();
     }
 }

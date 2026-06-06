@@ -21,6 +21,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static bool Prefix(JojaMart __instance, Response answer, ref bool __result)
         {
+            if (!Core.RunActivation.IsActive)
+                return true; // dormant on non-TLY saves — allow the vanilla Joja membership
             // Mirror vanilla's check (JojaMart.cs:42-46): build "<questionKey>_<answerKey>"
             // and compare. We block ONLY the JojaSignUp_Yes case so other dialogue answers
             // in JojaMart (shop interactions etc) pass through untouched.

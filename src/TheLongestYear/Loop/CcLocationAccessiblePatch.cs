@@ -34,6 +34,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static bool Prefix(string locationName, ref bool __result)
         {
+            if (!Core.RunActivation.IsActive)
+                return true; // dormant on non-TLY saves — defer to vanilla
             if (locationName == "CommunityCenter")
             {
                 __result = true;

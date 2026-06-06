@@ -85,6 +85,7 @@ namespace TheLongestYear.Loop
             // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
             private static bool Prefix(bool ignore_multiplayer, ref bool __result)
             {
+                if (!Core.RunActivation.IsActive) return true; // dormant on non-TLY saves
                 if (!Game1.isFestival()) return true; // defer to vanilla
 
                 // We only override the festival short-circuit. Replicate vanilla's other gates
@@ -122,6 +123,7 @@ namespace TheLongestYear.Loop
             // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
             private static bool Prefix(Event __instance, Farmer who, ref bool __result)
             {
+                if (!Core.RunActivation.IsActive) return true; // dormant on non-TLY saves — vanilla prompt
                 if (__instance == null || who == null || !who.IsLocalPlayer || !__instance.isFestival)
                 {
                     __result = false;
@@ -194,7 +196,7 @@ namespace TheLongestYear.Loop
             // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
             private static void Prefix(Event __instance, out int __state)
             {
-                __state = __instance != null && __instance.isFestival ? Game1.timeOfDay : -1;
+                __state = Core.RunActivation.IsActive && __instance != null && __instance.isFestival ? Game1.timeOfDay : -1;
             }
 
             // ReSharper disable once InconsistentNaming — Harmony convention.

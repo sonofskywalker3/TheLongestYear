@@ -51,6 +51,12 @@ namespace TheLongestYear
         // next save would overwrite the player's banked progression with nothing. Reset on every load.
         private bool _metaLoaded;
 
+        // True for the single OnSaveLoaded that immediately follows SaveCreating — i.e. a brand-new
+        // game. That's the ONLY way to begin a Longest Year run: OnSaveLoaded stamps the per-save
+        // marker and activates TLY. Loading any existing non-TLY save never sets this, so the mod
+        // stays dormant. Consumed (reset to false) the moment OnSaveLoaded reads it.
+        private bool _isNewGame;
+
         public override void Entry(IModHelper helper)
         {
             _config = helper.ReadConfig<GameplayConfig>();
@@ -95,6 +101,8 @@ namespace TheLongestYear
             // View-only planning shrine — registers its furniture + auto-places near the stash.
             _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
+            helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
@@ -141,11 +149,6 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"Harmony: {patched} patch class(es) applied, {failed} failed.",
                 failed > 0 ? LogLevel.Warn : LogLevel.Info);
-
-            // Activate the seed-driven weather scheduler. Toggled at Entry rather than
-            // OnSaveLoaded so the override is in place for the very first day's weather
-            // resolution (which happens during save creation, before SaveLoaded fires).
-            WeatherModificationsPatch.Enabled = _config.Enabled;
 
             // Observation-based donation detector. See DonationObserver.cs for why we can't rely
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
@@ -223,6 +226,7 @@ namespace TheLongestYear
 
             if (!_config.Enabled)
             {
+                DeactivateTly();
                 this.Monitor.Log("TLY disabled in config — skipping all save-load setup.", LogLevel.Info);
                 return;
             }
@@ -233,6 +237,7 @@ namespace TheLongestYear
             // in unpredictable places (or in water). Skip setup with a clear log message.
             if (Game1.whichFarm != 0)
             {
+                DeactivateTly();
                 this.Monitor.Log(
                     $"TLY only supports the Standard farm (Game1.whichFarm == 0). " +
                     $"Current farm type is {Game1.whichFarm}. Skipping all setup. " +
@@ -242,6 +247,30 @@ namespace TheLongestYear
             }
 
             _meta.Load();
+
+            // Per-save opt-in. TLY only activates on a save that was STARTED as a Longest Year run:
+            //   - a brand-new game created this session (_isNewGame, set by OnSaveCreating), or
+            //   - a save that already carries the run marker, or
+            //   - a pre-existing TLY save with banked data from before the marker existed (back-fill).
+            // Any other save — a normal vanilla playthrough loaded with the mod installed — leaves
+            // TLY fully dormant: no Harmony effects, no HUD, no reset loop. _metaLoaded stays false
+            // so OnSaving never persists empty defaults over the player's real save data.
+            bool isLongestYearSave = _isNewGame || _meta.State.IsLongestYearRun || _meta.LoadedExistingData;
+            _isNewGame = false; // consume — only the load right after SaveCreating counts as new
+            if (!isLongestYearSave)
+            {
+                DeactivateTly();
+                this.Monitor.Log(
+                    "This save wasn't started as a Longest Year run — the mod will stay dormant and " +
+                    "leave it untouched. Start a new game to play The Longest Year.",
+                    LogLevel.Info);
+                return;
+            }
+
+            // Stamp the marker so new games (and back-filled legacy TLY saves) take the clean flag
+            // path next load; it persists with the game's own save via OnSaving.
+            _meta.State.IsLongestYearRun = true;
+            RunActivation.Activate();
             _metaLoaded = true;
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
             // on a prior loop — that's what suppresses both intro events for years 2+.
@@ -313,6 +342,35 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
                 LogLevel.Info);
+        }
+
+        /// <summary>A brand-new game is being created. If TLY is enabled, this save becomes a Longest
+        /// Year run — remember it so the OnSaveLoaded that follows stamps the per-save marker and
+        /// activates the mod. SaveCreating runs before save data is writable, so the actual stamp
+        /// happens in OnSaveLoaded. Loading an existing save never fires this, which is what keeps TLY
+        /// dormant on non-TLY saves.</summary>
+        private void OnSaveCreating(object sender, SaveCreatingEventArgs e)
+        {
+            if (_config.Enabled)
+                _isNewGame = true;
+        }
+
+        /// <summary>Returning to title means the loaded save is gone — drop the runtime gate so no
+        /// stale state leaks into the next save the player loads.</summary>
+        private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+            => DeactivateTly();
+
+        /// <summary>Put TLY fully to sleep: clear the master runtime gate and null every static
+        /// provider so no Harmony patch, HUD draw, or tick handler does anything until a TLY save
+        /// re-activates it. Called for a non-TLY (or disabled / non-Standard) save load and on
+        /// return to title. The per-patch null-guards already short-circuit once the providers are
+        /// null, and <see cref="RunActivation.IsActive"/> backstops the rest.</summary>
+        private void DeactivateTly()
+        {
+            RunActivation.Deactivate();
+            ActiveEffectsProvider.Clear();
+            TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
+            DonationService.Active = null;
         }
 
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
@@ -765,6 +823,8 @@ namespace TheLongestYear
         /// backs on the same event hook with its own visibility gating.</summary>
         private void OnRenderedHud(object sender, StardewModdingAPI.Events.RenderingHudEventArgs e)
         {
+            if (!RunActivation.IsActive)
+                return;
             if (Game1.isFestival() && Game1.dayTimeMoneyBox != null)
                 Game1.dayTimeMoneyBox.draw(e.SpriteBatch);
 
@@ -907,10 +967,16 @@ namespace TheLongestYear
         }
 
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
-            => _runController?.OnDayStarted(sender, e);
+        {
+            if (!RunActivation.IsActive) return;
+            _runController?.OnDayStarted(sender, e);
+        }
 
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
-            => _runController?.OnDayEnding(sender, e);
+        {
+            if (!RunActivation.IsActive) return;
+            _runController?.OnDayEnding(sender, e);
+        }
 
 
         /// <summary>
@@ -920,6 +986,9 @@ namespace TheLongestYear
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             if (!Context.IsWorldReady)
+                return;
+            // Dormant on non-TLY saves: no deferred-offer retry, no festival auto-eject, no debug bridge.
+            if (!RunActivation.IsActive)
                 return;
 
             // Re-attempt a planning-hub open that was deferred because the menu surface was busy

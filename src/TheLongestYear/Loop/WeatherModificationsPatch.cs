@@ -19,20 +19,17 @@ namespace TheLongestYear.Loop
     /// choice unconditionally for non-festival days; festival days fall through with vanilla's
     /// result intact so per-festival weather (which can vary by festival) stays correct.
     ///
-    /// Gated on <see cref="Enabled"/> — toggled by ModEntry from <c>_config.Enabled</c> so the
-    /// player can disable TLY entirely without lingering weather overrides.
+    /// Gated on <see cref="RunActivation.IsActive"/> so a non-TLY save (or a disabled mod) keeps
+    /// vanilla weather behaviour with no lingering overrides.
     /// </summary>
     [HarmonyPatch(typeof(Game1), nameof(Game1.getWeatherModificationsForDate))]
     internal static class WeatherModificationsPatch
     {
-        /// <summary>Master toggle, set from ModEntry. False keeps vanilla weather behaviour.</summary>
-        public static bool Enabled;
-
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(WorldDate date, string default_weather, ref string __result)
         {
-            if (!Enabled) return;
+            if (!RunActivation.IsActive) return;
 
             int seasonIndex = (int)date.Season;
             int dayOfMonth = date.DayOfMonth;
