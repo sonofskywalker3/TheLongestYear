@@ -297,4 +297,23 @@ public class RunStateTests
         run.BeginNewRun(seed: 7);
         Assert.Empty(run.DonatedThisWeekIds);
     }
+
+    [Fact]
+    public void TryMarkVaultBundlePaid_is_true_once_then_false()
+    {
+        var run = new RunState();
+        Assert.True(run.TryMarkVaultBundlePaid(34));
+        Assert.False(run.TryMarkVaultBundlePaid(34));   // idempotent — no duplicate
+        Assert.True(run.TryMarkVaultBundlePaid(35));
+        Assert.Equal(2, run.VaultBundlesPaid.Count);
+    }
+
+    [Fact]
+    public void BeginNewRun_clears_vault_bundles_paid()
+    {
+        var run = new RunState();
+        run.TryMarkVaultBundlePaid(34);
+        run.BeginNewRun(seed: 1);
+        Assert.Empty(run.VaultBundlesPaid);
+    }
 }
