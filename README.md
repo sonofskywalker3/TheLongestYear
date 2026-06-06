@@ -92,7 +92,9 @@ What helps most right now:
 
 ## Art wanted
 
-I have no artistic ability — the banner is a plain placeholder and the mod leans on vanilla sprites throughout. If anyone would enjoy making proper **banner art**, or some custom **book / sprite artwork** (the Cookbook and Craftbook especially), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+The mod leans on vanilla sprites throughout. If anyone would enjoy making some custom **book / sprite artwork** (the Cookbook and Craftbook especially), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+
+*Banner art by **cwybabiesucks** — thank you!*
 
 ---
 
@@ -121,7 +123,7 @@ Core game logic lives in `TheLongestYear.Core` (pure, unit-tested); SMAPI/Harmon
 
 ## Credits
 
-By **sonofskywalker3**. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
+By **sonofskywalker3**. Banner art by **cwybabiesucks**. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
 
 ## License
 
