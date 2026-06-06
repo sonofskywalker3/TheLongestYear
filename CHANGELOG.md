@@ -5,6 +5,20 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased (0.9.x dev)
 
+- **0.9.5 — Fixed: loading a non-TLY save fired the intro cutscene.** The dormant
+  gate from 0.9.3 bailed correctly, but the intro / day-28 cutscene drivers (and a
+  warp tracker) are attached at startup with their own update loops and bypassed it,
+  so the Lewis→Junimo intro still played on a save TLY didn't start. They now respect
+  the per-save activation gate.
+- **0.9.4 — Fixed: the Community Center bulletin board (Mixed room) did nothing.**
+  Vanilla gates the bulletin board behind three completed bundles (unlike the other
+  five rooms, which open immediately); TLY revealed the note but never patched that
+  gate, so pressing it was a no-op. It now opens from day 1 like the rest.
+- **0.9.3 — Safety: TLY stays fully dormant on saves it didn't start.** Loading a
+  normal (non-TLY) save with the mod installed used to activate the full roguelite
+  layer — including the day-28 world reset. Now only starting a NEW game begins a run;
+  any other save is left completely untouched (no effects, HUD, or reset loop).
+  Existing runs migrate automatically.
 - **0.9.2 — Fixed: the weekly theme picker was lost when starting a new loop from
   the win screen.** The "Start a new loop" choice is a question dialogue; its answer
   callback ran the reset and tried to open the planning hub while that dialogue was
