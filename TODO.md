@@ -6,6 +6,33 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 🐞 ACTIVE BUG: vault/money gate is invisible in the green journal AND unpayable in normal play
+*Found 2026-06-06 during a gate-pass playtest (on the `feat/tly1-story-cutscenes` branch). Fix here on
+master — it's a core-mechanic gap, independent of the story/cutscene work.*
+
+**Immediate task (user-requested):** add the **money-bundle (Vault) purchase requirement to the green
+journal** (`SeasonGoalsMenu`) — it's a required part of the season gate but the player can't see it.
+
+Each season's gate requires the vanilla Vault bundle paid by day 28 (34 = 2,500g Spring / 35 = 5,000g
+Summer / 36 = 10,000g Fall / 37 = 25,000g Winter) — `VaultRules.IsVaultGateSatisfied` is ANDed into
+`BundleGate.IsSatisfied`. Two problems:
+1. **Invisible in the UI.** `SeasonGoalsMenu` is built only from the item `_requirements`; "vault"/"bus"
+   appears NOWHERE in the UI layer. A player can finish every shown bundle and still fail the season
+   with no on-screen reason. → add a vault line (cost + paid/unpaid badge).
+2. **Unpayable through gameplay.** The only writes to `Run.VaultBundlesPaid` are the debug command
+   (`tly_payvault`) and `WorldResetService` pre-paying all four *if* the player owns `keep_bus_unlocked`.
+   There is NO code that registers paying the real CC vault (the "Plan 06" Harmony hookup — never built).
+   So without `keep_bus_unlocked` the vault term can never go true in normal play; and `keep_bus_unlocked`
+   itself needs run-reach `bus:1` (a paid vault), which is also debug-only → **potential deadlock**.
+
+Fix scope: (a) wire a real in-game vault payment — detect the vanilla CC vault-bundle payment (indices
+34–37) via the donation observer → `VaultBundlesPaid`, or a JP-shrine option; (b) the green-journal line
+from the immediate task; (c) re-verify the `bus:1` → `keep_bus_unlocked` unlock path once (a) exists.
+
+### 📣 TASK: review + respond to Reddit / Nexus comments
+*2026-06-06: comments on the r/StardewValley beta thread and the Nexus mod page (47192) need triage +
+replies. (Credit u/Gribbleby if the déjà-vu idea below ships.)*
+
 ### ☆ TODO: brainstorm + write the "one-continuous-save trilogy architecture" spec
 *Captured 2026-06-06. User decision: TLY1/2/3 all run **continuously on one save** (one evolving
 campaign, not three independent runs/mods). This is a SEPARATE design from the story/cutscene pass —
