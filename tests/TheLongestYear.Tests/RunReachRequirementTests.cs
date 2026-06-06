@@ -42,4 +42,17 @@ public class RunReachRequirementTests
         var r = RunReachRequirement.Parse($"mine:{threshold}")!;
         Assert.Equal(expected, r.IsMet(actual));
     }
+
+    [Theory]
+    [InlineData(4, true)]
+    [InlineData(3, false)]
+    [InlineData(0, false)]
+    public void Bus_four_is_met_only_with_four_paid(int actualCount, bool expectedMet)
+    {
+        RunReachRequirement? r = RunReachRequirement.Parse("bus:4");
+        Assert.NotNull(r);
+        Assert.Equal("bus", r!.Metric);
+        Assert.Equal(4, r.Threshold);
+        Assert.Equal(expectedMet, r.IsMet(actualCount));
+    }
 }
