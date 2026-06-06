@@ -8,18 +8,19 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.9.2`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.9.6`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.9.2
+## What's New in 0.9.6
 
-First public beta. The headlines:
+Changes since the first beta (0.9.2):
 
-- **The full loop** — seasonal donation minimums, the year-rewind to Spring 1 on a miss, **Junimo Points** banked across loops, the **Junimo Shrine** upgrade shop, **weekly themes** (a paired bonus + liability), and on-farm carryover surfaces (the **Bundle Log** season-goals book, Cookbook/Craftbook, Junimo Stash).
-- **A real intro** — Lewis greets you on the porch, then a Junimo inside the Community Center frames the loop, before you take control.
-- **Win screen** — restore the Center within the year and the Junimos sing; then choose to keep playing that run or start a fresh loop.
-- **Fix (0.9.2)** — the weekly theme picker no longer goes missing when you start a new loop from the win screen.
+- **The Community Center bulletin board works now.** Walking up to the Mixed room's bulletin board did nothing before — it now opens like the other five rooms, so you can donate to it from day one.
+- **Other saves are left completely alone.** Loading a normal (non-TLY) save with the mod installed now does nothing at all — no effects, no HUD, no year-rewind. Starting a new game is the only way to begin a run, and existing runs carry over automatically.
+- **Update notifications.** SMAPI now tells you in its console when a new version is available.
+
+Earlier betas (0.9.0–0.9.2) shipped the full loop, the porch + Junimo intro, the win screen, and the new-loop picker fix. Full history in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -76,7 +77,7 @@ Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers 
 
 - **PC only.** No Android port yet.
 - **Standard farm only.** Other farm layouts put buildings in water and the stash off-map; the mod forces Standard on new games.
-- **Start on a new save.** Loading the mod onto an existing year-1+ save is unsupported.
+- **Start on a new save.** A run can only begin from a new game; other saves load normally and are left untouched.
 - Intro cutscene and dialogue are a first pass.
 - Multiplayer is untested.
 
