@@ -57,6 +57,9 @@ jobs:
           # version updates because archive_existing_file replaces in place.
           file_group_id: 7502657
           filename: ${{ steps.zip.outputs.path }}
+          # Clean display name; without this the action appends ".zip" to the raw
+          # filename (e.g. "TheLongestYear.0.9.5.zip.zip").
+          display_name: The Longest Year ${{ steps.release.outputs.version }}
           version: ${{ steps.release.outputs.version }}
           file_category: main
           archive_existing_file: true
