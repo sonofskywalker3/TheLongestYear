@@ -6,29 +6,6 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 🐞 ACTIVE BUG: vault/money gate is invisible in the green journal AND unpayable in normal play
-*Found 2026-06-06 during a gate-pass playtest (on the `feat/tly1-story-cutscenes` branch). Fix here on
-master — it's a core-mechanic gap, independent of the story/cutscene work.*
-
-**Immediate task (user-requested):** add the **money-bundle (Vault) purchase requirement to the green
-journal** (`SeasonGoalsMenu`) — it's a required part of the season gate but the player can't see it.
-
-Each season's gate requires the vanilla Vault bundle paid by day 28 (34 = 2,500g Spring / 35 = 5,000g
-Summer / 36 = 10,000g Fall / 37 = 25,000g Winter) — `VaultRules.IsVaultGateSatisfied` is ANDed into
-`BundleGate.IsSatisfied`. Two problems:
-1. **Invisible in the UI.** `SeasonGoalsMenu` is built only from the item `_requirements`; "vault"/"bus"
-   appears NOWHERE in the UI layer. A player can finish every shown bundle and still fail the season
-   with no on-screen reason. → add a vault line (cost + paid/unpaid badge).
-2. **Unpayable through gameplay.** The only writes to `Run.VaultBundlesPaid` are the debug command
-   (`tly_payvault`) and `WorldResetService` pre-paying all four *if* the player owns `keep_bus_unlocked`.
-   There is NO code that registers paying the real CC vault (the "Plan 06" Harmony hookup — never built).
-   So without `keep_bus_unlocked` the vault term can never go true in normal play; and `keep_bus_unlocked`
-   itself needs run-reach `bus:1` (a paid vault), which is also debug-only → **potential deadlock**.
-
-Fix scope: (a) wire a real in-game vault payment — detect the vanilla CC vault-bundle payment (indices
-34–37) via the donation observer → `VaultBundlesPaid`, or a JP-shrine option; (b) the green-journal line
-from the immediate task; (c) re-verify the `bus:1` → `keep_bus_unlocked` unlock path once (a) exists.
-
 ### 📣 TASK: review + respond to Reddit / Nexus comments
 *2026-06-06: comments on the r/StardewValley beta thread and the Nexus mod page (47192) need triage +
 replies. (Credit u/Gribbleby if the déjà-vu idea below ships.)*
@@ -343,6 +320,26 @@ Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
 ## Resolved / closed
+
+- **Vault/money gate invisible + unpayable** — fixed 2026-06-06 (v0.9.8–0.9.16, master).
+  Spec `docs/superpowers/specs/2026-06-06-vault-payment-gate-design.md`, plan
+  `docs/superpowers/plans/2026-06-06-vault-payment-gate.md`. Changes:
+  - **Gate reworked to count-based, tier-agnostic:** a season is satisfied when
+    `VaultBundlesPaid.Count >= season ordinal` (Spring 1 … Winter 4), any tiers, or
+    `keep_bus_unlocked`. Pay all four in Spring → every season pre-satisfied. Replaces the old
+    exact-tier match.
+  - **Payable in normal play:** `DonationObserver` routes vault-bundle (34–37) completions to a new
+    `DonationService.OnVaultBundlePaid`, and `VaultPaymentSync.Reconcile` (vanilla
+    `CommunityCenter.isBundleComplete` = source of truth) additively backfills the ledger at
+    day-end / journal-open / shrine-open — also covers the mid-run-upgrade migration (already-paid
+    bundles have no false→true transition to observe).
+  - **JP scales with gold paid** (`JpSettings.VaultGoldPerJp` default 1000 → 2500g=3, 5000g=5,
+    10000g=10, 25000g=25), no completion bonus, not season-multiplied.
+  - **`keep_bus_unlocked` now needs run-reach `bus:4`** (all four), and the `bus` metric returns
+    the paid count — resolves the old `bus:1`-only-via-debug deadlock.
+  - **Green journal** (`SeasonGoalsMenu`) shows a pinned per-season "Vault (bus repair): X of N
+    paid — MET/NOT MET" line. 462 tests pass. **PENDING: in-game playtest** (Task 11 step 4 of the
+    plan) — not yet deployed/tested.
 
 - **Continue-after-victory mode** — shipped 2026-05-29 as commit `5959de0`.
   JP-spend popup pops on both reset AND win paths; post-win choice
