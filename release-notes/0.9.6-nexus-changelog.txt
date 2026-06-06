@@ -1,0 +1,16 @@
+0.9.6 — Bulletin board fix, safe on other saves, update notifications
+
+Changes since the first beta (0.9.2):
+
+Fixes
+- The Community Center bulletin board (Mixed room) now works. Walking up to it did
+  nothing before — it's the only room vanilla gates behind three completed bundles —
+  so it now opens like the other five rooms and you can donate to it from day one.
+- Loading a normal (non-TLY) save with the mod installed now does nothing at all:
+  no effects, no HUD, no year-rewind. A run can only be started from a new game, and
+  existing runs carry over automatically.
+- Fixed a follow-up where the intro cutscene could still play on a non-TLY save.
+
+Changed
+- Added the Nexus update key, so SMAPI now tells you in its console when a new
+  version is available.
