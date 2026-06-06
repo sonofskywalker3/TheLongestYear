@@ -6,9 +6,32 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 📣 TASK: review + respond to Reddit / Nexus comments
-*2026-06-06: comments on the r/StardewValley beta thread and the Nexus mod page (47192) need triage +
-replies. (Credit u/Gribbleby if the déjà-vu idea below ships.)*
+### 📣 Community feedback triage (beta, 2026-06-06)
+*Mined from the r/StardewValley beta thread (1txuhfb, 48 comments) + Nexus mod 47192 posts (16).
+**Replies are the user's to write** — this is idea/inspiration capture with attribution only.
+Already-captured elsewhere: u/dcempire's "give the CC purpose after completion" → `mod-ideas.md` #3;
+u/Khajiit-ify→Emmalution and u/petraliten→Poxial → `marketing/youtuber-outreach.md`; u/Gribbleby's
+déjà-vu → the [1.0.0] entry below. New items needing triage:*
+
+- **Balance — early difficulty may be too low.** *u/Tutorem*: CC is "very doable in Y1" (often done by
+  early Fall with seed-picking/resets); worried the challenge is soft at the start. Watch during the
+  difficulty-tuning pass.
+- **Balance — Traveling Cart RNG.** *u/jneedham2*: a lucky Cart buy (red cabbage / truffle / sandfish)
+  can trivialize a run. TLY currently does nothing with the Cart; author is open to revisiting if it
+  becomes the dominant win path. Decide whether to constrain/handle the Cart.
+- **Compatibility — big-CC-content mods.** *ErraticPixel (Nexus)*: how does the 1-year gate interact
+  with CC-overhaul mods whose bundles need >1 year to finish? Also asked about mid-save install
+  (the per-save dormant gate covers that now). Worth a documented compat stance for large-CC mods.
+- **POSSIBLE OPEN BUG — Greenthumb without purchase.** *khauser13 (Nexus)*: the Greenthumb perk was
+  active on crops without buying it. Author attributed it to the same junimo-notes unlock gate as the
+  bulletin-board fix — **verify whether Greenthumb-without-purchase is actually fixed in 0.9.6 or still
+  leaking.** (Triage this as a real bug, not just feedback.)
+- **Cutscene presentation.** *Dusklight7 (Nexus)*: the opening cutscene should show ALL the talking
+  Junimos, not just the one recolored sprite. Fold into the cutscene overhaul above.
+- **Design inspiration (reference, not a request).** *u/jneedham2*: vanilla "Prank Grandpa's Ghost —
+  Glorious Victory" challenge (complete the remixed CC in five seasons) as a kindred framing.
+- **Community art offer.** *triangulummortis (Nexus)*: offered a drawn banner / fan art; connected via
+  Discord (Sonofskywalker3). No action needed beyond the user's own follow-up.
 
 ### ☆ TODO: brainstorm + write the "one-continuous-save trilogy architecture" spec
 *Captured 2026-06-06. User decision: TLY1/2/3 all run **continuously on one save** (one evolving
@@ -53,7 +76,9 @@ needs an event-script design pass (custom `Data/Events`, Junimo sprite reuse fro
 *"I assume relationships will also be reset? If somehow the villagers retained some memory it could
 make for some fun Groundhog Day dynamics!"* — **credit u/Gribbleby if this ships.** (The specific
 example lines below were the author's elaboration of that idea.)
-*Captured 2026-06-05. Not yet spec'd.*
+*Captured 2026-06-05. Not yet spec'd. Corroborating interest 2026-06-06: **wolfseas** (Nexus) also
+asked how heart events behave across loops — a second data point that relationship-across-loops is a
+wanted direction.*
 
 The loop wipes friendship every reset (villagers don't remember you) — but the **meta layer should
 silently track cumulative interaction** per villager across loops, *without* preserving the actual
