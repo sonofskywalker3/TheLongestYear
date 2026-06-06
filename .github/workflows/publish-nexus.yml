@@ -1,0 +1,62 @@
+name: Publish to Nexus Mods
+
+# Auto-uploads the release zip to Nexus mod 47192 whenever a GitHub release is
+# published. Mirrors AndroidConsolizer's pipeline. The mod DESCRIPTION, mod-level
+# version field, and per-version changelog are NOT set here (the Nexus API has no
+# mutations for them) — see docs/RELEASE_TOOLING.md for those steps.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to publish (e.g. v0.9.5). Leave empty for latest release.'
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine release tag
+        id: release
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          elif [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG=$(gh release view --json tagName -q '.tagName' --repo "$GITHUB_REPOSITORY")
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          # Strip leading 'v' for the Nexus version string.
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download release asset
+        run: |
+          gh release download "${{ steps.release.outputs.tag }}" \
+            --pattern '*.zip' --dir . --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Find ZIP file
+        id: zip
+        run: |
+          ZIP=$(ls *.zip | head -1)
+          echo "path=$ZIP" >> $GITHUB_OUTPUT
+          echo "Found: $ZIP"
+
+      - name: Upload to Nexus Mods
+        uses: Nexus-Mods/upload-action@main
+        with:
+          api_key: ${{ secrets.NEXUS_API_KEY }}
+          # Nexus file_group_id (NOT mod ID 47192). Discovered via the V2 GraphQL
+          # API: modFiles(modId: 47192, gameId: 1303).groupId. Stays stable across
+          # version updates because archive_existing_file replaces in place.
+          file_group_id: 7502657
+          filename: ${{ steps.zip.outputs.path }}
+          version: ${{ steps.release.outputs.version }}
+          file_category: main
+          archive_existing_file: true
