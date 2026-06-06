@@ -35,6 +35,7 @@ Each season's gate ANDs in a vault requirement (`VaultRules.IsVaultGateSatisfied
   range: 2,500g→3, 5,000g→5, 10,000g→10, 25,000g→25 (≈ Uncommon→Very Rare base). This is **not**
   additionally season-multiplied (gold's value is season-independent; scaling it would only
   reward deferring the big payment to Winter). The cross-run JP-boost upgrade still applies.
+  Config.json only — consistent with the other JP tunables, none of which are surfaced in GMCM.
 - **Journal shows per-season sufficiency only.** The green-journal line shows the paid count vs.
   this season's requirement with a met / not-met badge. No "kept via upgrade" label, no
   toward-the-upgrade progress (when the upgrade is owned the count is already full, so it simply
@@ -61,26 +62,34 @@ All new gameplay paths gate on `RunActivation.IsActive` + single-player.
 - `PaidCount(RunState)` → `run.VaultBundlesPaid.Count` (list is kept deduped on insert).
 - **Remove** `GoldCostForSeason`, `VaultGateStatus`, and `DescribeGate` (added in 0.9.7 for the
   old tier-specific design; obsolete under count semantics — `GoldForIndex` replaces the cost
-  helper). `BundleIndexForSeason` is also no longer used by the gate; keep it only if a
-  test/`tly_payvault` still references it — otherwise remove. *(Check `tly_payvault` first.)*
+  helper). **Keep `BundleIndexForSeason`** — the `tly_payvault` debug command still uses it to
+  resolve a season name to an index (`ModEntry.cs:1198`).
 
-### 2. `DonationService.OnVaultBundlePaid(int index)` — idempotent sink
+### 2. `RunState.TryMarkVaultBundlePaid(int index)` (Core) — pure dedup
+
+Mirrors the existing `TryMarkBundleAwarded`/`TryMarkRoomAwarded`:
+```
+if (VaultBundlesPaid.Contains(index)) return false;
+VaultBundlesPaid.Add(index);
+return true;
+```
+
+### 3. `DonationService.OnVaultBundlePaid(int index)` — idempotent sink
 
 ```
-if (!RunActivation.IsActive) return;                 // belt-and-suspenders; callers also gate
-if (Run.VaultBundlesPaid.Contains(index)) return;    // idempotent / dedupe
-Run.VaultBundlesPaid.Add(index);
+if (!Run.TryMarkVaultBundlePaid(index)) return;      // dedupe via Core helper
 long jp = JpBoostHelper.Apply(_store.State, _jp.VaultPayment(VaultRules.GoldForIndex(index)));
 _store.State.JunimoPoints += jp;                     // gold-scaled JP — NO TryMarkBundleAwarded / bonus
 _monitor.Log($"Vault bundle {index} paid -> +{jp} JP (now {_store.State.JunimoPoints}).", Info);
 ```
 
-`JpCalculator.VaultPayment(int gold)` = `max(1, round(gold / VaultGoldPerJp))`, with
-`JpSettings.VaultGoldPerJp` (default 1000) added to config + exposed in GMCM. No season multiply.
+No internal `RunActivation` check — matches sibling `OnItemDonated`/`OnBundleCompleted`, which
+rely on `DonationService.Active` being null on non-TLY saves; the reconcile caller also gates.
+`JpCalculator.VaultPayment(int gold)` = `max(1, round(gold / VaultGoldPerJp))`.
 
 This is the single place that records a vault payment + awards JP. Two feeders call it:
 
-### 3. `DonationObserver` — live path (immediate)
+### 4. `DonationObserver` — live path (immediate)
 
 In the existing bundle-complete diff (`!wasComplete && b.complete`): if
 `VaultRules.IsVaultIndex(b.bundleIndex)` → call `OnVaultBundlePaid(b.bundleIndex)` **instead of**
@@ -89,7 +98,7 @@ existing `OnBundleCompleted` path. The per-slot loop is unaffected — verified 
 `completionAnimation` flips `Bundle.complete` but leaves `ingredients[].completed` false, so the
 money "ingredient" never triggers a per-item award.
 
-### 4. `VaultPaymentSync.Reconcile(RunState)` (Integration, new) — backstop
+### 5. `VaultPaymentSync.Reconcile(RunState)` (Integration, new) — backstop
 
 ```
 if (!RunActivation.IsActive || !Game1.IsMasterGame || Game1.IsMultiplayer) return;
@@ -110,16 +119,16 @@ payment the observer missed.
 - `MenuLauncher.OpenSeasonGoals` — before building the journal (accurate display).
 - `MenuLauncher.OpenShrineShop` — before building the shrine (accurate `bus:4` run-reach).
 
-### 5. `RunReachEvaluator` — `bus` returns count
+### 6. `RunReachEvaluator` — `bus` returns count
 
 ```
 "bus" => _runState?.Invoke()?.VaultBundlesPaid.Count ?? 0,   // 0–4, deduped on insert
 ```
 `bus:4` is then met only when all four are paid. (Reconcile at shrine-open runs first.)
 
-### 6. `UpgradeCatalog` — `keep_bus_unlocked` run-reach `bus:1` → `bus:4`.
+### 7. `UpgradeCatalog` — `keep_bus_unlocked` run-reach `bus:1` → `bus:4`.
 
-### 7. `SeasonGoalsMenu` — count-based journal line
+### 8. `SeasonGoalsMenu` — count-based journal line
 
 Replace the `DescribeGate`-based banner (0.9.7) with:
 - `int paid = VaultRules.PaidCount(_run); int need = VaultRules.SeasonOrdinal(_season);`
