@@ -45,6 +45,7 @@ namespace TheLongestYear.Integration
 
         private void OnDayStarted(object sender, DayStartedEventArgs e)
         {
+            if (!RunActivation.IsActive) return; // dormant on non-TLY saves — no intro
             // Re-arm for a (possibly replayed) fresh morning.
             if (IntroGate.IsFreshIntroMorning(_meta.State.HasSeenIntro, _meta.Run.Season, _meta.Run.DayOfMonth))
             {
@@ -55,6 +56,7 @@ namespace TheLongestYear.Integration
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (!RunActivation.IsActive) return; // dormant on non-TLY saves — no intro cutscene
             if (!_config.Enabled || _finished) return;
             if (!Context.IsWorldReady || Game1.currentMinigame != null) return;
             // Only act on a settled frame — never during the load fade (acting then fights the

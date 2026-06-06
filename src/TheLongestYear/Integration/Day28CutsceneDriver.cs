@@ -37,6 +37,7 @@ namespace TheLongestYear.Integration
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (!TheLongestYear.Core.RunActivation.IsActive) return; // dormant on non-TLY saves
             RunController rc = _runController?.Invoke();
             if (rc == null) return;
 

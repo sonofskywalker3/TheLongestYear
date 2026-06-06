@@ -371,6 +371,11 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             DonationService.Active = null;
+            // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
+            // OnSaveLoaded; the dormant bail returns before that, so detach here too or a tracker
+            // left over from a prior TLY save keeps firing on the non-TLY save's warps.
+            if (_peakMineFloorTracker != null)
+                this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
         }
 
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
