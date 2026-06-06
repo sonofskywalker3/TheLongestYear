@@ -38,7 +38,7 @@ namespace TheLongestYear.Integration
                 "house"    => p.HouseUpgradeLevel,
                 "pet"      => p.hasPet() ? 1 : 0,
                 "shortcuts" => Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts") ? 1 : 0,
-                "bus"      => (_runState?.Invoke()?.VaultBundlesPaid.Count ?? 0) > 0 ? 1 : 0,
+                "bus"      => _runState?.Invoke()?.VaultBundlesPaid.Count ?? 0,   // 0–4 (deduped on insert)
                 _          => -1,   // unknown metric fails closed
             };
             return actual >= 0 && r.IsMet(actual);

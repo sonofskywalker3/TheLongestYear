@@ -396,41 +396,40 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>Draws the pinned Vault payment banner just below the title bar. The vault
-        /// bundle (bus repair) is ANDed into the season gate (<see cref="VaultRules.IsVaultGateSatisfied"/>)
-        /// but isn't part of the item-bundle list, so a player who finishes every shown bundle
-        /// could still fail the season with no on-screen reason. This line surfaces the cost +
-        /// paid/unpaid/kept state so the obligation is visible.</summary>
+        /// requirement is ANDed into the season gate (<see cref="VaultRules.IsVaultGateSatisfied"/>)
+        /// but isn't an item bundle, so it would otherwise be invisible. The gate is count-based:
+        /// the player must have paid at least the season ordinal's worth of vault bundles this run
+        /// (any tiers). This line shows that per-season sufficiency only — the keep_bus_unlocked
+        /// upgrade is a shrine concern, not shown here (when owned the count is already full, so it
+        /// simply reads as met).</summary>
         private void DrawVaultLine(SpriteBatch b)
         {
-            VaultGateStatus status = VaultRules.DescribeGate(_season, _run, _meta);
-            int gold = VaultRules.GoldCostForSeason(_season);
-            bool satisfied = status != VaultGateStatus.Unpaid;
+            int paid = VaultRules.PaidCount(_run);
+            int need = VaultRules.SeasonOrdinal(_season);
+            bool met = VaultRules.IsVaultGateSatisfied(_season, _run, _meta);
 
             int boxX = xPositionOnScreen + PanelPadding;
             int boxY = yPositionOnScreen + TitleBarHeight;
             int boxW = width - PanelPadding * 2;
             int boxH = VaultLineHeight - 8;
 
-            Color tint = satisfied ? Color.LightGreen * 0.7f : Color.White;
+            Color tint = met ? Color.LightGreen * 0.7f : Color.White;
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 boxX, boxY, boxW, boxH, tint, 1f, false);
 
-            // Left label: the cost.
-            string label = $"Vault (bus repair):  {gold:N0}g";
-            Color labelColor = satisfied ? Color.DarkGreen : Game1.textColor;
+            // Left label: per-season payment progress (paid vs. this season's required count).
+            string label = met
+                ? $"Vault (bus repair):  {paid} of {need} paid"
+                : $"Vault (bus repair):  {paid} of {need} paid — pay any Vault bundle at the CC";
+            Color labelColor = met ? Color.DarkGreen : Game1.textColor;
             float textY = boxY + (boxH - Game1.smallFont.MeasureString(label).Y) / 2f;
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
                 new Vector2(boxX + 16, textY), labelColor);
 
-            // Right badge: paid / kept / unpaid.
-            string badge = status switch
-            {
-                VaultGateStatus.PaidThisRun    => "PAID",
-                VaultGateStatus.KeptViaUpgrade => "bus kept (upgrade)",
-                _                              => "UNPAID — pay at the CC Vault",
-            };
+            // Right badge: MET / NOT MET for this season's checkpoint.
+            string badge = met ? "MET" : "NOT MET";
             Vector2 badgeSize = Game1.smallFont.MeasureString(badge);
-            Color badgeColor = satisfied ? Color.DarkGreen : new Color(160, 34, 34);
+            Color badgeColor = met ? Color.DarkGreen : new Color(160, 34, 34);
             Utility.drawTextWithShadow(b, badge, Game1.smallFont,
                 new Vector2(boxX + boxW - 16 - badgeSize.X, textY), badgeColor);
         }
