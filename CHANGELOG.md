@@ -5,6 +5,10 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased (0.9.x dev)
 
+- **0.9.6 — SMAPI update notifications.** Added the Nexus update key to the manifest,
+  so SMAPI now tells you in its console when a new version of The Longest Year is
+  available. (Also wires up automatic Nexus uploads on each GitHub release — no
+  player-facing change.)
 - **0.9.5 — Fixed: loading a non-TLY save fired the intro cutscene.** The dormant
   gate from 0.9.3 bailed correctly, but the intro / day-28 cutscene drivers (and a
   warp tracker) are attached at startup with their own update loops and bypassed it,

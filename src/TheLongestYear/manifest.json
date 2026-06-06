@@ -1,10 +1,10 @@
 {
     "Name": "The Longest Year",
     "Author": "sonofskywalker3",
-    "Version": "0.9.5",
+    "Version": "0.9.6",
     "Description": "Roguelite time-loop: restore the Community Center within the year, or the Junimos rewind it and you try again, stronger.",
     "UniqueID": "sonofskywalker3.TheLongestYear",
     "EntryDll": "TheLongestYear.dll",
     "MinimumApiVersion": "4.0.0",
-    "UpdateKeys": []
+    "UpdateKeys": [ "Nexus:47192" ]
 }
