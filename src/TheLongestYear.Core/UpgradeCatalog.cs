@@ -289,7 +289,7 @@ public static class UpgradeCatalog
         // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, "Keep Bus Unlocked",
             "Start each loop with all four Vault bundles already paid — the bus is restored from day 1.",
-            1500, metaRequirement: null, runReachRequirement: "bus:1"),
+            1500, metaRequirement: null, runReachRequirement: "bus:4"),
 
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).

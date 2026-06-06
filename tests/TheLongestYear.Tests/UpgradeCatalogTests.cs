@@ -333,4 +333,12 @@ public class UpgradeCatalogTests
             Assert.Equal(n == 1 ? null : $"keep_mastery_{n - 1}", m.PrerequisiteId);
         }
     }
+
+    [Fact]
+    public void Keep_bus_unlocked_requires_all_four_vault_bundles()
+    {
+        UpgradeDefinition? def = UpgradeCatalog.TryGet(VaultRules.KeepBusUnlockedId);
+        Assert.NotNull(def);
+        Assert.Equal("bus:4", def!.RunReachRequirement);
+    }
 }
