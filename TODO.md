@@ -6,6 +6,77 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### ☆ TODO: brainstorm + write the "one-continuous-save trilogy architecture" spec
+*Captured 2026-06-06. User decision: TLY1/2/3 all run **continuously on one save** (one evolving
+campaign, not three independent runs/mods). This is a SEPARATE design from the story/cutscene pass —
+needs its own brainstorm → spec. **User explicitly asked to be reminded to do this — surface it; don't
+let it slip.*** Scope to cover:
+- Save continuity spanning three "years"/stages; a year/stage state machine and how you advance TLY1→2→3.
+- **Escalating win bar:** TLY1 = restore CC; TLY2 = CC + (if too easy) basic Perfection; TLY3 = ultimate Perfection.
+- A **new layer of Junimo upgrades each year** to keep pace with the higher seasonal goals.
+- How TLY2 (Ginger Island / Joja resort) and TLY3 (valley annexation + Morris redemption at Perfection) hang off it.
+- Companion to the story brainstorm notes at
+  `docs/superpowers/notes/2026-06-06-story-cutscene-brainstorm-notes.md`.
+
+### ★ NEXT NON-BUG-FIX UPGRADE: animated loop cutscene + real ending cutscene
+*Captured 2026-06-05. User-flagged as the priority once bug fixes are clear —
+the next feature upgrade, not a polish afterthought.*
+
+Two distinct cutscene pieces:
+
+1. **Animated loop (reset) cutscene.** What we have now is *OK but static* — the
+   user wants it **animated, not a still frame**. This is the transition the
+   player sees when a loop resets (Winter 28 → next Spring 1). Make it feel like
+   the year actually rewinding rather than a placeholder card.
+
+2. **Real ending / victory cutscene.** The current 0.9 `VictoryMenu` is a
+   placeholder (see the deferral note below + the `VictoryMenu` class comment).
+   The real 1.0 ending should be a proper cutscene that shows:
+   - **Joja giving up and closing the store** — the narrative payoff for
+     restoring the CC and beating the loop.
+   - **A Junimo party / celebration** (or similar) — the joyful button on the
+     whole run.
+
+Ties together with the already-deferred items below: the "Win screen → JP shrine
+transition is jarring" entry explicitly defers transition polish into *this* real
+ending work, so fold them together when this gets spec'd. Not yet spec'd —
+needs an event-script design pass (custom `Data/Events`, Junimo sprite reuse from
+`Characters/Junimo`, Joja-store staging at JojaMart).
+
+### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
+**Source / credit: u/Gribbleby** on the r/StardewValley beta announcement thread
+(https://www.reddit.com/r/StardewValley/comments/1txuhfb/ — 98 upvotes, 20k+ views). Their seed:
+*"I assume relationships will also be reset? If somehow the villagers retained some memory it could
+make for some fun Groundhog Day dynamics!"* — **credit u/Gribbleby if this ships.** (The specific
+example lines below were the author's elaboration of that idea.)
+*Captured 2026-06-05. Not yet spec'd.*
+
+The loop wipes friendship every reset (villagers don't remember you) — but the **meta layer should
+silently track cumulative interaction** per villager across loops, *without* preserving the actual
+heart/relationship level. Once cumulative interaction with a villager is **significant**, occasionally
+intercept their conversations to inject a faint subconscious-familiarity line — the loop bleeding
+through. Examples the commenter gave:
+- *"I swear we've met before — do you have a twin?"*
+- *"I don't know why, but I feel very comfortable with you."*
+
+Why it's great: it's the perfect thematic payoff for a time loop — the villagers can't *remember*, yet
+something *lingers*. Rewards long-term players narratively without giving a mechanical head-start
+(hearts still reset, so no day-1 gifting/marriage exploit).
+
+Design seeds (needs a real spec):
+- **New MetaState field:** per-villager cumulative-interaction counter (talks + gifts + heart events
+  summed across *all* loops). This is the only thing that persists — the live `friendship` value keeps
+  resetting via the existing reset path. Explicitly do NOT preserve hearts (same boundary as the
+  barn-animal upgrades: track the meta, reset the mechanical level).
+- **"Significant" threshold** gates eligibility for the déjà-vu lines (tune so it kicks in after a
+  villager you've genuinely invested in across several loops, not someone you said hi to once).
+- **Injection:** low random chance to prepend/substitute a déjà-vu line when an eligible villager
+  starts a conversation — via a `Dialogue`/`NPC.CurrentDialogue` intercept or a `Characters/Dialogue/<name>`
+  asset edit. Keep it **rare** so it stays uncanny, not spammy.
+- **Line pool** (start with the two above, add more); could escalate tone with the cumulative counter
+  (mild "have we met?" → warmer "I trust you for some reason").
+- Keep it mysterious — never explain the loop in these lines; that's the intro/Junimo's job.
+
 ### Win screen → JP shrine transition is jarring (defer to the real 1.0 ending)
 Playtest 2026-06-05: dismissing the 0.9 `VictoryMenu` cuts straight into the
 JP shrine store with no easing — visually abrupt. **Deliberately deferred** —
