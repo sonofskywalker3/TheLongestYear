@@ -93,6 +93,23 @@ namespace TheLongestYear.Donations
                 LogLevel.Info);
         }
 
+        /// <summary>The player paid a real CC Vault money bundle (index 34–37). Records it into the
+        /// run ledger (idempotent) and awards JP proportional to the gold spent. Unlike a normal
+        /// bundle there is NO completion bonus — the vault is a one-item (money) bundle, so it pays
+        /// only the gold-scaled amount. No RunActivation check: <see cref="Active"/> is null on
+        /// non-TLY saves and the reconcile caller gates, matching OnItemDonated/OnBundleCompleted.</summary>
+        public void OnVaultBundlePaid(int bundleIndex)
+        {
+            if (!Run.TryMarkVaultBundlePaid(bundleIndex))
+                return;
+
+            long jp = JpBoostHelper.Apply(_store.State, _jp.VaultPayment(VaultRules.GoldForIndex(bundleIndex)));
+            _store.State.JunimoPoints += jp;
+            _monitor.Log(
+                $"Vault bundle {bundleIndex} paid ({VaultRules.GoldForIndex(bundleIndex):N0}g) -> +{jp} JP (now {_store.State.JunimoPoints}).",
+                LogLevel.Info);
+        }
+
         /// <summary>A room/area just completed — award its one-time completion bonus (season-scaled).</summary>
         public void OnRoomCompleted(int area)
         {
