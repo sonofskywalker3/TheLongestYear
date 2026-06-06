@@ -146,7 +146,13 @@ namespace TheLongestYear.Donations
                 {
                     if (!wasComplete && b.complete)
                     {
-                        DonationService.Active.OnBundleCompleted(b.bundleIndex);
+                        // Vault money bundles (34–37) pay gold, not items: record the payment +
+                        // gold-scaled JP, NOT the standard bundle-completion bonus. Everything else
+                        // takes the normal completion-bonus path.
+                        if (TheLongestYear.Core.VaultRules.IsVaultIndex(b.bundleIndex))
+                            DonationService.Active.OnVaultBundlePaid(b.bundleIndex);
+                        else
+                            DonationService.Active.OnBundleCompleted(b.bundleIndex);
                         _bundleCompleteSnapshot[b.bundleIndex] = true;
                     }
                 }
