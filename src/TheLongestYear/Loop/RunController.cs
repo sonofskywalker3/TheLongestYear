@@ -479,6 +479,7 @@ namespace TheLongestYear.Loop
 
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
+            TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)

@@ -67,6 +67,7 @@ namespace TheLongestYear.UI
         {
             if (!CanOpen())
                 return;
+            TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
             Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
@@ -91,6 +92,7 @@ namespace TheLongestYear.UI
         public void OpenSeasonGoals()
         {
             if (!CanOpen()) return;
+            TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
             Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _store.State, _runController.Requirements);
             _monitor.Log(
