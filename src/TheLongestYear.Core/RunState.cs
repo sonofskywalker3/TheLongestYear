@@ -114,6 +114,16 @@ public sealed class RunState
         return true;
     }
 
+    /// <summary>Record a vault bundle as paid this run; returns false if it was already recorded
+    /// (keeps <see cref="VaultBundlesPaid"/> deduped so the count maxes at 4).</summary>
+    public bool TryMarkVaultBundlePaid(int bundleIndex)
+    {
+        if (VaultBundlesPaid.Contains(bundleIndex))
+            return false;
+        VaultBundlesPaid.Add(bundleIndex);
+        return true;
+    }
+
     /// <summary>Add a donated item id; idempotent so re-donating the same id is a no-op in the ledger.</summary>
     public void RecordDonation(string itemId)
     {
