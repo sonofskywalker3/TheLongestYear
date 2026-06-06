@@ -12,6 +12,16 @@ namespace TheLongestYear.Core;
 /// </summary>
 public sealed class MetaState
 {
+    /// <summary>
+    /// True once this save has been claimed as a Longest Year run. Stamped by
+    /// <c>ModEntry.OnSaveLoaded</c> when a NEW game is created with TLY enabled, and back-filled
+    /// for pre-existing TLY saves that already carry banked meta-data. When this is false on
+    /// load (a normal save the mod never started), TLY stays fully dormant and touches nothing —
+    /// see <see cref="RunActivation"/>. This is the per-save opt-in: starting a new game is the
+    /// only way to begin a run.
+    /// </summary>
+    public bool IsLongestYearRun { get; set; }
+
     public long JunimoPoints { get; set; }
 
     /// <summary>IDs of permanently purchased upgrades.</summary>

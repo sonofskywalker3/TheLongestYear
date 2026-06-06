@@ -42,6 +42,7 @@ namespace TheLongestYear.Loop
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static bool Prefix(string precondition, ref string __result)
         {
+            if (!RunActivation.IsActive) return true; // dormant on non-TLY saves — defer to vanilla
             if (string.IsNullOrEmpty(precondition)) return true;
 
             int slashIdx = precondition.IndexOf('/');

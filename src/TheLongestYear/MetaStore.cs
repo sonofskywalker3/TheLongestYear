@@ -19,6 +19,12 @@ namespace TheLongestYear
         public MetaState State { get; private set; } = new MetaState();
         public RunState Run { get; private set; } = new RunState();
 
+        /// <summary>True when the last <see cref="Load"/> read real on-disk TLY data rather than
+        /// coalescing to fresh defaults. Lets ModEntry back-fill the run marker on pre-existing TLY
+        /// saves (created before <see cref="MetaState.IsLongestYearRun"/> existed) without falsely
+        /// claiming a brand-new non-TLY save as a run.</summary>
+        public bool LoadedExistingData { get; private set; }
+
         public MetaStore(IDataHelper data) => _data = data;
 
         /// <summary>Connect the stash service so BankToMeta fires before each save.</summary>
@@ -28,7 +34,9 @@ namespace TheLongestYear
         /// <summary>Load this playthrough's banked progress and active run. Call when a save is loaded.</summary>
         public void Load()
         {
-            State = _data.ReadSaveData<MetaState>(MetaDataKey) ?? new MetaState();
+            MetaState meta = _data.ReadSaveData<MetaState>(MetaDataKey);
+            LoadedExistingData = meta != null;
+            State = meta ?? new MetaState();
             Run = _data.ReadSaveData<RunState>(RunDataKey) ?? new RunState();
         }
 
