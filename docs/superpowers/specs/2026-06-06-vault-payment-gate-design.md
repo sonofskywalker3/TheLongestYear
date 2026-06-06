@@ -28,9 +28,13 @@ Each season's gate ANDs in a vault requirement (`VaultRules.IsVaultGateSatisfied
   missing indices into `Run.VaultBundlesPaid`. Additive only. This is what makes a player who
   paid on an older version (already-complete, no `false→true` transition to observe) carry over
   cleanly instead of being stuck unable to re-pay.
-- **JP: item-only, no completion bonus.** The vault is a one-item (money) bundle. Paying it
-  awards a single per-item JP (Common tier, week-scaled, JP-boost applied) and does **not**
-  award the bundle-completion bonus.
+- **JP scales with gold paid, no completion bonus.** The vault is a one-item (money) bundle, so
+  it grants no bundle-completion bonus. Instead the payment awards JP **proportional to the gold
+  sunk** — paying 25,000g must reward more than paying 2,500g. A configurable exchange rate
+  `JpSettings.VaultGoldPerJp` (default **1000**, min 1 JP) maps the tiers onto the existing JP
+  range: 2,500g→3, 5,000g→5, 10,000g→10, 25,000g→25 (≈ Uncommon→Very Rare base). This is **not**
+  additionally season-multiplied (gold's value is season-independent; scaling it would only
+  reward deferring the big payment to Winter). The cross-run JP-boost upgrade still applies.
 - **Journal shows per-season sufficiency only.** The green-journal line shows the paid count vs.
   this season's requirement with a met / not-met badge. No "kept via upgrade" label, no
   toward-the-upgrade progress (when the upgrade is owned the count is already full, so it simply
@@ -48,6 +52,7 @@ All new gameplay paths gate on `RunActivation.IsActive` + single-player.
 - `SeasonOrdinal(Season)` → 1..4 (`(int)season + 1`).
 - `IsVaultIndex(int)` → true for 34–37 (`Vault2500`..`Vault25000`).
 - `VaultIndices` → the four indices (for reconcile/iteration).
+- `GoldForIndex(int)` → 34→2500, 35→5000, 36→10000, 37→25000 (drives the JP scaling).
 - **Rewrite** `IsVaultGateSatisfied`:
   ```
   if (meta.HasUpgrade(KeepBusUnlockedId)) return true;
@@ -55,9 +60,9 @@ All new gameplay paths gate on `RunActivation.IsActive` + single-player.
   ```
 - `PaidCount(RunState)` → `run.VaultBundlesPaid.Count` (list is kept deduped on insert).
 - **Remove** `GoldCostForSeason`, `VaultGateStatus`, and `DescribeGate` (added in 0.9.7 for the
-  old tier-specific design; obsolete under count semantics). `BundleIndexForSeason` is also no
-  longer used by the gate; keep it only if a test/`tly_payvault` still references it — otherwise
-  remove. *(Check `tly_payvault` first.)*
+  old tier-specific design; obsolete under count semantics — `GoldForIndex` replaces the cost
+  helper). `BundleIndexForSeason` is also no longer used by the gate; keep it only if a
+  test/`tly_payvault` still references it — otherwise remove. *(Check `tly_payvault` first.)*
 
 ### 2. `DonationService.OnVaultBundlePaid(int index)` — idempotent sink
 
@@ -65,10 +70,13 @@ All new gameplay paths gate on `RunActivation.IsActive` + single-player.
 if (!RunActivation.IsActive) return;                 // belt-and-suspenders; callers also gate
 if (Run.VaultBundlesPaid.Contains(index)) return;    // idempotent / dedupe
 Run.VaultBundlesPaid.Add(index);
-long jp = JpBoostHelper.Apply(_store.State, _jp.PerItem(Rarity.Common, Run.WeekOfYear));
-_store.State.JunimoPoints += jp;                     // item JP only — NO TryMarkBundleAwarded / bonus
+long jp = JpBoostHelper.Apply(_store.State, _jp.VaultPayment(VaultRules.GoldForIndex(index)));
+_store.State.JunimoPoints += jp;                     // gold-scaled JP — NO TryMarkBundleAwarded / bonus
 _monitor.Log($"Vault bundle {index} paid -> +{jp} JP (now {_store.State.JunimoPoints}).", Info);
 ```
+
+`JpCalculator.VaultPayment(int gold)` = `max(1, round(gold / VaultGoldPerJp))`, with
+`JpSettings.VaultGoldPerJp` (default 1000) added to config + exposed in GMCM. No season multiply.
 
 This is the single place that records a vault payment + awards JP. Two feeders call it:
 
@@ -141,9 +149,12 @@ unlock path no longer depends on the upgrade it gates.
   `count >= ordinal`; not met when `count < ordinal`; pre-pay all four in Spring satisfies Winter;
   `keep_bus_unlocked` short-circuits with count 0. Remove the obsolete "different tier doesn't
   satisfy" and the 0.9.7 `GoldCostForSeason`/`DescribeGate` tests.
-- **`DonationService`** — `OnVaultBundlePaid` records the index, awards item JP (asserts JP rose
-  by the Common per-item amount), does **not** mark a bundle-completion award, and is idempotent
-  (second call is a no-op).
+- **`JpCalculator`** — `VaultPayment` scales with gold: 2500→3, 5000→5, 10000→10, 25000→25 at
+  the default rate; min 1; not season-multiplied (same result in any week).
+- **`DonationService`** — `OnVaultBundlePaid` records the index, awards the gold-scaled JP
+  (asserts JP rose by `VaultPayment(GoldForIndex)` — and that the 25,000g tier pays more than the
+  2,500g tier), does **not** mark a bundle-completion award, and is idempotent (second call is a
+  no-op).
 - **`RunReachRequirementTests` / `RunReachEvaluator`** — `bus:4` parses; met iff count ≥ 4.
 - **`UpgradeCatalogTests`** — `keep_bus_unlocked` run-reach string == `bus:4`.
 - `VaultPaymentSync.Reconcile` reads `Game1`/`CommunityCenter`, so it isn't unit-tested (same as
