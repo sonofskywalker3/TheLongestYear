@@ -62,4 +62,24 @@ public class JpCalculatorTests
         var lines = new[] { new DonationLine(Rarity.Common, 0) };
         Assert.Equal(90, Make().ForDonationBatch(lines, weekOfYear: 5, bundlesCompleted: 0, roomsCompleted: 1));
     }
+
+    [Theory]
+    [InlineData(2500, 3)]      // 2500/1000 = 2.5 -> 3
+    [InlineData(5000, 5)]
+    [InlineData(10000, 10)]
+    [InlineData(25000, 25)]
+    public void VaultPayment_scales_with_gold(int gold, long expected)
+        => Assert.Equal(expected, Make().VaultPayment(gold));
+
+    [Fact]
+    public void VaultPayment_is_at_least_one_jp()
+        => Assert.Equal(1, Make().VaultPayment(100));   // 100/1000 = 0.1 -> floor would be 0; min 1
+
+    [Fact]
+    public void VaultPayment_does_not_season_scale()
+    {
+        // Same gold in any week returns the same JP (unlike PerItem). VaultPayment takes no week.
+        Assert.Equal(Make().VaultPayment(25000), Make().VaultPayment(25000));
+        Assert.True(Make().VaultPayment(25000) > Make().VaultPayment(2500));
+    }
 }
