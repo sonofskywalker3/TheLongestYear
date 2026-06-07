@@ -386,6 +386,15 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, $"Junimo Points banked: {_state.JunimoPoints}", Game1.smallFont,
                 new Vector2(xPositionOnScreen + 40, yPositionOnScreen + 80), Game1.textColor);
 
+            // Multiple testers tried to buy from this board and were confused when nothing happened
+            // (it's a read-only preview — JP is spent only at a loop boundary). Spell that out,
+            // right-aligned on the JP line, so the "planning, not a shop" intent is obvious.
+            const string planningNote = "Planning view — you spend JP when a loop resets or you win, not here.";
+            Vector2 noteSize = Game1.smallFont.MeasureString(planningNote);
+            Utility.drawTextWithShadow(b, planningNote, Game1.smallFont,
+                new Vector2(xPositionOnScreen + width - 40 - noteSize.X, yPositionOnScreen + 80),
+                new Color(120, 90, 40));
+
             DrawForesight(b);
 
             if (_rows.Count == 0)
