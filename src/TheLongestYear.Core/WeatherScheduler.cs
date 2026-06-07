@@ -14,6 +14,9 @@ namespace TheLongestYear.Core;
 ///
 /// Rules:
 ///   - Days 1 + 2 of every season force Sun (vanilla parity: the loop opens calmly).
+///   - Each season guarantees ONE of its special-weather days lands in week 1 (days 3-7) at a
+///     random position. This replaces vanilla's fixed "Spring 3 = Rain" — players still get an
+///     early watering/weather day, but never the same day every loop (beta feedback, u/Tutorem).
 ///   - Festival days are returned as the literal string <c>"Festival"</c>; the live patch
 ///     leaves vanilla's per-festival weather alone for those days.
 ///   - The remaining open days are filled with the season's required special weather first,
@@ -41,6 +44,10 @@ public static class WeatherScheduler
 
     private const int ForcedSunDay1 = 1;
     private const int ForcedSunDay2 = 2;
+
+    // Week 1 spans days 1-7; days 1-2 are forced Sun, so the open week-1 window is days 3-7.
+    // One special-weather day per season is guaranteed within this window.
+    private const int WeekOneLastDay = 7;
 
     /// <summary>
     /// Build the 28-day weather schedule for a season as a 1-indexed array (index 0 unused).
@@ -74,18 +81,22 @@ public static class WeatherScheduler
 
         switch (seasonIndex)
         {
-            case 0: // Spring: ≥2 rain, no storms.
-                PlaceN(schedule, available, rng, Rain, 2);
+            case 0: // Spring: ≥2 rain, no storms; one rain in week 1.
+                PlaceOneInWeekOne(schedule, available, rng, Rain);
+                PlaceN(schedule, available, rng, Rain, 1);
                 break;
-            case 1: // Summer: ≥2 storms; ≥2 rain.
+            case 1: // Summer: ≥2 storms; ≥2 rain; one rain in week 1.
                 PlaceN(schedule, available, rng, Storm, 2);
-                PlaceN(schedule, available, rng, Rain, 2);
+                PlaceOneInWeekOne(schedule, available, rng, Rain);
+                PlaceN(schedule, available, rng, Rain, 1);
                 break;
-            case 2: // Fall: ≥2 rain.
-                PlaceN(schedule, available, rng, Rain, 2);
+            case 2: // Fall: ≥2 rain; one rain in week 1.
+                PlaceOneInWeekOne(schedule, available, rng, Rain);
+                PlaceN(schedule, available, rng, Rain, 1);
                 break;
-            case 3: // Winter: ≥2 snow.
-                PlaceN(schedule, available, rng, Snow, 2);
+            case 3: // Winter: ≥2 snow; one snow in week 1.
+                PlaceOneInWeekOne(schedule, available, rng, Snow);
+                PlaceN(schedule, available, rng, Snow, 1);
                 break;
         }
 
@@ -114,6 +125,29 @@ public static class WeatherScheduler
             schedule[day] = weather;
             available.RemoveAt(idx);
         }
+    }
+
+    /// <summary>
+    /// Place one <paramref name="weather"/> day in week 1 (open days ≤ <see cref="WeekOneLastDay"/>),
+    /// chosen at random among those days. Falls back to a normal anywhere-placement if week 1 has
+    /// no open days left (shouldn't happen — days 3-7 are always free after forced-Sun + festivals).
+    /// </summary>
+    private static void PlaceOneInWeekOne(string[] schedule, List<int> available, Random rng, string weather)
+    {
+        var weekOneSlots = new List<int>();
+        foreach (int day in available)
+            if (day <= WeekOneLastDay)
+                weekOneSlots.Add(day);
+
+        if (weekOneSlots.Count == 0)
+        {
+            PlaceN(schedule, available, rng, weather, 1);
+            return;
+        }
+
+        int day1 = weekOneSlots[rng.Next(weekOneSlots.Count)];
+        schedule[day1] = weather;
+        available.Remove(day1);
     }
 
     private static int[] FestivalsFor(int seasonIndex) => seasonIndex switch

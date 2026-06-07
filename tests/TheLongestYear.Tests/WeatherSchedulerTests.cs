@@ -56,6 +56,25 @@ public class WeatherSchedulerTests
             $"Winter (seed={seed}) had only {CountDays(schedule, "Snow")} snow days.");
     }
 
+    [Theory]
+    [InlineData(0, "Rain")]   // Spring
+    [InlineData(1, "Rain")]   // Summer
+    [InlineData(2, "Rain")]   // Fall
+    [InlineData(3, "Snow")]   // Winter
+    public void Each_season_has_its_special_weather_in_week_one(int seasonIndex, string weather)
+    {
+        // Days 1-2 are forced Sun, so the guaranteed week-1 special day must land in days 3-7.
+        for (int seed = 0; seed < 50; seed++)
+        {
+            var schedule = WeatherScheduler.BuildSchedule(seed, seasonIndex);
+            bool inWeekOne = false;
+            for (int d = 3; d <= 7; d++)
+                if (schedule[d] == weather) inWeekOne = true;
+            Assert.True(inWeekOne,
+                $"Season {seasonIndex} (seed={seed}) had no {weather} day in week 1 (days 3-7).");
+        }
+    }
+
     [Fact]
     public void Spring_never_has_storms()
     {
