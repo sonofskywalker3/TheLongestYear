@@ -6,12 +6,38 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 📣 Community feedback triage (beta, 2026-06-06)
-*Mined from the r/StardewValley beta thread (1txuhfb, 48 comments) + Nexus mod 47192 posts (16).
-**Replies are the user's to write** — this is idea/inspiration capture with attribution only.
+### 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-07)
+*Second scrape (Reddit 50 / Nexus 17). Concrete things to investigate, highest-value first:*
+
+- **JP-spend confusion (2 reports → fix the UX).** *Dusklight7* + *TheFirstBanana (Nexus)*: clicking
+  shrine upgrades does nothing mid-run and players think it's broken ("been so confused why I couldn't
+  spend my JP right away"). Working-as-designed (JP store opens only at loop boundaries — reset/win)
+  but reads as a bug. **Fix:** make the shrine UI state explicitly that purchases happen on
+  reset/win, not mid-run.
+- **Weather/luck desync (*u/Tutorem*, day 6).** 0 rain + 0 positive-luck days by day 6; the day-3
+  guaranteed rain didn't fire; the in-game **predictor/TV disagrees with actual weather** (predicted
+  rain day 6, none came). Investigate `WeatherScheduler` vs vanilla predictor — confirm the override
+  is intended and decide whether the TV/predictor desync (and possible always-negative luck) is a bug
+  or needs reconciling. NOTE: memory says the seed scheduler intentionally *subsumed* the old day-3
+  forced rain, so "no day-3 rain" may be expected — the predictor mismatch + zero-rain-by-day-6 are
+  the parts to verify.
+- **CC reads as "restored" from day 1 (*u/Tutorem*).** The CC looks visually completed at the start
+  AND NPC schedules treat it as restored — "needed Clint on day 5… he went to the CC instead."
+  Investigate: the day-1 CC-access patch is also flipping the visual/complete state + schedule
+  routing. Bundles should be accessible without the CC looking done or rerouting NPCs.
+- **Double-forage buff feels weak + double-XP question (*u/Tutorem*).** Buff "probably worthless past
+  week 1-2 unless it affects truffles"; also asks whether double-forage grants double XP. Balance +
+  a behavior question to answer.
+- **POSSIBLE OPEN BUG — Greenthumb without purchase.** *khauser13 (Nexus)*: Greenthumb perk active on
+  crops without buying it. Author tied it to the junimo-notes unlock gate (same patch as the
+  bulletin-board fix) — **verify it's actually fixed in 0.9.6 or still leaking.**
+
+### 📣 Community feedback triage (beta, 2026-06-06) — ideas/inspiration (replies are the user's)
+*Mined from the r/StardewValley beta thread (1txuhfb) + Nexus mod 47192 posts.
+**Replies are the user's to write** — idea/inspiration capture with attribution only.
 Already-captured elsewhere: u/dcempire's "give the CC purpose after completion" → `mod-ideas.md` #3;
 u/Khajiit-ify→Emmalution and u/petraliten→Poxial → `marketing/youtuber-outreach.md`; u/Gribbleby's
-déjà-vu → the [1.0.0] entry below. New items needing triage:*
+déjà-vu → the [1.0.0] entry below. Remaining items:*
 
 - **Balance — early difficulty may be too low.** *u/Tutorem*: CC is "very doable in Y1" (often done by
   early Fall with seed-picking/resets); worried the challenge is soft at the start. Watch during the
@@ -22,10 +48,6 @@ déjà-vu → the [1.0.0] entry below. New items needing triage:*
 - **Compatibility — big-CC-content mods.** *ErraticPixel (Nexus)*: how does the 1-year gate interact
   with CC-overhaul mods whose bundles need >1 year to finish? Also asked about mid-save install
   (the per-save dormant gate covers that now). Worth a documented compat stance for large-CC mods.
-- **POSSIBLE OPEN BUG — Greenthumb without purchase.** *khauser13 (Nexus)*: the Greenthumb perk was
-  active on crops without buying it. Author attributed it to the same junimo-notes unlock gate as the
-  bulletin-board fix — **verify whether Greenthumb-without-purchase is actually fixed in 0.9.6 or still
-  leaking.** (Triage this as a real bug, not just feedback.)
 - **Cutscene presentation.** *Dusklight7 (Nexus)*: the opening cutscene should show ALL the talking
   Junimos, not just the one recolored sprite. Fold into the cutscene overhaul above.
 - **Design inspiration (reference, not a request).** *u/jneedham2*: vanilla "Prank Grandpa's Ghost —
