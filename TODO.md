@@ -14,13 +14,16 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
   spend my JP right away"). Working-as-designed (JP store opens only at loop boundaries — reset/win)
   but reads as a bug. **Fix:** make the shrine UI state explicitly that purchases happen on
   reset/win, not mid-run.
-- **Weather/luck desync (*u/Tutorem*, day 6).** 0 rain + 0 positive-luck days by day 6; the day-3
-  guaranteed rain didn't fire; the in-game **predictor/TV disagrees with actual weather** (predicted
-  rain day 6, none came). Investigate `WeatherScheduler` vs vanilla predictor — confirm the override
-  is intended and decide whether the TV/predictor desync (and possible always-negative luck) is a bug
-  or needs reconciling. NOTE: memory says the seed scheduler intentionally *subsumed* the old day-3
-  forced rain, so "no day-3 rain" may be expected — the predictor mismatch + zero-rain-by-day-6 are
-  the parts to verify.
+- ~~**Weather/luck desync (*u/Tutorem*, day 6).**~~ **INVESTIGATED 2026-06-07 — not an internal bug.**
+  Traced the 1.6 flow: the in-game TV (TV.cs:326/589) AND the actual applied weather both resolve
+  through the patched `getWeatherModificationsForDate` (Game1.cs:9594 → Default LocationWeather →
+  `UpdateDailyWeather` sets real IsRaining), so both land on the same deterministic
+  `WeatherScheduler` value per date — internally consistent. Vanilla's nightly "tomorrow" re-roll is
+  overwritten by the override next cycle. The only thing that disagrees is the **external predictor
+  tool** (recomputes from vanilla RNG, unaware of the mod) — user doesn't care about it. Day-3 rain
+  intentionally removed by the scheduler; luck untouched (FarmerReset zeroes only the defunct Luck
+  *skill*); 0 rain by day 6 is fine (≥2/season guarantee, not early). No fix. *Optional: confirm
+  empirically from one playtest log (TV forecast at night vs next-day actual).*
 - **CC reads as "restored" from day 1 (*u/Tutorem*).** The CC looks visually completed at the start
   AND NPC schedules treat it as restored — "needed Clint on day 5… he went to the CC instead."
   Investigate: the day-1 CC-access patch is also flipping the visual/complete state + schedule
