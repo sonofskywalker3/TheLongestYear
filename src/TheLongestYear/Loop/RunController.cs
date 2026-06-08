@@ -366,6 +366,16 @@ namespace TheLongestYear.Loop
             ForceFullSave();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
+            // Re-persist the meta AFTER the hub opened. DoDayStartSeasonAndHub → PresentOffer sets
+            // Run.OfferPresentedWeek when the week-1 hub appears, but that happens after the Save()
+            // above — so the on-disk run-state still has the marker UNSET. A deferred SaveLoaded
+            // (fired by the in-place reset) then calls MetaStore.Load(), reverting the in-memory
+            // marker to that stale value; the next OnDayStarted sees OfferPresentedWeek != WeekOfYear
+            // and RE-presents the offer. Because the first pick is now in SelectedThemesThisMonth,
+            // OfferForWeek re-rolls a different pair and the second pick OVERWRITES the first
+            // (2026-06-08 playtest "double-pick theme on reset"). Saving the now-set marker makes
+            // the deferred reload read it back as presented, so the day-start guard skips the re-fire.
+            _store.Save();
             // Restore the HUD hidden for the FAIL cutscene's shop→reset window (OnCutsceneEnded).
             // Safe/no-op on the non-cutscene paths that also call this (post-win, fallback).
             Game1.displayHUD = true;
