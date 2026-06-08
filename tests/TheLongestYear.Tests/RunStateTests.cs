@@ -7,6 +7,19 @@ namespace TheLongestYear.Tests;
 public class RunStateTests
 {
     [Fact]
+    public void RecordCumulativeDonation_adds_to_ledger_only_not_weekly_list()
+    {
+        var run = new RunState();
+        run.RecordCumulativeDonation("(O)24");
+        run.RecordCumulativeDonation("(O)24"); // idempotent
+
+        Assert.Equal(new[] { "(O)24" }, run.DonatedItemIds);
+        Assert.True(run.DonatedSet().Contains("(O)24"));
+        // Must NOT pollute the weekly bonus-suppression list (unlike RecordDonation).
+        Assert.Empty(run.DonatedThisWeekIds);
+    }
+
+    [Fact]
     public void New_run_state_starts_at_spring_one_week_one()
     {
         var run = new RunState();
