@@ -6,8 +6,31 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-07)
-*Second scrape (Reddit 50 / Nexus 17). Concrete things to investigate, highest-value first:*
+### 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-08)
+*Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
+New 2026-06-08 reports are tagged **[3rd scrape]**:*
+
+- **🔴 Day-28 loop gate is unreliable — wrong reset/advance + JP-spend menu flashes away. [3rd scrape]**
+  Two reports, opposite symptoms, likely one root cause (success/failure eval racing the reset/advance
+  cutscene, tied to Vault-completion state on the 28th):
+  - *emmainthealps (Nexus)*: **failed** the 28th (unlucky sea-urchin spawns) yet the JP-spend menu
+    popped up then **disappeared before she could select**, and the game **advanced to Summer 1 with
+    all chests/progress intact** instead of resetting. Re-doing the day and **not** finishing the Vault
+    on the 28th produced a correct reset to Spring 1 → **finishing the Vault on day 28 appears to break
+    the reset path.**
+  - *khauser13 (Nexus)*: **completed every** donation goal in the season planner but it **reset to
+    Spring instead of continuing to Summer** (success misread as failure).
+- **🔴 Kept smoked/preserved fish loses its inner-fish identity through the carry chest. [3rd scrape]**
+  *emmainthealps (Nexus)*: a **Smoked Legend** carried back as a blank smoked fish worth **57g instead
+  of ~21,000g**. The preserved-item handling drops the source-fish id on carry-over (cf. the SDV-1.6
+  preserve sub-fields / `preservedParentSheetIndex`). Verify any item the reset preserves round-trips
+  its quality + preserve target, not just the base object.
+- **"Keep tool upgrades" missing from the JP purchase screen. [3rd scrape]** *khauser13 (Nexus)*: the
+  option appears in the planner but **not** in the actual JP-spend menu (also why emmainthealps expected
+  an Obsidian Edge to carry). Planner ↔ JP-spend catalog are out of sync — reconcile them.
+- **Weekly task can request an already-donated item → penalty locked for the whole week. [3rd scrape]**
+  *emmainthealps (Nexus)*: weekly task generation should exclude bundles/items already satisfied that
+  season, or the player is stuck with the penalty with no way to clear it.
 
 - **JP-spend confusion (2 reports → fix the UX).** *Dusklight7* + *TheFirstBanana (Nexus)*: clicking
   shrine upgrades does nothing mid-run and players think it's broken ("been so confused why I couldn't
@@ -24,10 +47,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
   intentionally removed by the scheduler; luck untouched (FarmerReset zeroes only the defunct Luck
   *skill*); 0 rain by day 6 is fine (≥2/season guarantee, not early). No fix. *Optional: confirm
   empirically from one playtest log (TV forecast at night vs next-day actual).*
-- **CC reads as "restored" from day 1 (*u/Tutorem*).** The CC looks visually completed at the start
-  AND NPC schedules treat it as restored — "needed Clint on day 5… he went to the CC instead."
-  Investigate: the day-1 CC-access patch is also flipping the visual/complete state + schedule
-  routing. Bundles should be accessible without the CC looking done or rerouting NPCs.
+- **CC reads as "restored" from day 1 — NPCs route into it (now 3 reports).** *u/Tutorem*: "needed
+  Clint on day 5… he went to the CC instead." **[3rd scrape]** corroborated by *dm_me_your_kindness
+  (Reddit)* — Granny in the pantry room, Gus goes up there, Clint there on Friday — and *khauser13
+  (Nexus)* — "very odd to see the townspeople entering in the community center… confused me before I
+  figured out why the schedules had changed." Investigate: the day-1 CC-access patch is also flipping
+  the visual/complete state + schedule routing. Bundles should be accessible without the CC looking
+  done or rerouting NPCs. *(Secondary idea if we can't fully suppress it: give those NPCs explaining
+  dialogue — see the feedback-triage entry.)*
 - **Double-forage buff feels weak + double-XP question (*u/Tutorem*).** Buff "probably worthless past
   week 1-2 unless it affects truffles"; also asks whether double-forage grants double XP. Balance +
   a behavior question to answer.
@@ -53,6 +80,9 @@ déjà-vu → the [1.0.0] entry below. Remaining items:*
   (the per-save dormant gate covers that now). Worth a documented compat stance for large-CC mods.
 - **Cutscene presentation.** *Dusklight7 (Nexus)*: the opening cutscene should show ALL the talking
   Junimos, not just the one recolored sprite. Fold into the cutscene overhaul above.
+- **NPC-in-CC dialogue (turn the bug into flavor). [3rd scrape]** *khauser13 (Nexus)*: if townsfolk are
+  going to be in the (abandoned) CC, give them dialogue explaining what they're doing there. Secondary
+  to actually fixing the schedule routing (see the 🔴/CC-restored bug above) — capture as flavor only.
 - **Design inspiration (reference, not a request).** *u/jneedham2*: vanilla "Prank Grandpa's Ghost —
   Glorious Victory" challenge (complete the remixed CC in five seasons) as a kindred framing.
 - **Community art offer.** *triangulummortis (Nexus)*: offered a drawn banner / fan art; connected via
