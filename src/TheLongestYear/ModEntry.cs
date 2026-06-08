@@ -166,6 +166,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
             helper.ConsoleCommands.Add("tly_removehorse", "Remove the stable + horse, clear the carryover snapshot, and drop the Keep Horse upgrade so it's re-buyable (debug — clean slate for a Keep-Horse carryover test).", this.CmdRemoveHorse);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
+            helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -509,6 +510,21 @@ namespace TheLongestYear
 
             _meta.State.JunimoPoints += amount;
             this.Monitor.Log($"JP is now {_meta.State.JunimoPoints} (in memory — persists on next save).", LogLevel.Info);
+        }
+
+        /// <summary>Debug: jump to a given day of the current season (console alias for the file-bridge
+        /// <c>tly_setday</c>). Sleep afterward to trigger that day's gate. Usage: tly_setday &lt;day&gt;
+        /// (defaults to 28).</summary>
+        private void CmdSetDay(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            int day = args.Length > 0 && int.TryParse(args[0], out int d) ? d : 28;
+            _runController?.DebugSetDay(day);
         }
 
         /// <summary>Debug: add gold to the loaded farmer. Mirrors <see cref="AddJp"/>; used for
