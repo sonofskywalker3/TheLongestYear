@@ -569,40 +569,15 @@ namespace TheLongestYear.Loop
             // DayEnding fires while the player can't open menus.
         }
 
-        /// <summary>CC/Joja room-completion mail that, sitting in mailForTomorrow overnight, makes
-        /// vanilla play that room's restoration WorldChangeEvent the next morning — the Junimos
-        /// fixing the bus, greenhouse, minecarts, etc. (decompile <c>Utility.pickFarmEvent</c>,
-        /// Utility.cs:4369-4416, each gated only on the mail flag, never on the date). Stored as the
-        /// bare key OR key + the NO_LETTER_MAIL suffix; <c>pickFarmEvent</c> matches both, so both are
-        /// stripped.</summary>
-        private const string NoLetterSuffix = "%&NL&%";
-        private static readonly string[] CcRestorationFarmEventMail =
-        {
-            "ccPantry", "ccVault", "ccBoilerRoom", "ccCraftsRoom", "ccFishTank", "ccMovieTheater",
-            "jojaPantry", "jojaVault", "jojaBoilerRoom", "jojaCraftsRoom", "jojaFishTank",
-            "jojaMovieTheater", "ccMovieTheaterJoja",
-        };
-
         /// <summary>Remove this-night's CC room-restoration mail so the matching overnight
         /// WorldChangeEvent doesn't play on a fail loop (the rewind un-restores the room, so the
         /// scene would show a repair the world is about to undo). Only rooms completed TODAY carry a
         /// mailForTomorrow entry — rooms finished on earlier days already played their scene and are
-        /// untouched. A no-op (other than a trace) when nothing was finished today.</summary>
+        /// untouched. A no-op (other than a trace) when nothing was finished today. The list +
+        /// removal live in <see cref="CcRestorationMail"/> (shared with the reset purge).</summary>
         private void SuppressResetDoomedRoomScenes()
         {
-            if (Game1.player == null) return;
-            var stripped = new System.Collections.Generic.List<string>();
-            foreach (string key in CcRestorationFarmEventMail)
-            {
-                foreach (string form in new[] { key, key + NoLetterSuffix })
-                {
-                    if (Game1.player.mailForTomorrow.Contains(form))
-                    {
-                        Game1.player.mailForTomorrow.Remove(form);
-                        stripped.Add(form);
-                    }
-                }
-            }
+            var stripped = CcRestorationMail.PurgeFromMailForTomorrow(Game1.player);
             if (stripped.Count > 0)
                 _monitor.Log(
                     $"Fail loop: suppressed {stripped.Count} reset-doomed CC restoration scene(s) " +

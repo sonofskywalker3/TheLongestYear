@@ -201,6 +201,22 @@ namespace TheLongestYear.Loop
                     LogLevel.Trace);
             }
 
+            // 1a-mail. Purge any PENDING CC room-restoration mail from mailForTomorrow. The block
+            // above clears mailReceived (the "already restored" record), but a ccVault/ccGreenhouse/…
+            // queued the day the reset fires sits in mailForTomorrow, which the rewind never touched —
+            // so vanilla's next-morning pickFarmEvent would play the Junimos-fix-the-bus WorldChangeEvent
+            // on the fresh, 0-bundle run (user 2026-06-08: "bus is fixed and it's a carryover"). The
+            // day-end fail path also strips this, but purging here guarantees a clean world regardless
+            // of how the reset was reached (debug tly_failreset, a legacy save that already baked in the
+            // stuck mail, etc.). Done on Game1.player (= MasterPlayer in single-player, where the CC
+            // mail lives).
+            var purged = CcRestorationMail.PurgeFromMailForTomorrow(Game1.player);
+            if (purged.Count > 0)
+                _monitor.Log(
+                    $"In-place reset: purged {purged.Count} stale CC restoration mail from mailForTomorrow " +
+                    $"([{string.Join(", ", purged)}]) so no phantom room-fix scene fires on the fresh run.",
+                    LogLevel.Info);
+
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
             Game1.year = 1;
             Game1.season = StardewValley.Season.Spring;
