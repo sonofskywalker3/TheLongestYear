@@ -1019,6 +1019,11 @@ namespace TheLongestYear
             if (Game1.activeClickableMenu == null && !Game1.eventUp)
                 _runController?.TryDrainDeferredOffer();
 
+            // Retry a day-28 shrine→reset that was deferred because the CC-completion ceremony (whole
+            // CC finished on day 28) held eventUp. Runs every tick (it does its own surface + backstop
+            // checks) so the reset proceeds the moment the ceremony clears, on a free frame (#1b).
+            _runController?.TryDrainDeferredShrine();
+
             // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
             // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
             // festival's end time rather than up to 30 ticks (~500ms) later.

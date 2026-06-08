@@ -47,6 +47,17 @@ namespace TheLongestYear.Loop
         /// the surface clears, so a blocked open is retried instead of silently lost.</summary>
         private (int week, CoreSeason? season)? _deferredOffer;
 
+        /// <summary>A day-28 shrine→continuation that couldn't open because a vanilla event/cutscene
+        /// was still up — specifically the CC-completion ceremony that fires the morning the player
+        /// finishes the whole CC on day 28 (#1b). Running the continuation under <c>eventUp</c> tore
+        /// the shrine menu away AND made <see cref="ForceFullSave"/> skip (the reset never persisted →
+        /// "JP menu flashed away, advanced with progress intact"). Held here and retried by
+        /// <see cref="TryDrainDeferredShrine"/> once the surface frees.</summary>
+        private System.Action _pendingShrineContinuation;
+        private int _shrineDeferTicks;
+        // ~1 minute at 60 ticks/s: a backstop so a stuck surface never strands the morning forever.
+        private const int ShrineDeferMaxTicks = 60 * 60;
+
         /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
         public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
 
@@ -264,10 +275,59 @@ namespace TheLongestYear.Loop
             if (Game1.activeClickableMenu is TheLongestYear.UI.JunimoShrineMenu shrine)
             {
                 shrine.exitFunction = () => onContinue();
+                _pendingShrineContinuation = null;
                 return;
             }
-            // Menu didn't open — fall through.
+
+            // Shrine didn't open. If a vanilla event/cutscene/new-day is still settling, that's a
+            // TRANSIENT block — the day-28 CC-completion ceremony (finishing the whole CC on day 28)
+            // holds eventUp the same morning the shrine+reset run. Running onContinue now would reset
+            // and ForceFullSave UNDER eventUp: the save is skipped, so the reset never persists and the
+            // run "advances with progress intact" while the shop flashes past (#1b). Defer and retry
+            // once the surface frees instead.
+            if (Game1.eventUp || Game1.newDay || Game1.currentMinigame != null
+                || Game1.activeClickableMenu != null)
+            {
+                _pendingShrineContinuation = onContinue;
+                _shrineDeferTicks = 0;
+                _monitor.Log("Day-28 shrine open blocked (event/cutscene up); deferring the reset until it clears.", LogLevel.Trace);
+                return;
+            }
+
+            // Surface is clear yet the shrine still didn't open — genuinely nothing to show; don't
+            // strand the morning, run the continuation now.
+            _pendingShrineContinuation = null;
             onContinue();
+        }
+
+        /// <summary>Re-attempt a day-28 shrine open that <see cref="TryOpenShrineThenContinue"/>
+        /// deferred because a vanilla event/cutscene (the CC-completion ceremony) was up. ModEntry's
+        /// update loop calls this each tick; a no-op when nothing is pending. Backstopped so a surface
+        /// that never frees can't hang the morning forever.</summary>
+        public void TryDrainDeferredShrine()
+        {
+            if (_pendingShrineContinuation is not { } onContinue)
+                return;
+
+            if (++_shrineDeferTicks > ShrineDeferMaxTicks)
+            {
+                _monitor.Log(
+                    "Day-28 shrine stayed blocked too long; running the reset continuation without the shrine.",
+                    LogLevel.Warn);
+                _pendingShrineContinuation = null;
+                onContinue();
+                return;
+            }
+
+            // Still blocked — wait. (The CC-completion ceremony clears within a few seconds.)
+            if (Game1.eventUp || Game1.newDay || Game1.currentMinigame != null
+                || Game1.activeClickableMenu != null)
+                return;
+
+            // Surface free: clear first so the retry's own open path owns the state, then re-run —
+            // it opens the shrine now (or falls through to onContinue if there's genuinely nothing).
+            _pendingShrineContinuation = null;
+            TryOpenShrineThenContinue(onContinue);
         }
 
         /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
