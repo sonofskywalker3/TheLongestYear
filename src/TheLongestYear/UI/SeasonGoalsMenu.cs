@@ -417,21 +417,31 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 boxX, boxY, boxW, boxH, tint, 1f, false);
 
-            // Left label: per-season payment progress (paid vs. this season's required count).
-            string label = met
-                ? $"Vault (bus repair):  {paid} of {need} paid"
-                : $"Vault (bus repair):  {paid} of {need} paid — pay any Vault bundle at the CC";
-            Color labelColor = met ? Color.DarkGreen : Game1.textColor;
-            float textY = boxY + (boxH - Game1.smallFont.MeasureString(label).Y) / 2f;
-            Utility.drawTextWithShadow(b, label, Game1.smallFont,
-                new Vector2(boxX + 16, textY), labelColor);
+            // Headline mirrors the bundle rows' "Name  (Theme)   Have/Need" format so the vault goal
+            // reads as just another row: "Bus Repair  (Vault)   paid/need".
+            string headline = $"Bus Repair  (Vault)   {paid}/{need}";
+            Color headColor = met ? Color.DarkGreen : Game1.textColor;
+            float textY = boxY + (boxH - Game1.smallFont.MeasureString(headline).Y) / 2f;
+            Utility.drawTextWithShadow(b, headline, Game1.smallFont,
+                new Vector2(boxX + 16, textY), headColor);
 
-            // Right badge: MET / NOT MET for this season's checkpoint.
-            string badge = met ? "MET" : "NOT MET";
+            // Right badge mirrors BadgeFor's wording ("checkpoint met" / "needs N before {Season} 1"
+            // / "needs N by run end") instead of the old MET/NOT MET, for consistency with the rows.
+            string badge = VaultBadge(met, need - paid);
             Vector2 badgeSize = Game1.smallFont.MeasureString(badge);
             Color badgeColor = met ? Color.DarkGreen : new Color(160, 34, 34);
             Utility.drawTextWithShadow(b, badge, Game1.smallFont,
                 new Vector2(boxX + boxW - 16 - badgeSize.X, textY), badgeColor);
+        }
+
+        /// <summary>Vault status badge in the same wording as <see cref="BadgeFor"/>: "checkpoint met"
+        /// once the season's vault quota is satisfied; otherwise how many more vault bundles must be
+        /// paid before the next season's day 1 (or "by run end" in Winter).</summary>
+        private string VaultBadge(bool met, int remaining)
+        {
+            if (met) return "checkpoint met";
+            if (_season == CoreSeason.Winter) return $"needs {remaining} by run end";
+            return $"needs {remaining} before {(CoreSeason)((int)_season + 1)} 1";
         }
 
         private void DrawRow(SpriteBatch b, ClickableComponent slot, BundleEntry e)
