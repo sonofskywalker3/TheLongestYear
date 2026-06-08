@@ -35,6 +35,16 @@ namespace TheLongestYear.Loop
             for (int i = 0; i < p.MaxItems; i++)
                 p.Items.Add(null);
 
+            // A tool being upgraded at Clint's lives in Farmer.toolBeingUpgraded, NOT in p.Items, so
+            // the inventory wipe above misses it. Left untouched, an in-flight (or finished-but-
+            // uncollected) upgrade survives the loop reset for free — Clint hands back the upgraded
+            // tool next visit, bypassing the revert-to-baseline rule (2026-06-08 playtest: a Copper
+            // Hoe upgraded pre-reset reappeared after a tly_failreset). Cancel it: kept tool tiers
+            // come from baseline.ToolTiers via ApplyToolTiers; EnsureBasicTools re-grants the basic
+            // tool the player handed Clint, so clearing this leaves no orphaned/free upgrade.
+            p.toolBeingUpgraded.Value = null;
+            p.daysLeftForToolUpgrade.Value = 0;
+
             // Skills — clear everything first.
             for (int i = 0; i < p.experiencePoints.Count; i++)
                 p.experiencePoints[i] = 0;
