@@ -480,6 +480,10 @@ namespace TheLongestYear.Loop
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
+            // Backstop the live DonationObserver: union any bundle slot vanilla shows as deposited
+            // into the ledger before the gate reads it, so a deposit the observer missed can't
+            // fail an otherwise-complete season (beta report, khauser13).
+            TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)

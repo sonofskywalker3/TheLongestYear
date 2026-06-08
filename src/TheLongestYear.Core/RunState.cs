@@ -133,6 +133,16 @@ public sealed class RunState
             DonatedThisWeekIds.Add(itemId);
     }
 
+    /// <summary>Add a donated id to the cumulative ledger ONLY (not the weekly bonus-suppression
+    /// list), idempotent. Used by the day-end CC reconcile (<c>ItemDonationSync</c>), which unions
+    /// the run's full historical deposits from vanilla state and must not pollute this-week
+    /// tracking with items donated in earlier weeks.</summary>
+    public void RecordCumulativeDonation(string itemId)
+    {
+        if (!DonatedItemIds.Contains(itemId))
+            DonatedItemIds.Add(itemId);
+    }
+
     /// <summary>The donation ledger as a set, for the gate evaluator.</summary>
     public ISet<string> DonatedSet() => new HashSet<string>(DonatedItemIds);
 
