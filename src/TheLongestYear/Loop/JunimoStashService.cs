@@ -298,6 +298,21 @@ namespace TheLongestYear.Loop
                         LogLevel.Warn);
                     continue;
                 }
+
+                // Re-apply a flavored good's source identity + baked price (see BankToMeta). Mirrors
+                // the game's own Object.GetOneCopyFrom, which copies exactly these three fields. Only
+                // set when captured (null for plain items), so non-preserved items keep their
+                // data-driven price untouched.
+                if (item is StardewValley.Object obj)
+                {
+                    if (record.PreservedParentSheetIndex != null)
+                        obj.preservedParentSheetIndex.Value = record.PreservedParentSheetIndex;
+                    if (record.Preserve.HasValue)
+                        obj.preserve.Value = (StardewValley.Object.PreserveType)record.Preserve.Value;
+                    if (record.Price.HasValue)
+                        obj.Price = record.Price.Value;
+                }
+
                 chest.Items.Add(item);
                 restored++;
             }
@@ -326,10 +341,25 @@ namespace TheLongestYear.Loop
             foreach (Item item in chest.Items)
             {
                 if (item == null) continue;
+
+                var obj = item as StardewValley.Object;
+                int quality = obj?.quality.Value ?? 0;
+
+                // Flavored/preserved goods (Smoked Fish, Wine, Jelly, Aged Roe, Honey, Bait, …)
+                // bake their source identity + sale price into preservedParentSheetIndex / preserve
+                // / price.Value. Recreating by base id alone loses ALL of it (a Smoked Legend comes
+                // back as a blank 57g smoked fish), so capture those fields when present. Plain items
+                // have no preserve identity → leave the fields null so restore doesn't touch them.
+                bool hasPreserveIdentity = obj != null &&
+                    (!string.IsNullOrEmpty(obj.preservedParentSheetIndex.Value) || obj.preserve.Value.HasValue);
+
                 _meta.StashItems.Add(new StashItemRecord(
                     item.QualifiedItemId,
                     item.Stack,
-                    (item as StardewValley.Object)?.quality.Value ?? 0));
+                    quality,
+                    hasPreserveIdentity ? obj.preservedParentSheetIndex.Value : null,
+                    hasPreserveIdentity && obj.preserve.Value.HasValue ? (int)obj.preserve.Value.Value : null,
+                    hasPreserveIdentity ? obj.Price : null));
             }
 
             _monitor.Log(
