@@ -29,6 +29,12 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   playtest with `tly_payvault spring` (count-based, index-agnostic). Confirm against a non-remixed save.
 
 - **🔴🔴 TODO (FIX NEXT) — Loop reset presents the weekly theme offer TWICE; first pick is discarded.**
+  **CONFIRMED in playtest 2026-06-08 via `tly_failreset`** (picked Farming → forced Fishing/Mixed →
+  Fishing overwrote it). **Safe fix confirmed:** the reset-time hub SURVIVES the reload (player picks
+  from it), so persist `OfferPresentedWeek` BEFORE the deferred reload — add `_store.Save()` right
+  after `DoDayStartSeasonAndHub()` (`RunController.cs:~368`) so `MetaStore.Load()` reads the marker as
+  set and the day-start guard skips the re-present. No "no-picker" risk (hub survives). See
+  HANDOFF-2026-06-08. Details below:
   Found 2026-06-08 during playtest (Summer 28 fail → Spring 1). The reset opens the Week-1 hub, but
   `OfferPresentedWeek` is set in `DoDayStartSeasonAndHub()` (`RunController.cs:368`) AFTER the
   post-reset save (`_store.Save()` / `ForceFullSave()` at 365-366), so the deferred
