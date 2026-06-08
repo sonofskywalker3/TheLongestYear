@@ -37,13 +37,13 @@ namespace TheLongestYear.UI
         private const int RowHeight = 144;
         private const int RowSpacing = 10;
 
-        // A pinned banner between the title bar and the scrolling list showing the season's
-        // Vault (bus repair) payment — a required part of the gate that isn't an item bundle,
-        // so it lives outside the scrolling list and stays visible at all times.
-        private const int VaultLineHeight = 56;
         private const int IngredientIconSize = 64;
         private const int IngredientIconGap = 24;
         private const int IngredientIconY = 64;        // offset from row top (below the header line)
+
+        // Gold-coin sprite in Game1.mouseCursors (the QuestLog reward coin); drawn on the vault row
+        // in place of item sprites, one per still-owed payment.
+        private static readonly Rectangle CoinIconSource = new Rectangle(280, 410, 16, 16);
 
         private const int RowIdBase = 8000;
         private const int ScrollUpId = 8900;
@@ -154,6 +154,18 @@ namespace TheLongestYear.UI
                 .OrderBy(e => e.Have >= e.Need ? 1 : 0)
                 .ThenBy(e => e.Bundle.Theme)
                 .ThenBy(e => e.Bundle.Name, StringComparer.Ordinal));
+
+            // The Vault (bus-repair) goal is a gate term but not an item bundle, so it has no
+            // ingredient row to fall out of _requirements. Add it as its own list row (it used to be
+            // a thin pinned banner, inconsistent with the bundle rows). An unmet vault sits at the
+            // top as an active obligation; once met it sinks to the bottom with completed bundles.
+            bool vaultMet = VaultRules.IsVaultGateSatisfied(_season, _run, _meta);
+            BundleEntry vaultEntry = BundleEntry.Vault(
+                VaultRules.PaidCount(_run), VaultRules.SeasonOrdinal(_season), vaultMet);
+            if (vaultMet)
+                _entries.Add(vaultEntry);
+            else
+                _entries.Insert(0, vaultEntry);
         }
 
         /// <summary>True if this bundle has any obligation that's due BY the current season's
@@ -229,9 +241,9 @@ namespace TheLongestYear.UI
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             int listX = xPositionOnScreen + PanelPadding;
-            int listY = yPositionOnScreen + TitleBarHeight + VaultLineHeight;
+            int listY = yPositionOnScreen + TitleBarHeight;
             int listWidth = width - PanelPadding * 2 - 56;     // leave room for scroll arrows
-            int listHeight = height - TitleBarHeight - VaultLineHeight - PanelPadding;
+            int listHeight = height - TitleBarHeight - PanelPadding;
             _rowsPerPage = Math.Max(1, listHeight / (RowHeight + RowSpacing));
 
             _rowSlots.Clear();
@@ -299,6 +311,17 @@ namespace TheLongestYear.UI
             {
                 if (!_rowSlots[i].containsPoint(x, y)) continue;
                 BundleEntry e = _entries[_scrollIndex + i];
+
+                // Vault row: no item ingredients, so surface the "how do I satisfy this" hint here
+                // (the old pinned banner spelled it out inline; on a row it lives on hover like the
+                // bundle rows' item tooltips).
+                if (e.IsVault)
+                {
+                    _hoverText = e.IsMet
+                        ? "Bus repair paid for this season."
+                        : "Pay any Vault bundle at the Community Center to repair the bus.";
+                    return;
+                }
 
                 // Hover over an ingredient icon → show its name + a "missing" tag.
                 int iconRowX = _rowSlots[i].bounds.X + 16;
@@ -376,10 +399,7 @@ namespace TheLongestYear.UI
             SpriteText.drawStringHorizontallyCenteredAt(b, title,
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
-            // Pinned Vault (bus repair) line — a required gate term that isn't an item bundle.
-            DrawVaultLine(b);
-
-            // Visible rows.
+            // Visible rows (the Vault/bus-repair goal is now one of these rows, added in BuildEntries).
             int visibleCount = Math.Min(_rowsPerPage, Math.Max(0, _entries.Count - _scrollIndex));
             for (int i = 0; i < visibleCount; i++)
                 DrawRow(b, _rowSlots[i], _entries[_scrollIndex + i]);
@@ -395,54 +415,6 @@ namespace TheLongestYear.UI
             this.drawMouse(b);
         }
 
-        /// <summary>Draws the pinned Vault payment banner just below the title bar. The vault
-        /// requirement is ANDed into the season gate (<see cref="VaultRules.IsVaultGateSatisfied"/>)
-        /// but isn't an item bundle, so it would otherwise be invisible. The gate is count-based:
-        /// the player must have paid at least the season ordinal's worth of vault bundles this run
-        /// (any tiers). This line shows that per-season sufficiency only — the keep_bus_unlocked
-        /// upgrade is a shrine concern, not shown here (when owned the count is already full, so it
-        /// simply reads as met).</summary>
-        private void DrawVaultLine(SpriteBatch b)
-        {
-            int paid = VaultRules.PaidCount(_run);
-            int need = VaultRules.SeasonOrdinal(_season);
-            bool met = VaultRules.IsVaultGateSatisfied(_season, _run, _meta);
-
-            int boxX = xPositionOnScreen + PanelPadding;
-            int boxY = yPositionOnScreen + TitleBarHeight;
-            int boxW = width - PanelPadding * 2;
-            int boxH = VaultLineHeight - 8;
-
-            Color tint = met ? Color.LightGreen * 0.7f : Color.White;
-            IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
-                boxX, boxY, boxW, boxH, tint, 1f, false);
-
-            // Headline mirrors the bundle rows' "Name  (Theme)   Have/Need" format so the vault goal
-            // reads as just another row: "Bus Repair  (Vault)   paid/need".
-            string headline = $"Bus Repair  (Vault)   {paid}/{need}";
-            Color headColor = met ? Color.DarkGreen : Game1.textColor;
-            float textY = boxY + (boxH - Game1.smallFont.MeasureString(headline).Y) / 2f;
-            Utility.drawTextWithShadow(b, headline, Game1.smallFont,
-                new Vector2(boxX + 16, textY), headColor);
-
-            // Right badge mirrors BadgeFor's wording ("checkpoint met" / "needs N before {Season} 1"
-            // / "needs N by run end") instead of the old MET/NOT MET, for consistency with the rows.
-            string badge = VaultBadge(met, need - paid);
-            Vector2 badgeSize = Game1.smallFont.MeasureString(badge);
-            Color badgeColor = met ? Color.DarkGreen : new Color(160, 34, 34);
-            Utility.drawTextWithShadow(b, badge, Game1.smallFont,
-                new Vector2(boxX + boxW - 16 - badgeSize.X, textY), badgeColor);
-        }
-
-        /// <summary>Vault status badge in the same wording as <see cref="BadgeFor"/>: "checkpoint met"
-        /// once the season's vault quota is satisfied; otherwise how many more vault bundles must be
-        /// paid before the next season's day 1 (or "by run end" in Winter).</summary>
-        private string VaultBadge(bool met, int remaining)
-        {
-            if (met) return "checkpoint met";
-            if (_season == CoreSeason.Winter) return $"needs {remaining} by run end";
-            return $"needs {remaining} before {(CoreSeason)((int)_season + 1)} 1";
-        }
 
         private void DrawRow(SpriteBatch b, ClickableComponent slot, BundleEntry e)
         {
@@ -451,8 +423,8 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, tint, 1f, false);
 
-            // Top line: "BundleName  (Theme)   N/X"
-            string headline = $"{e.Bundle.Name}  ({e.Bundle.Theme})   {e.Have}/{e.Need}";
+            // Top line: "BundleName  (Theme)   N/X" (vault row reuses the same shape via Title/ThemeTag).
+            string headline = $"{e.Title}  ({e.ThemeTag})   {e.Have}/{e.Need}";
             Color headColor = satisfiedThisSeason ? Color.DarkGreen : Game1.textColor;
             Utility.drawTextWithShadow(b, headline, Game1.smallFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), headColor);
@@ -474,6 +446,22 @@ namespace TheLongestYear.UI
             int iconRowY = slot.bounds.Y + IngredientIconY;
             int maxIcons = Math.Max(1,
                 (slot.bounds.Width - 32) / (IngredientIconSize + IngredientIconGap));
+
+            // Vault row has no item ingredients — draw one gold-coin icon per still-owed payment,
+            // mirroring the bundle rows' one-sprite-per-missing-item layout.
+            if (e.IsVault)
+            {
+                int coins = Math.Min(e.MissingThisSeasonCount, maxIcons);
+                for (int k = 0; k < coins; k++)
+                {
+                    b.Draw(Game1.mouseCursors,
+                        new Rectangle(iconRowX + k * (IngredientIconSize + IngredientIconGap), iconRowY,
+                            IngredientIconSize, IngredientIconSize),
+                        CoinIconSource, Color.White);
+                }
+                return;
+            }
+
             int drawCount = Math.Min(e.MissingItems.Count, maxIcons);
             for (int k = 0; k < drawCount; k++)
             {
@@ -535,21 +523,47 @@ namespace TheLongestYear.UI
 
         private sealed class BundleEntry
         {
-            public BundleRequirement Bundle { get; }
+            public BundleRequirement Bundle { get; }   // null for the synthetic Vault row
+            public bool IsVault { get; }
+            public string Title { get; }               // headline name ("Bus Repair" or the bundle name)
+            public string ThemeTag { get; }            // parenthetical tag ("Vault" or the bundle theme)
             public int Have { get; }
             public int Need { get; }
             public int MissingThisSeasonCount { get; }
             public IReadOnlyList<string> MissingItems { get; }
 
+            public bool IsMet => MissingThisSeasonCount == 0;
+
             public BundleEntry(BundleRequirement bundle, int have, int need, int missingThisSeason,
                 IReadOnlyList<string> missingItems)
             {
                 Bundle = bundle;
+                IsVault = false;
+                Title = bundle.Name;
+                ThemeTag = bundle.Theme.ToString();
                 Have = have;
                 Need = need;
                 MissingThisSeasonCount = missingThisSeason;
                 MissingItems = missingItems;
             }
+
+            private BundleEntry(int paid, int need, int missing)
+            {
+                Bundle = null;
+                IsVault = true;
+                Title = "Bus Repair";
+                ThemeTag = "Vault";
+                Have = Math.Min(paid, need);            // cap so a fully-prepaid run reads "N/N", not "4/1"
+                Need = need;
+                MissingThisSeasonCount = missing;
+                MissingItems = Array.Empty<string>();
+            }
+
+            /// <summary>The synthetic vault (bus-repair) goal row. <paramref name="paid"/> vault
+            /// bundles paid this run vs. <paramref name="need"/> required by this season; when
+            /// <paramref name="met"/> (count satisfied OR keep_bus_unlocked) it counts as complete.</summary>
+            public static BundleEntry Vault(int paid, int need, bool met)
+                => new BundleEntry(paid, need, met ? 0 : Math.Max(0, need - paid));
         }
     }
 }
