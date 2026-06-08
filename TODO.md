@@ -10,6 +10,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
+- **🔴 INVESTIGATE — Vault bundle indices may be wrong on REMIXED saves (gate could never satisfy).**
+  Found 2026-06-08 inspecting a live remixed save: the Vault money bundles are at indices **23–26**
+  (`Vault/23`=2500g … `Vault/26`=25000g), but `VaultRules` hardcodes **34–37** (those are actually
+  Bulletin's Dye/Fodder + Joja's "The Missing" in this save). Consequences if confirmed: `IsVaultIndex`
+  rejects 23–26 → `DonationObserver` misclassifies a real vault payment as a normal bundle completion
+  (`OnBundleCompleted`, never `OnVaultBundlePaid`) → `VaultBundlesPaid` stays empty →
+  `IsVaultGateSatisfied` is false → the season gate can NEVER pass (unless `keep_bus_unlocked`). And
+  `VaultPaymentSync.Reconcile` checks `isBundleComplete(34..37)` = the wrong bundles. **Verify:** is
+  34–37 only correct for NON-remixed bundles (vanilla renumbers the vault under Remixed)? TLY
+  *recommends* remixed, so this would hit the recommended config. If real, derive the vault indices
+  from the live `BundleData` (room == "Vault") instead of hardcoding. Worked around in the 2026-06-08
+  playtest with `tly_payvault spring` (count-based, index-agnostic). Confirm against a non-remixed save.
+
 - **🔴🔴 TODO (FIX NEXT) — Loop reset presents the weekly theme offer TWICE; first pick is discarded.**
   Found 2026-06-08 during playtest (Summer 28 fail → Spring 1). The reset opens the Week-1 hub, but
   `OfferPresentedWeek` is set in `DoDayStartSeasonAndHub()` (`RunController.cs:368`) AFTER the
