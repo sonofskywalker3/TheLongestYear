@@ -363,7 +363,23 @@ namespace TheLongestYear.Loop
         /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
         private void ContinueAfterResetSpend()
         {
-            _reset.PerformReset();
+            _monitor.Log(
+                $"ContinueAfterResetSpend: shrine closed, applying reset (eventUp={Game1.eventUp}, " +
+                $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Game1.season} {Game1.dayOfMonth}).",
+                LogLevel.Info);
+            // Capture a partial-reset failure explicitly. PerformReset changes uniqueIDForThisGame
+            // early then does heavy world work; if it threw mid-way the old code swallowed it up the
+            // stack and the game limped on in a half-reset state. Log the full exception, then
+            // rethrow (behaviour-preserving) so nothing is silently masked.
+            try
+            {
+                _reset.PerformReset();
+            }
+            catch (System.Exception ex)
+            {
+                _monitor.Log($"ContinueAfterResetSpend: PerformReset threw — reset NOT applied: {ex}", LogLevel.Error);
+                throw;
+            }
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();
@@ -522,6 +538,13 @@ namespace TheLongestYear.Loop
 
                 case RunAction.FailReset:
                     AwardInterimJp("run failed");
+                    // The morning rewind un-restores every CC room. Strip any room the player
+                    // FINISHED TODAY out of mailForTomorrow so its overnight restoration scene
+                    // (the bus/greenhouse/minecart WorldChangeEvent) never plays — otherwise the
+                    // player watches the Junimos lovingly fix the bus seconds before the loop
+                    // rewinds it broken again (user feedback 2026-06-08). This also removes the
+                    // bus-scene-vs-reset race that was the mechanism of #1b.
+                    SuppressResetDoomedRoomScenes();
                     _pendingCutscene = Day28Branch.Fail;
                     break;
 
@@ -544,6 +567,49 @@ namespace TheLongestYear.Loop
             }
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
             // DayEnding fires while the player can't open menus.
+        }
+
+        /// <summary>CC/Joja room-completion mail that, sitting in mailForTomorrow overnight, makes
+        /// vanilla play that room's restoration WorldChangeEvent the next morning — the Junimos
+        /// fixing the bus, greenhouse, minecarts, etc. (decompile <c>Utility.pickFarmEvent</c>,
+        /// Utility.cs:4369-4416, each gated only on the mail flag, never on the date). Stored as the
+        /// bare key OR key + the NO_LETTER_MAIL suffix; <c>pickFarmEvent</c> matches both, so both are
+        /// stripped.</summary>
+        private const string NoLetterSuffix = "%&NL&%";
+        private static readonly string[] CcRestorationFarmEventMail =
+        {
+            "ccPantry", "ccVault", "ccBoilerRoom", "ccCraftsRoom", "ccFishTank", "ccMovieTheater",
+            "jojaPantry", "jojaVault", "jojaBoilerRoom", "jojaCraftsRoom", "jojaFishTank",
+            "jojaMovieTheater", "ccMovieTheaterJoja",
+        };
+
+        /// <summary>Remove this-night's CC room-restoration mail so the matching overnight
+        /// WorldChangeEvent doesn't play on a fail loop (the rewind un-restores the room, so the
+        /// scene would show a repair the world is about to undo). Only rooms completed TODAY carry a
+        /// mailForTomorrow entry — rooms finished on earlier days already played their scene and are
+        /// untouched. A no-op (other than a trace) when nothing was finished today.</summary>
+        private void SuppressResetDoomedRoomScenes()
+        {
+            if (Game1.player == null) return;
+            var stripped = new System.Collections.Generic.List<string>();
+            foreach (string key in CcRestorationFarmEventMail)
+            {
+                foreach (string form in new[] { key, key + NoLetterSuffix })
+                {
+                    if (Game1.player.mailForTomorrow.Contains(form))
+                    {
+                        Game1.player.mailForTomorrow.Remove(form);
+                        stripped.Add(form);
+                    }
+                }
+            }
+            if (stripped.Count > 0)
+                _monitor.Log(
+                    $"Fail loop: suppressed {stripped.Count} reset-doomed CC restoration scene(s) " +
+                    $"([{string.Join(", ", stripped)}]) — no \"fix the bus\" cutscene before the rewind undoes it.",
+                    LogLevel.Info);
+            else
+                _monitor.Log("Fail loop: no CC room finished today, so no overnight restoration scene to suppress.", LogLevel.Trace);
         }
 
         private static CoreSeason NextSeason(CoreSeason s) => s switch
