@@ -101,10 +101,13 @@ namespace TheLongestYear.UI
 
             // Cart Whisperer (single upgrade): on a cart day — or any day if the Cart Catalog mod lets
             // you mail-order — flag which of the cart's REAL current stock can feed any CC bundle.
+            // Requires BOTH the upgrade AND the Cart Catalog mod installed+enabled (user decision
+            // 2026-06-08): without Cart Catalog the preview block is hidden entirely.
             _cartItems.Clear();
             _cartHeader = null;
             _cartEmptyNote = null;
-            _showCartBlock = _state.HasUpgrade("cart_whisper_1");
+            _showCartBlock = _state.HasUpgrade("cart_whisper_1")
+                && CartCatalogIntegration.Available(Game1.player);
             if (_showCartBlock)
             {
                 bool catalogAnyDay = CartCatalogIntegration.Available(Game1.player);
