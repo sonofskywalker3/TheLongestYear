@@ -93,7 +93,7 @@ namespace TheLongestYear.Donations
                 LogLevel.Info);
         }
 
-        /// <summary>The player paid a real CC Vault money bundle (index 34–37). Records it into the
+        /// <summary>The player paid a real CC Vault money bundle (this save's actual index). Records it into the
         /// run ledger (idempotent) and awards JP proportional to the gold spent. Unlike a normal
         /// bundle there is NO completion bonus — the vault is a one-item (money) bundle, so it pays
         /// only the gold-scaled amount. No RunActivation check: <see cref="Active"/> is null on
@@ -103,10 +103,11 @@ namespace TheLongestYear.Donations
             if (!Run.TryMarkVaultBundlePaid(bundleIndex))
                 return;
 
-            long jp = JpBoostHelper.Apply(_store.State, _jp.VaultPayment(VaultRules.GoldForIndex(bundleIndex)));
+            int gold = Integration.VaultBundleMap.GoldForIndex(bundleIndex);
+            long jp = JpBoostHelper.Apply(_store.State, _jp.VaultPayment(gold));
             _store.State.JunimoPoints += jp;
             _monitor.Log(
-                $"Vault bundle {bundleIndex} paid ({VaultRules.GoldForIndex(bundleIndex):N0}g) -> +{jp} JP (now {_store.State.JunimoPoints}).",
+                $"Vault bundle {bundleIndex} paid ({gold:N0}g) -> +{jp} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
         }
 

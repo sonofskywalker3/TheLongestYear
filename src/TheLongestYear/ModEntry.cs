@@ -1201,7 +1201,7 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1)
             {
-                this.Monitor.Log("Usage: tly_payvault <Spring|Summer|Fall|Winter|34|35|36|37>", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_payvault <Spring|Summer|Fall|Winter|index>", LogLevel.Warn);
                 return;
             }
 
@@ -1212,7 +1212,13 @@ namespace TheLongestYear
             }
             else if (System.Enum.TryParse(args[0], ignoreCase: true, out TheLongestYear.Core.Season s))
             {
-                bundleIndex = TheLongestYear.Core.VaultRules.BundleIndexForSeason(s);
+                // Resolve against THIS save's actual vault indices (remix-aware), not the vanilla 34–37.
+                bundleIndex = TheLongestYear.Integration.VaultBundleMap.IndexForSeason(s);
+                if (bundleIndex < 0)
+                {
+                    this.Monitor.Log("No vault bundle data available for that season on this save.", LogLevel.Warn);
+                    return;
+                }
             }
             else
             {

@@ -8,7 +8,7 @@ namespace TheLongestYear.Integration
     /// <summary>
     /// Reconciles the run's vault ledger from the vanilla CC's own paid-state — the source of
     /// truth for whether a money bundle has been paid. Additive only: it unions any vanilla-complete
-    /// vault bundle (34–37) into <see cref="RunState.VaultBundlesPaid"/> via the idempotent
+    /// vault bundle (this save's actual indices, remix-aware) into <see cref="RunState.VaultBundlesPaid"/> via the idempotent
     /// <see cref="DonationService.OnVaultBundlePaid"/>; it never removes.
     ///
     /// Backstops the live <see cref="DonationObserver"/> path for two cases the observer can't see:
@@ -30,7 +30,7 @@ namespace TheLongestYear.Integration
             var dict = Game1.netWorldState.Value?.Bundles?.FieldDict;
             if (dict == null) return;
 
-            foreach (int idx in VaultRules.VaultIndices)
+            foreach (int idx in VaultBundleMap.Indices())
             {
                 // Guard: isBundleComplete indexes bundles[idx] directly and throws
                 // KeyNotFoundException if the index isn't present (see WorldResetService notes).
