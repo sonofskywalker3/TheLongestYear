@@ -120,9 +120,15 @@ namespace TheLongestYear.UI
             // lock" trace in the 2026-05-26 night-2 playtest log, lines 278-279). eventUp
             // is the cutscene-real check; CanMove was an over-defensive guard added earlier.
             // Day-1 fresh-run path is unaffected: CanMove is already true on fresh load.
-            if (Game1.eventUp)
+            // Block on an active vanilla event OR an overnight FarmEvent. farmEvent is a SEPARATE
+            // flag from eventUp (Game1.cs:1023/1025) and plays with eventUp == false — so a shrine
+            // or hub opened here during the CC bus-repair WorldChangeEvent would be torn down by the
+            // event's end-of-play warp without firing its exitFunction (#1b). Defer past both.
+            if (Game1.eventUp || Game1.farmEvent != null)
             {
-                _monitor.Log("Cannot open menu: cutscene active (eventUp).", LogLevel.Trace);
+                _monitor.Log(
+                    $"Cannot open menu: cutscene/overnight event active (eventUp={Game1.eventUp}, " +
+                    $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}).", LogLevel.Trace);
                 return false;
             }
             return true;
