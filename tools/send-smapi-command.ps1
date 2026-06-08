@@ -36,7 +36,10 @@
     smapi-console-input-injection.md.
 #>
 param(
-    [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
+    # Position = 0 makes $Commands collect every positional/remaining arg and turns the params
+    # below into named-only — otherwise the 2nd/3rd positional command string binds to
+    # $ProcessName / $DelayMs and the call fails.
+    [Parameter(Mandatory = $true, Position = 0, ValueFromRemainingArguments = $true)]
     [string[]]$Commands,
 
     [string]$ProcessName = 'StardewModdingAPI',
