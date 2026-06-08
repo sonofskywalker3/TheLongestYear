@@ -44,12 +44,15 @@ Run 16** (seed -725868728) after a `tly_failreset`. Smoked Legend is in the stas
 Player saw a Cart Catalog delivery crate on the porch after a reset. Mechanism (confirmed by code):
 Cart Catalog delivers on `GameLoop.DayStarted → PorchDelivery.PlaceIfDue()` reading its OWN persistent
 `OrderStore` (mod save data), with **no TLY/RunActivation gate** (`CartCatalog` has zero references to
-TheLongestYear). TLY's `WorldResetService` resets the world but cannot/doesn't clear Cart Catalog's
-private OrderStore, so a pending order placed in a prior run re-delivers post-reset. Fix is cross-mod
-and needs design — options: (a) TLY clears Cart Catalog's pending orders on reset (requires a CC API
-or direct mod-data poke), or (b) CC gates `PlaceIfDue` on a TLY "run active + same run" check. Both
-couple the mods; (b) is cleaner (CC opts into TLY awareness). NOT fixed — logged for a design pass.
-Note the crate OBJECT also needs clearing if it was already placed pre-reset (farm `objects` dict).
+TheLongestYear). TLY's `WorldResetService` resets the world but Cart Catalog re-delivers from its
+persistent OrderStore the next morning, so a pending order placed in a prior loop re-appears post-reset.
+**Fix lives in OUR mods, not by asking anyone to change theirs** (both CC + TLY are sonofskywalker3's —
+see memory `feedback_fix_our_mods_not_theirs`): make **Cart Catalog TLY-friendly** — CC detects a TLY
+run and drops/suppresses orders that belong to a prior loop (e.g. stamp each order with the run id /
+reset counter and skip delivery when it doesn't match the active run), and clears any already-placed
+porch crate flagged with `PorchDelivery.PackageFlag` on a run reset. TLY can expose a tiny read-only
+"current run id / is-active" signal for CC to read; the gating logic stays in CC. Needs a design pass —
+NOT fixed yet.
 
 ### ~~🔴🔴 Double-pick theme on reset~~ — FIXED in v0.9.25 (see above).
 Reproduced live via `tly_failreset`. The reset presents the Week-1 offer, but `OfferPresentedWeek`
@@ -90,10 +93,22 @@ reproduce on a genuine upgrade. OPTIONAL hygiene only: make `ToolLevel` return t
 instead of the first, so a freak duplicate-tool bag can't mask an upgrade (no player can create that;
 defensive only — not done).
 
-### ⏳ #1b — Vault-finish-on-day-28 boundary race — UNREPRODUCED.
-`tly_failreset` does NOT trigger the vanilla CC-completion cutscene, so #1b didn't fire. Needs a real
-"complete the whole CC incl. Vault on day 28, then sleep" scenario; the SMAPI log captures the frame
-ordering (EvaluateDayEnd branch, `eventUp`/menu blocking the shrine, ForceFullSave skip).
+### ⏳ #1b — Vault-finish-on-day-28 boundary race — STILL OPEN; needs a non-suppression fix.
+The vanilla CC area-restoration cutscene (`doRestoreAreaCutscene`) leaves `Game1.eventUp` + frozen
+controls; finishing the CC on day 28 races TLY's day-28 gate/shrine (ForceFullSave skips on eventUp).
+**Tried + REVERTED:** v0.9.31 suppressed `doRestoreAreaCutscene` during a run (would have removed the
+eventUp and fixed #1b as a side effect), but that also dropped the star-over-the-fireplace flourish —
+unacceptable — and the flash vs junimo-star phases aren't cleanly separable. Reverted in v0.9.32; the
+vanilla cutscene stays. So #1b needs a fix that handles the RACE without touching the cutscene — e.g.
+**defer TLY's day-28 shrine + ForceFullSave until the ceremony's event ends** (poll `!Game1.eventUp`),
+or queue the day-28 processing to the first free tick after the ceremony. Dialog-freshness (varying the
+"we are the Junimos" line across loops) is a separate cosmetic idea now TODO'd on the story branch
+`feat/tly1-story-cutscenes`, NOT part of the #1b fix.
+NOTE on repro: a faithful setup is heavy (whole CC done on day 28). Debug-completing bundles
+(`debug bundle`/`ccload`) makes an inconsistent state (notes persist, areas half-complete) and is NOT
+trustworthy — the user rightly rejected it. A real near-complete save or full faithful donation is
+required. The cutscene-suppression mechanism IS understood from code even though the race wasn't
+captured live.
 
 ## Testing tooling (use these)
 - **SMAPI console injector:** `tools/send-smapi-command.ps1` (drives `tly_` commands into the running
