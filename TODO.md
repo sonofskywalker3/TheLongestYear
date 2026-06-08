@@ -11,26 +11,38 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
 - **🔴 Day-28 loop gate is unreliable — wrong reset/advance + JP-spend menu flashes away. [3rd scrape]**
-  Two reports, opposite symptoms, likely one root cause (success/failure eval racing the reset/advance
-  cutscene, tied to Vault-completion state on the 28th):
-  - *emmainthealps (Nexus)*: **failed** the 28th (unlucky sea-urchin spawns) yet the JP-spend menu
-    popped up then **disappeared before she could select**, and the game **advanced to Summer 1 with
-    all chests/progress intact** instead of resetting. Re-doing the day and **not** finishing the Vault
-    on the 28th produced a correct reset to Spring 1 → **finishing the Vault on day 28 appears to break
-    the reset path.**
-  - *khauser13 (Nexus)*: **completed every** donation goal in the season planner but it **reset to
-    Spring instead of continuing to Summer** (success misread as failure).
-- **🔴 Kept smoked/preserved fish loses its inner-fish identity through the carry chest. [3rd scrape]**
-  *emmainthealps (Nexus)*: a **Smoked Legend** carried back as a blank smoked fish worth **57g instead
-  of ~21,000g**. The preserved-item handling drops the source-fish id on carry-over (cf. the SDV-1.6
-  preserve sub-fields / `preservedParentSheetIndex`). Verify any item the reset preserves round-trips
-  its quality + preserve target, not just the base object.
-- **"Keep tool upgrades" missing from the JP purchase screen. [3rd scrape]** *khauser13 (Nexus)*: the
-  option appears in the planner but **not** in the actual JP-spend menu (also why emmainthealps expected
-  an Obsidian Edge to carry). Planner ↔ JP-spend catalog are out of sync — reconcile them.
-- **Weekly task can request an already-donated item → penalty locked for the whole week. [3rd scrape]**
-  *emmainthealps (Nexus)*: weekly task generation should exclude bundles/items already satisfied that
-  season, or the player is stuck with the penalty with no way to clear it.
+  Two reports, opposite symptoms; root-caused 2026-06-08 to TWO defects (not one):
+  - ✅ **FIXED v0.9.20** — *khauser13 (Nexus)*: **completed every** donation goal but it **reset to
+    Spring instead of advancing**. Cause: the item-donation ledger was observer-only (live
+    JunimoNoteMenu watcher) and could miss a deposit, so the gate read "failed." Added
+    `ItemDonationSync` (item analogue of `VaultPaymentSync`) to reconcile the ledger from vanilla CC
+    slot state at day-end before the gate eval.
+  - ⏳ **PENDING PLAYTEST LOG** — *emmainthealps (Nexus)*: **failed** the 28th yet the JP-spend menu
+    flashed away and the game **advanced to Summer with progress intact**. Root cause (MED-HIGH):
+    finishing the **Vault on day 28 = finishing the whole CC**, which trips vanilla's CC-completion
+    cutscene (`areAllAreasComplete` → goodbye / overnight WorldChangeEvent); that event holds
+    `Game1.eventUp` the next morning exactly when TLY's shrine + reset run, so the shrine is torn down
+    and `ForceFullSave` is skipped. Also no early-win check on a non-Winter day-28. **Fix not yet
+    applied** — needs one confirming log: reach Spring 28 with a requirement still missing AND finish
+    the Vault that day, then sleep; the SMAPI log should show the `EvaluateDayEnd` branch + a "cannot
+    open menu: eventUp" / "save skipped (event active)" trace to pin the frame ordering before the fix.
+- **✅ FIXED v0.9.19 — Kept smoked/preserved fish loses its inner-fish identity through the carry chest.
+  [3rd scrape]** *emmainthealps (Nexus)*: a **Smoked Legend** carried back as a blank 57g smoked fish.
+  Cause: the Junimo Stash serialized items to a lossy (ItemId, Quantity, Quality) record. Now captures
+  + re-applies `preservedParentSheetIndex` / `preserve` / `price.Value` (covers all flavored goods —
+  wine, jelly, aged roe, honey, bait, …). *Known remaining gaps: weapon enchantments/forged gems and
+  colored-item tint not yet round-tripped — log if reported. Verify via a value-preservation playtest.*
+- **⏳ "Keep tool upgrades" missing from the JP purchase screen. [3rd scrape]** *khauser13 (Nexus)*: shows
+  in the planner but not the spend menu. **Root-caused 2026-06-08 — NOT catalog drift** (both menus call
+  identical code). The tool-keep rows carry a `tool:<kind>:<tier>` reach requirement read LIVE from
+  `Game1.player.Items` at menu-build time; the spend menu opens at the fragile day-28 morning where the
+  tool may be absent/perturbed → reach reads 0 → rows filtered out. **Fix (pending, same boundary-race
+  area as the emmainthealps half above):** gate the boundary reach on a pre-wipe peak snapshot
+  (`WorldResetService.CapturePeaks`) instead of live inventory. Confirm with the same day-28 log.
+- **~~Weekly task can request an already-donated item → penalty locked for the whole week.~~ BY DESIGN
+  (user decision 2026-06-08). [3rd scrape]** *emmainthealps (Nexus)*: weekly tasks may ask for items
+  already donated, locking the penalty for the week. **Intended** — part of the challenge; not a bug.
+  No change.
 
 - **JP-spend confusion (2 reports → fix the UX).** *Dusklight7* + *TheFirstBanana (Nexus)*: clicking
   shrine upgrades does nothing mid-run and players think it's broken ("been so confused why I couldn't
@@ -47,14 +59,17 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   intentionally removed by the scheduler; luck untouched (FarmerReset zeroes only the defunct Luck
   *skill*); 0 rain by day 6 is fine (≥2/season guarantee, not early). No fix. *Optional: confirm
   empirically from one playtest log (TV forecast at night vs next-day actual).*
-- **CC reads as "restored" from day 1 — NPCs route into it (now 3 reports).** *u/Tutorem*: "needed
-  Clint on day 5… he went to the CC instead." **[3rd scrape]** corroborated by *dm_me_your_kindness
-  (Reddit)* — Granny in the pantry room, Gus goes up there, Clint there on Friday — and *khauser13
-  (Nexus)* — "very odd to see the townspeople entering in the community center… confused me before I
-  figured out why the schedules had changed." Investigate: the day-1 CC-access patch is also flipping
-  the visual/complete state + schedule routing. Bundles should be accessible without the CC looking
-  done or rerouting NPCs. *(Secondary idea if we can't fully suppress it: give those NPCs explaining
-  dialogue — see the feedback-triage entry.)*
+- **✅ FIXED v0.9.21 (NPC routing) — CC reads as "restored" from day 1 — NPCs route into it (3 reports).**
+  *u/Tutorem*: "needed Clint on day 5… he went to the CC instead." **[3rd scrape]** corroborated by
+  *dm_me_your_kindness (Reddit)* (Granny/Gus/Clint) and *khauser13 (Nexus)* ("townspeople entering the
+  community center… confused me"). Root cause: `CcLocationAccessiblePatch` forces
+  `isLocationAccessible("CommunityCenter")` true for the player's door, but vanilla NPC scheduling reads
+  the SAME flag — so it un-cancelled every villager's CC schedule. Fix: `NpcCcScheduleStayOutPatch`
+  postfixes `changeScheduleForLocationAccessibility` to always cancel the CC entry during a TLY run
+  (villagers use their default schedule), door stays open for the player. **Confirm villagers stay out
+  via playtest.** *Note: the "looks visually restored" reports are NOT a TLY-flag bug — restoration
+  keys on `areasComplete[]`, which TLY never sets; a player who finishes bundles sees genuine vanilla
+  restoration. The NPC-dialogue idea (feedback-triage) is moot now that they stay out.*
 - **Double-forage buff feels weak + double-XP question (*u/Tutorem*).** Buff "probably worthless past
   week 1-2 unless it affects truffles"; also asks whether double-forage grants double XP. Balance +
   a behavior question to answer.
