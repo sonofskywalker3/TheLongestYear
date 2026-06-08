@@ -16,6 +16,38 @@ namespace TheLongestYear.Integration
         private static System.Func<RunState> _runState;
         public static void AttachRunState(System.Func<RunState> runState) => _runState = runState;
 
+        /// <summary>Optional debug sink (wired by ModEntry) for the #3 keep-tool-upgrades
+        /// investigation: dumps what the live tool reach actually sees when a shrine builds.</summary>
+        public static System.Action<string> DebugLog;
+
+        /// <summary>Log every tool currently in the player's inventory with its UpgradeLevel, plus
+        /// what <see cref="ToolLevel"/> resolves per kind. Diagnoses why a "Keep &lt;tool&gt;" row is
+        /// missing from the shrine: a leftover basic tool earlier in the bag masks an upgraded one
+        /// (ToolLevel returns the FIRST match, not the highest), or the upgraded tool isn't in the
+        /// bag at all at shrine-open time. Call when the shrine's keep list is built.</summary>
+        public static void LogToolSnapshot()
+        {
+            if (DebugLog == null) return;
+            Farmer p = Game1.player;
+            if (p == null) { DebugLog("[reach-snapshot] no player loaded."); return; }
+
+            var sb = new System.Text.StringBuilder("[reach-snapshot] tools in bag: ");
+            foreach (Item it in p.Items)
+            {
+                switch (it)
+                {
+                    case Hoe h:         sb.Append($"Hoe(L{h.UpgradeLevel}) ");          break;
+                    case Pickaxe pk:    sb.Append($"Pickaxe(L{pk.UpgradeLevel}) ");     break;
+                    case Axe a:         sb.Append($"Axe(L{a.UpgradeLevel}) ");          break;
+                    case WateringCan w: sb.Append($"Can(L{w.UpgradeLevel}) ");          break;
+                    case FishingRod rd: sb.Append($"Rod(L{rd.UpgradeLevel}) ");         break;
+                }
+            }
+            sb.Append($"| ToolLevel resolves: hoe={ToolLevel(p, "hoe")} pickaxe={ToolLevel(p, "pickaxe")} ")
+              .Append($"axe={ToolLevel(p, "axe")} watering_can={ToolLevel(p, "watering_can")} rod={RodLevel(p)}");
+            DebugLog(sb.ToString());
+        }
+
         /// <summary>Null/empty requirement ⇒ always met (non-reach upgrades). Unknown metric ⇒ false.</summary>
         public static bool Meets(string requirement)
         {

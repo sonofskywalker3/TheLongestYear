@@ -72,6 +72,11 @@ namespace TheLongestYear.UI
             _store = store;
             _purchases = purchases;
 
+            // #3 diagnostic: dump what the live tool reach sees the instant the spend shrine opens
+            // (default category is Loadout) — distinguishes "leftover basic tool masks the upgrade"
+            // from "upgraded tool not in the bag at boundary time" for the missing Keep-tool rows.
+            TheLongestYear.Integration.RunReachEvaluator.LogToolSnapshot();
+
             RecomputeBoundsAndLayout();
 
             if (Game1.options.snappyMenus && Game1.options.gamepadControls)
