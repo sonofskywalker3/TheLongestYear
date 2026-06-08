@@ -10,6 +10,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
+- **🔴🔴 TODO (FIX NEXT) — Loop reset presents the weekly theme offer TWICE; first pick is discarded.**
+  Found 2026-06-08 during playtest (Summer 28 fail → Spring 1). The reset opens the Week-1 hub, but
+  `OfferPresentedWeek` is set in `DoDayStartSeasonAndHub()` (`RunController.cs:368`) AFTER the
+  post-reset save (`_store.Save()` / `ForceFullSave()` at 365-366), so the deferred
+  `SaveLoaded → MetaStore.Load()` reloads `Run` with `OfferPresentedWeek = -1` and the day-start
+  guard re-presents the offer. Because the first pick is now in `SelectedThemesThisMonth`,
+  `SelectionService.OfferForWeek` re-rolls a different pair, so the **second pick overwrites the
+  first** (log: picked Farming, then forced to pick again → Fishing). **NOT caused by the v0.9.19-21
+  fixes** (those are all day-ending code); pre-existing, fires on every reset.
+  **Fix carefully:** the naive "re-save after presenting" risks the OPPOSITE failure (no picker at
+  all) if the reset-time hub is closed by the reload — first VERIFY whether that hub survives the
+  reload, then either persist `OfferPresentedWeek` before the deferred reload OR present the offer
+  only on the post-load path (once). This offer flow has a history of the "no picker" regression
+  (see the win→keep-playing comments at `RunController.cs:714-719`). Confirm with a real reset.
+
 - **🔴 Day-28 loop gate is unreliable — wrong reset/advance + JP-spend menu flashes away. [3rd scrape]**
   Two reports, opposite symptoms; root-caused 2026-06-08 to TWO defects (not one):
   - ✅ **FIXED v0.9.20** — *khauser13 (Nexus)*: **completed every** donation goal but it **reset to
