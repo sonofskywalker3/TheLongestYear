@@ -10,6 +10,11 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
+- **🟠 UX — Bus-repair (Vault) goal renders inconsistently in the Season Goals menu.** User (2026-06-08):
+  "the bus repair in the season goals is completely different from all the other goals — make it
+  consistent." The vault/bus-repair entry in `SeasonGoalsMenu.cs` is presented unlike the bundle
+  goals; restyle it to match the others' layout/format. Pairs naturally with the vault-index fix below.
+
 - **🔴 INVESTIGATE — Vault bundle indices may be wrong on REMIXED saves (gate could never satisfy).**
   Found 2026-06-08 inspecting a live remixed save: the Vault money bundles are at indices **23–26**
   (`Vault/23`=2500g … `Vault/26`=25000g), but `VaultRules` hardcodes **34–37** (those are actually
