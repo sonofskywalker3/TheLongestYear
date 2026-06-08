@@ -255,14 +255,18 @@ namespace TheLongestYear.Loop
                     Game1.player.deepestMineLevel, baseline.MineElevatorFloor);
             }
 
-            // 7. Vault gate pre-pay if bus is kept unlocked.
+            // 7. Vault gate pre-pay if bus is kept unlocked. Mark this save's actual vault indices
+            //    (remix-aware) paid so the count-based gate reads full; fall back to the canonical
+            //    vanilla set if live bundle data is somehow unavailable.
             if (baseline.BusUnlocked)
             {
                 _run.VaultBundlesPaid.Clear();
-                _run.VaultBundlesPaid.Add(VaultRules.Vault2500);
-                _run.VaultBundlesPaid.Add(VaultRules.Vault5000);
-                _run.VaultBundlesPaid.Add(VaultRules.Vault10000);
-                _run.VaultBundlesPaid.Add(VaultRules.Vault25000);
+                System.Collections.Generic.IReadOnlyList<int> vaultIndices =
+                    TheLongestYear.Integration.VaultBundleMap.Indices();
+                if (vaultIndices.Count == 0)
+                    vaultIndices = VaultRules.VaultIndices;
+                foreach (int idx in vaultIndices)
+                    _run.VaultBundlesPaid.Add(idx);
             }
 
             // 7b. Robin's community-upgrade map shortcuts — single mail flag controls all five

@@ -6,8 +6,12 @@ namespace TheLongestYear.Core;
 /// Summer 2, Fall 3, Winter 4). Paying all four in Spring pre-satisfies every season. The
 /// keep_bus_unlocked Buildings upgrade short-circuits the gate (bus stays restored across runs).
 ///
-/// Vanilla indices (Data/Bundles "Vault/N"):
+/// Canonical NON-REMIXED indices (Data/Bundles "Vault/N"):
 ///   34 = 2,500g · 35 = 5,000g · 36 = 10,000g · 37 = 25,000g  (42,500g total)
+/// Remixed-bundle saves renumber these, so the live indices/gold are resolved at runtime from the
+/// save's own bundle data by <c>TheLongestYear.Integration.VaultBundleMap</c>; the constants below
+/// are the canonical layout + the fallback that map uses when bundle data is unavailable. The gate
+/// itself (<see cref="IsVaultGateSatisfied"/>) is count-based, so it is index-agnostic.
 /// </summary>
 public static class VaultRules
 {
@@ -41,18 +45,6 @@ public static class VaultRules
 
     /// <summary>Number of distinct vault bundles paid this run.</summary>
     public static int PaidCount(RunState run) => run.VaultBundlesPaid.Count;
-
-    /// <summary>Which vault bundle gates a season's monthly checkpoint. Kept for the tly_payvault
-    /// debug command (resolves a season name to an index); the live gate is count-based and does
-    /// NOT use this.</summary>
-    public static int BundleIndexForSeason(Season season) => season switch
-    {
-        Season.Spring => Vault2500,
-        Season.Summer => Vault5000,
-        Season.Fall   => Vault10000,
-        Season.Winter => Vault25000,
-        _ => -1
-    };
 
     /// <summary>True if the player has satisfied this season's vault gate: owns keep_bus_unlocked,
     /// or has paid at least <see cref="SeasonOrdinal"/> vault bundles this run (any tiers).</summary>
