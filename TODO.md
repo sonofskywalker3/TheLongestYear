@@ -10,12 +10,30 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
-- **🟠 UX — Bus-repair (Vault) goal renders inconsistently in the Season Goals menu.** User (2026-06-08):
-  "the bus repair in the season goals is completely different from all the other goals — make it
-  consistent." The vault/bus-repair entry in `SeasonGoalsMenu.cs` is presented unlike the bundle
-  goals; restyle it to match the others' layout/format. Pairs naturally with the vault-index fix below.
+**Fixed 2026-06-09 (4th scrape — khauser13 08 Jun 4:50PM + emmainthealps 09 Jun), bound for the v0.10.0 release:**
+- **✅ FIXED v0.9.38 — Mine elevator did not lock on loop reset.** *khauser13*: "could still get down to
+  floor sixty and I didn't buy the elevator unlocks." `WorldResetService` cleared only
+  `LowestMineLevelForOrder`, but `MineShaft.lowestLevelReached` falls back to `LowestMineLevel` (never
+  reset) + `deepestMineLevel` was only bumped up. Now all three pin to the kept floor (cap-not-grant).
+- **✅ FIXED v0.9.40 — Weekly goal "Large Egg" only credited one egg color.** *khauser13*: "needed a
+  large brown egg, the white egg didn't count." New `CcItemEquivalence` folds 174≡182 / 176≡180 so
+  EITHER egg color ticks the journal box and earns the bonus JP (user directive: accept either, not a
+  color suffix). +9 unit tests.
+- **✅ FIXED v0.9.41 — Stale vanilla "Rat Problem" quest appeared in a run.** *khauser13 / niki_m_m3*.
+  `RatProblemQuestPatch` prefixes `Farmer.addQuest` to skip id 26 mid-run + strips it from existing
+  saves on load; gated on `RunActivation.IsActive`.
 
-- **🔴 INVESTIGATE — Vault bundle indices may be wrong on REMIXED saves (gate could never satisfy).**
+- **✅ FIXED v0.9.28-29 — Bus-repair (Vault) goal renders inconsistently in the Season Goals menu.**
+  User (2026-06-08): "the bus repair in the season goals is completely different from all the other
+  goals — make it consistent." Restyled the vault/bus-repair entry in `SeasonGoalsMenu.cs` into a
+  real list row matching the bundle goals (commits `dd41590` + `e161727`).
+
+- **✅ FIXED v0.9.26 (confirmed) — Vault bundle indices were wrong on REMIXED saves (gate could never satisfy).**
+  Now derived from live `BundleData` (room == "Vault"), remix-aware — verified via the v0.9.27 load
+  diagnostic (`Vault bundles: 23=2,500g … 26=25,000g`). `VaultBundleMap` is the single source of truth;
+  `VaultPaymentSync`/`DonationObserver`/`DonationService` all read it. Original investigation below:
+
+  **🔴 INVESTIGATE — Vault bundle indices may be wrong on REMIXED saves (gate could never satisfy).**
   Found 2026-06-08 inspecting a live remixed save: the Vault money bundles are at indices **23–26**
   (`Vault/23`=2500g … `Vault/26`=25000g), but `VaultRules` hardcodes **34–37** (those are actually
   Bulletin's Dye/Fodder + Joja's "The Missing" in this save). Consequences if confirmed: `IsVaultIndex`
@@ -28,7 +46,13 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   from the live `BundleData` (room == "Vault") instead of hardcoding. Worked around in the 2026-06-08
   playtest with `tly_payvault spring` (count-based, index-agnostic). Confirm against a non-remixed save.
 
-- **🔴🔴 TODO (FIX NEXT) — Loop reset presents the weekly theme offer TWICE; first pick is discarded.**
+- **✅ FIXED v0.9.25 (confirmed) — Loop reset presented the weekly theme offer TWICE; first pick discarded.**
+  Added a second `_store.Save()` right after `DoDayStartSeasonAndHub()` in `ContinueAfterResetSpend`
+  (`RunController.cs`) so the deferred reload reads `OfferPresentedWeek` as set and the day-start guard
+  skips the re-present. Playtest `tly_failreset` (Run 17): exactly one offer + one Selected line, pick
+  stuck. Original diagnosis below:
+
+  **🔴🔴 TODO (FIX NEXT) — Loop reset presents the weekly theme offer TWICE; first pick is discarded.**
   **CONFIRMED in playtest 2026-06-08 via `tly_failreset`** (picked Farming → forced Fishing/Mixed →
   Fishing overwrote it). **Safe fix confirmed:** the reset-time hub SURVIVES the reload (player picks
   from it), so persist `OfferPresentedWeek` BEFORE the deferred reload — add `_store.Save()` right
@@ -80,7 +104,13 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   + re-applies `preservedParentSheetIndex` / `preserve` / `price.Value` (covers all flavored goods —
   wine, jelly, aged roe, honey, bait, …). *Known remaining gaps: weapon enchantments/forged gems and
   colored-item tint not yet round-tripped — log if reported. Verify via a value-preservation playtest.*
-- **⏳ "Keep tool upgrades" missing from the JP purchase screen. [3rd scrape]** *khauser13 (Nexus)*: shows
+- **✅ CONFIRMED NOT A BUG (2026-06-08) — "Keep tool upgrades" missing from the JP purchase screen.**
+  The earlier diagnostic caught a *grant artifact* (a granted duplicate pickaxe in the bag, which
+  `ToolLevel` resolved to the L0 copy). A real Clint upgrade replaces the tool in place, so the keep
+  rows show in BOTH the planner and the spend menu and persist into the next run — faithfully retested
+  2026-06-08. khauser13's report does not reproduce on a genuine upgrade. Original notes below:
+
+  **⏳ "Keep tool upgrades" missing from the JP purchase screen. [3rd scrape]** *khauser13 (Nexus)*: shows
   in the planner but not the spend menu. **Root-caused 2026-06-08 — NOT catalog drift** (both menus call
   identical code). The tool-keep rows carry a `tool:<kind>:<tier>` reach requirement read LIVE from
   `Game1.player.Items` at menu-build time; the spend menu opens at the fragile day-28 morning where the
@@ -92,11 +122,10 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   already donated, locking the penalty for the week. **Intended** — part of the challenge; not a bug.
   No change.
 
-- **JP-spend confusion (2 reports → fix the UX).** *Dusklight7* + *TheFirstBanana (Nexus)*: clicking
-  shrine upgrades does nothing mid-run and players think it's broken ("been so confused why I couldn't
-  spend my JP right away"). Working-as-designed (JP store opens only at loop boundaries — reset/win)
-  but reads as a bug. **Fix:** make the shrine UI state explicitly that purchases happen on
-  reset/win, not mid-run.
+- **✅ ADDRESSED — JP-spend confusion (Dusklight7 / TheFirstBanana / emmainthealps).** The planning
+  view (`ShrinePreviewMenu`) already prints, near the top, "Planning view — you spend JP when a loop
+  resets or you win, not here." That's the wording the author told testers was "in place." Ships in
+  this release. (Further clarity will come from the Junimo intro in the story update.)
 - ~~**Weather/luck desync (*u/Tutorem*, day 6).**~~ **INVESTIGATED 2026-06-07 — not an internal bug.**
   Traced the 1.6 flow: the in-game TV (TV.cs:326/589) AND the actual applied weather both resolve
   through the patched `getWeatherModificationsForDate` (Game1.cs:9594 → Default LocationWeather →
@@ -121,9 +150,10 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
 - **Double-forage buff feels weak + double-XP question (*u/Tutorem*).** Buff "probably worthless past
   week 1-2 unless it affects truffles"; also asks whether double-forage grants double XP. Balance +
   a behavior question to answer.
-- **POSSIBLE OPEN BUG — Greenthumb without purchase.** *khauser13 (Nexus)*: Greenthumb perk active on
-  crops without buying it. Author tied it to the junimo-notes unlock gate (same patch as the
-  bulletin-board fix) — **verify it's actually fixed in 0.9.6 or still leaking.**
+- **✅ VERIFIED CLOSED — Greenthumb without purchase.** *khauser13 (Nexus, 05 Jun)*. `GreenThumbPatch`
+  is correctly gated (`UpgradeChecker.GetTier("green_thumb",5)==0 → return`), so the mod's passive never
+  fires unpurchased; the report was the day-1 junimo-notes-unlock gate (fixed alongside the bulletin
+  board, v0.9.5). khauser played extensively on later versions (07-08 Jun) without re-reporting it.
 
 ### 📣 Community feedback triage (beta, 2026-06-06) — ideas/inspiration (replies are the user's)
 *Mined from the r/StardewValley beta thread (1txuhfb) + Nexus mod 47192 posts.
