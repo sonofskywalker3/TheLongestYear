@@ -1,18 +1,26 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.9.6).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.10.0).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.9.6[/b][/size]
-Changes since the first beta (0.9.2):
+[size=5][b]What's New in 0.10.0[/b][/size]
+A big stability pass on the season-end gate and loop reset, plus fixes from beta reports. Changes since 0.9.6:
 [list]
-[*][b]The Community Center bulletin board works now.[/b] Walking up to the Mixed room's bulletin board did nothing before — it now opens like the other five rooms, so you can donate to it from day one.
-[*][b]Other saves are left completely alone.[/b] Loading a normal (non-TLY) save with the mod installed now does nothing at all — no effects, no HUD, no year-rewind. Starting a new game is the only way to begin a run, and existing runs carry over automatically.
-[*][b]Update notifications.[/b] SMAPI now tells you in its console when a new version is available.
+[*][b]The season-end gate is reliable now.[/b] Two opposite bugs are fixed: finishing every goal no longer occasionally resets you anyway (the donation ledger is now reconciled from the Center itself at day's end), and failing the 28th no longer advances you to the next season when you'd just finished the bus-repair Vault that same day.
+[*][b]No more double theme pick on reset.[/b] A loop reset used to make you pick your weekly theme twice and silently discard the first choice. Fixed — you pick once.
+[*][b]The bus-repair (Vault) money goal counts correctly.[/b] On remixed-bundle saves (the recommended setup) the Vault was numbered differently and the gate could never be satisfied — now the indices are read from your actual bundles. The Season Goals menu also shows the bus-repair goal in the same style as every other goal.
+[*][b]Artisan goods keep their value through the Junimo Stash.[/b] A Smoked Legend (and wine, jelly, aged roe, honey, bait…) no longer comes back as a generic 57g item after a reset — flavor and price are preserved.
+[*][b]Villagers stay out of the abandoned Community Center[/b] during a run instead of routing into it.
+[*][b]The mine elevator locks on reset.[/b] You no longer keep elevator access to floors you reached last loop unless you actually bought the keep-elevator upgrade.
+[*][b]Weekly goals accept either egg color.[/b] A "Large Egg" (or "Egg") task now ticks whether you donate the brown or the white one.
+[*][b]An in-progress tool upgrade at Clint's no longer survives a reset[/b] as a free upgrade.
+[*][b]Removed the stale "Rat Problem" quest[/b] — the Center is already open from day one, so the vanilla investigation quest no longer appears.
+[*][b]Clearer Junimo Shrine.[/b] The planning view now states that JP is spent when a loop resets or you win — not mid-run — so the shrine no longer reads as broken.
+[*][b]Weather:[/b] each season is now guaranteed a special-weather day in week 1, replacing vanilla's always-on day-3 rain.
 [/list]
-Earlier betas (0.9.0–0.9.2) shipped the full loop, the porch + Junimo intro, the win screen, and the new-loop picker fix. Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
+Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
 
 [line]
 
