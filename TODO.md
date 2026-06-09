@@ -56,15 +56,22 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
     JunimoNoteMenu watcher) and could miss a deposit, so the gate read "failed." Added
     `ItemDonationSync` (item analogue of `VaultPaymentSync`) to reconcile the ledger from vanilla CC
     slot state at day-end before the gate eval.
-  - ⏳ **PENDING PLAYTEST LOG** — *emmainthealps (Nexus)*: **failed** the 28th yet the JP-spend menu
-    flashed away and the game **advanced to Summer with progress intact**. Root cause (MED-HIGH):
-    finishing the **Vault on day 28 = finishing the whole CC**, which trips vanilla's CC-completion
-    cutscene (`areAllAreasComplete` → goodbye / overnight WorldChangeEvent); that event holds
-    `Game1.eventUp` the next morning exactly when TLY's shrine + reset run, so the shrine is torn down
-    and `ForceFullSave` is skipped. Also no early-win check on a non-Winter day-28. **Fix not yet
-    applied** — needs one confirming log: reach Spring 28 with a requirement still missing AND finish
-    the Vault that day, then sleep; the SMAPI log should show the `EvaluateDayEnd` branch + a "cannot
-    open menu: eventUp" / "save skipped (event active)" trace to pin the frame ordering before the fix.
+  - ✅ **FIXED v0.9.37 (confirmed faithful repro 2026-06-09)** — *emmainthealps (Nexus)*: **failed** the
+    28th yet the JP-spend menu flashed away and the game **advanced to Summer with progress intact**.
+    The earlier "whole-CC-completion / `eventUp`" theory was WRONG. Real cause: finishing **just the
+    Vault** on day 28 queues `ccVault` in `mailForTomorrow`, so that night vanilla plays the bus-repair
+    **`WorldChangeEvent(7)`** — a **`Game1.farmEvent`, which is a SEPARATE flag from `eventUp`** and
+    runs with `newDay==false` AND `eventUp==false` but `farmEvent!=null` (`Game1.cs:9340` clears newDay
+    before `:9361` assigns farmEvent). TLY's day-28 driver + `MenuLauncher` guarded only on `eventUp`,
+    so the shrine opened DURING the bus scene and the event's end-of-play warp (`Game1.cs:4977-4989`)
+    tore it down without firing `exitFunction` → reset dropped. (That's also why the prior
+    "defer until `!eventUp`" never fired — wrong flag.) **Fix, 3 parts:** (1) FAIL loop strips the
+    rewind-doomed CC mail at day-end (`SuppressResetDoomedRoomScenes`) so the bus scene never plays;
+    (2) day-28 driver + launcher now also wait on `Game1.farmEvent` for the PASS path; (3)
+    `PerformReset` purges CC mail from `mailForTomorrow` (fixes the "bus fixed, 0 bundles done"
+    carryover). Log proof: `Fail loop: suppressed 1 reset-doomed CC restoration scene ([ccVault%&NL&%])`
+    with `farmEvent=none` through the reset. *Optional follow-up: confirm the PASS path (vault done +
+    gate PASSED on day 28 → bus scene plays, THEN the "next season" cutscene) — lower stakes, untested.*
 - **✅ FIXED v0.9.19 — Kept smoked/preserved fish loses its inner-fish identity through the carry chest.
   [3rd scrape]** *emmainthealps (Nexus)*: a **Smoked Legend** carried back as a blank 57g smoked fish.
   Cause: the Junimo Stash serialized items to a lossy (ItemId, Quantity, Quality) record. Now captures
