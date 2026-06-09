@@ -1,0 +1,36 @@
+0.10.0 — Season-end gate + loop-reset stability pass
+
+A big reliability pass on the season gate and loop reset, plus fixes from beta
+reports. Changes since 0.9.6:
+
+Fixes
+- Season-end gate, part 1: finishing every goal no longer occasionally resets you
+  anyway. The item-donation ledger is now reconciled directly from the Community
+  Center's bundle state at day's end, so a missed deposit can't read as a failure.
+- Season-end gate, part 2: failing the 28th no longer advances you to the next
+  season. Completing the bus-repair Vault on day 28 queued the overnight bus scene,
+  which raced the loop reset; the rewind-doomed scene is now suppressed on a fail and
+  deferred behind on a pass.
+- Loop reset no longer presents the weekly theme picker twice and discards your first
+  pick — you pick once.
+- The bus-repair (Vault) money goal now counts on remixed-bundle saves. The Vault is
+  renumbered under remixed bundles, so the hard-coded indices never matched and the
+  gate could never pass; the indices are now read from your live bundle data.
+- The Season Goals menu shows the bus-repair goal in the same style as the others.
+- Artisan goods keep their identity and value through the Junimo Stash. A Smoked
+  Legend (and wine, jelly, aged roe, honey, bait, …) no longer returns as a generic
+  57g item after a reset.
+- Villagers stay out of the abandoned Community Center during a run.
+- The mine elevator locks on reset — you no longer keep access to floors reached last
+  loop unless you bought the keep-elevator upgrade.
+- Weekly theme goals accept either egg color: a "Large Egg" or "Egg" task ticks for
+  the brown or the white variant.
+- A tool upgrade in progress at Clint's no longer survives a reset as a free upgrade.
+- Removed the stale vanilla "Rat Problem" quest — the Center is already open from
+  day one, so the investigation quest no longer appears.
+
+Changed
+- The Junimo Shrine planning view now states that JP is spent when a loop resets or
+  you win, not mid-run, so it no longer reads as broken.
+- Each season is now guaranteed a special-weather day in week 1, replacing vanilla's
+  always-on day-3 rain.

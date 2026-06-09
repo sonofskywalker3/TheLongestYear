@@ -8,19 +8,27 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.9.6`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.10.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.9.6
+## What's New in 0.10.0
 
-Changes since the first beta (0.9.2):
+A big stability pass on the season-end gate and loop reset, plus fixes from beta reports. Changes since `0.9.6`:
 
-- **The Community Center bulletin board works now.** Walking up to the Mixed room's bulletin board did nothing before — it now opens like the other five rooms, so you can donate to it from day one.
-- **Other saves are left completely alone.** Loading a normal (non-TLY) save with the mod installed now does nothing at all — no effects, no HUD, no year-rewind. Starting a new game is the only way to begin a run, and existing runs carry over automatically.
-- **Update notifications.** SMAPI now tells you in its console when a new version is available.
+- **The season-end gate is reliable now.** Two opposite bugs are fixed: finishing every goal no longer occasionally *resets* you anyway (the donation ledger is now reconciled from the Center itself at day's end), and *failing* the 28th no longer advances you to the next season when you'd just finished the bus-repair Vault that same day.
+- **No more double theme pick on reset.** A loop reset used to make you pick your weekly theme twice and silently discard the first choice. Fixed — you pick once.
+- **The bus-repair (Vault) money goal counts correctly.** On remixed-bundle saves (the recommended setup) the Vault was numbered differently and the gate could never be satisfied — now the indices are read from your actual bundles. The Season Goals menu also shows the bus-repair goal in the same style as every other goal.
+- **Artisan goods keep their value through the Junimo Stash.** A Smoked Legend (and wine, jelly, aged roe, honey, bait…) no longer comes back as a generic 57g item after a reset — flavor and price are preserved.
+- **Villagers stay out of the abandoned Community Center** during a run instead of routing into it.
+- **The mine elevator locks on reset.** You no longer keep elevator access to floors you reached last loop unless you actually bought the keep-elevator upgrade.
+- **Weekly goals accept either egg color.** A "Large Egg" (or "Egg") task now ticks whether you donate the brown or the white one.
+- **An in-progress tool upgrade at Clint's no longer survives a reset** as a free upgrade.
+- **Removed the stale "Rat Problem" quest** — the Center is already open from day one, so the vanilla investigation quest no longer appears.
+- **Clearer Junimo Shrine.** The planning view now states that JP is spent when a loop resets or you win — not mid-run — so the shrine no longer reads as broken.
+- **Weather:** each season is now guaranteed a special-weather day in week 1, replacing vanilla's always-on day-3 rain.
 
-Earlier betas (0.9.0–0.9.2) shipped the full loop, the porch + Junimo intro, the win screen, and the new-loop picker fix. Full history in [CHANGELOG.md](CHANGELOG.md).
+Full history in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
