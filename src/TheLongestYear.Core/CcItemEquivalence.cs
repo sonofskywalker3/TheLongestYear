@@ -27,7 +27,7 @@ namespace TheLongestYear.Core
         public static string Canonical(string itemId)
         {
             string bare = Bare(itemId);
-            return CanonById.TryGetValue(bare, out string canon) ? canon : bare;
+            return CanonById.TryGetValue(bare, out string? canon) ? canon : bare;
         }
 
         /// <summary>True if two item ids are the same item OR interchangeable egg color-variants.</summary>
