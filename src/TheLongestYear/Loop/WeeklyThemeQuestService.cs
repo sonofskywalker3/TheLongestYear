@@ -182,9 +182,23 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
+        /// <summary>The four vanilla egg objects whose DisplayName collides across colors —
+        /// 174/182 both render as "Large Egg" and 176/180 both as "Egg". A bundle slot accepts
+        /// exactly ONE of each pair, so the journal must name the color or the player wastes the
+        /// wrong-colored egg. khauser13 (Nexus): "the weekly theme farming says a large egg but for
+        /// the quest to count it it needed a large brown egg — the white egg didn't count."</summary>
+        private static readonly Dictionary<string, string> AmbiguousEggColors = new(StringComparer.Ordinal)
+        {
+            ["174"] = "White",   // Large Egg (white)
+            ["182"] = "Brown",   // Large Egg (brown)
+            ["176"] = "White",   // Egg (white)
+            ["180"] = "Brown",   // Egg (brown)
+        };
+
         /// <summary>Resolve a qualified item id to "DisplayName xStack" or fall back to the raw id.
         /// Stack count comes from the same ingredient-stack map the hub uses, so the quest text
-        /// matches the bonus icons' badges (e.g. "Wood x99" rather than just "Wood").</summary>
+        /// matches the bonus icons' badges (e.g. "Wood x99" rather than just "Wood"). Egg variants
+        /// that share a DisplayName get a "(Brown)"/"(White)" suffix so the journal is unambiguous.</summary>
         private string ResolveDisplayName(string qualifiedId)
         {
             try
@@ -194,7 +208,11 @@ namespace TheLongestYear.Loop
                 {
                     int stack = _stackForIngredient(qualifiedId);
                     string qty = stack > 1 ? $" x{stack}" : "";
-                    return $"{item.DisplayName}{qty}";
+                    string colorTag =
+                        AmbiguousEggColors.TryGetValue(BareItemId(qualifiedId), out string color)
+                            ? $" ({color})"
+                            : "";
+                    return $"{item.DisplayName}{colorTag}{qty}";
                 }
             }
             catch (Exception)
@@ -202,6 +220,17 @@ namespace TheLongestYear.Loop
                 // ItemRegistry may throw for malformed ids; fall through to the raw id.
             }
             return qualifiedId;
+        }
+
+        /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare numeric
+        /// (or string) id. Used to key the egg-color disambiguation table regardless of qualifier.</summary>
+        private static string BareItemId(string qualifiedId)
+        {
+            if (string.IsNullOrEmpty(qualifiedId)) return qualifiedId;
+            int close = qualifiedId.IndexOf(')');
+            return close >= 0 && qualifiedId.StartsWith("(", StringComparison.Ordinal)
+                ? qualifiedId[(close + 1)..]
+                : qualifiedId;
         }
 
         private static Quest FindCurrentWeeklyQuest()
