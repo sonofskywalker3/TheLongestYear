@@ -258,18 +258,21 @@ namespace TheLongestYear.Loop
             foreach (int skill in baseline.ProfessionPickerSkillsToRequeue)
                 _professionPicker.Enqueue(skill, baseline.SkillLevels[skill]);
 
-            // 6. Mine progress. Restore elevator floor from baseline (cap-not-grant
-            //    against in-run peak). MineShaft.lowestLevelReached property setter +
-            //    LowestMineLevelForOrder field (NetWorldState.cs:362) drive the elevator
-            //    panel options.
-            Game1.netWorldState.Value.LowestMineLevelForOrder = -1;
+            // 6. Mine progress. Pin the elevator to the kept floor (cap-not-grant — the player
+            //    keeps ONLY the floor they bought a keep_mine_elevator_N upgrade for; 0 = none).
+            //    The elevator panel reads MineShaft.lowestLevelReached, whose getter FALLS BACK to
+            //    NetWorldState.LowestMineLevel when LowestMineLevelForOrder < 0 (MineShaft.cs:181-189,
+            //    Android decompile). So clearing only LowestMineLevelForOrder leaves LowestMineLevel
+            //    (and Farmer.deepestMineLevel) at the in-run depth, and the elevator still offers
+            //    every floor reached this run — khauser13: "the mine elevator did not lock on reset,
+            //    I could still get down to floor sixty and I didn't buy the elevator unlocks."
+            //    Pin all THREE fields to the kept floor exactly (no Math.Max — that would leak the
+            //    in-run peak back in).
             MineShaft.clearActiveMines();
-            if (baseline.MineElevatorFloor > 0)
-            {
-                Game1.netWorldState.Value.LowestMineLevelForOrder = baseline.MineElevatorFloor;
-                Game1.player.deepestMineLevel = System.Math.Max(
-                    Game1.player.deepestMineLevel, baseline.MineElevatorFloor);
-            }
+            int keptFloor = baseline.MineElevatorFloor;
+            Game1.netWorldState.Value.LowestMineLevel = keptFloor;
+            Game1.netWorldState.Value.LowestMineLevelForOrder = keptFloor > 0 ? keptFloor : -1;
+            Game1.player.deepestMineLevel = keptFloor;
 
             // 7. Vault gate pre-pay if bus is kept unlocked. Mark this save's actual vault indices
             //    (remix-aware) paid so the count-based gate reads full; fall back to the canonical
