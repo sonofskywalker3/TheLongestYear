@@ -23,8 +23,9 @@ Fixes
 - Villagers stay out of the abandoned Community Center during a run.
 - The mine elevator locks on reset — you no longer keep access to floors reached last
   loop unless you bought the keep-elevator upgrade.
-- Weekly theme goals accept either egg color: a "Large Egg" or "Egg" task ticks for
-  the brown or the white variant.
+- Weekly theme goals now name the egg color: a "Large Egg" or "Egg" task shows
+  "(Brown)" or "(White)" in the quest log, since the two colors are distinct
+  Community Center items.
 - A tool upgrade in progress at Clint's no longer survives a reset as a free upgrade.
 - Removed the stale vanilla "Rat Problem" quest — the Center is already open from
   day one, so the investigation quest no longer appears.

@@ -22,7 +22,7 @@ A big stability pass on the season-end gate and loop reset, plus fixes from beta
 - **Artisan goods keep their value through the Junimo Stash.** A Smoked Legend (and wine, jelly, aged roe, honey, bait…) no longer comes back as a generic 57g item after a reset — flavor and price are preserved.
 - **Villagers stay out of the abandoned Community Center** during a run instead of routing into it.
 - **The mine elevator locks on reset.** You no longer keep elevator access to floors you reached last loop unless you actually bought the keep-elevator upgrade.
-- **Weekly goals accept either egg color.** A "Large Egg" (or "Egg") task now ticks whether you donate the brown or the white one.
+- **Weekly goals name the egg color.** A "Large Egg" (or "Egg") task now shows "(Brown)" or "(White)" in the quest log — the two colors are different Community Center items, so the goal tells you which one it wants instead of leaving you to guess.
 - **An in-progress tool upgrade at Clint's no longer survives a reset** as a free upgrade.
 - **Removed the stale "Rat Problem" quest** — the Center is already open from day one, so the vanilla investigation quest no longer appears.
 - **Clearer Junimo Shrine.** The planning view now states that JP is spent when a loop resets or you win — not mid-run — so the shrine no longer reads as broken.

@@ -15,10 +15,12 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   floor sixty and I didn't buy the elevator unlocks." `WorldResetService` cleared only
   `LowestMineLevelForOrder`, but `MineShaft.lowestLevelReached` falls back to `LowestMineLevel` (never
   reset) + `deepestMineLevel` was only bumped up. Now all three pin to the kept floor (cap-not-grant).
-- **✅ FIXED v0.9.40 — Weekly goal "Large Egg" only credited one egg color.** *khauser13*: "needed a
-  large brown egg, the white egg didn't count." New `CcItemEquivalence` folds 174≡182 / 176≡180 so
-  EITHER egg color ticks the journal box and earns the bonus JP (user directive: accept either, not a
-  color suffix). +9 unit tests.
+- **✅ FIXED v0.9.43 — Weekly goal "Large Egg" didn't say which color it wanted.** *khauser13*: "needed a
+  large brown egg, the white egg didn't count." Investigation (decompile + live save) confirmed the two
+  large-egg slots in the Animal bundle are **vanilla** (6 animal products / need 5; 174 white + 182 brown
+  are distinct CC items) — NOT a TLY bug, and not interchangeable. Tried an equivalence fix (v0.9.39-40,
+  reverted); the right fix is to **name the color** in the quest log: `ResolveDisplayName` appends
+  "(Brown)"/"(White)" for 174/182/176/180. Matching stays exact-id (vanilla-faithful).
 - **✅ FIXED v0.9.41 — Stale vanilla "Rat Problem" quest appeared in a run.** *khauser13 / niki_m_m3*.
   `RatProblemQuestPatch` prefixes `Farmer.addQuest` to skip id 26 mid-run + strips it from existing
   saves on load; gated on `RunActivation.IsActive`.
