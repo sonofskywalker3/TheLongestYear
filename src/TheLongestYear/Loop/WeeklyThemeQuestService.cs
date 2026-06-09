@@ -135,7 +135,10 @@ namespace TheLongestYear.Loop
             foreach (string id in bonusItems)
             {
                 string name = ResolveDisplayName(id);
-                bool isDone = donated.Contains(id);
+                // Egg color-variants are interchangeable (174≡182 "Large Egg", 176≡180 "Egg"):
+                // donating EITHER color credits a bonus item sampled as the other shade. See
+                // CcItemEquivalence — user directive 2026-06-09 ("accept EITHER egg").
+                bool isDone = donated.Exists(d => CcItemEquivalence.Matches(d, id));
                 if (isDone) doneCount++;
                 // ASCII checkbox glyphs — Stardew's smallFont doesn't include U+2611/U+2610.
                 lines.Add(isDone ? $"  [X] {name}" : $"  [ ] {name}");
@@ -182,23 +185,9 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>The four vanilla egg objects whose DisplayName collides across colors —
-        /// 174/182 both render as "Large Egg" and 176/180 both as "Egg". A bundle slot accepts
-        /// exactly ONE of each pair, so the journal must name the color or the player wastes the
-        /// wrong-colored egg. khauser13 (Nexus): "the weekly theme farming says a large egg but for
-        /// the quest to count it it needed a large brown egg — the white egg didn't count."</summary>
-        private static readonly Dictionary<string, string> AmbiguousEggColors = new(StringComparer.Ordinal)
-        {
-            ["174"] = "White",   // Large Egg (white)
-            ["182"] = "Brown",   // Large Egg (brown)
-            ["176"] = "White",   // Egg (white)
-            ["180"] = "Brown",   // Egg (brown)
-        };
-
         /// <summary>Resolve a qualified item id to "DisplayName xStack" or fall back to the raw id.
         /// Stack count comes from the same ingredient-stack map the hub uses, so the quest text
-        /// matches the bonus icons' badges (e.g. "Wood x99" rather than just "Wood"). Egg variants
-        /// that share a DisplayName get a "(Brown)"/"(White)" suffix so the journal is unambiguous.</summary>
+        /// matches the bonus icons' badges (e.g. "Wood x99" rather than just "Wood").</summary>
         private string ResolveDisplayName(string qualifiedId)
         {
             try
@@ -208,11 +197,7 @@ namespace TheLongestYear.Loop
                 {
                     int stack = _stackForIngredient(qualifiedId);
                     string qty = stack > 1 ? $" x{stack}" : "";
-                    string colorTag =
-                        AmbiguousEggColors.TryGetValue(BareItemId(qualifiedId), out string color)
-                            ? $" ({color})"
-                            : "";
-                    return $"{item.DisplayName}{colorTag}{qty}";
+                    return $"{item.DisplayName}{qty}";
                 }
             }
             catch (Exception)
@@ -220,17 +205,6 @@ namespace TheLongestYear.Loop
                 // ItemRegistry may throw for malformed ids; fall through to the raw id.
             }
             return qualifiedId;
-        }
-
-        /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare numeric
-        /// (or string) id. Used to key the egg-color disambiguation table regardless of qualifier.</summary>
-        private static string BareItemId(string qualifiedId)
-        {
-            if (string.IsNullOrEmpty(qualifiedId)) return qualifiedId;
-            int close = qualifiedId.IndexOf(')');
-            return close >= 0 && qualifiedId.StartsWith("(", StringComparison.Ordinal)
-                ? qualifiedId[(close + 1)..]
-                : qualifiedId;
         }
 
         private static Quest FindCurrentWeeklyQuest()
