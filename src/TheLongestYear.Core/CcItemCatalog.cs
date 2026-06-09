@@ -49,6 +49,8 @@ public static class CcItemCatalog
         "(O)426", // Goat Cheese     — goat + cheese press
         "(O)428", // Cloth           — sheep wool + loom
         "(O)440", // Wool            — sheep + barn upgrade
+        "(O)184", // Milk            — cow + barn (~6k barn + 1.5k cow; unaffordable on a 500g W1 start)
+        "(O)186", // Large Milk      — cow + max hearts (~12 days); same gate as Large Goat Milk (438)
         "(O)436", // Goat Milk       — goat + Big Barn
         "(O)438", // Large Goat Milk — goat + max hearts
         "(O)442", // Duck Egg        — Big Coop
