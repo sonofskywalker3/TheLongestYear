@@ -70,8 +70,10 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
     (2) day-28 driver + launcher now also wait on `Game1.farmEvent` for the PASS path; (3)
     `PerformReset` purges CC mail from `mailForTomorrow` (fixes the "bus fixed, 0 bundles done"
     carryover). Log proof: `Fail loop: suppressed 1 reset-doomed CC restoration scene ([ccVault%&NL&%])`
-    with `farmEvent=none` through the reset. *Optional follow-up: confirm the PASS path (vault done +
-    gate PASSED on day 28 → bus scene plays, THEN the "next season" cutscene) — lower stakes, untested.*
+    with `farmEvent=none` through the reset. **PASS path also confirmed** (2026-06-09): with the gate
+    passed on Spring 28 + Vault done, the log shows `Day-28 cutscene: deferring the Continue scene until
+    the overnight FarmEvent (WorldChangeEvent) finishes` → opens 14s later with `farmEvent=none` → clean
+    advance to Summer. Both branches verified.
 - **✅ FIXED v0.9.19 — Kept smoked/preserved fish loses its inner-fish identity through the carry chest.
   [3rd scrape]** *emmainthealps (Nexus)*: a **Smoked Legend** carried back as a blank 57g smoked fish.
   Cause: the Junimo Stash serialized items to a lossy (ItemId, Quantity, Quality) record. Now captures
