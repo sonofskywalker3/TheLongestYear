@@ -148,6 +148,10 @@ namespace TheLongestYear.Loop
             // Refresh the weekly quest's objective text against the restored ledger so a
             // save+reload mid-week reflects already-donated items.
             _questService?.OnRunLoaded();
+
+            // Clear the stale vanilla "Rat Problem" quest (the CC is already open this run). The
+            // Harmony prefix stops new adds; this strips it from a save that already received it.
+            RatProblemQuestPatch.StripFromLog(_monitor);
         }
 
         /// <summary>
