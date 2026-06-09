@@ -25,6 +25,23 @@ New 2026-06-08 reports are tagged **[3rd scrape]**:*
   `RatProblemQuestPatch` prefixes `Farmer.addQuest` to skip id 26 mid-run + strips it from existing
   saves on load; gated on `RunActivation.IsActive`.
 
+### 🔧 Tech debt — consolidate the three reset paths (found 2026-06-09)
+There are **three** near-identical "reset world → BeginNewRun → persist → present week-1 offer"
+sequences, each maintained by hand:
+- `RunController.ContinueAfterResetSpend` — the real loop reset (fail-day-28 / win→new-loop / `tly_failreset`).
+- `RunController.ApplyKeepPlaying` — the win→keep-playing branch.
+- `ModEntry.FullResetAndPresentOffer` — the debug `tly_reset` / `tly_resetif` path.
+
+Every cross-cutting fix has to be applied to all three and one always gets missed: the JP-refund guard
+and the double-pick `OfferPresentedWeek` re-save (v0.9.25) both landed in `ContinueAfterResetSpend` but
+NOT in `FullResetAndPresentOffer` (double-pick on `tly_reset` caught 2026-06-09, patched v0.9.44). They
+also diverge behaviorally — the debug path calls `PresentOffer()` directly while the real path calls
+`DoDayStartSeasonAndHub()` (season setup + more), so **`tly_reset` is not a faithful stand-in for a real
+reset** (this muddied the v0.9.38 mine-elevator test). **Fix:** extract ONE shared "finalize reset"
+routine (reset → drain picker → BeginNewRun → clear effects → save → ForceFullSave → day-start hub →
+re-save offer marker) and route all three callers through it, so fixes land once and `tly_reset`
+exercises the real path. **Refactor — do it AFTER the v0.10.0 release** (no refactor mid-bugfix).
+
 - **✅ FIXED v0.9.28-29 — Bus-repair (Vault) goal renders inconsistently in the Season Goals menu.**
   User (2026-06-08): "the bus repair in the season goals is completely different from all the other
   goals — make it consistent." Restyled the vault/bus-repair entry in `SeasonGoalsMenu.cs` into a
