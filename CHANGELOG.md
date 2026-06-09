@@ -27,8 +27,9 @@ Consolidates the 0.9.7–0.9.41 dev line. Changes since 0.9.6:
 - **Villagers stay out of the abandoned CC during a run (0.9.21).**
 - **Mine elevator locks on reset (0.9.38).** Floors reached last loop are no longer
   accessible unless the keep-elevator upgrade was bought (cap-not-grant).
-- **Weekly goals accept either egg color (0.9.40).** A "Large Egg"/"Egg" task ticks for
-  the brown or the white variant.
+- **Weekly goals name the egg color (0.9.43).** A "Large Egg"/"Egg" goal shows
+  "(Brown)" or "(White)" in the quest log — the two colors are distinct CC items, so
+  the goal names which it wants instead of leaving the player to guess.
 - **In-progress Clint tool upgrade no longer survives a reset (0.9.30)** as a free upgrade.
 - **Removed the stale vanilla "Rat Problem" quest during a run (0.9.41).**
 - **Week-1 special-weather guarantee (0.9.18).** Each season is guaranteed a special
