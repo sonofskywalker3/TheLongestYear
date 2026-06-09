@@ -77,9 +77,7 @@ namespace TheLongestYear.Donations
         private bool IsSelectedBonusItem(string itemId)
         {
             if (!Run.CurrentSelection.HasValue) return false;
-            // Egg color-variants are interchangeable for the bonus (174≡182, 176≡180) — match the
-            // weekly-quest credit so donating either shade also earns the 1.5x JP. See CcItemEquivalence.
-            return Run.CurrentWeekBonusItems.Exists(b => CcItemEquivalence.Matches(b, itemId));
+            return Run.CurrentWeekBonusItems.Contains(itemId);
         }
 
         /// <summary>A bundle just completed — award its one-time completion bonus (season-scaled).</summary>
