@@ -800,6 +800,13 @@ namespace TheLongestYear
                 "Opening week 1 hub.",
                 LogLevel.Info);
             _runController?.PresentOffer(targetWeekOfYear: 1);
+
+            // Re-persist AFTER PresentOffer set Run.OfferPresentedWeek = 1. The _meta.Save() above
+            // ran while it was still -1 (BeginNewRun), so without this the deferred SaveLoaded ->
+            // _meta.Load() reverts the marker and the day-start guard re-presents the offer (double
+            // theme pick). Same fix as ContinueAfterResetSpend (RunController.cs) — keep both reset
+            // paths in sync so the debug reset behaves like the natural fail-day-28 reset.
+            _meta.Save();
         }
 
         /// <summary>Pure-random reset seed for inline resets (the OnDayStarted reset path uses its
