@@ -57,15 +57,19 @@ namespace TheLongestYear.Loop
 
             // Round-13 spec: +1 from the rolled set, not full set doubled. See
             // MineOreDropBonus for rationale + the Debris.itemId.Value read path.
-            var candidates = new System.Collections.Generic.List<string>();
+            // Quality rides along (khauser13 2026-06-10: "the dupe is not always the same
+            // quality"): Item-bearing debris carries it on item.Quality, id-based debris on
+            // Debris.itemQuality — clone with the quality-passing createObjectDebris overload.
+            var candidates = new System.Collections.Generic.List<(string Id, int Quality)>();
             int total = loc.debris.Count;
             for (int i = startDebrisCount; i < total; i++)
             {
                 var d = loc.debris[i];
                 string id = d?.item?.QualifiedItemId;
+                int quality = !string.IsNullOrEmpty(id) ? d.item.Quality : (d?.itemQuality ?? 0);
                 if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
                 if (string.IsNullOrEmpty(id)) continue;
-                candidates.Add(id);
+                candidates.Add((id, quality));
             }
             if (candidates.Count == 0) return false;
 
@@ -80,7 +84,7 @@ namespace TheLongestYear.Loop
             {
                 // Foraging path: filter stone/wood out of the candidate pool (BonusDropResolver
                 // policy — shared with ForageYieldPatch + MineDropsPatch).
-                candidates.RemoveAll(id => id == Stone || id == Wood);
+                candidates.RemoveAll(c => c.Id == Stone || c.Id == Wood);
                 if (candidates.Count == 0) return false;
                 rate = 0.20;
                 label = "forage_yield_up";
@@ -88,11 +92,11 @@ namespace TheLongestYear.Loop
 
             if (Game1.random.NextDouble() >= rate) return false;
 
-            string pickedId = candidates[Game1.random.Next(candidates.Count)];
-            Game1.createObjectDebris(pickedId, tileX, tileY, loc);
+            var picked = candidates[Game1.random.Next(candidates.Count)];
+            Game1.createObjectDebris(picked.Id, tileX, tileY, -1, picked.Quality, 1f, loc);
             BonusDropEffects.Play(loc, tileX, tileY);
             PatchLog.Info(
-                $"{label} (terrain): +1 '{pickedId}' " +
+                $"{label} (terrain): +1 '{picked.Id}' (Q{picked.Quality}) " +
                 $"(picked from {candidates.Count} vanilla drop(s)) at ({tileX}, {tileY}) on " +
                 $"{loc.NameOrUniqueName}.");
             return true;

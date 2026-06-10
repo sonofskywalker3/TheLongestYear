@@ -98,15 +98,18 @@ namespace TheLongestYear.Loop
                 // leaves Debris.item null and stores the id in Debris.itemId.Value. Read
                 // the string id; clone via Game1.createObjectDebris which uses the same
                 // constructor vanilla used so the visual + collection behaviour matches.
-                var candidates = new System.Collections.Generic.List<string>();
+                // Quality rides along (khauser13 2026-06-10) — see TerrainBonusPatches for the
+                // item.Quality / Debris.itemQuality read split.
+                var candidates = new System.Collections.Generic.List<(string Id, int Quality)>();
                 int total = __instance.debris.Count;
                 for (int i = __state; i < total; i++)
                 {
                     var d = __instance.debris[i];
                     string id = d?.item?.QualifiedItemId;
+                    int quality = !string.IsNullOrEmpty(id) ? d.item.Quality : (d?.itemQuality ?? 0);
                     if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
                     if (string.IsNullOrEmpty(id)) continue;
-                    candidates.Add(id);
+                    candidates.Add((id, quality));
                 }
                 if (candidates.Count == 0)
                 {
@@ -114,12 +117,12 @@ namespace TheLongestYear.Loop
                     return;
                 }
 
-                string pickedId = candidates[Game1.random.Next(candidates.Count)];
-                Game1.createObjectDebris(pickedId, x, y, __instance);
+                var picked = candidates[Game1.random.Next(candidates.Count)];
+                Game1.createObjectDebris(picked.Id, x, y, -1, picked.Quality, 1f, __instance);
                 BonusDropEffects.Play(__instance, x, y);
 
                 PatchLog.Info(
-                    $"{firingBonus}: stone '{stoneId}' destroyed → +1 '{pickedId}' " +
+                    $"{firingBonus}: stone '{stoneId}' destroyed → +1 '{picked.Id}' (Q{picked.Quality}) " +
                     $"(picked from {candidates.Count} vanilla drop(s)) at ({x}, {y}) on " +
                     $"{__instance.NameOrUniqueName}.");
             }
