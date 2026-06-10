@@ -18,7 +18,8 @@ namespace TheLongestYear.Donations
     ///   - We snapshot every bundle's per-slot <c>completed</c> flag when the menu opens, then
     ///     scan once per tick while it's open. A diff (false → true) means the player just
     ///     deposited; we look the ingredient up in the bundle's <c>ingredients</c> list and award
-    ///     JP for that item id × that slot's required stack.
+    ///     the rarity JP of a SINGLE item of that id (2026-06-10 design: the slot's required
+    ///     stack is an acquisition cost, not a JP multiplier — a 99-wood slot pays Common×1).
     ///   - <see cref="JunimoNoteMenu.GetRepresentativeItemId"/> resolves category ingredients (e.g.
     ///     -5 → any egg) to the concrete representative id. Plain id ingredients pass through.
     ///   - Ids may be either qualified ("(O)388") or bare ("388") depending on the bundle source —
@@ -145,7 +146,11 @@ namespace TheLongestYear.Donations
                         }
                         string rawId = JunimoNoteMenu.GetRepresentativeItemId(desc);
                         string qualifiedId = BundleParsing.NormalizeItemId(rawId);
-                        DonationService.Active.OnItemDonated(qualifiedId, desc.stack);
+                        // Single-item award (2026-06-10 design): a completed slot pays the rarity
+                        // JP of ONE item regardless of the slot's required stack — 99 wood pays
+                        // Common×1, not Common×99. Multipliers (season, weekly bonus, jp_boost)
+                        // still apply inside OnItemDonated.
+                        DonationService.Active.OnItemDonated(qualifiedId, 1);
                         // Mark as awarded so the next tick doesn't double-fire if the bundle
                         // stays in scope (e.g. player completes another slot on the same bundle).
                         prev[i] = true;
