@@ -98,7 +98,28 @@ namespace TheLongestYear.Loop
             if (Run.Seed == 0)
                 Run.Seed = NewSeed();
 
-            Run.Season = (CoreSeason)(int)Game1.season;
+            // Month-rollover-on-load (khauser13 soft lock, 2026-06-10): when the player slept
+            // into a new month and quit BEFORE completing its first day, the on-disk run-state
+            // predates the rollover (vanilla saves before OnDayStarted runs BeginNewMonth). The
+            // old blind `Run.Season = calendar` sync here destroyed the season mismatch that
+            // DoDayStartSeasonAndHub uses to detect the rollover, so SelectedThemesThisMonth
+            // kept LAST month's picks, accumulated past 4 themes, and OfferForWeek eventually
+            // returned an EMPTY offer — an unclosable theme picker. Run the same rollover the
+            // live day-start path would have: clear month state + consume the day-28 pre-pick,
+            // then re-sample the bonus list for the new season. The effect/quest restore below
+            // then operates on the rolled-over (correct) selection state.
+            var calendarSeason = (CoreSeason)(int)Game1.season;
+            if (calendarSeason != Run.Season)
+            {
+                _monitor.Log(
+                    $"Load is in {calendarSeason} but run-state was saved in {Run.Season} — the quit " +
+                    "raced the month rollover. Running BeginNewMonth now (clears last month's theme " +
+                    "selections; consumes any day-28 pre-pick).",
+                    LogLevel.Info);
+                Run.BeginNewMonth(calendarSeason);
+                if (Run.CurrentSelection.HasValue)
+                    PopulateBonusItemsForCurrentSelection();
+            }
             Run.DayOfMonth = Game1.dayOfMonth;
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
@@ -768,6 +789,23 @@ namespace TheLongestYear.Loop
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
                 : Run.SelectedThemesThisMonth;
             var offer = SelectionService.OfferForWeek(Run.Seed, week, selectionsForOffer);
+
+            // Backstop (khauser13 soft lock): the hub has no close button by design — a forced
+            // 1-of-N choice — so an EMPTY offer would hard-lock the player. The month rollover
+            // fix in OnRunLoaded removes the known cause (a stale month exhausting all 5 themes),
+            // but if any state ever exhausts the pool again, skip the week instead of locking:
+            // mark it presented (no theme, no bonus, no liability) and move on.
+            if (offer.Count == 0)
+            {
+                _monitor.Log(
+                    $"Week {week} offer is EMPTY (selected this month: " +
+                    $"[{string.Join(",", Run.SelectedThemesThisMonth)}]). Skipping the theme pick " +
+                    "this week instead of opening an unclosable hub.",
+                    LogLevel.Warn);
+                Run.OfferPresentedWeek = week;
+                _deferredOffer = null;
+                return;
+            }
 
             string seasonTag = seasonOverride.HasValue ? $" (for {seasonOverride.Value})" : "";
             _monitor.Log(
