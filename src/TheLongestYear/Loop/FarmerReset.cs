@@ -94,6 +94,12 @@ namespace TheLongestYear.Loop
             p.eventsSeen.Clear();
             p.questLog.Clear();
 
+            // Cave gift — back to unchosen each loop. loadForNewGame rebuilds the FarmCave (mushroom
+            // boxes gone) but keeps the persistent Farmer, so a stale caveChoice would otherwise
+            // carry over. The Demetrius scene only plays once now (event-hygiene pass 2026-06-10);
+            // CaveChoicePrompt re-offers mushrooms-vs-bats on cave entry whenever this is unchosen.
+            p.caveChoice.Value = 0;
+
             // Event-gating Phase 1: re-seed eventsSeen from the cross-loop "seen ever" memory rather
             // than leaving it wiped, so a scene the player already watched stays suppressed by
             // vanilla's own seen-check (the unconditional Clear() was the root cause of vanilla early

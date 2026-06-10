@@ -113,11 +113,13 @@ public sealed class EventGatingTables
     private const string FurnaceTeachEventId = "992553";
     private const string DemetriusCaveEventId = "65";
 
-    /// <summary>The live tables, wired with the audited vanilla ids. Furnace + cave are replayable
-    /// (excluded from the seen re-seed); the cave is held to Spring 5; the furnace teach is gated on
-    /// the recipe being known this run.</summary>
+    /// <summary>The live tables, wired with the audited vanilla ids. The furnace teach is replayable
+    /// (excluded from the seen re-seed) but suppressed while the recipe is already known this run.
+    /// The Demetrius cave scene plays ONCE (held to Spring 5); from loop 2 on it stays seen
+    /// (event-hygiene pass 2026-06-10) and the per-loop mushrooms-vs-bats re-choice is offered by
+    /// the lightweight <c>CaveChoicePrompt</c> on cave entry instead of replaying the cutscene.</summary>
     public static EventGatingTables Default { get; } = new EventGatingTables(
-        replayable: new[] { FurnaceTeachEventId, DemetriusCaveEventId },
+        replayable: new[] { FurnaceTeachEventId },
         holdUntilSpring5: new[] { DemetriusCaveEventId },
         furnace: new[] { FurnaceTeachEventId });
 }

@@ -30,6 +30,7 @@ namespace TheLongestYear
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
         private IReadOnlyDictionary<string, int> _ingredientStacks = new Dictionary<string, int>();
         private DonationObserver _donationObserver;
+        private CaveChoicePrompt _caveChoicePrompt;
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
@@ -154,6 +155,10 @@ namespace TheLongestYear
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
             // showed it didn't fire on real CC deposits).
             _donationObserver = new DonationObserver(helper, this.Monitor);
+
+            // Per-loop mushrooms-vs-bats re-choice on cave entry — replaces the replaying
+            // Demetrius cutscene (event-hygiene pass; see CaveChoicePrompt).
+            _caveChoicePrompt = new CaveChoicePrompt(helper, this.Monitor);
 
             // The Cookbook, Craftbook, and Bundle-log are placeable book furniture now
             // (see BookFurniture) — no tile-anchored interactables.
@@ -551,6 +556,9 @@ namespace TheLongestYear
                 TheLongestYear.Loop.EventSuppressionPatch.SuppressedEventIds,
                 System.StringComparer.Ordinal);
             exclude.UnionWith(TheLongestYear.Loop.RelationshipEventIndex.Ids);
+            // Demetrius cave (65): plays once, then stays seen — the per-loop re-choice is
+            // CaveChoicePrompt's job now, so the scan must never re-flag it as replayable.
+            exclude.Add("65");
             return exclude;
         }
 
