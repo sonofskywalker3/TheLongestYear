@@ -10,6 +10,65 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
+**✅ NOT A TLY BUG — "SVE and Longest Year clash" (Nexus bug 1089299, TheFirstBanana, 0.9.6, 7 Jun 2026) — RESOLVED 2026-06-10.**
+**Confirmed via pure-SVE test (no TLY, Odin, slept to day 5 / normal landslide timing): the Adventurer's Guild
+door has NO lock.** So SVE itself removes the vanilla "proven adventurers only" gate — TLY is not involved.
+Reply to the reporter that it's SVE's guild rework, not a TLY conflict. (Bug can be marked "Not a bug" on Nexus.)
+Investigation detail below.
+
+
+**Symptom (exact):** "The Longest Year appears to have eaten the SVE Adventurer's Guild cutscene. It never
+happened, and I could go into the guild before killing 10 slimes."
+
+**Findings (PC repro, SVE 1.15.11 + TLY 0.10.0, real log `test-output/SMAPI-sve-clash-day1.txt`):**
+- Reproduced on **day 1, loop 1, no reset.** Log shows **zero** TLY event suppression / reseed that day, so
+  the cross-loop reseed is NOT the cause of this report.
+- Vanilla locks the guild: `Mountain.checkAction` tile 1136 → "proven adventurers only" unless
+  `mailReceived "guildMember"` OR `hasQuest("16")` (user confirmed the lock on Switch).
+- Warp order in the log: Mountain → `Custom_AdventurerSummit` (SVE area) → **AdventureGuild (10:20:56)** →
+  Mine (10:21:38, *after*). So the guild was entered with no quest 16 and no prior mine visit.
+- **TLY source never touches the guild** — no `guildMember`, no quest 16, no patch on that gate (grep-confirmed).
+- **SVE rewrites the guild** — edits `Maps/Mountain`, adds `Custom_AdventurerSummit`, ships a `BeforeGuildMember`
+  Marlon schedule, gates its own initiation cutscene (event `1000034`, precond `/j 10`) on `HasFlag guildMember`.
+- **Conclusion:** the day-1 walk-in is SVE's own guild rework (SVE removes the vanilla "proven adventurers"
+  lock), not a TLY effect. Confirm with the pure-SVE test (disable TLY → guild still enterable day 1) and then
+  reply to the reporter that it's SVE's design.
+
+**The reseed is WORKING AS DESIGNED, not a bug (user 2026-06-10):** repeat loops SHOULD skip already-seen
+cutscenes (déjà-vu); only cutscenes "needed to get something" (furnace recipe, Demetrius bat/mushroom cave)
+should replay. That's exactly what `EventGatingTables.Default.ReplayableEventIds` does.
+
+**The ONE real generalization worth considering — mechanic-gating MOD cutscenes:** the `replayable` set is
+hardcoded to 2 **vanilla** ids (furnace `992553`, cave `65`). A MOD cutscene that grants a per-loop mechanic
+the reset wipes — e.g. SVE's `1000034` sets `guildMember` (cleared each loop by FarmerReset's `mailReceived.Clear()`)
+— gets marked seen and never replays, so the player can't regain that unlock on loop 2+. By the user's own rule
+("replay ones needed to get something") those SHOULD replay. **Possible general fix:** instead of a hardcoded
+vanilla id list, detect mechanic-granting cutscenes by scanning the event script for unlock commands
+(`addCraftingRecipe`/`addCookingRecipe`/recipe/mail/flag grants) and auto-add them to the replayable set — so
+any mod's "teach/unlock" cutscene replays each loop automatically, while purely-narrative ones stay skipped.
+Only do this if per-loop guild/mod-mechanic access actually matters in a run (guild combat rewards are optional
+to CC restoration — user to decide). If it doesn't matter, there is nothing to fix here.
+
+Also still worth checking under SVE (separate): whether `VaultBundleMap`/bundle-index derivation survives SVE's
+remixed/expanded bundles, and whether world-reset warps land correctly on SVE maps.
+
+### 🔁 QUEUED (next update / event-hygiene pass) — generalize "replayable" cutscene detection so MOD unlock cutscenes replay each loop
+Captured 2026-06-10 out of the SVE investigation (user wants this saved for the next update). The déjà-vu skip
+is correct by design, but the **replayable** set (cutscenes that must re-fire each loop because they grant
+something the reset wipes) is **hardcoded to two vanilla ids**: furnace teach `992553` + Demetrius cave `65`
+(`EventGatingTables.Default`). A MOD's unlock cutscene that the loop wipes — e.g. SVE's guild initiation
+`1000034` sets `guildMember`, cleared every loop by `FarmerReset` `mailReceived.Clear()` — is NOT in that list,
+so it's marked seen and never replays → the player can't regain that unlock on loop 2+. By the design rule
+("replay the ones needed to get something, like furnace/cave") it *should* replay.
+**Plan:** replace the hardcoded vanilla id list with a runtime scan — at load, read `Data/Events/*` and flag
+any event whose script contains a grant/unlock command (`addCraftingRecipe`, `addCookingRecipe`, recipe/mail/
+flag grants, `addQuest` that gates a mechanic) as replayable; merge with the existing vanilla ids. This makes
+furnace, cave, SVE's guild, and any future mod's teach/unlock cutscene auto-replay each loop, while purely
+narrative cutscenes stay skipped — works for ALL mods without hardcoding. `tly_dumpevents` already does a
+token scan over `Data/Events/*`, so the scanning machinery is half-built. Fits the v0.10.1 event-hygiene pass.
+**Scope check before building:** only worth it if regaining guild/mod-mechanic access *each loop* matters
+(guild combat rewards are optional to CC restoration) — confirm intent first.
+
 **Fixed 2026-06-09 (4th scrape — khauser13 08 Jun 4:50PM + emmainthealps 09 Jun), bound for the v0.10.0 release:**
 - **✅ FIXED v0.9.38 — Mine elevator did not lock on loop reset.** *khauser13*: "could still get down to
   floor sixty and I didn't buy the elevator unlocks." `WorldResetService` cleared only
