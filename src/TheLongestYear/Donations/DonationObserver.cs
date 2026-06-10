@@ -27,6 +27,10 @@ namespace TheLongestYear.Donations
     /// </summary>
     internal sealed class DonationObserver
     {
+        /// <summary>Bundle-data sentinel id for a money "ingredient" (the Vault bundles); its
+        /// <c>stack</c> field is the gold amount, not an item count.</summary>
+        private const string MoneyIngredientId = "-1";
+
         private readonly IMonitor _monitor;
 
         /// <summary>bundleIndex → per-slot completed snapshot taken when JunimoNoteMenu opened.
@@ -129,6 +133,16 @@ namespace TheLongestYear.Donations
                     if (!prev[i] && b.ingredients[i].completed)
                     {
                         BundleIngredientDescription desc = b.ingredients[i];
+                        // A money slot (Vault bundle) must never take the per-item path: its stack
+                        // is the GOLD amount, so 25,000g would mint 25,000 items' worth of JP. This
+                        // can really fire — a mid-session menu rebuild (window resize; routine on
+                        // Android) re-reads the slot from netWorldState as freshly completed. Vault
+                        // JP is paid by OnVaultBundlePaid via the bundle-complete diff below.
+                        if (desc.id == MoneyIngredientId)
+                        {
+                            prev[i] = true;
+                            continue;
+                        }
                         string rawId = JunimoNoteMenu.GetRepresentativeItemId(desc);
                         string qualifiedId = BundleParsing.NormalizeItemId(rawId);
                         DonationService.Active.OnItemDonated(qualifiedId, desc.stack);
