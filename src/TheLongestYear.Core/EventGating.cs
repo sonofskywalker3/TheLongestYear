@@ -79,6 +79,31 @@ public sealed class EventGatingTables
     /// <summary>True if the event script grants a run-wipe-able unlock (see <see cref="MatchedGrantToken"/>).</summary>
     public static bool ScriptGrantsUnlock(string? script) => MatchedGrantToken(script) != null;
 
+    /// <summary>The event ids that should be REPLAYABLE each loop: every scanned event whose script
+    /// grants an unlock, MINUS the explicit <paramref name="exclude"/> set (narrative-suppressed +
+    /// relationship events), UNION the always-replayable <paramref name="baseReplayableIds"/> (the
+    /// vanilla furnace/cave ids — never excluded). Pure; the runtime scanner feeds it loaded content.</summary>
+    public static HashSet<string> CollectReplayableIds(
+        IEnumerable<(string id, string script)> events,
+        IEnumerable<string> baseReplayableIds,
+        ISet<string>? exclude)
+    {
+        var result = new HashSet<string>(StringComparer.Ordinal);
+        foreach ((string id, string script) in events)
+        {
+            if (string.IsNullOrEmpty(id))
+                continue;
+            if (exclude != null && exclude.Contains(id))
+                continue;
+            if (ScriptGrantsUnlock(script))
+                result.Add(id);
+        }
+        if (baseReplayableIds != null)
+            foreach (string id in baseReplayableIds)
+                result.Add(id);
+        return result;
+    }
+
     // Real vanilla ids, confirmed via the tly_dumpevents audit (2026-06-03), both in
     // Data/Events/Farm:
     //   992553 — Clint teaches the Furnace recipe ("…you've been bringing copper ore…").
