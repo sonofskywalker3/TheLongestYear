@@ -32,7 +32,9 @@ namespace TheLongestYear.Loop
         // Event keys can appear as "191393" or "191393/precondition1/precondition2/..."
         // depending on the Data/Events/&lt;Location&gt; entry; we match the leading id segment
         // so both forms are caught.
-        private static readonly System.Collections.Generic.HashSet<string> SuppressedEventIds
+        // internal (not private): the replayable-cutscene scanner reuses this as its exclusion seed so
+        // an event we explicitly suppress is never auto-flagged as replayable (single source of truth).
+        internal static readonly System.Collections.Generic.HashSet<string> SuppressedEventIds
             = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal)
         {
             "191393", // Demetrius + Lewis CC intro in Town (Spring 5 Y1)
