@@ -40,4 +40,27 @@ public class ReplayableDetectionTests
         Assert.True(EventGatingTables.ScriptGrantsUnlock("addMailReceived guildMember/end"));
         Assert.False(EventGatingTables.ScriptGrantsUnlock("speak Lewis \"hi\"/end"));
     }
+
+    [Fact]
+    public void CollectReplayableIds_flags_grants_excludes_narrative_and_unions_base()
+    {
+        var events = new (string id, string script)[]
+        {
+            ("100", "speak Lewis \"hi\"/end"),              // narrative → not flagged
+            ("200", "addMailReceived guildMember/end"),     // grant → flagged
+            ("300", "addCraftingRecipe Furnace/end"),       // grant → flagged
+            ("191393", "addMailReceived ccDone/end"),       // grant BUT excluded → dropped
+        };
+        var baseIds = new[] { "992553", "65" };             // vanilla furnace/cave, always replayable
+        var exclude = new System.Collections.Generic.HashSet<string> { "191393" };
+
+        var result = EventGatingTables.CollectReplayableIds(events, baseIds, exclude);
+
+        Assert.Contains("200", result);
+        Assert.Contains("300", result);
+        Assert.Contains("992553", result);
+        Assert.Contains("65", result);
+        Assert.DoesNotContain("100", result);     // narrative not flagged
+        Assert.DoesNotContain("191393", result);  // excluded even though it grants
+    }
 }
