@@ -971,6 +971,14 @@ namespace TheLongestYear
                 name: () => "Show JP HUD",
                 tooltip: () => "Always-on corner counter showing banked JP and the current week's theme.");
 
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.AutoDetectReplayableUnlockCutscenes,
+                setValue: v => _config.AutoDetectReplayableUnlockCutscenes = v,
+                name: () => "Auto-detect mod unlock cutscenes",
+                tooltip: () => "Re-fire any mod cutscene that grants a recipe / mail flag / quest each " +
+                               "loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only " +
+                               "vanilla furnace/cave scenes replay. Takes effect on next save load.");
+
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
 
