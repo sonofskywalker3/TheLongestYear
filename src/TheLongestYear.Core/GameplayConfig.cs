@@ -186,6 +186,13 @@ public sealed class GameplayConfig
     /// the 1.5× / drawback-lifted state. Toggle off to hide.</summary>
     public bool ShowJpHud { get; set; } = true;
 
+    /// <summary>When true (default), TLY scans the live save's Data/Events at load and auto-flags any
+    /// cutscene that grants a run-wipe-able unlock (recipe / mail flag / quest) as "replayable" so it
+    /// re-fires each loop — covering mod unlock cutscenes, not just the vanilla furnace/cave scenes.
+    /// Set false to fall back to only the hardcoded vanilla ids (today's behavior). Takes effect on the
+    /// next save load.</summary>
+    public bool AutoDetectReplayableUnlockCutscenes { get; set; } = true;
+
     /// <summary>QA/debug: show the "Re-roll Themes" button on the planning hub, which regenerates
     /// the week's theme offer in place. Off by default — the week's offer is meant to be fixed —
     /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
