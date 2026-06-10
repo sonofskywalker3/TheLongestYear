@@ -49,23 +49,27 @@ namespace TheLongestYear.Loop
             // read-path explanation.
             int tx = (int)__instance.TileLocation.X;
             int ty = (int)__instance.TileLocation.Y;
-            var candidates = new System.Collections.Generic.List<string>();
+            // Quality rides along (khauser13 2026-06-10) — see TerrainBonusPatches for the
+            // item.Quality / Debris.itemQuality read split. Matters here: 1.6 scythe-cut
+            // forage drops carry harvest quality.
+            var candidates = new System.Collections.Generic.List<(string Id, int Quality)>();
             int total = loc.debris.Count;
             for (int i = __state; i < total; i++)
             {
                 var d = loc.debris[i];
                 string id = d?.item?.QualifiedItemId;
+                int quality = !string.IsNullOrEmpty(id) ? d.item.Quality : (d?.itemQuality ?? 0);
                 if (string.IsNullOrEmpty(id)) id = d?.itemId?.Value;
                 if (string.IsNullOrEmpty(id)) continue;
-                candidates.Add(id);
+                candidates.Add((id, quality));
             }
             if (candidates.Count == 0) return;
 
-            string pickedId = candidates[Game1.random.Next(candidates.Count)];
-            Game1.createObjectDebris(pickedId, tx, ty, loc);
+            var picked = candidates[Game1.random.Next(candidates.Count)];
+            Game1.createObjectDebris(picked.Id, tx, ty, -1, picked.Quality, 1f, loc);
             BonusDropEffects.Play(loc, tx, ty);
             PatchLog.Info(
-                $"all_drops_up: source '{__instance.QualifiedItemId}' → +1 '{pickedId}' " +
+                $"all_drops_up: source '{__instance.QualifiedItemId}' → +1 '{picked.Id}' (Q{picked.Quality}) " +
                 $"(picked from {candidates.Count} vanilla drop(s)) at ({tx}, {ty}) on " +
                 $"{loc.NameOrUniqueName}.");
         }
