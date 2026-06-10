@@ -3,6 +3,43 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.11.0 — 2026-06-10
+
+Fixes from this week's beta reports, plus a donation-JP rebalance. Consolidates
+the 0.10.1–0.10.5 dev line. Changes since 0.10.0:
+
+### Fixed
+- **Theme-picker soft lock (0.10.4).** Quitting on the first day of a new season
+  before completing it could reload into a weekly theme picker with no options and
+  no way to close it. The save was written before the month rollover ran, and the
+  load path's blind season sync erased the mismatch that triggers the rollover —
+  last month's theme picks survived, accumulated past four, and eventually excluded
+  every theme from the weekly offer. The load path now performs the month rollover
+  itself (clearing month state and consuming the day-28 pre-pick), and as a backstop
+  an empty offer skips the week instead of opening an unclosable menu — which also
+  self-heals already-affected saves.
+- **Dupe drops keep their quality (0.10.5).** The extra-item weekly bonuses
+  (mine_drops_up / all_drops_up / tree + clump + monster paths) cloned drops by id
+  only, always at base quality. The debris diff now carries `Item.Quality` /
+  `Debris.itemQuality` through to the clone. Fish and hand-picked forage dupes
+  already carried quality.
+- **Vault money slots can no longer mint JP (0.10.2).** The donation observer's
+  per-slot diff could treat a paid Vault bundle's gold amount as an item count
+  (up to ~26,000 JP for the 25,000g vault) when the menu rebuilt mid-session.
+  Money ingredients are now excluded from the per-item path; the Vault pays only
+  its intended gold-scaled award.
+
+### Changed
+- **Donation JP rebalance: single-item slot awards (0.10.3).** A completed bundle
+  slot awards the rarity JP of ONE item regardless of the slot's required stack —
+  99 wood pays Common×1, not Common×99. The stack is an acquisition cost, not a JP
+  multiplier; season scaling, weekly bonus items, and JP Boost apply unchanged.
+  Bundle, room, and weekly-goal completion bonuses are now the dominant JP source.
+- **Replayable-cutscene detection generalized (0.10.1).** Unlock-granting cutscenes
+  are auto-detected from `Data/Events` instead of a hardcoded id list, so other
+  mods' unlock scenes (e.g. Stardew Valley Expanded's) re-fire each loop the same
+  way vanilla's do. Adds the `tly_dumpreplayable` debug audit command.
+
 ## 0.10.0 — 2026-06-09
 
 A stability pass on the season-end gate and loop reset, plus fixes from beta reports.

@@ -8,25 +8,19 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.10.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.11.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.10.0
+## What's New in 0.11.0
 
-A big stability pass on the season-end gate and loop reset, plus fixes from beta reports. Changes since `0.9.6`:
+Fixes from this week's beta reports, plus a donation-JP rebalance. Changes since `0.10.0`:
 
-- **The season-end gate is reliable now.** Two opposite bugs are fixed: finishing every goal no longer occasionally *resets* you anyway (the donation ledger is now reconciled from the Center itself at day's end), and *failing* the 28th no longer advances you to the next season when you'd just finished the bus-repair Vault that same day.
-- **No more double theme pick on reset.** A loop reset used to make you pick your weekly theme twice and silently discard the first choice. Fixed — you pick once.
-- **The bus-repair (Vault) money goal counts correctly.** On remixed-bundle saves (the recommended setup) the Vault was numbered differently and the gate could never be satisfied — now the indices are read from your actual bundles. The Season Goals menu also shows the bus-repair goal in the same style as every other goal.
-- **Artisan goods keep their value through the Junimo Stash.** A Smoked Legend (and wine, jelly, aged roe, honey, bait…) no longer comes back as a generic 57g item after a reset — flavor and price are preserved.
-- **Villagers stay out of the abandoned Community Center** during a run instead of routing into it.
-- **The mine elevator locks on reset.** You no longer keep elevator access to floors you reached last loop unless you actually bought the keep-elevator upgrade.
-- **Weekly goals name the egg color.** A "Large Egg" (or "Egg") task now shows "(Brown)" or "(White)" in the quest log — the two colors are different Community Center items, so the goal tells you which one it wants instead of leaving you to guess.
-- **An in-progress tool upgrade at Clint's no longer survives a reset** as a free upgrade.
-- **Removed the stale "Rat Problem" quest** — the Center is already open from day one, so the vanilla investigation quest no longer appears.
-- **Clearer Junimo Shrine.** The planning view now states that JP is spent when a loop resets or you win — not mid-run — so the shrine no longer reads as broken.
-- **Weather:** each season is now guaranteed a special-weather day in week 1, replacing vanilla's always-on day-3 rain.
+- **The theme picker can no longer soft-lock.** Quitting on the first day of a new season (before finishing that day) could reload into a weekly theme picker with no options and no way to close it — stuck for the rest of the month. The month now rolls over correctly on load, an empty offer can never lock the menu again, and already-affected saves recover on their own the next time they load.
+- **Donation JP rebalance: one item, one award.** A completed bundle slot now awards the rarity JP of a *single* item, no matter how many the slot asks for — 99 wood pays the same as 1 parsnip. Filling big material slots is the cost of restoring the Center, not a JP farm; season scaling, weekly bonus items, and JP Boost still multiply as before. Expect bundle, room, and weekly-goal rewards to be your main JP income now.
+- **Duplicated drops keep their quality.** The weekly bonuses that grant an extra item now copy the original's quality instead of always dropping a base-quality copy.
+- **Vault payments pay the right JP.** Paying a bus-repair Vault goal could mint a massive, unintended JP windfall if the donation menu refreshed at the wrong moment. The Vault now always pays its intended gold-scaled amount.
+- **Other mods' unlock cutscenes replay correctly.** Unlock scenes added by other installed mods are now auto-detected from the game's event data, so their unlocks re-fire each loop the same way vanilla's do (previously only a fixed list was handled).
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
