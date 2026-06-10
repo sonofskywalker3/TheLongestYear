@@ -46,6 +46,39 @@ public sealed class EventGatingTables
     public bool IsHeldUntilSpring5(string eventId) => _holdUntilSpring5.Contains(eventId);
     public bool IsFurnaceTeach(string eventId) => _furnace.Contains(eventId);
 
+    /// <summary>Event-script commands that GRANT a run-wipe-able unlock. An event whose script runs
+    /// any of these re-teaches/re-unlocks something <c>FarmerReset</c> clears, so it must re-fire each
+    /// loop. "mailReceived" is the vanilla alias of "addMailReceived" (Event.cs DefaultCommands).</summary>
+    private static readonly string[] GrantCommandTokens =
+        { "addCraftingRecipe", "addCookingRecipe", "addMailReceived", "mailReceived", "addQuest" };
+
+    /// <summary>The grant command this script runs (for diagnostics), or null if none. Event scripts
+    /// are "/"-delimited command segments; a grant is detected when a segment STARTS WITH a token
+    /// (followed by a space or end-of-segment), so a token appearing inside <c>speak</c> dialogue text
+    /// is ignored.</summary>
+    public static string? MatchedGrantToken(string? script)
+    {
+        if (string.IsNullOrEmpty(script))
+            return null;
+        foreach (string segment in script.Split('/'))
+        {
+            string s = segment.TrimStart();
+            foreach (string token in GrantCommandTokens)
+            {
+                if (s.Length < token.Length)
+                    continue;
+                if (!s.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (s.Length == token.Length || s[token.Length] == ' ')
+                    return token;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>True if the event script grants a run-wipe-able unlock (see <see cref="MatchedGrantToken"/>).</summary>
+    public static bool ScriptGrantsUnlock(string? script) => MatchedGrantToken(script) != null;
+
     // Real vanilla ids, confirmed via the tly_dumpevents audit (2026-06-03), both in
     // Data/Events/Farm:
     //   992553 — Clint teaches the Furnace recipe ("…you've been bringing copper ore…").
