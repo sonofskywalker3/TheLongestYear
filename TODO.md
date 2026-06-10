@@ -52,22 +52,24 @@ to CC restoration — user to decide). If it doesn't matter, there is nothing to
 Also still worth checking under SVE (separate): whether `VaultBundleMap`/bundle-index derivation survives SVE's
 remixed/expanded bundles, and whether world-reset warps land correctly on SVE maps.
 
-### 🔁 QUEUED (next update / event-hygiene pass) — generalize "replayable" cutscene detection so MOD unlock cutscenes replay each loop
-Captured 2026-06-10 out of the SVE investigation (user wants this saved for the next update). The déjà-vu skip
-is correct by design, but the **replayable** set (cutscenes that must re-fire each loop because they grant
-something the reset wipes) is **hardcoded to two vanilla ids**: furnace teach `992553` + Demetrius cave `65`
-(`EventGatingTables.Default`). A MOD's unlock cutscene that the loop wipes — e.g. SVE's guild initiation
-`1000034` sets `guildMember`, cleared every loop by `FarmerReset` `mailReceived.Clear()` — is NOT in that list,
-so it's marked seen and never replays → the player can't regain that unlock on loop 2+. By the design rule
-("replay the ones needed to get something, like furnace/cave") it *should* replay.
-**Plan:** replace the hardcoded vanilla id list with a runtime scan — at load, read `Data/Events/*` and flag
-any event whose script contains a grant/unlock command (`addCraftingRecipe`, `addCookingRecipe`, recipe/mail/
-flag grants, `addQuest` that gates a mechanic) as replayable; merge with the existing vanilla ids. This makes
-furnace, cave, SVE's guild, and any future mod's teach/unlock cutscene auto-replay each loop, while purely
-narrative cutscenes stay skipped — works for ALL mods without hardcoding. `tly_dumpevents` already does a
-token scan over `Data/Events/*`, so the scanning machinery is half-built. Fits the v0.10.1 event-hygiene pass.
-**Scope check before building:** only worth it if regaining guild/mod-mechanic access *each loop* matters
-(guild combat rewards are optional to CC restoration) — confirm intent first.
+### ✅ DONE v0.10.1 (2026-06-10) — generalized "replayable" cutscene detection so MOD unlock cutscenes replay each loop
+Scope confirmed YES (regaining mod-mechanic access each loop matters for completeness across all mods), then
+built max-recall per the user's choice. Spec `docs/superpowers/specs/2026-06-10-generalized-replayable-cutscene-detection-design.md`,
+plan `docs/superpowers/plans/2026-06-10-generalized-replayable-cutscene-detection.md`. Commits `354b15d..a9c2a54`.
+**Shipped:**
+- Pure Core (`EventGatingTables`): `MatchedGrantToken` / `ScriptGrantsUnlock` (boundary-aware "/"-segment scan
+  for `addCraftingRecipe`/`addCookingRecipe`/`addMailReceived`/`mailReceived`/`addQuest`) + `CollectReplayableIds`
+  (flags grants, subtracts the exclusion set, unions the vanilla furnace/cave ids). Unit-tested.
+- `ReplayableEventScan` (impure shell): at `SaveLoaded`, scans every live `Game1.locations` `Data/Events/*`
+  (covers mod-added locations like SVE's `Custom_AdventurerSummit`), feeds the pure collector, caches the set;
+  cleared on deactivate. `FarmerReset` reseed now OR's it with `EventGatingTables.Default`.
+- Safety: exclusion set = `EventSuppressionPatch.SuppressedEventIds` (e.g. Lewis CC `191393`) ∪
+  `RelationshipEventIndex.Ids`; config kill-switch `AutoDetectReplayableUnlockCutscenes` (default on) + GMCM;
+  `tly_dumpreplayable` debug audit command. 489 tests pass; final code review APPROVED.
+- **PENDING: in-game smoke test** — deploy, then `tly_dumpreplayable` on a TLY save should show furnace `992553`
+  + cave `65` flagged, `191393` excluded=true, `config enabled=True`; SaveLoaded log shows the scan count.
+- *Known limitation (documented): grants nested in `quickQuestion` `\`-delimited choice branches aren't matched
+  — no vanilla teach uses that shape; revisit only if a choice-gated mod teach is reported as not replaying.*
 
 **Fixed 2026-06-09 (4th scrape — khauser13 08 Jun 4:50PM + emmainthealps 09 Jun), bound for the v0.10.0 release:**
 - **✅ FIXED v0.9.38 — Mine elevator did not lock on loop reset.** *khauser13*: "could still get down to
