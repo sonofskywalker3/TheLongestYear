@@ -181,6 +181,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
             helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
+            helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
@@ -461,6 +462,62 @@ namespace TheLongestYear
             }
             this.Monitor.Log(
                 $"[dumpevents] scanned {total} events across {locations.Length} locations; {hits} candidate(s) matched.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Audit the replayable-cutscene detection: scan the live save's events, log every
+        /// unlock-granting cutscene with the matched grant command + whether the exclusion set drops it,
+        /// then the resulting flagged-id set. Requires a loaded save (reads Game1.locations).</summary>
+        private void CmdDumpReplayable(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            System.Collections.Generic.HashSet<string> exclude = BuildReplayableExclude();
+            int total = 0, grants = 0, excluded = 0;
+
+            foreach (GameLocation loc in Game1.locations)
+            {
+                if (string.IsNullOrEmpty(loc?.Name)) continue;
+
+                System.Collections.Generic.Dictionary<string, string> data;
+                try
+                {
+                    data = this.Helper.GameContent.Load<System.Collections.Generic.Dictionary<string, string>>($"Data/Events/{loc.Name}");
+                }
+                catch (System.Exception)
+                {
+                    continue;
+                }
+                if (data == null) continue;
+
+                foreach (System.Collections.Generic.KeyValuePair<string, string> kv in data)
+                {
+                    total++;
+                    string script = kv.Value ?? "";
+                    string token = EventGatingTables.MatchedGrantToken(script);
+                    if (token == null) continue;
+
+                    grants++;
+                    int slash = kv.Key.IndexOf('/');
+                    string id = slash < 0 ? kv.Key : kv.Key.Substring(0, slash);
+                    bool isExcluded = exclude.Contains(id);
+                    if (isExcluded) excluded++;
+                    string snippet = script.Length > 120 ? script.Substring(0, 120) : script;
+                    this.Monitor.Log(
+                        $"[dumpreplayable] {loc.Name} id={id} grant='{token}' excluded={isExcluded} :: {snippet}",
+                        LogLevel.Info);
+                }
+            }
+
+            this.Monitor.Log(
+                $"[dumpreplayable] scanned {total} events; {grants} grant-cutscene(s), {excluded} excluded, " +
+                $"{grants - excluded} flagged replayable (config enabled={_config.AutoDetectReplayableUnlockCutscenes}). " +
+                $"Exclusion set has {exclude.Count} id(s). Vanilla base always-replayable: " +
+                $"[{string.Join(",", EventGatingTables.Default.ReplayableEventIds)}].",
                 LogLevel.Info);
         }
 
