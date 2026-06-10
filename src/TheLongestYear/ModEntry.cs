@@ -277,6 +277,16 @@ namespace TheLongestYear
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
+            // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
+            // unlock-granting cutscene (recipe/mail/quest) so a mod's teach/unlock scene re-fires each
+            // loop, merged with the vanilla furnace/cave ids. FarmerReset consults it at reset time.
+            TheLongestYear.Loop.ReplayableEventScan.Populate(
+                this.Helper.GameContent,
+                Game1.locations,
+                EventGatingTables.Default.ReplayableEventIds,
+                BuildReplayableExclude(),
+                _config.AutoDetectReplayableUnlockCutscenes,
+                this.Monitor);
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
             _mountainUnlock = new MountainUnlock(this.Monitor);
@@ -373,6 +383,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             DonationService.Active = null;
+            TheLongestYear.Loop.ReplayableEventScan.Clear();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
             // OnSaveLoaded; the dormant bail returns before that, so detach here too or a tracker
             // left over from a prior TLY save keeps firing on the non-TLY save's warps.
@@ -471,6 +482,19 @@ namespace TheLongestYear
                 this.Monitor.Log(
                     $"Recorded {added} newly-seen event id(s) to SeenEventsEver (total {seen.Count}).",
                     LogLevel.Trace);
+        }
+
+        /// <summary>The exclusion seed for the replayable-cutscene scan: events we explicitly suppress
+        /// (<see cref="TheLongestYear.Loop.EventSuppressionPatch.SuppressedEventIds"/>, e.g. the Lewis
+        /// CC intro) plus relationship/heart events (which re-fire via their own reseed skip). An event
+        /// in this set is never auto-flagged as a wipe-able unlock grant.</summary>
+        private static System.Collections.Generic.HashSet<string> BuildReplayableExclude()
+        {
+            var exclude = new System.Collections.Generic.HashSet<string>(
+                TheLongestYear.Loop.EventSuppressionPatch.SuppressedEventIds,
+                System.StringComparer.Ordinal);
+            exclude.UnionWith(TheLongestYear.Loop.RelationshipEventIndex.Ids);
+            return exclude;
         }
 
         private void PrintMeta(string command, string[] args)
