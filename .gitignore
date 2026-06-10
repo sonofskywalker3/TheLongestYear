@@ -20,3 +20,6 @@ save-recovery-backup/
 
 # Sprite generator zoomed previews (not shipped)
 tools/preview/
+
+# Local test/dev artifacts (logs, scrapes, recon screenshots, evidence saves) — not part of the repo
+test-output/
