@@ -41,7 +41,7 @@ try {
         dotnet build (Join-Path $root 'src\TheLongestYear\TheLongestYear.csproj') -c Release -v quiet
         if ($LASTEXITCODE -ne 0) { throw "Release build failed." }
     }
-    $zip = Join-Path $root "src\TheLongestYear\bin\Release\net6.0\The Longest Year $version.zip"
+    $zip = Join-Path $root "src\TheLongestYear\bin\Release\net6.0\TheLongestYear $version.zip"
     if (-not (Test-Path $zip)) { throw "Release zip not found: $zip" }
 
     # 2. Push + GitHub release (fires publish-nexus.yml -> Nexus file upload).
