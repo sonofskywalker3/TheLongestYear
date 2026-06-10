@@ -6,6 +6,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 📄 Mod page: surface the remixed-bundles recommendation (promised to khauser13 2026-06-10)
+khauser13: "Noticed in the change logs that it is recommended to use remixed bundles. You may want
+to include a picture of recommended settings or note that in the mod description." Replied on Nexus
+(2026-06-10) promising to add it. Add a "recommended setup" note (remixed bundles ON) to the
+README + nexus-description (content-identical, house style) — ideally with a screenshot of the
+new-game options — and sync the live description with the next release.
+
+### ✅ DONE v0.11.1 (2026-06-10) — event-hygiene pass: cave re-choice prompt replaces replaying Demetrius scene
+The Demetrius cave cutscene (65) no longer replays every loop: it plays once (Spring-5 hold kept),
+then `FarmerReset` clears `caveChoice` each loop and the new `CaveChoicePrompt` offers
+mushrooms / fruit bats / decide-later on cave entry whenever unchosen (applies vanilla's
+`hostActionChooseCave` effects). Furnace teach (992553) keeps replayable + recipe-known gating;
+Lewis CC (191393) stays suppressed. PENDING PLAYTEST: reset a loop (`tly_failreset`), enter the
+cave, confirm prompt + mushroom boxes; check the dialogue wording feels right.
+
 ### 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-08)
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
