@@ -71,9 +71,13 @@ Three pieces, following the existing house pattern (`RelationshipEventIndex` sta
 ### B. Runtime scanner (impure shell) — new `ReplayableEventScan` static provider
 
 - Populated at `SaveLoaded` (after `Game1.locations` exists and content is loadable).
-- Enumerates location names = **`Game1.locations.Select(l => l.Name)` ∪ the vanilla location list**. Using
-  the live world's locations is what makes detection general — it covers mod-added locations (e.g. SVE's
-  `Custom_AdventurerSummit`), not just the hardcoded 34 from `CmdDumpEvents`.
+- Enumerates location names = **`Game1.locations` (every loaded location's `.Name`)**. Using the live world
+  is what makes detection general — it covers mod-added locations (e.g. SVE's `Custom_AdventurerSummit`),
+  not just the hardcoded 34 from `CmdDumpEvents`. **Live-only, intentionally** (resolved during code review,
+  2026-06-10): every event-bearing vanilla location (Farm, Town, all interiors, CommunityCenter, Mine, …) is
+  always a persistent `GameLocation` in `Game1.locations` at `SaveLoaded`, so the old vanilla static list is
+  a strict subset that adds zero recall — and a 4th hardcoded copy of that list would violate DRY. Live
+  enumeration is therefore at-least-as-correct for vanilla and strictly more general for mods.
 - For each location, `Helper.GameContent.Load<Dictionary<string,string>>($"Data/Events/{loc}")` (try/catch
   the missing-file case, as `CmdDumpEvents` already does), strip the precondition suffix from each key to
   get the bare id, and feed `(id, script)` pairs into `CollectReplayableIds`.
@@ -150,3 +154,8 @@ Pure Core functions → unit tests with no game content (mirrors `EventGatingPol
   ids via the exclusion set.
 - The reset-path consolidation tech debt — explicitly deferred until after any bugfix work (no refactor
   mid-fix).
+- **Known matcher limitation (review note, 2026-06-10):** `MatchedGrantToken` splits scripts on `/` only, so
+  a grant command nested inside a `quickQuestion` dialogue-choice branch (branches are `\`-delimited, not
+  `/`) is not detected — that event won't be auto-flagged replayable. No vanilla unlock teach uses this shape;
+  revisit only if a "my mod's choice-gated teach won't replay" report appears. A code comment near
+  `MatchedGrantToken` records this so it isn't a future surprise.

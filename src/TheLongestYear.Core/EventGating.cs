@@ -55,7 +55,9 @@ public sealed class EventGatingTables
     /// <summary>The grant command this script runs (for diagnostics), or null if none. Event scripts
     /// are "/"-delimited command segments; a grant is detected when a segment STARTS WITH a token
     /// (followed by a space or end-of-segment), so a token appearing inside <c>speak</c> dialogue text
-    /// is ignored.</summary>
+    /// is ignored. Limitation: only "/"-segments are scanned, so a grant nested in a <c>quickQuestion</c>
+    /// dialogue-choice branch (branches are "\"-delimited, not "/") is not detected — no vanilla unlock
+    /// teach uses that shape; revisit if a choice-gated mod teach is reported as not replaying.</summary>
     public static string? MatchedGrantToken(string? script)
     {
         if (string.IsNullOrEmpty(script))
