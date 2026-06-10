@@ -1,0 +1,29 @@
+0.11.0 — Beta-report fixes + donation-JP rebalance
+
+Fixes from this week's beta reports, plus a donation-JP rebalance. Changes
+since 0.10.0:
+
+Fixes
+- The theme picker can no longer soft-lock. Quitting on the first day of a new
+  season (before finishing that day) could reload into a weekly theme picker
+  with no options and no way to close it — stuck for the rest of the month.
+  The month now rolls over correctly on load, an empty offer can never lock
+  the menu again, and already-affected saves recover on their own the next
+  time they load.
+- Duplicated drops keep their quality. The weekly bonuses that grant an extra
+  item now copy the original's quality instead of always dropping a
+  base-quality copy.
+- Vault payments pay the right JP. Paying a bus-repair Vault goal could mint a
+  massive, unintended JP windfall if the donation menu refreshed at the wrong
+  moment. The Vault now always pays its intended gold-scaled amount.
+- Other mods' unlock cutscenes replay correctly. Unlock scenes added by other
+  installed mods are now auto-detected from the game's event data, so their
+  unlocks re-fire each loop the same way vanilla's do.
+
+Changed
+- Donation JP rebalance: one item, one award. A completed bundle slot now
+  awards the rarity JP of a SINGLE item, no matter how many the slot asks
+  for — 99 wood pays the same as 1 parsnip. Filling big material slots is the
+  cost of restoring the Center, not a JP farm; season scaling, weekly bonus
+  items, and JP Boost still multiply as before. Expect bundle, room, and
+  weekly-goal rewards to be your main JP income now.

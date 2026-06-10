@@ -1,24 +1,18 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.10.0).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.11.0).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.10.0[/b][/size]
-A big stability pass on the season-end gate and loop reset, plus fixes from beta reports. Changes since 0.9.6:
+[size=5][b]What's New in 0.11.0[/b][/size]
+Fixes from this week's beta reports, plus a donation-JP rebalance. Changes since 0.10.0:
 [list]
-[*][b]The season-end gate is reliable now.[/b] Two opposite bugs are fixed: finishing every goal no longer occasionally resets you anyway (the donation ledger is now reconciled from the Center itself at day's end), and failing the 28th no longer advances you to the next season when you'd just finished the bus-repair Vault that same day.
-[*][b]No more double theme pick on reset.[/b] A loop reset used to make you pick your weekly theme twice and silently discard the first choice. Fixed — you pick once.
-[*][b]The bus-repair (Vault) money goal counts correctly.[/b] On remixed-bundle saves (the recommended setup) the Vault was numbered differently and the gate could never be satisfied — now the indices are read from your actual bundles. The Season Goals menu also shows the bus-repair goal in the same style as every other goal.
-[*][b]Artisan goods keep their value through the Junimo Stash.[/b] A Smoked Legend (and wine, jelly, aged roe, honey, bait…) no longer comes back as a generic 57g item after a reset — flavor and price are preserved.
-[*][b]Villagers stay out of the abandoned Community Center[/b] during a run instead of routing into it.
-[*][b]The mine elevator locks on reset.[/b] You no longer keep elevator access to floors you reached last loop unless you actually bought the keep-elevator upgrade.
-[*][b]Weekly goals name the egg color.[/b] A "Large Egg" (or "Egg") task now shows "(Brown)" or "(White)" in the quest log — the two colors are different Community Center items, so the goal tells you which one it wants instead of leaving you to guess.
-[*][b]An in-progress tool upgrade at Clint's no longer survives a reset[/b] as a free upgrade.
-[*][b]Removed the stale "Rat Problem" quest[/b] — the Center is already open from day one, so the vanilla investigation quest no longer appears.
-[*][b]Clearer Junimo Shrine.[/b] The planning view now states that JP is spent when a loop resets or you win — not mid-run — so the shrine no longer reads as broken.
-[*][b]Weather:[/b] each season is now guaranteed a special-weather day in week 1, replacing vanilla's always-on day-3 rain.
+[*][b]The theme picker can no longer soft-lock.[/b] Quitting on the first day of a new season (before finishing that day) could reload into a weekly theme picker with no options and no way to close it — stuck for the rest of the month. The month now rolls over correctly on load, an empty offer can never lock the menu again, and already-affected saves recover on their own the next time they load.
+[*][b]Donation JP rebalance: one item, one award.[/b] A completed bundle slot now awards the rarity JP of a [i]single[/i] item, no matter how many the slot asks for — 99 wood pays the same as 1 parsnip. Filling big material slots is the cost of restoring the Center, not a JP farm; season scaling, weekly bonus items, and JP Boost still multiply as before. Expect bundle, room, and weekly-goal rewards to be your main JP income now.
+[*][b]Duplicated drops keep their quality.[/b] The weekly bonuses that grant an extra item now copy the original's quality instead of always dropping a base-quality copy.
+[*][b]Vault payments pay the right JP.[/b] Paying a bus-repair Vault goal could mint a massive, unintended JP windfall if the donation menu refreshed at the wrong moment. The Vault now always pays its intended gold-scaled amount.
+[*][b]Other mods' unlock cutscenes replay correctly.[/b] Unlock scenes added by other installed mods are now auto-detected from the game's event data, so their unlocks re-fire each loop the same way vanilla's do (previously only a fixed list was handled).
 [/list]
 Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
 
