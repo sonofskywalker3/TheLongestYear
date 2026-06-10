@@ -105,7 +105,11 @@ namespace TheLongestYear.Loop
                 // Replayable scenes (furnace/cave) and relationship/heart events stay eligible: the
                 // former are re-gated by EventGatingPolicy, the latter must re-fire as the player
                 // rebuilds friendships from zero each loop.
-                if (EventGatingTables.Default.IsReplayable(id)) continue;
+                // Replayable = the hardcoded vanilla ids (furnace/cave) OR any unlock-granting cutscene
+                // the load-time scan flagged (mod teach/unlock scenes). Either way, don't re-mark it
+                // seen, so it stays eligible to re-fire this loop.
+                if (EventGatingTables.Default.IsReplayable(id)
+                    || ReplayableEventScan.IsReplayable(id)) continue;
                 if (RelationshipEventIndex.Contains(id)) continue;
                 if (p.eventsSeen.Contains(id)) continue;
                 p.eventsSeen.Add(id);
