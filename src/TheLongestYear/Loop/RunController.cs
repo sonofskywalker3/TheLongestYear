@@ -386,10 +386,25 @@ namespace TheLongestYear.Loop
 
         /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
         /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
-        private void ContinueAfterResetSpend()
+        private void ContinueAfterResetSpend() => FinalizeReset("shrine closed");
+
+        /// <summary>
+        /// THE one loop-reset finalizer (tech-debt consolidation, 2026-06-10). Every path that
+        /// rewinds the world to Spring 1 of a new run MUST route through here so cross-cutting
+        /// fixes land once: the real fail/win→new-loop reset calls it via
+        /// <see cref="ContinueAfterResetSpend"/>, and the debug <c>tly_reset</c>/<c>tly_resetif</c>
+        /// path calls it from <c>ModEntry.FullResetAndPresentOffer</c> — which previously
+        /// hand-copied a subset (it missed ActiveEffectsProvider.Clear, so a debug reset leaked the
+        /// old theme's bonus/liability, and skipped ForceFullSave, so it wasn't a faithful stand-in
+        /// for a real reset — the v0.9.38 mine-elevator test fell into exactly that gap).
+        /// NOTE: <see cref="ApplyKeepPlaying"/> is intentionally NOT routed through here — keeping
+        /// a won run is not a reset (no PerformReset/BeginNewRun); it shares only the
+        /// persist-immediately + day-start-hub tail.
+        /// </summary>
+        public void FinalizeReset(string reason)
         {
             _monitor.Log(
-                $"ContinueAfterResetSpend: shrine closed, applying reset (eventUp={Game1.eventUp}, " +
+                $"FinalizeReset ({reason}): applying reset (eventUp={Game1.eventUp}, " +
                 $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Game1.season} {Game1.dayOfMonth}).",
                 LogLevel.Info);
             // Capture a partial-reset failure explicitly. PerformReset changes uniqueIDForThisGame
@@ -402,7 +417,7 @@ namespace TheLongestYear.Loop
             }
             catch (System.Exception ex)
             {
-                _monitor.Log($"ContinueAfterResetSpend: PerformReset threw — reset NOT applied: {ex}", LogLevel.Error);
+                _monitor.Log($"FinalizeReset ({reason}): PerformReset threw — reset NOT applied: {ex}", LogLevel.Error);
                 throw;
             }
             _reset.ProfessionPicker.DrainOnDayStart();
@@ -412,8 +427,7 @@ namespace TheLongestYear.Loop
             // run/reset counters) IMMEDIATELY. A deferred SaveLoaded fires after the in-place reset
             // and calls MetaStore.Load(), which would otherwise overwrite our in-memory state with
             // the stale on-disk meta from before the shrine was opened — refunding the JP the player
-            // just spent and dropping their purchases. ApplyKeepPlaying + ModEntry.FullResetAndPresentOffer
-            // guard the same way; this path was missing it (2026-06-01 playtest: "it refunded all my JP").
+            // just spent and dropping their purchases (2026-06-01 playtest: "it refunded all my JP").
             _store.Save();
             ForceFullSave();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
@@ -429,7 +443,7 @@ namespace TheLongestYear.Loop
             // the deferred reload read it back as presented, so the day-start guard skips the re-fire.
             _store.Save();
             // Restore the HUD hidden for the FAIL cutscene's shop→reset window (OnCutsceneEnded).
-            // Safe/no-op on the non-cutscene paths that also call this (post-win, fallback).
+            // Safe/no-op on the non-cutscene paths that also call this (post-win, debug, fallback).
             Game1.displayHUD = true;
         }
 

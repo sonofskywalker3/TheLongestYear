@@ -880,27 +880,19 @@ namespace TheLongestYear
         /// BeginNewRun so the subsequent SaveLoaded's Load reads the post-reset state.</summary>
         private void FullResetAndPresentOffer()
         {
-            _reset.PerformReset();
-            _reset.ProfessionPicker.DrainOnDayStart();
-            _meta.Run.BeginNewRun(NewRunSeed());
-            _meta.Save();   // persist the cleared state so deferred SaveLoaded can't revert it
-            this.Monitor.Log(
-                $"Reset complete. Run {_meta.Run.RunNumber} begins (seed {_meta.Run.Seed}). " +
-                "Opening week 1 hub.",
-                LogLevel.Info);
-            _runController?.PresentOffer(targetWeekOfYear: 1);
-
-            // Re-persist AFTER PresentOffer set Run.OfferPresentedWeek = 1. The _meta.Save() above
-            // ran while it was still -1 (BeginNewRun), so without this the deferred SaveLoaded ->
-            // _meta.Load() reverts the marker and the day-start guard re-presents the offer (double
-            // theme pick). Same fix as ContinueAfterResetSpend (RunController.cs) — keep both reset
-            // paths in sync so the debug reset behaves like the natural fail-day-28 reset.
-            _meta.Save();
+            // Tech-debt consolidation (2026-06-10): the debug reset is now a thin alias for THE
+            // shared finalizer (RunController.FinalizeReset) instead of a hand-copied subset. That
+            // makes tly_reset a faithful stand-in for the real fail-day-28 reset (it previously
+            // skipped ActiveEffectsProvider.Clear — leaking the old theme's effects — and
+            // ForceFullSave, and presented the offer via PresentOffer(1) instead of the real
+            // day-start flow). Cross-cutting reset fixes now land once, in FinalizeReset.
+            if (_runController == null)
+            {
+                this.Monitor.Log("Reset unavailable: no run controller (load a save first).", LogLevel.Warn);
+                return;
+            }
+            _runController.FinalizeReset("debug tly_reset");
         }
-
-        /// <summary>Pure-random reset seed for inline resets (the OnDayStarted reset path uses its
-        /// own seed via RunController.NewSeed; this is the simpler external entry point).</summary>
-        private static int NewRunSeed() => new Random().Next();
 
         private void LeakTest(string command, string[] args)
         {
