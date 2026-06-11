@@ -313,6 +313,11 @@ ending work, so fold them together when this gets spec'd. Not yet spec'd —
 needs an event-script design pass (custom `Data/Events`, Junimo sprite reuse from
 `Characters/Junimo`, Joja-store staging at JojaMart).
 
+**Known cosmetic to design OUT in the revamp (user decision 2026-06-10, do NOT fix in place):**
+the Lewis day-1 intro cutscene renders a **black bar along the right side of the screen**
+(xsansara's "black block" report; Jeff sees it too). Whatever causes the current intro's
+viewport/letterboxing to come up short, the rebuilt 1.0 intro should avoid the same approach.
+
 ### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
 **Source / credit: u/Gribbleby** on the r/StardewValley beta announcement thread
 (https://www.reddit.com/r/StardewValley/comments/1txuhfb/ — 98 upvotes, 20k+ views). Their seed:
