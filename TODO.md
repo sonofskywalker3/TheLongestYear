@@ -9,9 +9,16 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ### 📄 Mod page: surface the remixed-bundles recommendation (promised to khauser13 2026-06-10)
 khauser13: "Noticed in the change logs that it is recommended to use remixed bundles. You may want
 to include a picture of recommended settings or note that in the mod description." Replied on Nexus
-(2026-06-10) promising to add it. Add a "recommended setup" note (remixed bundles ON) to the
-README + nexus-description (content-identical, house style) — ideally with a screenshot of the
-new-game options — and sync the live description with the next release.
+(2026-06-10) promising to add it. **Repo-side DONE (266d259):** Install step added to README +
+nexus-description (content-identical). **Remaining:** a screenshot of the new-game Advanced Options
+panel for the page, and the live-description sync (rides the next release's nexus-update run).
+
+### 🔍 VERIFY — Better Chests × Junimo Stash capacity fix (v0.11.3, 4b9097e)
+Our `Chest.GetActualCapacity` postfix is now `Priority.Last` so the stash's true slot count wins
+over Better Chests' resize postfix regardless of load order (VeggieGirl43: 70-slot grid, 4 usable).
+Not yet verified with Better Chests actually installed — install BC on the PC test setup (or ask
+VeggieGirl43 to retest on the release that ships this) and confirm the stash opens at its real
+slot count.
 
 ### ✅ DONE v0.11.1 (2026-06-10) — event-hygiene pass: cave re-choice prompt replaces replaying Demetrius scene
 The Demetrius cave cutscene (65) no longer replays every loop: it plays once (Spring-5 hold kept),
@@ -100,6 +107,13 @@ plan `docs/superpowers/plans/2026-06-10-generalized-replayable-cutscene-detectio
 - **✅ FIXED v0.9.41 — Stale vanilla "Rat Problem" quest appeared in a run.** *khauser13 / niki_m_m3*.
   `RatProblemQuestPatch` prefixes `Farmer.addQuest` to skip id 26 mid-run + strips it from existing
   saves on load; gated on `RunActivation.IsActive`.
+
+### ✅ DONE v0.11.2 (2026-06-10) — reset paths consolidated into RunController.FinalizeReset
+`ContinueAfterResetSpend` delegates to the shared finalizer; `ModEntry.FullResetAndPresentOffer`
+(tly_reset/tly_resetif) is a thin alias, gaining the missing `ActiveEffectsProvider.Clear` (debug
+resets leaked theme effects), `ForceFullSave`, and the real day-start flow — so `tly_reset` is now a
+faithful stand-in for a real reset. `ApplyKeepPlaying` intentionally NOT routed (not a reset; shares
+only the persist + day-start tail). Original notes below:
 
 ### 🔧 Tech debt — consolidate the three reset paths (found 2026-06-09)
 There are **three** near-identical "reset world → BeginNewRun → persist → present week-1 offer"
