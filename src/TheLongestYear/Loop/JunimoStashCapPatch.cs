@@ -229,6 +229,13 @@ namespace TheLongestYear.Loop
 
         public static void Connect(MetaState meta) => _meta = meta;
 
+        // Priority.Last: among postfixes, lower priority runs LATER, so ours writes __result
+        // last and wins. Without this, another mod's capacity postfix can override the stash
+        // cap depending on mod load order — VeggieGirl43 (Reddit, 2026-06-06) saw the stash
+        // open as a 70-slot grid with Better Chests installed while only 4 slots actually
+        // accepted items (the addItem cap patch still enforced the real limit). Fix-our-mod
+        // rule: we pin our answer for OUR chest only; every other chest is untouched.
+        [HarmonyPriority(Priority.Last)]
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(Chest __instance, ref int __result)
         {
