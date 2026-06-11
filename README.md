@@ -48,6 +48,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
 4. **Start a new game on the Standard farm.** The farm-type and skip-intro options are managed for you — the mod's own intro plays in their place.
+5. **Recommended: turn ON "remix bundles"** (Advanced Options → Community Center Bundles → Remixed when creating the farm). Every loop reshuffles which bundles you get and what they ask for, so no two runs play the same — it's the setup the mod is balanced around. Standard bundles work fine too if you prefer to master one fixed set.
 
 ## How it works
 
