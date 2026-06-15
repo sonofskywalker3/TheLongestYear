@@ -235,6 +235,27 @@ public static class UpgradeCatalog
         new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer",
             "On the shrine, flags which Traveling Cart items can feed a Community Center bundle.", 350),
 
+        // Foresight — Cart Stall upgrades. Each tier unlocks one additional visible item slot on
+        // the Traveling Cart (base = 1; buying slot_2 gives 2 items per visit, etc.).
+        new UpgradeDefinition("cart_slot_2", UpgradeCategory.Foresight, "Cart Stall II",
+            "The Traveling Cart offers 2 items per visit.", 40),
+        new UpgradeDefinition("cart_slot_3", UpgradeCategory.Foresight, "Cart Stall III",
+            "The Traveling Cart offers 3 items per visit.", 80, "cart_slot_2"),
+        new UpgradeDefinition("cart_slot_4", UpgradeCategory.Foresight, "Cart Stall IV",
+            "The Traveling Cart offers 4 items per visit.", 140, "cart_slot_3"),
+        new UpgradeDefinition("cart_slot_5", UpgradeCategory.Foresight, "Cart Stall V",
+            "The Traveling Cart offers 5 items per visit.", 220, "cart_slot_4"),
+        new UpgradeDefinition("cart_slot_6", UpgradeCategory.Foresight, "Cart Stall VI",
+            "The Traveling Cart offers 6 items per visit.", 320, "cart_slot_5"),
+        new UpgradeDefinition("cart_slot_7", UpgradeCategory.Foresight, "Cart Stall VII",
+            "The Traveling Cart offers 7 items per visit.", 450, "cart_slot_6"),
+        new UpgradeDefinition("cart_slot_8", UpgradeCategory.Foresight, "Cart Stall VIII",
+            "The Traveling Cart offers 8 items per visit.", 620, "cart_slot_7"),
+        new UpgradeDefinition("cart_slot_9", UpgradeCategory.Foresight, "Cart Stall IX",
+            "The Traveling Cart offers 9 items per visit.", 850, "cart_slot_8"),
+        new UpgradeDefinition("cart_slot_10", UpgradeCategory.Foresight, "Cart Stall X",
+            "The Traveling Cart offers its full stock (10 items) per visit.", 1200, "cart_slot_9"),
+
         // Stash
         new UpgradeDefinition("stash_1", UpgradeCategory.Stash, "Junimo Stash I",
             "Expand the Junimo Stash from 4 to 8 slots.", 300),
