@@ -47,8 +47,10 @@ namespace TheLongestYear.Loop
             }, AssetEditPriority.Default);
         }
 
-        /// <summary>Deliver the letter on Spring 1 of the first loop. Idempotent: mailReceived
-        /// gates re-sends, and CompletedResets gates later loops.</summary>
+        /// <summary>Deliver the letter on Spring 1 of the first loop. Idempotent:
+        /// CompletedResets == 0 is the durable first-loop gate (it lives in MetaState and
+        /// survives the reset, which clears mailReceived); the mailReceived/mailbox checks
+        /// guard same-loop double-delivery (e.g. re-entering Spring 1 after a save-reload).</summary>
         public void OnDayStarted()
         {
             Farmer p = Game1.player;
