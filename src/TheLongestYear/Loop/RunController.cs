@@ -726,11 +726,11 @@ namespace TheLongestYear.Loop
 
         /// <summary>
         /// Number of Traveling Cart item slots to preview on the planning hub.
-        /// Equals 2 * highest Cart Whisperer tier owned (cart_whisper_1 through cart_whisper_3).
+        /// Equals 2 * highest Cart Whisperer tier owned (cart_whisper_1 through cart_whisper_5).
         /// Returns 0 if none owned.
         /// </summary>
         public int CartPreviewSlots()
-            => CartStockPreview.SlotsToReveal(_store.State.HighestKeptTier("cart_whisper_", 3));
+            => CartStockPreview.SlotsToReveal(_store.State.HighestKeptTier("cart_whisper_", 5));
 
         /// <summary>Obtainability predicate for the sampler: looks up the item in the CcItem
         /// catalog and tests against this season's ObtainableSeasons. Items not in the catalog
