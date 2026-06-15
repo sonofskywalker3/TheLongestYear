@@ -75,7 +75,8 @@ namespace TheLongestYear.Loop
             q.questDescription =
                 $"Bonus: {ThemeModifiers.DisplayNameFor(bonusId)}\n" +
                 $"Drawback: {ThemeModifiers.DisplayNameFor(liabilityId)}\n\n" +
-                "Donate any of this week's bonus items to the Community Center for 1.5x JP.";
+                "Tip: hold this week's bonus items until now to donate them - you get 1.5x JP AND clear the drawback. " +
+                "Don't rush bundle donations; wait for the matching theme week.";
             q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}";
             q.dayQuestAccepted.Value = Game1.Date.TotalDays;
             q.daysLeft.Value = -1;   // no time limit (the next week's pick will replace it)
