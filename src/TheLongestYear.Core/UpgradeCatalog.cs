@@ -230,10 +230,22 @@ public static class UpgradeCatalog
         new UpgradeDefinition("weather_sage_6", UpgradeCategory.Foresight, "Weather Sage VI",
             "Reveal the full next 6 days' weather.", 950, "weather_sage_5"),
 
-        // Foresight — Cart Whisperer (single upgrade; never tier-numbered in UI). On a cart day the
-        // shrine flags which of the Traveling Cart's real stock can feed any CC bundle.
-        new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer",
-            "On the shrine, flags which Traveling Cart items can feed a Community Center bundle.", 350),
+        // Foresight — Cart Whisperer (3 tiers). On a cart day the shrine flags which of the
+        // Traveling Cart's real stock can feed any CC bundle. Tier N previews 2*N cart slots
+        // (CartStockPreview.SlotsToReveal), but the cart's visible stock is capped by the player's
+        // cart_slot tier (CartSlotLimitPatch). So each tier is gated on the cart_slot upgrade that
+        // makes its full reveal buyable — no paying for a preview wider than the cart can show.
+        // cw1 (reveals 2) is the entry tier, usable on the base 1-slot cart (ungated). cw2 (reveals
+        // 4) needs cart_slot_4; cw3 (reveals 6) needs cart_slot_6. The slot gate is a MetaRequirement
+        // so the whisper chain (cw1->cw2->cw3 via PrerequisiteId) stays linear for the shop-leaf UI.
+        new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer I",
+            "On the shrine, flags which Traveling Cart items can feed a Community Center bundle (previews 2 slots).", 350),
+        new UpgradeDefinition("cart_whisper_2", UpgradeCategory.Foresight, "Cart Whisperer II",
+            "Previews bundle-feeding Traveling Cart items across 4 slots.", 600, "cart_whisper_1",
+            metaRequirement: "upgrade:cart_slot_4"),
+        new UpgradeDefinition("cart_whisper_3", UpgradeCategory.Foresight, "Cart Whisperer III",
+            "Previews bundle-feeding Traveling Cart items across 6 slots.", 900, "cart_whisper_2",
+            metaRequirement: "upgrade:cart_slot_6"),
 
         // Foresight — Cart Stall upgrades. Each tier unlocks one additional visible item slot on
         // the Traveling Cart (base = 1; buying slot_2 gives 2 items per visit, etc.).
