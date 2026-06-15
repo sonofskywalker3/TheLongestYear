@@ -39,6 +39,7 @@ namespace TheLongestYear
         private Day28CutsceneDriver _day28Driver;
         private BookFurniture _bookFurniture;
         private UI.PlanningShrineService _planningShrine;
+        private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -101,6 +102,10 @@ namespace TheLongestYear
             _bookFurniture = new BookFurniture(this.Monitor, helper);
             // View-only planning shrine — registers its furniture + auto-places near the stash.
             _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
+            // First-loop Spring-1 onboarding letter. Constructed at Entry so AssetRequested is
+            // hooked before the first asset load (same reason as _introInjector above).
+            _onboardingMail = new TheLongestYear.Loop.OnboardingMailService(this.Monitor, _meta);
+            helper.Events.Content.AssetRequested += _onboardingMail.OnAssetRequested;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -1087,6 +1092,7 @@ namespace TheLongestYear
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
+            _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);
         }
 
