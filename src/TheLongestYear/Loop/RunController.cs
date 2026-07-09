@@ -118,7 +118,15 @@ namespace TheLongestYear.Loop
                     LogLevel.Info);
                 Run.BeginNewMonth(calendarSeason);
                 if (Run.CurrentSelection.HasValue)
+                {
                     PopulateBonusSlotsForCurrentSelection();
+                    // Empty new-season pool for the pre-picked theme: lift the drawback now, same
+                    // as the live rollover paths (SelectByName/DoDayStartSeasonAndHub). Safe re
+                    // ordering: the effects-restore block below calls ActiveEffectsProvider.Set
+                    // (which clears suppression) but then re-applies SuppressLiability because
+                    // this sets Run.LiabilitySuppressedThisWeek.
+                    ApplyEmptyPoolLiftIfNeeded();
+                }
             }
             Run.DayOfMonth = Game1.dayOfMonth;
 
