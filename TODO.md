@@ -13,7 +13,18 @@ POSTS. xsansara's awaited SMAPI log delivered
 (`test-output/SMAPI-xsansara-0.10.0-broke.txt`, from https://smapi.io/log/f4734fe4799f4565bdcb5f0302eedb4e).
 No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
 
-- **🔴🔴 Remixed bundles that miss every classification rule are SILENTLY DROPPED from season
+- **✅ FIXED v0.11.11 (3d7210e) — Remixed bundles that miss every classification rule were
+  SILENTLY DROPPED from season checkpoints + weekly themes.** Root cause: `BundleClassifier`
+  returned null for pick-X-of-Y bundles whose NAME isn't in `DefaultBundleQuotas` (only the 7
+  vanilla names). Fix: unknown X<Y bundles now classify as Percentage with a derived cumulative
+  ramp `floor(X * [0.25, 0.5, 0.75, 1.0])` (Winter demands full X; matches curated Chef's at
+  X=3); curated quota entries still win by name; builder logs the derived ramp at INFO. Also
+  covers SVE/custom-bundle-mod bundles (PokeTheSilver204's compat question). 499 tests pass.
+  **PENDING log verification:** next PC session on a remixed save, the load log should show
+  `0 unclassified skipped` + `using derived ramp [...]` INFO lines for the remix-named bundles.
+  *Curated per-name ramps for the remix pool = 0.12.0 balance-pass material.* Original report:
+
+  **Remixed bundles that miss every classification rule are SILENTLY DROPPED from season
   checkpoints + weekly themes — undermines the gate on the RECOMMENDED config.** Log-confirmed in
   xsansara's log: `BundleCatalogBuilder: bundle 'X' didn't match any classification rule` ×6
   (Rare Crops, Brewer's, Wild Medicine, Treasure Hunter's, Children's, Winter Star) →
