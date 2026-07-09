@@ -266,27 +266,16 @@ namespace TheLongestYear.UI
             dest.Clear();
             if (theme == null) return;
 
-            int maxCount = _runController.BonusListSizeForCurrentSeason();
             // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
             int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
-            IReadOnlyList<string> sample = BonusItemSampler.SampleForTheme(
-                _run.Seed, week,
-                theme.Value, _offerSeason,
-                _requirements,
-                id => _runController.IsObtainableInSeason(id, _offerSeason),
-                _runController.GetRarityForItem,
-                maxCount);
+            var sample = _runController.SampleSlotsForTheme(theme.Value, _offerSeason, week);
 
-            foreach (string id in sample)
+            foreach (BonusSlot slot in sample)
             {
-                int stack = _runController.GetStackForIngredient(id);
-                // 2026-05-29 user playtest: Quality Crops bundle's Parsnips were rendering
-                // without a gold star on the week-2 farming card. Pull the per-id MAX quality
-                // (0=basic, 1=silver, 2=gold, 4=iridium) so ItemRegistry.Create stamps the
-                // correct quality badge on the bonus icon.
-                int quality = _runController.GetQualityForIngredient(id);
+                // Each icon shows ITS slot's true requirement (stack badge + quality star) —
+                // 2026-07-09 slot redesign; replaces the global per-id MAX maps here.
                 Item item = null;
-                try { item = ItemRegistry.Create(id, stack, quality, allowNull: true); }
+                try { item = ItemRegistry.Create(slot.ItemId, slot.Stack, slot.Quality, allowNull: true); }
                 catch (Exception) { item = null; }
                 dest.Add(item);
             }
@@ -312,7 +301,7 @@ namespace TheLongestYear.UI
                 ? weatherBlockH + (weatherBlockH > 0 && cartRowsH > 0 ? PreviewSpacing : 0) + cartRowsH + PanelPadding
                 : 0;
 
-            int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 20;
+            int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 32 + 20;
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
             // Reserve space for the reroll debug button row below preview rows / cards — only when
@@ -581,6 +570,13 @@ namespace TheLongestYear.UI
 
             SpriteText.drawStringHorizontallyCenteredAt(b, "Pick a theme", panelCenterX, drawY);
 
+            drawY += 48;
+            const string bankingTip = "Banking items for a matching theme week pays 1.5x JP.";
+            Vector2 tipSize = Game1.smallFont.MeasureString(bankingTip);
+            Utility.drawTextWithShadow(b, bankingTip, Game1.smallFont,
+                new Vector2(panelCenterX - tipSize.X / 2f, drawY),
+                Game1.textColor);
+
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds);
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds);
 
@@ -748,7 +744,7 @@ namespace TheLongestYear.UI
                 {
                     // StackDrawType.Draw renders the stack number badge over the icon — needed
                     // so the player sees the actual donation quantity (e.g. Wood = 99, not "1").
-                    // The Item is created with Stack=GetStackForIngredient(id) above.
+                    // The Item is created with the sampled BonusSlot's Stack/Quality above.
                     item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
                 }
                 else
