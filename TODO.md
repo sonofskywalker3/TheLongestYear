@@ -6,6 +6,74 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 🐞 INVESTIGATE — 5th sweep (2026-07-09): Nexus posts 06-10 → 07-05 + xsansara log
+*Full forum sweep 2026-07-09 (`forum-sweeps/2026-07-09-21-47_*`). Reddit: 4 new comments, all
+praise/flavor — nothing actionable. Nexus bugs tab: no new bugs. All the new material is Nexus
+POSTS. xsansara's awaited SMAPI log delivered
+(`test-output/SMAPI-xsansara-0.10.0-broke.txt`, from https://smapi.io/log/f4734fe4799f4565bdcb5f0302eedb4e).
+No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
+
+- **🔴🔴 Remixed bundles that miss every classification rule are SILENTLY DROPPED from season
+  checkpoints + weekly themes — undermines the gate on the RECOMMENDED config.** Log-confirmed in
+  xsansara's log: `BundleCatalogBuilder: bundle 'X' didn't match any classification rule` ×6
+  (Rare Crops, Brewer's, Wild Medicine, Treasure Hunter's, Children's, Winter Star) →
+  "20 classified, 6 unclassified skipped." Corroborated by *khauser13 (13 Jun)*: remixed bundles
+  (Home Cook's, Forest's, Quality Fish) "did not show up in the checkpoints for the season or in
+  the weekly themes"; some weekly themes "came up blank on required donations." *xsansara (11 Jun)*
+  likewise: Garden-bundle flowers / Chef / Fodder items missing from season requirements. **Fallout
+  includes a premature WIN:** *khauser13 (12 Jun)* deliberately withheld the last CC item, hit all
+  (classified-only) winter checkpoints, and the mod counted the loop complete — Chef's bundle was
+  never in the checklist. **Fix direction:** ensure EVERY live bundle classifies (add rules or a
+  safe fallback quota), so unclassified never silently shrinks the gate. Interim for 0.12.0; the
+  0.13.0 owned-bundle engine retires the whole class.
+- **🔴 Weekly theme quantity bug — a 5x-quantity request is satisfied by donating 1x.** *khauser13
+  (11 Jun)*: weekly quest wanted 5 crops (quality-crops slot); donating a single parsnip into the
+  spring-crops slot ticked it. Reproduced with melons. Checklist matching looks id-only, ignoring
+  the requested quantity/slot.
+- **🔴 Structurally impossible weekly themes.** *khauser13 (11 Jun)*: mining theme asked solar
+  essence + void essence + slime/bat wings when the CC only has 2 matching turn-in slots — cannot
+  complete regardless of play. DISTINCT from the "asks already-donated items" case (that one is
+  BY DESIGN per 2026-06-08, though now 4 reporters have flagged it — Tutorem, emmainthealps,
+  xsansara, Dusklight7 — worth a 0.12.0 clarity/balance revisit: Dusklight7 suggests pre-checking
+  or crediting already-donated items).
+- **🔴 Green rain never triggers in summer.** *khauser13 (11 Jun)*. Likely `WeatherScheduler`
+  override drops vanilla's 1.6 green-rain day when it rewrites summer weather. (Summer 13/26
+  guaranteed storms also gone — that part is WAI, the scheduler's ≥2-storm guarantee replaced
+  them, but green rain is a real content loss.)
+- **🔴 Loop reset coverage gaps — museum + more persists across resets.** *Dusklight7 (05 Jul)*:
+  museum donations/rewards do NOT reset (re-donating new items re-earns reward ladder early =
+  "massive broken potential" — early scarecrows/starfruit — AND can lock players out of rewards in
+  later loops if they run out of new donatables; recommends resetting the museum). Also reported
+  persisting: mines milestone-floor chests, monster-hunting (slayer) progress, ticket rewards in
+  Lewis' house (?), day-1 parsnips, books read (special powers), worn clothes + rings ("unbelievable
+  broken potential"). *Cross-check khauser13 (13 Jun): museum rewards "mostly reset themselves"
+  except the ancient seed — seed/recipe part is WAI per 2026-06-10 decision.* Needs a reset-audit
+  pass: decide per-surface keep/reset and fix the leaks.
+- **⭐ JP upgrade request ×2 — `keep_silo`.** *khauser13 (11 Jun)* + *Dusklight7 (05 Jul)*
+  independently: silo missing from the shrine keep-building options; cheap but its absence is
+  confusing. Small catalog addition alongside the other keep-building entries.
+- **⚖️ Balance (0.12.0/0.13.0 fodder — difficulty too low for strong players).** *khauser13
+  (12-13 Jun)*: finished the year first try on BOTH standard and remixed (sleeping idle days);
+  suggests harder bundles / permanent debuffs; winter weekly themes felt pointless (everything
+  already donated); keep-XP prices feel too high vs. an XP-multiplier upgrade idea. *PokeTheSilver204
+  (13 Jun)*: red cabbage is the only year-1 blocker → red-cabbage-cultivation JP upgrade trivializes
+  run 2; asks for custom-bundle-mod support or challenge modes / 1-year-perfection mode. *xsansara
+  (11 Jun)*: breezed through spring at 25% profit. *Dusklight7 (05 Jul)*: deliberate spring-reset
+  JP farming is a cheese path — suggests mid-run JP spending (at a premium) or a JP incentive for
+  season checkpoints to reward progressing. All feeds the 0.13.0 difficulty engine; author already
+  replied to khauser13 (14 Jun) promising rebalancing.
+- **📬 USER REPLY NEEDED — Chinese translation posted (Fluxwb, 20 Jun, Nexus mod 47926).** They
+  modified the DLL to translate and ask (in Chinese) whether the author objects; will take it down
+  on request. Decide the translation/permissions stance + reply. (Consider i18n support so future
+  translations don't need DLL edits.)
+- **📱 Android: can't buy from the Junimo shrine.** *Stardewlover87 (09 Jun)*. Android port is
+  deferred; capture for the port task. (Likely the same Android ShopMenu/ISalable landmine class
+  documented in AC memory.)
+- **ℹ️ xsansara "money reset to 0 / drained on load" after 0.10.0 upgrade — log inconclusive.**
+  The delivered log is a clean 3-minute session on a fresh Run 1 (Spring 5), zero errors; the
+  broken save was abandoned and re-rolled, and xsansara can't reproduce. Keep an eye out for any
+  other money-on-load report; nothing actionable now.
+
 ### 📄 Mod page: surface the remixed-bundles recommendation (promised to khauser13 2026-06-10)
 khauser13: "Noticed in the change logs that it is recommended to use remixed bundles. You may want
 to include a picture of recommended settings or note that in the mod description." Replied on Nexus
