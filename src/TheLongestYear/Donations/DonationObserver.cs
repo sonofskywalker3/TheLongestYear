@@ -150,7 +150,7 @@ namespace TheLongestYear.Donations
                         // JP of ONE item regardless of the slot's required stack — 99 wood pays
                         // Common×1, not Common×99. Multipliers (season, weekly bonus, jp_boost)
                         // still apply inside OnItemDonated.
-                        DonationService.Active.OnItemDonated(qualifiedId, 1);
+                        DonationService.Active.OnItemDonated(qualifiedId, 1, b.bundleIndex, i);
                         // Mark as awarded so the next tick doesn't double-fire if the bundle
                         // stays in scope (e.g. player completes another slot on the same bundle).
                         prev[i] = true;
