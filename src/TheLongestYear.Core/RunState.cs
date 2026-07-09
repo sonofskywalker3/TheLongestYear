@@ -76,10 +76,14 @@ public sealed class RunState
     /// PeakMineFloorTracker (mod-side) on Player.Warped into a MineShaft.</summary>
     public int PeakMineFloor { get; set; }
 
-    /// <summary>True when this week's theme quest has been completed (all 4 bonus items
-    /// donated) and the liability is lifted for the rest of the week. Reset on theme select,
-    /// month transition, and run reset. Persisted via MetaStore so a save+reload mid-week
-    /// keeps the lifted state.</summary>
+    /// <summary>True when this week's theme quest has been completed (every sampled goal slot
+    /// donated — the goal count varies by season, see BonusItemSampler.DefaultMaxCountBySeason)
+    /// and the liability is lifted for the rest of the week. Also set by the empty-pool
+    /// auto-lift when no goal slots could be sampled this week (see
+    /// RunController.ApplyEmptyPoolLiftIfNeeded), and doubles as the idempotency guard against
+    /// double-paying the weekly JP bonus on a save+reload. Reset on theme select, month
+    /// transition, and run reset. Persisted via MetaStore so a save+reload mid-week keeps the
+    /// lifted state.</summary>
     public bool LiabilitySuppressedThisWeek { get; set; }
 
     /// <summary>Record having reached the given floor this run. Idempotent for shallower
@@ -173,8 +177,8 @@ public sealed class RunState
         LiabilitySuppressedThisWeek = false;
 
         // Consume the day-28 pre-pick (if any). The controller still needs to call
-        // PopulateBonusItemsForCurrentSelection AFTER this so the new month's bonus list
-        // matches the new season — see RunController.OnDayStarted.
+        // PopulateBonusSlotsForCurrentSelection AFTER this so the new month's goal slots
+        // match the new season — see RunController.OnDayStarted.
         if (NextMonthSelection.HasValue)
         {
             Select(NextMonthSelection.Value);

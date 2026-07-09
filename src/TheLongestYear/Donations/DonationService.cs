@@ -8,8 +8,8 @@ namespace TheLongestYear.Donations
     /// <summary>
     /// Applies the JP economy to real Community Center activity: rarity-scaled JP per donated item,
     /// the donated id into the run ledger (so the gate responds), one-time bundle/room
-    /// completion bonuses, and the weekly-selection bonus-list multiplier. JP lands in MetaState
-    /// (committed with the next save — never eagerly).
+    /// completion bonuses, and the weekly goal-slot selection bonus multiplier. JP lands in
+    /// MetaState (committed with the next save — never eagerly).
     /// </summary>
     internal sealed class DonationService
     {
@@ -23,7 +23,7 @@ namespace TheLongestYear.Donations
 
         /// <summary>Fires after a successful CC donation has been recorded to the ledger + JP
         /// awarded. WeeklyThemeQuestService subscribes to refresh the per-week quest's progress
-        /// text (and auto-complete when all 4 bonus items are donated). Kept as an Action rather
+        /// text (and auto-complete when every goal slot is donated). Kept as an Action rather
         /// than a typed event so the donation layer stays free of cross-package references.</summary>
         public Action AfterDonation;
 

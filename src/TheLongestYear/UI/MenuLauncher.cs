@@ -51,7 +51,7 @@ namespace TheLongestYear.UI
                 selectionsForOffer);
 
             Game1.activeClickableMenu = new WeeklyHubMenu(
-                _monitor, _runController, _config, _store.Run, _runController.Requirements,
+                _monitor, _runController, _config, _store.Run,
                 offer, offerSeason, isPreSelectForNextMonth: seasonOverride.HasValue,
                 weatherSageSlots: _runController.WeatherSageTier(),
                 // Cart preview removed from the hub — Cart Whisperer is now bundle-sense on the shrine.
