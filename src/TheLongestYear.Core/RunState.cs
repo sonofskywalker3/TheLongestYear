@@ -24,21 +24,20 @@ public sealed class RunState
     public List<string> DonatedItemIds { get; set; } = new();
 
     /// <summary>
-    /// Donated item ids for the CURRENT week only. Cleared on every theme <see cref="Select"/>,
-    /// <see cref="BeginNewMonth"/>, and <see cref="BeginNewRun"/>. The weekly theme quest's checklist
-    /// reads this (not the cumulative <see cref="DonatedItemIds"/>) so a re-sampled bonus item that was
-    /// already donated in an EARLIER week doesn't auto-tick the box — or auto-complete the quest for a
-    /// free JP bonus + drawback lift — without a real donation this week.
-    /// </summary>
-    public List<string> DonatedThisWeekIds { get; set; } = new();
-
-    /// <summary>
-    /// The active week's bonus-item sample (qualified ids) for the selected theme. Populated at
-    /// selection time from <see cref="BonusItemSampler"/>; donating any of these earns the 1.5×
-    /// SelectionBonusMultiplier. Cleared on <see cref="BeginNewMonth"/> and <see cref="BeginNewRun"/>
-    /// so a fresh month/run starts with no active bonuses.
+    /// LEGACY (pre-slot redesign, 2026-07-09): the old id-only weekly bonus sample. Kept ONLY so
+    /// mid-week saves from older versions deserialize and RunController can detect + migrate them
+    /// (non-empty here + empty CurrentWeekBonusSlots → one-time re-sample). Never written to by
+    /// new code except clears.
     /// </summary>
     public List<string> CurrentWeekBonusItems { get; set; } = new();
+
+    /// <summary>
+    /// The active week's sampled goal slots. Populated at selection time by
+    /// RunController.PopulateBonusSlotsForCurrentSelection; a goal ticks when its exact CC slot
+    /// flips complete (live state is the source of truth). Completing a sampled slot earns the
+    /// 1.5× SelectionBonusMultiplier. Cleared on Select/BeginNewMonth/BeginNewRun.
+    /// </summary>
+    public List<BonusSlot> CurrentWeekBonusSlots { get; set; } = new();
 
     /// <summary>Themes already selected this month (cleared each month). The 5th is never selected.</summary>
     public List<Theme> SelectedThemesThisMonth { get; set; } = new();
@@ -129,8 +128,6 @@ public sealed class RunState
     {
         if (!DonatedItemIds.Contains(itemId))
             DonatedItemIds.Add(itemId);
-        if (!DonatedThisWeekIds.Contains(itemId))
-            DonatedThisWeekIds.Add(itemId);
     }
 
     /// <summary>Add a donated id to the cumulative ledger ONLY (not the weekly bonus-suppression
@@ -156,8 +153,8 @@ public sealed class RunState
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
-        // A fresh week's quest must start from zero donations this week (the cumulative ledger persists).
-        DonatedThisWeekIds.Clear();
+        // A fresh pick must start from zero goals — the previous week's sampled slots don't carry over.
+        CurrentWeekBonusSlots.Clear();
     }
 
     /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
@@ -170,8 +167,8 @@ public sealed class RunState
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
         CurrentWeekBonusItems.Clear();
+        CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
-        DonatedThisWeekIds.Clear();
 
         // Consume the day-28 pre-pick (if any). The controller still needs to call
         // PopulateBonusItemsForCurrentSelection AFTER this so the new month's bonus list
@@ -191,7 +188,6 @@ public sealed class RunState
         Season = Season.Spring;
         DayOfMonth = 1;
         DonatedItemIds.Clear();
-        DonatedThisWeekIds.Clear();
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
         NextMonthSelection = null;
@@ -199,6 +195,7 @@ public sealed class RunState
         AwardedRoomCompletions.Clear();
         VaultBundlesPaid.Clear();
         CurrentWeekBonusItems.Clear();
+        CurrentWeekBonusSlots.Clear();
         OfferPresentedWeek = -1;
         PeakMineFloor = 0;
         LiabilitySuppressedThisWeek = false;

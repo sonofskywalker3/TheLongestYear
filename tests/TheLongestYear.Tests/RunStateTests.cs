@@ -7,7 +7,7 @@ namespace TheLongestYear.Tests;
 public class RunStateTests
 {
     [Fact]
-    public void RecordCumulativeDonation_adds_to_ledger_only_not_weekly_list()
+    public void RecordCumulativeDonation_adds_to_the_cumulative_ledger_idempotently()
     {
         var run = new RunState();
         run.RecordCumulativeDonation("(O)24");
@@ -15,8 +15,6 @@ public class RunStateTests
 
         Assert.Equal(new[] { "(O)24" }, run.DonatedItemIds);
         Assert.True(run.DonatedSet().Contains("(O)24"));
-        // Must NOT pollute the weekly bonus-suppression list (unlike RecordDonation).
-        Assert.Empty(run.DonatedThisWeekIds);
     }
 
     [Fact]
@@ -255,61 +253,16 @@ public class RunStateTests
         Assert.Equal(45, run.PeakMineFloor);
     }
 
-    // ---- Per-week donation ledger (DonatedThisWeekIds) ----
-    // Backs the weekly theme quest's checklist so it counts only THIS week's donations, not the
-    // run-cumulative ledger (which would let a re-sampled, already-donated item auto-complete the
-    // quest for free). See WeeklyThemeQuestService.RefreshObjective.
+    // ---- Per-week bonus slot list (CurrentWeekBonusSlots) ----
+    // Backs the weekly theme quest's checklist: RunController samples live CC bundle slots for the
+    // selected theme; a goal ticks when its exact slot flips complete. Cleared on Select/
+    // BeginNewMonth/BeginNewRun so a re-picked or new week starts with no active goals (see the
+    // BonusSlot-specific clearing tests above). DonatedThisWeekIds (the old id-only ledger) was
+    // retired in the slot redesign (2026-07-09).
 
     [Fact]
-    public void New_run_state_starts_with_empty_week_donations()
-        => Assert.Empty(new RunState().DonatedThisWeekIds);
-
-    [Fact]
-    public void RecordDonation_adds_to_both_the_cumulative_and_per_week_ledgers()
-    {
-        var run = new RunState();
-        run.RecordDonation("Parsnip");
-        Assert.Contains("Parsnip", run.DonatedItemIds);
-        Assert.Contains("Parsnip", run.DonatedThisWeekIds);
-    }
-
-    [Fact]
-    public void RecordDonation_is_idempotent_in_the_per_week_ledger()
-    {
-        var run = new RunState();
-        run.RecordDonation("Parsnip");
-        run.RecordDonation("Parsnip");
-        Assert.Single(run.DonatedThisWeekIds);
-    }
-
-    [Fact]
-    public void Select_clears_the_per_week_ledger_but_keeps_the_cumulative_one()
-    {
-        var run = new RunState();
-        run.RecordDonation("Parsnip");
-        run.Select(Theme.Mining);
-        Assert.Empty(run.DonatedThisWeekIds);
-        Assert.Contains("Parsnip", run.DonatedItemIds);
-    }
-
-    [Fact]
-    public void BeginNewMonth_clears_the_per_week_ledger_but_keeps_the_cumulative_one()
-    {
-        var run = new RunState();
-        run.RecordDonation("Parsnip");
-        run.BeginNewMonth(Season.Summer);
-        Assert.Empty(run.DonatedThisWeekIds);
-        Assert.Contains("Parsnip", run.DonatedItemIds);
-    }
-
-    [Fact]
-    public void BeginNewRun_clears_the_per_week_ledger()
-    {
-        var run = new RunState();
-        run.RecordDonation("Parsnip");
-        run.BeginNewRun(seed: 7);
-        Assert.Empty(run.DonatedThisWeekIds);
-    }
+    public void New_run_state_starts_with_empty_current_week_bonus_slots()
+        => Assert.Empty(new RunState().CurrentWeekBonusSlots);
 
     [Fact]
     public void TryMarkVaultBundlePaid_is_true_once_then_false()
@@ -328,5 +281,32 @@ public class RunStateTests
         run.TryMarkVaultBundlePaid(34);
         run.BeginNewRun(seed: 1);
         Assert.Empty(run.VaultBundlesPaid);
+    }
+
+    [Fact]
+    public void BeginNewMonth_clears_current_week_bonus_slots()
+    {
+        var run = new RunState();
+        run.CurrentWeekBonusSlots.Add(new BonusSlot { BundleIndex = 3, IngredientIndex = 1, ItemId = "(O)24", Stack = 5, Quality = 2, BundleName = "Quality Crops" });
+        run.BeginNewMonth(Season.Summer);
+        Assert.Empty(run.CurrentWeekBonusSlots);
+    }
+
+    [Fact]
+    public void BeginNewRun_clears_current_week_bonus_slots()
+    {
+        var run = new RunState();
+        run.CurrentWeekBonusSlots.Add(new BonusSlot { BundleIndex = 3, IngredientIndex = 1, ItemId = "(O)24" });
+        run.BeginNewRun(seed: 42);
+        Assert.Empty(run.CurrentWeekBonusSlots);
+    }
+
+    [Fact]
+    public void Select_clears_current_week_bonus_slots()
+    {
+        var run = new RunState();
+        run.CurrentWeekBonusSlots.Add(new BonusSlot { BundleIndex = 3, IngredientIndex = 1, ItemId = "(O)24" });
+        run.Select(Theme.Farming);
+        Assert.Empty(run.CurrentWeekBonusSlots);
     }
 }
