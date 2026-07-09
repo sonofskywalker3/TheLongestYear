@@ -204,15 +204,50 @@ public class BundleClassifierTests
         Assert.Equal(3, req.Ingredients.Count);
     }
 
-    // ----- Skip cases -----
+    // ----- Derived-quota fallback (5th-sweep fix: remixed/mod bundles must never drop) -----
 
     [Fact]
-    public void Unknown_xLtY_bundle_with_no_quota_returns_null()
+    public void Unknown_xLtY_bundle_with_no_quota_classifies_with_derived_quota()
     {
+        // Remixed saves generate pick-X-of-Y bundles with names outside DefaultBundleQuotas
+        // (Rare Crops, Brewer's, Wild Medicine, ...). These must NOT be dropped — they'd
+        // silently vanish from season checkpoints, the win gate, and weekly-theme pools
+        // (khauser13's premature win + blank themes, xsansara's log WARNs, 2026-07-09 sweep).
         var parsed = Make("Mystery", 3, "(O)1", "(O)2", "(O)3", "(O)4", "(O)5");
         var req = BundleClassifier.Classify(parsed, Theme.Mixed, NoPins, NoQuotas);
-        Assert.Null(req);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.Percentage, req!.Kind);
+        Assert.Equal(3, req.NumberOfSlots);
+        Assert.Equal(5, req.Ingredients.Count);
+        // Derived ramp = floor(X * [0.25, 0.5, 0.75, 1.0]) — matches the curated Chef's
+        // ramp exactly at X=3.
+        Assert.Equal(new[] { 0, 1, 2, 3 }, req.CumulativeRequiredBySeason);
     }
+
+    [Theory]
+    [InlineData(1, new[] { 0, 0, 0, 1 })]
+    [InlineData(2, new[] { 0, 1, 1, 2 })]
+    [InlineData(3, new[] { 0, 1, 2, 3 })]
+    [InlineData(5, new[] { 1, 2, 3, 5 })]
+    [InlineData(6, new[] { 1, 3, 4, 6 })]
+    public void Derived_quota_ramp_is_quarter_half_threequarter_full(int x, int[] expected)
+    {
+        Assert.Equal(expected, BundleClassifier.DerivedDefaultQuota(x));
+    }
+
+    [Fact]
+    public void Named_quota_entry_wins_over_derived_fallback()
+    {
+        var parsed = Make("Chef's", 3, "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6");
+        var quotas = new Dictionary<string, int[]> { ["Chef's"] = new[] { 1, 1, 2, 3 } };
+
+        var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, quotas);
+
+        Assert.Equal(new[] { 1, 1, 2, 3 }, req!.CumulativeRequiredBySeason);
+    }
+
+    // ----- Skip cases -----
 
     [Fact]
     public void Bundle_with_only_category_ingredients_returns_null()

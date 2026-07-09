@@ -18,7 +18,13 @@ namespace TheLongestYear.Core;
 ///      → <see cref="BundleKind.PerItem"/>. Vanilla Construction lists Wood twice (X=4, Y=3
 ///      deduped); the set-based donation ledger doesn't differentiate stack counts, so
 ///      donating Wood once satisfies all wood slots.
-///   4. Otherwise (X &lt; Y, no quota) → returns null (caller should skip + warn).
+///   4. Otherwise (X &lt; Y, no quota) → <see cref="BundleKind.Percentage"/> with a DERIVED
+///      quota (<see cref="DerivedDefaultQuota"/>). Remixed saves — the RECOMMENDED config —
+///      generate pick-X-of-Y bundles with names outside the quota table (Rare Crops,
+///      Brewer's, Wild Medicine, Treasure Hunter's, Children's, Winter Star, ...); before
+///      2026-07-09 these returned null and were silently dropped from season checkpoints,
+///      the win gate, and weekly-theme pools (khauser13's premature win + blank themes).
+///      Only category-only bundles return null now.
 ///
 /// Ingredients are normalized via <see cref="BundleParsing.NormalizeItemId"/> and de-duplicated
 /// to match the donation-ledger model (one set entry per qualified id).
@@ -113,8 +119,36 @@ public static class BundleClassifier
                 ingredientStacks, ingredientQualities);
         }
 
-        // X < Y with no named quota — caller logs and skips.
-        return null;
+        // X < Y with no named quota — an unknown pick-X-of-Y bundle (remixed / SVE / custom
+        // bundle mod). Classify as Percentage with a derived default ramp so it still gates
+        // seasons, counts toward the win, and feeds the weekly-theme pools. A named
+        // BundleQuotas/DefaultBundleQuotas entry (checked above) overrides this.
+        return BundleRequirement.CreatePercentage(
+            name, theme, ingredients,
+            numberOfSlots: parsed.NumberOfSlots,
+            cumulativeRequiredBySeason: DerivedDefaultQuota(parsed.NumberOfSlots),
+            ingredientStacks: ingredientStacks,
+            ingredientQualities: ingredientQualities);
+    }
+
+    /// <summary>
+    /// Default cumulative [Spring, Summer, Fall, Winter] quota for a pick-X-of-Y bundle with
+    /// no curated entry: floor(X * [0.25, 0.5, 0.75, 1.0]). Monotone, each value in [0..X],
+    /// Winter always demands the full X so the bundle must be completed to win. Matches the
+    /// curated Chef's ramp exactly at X=3; curated entries stay authoritative where present.
+    /// </summary>
+    public static int[] DerivedDefaultQuota(int numberOfSlots)
+    {
+        if (numberOfSlots < 1)
+            throw new ArgumentOutOfRangeException(nameof(numberOfSlots),
+                $"numberOfSlots must be >= 1; got {numberOfSlots}.");
+        return new[]
+        {
+            numberOfSlots / 4,
+            numberOfSlots / 2,
+            numberOfSlots * 3 / 4,
+            numberOfSlots
+        };
     }
 
     /// <summary>Distinct, qualified-id ingredient list (drops category refs).</summary>

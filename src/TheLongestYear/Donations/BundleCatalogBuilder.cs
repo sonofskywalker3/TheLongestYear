@@ -144,22 +144,19 @@ namespace TheLongestYear.Donations
 
                 if (req == null)
                 {
-                    // Either an all-category bundle or an X<Y bundle with no quota entry.
-                    if (bundle.Ingredients.Count > 0 &&
-                        System.Linq.Enumerable.All(bundle.Ingredients, i => BundleParsing.IsCategoryRef(i.ItemRef)))
-                    {
-                        categorySkipped++;
-                    }
-                    else
-                    {
-                        _monitor.Log(
-                            $"BundleCatalogBuilder: bundle '{bundle.Name}' (room '{bundle.Room}', " +
-                            $"X={bundle.NumberOfSlots}, Y={bundle.Ingredients.Count}) didn't match " +
-                            $"any classification rule. Add a DefaultBundleQuotas entry or skip.",
-                            LogLevel.Warn);
-                        unclassifiedSkipped++;
-                    }
+                    // Only category-only bundles classify to null now; unknown pick-X-of-Y
+                    // bundles get a derived quota (see BundleClassifier decision order #4).
+                    categorySkipped++;
                     continue;
+                }
+
+                if (req.Kind == BundleKind.Percentage && !_bundleQuotas.ContainsKey(bundle.Name))
+                {
+                    _monitor.Log(
+                        $"BundleCatalogBuilder: bundle '{bundle.Name}' (room '{bundle.Room}', " +
+                        $"X={req.NumberOfSlots}, Y={req.Ingredients.Count}) has no curated quota — " +
+                        $"using derived ramp [{string.Join(", ", req.CumulativeRequiredBySeason)}].",
+                        LogLevel.Info);
                 }
 
                 reqs.Add(req);
