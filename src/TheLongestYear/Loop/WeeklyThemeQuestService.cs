@@ -9,27 +9,36 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Surfaces the current week's selected theme + bonus-item checklist as a vanilla
-    /// <see cref="Quest"/> in the player's quest log. Each donation to the Community Center
-    /// that matches a bonus item flips its checkbox in the quest objective. When all four
-    /// are donated, the quest auto-completes.
+    /// Surfaces the current week's selected theme + goal-slot checklist as a vanilla
+    /// <see cref="Quest"/> in the player's quest log. Goals are exact Community Center bundle
+    /// slots (bundle, ingredient line, stack, quality) seeded-sampled from the open-slot pool at
+    /// selection time (<see cref="RunState.CurrentWeekBonusSlots"/>). Each goal ticks its
+    /// checkbox when that slot flips complete in LIVE CC state — self-reconciling, since vanilla
+    /// only marks a slot complete once the full required stack and quality are deposited. When
+    /// every goal is done, the quest auto-completes.
     ///
     /// Spec source: 2026-05-26 playtest discussion (logged in TODO.md). User reiterated on
     /// 2026-05-28: "I still don't have a quest for tracking my weekly theme." Implemented
-    /// as the v1.1 ask after the v1 polish batch shipped.
+    /// as the v1.1 ask after the v1 polish batch shipped. Slots replaced the earlier "any 4
+    /// sampled item ids" design in the 2026-07-09 slot redesign.
     ///
     /// Persistence:
     ///   - Quest lives in <c>Game1.player.questLog</c>, which is saved by vanilla.
-    ///   - Bonus list + donation ledger live in <see cref="RunState"/>, which is saved by
-    ///     MetaStore on the game's Saving event.
+    ///   - Goal slots live in <see cref="RunState.CurrentWeekBonusSlots"/>, which is saved by
+    ///     MetaStore on the game's Saving event. Live CC state (not a separate ledger) is read
+    ///     directly to determine completion, so there's nothing else to persist per-donation.
     ///   - On save reload, <see cref="OnRunLoaded"/> re-derives the objective text so a
     ///     mid-week reload doesn't show stale progress.
     ///
     /// Lifecycle:
     ///   - <see cref="OnThemeSelected"/> from <c>RunController.SelectByName</c> + the day-28
     ///     pre-pick application path. Removes any prior weekly quest and creates a fresh one.
-    ///   - <see cref="OnItemDonated"/> from <c>DonationService.OnItemDonated</c> after the
-    ///     ledger is updated. Cheap — one questLog scan + one text update.
+    ///     An empty open-slot pool at selection means no quest is created and the week's
+    ///     liability is auto-lifted instead (see <c>RunController.ApplyEmptyPoolLiftIfNeeded</c>).
+    ///   - <see cref="OnItemDonated"/> from <c>DonationService.OnItemDonated</c>. Cheap — one
+    ///     questLog scan + one live-CC-state re-check + one text update.
+    ///   - Completing all goals pays the weekly JP bonus and lifts the drawback for the rest of
+    ///     the week (see <see cref="AwardCompletionRewards"/>).
     ///   - The reset wipes <c>player.questLog</c> via <c>loadForNewGame</c>, so no explicit
     ///     cleanup is needed across runs.
     /// </summary>
@@ -92,8 +101,8 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>
-        /// Called after a CC donation lands in the ledger. Refreshes the current weekly quest's
-        /// objective text and auto-completes it if every bonus item has been donated.
+        /// Called after a CC donation lands. Refreshes the current weekly quest's objective text
+        /// and auto-completes it if every goal slot is now complete in live CC state.
         /// </summary>
         public void OnItemDonated()
         {

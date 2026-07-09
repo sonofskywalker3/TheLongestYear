@@ -76,7 +76,6 @@ namespace TheLongestYear.UI
         private readonly RunController _runController;
         private readonly GameplayConfig _config;
         private readonly RunState _run;
-        private readonly IReadOnlyList<BundleRequirement> _requirements;
 
         /// <summary>Season the menu's bundle progress + bonus preview reflect. May be NEXT season
         /// (Sunday-night day-28 case) — see <see cref="_isPreSelectForNextMonth"/>.</summary>
@@ -119,7 +118,7 @@ namespace TheLongestYear.UI
         private readonly int _cartPreviewSlots;
 
         public WeeklyHubMenu(IMonitor monitor, RunController runController, GameplayConfig config,
-            RunState run, IReadOnlyList<BundleRequirement> requirements, IReadOnlyList<Theme> offer,
+            RunState run, IReadOnlyList<Theme> offer,
             CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false,
             int weatherSageSlots = 0, int cartPreviewSlots = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
@@ -128,7 +127,6 @@ namespace TheLongestYear.UI
             _runController = runController;
             _config = config;
             _run = run;
-            _requirements = requirements ?? new List<BundleRequirement>();
             _offer = offer ?? new List<Theme>();
             _offerSeason = offerSeason ?? run.Season;
             _isPreSelectForNextMonth = isPreSelectForNextMonth;

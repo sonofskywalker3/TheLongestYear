@@ -12,7 +12,7 @@ public class BonusDropResolverTests
     public void NoBonus_always_returns_false()
     {
         var rng = new System.Random(0);
-        Assert.False(BonusDropResolver.ShouldGrantExtraDrop(null, "(O)281", rng));
+        Assert.False(BonusDropResolver.ShouldGrantExtraDrop(null!, "(O)281", rng));
     }
 
     [Fact]

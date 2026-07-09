@@ -100,4 +100,21 @@ public class BonusSlotSamplerTests
         var late = BonusSlotSampler.SampleSlots(42, 3, Theme.Farming, pool, CommonRarity, 2);
         Assert.Equal(2, late.Count);
     }
+
+    [Fact]
+    public void Sample_is_invariant_to_pool_input_order()
+    {
+        var pool = new List<BonusSlot>
+        {
+            Slot("(O)24", 0, 0, stack: 1),
+            Slot("(O)24", 3, 1, stack: 5, quality: 2),
+            Slot("(O)188", 1, 0), Slot("(O)190", 2, 0),
+        };
+        var reversed = Enumerable.Reverse(pool).ToList();
+        var a = BonusSlotSampler.SampleSlots(42, 5, Theme.Farming, pool, CommonRarity, 4);
+        var b = BonusSlotSampler.SampleSlots(42, 5, Theme.Farming, reversed, CommonRarity, 4);
+        Assert.Equal(
+            a.Select(s => (s.ItemId, s.BundleIndex, s.IngredientIndex)),
+            b.Select(s => (s.ItemId, s.BundleIndex, s.IngredientIndex)));
+    }
 }

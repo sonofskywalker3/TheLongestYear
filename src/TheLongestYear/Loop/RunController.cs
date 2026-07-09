@@ -856,7 +856,7 @@ namespace TheLongestYear.Loop
 
         /// <summary>Wired by ModEntry after the quest service is constructed. Drives the per-week
         /// quest in the player's quest log — created on theme selection, refreshed on donation,
-        /// auto-completed when all bonus items donated.</summary>
+        /// auto-completed when every goal slot is complete.</summary>
         public void AttachQuestService(WeeklyThemeQuestService quest) => _questService = quest;
 
         /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
