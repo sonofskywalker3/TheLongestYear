@@ -257,7 +257,7 @@ public class RunStateTests
     // Backs the weekly theme quest's checklist: RunController samples live CC bundle slots for the
     // selected theme; a goal ticks when its exact slot flips complete. Cleared on Select/
     // BeginNewMonth/BeginNewRun so a re-picked or new week starts with no active goals (see the
-    // BonusSlot-specific clearing tests above). DonatedThisWeekIds (the old id-only ledger) was
+    // BonusSlot-specific clearing tests below). DonatedThisWeekIds (the old id-only ledger) was
     // retired in the slot redesign (2026-07-09).
 
     [Fact]

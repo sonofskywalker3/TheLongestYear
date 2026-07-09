@@ -26,8 +26,9 @@ public sealed class RunState
     /// <summary>
     /// LEGACY (pre-slot redesign, 2026-07-09): the old id-only weekly bonus sample. Kept ONLY so
     /// mid-week saves from older versions deserialize and RunController can detect + migrate them
-    /// (non-empty here + empty CurrentWeekBonusSlots → one-time re-sample). Never written to by
-    /// new code except clears.
+    /// (non-empty here + empty CurrentWeekBonusSlots → one-time re-sample). (Population by
+    /// RunController is removed later in the 2026-07-09 slot-redesign plan; until then this
+    /// doubles as the live list.)
     /// </summary>
     public List<string> CurrentWeekBonusItems { get; set; } = new();
 
@@ -123,17 +124,18 @@ public sealed class RunState
         return true;
     }
 
-    /// <summary>Add a donated item id; idempotent so re-donating the same id is a no-op in the ledger.</summary>
+    /// <summary>Record a live donation event just observed, in the cumulative ledger; idempotent
+    /// so re-donating the same id is a no-op.</summary>
     public void RecordDonation(string itemId)
     {
         if (!DonatedItemIds.Contains(itemId))
             DonatedItemIds.Add(itemId);
     }
 
-    /// <summary>Add a donated id to the cumulative ledger ONLY (not the weekly bonus-suppression
-    /// list), idempotent. Used by the day-end CC reconcile (<c>ItemDonationSync</c>), which unions
-    /// the run's full historical deposits from vanilla state and must not pollute this-week
-    /// tracking with items donated in earlier weeks.</summary>
+    /// <summary>Add a donated id to the cumulative ledger, idempotent. Used by the day-end CC
+    /// reconcile (<c>ItemDonationSync</c>), which unions the run's full historical deposits from
+    /// vanilla state — as opposed to <see cref="RecordDonation"/>, which records a live donation
+    /// event just observed.</summary>
     public void RecordCumulativeDonation(string itemId)
     {
         if (!DonatedItemIds.Contains(itemId))
