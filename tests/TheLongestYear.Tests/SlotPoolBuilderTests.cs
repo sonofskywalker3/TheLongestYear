@@ -63,7 +63,7 @@ public class SlotPoolBuilderTests
         var data = BundleData((3, "Rare Crops", "24 1 0 188 5 2", 1));
         var reqs = Reqs(BundleRequirement.CreatePercentage(
             "Rare Crops", Theme.Farming, new[] { "(O)24", "(O)188" },
-            numberOfSlots: 1, cumulativeRequiredBySeason: new[] { 0, 0, 0, 1 }));
+            numberOfSlots: 1, cumulativeRequiredBySeason: new[] { 1, 1, 1, 1 }));
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => new[] { true, false }, reqs,
