@@ -763,7 +763,10 @@ namespace TheLongestYear.Loop
 
         /// <summary>Sample this week's goal slots for a theme+season — shared by the hub preview
         /// and the selection-time commit so both show the same goals. Pool = open, in-play slots
-        /// (already-donated slots are never sampled; a complete bundle's leftover lines are dead).</summary>
+        /// (already-donated slots are never sampled; a complete bundle's leftover lines are dead).
+        /// The pool is re-derived from live CC state at call time; the selection-time result is
+        /// persisted in RunState.CurrentWeekBonusSlots, so committed goals don't reshuffle as
+        /// slots complete mid-week.</summary>
         public System.Collections.Generic.IReadOnlyList<BonusSlot> SampleSlotsForTheme(
             Theme theme, CoreSeason season, int weekOfYear)
         {
