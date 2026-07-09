@@ -42,15 +42,15 @@ namespace TheLongestYear.Loop
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
         private readonly JpCalculator _jp;
-        private readonly Func<string, int> _stackForIngredient;
+        private readonly Func<int, bool[]> _slotStateForBundle;
 
         public WeeklyThemeQuestService(IMonitor monitor, MetaStore store,
-            GameplayConfig config, Func<string, int> stackForIngredient)
+            GameplayConfig config, Func<int, bool[]> slotStateForBundle)
         {
             _monitor = monitor;
             _store = store;
             _jp = new JpCalculator(config.Jp);
-            _stackForIngredient = stackForIngredient ?? (_ => 1);
+            _slotStateForBundle = slotStateForBundle ?? (_ => null);
         }
 
         private RunState Run => _store.Run;
@@ -64,7 +64,7 @@ namespace TheLongestYear.Loop
             RemoveExistingWeeklyQuests();
 
             if (!Run.CurrentSelection.HasValue) return;
-            if (Run.CurrentWeekBonusItems.Count == 0) return;
+            if (Run.CurrentWeekBonusSlots.Count == 0) return;
 
             Theme theme = Run.CurrentSelection.Value;
             var (bonusId, liabilityId) = ThemeModifiers.For(theme);
@@ -75,8 +75,9 @@ namespace TheLongestYear.Loop
             q.questDescription =
                 $"Bonus: {ThemeModifiers.DisplayNameFor(bonusId)}\n" +
                 $"Drawback: {ThemeModifiers.DisplayNameFor(liabilityId)}\n\n" +
-                "Tip: hold this week's bonus items until now to donate them - you get 1.5x JP AND clear the drawback. " +
-                "Don't rush bundle donations; wait for the matching theme week.";
+                "Tip: hold matching donations for their theme week - completing a goal slot pays " +
+                "1.5x JP, and finishing every goal lifts the drawback. Each goal names the exact " +
+                "bundle slot it wants (full quantity and quality).";
             q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}";
             q.dayQuestAccepted.Value = Game1.Date.TotalDays;
             q.daysLeft.Value = -1;   // no time limit (the next week's pick will replace it)
@@ -86,7 +87,7 @@ namespace TheLongestYear.Loop
 
             _monitor.Log(
                 $"WeeklyThemeQuestService: added quest '{q.questTitle}' for week {Run.WeekOfYear} " +
-                $"with {Run.CurrentWeekBonusItems.Count} bonus items.",
+                $"with {Run.CurrentWeekBonusSlots.Count} goal slots.",
                 LogLevel.Info);
         }
 
@@ -119,42 +120,50 @@ namespace TheLongestYear.Loop
             }
 
             // No quest in log — back-fill it if a selection is already active.
-            if (Run.CurrentSelection.HasValue && Run.CurrentWeekBonusItems.Count > 0)
+            if (Run.CurrentSelection.HasValue && Run.CurrentWeekBonusSlots.Count > 0)
                 OnThemeSelected();
         }
 
         private void RefreshObjective(Quest q)
         {
-            IList<string> bonusItems = Run.CurrentWeekBonusItems;
-            List<string> donated = new();   // TEMP: rewritten to slot-based ticks in the same plan (Task 4).
+            IList<BonusSlot> slots = Run.CurrentWeekBonusSlots;
             int doneCount = 0;
             var lines = new List<string>();
 
-            foreach (string id in bonusItems)
+            foreach (BonusSlot slot in slots)
             {
-                string name = ResolveDisplayName(id);
-                // Exact-id match (vanilla treats the two egg colors as distinct CC items — the
-                // Animal bundle has separate 174/182 slots). ResolveDisplayName names the color so
-                // the player knows which egg the goal wants.
-                bool isDone = donated.Contains(id);
+                // Live CC slot state is the source of truth: every sampled slot was open at
+                // selection time, so "complete now" means "completed this week". Self-reconciling
+                // (no observer-miss drift), and vanilla only completes a slot when the full
+                // stack at the required quality is deposited — multi-item goals need all items.
+                bool isDone = IsSlotComplete(slot);
                 if (isDone) doneCount++;
                 // ASCII checkbox glyphs — Stardew's smallFont doesn't include U+2611/U+2610.
-                lines.Add(isDone ? $"  [X] {name}" : $"  [ ] {name}");
+                lines.Add(isDone ? $"  [X] {DescribeSlot(slot)}" : $"  [ ] {DescribeSlot(slot)}");
             }
 
-            q.currentObjective = $"Donated {doneCount}/{bonusItems.Count}:\n" + string.Join("\n", lines);
+            q.currentObjective = $"Donated {doneCount}/{slots.Count}:\n" + string.Join("\n", lines);
 
-            // Auto-complete when every bonus item has been donated this run. Two rewards land:
+            // Auto-complete when every goal slot has been donated this week. Two rewards land:
             //   1) A flat JP bonus (season-scaled like the bundle/room completion bonuses).
             //   2) The week's liability is lifted for the remaining days (bonus stays active).
             //      RunState.LiabilitySuppressedThisWeek persists the lifted state so a reload
             //      doesn't snap the liability back on; ActiveEffectsProvider.SuppressLiability
             //      drives the live patches (ForageOffPatch et al.) to short-circuit to false.
-            if (bonusItems.Count > 0 && doneCount == bonusItems.Count && !q.completed.Value)
+            if (slots.Count > 0 && doneCount == slots.Count && !q.completed.Value)
             {
                 q.questComplete();
                 AwardCompletionRewards();
             }
+        }
+
+        private bool IsSlotComplete(BonusSlot slot)
+        {
+            bool[] state = _slotStateForBundle(slot.BundleIndex);
+            return state != null
+                && slot.IngredientIndex >= 0
+                && slot.IngredientIndex < state.Length
+                && state[slot.IngredientIndex];
         }
 
         private void AwardCompletionRewards()
@@ -196,31 +205,29 @@ namespace TheLongestYear.Loop
             ["180"] = "Brown",   // Egg (brown)
         };
 
-        /// <summary>Resolve a qualified item id to "DisplayName xStack" or fall back to the raw id.
-        /// Stack count comes from the same ingredient-stack map the hub uses, so the quest text
-        /// matches the bonus icons' badges (e.g. "Wood x99" rather than just "Wood"). Egg variants
-        /// that share a DisplayName get a "(Brown)"/"(White)" suffix so the goal names the color.</summary>
-        private string ResolveDisplayName(string qualifiedId)
+        /// <summary>"DisplayName (Brown) x5 (gold) - Bundle Name" — names the exact slot
+        /// requirement. Quality tags: 1=silver, 2/3=gold, 4=iridium.</summary>
+        private string DescribeSlot(BonusSlot slot)
         {
+            string name = slot.ItemId;
             try
             {
-                Item item = ItemRegistry.Create(qualifiedId, 1, 0, allowNull: true);
-                if (item != null)
-                {
-                    int stack = _stackForIngredient(qualifiedId);
-                    string qty = stack > 1 ? $" x{stack}" : "";
-                    string colorTag =
-                        AmbiguousEggColors.TryGetValue(BareItemId(qualifiedId), out string color)
-                            ? $" ({color})"
-                            : "";
-                    return $"{item.DisplayName}{colorTag}{qty}";
-                }
+                Item item = ItemRegistry.Create(slot.ItemId, 1, 0, allowNull: true);
+                if (item != null) name = item.DisplayName;
             }
             catch (Exception)
             {
-                // ItemRegistry may throw for malformed ids; fall through to the raw id.
+                // ItemRegistry may throw for malformed ids; fall back to the raw id.
             }
-            return qualifiedId;
+
+            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(slot.ItemId), out string color)
+                ? $" ({color})" : "";
+            string qty = slot.Stack > 1 ? $" x{slot.Stack}" : "";
+            string quality = slot.Quality >= 4 ? " (iridium)"
+                : slot.Quality >= 2 ? " (gold)"
+                : slot.Quality >= 1 ? " (silver)"
+                : "";
+            return $"{name}{colorTag}{qty}{quality} - {slot.BundleName}";
         }
 
         /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used

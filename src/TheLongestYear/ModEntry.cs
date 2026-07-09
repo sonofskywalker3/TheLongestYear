@@ -330,7 +330,7 @@ namespace TheLongestYear
 
             _questService = new WeeklyThemeQuestService(
                 this.Monitor, _meta, _config,
-                stackForIngredient: id => _ingredientStacks.TryGetValue(id, out int s) ? s : 1);
+                slotStateForBundle: RunController.SlotStateForBundle);
             // Wire the post-donation callback so each CC deposit refreshes the quest's progress
             // text (and auto-completes when every bonus item this week has been donated).
             DonationService.Active.AfterDonation = _questService.OnItemDonated;

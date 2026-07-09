@@ -118,9 +118,24 @@ namespace TheLongestYear.Loop
                     LogLevel.Info);
                 Run.BeginNewMonth(calendarSeason);
                 if (Run.CurrentSelection.HasValue)
-                    PopulateBonusItemsForCurrentSelection();
+                    PopulateBonusSlotsForCurrentSelection();
             }
             Run.DayOfMonth = Game1.dayOfMonth;
+
+            // 2026-07-09 slot redesign migration: a mid-week save from an older version has the
+            // legacy id-only bonus list but no slot goals. Re-sample once (the week's goals
+            // re-roll — one-time, beta-acceptable) and rebuild the quest from slots.
+            if (Run.CurrentSelection.HasValue
+                && Run.CurrentWeekBonusSlots.Count == 0
+                && Run.CurrentWeekBonusItems.Count > 0)
+            {
+                _monitor.Log(
+                    "Migrating this week's bonus list to slot-based goals (one-time re-sample).",
+                    LogLevel.Info);
+                PopulateBonusSlotsForCurrentSelection();
+                ApplyEmptyPoolLiftIfNeeded();
+                _questService?.OnThemeSelected();
+            }
 
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
 
@@ -507,12 +522,14 @@ namespace TheLongestYear.Loop
                 // the bonus list still reflects last month's season, so re-sample now.
                 if (Run.CurrentSelection.HasValue)
                 {
-                    PopulateBonusItemsForCurrentSelection();
+                    PopulateBonusSlotsForCurrentSelection();
                     var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
                     ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(
                         $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
                         LogLevel.Info);
+
+                    ApplyEmptyPoolLiftIfNeeded();
 
                     // Spawn the weekly tracker for the freshly-activated pre-pick.
                     _questService?.OnThemeSelected();
@@ -659,12 +676,13 @@ namespace TheLongestYear.Loop
             }
 
             Run.Select(theme);
-            PopulateBonusItemsForCurrentSelection();
+            PopulateBonusSlotsForCurrentSelection();
             var (bonus, liability) = ThemeModifiers.For(theme);
             ActiveEffectsProvider.Set(bonus, liability);
+            ApplyEmptyPoolLiftIfNeeded();
             _monitor.Log(
                 $"Selected {theme} (bonus {bonus}, liability {liability}). " +
-                $"Bonus items this week: [{string.Join(", ", Run.CurrentWeekBonusItems)}].",
+                $"Goal slots this week: [{string.Join(", ", Run.CurrentWeekBonusSlots.Select(s => $"{s.ItemId}@{s.BundleName}#{s.IngredientIndex}"))}].",
                 LogLevel.Info);
 
             // Surface the weekly theme + bonus checklist as a quest entry.
@@ -678,22 +696,36 @@ namespace TheLongestYear.Loop
                 SweepExistingForage();
         }
 
-        /// <summary>Sample the per-week bonus list for the current selection and store it on RunState.</summary>
-        private void PopulateBonusItemsForCurrentSelection()
+        /// <summary>Sample the per-week goal slots for the current selection and store them on
+        /// RunState. Clears the legacy id list so post-migration saves stop carrying it.</summary>
+        private void PopulateBonusSlotsForCurrentSelection()
         {
+            Run.CurrentWeekBonusSlots.Clear();
             Run.CurrentWeekBonusItems.Clear();
             if (!Run.CurrentSelection.HasValue) return;
+            var sample = SampleSlotsForTheme(Run.CurrentSelection.Value, Run.Season, Run.WeekOfYear);
+            Run.CurrentWeekBonusSlots.AddRange(sample);
+        }
 
-            int maxCount = BonusListSizeForCurrentSeason();
-            var sample = BonusItemSampler.SampleForTheme(
-                Run.Seed, Run.WeekOfYear,
-                Run.CurrentSelection.Value, Run.Season,
-                _requirements,
-                IsObtainableInCurrentSeason,
-                RarityForItem,
-                maxCount);
+        /// <summary>Empty goal pool (everything for this theme already donated): no quest this
+        /// week, drawback auto-lifted, no weekly JP bonus (spec 2026-07-09 §3). The
+        /// LiabilitySuppressedThisWeek flag doubles as the completion-reward idempotency guard,
+        /// so setting it here also prevents a later JP payout.</summary>
+        private void ApplyEmptyPoolLiftIfNeeded()
+        {
+            if (!Run.CurrentSelection.HasValue) return;
+            if (Run.CurrentWeekBonusSlots.Count > 0) return;
+            if (Run.LiabilitySuppressedThisWeek) return;
 
-            Run.CurrentWeekBonusItems.AddRange(sample);
+            Run.LiabilitySuppressedThisWeek = true;
+            ActiveEffectsProvider.SuppressLiability();
+            Game1.addHUDMessage(new HUDMessage(
+                "Nothing left to donate for this theme - drawback lifted.",
+                HUDMessage.newQuest_type));
+            _monitor.Log(
+                $"Weekly goal pool for {Run.CurrentSelection} is empty (all in-play slots donated) - " +
+                "no quest this week; drawback auto-lifted, no weekly JP bonus.",
+                LogLevel.Info);
         }
 
         /// <summary>Rarity lookup for the bonus sampler: pull from the pre-built CcItem catalog so
@@ -711,10 +743,40 @@ namespace TheLongestYear.Loop
         /// lookup as the selection-time commit. Keeps the two samples deterministically aligned.</summary>
         public Rarity GetRarityForItem(string itemId) => RarityForItem(itemId);
 
-        /// <summary>How big the per-card bonus-item preview list should be for the season.
+        /// <summary>Live per-slot completion state for a bundle (vanilla source of truth), or
+        /// null when absent. Same NetBundles access pattern as ItemDonationSync/VaultPaymentSync:
+        /// FieldDict.ContainsKey is the safe presence check.</summary>
+        internal static bool[] SlotStateForBundle(int bundleIndex)
+        {
+            var bundles = Game1.netWorldState?.Value?.Bundles;
+            if (bundles?.FieldDict == null) return null;
+            return bundles.FieldDict.ContainsKey(bundleIndex) ? bundles[bundleIndex] : null;
+        }
+
+        /// <summary>Sample this week's goal slots for a theme+season — shared by the hub preview
+        /// and the selection-time commit so both show the same goals. Pool = open, in-play slots
+        /// (already-donated slots are never sampled; a complete bundle's leftover lines are dead).</summary>
+        public System.Collections.Generic.IReadOnlyList<BonusSlot> SampleSlotsForTheme(
+            Theme theme, CoreSeason season, int weekOfYear)
+        {
+            var bundleData = Game1.netWorldState?.Value?.BundleData;
+            if (bundleData == null) return System.Array.Empty<BonusSlot>();
+            var pool = SlotPoolBuilder.OpenSlotsForTheme(
+                bundleData, SlotStateForBundle, _requirements,
+                theme, season, id => IsObtainableInSeason(id, season));
+            return BonusSlotSampler.SampleSlots(
+                Run.Seed, weekOfYear, theme, pool, RarityForItem, BonusListSizeFor(season));
+        }
+
+        /// <summary>How big the per-card bonus-item preview list should be for the given season.
+        /// Lives in <see cref="BonusItemSampler.DefaultMaxCountBySeason"/>.</summary>
+        public int BonusListSizeFor(CoreSeason season)
+            => BonusItemSampler.DefaultMaxCountBySeason[(int)season];
+
+        /// <summary>How big the per-card bonus-item preview list should be for the current season.
         /// Lives in <see cref="BonusItemSampler.DefaultMaxCountBySeason"/>.</summary>
         public int BonusListSizeForCurrentSeason()
-            => BonusItemSampler.DefaultMaxCountBySeason[(int)Run.Season];
+            => BonusListSizeFor(Run.Season);
 
         /// <summary>
         /// Number of weather preview days to reveal (the next N days, starting tomorrow).

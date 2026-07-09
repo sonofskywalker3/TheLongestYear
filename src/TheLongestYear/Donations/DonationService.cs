@@ -38,9 +38,12 @@ namespace TheLongestYear.Donations
         private RunState Run => _store.Run;
 
         /// <summary>A successful donation of <paramref name="count"/> of an item to the CC.
-        /// Pays base rarity JP; if the player has a selected theme this week AND the donated id
-        /// is in that week's bonus list, the JP is multiplied by SelectionBonusMultiplier.</summary>
-        public void OnItemDonated(string qualifiedItemId, int count)
+        /// Pays base rarity JP; if the player has a selected theme this week AND the completed
+        /// slot (<paramref name="bundleIndex"/>/<paramref name="ingredientIndex"/>) is one of this
+        /// week's sampled goal slots, the JP is multiplied by SelectionBonusMultiplier. The
+        /// bundle/ingredient indices default to -1 (no slot identity) so debug/legacy callers
+        /// still compile and simply never earn the multiplier.</summary>
+        public void OnItemDonated(string qualifiedItemId, int count, int bundleIndex = -1, int ingredientIndex = -1)
         {
             if (string.IsNullOrEmpty(qualifiedItemId) || count <= 0)
                 return;
@@ -48,7 +51,7 @@ namespace TheLongestYear.Donations
             Rarity rarity = ItemRarityResolver.Resolve(qualifiedItemId, _config.RarityThresholds);
             long baseJp = _jp.PerItem(rarity, Run.WeekOfYear) * count;
 
-            bool bonusApplies = IsSelectedBonusItem(qualifiedItemId);
+            bool bonusApplies = IsSelectedBonusSlot(bundleIndex, ingredientIndex);
             long awarded = bonusApplies
                 ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;
@@ -70,14 +73,16 @@ namespace TheLongestYear.Donations
             AfterDonation?.Invoke();
         }
 
-        /// <summary>True if the player has a selected theme this week AND the donated id is in
-        /// this week's sampled bonus list (see <see cref="BonusItemSampler"/>). The list is
-        /// populated by <c>RunController.PopulateBonusItemsForCurrentSelection</c> at selection
-        /// time and persists in <see cref="RunState.CurrentWeekBonusItems"/>.</summary>
-        private bool IsSelectedBonusItem(string itemId)
+        /// <summary>True if the just-completed CC slot is one of this week's sampled goal slots
+        /// (see <see cref="BonusSlotSampler"/>; persisted in <see cref="RunState.CurrentWeekBonusSlots"/>).</summary>
+        private bool IsSelectedBonusSlot(int bundleIndex, int ingredientIndex)
         {
+            if (bundleIndex < 0 || ingredientIndex < 0) return false;
             if (!Run.CurrentSelection.HasValue) return false;
-            return Run.CurrentWeekBonusItems.Contains(itemId);
+            foreach (BonusSlot s in Run.CurrentWeekBonusSlots)
+                if (s.BundleIndex == bundleIndex && s.IngredientIndex == ingredientIndex)
+                    return true;
+            return false;
         }
 
         /// <summary>A bundle just completed — award its one-time completion bonus (season-scaled).</summary>
