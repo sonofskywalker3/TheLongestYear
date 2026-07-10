@@ -29,11 +29,12 @@ public static class WeatherScheduler
 {
     public const int DaysPerMonth = 28;
 
-    private const string Sun      = "Sun";
-    private const string Rain     = "Rain";
-    private const string Storm    = "Storm";
-    private const string Snow     = "Snow";
-    private const string Festival = "Festival";
+    private const string Sun       = "Sun";
+    private const string Rain      = "Rain";
+    private const string Storm     = "Storm";
+    private const string Snow      = "Snow";
+    private const string Festival  = "Festival";
+    private const string GreenRain = "GreenRain";
 
     // Vanilla 1.6 festival days per season (ignores SVE / mod festivals — same set as
     // WeatherForecast.SpringFestivals etc. so the two stay in sync).
@@ -51,9 +52,15 @@ public static class WeatherScheduler
 
     /// <summary>
     /// Build the 28-day weather schedule for a season as a 1-indexed array (index 0 unused).
-    /// Result strings are one of: Sun, Rain, Storm, Snow, Festival.
+    /// Result strings are one of: Sun, Rain, Storm, Snow, Festival, GreenRain.
     /// </summary>
-    public static string[] BuildSchedule(int uniqueId, int seasonIndex)
+    /// <param name="summerGreenRainDay">Vanilla 1.6's green-rain day for this year's summer
+    /// (one of 5/6/7/14/15/16/18/23, from <c>Utility.isGreenRainDay</c>), or -1 for none.
+    /// Flows in from the caller because the vanilla pick uses game RNG this pure class can't
+    /// replicate. Ignored outside summer. Reserved like a festival day so the storm/rain
+    /// minimums place around it — the scheduler used to overwrite vanilla's green-rain
+    /// override entirely, so green rain never fired on a TLY save (khauser13 2026-06-11).</param>
+    public static string[] BuildSchedule(int uniqueId, int seasonIndex, int summerGreenRainDay = -1)
     {
         var schedule = new string[DaysPerMonth + 1];
         int[] festivals = FestivalsFor(seasonIndex);
@@ -66,6 +73,15 @@ public static class WeatherScheduler
         foreach (int d in festivals)
             if (d >= 1 && d <= DaysPerMonth)
                 schedule[d] = Festival;
+
+        // Green rain day (summer only). Forced-sun and festival days win — mirrors vanilla's
+        // override order in getWeatherModificationsForDate, where the festival check runs after
+        // the green-rain check. (Vanilla's options never collide with either in practice.)
+        if (seasonIndex == 1 && summerGreenRainDay >= 1 && summerGreenRainDay <= DaysPerMonth
+            && schedule[summerGreenRainDay] == null)
+        {
+            schedule[summerGreenRainDay] = GreenRain;
+        }
 
         // Open day pool: every unfilled day. Sorted ascending for deterministic ordering
         // before the seeded shuffle below.
@@ -109,11 +125,11 @@ public static class WeatherScheduler
     }
 
     /// <summary>Look up a single day's scheduled weather. Returns null for out-of-range days.</summary>
-    public static string? WeatherFor(int uniqueId, int seasonIndex, int dayOfMonth)
+    public static string? WeatherFor(int uniqueId, int seasonIndex, int dayOfMonth, int summerGreenRainDay = -1)
     {
         if (dayOfMonth < 1 || dayOfMonth > DaysPerMonth) return null;
         if (seasonIndex < 0 || seasonIndex > 3) return null;
-        return BuildSchedule(uniqueId, seasonIndex)[dayOfMonth];
+        return BuildSchedule(uniqueId, seasonIndex, summerGreenRainDay)[dayOfMonth];
     }
 
     private static void PlaceN(string[] schedule, List<int> available, Random rng, string weather, int n)

@@ -153,4 +153,75 @@ public class WeatherSchedulerTests
         for (int d = 1; d <= WeatherScheduler.DaysPerMonth; d++)
             Assert.NotNull(schedule[d]);
     }
+
+    // --- Green rain (khauser13: green rain never fired in summer — the scheduler overwrote
+    //     vanilla's pick because it had no GreenRain concept) ---
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(14)]
+    [InlineData(23)]  // vanilla's options are {5,6,7,14,15,16,18,23}
+    public void Summer_green_rain_day_is_marked_GreenRain(int greenRainDay)
+    {
+        for (int seed = 0; seed < 20; seed++)
+        {
+            var schedule = WeatherScheduler.BuildSchedule(seed, seasonIndex: 1, summerGreenRainDay: greenRainDay);
+            Assert.Equal("GreenRain", schedule[greenRainDay]);
+        }
+    }
+
+    [Fact]
+    public void Summer_keeps_storm_and_rain_minimums_alongside_green_rain()
+    {
+        for (int seed = 0; seed < 50; seed++)
+        {
+            var schedule = WeatherScheduler.BuildSchedule(seed, seasonIndex: 1, summerGreenRainDay: 14);
+            Assert.True(CountDays(schedule, "Storm") >= 2,
+                $"Summer (seed={seed}) had only {CountDays(schedule, "Storm")} storm days with green rain reserved.");
+            Assert.True(CountDays(schedule, "Rain") >= 2,
+                $"Summer (seed={seed}) had only {CountDays(schedule, "Rain")} rain days with green rain reserved.");
+            Assert.Equal(1, CountDays(schedule, "GreenRain"));
+        }
+    }
+
+    [Fact]
+    public void Week_one_rain_guarantee_survives_a_week_one_green_rain_day()
+    {
+        // Green rain on day 5/6/7 shrinks the open week-1 window but days 3-4 are always free.
+        foreach (int greenRainDay in new[] { 5, 6, 7 })
+        {
+            for (int seed = 0; seed < 30; seed++)
+            {
+                var schedule = WeatherScheduler.BuildSchedule(seed, seasonIndex: 1, summerGreenRainDay: greenRainDay);
+                bool rainInWeekOne = false;
+                for (int d = 3; d <= 7; d++)
+                    if (schedule[d] == "Rain") rainInWeekOne = true;
+                Assert.True(rainInWeekOne,
+                    $"Summer (seed={seed}, greenRain={greenRainDay}) lost its week-1 rain day.");
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]  // Spring
+    [InlineData(2)]  // Fall
+    [InlineData(3)]  // Winter
+    public void Green_rain_day_is_ignored_outside_summer(int seasonIndex)
+    {
+        var schedule = WeatherScheduler.BuildSchedule(uniqueId: 42, seasonIndex, summerGreenRainDay: 14);
+        Assert.Equal(0, CountDays(schedule, "GreenRain"));
+    }
+
+    [Fact]
+    public void No_green_rain_when_day_not_provided()
+    {
+        var schedule = WeatherScheduler.BuildSchedule(uniqueId: 42, seasonIndex: 1);
+        Assert.Equal(0, CountDays(schedule, "GreenRain"));
+    }
+
+    [Fact]
+    public void WeatherFor_passes_the_green_rain_day_through()
+    {
+        Assert.Equal("GreenRain", WeatherScheduler.WeatherFor(42, 1, 14, summerGreenRainDay: 14));
+    }
 }

@@ -35,7 +35,15 @@ namespace TheLongestYear.Loop
             int dayOfMonth = date.DayOfMonth;
             int uniqueId = unchecked((int)Game1.uniqueIDForThisGame);
 
-            string scheduled = WeatherScheduler.WeatherFor(uniqueId, seasonIndex, dayOfMonth);
+            // Vanilla 1.6 green rain: the original method already set __result = "GreenRain" for
+            // this year's pick, but returning the schedule unconditionally overwrote it — green
+            // rain NEVER fired on a TLY save (khauser13 2026-06-11). Resolve the vanilla pick and
+            // hand it to the scheduler, which reserves the day so the ≥2-storm/≥2-rain summer
+            // minimums still place around it. The pick is seeded on (year, uniqueIDForThisGame),
+            // so it lands on a different day each loop for free.
+            int greenRainDay = seasonIndex == 1 ? GreenRainDay.VanillaSummerDay() : -1;
+
+            string scheduled = WeatherScheduler.WeatherFor(uniqueId, seasonIndex, dayOfMonth, greenRainDay);
             if (scheduled == null) return;
 
             // Festival days: leave vanilla's per-festival weather alone (the scheduler stores
@@ -44,6 +52,27 @@ namespace TheLongestYear.Loop
             if (scheduled == "Festival") return;
 
             __result = scheduled;
+        }
+    }
+
+    /// <summary>Resolves vanilla's summer green-rain day for the current year/seed.
+    /// <c>Utility.isGreenRainDay</c> seeds on <c>(Game1.year * 777, Game1.uniqueIDForThisGame)</c>
+    /// with game RNG the pure scheduler can't replicate, so the day is found game-side (by asking
+    /// vanilla about each candidate day) and passed in as data.</summary>
+    internal static class GreenRainDay
+    {
+        // Vanilla's candidate set (Utility.isGreenRainDay) — only these days can ever match.
+        private static readonly int[] VanillaOptions = { 5, 6, 7, 14, 15, 16, 18, 23 };
+
+        /// <summary>This year's green-rain day of summer, or -1 if none resolves.</summary>
+        internal static int VanillaSummerDay()
+        {
+            foreach (int day in VanillaOptions)
+            {
+                if (Utility.isGreenRainDay(day, StardewValley.Season.Summer))
+                    return day;
+            }
+            return -1;
         }
     }
 }

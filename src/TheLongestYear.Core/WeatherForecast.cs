@@ -7,7 +7,7 @@ namespace TheLongestYear.Core;
 /// </summary>
 /// <param name="SeasonIndex">0=Spring 1=Summer 2=Fall 3=Winter</param>
 /// <param name="DayOfMonth">1-28</param>
-/// <param name="Weather">"Sun", "Rain", "Storm", "Snow", "Festival" (or "?" if unschedulable)</param>
+/// <param name="Weather">"Sun", "Rain", "Storm", "Snow", "Festival", "GreenRain" (or "?" if unschedulable)</param>
 public readonly record struct ForecastDay(int SeasonIndex, int DayOfMonth, string Weather);
 
 /// <summary>
@@ -29,8 +29,10 @@ public static class WeatherForecast
     /// <param name="currentDayOfMonth">today's day-of-month (1-28)</param>
     /// <param name="currentSeasonIndex">0=Spring 1=Summer 2=Fall 3=Winter</param>
     /// <param name="slotsToReveal">how many days forward to compute (from Weather Sage tier)</param>
+    /// <param name="summerGreenRainDay">this year's summer green-rain day (vanilla pick, resolved
+    /// game-side), or -1; applied to any summer day the forecast window covers</param>
     public static ForecastDay[] Build(int uniqueId, int daysPlayedToday, int currentDayOfMonth,
-        int currentSeasonIndex, int slotsToReveal)
+        int currentSeasonIndex, int slotsToReveal, int summerGreenRainDay = -1)
     {
         var result = new ForecastDay[slotsToReveal];
         int dayOfMonth = currentDayOfMonth;
@@ -46,7 +48,7 @@ public static class WeatherForecast
                 seasonIndex = (seasonIndex + 1) % 4;
             }
 
-            string scheduled = WeatherScheduler.WeatherFor(uniqueId, seasonIndex, dayOfMonth) ?? "?";
+            string scheduled = WeatherScheduler.WeatherFor(uniqueId, seasonIndex, dayOfMonth, summerGreenRainDay) ?? "?";
             result[slot] = new ForecastDay(seasonIndex, dayOfMonth, scheduled);
         }
 
