@@ -217,6 +217,24 @@ namespace TheLongestYear.Loop
                     $"([{string.Join(", ", purged)}]) so no phantom room-fix scene fires on the fresh run.",
                     LogLevel.Info);
 
+            // 1b. Museum wipe. LibraryMuseum.museumPieces is a PROPERTY over
+            // Game1.netWorldState.Value.MuseumPieces (LibraryMuseum.cs:50) — world-state level,
+            // the same survival class as the CC bundles above: loadForNewGame rebuilds the
+            // location but not the netWorldState dictionary, so donations persisted across loops
+            // (Dusklight7 2026-07-05). FarmerReset wipes the museumCollectedRewardO_* mail, so
+            // persisting donations re-armed the entire reward ladder every loop (free early
+            // scarecrows/starfruit) — and long-tenured players could exhaust donatable items and
+            // lock themselves out of rewards. Clearing rewinds the museum to empty; rewards are
+            // re-earned by re-donating (user-approved 2026-07-09).
+            int museumPieces = Game1.netWorldState.Value.MuseumPieces.Length;
+            if (museumPieces > 0)
+            {
+                Game1.netWorldState.Value.MuseumPieces.Clear();
+                _monitor.Log(
+                    $"In-place reset: cleared {museumPieces} museum donation(s) — the museum rewinds with the year.",
+                    LogLevel.Info);
+            }
+
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
             Game1.year = 1;
             Game1.season = StardewValley.Season.Spring;
