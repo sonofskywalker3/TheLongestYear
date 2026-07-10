@@ -1194,6 +1194,7 @@ namespace TheLongestYear
             switch (command)
             {
                 case "tly_meta": this.PrintMeta(command, args); break;
+                case "tly_loadsave": this.CmdLoadSave(command, args); break;
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_additem": this.CmdAddItem(command, args); break;
