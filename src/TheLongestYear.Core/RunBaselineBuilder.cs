@@ -121,6 +121,9 @@ public static class RunBaselineBuilder
         var keptBuildings = new List<string>();
         AddTopOfChain(meta, CoopChain, keptBuildings);
         AddTopOfChain(meta, BarnChain, keptBuildings);
+        // Silo is a single-tier keep, no chain.
+        if (meta.HasUpgrade("keep_silo"))
+            keptBuildings.Add("Silo");
 
         // Starting animals — every owned start_<species> goes in (the prerequisite chain
         // already enforces the matching housing was bought, so the housing is in keptBuildings).

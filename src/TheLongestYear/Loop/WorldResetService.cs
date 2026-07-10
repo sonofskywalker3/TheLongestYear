@@ -526,6 +526,8 @@ namespace TheLongestYear.Loop
             ["Barn"]         = new Vector2(62f, 12f),
             ["Big Barn"]     = new Vector2(62f, 12f),
             ["Deluxe Barn"]  = new Vector2(62f, 12f),
+            // 3x3 silo between the coop (x54-59, y9-11) and barn (x62-68, y12-15) footprints.
+            ["Silo"]         = new Vector2(60f, 9f),
         };
 
         private void ApplyKeptBuildings(IReadOnlyList<string> buildings)

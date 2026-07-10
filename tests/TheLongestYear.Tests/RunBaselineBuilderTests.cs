@@ -275,6 +275,17 @@ public class RunBaselineBuilderTests
     }
 
     [Fact]
+    public void Keep_silo_lands_in_kept_buildings()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_silo" } };
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Contains("Silo", b.KeptBuildings);
+
+        var without = RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.DoesNotContain("Silo", without.KeptBuildings);
+    }
+
+    [Fact]
     public void StartingAnimals_include_owned_start_animals_with_their_required_housing()
     {
         var meta = new MetaState
