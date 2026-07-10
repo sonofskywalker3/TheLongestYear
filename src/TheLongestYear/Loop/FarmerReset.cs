@@ -161,6 +161,27 @@ namespace TheLongestYear.Loop
             // Suppress the vanilla intro cutscene from replaying every loop (matches TitleMenu's new-game path).
             p.eventsSeen.Add("60367");
 
+            // Max health/stamina — rewind to the vanilla formula before refilling. NEVER reset
+            // before (found live 2026-07-10: 500 max HP after 27 loops): maxHealth is a plain
+            // field, so each loop's Fighter/Defender re-picks (+15/+25 via vanilla
+            // LevelUpMenu.getImmediateProfessionPerk) and snake milk stacked forever. Mirrors
+            // LevelUpMenu.RevalidateHealth's formula (100 base + 5 per combat level except 5
+            // and 10 + professions + qiCave) — we can't call it directly because it only fixes
+            // UPWARD. At this point professions are cleared (re-picks re-add their bonus at
+            // pick time via the vanilla menu) and the qiCave snake-milk mail is wiped (+25
+            // correctly drops until re-drunk this run), so only kept combat levels count.
+            int expectedMaxHealth = 100;
+            for (int i = 1; i <= p.combatLevel.Value; i++)
+            {
+                if (i != 5 && i != 10)
+                    expectedMaxHealth += 5;
+            }
+            p.maxHealth = expectedMaxHealth;
+
+            // Stardrops are tracked by CF_* mail (wiped above), making them re-collectable
+            // each loop — without this their +34s would stack in maxStamina the same way.
+            p.maxStamina.Value = 270;
+
             // Vitals to full.
             p.stamina = p.maxStamina.Value;
             p.health = p.maxHealth;
