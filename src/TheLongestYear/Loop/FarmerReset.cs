@@ -99,6 +99,11 @@ namespace TheLongestYear.Loop
 
             // Mastery — permanent floor from Keep Mastery. Set the global MasteryExp stat to the
             // threshold for the kept level so MasteryTrackerMenu.getCurrentMasteryLevel() reports it.
+            // The stat wipe above cleared masteryLevelsSpent + the mastery_* claim flags, so a Keep
+            // Mastery owner re-claims their perks at the pedestal each loop — INTENTIONAL: the perk
+            // recipes and reward items are themselves wiped every reset, so re-claiming is the only
+            // way the keep functions (same pattern as kept skill levels re-picking professions).
+            // Claims per loop are bounded by the kept level, and non-owners get no floor at all.
             if (baseline.MasteryLevel > 0)
             {
                 int needed = StardewValley.Menus.MasteryTrackerMenu.getMasteryExpNeededForLevel(baseline.MasteryLevel);
