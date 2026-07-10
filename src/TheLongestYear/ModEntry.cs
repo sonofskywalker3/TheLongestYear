@@ -28,7 +28,6 @@ namespace TheLongestYear
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
-        private IReadOnlyDictionary<string, int> _ingredientStacks = new Dictionary<string, int>();
         private DonationObserver _donationObserver;
         private CaveChoicePrompt _caveChoicePrompt;
         private PeakMineFloorTracker _peakMineFloorTracker;
@@ -324,8 +323,6 @@ namespace TheLongestYear
                 ParseBundleQuotas());
             _catalog = builder.Build();
             _requirements = builder.BuildRequirements();
-            _ingredientStacks = builder.BuildIngredientStacks();
-            var ingredientQualities = builder.BuildIngredientQualities();
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _questService = new WeeklyThemeQuestService(
@@ -335,7 +332,7 @@ namespace TheLongestYear
             // text (and auto-completes when every goal slot this week is complete).
             DonationService.Active.AfterDonation = _questService.OnItemDonated;
 
-            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements, _ingredientStacks, ingredientQualities);
+            _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
             _runController.AttachQuestService(_questService);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
