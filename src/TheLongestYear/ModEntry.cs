@@ -186,6 +186,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
+            helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
@@ -1218,6 +1219,7 @@ namespace TheLongestYear
                 case "tly_donate": this.CmdDonate(command, args); break;
                 case "tly_runstate": this.CmdRunState(command, args); break;
                 case "tly_catalog": this.CmdCatalog(command, args); break;
+                case "tly_classify": this.CmdClassify(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
@@ -1278,6 +1280,26 @@ namespace TheLongestYear
             this.Monitor.Log($"CC catalog: {_catalog.Count} items.", LogLevel.Info);
             foreach (var kvp in byTheme)
                 this.Monitor.Log($"  {kvp.Key}: {kvp.Value}", LogLevel.Info);
+        }
+
+        /// <summary>Re-run the bundle catalog + requirement classification over whatever is in
+        /// <c>Game1.netWorldState.Value.BundleData</c> RIGHT NOW and log the usual summary lines.
+        /// Results go into locals only — the active run's catalog/requirements are untouched, so
+        /// this is safe on a live save. Exists so an unattended session can verify remixed-bundle
+        /// classification: 'debug ShuffleBundles' regenerates the bundles as Remixed in memory
+        /// (never persisted unless the game saves), then this command classifies them.</summary>
+        private void CmdClassify(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            var builder = new BundleCatalogBuilder(
+                _config.RarityThresholds, _seasonResolver, this.Monitor,
+                ParseThemeOverrides(),
+                ParseItemSeasonPins(),
+                ParseBundleQuotas());
+            IReadOnlyList<CcItem> catalog = builder.Build();
+            IReadOnlyList<BundleRequirement> requirements = builder.BuildRequirements();
+            this.Monitor.Log($"tly_classify: {catalog.Count} catalog items, {requirements.Count} requirements (diagnostics only — active run unchanged).", LogLevel.Info);
         }
 
         private void CmdTestDonate(string command, string[] args)
