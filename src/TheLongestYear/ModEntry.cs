@@ -170,6 +170,7 @@ namespace TheLongestYear
             _commandFilePath = Path.Combine(helper.DirectoryPath, DebugCommandFileName);
 
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
+            helper.ConsoleCommands.Add("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
@@ -562,6 +563,28 @@ namespace TheLongestYear
             // CaveChoicePrompt's job now, so the scan must never re-flag it as replayable.
             exclude.Add("65");
             return exclude;
+        }
+
+        /// <summary>Load a save from the title screen by folder name — the same
+        /// <c>SaveGame.Load(slotName)</c> call LoadGameMenu's slot click makes (LoadGameMenu.cs:85).
+        /// Debug/automation tool: lets an unattended session load a save via console injection to
+        /// read the SaveLoaded diagnostics (e.g. the remixed-bundle classification lines) without
+        /// clicking through the title menu. Refuses while a save is already loaded.</summary>
+        private void CmdLoadSave(string command, string[] args)
+        {
+            if (Context.IsWorldReady)
+            {
+                this.Monitor.Log("A save is already loaded — return to title first (tly_loadsave is title-screen-only).", LogLevel.Warn);
+                return;
+            }
+            if (args.Length < 1 || string.IsNullOrWhiteSpace(args[0]))
+            {
+                this.Monitor.Log("Usage: tly_loadsave <saveFolderName>  (e.g. tly_loadsave None_123456789)", LogLevel.Info);
+                return;
+            }
+
+            this.Monitor.Log($"tly_loadsave: loading '{args[0]}'.", LogLevel.Info);
+            StardewValley.SaveGame.Load(args[0]);
         }
 
         private void PrintMeta(string command, string[] args)
