@@ -260,6 +260,52 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>
+    /// Opens the stash's ItemGrabMenu with a NULL <c>context</c> so storage-overhaul mods leave
+    /// its layout alone. Better Chests and Unlimited Storage both TRANSPILE the ItemGrabMenu
+    /// constructor: after vanilla computes the capacity, their inserted helper post-processes it
+    /// using the ctor's <c>context</c> argument (`context as Chest` → their per-chest option →
+    /// 36/70-slot grid), so no Harmony postfix priority can win. Vanilla itself keys the layout
+    /// on <c>sourceItem</c>, NOT context (ItemGrabMenu.cs:316-318), and Chest.ShowMenu passes
+    /// the chest as BOTH — so nulling context for OUR tagged chest keeps the vanilla small-chest
+    /// geometry while both helpers fall through their Chest checks. Vanilla uses context beyond
+    /// layout only for cases that never apply to a plain chest (JunimoHut button, JunimoNoteMenu
+    /// reward grab, CC/museum drag checks). A prefix runs before the (transpiled) ctor body.
+    /// Verified live 2026-07-10 vs Unlimited Storage 1.2.0 with BigChestMenu=true.
+    /// </summary>
+    [HarmonyPatch]
+    internal static class JunimoStashMenuContextPatch
+    {
+        // Match every ItemGrabMenu ctor overload that has both a sourceItem and an object
+        // context parameter (PC and Android overloads differ in arity — match by name, not
+        // by exact signature).
+        private static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
+        {
+            foreach (var ctor in typeof(ItemGrabMenu).GetConstructors())
+            {
+                var ps = ctor.GetParameters();
+                bool hasContext = false, hasSource = false;
+                foreach (var p in ps)
+                {
+                    if (p.Name == "context" && p.ParameterType == typeof(object)) hasContext = true;
+                    if (p.Name == "sourceItem") hasSource = true;
+                }
+                if (hasContext && hasSource)
+                    yield return ctor;
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Prefix(Item sourceItem, ref object context)
+        {
+            if (sourceItem is Chest chest
+                && chest.modData?.ContainsKey(JunimoStashService.StashModDataKey) == true)
+            {
+                context = null;
+            }
+        }
+    }
+
+    /// <summary>
     /// Pins the stash chest's <see cref="Chest.SpecialChestType"/> to <c>None</c> so the
     /// ItemGrabMenu lays it out as a plain small chest. Storage mods force the big-chest MENU
     /// through this getter rather than through capacity — Unlimited Storage 1.2.0 (LeFauxMatt,
