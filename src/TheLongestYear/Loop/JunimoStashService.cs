@@ -120,6 +120,7 @@ namespace TheLongestYear.Loop
             var chest = new Chest(playerChest: true, tile, itemId: "130");
             chest.playerChoiceColor.Value = new Microsoft.Xna.Framework.Color(150, 90, 200);
             chest.modData[StashModDataKey] = "1";
+            StampBetterChestsOptOut(chest);
             farm.objects[tile] = chest;
             _placedTile = tile;
 
@@ -127,6 +128,26 @@ namespace TheLongestYear.Loop
                 $"JunimoStashService: placed stash chest at ({tile.X}, {tile.Y}), " +
                 $"cap={_meta.StashSlotCount} slots.",
                 LogLevel.Info);
+        }
+
+        // Better Chests (furyx639.BetterChests) reads per-chest feature overrides from these
+        // modData keys — the same ones its own "configure chest" UI writes. The stash is a
+        // fixed-purpose few-slot chest: without the opt-out, BC resizes its MENU to a 70-slot
+        // grid via an ItemGrabMenu transpiler (GetMenuCapacity reads BC's ResizeChest OPTION,
+        // not Chest.GetActualCapacity, so the 0.11.3 capacity-postfix fix could never reach it
+        // — VeggieGirl43's report), can bulk-stash arbitrary items into it, auto-organize it,
+        // or let the player carry it off its anchor tile. Fix-our-mod rule: opt THIS chest out
+        // through BC's supported per-chest surface; every other chest is left to BC.
+        // Harmless without BC installed — just inert modData alongside our own tag.
+        private const string BetterChestsOptionPrefix = "furyx639.BetterChests/";
+        private const string BetterChestsDisabledValue = "Disabled";
+        private static readonly string[] BetterChestsDisabledOptions =
+            { "ResizeChest", "StashToChest", "AutoOrganize", "CarryChest" };
+
+        private static void StampBetterChestsOptOut(Chest chest)
+        {
+            foreach (string option in BetterChestsDisabledOptions)
+                chest.modData[BetterChestsOptionPrefix + option] = BetterChestsDisabledValue;
         }
 
         /// <summary>
