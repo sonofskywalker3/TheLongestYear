@@ -45,6 +45,36 @@ namespace TheLongestYear.Loop
             p.toolBeingUpgraded.Value = null;
             p.daysLeftForToolUpgrade.Value = 0;
 
+            // Worn equipment — hat/shirt/pants/boots/rings/trinkets live in their own slots, not
+            // p.Items, so the inventory wipe above misses them (2026-07-09 reset-leak audit,
+            // Dusklight7: worn rings + clothes survived every loop). Farmer.Equip(null, slot)
+            // routes through vanilla's unequip hook (onUnequip + equipment-buff recompute) so
+            // ring/boot effects actually drop with the item.
+            p.Equip<StardewValley.Objects.Hat>(null, p.hat);
+            p.Equip<StardewValley.Objects.Clothing>(null, p.shirtItem);
+            p.Equip<StardewValley.Objects.Clothing>(null, p.pantsItem);
+            p.Equip<StardewValley.Objects.Boots>(null, p.boots);
+            p.Equip<StardewValley.Objects.Ring>(null, p.leftRing);
+            p.Equip<StardewValley.Objects.Ring>(null, p.rightRing);
+            // Trinkets unequip by index assignment — that fires OnTrinketChange → Trinket.Unapply,
+            // the same path the inventory page uses — then the emptied list is cleared.
+            for (int i = 0; i < p.trinketItems.Count; i++)
+                p.trinketItems[i] = null;
+            p.trinketItems.Clear();
+
+            // Run-scoped per-farmer progress the reset never covered (same audit):
+            //  - slayer kill counts persist while the Gil_* reward mail is wiped below, so loop 2
+            //    could walk into the guild and instantly re-claim every slayer ring;
+            //  - consumed milestone-chest floors meant mine chests never respawned on later loops
+            //    (descending with wiped weapons and no milestone gear);
+            //  - power books / mastery exp + claims / prize-ticket ladder all persist in
+            //    Stats.Values. Removal is a targeted allow-list (StatResetRules) — lifetime
+            //    cosmetic counters (steps taken, crops shipped, …) stay.
+            p.stats.specificMonstersKilled.Clear();
+            p.chestConsumedMineLevels.Clear();
+            foreach (string key in StatResetRules.SelectRunScoped(p.stats.Values.Keys))
+                p.stats.Values.Remove(key);
+
             // Skills — clear everything first.
             for (int i = 0; i < p.experiencePoints.Count; i++)
                 p.experiencePoints[i] = 0;
