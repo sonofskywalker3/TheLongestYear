@@ -1216,7 +1216,9 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme>", LogLevel.Warn); return; }
-            _runController.SelectByName(args[0]);
+            // skipOfferCheck: this is a debug/playtest command — let it force any theme, not just
+            // the seeded pair. The SelectedThemesThisMonth dedupe inside Select still applies.
+            _runController.SelectByName(args[0], skipOfferCheck: true);
         }
 
         private void CmdOffer(string command, string[] args)
