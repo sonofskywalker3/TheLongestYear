@@ -1134,23 +1134,28 @@ namespace TheLongestYear
         /// </summary>
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (!Context.IsWorldReady)
-                return;
-            // Dormant on non-TLY saves: no deferred-offer retry, no festival auto-eject, no debug bridge.
-            if (!RunActivation.IsActive)
-                return;
+            if (Context.IsWorldReady)
+            {
+                // Dormant on non-TLY saves: no deferred-offer retry, no festival auto-eject, no debug
+                // bridge (the bridge must never run commands against a save the mod is dormant on).
+                if (!RunActivation.IsActive)
+                    return;
 
-            // Re-attempt a planning-hub open that was deferred because the menu surface was busy
-            // (the post-win keep-playing dialogue still closing when the new loop's reset fired).
-            // Gate on a clear surface so the retry opens cleanly and doesn't re-log every tick.
-            if (Game1.activeClickableMenu == null && !Game1.eventUp)
-                _runController?.TryDrainDeferredOffer();
+                // Re-attempt a planning-hub open that was deferred because the menu surface was busy
+                // (the post-win keep-playing dialogue still closing when the new loop's reset fired).
+                // Gate on a clear surface so the retry opens cleanly and doesn't re-log every tick.
+                if (Game1.activeClickableMenu == null && !Game1.eventUp)
+                    _runController?.TryDrainDeferredOffer();
 
-            // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
-            // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
-            // festival's end time rather than up to 30 ticks (~500ms) later.
-            if (FestivalTimeFlow.ShouldAutoEnd())
-                FestivalTimeFlow.ForceEnd(this.Monitor);
+                // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
+                // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
+                // festival's end time rather than up to 30 ticks (~500ms) later.
+                if (FestivalTimeFlow.ShouldAutoEnd())
+                    FestivalTimeFlow.ForceEnd(this.Monitor);
+            }
+            // No world loaded (title screen): fall through to the bridge poll so tly_loadsave can
+            // start an unattended session. There is no save to be dormant on, and every
+            // world-touching command guards on Context.IsWorldReady itself ("Load a save first").
 
             // The file bridge is developer-only and off by default — a shipped build must not watch
             // the filesystem or run queued tly_ commands (some destructive) the player never typed.
