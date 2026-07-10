@@ -81,12 +81,13 @@ namespace TheLongestYear.Loop
             var q = new Quest();
             q.questType.Value = Quest.type_basic;
             q.questTitle = $"Weekly Theme: {theme}";
+            // Keep the description SHORT: the quest-log page renders it above the objective
+            // text, and a long paragraph here pushes the checklist below the fold (user
+            // feedback 2026-07-09: "had to scroll down to find them"). The tip rides at the
+            // END of the objective text instead — below the checklist.
             q.questDescription =
                 $"Bonus: {ThemeModifiers.DisplayNameFor(bonusId)}\n" +
-                $"Drawback: {ThemeModifiers.DisplayNameFor(liabilityId)}\n\n" +
-                "Tip: hold matching donations for their theme week - completing a goal slot pays " +
-                "1.5x JP, and finishing every goal lifts the drawback. Each goal names the exact " +
-                "bundle slot it wants (full quantity and quality).";
+                $"Drawback: {ThemeModifiers.DisplayNameFor(liabilityId)}";
             q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}";
             q.dayQuestAccepted.Value = Game1.Date.TotalDays;
             q.daysLeft.Value = -1;   // no time limit (the next week's pick will replace it)
@@ -151,7 +152,12 @@ namespace TheLongestYear.Loop
                 lines.Add(isDone ? $"  [X] {DescribeSlot(slot)}" : $"  [ ] {DescribeSlot(slot)}");
             }
 
-            q.currentObjective = $"Donated {doneCount}/{slots.Count}:\n" + string.Join("\n", lines);
+            // Checklist first, tip LAST — the tip must never push the goals below the fold
+            // (user feedback 2026-07-09).
+            q.currentObjective =
+                $"Donated {doneCount}/{slots.Count}:\n" + string.Join("\n", lines) +
+                "\n\nTip: hold matching donations for their theme week - completing a goal slot " +
+                "pays 1.5x JP, and finishing every goal lifts the drawback.";
 
             // Auto-complete when every goal slot has been donated this week. Two rewards land:
             //   1) A flat JP bonus (season-scaled like the bundle/room completion bonuses).
