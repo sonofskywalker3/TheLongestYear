@@ -4,41 +4,110 @@ using System.Collections.Generic;
 namespace TheLongestYear.Core
 {
     /// <summary>
-    /// Classifies vanilla per-farmer <c>Stats.Values</c> keys as run-scoped: progress earned
-    /// inside a single loop that the reset must wipe, or it leaks across runs (2026-07-09
-    /// reset-leak audit, Dusklight7's report). Everything not matched here is left alone —
-    /// lifetime counters (steps taken, crops shipped, …) are cosmetic and persisting them is
-    /// harmless, so the rule set is a targeted allow-list, not a blanket stats wipe.
+    /// Classifies vanilla per-farmer <c>Stats.Values</c> keys for the loop reset.
+    /// WIPE-BY-DEFAULT (user ruling 2026-07-10, reversing the 0.11.24 allow-list): any key not
+    /// on the explicit keep-list below is removed at reset, so a future vanilla or mod
+    /// progression stat (the <c>Book_*</c>/<c>mastery_*</c> class that kept leaking) can never
+    /// silently survive a loop. The keep-list was classified ONCE against the complete 1.6.15
+    /// <c>StatKeys</c> universe (decompile StatKeys.cs) — a missed future key over-wipes a
+    /// cosmetic counter (recoverable direction for a roguelite) instead of leaking power.
     /// </summary>
     public static class StatResetRules
     {
-        // Key families (verified against the Android decompile's StatKeys.cs):
-        //  - "Book_*"      — 1.6 power books; each key grants a permanent passive once read.
-        //  - "mastery_*"   — claimed mastery perks (mastery_4 gates the trinket slots).
-        private static readonly string[] RunScopedPrefixes = { "Book_", "mastery_" };
-
-        private static readonly HashSet<string> RunScopedKeys = new(StringComparer.OrdinalIgnoreCase)
+        // Keys that SURVIVE the reset. Three classes:
+        //
+        //  ENGINE — daysPlayed: event preconditions + daily RNG seeding; the reset re-establishes
+        //  it explicitly (WorldResetService sets DaysPlayed = 1), keeping it here is ordering
+        //  defense so the wipe can never race that write. averageBedtime: rolling average, no
+        //  run leverage.
+        //
+        //  RNG-SEQUENCE COUNTERS — timesEnchanted / geodesCracked / MysteryBoxesOpened seed
+        //  WHICH enchant/geode-drop/box-drop comes next (e.g. BaseEnchantment.cs:127 seeds on
+        //  timesEnchanted). Wiping them would restart the exact same drop sequence every loop —
+        //  memorizable and scummable. They grant no power, only variety; they stay.
+        //
+        //  LIFETIME TALLIES — cosmetic production/found/activity counters (steps taken, crops
+        //  shipped, …). The user never approved wiping these; none of them gate in-run content.
+        //
+        // Falls out WIPED by default (the old allow-list, now implicit): Book_*, mastery_*,
+        // MasteryExp, masteryLevelsSpent, trinketSlots, ticketPrizesClaimed,
+        // specialOrderPrizeTickets — plus run-relevant ladders the allow-list had missed:
+        // BillboardQuestsDone + GoldenTagsTurnedIn (prize/derby reward ladders),
+        // blessingOfWaters (day-scoped statue blessing), individualMoneyEarned (money is
+        // run-scoped), SquidFestScore_<day>_<year> — and every unknown future key.
+        private static readonly HashSet<string> KeptKeys = new(StringComparer.OrdinalIgnoreCase)
         {
-            "MasteryExp",               // mastery progress bar (MasteryTrackerMenu reads it live)
-            "masteryLevelsSpent",       // claims already spent at the mastery pedestal
-            "ticketPrizesClaimed",      // prize-ticket machine ladder position (Lewis' house)
-            "specialOrderPrizeTickets", // unclaimed prize tickets the machine decrements
-            "trinketSlots",             // combat-mastery trinket slot — InventoryPage gates the
-                                        // slot on THIS stat, not on mastery_4 (2026-07-10 review)
+            // Engine.
+            "daysPlayed",
+            "averageBedtime",
+
+            // RNG-sequence counters (see class comment).
+            "timesEnchanted",
+            "geodesCracked",
+            "MysteryBoxesOpened",
+
+            // Lifetime tallies.
+            "beachFarmSpawns",
+            "beveragesMade",
+            "boatRidesToIsland",
+            "caveCarrotsFound",
+            "cheeseMade",
+            "chickenEggsLayed",
+            "childrenTurnedToDoves",
+            "completedJunimoKart",
+            "completedPrairieKing",
+            "completedPrairieKingWithoutDying",
+            "copperFound",
+            "cowMilkProduced",
+            "cropsShipped",
+            "diamondsFound",
+            "dirtHoed",
+            "duckEggsLayed",
+            "exMemoriesWiped",
+            "fishCaught",
+            "giftsGiven",
+            "goatCheeseMade",
+            "goatMilkProduced",
+            "goldFound",
+            "goodFriends",
+            "hardModeMonstersKilled",
+            "iridiumFound",
+            "ironFound",
+            "itemsCooked",
+            "itemsCrafted",
+            "itemsForaged",
+            "itemsShipped",
+            "monstersKilled",
+            "mossHarvested",
+            "mysticStonesCrushed",
+            "notesFound",
+            "otherPreciousGemsFound",
+            "piecesOfTrashRecycled",
+            "preservesMade",
+            "prismaticShardsFound",
+            "questsCompleted",
+            "rabbitWoolProduced",
+            "rocksCrushed",
+            "seedsSown",
+            "sheepWoolProduced",
+            "slimesKilled",
+            "stepsTaken",
+            "stoneGathered",
+            "stumpsChopped",
+            "timesFished",
+            "timesUnconscious",
+            "totalMoneyGifted",
+            "trashCansChecked",
+            "trufflesFound",
+            "weedsEliminated",
+            "wildtreesplanted",
         };
 
         public static bool IsRunScoped(string statKey)
         {
             if (string.IsNullOrEmpty(statKey))
                 return false;
-            if (RunScopedKeys.Contains(statKey))
-                return true;
-            foreach (string prefix in RunScopedPrefixes)
-            {
-                if (statKey.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-            return false;
+            return !KeptKeys.Contains(statKey);
         }
 
         /// <summary>The subset of <paramref name="keys"/> the reset should remove. Materialized

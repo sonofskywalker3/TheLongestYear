@@ -68,8 +68,9 @@ namespace TheLongestYear.Loop
             //  - consumed milestone-chest floors meant mine chests never respawned on later loops
             //    (descending with wiped weapons and no milestone gear);
             //  - power books / mastery exp + claims / prize-ticket ladder all persist in
-            //    Stats.Values. Removal is a targeted allow-list (StatResetRules) — lifetime
-            //    cosmetic counters (steps taken, crops shipped, …) stay.
+            //    Stats.Values. Removal is WIPE-BY-DEFAULT with an explicit keep-list
+            //    (StatResetRules, user ruling 2026-07-10): unknown future keys wipe; only
+            //    engine-critical keys, RNG-sequence counters, and lifetime tallies survive.
             p.stats.specificMonstersKilled.Clear();
             p.chestConsumedMineLevels.Clear();
             foreach (string key in StatResetRules.SelectRunScoped(p.stats.Values.Keys))
