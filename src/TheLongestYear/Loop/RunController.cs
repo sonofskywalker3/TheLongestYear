@@ -668,6 +668,15 @@ namespace TheLongestYear.Loop
             }
 
             Run.Select(theme);
+            // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
+            // card, console). Mark the week presented and drop any deferred re-present for it —
+            // otherwise a stale deferred offer (stashed while a picker was already up) drains the
+            // moment the pick closes the hub and opens a SECOND picker, whose next pick then
+            // overwrites this one (2026-07-09 playtest: picked Farming, ghost picker popped,
+            // Mixed overwrote Farming).
+            Run.OfferPresentedWeek = Run.WeekOfYear;
+            if (_deferredOffer is { } stale && stale.week == Run.WeekOfYear)
+                _deferredOffer = null;
             PopulateBonusSlotsForCurrentSelection();
             var (bonus, liability) = ThemeModifiers.For(theme);
             ActiveEffectsProvider.Set(bonus, liability);
@@ -917,6 +926,16 @@ namespace TheLongestYear.Loop
             // than looping. The week is not yet marked presented, so PresentOffer's own guard
             // lets the retry through.
             _deferredOffer = null;
+            // A deferred offer for a week that's no longer current is garbage (the week rolled
+            // over, or a reset replaced the run while it sat pending) — drop it instead of
+            // presenting a picker for a week the player is no longer in.
+            if (pending.week != Run.WeekOfYear)
+            {
+                _monitor.Log(
+                    $"Dropping stale deferred offer for week {pending.week} (current week {Run.WeekOfYear}).",
+                    LogLevel.Trace);
+                return;
+            }
             PresentOffer(pending.week, pending.season);
         }
 
