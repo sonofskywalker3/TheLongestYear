@@ -37,16 +37,30 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   never in the checklist. **Fix direction:** ensure EVERY live bundle classifies (add rules or a
   safe fallback quota), so unclassified never silently shrinks the gate. Interim for 0.12.0; the
   0.13.0 owned-bundle engine retires the whole class.
-- **🔴 Weekly theme quantity bug — a 5x-quantity request is satisfied by donating 1x.** *khauser13
-  (11 Jun)*: weekly quest wanted 5 crops (quality-crops slot); donating a single parsnip into the
-  spring-crops slot ticked it. Reproduced with melons. Checklist matching looks id-only, ignoring
-  the requested quantity/slot.
-- **🔴 Structurally impossible weekly themes.** *khauser13 (11 Jun)*: mining theme asked solar
-  essence + void essence + slime/bat wings when the CC only has 2 matching turn-in slots — cannot
-  complete regardless of play. DISTINCT from the "asks already-donated items" case (that one is
-  BY DESIGN per 2026-06-08, though now 4 reporters have flagged it — Tutorem, emmainthealps,
-  xsansara, Dusklight7 — worth a 0.12.0 clarity/balance revisit: Dusklight7 suggests pre-checking
-  or crediting already-donated items).
+- **✅ FIXED v0.11.12–0.11.19 (slot-based weekly theme redesign, PENDING PLAYTEST) — weekly theme
+  quantity bug + impossible themes + already-donated asks, all three killed by one redesign.**
+  Spec `docs/superpowers/specs/2026-07-09-slot-based-weekly-theme-checklist-design.md`, plan
+  `docs/superpowers/plans/2026-07-09-slot-based-weekly-theme-checklist.md` (user-approved design:
+  exact-slot goals, seeded-random slot choice, empty pool → no quest + drawback auto-lift).
+  Weekly goals now point at SPECIFIC still-open bundle slots (`Parsnip x5 (gold) - Quality Crops`)
+  and tick only when that exact slot flips complete in live CC state — vanilla enforces the full
+  stack + quality, so 1x parsnip can no longer clear a x5 goal (khauser13). The pool samples only
+  OPEN slots, so goals can't ask for already-donated items (Tutorem/emmainthealps/xsansara/
+  Dusklight7 — the old "by design" ruling was overturned by the user 2026-07-09) and structurally
+  impossible themes can't be generated (khauser13's mining case). Fewer open slots → shorter
+  checklist; zero → no quest, drawback lifted, no JP. The 1.5× JP bonus is slot-strict. Hub
+  preview uses the same sampler + shows per-slot stack/quality; new hub line "Banking items for a
+  matching theme week pays 1.5x JP." + reworded quest tip. Mid-week saves migrate with a one-time
+  goal re-roll. 498 tests pass; boot smoke on PC clean (46 patch classes, 0 errors); final holistic
+  review = ready. **PENDING PLAYTEST:** pick a theme (goals name slot+bundle), donate a partial
+  stack (no tick), complete the exact slot (tick + 1.5× in log), late-run short/empty weeks lift
+  the drawback; hub tip renders without layout overlap.
+
+*Original reports (for history):*
+- *khauser13 (11 Jun)*: weekly quest wanted 5 crops (quality-crops slot); donating a single
+  parsnip into the spring-crops slot ticked it. Reproduced with melons.
+- *khauser13 (11 Jun)*: mining theme asked solar essence + void essence + slime/bat wings when
+  the CC only has 2 matching turn-in slots — impossible regardless of play.
 - **🔴 Green rain never triggers in summer.** *khauser13 (11 Jun)*. Likely `WeatherScheduler`
   override drops vanilla's 1.6 green-rain day when it rewrites summer weather. (Summer 13/26
   guaranteed storms also gone — that part is WAI, the scheduler's ≥2-storm guarantee replaced
