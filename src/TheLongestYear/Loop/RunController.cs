@@ -217,6 +217,10 @@ namespace TheLongestYear.Loop
 
         public void OnDayStarted(object sender, DayStartedEventArgs e)
         {
+            // Runs before the cutscene early-return: vanilla's morning ownership pass has already
+            // blanked an unowned/unnamed horse by now, and it must be repaired on day-28 mornings too.
+            HorseCarryoverService.EnsureHorseNamed(_store.State, _monitor);
+
             if (_pendingCutscene != Day28Branch.None)
             {
                 // A day-28 outcome is queued. The Day28CutsceneDriver plays the in-bed Junimo
