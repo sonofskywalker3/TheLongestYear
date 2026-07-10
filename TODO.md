@@ -139,12 +139,28 @@ to include a picture of recommended settings or note that in the mod description
 nexus-description (content-identical). **Remaining:** a screenshot of the new-game Advanced Options
 panel for the page, and the live-description sync (rides the next release's nexus-update run).
 
-### 🔍 VERIFY — Better Chests × Junimo Stash capacity fix (v0.11.3, 4b9097e)
-Our `Chest.GetActualCapacity` postfix is now `Priority.Last` so the stash's true slot count wins
-over Better Chests' resize postfix regardless of load order (VeggieGirl43: 70-slot grid, 4 usable).
-Not yet verified with Better Chests actually installed — install BC on the PC test setup (or ask
-VeggieGirl43 to retest on the release that ships this) and confirm the stash opens at its real
-slot count.
+### ✅ VERIFIED + REFIXED v0.11.35 (2026-07-10) — Better Chests × Junimo Stash (was v0.11.3)
+Live-tested with the real reporter mod: BC 2.18.6 + FauxCore 1.2.2 (BC is HIDDEN on Nexus since
+Dec 2024 — author's own uploads still live on CurseForge). **The 0.11.3 Priority.Last capacity
+postfix did NOT fix it** — VeggieGirl43's 70-slot grid reproduced, because BC sizes the chest
+MENU via an ItemGrabMenu transpiler (`GetMenuCapacity` reads BC's per-chest ResizeChest OPTION,
+never `GetActualCapacity`). Actual fix (v0.11.35): stamp BC's supported per-chest modData keys
+on the stash at placement — `furyx639.BetterChests/{ResizeChest,StashToChest,AutoOrganize,
+CarryChest}` = `"Disabled"` (same keys BC's configure-chest UI writes; also stops BC bulk-stash
+dumping into the stash and carry-away). Screenshot-verified: 4-slot grid with BC active.
+Inert without BC. Ask VeggieGirl43 to retest on the release that ships 0.11.35.
+
+### 🟡 KNOWN LIMITATION — Unlimited Storage (BC's successor) still inflates the stash GRID
+Cross-checked with LeFauxMatt's live successor, Unlimited Storage 1.2.0 (Nexus 30323): its
+transpiled `ItemGrabMenu` helper returns `BigChestMenu ? 70 : 36` for ANY chest context —
+even `SpecialChestType.None`, even at default config — and its enable list is per item ID
+("130" = all regular chests), so no per-instance opt-out exists on its side. v0.11.36 pins the
+stash's `SpecialChestType` to None (correct, inert defense; counters SpecialChestType-based
+inflation) but the transpiler path still wins: with US installed the stash draws a 36/70-slot
+grid while deposits stay correctly capped (cosmetic only — the JunimoStashCapPatch reject
+still enforces the real limit). Unreported by any player. The robust fix would rebuild
+`ItemsToGrabMenu` in our ShowMenu postfix with our capacity (PC geometry + controller-snap
+rewiring — nontrivial); decide only if a player actually reports it.
 
 ### ✅ DONE v0.11.1 (2026-06-10) — event-hygiene pass: cave re-choice prompt replaces replaying Demetrius scene
 The Demetrius cave cutscene (65) no longer replays every loop: it plays once (Spring-5 hold kept),

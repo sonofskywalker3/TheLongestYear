@@ -84,6 +84,25 @@ log ERROR all morning was a console-injection typo (stray leading char — retry
 Nothing was saved in-game at any point; the user's save file is untouched. Better Chests
 verification remains deferred (needs Nexus download + in-game interaction).
 
+## ✅ Better Chests verification executed later that morning — master now v0.11.36
+
+User-directed session (~10:00–10:30): BC is HIDDEN on Nexus (author marked it obsolete Dec
+2024); the author's own uploads are still live on **CurseForge** — downloaded BC 2.18.6 +
+FauxCore 1.2.2 from there. Result: **0.11.3 did NOT fix the report** (70-slot grid reproduced;
+BC sizes the menu via transpiler from its ResizeChest OPTION, not GetActualCapacity).
+**v0.11.35** = real fix: BC per-chest modData opt-out stamped on the stash at placement —
+screenshot-verified 4-slot grid with BC active. **v0.11.36** = SpecialChestType→None pin
+(inert defense). Cross-check with Unlimited Storage 1.2.0 (BC's live successor) found ITS
+transpiler still inflates the stash grid (36/70, cosmetic only, deposits stay capped) with no
+per-instance opt-out surface — documented as a known limitation in TODO.md, robust menu-rebuild
+fix deliberately NOT built (unreported, regression-risky). All third-party mods removed after
+testing; Mods folder restored.
+
+**⚠ Vortex incident:** at 10:14 the ContentPatcher folder was emptied (only the
+`__folder_managed_by_vortex` marker + config.json remain) — almost certainly a Vortex purge
+reacting to the externally-added test mods. FTM now skips (missing CP dependency). **User must
+redeploy in Vortex before the lunch playtest.**
+
 ## Open items (priority order)
 
 1. **📬 USER: Fluxwb Chinese translation reply** (Nexus 47926) + i18n-support decision (would be a
