@@ -49,6 +49,17 @@ public class UpgradeCatalogTests
     }
 
     [Fact]
+    public void Keep_silo_is_a_buildings_keep_gated_on_building_a_silo()
+    {
+        // khauser13 + Dusklight7 (2026-07): the silo was missing from the keep-building options.
+        var silo = UpgradeCatalog.All.SingleOrDefault(u => u.Id == "keep_silo");
+        Assert.NotNull(silo);
+        Assert.Equal(UpgradeCategory.Buildings, silo!.Category);
+        Assert.Equal("building:Silo", silo.RunReachRequirement);
+        Assert.Null(silo.PrerequisiteId);
+    }
+
+    [Fact]
     public void Every_prerequisite_points_to_a_real_upgrade_id()
     {
         var allIds = UpgradeCatalog.All.Select(u => u.Id).ToHashSet();

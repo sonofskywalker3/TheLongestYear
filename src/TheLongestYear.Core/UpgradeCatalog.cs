@@ -304,6 +304,12 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, "Keep Deluxe Barn",
             "Start each loop with a Deluxe Barn.", 2000, "keep_big_barn",
             metaRequirement: null, runReachRequirement: "building:Deluxe Barn"),
+        // Silo — requested twice (khauser13 2026-06-11 + Dusklight7 2026-07-05): cheap in vanilla,
+        // but its absence from the keep-building options read as an oversight. Priced well below
+        // the Coop/Barn keeps to match its vanilla cost (100g + stones vs. thousands).
+        new UpgradeDefinition("keep_silo", UpgradeCategory.Buildings, "Keep Silo",
+            "Start each loop with a Silo already built.", 150,
+            metaRequirement: null, runReachRequirement: "building:Silo"),
         new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
             "Start each loop with the Kitchen house upgrade (cooking accessible day 1).", 800,
             metaRequirement: null, runReachRequirement: "house:1"),
