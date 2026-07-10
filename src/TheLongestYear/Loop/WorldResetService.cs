@@ -235,6 +235,20 @@ namespace TheLongestYear.Loop
                     LogLevel.Info);
             }
 
+            // 1c. Lost books — same netWorldState survival class as the museum pieces above.
+            // LostBooksFound is the found COUNT (the per-book "lb_<n>" read markers live in
+            // mailReceived, which FarmerReset already clears wholesale). Reset the count so the
+            // library shelf rewinds with the museum (user ruling 2026-07-10: full reset for
+            // consistency; books scatter again each loop).
+            int lostBooks = Game1.netWorldState.Value.LostBooksFound;
+            if (lostBooks > 0)
+            {
+                Game1.netWorldState.Value.LostBooksFound = 0;
+                _monitor.Log(
+                    $"In-place reset: cleared {lostBooks} lost book(s) found — the library shelf rewinds too.",
+                    LogLevel.Info);
+            }
+
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
             Game1.year = 1;
             Game1.season = StardewValley.Season.Spring;
