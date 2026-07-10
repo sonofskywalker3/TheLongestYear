@@ -37,8 +37,14 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   never in the checklist. **Fix direction:** ensure EVERY live bundle classifies (add rules or a
   safe fallback quota), so unclassified never silently shrinks the gate. Interim for 0.12.0; the
   0.13.0 owned-bundle engine retires the whole class.
-- **✅ FIXED v0.11.12–0.11.19 (slot-based weekly theme redesign, PENDING PLAYTEST) — weekly theme
-  quantity bug + impossible themes + already-donated asks, all three killed by one redesign.**
+- **✅ FIXED v0.11.12–0.11.19 + PLAYTEST CONFIRMED 2026-07-09 — weekly theme quantity bug +
+  impossible themes + already-donated asks, all three killed by one redesign.** Playtest (user,
+  live save): 1 regular parsnip into Spring Crops → no tick, no bonus (`+3 JP`, the exact move
+  that faked the old code out); 5 gold parsnips into Quality Crops → goal ticked + `(bonus x1.5)`
+  in the log. Test items RETIRED. Same session also shipped: v0.11.20 quest tip moved below the
+  checklist (user feedback), v0.11.21 horse re-name-every-morning fix (verify first morning with
+  a stable), v0.11.22 `tly_select` force-any-theme for playtesting, v0.11.23 ghost-picker fix
+  (theme pick now consumes the week's offer; stale deferred offers dropped).
   Spec `docs/superpowers/specs/2026-07-09-slot-based-weekly-theme-checklist-design.md`, plan
   `docs/superpowers/plans/2026-07-09-slot-based-weekly-theme-checklist.md` (user-approved design:
   exact-slot goals, seeded-random slot choice, empty pool → no quest + drawback auto-lift).
