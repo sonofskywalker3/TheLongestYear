@@ -260,6 +260,28 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>
+    /// Pins the stash chest's <see cref="Chest.SpecialChestType"/> to <c>None</c> so the
+    /// ItemGrabMenu lays it out as a plain small chest. Storage mods force the big-chest MENU
+    /// through this getter rather than through capacity — Unlimited Storage 1.2.0 (LeFauxMatt,
+    /// verified live 2026-07-10 with BigChestMenu=true) postfixes it to BigChest for every
+    /// enabled item ID, and its enable list is per item ID ("130" = ALL regular chests), so
+    /// there is no per-instance opt-out on its side (unlike Better Chests' modData options).
+    /// Same shape as <see cref="JunimoStashCapacityPatch"/>: Priority.Last so our answer wins,
+    /// gated on OUR modData tag so every other chest is left to the storage mod.
+    /// </summary>
+    [HarmonyPatch(typeof(Chest), nameof(Chest.SpecialChestType), MethodType.Getter)]
+    internal static class JunimoStashSpecialChestTypePatch
+    {
+        [HarmonyPriority(Priority.Last)]
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Postfix(Chest __instance, ref Chest.SpecialChestTypes __result)
+        {
+            if (__instance?.modData?.ContainsKey(JunimoStashService.StashModDataKey) != true) return;
+            __result = Chest.SpecialChestTypes.None;
+        }
+    }
+
+    /// <summary>
     /// Prevents the player from picking up the stash chest with a pickaxe or axe. The stash is
     /// part of the run loop (placed on every save load, populated from MetaState) — letting the
     /// player pick it up would put a regular-chest copy in their inventory that wouldn't sync
