@@ -67,22 +67,45 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   parsnip into the spring-crops slot ticked it. Reproduced with melons.
 - *khauser13 (11 Jun)*: mining theme asked solar essence + void essence + slime/bat wings when
   the CC only has 2 matching turn-in slots — impossible regardless of play.
-- **🔴 Green rain never triggers in summer.** *khauser13 (11 Jun)*. Likely `WeatherScheduler`
-  override drops vanilla's 1.6 green-rain day when it rewrites summer weather. (Summer 13/26
-  guaranteed storms also gone — that part is WAI, the scheduler's ≥2-storm guarantee replaced
-  them, but green rain is a real content loss.)
-- **🔴 Loop reset coverage gaps — museum + more persists across resets.** *Dusklight7 (05 Jul)*:
-  museum donations/rewards do NOT reset (re-donating new items re-earns reward ladder early =
-  "massive broken potential" — early scarecrows/starfruit — AND can lock players out of rewards in
-  later loops if they run out of new donatables; recommends resetting the museum). Also reported
-  persisting: mines milestone-floor chests, monster-hunting (slayer) progress, ticket rewards in
-  Lewis' house (?), day-1 parsnips, books read (special powers), worn clothes + rings ("unbelievable
-  broken potential"). *Cross-check khauser13 (13 Jun): museum rewards "mostly reset themselves"
-  except the ancient seed — seed/recipe part is WAI per 2026-06-10 decision.* Needs a reset-audit
-  pass: decide per-surface keep/reset and fix the leaks.
-- **⭐ JP upgrade request ×2 — `keep_silo`.** *khauser13 (11 Jun)* + *Dusklight7 (05 Jul)*
-  independently: silo missing from the shrine keep-building options; cheap but its absence is
-  confusing. Small catalog addition alongside the other keep-building entries.
+- **✅ FIXED v0.11.26 — Green rain never triggers in summer.** *khauser13 (11 Jun)*. Root cause
+  confirmed: `WeatherModificationsPatch` returned the scheduler's choice unconditionally for
+  non-festival days and the scheduler had no GreenRain concept, so vanilla's green-rain override
+  (set inside `getWeatherModificationsForDate` before the postfix) was clobbered every summer.
+  Fix: `GreenRainDay.VanillaSummerDay()` resolves vanilla's pick (seeded on year+uniqueID, so it
+  moves each loop) and the scheduler reserves it like a festival day BEFORE placing storms/rain —
+  ≥2-storm/≥2-rain minimums + week-1 rain guarantee unit-covered. Weather Sage previews show the
+  1.6 green-rain icon + "Green Rain" hover. (Summer 13/26 fixed storms staying gone = WAI.)
+  **PENDING PLAYTEST:** on a summer save, TV forecast / Weather Sage should show a green-rain day
+  on one of {5,6,7,14,15,16,18,23}, and the day should actually run green rain.
+- **✅ FIXED v0.11.24-25 — Loop reset coverage gaps (Dusklight7's reset-leak audit).** All
+  keep-vs-reset decisions user-approved 2026-07-09 (full reset on every surface). Root causes +
+  fixes:
+  - *Museum donations/rewards* (v0.11.25): `MuseumPieces` lives on `Game1.netWorldState` (same
+    survival class as the CC bundles — `loadForNewGame` doesn't rebuild netWorldState dicts);
+    reward mail WAS wiped, so persisting donations re-armed the reward ladder every loop. Now
+    cleared in `PerformReset` — the museum rewinds with the year.
+  - *Worn clothes + rings + trinkets* (v0.11.24): equipment slots are separate Farmer fields the
+    p.Items wipe never touched. All slots (hat/shirt/pants/boots/rings/trinkets) now unequipped
+    via vanilla's hooks (buff recompute included).
+  - *Monster-slayer progress* (v0.11.24): `stats.specificMonstersKilled` persisted while `Gil_*`
+    mail was wiped → instant ring re-claims each loop. Cleared.
+  - *Mine milestone chests* (v0.11.24): `chestConsumedMineLevels` persisted → chests never
+    respawned. Cleared — each loop's descent re-earns the gear ladder.
+  - *Books read / mastery / prize tickets* (v0.11.24): run-scoped `Stats.Values` keys removed via
+    new pure `StatResetRules` allow-list (`Book_*`, `mastery_*`, MasteryExp, masteryLevelsSpent,
+    ticketPrizesClaimed, specialOrderPrizeTickets). Mastery was a found-in-audit leak: the floor
+    was only SET for Keep Mastery owners, never wiped for non-owners. Lifetime cosmetic counters
+    (steps, shipped, …) deliberately stay.
+  - *Day-1 parsnips*: already fixed 2026-05-30 (`RemoveStarterGiftBox`, shipped in 0.10.0) —
+    likely a stale observation from an older build; run 1 keeps the box by design.
+  - *Ancient seed*: WAI per 2026-06-10 decision (unchanged).
+  **PENDING PLAYTEST (one pass covers all):** reset a loop wearing rings + a hat with museum
+  donations, slayer kills, a consumed floor-10 chest, and a read book → after reset: empty museum,
+  bare equipment slots, Gil offers nothing, floor-10 chest respawns, book buff gone.
+- **✅ DONE v0.11.27 — JP upgrade request ×2 — `keep_silo`.** *khauser13 (11 Jun)* + *Dusklight7
+  (05 Jul)*. Buildings category, 150 JP, gated on `building:Silo` reach (evaluator gained an
+  exact-match fallback for non-chain buildings); rebuilt each loop at (60,9) between the coop and
+  barn tiles. Hay does not carry over.
 - **⚖️ Balance (0.12.0/0.13.0 fodder — difficulty too low for strong players).** *khauser13
   (12-13 Jun)*: finished the year first try on BOTH standard and remixed (sleeping idle days);
   suggests harder bundles / permanent debuffs; winter weekly themes felt pointless (everything
