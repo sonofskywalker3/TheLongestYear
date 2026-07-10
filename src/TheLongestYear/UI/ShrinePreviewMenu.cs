@@ -96,7 +96,8 @@ namespace TheLongestYear.UI
             _weatherDays = weatherTier > 0
                 ? WeatherForecast.Build(
                     (int)Game1.uniqueIDForThisGame, (int)Game1.stats.DaysPlayed,
-                    Game1.dayOfMonth, (int)Game1.season, weatherTier)
+                    Game1.dayOfMonth, (int)Game1.season, weatherTier,
+                    Loop.GreenRainDay.VanillaSummerDay())
                 : System.Array.Empty<ForecastDay>();
 
             // Cart Whisperer (single upgrade): on a cart day — or any day if the Cart Catalog mod lets
@@ -162,16 +163,23 @@ namespace TheLongestYear.UI
             return today; // unreachable — a visit day always exists within 28 days.
         }
 
-        /// <summary>Weather-icon source rect in <c>Game1.mouseCursors</c> (LooseSprites\Cursors),
-        /// matching the in-game TV/HUD icons. Unknown/Sun falls through to the sunny icon.</summary>
-        private static Rectangle WeatherIconSource(string weather) => weather switch
+        /// <summary>Weather-icon texture + source rect matching the in-game TV/HUD icons.
+        /// Green rain's icon lives on the 1.6 sheet (<c>Game1.mouseCursors_1_6</c>, same rect the
+        /// TV forecast uses); everything else is on <c>Game1.mouseCursors</c>. Unknown/Sun falls
+        /// through to the sunny icon.</summary>
+        private static (Microsoft.Xna.Framework.Graphics.Texture2D Texture, Rectangle Source) WeatherIconSource(string weather) => weather switch
         {
-            "Rain" => new Rectangle(465, 333, 13, 13),
-            "Storm" => new Rectangle(413, 346, 13, 13),
-            "Snow" => new Rectangle(465, 346, 13, 13),
-            "Festival" => new Rectangle(413, 372, 13, 13),
-            _ => new Rectangle(413, 333, 13, 13), // Sun / default
+            "Rain" => (Game1.mouseCursors, new Rectangle(465, 333, 13, 13)),
+            "Storm" => (Game1.mouseCursors, new Rectangle(413, 346, 13, 13)),
+            "Snow" => (Game1.mouseCursors, new Rectangle(465, 346, 13, 13)),
+            "Festival" => (Game1.mouseCursors, new Rectangle(413, 372, 13, 13)),
+            "GreenRain" => (Game1.mouseCursors_1_6, new Rectangle(178, 363, 13, 13)),
+            _ => (Game1.mouseCursors, new Rectangle(413, 333, 13, 13)), // Sun / default
         };
+
+        /// <summary>Human label for a forecast weather string ("GreenRain" → "Green Rain").</summary>
+        internal static string WeatherLabel(string weather)
+            => weather == "GreenRain" ? "Green Rain" : weather;
 
         private int ForesightPanelHeight()
         {
@@ -361,7 +369,7 @@ namespace TheLongestYear.UI
             {
                 if (bounds.Contains(x, y))
                 {
-                    _hoverText = $"Day {day.DayOfMonth} - {day.Weather}";
+                    _hoverText = $"Day {day.DayOfMonth} - {WeatherLabel(day.Weather)}";
                     return;
                 }
             }
@@ -474,9 +482,9 @@ namespace TheLongestYear.UI
                     Utility.drawTextWithShadow(b, num, Game1.smallFont,
                         new Vector2(bounds.X + (WeatherCellWidth - ns.X) / 2f, numY), Game1.textColor);
 
-                    Rectangle src = WeatherIconSource(day.Weather);
+                    var (tex, src) = WeatherIconSource(day.Weather);
                     float iconX = bounds.X + (WeatherCellWidth - WeatherIconPx) / 2f;
-                    b.Draw(Game1.mouseCursors, new Vector2(iconX, iconY), src, Color.White, 0f,
+                    b.Draw(tex, new Vector2(iconX, iconY), src, Color.White, 0f,
                         Vector2.Zero, WeatherIconScale, SpriteEffects.None, 0.9f);
                 }
             }
