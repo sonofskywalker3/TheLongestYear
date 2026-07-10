@@ -26,8 +26,6 @@ namespace TheLongestYear.Loop
         private readonly JpCalculator _jp;
         private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
         private readonly System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
-        private readonly System.Collections.Generic.IReadOnlyDictionary<string, int> _ingredientStacks;
-        private readonly System.Collections.Generic.IReadOnlyDictionary<string, int> _ingredientQualities;
 
         /// <summary>Which day-28 bedtime cutscene is queued for the next morning (set in
         /// OnDayEnding from the gate's RunAction). The <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/>
@@ -56,9 +54,7 @@ namespace TheLongestYear.Loop
 
         public RunController(IMonitor monitor, MetaStore store, GameplayConfig config, WorldResetService reset,
             System.Collections.Generic.IReadOnlyList<CcItem> catalog,
-            System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null,
-            System.Collections.Generic.IReadOnlyDictionary<string, int> ingredientStacks = null,
-            System.Collections.Generic.IReadOnlyDictionary<string, int> ingredientQualities = null)
+            System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements = null)
         {
             _monitor = monitor;
             _store = store;
@@ -67,23 +63,7 @@ namespace TheLongestYear.Loop
             _jp = new JpCalculator(config.Jp);
             _catalog = (catalog != null && catalog.Count > 0) ? catalog : CcItemCatalog.Items;
             _requirements = requirements ?? new System.Collections.Generic.List<BundleRequirement>();
-            _ingredientStacks = ingredientStacks ?? new System.Collections.Generic.Dictionary<string, int>();
-            _ingredientQualities = ingredientQualities ?? new System.Collections.Generic.Dictionary<string, int>();
         }
-
-        /// <summary>Quantity required for a bonus item's bundle slot, used by the hub UI so the
-        /// icon shows the actual donation count (e.g. Wood = 99). Falls back to 1 for unknown ids
-        /// (SVE additions etc.) so the display never crashes.</summary>
-        public int GetStackForIngredient(string itemId)
-            => _ingredientStacks.TryGetValue(itemId, out int stack) ? stack : 1;
-
-        /// <summary>Minimum quality required for a bonus item's bundle slot, used by the hub UI
-        /// so the icon shows the gold-star (or silver/iridium) badge when the slot needs above-
-        /// basic quality. Scale: 0=basic, 1=silver, 2=gold, 4=iridium. Falls back to 0 for ids
-        /// that don't appear in any bundle. 2026-05-29: added to fix Quality Crops parsnips
-        /// showing as basic-quality in the week-2 farming preview.</summary>
-        public int GetQualityForIngredient(string itemId)
-            => _ingredientQualities.TryGetValue(itemId, out int q) ? q : 0;
 
         private RunState Run => _store.Run;
 

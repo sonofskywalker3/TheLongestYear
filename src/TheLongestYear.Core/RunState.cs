@@ -26,9 +26,8 @@ public sealed class RunState
     /// <summary>
     /// LEGACY (pre-slot redesign, 2026-07-09): the old id-only weekly bonus sample. Kept ONLY so
     /// mid-week saves from older versions deserialize and RunController can detect + migrate them
-    /// (non-empty here + empty CurrentWeekBonusSlots → one-time re-sample). (Population by
-    /// RunController is removed later in the 2026-07-09 slot-redesign plan; until then this
-    /// doubles as the live list.)
+    /// (non-empty here + empty CurrentWeekBonusSlots → one-time re-sample). Never populated by
+    /// current code — only cleared.
     /// </summary>
     public List<string> CurrentWeekBonusItems { get; set; } = new();
 
