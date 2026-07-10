@@ -56,6 +56,34 @@ An 8-angle adversarial review ran over 0.11.24-27; confirmed items were fixed (0
 - `EnableThemeReroll: true` still set in the DEPLOYED config.json (playtest convenience) — leave
   until a release pass.
 
+## ✅ Executed 2026-07-10 morning (unattended) — master now v0.11.34
+
+The watcher fired (game exited ~08:47), deployed HEAD, and the verification pass ran with three
+findings/fixes along the way:
+
+- **v0.11.31 — tly_loadsave was broken on its first live run.** `SaveGame.Load` alone leaves the
+  TitleMenu active: the loader finishes, `gameMode` flips to playing, but the title keeps drawing
+  and SaveLoaded never fires (log freezes at "Game loader done"). Vanilla pairs every
+  `SaveGame.Load` with `Game1.exitActiveMenu()` (LoadGameMenu.cs:85-86) — now we do too. Verified
+  live: `Context: loaded save` + full TLY diagnostics within seconds.
+- **The user's test save None_443325260 uses STANDARD bundles**, so its load log can never show
+  the remixed derived-ramp lines. **v0.11.32 adds `tly_classify`** (diagnostics-only rebuild of
+  catalog + requirements over live BundleData; active run untouched). Paired with vanilla
+  `debug ShuffleBundles` (in-memory remix, nothing saved): **0.11.11 fix LOG-VERIFIED** —
+  `26 classified (0 category-only skipped, 0 unclassified skipped)`, derived ramps logged for
+  Brewer's [1,2,3,4], Wild Medicine [0,1,2,3], Treasure Hunter's [1,2,3,5].
+- **v0.11.33 + v0.11.34 — the tly_commands.txt bridge couldn't drive tly_loadsave**: the command
+  wasn't routed in ExecuteDebugLine (0.11.33), and the bridge poll itself bailed on
+  `!Context.IsWorldReady` so it never ran at the title screen (0.11.34 restructures the gate:
+  in-world work still requires an active TLY save; with no world loaded the poll falls through —
+  every world-touching command self-guards). Verified end-to-end: queued command consumed at
+  title on boot, save loaded, 0 errors.
+
+Boot smoke on every launch: 46 Harmony patch classes applied, 0 failed; 531 tests pass; the only
+log ERROR all morning was a console-injection typo (stray leading char — retry succeeded).
+Nothing was saved in-game at any point; the user's save file is untouched. Better Chests
+verification remains deferred (needs Nexus download + in-game interaction).
+
 ## Open items (priority order)
 
 1. **📬 USER: Fluxwb Chinese translation reply** (Nexus 47926) + i18n-support decision (would be a

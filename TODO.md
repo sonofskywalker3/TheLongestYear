@@ -20,8 +20,12 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   ramp `floor(X * [0.25, 0.5, 0.75, 1.0])` (Winter demands full X; matches curated Chef's at
   X=3); curated quota entries still win by name; builder logs the derived ramp at INFO. Also
   covers SVE/custom-bundle-mod bundles (PokeTheSilver204's compat question). 499 tests pass.
-  **PENDING log verification:** next PC session on a remixed save, the load log should show
-  `0 unclassified skipped` + `using derived ramp [...]` INFO lines for the remix-named bundles.
+  **✅ LOG-VERIFIED 2026-07-10 (unattended, v0.11.32):** the user's test save turned out to use
+  STANDARD bundles, so the remix path was exercised in memory instead: `debug ShuffleBundles`
+  (vanilla's own remix generator) + new `tly_classify` (re-runs the real builder, diagnostics
+  only). Result: `26 classified (0 category-only skipped, 0 unclassified skipped)` with
+  `using derived ramp` INFO lines for Brewer's [1,2,3,4], Wild Medicine [0,1,2,3], and Treasure
+  Hunter's [1,2,3,5] — all ramps monotonic and ending at X. Nothing persisted (no save).
   *Curated per-name ramps for the remix pool = 0.12.0 balance-pass material.* Original report:
 
   **Remixed bundles that miss every classification rule are SILENTLY DROPPED from season
