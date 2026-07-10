@@ -566,7 +566,10 @@ namespace TheLongestYear
         }
 
         /// <summary>Load a save from the title screen by folder name — the same
-        /// <c>SaveGame.Load(slotName)</c> call LoadGameMenu's slot click makes (LoadGameMenu.cs:85).
+        /// <c>SaveGame.Load(slotName)</c> + <c>Game1.exitActiveMenu()</c> pair LoadGameMenu's slot
+        /// click makes (LoadGameMenu.cs:85-86). Both calls are required: without the menu exit the
+        /// TitleMenu stays active after the loader finishes, keeps drawing the title screen, and the
+        /// world never proceeds (no SaveLoaded, frozen log).
         /// Debug/automation tool: lets an unattended session load a save via console injection to
         /// read the SaveLoaded diagnostics (e.g. the remixed-bundle classification lines) without
         /// clicking through the title menu. Refuses while a save is already loaded.</summary>
@@ -585,6 +588,7 @@ namespace TheLongestYear
 
             this.Monitor.Log($"tly_loadsave: loading '{args[0]}'.", LogLevel.Info);
             StardewValley.SaveGame.Load(args[0]);
+            Game1.exitActiveMenu();
         }
 
         private void PrintMeta(string command, string[] args)
