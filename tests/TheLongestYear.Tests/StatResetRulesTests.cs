@@ -22,6 +22,9 @@ public class StatResetRulesTests
     // Prize-ticket machine ladder position + unclaimed ticket count.
     [InlineData("ticketPrizesClaimed")]
     [InlineData("specialOrderPrizeTickets")]
+    // Combat-mastery trinket slot: InventoryPage gates the slot on this stat (NOT on mastery_4),
+    // so leaving it would let trinkets be equipped on loop 2 with no mastery re-earned.
+    [InlineData("trinketSlots")]
     public void IsRunScoped_true_for_run_scoped_keys(string key)
         => Assert.True(StatResetRules.IsRunScoped(key));
 

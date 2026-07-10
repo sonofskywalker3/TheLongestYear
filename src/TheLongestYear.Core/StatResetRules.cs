@@ -23,6 +23,8 @@ namespace TheLongestYear.Core
             "masteryLevelsSpent",       // claims already spent at the mastery pedestal
             "ticketPrizesClaimed",      // prize-ticket machine ladder position (Lewis' house)
             "specialOrderPrizeTickets", // unclaimed prize tickets the machine decrements
+            "trinketSlots",             // combat-mastery trinket slot — InventoryPage gates the
+                                        // slot on THIS stat, not on mastery_4 (2026-07-10 review)
         };
 
         public static bool IsRunScoped(string statKey)
