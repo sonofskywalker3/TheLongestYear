@@ -41,7 +41,9 @@ namespace TheLongestYear.Loop
             // hand it to the scheduler, which reserves the day so the ≥2-storm/≥2-rain summer
             // minimums still place around it. The pick is seeded on (year, uniqueIDForThisGame),
             // so it lands on a different day each loop for free.
-            int greenRainDay = seasonIndex == 1 ? GreenRainDay.VanillaSummerDay() : -1;
+            int greenRainDay = seasonIndex == WeatherScheduler.SummerSeasonIndex
+                ? GreenRainDay.VanillaSummerDay()
+                : -1;
 
             string scheduled = WeatherScheduler.WeatherFor(uniqueId, seasonIndex, dayOfMonth, greenRainDay);
             if (scheduled == null) return;

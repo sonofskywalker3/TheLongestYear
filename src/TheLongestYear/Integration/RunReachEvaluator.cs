@@ -123,8 +123,8 @@ namespace TheLongestYear.Integration
         private static readonly string[] BarnChain = { "Barn", "Big Barn", "Deluxe Barn" };
 
         /// <summary>True if the farm has a building of <paramref name="type"/> or a higher tier in
-        /// the same chain. Types outside the coop/barn chains (e.g. Silo) match by exact
-        /// buildingType — single-tier buildings have no chain to climb.</summary>
+        /// the same chain. Types outside the coop/barn chains (e.g. Silo) are treated as a
+        /// one-element chain, so they match by exact buildingType — one loop covers both cases.</summary>
         private static bool HasBuildingAtLeast(string type)
         {
             Farm farm = Game1.getFarm();
@@ -132,15 +132,9 @@ namespace TheLongestYear.Integration
 
             string[] chain = Array.IndexOf(CoopChain, type) >= 0 ? CoopChain
                            : Array.IndexOf(BarnChain, type) >= 0 ? BarnChain
-                           : null;
-            if (chain == null)
-            {
-                foreach (StardewValley.Buildings.Building b in farm.buildings)
-                    if (b.buildingType.Value == type) return true;
-                return false;
-            }
-
+                           : new[] { type };
             int need = Array.IndexOf(chain, type);
+
             foreach (StardewValley.Buildings.Building b in farm.buildings)
             {
                 int have = Array.IndexOf(chain, b.buildingType.Value);

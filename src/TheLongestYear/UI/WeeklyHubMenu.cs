@@ -460,7 +460,7 @@ namespace TheLongestYear.UI
                 {
                     if (bounds.Contains(x, y))
                     {
-                        _hoverText = $"Day {day.DayOfMonth} - {ShrinePreviewMenu.WeatherLabel(day.Weather)}";
+                        _hoverText = $"Day {day.DayOfMonth} - {WeatherIcons.Label(day.Weather)}";
                         return;
                     }
                 }
@@ -641,25 +641,14 @@ namespace TheLongestYear.UI
                 Utility.drawTextWithShadow(b, num, Game1.smallFont,
                     new Vector2(cellX + (WeatherCellWidth - ns.X) / 2f, numY), Game1.textColor);
 
-                var (tex, src) = WeatherIconSource(_weatherForecast[i].Weather);
+                var (tex, src) = WeatherIcons.Source(_weatherForecast[i].Weather);
                 float iconX = cellX + (WeatherCellWidth - WeatherIconPx) / 2f;
                 b.Draw(tex, new Vector2(iconX, iconY), src, Color.White, 0f,
                     Vector2.Zero, WeatherIconScale, SpriteEffects.None, 0.9f);
             }
         }
 
-        /// <summary>Weather-icon texture + source rect matching the TV/HUD icons (same mapping as
-        /// ShrinePreviewMenu — green rain lives on the 1.6 cursor sheet). Unknown/Sun falls
-        /// through to the sunny icon.</summary>
-        private static (Texture2D Texture, Rectangle Source) WeatherIconSource(string weather) => weather switch
-        {
-            "Rain" => (Game1.mouseCursors, new Rectangle(465, 333, 13, 13)),
-            "Storm" => (Game1.mouseCursors, new Rectangle(413, 346, 13, 13)),
-            "Snow" => (Game1.mouseCursors, new Rectangle(465, 346, 13, 13)),
-            "Festival" => (Game1.mouseCursors, new Rectangle(413, 372, 13, 13)),
-            "GreenRain" => (Game1.mouseCursors_1_6, new Rectangle(178, 363, 13, 13)),
-            _ => (Game1.mouseCursors, new Rectangle(413, 333, 13, 13)), // Sun / default
-        };
+        // Icon + label lookups live in the shared WeatherIcons helper (one copy for both menus).
 
         /// <summary>A faint filled cell with a thin border (the calendar-grid backing for a weather
         /// column), drawn from the 1×1 white pixel — same styling as the shrine board.</summary>

@@ -29,12 +29,19 @@ public static class WeatherScheduler
 {
     public const int DaysPerMonth = 28;
 
+    /// <summary>Season index for Summer (0=Spring 1=Summer 2=Fall 3=Winter) — the only season
+    /// where a green-rain day can be reserved.</summary>
+    public const int SummerSeasonIndex = 1;
+
     private const string Sun       = "Sun";
     private const string Rain      = "Rain";
     private const string Storm     = "Storm";
     private const string Snow      = "Snow";
     private const string Festival  = "Festival";
-    private const string GreenRain = "GreenRain";
+
+    /// <summary>Vanilla 1.6's green-rain weather string — public so UI/patch code compares
+    /// against the constant instead of re-typing the literal.</summary>
+    public const string GreenRain = "GreenRain";
 
     // Vanilla 1.6 festival days per season (ignores SVE / mod festivals — same set as
     // WeatherForecast.SpringFestivals etc. so the two stay in sync).
@@ -77,7 +84,7 @@ public static class WeatherScheduler
         // Green rain day (summer only). Forced-sun and festival days win — mirrors vanilla's
         // override order in getWeatherModificationsForDate, where the festival check runs after
         // the green-rain check. (Vanilla's options never collide with either in practice.)
-        if (seasonIndex == 1 && summerGreenRainDay >= 1 && summerGreenRainDay <= DaysPerMonth
+        if (seasonIndex == SummerSeasonIndex && summerGreenRainDay >= 1 && summerGreenRainDay <= DaysPerMonth
             && schedule[summerGreenRainDay] == null)
         {
             schedule[summerGreenRainDay] = GreenRain;
