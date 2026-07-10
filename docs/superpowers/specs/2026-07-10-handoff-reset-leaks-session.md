@@ -103,6 +103,31 @@ testing; Mods folder restored.
 reacting to the externally-added test mods. FTM now skips (missing CP dependency). **User must
 redeploy in Vortex before the lunch playtest.**
 
+## Late-morning session (user-directed) — master now v0.11.39
+
+- **v0.11.37** — LostBooksFound resets with the museum (user ruling; `lb_*` mail markers were
+  already covered by FarmerReset's wholesale mailReceived.Clear()).
+- **v0.11.38** — StatResetRules flipped to WIPE-BY-DEFAULT with an explicit keep-list (user
+  ruling, reversing the 0.11.24 allow-list): unknown future keys can never leak. Keep-list
+  classified once against the full 1.6.15 StatKeys universe — engine (daysPlayed,
+  averageBedtime), RNG-sequence counters (timesEnchanted/geodesCracked/MysteryBoxesOpened:
+  wiping restarts identical memorizable drop sequences), lifetime tallies. Newly wiped:
+  BillboardQuestsDone, GoldenTagsTurnedIn, blessingOfWaters, individualMoneyEarned,
+  SquidFestScore_*. 546 tests pass.
+- **v0.11.39** — Unlimited Storage grid inflation FIXED (user overruled the defer):
+  `JunimoStashMenuContextPatch` nulls the ItemGrabMenu ctor's `context` for the tagged stash.
+  Vanilla lays out from `sourceItem`; BC's and US's transpiled capacity helpers both key on
+  `context as Chest` — so the null keeps vanilla 4-slot geometry and defeats the entire
+  menu-inflater class generically. Screenshot-verified vs US 1.2.0 + BigChestMenu=true.
+  Cosmetic residue documented in TODO (US's floating search/arrow chrome keys on sourceItem —
+  suppressing it is disproportionate).
+- **Fluxwb replied by the user 2026-07-10** — translation approved, credit + link requested;
+  i18n extraction parked pending explicit go-ahead (see TODO).
+- New systematic TODO item (user request): one-time complete NetWorldState field audit
+  (keep/wipe each field once — closes the bundles/museum/lost-books leak class permanently).
+- Test mods removed again; Mods folder back to the original set (ContentPatcher still awaiting
+  the user's Vortex redeploy).
+
 ## Open items (priority order)
 
 1. **📬 USER: Fluxwb Chinese translation reply** (Nexus 47926) + i18n-support decision (would be a

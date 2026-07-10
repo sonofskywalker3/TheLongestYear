@@ -120,10 +120,13 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   JP farming is a cheese path — suggests mid-run JP spending (at a premium) or a JP incentive for
   season checkpoints to reward progressing. All feeds the 0.13.0 difficulty engine; author already
   replied to khauser13 (14 Jun) promising rebalancing.
-- **📬 USER REPLY NEEDED — Chinese translation posted (Fluxwb, 20 Jun, Nexus mod 47926).** They
-  modified the DLL to translate and ask (in Chinese) whether the author objects; will take it down
-  on request. Decide the translation/permissions stance + reply. (Consider i18n support so future
-  translations don't need DLL edits.)
+- **✅ REPLIED 2026-07-10 — Chinese translation approved (Fluxwb, Nexus mod 47926).** User's
+  reply (on the TLY posts tab, in Chinese + English): thrilled to have another language, only
+  asks for credit + a link to the original in their mod description, and offered to make future
+  translations easier. **Follow-through parked pending explicit go-ahead: i18n support** (string
+  extraction to `i18n/` JSON so translations stop requiring DLL edits — Fluxwb's copy is frozen
+  at 0.11.0 for exactly this reason, and the user's public offer implies it). Large pass; do NOT
+  start unprompted.
 - **📱 Android: can't buy from the Junimo shrine.** *Stardewlover87 (09 Jun)*. Android port is
   deferred; capture for the port task. (Likely the same Android ShopMenu/ISalable landmine class
   documented in AC memory.)
@@ -150,17 +153,31 @@ CarryChest}` = `"Disabled"` (same keys BC's configure-chest UI writes; also stop
 dumping into the stash and carry-away). Screenshot-verified: 4-slot grid with BC active.
 Inert without BC. Ask VeggieGirl43 to retest on the release that ships 0.11.35.
 
-### 🟡 KNOWN LIMITATION — Unlimited Storage (BC's successor) still inflates the stash GRID
-Cross-checked with LeFauxMatt's live successor, Unlimited Storage 1.2.0 (Nexus 30323): its
-transpiled `ItemGrabMenu` helper returns `BigChestMenu ? 70 : 36` for ANY chest context —
-even `SpecialChestType.None`, even at default config — and its enable list is per item ID
-("130" = all regular chests), so no per-instance opt-out exists on its side. v0.11.36 pins the
-stash's `SpecialChestType` to None (correct, inert defense; counters SpecialChestType-based
-inflation) but the transpiler path still wins: with US installed the stash draws a 36/70-slot
-grid while deposits stay correctly capped (cosmetic only — the JunimoStashCapPatch reject
-still enforces the real limit). Unreported by any player. The robust fix would rebuild
-`ItemsToGrabMenu` in our ShowMenu postfix with our capacity (PC geometry + controller-snap
-rewiring — nontrivial); decide only if a player actually reports it.
+### ✅ FIXED v0.11.39 (2026-07-10) — Unlimited Storage (BC's successor) inflated the stash GRID
+Cross-check with LeFauxMatt's live successor, Unlimited Storage 1.2.0 (Nexus 30323): its
+transpiled `ItemGrabMenu` helper returned `BigChestMenu ? 70 : 36` for ANY chest context —
+even `SpecialChestType.None`, even at default config — so neither the capacity postfix
+(0.11.3) nor the SpecialChestType pin (0.11.36, kept as inert defense) could reach it.
+**Fix (v0.11.39): `JunimoStashMenuContextPatch`** — vanilla keys the menu LAYOUT on
+`sourceItem` while both BC's and US's transpiled helpers key on the ctor's `context` arg
+(`context as Chest`); `Chest.ShowMenu` passes the chest as both, so a prefix that nulls
+`context` for our tagged stash keeps vanilla 4-slot geometry and makes BOTH helpers fall
+through. Generic against the whole menu-inflater class. Screenshot-verified vs US 1.2.0 with
+BigChestMenu=true: 4-slot grid, 48 patches 0 failed, 0 errors. Known cosmetic residue: US's
+search-bar + scroll-arrow chrome floats detached at the screen edge when the stash is open
+(any US user — US keys its chrome on `menu.sourceItem ?? menu.context` and the stash is
+ItemId 130 in its default EnabledIds). Suppressing would require nulling the menu's
+sourceItem FIELD, which vanilla's window-resize rebuild and our color-picker draw guard both
+need intact — disproportionate; leave unless a US user reports it.
+
+### 🧾 SYSTEMATIC — one-time complete netWorldState keep/wipe audit (user request 2026-07-10)
+Bundles, museum pieces, and lost books were all caught ONE REPORT AT A TIME from the same
+survival class: fields on `NetWorldState` that the reset's loadForNewGame path never rebuilds.
+`NetWorldState` is a finite class — enumerate every field once (decompile
+StardewValley.Network/NetWorldState.cs), rule each keep/wipe against the full-reset
+philosophy, implement the wipes, and this class of leak is closed permanently instead of
+reactively. Pairs with the 0.11.38 StatResetRules wipe-by-default flip (same philosophy:
+enumerate the exemptions, not the leaks).
 
 ### ✅ DONE v0.11.1 (2026-06-10) — event-hygiene pass: cave re-choice prompt replaces replaying Demetrius scene
 The Demetrius cave cutscene (65) no longer replays every loop: it plays once (Spring-5 hold kept),
