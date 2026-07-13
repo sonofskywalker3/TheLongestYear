@@ -291,5 +291,19 @@
     "menu.goals.quality-silver": " (silver)",
     "menu.goals.quality-gold": " (gold)",
     "menu.goals.quality-iridium": " (iridium)",
-    "weather.green-rain": "Green Rain"
+    "weather.green-rain": "Green Rain",
+
+    // -- book menus / victory / cutscene hint ---------------------------------------
+    "menu.cookbook.no-new": "No new recipes to add — learn more recipes first.",
+    "menu.cookbook.choose": "Choose a recipe to bank:",
+    "menu.cookbook.title": "Cookbook — {{used}} / {{total}} slots",
+    "menu.craftbook.title": "Craftbook — {{used}} / {{total}} slots",
+    "menu.cookbook.empty-slot": "[empty — click to add]",
+    "menu.cookbook.remove-confirm": "Remove \"{{recipe}}\" from the cookbook?\nThis recipe won't carry over next run unless re-banked.",
+    "menu.craftbook.remove-confirm": "Remove \"{{recipe}}\" from the craftbook?\nThis recipe won't carry over next run unless re-banked.",
+    "menu.victory.restored": "You have restored the Community Center. The valley is saved!",
+    "menu.victory.continue-hint": "(press A or click to continue)",
+    "menu.cutscene.continue-hint": "(click or press A to continue)",
+    "win.loop-line.first": "You restored it on your very first loop!",
+    "win.loop-line.many": "It took {{count}} loops."
 }

@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Day28;
 
 namespace TheLongestYear.UI
@@ -19,8 +20,6 @@ namespace TheLongestYear.UI
     /// the cancel/ESC inputs are ignored; the scene only ends by advancing past the last page.</summary>
     internal sealed class Day28CutsceneMenu : IClickableMenu
     {
-        private const string ContinueHint = "(click or press A to continue)";
-
         // Junimo sprite drawn above the text. Source frame 0 of the 16×16 sheet, scaled up; the
         // sheet is a white silhouette meant to be tinted, so we give it the classic Junimo green.
         private const int JunimoFrame = 16;
@@ -127,8 +126,9 @@ namespace TheLongestYear.UI
                 Utility.drawTextWithShadow(b, wrapped, Game1.dialogueFont, pos, Color.White);
             }
 
-            Vector2 hintSize = Game1.smallFont.MeasureString(ContinueHint);
-            Utility.drawTextWithShadow(b, ContinueHint, Game1.smallFont,
+            string continueHint = Strings.Get("menu.cutscene.continue-hint");
+            Vector2 hintSize = Game1.smallFont.MeasureString(continueHint);
+            Utility.drawTextWithShadow(b, continueHint, Game1.smallFont,
                 new Vector2((w - hintSize.X) / 2f, h - 96), Color.White * 0.7f);
         }
     }

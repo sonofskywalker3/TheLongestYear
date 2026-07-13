@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace TheLongestYear.Core
 {
     /// <summary>Single source of truth for the win payoff's loop-count line, shared by the
@@ -11,7 +13,7 @@ namespace TheLongestYear.Core
         /// value) reads as a first-loop brag; later loops count the attempts.</summary>
         public static string LoopLine(int runNumber) =>
             runNumber <= 1
-                ? "You restored it on your very first loop!"
-                : $"It took {runNumber} loops.";
+                ? Strings.Get("win.loop-line.first")
+                : Strings.Get("win.loop-line.many", new Dictionary<string, string> { ["count"] = runNumber.ToString() });
     }
 }
