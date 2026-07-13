@@ -46,8 +46,9 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   live save): 1 regular parsnip into Spring Crops → no tick, no bonus (`+3 JP`, the exact move
   that faked the old code out); 5 gold parsnips into Quality Crops → goal ticked + `(bonus x1.5)`
   in the log. Test items RETIRED. Same session also shipped: v0.11.20 quest tip moved below the
-  checklist (user feedback), v0.11.21 horse re-name-every-morning fix (verify first morning with
-  a stable), v0.11.22 `tly_select` force-any-theme for playtesting, v0.11.23 ghost-picker fix
+  checklist (user feedback), v0.11.21 horse re-name-every-morning fix (✅ CONFIRMED 2026-07-13
+  first morning with a stable; overnight warp-to-stable = vanilla `Stable.dayUpdate → grabHorse()`,
+  not ours), v0.11.22 `tly_select` force-any-theme for playtesting, v0.11.23 ghost-picker fix
   (theme pick now consumes the week's offer; stale deferred offers dropped).
   Spec `docs/superpowers/specs/2026-07-09-slot-based-weekly-theme-checklist-design.md`, plan
   `docs/superpowers/plans/2026-07-09-slot-based-weekly-theme-checklist.md` (user-approved design:
@@ -79,8 +80,9 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   moves each loop) and the scheduler reserves it like a festival day BEFORE placing storms/rain —
   ≥2-storm/≥2-rain minimums + week-1 rain guarantee unit-covered. Weather Sage previews show the
   1.6 green-rain icon + "Green Rain" hover. (Summer 13/26 fixed storms staying gone = WAI.)
-  **PENDING PLAYTEST:** on a summer save, TV forecast / Weather Sage should show a green-rain day
-  on one of {5,6,7,14,15,16,18,23}, and the day should actually run green rain.
+  **✅ PLAYTEST CONFIRMED 2026-07-13:** shrine forecast showed Green Rain on Summer 15 (day 5 =
+  plain rain, correctly distinct); the 15th actually ran green rain; a 2-day thunderstorm followed
+  plus rain on the 5th and 24th — storm/rain season minimums met on a live schedule.
 - **✅ FIXED v0.11.24-25 — Loop reset coverage gaps (Dusklight7's reset-leak audit).** All
   keep-vs-reset decisions user-approved 2026-07-09 (full reset on every surface). Root causes +
   fixes:
@@ -103,13 +105,21 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   - *Day-1 parsnips*: already fixed 2026-05-30 (`RemoveStarterGiftBox`, shipped in 0.10.0) —
     likely a stale observation from an older build; run 1 keeps the box by design.
   - *Ancient seed*: WAI per 2026-06-10 decision (unchanged).
-  **PENDING PLAYTEST (one pass covers all):** reset a loop wearing rings + a hat with museum
-  donations, slayer kills, a consumed floor-10 chest, and a read book → after reset: empty museum,
-  bare equipment slots, Gil offers nothing, floor-10 chest respawns, book buff gone.
+  **✅ PLAYTEST CONFIRMED 2026-07-13 (one `tly_failreset` pass, Run 27→28):** museum wiped (6
+  donations in the log) + lost-book pages reset (0.11.37), all equipment slots emptied + trinket
+  slot gone (0.11.28), Gil offers nothing + guild door re-locked (guildMember wiped; vanilla
+  re-invite arrived on schedule after floor 5), floor-10 chest respawned, book buff gone, and
+  maxHealth/stamina rewound 500→100 (0.11.40).
+  **⚠ RULING REVISED v0.11.41 (user, 2026-07-13, after seeing the wipe live):** hat/shirt/pants
+  now STAY WORN across resets — cosmetic-only slots, and the character-creation outfit is recorded
+  nowhere, so wiping strips the player's look irreversibly. Boots/rings/trinkets still wipe.
+  **PENDING next reset (on 0.11.41):** clothes stay on, boots/rings/trinkets still wipe.
 - **✅ DONE v0.11.27 — JP upgrade request ×2 — `keep_silo`.** *khauser13 (11 Jun)* + *Dusklight7
   (05 Jul)*. Buildings category, 150 JP, gated on `building:Silo` reach (evaluator gained an
   exact-match fallback for non-chain buildings); rebuilt each loop at (60,9) between the coop and
-  barn tiles. Hay does not carry over.
+  barn tiles. Hay does not carry over. **✅ PLAYTEST CONFIRMED 2026-07-13:** with a silo built
+  this run the shrine shows the row (150 JP, Buildings) — user bought it. **PENDING next reset:**
+  silo rebuilds at (60,9).
 - **⚖️ Balance (0.12.0/0.13.0 fodder — difficulty too low for strong players).** *khauser13
   (12-13 Jun)*: finished the year first try on BOTH standard and remixed (sleeping idle days);
   suggests harder bundles / permanent debuffs; winter weekly themes felt pointless (everything
@@ -184,8 +194,8 @@ The Demetrius cave cutscene (65) no longer replays every loop: it plays once (Sp
 then `FarmerReset` clears `caveChoice` each loop and the new `CaveChoicePrompt` offers
 mushrooms / fruit bats / decide-later on cave entry whenever unchosen (applies vanilla's
 `hostActionChooseCave` effects). Furnace teach (992553) keeps replayable + recipe-known gating;
-Lewis CC (191393) stays suppressed. PENDING PLAYTEST: reset a loop (`tly_failreset`), enter the
-cave, confirm prompt + mushroom boxes; check the dialogue wording feels right.
+Lewis CC (191393) stays suppressed. ✅ PLAYTEST CONFIRMED 2026-07-13: post-reset cave entry showed
+the picker, user: "nice cave picker, worked well" — wording approved.
 
 ### 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-08)
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
