@@ -1,5 +1,14 @@
 # The Longest Year (beta 0.9.2) — community announcement tracking
 
+## 0.11.44 release update (2026-07-13) — POSTED
+Update comment (`2026-07-13-01144-update-comment.md`) posted + verified on all three Reddit
+threads (r/StardewValley 1txuhfb, r/StardewValleyMods 1txu610, r/SMAPI 1txtkb4) and as a reply
+on the forums.stardewvalley.net thread (52534, BBCode variant). VeggieGirl43 got the Better-
+Chests retest DM via Reddit chat (`2026-07-13-veggiegirl43-dm.txt`). Nexus posts tab skipped
+by user decision (the mod page announces itself). Scripts: `tly-reddit-comment-01144.mjs`,
+`tly-xenforo-reply-01144.mjs`, `tly-reddit-dm-veggiegirl-01144.mjs` (AC/release-notes).
+NOTE: forums session had expired — logging in via `tly-forum-wait-login.mjs` re-armed it.
+
 Mod facts (do not invent beyond these):
 - Nexus: https://www.nexusmods.com/stardewvalley/mods/47192 · GitHub: https://github.com/sonofskywalker3/TheLongestYear
 - PC-only, SMAPI 4.0+, new save on **Standard** farm, beta `0.9.2`.
