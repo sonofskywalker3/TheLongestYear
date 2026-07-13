@@ -180,7 +180,7 @@ namespace TheLongestYear.UI
             _pickerScroll = 0;
             if (_pickerList.Count == 0)
             {
-                Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.cookbook.no-new"), HUDMessage.newQuest_type));
+                Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.books.no-new"), HUDMessage.newQuest_type));
                 _pickerList = null;
                 _pendingSlot = -1;
             }
@@ -264,7 +264,7 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             string title = _pickerList != null
-                ? Strings.Get("menu.cookbook.choose")
+                ? Strings.Get("menu.books.choose")
                 : Strings.Get("menu.craftbook.title", new Dictionary<string, string>
                     {
                         ["used"] = _meta.CraftbookRecipes.Count.ToString(),
@@ -300,7 +300,7 @@ namespace TheLongestYear.UI
                 bool filled = slotIndex < _meta.CraftbookRecipes.Count;
                 string label = filled
                     ? RecipeDisplayName(_meta.CraftbookRecipes[slotIndex], isCooking: false)
-                    : Strings.Get("menu.cookbook.empty-slot");
+                    : Strings.Get("menu.books.empty-slot");
                 Color tint = filled ? Color.White : Color.White * 0.6f;
 
                 IClickableMenu.drawTextureBox(b, Game1.menuTexture,
