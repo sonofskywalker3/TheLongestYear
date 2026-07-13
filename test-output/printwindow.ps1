@@ -11,6 +11,7 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 public class WinCap {
+    [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr p);
@@ -35,6 +36,10 @@ public class WinCap {
 }
 "@ -ReferencedAssemblies System.Drawing
 
+# DPI-aware BEFORE any window metrics: at >100% display scaling GetWindowRect otherwise
+# returns logical pixels while PrintWindow renders physical — the bitmap comes out as a
+# cropped top-left corner (seen 2026-07-13 at 150% scaling: 1295x757 crop of a 1920x1080 game).
+[void][WinCap]::SetProcessDPIAware()
 $h = [WinCap]::Find()
 if ($h -eq [IntPtr]::Zero) { Write-Error "Stardew SMAPI window not found"; exit 1 }
 $r = New-Object WinCap+RECT
