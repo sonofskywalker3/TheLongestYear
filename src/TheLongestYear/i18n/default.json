@@ -320,11 +320,14 @@
     "egg-color.brown": " (Brown)",
 
     // -- book menus / victory / cutscene hint ---------------------------------------
-    "menu.cookbook.no-new": "No new recipes to add — learn more recipes first.",
-    "menu.cookbook.choose": "Choose a recipe to bank:",
+    // menu.books.* are shared by BOTH CookbookMenu and CraftbookMenu — keep the key
+    // family-neutral so a translator doesn't bake cookbook-only wording into text the
+    // craftbook also displays (renaming later would break existing translation files).
+    "menu.books.no-new": "No new recipes to add — learn more recipes first.",
+    "menu.books.choose": "Choose a recipe to bank:",
     "menu.cookbook.title": "Cookbook — {{used}} / {{total}} slots",
     "menu.craftbook.title": "Craftbook — {{used}} / {{total}} slots",
-    "menu.cookbook.empty-slot": "[empty — click to add]",
+    "menu.books.empty-slot": "[empty — click to add]",
     "menu.cookbook.remove-confirm": "Remove \"{{recipe}}\" from the cookbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.craftbook.remove-confirm": "Remove \"{{recipe}}\" from the craftbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.victory.restored": "You have restored the Community Center. The valley is saved!",
