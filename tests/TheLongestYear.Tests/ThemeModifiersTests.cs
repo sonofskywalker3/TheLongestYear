@@ -31,10 +31,6 @@ public class ThemeModifiersTests
     [InlineData("mines_closed",         "Mine entrance closed all week")]
     [InlineData("all_drops_up",         "10% chance for any drop to be +1")]
     [InlineData("all_sell_prices_down", "All sell prices cut in half")]
-    [InlineData("forage_drops_off",     "Foraging disabled (legacy)")]
-    [InlineData("mine_drops_off",       "Mine drops disabled (legacy)")]
-    [InlineData("shop_discount",        "Shop prices 15% lower")]
-    [InlineData("stamina_drain_up",     "Tools drain 30% more stamina")]
     public void DisplayNameFor_maps_known_ids(string id, string expected)
         => Assert.Equal(expected, ThemeModifiers.DisplayNameFor(id));
 

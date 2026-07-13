@@ -248,7 +248,7 @@ namespace TheLongestYear.Loop
             };
             string loopLine = WinSummary.LoopLine(Run.RunNumber);
             string prompt = Strings.Get("dialog.win.prompt",
-                new Dictionary<string, string> { ["loopLine"] = loopLine });
+                new Dictionary<string, string> { ["loopline"] = loopLine });
 
             GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
             if (loc == null)
