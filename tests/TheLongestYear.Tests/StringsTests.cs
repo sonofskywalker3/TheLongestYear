@@ -1,12 +1,17 @@
+using System;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using Xunit;
 
 namespace TheLongestYear.Tests;
 
-public class StringsTests
+public class StringsTests : IDisposable
 {
     public StringsTests() => Strings.Reset();
+
+    /// <summary>Restores the global i18n provider after this class runs so any later
+    /// "i18n"-collection test class doesn't see a null provider left behind by Reset().</summary>
+    public void Dispose() => I18nFixture.InstallGlobalProvider();
 
     [Fact]
     public void Get_WithoutInit_ReturnsKeyItself()
