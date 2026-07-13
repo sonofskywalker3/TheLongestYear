@@ -4,8 +4,11 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
+[Collection("i18n")]
 public class Day28DialogueScriptTests
 {
+    public Day28DialogueScriptTests(I18nFixture _) { }
+
     [Fact]
     public void Substitutes_player_name_for_at_symbol()
     {
