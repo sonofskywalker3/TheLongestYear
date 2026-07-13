@@ -130,6 +130,12 @@ namespace TheLongestYear.Loop
             // tile so the stable persists where the player built it.
             HorseCarryoverService.SnapshotHorse(_meta, _monitor);
 
+            // 0c. Capture where each kept-building family (coop/barn/silo) currently stands, so the
+            // step-8 rebuild puts the building back exactly where the player had it (2026-07-13 user
+            // ruling — same contract as the stable above). Unconditional: cheap, and keeping the spot
+            // fresh even before the keep is purchased means the first keep-owning reset already knows it.
+            SnapshotKeptBuildingSpots();
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -542,17 +548,15 @@ namespace TheLongestYear.Loop
             return new PlayerSnapshot { ToolTiers = toolTiers, SkillLevels = skillLevels };
         }
 
-        // Deterministic tile coords for each kept-building blueprint. Picked to fit
-        // the default vanilla farm layout without overlapping the bus stop or the
-        // starting clearing. If two chains both place (Coop + Barn) they don't
-        // overlap each other.
+        // FALLBACK tile coords for each kept-building blueprint, used only when
+        // MetaState.KeptBuildingSpots has no snapshot for the family (fresh meta from before
+        // v0.11.44). Normal path: the building goes back where the player had it (step 0c).
         //
         // The 1.6 FARMHOUSE is itself a Building at (59,12) whose footprint reaches at
         // least (67,16) and whose sprite draws over everything in x59-67 above it —
         // tiles must avoid BOTH. 2026-07-13 playtest: the silo's old tile (60,9) placed
         // it invisibly behind the farmhouse roof, and the old barn tile (62,12) sat
-        // inside the farmhouse footprint outright. The cluster now sits west of the
-        // house: barn row below, silo beside the coop.
+        // inside the farmhouse footprint outright.
         private static readonly Dictionary<string, Vector2> BuildingTiles = new()
         {
             ["Coop"]         = new Vector2(54f, 9f),
@@ -565,12 +569,30 @@ namespace TheLongestYear.Loop
             ["Silo"]         = new Vector2(51f, 9f),
         };
 
+        // Refresh MetaState.KeptBuildingSpots from the live farm: for every building in a
+        // known family (coop/barn/silo), remember its top-left tile. Families with no live
+        // building keep their previous entry (a demolished building still remembers its spot).
+        private void SnapshotKeptBuildingSpots()
+        {
+            foreach (Building b in Game1.getFarm().buildings)
+            {
+                string family = ChainInfo(b.buildingType.Value).Family;
+                if (family.Length == 0)
+                    continue;
+                _meta.KeptBuildingSpots[family] = new BuildingSpot(b.tileX.Value, b.tileY.Value);
+            }
+        }
+
         private void ApplyKeptBuildings(IReadOnlyList<string> buildings)
         {
             Farm farm = Game1.getFarm();
             foreach (string blueprint in buildings)
             {
-                if (!BuildingTiles.TryGetValue(blueprint, out Vector2 tile))
+                // Player's own spot first (step-0c snapshot); fixed tile only as legacy fallback.
+                Vector2 tile;
+                if (_meta.KeptBuildingSpots.TryGetValue(ChainInfo(blueprint).Family, out BuildingSpot spot))
+                    tile = new Vector2(spot.X, spot.Y);
+                else if (!BuildingTiles.TryGetValue(blueprint, out tile))
                 {
                     _monitor.Log($"Reset: no tile mapped for kept building '{blueprint}', skipping.",
                         LogLevel.Warn);
@@ -587,10 +609,11 @@ namespace TheLongestYear.Loop
                 b.load();                              // initialises interior
                 farm.buildings.Add(b);
 
-                // Clear the footprint of any weeds/debris the farm regeneration spawned, the same
-                // way Robin's build does. These baseline tiles usually sit in the cleared starting
-                // area (a no-op), but this keeps the placement clean if the tile map ever changes.
-                farm.removeObjectsAndSpawned((int)tile.X, (int)tile.Y, b.tilesWide.Value, b.tilesHigh.Value);
+                // Bulldoze the footprint. The fresh farm regenerates random debris, trees, and
+                // stump/boulder clumps anywhere — including on the player's chosen spot — so
+                // objects alone (Robin's check) aren't enough: the building must win the tile
+                // (2026-07-13 user ruling: "even if you have to clear out some stuff").
+                ClearFootprint(farm, (int)tile.X, (int)tile.Y, b.tilesWide.Value, b.tilesHigh.Value);
 
                 _monitor.Log($"Reset: kept building '{blueprint}' placed at ({tile.X},{tile.Y}).",
                     LogLevel.Info);
@@ -645,7 +668,8 @@ namespace TheLongestYear.Loop
         // Coop chain (chickens, ducks, etc.) and Barn chain (cows, goats, etc.) both
         // have tier 1/2/3 housing — but a Coop must not satisfy a Cow placement and
         // vice versa. The family string segregates the two chains; tier comparison
-        // only happens within a family.
+        // only happens within a family. Silo is a one-tier family, present so the
+        // kept-building spot snapshot can key it (animals never request it).
         private static (string Family, int Tier) ChainInfo(string blueprint) => blueprint switch
         {
             "Coop"         => ("coop", 1),
@@ -654,8 +678,32 @@ namespace TheLongestYear.Loop
             "Barn"         => ("barn", 1),
             "Big Barn"     => ("barn", 2),
             "Deluxe Barn"  => ("barn", 3),
+            "Silo"         => ("silo", 1),
             _ => ("", 0)
         };
+
+        // Force-clear a building footprint on the fresh farm: spawned objects/forage
+        // (removeObjectsAndSpawned), terrain features (trees, grass, hoed dirt), and
+        // stump/boulder resource clumps. The kept building always wins its tiles.
+        private static void ClearFootprint(Farm farm, int tileX, int tileY, int width, int height)
+        {
+            farm.removeObjectsAndSpawned(tileX, tileY, width, height);
+
+            for (int x = tileX; x < tileX + width; x++)
+                for (int y = tileY; y < tileY + height; y++)
+                    farm.terrainFeatures.Remove(new Vector2(x, y));
+
+            for (int i = farm.resourceClumps.Count - 1; i >= 0; i--)
+            {
+                var clump = farm.resourceClumps[i];
+                bool overlaps = false;
+                for (int x = tileX; x < tileX + width && !overlaps; x++)
+                    for (int y = tileY; y < tileY + height && !overlaps; y++)
+                        overlaps = clump.occupiesTile(x, y);
+                if (overlaps)
+                    farm.resourceClumps.RemoveAt(i);
+            }
+        }
 
         /// <summary>
         /// Adds vanilla Quests to the player's questLog for each TLY interactable the first
