@@ -57,3 +57,14 @@ public sealed class I18nFixture
 
 [CollectionDefinition("i18n")]
 public class I18nCollection : ICollectionFixture<I18nFixture> { }
+
+/// <summary>Installs the i18n provider at test-assembly load time, before ANY test class runs.
+/// Without this, whichever test class xunit happens to execute first "wins" the global
+/// <see cref="Strings"/> facade: if that class isn't in the "i18n" collection, the provider
+/// is never installed for it, and any assertions on localized text see raw ids instead
+/// (class-order-dependent flakiness).</summary>
+internal static class I18nModuleInit
+{
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Init() => I18nFixture.InstallGlobalProvider();
+}
