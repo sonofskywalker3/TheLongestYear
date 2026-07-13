@@ -48,23 +48,25 @@ jobs:
           echo "path=$ZIP" >> $GITHUB_OUTPUT
           echo "Found: $ZIP"
 
-      # PINNED to the last pre-migration commit (2026-05-26). upload-action@main
-      # (2026-06-17, "Migrate to createModFileVersion") dropped file_group_id for a
-      # required v3 file_id, and legacy files 404 on that endpoint. The old
-      # update-group flow this pin uses is deprecated but guaranteed live until
-      # 2026-09-09 — migrate to the v3 file_id schema before then (see TODO.md).
+      # PINNED to the v3-migration merge commit (2026-06-17, "Migrate to
+      # createModFileVersion", = post-migration main as of 2026-07-13). Verified
+      # via the read-only nexus-v3-probe workflow: the v3 mod-file id equals our
+      # old file_group_id (Nexus migrated update groups into v3 mod files; the
+      # legacy per-version fileId 174860 is NOT it). Rollback if a release fails:
+      # pre-migration pin ee1af4be8e1be6773ab5aeb02bacc6d638b20deb with
+      # file_group_id/file_category/archive_existing_file — live until 2026-09-09.
       - name: Upload to Nexus Mods
-        uses: Nexus-Mods/upload-action@ee1af4be8e1be6773ab5aeb02bacc6d638b20deb
+        uses: Nexus-Mods/upload-action@f6e1e2ea683dfe8f88cccf642c6e0e69ab66825e
         with:
           api_key: ${{ secrets.NEXUS_API_KEY }}
-          # Nexus file_group_id (NOT mod ID 47192). Discovered via the V2 GraphQL
-          # API: modFiles(modId: 47192, gameId: 1303).groupId. Stays stable across
-          # version updates because archive_existing_file replaces in place.
-          file_group_id: 7502657
+          # v3 mod-file id (NOT mod ID 47192, NOT a per-version fileId). Confirmed
+          # by GET /v3/mods/5596342433880/files — the mod's single active file.
+          # Stays stable across version updates; versions attach to it.
+          file_id: 7502657
           filename: ${{ steps.zip.outputs.path }}
           # Clean display name; without this the action appends ".zip" to the raw
           # filename (e.g. "TheLongestYear.0.9.5.zip.zip").
           display_name: The Longest Year ${{ steps.release.outputs.version }}
           version: ${{ steps.release.outputs.version }}
-          file_category: main
-          archive_existing_file: true
+          category: main
+          archive_existing_version: true
