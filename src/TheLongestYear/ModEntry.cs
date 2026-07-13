@@ -124,6 +124,13 @@ namespace TheLongestYear
             // already below the box so no visual overlap there.
             helper.Events.Display.RenderingHud += this.OnRenderedHud;
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
+            // Re-inject the onboarding mail body/title and furniture display names in the new
+            // language when the player switches locale mid-session.
+            this.Helper.Events.Content.LocaleChanged += (_, _) =>
+            {
+                this.Helper.GameContent.InvalidateCache("Data/Mail");
+                this.Helper.GameContent.InvalidateCache("Data/Furniture");
+            };
 
             // Force every new TLY game onto the Standard farm. Wired here (not in OnSaveLoaded)
             // because the enforcer needs to fire on the title screen / character-creation flow,

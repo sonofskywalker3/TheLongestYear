@@ -44,7 +44,10 @@ namespace TheLongestYear.UI
                     // Texture path uses backslashes: Data/Furniture is split on '/', so a "Mods/.../Shrine"
                     // path would be truncated to "Mods" in field 9. SMAPI normalizes '\' vs '/'.
                     string tex = ShrineTextureAsset.Replace('/', '\\');
-                    data[ShrineId] = $"Planning Shrine/decor/1 2/1 1/1/0/-1/Junimo Planning Shrine/0/{tex}";
+                    // Field 0 ("Planning Shrine") is the furniture's InternalName, not shown to the
+                    // player (FurnitureDataDefinition.GetData passes it separately from DisplayName,
+                    // which is field 7) — it stays hardcoded like BookFurniture's internal names.
+                    data[ShrineId] = $"Planning Shrine/decor/1 2/1 1/1/0/-1/{Strings.Get("furniture.planning-shrine")}/0/{tex}";
                 }, AssetEditPriority.Default);
             }
         }
