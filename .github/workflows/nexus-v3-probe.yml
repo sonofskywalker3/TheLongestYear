@@ -1,0 +1,61 @@
+name: Nexus v3 API probe (debug)
+
+# READ-ONLY probe for the upload-action v3 migration (deadline 2026-09-09; see
+# TODO.md + publish-nexus.yml pin comment). The v3 API rejects unauthenticated
+# calls (401) and the key lives only in the NEXUS_API_KEY repo secret, so this
+# has to run as a workflow. It answers one question: do our legacy mods already
+# have v3 mod-file identities (the `file_id` upload-action@main requires)?
+#
+#   GET /v3/games/stardewvalley/mods/{game_scoped_id}  -> global mod id
+#   GET /v3/mods/{global id}/files                     -> v3 mod-file ids
+#
+# Probes all three of our mods in one run (same Nexus account/key):
+# TLY 47192, AndroidConsolizer 41869, CartCatalog 47146.
+# Uploads nothing, mutates nothing. Delete this workflow after the migration.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe v3 mod + files endpoints
+        env:
+          NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
+        run: |
+          set -euo pipefail
+          BASE="https://api.nexusmods.com/v3"
+          for SCOPED_ID in 47192 41869 47146; do
+            echo "=============================================="
+            echo "== game-scoped mod id: $SCOPED_ID"
+            echo "=============================================="
+
+            echo "--- GET /games/stardewvalley/mods/$SCOPED_ID"
+            MOD_JSON=$(curl -sS -w '\n%{http_code}' \
+              -H "apikey: $NEXUS_API_KEY" \
+              -H "User-Agent: tly-v3-probe" \
+              "$BASE/games/stardewvalley/mods/$SCOPED_ID")
+            STATUS=$(echo "$MOD_JSON" | tail -1)
+            BODY=$(echo "$MOD_JSON" | sed '$d')
+            echo "HTTP $STATUS"
+            echo "$BODY" | jq . || echo "$BODY"
+
+            if [ "$STATUS" != "200" ]; then
+              echo "!! getMod failed for $SCOPED_ID — skipping files probe"
+              continue
+            fi
+
+            GLOBAL_ID=$(echo "$BODY" | jq -r '.data.id')
+            echo "--- global mod id: $GLOBAL_ID"
+
+            echo "--- GET /mods/$GLOBAL_ID/files"
+            FILES_JSON=$(curl -sS -w '\n%{http_code}' \
+              -H "apikey: $NEXUS_API_KEY" \
+              -H "User-Agent: tly-v3-probe" \
+              "$BASE/mods/$GLOBAL_ID/files")
+            FSTATUS=$(echo "$FILES_JSON" | tail -1)
+            FBODY=$(echo "$FILES_JSON" | sed '$d')
+            echo "HTTP $FSTATUS"
+            echo "$FBODY" | jq . || echo "$FBODY"
+          done
