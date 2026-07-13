@@ -272,6 +272,20 @@ namespace TheLongestYear.Loop
                 Game1.player.yearForSaveGame = Game1.year;
             }
 
+            // 2b. Weather. The reset rewinds the calendar but nothing above re-resolves the DAY's
+            //     weather, so the pre-reset day's state — Game1.isRaining/isLightning/isSnowing,
+            //     the HUD icon, and every netWorldState LocationWeather — rides into Spring 1 and
+            //     gets SAVED there (2026-07-13 playtest: reset during a Summer thunderstorm left
+            //     Spring 1 with Weather=Storm serialized, lightning flashes and a storm icon on a
+            //     clear day). Run vanilla's own day-start chain for the rewound date:
+            //     UpdateWeatherForNewDay resolves today via getWeatherModificationsForDate (which
+            //     WeatherModificationsPatch routes to the new run's schedule — uniqueID was
+            //     re-seeded in step 0), ApplyWeatherForNewDay copies the result into the live
+            //     flags (and resets the day-1 monthly counters), updateWeatherIcon redraws the HUD.
+            Game1.UpdateWeatherForNewDay();
+            Game1.ApplyWeatherForNewDay();
+            Game1.updateWeatherIcon();
+
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
