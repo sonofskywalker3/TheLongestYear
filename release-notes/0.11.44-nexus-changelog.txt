@@ -1,0 +1,32 @@
+0.11.44 — Slot-based weekly goals, airtight resets, remixed-bundle fix
+
+The big fix release: weekly goals redesigned around real bundle slots, remixed
+bundles fully supported, the loop reset made airtight, and new upgrades.
+Changes since 0.11.0:
+
+Fixed
+- Weekly goals now target real bundle slots. Each goal names a specific
+  still-open bundle slot (item, stack, quality) and ticks only when that exact
+  slot completes. No more single-item clears of x5 goals, impossible themes,
+  or goals asking for already-donated items. Empty pool = no quest, drawback
+  lifts. The 1.5x banking bonus is slot-strict.
+- Remixed bundles all count. Bundles matching no known pattern were silently
+  dropped from season checkpoints and weekly themes (could even grant an early
+  win). Every bundle now classifies, custom-bundle mods included.
+- The loop reset is airtight: museum donations and lost library books, worn
+  boots/rings/trinkets, monster-slayer progress, mine milestone chests, power
+  books / mastery / prize tickets, and max health/stamina all rewind with the
+  year. Clothes (hat/shirt/pants) now stay on through a reset.
+- Kept buildings rebuild where the player placed them (coop/barn/silo, like
+  the stable already did), with the footprint cleared of regenerated debris.
+- Green rain fires in summer again and shows in forecasts; a reset no longer
+  drags the old day's weather into Spring 1.
+- The farm cave choice (mushrooms / fruit bats) is offered fresh each loop.
+- Better Chests / Unlimited Storage no longer inflate the Junimo Stash grid.
+- Horse no longer asks to be renamed every morning; theme picks can't be lost
+  to a stale offer; quest-tip layout fixes.
+
+Added
+- Keep Silo upgrade (150 JP, Buildings).
+- Cart Whisperer I-V (Foresight): on cart days, the shrine flags which of the
+  Traveling Cart's stock can feed a Community Center bundle.
