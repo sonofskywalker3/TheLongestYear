@@ -540,7 +540,7 @@ namespace TheLongestYear.UI
                 Bundle = bundle;
                 IsVault = false;
                 Title = bundle.Name;
-                ThemeTag = bundle.Theme.ToString();
+                ThemeTag = ThemeDisplay.Name(bundle.Theme);
                 Have = have;
                 Need = need;
                 MissingThisSeasonCount = missingThisSeason;

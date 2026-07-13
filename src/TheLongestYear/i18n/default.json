@@ -215,5 +215,30 @@
     "tier.1": "Copper", "tier.2": "Steel", "tier.3": "Gold", "tier.4": "Iridium",
     "tool.hoe": "Hoe", "tool.pickaxe": "Pickaxe", "tool.axe": "Axe", "tool.watering_can": "Watering Can",
     "skill.farming": "Farming", "skill.mining": "Mining", "skill.foraging": "Foraging",
-    "skill.fishing": "Fishing", "skill.combat": "Combat"
+    "skill.fishing": "Fishing", "skill.combat": "Combat",
+
+    // -- themes / categories / modifiers ------------------------------------------
+    "theme.foraging": "Foraging", "theme.farming": "Farming", "theme.fishing": "Fishing",
+    "theme.mining": "Mining", "theme.mixed": "Mixed",
+    "upgrade-category.loadout": "Loadout", "upgrade-category.carryover": "Carryover",
+    "upgrade-category.efficiency": "Efficiency", "upgrade-category.obtainability": "Obtainability",
+    "upgrade-category.foresight": "Foresight", "upgrade-category.stash": "Stash",
+    "upgrade-category.buildings": "Buildings",
+    // Plain ASCII only in modifier.* values (no U+2212 minus sign) — Stardew's smallFont
+    // doesn't include the typographic minus and renders it as tofu. Keep entries concise
+    // enough to wrap to two lines max on a 460px-wide card (Game1.parseText word-wrapping).
+    "modifier.forage_yield_up": "20% chance to find an extra foraged item",
+    "modifier.forage_off": "All foraging items removed",
+    "modifier.crop_growth_up": "20% chance per crop per day to grow an extra day",
+    "modifier.crop_growth_down": "20% chance per crop per day to grow nothing",
+    "modifier.fish_bite_up": "Fish bite 30% sooner",
+    "modifier.fish_bite_down": "Fish bite 30% slower",
+    "modifier.mine_drops_up": "20% chance for mined resources to drop +1",
+    "modifier.mines_closed": "Mine entrance closed all week",
+    "modifier.all_drops_up": "10% chance for any drop to be +1",
+    "modifier.all_sell_prices_down": "All sell prices cut in half",
+    "modifier.forage_drops_off": "Foraging disabled (legacy)",
+    "modifier.mine_drops_off": "Mine drops disabled (legacy)",
+    "modifier.shop_discount": "Shop prices 15% lower",
+    "modifier.stamina_drain_up": "Tools drain 30% more stamina"
 }

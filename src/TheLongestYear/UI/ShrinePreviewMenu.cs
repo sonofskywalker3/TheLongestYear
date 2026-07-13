@@ -189,7 +189,7 @@ namespace TheLongestYear.UI
                 if (owned.Count == 0 && buyable.Count == 0)
                     continue;
 
-                _rows.Add(new Row { IsHeader = true, Text = cat.ToString() });
+                _rows.Add(new Row { IsHeader = true, Text = ThemeDisplay.CategoryName(cat) });
 
                 // Owned leaves first (green, no cost) — "you already have this, nothing more to buy".
                 foreach (UpgradeDefinition def in owned)

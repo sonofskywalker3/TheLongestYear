@@ -22,46 +22,14 @@ public static class ThemeModifiers
     };
 
     /// <summary>
-    /// Human-readable description of what a bonus/liability id actually DOES in plain English.
-    /// 2026-05-28 playtest feedback: the prior "+30% Mine Drops" style was a number without a
-    /// mechanic — the player had to hover the card for the tooltip to learn what it meant.
-    /// New phrasing spells out the in-world effect ("30% chance for mined resources to drop
-    /// +1", "All foraging items removed") so the planning-hub card stands on its own without
-    /// a tooltip. Strings are sized to fit a 460px-wide card with smallFont after
-    /// <c>Game1.parseText</c> word-wrapping; keep new entries concise enough to wrap to two
-    /// lines max.
-    ///
-    /// The id strings themselves remain stable so the effect layer (Plan 06) can switch on
-    /// them. Numbers here are the v1 baselines; Plan 06 will read them from
-    /// <see cref="GameplayConfig"/> so they can be tuned without redeploying.
-    /// Falls back to the raw id if unmapped (defensive — easy to spot in-game if a new id is
-    /// missed). Plain ASCII only (no U+2212 minus sign) — Stardew's smallFont doesn't include
-    /// the typographic minus and renders it as tofu.
+    /// Human-readable description of what a bonus/liability id actually DOES in plain English,
+    /// looked up from i18n (<c>modifier.&lt;id&gt;</c> keys in <c>i18n/default.json</c>). Falls
+    /// back to the raw id if unmapped (defensive — easy to spot in-game if a new id is missed).
+    /// The id strings themselves remain stable so the effect layer (Plan 06) can switch on them.
     /// </summary>
-    public static string DisplayNameFor(string modifierId) => modifierId switch
+    public static string DisplayNameFor(string modifierId)
     {
-        "forage_yield_up"        => "20% chance to find an extra foraged item",
-        "forage_off"             => "All foraging items removed",
-        // 2026-05-29 user spec: crop_growth_up/down switched from deterministic (days 2+5
-        // every week) to probabilistic (20% per watered crop per day) — distributes the
-        // bonus/penalty across the whole week instead of concentrating on two days.
-        "crop_growth_up"         => "20% chance per crop per day to grow an extra day",
-        "crop_growth_down"       => "20% chance per crop per day to grow nothing",
-        "fish_bite_up"           => "Fish bite 30% sooner",
-        "fish_bite_down"         => "Fish bite 30% slower",
-        "mine_drops_up"          => "20% chance for mined resources to drop +1",
-        // 2026-05-28 playtest round 2: user requested a HARD entrance block — "floor 1 needs
-        // to be blocked, floor 0 is accessible." MinesEntranceClosedPatch now intercepts the
-        // performAction("Mine"/"NextMineLevel"/"MineElevator") verbs so the player can walk to
-        // the mine entrance in Mountain but cannot enter the shaft at all.
-        "mines_closed"           => "Mine entrance closed all week",
-        "all_drops_up"           => "10% chance for any drop to be +1",
-        "all_sell_prices_down"   => "All sell prices cut in half",
-        // Legacy / unused-in-v1 -- kept so old config files don't show raw ids if loaded.
-        "forage_drops_off"       => "Foraging disabled (legacy)",
-        "mine_drops_off"         => "Mine drops disabled (legacy)",
-        "shop_discount"          => "Shop prices 15% lower",
-        "stamina_drain_up"       => "Tools drain 30% more stamina",
-        _ => modifierId
-    };
+        string result = Strings.Get($"modifier.{modifierId}");
+        return result == $"modifier.{modifierId}" ? modifierId : result;
+    }
 }

@@ -316,14 +316,14 @@ namespace TheLongestYear.UI
             int cardsRightX = cardsLeftX + CardWidth + CardSpacing;
 
             _leftCard = new ClickableComponent(new Rectangle(cardsLeftX, cardsY, CardWidth, CardHeight),
-                _offer.Count > 0 ? _offer[0].ToString() : "left-card")
+                _offer.Count > 0 ? ThemeDisplay.Name(_offer[0]) : "left-card")
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
                 downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
             };
             _rightCard = new ClickableComponent(new Rectangle(cardsRightX, cardsY, CardWidth, CardHeight),
-                _offer.Count > 1 ? _offer[1].ToString() : "right-card")
+                _offer.Count > 1 ? ThemeDisplay.Name(_offer[1]) : "right-card")
             {
                 myID = CardIdRight,
                 leftNeighborID = CardIdLeft,
@@ -691,7 +691,7 @@ namespace TheLongestYear.UI
             int textWidth = card.bounds.Width - CardInnerPad * 2;
 
             // Theme name (big, centred).
-            string themeName = theme.Value.ToString();
+            string themeName = ThemeDisplay.Name(theme.Value);
             Vector2 nameSize = Game1.dialogueFont.MeasureString(themeName);
             float nameX = card.bounds.X + (card.bounds.Width - nameSize.X) / 2f;
             Utility.drawTextWithShadow(b, themeName, Game1.dialogueFont,
