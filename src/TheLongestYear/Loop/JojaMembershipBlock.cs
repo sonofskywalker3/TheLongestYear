@@ -2,6 +2,7 @@ using HarmonyLib;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Locations;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
@@ -35,9 +36,7 @@ namespace TheLongestYear.Loop
             // v1: refuse the membership purchase. Vanilla would otherwise deduct 5000g and
             // add the JojaMember mail (JojaMart.cs:48-54), which would break the time-loop
             // gate by switching the CC to the money-only Joja path.
-            Game1.drawObjectDialogue(
-                "The Junimos shake their heads. Something about \"a debt to the land\" " +
-                "they want you to settle yourself.");
+            Game1.drawObjectDialogue(Strings.Get("dialog.joja"));
             __result = true;
             return false;
         }
