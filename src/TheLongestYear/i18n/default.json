@@ -240,5 +240,28 @@
     "modifier.forage_drops_off": "Foraging disabled (legacy)",
     "modifier.mine_drops_off": "Mine drops disabled (legacy)",
     "modifier.shop_discount": "Shop prices 15% lower",
-    "modifier.stamina_drain_up": "Tools drain 30% more stamina"
+    "modifier.stamina_drain_up": "Tools drain 30% more stamina",
+
+    // -- shrine menus -------------------------------------------------------------
+    "menu.shrine.title": "Junimo Shrine",
+    "menu.shrine.jp": "JP: {{jp}}",
+    "menu.shrine.owned": "Owned",
+    "menu.shrine.cost": "Cost: {{cost}} JP",
+    "menu.shrine.insufficient": "  (insufficient)",
+    "menu.shrine.hover": "{{name}}\n{{description}}\n{{footer}}",
+    "menu.shrine-preview.title": "Junimo Shrine - Planning",
+    "menu.shrine-preview.banked": "Junimo Points banked: {{jp}}",
+    "menu.shrine-preview.planning-note": "Planning view — you spend JP when a loop resets or you win, not here.",
+    "menu.shrine-preview.nothing-new": "Nothing new to plan for yet — reach further this run!",
+    "menu.shrine-preview.weather-header": "Weather",
+    "menu.shrine-preview.weather-day-hover": "Day {{day}} - {{weather}}",
+    "menu.shrine-preview.cart-away": "Traveling Cart — not in town (next: {{day}})",
+    "menu.shrine-preview.cart-catalog-header": "Cart Catalog — bundle items today",
+    "menu.shrine-preview.cart-traveling-header": "Traveling Cart — bundle items today",
+    "menu.shrine-preview.cart-nothing": "Nothing here for a bundle today.",
+    "menu.shrine-preview.cart-item-hover": "{{name}}\n{{price}}g",
+    "menu.shrine-preview.tooltip-owned": "{{description}}\nOwned.",
+    "menu.shrine-preview.tooltip-buyable": "{{description}}\nCurrently owned: {{owned}}",
+    "menu.shrine-preview.owned-none": "none",
+    "menu.shrine-preview.cost": "{{cost}} JP"
 }

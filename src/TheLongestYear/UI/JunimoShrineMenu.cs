@@ -194,8 +194,15 @@ namespace TheLongestYear.UI
                 if (_rowSlots[i].containsPoint(x, y))
                 {
                     UpgradeDefinition def = rows[i].Def;
-                    string footer = rows[i].Owned ? "Owned" : $"Cost: {def.Cost} JP";
-                    _hoverText = $"{def.DisplayName}\n{def.Description}\n{footer}";
+                    string footer = rows[i].Owned
+                        ? Strings.Get("menu.shrine.owned")
+                        : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = def.Cost.ToString() });
+                    _hoverText = Strings.Get("menu.shrine.hover", new Dictionary<string, string>
+                    {
+                        ["name"] = def.DisplayName,
+                        ["description"] = def.Description,
+                        ["footer"] = footer,
+                    });
                     return;
                 }
             }
@@ -312,10 +319,11 @@ namespace TheLongestYear.UI
 
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
-            SpriteText.drawStringHorizontallyCenteredAt(b, "Junimo Shrine",
+            SpriteText.drawStringHorizontallyCenteredAt(b, Strings.Get("menu.shrine.title"),
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
-            string jp = $"JP: {_store.State.JunimoPoints}";
+            string jp = Strings.Get("menu.shrine.jp",
+                new Dictionary<string, string> { ["jp"] = _store.State.JunimoPoints.ToString() });
             Vector2 jpSize = Game1.dialogueFont.MeasureString(jp);
             Utility.drawTextWithShadow(b, jp, Game1.dialogueFont,
                 new Vector2(xPositionOnScreen + width - PanelPadding - jpSize.X, yPositionOnScreen + 24),
@@ -366,7 +374,7 @@ namespace TheLongestYear.UI
                     slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, Color.White, 1f, false);
                 Utility.drawTextWithShadow(b, def.DisplayName, Game1.dialogueFont,
                     new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), OwnedGreen);
-                Utility.drawTextWithShadow(b, "Owned", Game1.smallFont,
+                Utility.drawTextWithShadow(b, Strings.Get("menu.shrine.owned"), Game1.smallFont,
                     new Vector2(slot.bounds.X + 16, slot.bounds.Y + 56), OwnedGreen);
                 return;
             }
@@ -381,7 +389,8 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, def.DisplayName, Game1.dialogueFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), Game1.textColor);
 
-            string statusLine = $"Cost: {def.Cost} JP" + (!affordable ? "  (insufficient)" : "");
+            string statusLine = Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = def.Cost.ToString() })
+                + (!affordable ? Strings.Get("menu.shrine.insufficient") : "");
             Utility.drawTextWithShadow(b, statusLine, Game1.smallFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 56),
                 affordable ? Game1.textColor : Color.Red);
