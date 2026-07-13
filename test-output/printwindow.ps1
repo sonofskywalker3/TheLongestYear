@@ -1,6 +1,9 @@
 # Screenshot the running Stardew (SMAPI) window via PrintWindow flag 2 (PW_RENDERFULLCONTENT).
-# Captures the window's own GPU render even when occluded. Matches the window by title containing
-# both "Stardew Valley" and "SMAPI". Usage: pwsh -NoProfile -File printwindow.ps1 <out.png>
+# Captures the window's own GPU render even when occluded. Matches the GAME window by title
+# containing "Stardew Valley" AND window class "SDL_app" — a title-only match grabs the SMAPI
+# console first (both windows have "Stardew Valley"+"SMAPI" in the title; the console is
+# ConsoleWindowClass / CASCADIA_HOSTING_WINDOW_CLASS, the MonoGame window is SDL_app).
+# Usage: pwsh -NoProfile -File printwindow.ps1 <out.png>
 param([string]$Out = "win-screen.png")
 
 Add-Type @"
@@ -12,6 +15,7 @@ public class WinCap {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr p);
     [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+    [DllImport("user32.dll")] public static extern int GetClassName(IntPtr h, System.Text.StringBuilder s, int n);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
     public delegate bool EnumProc(IntPtr h, IntPtr p);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
@@ -21,8 +25,9 @@ public class WinCap {
             if (!IsWindowVisible(h)) return true;
             var sb = new System.Text.StringBuilder(256);
             GetWindowText(h, sb, 256);
-            string t = sb.ToString();
-            if (t.Contains("Stardew Valley") && t.Contains("SMAPI")) { found = h; return false; }
+            var cls = new System.Text.StringBuilder(256);
+            GetClassName(h, cls, 256);
+            if (sb.ToString().Contains("Stardew Valley") && cls.ToString() == "SDL_app") { found = h; return false; }
             return true;
         }, IntPtr.Zero);
         return found;
