@@ -40,11 +40,6 @@ namespace TheLongestYear.UI
         private const int CartIconPx = 64;
         private const int CartIconRowH = 72;
 
-        // Abbreviated weekday names, indexed by dayOfMonth % 7 (0 = Sunday, matching vanilla's
-        // shortDayDisplayNameFromDayOfSeason). Day 5 → Fri, day 7 → Sun (the cart's days).
-        private static readonly string[] ShortDayNames =
-            { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-
         private sealed class Row
         {
             public bool IsHeader;
@@ -116,7 +111,10 @@ namespace TheLongestYear.UI
 
                 if (!cartInTown && !catalogAnyDay)
                 {
-                    _cartHeader = $"Traveling Cart — not in town (next: {ShortDayName(NextCartVisitDay(Game1.dayOfMonth))})";
+                    _cartHeader = Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
+                    {
+                        ["day"] = ShortDayName(NextCartVisitDay(Game1.dayOfMonth)),
+                    });
                     _cartEmptyNote = "";
                     return;
                 }
@@ -137,10 +135,10 @@ namespace TheLongestYear.UI
                 }
 
                 _cartHeader = (catalogAnyDay && !cartInTown)
-                    ? "Cart Catalog — bundle items today"
-                    : "Traveling Cart — bundle items today";
+                    ? Strings.Get("menu.shrine-preview.cart-catalog-header")
+                    : Strings.Get("menu.shrine-preview.cart-traveling-header");
                 if (_cartItems.Count == 0)
-                    _cartEmptyNote = "Nothing here for a bundle today.";
+                    _cartEmptyNote = Strings.Get("menu.shrine-preview.cart-nothing");
             }
         }
 
@@ -148,7 +146,10 @@ namespace TheLongestYear.UI
         /// (Fri 5/12/19/26, Sun 7/14/21/28).</summary>
         private static bool TravelingCartVisitsToday(int dayOfMonth) => dayOfMonth % 7 % 5 == 0;
 
-        private static string ShortDayName(int dayOfMonth) => ShortDayNames[dayOfMonth % 7];
+        // Day-of-month IS day-of-season in vanilla's terms, so the vanilla helper (loaded from
+        // the game's own localized Strings\StringsFromCSFiles asset) produces the identical
+        // abbreviated weekday names ("Sun".."Sat") this menu previously hardcoded in English.
+        private static string ShortDayName(int dayOfMonth) => Game1.shortDayDisplayNameFromDayOfSeason(dayOfMonth);
 
         /// <summary>Day-of-month of the next Traveling Cart visit strictly after <paramref name="today"/>,
         /// wrapping across the 28-day month. The cart visits on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
@@ -197,7 +198,8 @@ namespace TheLongestYear.UI
                     {
                         Def = def,
                         IsOwned = true,
-                        Tooltip = $"{def.Description}\nOwned.",
+                        Tooltip = Strings.Get("menu.shrine-preview.tooltip-owned",
+                            new Dictionary<string, string> { ["description"] = def.Description }),
                     });
 
                 // Then the next-purchasable tiers (with cost).
@@ -205,7 +207,11 @@ namespace TheLongestYear.UI
                     _rows.Add(new Row
                     {
                         Def = def,
-                        Tooltip = $"{def.Description}\nCurrently owned: {OwnedLabel(def)}",
+                        Tooltip = Strings.Get("menu.shrine-preview.tooltip-buyable", new Dictionary<string, string>
+                        {
+                            ["description"] = def.Description,
+                            ["owned"] = OwnedLabel(def),
+                        }),
                     });
             }
         }
@@ -216,7 +222,7 @@ namespace TheLongestYear.UI
         private static string OwnedLabel(UpgradeDefinition def)
         {
             if (def.PrerequisiteId == null)
-                return "none";
+                return Strings.Get("menu.shrine-preview.owned-none");
             return UpgradeCatalog.TryGet(def.PrerequisiteId)?.DisplayName ?? def.PrerequisiteId;
         }
 
@@ -345,7 +351,11 @@ namespace TheLongestYear.UI
             {
                 if (bounds.Contains(x, y))
                 {
-                    _hoverText = $"{name}\n{price}g";
+                    _hoverText = Strings.Get("menu.shrine-preview.cart-item-hover", new Dictionary<string, string>
+                    {
+                        ["name"] = name,
+                        ["price"] = price.ToString(),
+                    });
                     return;
                 }
             }
@@ -353,7 +363,11 @@ namespace TheLongestYear.UI
             {
                 if (bounds.Contains(x, y))
                 {
-                    _hoverText = $"Day {day.DayOfMonth} - {WeatherIcons.Label(day.Weather)}";
+                    _hoverText = Strings.Get("menu.shrine-preview.weather-day-hover", new Dictionary<string, string>
+                    {
+                        ["day"] = day.DayOfMonth.ToString(),
+                        ["weather"] = WeatherIcons.Label(day.Weather),
+                    });
                     return;
                 }
             }
@@ -376,15 +390,17 @@ namespace TheLongestYear.UI
                 Color.Black * 0.5f);
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
-            SpriteText.drawStringHorizontallyCenteredAt(b, "Junimo Shrine - Planning",
+            SpriteText.drawStringHorizontallyCenteredAt(b, Strings.Get("menu.shrine-preview.title"),
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
-            Utility.drawTextWithShadow(b, $"Junimo Points banked: {_state.JunimoPoints}", Game1.smallFont,
+            Utility.drawTextWithShadow(b,
+                Strings.Get("menu.shrine-preview.banked", new Dictionary<string, string> { ["jp"] = _state.JunimoPoints.ToString() }),
+                Game1.smallFont,
                 new Vector2(xPositionOnScreen + 40, yPositionOnScreen + 80), Game1.textColor);
 
             // Multiple testers tried to buy from this board and were confused when nothing happened
             // (it's a read-only preview — JP is spent only at a loop boundary). Spell that out,
             // right-aligned on the JP line, so the "planning, not a shop" intent is obvious.
-            const string planningNote = "Planning view — you spend JP when a loop resets or you win, not here.";
+            string planningNote = Strings.Get("menu.shrine-preview.planning-note");
             Vector2 noteSize = Game1.smallFont.MeasureString(planningNote);
             Utility.drawTextWithShadow(b, planningNote, Game1.smallFont,
                 new Vector2(xPositionOnScreen + width - 40 - noteSize.X, yPositionOnScreen + 80),
@@ -394,7 +410,7 @@ namespace TheLongestYear.UI
 
             if (_rows.Count == 0)
             {
-                Utility.drawTextWithShadow(b, "Nothing new to plan for yet — reach further this run!",
+                Utility.drawTextWithShadow(b, Strings.Get("menu.shrine-preview.nothing-new"),
                     Game1.smallFont, new Vector2(_listX, _listY), Game1.textColor);
             }
 
@@ -415,7 +431,7 @@ namespace TheLongestYear.UI
                     Color green = new Color(30, 130, 30);
                     Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
                         new Vector2(_listX + 24, rowY + 6), green);
-                    const string ownedLabel = "Owned";
+                    string ownedLabel = Strings.Get("menu.shrine.owned");
                     Vector2 ownedSize = Game1.smallFont.MeasureString(ownedLabel);
                     Utility.drawTextWithShadow(b, ownedLabel, Game1.smallFont,
                         new Vector2(_listX + _listWidth - 64 - ownedSize.X, rowY + 6), green);
@@ -425,7 +441,8 @@ namespace TheLongestYear.UI
                     bool affordable = _state.JunimoPoints >= row.Def.Cost;
                     Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
                         new Vector2(_listX + 24, rowY + 6), Game1.textColor);
-                    string cost = $"{row.Def.Cost} JP";
+                    string cost = Strings.Get("menu.shrine-preview.cost",
+                        new Dictionary<string, string> { ["cost"] = row.Def.Cost.ToString() });
                     Vector2 costSize = Game1.smallFont.MeasureString(cost);
                     Utility.drawTextWithShadow(b, cost, Game1.smallFont,
                         new Vector2(_listX + _listWidth - 64 - costSize.X, rowY + 6),
@@ -452,7 +469,7 @@ namespace TheLongestYear.UI
         {
             if (_weatherCells.Count > 0)
             {
-                Utility.drawTextWithShadow(b, "Weather", Game1.dialogueFont,
+                Utility.drawTextWithShadow(b, Strings.Get("menu.shrine-preview.weather-header"), Game1.dialogueFont,
                     new Vector2(_listX, _weatherHeaderY), Game1.textColor);
                 int numY = _weatherHeaderY + WeatherHeaderH;
                 int iconY = numY + WeatherNumberRowH;
