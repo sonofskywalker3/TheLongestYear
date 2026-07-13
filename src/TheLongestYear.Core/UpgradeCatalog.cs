@@ -55,18 +55,15 @@ public static class UpgradeCatalog
         var entries = new List<UpgradeDefinition>
         {
         // Loadout
-        new UpgradeDefinition("backpack_1", UpgradeCategory.Loadout, "Backpack I",
-            "Start each loop with the 24-slot backpack.", 150,
+        new UpgradeDefinition("backpack_1", UpgradeCategory.Loadout, 150,
             metaRequirement: null, runReachRequirement: "backpack:1"),
-        new UpgradeDefinition("backpack_2", UpgradeCategory.Loadout, "Backpack II",
-            "Start each loop with the 36-slot backpack.", 375, "backpack_1",
+        new UpgradeDefinition("backpack_2", UpgradeCategory.Loadout, 375, "backpack_1",
             metaRequirement: null, runReachRequirement: "backpack:2"),
 
         // Golden Scythe — a convenience keep. Reach-gated on having obtained the Golden
         // Scythe this run (mail "gotGoldenScythe"); once owned it is a permanent floor —
         // FarmerReset grants the Golden Scythe instead of the basic scythe every loop.
-        new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, "Keep Golden Scythe",
-            "Start each loop with the Golden Scythe instead of the basic scythe.", 250,
+        new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, 250,
             metaRequirement: null, runReachRequirement: "scythe:golden"),
 
         // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
@@ -74,16 +71,11 @@ public static class UpgradeCatalog
         // sets the TOTAL starting-gold bonus to its amount (not additive — owning II
         // means +2500g, not +1000+2500). Highest owned tier wins, same as backpack.
         // Costs match the shop-discount curve since both are similar early-run impact.
-        new UpgradeDefinition("starter_gold_1", UpgradeCategory.Loadout, "Seed Money I",
-            "Start each loop with +1,000g.", 75),
-        new UpgradeDefinition("starter_gold_2", UpgradeCategory.Loadout, "Seed Money II",
-            "Start each loop with +2,500g.", 175, "starter_gold_1"),
-        new UpgradeDefinition("starter_gold_3", UpgradeCategory.Loadout, "Seed Money III",
-            "Start each loop with +5,000g.", 350, "starter_gold_2"),
-        new UpgradeDefinition("starter_gold_4", UpgradeCategory.Loadout, "Seed Money IV",
-            "Start each loop with +10,000g.", 600, "starter_gold_3"),
-        new UpgradeDefinition("starter_gold_5", UpgradeCategory.Loadout, "Seed Money V",
-            "Start each loop with +25,000g.", 900, "starter_gold_4"),
+        new UpgradeDefinition("starter_gold_1", UpgradeCategory.Loadout, 75),
+        new UpgradeDefinition("starter_gold_2", UpgradeCategory.Loadout, 175, "starter_gold_1"),
+        new UpgradeDefinition("starter_gold_3", UpgradeCategory.Loadout, 350, "starter_gold_2"),
+        new UpgradeDefinition("starter_gold_4", UpgradeCategory.Loadout, 600, "starter_gold_3"),
+        new UpgradeDefinition("starter_gold_5", UpgradeCategory.Loadout, 900, "starter_gold_4"),
 
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
@@ -92,38 +84,26 @@ public static class UpgradeCatalog
         // Tier determines the slot pool size. Highest owned tier wins (owning III = 20 slots).
         // Cookbook: gated by kitchen (HouseUpgradeLevel >= 1) at interaction time, not at purchase.
         // Craftbook: no in-run prereq — available from day 1 of the run after purchase.
-        new UpgradeDefinition("cookbook_1", UpgradeCategory.Carryover, "Cookbook I",
-            "Bank up to 5 cooking recipes between loops.", 150),
-        new UpgradeDefinition("cookbook_2", UpgradeCategory.Carryover, "Cookbook II",
-            "Bank up to 10 cooking recipes between loops.", 350, "cookbook_1"),
-        new UpgradeDefinition("cookbook_3", UpgradeCategory.Carryover, "Cookbook III",
-            "Bank up to 20 cooking recipes between loops.", 700, "cookbook_2"),
-        new UpgradeDefinition("craftbook_1", UpgradeCategory.Carryover, "Craftbook I",
-            "Bank up to 5 crafting recipes between loops.", 150),
-        new UpgradeDefinition("craftbook_2", UpgradeCategory.Carryover, "Craftbook II",
-            "Bank up to 10 crafting recipes between loops.", 350, "craftbook_1"),
-        new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, "Craftbook III",
-            "Bank up to 20 crafting recipes between loops.", 700, "craftbook_2"),
+        new UpgradeDefinition("cookbook_1", UpgradeCategory.Carryover, 150),
+        new UpgradeDefinition("cookbook_2", UpgradeCategory.Carryover, 350, "cookbook_1"),
+        new UpgradeDefinition("cookbook_3", UpgradeCategory.Carryover, 700, "cookbook_2"),
+        new UpgradeDefinition("craftbook_1", UpgradeCategory.Carryover, 150),
+        new UpgradeDefinition("craftbook_2", UpgradeCategory.Carryover, 350, "craftbook_1"),
+        new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, 700, "craftbook_2"),
 
         // Efficiency
-        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, "Keep Horse",
-            "Keep your stable and horse across loops (build it once, where you want it).", 450),
+        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, 450),
 
         // Shop Discount — 5-tier chain (2026-05-29 rebalance: was single-tier 5%, now
         // 5/10/15/20/25%. Renamed from shop_discount_5 → shop_discount_1..5; the prior
         // ID's "5" meant the percent and was confusing alongside the chain numbering).
         // Effect applies EVERY run (permanent), not just this run — earlier wording
         // implied single-use. Same cost curve as starter_gold; both are early-run cushion.
-        new UpgradeDefinition("shop_discount_1", UpgradeCategory.Efficiency, "Shop Discount I",
-            "5% off all shop purchases.", 75),
-        new UpgradeDefinition("shop_discount_2", UpgradeCategory.Efficiency, "Shop Discount II",
-            "10% off all shop purchases.", 175, "shop_discount_1"),
-        new UpgradeDefinition("shop_discount_3", UpgradeCategory.Efficiency, "Shop Discount III",
-            "15% off all shop purchases.", 350, "shop_discount_2"),
-        new UpgradeDefinition("shop_discount_4", UpgradeCategory.Efficiency, "Shop Discount IV",
-            "20% off all shop purchases.", 600, "shop_discount_3"),
-        new UpgradeDefinition("shop_discount_5", UpgradeCategory.Efficiency, "Shop Discount V",
-            "25% off all shop purchases.", 900, "shop_discount_4"),
+        new UpgradeDefinition("shop_discount_1", UpgradeCategory.Efficiency, 75),
+        new UpgradeDefinition("shop_discount_2", UpgradeCategory.Efficiency, 175, "shop_discount_1"),
+        new UpgradeDefinition("shop_discount_3", UpgradeCategory.Efficiency, 350, "shop_discount_2"),
+        new UpgradeDefinition("shop_discount_4", UpgradeCategory.Efficiency, 600, "shop_discount_3"),
+        new UpgradeDefinition("shop_discount_5", UpgradeCategory.Efficiency, 900, "shop_discount_4"),
 
         // JP Boost — 5-tier chain. Multiplies ALL JP-awarding sources (item donations,
         // bundle completions, room completions, weekly theme quests, interim run-end
@@ -131,27 +111,19 @@ public static class UpgradeCatalog
         // every JP earned after purchase is bigger, including the JP that will fund the
         // next upgrade. Tier 1 (100) is the most expensive starter T1; full chain (3000)
         // is the most expensive Obtainability chain.
-        new UpgradeDefinition("jp_boost_1", UpgradeCategory.Efficiency, "Junimo Favor I",
-            "All Junimo Point gains increased by 5%.", 100),
-        new UpgradeDefinition("jp_boost_2", UpgradeCategory.Efficiency, "Junimo Favor II",
-            "All Junimo Point gains increased by 10%.", 250, "jp_boost_1"),
-        new UpgradeDefinition("jp_boost_3", UpgradeCategory.Efficiency, "Junimo Favor III",
-            "All Junimo Point gains increased by 15%.", 500, "jp_boost_2"),
-        new UpgradeDefinition("jp_boost_4", UpgradeCategory.Efficiency, "Junimo Favor IV",
-            "All Junimo Point gains increased by 20%.", 850, "jp_boost_3"),
-        new UpgradeDefinition("jp_boost_5", UpgradeCategory.Efficiency, "Junimo Favor V",
-            "All Junimo Point gains increased by 25%.", 1300, "jp_boost_4"),
+        new UpgradeDefinition("jp_boost_1", UpgradeCategory.Efficiency, 100),
+        new UpgradeDefinition("jp_boost_2", UpgradeCategory.Efficiency, 250, "jp_boost_1"),
+        new UpgradeDefinition("jp_boost_3", UpgradeCategory.Efficiency, 500, "jp_boost_2"),
+        new UpgradeDefinition("jp_boost_4", UpgradeCategory.Efficiency, 850, "jp_boost_3"),
+        new UpgradeDefinition("jp_boost_5", UpgradeCategory.Efficiency, 1300, "jp_boost_4"),
 
         // Obtainability
-        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, "Cultivation: Red Cabbage",
-            "Red Cabbage can appear from Mixed Seeds in Summer.", 750),
+        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 750),
         // 2026-05-29 user spec: starfruit decoupled from red cabbage — picker should be able
         // to grab either independently. Cost dropped 1125 → 750 to match cult_red_cabbage
         // ("change the starfruit cost to the same cost as the red cabbage").
-        new UpgradeDefinition("cult_starfruit", UpgradeCategory.Obtainability, "Cultivation: Starfruit",
-            "Starfruit can appear from Mixed Seeds in Summer.", 750),
-        new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, "Fortune: Rare Fish",
-            "Rare fish catch chance increased by 25%.", 525),
+        new UpgradeDefinition("cult_starfruit", UpgradeCategory.Obtainability, 750),
+        new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, 525),
 
         // Obtainability — Passive Accelerators (added 2026-05-29, cost-tuned 2026-05-29)
         //
@@ -167,68 +139,42 @@ public static class UpgradeCatalog
         // makes the first purchase a sure thing even on a casual first-run pace.
 
         // Green Thumb — % chance per watered crop per night to gain an extra growth day.
-        new UpgradeDefinition("green_thumb_1", UpgradeCategory.Obtainability, "Green Thumb I",
-            "Each watered crop has a 5% chance per day to gain an extra day of growth.", 50),
-        new UpgradeDefinition("green_thumb_2", UpgradeCategory.Obtainability, "Green Thumb II",
-            "Each watered crop has a 10% chance per day to gain an extra day of growth.", 125, "green_thumb_1"),
-        new UpgradeDefinition("green_thumb_3", UpgradeCategory.Obtainability, "Green Thumb III",
-            "Each watered crop has a 15% chance per day to gain an extra day of growth.", 250, "green_thumb_2"),
-        new UpgradeDefinition("green_thumb_4", UpgradeCategory.Obtainability, "Green Thumb IV",
-            "Each watered crop has a 20% chance per day to gain an extra day of growth.", 425, "green_thumb_3"),
-        new UpgradeDefinition("green_thumb_5", UpgradeCategory.Obtainability, "Green Thumb V",
-            "Each watered crop has a 25% chance per day to gain an extra day of growth.", 650, "green_thumb_4"),
+        new UpgradeDefinition("green_thumb_1", UpgradeCategory.Obtainability, 50),
+        new UpgradeDefinition("green_thumb_2", UpgradeCategory.Obtainability, 125, "green_thumb_1"),
+        new UpgradeDefinition("green_thumb_3", UpgradeCategory.Obtainability, 250, "green_thumb_2"),
+        new UpgradeDefinition("green_thumb_4", UpgradeCategory.Obtainability, 425, "green_thumb_3"),
+        new UpgradeDefinition("green_thumb_5", UpgradeCategory.Obtainability, 650, "green_thumb_4"),
 
         // Coal Vein — % chance per destroyed stone to drop +1 coal.
-        new UpgradeDefinition("coal_vein_1", UpgradeCategory.Obtainability, "Coal Vein I",
-            "Each stone you destroy has a 5% chance to drop an extra coal.", 50),
-        new UpgradeDefinition("coal_vein_2", UpgradeCategory.Obtainability, "Coal Vein II",
-            "Each stone you destroy has a 10% chance to drop an extra coal.", 125, "coal_vein_1"),
-        new UpgradeDefinition("coal_vein_3", UpgradeCategory.Obtainability, "Coal Vein III",
-            "Each stone you destroy has a 15% chance to drop an extra coal.", 250, "coal_vein_2"),
-        new UpgradeDefinition("coal_vein_4", UpgradeCategory.Obtainability, "Coal Vein IV",
-            "Each stone you destroy has a 20% chance to drop an extra coal.", 425, "coal_vein_3"),
-        new UpgradeDefinition("coal_vein_5", UpgradeCategory.Obtainability, "Coal Vein V",
-            "Each stone you destroy has a 25% chance to drop an extra coal.", 650, "coal_vein_4"),
+        new UpgradeDefinition("coal_vein_1", UpgradeCategory.Obtainability, 50),
+        new UpgradeDefinition("coal_vein_2", UpgradeCategory.Obtainability, 125, "coal_vein_1"),
+        new UpgradeDefinition("coal_vein_3", UpgradeCategory.Obtainability, 250, "coal_vein_2"),
+        new UpgradeDefinition("coal_vein_4", UpgradeCategory.Obtainability, 425, "coal_vein_3"),
+        new UpgradeDefinition("coal_vein_5", UpgradeCategory.Obtainability, 650, "coal_vein_4"),
 
         // Forager's Eye — % chance per overnight forage spawn to be doubled.
-        new UpgradeDefinition("foragers_eye_1", UpgradeCategory.Obtainability, "Forager's Eye I",
-            "Each overnight forage spawn has a 5% chance to be doubled.", 50),
-        new UpgradeDefinition("foragers_eye_2", UpgradeCategory.Obtainability, "Forager's Eye II",
-            "Each overnight forage spawn has a 10% chance to be doubled.", 125, "foragers_eye_1"),
-        new UpgradeDefinition("foragers_eye_3", UpgradeCategory.Obtainability, "Forager's Eye III",
-            "Each overnight forage spawn has a 15% chance to be doubled.", 250, "foragers_eye_2"),
-        new UpgradeDefinition("foragers_eye_4", UpgradeCategory.Obtainability, "Forager's Eye IV",
-            "Each overnight forage spawn has a 20% chance to be doubled.", 425, "foragers_eye_3"),
-        new UpgradeDefinition("foragers_eye_5", UpgradeCategory.Obtainability, "Forager's Eye V",
-            "Each overnight forage spawn has a 25% chance to be doubled.", 650, "foragers_eye_4"),
+        new UpgradeDefinition("foragers_eye_1", UpgradeCategory.Obtainability, 50),
+        new UpgradeDefinition("foragers_eye_2", UpgradeCategory.Obtainability, 125, "foragers_eye_1"),
+        new UpgradeDefinition("foragers_eye_3", UpgradeCategory.Obtainability, 250, "foragers_eye_2"),
+        new UpgradeDefinition("foragers_eye_4", UpgradeCategory.Obtainability, 425, "foragers_eye_3"),
+        new UpgradeDefinition("foragers_eye_5", UpgradeCategory.Obtainability, 650, "foragers_eye_4"),
 
         // Quick Bite — % faster fish bite per tier. Stacks multiplicatively with the Fishing
         // theme bonus (0.70x): Quick Bite V on Fishing week = 0.70 × 0.75 = ~47.5% sooner total.
-        new UpgradeDefinition("quick_bite_1", UpgradeCategory.Obtainability, "Quick Bite I",
-            "Fish bite 5% sooner.", 50),
-        new UpgradeDefinition("quick_bite_2", UpgradeCategory.Obtainability, "Quick Bite II",
-            "Fish bite 10% sooner.", 125, "quick_bite_1"),
-        new UpgradeDefinition("quick_bite_3", UpgradeCategory.Obtainability, "Quick Bite III",
-            "Fish bite 15% sooner.", 250, "quick_bite_2"),
-        new UpgradeDefinition("quick_bite_4", UpgradeCategory.Obtainability, "Quick Bite IV",
-            "Fish bite 20% sooner.", 425, "quick_bite_3"),
-        new UpgradeDefinition("quick_bite_5", UpgradeCategory.Obtainability, "Quick Bite V",
-            "Fish bite 25% sooner.", 650, "quick_bite_4"),
+        new UpgradeDefinition("quick_bite_1", UpgradeCategory.Obtainability, 50),
+        new UpgradeDefinition("quick_bite_2", UpgradeCategory.Obtainability, 125, "quick_bite_1"),
+        new UpgradeDefinition("quick_bite_3", UpgradeCategory.Obtainability, 250, "quick_bite_2"),
+        new UpgradeDefinition("quick_bite_4", UpgradeCategory.Obtainability, 425, "quick_bite_3"),
+        new UpgradeDefinition("quick_bite_5", UpgradeCategory.Obtainability, 650, "quick_bite_4"),
 
         // Foresight — Weather Sage chain (6 tiers; tier N reveals the next N days, max 6 —
         // today is excluded since its weather is already locked in).
-        new UpgradeDefinition("weather_sage_1", UpgradeCategory.Foresight, "Weather Sage I",
-            "Reveal the next day's weather.", 150),
-        new UpgradeDefinition("weather_sage_2", UpgradeCategory.Foresight, "Weather Sage II",
-            "Reveal the next 2 days' weather.", 275, "weather_sage_1"),
-        new UpgradeDefinition("weather_sage_3", UpgradeCategory.Foresight, "Weather Sage III",
-            "Reveal the next 3 days' weather.", 375, "weather_sage_2"),
-        new UpgradeDefinition("weather_sage_4", UpgradeCategory.Foresight, "Weather Sage IV",
-            "Reveal the next 4 days' weather.", 525, "weather_sage_3"),
-        new UpgradeDefinition("weather_sage_5", UpgradeCategory.Foresight, "Weather Sage V",
-            "Reveal the next 5 days' weather.", 725, "weather_sage_4"),
-        new UpgradeDefinition("weather_sage_6", UpgradeCategory.Foresight, "Weather Sage VI",
-            "Reveal the full next 6 days' weather.", 950, "weather_sage_5"),
+        new UpgradeDefinition("weather_sage_1", UpgradeCategory.Foresight, 150),
+        new UpgradeDefinition("weather_sage_2", UpgradeCategory.Foresight, 275, "weather_sage_1"),
+        new UpgradeDefinition("weather_sage_3", UpgradeCategory.Foresight, 375, "weather_sage_2"),
+        new UpgradeDefinition("weather_sage_4", UpgradeCategory.Foresight, 525, "weather_sage_3"),
+        new UpgradeDefinition("weather_sage_5", UpgradeCategory.Foresight, 725, "weather_sage_4"),
+        new UpgradeDefinition("weather_sage_6", UpgradeCategory.Foresight, 950, "weather_sage_5"),
 
         // Foresight — Cart Whisperer (5 tiers). On a cart day the shrine flags which of the
         // Traveling Cart's real stock can feed any CC bundle. Tier N previews 2*N cart slots
@@ -238,87 +184,59 @@ public static class UpgradeCatalog
         // cw_N (reveals 2N) requires cart_slot_(2N). Five tiers span the full 10-item cart (cw5 = all
         // 10). The slot gate is a MetaRequirement so the whisper chain (cw1->...->cw5 via
         // PrerequisiteId) stays linear for the shop-leaf UI.
-        new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, "Cart Whisperer I",
-            "On the shrine, flags which Traveling Cart items can feed a Community Center bundle (previews 2 slots).", 350,
+        new UpgradeDefinition("cart_whisper_1", UpgradeCategory.Foresight, 350,
             metaRequirement: "upgrade:cart_slot_2"),
-        new UpgradeDefinition("cart_whisper_2", UpgradeCategory.Foresight, "Cart Whisperer II",
-            "Previews bundle-feeding Traveling Cart items across 4 slots.", 600, "cart_whisper_1",
+        new UpgradeDefinition("cart_whisper_2", UpgradeCategory.Foresight, 600, "cart_whisper_1",
             metaRequirement: "upgrade:cart_slot_4"),
-        new UpgradeDefinition("cart_whisper_3", UpgradeCategory.Foresight, "Cart Whisperer III",
-            "Previews bundle-feeding Traveling Cart items across 6 slots.", 900, "cart_whisper_2",
+        new UpgradeDefinition("cart_whisper_3", UpgradeCategory.Foresight, 900, "cart_whisper_2",
             metaRequirement: "upgrade:cart_slot_6"),
-        new UpgradeDefinition("cart_whisper_4", UpgradeCategory.Foresight, "Cart Whisperer IV",
-            "Previews bundle-feeding Traveling Cart items across 8 slots.", 1200, "cart_whisper_3",
+        new UpgradeDefinition("cart_whisper_4", UpgradeCategory.Foresight, 1200, "cart_whisper_3",
             metaRequirement: "upgrade:cart_slot_8"),
-        new UpgradeDefinition("cart_whisper_5", UpgradeCategory.Foresight, "Cart Whisperer V",
-            "Previews bundle-feeding Traveling Cart items across the cart's full 10-slot stock.", 1500, "cart_whisper_4",
+        new UpgradeDefinition("cart_whisper_5", UpgradeCategory.Foresight, 1500, "cart_whisper_4",
             metaRequirement: "upgrade:cart_slot_10"),
 
         // Foresight — Cart Stall upgrades. Each tier unlocks one additional visible item slot on
         // the Traveling Cart (base = 1; buying slot_2 gives 2 items per visit, etc.).
-        new UpgradeDefinition("cart_slot_2", UpgradeCategory.Foresight, "Cart Stall II",
-            "The Traveling Cart offers 2 items per visit.", 40),
-        new UpgradeDefinition("cart_slot_3", UpgradeCategory.Foresight, "Cart Stall III",
-            "The Traveling Cart offers 3 items per visit.", 80, "cart_slot_2"),
-        new UpgradeDefinition("cart_slot_4", UpgradeCategory.Foresight, "Cart Stall IV",
-            "The Traveling Cart offers 4 items per visit.", 140, "cart_slot_3"),
-        new UpgradeDefinition("cart_slot_5", UpgradeCategory.Foresight, "Cart Stall V",
-            "The Traveling Cart offers 5 items per visit.", 220, "cart_slot_4"),
-        new UpgradeDefinition("cart_slot_6", UpgradeCategory.Foresight, "Cart Stall VI",
-            "The Traveling Cart offers 6 items per visit.", 320, "cart_slot_5"),
-        new UpgradeDefinition("cart_slot_7", UpgradeCategory.Foresight, "Cart Stall VII",
-            "The Traveling Cart offers 7 items per visit.", 450, "cart_slot_6"),
-        new UpgradeDefinition("cart_slot_8", UpgradeCategory.Foresight, "Cart Stall VIII",
-            "The Traveling Cart offers 8 items per visit.", 620, "cart_slot_7"),
-        new UpgradeDefinition("cart_slot_9", UpgradeCategory.Foresight, "Cart Stall IX",
-            "The Traveling Cart offers 9 items per visit.", 850, "cart_slot_8"),
-        new UpgradeDefinition("cart_slot_10", UpgradeCategory.Foresight, "Cart Stall X",
-            "The Traveling Cart offers its full stock (10 items) per visit.", 1200, "cart_slot_9"),
+        new UpgradeDefinition("cart_slot_2", UpgradeCategory.Foresight, 40),
+        new UpgradeDefinition("cart_slot_3", UpgradeCategory.Foresight, 80, "cart_slot_2"),
+        new UpgradeDefinition("cart_slot_4", UpgradeCategory.Foresight, 140, "cart_slot_3"),
+        new UpgradeDefinition("cart_slot_5", UpgradeCategory.Foresight, 220, "cart_slot_4"),
+        new UpgradeDefinition("cart_slot_6", UpgradeCategory.Foresight, 320, "cart_slot_5"),
+        new UpgradeDefinition("cart_slot_7", UpgradeCategory.Foresight, 450, "cart_slot_6"),
+        new UpgradeDefinition("cart_slot_8", UpgradeCategory.Foresight, 620, "cart_slot_7"),
+        new UpgradeDefinition("cart_slot_9", UpgradeCategory.Foresight, 850, "cart_slot_8"),
+        new UpgradeDefinition("cart_slot_10", UpgradeCategory.Foresight, 1200, "cart_slot_9"),
 
         // Stash
-        new UpgradeDefinition("stash_1", UpgradeCategory.Stash, "Junimo Stash I",
-            "Expand the Junimo Stash from 4 to 8 slots.", 300),
-        new UpgradeDefinition("stash_2", UpgradeCategory.Stash, "Junimo Stash II",
-            "Expand the Junimo Stash from 8 to 12 slots.", 675, "stash_1"),
-        new UpgradeDefinition("stash_3", UpgradeCategory.Stash, "Junimo Stash III",
-            "Expand the Junimo Stash from 12 to 16 slots.", 1200, "stash_2"),
+        new UpgradeDefinition("stash_1", UpgradeCategory.Stash, 300),
+        new UpgradeDefinition("stash_2", UpgradeCategory.Stash, 675, "stash_1"),
+        new UpgradeDefinition("stash_3", UpgradeCategory.Stash, 1200, "stash_2"),
 
         // Buildings — Keep [X] chain. Effects (actually pre-build the structure on run start)
         // are deferred to a later plan; here we only record the entitlement.
         // Coop chain: ~5 runs to bank Keep Coop, more to upgrade.
-        new UpgradeDefinition("keep_coop", UpgradeCategory.Buildings, "Keep Coop",
-            "Start each loop with a Coop already built.", 600,
+        new UpgradeDefinition("keep_coop", UpgradeCategory.Buildings, 600,
             metaRequirement: null, runReachRequirement: "building:Coop"),
-        new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, "Keep Big Coop",
-            "Start each loop with a Big Coop.", 1200, "keep_coop",
+        new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, 1200, "keep_coop",
             metaRequirement: null, runReachRequirement: "building:Big Coop"),
-        new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, "Keep Deluxe Coop",
-            "Start each loop with a Deluxe Coop.", 2000, "keep_big_coop",
+        new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, 2000, "keep_big_coop",
             metaRequirement: null, runReachRequirement: "building:Deluxe Coop"),
-        new UpgradeDefinition("keep_barn", UpgradeCategory.Buildings, "Keep Barn",
-            "Start each loop with a Barn already built.", 600,
+        new UpgradeDefinition("keep_barn", UpgradeCategory.Buildings, 600,
             metaRequirement: null, runReachRequirement: "building:Barn"),
-        new UpgradeDefinition("keep_big_barn", UpgradeCategory.Buildings, "Keep Big Barn",
-            "Start each loop with a Big Barn.", 1200, "keep_barn",
+        new UpgradeDefinition("keep_big_barn", UpgradeCategory.Buildings, 1200, "keep_barn",
             metaRequirement: null, runReachRequirement: "building:Big Barn"),
-        new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, "Keep Deluxe Barn",
-            "Start each loop with a Deluxe Barn.", 2000, "keep_big_barn",
+        new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, 2000, "keep_big_barn",
             metaRequirement: null, runReachRequirement: "building:Deluxe Barn"),
         // Silo — requested twice (khauser13 2026-06-11 + Dusklight7 2026-07-05): cheap in vanilla,
         // but its absence from the keep-building options read as an oversight. Priced well below
         // the Coop/Barn keeps to match its vanilla cost (100g + stones vs. thousands).
-        new UpgradeDefinition("keep_silo", UpgradeCategory.Buildings, "Keep Silo",
-            "Start each loop with a Silo already built.", 150,
+        new UpgradeDefinition("keep_silo", UpgradeCategory.Buildings, 150,
             metaRequirement: null, runReachRequirement: "building:Silo"),
-        new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, "Keep Kitchen",
-            "Start each loop with the Kitchen house upgrade (cooking accessible day 1).", 800,
+        new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, 800,
             metaRequirement: null, runReachRequirement: "house:1"),
-        new UpgradeDefinition("keep_basement", UpgradeCategory.Buildings, "Keep Basement",
-            "Start each loop with the full L3 farmhouse (kitchen, kids' room, cellar with 33 cask slots) " +
-            "and the Cask recipe.", 1800, "keep_kitchen",
+        new UpgradeDefinition("keep_basement", UpgradeCategory.Buildings, 1800, "keep_kitchen",
             metaRequirement: null, runReachRequirement: "house:3"),
-        new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, "Keep Map Shortcuts",
-            "Start each loop with all of Robin's map shortcuts pre-cleared.", 900,
+        new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, 900,
             metaRequirement: null, runReachRequirement: "shortcuts:1"),
 
         // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
@@ -326,41 +244,29 @@ public static class UpgradeCatalog
         // pets don't produce anything you'd ship or donate, so the cost reflects "mostly
         // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
         // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
-        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, "Keep Pet",
-            "Your pet returns at the start of every loop with its name and friendship hearts intact.", 75,
+        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 75,
             metaRequirement: null, runReachRequirement: "pet:1"),
 
         // Vault — pre-pay all four bus bundles once and keep them paid across resets.
         // Without this upgrade the player has to pay the season's Vault bundle every run by day 28
         // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).
-        new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, "Keep Bus Unlocked",
-            "Start each loop with all four Vault bundles already paid — the bus is restored from day 1.",
-            1500, metaRequirement: null, runReachRequirement: "bus:4"),
+        new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, 1500,
+            metaRequirement: null, runReachRequirement: "bus:4"),
 
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
         // Coop birds:
-        new UpgradeDefinition("start_chicken", UpgradeCategory.Buildings, "Start with Chicken",
-            "Start each loop with a Chicken in your Coop.", 400, "keep_coop", "species:Chicken"),
-        new UpgradeDefinition("start_void_chicken", UpgradeCategory.Buildings, "Start with Void Chicken",
-            "Start each loop with a Void Chicken (any Coop tier).", 600, "keep_coop", "species:VoidChicken"),
-        new UpgradeDefinition("start_duck", UpgradeCategory.Buildings, "Start with Duck",
-            "Start each loop with a Duck (Big Coop or better).", 500, "keep_big_coop", "species:Duck"),
-        new UpgradeDefinition("start_dinosaur", UpgradeCategory.Buildings, "Start with Dinosaur",
-            "Start each loop with a Dinosaur (Big Coop or better).", 900, "keep_big_coop", "species:Dinosaur"),
-        new UpgradeDefinition("start_rabbit", UpgradeCategory.Buildings, "Start with Rabbit",
-            "Start each loop with a Rabbit (Deluxe Coop).", 700, "keep_deluxe_coop", "species:Rabbit"),
-        new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, "Start with Ostrich",
-            "Start each loop with an Ostrich (Deluxe Coop).", 1500, "keep_deluxe_coop", "species:Ostrich"),
+        new UpgradeDefinition("start_chicken", UpgradeCategory.Buildings, 400, "keep_coop", "species:Chicken"),
+        new UpgradeDefinition("start_void_chicken", UpgradeCategory.Buildings, 600, "keep_coop", "species:VoidChicken"),
+        new UpgradeDefinition("start_duck", UpgradeCategory.Buildings, 500, "keep_big_coop", "species:Duck"),
+        new UpgradeDefinition("start_dinosaur", UpgradeCategory.Buildings, 900, "keep_big_coop", "species:Dinosaur"),
+        new UpgradeDefinition("start_rabbit", UpgradeCategory.Buildings, 700, "keep_deluxe_coop", "species:Rabbit"),
+        new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, 1500, "keep_deluxe_coop", "species:Ostrich"),
         // Barn animals:
-        new UpgradeDefinition("start_cow", UpgradeCategory.Buildings, "Start with Cow",
-            "Start each loop with a Cow in your Barn.", 400, "keep_barn", "species:Cow"),
-        new UpgradeDefinition("start_goat", UpgradeCategory.Buildings, "Start with Goat",
-            "Start each loop with a Goat (Big Barn or better).", 500, "keep_big_barn", "species:Goat"),
-        new UpgradeDefinition("start_sheep", UpgradeCategory.Buildings, "Start with Sheep",
-            "Start each loop with a Sheep (Deluxe Barn).", 600, "keep_deluxe_barn", "species:Sheep"),
-        new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, "Start with Pig",
-            "Start each loop with a Pig (Deluxe Barn).", 700, "keep_deluxe_barn", "species:Pig"),
+        new UpgradeDefinition("start_cow", UpgradeCategory.Buildings, 400, "keep_barn", "species:Cow"),
+        new UpgradeDefinition("start_goat", UpgradeCategory.Buildings, 500, "keep_big_barn", "species:Goat"),
+        new UpgradeDefinition("start_sheep", UpgradeCategory.Buildings, 600, "keep_deluxe_barn", "species:Sheep"),
+        new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, 700, "keep_deluxe_barn", "species:Pig"),
         };
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());

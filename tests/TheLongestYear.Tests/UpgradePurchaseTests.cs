@@ -6,7 +6,7 @@ namespace TheLongestYear.Tests;
 public class UpgradePurchaseTests
 {
     private static UpgradeDefinition Def(string id, long cost = 100, string? prereq = null, string? meta = null)
-        => new UpgradeDefinition(id, UpgradeCategory.Loadout, id + "-name", "desc", cost, prereq, meta);
+        => new UpgradeDefinition(id, UpgradeCategory.Loadout, cost, prereq, meta);
 
     [Fact]
     public void Success_deducts_cost_and_records_ownership()
