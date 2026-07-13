@@ -48,18 +48,30 @@ jobs:
           echo "path=$ZIP" >> $GITHUB_OUTPUT
           echo "Found: $ZIP"
 
+      # upload-action@main's 2026-07 schema wants the file_id of the EXISTING main
+      # file to attach the new version to (file_group_id/file_category/
+      # archive_existing_file are gone). The current file's id changes as versions
+      # are uploaded, so resolve the newest one live instead of hardcoding it.
+      - name: Resolve current Nexus file id
+        id: nexusfile
+        run: |
+          FILE_ID=$(curl -s -X POST https://api.nexusmods.com/v2/graphql \
+            -H "Content-Type: application/json" \
+            -d '{"query":"{ modFiles(modId: 47192, gameId: 1303) { fileId } }"}' \
+            | jq '[.data.modFiles[].fileId] | max')
+          echo "Resolved file_id=$FILE_ID"
+          test -n "$FILE_ID" && test "$FILE_ID" != "null"
+          echo "file_id=$FILE_ID" >> $GITHUB_OUTPUT
+
       - name: Upload to Nexus Mods
         uses: Nexus-Mods/upload-action@main
         with:
           api_key: ${{ secrets.NEXUS_API_KEY }}
-          # Nexus file_group_id (NOT mod ID 47192). Discovered via the V2 GraphQL
-          # API: modFiles(modId: 47192, gameId: 1303).groupId. Stays stable across
-          # version updates because archive_existing_file replaces in place.
-          file_group_id: 7502657
+          file_id: ${{ steps.nexusfile.outputs.file_id }}
           filename: ${{ steps.zip.outputs.path }}
           # Clean display name; without this the action appends ".zip" to the raw
           # filename (e.g. "TheLongestYear.0.9.5.zip.zip").
           display_name: The Longest Year ${{ steps.release.outputs.version }}
           version: ${{ steps.release.outputs.version }}
-          file_category: main
-          archive_existing_file: true
+          category: main
+          archive_existing_version: true
