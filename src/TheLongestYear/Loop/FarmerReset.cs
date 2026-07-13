@@ -45,14 +45,15 @@ namespace TheLongestYear.Loop
             p.toolBeingUpgraded.Value = null;
             p.daysLeftForToolUpgrade.Value = 0;
 
-            // Worn equipment — hat/shirt/pants/boots/rings/trinkets live in their own slots, not
-            // p.Items, so the inventory wipe above misses them (2026-07-09 reset-leak audit,
-            // Dusklight7: worn rings + clothes survived every loop). Farmer.Equip(null, slot)
-            // routes through vanilla's unequip hook (onUnequip + equipment-buff recompute) so
-            // ring/boot effects actually drop with the item.
-            p.Equip<StardewValley.Objects.Hat>(null, p.hat);
-            p.Equip<StardewValley.Objects.Clothing>(null, p.shirtItem);
-            p.Equip<StardewValley.Objects.Clothing>(null, p.pantsItem);
+            // Worn equipment — the STAT-BEARING slots (boots/rings/trinkets) live in their own
+            // slots, not p.Items, so the inventory wipe above misses them (2026-07-09 reset-leak
+            // audit, Dusklight7: worn rings survived every loop). Farmer.Equip(null, slot) routes
+            // through vanilla's unequip hook (onUnequip + equipment-buff recompute) so ring/boot
+            // effects actually drop with the item.
+            // Hat/shirt/pants deliberately stay worn (user ruling 2026-07-13, revising the
+            // 2026-07-09 all-slots wipe): they carry no stats, and stripping them can never be
+            // undone "authentically" — the character-creation outfit is recorded nowhere, so a
+            // wipe just leaves the farmer in underwear with no way back to their look.
             p.Equip<StardewValley.Objects.Boots>(null, p.boots);
             p.Equip<StardewValley.Objects.Ring>(null, p.leftRing);
             p.Equip<StardewValley.Objects.Ring>(null, p.rightRing);
