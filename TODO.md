@@ -16,6 +16,12 @@ AC 7118491 / CartCatalog 7497950 (input renames: `file_category`→`category`,
 release** — watch that run; rollback = pre-migration pin `ee1af4be` + old input names
 (guaranteed until 2026-09-09). Delete `nexus-v3-probe.yml` once a release passes.
 
+### 📄 Nexus description sync owed — README gained a Translations section (2026-07-13)
+`README.md` gained a "Translations" section (i18n extraction complete, links `docs/TRANSLATING.md`).
+Per the README ≡ Nexus description house rule, `docs/nexus-description.bbcode` needs the matching
+BBCode section added and the live Nexus page updated — ride this into the next description update
+(manual paste step, same as every other description sync); do NOT push it standalone.
+
 ### 📄 Mod page: Advanced Options screenshot STILL OWED (khauser13)
 The 0.11.44 release synced the description but the promised screenshot of the new-game
 Advanced Options panel (remixed-bundles recommendation) is still missing from the Nexus
@@ -152,6 +158,12 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   extraction to `i18n/` JSON so translations stop requiring DLL edits — Fluxwb's copy is frozen
   at 0.11.0 for exactly this reason, and the user's public offer implies it). Large pass; do NOT
   start unprompted.
+  **✅ DONE 2026-07-13 — i18n string extraction complete (pre-0.12 queue item 4).** Every
+  player-visible string now lives in `src/TheLongestYear/i18n/default.json`; guard tests cover
+  literal-key scanning, catalog resolution, and orphan/token checks (v0.11.55-58). Translator
+  docs added at `docs/TRANSLATING.md`; README gained a matching "Translations" section. Fluxwb
+  (and any future translator) can now ship a `<locale>.json` with no DLL edits. In-game
+  verification pass (Advanced Options screenshot aside) still pending per the task-14 brief.
 - **📱 Android: can't buy from the Junimo shrine.** *Stardewlover87 (09 Jun)*. Android port is
   deferred; capture for the port task. (Likely the same Android ShopMenu/ISalable landmine class
   documented in AC memory.)

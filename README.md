@@ -103,6 +103,13 @@ The mod leans on vanilla sprites throughout. If anyone would enjoy making some c
 
 *Banner art by **cwybabiesucks** — thank you!*
 
+## Translations
+
+As of this version, every player-visible string in the mod lives in a JSON file
+(`i18n/default.json`) — the mod is fully translatable with no DLL edits or rebuilds. See
+[`docs/TRANSLATING.md`](docs/TRANSLATING.md) for how to add a language. If you translate it,
+let us know (Nexus DM or GitHub issue) and we'll link your work from the mod page.
+
 ---
 
 ## Also by this author
