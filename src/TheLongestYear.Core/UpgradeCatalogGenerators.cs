@@ -40,6 +40,9 @@ internal static class UpgradeCatalogGenerators
     };
 
     /// <summary>Yield all Loadout keep-tier entries (16 tools + 2 fishing rod = 18 rows).</summary>
+    // Interim shim usage — the (displayName, description) constructor is [Obsolete] pending
+    // Task 4's conversion of these generators to template keys+tokens. See UpgradeDefinition.cs.
+#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> LoadoutToolKeeps()
     {
         foreach (var (slug, displayName) in ToolKinds)
@@ -60,6 +63,7 @@ internal static class UpgradeCatalogGenerators
                 "Start each loop with your Fishing Rod at this tier.",
                 cost, prereq, metaRequirement: null, runReachRequirement: reach);
     }
+#pragma warning restore 618
 
     // Skill level keep costs, indexed [1..10]. Levels 5 and 10 jump because they
     // also re-trigger the profession picker (Phase A persistence design §B), so the
@@ -83,6 +87,7 @@ internal static class UpgradeCatalogGenerators
     };
 
     /// <summary>Yield all 50 Carryover keep-skill-level entries.</summary>
+#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> CarryoverSkillLevelKeeps()
     {
         foreach (var (slug, displayName) in SkillKinds)
@@ -101,8 +106,10 @@ internal static class UpgradeCatalogGenerators
                     metaRequirement: null, runReachRequirement: $"skill:{slug}:{level}");
             }
     }
+#pragma warning restore 618
 
     /// <summary>Yield all 12 Carryover keep-mine-elevator-floor entries (10–120 step 10).</summary>
+#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> CarryoverMineElevatorKeeps()
     {
         for (int floor = 10; floor <= 120; floor += 10)
@@ -121,6 +128,7 @@ internal static class UpgradeCatalogGenerators
                 cost, prereq, metaRequirement: null, runReachRequirement: $"mine:{floor}");
         }
     }
+#pragma warning restore 618
 
     // Mastery keep costs, indexed [1..5]. End-game progression (post all-skills-10), so a
     // steep ramp. Owning a tier is a PERMANENT floor (not in-run-peak capped like skill
@@ -128,6 +136,7 @@ internal static class UpgradeCatalogGenerators
     private static readonly long[] MasteryCosts = { 0, 1000, 1500, 2000, 2750, 3500 };
 
     /// <summary>Yield the 5 Carryover Keep-Mastery tiers.</summary>
+#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> CarryoverMasteryKeeps()
     {
         for (int level = 1; level <= 5; level++)
@@ -140,4 +149,5 @@ internal static class UpgradeCatalogGenerators
                 MasteryCosts[level], prereq, metaRequirement: null, runReachRequirement: $"mastery:{level}");
         }
     }
+#pragma warning restore 618
 }

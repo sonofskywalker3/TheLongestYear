@@ -4,6 +4,7 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
+[Collection("i18n")]
 public class UpgradeCatalogTests
 {
     [Fact]
