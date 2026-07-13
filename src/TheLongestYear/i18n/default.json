@@ -1,0 +1,12 @@
+{
+    // ============================================================================
+    // The Longest Year — English source of truth.
+    // TRANSLATORS: copy this file to <locale>.json (e.g. zh.json), translate the
+    // VALUES only. Preserve exactly: {{token}} placeholders, @ (player name),
+    // #$b# (page break), $h/$s/$a (portrait poses). Keys missing from your file
+    // fall back to English per-key. See docs/TRANSLATING.md.
+    // ============================================================================
+
+    // -- hud --------------------------------------------------------------------
+    "hud.festival-over": "The festival is over."
+}

@@ -60,6 +60,11 @@ namespace TheLongestYear
 
         public override void Entry(IModHelper helper)
         {
+            TheLongestYear.Core.Strings.Init((key, tokens) =>
+                tokens == null
+                    ? this.Helper.Translation.Get(key).ToString()
+                    : this.Helper.Translation.Get(key, tokens).ToString());
+
             _config = helper.ReadConfig<GameplayConfig>();
 
             // One-shot config migration.

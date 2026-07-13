@@ -23,4 +23,9 @@
     <Content Include="assets\**\*.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- i18n localization files. -->
+  <ItemGroup>
+    <Content Include="i18n\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
