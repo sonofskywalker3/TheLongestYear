@@ -6,16 +6,15 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### ⏰ DEADLINE 2026-09-09 — migrate publish-nexus.yml off the deprecated update-group flow
-Nexus's `upload-action@main` (2026-06-17 migration) requires a v3 `file_id`, but legacy
-files 404 on `POST /v3/mod-files/{id}/versions` (hit live releasing 0.11.44 — legacy
-fileId 170754 was "Mod file not found"). All three mods (TLY / AC / CartCatalog) are now
-PINNED to pre-migration commit `ee1af4be` whose update-group flow is deprecated but
-guaranteed until **2026-09-09**. Before then: figure out how a legacy mod obtains a v3
-mod-file identity (possibly `POST /v3/mod-files` from a finalised upload creates one, or
-Nexus migrates ids server-side — re-test `GET /v3/mods/{global id}/files` with the API
-key) and update all three workflows. v3 endpoints need the API key (GH secret) — probe
-from a workflow step, not locally.
+### ⏰ Nexus upload v3 migration — MIGRATED 2026-07-13, VERIFY on next release
+The read-only `nexus-v3-probe.yml` workflow (run 29268259621) solved the mystery: **the v3
+mod-file id IS the old `file_group_id`** (Nexus migrated update groups into v3 mod files;
+the legacy per-version fileId 170754/174860 was never it — hence the 0.11.44 404). All
+three workflows now use post-migration pin `f6e1e2ea` with `file_id` = TLY 7502657 /
+AC 7118491 / CartCatalog 7497950 (input renames: `file_category`→`category`,
+`archive_existing_file`→`archive_existing_version`). **Unexercised until the next actual
+release** — watch that run; rollback = pre-migration pin `ee1af4be` + old input names
+(guaranteed until 2026-09-09). Delete `nexus-v3-probe.yml` once a release passes.
 
 ### 📄 Mod page: Advanced Options screenshot STILL OWED (khauser13)
 The 0.11.44 release synced the description but the promised screenshot of the new-game
