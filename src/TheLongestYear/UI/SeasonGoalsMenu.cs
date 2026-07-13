@@ -318,8 +318,8 @@ namespace TheLongestYear.UI
                 if (e.IsVault)
                 {
                     _hoverText = e.IsMet
-                        ? "Bus repair paid for this season."
-                        : "Pay any Vault bundle at the Community Center to repair the bus.";
+                        ? Strings.Get("menu.goals.vault-hover-met")
+                        : Strings.Get("menu.goals.vault-hover-unmet");
                     return;
                 }
 
@@ -337,8 +337,16 @@ namespace TheLongestYear.UI
                         int stack = e.Bundle.IngredientStacks.TryGetValue(itemId, out int s) ? s : 1;
                         int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
                         Item probe = ResolveItem(itemId, stack, quality);
-                        string qty = stack > 1 ? $" x{stack}" : "";
-                        string qStr = quality switch { 1 => " (silver)", 2 => " (gold)", 4 => " (iridium)", _ => "" };
+                        string qty = stack > 1
+                            ? Strings.Get("menu.goals.qty-suffix", new Dictionary<string, string> { ["count"] = stack.ToString() })
+                            : "";
+                        string qStr = quality switch
+                        {
+                            1 => Strings.Get("menu.goals.quality-silver"),
+                            2 => Strings.Get("menu.goals.quality-gold"),
+                            4 => Strings.Get("menu.goals.quality-iridium"),
+                            _ => "",
+                        };
                         _hoverText = (probe?.DisplayName ?? itemId) + qty + qStr;
                         return;
                     }
@@ -395,7 +403,11 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             // Title bar.
-            string title = $"Season Goals — {_season} (day {_run.DayOfMonth})";
+            string title = Strings.Get("menu.goals.title", new Dictionary<string, string>
+            {
+                ["season"] = SeasonName(_season),
+                ["day"] = _run.DayOfMonth.ToString(),
+            });
             SpriteText.drawStringHorizontallyCenteredAt(b, title,
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
@@ -424,7 +436,13 @@ namespace TheLongestYear.UI
                 slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, tint, 1f, false);
 
             // Top line: "BundleName  (Theme)   N/X" (vault row reuses the same shape via Title/ThemeTag).
-            string headline = $"{e.Title}  ({e.ThemeTag})   {e.Have}/{e.Need}";
+            string headline = Strings.Get("menu.goals.row-headline", new Dictionary<string, string>
+            {
+                ["title"] = e.Title,
+                ["theme"] = e.ThemeTag,
+                ["have"] = e.Have.ToString(),
+                ["need"] = e.Need.ToString(),
+            });
             Color headColor = satisfiedThisSeason ? Color.DarkGreen : Game1.textColor;
             Utility.drawTextWithShadow(b, headline, Game1.smallFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), headColor);
@@ -495,7 +513,8 @@ namespace TheLongestYear.UI
             // "+N more" overflow indicator if the row can't hold all missing icons.
             if (e.MissingItems.Count > drawCount)
             {
-                string more = $"+{e.MissingItems.Count - drawCount} more";
+                string more = Strings.Get("menu.goals.more", new Dictionary<string, string>
+                    { ["count"] = (e.MissingItems.Count - drawCount).ToString() });
                 Utility.drawTextWithShadow(b, more, Game1.smallFont,
                     new Vector2(iconRowX + drawCount * (IngredientIconSize + IngredientIconGap),
                                 iconRowY + 20),
@@ -508,10 +527,24 @@ namespace TheLongestYear.UI
         /// since Winter day-28 IS the run-end checkpoint (no next-season day 1 to point at).</summary>
         private string BadgeFor(BundleEntry e)
         {
-            if (e.MissingThisSeasonCount == 0) return "checkpoint met";
-            if (_season == CoreSeason.Winter) return $"needs {e.MissingThisSeasonCount} by run end";
-            return $"needs {e.MissingThisSeasonCount} before {(CoreSeason)((int)_season + 1)} 1";
+            if (e.MissingThisSeasonCount == 0) return Strings.Get("menu.goals.badge-met");
+            if (_season == CoreSeason.Winter)
+                return Strings.Get("menu.goals.badge-needs-end",
+                    new Dictionary<string, string> { ["count"] = e.MissingThisSeasonCount.ToString() });
+            return Strings.Get("menu.goals.badge-needs-before", new Dictionary<string, string>
+            {
+                ["count"] = e.MissingThisSeasonCount.ToString(),
+                ["season"] = SeasonName((CoreSeason)((int)_season + 1)),
+            });
         }
+
+        /// <summary>Vanilla's own localized season name (SDV 1.6 <c>Utility.getSeasonNameFromNumber</c>),
+        /// used for the <c>{{season}}</c> token in the <c>menu.goals.title</c> /
+        /// <c>menu.goals.badge-needs-before</c> i18n keys so translated builds get the game's
+        /// own "Spring"/"Summer"/"Fall"/"Winter" instead of our own (unmaintained) season key.
+        /// English output is byte-identical to the prior <c>(CoreSeason)n</c> enum-name rendering.</summary>
+        private static string SeasonName(CoreSeason season)
+            => StardewValley.Utility.getSeasonNameFromNumber((int)season);
 
         private static Item ResolveItem(string id, int stack = 1, int quality = 0)
         {
@@ -551,8 +584,8 @@ namespace TheLongestYear.UI
             {
                 Bundle = null;
                 IsVault = true;
-                Title = "Bus Repair";
-                ThemeTag = "Vault";
+                Title = Strings.Get("menu.goals.bus-repair");
+                ThemeTag = Strings.Get("menu.goals.vault");
                 Have = Math.Min(paid, need);            // cap so a fully-prepaid run reads "N/N", not "4/1"
                 Need = need;
                 MissingThisSeasonCount = missing;

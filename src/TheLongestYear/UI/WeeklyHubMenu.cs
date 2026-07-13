@@ -460,7 +460,11 @@ namespace TheLongestYear.UI
                 {
                     if (bounds.Contains(x, y))
                     {
-                        _hoverText = $"Day {day.DayOfMonth} - {WeatherIcons.Label(day.Weather)}";
+                        _hoverText = Strings.Get("menu.hub.day-label", new Dictionary<string, string>
+                        {
+                            ["day"] = day.DayOfMonth.ToString(),
+                            ["weather"] = WeatherIcons.Label(day.Weather),
+                        });
                         return;
                     }
                 }
@@ -475,8 +479,14 @@ namespace TheLongestYear.UI
                 {
                     // Show quantity in the hover so the player sees "Wood x99 (1.5x)" not just "Wood (1.5x)".
                     int hoverStack = items[i].Stack;
-                    string qty = hoverStack > 1 ? $" x{hoverStack}" : "";
-                    _hoverText = $"{items[i].DisplayName}{qty} (1.5x)";
+                    string qty = hoverStack > 1
+                        ? Strings.Get("menu.hub.qty-suffix", new Dictionary<string, string> { ["count"] = hoverStack.ToString() })
+                        : "";
+                    _hoverText = Strings.Get("menu.hub.bonus-hover", new Dictionary<string, string>
+                    {
+                        ["name"] = items[i].DisplayName,
+                        ["qty"] = qty,
+                    });
                     return;
                 }
             }
@@ -567,10 +577,10 @@ namespace TheLongestYear.UI
                 drawY += JunimoSpriteSize + 12;
             }
 
-            SpriteText.drawStringHorizontallyCenteredAt(b, "Pick a theme", panelCenterX, drawY);
+            SpriteText.drawStringHorizontallyCenteredAt(b, Strings.Get("menu.hub.pick-theme"), panelCenterX, drawY);
 
             drawY += 48;
-            const string bankingTip = "Banking items for a matching theme week pays 1.5x JP.";
+            string bankingTip = Strings.Get("menu.hub.banking-tip");
             Vector2 tipSize = Game1.smallFont.MeasureString(bankingTip);
             Utility.drawTextWithShadow(b, bankingTip, Game1.smallFont,
                 new Vector2(panelCenterX - tipSize.X / 2f, drawY),
@@ -585,7 +595,7 @@ namespace TheLongestYear.UI
                 string label = (i < _cartItems.Count && _cartItems[i] != null)
                     ? _cartItems[i].DisplayName
                     : "?";
-                DrawPreviewRow(b, _cartRows[i], $"Cart: {label}");
+                DrawPreviewRow(b, _cartRows[i], Strings.Get("menu.hub.cart-label", new Dictionary<string, string> { ["label"] = label }));
             }
 
             DrawRerollButton(b);
@@ -610,7 +620,9 @@ namespace TheLongestYear.UI
                 _rerollButton.bounds.Width, _rerollButton.bounds.Height,
                 Color.White, 1f, false);
 
-            string label = _rerollCounter == 0 ? "Re-roll Themes" : $"Re-roll ({_rerollCounter})";
+            string label = _rerollCounter == 0
+                ? Strings.Get("menu.hub.reroll")
+                : Strings.Get("menu.hub.reroll-count", new Dictionary<string, string> { ["count"] = _rerollCounter.ToString() });
             Vector2 size = Game1.smallFont.MeasureString(label);
             float labelX = _rerollButton.bounds.X + (_rerollButton.bounds.Width - size.X) / 2f;
             float labelY = _rerollButton.bounds.Y + (_rerollButton.bounds.Height - size.Y) / 2f;
@@ -626,7 +638,7 @@ namespace TheLongestYear.UI
             if (_weatherSageSlots <= 0 || _weatherBlockY < 0 || _weatherForecast.Length == 0)
                 return;
 
-            Utility.drawTextWithShadow(b, "Weather", Game1.dialogueFont,
+            Utility.drawTextWithShadow(b, Strings.Get("menu.hub.weather-header"), Game1.dialogueFont,
                 new Vector2(_weatherBlockX, _weatherBlockY), Game1.textColor);
 
             int numY = _weatherBlockY + WeatherHeaderH;
@@ -677,7 +689,7 @@ namespace TheLongestYear.UI
 
             if (theme == null)
             {
-                Utility.drawTextWithShadow(b, "(no offer)", Game1.smallFont,
+                Utility.drawTextWithShadow(b, Strings.Get("menu.hub.no-offer"), Game1.smallFont,
                     new Vector2(card.bounds.X + 24, card.bounds.Y + 24), Game1.textColor);
                 return;
             }
@@ -716,7 +728,7 @@ namespace TheLongestYear.UI
 
             // Bonus header above the icon row (both share BonusBottomMargin so they move together).
             int bonusHeaderY = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize - BodyLineHeight - 4;
-            Utility.drawTextWithShadow(b, "Bonus this week (1.5x):", Game1.smallFont,
+            Utility.drawTextWithShadow(b, Strings.Get("menu.hub.bonus-week"), Game1.smallFont,
                 new Vector2(textX, bonusHeaderY), Game1.textColor);
 
             // Bonus item icons (pre-computed bounds).

@@ -26,6 +26,6 @@ namespace TheLongestYear.UI
 
         /// <summary>Human label for a forecast weather string ("GreenRain" → "Green Rain").</summary>
         internal static string Label(string weather)
-            => weather == WeatherScheduler.GreenRain ? "Green Rain" : weather;
+            => weather == WeatherScheduler.GreenRain ? Strings.Get("weather.green-rain") : weather;
     }
 }
