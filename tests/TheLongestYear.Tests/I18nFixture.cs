@@ -5,6 +5,8 @@ using System.Text.Json;
 using TheLongestYear.Core;
 using Xunit;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace TheLongestYear.Tests;
 
 /// <summary>Loads the REAL i18n/default.json into Strings so tests assert on real English
@@ -17,7 +19,15 @@ public sealed class I18nFixture
     public I18nFixture()
     {
         Map = Load();
-        var map = Map;
+        InstallGlobalProvider();
+    }
+
+    /// <summary>(Re-)installs the real-i18n provider into the <see cref="Strings"/> facade.
+    /// Callable independently of construction so other test classes that mutate the global
+    /// provider (e.g. via <c>Strings.Reset()</c>) can restore it afterward.</summary>
+    public static void InstallGlobalProvider()
+    {
+        var map = Load();
         Strings.Init((key, tokens) =>
         {
             if (!map.TryGetValue(key, out string? value))
