@@ -60,10 +60,14 @@ namespace TheLongestYear
 
         public override void Entry(IModHelper helper)
         {
+            // .Default(key) makes a missing translation echo the raw key exactly, matching the
+            // test provider's behavior (see I18nFixture) — SMAPI's own fallback is otherwise
+            // "(no translation:{key})", which breaks ThemeModifiers.DisplayNameFor's raw-id
+            // fallback check (it compares the resolved string against the key itself).
             TheLongestYear.Core.Strings.Init((key, tokens) =>
                 tokens == null
-                    ? this.Helper.Translation.Get(key).ToString()
-                    : this.Helper.Translation.Get(key, tokens).ToString());
+                    ? this.Helper.Translation.Get(key).Default(key).ToString()
+                    : this.Helper.Translation.Get(key, tokens).Default(key).ToString());
 
             _config = helper.ReadConfig<GameplayConfig>();
 
