@@ -16,54 +16,49 @@ internal static class UpgradeCatalogGenerators
     // tool's tier-up keep.
     private static readonly long[] ToolTierCosts = { 150, 300, 525, 875 };
 
-    private static readonly (string IdSlug, string DisplayName)[] ToolKinds =
-    {
-        ("hoe",          "Hoe"),
-        ("pickaxe",      "Pickaxe"),
-        ("axe",          "Axe"),
-        ("watering_can", "Watering Can"),
-    };
+    private static readonly string[] ToolSlugs = { "hoe", "pickaxe", "axe", "watering_can" };
 
     // Tier 1=Copper, 2=Steel, 3=Gold, 4=Iridium. Matches Tool.UpgradeLevel
     // (StardewValley\StardewValley\Tool.cs:167) which is 0=base/rusty, 1=copper, ...
-    private static readonly string[] TierNames = { "Copper", "Steel", "Gold", "Iridium" };
+    // Display names live in default.json as tier.1..tier.4 (see UpgradeDefinition ResolveTokens).
 
     // Fishing rod chain. 2026-06-01 (Spec A): added the Bamboo Pole root so the rod
     // chain mirrors the tool chains; reach gating (rod:N = FishingRod.UpgradeLevel, where
     // 0=bamboo, 2=fiberglass, 3=iridium — UpgradeLevel 1 is the Training Rod, which has no
-    // keep) keeps un-earned tiers out of the shop.
-    private static readonly (string Id, string DisplayName, long Cost, string? Prereq, string Reach)[] FishingRodTiers =
+    // keep) keeps un-earned tiers out of the shop. Names are hand-authored (upgrade.{id}.name);
+    // the shared desc lives at upgrade-tpl.keep-rod.desc.
+    private static readonly (string Id, long Cost, string? Prereq, string Reach)[] FishingRodTiers =
     {
-        ("keep_fishing_rod_0", "Keep Bamboo Pole",     25,  null,                 "rod:0"),
-        ("keep_fishing_rod_1", "Keep Fiberglass Rod",  150, "keep_fishing_rod_0", "rod:2"),
-        ("keep_fishing_rod_2", "Keep Iridium Rod",     425, "keep_fishing_rod_1", "rod:3"),
+        ("keep_fishing_rod_0", 25,  null,                 "rod:0"),
+        ("keep_fishing_rod_1", 150, "keep_fishing_rod_0", "rod:2"),
+        ("keep_fishing_rod_2", 425, "keep_fishing_rod_1", "rod:3"),
     };
 
     /// <summary>Yield all Loadout keep-tier entries (16 tools + 2 fishing rod = 18 rows).</summary>
-    // Interim shim usage — the (displayName, description) constructor is [Obsolete] pending
-    // Task 4's conversion of these generators to template keys+tokens. See UpgradeDefinition.cs.
-#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> LoadoutToolKeeps()
     {
-        foreach (var (slug, displayName) in ToolKinds)
+        foreach (var slug in ToolSlugs)
             for (int tier = 1; tier <= 4; tier++)
             {
                 string id = $"keep_{slug}_{tier}";
                 string? prereq = tier == 1 ? null : $"keep_{slug}_{tier - 1}";
-                string name = $"Keep {TierNames[tier - 1]} {displayName}";
-                string desc = $"Start each loop with your {displayName} at the {TierNames[tier - 1]} tier.";
+                var tokens = new Dictionary<string, string>
+                {
+                    ["tier"] = $"i18n:tier.{tier}",
+                    ["tool"] = $"i18n:tool.{slug}",
+                };
                 yield return new UpgradeDefinition(
-                    id, UpgradeCategory.Loadout, name, desc, ToolTierCosts[tier - 1], prereq,
+                    id, UpgradeCategory.Loadout,
+                    "upgrade-tpl.keep-tool.name", "upgrade-tpl.keep-tool.desc", tokens,
+                    ToolTierCosts[tier - 1], prereq,
                     metaRequirement: null, runReachRequirement: $"tool:{slug}:{tier}");
             }
 
-        foreach (var (id, name, cost, prereq, reach) in FishingRodTiers)
+        foreach (var (id, cost, prereq, reach) in FishingRodTiers)
             yield return new UpgradeDefinition(
-                id, UpgradeCategory.Loadout, name,
-                "Start each loop with your Fishing Rod at this tier.",
+                id, UpgradeCategory.Loadout, $"upgrade.{id}.name", "upgrade-tpl.keep-rod.desc", tokens: null,
                 cost, prereq, metaRequirement: null, runReachRequirement: reach);
     }
-#pragma warning restore 618
 
     // Skill level keep costs, indexed [1..10]. Levels 5 and 10 jump because they
     // also re-trigger the profession picker (Phase A persistence design §B), so the
@@ -77,39 +72,33 @@ internal static class UpgradeCatalogGenerators
         2000                       // L10 — final profession unlock
     };
 
-    private static readonly (string IdSlug, string DisplayName)[] SkillKinds =
-    {
-        ("farming",  "Farming"),
-        ("mining",   "Mining"),
-        ("foraging", "Foraging"),
-        ("fishing",  "Fishing"),
-        ("combat",   "Combat"),
-    };
+    private static readonly string[] SkillSlugs = { "farming", "mining", "foraging", "fishing", "combat" };
 
     /// <summary>Yield all 50 Carryover keep-skill-level entries.</summary>
-#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> CarryoverSkillLevelKeeps()
     {
-        foreach (var (slug, displayName) in SkillKinds)
+        foreach (var slug in SkillSlugs)
             for (int level = 1; level <= 10; level++)
             {
                 string id = $"keep_{slug}_level_{level}";
                 string? prereq = level == 1 ? null : $"keep_{slug}_level_{level - 1}";
-                string name = $"Keep {displayName} Level {level}";
-                string desc = $"Start each loop at {displayName} Level {level}. XP is set to the level " +
-                              "threshold — no half-progress preserved." +
-                              (level == 5 || level == 10
-                                ? $" Re-triggers the profession picker for Level {level}."
-                                : "");
+                string descKey = level == 5 || level == 10
+                    ? "upgrade-tpl.keep-skill.desc-profession"
+                    : "upgrade-tpl.keep-skill.desc";
+                var tokens = new Dictionary<string, string>
+                {
+                    ["skill"] = $"i18n:skill.{slug}",
+                    ["level"] = level.ToString(),
+                };
                 yield return new UpgradeDefinition(
-                    id, UpgradeCategory.Carryover, name, desc, SkillLevelCosts[level], prereq,
+                    id, UpgradeCategory.Carryover,
+                    "upgrade-tpl.keep-skill.name", descKey, tokens,
+                    SkillLevelCosts[level], prereq,
                     metaRequirement: null, runReachRequirement: $"skill:{slug}:{level}");
             }
     }
-#pragma warning restore 618
 
     /// <summary>Yield all 12 Carryover keep-mine-elevator-floor entries (10–120 step 10).</summary>
-#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> CarryoverMineElevatorKeeps()
     {
         for (int floor = 10; floor <= 120; floor += 10)
@@ -121,14 +110,13 @@ internal static class UpgradeCatalogGenerators
             // exceed the Iridium-tool tier, reflecting that skipping most of the mines is a
             // major time save. Buy shallow elevator keeps early, deep ones after tool chains.
             long cost = 75 + ((floor - 10) / 10) * 100;
+            var tokens = new Dictionary<string, string> { ["floor"] = floor.ToString() };
             yield return new UpgradeDefinition(
                 id, UpgradeCategory.Carryover,
-                $"Keep Mine Elevator Floor {floor}",
-                $"Start each loop with the mine elevator accessible to floor {floor}.",
+                "upgrade-tpl.keep-elevator.name", "upgrade-tpl.keep-elevator.desc", tokens,
                 cost, prereq, metaRequirement: null, runReachRequirement: $"mine:{floor}");
         }
     }
-#pragma warning restore 618
 
     // Mastery keep costs, indexed [1..5]. End-game progression (post all-skills-10), so a
     // steep ramp. Owning a tier is a PERMANENT floor (not in-run-peak capped like skill
@@ -136,18 +124,17 @@ internal static class UpgradeCatalogGenerators
     private static readonly long[] MasteryCosts = { 0, 1000, 1500, 2000, 2750, 3500 };
 
     /// <summary>Yield the 5 Carryover Keep-Mastery tiers.</summary>
-#pragma warning disable 618
     public static IEnumerable<UpgradeDefinition> CarryoverMasteryKeeps()
     {
         for (int level = 1; level <= 5; level++)
         {
             string id = $"keep_mastery_{level}";
             string? prereq = level == 1 ? null : $"keep_mastery_{level - 1}";
+            var tokens = new Dictionary<string, string> { ["level"] = level.ToString() };
             yield return new UpgradeDefinition(
-                id, UpgradeCategory.Carryover, $"Keep Mastery {level}",
-                $"Start each loop at Mastery Level {level}. Persists across loops once kept.",
+                id, UpgradeCategory.Carryover,
+                "upgrade-tpl.keep-mastery.name", "upgrade-tpl.keep-mastery.desc", tokens,
                 MasteryCosts[level], prereq, metaRequirement: null, runReachRequirement: $"mastery:{level}");
         }
     }
-#pragma warning restore 618
 }
