@@ -80,14 +80,17 @@ namespace TheLongestYear.Loop
 
             var q = new Quest();
             q.questType.Value = Quest.type_basic;
-            q.questTitle = $"Weekly Theme: {ThemeDisplay.Name(theme)}";
+            q.questTitle = Strings.Get("quest.weekly.title",
+                new Dictionary<string, string> { ["theme"] = ThemeDisplay.Name(theme) });
             // Keep the description SHORT: the quest-log page renders it above the objective
             // text, and a long paragraph here pushes the checklist below the fold (user
             // feedback 2026-07-09: "had to scroll down to find them"). The tip rides at the
             // END of the objective text instead — below the checklist.
-            q.questDescription =
-                $"Bonus: {ThemeModifiers.DisplayNameFor(bonusId)}\n" +
-                $"Drawback: {ThemeModifiers.DisplayNameFor(liabilityId)}";
+            q.questDescription = Strings.Get("quest.weekly.description", new Dictionary<string, string>
+            {
+                ["bonus"] = ThemeModifiers.DisplayNameFor(bonusId),
+                ["drawback"] = ThemeModifiers.DisplayNameFor(liabilityId),
+            });
             q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}";
             q.dayQuestAccepted.Value = Game1.Date.TotalDays;
             q.daysLeft.Value = -1;   // no time limit (the next week's pick will replace it)
@@ -154,10 +157,14 @@ namespace TheLongestYear.Loop
 
             // Checklist first, tip LAST — the tip must never push the goals below the fold
             // (user feedback 2026-07-09).
+            string progress = Strings.Get("quest.weekly.progress", new Dictionary<string, string>
+            {
+                ["done"] = doneCount.ToString(),
+                ["total"] = slots.Count.ToString(),
+            });
             q.currentObjective =
-                $"Donated {doneCount}/{slots.Count}:\n" + string.Join("\n", lines) +
-                "\n\nTip: hold matching donations for their theme week - completing a goal slot " +
-                "pays 1.5x JP, and finishing every goal lifts the drawback.";
+                progress + "\n" + string.Join("\n", lines) +
+                "\n\n" + Strings.Get("quest.weekly.tip");
 
             // Auto-complete when every goal slot has been donated this week. Two rewards land:
             //   1) A flat JP bonus (season-scaled like the bundle/room completion bonuses).
@@ -214,14 +221,14 @@ namespace TheLongestYear.Loop
         /// Keyed by bare id (qualifier stripped).</summary>
         private static readonly Dictionary<string, string> AmbiguousEggColors = new(StringComparer.Ordinal)
         {
-            ["174"] = "White",   // Large Egg (white)
-            ["182"] = "Brown",   // Large Egg (brown)
-            ["176"] = "White",   // Egg (white)
-            ["180"] = "Brown",   // Egg (brown)
+            ["174"] = "egg-color.white",   // Large Egg (white)
+            ["182"] = "egg-color.brown",   // Large Egg (brown)
+            ["176"] = "egg-color.white",   // Egg (white)
+            ["180"] = "egg-color.brown",   // Egg (brown)
         };
 
         /// <summary>"DisplayName (Brown) x5 (gold) - Bundle Name" — names the exact slot
-        /// requirement. Quality tags: 1=silver, 2/3=gold, 4=iridium.</summary>
+        /// requirement. Quality tags via <see cref="QualityTags"/>.</summary>
         private string DescribeSlot(BonusSlot slot)
         {
             string name = slot.ItemId;
@@ -235,14 +242,20 @@ namespace TheLongestYear.Loop
                 // ItemRegistry may throw for malformed ids; fall back to the raw id.
             }
 
-            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(slot.ItemId), out string color)
-                ? $" ({color})" : "";
-            string qty = slot.Stack > 1 ? $" x{slot.Stack}" : "";
-            string quality = slot.Quality >= 4 ? " (iridium)"
-                : slot.Quality >= 2 ? " (gold)"
-                : slot.Quality >= 1 ? " (silver)"
+            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(slot.ItemId), out string colorKey)
+                ? Strings.Get(colorKey) : "";
+            string qty = slot.Stack > 1
+                ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = slot.Stack.ToString() })
                 : "";
-            return $"{name}{colorTag}{qty}{quality} - {slot.BundleName}";
+            string quality = QualityTags.For(slot.Quality);
+            return Strings.Get("quest.weekly.slot", new Dictionary<string, string>
+            {
+                ["item"] = name,
+                ["color"] = colorTag,
+                ["qty"] = qty,
+                ["quality"] = quality,
+                ["bundle"] = slot.BundleName,
+            });
         }
 
         /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used

@@ -288,10 +288,24 @@
     "menu.goals.vault-hover-unmet": "Pay any Vault bundle at the Community Center to repair the bus.",
     "menu.goals.row-headline": "{{title}}  ({{theme}})   {{have}}/{{need}}",
     "menu.goals.qty-suffix": " x{{count}}",
-    "menu.goals.quality-silver": " (silver)",
-    "menu.goals.quality-gold": " (gold)",
-    "menu.goals.quality-iridium": " (iridium)",
     "weather.green-rain": "Green Rain",
+
+    // -- quests / composed fragments / tags -----------------------------------------
+    "quest.weekly.title": "Weekly Theme: {{theme}}",
+    "quest.weekly.description": "Bonus: {{bonus}}\nDrawback: {{drawback}}",
+    "quest.weekly.progress": "Donated {{done}}/{{total}}:",
+    "quest.weekly.slot": "{{item}}{{color}}{{qty}}{{quality}} - {{bundle}}",
+    "quest.weekly.qty": " x{{count}}",
+    "quest.weekly.tip": "Tip: hold matching donations for their theme week - completing a goal slot pays 1.5x JP, and finishing every goal lifts the drawback.",
+    "quest.stash.title": "A gift from the Junimos",
+    "quest.stash.desc": "The Junimos placed a special chest on your farm — it will survive the seasons. Find it and use it wisely; it has very limited space.",
+    "quest.shrine.title": "The Junimo Shrine",
+    "quest.shrine.desc": "There's a small Junimo shrine just left of your farmhouse. Check it to see what you've unlocked and what you can plan for next loop.",
+    "quality.silver": " (silver)",
+    "quality.gold": " (gold)",
+    "quality.iridium": " (iridium)",
+    "egg-color.white": " (White)",
+    "egg-color.brown": " (Brown)",
 
     // -- book menus / victory / cutscene hint ---------------------------------------
     "menu.cookbook.no-new": "No new recipes to add — learn more recipes first.",

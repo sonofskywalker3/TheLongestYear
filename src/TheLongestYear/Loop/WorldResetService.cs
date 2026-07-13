@@ -801,9 +801,8 @@ namespace TheLongestYear.Loop
             {
                 AddIntroQuest(
                     id: "tly.-9003",
-                    title: "A gift from the Junimos",
-                    description: "The Junimos placed a special chest on your farm — it will survive the seasons. " +
-                                 "Find it and use it wisely; it has very limited space.");
+                    title: Strings.Get("quest.stash.title"),
+                    description: Strings.Get("quest.stash.desc"));
             }
 
             // Planning shrine — a view-only board just left of the farmhouse, present from loop 1.
@@ -811,9 +810,8 @@ namespace TheLongestYear.Loop
             {
                 AddIntroQuest(
                     id: "tly.-9005",
-                    title: "The Junimo Shrine",
-                    description: "There's a small Junimo shrine just left of your farmhouse. " +
-                                 "Check it to see what you've unlocked and what you can plan for next loop.");
+                    title: Strings.Get("quest.shrine.title"),
+                    description: Strings.Get("quest.shrine.desc"));
             }
         }
 
