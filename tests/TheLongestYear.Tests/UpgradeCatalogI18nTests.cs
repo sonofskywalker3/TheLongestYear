@@ -31,4 +31,14 @@ public class UpgradeCatalogI18nTests
         Assert.Equal("Backpack I", def.DisplayName);
         Assert.Equal("Start each loop with the 24-slot backpack.", def.Description);
     }
+
+    [Fact]
+    public void GeneratedRows_KeepByteIdenticalEnglish()
+    {
+        Assert.Equal("Keep Copper Hoe", UpgradeCatalog.TryGet("keep_hoe_1")!.DisplayName);
+        Assert.Equal("Start each loop with your Hoe at the Copper tier.", UpgradeCatalog.TryGet("keep_hoe_1")!.Description);
+        Assert.Equal("Keep Farming Level 5", UpgradeCatalog.TryGet("keep_farming_level_5")!.DisplayName);
+        Assert.EndsWith("Re-triggers the profession picker for Level 5.", UpgradeCatalog.TryGet("keep_farming_level_5")!.Description);
+        Assert.Equal("Keep Mine Elevator Floor 120", UpgradeCatalog.TryGet("keep_mine_elevator_120")!.DisplayName);
+    }
 }

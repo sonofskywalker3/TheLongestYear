@@ -196,5 +196,24 @@
     "upgrade.start_sheep.name": "Start with Sheep",
     "upgrade.start_sheep.desc": "Start each loop with a Sheep (Deluxe Barn).",
     "upgrade.start_pig.name": "Start with Pig",
-    "upgrade.start_pig.desc": "Start each loop with a Pig (Deluxe Barn)."
+    "upgrade.start_pig.desc": "Start each loop with a Pig (Deluxe Barn).",
+
+    // -- upgrade templates (generators) + word tokens -----------------------------
+    "upgrade-tpl.keep-tool.name": "Keep {{tier}} {{tool}}",
+    "upgrade-tpl.keep-tool.desc": "Start each loop with your {{tool}} at the {{tier}} tier.",
+    "upgrade-tpl.keep-skill.name": "Keep {{skill}} Level {{level}}",
+    "upgrade-tpl.keep-skill.desc": "Start each loop at {{skill}} Level {{level}}. XP is set to the level threshold — no half-progress preserved.",
+    "upgrade-tpl.keep-skill.desc-profession": "Start each loop at {{skill}} Level {{level}}. XP is set to the level threshold — no half-progress preserved. Re-triggers the profession picker for Level {{level}}.",
+    "upgrade-tpl.keep-elevator.name": "Keep Mine Elevator Floor {{floor}}",
+    "upgrade-tpl.keep-elevator.desc": "Start each loop with the mine elevator accessible to floor {{floor}}.",
+    "upgrade-tpl.keep-mastery.name": "Keep Mastery {{level}}",
+    "upgrade-tpl.keep-mastery.desc": "Start each loop at Mastery Level {{level}}. Persists across loops once kept.",
+    "upgrade-tpl.keep-rod.desc": "Start each loop with your Fishing Rod at this tier.",
+    "upgrade.keep_fishing_rod_0.name": "Keep Bamboo Pole",
+    "upgrade.keep_fishing_rod_1.name": "Keep Fiberglass Rod",
+    "upgrade.keep_fishing_rod_2.name": "Keep Iridium Rod",
+    "tier.1": "Copper", "tier.2": "Steel", "tier.3": "Gold", "tier.4": "Iridium",
+    "tool.hoe": "Hoe", "tool.pickaxe": "Pickaxe", "tool.axe": "Axe", "tool.watering_can": "Watering Can",
+    "skill.farming": "Farming", "skill.mining": "Mining", "skill.foraging": "Foraging",
+    "skill.fishing": "Fishing", "skill.combat": "Combat"
 }
