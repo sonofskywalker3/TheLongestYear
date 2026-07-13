@@ -80,7 +80,7 @@ namespace TheLongestYear.Loop
 
             var q = new Quest();
             q.questType.Value = Quest.type_basic;
-            q.questTitle = $"Weekly Theme: {theme}";
+            q.questTitle = $"Weekly Theme: {ThemeDisplay.Name(theme)}";
             // Keep the description SHORT: the quest-log page renders it above the objective
             // text, and a long paragraph here pushes the checklist below the fold (user
             // feedback 2026-07-09: "had to scroll down to find them"). The tip rides at the

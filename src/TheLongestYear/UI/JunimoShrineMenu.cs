@@ -110,10 +110,10 @@ namespace TheLongestYear.UI
                 int tabX = xPositionOnScreen + PanelPadding;
                 int tabY = yPositionOnScreen + 80 + (i * (TabHeight + TabSpacing));
                 var tab = new ClickableTextureComponent(
-                    name: categories[i].ToString(),
+                    name: ThemeDisplay.CategoryName(categories[i]),
                     bounds: new Rectangle(tabX, tabY, TabWidth, TabHeight),
                     label: null,
-                    hoverText: categories[i].ToString(),
+                    hoverText: ThemeDisplay.CategoryName(categories[i]),
                     texture: Game1.mouseCursors,
                     sourceRect: new Rectangle(16, 368, 16, 16), // simple panel slice — re-skin later
                     scale: 1f)
@@ -330,7 +330,7 @@ namespace TheLongestYear.UI
                 IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                     tab.bounds.X, tab.bounds.Y, tab.bounds.Width, tab.bounds.Height, tint, 1f, false);
 
-                string label = ((UpgradeCategory)i).ToString();
+                string label = ThemeDisplay.CategoryName((UpgradeCategory)i);
                 // Scale the label down if it would overflow the tab (e.g. "Obtainability"),
                 // so long category names always fit inside the frame.
                 Vector2 labelSize = Game1.smallFont.MeasureString(label);
