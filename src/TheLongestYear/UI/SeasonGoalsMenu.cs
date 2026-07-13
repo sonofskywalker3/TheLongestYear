@@ -340,13 +340,7 @@ namespace TheLongestYear.UI
                         string qty = stack > 1
                             ? Strings.Get("menu.goals.qty-suffix", new Dictionary<string, string> { ["count"] = stack.ToString() })
                             : "";
-                        string qStr = quality switch
-                        {
-                            1 => Strings.Get("menu.goals.quality-silver"),
-                            2 => Strings.Get("menu.goals.quality-gold"),
-                            4 => Strings.Get("menu.goals.quality-iridium"),
-                            _ => "",
-                        };
+                        string qStr = QualityTags.For(quality);
                         _hoverText = (probe?.DisplayName ?? itemId) + qty + qStr;
                         return;
                     }
