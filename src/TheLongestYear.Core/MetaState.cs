@@ -85,6 +85,15 @@ public sealed class MetaState
     public HorseSnapshot? HorseState { get; set; }
 
     /// <summary>
+    /// Last-known tile per kept-building family ("coop"/"barn"/"silo"), refreshed from the live
+    /// farm before every loop reset. The reset rebuilds each kept building at its family's spot
+    /// (footprint force-cleared) so player placement survives loops; entries persist even when
+    /// the building is missing at snapshot time (demolished mid-run), remembering the last run
+    /// that had one. Empty for fresh metas — the reset falls back to fixed default tiles.
+    /// </summary>
+    public Dictionary<string, BuildingSpot> KeptBuildingSpots { get; set; } = new();
+
+    /// <summary>
     /// Quest ids the player has completed across all runs in this playthrough. Backs the
     /// quest:&lt;id&gt; meta-requirement namespace. Producer is part of a later plan; declared
     /// here so future plans don't have to touch the state class.
