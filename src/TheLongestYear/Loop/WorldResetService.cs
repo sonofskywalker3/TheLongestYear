@@ -9,6 +9,7 @@ using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Characters;
 using StardewValley.Locations;
+using StardewValley.Network;
 using StardewValley.Quests;
 using TheLongestYear.Core;
 using TheLongestYear.UI;
@@ -254,6 +255,13 @@ namespace TheLongestYear.Loop
                     $"In-place reset: cleared {lostBooks} lost book(s) found — the library shelf rewinds too.",
                     LogLevel.Info);
             }
+
+            // 1d. Everything else on NetWorldState — one-time full field audit (user request
+            // 2026-07-10; spec docs/superpowers/specs/2026-07-13-networldstate-audit-design.md).
+            // Bundles, museum, and lost books were caught one report at a time from this same
+            // survival class (loadForNewGame never rebuilds netWorldState); this closes the rest
+            // of the class in one pass instead of reactively.
+            ResetNetWorldStateLeftovers();
 
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
             Game1.year = 1;
@@ -568,6 +576,70 @@ namespace TheLongestYear.Loop
             // 3x3 silo just west of the coop (x54-59, y9-11), clear of the pet bowl (53,7).
             ["Silo"]         = new Vector2(51f, 9f),
         };
+
+        // The rest of the NetWorldState wipe-by-default pass (audit 2026-07-13). Rulings:
+        // WIPE = run progression that must rewind with the year (island/walnut chain, raccoon
+        // chain, perfection counters, Shrine-of-Challenge difficulty, in-flight Robin/Wizard
+        // builds, world-state flags, daily ephemera). KEEP = save-level configuration or
+        // session state (whichFarm/whichModFarm, ShuffleMineChests remix option, player
+        // limits/privacy/farmhands, pause flags, LocationsWithBuildings — maintained by the
+        // engine, DishOfTheDay — re-rolled by loadForNewGame). Calendar, weather, bundles,
+        // museum, lost books, and mine levels are handled in their own steps above/below.
+        private void ResetNetWorldStateLeftovers()
+        {
+            NetWorldState ws = Game1.netWorldState.Value;
+
+            // Ginger Island / golden-walnut chain.
+            ws.GoldenWalnuts = 0;
+            ws.GoldenWalnutsFound = 0;
+            ws.GoldenCoconutCracked = false;
+            ws.FoundBuriedNuts.Clear();
+            ws.IslandVisitors.Clear();
+            ws.ParrotPlatformsUnlocked = false;
+            ws.ActivatedGoldenParrot = false;
+            ws.IsGoblinRemoved = false;
+            ws.IsSubmarineLocked = false;
+
+            // Perfection-adjacent + misc progression counters.
+            ws.MiniShippingBinsObtained = 0;
+            ws.PerfectionWaivers = 0;
+            ws.TreasureTotemsUsed = 0;
+
+            // Raccoon chain (giant stump requests).
+            ws.TimesFedRaccoons = 0;
+            ws.SeasonOfCurrentRacconBundle = -1;
+            ws.DaysPlayedWhenLastRaccoonBundleWasFinished = 0;
+            for (int i = 0; i < ws.raccoonBundles.Count; i++)
+                ws.raccoonBundles[i] = false;
+
+            // Shrine of Challenge / hard-mode toggles.
+            ws.MinesDifficulty = 0;
+            ws.SkullCavesDifficulty = 0;
+
+            // In-flight Robin/Wizard constructions reference buildings the world wipe just
+            // deleted — same class as Clint's toolBeingUpgraded in FarmerReset.
+            ws.Builders.Clear();
+
+            // World-state flags (trash bear, one-time map states, …) mirror the static
+            // Game1.worldStateIDs set; clear both sides so nothing re-syncs back.
+            foreach (string id in Game1.worldStateIDs.ToArray())
+                ws.removeWorldStateID(id);
+            Game1.worldStateIDs.Clear();
+
+            // Daily ephemera the skipped vanilla day-start would have refreshed.
+            ws.ActivePassiveFestivals.Clear();
+            ws.CheckedGarbage.Clear();
+            ws.canDriveYourselfToday.Value = false;
+            ws.goldenClocksTurnedOff.Value = false;
+
+            // Traveling Cart year-1 red-cabbage guarantee counter — back to its new-game
+            // sentinel so every loop gets the same guarantee window.
+            ws.visitsUntilY1Guarantee.Value = -1;
+
+            _monitor.Log("In-place reset: netWorldState leftovers wiped (island/walnuts, raccoons, " +
+                "perfection counters, mine difficulty, builders, world flags, daily ephemera).",
+                LogLevel.Trace);
+        }
 
         // Refresh MetaState.KeptBuildingSpots from the live farm: for every building in a
         // known family (coop/barn/silo), remember its top-left tile. Families with no live
