@@ -343,5 +343,39 @@
     "furniture.cookbook": "The Longest Year Cookbook",
     "furniture.craftbook": "The Longest Year Craftbook",
     "furniture.bundle-log": "The Longest Year Bundle Log",
-    "furniture.planning-shrine": "Junimo Planning Shrine"
+    "furniture.planning-shrine": "Junimo Planning Shrine",
+
+    // -- gmcm -------------------------------------------------------------------------
+    "gmcm.section": "The Longest Year",
+    "gmcm.master-blurb": "Master switch. When off, TLY skips all setup at save load and no effects fire. Toggling takes effect on the next save load.",
+    "gmcm.enabled.name": "Enabled",
+    "gmcm.jp-hud.name": "Show JP HUD",
+    "gmcm.jp-hud.tooltip": "Always-on corner counter showing banked JP and the current week's theme.",
+    "gmcm.auto-detect.name": "Auto-detect mod unlock cutscenes",
+    "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
+
+    // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
+    "event.intro.lewis-1": "Hi there, @. Welcome to the valley.#$b#I'm Lewis — mayor of Pelican Town. I came up to greet you and your new farm.$h",
+    "event.intro.lewis-2": "I wanted to be the first to say it... but I'm afraid I have to apologize for the timing.$s",
+    "event.intro.lewis-3": "Joja Corporation rolled out a 'revitalization initiative' this spring. They've already filed permits to demolish our old Community Center. They're calling it an 'eyesore.'$a",
+    "event.intro.lewis-4": "Deadline is Winter 28. If nothing changes by then, it'll be a Joja warehouse by next year.$s",
+    "event.intro.lewis-5": "If only there was a way for us to repair the old Community Center.$s#$b#It's a registered historical landmark, you know. The state will protect it — but only if it's restored to full working condition before that deadline.$h",
+    "event.intro.lewis-6": "Truth be told, nobody's got the time or the skill to take it on. Folks have their own troubles, and that old place needs more than goodwill.$s",
+    "event.intro.lewis-7": "Here — take the key to the front door. If you ever want to see the old place before they tear it down, it's worth a look.$h",
+    "event.intro.lewis-8": "Good luck out there, @. Pelican Town's rooting for you.$h",
+    "event.intro.junimo-1": "Hello, @. We are the spirits of this land — the Junimos.#$b#Few folk can see us anymore.$h",
+    "event.intro.junimo-2": "Long ago, the people of this valley worked the soil together and shared what nature gave them.#$b#In that kindness we flourished, and this old hall was the heart of it.$h",
+    "event.intro.junimo-3": "But the world grew busy — they chased coin and comfort, and forgot one another.#$b#The shared work stopped, the hall fell quiet, and the spirit of the land thinned.#$b#As the people drifted apart, we faded with them, until there was nothing left to wake for. And so we slept.$s",
+    "event.intro.junimo-4": "Lately, though, we feel a stirring.#$b#The people are weary of their 'progress,' and miss what they traded away — the valley whole, and alive.#$b#That longing is what woke us... that, and you.$h",
+    "event.intro.junimo-5": "We can make the land strong again — but not alone, and neither can you.#$b#Work the soil. Draw the townsfolk back together.#$b#As they share in the land's bounty once more, our power returns, and this hall is restored.$h",
+    "event.intro.junimo-6": "But the seasons bind you, @. Each one asks its share.#$b#Bring enough of the land's bounty to this hall before a season turns.#$b#Fall short, and the year unwinds to spring — and you begin again.$s",
+    "event.intro.junimo-7": "Even keeping pace, a single year is too short to make the valley whole.#$b#You will not finish on this first turning.$s",
+    "event.intro.junimo-8": "When the year unwinds, all of it returns — the fields, the buildings, even the folk you have come to know.#$b#What you gathered in the world is lost.$s",
+    "event.intro.junimo-9": "But the skills you have learned, and some of what you have done, need not be lost.#$b#The offerings you give us become our power...#$b#...and we will spend it to help you hold on to some of what you have gained, so each beginning is a little kinder than the last.$h",
+    "event.intro.junimo-10": "We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Will you work the land with us, @?$h",
+    "event.intro.junimo-11": "Then go. Spring is yours.$h",
+
+    // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
+    "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year — but don't worry. We have enough power left over to give you a head-start this time.$h",
+    "cutscene.day28.continue": "Great job, @ — you're doing well!#$b#Keep this up and we'll save the valley together. We'll gain even more power from the work you do this season.$h"
 }

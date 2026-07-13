@@ -1079,28 +1079,25 @@ namespace TheLongestYear
                 reset: () => _config = new GameplayConfig(),
                 save: () => this.Helper.WriteConfig(_config));
 
-            gmcm.AddSectionTitle(this.ModManifest, () => "The Longest Year");
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.section"));
             gmcm.AddParagraph(this.ModManifest,
-                () => "Master switch. When off, TLY skips all setup at save load and no effects fire. " +
-                      "Toggling takes effect on the next save load.");
+                () => Strings.Get("gmcm.master-blurb"));
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.Enabled,
                 setValue: v => _config.Enabled = v,
-                name: () => "Enabled");
+                name: () => Strings.Get("gmcm.enabled.name"));
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.ShowJpHud,
                 setValue: v => _config.ShowJpHud = v,
-                name: () => "Show JP HUD",
-                tooltip: () => "Always-on corner counter showing banked JP and the current week's theme.");
+                name: () => Strings.Get("gmcm.jp-hud.name"),
+                tooltip: () => Strings.Get("gmcm.jp-hud.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.AutoDetectReplayableUnlockCutscenes,
                 setValue: v => _config.AutoDetectReplayableUnlockCutscenes = v,
-                name: () => "Auto-detect mod unlock cutscenes",
-                tooltip: () => "Re-fire any mod cutscene that grants a recipe / mail flag / quest each " +
-                               "loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only " +
-                               "vanilla furnace/cave scenes replay. Takes effect on next save load.");
+                name: () => Strings.Get("gmcm.auto-detect.name"),
+                tooltip: () => Strings.Get("gmcm.auto-detect.tooltip"));
 
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
