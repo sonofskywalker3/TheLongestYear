@@ -6,6 +6,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### ⏰ DEADLINE 2026-09-09 — migrate publish-nexus.yml off the deprecated update-group flow
+Nexus's `upload-action@main` (2026-06-17 migration) requires a v3 `file_id`, but legacy
+files 404 on `POST /v3/mod-files/{id}/versions` (hit live releasing 0.11.44 — legacy
+fileId 170754 was "Mod file not found"). All three mods (TLY / AC / CartCatalog) are now
+PINNED to pre-migration commit `ee1af4be` whose update-group flow is deprecated but
+guaranteed until **2026-09-09**. Before then: figure out how a legacy mod obtains a v3
+mod-file identity (possibly `POST /v3/mod-files` from a finalised upload creates one, or
+Nexus migrates ids server-side — re-test `GET /v3/mods/{global id}/files` with the API
+key) and update all three workflows. v3 endpoints need the API key (GH secret) — probe
+from a workflow step, not locally.
+
+### 📄 Mod page: Advanced Options screenshot STILL OWED (khauser13)
+The 0.11.44 release synced the description but the promised screenshot of the new-game
+Advanced Options panel (remixed-bundles recommendation) is still missing from the Nexus
+page — needs a new-game screen visit + media upload (`tly-media-upload.mjs` pattern).
+
 ### 🐞 INVESTIGATE — 5th sweep (2026-07-09): Nexus posts 06-10 → 07-05 + xsansara log
 *Full forum sweep 2026-07-09 (`forum-sweeps/2026-07-09-21-47_*`). Reddit: 4 new comments, all
 praise/flavor — nothing actionable. Nexus bugs tab: no new bugs. All the new material is Nexus
