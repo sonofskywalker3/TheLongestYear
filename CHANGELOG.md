@@ -3,7 +3,73 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.11.0 — 2026-06-10
+## 0.11.44 — 2026-07-13
+
+The big fix release: weekly goals redesigned around real bundle slots, remixed
+bundles fully supported, the loop reset made airtight, and new upgrades.
+Consolidates the 0.11.1–0.11.44 dev line. Changes since 0.11.0:
+
+### Fixed
+- **Weekly goals redesigned: slot-based checklists (0.11.12–0.11.23).** Each goal
+  now names a specific still-open bundle slot (item, stack, quality — e.g.
+  "Parsnip x5 (gold) — Quality Crops") and ticks only when that exact slot
+  completes in live CC state. Kills three reported bugs at once: a single item
+  could clear a x5-stack goal; themes could demand items with no matching open
+  slot (structurally impossible weeks); goals could ask for items already
+  donated. Fewer open slots → shorter checklist; zero → no quest that week and
+  the drawback auto-lifts. The 1.5× banking bonus is slot-strict. Mid-week saves
+  migrate with a one-time goal re-roll.
+- **Remixed bundles all count (0.11.11).** Bundles matching no classification
+  rule were silently dropped from season checkpoints and weekly themes — the
+  gate shrank on the RECOMMENDED remixed config, and one report won a loop with
+  a bundle still open. Unknown pick-X-of-Y bundles now classify with a derived
+  cumulative quota ramp (custom-bundle mods included); nothing is skipped.
+- **Reset-leak audit — the loop reset is now airtight (0.11.24–0.11.28,
+  0.11.37–0.11.40).** Museum donations and lost library books, worn
+  boots/rings/trinkets (and the trinket slot itself), monster-slayer kill
+  progress, consumed mine milestone chests, power books / mastery / prize
+  tickets, and max health/stamina all rewind with the year. Run-scoped stats
+  are now wiped by default with an explicit keep-list, so future game versions
+  can't silently leak progression across loops.
+- **Your clothes survive the loop (0.11.41).** Hat, shirt, and pants stay worn
+  through a reset — they carry no stats, and the wipe left farmers in their
+  underwear with no way back to their look. Boots, rings, and trinkets still reset.
+- **Kept buildings rebuild where you put them (0.11.42, 0.11.44).** Coop, barn,
+  and silo keeps snapshot their position before the reset and rebuild exactly
+  there (footprint cleared of regenerated debris), matching the stable's
+  behavior — previously they landed on fixed tiles, one of which hid the silo
+  behind the farmhouse.
+- **Green rain is back in summer (0.11.26).** The weather scheduler was
+  overriding vanilla's green-rain day; it's now reserved like a festival day,
+  storm/rain minimums still hold, and forecasts (TV + Weather Sage) show it.
+- **A reset no longer drags the old day's weather into Spring 1 (0.11.43).**
+  Resetting mid-storm left lightning flashes, a storm HUD icon, and serialized
+  storm state on the new Spring 1; the reset now re-resolves the day's weather
+  through the game's own day-start path.
+- **The farm cave asks again each loop (0.11.1).** Entering the cave offers the
+  mushrooms / fruit bats / decide-later choice fresh whenever unchosen, instead
+  of replaying the Demetrius scene (which only ran once, locking the first pick
+  in forever).
+- **Big-chest mod compatibility (0.11.35–0.11.36, 0.11.39).** Better Chests and
+  Unlimited Storage no longer inflate the 4-slot Junimo Stash into a full chest
+  grid; BC also no longer bulk-stashes into it or carries it away.
+- **Horse fixes (0.11.21).** The horse no longer asks to be renamed every
+  morning after a loop reset.
+- **Theme picker polish (0.11.20, 0.11.22–0.11.23).** A pick can no longer be
+  lost to a stale deferred offer; the quest tip moved below the checklist.
+
+### Added
+- **Keep Silo upgrade (0.11.27)** — 150 JP, Buildings; requires building a silo
+  that run. Hay does not carry over.
+- **Cart Whisperer I–V (0.11.5–0.11.10)** — Foresight chain; on Traveling Cart
+  days the shrine planning view flags which of the cart's stock can feed a
+  Community Center bundle (each tier previews more slots, gated on Cart Stall).
+- Unattended-verification debug tooling (0.11.30–0.11.34): `tly_loadsave`,
+  `tly_classify`, title-screen command bridge.
+
+### Changed
+- All reset paths route through one shared finalizer (0.11.2), so debug resets
+  exercise the exact production path.
 
 Fixes from this week's beta reports, plus a donation-JP rebalance. Consolidates
 the 0.10.1–0.10.5 dev line. Changes since 0.10.0:

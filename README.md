@@ -8,19 +8,23 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.11.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.11.44`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.11.0
+## What's New in 0.11.44
 
-Fixes from this week's beta reports, plus a donation-JP rebalance. Changes since `0.10.0`:
+The big fix release: weekly goals redesigned around real bundle slots, remixed bundles fully supported, the loop reset made airtight, and new upgrades. Changes since `0.11.0`:
 
-- **The theme picker can no longer soft-lock.** Quitting on the first day of a new season (before finishing that day) could reload into a weekly theme picker with no options and no way to close it — stuck for the rest of the month. The month now rolls over correctly on load, an empty offer can never lock the menu again, and already-affected saves recover on their own the next time they load.
-- **Donation JP rebalance: one item, one award.** A completed bundle slot now awards the rarity JP of a *single* item, no matter how many the slot asks for — 99 wood pays the same as 1 parsnip. Filling big material slots is the cost of restoring the Center, not a JP farm; season scaling, weekly bonus items, and JP Boost still multiply as before. Expect bundle, room, and weekly-goal rewards to be your main JP income now.
-- **Duplicated drops keep their quality.** The weekly bonuses that grant an extra item now copy the original's quality instead of always dropping a base-quality copy.
-- **Vault payments pay the right JP.** Paying a bus-repair Vault goal could mint a massive, unintended JP windfall if the donation menu refreshed at the wrong moment. The Vault now always pays its intended gold-scaled amount.
-- **Other mods' unlock cutscenes replay correctly.** Unlock scenes added by other installed mods are now auto-detected from the game's event data, so their unlocks re-fire each loop the same way vanilla's do (previously only a fixed list was handled).
+- **Weekly goals now target real bundle slots.** Complete redesign: each goal names a specific still-open bundle slot — like `Parsnip x5 (gold) — Quality Crops` — and ticks only when that exact slot is completed. Goals can no longer be cleared by a single item when five were asked, demand items with no matching open slot, or ask for something you already donated. If nothing's open, the week has no quest and the drawback lifts. The 1.5× banking bonus is slot-strict.
+- **Remixed bundles all count.** Remixed or custom bundles that matched no known pattern were silently left out of season checkpoints and weekly themes — the gate quietly shrank on the recommended remixed setup. Every bundle now classifies (custom-bundle mods included), with sensible quotas derived for unknown ones.
+- **The loop reset is airtight.** A full audit closed every "survived the loop" leak: museum donations and lost library books, worn boots/rings/trinkets, monster-slayer progress, mine milestone chests, power books / mastery / prize tickets, and max health/stamina all rewind with the year now. And your **clothes stay on** — hat, shirt, and pants are yours to keep.
+- **Kept buildings stay where YOU put them.** Coop, barn, and silo keeps rebuild each loop at their last position instead of a fixed spot, just like the stable. New **Keep Silo** upgrade (150 JP, Buildings).
+- **New Foresight chain: Cart Whisperer I–V.** On Traveling Cart days, the shrine planning view flags which of the cart's actual stock can feed a Community Center bundle.
+- **Green rain is back in summer.** The scheduler was overriding vanilla's green-rain day; it's now reserved like a festival and shows in the TV and Weather Sage forecasts. A reset also no longer drags the old day's weather into Spring 1.
+- **The farm cave asks again.** Each loop, entering the cave offers the mushrooms / fruit bats choice fresh instead of locking your first-ever pick in forever.
+- **Big-chest mod compatibility.** Better Chests and Unlimited Storage no longer inflate the 4-slot Junimo Stash into a giant grid.
+- **Smaller fixes:** the horse no longer asks to be renamed every morning; a theme pick can't be lost to a stale offer; quest-tip layout.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
