@@ -33,17 +33,8 @@ namespace TheLongestYear.Loop
                 var data = asset.AsDictionary<string, string>().Data;
                 // Mail format: body text, ^ = line break, [#] separates the letter title.
                 data[MailKey] =
-                    "Welcome to The Longest Year!^^"
-                    + "You're stuck looping Year 1 until you finish the Community Center. "
-                    + "Each loop you spend Junimo Points (JP) on permanent upgrades.^^"
-                    + "Two things that trip everyone up:^"
-                    + "1) You earn a LOT more JP the deeper into the year you get, so don't feel behind early.^"
-                    + "2) DON'T rush to complete bundles! Hold an item until its weekly theme comes up, then donate it "
-                    + "- you bank a 1.5x JP bonus AND clear that week's downside. Rushing donations wastes both.^^"
-                    + "Also: festivals give your day back on purpose. You can leave and come back, and leaving early "
-                    + "keeps your clock - returning 'early' is intended, not a bug.^^"
-                    + "Good luck. The Junimos are counting on you."
-                    + "[#]The Longest Year";
+                    TheLongestYear.Core.Strings.Get("mail.intro.body")
+                    + "[#]" + TheLongestYear.Core.Strings.Get("mail.intro.title");
             }, AssetEditPriority.Default);
         }
 

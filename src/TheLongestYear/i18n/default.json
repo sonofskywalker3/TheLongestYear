@@ -335,5 +335,13 @@
     "menu.victory.continue-hint": "(press A or click to continue)",
     "menu.cutscene.continue-hint": "(click or press A to continue)",
     "win.loop-line.first": "You restored it on your very first loop!",
-    "win.loop-line.many": "It took {{count}} loops."
+    "win.loop-line.many": "It took {{count}} loops.",
+
+    // -- onboarding mail / furniture display names ---------------------------------
+    "mail.intro.title": "The Longest Year",
+    "mail.intro.body": "Welcome to The Longest Year!^^You're stuck looping Year 1 until you finish the Community Center. Each loop you spend Junimo Points (JP) on permanent upgrades.^^Two things that trip everyone up:^1) You earn a LOT more JP the deeper into the year you get, so don't feel behind early.^2) DON'T rush to complete bundles! Hold an item until its weekly theme comes up, then donate it - you bank a 1.5x JP bonus AND clear that week's downside. Rushing donations wastes both.^^Also: festivals give your day back on purpose. You can leave and come back, and leaving early keeps your clock - returning 'early' is intended, not a bug.^^Good luck. The Junimos are counting on you.",
+    "furniture.cookbook": "The Longest Year Cookbook",
+    "furniture.craftbook": "The Longest Year Craftbook",
+    "furniture.bundle-log": "The Longest Year Bundle Log",
+    "furniture.planning-shrine": "Junimo Planning Shrine"
 }
