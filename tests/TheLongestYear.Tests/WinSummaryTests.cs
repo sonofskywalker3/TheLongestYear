@@ -3,8 +3,11 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
+[Collection("i18n")]
 public class WinSummaryTests
 {
+    public WinSummaryTests(I18nFixture _) { }
+
     [Fact]
     public void Loop_one_reads_as_a_first_loop_brag()
         => Assert.Equal("You restored it on your very first loop!", WinSummary.LoopLine(1));

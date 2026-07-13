@@ -16,9 +16,6 @@ namespace TheLongestYear.UI
     /// opens the JP shrine and the keep-playing choice). The elaborate payoff cutscene is deferred to 1.0.</summary>
     internal sealed class VictoryMenu : IClickableMenu
     {
-        private const string TitleLine = "You have restored the Community Center. The valley is saved!";
-        private const string ContinueHint = "(press A or click to continue)";
-
         // Junimo sprite: frame 0 of the 16×16 Characters\Junimo sheet (a white silhouette meant to be
         // tinted), scaled up. Three are drawn in a row, each a different colour, for a little payoff.
         private const int JunimoFrame = 16;
@@ -117,7 +114,7 @@ namespace TheLongestYear.UI
 
             // Title line.
             int maxWidth = System.Math.Min(900, (int)(w * 0.6f));
-            string title = Game1.parseText(TitleLine, Game1.dialogueFont, maxWidth);
+            string title = Game1.parseText(Strings.Get("menu.victory.restored"), Game1.dialogueFont, maxWidth);
             Vector2 titleSize = Game1.dialogueFont.MeasureString(title);
             Utility.drawTextWithShadow(b, title, Game1.dialogueFont,
                 new Vector2((w - titleSize.X) / 2f, textY), Color.White);
@@ -130,8 +127,9 @@ namespace TheLongestYear.UI
                 new Vector2((w - loopSize.X) / 2f, loopY), Color.White);
 
             // Continue hint, near the bottom.
-            Vector2 hintSize = Game1.smallFont.MeasureString(ContinueHint);
-            Utility.drawTextWithShadow(b, ContinueHint, Game1.smallFont,
+            string continueHint = Strings.Get("menu.victory.continue-hint");
+            Vector2 hintSize = Game1.smallFont.MeasureString(continueHint);
+            Utility.drawTextWithShadow(b, continueHint, Game1.smallFont,
                 new Vector2((w - hintSize.X) / 2f, h - 96), Color.White * 0.7f);
         }
     }

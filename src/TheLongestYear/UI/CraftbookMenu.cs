@@ -180,7 +180,7 @@ namespace TheLongestYear.UI
             _pickerScroll = 0;
             if (_pickerList.Count == 0)
             {
-                Game1.addHUDMessage(new HUDMessage("No new recipes to add — learn more recipes first.", HUDMessage.newQuest_type));
+                Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.cookbook.no-new"), HUDMessage.newQuest_type));
                 _pickerList = null;
                 _pendingSlot = -1;
             }
@@ -201,7 +201,7 @@ namespace TheLongestYear.UI
             string recipeId = _meta.CraftbookRecipes[slotIndex];
             string name = RecipeDisplayName(recipeId, isCooking: false);
             Game1.activeClickableMenu = new ConfirmationDialog(
-                $"Remove \"{name}\" from the craftbook?\nThis recipe won't carry over next run unless re-banked.",
+                Strings.Get("menu.craftbook.remove-confirm", new Dictionary<string, string> { ["recipe"] = name }),
                 _ =>
                 {
                     _meta.CraftbookRecipes.RemoveAt(slotIndex);
@@ -264,8 +264,12 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             string title = _pickerList != null
-                ? "Choose a recipe to bank:"
-                : $"Craftbook — {_meta.CraftbookRecipes.Count} / {_slotCount} slots";
+                ? Strings.Get("menu.cookbook.choose")
+                : Strings.Get("menu.craftbook.title", new Dictionary<string, string>
+                    {
+                        ["used"] = _meta.CraftbookRecipes.Count.ToString(),
+                        ["total"] = _slotCount.ToString(),
+                    });
             StardewValley.BellsAndWhistles.SpriteText.drawStringHorizontallyCenteredAt(
                 b, title, xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
@@ -296,7 +300,7 @@ namespace TheLongestYear.UI
                 bool filled = slotIndex < _meta.CraftbookRecipes.Count;
                 string label = filled
                     ? RecipeDisplayName(_meta.CraftbookRecipes[slotIndex], isCooking: false)
-                    : "[empty — click to add]";
+                    : Strings.Get("menu.cookbook.empty-slot");
                 Color tint = filled ? Color.White : Color.White * 0.6f;
 
                 IClickableMenu.drawTextureBox(b, Game1.menuTexture,
