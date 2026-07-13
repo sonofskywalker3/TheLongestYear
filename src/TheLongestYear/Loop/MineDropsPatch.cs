@@ -152,7 +152,7 @@ namespace TheLongestYear.Loop
             // Tile 112 = elevator, tile 173 = descend ladder.
             if (tileIndex == 112 || tileIndex == 173)
             {
-                Game1.drawObjectDialogue("The mines feel uneasy this week. The elevator and lower ladders will not respond.");
+                Game1.drawObjectDialogue(Strings.Get("dialog.mines.uneasy-1"));
                 __result = true;
                 return false; // skip original
             }
@@ -194,7 +194,7 @@ namespace TheLongestYear.Loop
             if (verb != "Mine" && verb != "NextMineLevel" && verb != "MineElevator")
                 return true;
 
-            Game1.drawObjectDialogue("The mines feel uneasy this week. The entrance has been closed off.");
+            Game1.drawObjectDialogue(Strings.Get("dialog.mines.uneasy-2"));
             __result = true;
             return false; // skip original — no warp into the shaft
         }

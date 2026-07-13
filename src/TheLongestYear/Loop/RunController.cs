@@ -243,14 +243,12 @@ namespace TheLongestYear.Loop
         {
             var responses = new[]
             {
-                new StardewValley.Response("newLoop",     "Start a new loop"),
-                new StardewValley.Response("keepPlaying", "Keep playing this run")
+                new StardewValley.Response("newLoop",     Strings.Get("dialog.win.new-loop")),
+                new StardewValley.Response("keepPlaying", Strings.Get("dialog.win.keep-playing"))
             };
             string loopLine = WinSummary.LoopLine(Run.RunNumber);
-            string prompt =
-                "The Junimos sing! The Community Center is restored.\n" +
-                loopLine + "\n" +
-                "Do you want to begin a new loop now, or keep playing this run?";
+            string prompt = Strings.Get("dialog.win.prompt",
+                new Dictionary<string, string> { ["loopLine"] = loopLine });
 
             GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
             if (loc == null)
@@ -721,7 +719,7 @@ namespace TheLongestYear.Loop
             Run.LiabilitySuppressedThisWeek = true;
             ActiveEffectsProvider.SuppressLiability();
             Game1.addHUDMessage(new HUDMessage(
-                "Nothing left to donate for this theme - drawback lifted.",
+                Strings.Get("hud.nothing-to-donate"),
                 HUDMessage.newQuest_type));
             _monitor.Log(
                 $"Weekly goal pool for {Run.CurrentSelection} is empty (all in-play slots donated) - " +

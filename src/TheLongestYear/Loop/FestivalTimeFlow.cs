@@ -4,6 +4,7 @@ using HarmonyLib;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
@@ -56,7 +57,7 @@ namespace TheLongestYear.Loop
             if (Game1.activeClickableMenu != null)
                 Game1.exitActiveMenu();
 
-            Game1.addHUDMessage(new HUDMessage("The festival is over.", HUDMessage.newQuest_type));
+            Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.festival-over"), HUDMessage.newQuest_type));
             Game1.CurrentEvent?.forceEndFestival(Game1.player);
             monitor.Log("Festival auto-ejected: end time reached.", LogLevel.Info);
         }

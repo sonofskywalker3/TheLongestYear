@@ -9,6 +9,22 @@
 
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
+    "hud.theme-complete": "Weekly theme complete! +{{jp}} JP, drawback lifted.",
+    "hud.nothing-to-donate": "Nothing left to donate for this theme - drawback lifted.",
+    "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
+    "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
+
+    // -- question / message dialogues ---------------------------------------------
+    "dialog.cave.prompt": "The cave waits, familiar and patient. What should it nurture this year?",
+    "dialog.cave.mushrooms": "Mushrooms",
+    "dialog.cave.bats": "Fruit bats",
+    "dialog.cave.later": "(Decide later)",
+    "dialog.win.prompt": "The Junimos sing! The Community Center is restored.\n{{loopLine}}\nDo you want to begin a new loop now, or keep playing this run?",
+    "dialog.win.new-loop": "Start a new loop",
+    "dialog.win.keep-playing": "Keep playing this run",
+    "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
+    "dialog.mines.uneasy-1": "The mines feel uneasy this week. The elevator and lower ladders will not respond.",
+    "dialog.mines.uneasy-2": "The mines feel uneasy this week. The entrance has been closed off.",
 
     // -- upgrades (hand-authored) — keys derive from the upgrade id ---------------
     "upgrade.backpack_1.name": "Backpack I",

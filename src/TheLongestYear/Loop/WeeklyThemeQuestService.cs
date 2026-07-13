@@ -205,7 +205,7 @@ namespace TheLongestYear.Loop
                 : "drawback";
 
             Game1.addHUDMessage(new HUDMessage(
-                $"Weekly theme complete! +{bonus} JP, drawback lifted.",
+                Strings.Get("hud.theme-complete", new Dictionary<string, string> { ["jp"] = bonus.ToString() }),
                 HUDMessage.achievement_type));
 
             _monitor.Log(

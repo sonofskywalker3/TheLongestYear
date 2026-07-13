@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HarmonyLib;
 using StardewModdingAPI;
 using StardewValley;
@@ -76,8 +77,9 @@ namespace TheLongestYear.Loop
             __result = item;
 
             // HUD message.
-            Game1.showRedMessage(
-                $"Junimo Stash is full! ({cap} slot{(cap == 1 ? "" : "s")} maximum)");
+            Game1.showRedMessage(Strings.Get(
+                cap == 1 ? "hud.stash-full.one" : "hud.stash-full.other",
+                new Dictionary<string, string> { ["cap"] = cap.ToString() }));
 
             _monitor?.Log(
                 $"JunimoStashCapPatch: rejected item '{item.QualifiedItemId}' — stash at cap ({cap}).",

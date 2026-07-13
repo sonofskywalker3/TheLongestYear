@@ -50,12 +50,12 @@ namespace TheLongestYear.Loop
             if (Game1.eventUp || Game1.farmEvent != null || Game1.activeClickableMenu != null) return;
 
             cave.createQuestionDialogue(
-                "The cave waits, familiar and patient. What should it nurture this year?",
+                Strings.Get("dialog.cave.prompt"),
                 new[]
                 {
-                    new Response(AnswerMushrooms, "Mushrooms"),
-                    new Response(AnswerBats, "Fruit bats"),
-                    new Response(AnswerLater, "(Decide later)"),
+                    new Response(AnswerMushrooms, Strings.Get("dialog.cave.mushrooms")),
+                    new Response(AnswerBats, Strings.Get("dialog.cave.bats")),
+                    new Response(AnswerLater, Strings.Get("dialog.cave.later")),
                 },
                 OnAnswer);
         }
