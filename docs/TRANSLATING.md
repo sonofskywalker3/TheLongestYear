@@ -20,8 +20,12 @@ All player-visible text lives in [`src/TheLongestYear/i18n/default.json`](../src
    translated text in both the `.one` and `.other` values.
 5. **`furniture.*` keys are display names embedded in a slash-delimited game data row**
    (`Data/Furniture`) — your translated value must NOT contain a literal `/` character, or
-   it will split into extra fields and corrupt the row. Everything else has no such
-   restriction.
+   it will split into extra fields and corrupt the row.
+   **`event.intro.*` keys have the same restriction, for a different reason:** each value is
+   substituted into a `speak <npc> "..."` command inside a slash-delimited, quote-wrapped
+   vanilla event script (see `IntroEventInjector.BuildIntroEvent`). Your translated value must
+   NOT contain a literal `/` or `"` character — either one will corrupt the event script (a
+   `/` splits it into extra commands; a `"` breaks out of the quoted speech line early).
 6. Drop the file into the installed mod folder (`Mods/TheLongestYear/i18n/`) and restart.
    SMAPI picks the file matching the game language; any key missing from your file
    falls back to English automatically, so partial translations work fine.
