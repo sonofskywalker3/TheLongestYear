@@ -532,16 +532,23 @@ namespace TheLongestYear.Loop
         // the default vanilla farm layout without overlapping the bus stop or the
         // starting clearing. If two chains both place (Coop + Barn) they don't
         // overlap each other.
+        //
+        // The 1.6 FARMHOUSE is itself a Building at (59,12) whose footprint reaches at
+        // least (67,16) and whose sprite draws over everything in x59-67 above it —
+        // tiles must avoid BOTH. 2026-07-13 playtest: the silo's old tile (60,9) placed
+        // it invisibly behind the farmhouse roof, and the old barn tile (62,12) sat
+        // inside the farmhouse footprint outright. The cluster now sits west of the
+        // house: barn row below, silo beside the coop.
         private static readonly Dictionary<string, Vector2> BuildingTiles = new()
         {
             ["Coop"]         = new Vector2(54f, 9f),
             ["Big Coop"]     = new Vector2(54f, 9f),
             ["Deluxe Coop"]  = new Vector2(54f, 9f),
-            ["Barn"]         = new Vector2(62f, 12f),
-            ["Big Barn"]     = new Vector2(62f, 12f),
-            ["Deluxe Barn"]  = new Vector2(62f, 12f),
-            // 3x3 silo between the coop (x54-59, y9-11) and barn (x62-68, y12-15) footprints.
-            ["Silo"]         = new Vector2(60f, 9f),
+            ["Barn"]         = new Vector2(46f, 12f),
+            ["Big Barn"]     = new Vector2(46f, 12f),
+            ["Deluxe Barn"]  = new Vector2(46f, 12f),
+            // 3x3 silo just west of the coop (x54-59, y9-11), clear of the pet bowl (53,7).
+            ["Silo"]         = new Vector2(51f, 9f),
         };
 
         private void ApplyKeptBuildings(IReadOnlyList<string> buildings)
@@ -570,6 +577,9 @@ namespace TheLongestYear.Loop
                 // way Robin's build does. These baseline tiles usually sit in the cleared starting
                 // area (a no-op), but this keeps the placement clean if the tile map ever changes.
                 farm.removeObjectsAndSpawned((int)tile.X, (int)tile.Y, b.tilesWide.Value, b.tilesHigh.Value);
+
+                _monitor.Log($"Reset: kept building '{blueprint}' placed at ({tile.X},{tile.Y}).",
+                    LogLevel.Info);
             }
         }
 
