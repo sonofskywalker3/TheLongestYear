@@ -1,0 +1,5 @@
+@Fluxwb 好消息！从 0.11.60 版本开始，模组已完全支持本地化——所有文本（升级目录、菜单、任务、对话、信件和设置）都在一个 JSON 文件里。翻译不再需要修改 DLL：只需将 i18n/default.json 复制为 zh.json 并翻译其中的值即可。未翻译的条目会自动回退为英文，模组更新时也不需要重新编译。详细说明（包括必须保留的 {{占位符}} 和对话代码）请见 GitHub 上的 docs/TRANSLATING.md。如果您将汉化更新为这种方式，请告诉我，我会在模组页面注明并链接您的作品。
+
+Good news! As of 0.11.60 the mod is fully localizable — every player-facing string (upgrade catalog, menus, quests, dialogue, mail, settings) lives in one JSON file. Translations no longer require DLL edits: just copy i18n/default.json to zh.json and translate the values. Untranslated lines fall back to English automatically, and mod updates no longer need a rebuild. The full guide (including the {{placeholders}} and dialogue codes that must be preserved) is in docs/TRANSLATING.md on GitHub. If you update your translation this way, let me know and I'll credit and link your work from the mod page.
+
+（中文为机器翻译，如有不当请见谅。）
