@@ -93,7 +93,7 @@ namespace TheLongestYear.Loop
                 if (!perRoom.TryGetValue(areaData.AreaName, out SortedDictionary<int, List<BundleSpec>> byIndex))
                     continue; // no matching standard-set positions for this area — nothing to widen
 
-                List<int> positionAbsoluteIndex = byIndex.Keys.ToList(); // ascending; position j -> absolute index
+                List<int> positionAbsoluteIndex = ResolvePositionAbsoluteIndex(areaData, byIndex); // position j -> absolute index
 
                 foreach (BundleSetData set in areaData.BundleSets ?? Enumerable.Empty<BundleSetData>())
                     foreach (BundleData bundle in set?.Bundles ?? Enumerable.Empty<BundleData>())
@@ -138,6 +138,45 @@ namespace TheLongestYear.Loop
                     result[roomEntry.Key] = positions;
             }
             return result;
+        }
+
+        /// <summary>Resolves position j -&gt; absolute <c>Data/Bundles</c> index, per vanilla's own
+        /// mechanism (decompile: <c>BundleGenerator.Generate</c>, StardewValley/BundleGenerator.cs) --
+        /// <c>RandomBundleData.Keys</c> is a space-delimited list of absolute indices parsed via
+        /// <c>ArgUtility.SplitBySpace</c> into <c>list</c>, where <c>list[j]</c> is the absolute
+        /// index vanilla writes position j's pick under (<c>bundleData[AreaName + "/" + list[key]]</c>).
+        /// Falls back to <see cref="byIndex"/>'s own ascending key order (the pre-fix behavior) only
+        /// when <c>Keys</c> is missing or fails to parse -- logging one WARN naming the room, since
+        /// that fallback can silently disagree with vanilla's absolute indices.</summary>
+        private List<int> ResolvePositionAbsoluteIndex(RandomBundleData areaData, SortedDictionary<int, List<BundleSpec>> byIndex)
+        {
+            if (!string.IsNullOrWhiteSpace(areaData.Keys))
+            {
+                string[] tokens = areaData.Keys.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (tokens.Length > 0)
+                {
+                    var parsed = new List<int>(tokens.Length);
+                    bool allParsed = true;
+                    foreach (string token in tokens)
+                    {
+                        if (!int.TryParse(token, out int absoluteIndex))
+                        {
+                            allParsed = false;
+                            break;
+                        }
+                        parsed.Add(absoluteIndex);
+                    }
+                    if (allParsed)
+                        return parsed;
+                }
+            }
+
+            _monitor?.Log(
+                $"VanillaBundlePool: room '{areaData.AreaName}' RandomBundleData.Keys is missing or " +
+                "malformed -- falling back to Data/Bundles' own ascending index order for this area's " +
+                "position mapping (may not match vanilla's absolute indices).",
+                LogLevel.Warn);
+            return byIndex.Keys.ToList();
         }
 
         private void AddCandidateAtPosition(
