@@ -314,4 +314,17 @@ public class MetaStateTests
         var c = new GameplayConfig();
         Assert.True(c.Enabled);
     }
+
+    [Fact]
+    public void MeetsMetaRequirement_UpgradesNamespace_RequiresAllListedIds()
+    {
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("xp_mult_farming_4");
+        meta.OwnedUpgrades.Add("xp_mult_fishing_4");
+
+        Assert.True(meta.MeetsMetaRequirement("upgrades:xp_mult_farming_4,xp_mult_fishing_4"));
+        Assert.True(meta.MeetsMetaRequirement("upgrades:xp_mult_farming_4, xp_mult_fishing_4")); // tolerant of spaces
+        Assert.False(meta.MeetsMetaRequirement("upgrades:xp_mult_farming_4,xp_mult_combat_4"));
+        Assert.False(meta.MeetsMetaRequirement("upgrades:"));
+    }
 }
