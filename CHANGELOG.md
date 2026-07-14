@@ -3,6 +3,30 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.11.60 — 2026-07-14
+
+Localization release: the mod is now fully translatable. Consolidates the
+0.11.45–0.11.60 dev line.
+
+### Added
+- **Full i18n support (0.11.46–0.11.60).** Every player-visible string moved to
+  `i18n/default.json` (SMAPI translation framework): the upgrade catalog
+  (hand-authored rows keyed by id, generated rows via token templates),
+  themes/modifiers/category labels, all seven self-drawn menus, weekly/stash/
+  shrine quest text (including the composed objective checklist), HUD messages
+  and question dialogues (with explicit plural variants), GMCM options (live
+  language switch), the onboarding mail, furniture display names (re-injected
+  on locale change), the Day-1 intro speak lines, and the Day-28 cutscene.
+  English output is byte-identical to 0.11.44. Guard tests fail the build on
+  missing/orphaned keys or broken `{{tokens}}`. `docs/TRANSLATING.md` documents
+  the translator workflow — a translation is now a single JSON file.
+
+### Fixed
+- **World-state keep/wipe audit (0.11.45).** A one-time audit of every
+  world-level (`netWorldState`) field the loop reset touches; closed the
+  remaining "survives the reset" leak class with an explicit keep/wipe ruling
+  per field.
+
 ## 0.11.44 — 2026-07-13
 
 The big fix release: weekly goals redesigned around real bundle slots, remixed

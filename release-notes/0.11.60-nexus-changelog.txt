@@ -1,0 +1,3 @@
+The Longest Year is now fully translatable. Every player-visible string — the upgrade catalog, menus, quests, dialogue, mail, config options — now lives in i18n/default.json. A translation is a single JSON file: no DLL edits, no rebuilds, per-line English fallback. See docs/TRANSLATING.md on GitHub.
+Nothing changes in English — every string renders exactly as it did in 0.11.44.
+Reset hardening: a one-time audit of every world-level state field closed the last known class of "survived the loop" leaks.
