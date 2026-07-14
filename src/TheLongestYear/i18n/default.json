@@ -10,7 +10,7 @@
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
     "hud.theme-complete": "Weekly theme complete! +{{jp}} JP, drawback lifted.",
-    "hud.nothing-to-donate": "Nothing left to donate for this theme - drawback lifted.",
+    "hud.nothing-to-donate": "The Junimos are overwhelmed by your donations - no requests this week! Drawback lifted.",
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
     "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
@@ -285,6 +285,7 @@
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",
+    "menu.hub.season-mult": "Junimo gratitude grows with the seasons - donations now earn x{{mult}} JP.",
     "menu.hub.reroll": "Re-roll Themes",
     "menu.hub.reroll-count": "Re-roll ({{count}})",
     "menu.hub.no-offer": "(no offer)",

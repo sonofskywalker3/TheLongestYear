@@ -40,6 +40,12 @@ namespace TheLongestYear.UI
         private const int BodyLineHeight = 26;
         private const int SectionGap = 8;
 
+        // ---------- Header tip lines (banking tip + season-multiplier line) ----------
+        // Vertical gap from the banking-tip line to the season-multiplier line below it
+        // (0.12.0 clarity pass). titleBlock must reserve this same amount so the cards
+        // don't start until this second line has fully cleared — see RecomputeBoundsAndLayout.
+        private const int SeasonMultLineHeight = 36;
+
         // ---------- Bonus item icons ----------
         // Smaller than the v1 icon grid — bonus row needs to fit up to 7 icons in CardWidth-pad.
         private const float BonusIconScale = 0.75f;
@@ -280,6 +286,17 @@ namespace TheLongestYear.UI
             }
         }
 
+        /// <summary>Current season's JP multiplier, formatted for display ("1", "1.5", "2.5", "4").
+        /// Resolved through the exact same source the JP economy uses (<see cref="JpCalculator"/>
+        /// over <see cref="GameplayConfig.Jp"/>) rather than re-deriving the season/multiplier
+        /// mapping here, so this display can never drift from what donations actually award.</summary>
+        private string SeasonMultiplierDisplay()
+        {
+            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+            double mult = new JpCalculator(_config.Jp).Multiplier(week);
+            return mult.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         // ---------- layout ----------
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
@@ -300,7 +317,7 @@ namespace TheLongestYear.UI
                 ? weatherBlockH + (weatherBlockH > 0 && cartRowsH > 0 ? PreviewSpacing : 0) + cartRowsH + PanelPadding
                 : 0;
 
-            int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 32 + 20;
+            int titleBlock = 24 + (_junimoTexture != null ? JunimoSpriteSize + 12 : 0) + 48 + 32 + 20 + SeasonMultLineHeight;
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
             // Reserve space for the reroll debug button row below preview rows / cards — only when
@@ -584,6 +601,14 @@ namespace TheLongestYear.UI
             Vector2 tipSize = Game1.smallFont.MeasureString(bankingTip);
             Utility.drawTextWithShadow(b, bankingTip, Game1.smallFont,
                 new Vector2(panelCenterX - tipSize.X / 2f, drawY),
+                Game1.textColor);
+
+            drawY += SeasonMultLineHeight;
+            string multTip = Strings.Get("menu.hub.season-mult",
+                new Dictionary<string, string> { ["mult"] = SeasonMultiplierDisplay() });
+            Vector2 multSize = Game1.smallFont.MeasureString(multTip);
+            Utility.drawTextWithShadow(b, multTip, Game1.smallFont,
+                new Vector2(panelCenterX - multSize.X / 2f, drawY),
                 Game1.textColor);
 
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds);
