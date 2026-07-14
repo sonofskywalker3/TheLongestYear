@@ -185,6 +185,7 @@ public sealed class MetaState
     /// <list type="bullet">
     ///   <item><term>species:&lt;name&gt;</term><description>Animal species ever owned (case-insensitive). Vanilla Stardew is inconsistent about casing in Data/FarmAnimals vs FarmAnimal.type.</description></item>
     ///   <item><term>upgrade:&lt;id&gt;</term><description>Permanently purchased upgrade id (case-sensitive; our own lowercase ids).</description></item>
+    ///   <item><term>upgrades:&lt;id1&gt;,&lt;id2&gt;,...</term><description>Comma-separated upgrade ids, ALL must be owned (conjunction).</description></item>
     ///   <item><term>quest:&lt;id&gt;</term><description>Quest id ever completed across all runs (case-sensitive; vanilla quest ids are lowercase by convention).</description></item>
     ///   <item><term>mail:&lt;flag&gt;</term><description>Mail flag ever received across all runs (case-insensitive). Vanilla CC code uses mixed casing for mail flags.</description></item>
     ///   <item><term>season:&lt;n&gt;</term><description>True when CompletedResets &gt;= n. "season" here means run-number / number of completed resets, NOT the in-game calendar season (Spring/Summer/Fall/Winter).</description></item>
