@@ -25,7 +25,9 @@ namespace TheLongestYear.Loop
         private readonly RunManager _runManager = new RunManager(new GateEvaluator());
         private readonly JpCalculator _jp;
         private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
-        private readonly System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
+        // Not readonly: ReplaceRequirements (owned-bundle engine wiring) swaps this after a
+        // reset regenerates the manifest -- see that method's doc comment.
+        private System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
 
         /// <summary>Which day-28 bedtime cutscene is queued for the next morning (set in
         /// OnDayEnding from the gate's RunAction). The <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/>
@@ -47,6 +49,13 @@ namespace TheLongestYear.Loop
 
         /// <summary>Classified bundle requirements for this run; exposed for the UI + donation layer.</summary>
         public System.Collections.Generic.IReadOnlyList<BundleRequirement> Requirements => _requirements;
+
+        /// <summary>Swaps the run's requirement manifest. Exists solely for reset-time owned-
+        /// bundle engine regeneration (see FinalizeReset, which calls this right after
+        /// WorldResetService.PerformReset returns its freshly-generated manifest) -- requirements
+        /// are otherwise fixed for the lifetime of a RunController instance.</summary>
+        public void ReplaceRequirements(System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements)
+            => _requirements = requirements;
 
         /// <summary>CcItem catalog (rarity/season/theme metadata); exposed so the UI can look up
         /// per-season obtainability when computing the bonus-item preview per card.</summary>
@@ -425,6 +434,17 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"FinalizeReset ({reason}): PerformReset threw — reset NOT applied: {ex}", LogLevel.Error);
                 throw;
             }
+            // Re-inject the manifest PerformReset just generated for the new loop -- before
+            // DoDayStartSeasonAndHub below, which samples goal slots from _requirements. Null only
+            // if PerformReset somehow returned without generating (shouldn't happen post-wiring;
+            // guarded rather than trusted so a future refactor can't silently null out the run).
+            if (_reset.LastGeneratedRequirements != null)
+                ReplaceRequirements(_reset.LastGeneratedRequirements);
+            else
+                _monitor.Log(
+                    $"FinalizeReset ({reason}): WorldResetService.LastGeneratedRequirements was null — " +
+                    "keeping the previous requirement manifest.",
+                    LogLevel.Warn);
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();

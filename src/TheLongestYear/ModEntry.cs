@@ -329,19 +329,24 @@ namespace TheLongestYear
             JunimoStashCapacityPatch.Connect(_meta.State);
             XpMultiplierPatch.Connect(_meta.State);
             PatchLog.Connect(this.Monitor);
+            // Computed once and shared by both the reset service (owned-bundle engine seed-time
+            // manifest generation, see WorldResetService.PerformReset) and the catalog builder
+            // below -- the same merged config the legacy classify path has always used.
+            var themeOverrides = ParseThemeOverrides();
+            var itemSeasonPins = ParseItemSeasonPins();
+            var bundleQuotas = ParseBundleQuotas();
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
-                _stashService, _mountainUnlock, _bookFurniture, _planningShrine);
+                _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
+                itemSeasonPins, bundleQuotas);
 
             _seasonResolver = new SeasonResolver();
             var builder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
-                ParseThemeOverrides(),
-                ParseItemSeasonPins(),
-                ParseBundleQuotas());
+                themeOverrides, itemSeasonPins, bundleQuotas);
             _catalog = builder.Build();
-            _requirements = builder.BuildRequirements();
+            _requirements = ResolveRequirements(builder, itemSeasonPins, bundleQuotas);
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _questService = new WeeklyThemeQuestService(
@@ -1401,6 +1406,85 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"Vault bundle {bundleIndex} marked paid. Paid this run: [{string.Join(", ", _meta.Run.VaultBundlesPaid)}]",
                 LogLevel.Info);
+        }
+
+        /// <summary>Decide where this save's bundle requirement manifest comes from (owned-bundle
+        /// engine wiring, Task 6). Three cases, in order:
+        /// <list type="number">
+        ///   <item>Engine mode -- <c>BundlesGeneratedForReset == CompletedResets</c>: the live
+        ///   save's bundles were engine-written for THIS exact loop. Regenerate the manifest
+        ///   deterministically from the seed (Generate() is pure given (UniqueMultiplayerID,
+        ///   CompletedResets), so this reproduces the same set WriteToWorld wrote without a
+        ///   second write) and defensively verify every generated key still exists in the live
+        ///   BundleData before trusting it -- a mismatch (mod list changed, save edited by hand,
+        ///   etc.) logs a WARN and falls through to case 3 instead of silently serving a manifest
+        ///   that disagrees with what's actually on the CC board.</item>
+        ///   <item>Fresh engine-era run-create -- no prior reset (<c>CompletedResets == 0</c>), no
+        ///   legacy marker (<c>BundlesGeneratedForReset == -1</c>), and the CC is untouched (no
+        ///   completed slot -- see <see cref="AnyBundleSlotComplete"/>): a brand-new save the
+        ///   engine gets to author from day 1. Generates, WRITES the bundles into the world (the
+        ///   only branch here that does), and stamps the marker.</item>
+        ///   <item>Legacy -- everything else: an in-flight pre-engine loop finishing out on its
+        ///   existing bundles. Read-and-classify off live BundleData, unchanged from before this
+        ///   task.</item>
+        /// </list>
+        /// The CcItem catalog (<paramref name="builder"/>.Build(), called by the caller) always
+        /// reads live BundleData regardless of which case fires here -- it reflects whatever
+        /// bundles are actually live, engine-written or not.</summary>
+        private IReadOnlyList<BundleRequirement> ResolveRequirements(
+            BundleCatalogBuilder builder,
+            System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins,
+            System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas)
+        {
+            MetaState state = _meta.State;
+            // See WorldResetService.PerformReset step 11a for why this is the seed basis (not
+            // Game1.uniqueIDForThisGame, which our own reset re-seeds every loop and is time-based
+            // to begin with) -- it must match exactly what generated whatever is currently live.
+            ulong seedBasis = unchecked((ulong)Game1.player.UniqueMultiplayerID);
+
+            if (state.BundlesGeneratedForReset == state.CompletedResets)
+            {
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor);
+                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, state.CompletedResets));
+
+                Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
+                bool mismatch = set.Bundles.Any(spec => !liveData.ContainsKey(BundleDataWriter.Key(spec)));
+                if (!mismatch)
+                    return set.BuildRequirements(itemSeasonPins, bundleQuotas);
+
+                this.Monitor.Log(
+                    "ResolveRequirements: engine manifest mismatch against live BundleData — " +
+                    "falling back to read path.",
+                    LogLevel.Warn);
+                // fall through to the legacy read-and-classify path below.
+            }
+            else if (state.CompletedResets == 0 && state.BundlesGeneratedForReset == -1 && !AnyBundleSlotComplete())
+            {
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor);
+                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
+                engine.WriteToWorld(set, this.Monitor);
+                state.BundlesGeneratedForReset = 0;
+                return set.BuildRequirements(itemSeasonPins, bundleQuotas);
+            }
+
+            return builder.BuildRequirements();
+        }
+
+        /// <summary>True when any CC bundle completion slot is already marked complete. Same
+        /// FieldDict-scan idiom as WorldResetService.PerformReset step 1a's defensive wipe, used
+        /// read-only here to detect whether a fresh save's Community Center has been touched yet
+        /// (gates the run-create branch of <see cref="ResolveRequirements"/>).</summary>
+        private static bool AnyBundleSlotComplete()
+        {
+            foreach (KeyValuePair<int, Netcode.NetArray<bool, Netcode.NetBool>> kvp
+                     in Game1.netWorldState.Value.Bundles.FieldDict)
+            {
+                Netcode.NetArray<bool, Netcode.NetBool> arr = kvp.Value;
+                for (int i = 0; i < arr.Length; i++)
+                    if (arr[i])
+                        return true;
+            }
+            return false;
         }
 
         /// <summary>Merge GameplayConfig.DefaultItemSeasonPins + user ItemSeasonPins. User wins on conflict.

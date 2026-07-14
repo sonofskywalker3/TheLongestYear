@@ -13,6 +13,7 @@ using StardewValley.Network;
 using StardewValley.Quests;
 using TheLongestYear.Core;
 using TheLongestYear.UI;
+using CoreSeason = TheLongestYear.Core.Season;
 
 namespace TheLongestYear.Loop
 {
@@ -37,6 +38,8 @@ namespace TheLongestYear.Loop
         private readonly MountainUnlock _mountainUnlock;
         private readonly TheLongestYear.Integration.BookFurniture _bookFurniture;
         private readonly TheLongestYear.UI.PlanningShrineService _planningShrine;
+        private readonly IReadOnlyDictionary<string, CoreSeason> _itemSeasonPins;
+        private readonly IReadOnlyDictionary<string, int[]> _bundleQuotas;
 
         /// <summary>The pre-reset save folder recorded in <see cref="PerformReset"/>, deleted by
         /// <see cref="CleanupAbandonedSaveFolder"/> only after the post-reset full save confirms the
@@ -44,6 +47,12 @@ namespace TheLongestYear.Loop
         private string _abandonedSaveFolder;
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
+
+        /// <summary>The bundle-requirement manifest the most recent <see cref="PerformReset"/> call
+        /// generated for the new loop (owned-bundle engine wiring) -- RunController.FinalizeReset
+        /// re-injects this into the run via RunController.ReplaceRequirements right after PerformReset
+        /// returns. Null until the first PerformReset call.</summary>
+        public IReadOnlyList<BundleRequirement> LastGeneratedRequirements { get; private set; }
 
         public WorldResetService(
             IMonitor monitor,
@@ -57,7 +66,9 @@ namespace TheLongestYear.Loop
             JunimoStashService stashService,
             MountainUnlock mountainUnlock,
             TheLongestYear.Integration.BookFurniture bookFurniture,
-            TheLongestYear.UI.PlanningShrineService planningShrine)
+            TheLongestYear.UI.PlanningShrineService planningShrine,
+            IReadOnlyDictionary<string, CoreSeason> itemSeasonPins,
+            IReadOnlyDictionary<string, int[]> bundleQuotas)
         {
             _monitor = monitor;
             _meta = meta;
@@ -71,6 +82,8 @@ namespace TheLongestYear.Loop
             _mountainUnlock = mountainUnlock;
             _bookFurniture = bookFurniture;
             _planningShrine = planningShrine;
+            _itemSeasonPins = itemSeasonPins;
+            _bundleQuotas = bundleQuotas;
         }
 
         public void PerformReset()
@@ -389,6 +402,43 @@ namespace TheLongestYear.Loop
 
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
+
+            // 11a. Regenerate the owned-bundle set for the new loop (Task 6: engine wiring) and
+            // expose its requirement manifest via LastGeneratedRequirements so FinalizeReset can
+            // re-inject it (RunController.ReplaceRequirements) before the hub samples goal slots.
+            //
+            // Seed basis: NOT Game1.uniqueIDForThisGame. Decompile-verified
+            // (Utility.NewUniqueIdForThisGame, StardewValley/Utility.cs): it's
+            // `(ulong)(DateTime.UtcNow - epoch).TotalSeconds` -- wall-clock, not deterministic --
+            // and step 0 above just reseeded it to a fresh value for THIS loop. Two problems rule
+            // it out entirely, not just the obvious one:
+            //   (a) using the value captured HERE (post-reseed) would make a replayed reset
+            //       reroll: ForceFullSave (called by FinalizeReset right after this method
+            //       returns) explicitly documents a skip-and-defer-to-next-sleep path when an
+            //       event/minigame is active, so "generate+write happened but the save hasn't
+            //       landed on disk yet" is a real, reachable window, not just a theoretical
+            //       process-kill race. A reload from that window followed by re-triggering the
+            //       reset would draw a NEW wall-clock reseed and a DIFFERENT bundle set --
+            //       exactly the reroll the engine exists to prevent.
+            //   (b) using a PRE-reset capture (the id from BEFORE step 0's reseed) fixes (a) but
+            //       breaks the far more common case: this id is only ever this loop's OLD id --
+            //       every ordinary subsequent reload of the NEW save (the whole rest of this
+            //       loop's playtime) sees the POST-reseed id instead, so ModEntry's SaveLoaded
+            //       engine-mode branch could never reproduce this exact generation and would
+            //       permanently fall back to the legacy read path for the entire loop.
+            // Game1.player.UniqueMultiplayerID has neither problem: it's assigned once at farmer
+            // creation, is part of the Farmer's own persisted save data, and loadForNewGame
+            // above only resets the EXISTING persistent Farmer's stats/inventory -- it never
+            // reassigns this id (decompile-verified, Game1.loadForNewGame). So it is IDENTICAL
+            // across a replayed reset (satisfies the anti-scum guarantee) AND identical on every
+            // later reload of this loop's save (satisfies SaveLoaded's manifest-first re-derivation) --
+            // the one value that is simultaneously stable across both.
+            var engine = new BundleEngine(_monitor);
+            int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.CompletedResets);
+            GeneratedBundleSet generatedSet = engine.Generate(seed);
+            engine.WriteToWorld(generatedSet, _monitor);
+            _meta.BundlesGeneratedForReset = _meta.CompletedResets;
+            LastGeneratedRequirements = generatedSet.BuildRequirements(_itemSeasonPins, _bundleQuotas);
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();
