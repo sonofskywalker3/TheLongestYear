@@ -353,4 +353,29 @@ public class UpgradeCatalogTests
         Assert.NotNull(def);
         Assert.Equal("bus:4", def!.RunReachRequirement);
     }
+
+    [Fact]
+    public void XpMultFamily_IsInCatalogWithChainAndCapstoneGate()
+    {
+        string[] slugs = { "farming", "fishing", "foraging", "mining", "combat" };
+        foreach (var slug in slugs)
+        {
+            for (int tier = 1; tier <= 4; tier++)
+            {
+                var def = UpgradeCatalog.TryGet($"xp_mult_{slug}_{tier}");
+                Assert.NotNull(def);
+                Assert.Equal(UpgradeCategory.Efficiency, def!.Category);
+                Assert.Equal(tier == 1 ? null : $"xp_mult_{slug}_{tier - 1}", def.PrerequisiteId);
+            }
+            Assert.Equal(100, UpgradeCatalog.TryGet($"xp_mult_{slug}_1")!.Cost);
+            Assert.Equal(550, UpgradeCatalog.TryGet($"xp_mult_{slug}_4")!.Cost);
+        }
+
+        var capstone = UpgradeCatalog.TryGet("xp_mult_all");
+        Assert.NotNull(capstone);
+        Assert.Equal(3000, capstone!.Cost);
+        Assert.Equal(
+            "upgrades:xp_mult_farming_4,xp_mult_fishing_4,xp_mult_foraging_4,xp_mult_mining_4,xp_mult_combat_4",
+            capstone.MetaRequirement);
+    }
 }

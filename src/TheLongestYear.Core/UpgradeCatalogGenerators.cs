@@ -137,4 +137,40 @@ internal static class UpgradeCatalogGenerators
                 MasteryCosts[level], prereq, metaRequirement: null, runReachRequirement: $"mastery:{level}");
         }
     }
+
+    // XP multiplier costs, indexed [1..4] (tier N = x(N+1) on one skill). Deliberately
+    // cheaper than the keep-level chain: keeps set your starting floor, multipliers set
+    // your re-leveling slope (spec 2026-07-14 economy Change 3). Full family = 5x1200
+    // + 3000 capstone = 9000 JP for x10-everything — deep-meta territory.
+    private static readonly long[] XpMultCosts = { 0, 100, 200, 350, 550 };
+
+    private static readonly string[] XpMultSkillSlugs = { "farming", "fishing", "foraging", "mining", "combat" };
+
+    /// <summary>Yield the 20 per-skill xp_mult tiers + the xp_mult_all capstone (21 rows).</summary>
+    public static IEnumerable<UpgradeDefinition> EfficiencyXpMultipliers()
+    {
+        foreach (var slug in XpMultSkillSlugs)
+            for (int tier = 1; tier <= 4; tier++)
+            {
+                string id = $"xp_mult_{slug}_{tier}";
+                string? prereq = tier == 1 ? null : $"xp_mult_{slug}_{tier - 1}";
+                var tokens = new Dictionary<string, string>
+                {
+                    ["skill"] = $"i18n:skill.{slug}",
+                    ["factor"] = (tier + 1).ToString(),
+                };
+                yield return new UpgradeDefinition(
+                    id, UpgradeCategory.Efficiency,
+                    "upgrade-tpl.xp-mult.name", "upgrade-tpl.xp-mult.desc", tokens,
+                    XpMultCosts[tier], prereq,
+                    metaRequirement: null, runReachRequirement: null);
+            }
+
+        yield return new UpgradeDefinition(
+            "xp_mult_all", UpgradeCategory.Efficiency,
+            "upgrade.xp_mult_all.name", "upgrade.xp_mult_all.desc", tokens: null,
+            3000, null,
+            metaRequirement: "upgrades:xp_mult_farming_4,xp_mult_fishing_4,xp_mult_foraging_4,xp_mult_mining_4,xp_mult_combat_4",
+            runReachRequirement: null);
+    }
 }
