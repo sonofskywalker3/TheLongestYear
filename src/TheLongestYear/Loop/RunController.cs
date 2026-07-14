@@ -583,7 +583,6 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.FailReset:
-                    AwardInterimJp("run failed");
                     // The morning rewind un-restores every CC room. Strip any room the player
                     // FINISHED TODAY out of mailForTomorrow so its overnight restoration scene
                     // (the bus/greenhouse/minecart WorldChangeEvent) never plays — otherwise the
@@ -602,7 +601,6 @@ namespace TheLongestYear.Loop
                     // question we already answered.
                     if (!_store.State.VictoryAcknowledged)
                     {
-                        AwardInterimJp("run WON — loop broken");
                         // Queue the win screen for the morning. Routes through the same
                         // Day28CutsceneDriver/OnCutsceneEnded path as Fail/Continue (the driver
                         // opens VictoryMenu for the Win branch); OnCutsceneEnded then opens the
@@ -935,20 +933,6 @@ namespace TheLongestYear.Loop
                 return;
             }
             PresentOffer(pending.week, pending.season);
-        }
-
-        private void AwardInterimJp(string reason)
-        {
-            var lines = Run.DonatedItemIds
-                .GroupBy(CcItemCatalog.RarityOf)
-                .Select(g => new DonationLine(g.Key, g.Count()));
-            long awarded = JpBoostHelper.Apply(
-                _store.State,
-                _jp.ForDonationBatch(lines, Run.WeekOfYear, bundlesCompleted: 0, roomsCompleted: 0));
-            _store.State.JunimoPoints += awarded;
-            _monitor.Log(
-                $"Interim JP for {reason}: +{awarded} (now {_store.State.JunimoPoints}). Persists on this day's save.",
-                LogLevel.Info);
         }
 
         private string DescribeWeek() => $"{Run.Season} day {Run.DayOfMonth} (week {Run.WeekOfYear}).";
