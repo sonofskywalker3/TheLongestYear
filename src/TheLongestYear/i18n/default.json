@@ -11,6 +11,7 @@
     "hud.festival-over": "The festival is over.",
     "hud.theme-complete": "Weekly theme complete! +{{jp}} JP, drawback lifted.",
     "hud.nothing-to-donate": "Nothing left to donate for this theme - drawback lifted.",
+    "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
     "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
 

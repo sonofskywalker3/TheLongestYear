@@ -576,6 +576,16 @@ namespace TheLongestYear.Loop
 
                 case RunAction.AdvanceMonth:
                     _monitor.Log($"Month cleared ({Run.Season}). Advancing.", LogLevel.Info);
+                    // Season-checkpoint award (spec 2026-07-14 economy Change 2): pays at the ENTERING
+                    // season's multiplier so progressing always out-earns re-farming spring.
+                    long checkpointJp = JpBoostHelper.Apply(_store.State, _jp.CheckpointBonus(Run.WeekOfYear + 1));
+                    _store.State.JunimoPoints += checkpointJp;
+                    _monitor.Log(
+                        $"Season checkpoint passed -> +{checkpointJp} JP (now {_store.State.JunimoPoints}).",
+                        LogLevel.Info);
+                    Game1.addHUDMessage(new HUDMessage(
+                        Strings.Get("hud.checkpoint-award", new Dictionary<string, string> { ["jp"] = checkpointJp.ToString() }),
+                        HUDMessage.newQuest_type));
                     // Queue the "great job, next season" Junimo cutscene for the morning. The
                     // game still advances the date; OnCutsceneEnded → DoDayStartSeasonAndHub
                     // clears the month's selections and opens the planning hub after the scene.
