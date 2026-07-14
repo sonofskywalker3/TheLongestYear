@@ -327,4 +327,10 @@ public class MetaStateTests
         Assert.False(meta.MeetsMetaRequirement("upgrades:xp_mult_farming_4,xp_mult_combat_4"));
         Assert.False(meta.MeetsMetaRequirement("upgrades:"));
     }
+
+    [Fact]
+    public void BundlesGeneratedForReset_DefaultsToNever()
+    {
+        Assert.Equal(-1, new MetaState().BundlesGeneratedForReset);
+    }
 }
