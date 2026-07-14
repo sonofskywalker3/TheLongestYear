@@ -1,22 +1,15 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.11.44).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.11.60).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.11.44[/b][/size]
-The big fix release: weekly goals redesigned around real bundle slots, remixed bundles fully supported, the loop reset made airtight, and new upgrades. Changes since 0.11.0:
+[size=5][b]What's New in 0.11.60[/b][/size]
+[b]The Longest Year is now fully translatable.[/b] Every player-visible string — the ~180-entry upgrade catalog, all the menus, weekly quests, dialogue, mail, and config options — now lives in a plain JSON file ([font=Courier New]i18n/default.json[/font]). Adding a language means copying that file, translating the values, and dropping it into the mod folder: no DLL edits, no rebuilds, and any line you haven't translated yet falls back to English automatically. See [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/docs/TRANSLATING.md]TRANSLATING.md[/url] — and if you make one, let us know so we can link it from the mod page.
 [list]
-[*][b]Weekly goals now target real bundle slots.[/b] Complete redesign: each goal names a specific still-open bundle slot — like [font=Courier New]Parsnip x5 (gold) — Quality Crops[/font] — and ticks only when that exact slot is completed. Goals can no longer be cleared by a single item when five were asked, demand items with no matching open slot, or ask for something you already donated. If nothing's open, the week has no quest and the drawback lifts. The 1.5× banking bonus is slot-strict.
-[*][b]Remixed bundles all count.[/b] Remixed or custom bundles that matched no known pattern were silently left out of season checkpoints and weekly themes — the gate quietly shrank on the recommended remixed setup. Every bundle now classifies (custom-bundle mods included), with sensible quotas derived for unknown ones.
-[*][b]The loop reset is airtight.[/b] A full audit closed every "survived the loop" leak: museum donations and lost library books, worn boots/rings/trinkets, monster-slayer progress, mine milestone chests, power books / mastery / prize tickets, and max health/stamina all rewind with the year now. And your [b]clothes stay on[/b] — hat, shirt, and pants are yours to keep.
-[*][b]Kept buildings stay where YOU put them.[/b] Coop, barn, and silo keeps rebuild each loop at their last position instead of a fixed spot, just like the stable. New [b]Keep Silo[/b] upgrade (150 JP, Buildings).
-[*][b]New Foresight chain: Cart Whisperer I–V.[/b] On Traveling Cart days, the shrine planning view flags which of the cart's actual stock can feed a Community Center bundle.
-[*][b]Green rain is back in summer.[/b] The scheduler was overriding vanilla's green-rain day; it's now reserved like a festival and shows in the TV and Weather Sage forecasts. A reset also no longer drags the old day's weather into Spring 1.
-[*][b]The farm cave asks again.[/b] Each loop, entering the cave offers the mushrooms / fruit bats choice fresh instead of locking your first-ever pick in forever.
-[*][b]Big-chest mod compatibility.[/b] Better Chests and Unlimited Storage no longer inflate the 4-slot Junimo Stash into a giant grid.
-[*][b]Smaller fixes:[/b] the horse no longer asks to be renamed every morning; a theme pick can't be lost to a stale offer; quest-tip layout.
+[*][b]Nothing changes in English.[/b] Every string renders exactly as it did in 0.11.44 — this release is plumbing.
+[*][b]Reset hardening.[/b] A one-time audit of every world-level state field closed the last known class of "survived the loop" leaks.
 [/list]
 Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
 
@@ -79,6 +72,11 @@ Everything difficulty-related lives in [font=Courier New]config.json[/font] — 
 The mod leans on vanilla sprites throughout. If anyone would enjoy making some custom book/sprite artwork (the Cookbook and Craftbook especially), I'd genuinely love to accept it and credit you. Drop a note in the comments.
 
 [i]Banner art by [b]cwybabiesucks[/b] — thank you![/i]
+
+[line]
+
+[size=5][b]Translations[/b][/size]
+As of 0.11.60, every player-visible string in the mod lives in a JSON file ([font=Courier New]i18n/default.json[/font]) — the mod is fully translatable with no DLL edits or rebuilds. See [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/docs/TRANSLATING.md]TRANSLATING.md[/url] for how to add a language. If you translate it, let us know (Nexus DM or GitHub issue) and we'll link your work from the mod page.
 
 [line]
 
