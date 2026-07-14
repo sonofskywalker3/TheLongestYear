@@ -24,6 +24,12 @@ public sealed class JpSettings
     /// room completion bonuses.</summary>
     public int WeeklyQuestCompletionBonus { get; set; } = 30;
 
+    /// <summary>Bonus JP awarded when a season checkpoint is PASSED (day-28 gate cleared on
+    /// Spring/Summer/Fall). Scaled by the multiplier of the season being ENTERED, so pushing
+    /// deeper always beats re-farming spring (spec 2026-07-14, anti-cheese). Winter 28 is the
+    /// win, not a checkpoint.</summary>
+    public int CheckpointCompletionBonus { get; set; } = 100;
+
     /// <summary>Gold paid to the CC Vault per 1 JP awarded. Vault payments reward JP proportional
     /// to the gold sunk (2,500g→3, 5,000g→5, 10,000g→10, 25,000g→25 at the default rate). Unlike
     /// item/bundle JP this is NOT season-multiplied — gold's value is season-independent.</summary>

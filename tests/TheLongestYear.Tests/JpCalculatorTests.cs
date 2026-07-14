@@ -82,4 +82,22 @@ public class JpCalculatorTests
         Assert.Equal(Make().VaultPayment(25000), Make().VaultPayment(25000));
         Assert.True(Make().VaultPayment(25000) > Make().VaultPayment(2500));
     }
+
+    [Fact]
+    public void CheckpointBonus_ScalesByEnteringSeasonMultiplier()
+    {
+        var jp = new JpCalculator(new JpSettings());
+        // Day 28 of Spring is week 4; the entering week is 5 (Summer, x1.5).
+        Assert.Equal(150, jp.CheckpointBonus(5));
+        // Entering Fall (week 9, x2.5) and Winter (week 13, x4.0).
+        Assert.Equal(250, jp.CheckpointBonus(9));
+        Assert.Equal(400, jp.CheckpointBonus(13));
+    }
+
+    [Fact]
+    public void CheckpointBonus_UsesConfiguredBase()
+    {
+        var jp = new JpCalculator(new JpSettings { CheckpointCompletionBonus = 40 });
+        Assert.Equal(60, jp.CheckpointBonus(5)); // 40 * 1.5
+    }
 }

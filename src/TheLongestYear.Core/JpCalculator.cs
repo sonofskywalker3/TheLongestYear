@@ -35,6 +35,11 @@ public sealed class JpCalculator
     /// <summary>Bonus JP awarded on weekly theme quest completion.</summary>
     public long WeeklyQuestBonus(int weekOfYear) => Scale(_s.WeeklyQuestCompletionBonus, weekOfYear);
 
+    /// <summary>Season-checkpoint completion bonus, scaled at the ENTERING week
+    /// (pass Run.WeekOfYear + 1 from the day-28 boundary).</summary>
+    public long CheckpointBonus(int enteringWeekOfYear) =>
+        Scale(_s.CheckpointCompletionBonus, enteringWeekOfYear);
+
     /// <summary>JP for paying a CC Vault money bundle, proportional to the gold spent
     /// (gold / VaultGoldPerJp, rounded, minimum 1). NOT season-multiplied.</summary>
     public long VaultPayment(int gold)
