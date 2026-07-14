@@ -137,6 +137,18 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   barn tiles. Hay does not carry over. **✅ PLAYTEST CONFIRMED 2026-07-13:** with a silo built
   this run the shrine shows the row (150 JP, Buildings) — user bought it. **PENDING next reset:**
   silo rebuilds at (60,9).
+- **✅ 0.12.0 ECONOMY/CLARITY HALF SHIPPED v0.11.61–68 (2026-07-14, deployed to PC Mods, boot
+  smoke 49 patches/0 failed).** Specs `docs/superpowers/specs/2026-07-14-tly-0.12.0-*.md`; plan
+  `docs/superpowers/plans/2026-07-14-tly-0.12.0-economy-clarity.md`; SDD ledger
+  `.superpowers/sdd/progress.md`. Landed: donation-JP double-pay removed (AwardInterimJp),
+  season-checkpoint JP award (100 × entering-season mult → 150/250/400), xp_mult upgrade family
+  (5 skills × x2..x5 at 100/200/350/550 + 3000 JP "Junimo Insight" x10 capstone, capstone-only
+  touches Mastery), hub line advertising the season multiplier (VERIFIED rendering), empty-week
+  "Junimos are overwhelmed" reword. **PENDING user playtest:** checkpoint-award HUD toast
+  visibility at day-end fade (log line is authoritative), xp_mult rows in the shrine + the
+  "  (insufficient)" leading-space eyeball (next natural shrine visit), a real donation single-pay
+  log check. **Remaining 0.12.0 half = owned-bundle engine** (spec approved; plan in progress).
+  Cult repricing (red cabbage/starfruit) DEFERRED pending engine-baseline playtest per user ruling.
 - **⚖️ Balance (0.12.0/0.13.0 fodder — difficulty too low for strong players).** *khauser13
   (12-13 Jun)*: finished the year first try on BOTH standard and remixed (sleeping idle days);
   suggests harder bundles / permanent debuffs; winter weekly themes felt pointless (everything
