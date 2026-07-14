@@ -203,6 +203,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
+            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [completedResets]", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
@@ -1245,6 +1246,7 @@ namespace TheLongestYear
                 case "tly_runstate": this.CmdRunState(command, args); break;
                 case "tly_catalog": this.CmdCatalog(command, args); break;
                 case "tly_classify": this.CmdClassify(command, args); break;
+                case "tly_genbundles": this.CmdGenBundles(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
@@ -1325,6 +1327,117 @@ namespace TheLongestYear
             IReadOnlyList<CcItem> catalog = builder.Build();
             IReadOnlyList<BundleRequirement> requirements = builder.BuildRequirements();
             this.Monitor.Log($"tly_classify: {catalog.Count} catalog items, {requirements.Count} requirements (diagnostics only — active run unchanged).", LogLevel.Info);
+        }
+
+        /// <summary>Diagnostics-only dry run of the owned-bundle engine for a given loop number:
+        /// generates the set (nothing written or persisted — never touches live BundleData or
+        /// MetaState), logs each room's picked bundle names + slot counts, the manifest
+        /// classification summary, and a determinism self-check (regenerates off the SAME seed
+        /// and diffs the two sets byte-for-byte). Mirrors <see cref="CmdClassify"/>'s design —
+        /// locals only. Guarded exactly like tly_classify (requires a loaded save) because the
+        /// seed basis is Game1.player.UniqueMultiplayerID, which doesn't exist at the title
+        /// screen.</summary>
+        private void CmdGenBundles(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            int completedResets = args.Length > 0 && int.TryParse(args[0], out int resets)
+                ? resets
+                : _meta.State.CompletedResets;
+
+            // Same seed basis as ResolveRequirements/WorldResetService.PerformReset — see
+            // ResolveRequirements' comment for why (Game1.uniqueIDForThisGame is time-based and
+            // re-seeded by our own reset every loop, so it can't be the basis).
+            ulong seedBasis = unchecked((ulong)Game1.player.UniqueMultiplayerID);
+            int seed = BundleEngineSeed.For(seedBasis, completedResets);
+
+            System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
+            System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
+
+            GeneratedBundleSet first = new TheLongestYear.Loop.BundleEngine(this.Monitor).Generate(seed);
+            this.Monitor.Log(
+                $"tly_genbundles: generated for loop {completedResets} (seed {seed}), diagnostics only — nothing written.",
+                LogLevel.Info);
+            LogGeneratedBundleSet(first, itemSeasonPins, bundleQuotas);
+
+            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor).Generate(seed);
+            string difference = FirstBundleSetDifference(first, second);
+            if (difference == null)
+                this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
+            else
+                this.Monitor.Log($"tly_genbundles: determinism ERROR — {difference}", LogLevel.Error);
+        }
+
+        /// <summary>Logs each room's picked bundle names + slot counts, then the manifest
+        /// classification summary ("N generated, M classified, K skipped"). K counts every
+        /// bundle <see cref="GeneratedBundleSet.BuildRequirements"/> drops (Vault/non-themed
+        /// rooms are expected to drop — RoomThemeMap has no entry for them — so that's not
+        /// logged as a problem); any drop INSIDE a themed room is unexpected (the engine
+        /// authored every bundle, so nothing themed should ever fail classification) and is
+        /// called out at WARN with a per-room breakdown.</summary>
+        private void LogGeneratedBundleSet(
+            GeneratedBundleSet set,
+            System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins,
+            System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas)
+        {
+            foreach (var roomGroup in set.Bundles.GroupBy(b => b.Room).OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                this.Monitor.Log($"  {roomGroup.Key}:", LogLevel.Info);
+                foreach (BundleSpec spec in roomGroup.OrderBy(b => b.Index))
+                    this.Monitor.Log(
+                        $"    [{spec.Index}] {spec.DisplayName} (pick {spec.NumberOfSlots} of {spec.Slots.Count})",
+                        LogLevel.Info);
+            }
+
+            IReadOnlyList<BundleRequirement> requirements = set.BuildRequirements(itemSeasonPins, bundleQuotas);
+            int generated = set.Bundles.Count;
+            int classified = requirements.Count;
+            int skipped = generated - classified;
+
+            var themedSkipsByRoom = new System.Collections.Generic.Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (BundleSpec spec in set.Bundles)
+            {
+                if (!RoomThemeMap.TryGetTheme(spec.Room, out TheLongestYear.Core.Theme theme))
+                    continue; // Vault / non-themed room — always classified out, not a problem.
+
+                var parsed = BundleParsing.Parse(BundleDataWriter.Key(spec), BundleDataWriter.Value(spec));
+                if (BundleClassifier.Classify(parsed, theme, itemSeasonPins, bundleQuotas) == null)
+                    themedSkipsByRoom[spec.Room] = themedSkipsByRoom.TryGetValue(spec.Room, out int n) ? n + 1 : 1;
+            }
+            int themedSkipped = themedSkipsByRoom.Values.Sum();
+
+            this.Monitor.Log(
+                $"tly_genbundles: {generated} generated, {classified} classified, {skipped} skipped.",
+                LogLevel.Info);
+            if (themedSkipped > 0)
+            {
+                string breakdown = string.Join(", ", themedSkipsByRoom.Select(kv => $"{kv.Key}: {kv.Value}"));
+                this.Monitor.Log(
+                    $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms (unexpected — {breakdown}).",
+                    LogLevel.Warn);
+            }
+        }
+
+        /// <summary>Compares two engine-generated sets by their written BundleData key/value
+        /// pairs (the canonical form the game itself would see) and returns a description of the
+        /// first difference found, or null if they're identical.</summary>
+        private static string FirstBundleSetDifference(GeneratedBundleSet a, GeneratedBundleSet b)
+        {
+            IReadOnlyDictionary<string, string> dataA = a.ToBundleData();
+            IReadOnlyDictionary<string, string> dataB = b.ToBundleData();
+
+            foreach (string key in dataA.Keys.Union(dataB.Keys).OrderBy(k => k, StringComparer.Ordinal))
+            {
+                bool inA = dataA.TryGetValue(key, out string valueA);
+                bool inB = dataB.TryGetValue(key, out string valueB);
+                if (!inA)
+                    return $"key '{key}' is present in the second generation but missing from the first.";
+                if (!inB)
+                    return $"key '{key}' is present in the first generation but missing from the second.";
+                if (valueA != valueB)
+                    return $"key '{key}' differs: '{valueA}' vs '{valueB}'.";
+            }
+            return null;
         }
 
         private void CmdTestDonate(string command, string[] args)
