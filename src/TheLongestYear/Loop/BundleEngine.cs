@@ -35,6 +35,11 @@ namespace TheLongestYear.Loop
     /// every room's picks to a room-local 0..n-1 index (by design, per its own doc comment), so
     /// this method re-numbers every non-Vault room's picks onto a single global, collision-free
     /// index space AFTER picking, reserving the Vault room's real (unmodified) indices first.
+    ///
+    /// The write-key space (the full set of "Room/index" keys <see cref="WriteToWorld"/> emits)
+    /// MUST be identical across every generation for a given pool shape, because
+    /// <c>NetWorldState.SetBundleData</c> merges/upserts and NEVER removes a key -- a generation
+    /// that emitted fewer keys than a previous one would leave stale bundles behind.
     /// </summary>
     internal sealed class BundleEngine
     {
@@ -80,7 +85,12 @@ namespace TheLongestYear.Loop
             }
 
             int nextGlobalIndex = 0;
-            foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry in pools)
+            // Deterministic room order (ordinal by name) rather than the dictionary's own
+            // enumeration order -- Dictionary<TKey,TValue> enumeration order is an implementation
+            // detail, not a contract, so relying on it would make the fixed-key-space guarantee
+            // below fragile across process launches/.NET versions even though the seed is the same.
+            foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry
+                     in pools.OrderBy(kv => kv.Key, StringComparer.Ordinal))
             {
                 if (roomEntry.Key == VaultRoomName)
                     continue;
@@ -117,7 +127,7 @@ namespace TheLongestYear.Loop
             Game1.netWorldState.Value.SetBundleData(newData);
 
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
-            if (cc != null)
+            if (cc != null && cc.Map != null)
             {
                 // Same idiom as WorldResetService.PerformReset step 1a: zero every completion
                 // NetArray/NetBool IN PLACE (never Clear() the keys -- vanilla does bundles[i]
