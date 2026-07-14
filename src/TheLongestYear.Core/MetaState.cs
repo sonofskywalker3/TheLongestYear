@@ -48,6 +48,14 @@ public sealed class MetaState
     /// </summary>
     public int CompletedResets { get; set; }
 
+    /// <summary>The MetaState.CompletedResets value the save's CURRENT bundle set was
+    /// engine-generated for, or -1 if the bundles were not engine-generated (pre-engine
+    /// save mid-loop, which finishes on its existing bundles — spec migration rule).
+    /// When this equals CompletedResets at SaveLoaded, requirements come from the engine
+    /// manifest (regenerated deterministically from the seed); otherwise the legacy
+    /// read-and-classify path serves the in-flight loop.</summary>
+    public int BundlesGeneratedForReset { get; set; } = -1;
+
     /// <summary>
     /// True once the player has chosen "Keep playing" after winning the loop (CC restored on
     /// Winter 28). Set inside the post-win JP-spend → choice flow; when true, the Winter 28
