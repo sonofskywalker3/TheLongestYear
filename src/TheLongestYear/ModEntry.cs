@@ -327,6 +327,7 @@ namespace TheLongestYear
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
+            XpMultiplierPatch.Connect(_meta.State);
             PatchLog.Connect(this.Monitor);
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
