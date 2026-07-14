@@ -14,7 +14,7 @@ namespace TheLongestYear.Loop
     /// Drives the run loop: syncs RunState from the game date, opens the Sunday-night planning
     /// hub with the weekly selection offer, evaluates the day-end gate via RunManager + bundle
     /// requirements, and executes the action (fail → reset next morning, advance month → consume
-    /// any day-28 pre-pick, win → log). Interim JP is banked on run end.
+    /// any day-28 pre-pick, win → log). JP banks live as donations happen (DonationService); nothing extra is awarded at run end.
     /// </summary>
     internal sealed class RunController
     {
@@ -323,8 +323,8 @@ namespace TheLongestYear.Loop
                     DoDayStartSeasonAndHub();
                     break;
                 case Day28Branch.Win:
-                    // After the win screen closes: open the JP-spend shrine (the player has a fresh
-                    // win-JP bonus), then ask "start a new loop" vs "keep playing". Same order as the
+                    // After the win screen closes: open the JP-spend shrine (the player spends the JP
+                    // banked across the run), then ask "start a new loop" vs "keep playing". Same order as the
                     // old _pendingWinChoice path, with the win screen now in front of it.
                     TryOpenShrineThenContinue(ShowKeepPlayingChoice);
                     break;
