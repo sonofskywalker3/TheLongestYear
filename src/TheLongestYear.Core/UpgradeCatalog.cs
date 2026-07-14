@@ -272,6 +272,7 @@ public static class UpgradeCatalog
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMineElevatorKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMasteryKeeps());
+        entries.AddRange(UpgradeCatalogGenerators.EfficiencyXpMultipliers());
         return entries;
     }
 }
