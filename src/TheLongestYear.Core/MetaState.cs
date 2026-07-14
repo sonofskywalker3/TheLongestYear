@@ -205,6 +205,11 @@ public sealed class MetaState
         {
             "species" => AnimalSpeciesEverOwned.Contains(value, StringComparer.OrdinalIgnoreCase),
             "upgrade" => OwnedUpgrades.Contains(value, StringComparer.Ordinal),
+            // "upgrades" = conjunction: EVERY comma-separated id must be owned. Added for the
+            // xp_mult_all capstone (spec 2026-07-14 economy Change 3).
+            "upgrades" => value.Length > 0 && value
+                .Split(',')
+                .All(id => OwnedUpgrades.Contains(id.Trim(), StringComparer.Ordinal)),
             "quest"   => CompletedQuestsEver.Contains(value, StringComparer.Ordinal),
             "mail"    => MailFlagsEverReceived.Contains(value, StringComparer.OrdinalIgnoreCase),
             // "season" = run number (CompletedResets), NOT the in-game calendar season.
