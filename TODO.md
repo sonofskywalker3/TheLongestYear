@@ -6,26 +6,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### ⏰ Nexus upload v3 migration — MIGRATED 2026-07-13, VERIFY on next release
-The read-only `nexus-v3-probe.yml` workflow (run 29268259621) solved the mystery: **the v3
-mod-file id IS the old `file_group_id`** (Nexus migrated update groups into v3 mod files;
-the legacy per-version fileId 170754/174860 was never it — hence the 0.11.44 404). All
-three workflows now use post-migration pin `f6e1e2ea` with `file_id` = TLY 7502657 /
-AC 7118491 / CartCatalog 7497950 (input renames: `file_category`→`category`,
-`archive_existing_file`→`archive_existing_version`). **Unexercised until the next actual
-release** — watch that run; rollback = pre-migration pin `ee1af4be` + old input names
-(guaranteed until 2026-09-09). Delete `nexus-v3-probe.yml` once a release passes.
+### ✅ Nexus upload v3 migration — VERIFIED LIVE by the 0.11.60 release (2026-07-14)
+The v3 mod-file id IS the old `file_group_id` (probe run 29268259621). All three repos use
+post-migration pin `f6e1e2ea` with `file_id` = TLY 7502657 / AC 7118491 / CartCatalog
+7497950. TLY's flow verified end-to-end by release run 29331424115 (0.11.60); probe
+workflow deleted. AC and CartCatalog flows remain unexercised until their next releases —
+rollback if one fails = pre-migration pin `ee1af4be` + old input names (dead after
+2026-09-09, so a failure then needs a real fix, not the rollback).
 
-### 📄 Nexus description sync owed — README gained a Translations section (2026-07-13)
-`README.md` gained a "Translations" section (i18n extraction complete, links `docs/TRANSLATING.md`).
-Per the README ≡ Nexus description house rule, `docs/nexus-description.bbcode` needs the matching
-BBCode section added and the live Nexus page updated — ride this into the next description update
-(manual paste step, same as every other description sync); do NOT push it standalone.
+### 📄 Nexus changelog paste for 0.11.60 (the one manual step)
+File + version + description all synced automatically on 2026-07-14. The Nexus CHANGELOG
+field is the only remaining manual paste: `release-notes/0.11.60-nexus-changelog.txt`.
 
-### 📄 Mod page: Advanced Options screenshot STILL OWED (khauser13)
-The 0.11.44 release synced the description but the promised screenshot of the new-game
-Advanced Options panel (remixed-bundles recommendation) is still missing from the Nexus
-page — needs a new-game screen visit + media upload (`tly-media-upload.mjs` pattern).
+<!-- RESOLVED 2026-07-14: description sync (Translations section + What's New 0.11.60 live
+via release.ps1); Advanced Options screenshot uploaded to the gallery 2026-07-13
+(release-notes/advanced-options-remixed.png); Fluxwb replied on the posts tab pointing at
+docs/TRANSLATING.md — awaiting their updated zh translation to credit + link. -->
 
 ### 🐞 INVESTIGATE — 5th sweep (2026-07-09): Nexus posts 06-10 → 07-05 + xsansara log
 *Full forum sweep 2026-07-09 (`forum-sweeps/2026-07-09-21-47_*`). Reddit: 4 new comments, all
