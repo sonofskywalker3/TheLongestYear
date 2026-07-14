@@ -1409,16 +1409,21 @@ namespace TheLongestYear
         }
 
         /// <summary>Decide where this save's bundle requirement manifest comes from (owned-bundle
-        /// engine wiring, Task 6). Three cases, in order:
+        /// engine wiring, Task 6; review-fixed v0.11.76). The three-way branch itself is the pure,
+        /// tested <see cref="EngineModeDecider.Decide"/>:
         /// <list type="number">
         ///   <item>Engine mode -- <c>BundlesGeneratedForReset == CompletedResets</c>: the live
         ///   save's bundles were engine-written for THIS exact loop. Regenerate the manifest
         ///   deterministically from the seed (Generate() is pure given (UniqueMultiplayerID,
         ///   CompletedResets), so this reproduces the same set WriteToWorld wrote without a
-        ///   second write) and defensively verify every generated key still exists in the live
-        ///   BundleData before trusting it -- a mismatch (mod list changed, save edited by hand,
-        ///   etc.) logs a WARN and falls through to case 3 instead of silently serving a manifest
-        ///   that disagrees with what's actually on the CC board.</item>
+        ///   second write) and defensively verify every generated entry matches the live
+        ///   BundleData VALUE-for-value via <see cref="EngineManifestCheck.Matches"/> before
+        ///   trusting it -- the engine's write-key space is invariant across generations, so
+        ///   key-existence alone would pass a live board stuck on an OLDER generation (reachable:
+        ///   MetaStore.Save persists the bumped counters before ForceFullSave writes the world; a
+        ///   crash/skip in that window reloads with the new meta but the old generation's bundles
+        ///   still on the board). A mismatch logs a WARN and falls through to case 3 instead of
+        ///   silently serving a manifest that disagrees with what's actually on the CC board.</item>
         ///   <item>Fresh engine-era run-create -- no prior reset (<c>CompletedResets == 0</c>), no
         ///   legacy marker (<c>BundlesGeneratedForReset == -1</c>), and the CC is untouched (no
         ///   completed slot -- see <see cref="AnyBundleSlotComplete"/>): a brand-new save the
@@ -1442,23 +1447,26 @@ namespace TheLongestYear
             // to begin with) -- it must match exactly what generated whatever is currently live.
             ulong seedBasis = unchecked((ulong)Game1.player.UniqueMultiplayerID);
 
-            if (state.BundlesGeneratedForReset == state.CompletedResets)
+            RequirementsSource source = EngineModeDecider.Decide(
+                state.BundlesGeneratedForReset, state.CompletedResets, AnyBundleSlotComplete());
+
+            if (source == RequirementsSource.EngineManifest)
             {
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, state.CompletedResets));
 
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
-                bool mismatch = set.Bundles.Any(spec => !liveData.ContainsKey(BundleDataWriter.Key(spec)));
-                if (!mismatch)
+                bool matches = EngineManifestCheck.Matches(set.ToBundleData(), liveData);
+                if (matches)
                     return set.BuildRequirements(itemSeasonPins, bundleQuotas);
 
                 this.Monitor.Log(
-                    "ResolveRequirements: engine manifest mismatch against live BundleData — " +
+                    "ResolveRequirements: engine manifest mismatch (stale or foreign bundle data) — " +
                     "falling back to read path.",
                     LogLevel.Warn);
                 // fall through to the legacy read-and-classify path below.
             }
-            else if (state.CompletedResets == 0 && state.BundlesGeneratedForReset == -1 && !AnyBundleSlotComplete())
+            else if (source == RequirementsSource.GenerateFreshRun)
             {
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
