@@ -1571,7 +1571,13 @@ namespace TheLongestYear
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
                 bool matches = EngineManifestCheck.Matches(set.ToBundleData(), liveData);
                 if (matches)
-                    return set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                {
+                    var requirements = set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                    this.Monitor.Log(
+                        $"Requirements source: engine manifest (loop {state.CompletedResets}, {requirements.Count} bundles).",
+                        LogLevel.Info);
+                    return requirements;
+                }
 
                 this.Monitor.Log(
                     "ResolveRequirements: engine manifest mismatch (stale or foreign bundle data) — " +
@@ -1585,10 +1591,18 @@ namespace TheLongestYear
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
-                return set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                var requirements = set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                this.Monitor.Log(
+                    $"Requirements source: engine generation (fresh run, {requirements.Count} bundles written).",
+                    LogLevel.Info);
+                return requirements;
             }
 
-            return builder.BuildRequirements();
+            var legacyRequirements = builder.BuildRequirements();
+            this.Monitor.Log(
+                "Requirements source: legacy read-and-classify (pre-engine save; regenerates at next reset).",
+                LogLevel.Info);
+            return legacyRequirements;
         }
 
         /// <summary>True when any CC bundle completion slot is already marked complete. Same
