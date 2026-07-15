@@ -147,8 +147,26 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   "Junimos are overwhelmed" reword. **PENDING user playtest:** checkpoint-award HUD toast
   visibility at day-end fade (log line is authoritative), xp_mult rows in the shrine + the
   "  (insufficient)" leading-space eyeball (next natural shrine visit), a real donation single-pay
-  log check. **Remaining 0.12.0 half = owned-bundle engine** (spec approved; plan in progress).
-  Cult repricing (red cabbage/starfruit) DEFERRED pending engine-baseline playtest per user ruling.
+  log check. Cult repricing (red cabbage/starfruit) DEFERRED pending engine-baseline playtest.
+- **✅ 0.12.0 ENGINE PLAN 1 of 3 (SKELETON) SHIPPED v0.11.69–80 (2026-07-14, deployed to PC
+  Mods, live-smoked end-to-end on a cloned save).** Plan
+  `docs/superpowers/plans/2026-07-14-tly-0.12.0-engine-1-skeleton.md`; final review READY;
+  606/606 tests. TLY now WRITES its own bundle set (vanilla + remix pools) at run-create and
+  every reset: seed = `player.UniqueMultiplayerID ^ CompletedResets·prime` (spec amended — the
+  save's uniqueID is wall-clock re-rolled, do not "correct" back), vanilla's own absolute
+  bundle-index space (migration write overwrites the legacy board — ghost-bundle merge + the
+  CC-creation crash were caught and fixed in smoke), no duplicate bundles per room,
+  value-strict manifest check with legacy fallback, season-gate ramp clamp, `tly_genbundles`
+  diagnostic, requirements-source INFO line on every load. Pre-engine saves stay on the legacy
+  read path until their next reset (no migration code). **Smoke leftovers: two
+  `ZZZ-DELETEME-smoke-*` save folders await user deletion (auto-delete policy-denied).**
+  **REMAINING for 0.12.0: engine Plan 2** (expanded data-derived item pools, monster-drop
+  bundles, large-quantity forage rolls, SVE compat pass; REQUIREMENTS carried from review:
+  restore Pick-based ingredient trimming — untrimmed pools are EASIER than vanilla remix;
+  BundleDataWriter slash-guard before programmatic names; pool-provider unit tests) **and
+  Plan 3** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards, Vault +25%,
+  baseline tuned to the Normal bar: a very skilled player cannot 1-loop it), then the cult
+  repricing decision.
 - **⚖️ Balance (0.12.0/0.13.0 fodder — difficulty too low for strong players).** *khauser13
   (12-13 Jun)*: finished the year first try on BOTH standard and remixed (sleeping idle days);
   suggests harder bundles / permanent debuffs; winter weekly themes felt pointless (everything
