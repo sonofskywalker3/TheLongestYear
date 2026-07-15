@@ -5,8 +5,13 @@ namespace TheLongestYear.Core;
 
 /// <summary>Deterministically picks one bundle per room position from that position's
 /// candidate pool (pool shape mirrors Data/RandomBundles: element i = variants for the
-/// room's i-th bundle). Picks are re-indexed 0..n-1 so the written BundleData has
-/// sequential per-room indices regardless of which variants won.</summary>
+/// room's i-th bundle). Every candidate at a position already carries that position's
+/// ABSOLUTE bundle index (vanilla's own Data/Bundles key index, or the RandomBundles
+/// Keys-driven absolute index -- see VanillaBundlePool.BuildRoomPools/ResolvePositionAbsoluteIndex),
+/// so the chosen candidate's Index is preserved AS-IS -- it is NOT re-indexed to a
+/// room-local 0..n-1 sequence. Vanilla's own absolute indices are already globally unique
+/// across rooms by construction, which is what lets BundleEngine skip any further
+/// re-numbering (see its class doc for why that matters for the legacy-save migration write).</summary>
 public static class RemixSelector
 {
     public static IReadOnlyList<BundleSpec> PickForRoom(
@@ -21,7 +26,7 @@ public static class RemixSelector
             IReadOnlyList<BundleSpec> pool = WithoutAlreadyPickedNames(candidates, pickedNames);
             var chosen = pool[rng.Next(pool.Count)];
             pickedNames.Add(chosen.Name);
-            picks.Add(chosen with { Index = position });
+            picks.Add(chosen);
         }
         return picks;
     }
