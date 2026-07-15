@@ -7,15 +7,21 @@ namespace TheLongestYear.Tests;
 
 public class RemixSelectorTests
 {
-    private static BundleSpec Named(string name) => new(
-        "Pantry", 0, name, name, "O 495 30", 0, 1,
+    private static BundleSpec Named(string name, int index = 0) => new(
+        "Pantry", index, name, name, "O 495 30", 0, 1,
         new[] { new BundleSlotSpec("24", 1, 0) });
 
+    // Each position's candidates all carry the SAME absolute index (mirrors
+    // VanillaBundlePool.BuildRoomPools, which groups every position's candidates under one
+    // shared absolute Data/Bundles index) -- and positions use non-sequential, non-zero-based
+    // values (6, 9, 11) specifically so a test asserting "index preserved from the candidate"
+    // can't accidentally pass against old re-indexing code that just happened to reproduce
+    // 0..n-1 by coincidence.
     private static IReadOnlyList<IReadOnlyList<BundleSpec>> Pools() => new[]
     {
-        (IReadOnlyList<BundleSpec>)new[] { Named("A1"), Named("A2"), Named("A3") },
-        new[] { Named("B1"), Named("B2") },
-        new[] { Named("C1") },
+        (IReadOnlyList<BundleSpec>)new[] { Named("A1", 6), Named("A2", 6), Named("A3", 6) },
+        new[] { Named("B1", 9), Named("B2", 9) },
+        new[] { Named("C1", 11) },
     };
 
     [Fact]
@@ -37,11 +43,15 @@ public class RemixSelectorTests
     }
 
     [Fact]
-    public void OnePickPerPosition_ReindexedSequentially()
+    public void OnePickPerPosition_IndexPreservedFromCandidate()
     {
+        // BundleEngine.Generate no longer re-numbers picks onto a global 0..N space -- each
+        // pick keeps the ABSOLUTE index its position already carries (vanilla's own Data/Bundles
+        // index, or the RandomBundles Keys-driven absolute index), because that index space is
+        // already globally unique across rooms by construction (see BundleEngine's class doc).
         var picks = RemixSelector.PickForRoom(Pools(), 7, "Pantry");
         Assert.Equal(3, picks.Count);
-        Assert.Equal(new[] { 0, 1, 2 }, picks.Select(p => p.Index));
+        Assert.Equal(new[] { 6, 9, 11 }, picks.Select(p => p.Index));
         Assert.StartsWith("A", picks[0].Name);
         Assert.StartsWith("B", picks[1].Name);
         Assert.Equal("C1", picks[2].Name);
@@ -102,13 +112,13 @@ public class RemixSelectorTests
         // (the global name-uniquifier in BundleEngine is the last-resort backstop for this case).
         var pools = new[]
         {
-            (IReadOnlyList<BundleSpec>)new[] { Named("Only") },
-            new[] { Named("Only") },
+            (IReadOnlyList<BundleSpec>)new[] { Named("Only", 3) },
+            new[] { Named("Only", 4) },
         };
         var picks = RemixSelector.PickForRoom(pools, seed: 42, room: "Pantry");
         Assert.Equal(2, picks.Count);
         Assert.All(picks, p => Assert.Equal("Only", p.Name));
-        Assert.Equal(new[] { 0, 1 }, picks.Select(p => p.Index));
+        Assert.Equal(new[] { 3, 4 }, picks.Select(p => p.Index));
     }
 
     [Fact]
