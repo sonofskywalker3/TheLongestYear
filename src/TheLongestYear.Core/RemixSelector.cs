@@ -14,10 +14,12 @@ namespace TheLongestYear.Core;
 /// re-numbering (see its class doc for why that matters for the legacy-save migration write).</summary>
 public static class RemixSelector
 {
+    private const int RoomSaltPrime = 7919;
+
     public static IReadOnlyList<BundleSpec> PickForRoom(
         IReadOnlyList<IReadOnlyList<BundleSpec>> slotPools, int seed, string room)
     {
-        var rng = new Random(seed ^ (StableRoomSalt(room) * 7919));
+        var rng = new Random(seed ^ (StableRoomSalt(room) * RoomSaltPrime));
         var picks = new List<BundleSpec>(slotPools.Count);
         var pickedNames = new HashSet<string>(StringComparer.Ordinal);
         for (int position = 0; position < slotPools.Count; position++)
