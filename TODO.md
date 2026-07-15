@@ -14,9 +14,9 @@ workflow deleted. AC and CartCatalog flows remain unexercised until their next r
 rollback if one fails = pre-migration pin `ee1af4be` + old input names (dead after
 2026-09-09, so a failure then needs a real fix, not the rollback).
 
-### 📄 Nexus changelog paste for 0.11.60 (the one manual step)
-File + version + description all synced automatically on 2026-07-14. The Nexus CHANGELOG
-field is the only remaining manual paste: `release-notes/0.11.60-nexus-changelog.txt`.
+### ✅ DONE 2026-07-15 — Nexus changelog for 0.11.60 posted (browser-driven, verified live)
+Entered via the new edit UI (Manage → Documentation → Add changelog, file/version auto-matched
+0.11.60) and verified rendering on the public Logs tab. The 0.11.60 release is now fully closed.
 
 <!-- RESOLVED 2026-07-14: description sync (Translations section + What's New 0.11.60 live
 via release.ps1); Advanced Options screenshot uploaded to the gallery 2026-07-13
