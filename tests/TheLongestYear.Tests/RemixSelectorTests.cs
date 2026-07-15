@@ -67,4 +67,55 @@ public class RemixSelectorTests
         Assert.Equal(BundleEngineSeed.For(123456789UL, 3), BundleEngineSeed.For(123456789UL, 3));
         Assert.NotEqual(BundleEngineSeed.For(123456789UL, 3), BundleEngineSeed.For(123456789UL, 4));
     }
+
+    // Reproduces the live tly_genbundles finding: one room fielded "Home Cook's" at three
+    // positions (name-uniquified downstream to II/III but content-identical) because each
+    // position's candidate pool independently offered the same-named bundle. Every position
+    // below offers the SAME three names ("A","B","C"), so an alternative unpicked-name
+    // candidate is always available at every position (worst case: 2 of 3 already picked,
+    // 1 still unpicked) -- this must never produce a duplicate name for ANY seed.
+    private static IReadOnlyList<IReadOnlyList<BundleSpec>> OverlappingPools() => new[]
+    {
+        (IReadOnlyList<BundleSpec>)new[] { Named("A"), Named("B"), Named("C") },
+        new[] { Named("A"), Named("B"), Named("C") },
+        new[] { Named("A"), Named("B"), Named("C") },
+    };
+
+    [Fact]
+    public void NoDuplicateNamesWithinRoom_WhenAlternativesExist()
+    {
+        for (int seed = 0; seed < 200; seed++)
+        {
+            var picks = RemixSelector.PickForRoom(OverlappingPools(), seed, "Pantry");
+            var names = picks.Select(p => p.Name).ToList();
+            Assert.True(
+                names.Distinct(System.StringComparer.Ordinal).Count() == names.Count,
+                $"seed {seed} produced duplicate names: {string.Join(",", names)}");
+        }
+    }
+
+    [Fact]
+    public void DuplicateNamesStillAllowed_WhenNoAlternativeRemains()
+    {
+        // Every position offers ONLY "Only" -- no unpicked-name alternative can ever exist, so
+        // the dedup guard must fall back to the full pool rather than throw or drop a position
+        // (the global name-uniquifier in BundleEngine is the last-resort backstop for this case).
+        var pools = new[]
+        {
+            (IReadOnlyList<BundleSpec>)new[] { Named("Only") },
+            new[] { Named("Only") },
+        };
+        var picks = RemixSelector.PickForRoom(pools, seed: 42, room: "Pantry");
+        Assert.Equal(2, picks.Count);
+        Assert.All(picks, p => Assert.Equal("Only", p.Name));
+        Assert.Equal(new[] { 0, 1 }, picks.Select(p => p.Index));
+    }
+
+    [Fact]
+    public void Dedup_SameSeed_StillDeterministic()
+    {
+        var a = RemixSelector.PickForRoom(OverlappingPools(), seed: 555, room: "Pantry");
+        var b = RemixSelector.PickForRoom(OverlappingPools(), seed: 555, room: "Pantry");
+        Assert.Equal(a.Select(x => x.Name), b.Select(x => x.Name));
+    }
 }
