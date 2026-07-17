@@ -68,6 +68,11 @@ namespace TheLongestYear.Loop
     {
         private const string VaultRoomName = "Vault";
 
+        // Per-bundle RNG salt for slot composition (trim + Plan-2 slot filling). spec.Index is
+        // vanilla's own absolute bundle index — unique per generation — so each bundle gets an
+        // independent deterministic stream from the loop seed.
+        private const int SlotSaltPrime = 6151;
+
         private static readonly (int Value, string Symbol)[] RomanNumerals =
         {
             (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
@@ -127,7 +132,8 @@ namespace TheLongestYear.Loop
                 {
                     if (!TryClaimIndex(pick, claimedIndices))
                         continue;
-                    allPicks.Add(Uniquify(pick, usedNameCounts));
+                    BundleSpec composed = SlotTrimmer.Trim(pick, new Random(seed ^ (pick.Index * SlotSaltPrime)));
+                    allPicks.Add(Uniquify(composed, usedNameCounts));
                 }
             }
 

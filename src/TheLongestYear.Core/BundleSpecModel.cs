@@ -12,7 +12,10 @@ public sealed record BundleSlotSpec(string ItemId, int Stack, int Quality);
 /// (see BundleParsing): RewardField is the raw reward text (e.g. "O 495 30"), Color is the
 /// bundle's sprite tint index, NumberOfSlots is the pick-X count (how many of the Slots
 /// must be donated). Names must stay STABLE and UNIQUE per save — downstream systems
-/// (SlotPoolBuilder, quota tables) match bundles by name.</summary>
+/// (SlotPoolBuilder, quota tables) match bundles by name. PickCount mirrors RandomBundles'
+/// Pick field: how many of the candidate Slots are actually SHOWN after the seeded
+/// generation-time trim (SlotTrimmer); -1 (default, and all standard Data/Bundles entries)
+/// = show all.</summary>
 public sealed record BundleSpec(
     string Room,
     int Index,
@@ -21,4 +24,5 @@ public sealed record BundleSpec(
     string RewardField,
     int Color,
     int NumberOfSlots,
-    IReadOnlyList<BundleSlotSpec> Slots);
+    IReadOnlyList<BundleSlotSpec> Slots,
+    int PickCount = -1);
