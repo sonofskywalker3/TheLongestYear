@@ -81,7 +81,7 @@ public static class ItemPoolBuilder
             string id = Qualify(bare);
             if (!Vets(bare, id, objects, excluded))
                 continue;
-            if (!bySeasons.TryGetValue(id, out List<Season> seasons))
+            if (!bySeasons.TryGetValue(id, out List<Season>? seasons))
                 bySeasons[id] = seasons = new List<Season>();
             foreach (Season s in crop.Seasons)
                 if (!seasons.Contains(s))
@@ -112,13 +112,13 @@ public static class ItemPoolBuilder
             IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition);
             if (seasons.Count == 0)
                 anySeasonById.Add(id); // one any-season spawn makes the item any-season
-            if (!seasonsById.TryGetValue(id, out List<Season> list))
+            if (!seasonsById.TryGetValue(id, out List<Season>? list))
                 seasonsById[id] = list = new List<Season>();
             foreach (Season s in seasons)
                 if (!list.Contains(s))
                     list.Add(s);
 
-            if (!locationsById.TryGetValue(id, out List<string> locs))
+            if (!locationsById.TryGetValue(id, out List<string>? locs))
                 locationsById[id] = locs = new List<string>();
             if (!locs.Contains(spawn.Location))
                 locs.Add(spawn.Location);
@@ -159,7 +159,7 @@ public static class ItemPoolBuilder
                     seasonsById[id] = new List<Season>();
                 return;
             }
-            if (!seasonsById.TryGetValue(id, out List<Season> list))
+            if (!seasonsById.TryGetValue(id, out List<Season>? list))
                 seasonsById[id] = list = new List<Season>();
             foreach (Season s in seasons)
                 if (!list.Contains(s))
@@ -240,7 +240,7 @@ public static class ItemPoolBuilder
     {
         if (excluded.Contains(qualifiedId))
             return false;
-        if (!objects.TryGetValue(bareId, out RawObjectEntry obj))
+        if (!objects.TryGetValue(bareId, out RawObjectEntry? obj))
             return false; // unknown to Data/Objects — can't price/vet it, drop it
         if (string.Equals(obj.Type, QuestType, StringComparison.OrdinalIgnoreCase))
             return false;
@@ -256,7 +256,7 @@ public static class ItemPoolBuilder
         BundleGenerationTuning tuning, IReadOnlyList<Season> seasons, IReadOnlyList<string> locations)
     {
         string bare = Unqualify(qualifiedId);
-        int price = objects.TryGetValue(bare, out RawObjectEntry obj) ? obj.Price : 0;
+        int price = objects.TryGetValue(bare, out RawObjectEntry? obj) ? obj.Price : 0;
         int weight = tuning.RareRollWeights.TryGetValue(qualifiedId, out int over) ? over
             : bare.All(char.IsDigit) ? tuning.VanillaItemWeight
             : tuning.ModdedItemWeight;
