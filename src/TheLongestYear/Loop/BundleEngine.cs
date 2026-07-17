@@ -80,12 +80,22 @@ namespace TheLongestYear.Loop
 
         private readonly VanillaBundlePool _pool;
         private readonly IMonitor _monitor;
+        private readonly BundleGenerationTuning _tuning;
+        private readonly Dictionary<int, DomainMatch> _lastDomains = new();
         private int _lastSeed;
 
-        public BundleEngine(IMonitor monitor)
+        public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
+            = new Dictionary<string, Core.Season>();
+
+        /// <summary>Every non-Vault pick's domain classification from the last <see
+        /// cref="Generate"/> call, keyed by absolute index (diagnostics; see tly_genbundles).</summary>
+        public IReadOnlyDictionary<int, DomainMatch> LastDomains => _lastDomains;
+
+        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning)
         {
             _monitor = monitor;
             _pool = new VanillaBundlePool(monitor);
+            _tuning = tuning ?? new BundleGenerationTuning();
         }
 
         /// <summary>Draws one bundle per room-position (Vault unmodified) and returns the
@@ -93,6 +103,10 @@ namespace TheLongestYear.Loop
         public GeneratedBundleSet Generate(int seed)
         {
             _lastSeed = seed;
+            _lastDomains.Clear();
+            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning);
+            LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
+
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools = _pool.BuildRoomPools();
 
             var allPicks = new List<BundleSpec>();
@@ -132,12 +146,40 @@ namespace TheLongestYear.Loop
                 {
                     if (!TryClaimIndex(pick, claimedIndices))
                         continue;
-                    BundleSpec composed = SlotTrimmer.Trim(pick, new Random(seed ^ (pick.Index * SlotSaltPrime)));
+
+                    var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
+                    DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
+                    BundleSpec composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng);
+                    if (ReferenceEquals(composed, pick))
+                    {
+                        if (match.Domain != PoolDomain.None)
+                            _monitor?.Log(
+                                $"BundleEngine: '{pick.Room}/{pick.Name}' matched domain {match.Domain} but its " +
+                                "filtered pool couldn't fill every slot — keeping vanilla slots.",
+                                LogLevel.Trace);
+                        composed = SlotTrimmer.Trim(pick, slotRng);
+                    }
+                    _lastDomains[pick.Index] = match; // for diagnostics (see below)
                     allPicks.Add(Uniquify(composed, usedNameCounts));
                 }
             }
 
             return new GeneratedBundleSet(allPicks);
+        }
+
+        /// <summary>Requirements manifest with data-derived season pins merged UNDER the
+        /// caller's pins (hand-curated defaults + user config always win; derived pins only
+        /// fill gaps for items the curated table has never seen — e.g. re-rolled or modded
+        /// ingredients). Call after Generate.</summary>
+        public IReadOnlyList<BundleRequirement> BuildRequirements(
+            GeneratedBundleSet set,
+            IReadOnlyDictionary<string, Core.Season> basePins,
+            IReadOnlyDictionary<string, int[]> bundleQuotas)
+        {
+            var merged = new Dictionary<string, Core.Season>(LastDerivedSeasonPins, StringComparer.Ordinal);
+            foreach (KeyValuePair<string, Core.Season> pin in basePins)
+                merged[pin.Key] = pin.Value;
+            return set.BuildRequirements(merged, bundleQuotas);
         }
 
         /// <summary>Writes the generated set into <c>Game1.netWorldState</c> and re-syncs the CC
