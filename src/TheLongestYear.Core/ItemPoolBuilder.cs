@@ -46,7 +46,7 @@ public static class ItemPoolBuilder
             MonsterDrops = monsterPool,
             Metals = metalsPool,
             ArtisanGoods = artisanPool,
-            DerivedSeasonPins = DerivePins(cropPool, fishPool, foragePool),
+            DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
         };
     }
 
