@@ -39,11 +39,14 @@ namespace TheLongestYear.Loop
     ///     for that position (vanilla instead randomly commits to a single whole SET). Our own
     ///     picker is <see cref="RemixSelector"/>, which already makes the per-position choice, so
     ///     there is no need to also pre-select a whole set here — this only widens the pool.
-    ///   - <c>Items</c>' <c>Pick</c> field is NOT used to randomly trim the ingredient list (that
-    ///     trim has no seed available at pool-build time); every parsed ingredient becomes a slot
-    ///     and <c>RequiredItems</c> (falling back to <c>Pick</c>, then to the full count) becomes
-    ///     <see cref="BundleSpec.NumberOfSlots"/> — i.e. the bundle may show MORE candidate items
-    ///     than vanilla's own remix would, while still requiring the same number donated.
+    ///   - <c>Items</c>' <c>Pick</c> field is NOT used to trim the ingredient list HERE (this pool
+    ///     builder has no seed available at pool-build time); every parsed ingredient becomes a
+    ///     slot and <c>RequiredItems</c> (falling back to <c>Pick</c>, then to the full count)
+    ///     becomes <see cref="BundleSpec.NumberOfSlots"/>. <c>Pick</c> itself is still threaded
+    ///     through as <see cref="BundleSpec.PickCount"/> so the seeded trim can happen later, at
+    ///     generation time, via <see cref="SlotTrimmer"/> (see <c>BundleEngine.Generate</c>) — the
+    ///     pool here keeps every candidate untrimmed; PickCount just records the intended
+    ///     shown-count for that later step.
     ///   - "[a|b|c]" random-tag brackets in <c>Items</c> deterministically resolve to their FIRST
     ///     option (no RNG available here either) instead of vanilla's random pick.
     /// </summary>
@@ -232,7 +235,8 @@ namespace TheLongestYear.Loop
                 : slots.Count;
             string reward = ResolveReward(bundle.Reward);
 
-            return new BundleSpec(room, index, bundle.Name, bundle.Name, reward, color, numberOfSlots, slots);
+            return new BundleSpec(room, index, bundle.Name, bundle.Name, reward, color, numberOfSlots, slots,
+                PickCount: bundle.Pick);
         }
 
         private IReadOnlyList<BundleSlotSpec> ParseRandomItems(string itemsField, string room, string bundleName)
