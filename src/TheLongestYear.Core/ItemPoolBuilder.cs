@@ -15,9 +15,11 @@ namespace TheLongestYear.Core;
 public static class ItemPoolBuilder
 {
     private const string QuestType = "Quest";
+    private const string FishType = "Fish";
     private const string LegendaryFishTag = "fish_legendary";
     private const int MetalCategory = -15;
     private const int ArtisanCategory = -26;
+    private const int MonsterLootCategory = -28;
 
     public static ItemPools Build(
         IReadOnlyList<RawCropEntry> crops,
@@ -91,6 +93,10 @@ public static class ItemPoolBuilder
             kv.Key, objects, tuning, SortedSeasons(kv.Value), Array.Empty<string>())));
     }
 
+    /// <summary>Fish and crab-pot pools, restricted to items whose Data/Objects Type is
+    /// "Fish". Location fish-spawn tables carry non-fish junk/trash entries (e.g. wood,
+    /// stone) alongside real fish, so Vets() alone isn't enough — a type check keeps the
+    /// pool type-pure for correct bundle classification.</summary>
     private static (IReadOnlyList<PoolItem> fish, IReadOnlyList<PoolItem> crabPot) BuildFishPools(
         IReadOnlyList<RawSpawnEntry> fishSpawns, IReadOnlySet<string> trapFishIds,
         IReadOnlyDictionary<string, RawObjectEntry> objects,
@@ -107,6 +113,9 @@ public static class ItemPoolBuilder
             string bare = Unqualify(spawn.ItemId);
             string id = Qualify(bare);
             if (!Vets(bare, id, objects, excluded))
+                continue;
+            if (!objects.TryGetValue(bare, out RawObjectEntry? spawnObj)
+                || !string.Equals(spawnObj.Type, FishType, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition);
@@ -198,6 +207,10 @@ public static class ItemPoolBuilder
             Array.Empty<string>())));
     }
 
+    /// <summary>Monster-drop pool, restricted to items whose Data/Objects Category is the
+    /// monster-loot category. Monster drop tables carry bars/gems/minerals alongside true
+    /// loot, so Vets() alone isn't enough — a category check keeps the pool type-pure for
+    /// correct bundle classification.</summary>
     private static IReadOnlyList<PoolItem> BuildMonsterPool(
         IReadOnlyList<RawMonsterDropEntry> drops,
         IReadOnlyDictionary<string, RawObjectEntry> objects,
@@ -210,6 +223,9 @@ public static class ItemPoolBuilder
             string bare = Unqualify(drop.ItemId);
             string id = Qualify(bare);
             if (!seen.Add(id) || !Vets(bare, id, objects, excluded))
+                continue;
+            if (!objects.TryGetValue(bare, out RawObjectEntry? dropObj)
+                || dropObj.Category != MonsterLootCategory)
                 continue;
             items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
         }
