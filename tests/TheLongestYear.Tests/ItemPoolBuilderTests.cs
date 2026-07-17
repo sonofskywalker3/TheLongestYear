@@ -159,6 +159,16 @@ public class ItemPoolBuilderTests
     }
 
     [Fact]
+    public void DerivedSeasonPins_IncludeSeasonLimitedTrapFish()
+    {
+        var pools = Build(
+            objects: Objects(("715", Obj(category: -4))),
+            fish: new[] { new RawSpawnEntry("(O)715", Season.Fall, null, "Beach") },
+            trap: new HashSet<string> { "715" });
+        Assert.Equal(Season.Fall, pools.DerivedSeasonPins["(O)715"]);
+    }
+
+    [Fact]
     public void MonsterDrops_DedupedAcrossMonsters_PricedFromObjects()
     {
         var pools = Build(
