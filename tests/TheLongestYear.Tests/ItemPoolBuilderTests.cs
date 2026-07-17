@@ -98,10 +98,32 @@ public class ItemPoolBuilderTests
     }
 
     [Fact]
+    public void FishPool_RequiresObjectTypeFish_JunkSpawnsExcluded()
+    {
+        var pools = Build(
+            objects: Objects(("128", Obj(category: -4, type: "Fish")), ("388", Obj(category: -16))),
+            fish: new[]
+            {
+                new RawSpawnEntry("(O)128", null, null, "Beach"),
+                new RawSpawnEntry("(O)388", null, null, "Town"), // wood in a fish table — junk
+            });
+        Assert.Equal(new[] { "(O)128" }, pools.Fish.Select(p => p.ItemId));
+    }
+
+    [Fact]
+    public void MonsterPool_RequiresMonsterLootCategory_OtherDropsExcluded()
+    {
+        var pools = Build(
+            objects: Objects(("768", Obj(category: -28)), ("80", Obj(category: -2))),
+            drops: new[] { new RawMonsterDropEntry("768"), new RawMonsterDropEntry("80") });
+        Assert.Equal(new[] { "(O)768" }, pools.MonsterDrops.Select(p => p.ItemId));
+    }
+
+    [Fact]
     public void Fish_SeasonsUnionAcrossSpawns_LocationsCollected_TrapSeparated()
     {
         var pools = Build(
-            objects: Objects(("128", Obj(category: -4)), ("715", Obj(category: -4))),
+            objects: Objects(("128", Obj(category: -4, type: "Fish")), ("715", Obj(category: -4, type: "Fish"))),
             fish: new[]
             {
                 new RawSpawnEntry("(O)128", Season.Summer, null, "Beach"),
@@ -145,8 +167,8 @@ public class ItemPoolBuilderTests
     public void DerivedSeasonPins_LaterThanSpringOnly()
     {
         var pools = Build(
-            objects: Objects(("128", Obj(category: -4)), ("129", Obj(category: -4)),
-                             ("130", Obj(category: -4))),
+            objects: Objects(("128", Obj(category: -4, type: "Fish")), ("129", Obj(category: -4, type: "Fish")),
+                             ("130", Obj(category: -4, type: "Fish"))),
             fish: new[]
             {
                 new RawSpawnEntry("(O)128", Season.Fall, null, "Beach"),   // earliest Fall -> pinned
@@ -162,7 +184,7 @@ public class ItemPoolBuilderTests
     public void DerivedSeasonPins_IncludeSeasonLimitedTrapFish()
     {
         var pools = Build(
-            objects: Objects(("715", Obj(category: -4))),
+            objects: Objects(("715", Obj(category: -4, type: "Fish"))),
             fish: new[] { new RawSpawnEntry("(O)715", Season.Fall, null, "Beach") },
             trap: new HashSet<string> { "715" });
         Assert.Equal(Season.Fall, pools.DerivedSeasonPins["(O)715"]);
