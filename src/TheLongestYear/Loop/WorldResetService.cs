@@ -433,12 +433,12 @@ namespace TheLongestYear.Loop
             // across a replayed reset (satisfies the anti-scum guarantee) AND identical on every
             // later reload of this loop's save (satisfies SaveLoaded's manifest-first re-derivation) --
             // the one value that is simultaneously stable across both.
-            var engine = new BundleEngine(_monitor);
+            var engine = new BundleEngine(_monitor, _config.PoolTuning);
             int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.CompletedResets);
             GeneratedBundleSet generatedSet = engine.Generate(seed);
             engine.WriteToWorld(generatedSet, _monitor);
             _meta.BundlesGeneratedForReset = _meta.CompletedResets;
-            LastGeneratedRequirements = generatedSet.BuildRequirements(_itemSeasonPins, _bundleQuotas);
+            LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas);
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();

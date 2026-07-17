@@ -1354,13 +1354,14 @@ namespace TheLongestYear
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
 
-            GeneratedBundleSet first = new TheLongestYear.Loop.BundleEngine(this.Monitor).Generate(seed);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning);
+            GeneratedBundleSet first = firstEngine.Generate(seed);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {completedResets} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
-            LogGeneratedBundleSet(first, itemSeasonPins, bundleQuotas);
+            LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor).Generate(seed);
+            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning).Generate(seed);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -1376,6 +1377,7 @@ namespace TheLongestYear
         /// authored every bundle, so nothing themed should ever fail classification) and is
         /// called out at WARN with a per-room breakdown.</summary>
         private void LogGeneratedBundleSet(
+            TheLongestYear.Loop.BundleEngine engine,
             GeneratedBundleSet set,
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins,
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas)
@@ -1384,12 +1386,23 @@ namespace TheLongestYear
             {
                 this.Monitor.Log($"  {roomGroup.Key}:", LogLevel.Info);
                 foreach (BundleSpec spec in roomGroup.OrderBy(b => b.Index))
+                {
                     this.Monitor.Log(
                         $"    [{spec.Index}] {spec.DisplayName} (pick {spec.NumberOfSlots} of {spec.Slots.Count})",
                         LogLevel.Info);
-            }
 
-            IReadOnlyList<BundleRequirement> requirements = set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                    // engine.LastDomains keyed by absolute index; missing key/None = vanilla slots.
+                    string source = engine.LastDomains.TryGetValue(spec.Index, out TheLongestYear.Core.DomainMatch m) && m.Domain != TheLongestYear.Core.PoolDomain.None
+                        ? $"re-rolled from {m.Domain}{(m.Season != null ? $"({m.Season})" : "")}"
+                        : "vanilla slots";
+                    this.Monitor.Log(
+                        $"      {spec.Room}/{spec.Index} '{spec.Name}' [{spec.Slots.Count} slots, need {spec.NumberOfSlots}] — {source}",
+                        LogLevel.Info);
+                }
+            }
+            this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
+
+            IReadOnlyList<BundleRequirement> requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
             int generated = set.Bundles.Count;
             int classified = requirements.Count;
             int skipped = generated - classified;
@@ -1565,14 +1578,14 @@ namespace TheLongestYear
 
             if (source == RequirementsSource.EngineManifest)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, state.CompletedResets));
 
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
                 bool matches = EngineManifestCheck.Matches(set.ToBundleData(), liveData);
                 if (matches)
                 {
-                    var requirements = set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                    var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
                     this.Monitor.Log(
                         $"Requirements source: engine manifest (loop {state.CompletedResets}, {requirements.Count} bundles).",
                         LogLevel.Info);
@@ -1587,11 +1600,11 @@ namespace TheLongestYear
             }
             else if (source == RequirementsSource.GenerateFreshRun)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
-                var requirements = set.BuildRequirements(itemSeasonPins, bundleQuotas);
+                var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
                 this.Monitor.Log(
                     $"Requirements source: engine generation (fresh run, {requirements.Count} bundles written).",
                     LogLevel.Info);
