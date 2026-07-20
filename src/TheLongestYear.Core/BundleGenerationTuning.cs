@@ -24,8 +24,14 @@ public sealed class BundleGenerationTuning
 
     /// <summary>Config-extensible exclude-list (spec modded-content rule): qualified item
     /// ids never offered by any pool, merged with the structural vetting (Quest type,
-    /// ExcludeFromRandomSale, fish_legendary tag).</summary>
-    public List<string> ExcludedItemIds { get; set; } = new();
+    /// ExcludeFromRandomSale, fish_legendary tag). Defaults exclude Banana Sapling and
+    /// Mango Sapling — tropical fruit tree saplings that fall out of the Saplings pool's
+    /// island-only obtainability without needing special-case derivation code.</summary>
+    public List<string> ExcludedItemIds { get; set; } = new()
+    {
+        "(O)69",  // Banana Sapling
+        "(O)835", // Mango Sapling
+    };
 
     /// <summary>Spawn locations whose key contains any of these markers (case-insensitive)
     /// are excluded from pool derivation — post-CC / late-game areas whose items aren't
@@ -45,6 +51,28 @@ public sealed class BundleGenerationTuning
         ["Fall"] = new() { "(O)422", "(O)88", "(O)90" },    // Purple Mushroom + desert
         ["Winter"] = new() { "(O)422" },                    // Purple Mushroom
     };
+
+    /// <summary>Curated additions to the seasonal crop pools (mirrors
+    /// <see cref="SeasonalForageAdditions"/>'s shape/loop): Tea Leaves aren't a
+    /// Data/Crops entry (grown from a bush, not a seed), so they join the crop pool via
+    /// this curated list instead of crop-table derivation. Keys are Season names; values
+    /// are qualified item ids.</summary>
+    public Dictionary<string, List<string>> CropPoolAdditions { get; set; } = new()
+    {
+        ["Spring"] = new() { "(O)815" }, // Tea Leaves
+        ["Summer"] = new() { "(O)815" }, // Tea Leaves
+        ["Fall"] = new() { "(O)815" },   // Tea Leaves
+    };
+
+    /// <summary>Multiplier applied to the Junimo Vault's base donation-value ask (spec
+    /// Plan-3 tuning knob).</summary>
+    public double VaultAmountMultiplier { get; set; } = 1.25;
+
+    /// <summary>Number of trophy slots shown on the Gil's Trophies bundle composition.</summary>
+    public int TrophyShownCount { get; set; } = 4;
+
+    /// <summary>Number of trophy slots that must be donated to complete Gil's Trophies.</summary>
+    public int TrophyRequiredCount { get; set; } = 2;
 
     /// <summary>Quality-ask chances per re-rolled slot (crops/forage/fish domains only).</summary>
     public double SilverQualityChance { get; set; } = 0.10;

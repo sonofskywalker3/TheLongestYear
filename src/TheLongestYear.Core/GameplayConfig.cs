@@ -216,4 +216,9 @@ public sealed class GameplayConfig
 
     /// <summary>Windowed height the mod forces on launch. See <see cref="WindowWidth"/>.</summary>
     public int WindowHeight { get; set; } = 1080;
+
+    /// <summary>Kill-switch for the weapon/hat donation patches. When false, Gil's Trophies
+    /// composes rings-only (no weapon/hat slots offered), for compatibility with mods that
+    /// conflict with those patches.</summary>
+    public bool EnableNonObjectDonations { get; set; } = true;
 }
