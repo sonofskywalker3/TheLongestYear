@@ -158,15 +158,32 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   CC-creation crash were caught and fixed in smoke), no duplicate bundles per room,
   value-strict manifest check with legacy fallback, season-gate ramp clamp, `tly_genbundles`
   diagnostic, requirements-source INFO line on every load. Pre-engine saves stay on the legacy
-  read path until their next reset (no migration code). **Smoke leftovers: two
-  `ZZZ-DELETEME-smoke-*` save folders await user deletion (auto-delete policy-denied).**
-  **REMAINING for 0.12.0: engine Plan 2** (expanded data-derived item pools, monster-drop
-  bundles, large-quantity forage rolls, SVE compat pass; REQUIREMENTS carried from review:
-  restore Pick-based ingredient trimming — untrimmed pools are EASIER than vanilla remix;
-  BundleDataWriter slash-guard before programmatic names; pool-provider unit tests) **and
-  Plan 3** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards, Vault +25%,
-  baseline tuned to the Normal bar: a very skilled player cannot 1-loop it), then the cult
-  repricing decision.
+  read path until their next reset (no migration code).
+- **✅ 0.12.0 ENGINE PLAN 2 of 3 (EXPANDED POOLS) SHIPPED v0.11.81–91 (2026-07-20, deployed
+  to PC Mods, vanilla-smoked end-to-end on a cloned save; final review READY after 1 fix).**
+  Plan `docs/superpowers/plans/2026-07-17-tly-0.12.0-engine-2-expanded-pools.md`; ledger
+  `.superpowers/sdd/progress.md`; 642/642 tests. Picked bundles now RE-ROLL their slot
+  contents from pools derived from the game's own data (SVE-proof by construction): seasonal
+  crops/foraging keep their season but draw ANY season-valid item, fish re-roll within their
+  original habitat (spawn-location overlap), Adventurer's from pure monster loot
+  (price-banded stacks), Engineer's from metals (iridium bar = rare roll), Brewer's from
+  artisan goods; curated harder forage additions + large-quantity (x40–99) forage asks; all
+  review-carried requirements landed (seeded Pick-trimming v0.11.82, slash-guard v0.11.81,
+  pool-provider unit tests v0.11.83); data-derived season pins feed the season-gate clamp
+  (merged UNDER curated/user pins). Tuning knobs in one `GameplayConfig.PoolTuning` block
+  (Plan 3 tunes to the Normal bar). Smoke caught + fixed: junk in fish spawn tables made
+  Construction classify as Fish, and drop-table bars/gems made Geologist's classify as
+  MonsterDrops → v0.11.90 type-pure pools (Type "Fish" / category −28); final review caught
+  negated GSQ season clauses pinning items to their CLOSED season → v0.11.91 negation guard.
+  Fresh-process disk reload = engine manifest byte-identical (no save-scum reroll). NOTE:
+  unattended resets must use `tly_reset` — `tly_failreset` queues a cutscene that blocks
+  without a player. **Smoke leftover: `ZZZ-DELETEME-smoke2-None_444200714` save folder
+  awaits user deletion.** **REMAINING for 0.12.0: Task 9 SVE compat pass** (waiting on user
+  enabling SVE in Vortex; staged disabled as `-Stardew Valley Expanded--3753-1-15-11`)
+  **and engine Plan 3** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards —
+  keep authored names slash-free (Uniquify runs before Sanitize), Vault +25%, baseline tuned
+  to the Normal bar: a very skilled player cannot 1-loop it; flavor note: Garden currently
+  re-rolls from ALL crops — consider a flowers filter), then the cult repricing decision.
 - **⚖️ Balance (0.12.0/0.13.0 fodder — difficulty too low for strong players).** *khauser13
   (12-13 Jun)*: finished the year first try on BOTH standard and remixed (sleeping idle days);
   suggests harder bundles / permanent debuffs; winter weekly themes felt pointless (everything
