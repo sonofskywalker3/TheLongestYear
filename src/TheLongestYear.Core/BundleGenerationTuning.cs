@@ -27,6 +27,15 @@ public sealed class BundleGenerationTuning
     /// ExcludeFromRandomSale, fish_legendary tag).</summary>
     public List<string> ExcludedItemIds { get; set; } = new();
 
+    /// <summary>Spawn locations whose key contains any of these markers (case-insensitive)
+    /// are excluded from pool derivation — post-CC / late-game areas whose items aren't
+    /// year-1 obtainable (Ginger Island; SVE's Fable Reef and Crimson Badlands).
+    /// Config-extensible for other mods' late-game maps.</summary>
+    public List<string> ExcludedLocationMarkers { get; set; } = new()
+    {
+        "Island", "FableReef", "CrimsonBadlands",
+    };
+
     /// <summary>Curated harder additions to the seasonal forage pools (spec seasonal-forage
     /// ruling 2026-07-14). Keys are Season names; values are qualified item ids.</summary>
     public Dictionary<string, List<string>> SeasonalForageAdditions { get; set; } = new()
