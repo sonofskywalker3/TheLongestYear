@@ -177,10 +177,18 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   negated GSQ season clauses pinning items to their CLOSED season → v0.11.91 negation guard.
   Fresh-process disk reload = engine manifest byte-identical (no save-scum reroll). NOTE:
   unattended resets must use `tly_reset` — `tly_failreset` queues a cutscene that blocks
-  without a player. **Smoke leftover: `ZZZ-DELETEME-smoke2-None_444200714` save folder
-  awaits user deletion.** **REMAINING for 0.12.0: Task 9 SVE compat pass** (waiting on user
-  enabling SVE in Vortex; staged disabled as `-Stardew Valley Expanded--3753-1-15-11`)
-  **and engine Plan 3** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards —
+  without a player. **✅ SVE COMPAT PASS DONE 2026-07-20 (v0.11.92, user-authorized
+  self-serve):** SVE 1.15.11 temporarily installed from the Vortex downloads zip (staging
+  folder was an empty skeleton), verified live — pools widen with SVE content (crops 48→52,
+  fish 54→56, artisan 20→23), SVE items landed in gate bundles (Gold Carrot, Butter,
+  Nectarine, Pear), Gar confirmed year-1 (Forest West), 0 TLY errors, classify 26/0,
+  determinism OK, and the value-strict manifest-mismatch guard fired live for the first
+  time (changed pools → legacy fallback → self-healed at reset). Fix shipped v0.11.92:
+  `ExcludedLocationMarkers` config list (Island / FableReef / CrimsonBadlands) — SVE's
+  Shark (Fable-Reef-only) had slipped past the old "Island" substring into a year-1 board;
+  it now appears only in SVE's own post-CC "The Missing" (non-themed, correct). SVE
+  removed after the pass; Mods folder verified back to baseline (no Vortex purge); all
+  scratch saves deleted. **REMAINING for 0.12.0: engine Plan 3** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards —
   keep authored names slash-free (Uniquify runs before Sanitize), Vault +25%, baseline tuned
   to the Normal bar: a very skilled player cannot 1-loop it; flavor note: Garden currently
   re-rolls from ALL crops — consider a flowers filter), then the cult repricing decision.
