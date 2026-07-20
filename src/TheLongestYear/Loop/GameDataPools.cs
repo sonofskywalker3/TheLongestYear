@@ -14,12 +14,12 @@ namespace TheLongestYear.Loop
     /// delegates pool derivation to the pure ItemPoolBuilder. Because everything is read
     /// from the game's OWN data at generation time, mod-added content (SVE crops/fish/
     /// forage/monsters) joins the pools automatically — the spec's "SVE-proof by
-    /// construction". Locations whose name contains "Island" are skipped (Ginger Island
-    /// is not year-1 content). All failures degrade to smaller pools, never throw:
-    /// a bundle whose pool can't fill it keeps its vanilla slots (filler fallback).</summary>
+    /// construction". Locations whose key matches a tuning.ExcludedLocationMarkers entry
+    /// are skipped (Ginger Island and other post-CC / late-game areas are not year-1
+    /// content). All failures degrade to smaller pools, never throw: a bundle whose pool
+    /// can't fill it keeps its vanilla slots (filler fallback).</summary>
     internal sealed class GameDataPools
     {
-        private const string IslandLocationMarker = "Island";
         private const int MonsterDropListFieldIndex = 6;
         private const int FishTrapFieldIndex = 1;
         private const string FishTrapMarker = "trap";
@@ -57,7 +57,7 @@ namespace TheLongestYear.Loop
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
-                    if (kv.Key.Contains(IslandLocationMarker, StringComparison.OrdinalIgnoreCase))
+                    if (ItemPoolBuilder.IsExcludedLocation(kv.Key, tuning.ExcludedLocationMarkers))
                         continue;
                     LocationData loc = kv.Value;
                     if (loc == null) continue;

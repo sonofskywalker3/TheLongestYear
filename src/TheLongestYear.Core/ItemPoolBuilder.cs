@@ -317,6 +317,19 @@ public static class ItemPoolBuilder
     private static IReadOnlyList<PoolItem> Finish(IEnumerable<PoolItem> items)
         => items.OrderBy(p => p.ItemId, StringComparer.Ordinal).ToList();
 
+    /// <summary>True when a Data/Locations key matches any excluded-location marker
+    /// (case-insensitive substring) — such locations never feed the pools.</summary>
+    public static bool IsExcludedLocation(string locationKey, IReadOnlyList<string> markers)
+    {
+        foreach (string marker in markers)
+        {
+            if (!string.IsNullOrEmpty(marker)
+                && locationKey.Contains(marker, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
     private static string Qualify(string bareId) => BundleParsing.NormalizeItemId(bareId);
 
     private static string Unqualify(string id)

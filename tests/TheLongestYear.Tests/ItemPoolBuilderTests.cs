@@ -220,4 +220,15 @@ public class ItemPoolBuilderTests
         Assert.Equal(new[] { "(O)334" }, pools.Metals.Select(p => p.ItemId));
         Assert.Equal(new[] { "(O)426" }, pools.ArtisanGoods.Select(p => p.ItemId));
     }
+
+    [Fact]
+    public void IsExcludedLocation_MatchesMarkersCaseInsensitive()
+    {
+        var markers = new BundleGenerationTuning().ExcludedLocationMarkers;
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("IslandWest", markers));
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("Custom_FableReef", markers));
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("Custom_CrimsonBadlands", markers));
+        Assert.False(ItemPoolBuilder.IsExcludedLocation("Custom_ForestWest", markers));
+        Assert.False(ItemPoolBuilder.IsExcludedLocation("Beach", markers));
+    }
 }
