@@ -4,6 +4,7 @@ using System.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Crops;
+using StardewValley.GameData.FruitTrees;
 using StardewValley.GameData.Locations;
 using StardewValley.GameData.Objects;
 using TheLongestYear.Core;
@@ -36,6 +37,8 @@ namespace TheLongestYear.Loop
             var fish = new List<RawSpawnEntry>();
             var trapIds = new HashSet<string>(StringComparer.Ordinal);
             var drops = new List<RawMonsterDropEntry>();
+            var fruitTrees = new List<RawFruitTreeEntry>();
+            var geodeDrops = new List<RawGeodeDropEntry>();
 
             try
             {
@@ -46,7 +49,20 @@ namespace TheLongestYear.Loop
                     objects[kv.Key] = new RawObjectEntry(
                         o.Type ?? "", o.Category, o.Price, o.ExcludeFromRandomSale,
                         (IReadOnlyList<string>)(o.ContextTags ?? new List<string>()));
+
+                    foreach (ObjectGeodeDropData geodeDrop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
+                    {
+                        if (geodeDrop == null) continue;
+                        if (!string.IsNullOrEmpty(geodeDrop.ItemId))
+                            geodeDrops.Add(new RawGeodeDropEntry(geodeDrop.ItemId));
+                        foreach (string randomId in geodeDrop.RandomItemId ?? new List<string>())
+                            if (!string.IsNullOrEmpty(randomId))
+                                geodeDrops.Add(new RawGeodeDropEntry(randomId));
+                    }
                 }
+
+                foreach (var kv in Game1.content.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
+                    fruitTrees.Add(new RawFruitTreeEntry(kv.Key));
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, CropData>>("Data/Crops"))
                 {
@@ -96,15 +112,17 @@ namespace TheLongestYear.Loop
                     LogLevel.Warn);
             }
 
-            // TODO(Plan-3 Task 5): read real Data/FruitTrees + geode drop tables; empty for now.
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
-                new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), tuning);
+                fruitTrees, geodeDrops, tuning);
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
                 $"monster {pools.MonsterDrops.Count}, metals {pools.Metals.Count}, " +
-                $"artisan {pools.ArtisanGoods.Count}; derived season pins {pools.DerivedSeasonPins.Count}.",
+                $"artisan {pools.ArtisanGoods.Count}, saplings {pools.Saplings.Count}, " +
+                $"geode-minerals {pools.GeodeMinerals.Count}, artifacts {pools.Artifacts.Count}, " +
+                $"books {pools.Books.Count}, cooking {pools.Cooking.Count}, " +
+                $"tapper {pools.TapperGoods.Count}; derived season pins {pools.DerivedSeasonPins.Count}.",
                 LogLevel.Trace);
             return pools;
         }

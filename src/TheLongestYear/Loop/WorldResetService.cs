@@ -433,7 +433,7 @@ namespace TheLongestYear.Loop
             // across a replayed reset (satisfies the anti-scum guarantee) AND identical on every
             // later reload of this loop's save (satisfies SaveLoaded's manifest-first re-derivation) --
             // the one value that is simultaneously stable across both.
-            var engine = new BundleEngine(_monitor, _config.PoolTuning);
+            var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
             int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.CompletedResets);
             GeneratedBundleSet generatedSet = engine.Generate(seed);
             engine.WriteToWorld(generatedSet, _monitor);
