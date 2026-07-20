@@ -73,6 +73,12 @@ namespace TheLongestYear.Loop
         // independent deterministic stream from the loop seed.
         private const int SlotSaltPrime = 6151;
 
+        // Per-def RNG salt for authored bundle composition (Plan-3 "authored bundles"). Mirrors
+        // RemixSelector's own RoomSaltPrime/StableRoomSalt idiom, but salted on the AUTHORED
+        // DEF NAME rather than room -- see the doc comment on the composition block in Generate
+        // for why (streams must be independent of room/position enumeration).
+        private const int AuthoredSaltPrime = 5381;
+
         private static readonly (int Value, string Symbol)[] RomanNumerals =
         {
             (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
@@ -81,6 +87,7 @@ namespace TheLongestYear.Loop
         private readonly VanillaBundlePool _pool;
         private readonly IMonitor _monitor;
         private readonly BundleGenerationTuning _tuning;
+        private readonly bool _nonObjectDonationsEnabled;
         private readonly Dictionary<int, DomainMatch> _lastDomains = new();
         private int _lastSeed;
 
@@ -91,11 +98,12 @@ namespace TheLongestYear.Loop
         /// cref="Generate"/> call, keyed by absolute index (diagnostics; see tly_genbundles).</summary>
         public IReadOnlyDictionary<int, DomainMatch> LastDomains => _lastDomains;
 
-        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning)
+        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled)
         {
             _monitor = monitor;
             _pool = new VanillaBundlePool(monitor);
             _tuning = tuning ?? new BundleGenerationTuning();
+            _nonObjectDonationsEnabled = nonObjectDonationsEnabled;
         }
 
         /// <summary>Draws one bundle per room-position (Vault unmodified) and returns the
@@ -107,7 +115,8 @@ namespace TheLongestYear.Loop
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning);
             LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
 
-            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools = _pool.BuildRoomPools();
+            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
+                WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed);
 
             var allPicks = new List<BundleSpec>();
             var usedNameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -124,7 +133,7 @@ namespace TheLongestYear.Loop
                 {
                     if (candidates.Count == 0)
                         continue; // already WARN-logged by BuildRoomPools
-                    BundleSpec spec = candidates[0];
+                    BundleSpec spec = VaultAmountScaler.Scale(candidates[0], _tuning.VaultAmountMultiplier);
                     if (!TryClaimIndex(spec, claimedIndices))
                         continue;
                     allPicks.Add(Uniquify(spec, usedNameCounts));
@@ -222,6 +231,86 @@ namespace TheLongestYear.Loop
             monitor.Log(
                 $"BundleEngine: wrote {set.Bundles.Count} bundles across {roomCount} rooms (seed {_lastSeed}).",
                 LogLevel.Info);
+        }
+
+        /// <summary>Composes every Plan-3 authored bundle def ONCE per generation and appends a
+        /// position-specific clone to EVERY position of the def's room's slot pools, mirroring
+        /// <see cref="VanillaBundlePool"/>'s own wildcard-widening idiom (its
+        /// AddCandidateAtAbsoluteIndex, called once per position for Index == -1 bundles). Each
+        /// clone is `composed with { Index = positionAbsoluteIndex }` -- the position's
+        /// absolute index is read off that position's EXISTING first candidate
+        /// (<c>positions[p][0].Index</c>), which is reliable because BuildRoomPools already
+        /// skips empty positions. The composed spec is deliberately NEVER re-composed per
+        /// position and NEVER re-indexed by <see cref="RemixSelector"/> -- RemixSelector
+        /// preserves whichever candidate's absolute index it picks as-is (see its class doc), so
+        /// every position needs its own index-stamped clone up front, not a re-index after the
+        /// pick.
+        ///
+        /// Determinism: each def's RNG stream is seeded from
+        /// <c>seed ^ (StableAuthoredSalt(def.Name) * AuthoredSaltPrime)</c> -- salted on the
+        /// def's NAME alone, independent of room/position enumeration order (unlike
+        /// <see cref="RemixSelector"/>'s per-ROOM salt) -- so a def's composed slots never shift
+        /// because another def or room widened first, or because BuildRoomPools' dictionary
+        /// enumeration order changes. SeasonSpread defs (Four Seasons Sampler) consume retry
+        /// attempts only from their OWN stream inside <see cref="AuthoredBundleComposer"/>; no
+        /// other def's stream is ever touched.</summary>
+        private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> WidenWithAuthoredBundles(
+            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools,
+            ItemPools itemPools, int seed)
+        {
+            var widened = new Dictionary<string, List<List<BundleSpec>>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry in pools)
+                widened[roomEntry.Key] = roomEntry.Value.Select(positions => new List<BundleSpec>(positions)).ToList();
+
+            foreach (AuthoredBundleDef def in AuthoredBundleCatalog.All)
+            {
+                if (!widened.TryGetValue(def.Room, out List<List<BundleSpec>> positions))
+                {
+                    _monitor?.Log(
+                        $"BundleEngine: authored def '{def.Name}' targets room '{def.Room}' which has no " +
+                        "live position pools this generation -- skipped.",
+                        LogLevel.Trace);
+                    continue;
+                }
+
+                var authoredRng = new Random(seed ^ (StableAuthoredSalt(def.Name) * AuthoredSaltPrime));
+                // absoluteIndex: 0 is a placeholder -- every position clone below overwrites it
+                // with that position's own absolute index (see doc comment above).
+                BundleSpec composed = AuthoredBundleComposer.Compose(
+                    def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng);
+                if (composed == null)
+                {
+                    _monitor?.Log(
+                        $"BundleEngine: authored def '{def.Name}' couldn't be composed this generation " +
+                        "(source pool too small, or season-spread retry budget exhausted) -- skipped.",
+                        LogLevel.Trace);
+                    continue;
+                }
+
+                for (int position = 0; position < positions.Count; position++)
+                {
+                    int positionAbsoluteIndex = positions[position][0].Index; // every position has >= 1 candidate
+                    positions[position].Add(composed with { Index = positionAbsoluteIndex });
+                }
+            }
+
+            var result = new Dictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, List<List<BundleSpec>>> roomEntry in widened)
+                result[roomEntry.Key] = roomEntry.Value.Select(p => (IReadOnlyList<BundleSpec>)p).ToList();
+            return result;
+        }
+
+        /// <summary>Deterministic, culture/runtime-stable salt for an authored bundle def's NAME
+        /// (string.GetHashCode is randomized per process in .NET — never use it for persisted
+        /// determinism). Same char-walk hash idiom as <see cref="RemixSelector"/>'s own private
+        /// StableRoomSalt, copied here (rather than shared) because it salts on a different key
+        /// (def name, not room) for a different, independent RNG stream — see
+        /// <see cref="WidenWithAuthoredBundles"/>'s doc comment.</summary>
+        private static int StableAuthoredSalt(string name)
+        {
+            int hash = 17;
+            foreach (char c in name) hash = unchecked(hash * 31 + c);
+            return hash;
         }
 
         /// <summary>Defensive duplicate-index guard: claims <paramref name="spec"/>'s absolute

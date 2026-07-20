@@ -1354,14 +1354,14 @@ namespace TheLongestYear
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
 
-            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
             GeneratedBundleSet first = firstEngine.Generate(seed);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {completedResets} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning).Generate(seed);
+            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations).Generate(seed);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -1387,8 +1387,15 @@ namespace TheLongestYear
                 this.Monitor.Log($"  {roomGroup.Key}:", LogLevel.Info);
                 foreach (BundleSpec spec in roomGroup.OrderBy(b => b.Index))
                 {
+                    // Authored names are unique by construction (AuthoredBundleCatalog), so an
+                    // exact Name match is sufficient here -- unlike Uniquify's " II"/" III"
+                    // collision suffixes (which only ever apply to vanilla RandomBundles name
+                    // collisions), an authored def's Name never gets suffixed.
+                    string authoredTag = TheLongestYear.Core.AuthoredBundleCatalog.All.Any(d => d.Name == spec.Name)
+                        ? " [authored]"
+                        : "";
                     this.Monitor.Log(
-                        $"    [{spec.Index}] {spec.DisplayName} (pick {spec.NumberOfSlots} of {spec.Slots.Count})",
+                        $"    [{spec.Index}] {spec.DisplayName} (pick {spec.NumberOfSlots} of {spec.Slots.Count}){authoredTag}",
                         LogLevel.Info);
 
                     // engine.LastDomains keyed by absolute index; missing key/None = vanilla slots.
@@ -1578,7 +1585,7 @@ namespace TheLongestYear
 
             if (source == RequirementsSource.EngineManifest)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, state.CompletedResets));
 
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
@@ -1600,7 +1607,7 @@ namespace TheLongestYear
             }
             else if (source == RequirementsSource.GenerateFreshRun)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
