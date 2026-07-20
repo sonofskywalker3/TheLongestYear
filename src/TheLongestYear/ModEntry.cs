@@ -6,6 +6,7 @@ using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
 using TheLongestYear.Integration;
@@ -171,6 +172,12 @@ namespace TheLongestYear
                 $"Harmony: {patched} patch class(es) applied, {failed} failed.",
                 failed > 0 ? LogLevel.Warn : LogLevel.Info);
 
+            // Wire the static monitor/config the weapon/hat donation patch cluster reads
+            // (kill-switched via GameplayConfig.EnableNonObjectDonations + the RunActivation
+            // gate — see BundleDonationPatches). _config is a single stable instance for the
+            // whole session, so Connect only needs to run once here.
+            TheLongestYear.Patches.BundleDonationPatches.Connect(this.Monitor, _config);
+
             // Observation-based donation detector. See DonationObserver.cs for why we can't rely
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
             // showed it didn't fire on real CC deposits).
@@ -204,6 +211,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [completedResets]", this.CmdGenBundles);
+            helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
@@ -1247,6 +1255,7 @@ namespace TheLongestYear
                 case "tly_catalog": this.CmdCatalog(command, args); break;
                 case "tly_classify": this.CmdClassify(command, args); break;
                 case "tly_genbundles": this.CmdGenBundles(command, args); break;
+                case "tly_trophytest": this.CmdTrophyTest(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
@@ -1436,6 +1445,109 @@ namespace TheLongestYear
                     $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms (unexpected — {breakdown}).",
                     LogLevel.Warn);
             }
+        }
+
+        /// <summary>
+        /// Diagnostics-only proof that the weapon/hat donation patches (see
+        /// <see cref="TheLongestYear.Patches.BundleDonationPatches"/>) make (W)/(H) items valid CC
+        /// ingredients. Creates ephemeral <c>(W)13</c>, <c>(H)8</c>, <c>(O)520</c> items via
+        /// <c>ItemRegistry.Create</c> and a synthetic, DETACHED <see cref="Bundle"/> carrying Gil's
+        /// Trophies' real ingredient composition (see
+        /// <see cref="TheLongestYear.Core.AuthoredBundleCatalog.GilTrophies"/> / the Boiler Room
+        /// authored def) via the simple
+        /// <c>Bundle(name, displayName, ingredients, completedFlags, rewardListString)</c>
+        /// constructor — chosen over the raw-BundleData-string overload because that one loads a
+        /// texture and builds a <c>TemporaryAnimatedSprite</c> (Bundle.cs ~87-160), a side effect a
+        /// diagnostic command shouldn't risk. The synthetic bundle is never added to
+        /// <c>Game1.RequireLocation&lt;CommunityCenter&gt;("CommunityCenter").bundles</c>, so
+        /// nothing here can touch the real board.
+        ///
+        /// For each id, logs PASS/FAIL for (a) <c>Bundle.IsValidItemForThisIngredientDescription</c>
+        /// and (b) <c>Bundle.canAcceptThisItem</c> — the checks the highlight-wrapper's
+        /// <c>ItemMatchesAnyNonObjectIngredient</c> and the vanilla pickup/click paths both rely on;
+        /// (a) is the load-bearing check since (b) and the deposit path both call it internally.
+        /// (c) <c>Bundle.tryToDepositThisItem</c> needs a live <see cref="JunimoNoteMenu"/> — its
+        /// <c>onIngredientDeposit</c> callback is what breaks BEFORE the
+        /// <c>communityCenter.bundles.FieldDict</c> persistence write (Bundle.cs:323-328), which is
+        /// what would make a non-persisting deposit test safe — but constructing a
+        /// <see cref="JunimoNoteMenu"/> headlessly loads a whole room's textures/bundle set as a
+        /// side effect of a debug command, so (c) is skipped and logged rather than risking that.
+        /// Requires a loaded save (world-ready gate).
+        /// </summary>
+        private void CmdTrophyTest(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            bool wrapperActive = RunActivation.IsActive && _config.EnableNonObjectDonations;
+            this.Monitor.Log(
+                $"tly_trophytest: highlight-wrapper active={wrapperActive} " +
+                $"(RunActivation.IsActive={RunActivation.IsActive}, EnableNonObjectDonations={_config.EnableNonObjectDonations}).",
+                LogLevel.Info);
+
+            string[] ids = { "(W)13", "(H)8", "(O)520" };
+            var ingredients = new List<BundleIngredientDescription>();
+            foreach (string id in ids)
+                ingredients.Add(new BundleIngredientDescription(id, 1, 0, completed: false));
+            var completedFlags = new bool[ingredients.Count];
+
+            Bundle synthetic;
+            try
+            {
+                synthetic = new Bundle(
+                    "Gil's Trophies (tly_trophytest)",
+                    "Gil's Trophies (tly_trophytest)",
+                    ingredients,
+                    completedFlags,
+                    "O 879 5");
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log(
+                    $"tly_trophytest: couldn't construct the synthetic Bundle: {ex.GetType().Name}: {ex.Message}. Aborting.",
+                    LogLevel.Error);
+                return;
+            }
+
+            int pass = 0, total = 0;
+            for (int i = 0; i < ids.Length; i++)
+            {
+                string id = ids[i];
+                Item item;
+                try { item = ItemRegistry.Create(id, 1); }
+                catch (Exception ex)
+                {
+                    total++;
+                    this.Monitor.Log($"tly_trophytest [{id}]: couldn't create item — {ex.Message}. FAIL.", LogLevel.Error);
+                    continue;
+                }
+
+                BundleIngredientDescription ingredient = synthetic.ingredients[i];
+
+                bool validA = synthetic.IsValidItemForThisIngredientDescription(item, ingredient);
+                total++;
+                if (validA) pass++;
+                this.Monitor.Log(
+                    $"tly_trophytest [{id}] (a) IsValidItemForThisIngredientDescription = {(validA ? "PASS" : "FAIL")}.",
+                    validA ? LogLevel.Info : LogLevel.Warn);
+
+                // canAcceptThisItem accepts a null slot (its gate is "slot == null || slot.item == null"),
+                // so no ClickableTextureComponent needs to be constructed for this check.
+                bool validB = synthetic.canAcceptThisItem(item, null);
+                total++;
+                if (validB) pass++;
+                this.Monitor.Log(
+                    $"tly_trophytest [{id}] (b) canAcceptThisItem = {(validB ? "PASS" : "FAIL")}.",
+                    validB ? LogLevel.Info : LogLevel.Warn);
+            }
+
+            this.Monitor.Log(
+                "tly_trophytest (c) tryToDepositThisItem: deposit check skipped (needs live menu) — " +
+                "constructing a headless JunimoNoteMenu would load a whole room's textures/bundle set " +
+                "as a side effect of a debug command; (a)+(b) already exercise the ingredient-matching " +
+                "logic the deposit path shares (Bundle.IsValidItemForThisIngredientDescription's id-branch).",
+                LogLevel.Info);
+
+            this.Monitor.Log($"tly_trophytest: {pass}/{total} PASS", pass == total ? LogLevel.Info : LogLevel.Error);
         }
 
         /// <summary>Compares two engine-generated sets by their written BundleData key/value
