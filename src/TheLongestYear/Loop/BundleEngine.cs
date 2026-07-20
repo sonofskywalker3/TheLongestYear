@@ -84,6 +84,12 @@ namespace TheLongestYear.Loop
             (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
         };
 
+        // Authored bundle names (Plan-3), for the classify/fill/trim exemption below -- see the
+        // doc comment on the pick loop in Generate. Built once from AuthoredBundleCatalog.All
+        // rather than re-querying .Any(...) per pick.
+        private static readonly HashSet<string> AuthoredBundleNames =
+            new(AuthoredBundleCatalog.All.Select(def => def.Name), StringComparer.Ordinal);
+
         private readonly VanillaBundlePool _pool;
         private readonly IMonitor _monitor;
         private readonly BundleGenerationTuning _tuning;
@@ -156,19 +162,37 @@ namespace TheLongestYear.Loop
                     if (!TryClaimIndex(pick, claimedIndices))
                         continue;
 
-                    var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
-                    DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
-                    BundleSpec composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng);
-                    if (ReferenceEquals(composed, pick))
+                    BundleSpec composed;
+                    if (AuthoredBundleNames.Contains(pick.Name))
                     {
-                        if (match.Domain != PoolDomain.None)
-                            _monitor?.Log(
-                                $"BundleEngine: '{pick.Room}/{pick.Name}' matched domain {match.Domain} but its " +
-                                "filtered pool couldn't fill every slot — keeping vanilla slots.",
-                                LogLevel.Trace);
-                        composed = SlotTrimmer.Trim(pick, slotRng);
+                        // Authored slots (Plan-3) are composed ONCE per def by
+                        // AuthoredBundleComposer (see WidenWithAuthoredBundles) and are FINAL --
+                        // the composer already made deliberate stack-1/quality-0 choices for
+                        // every slot (e.g. Weatherman's = all-fish, Preserver's = all-artisan).
+                        // Those authored picks clear PoolDomainClassifier's 2/3 majority just as
+                        // easily as a coincidentally-themed vanilla pick, so running them through
+                        // the classify/fill/trim chain below would silently RE-ROLL an authored
+                        // bundle's already-final slots and make them position-dependent (final-
+                        // review finding). Skip the chain entirely for authored picks.
+                        composed = pick;
+                        _lastDomains[pick.Index] = new DomainMatch(PoolDomain.None, null);
                     }
-                    _lastDomains[pick.Index] = match; // for diagnostics (see below)
+                    else
+                    {
+                        var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
+                        DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
+                        composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng);
+                        if (ReferenceEquals(composed, pick))
+                        {
+                            if (match.Domain != PoolDomain.None)
+                                _monitor?.Log(
+                                    $"BundleEngine: '{pick.Room}/{pick.Name}' matched domain {match.Domain} but its " +
+                                    "filtered pool couldn't fill every slot — keeping vanilla slots.",
+                                    LogLevel.Trace);
+                            composed = SlotTrimmer.Trim(pick, slotRng);
+                        }
+                        _lastDomains[pick.Index] = match; // for diagnostics (see below)
+                    }
                     allPicks.Add(Uniquify(composed, usedNameCounts));
                 }
             }
