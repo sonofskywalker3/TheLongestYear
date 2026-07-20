@@ -24,6 +24,12 @@ public sealed class ItemPools
     public IReadOnlyList<PoolItem> MonsterDrops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Metals { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> ArtisanGoods { get; init; } = new List<PoolItem>();
+    public IReadOnlyList<PoolItem> Artifacts { get; init; } = new List<PoolItem>();
+    public IReadOnlyList<PoolItem> Books { get; init; } = new List<PoolItem>();
+    public IReadOnlyList<PoolItem> Saplings { get; init; } = new List<PoolItem>();
+    public IReadOnlyList<PoolItem> GeodeMinerals { get; init; } = new List<PoolItem>();
+    public IReadOnlyList<PoolItem> Cooking { get; init; } = new List<PoolItem>();
+    public IReadOnlyList<PoolItem> TapperGoods { get; init; } = new List<PoolItem>();
 
     /// <summary>Item -> earliest obtainable season, for every pool item whose earliest
     /// season is later than Spring. Feeds the season-gate ramp clamp so re-rolled
@@ -65,3 +71,13 @@ public sealed record RawSpawnEntry(string ItemId, Season? Season, string? Condit
 /// <summary>One monster drop-table item (Data/Monsters field 6; chance not needed —
 /// pools care about obtainability, not drop rate).</summary>
 public sealed record RawMonsterDropEntry(string ItemId);
+
+/// <summary>One Data/FruitTrees entry's sapling item id (unqualified) — feeds the
+/// Saplings pool. Fruit tree saplings are shop items, not seasonal spawns, so no
+/// season data travels with this record (empty/any season).</summary>
+public sealed record RawFruitTreeEntry(string SaplingItemId);
+
+/// <summary>One geode drop-table item id (unqualified) — feeds the GeodeMinerals pool,
+/// merged with a curated default-mineral list (the vanilla default geode table is code,
+/// not data) and then filtered to exclude gem-category items.</summary>
+public sealed record RawGeodeDropEntry(string ItemId);

@@ -22,7 +22,9 @@ public class ItemPoolBuilderTests
         IReadOnlyList<RawSpawnEntry>? forage = null,
         IReadOnlyList<RawSpawnEntry>? fish = null,
         IReadOnlySet<string>? trap = null,
-        IReadOnlyList<RawMonsterDropEntry>? drops = null)
+        IReadOnlyList<RawMonsterDropEntry>? drops = null,
+        IReadOnlyList<RawFruitTreeEntry>? fruitTrees = null,
+        IReadOnlyList<RawGeodeDropEntry>? geodeDrops = null)
         => ItemPoolBuilder.Build(
             crops ?? new List<RawCropEntry>(),
             objects ?? new Dictionary<string, RawObjectEntry>(),
@@ -30,6 +32,8 @@ public class ItemPoolBuilderTests
             fish ?? new List<RawSpawnEntry>(),
             trap ?? new HashSet<string>(),
             drops ?? new List<RawMonsterDropEntry>(),
+            fruitTrees ?? new List<RawFruitTreeEntry>(),
+            geodeDrops ?? new List<RawGeodeDropEntry>(),
             Tuning);
 
     [Fact]
@@ -67,7 +71,8 @@ public class ItemPoolBuilderTests
                 ("4", Obj(tags: "fish_legendary")),
                 ("5", Obj())),
             new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
-            new HashSet<string>(), new List<RawMonsterDropEntry>(), tuning);
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), tuning);
         Assert.Equal(new[] { "(O)5" }, pools.Crops.Select(p => p.ItemId));
     }
 
@@ -90,7 +95,8 @@ public class ItemPoolBuilderTests
                 ("Mod.CopperThing", Obj(category: -15)),
                 ("337", Obj(category: -15))),
             new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
-            new HashSet<string>(), new List<RawMonsterDropEntry>(), tuning);
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), tuning);
         var metals = pools.Metals.ToDictionary(p => p.ItemId);
         Assert.Equal(3, metals["(O)334"].Weight);
         Assert.Equal(1, metals["(O)Mod.CopperThing"].Weight);
@@ -230,5 +236,54 @@ public class ItemPoolBuilderTests
         Assert.True(ItemPoolBuilder.IsExcludedLocation("Custom_CrimsonBadlands", markers));
         Assert.False(ItemPoolBuilder.IsExcludedLocation("Custom_ForestWest", markers));
         Assert.False(ItemPoolBuilder.IsExcludedLocation("Beach", markers));
+    }
+
+    [Fact]
+    public void Artifacts_Books_Cooking_TapperGoods_DeriveByTypeAndCategory()
+    {
+        var pools = Build(objects: Objects(
+            ("100", Obj(type: "Arch", category: 0)),
+            ("102", Obj(category: -102)),
+            ("SkillBook", Obj(category: -103)),
+            ("194", Obj(category: -7)),
+            ("724", Obj(category: -27)),
+            ("24", Obj(category: -75))));
+        Assert.Equal(new[] { "(O)100" }, pools.Artifacts.Select(p => p.ItemId));
+        Assert.Equal(new[] { "(O)102", "(O)SkillBook" }, pools.Books.Select(p => p.ItemId));
+        Assert.Equal(new[] { "(O)194" }, pools.Cooking.Select(p => p.ItemId));
+        Assert.Contains("(O)724", pools.TapperGoods.Select(p => p.ItemId));
+    }
+
+    [Fact]
+    public void Saplings_FromFruitTrees_BananaMangoExcludedByDefaultTuning()
+    {
+        var tuning = new BundleGenerationTuning();
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("628", Obj(category: -74)), ("69", Obj(category: -74)), ("835", Obj(category: -74))),
+            new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new[] { new RawFruitTreeEntry("628"), new RawFruitTreeEntry("69"), new RawFruitTreeEntry("835") },
+            new List<RawGeodeDropEntry>(), tuning);
+        Assert.Equal(new[] { "(O)628" }, pools.Saplings.Select(p => p.ItemId));
+    }
+
+    [Fact]
+    public void GeodeMinerals_FromDrops_GemCategoryExcluded()
+    {
+        var pools = Build(
+            objects: Objects(("86", Obj(category: -12)), ("60", Obj(category: -2))),
+            geodeDrops: new[] { new RawGeodeDropEntry("86"), new RawGeodeDropEntry("60") });
+        Assert.Contains("(O)86", pools.GeodeMinerals.Select(p => p.ItemId));
+        Assert.DoesNotContain("(O)60", pools.GeodeMinerals.Select(p => p.ItemId));
+    }
+
+    [Fact]
+    public void CropPoolAdditions_TeaLeavesJoinSpringSummerFall()
+    {
+        var pools = Build(objects: Objects(("815", Obj(category: -75))));
+        var tea = pools.Crops.FirstOrDefault(p => p.ItemId == "(O)815");
+        Assert.NotNull(tea);
+        Assert.Equal(new[] { Season.Spring, Season.Summer, Season.Fall }, tea!.Seasons);
     }
 }

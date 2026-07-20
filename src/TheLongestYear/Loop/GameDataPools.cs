@@ -96,7 +96,10 @@ namespace TheLongestYear.Loop
                     LogLevel.Warn);
             }
 
-            ItemPools pools = ItemPoolBuilder.Build(crops, objects, forage, fish, trapIds, drops, tuning);
+            // TODO(Plan-3 Task 5): read real Data/FruitTrees + geode drop tables; empty for now.
+            ItemPools pools = ItemPoolBuilder.Build(
+                crops, objects, forage, fish, trapIds, drops,
+                new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), tuning);
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +

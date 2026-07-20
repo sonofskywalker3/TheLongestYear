@@ -16,10 +16,32 @@ public static class ItemPoolBuilder
 {
     private const string QuestType = "Quest";
     private const string FishType = "Fish";
+    private const string ArchType = "Arch";
     private const string LegendaryFishTag = "fish_legendary";
     private const int MetalCategory = -15;
     private const int ArtisanCategory = -26;
     private const int MonsterLootCategory = -28;
+    private const int CookingCategory = -7;
+    private const int TapperCategory = -27;
+    private const int GemCategory = -2;
+    private static readonly HashSet<int> BookCategories = new() { -102, -103 };
+
+    /// <summary>Fixed additions to the TapperGoods pool beyond the -27 (syrup) category:
+    /// Hardwood, Sap, Moss (1.6), Maple Seed, Acorn, Pine Cone — tapper-adjacent items a
+    /// player collects alongside tapper output.</summary>
+    private static readonly string[] TapperGoodsAdditions =
+    {
+        "(O)709", "(O)92", "(O)Moss", "(O)310", "(O)309", "(O)311",
+    };
+
+    /// <summary>Curated vanilla default-geode mineral table (code, not data, in the base
+    /// game): Copper/Iron Ore, Coal, Stone, Earth Crystal, Frozen Tear, Fire Quartz,
+    /// Quartz. Merged with drop-derived ids; gem-category (-2) items are filtered out
+    /// after the merge regardless of source.</summary>
+    private static readonly string[] DefaultGeodeMinerals =
+    {
+        "(O)378", "(O)380", "(O)382", "(O)390", "(O)86", "(O)84", "(O)82", "(O)80",
+    };
 
     public static ItemPools Build(
         IReadOnlyList<RawCropEntry> crops,
@@ -28,6 +50,8 @@ public static class ItemPoolBuilder
         IReadOnlyList<RawSpawnEntry> fishSpawns,
         IReadOnlySet<string> trapFishIds,
         IReadOnlyList<RawMonsterDropEntry> monsterDrops,
+        IReadOnlyList<RawFruitTreeEntry> fruitTrees,
+        IReadOnlyList<RawGeodeDropEntry> geodeDrops,
         BundleGenerationTuning tuning)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
@@ -38,6 +62,13 @@ public static class ItemPoolBuilder
         var monsterPool = BuildMonsterPool(monsterDrops, objects, excluded, tuning);
         var metalsPool = BuildCategoryPool(objects, MetalCategory, excluded, tuning);
         var artisanPool = BuildCategoryPool(objects, ArtisanCategory, excluded, tuning);
+        var artifactsPool = BuildTypePool(objects, ArchType, excluded, tuning);
+        var booksPool = BuildMultiCategoryPool(objects, BookCategories, excluded, tuning);
+        var saplingsPool = BuildSaplingPool(fruitTrees, objects, excluded, tuning);
+        var geodeMineralsPool = BuildGeodeMineralPool(geodeDrops, objects, excluded, tuning);
+        var cookingPool = BuildCategoryPool(objects, CookingCategory, excluded, tuning);
+        var tapperGoodsPool = BuildCategoryPoolWithAdditions(
+            objects, TapperCategory, TapperGoodsAdditions, excluded, tuning);
 
         return new ItemPools
         {
@@ -48,6 +79,12 @@ public static class ItemPoolBuilder
             MonsterDrops = monsterPool,
             Metals = metalsPool,
             ArtisanGoods = artisanPool,
+            Artifacts = artifactsPool,
+            Books = booksPool,
+            Saplings = saplingsPool,
+            GeodeMinerals = geodeMineralsPool,
+            Cooking = cookingPool,
+            TapperGoods = tapperGoodsPool,
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
         };
     }
@@ -92,6 +129,26 @@ public static class ItemPoolBuilder
                 if (!seasons.Contains(s))
                     seasons.Add(s);
         }
+
+        // Curated additions (spec: Tea Leaves aren't a Data/Crops entry — grown from a
+        // bush, not a seed): join the season's pool, mirroring SeasonalForageAdditions.
+        foreach (KeyValuePair<string, List<string>> addition in tuning.CropPoolAdditions)
+        {
+            if (!Enum.TryParse(addition.Key, ignoreCase: true, out Season season))
+                continue;
+            foreach (string rawId in addition.Value)
+            {
+                string bare = Unqualify(rawId);
+                string id = Qualify(bare);
+                if (!Vets(bare, id, objects, excluded))
+                    continue;
+                if (!bySeasons.TryGetValue(id, out List<Season>? seasons))
+                    bySeasons[id] = seasons = new List<Season>();
+                if (!seasons.Contains(season))
+                    seasons.Add(season);
+            }
+        }
+
         return Finish(bySeasons.Select(kv => MakeItem(
             kv.Key, objects, tuning, SortedSeasons(kv.Value), Array.Empty<string>())));
     }
@@ -246,6 +303,121 @@ public static class ItemPoolBuilder
                 continue;
             string id = Qualify(entry.Key);
             if (!Vets(entry.Key, id, objects, excluded))
+                continue;
+            items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
+        }
+        return Finish(items);
+    }
+
+    /// <summary>Objects pool filtered by any of several Data/Objects Categories (e.g. the
+    /// two Books categories, cooking recipe books vs. skill books).</summary>
+    private static IReadOnlyList<PoolItem> BuildMultiCategoryPool(
+        IReadOnlyDictionary<string, RawObjectEntry> objects, IReadOnlySet<int> categories,
+        HashSet<string> excluded, BundleGenerationTuning tuning)
+    {
+        var items = new List<PoolItem>();
+        foreach (KeyValuePair<string, RawObjectEntry> entry in objects)
+        {
+            if (!categories.Contains(entry.Value.Category))
+                continue;
+            string id = Qualify(entry.Key);
+            if (!Vets(entry.Key, id, objects, excluded))
+                continue;
+            items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
+        }
+        return Finish(items);
+    }
+
+    /// <summary>A category pool (like <see cref="BuildCategoryPool"/>) plus a curated list
+    /// of fixed additional ids (e.g. TapperGoods: syrup category + Hardwood/Sap/Moss/seeds).</summary>
+    private static IReadOnlyList<PoolItem> BuildCategoryPoolWithAdditions(
+        IReadOnlyDictionary<string, RawObjectEntry> objects, int category,
+        IReadOnlyList<string> additionalIds,
+        HashSet<string> excluded, BundleGenerationTuning tuning)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var items = new List<PoolItem>();
+        foreach (KeyValuePair<string, RawObjectEntry> entry in objects)
+        {
+            if (entry.Value.Category != category)
+                continue;
+            string id = Qualify(entry.Key);
+            if (!seen.Add(id) || !Vets(entry.Key, id, objects, excluded))
+                continue;
+            items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
+        }
+        foreach (string rawId in additionalIds)
+        {
+            string bare = Unqualify(rawId);
+            string id = Qualify(bare);
+            if (!seen.Add(id) || !Vets(bare, id, objects, excluded))
+                continue;
+            items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
+        }
+        return Finish(items);
+    }
+
+    /// <summary>Objects pool filtered by Data/Objects Type (e.g. "Arch" for Artifacts).</summary>
+    private static IReadOnlyList<PoolItem> BuildTypePool(
+        IReadOnlyDictionary<string, RawObjectEntry> objects, string type,
+        HashSet<string> excluded, BundleGenerationTuning tuning)
+    {
+        var items = new List<PoolItem>();
+        foreach (KeyValuePair<string, RawObjectEntry> entry in objects)
+        {
+            if (!string.Equals(entry.Value.Type, type, StringComparison.OrdinalIgnoreCase))
+                continue;
+            string id = Qualify(entry.Key);
+            if (!Vets(entry.Key, id, objects, excluded))
+                continue;
+            items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
+        }
+        return Finish(items);
+    }
+
+    /// <summary>Fruit-tree sapling pool: saplings are shop items (no season data), so every
+    /// vetted sapling id gets the "any season" empty list.</summary>
+    private static IReadOnlyList<PoolItem> BuildSaplingPool(
+        IReadOnlyList<RawFruitTreeEntry> fruitTrees,
+        IReadOnlyDictionary<string, RawObjectEntry> objects,
+        HashSet<string> excluded, BundleGenerationTuning tuning)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var items = new List<PoolItem>();
+        foreach (RawFruitTreeEntry tree in fruitTrees)
+        {
+            string bare = Unqualify(tree.SaplingItemId);
+            string id = Qualify(bare);
+            if (!seen.Add(id) || !Vets(bare, id, objects, excluded))
+                continue;
+            items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
+        }
+        return Finish(items);
+    }
+
+    /// <summary>Geode-mineral pool: distinct drop-derived ids MERGED with the curated
+    /// default-mineral list (the vanilla default geode table is code, not data), then
+    /// filtered to drop any item whose object Category is the gem category — gems belong
+    /// to the Jewel bundle, not GeodeMinerals — applied AFTER the merge so it's correct
+    /// regardless of which quartz-family items are gem-category in a given data set.</summary>
+    private static IReadOnlyList<PoolItem> BuildGeodeMineralPool(
+        IReadOnlyList<RawGeodeDropEntry> geodeDrops,
+        IReadOnlyDictionary<string, RawObjectEntry> objects,
+        HashSet<string> excluded, BundleGenerationTuning tuning)
+    {
+        var bareIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (RawGeodeDropEntry drop in geodeDrops)
+            bareIds.Add(Unqualify(drop.ItemId));
+        foreach (string defaultId in DefaultGeodeMinerals)
+            bareIds.Add(Unqualify(defaultId));
+
+        var items = new List<PoolItem>();
+        foreach (string bare in bareIds)
+        {
+            string id = Qualify(bare);
+            if (!Vets(bare, id, objects, excluded))
+                continue;
+            if (objects.TryGetValue(bare, out RawObjectEntry? obj) && obj.Category == GemCategory)
                 continue;
             items.Add(MakeItem(id, objects, tuning, Array.Empty<Season>(), Array.Empty<string>()));
         }
