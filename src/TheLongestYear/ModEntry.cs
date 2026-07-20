@@ -1477,6 +1477,7 @@ namespace TheLongestYear
         private void CmdTrophyTest(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (_config == null) { this.Monitor.Log("Config unavailable.", LogLevel.Warn); return; }
 
             bool wrapperActive = RunActivation.IsActive && _config.EnableNonObjectDonations;
             this.Monitor.Log(
