@@ -188,7 +188,30 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   Shark (Fable-Reef-only) had slipped past the old "Island" substring into a year-1 board;
   it now appears only in SVE's own post-CC "The Missing" (non-themed, correct). SVE
   removed after the pass; Mods folder verified back to baseline (no Vortex purge); all
-  scratch saves deleted. **REMAINING for 0.12.0: engine Plan 3** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards —
+  scratch saves deleted.
+- **✅ 0.12.0 ENGINE PLAN 3 of 3 (AUTHORED BUNDLES) SHIPPED v0.11.93–100 (2026-07-20,
+  deployed to PC Mods, smoked on cloned saves, final review READY after 2 trivial fixes).**
+  Plan `docs/superpowers/plans/2026-07-20-tly-0.12.0-engine-3-authored-bundles.md`; spec
+  `docs/superpowers/specs/2026-07-20-tly-0.12.0-engine-3-authored-bundles-design.md`;
+  662/662 tests. **Eleven authored bundles** join the room pools as remix candidates
+  (Artifact, Mineral, Book→Book of Stars reward, Tapper's, Four Seasons Sampler→Tea
+  Sapling x2, Orchard (NEW, saplings ex-Banana/Mango), Preserver's, Home Cook's Feast,
+  Weatherman's, **Gil's Trophies** (11 eradication rewards incl. Warrior Ring — donate 2
+  of 4 shown; trophies re-earn each loop so no uniqueness exclusions), Recycler's), each
+  composed once per generation from a per-def-name seeded stream, slots FINAL (exempt from
+  the domain filler, v0.11.100). **Weapon/hat donation enabled** by a two-patch cluster
+  (inventory-highlight wrapper + ingredient-icon gate; everything else in 1.6 is already
+  type-agnostic) behind `EnableNonObjectDonations` (config.json; off = rings-only compose;
+  mid-loop flip can strand an in-flight trophy bundle until next reset — documented).
+  **Vault engine-owned +25%** (3,125/6,250/12,500/31,250g, names match; multiplier is a
+  tuning knob; vanilla's own asset stuffs the amount in the quality field — preserved,
+  not a bug). Tea Leaves in the crops pool (Spr/Sum/Fall) + Green Tea via artisan.
+  `tly_trophytest` proves (W)13/(H)8/(O)520 match+accept programmatically.
+  **PENDING USER PLAYTEST:** live CC click-through of a weapon/hat donation (the one
+  check automation can't do), authored-bundle feel, Vault +25% feel, Normal-bar
+  difficulty impressions → drives the PoolTuning pass, then the cult repricing decision.
+  **REMAINING for 0.12.0: the Normal-bar tuning playtest loop (knobs all in
+  `GameplayConfig.PoolTuning`) + cult repricing decision — then 0.12.0 releases.** (Artifact/Mineral/Book + 7 surveyed authored bundles w/ rewards —
   keep authored names slash-free (Uniquify runs before Sanitize), Vault +25%, baseline tuned
   to the Normal bar: a very skilled player cannot 1-loop it; flavor note: Garden currently
   re-rolls from ALL crops — consider a flowers filter), then the cult repricing decision.
