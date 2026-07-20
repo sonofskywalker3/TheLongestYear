@@ -1,10 +1,39 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-05-27 (after Plan 07 landed — v1 implementation COMPLETE)
-**Branch:** `feat/v1-plan-07-junimo-stash`
-**Tests:** 328 passing, 0 failing
-**Build:** clean (0 warnings, 0 errors)
-**Status:** v1 ready for first meaningful playtest
+**Last updated:** 2026-07-20 (0.12.0 engine work code-complete at v0.11.100 — beta-release decision point)
+**Branch:** `master` (clean)
+**Tests:** 662 passing, 0 failing
+**Build:** clean; deployed to PC Mods, smoked on cloned saves
+**Last public release:** 0.11.60 (Nexus, 2026-07-14; changelog posted 07-15 — fully closed)
+
+## Current state (2026-07-20) — beta-release decision point
+
+All three 0.12.0 engine plans are shipped (v0.11.61→v0.11.100): authored bundles (11 defs
+incl. Gil's Trophies with Warrior Ring), weapon/hat donations (`EnableNonObjectDonations`),
+Vault engine-owned +25%, SVE compat pass. Final review passed after 2 trivial fixes
+(v0.11.99/100). `TODO.md` is the live source of truth — see its "0.12.0 ENGINE PLAN 3 of 3"
+entry for full detail.
+
+**Assessed 2026-07-20: ready for a public BETA with two gates:**
+1. **One human check outstanding** — a live CC click-through of a weapon/hat donation into a
+   trophy bundle (`tly_trophytest` proved match/accept programmatically; no human has run the
+   real menu flow). Riskiest untested surface; 10 min on the already-deployed PC build.
+2. **Version framing** — 0.12.0 is reserved for after the Normal-bar `PoolTuning` playtest
+   loop + cult repricing decision. Ship the beta as **0.12.0-beta.1** (or 0.11.100 marked
+   beta/optional on Nexus), NOT as 0.12.0. Beta feedback feeds the tuning pass.
+
+Release-note caveat to include: flipping `EnableNonObjectDonations` mid-loop can strand an
+in-flight trophy bundle until the next reset (known, documented).
+
+Release mechanics: `gh release create` → publish-nexus workflow (TLY flow verified live by
+0.11.60; `file_id` 7502657); description sync via `release.ps1`; Nexus changelog = manual
+browser paste. **No push/release without explicit "yes, push."**
+
+---
+
+## Historical — v1 snapshot (2026-05-27, after Plan 07)
+
+**Status then:** v1 ready for first meaningful playtest (328 tests).
 
 ## What v1 means
 
