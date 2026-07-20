@@ -54,12 +54,15 @@ public static class ItemPoolBuilder
 
     /// <summary>Season list for one spawn entry: an explicit Season wins; otherwise any
     /// season names found in the Condition string (best-effort GameStateQuery token scan);
-    /// otherwise empty = any season.</summary>
+    /// otherwise empty = any season. Note: negated GSQ season clauses (containing '!')
+    /// cannot be token-scanned safely, so any negation means "no season signal".</summary>
     public static IReadOnlyList<Season> SeasonsFromSpawn(Season? season, string? condition)
     {
         if (season != null)
             return new[] { season.Value };
         if (string.IsNullOrEmpty(condition))
+            return Array.Empty<Season>();
+        if (condition.Contains('!'))
             return Array.Empty<Season>();
 
         var found = new List<Season>();

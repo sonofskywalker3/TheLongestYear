@@ -149,6 +149,12 @@ public class ItemPoolBuilderTests
     }
 
     [Fact]
+    public void SeasonsFromSpawn_NegatedCondition_TreatedAsNoSignal()
+    {
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!LOCATION_SEASON Here winter"));
+    }
+
+    [Fact]
     public void ForageAdditions_FromTuning_JoinTheSeasonPool()
     {
         // Default tuning adds (O)404/(O)420 to Spring; give them object entries so they vet in.
