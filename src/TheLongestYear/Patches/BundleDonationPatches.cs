@@ -124,7 +124,8 @@ namespace TheLongestYear.Patches
         /// <c>inventory.highlightMethod</c> with a wrapper that additionally accepts (W)/(H)
         /// items matching an open bundle's ingredients. The wrapper defers to the ORIGINAL
         /// delegate first (<c>original(item) || …</c>), so every vanilla highlight case
-        /// (Objects) is unchanged.
+        /// (Objects) is unchanged. The wrapper re-checks <see cref="Enabled"/> on each invocation,
+        /// closing the window where a mid-menu config toggle could leave stale highlighting active.
         /// </summary>
         [HarmonyPatch(typeof(JunimoNoteMenu))]
         internal static class HighlightWrapperPatch
@@ -161,7 +162,7 @@ namespace TheLongestYear.Patches
                         return;
 
                     InventoryMenu.highlightThisItem wrapper = candidate =>
-                        original(candidate) || ItemMatchesAnyNonObjectIngredient(__instance, candidate);
+                        original(candidate) || (Enabled && ItemMatchesAnyNonObjectIngredient(__instance, candidate));
                     inv.highlightMethod = wrapper;
                     _wrapped.Add(inv, null);
                 }
