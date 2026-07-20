@@ -30,7 +30,7 @@ public static class BundleSlotFiller
         if (candidates.Count < targetCount)
             return spec;
 
-        List<PoolItem> chosen = SampleWithoutReplacement(candidates, targetCount, rng);
+        List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng);
         var slots = chosen.Select(item => new BundleSlotSpec(
             item.ItemId,
             RollStack(match.Domain, item, tuning, rng),
@@ -99,33 +99,6 @@ public static class BundleSlotFiller
         if (habitat.Count == 0)
             return fishPool;
         return fishPool.Where(p => p.Locations.Any(habitat.Contains)).ToList();
-    }
-
-    /// <summary>Cumulative-weight walk over the ordered candidate list, removing each
-    /// pick — deterministic for a given rng stream and pool order (pools are
-    /// ItemId-ordered by ItemPoolBuilder).</summary>
-    private static List<PoolItem> SampleWithoutReplacement(
-        IReadOnlyList<PoolItem> candidates, int count, Random rng)
-    {
-        var remaining = candidates.ToList();
-        var picked = new List<PoolItem>(count);
-        for (int i = 0; i < count; i++)
-        {
-            int total = remaining.Sum(p => p.Weight);
-            int roll = rng.Next(total);
-            int cursor = 0;
-            for (int j = 0; j < remaining.Count; j++)
-            {
-                cursor += remaining[j].Weight;
-                if (roll < cursor)
-                {
-                    picked.Add(remaining[j]);
-                    remaining.RemoveAt(j);
-                    break;
-                }
-            }
-        }
-        return picked;
     }
 
     private static int RollStack(
