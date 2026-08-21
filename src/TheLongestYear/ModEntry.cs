@@ -229,6 +229,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
+            helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
             helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
@@ -1290,6 +1291,7 @@ namespace TheLongestYear
                 case "tly_trophytest": this.CmdTrophyTest(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
+                case "tly_jpbudget": this.CmdJpBudget(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
@@ -1618,6 +1620,80 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _launcher?.OpenWeeklyHub();
+        }
+
+        /// <summary>Diagnostics only: the maximum JP the CURRENT loop's board can pay out, per
+        /// season and in total, under the "donate each slot as soon as it is obtainable" model
+        /// (plus a hoard-everything-for-Winter ceiling). Pure maths in
+        /// <see cref="JpBudgetCalculator"/>; this reduces the live BundleData + CcItem catalog to
+        /// its inputs. Baseline economy — no jp_boost tiers applied. Usage: tly_jpbudget [verbose]</summary>
+        private void CmdJpBudget(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            bool verbose = args.Length > 0 && string.Equals(args[0], "verbose", StringComparison.OrdinalIgnoreCase);
+
+            var catalogById = new Dictionary<string, CcItem>(StringComparer.Ordinal);
+            foreach (CcItem item in _catalog)
+                catalogById[item.Id] = item;
+
+            var bundles = new List<BudgetBundle>();
+            int unknownItems = 0;
+            foreach (KeyValuePair<string, string> kvp in Game1.netWorldState.Value.BundleData)
+            {
+                ParsedBundle parsed = BundleParsing.Parse(kvp.Key, kvp.Value);
+                int vaultGold = TheLongestYear.Integration.VaultBundleMap.GoldForIndex(parsed.Index);
+                if (vaultGold > 0)
+                {
+                    bundles.Add(new BudgetBundle(parsed.Room, parsed.Name, parsed.NumberOfSlots, new List<BudgetSlot>(), vaultGold));
+                    continue;
+                }
+
+                var slots = new List<BudgetSlot>();
+                foreach (BundleIngredient ing in parsed.Ingredients)
+                {
+                    if (BundleParsing.IsCategoryRef(ing.ItemRef)) continue;
+                    string id = BundleParsing.NormalizeItemId(ing.ItemRef);
+                    Rarity rarity;
+                    int earliest;
+                    if (catalogById.TryGetValue(id, out CcItem cc))
+                    {
+                        rarity = cc.Rarity;
+                        earliest = cc.ObtainableSeasons.Min(s => (int)s);
+                    }
+                    else
+                    {
+                        unknownItems++;
+                        rarity = TheLongestYear.Donations.ItemRarityResolver.Resolve(id, _config.RarityThresholds);
+                        earliest = 0;
+                    }
+                    slots.Add(new BudgetSlot(id, rarity, earliest));
+                    if (verbose)
+                        this.Monitor.Log($"  {parsed.Room}/{parsed.Index} '{parsed.Name}' {id} {rarity} earliest={(TheLongestYear.Core.Season)earliest}", LogLevel.Info);
+                }
+                bundles.Add(new BudgetBundle(parsed.Room, parsed.Name, parsed.NumberOfSlots, slots, 0));
+            }
+
+            JpBudgetReport report = JpBudgetCalculator.Compute(
+                bundles, _config.Jp, _config.SelectionBonusMultiplier, BonusItemSampler.DefaultMaxCountBySeason);
+
+            this.Monitor.Log(
+                $"tly_jpbudget: loop {_meta.State.CompletedResets} (run {_meta.Run.RunNumber}), {bundles.Count} bundles, " +
+                $"{report.SlotsBySeason.Sum()} item slots ({unknownItems} not in the catalog → Spring/price-rarity fallback). " +
+                "Baseline economy, no jp_boost. Model: each slot paid once at its EARLIEST obtainable season.",
+                LogLevel.Info);
+            this.Monitor.Log("  season  slots  donation  selBonus  bundles  rooms  weekly  checkpoint  vault  TOTAL", LogLevel.Info);
+            for (int s = 0; s < Calendar.MonthsPerYear; s++)
+            {
+                this.Monitor.Log(
+                    $"  {(TheLongestYear.Core.Season)s,-6}  {report.SlotsBySeason[s],5}  {report.Donation[s],8}  {report.SelectionBonus[s],8}  " +
+                    $"{report.BundleBonus[s],7}  {report.RoomBonus[s],5}  {report.WeeklyQuest[s],6}  {report.Checkpoint[s],10}  " +
+                    $"{report.Vault[s],5}  {report.SeasonTotal(s),5}",
+                    LogLevel.Info);
+            }
+            this.Monitor.Log(
+                $"  TOTAL (earliest-season model) = {report.Total} JP; hoard-everything-for-Winter ceiling = {report.HoardCeiling} JP " +
+                "(ignores checkpoint quotas — upper bound only).",
+                LogLevel.Info);
         }
 
         private void CmdOpenShop(string command, string[] args)
