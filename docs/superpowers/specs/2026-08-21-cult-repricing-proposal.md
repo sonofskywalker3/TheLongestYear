@@ -1,4 +1,18 @@
-# Cult / hard-gate upgrade repricing — proposal (2026-08-21, awaiting ruling)
+# Cult / hard-gate upgrade repricing — proposal (2026-08-21) — RULED + SHIPPED v0.12.7
+
+**Ruling (user, 2026-08-21):** drop `cult_starfruit` entirely (anyone can reach the desert — no RNG to buy
+off); `cult_red_cabbage` (Summer Mixed Seeds roll) → **5,000** — hefty but not impossible, and Red Cabbage may
+not even be asked on a remix/engine board; new **`pierre_year2_seeds` 10,000** = the sure thing: Pierre
+stocks his year-2 seeds (Garlic / Red Cabbage / Artichoke) in year 1 (`PierreYear2SeedsService`, a
+Data/Shops edit that strips the `YEAR 2` clause while owned). `keep_bus_unlocked`, `fortune_rare_fish` and
+the Cart Stall curve were not ruled on and stay as they are. Smoked 2026-08-21: bought on a clone,
+`debug season summer` + `debug shop SeedShop` → Red Cabbage Seeds 100g listed between Sunflower Seeds and
+Grass Starter; log `unlocked 3 year-2 seed line(s)`.
+
+---
+
+*Original proposal below for the record.*
+
 
 Input: `docs/superpowers/notes/2026-08-21-jp-budget.md` — a strong player banks **≈ 8,000–9,500 JP
 per winning loop** (median 8,650; ≈ 1,930 of it fixed awards); an "everything now" player ≈

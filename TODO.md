@@ -14,12 +14,13 @@ B5 ✅ v0.12.5–0.12.6 + `notes/2026-08-21-jp-budget.md`. Three specs await the
 - **A4 quota ramps** — `specs/2026-08-21-curated-quota-ramps-design.md`: 18 uncurated pick-X-of-Y bundles;
   must-fix Winter Star `[0,0,0,2]`, Forager's `[0,0,2,2]`, Gil's Trophies `[0,0,1,2]` (+ trim 4 late-game
   trophies), Brewer's/Preserver's `[0,1,2,4]`, Mineral `[0,1,3,4]`; should-fix six more.
-- **B6 repricing** — `specs/2026-08-21-cult-repricing-proposal.md`: cult_red_cabbage/starfruit 750 → 10,000
-  (rule: > max strong loop 9,512), keep_bus_unlocked 1,500 → 4,500, fortune_rare_fish stays, Cart Stall
-  60…2,000 (Σ 6,720); plus the question of replacing the Mixed-Seeds roll with 2-tier obtainability chains.
-- **C7 BundleSource** — `specs/2026-08-21-bundle-source-engine-vanilla-design.md`: rulings on (1) "TLY Custom"
-  as a third AGO dropdown entry (recommended) vs config-driven row, (2) config flip applies at next reset
-  (recommended). Audit found: catalog only takes the first X ingredients, SeasonResolver crop-over-forage
+- ✅ **B6 repricing — RULED + SHIPPED v0.12.7**: cult_starfruit removed, cult_red_cabbage 750 → 5,000, new
+  pierre_year2_seeds 10,000 (Pierre sells Garlic/Red Cabbage/Artichoke seeds in year 1; smoked live). Bus /
+  rare-fish / Cart Stall untouched (not ruled).
+- **C7 BundleSource** — `specs/2026-08-21-bundle-source-engine-vanilla-design.md`: **ruling 1 received** — "TLY
+  Custom" stays the DEFAULT, pre-selected entry of the Advanced Options dropdown; Normal/Remixed are the
+  options the player must pick deliberately (per save). Ruling 2 (config flip → next reset) recommended,
+  not contested. Audit found: catalog only takes the first X ingredients, SeasonResolver crop-over-forage
   (Grape), legacy path has no obtainability clamp, and **CCCB swaps BundleData values at DayStarted** (TLY
   classifies at SaveLoaded → ada113's bug; fix = fingerprint + re-classify on DayStarted in Vanilla mode).
 
