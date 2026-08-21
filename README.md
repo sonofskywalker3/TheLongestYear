@@ -57,7 +57,9 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
 4. **Start a new game on the Standard farm.** The farm-type and skip-intro options are managed for you — the mod's own intro plays in their place.
-5. Bundles are the mod's own: every loop rolls a fresh board from the vanilla + remix pools plus the mod's authored bundles, so the Standard/Remixed choice at farm creation doesn't matter.
+5. Bundles are the mod's own: every loop rolls a fresh board from the vanilla + remix pools plus the mod's authored bundles. While the mod is enabled, the **Community Center Bundles** row under **New → Advanced Options** shows a single **TLY Custom** entry (hover it for the explanation) — there is no Standard/Remixed choice to make.
+
+   ![New game → Advanced Options → Community Center Bundles showing TLY Custom](release-notes/advanced-options-tly-custom.png)
 
 ## How it works
 
