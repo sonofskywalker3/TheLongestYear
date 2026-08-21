@@ -1623,10 +1623,12 @@ namespace TheLongestYear
         }
 
         /// <summary>Diagnostics only: the maximum JP the CURRENT loop's board can pay out, per
-        /// season and in total, under the "donate each slot as soon as it is obtainable" model
-        /// (plus a hoard-everything-for-Winter ceiling). Pure maths in
-        /// <see cref="JpBudgetCalculator"/>; this reduces the live BundleData + CcItem catalog to
-        /// its inputs. Baseline economy — no jp_boost tiers applied. Usage: tly_jpbudget [verbose]</summary>
+        /// season and in total, under two models — "donate as soon as obtainable" and the
+        /// "strong player" (meet each checkpoint minimum with the cheapest obtainable slots, hoard
+        /// the rest for Winter's 4×) — plus a hoard-everything ceiling. Pure maths in
+        /// <see cref="JpBudgetCalculator"/>; this reduces the live BundleData + CcItem catalog +
+        /// resolved requirements to its inputs. Baseline economy — no jp_boost tiers applied.
+        /// Usage: tly_jpbudget [verbose]</summary>
         private void CmdJpBudget(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -1635,9 +1637,13 @@ namespace TheLongestYear
             var catalogById = new Dictionary<string, CcItem>(StringComparer.Ordinal);
             foreach (CcItem item in _catalog)
                 catalogById[item.Id] = item;
+            var reqByName = new Dictionary<string, BundleRequirement>(StringComparer.Ordinal);
+            foreach (BundleRequirement req in _requirements)
+                if (!reqByName.ContainsKey(req.Name))
+                    reqByName[req.Name] = req;
 
             var bundles = new List<BudgetBundle>();
-            int unknownItems = 0;
+            var notInCatalog = new SortedSet<string>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, string> kvp in Game1.netWorldState.Value.BundleData)
             {
                 ParsedBundle parsed = BundleParsing.Parse(kvp.Key, kvp.Value);
@@ -1648,6 +1654,7 @@ namespace TheLongestYear
                     continue;
                 }
 
+                reqByName.TryGetValue(parsed.Name, out BundleRequirement requirement);
                 var slots = new List<BudgetSlot>();
                 foreach (BundleIngredient ing in parsed.Ingredients)
                 {
@@ -1658,19 +1665,32 @@ namespace TheLongestYear
                     if (catalogById.TryGetValue(id, out CcItem cc))
                     {
                         rarity = cc.Rarity;
-                        earliest = cc.ObtainableSeasons.Min(s => (int)s);
+                        earliest = cc.ObtainableSeasons.Min(x => (int)x);
                     }
                     else
                     {
-                        unknownItems++;
+                        notInCatalog.Add(id);
                         rarity = TheLongestYear.Donations.ItemRarityResolver.Resolve(id, _config.RarityThresholds);
                         earliest = 0;
                     }
-                    slots.Add(new BudgetSlot(id, rarity, earliest));
+                    int? pin = null;
+                    if (requirement?.Kind == BundleKind.PerItem && requirement.ItemSeasonPins != null
+                        && requirement.ItemSeasonPins.TryGetValue(id, out TheLongestYear.Core.Season pinned))
+                        pin = (int)pinned;
+                    slots.Add(new BudgetSlot(id, rarity, earliest, pin));
                     if (verbose)
-                        this.Monitor.Log($"  {parsed.Room}/{parsed.Index} '{parsed.Name}' {id} {rarity} earliest={(TheLongestYear.Core.Season)earliest}", LogLevel.Info);
+                        this.Monitor.Log(
+                            $"  {parsed.Room}/{parsed.Index} '{parsed.Name}' {id} {rarity} earliest={(TheLongestYear.Core.Season)earliest}" +
+                            (pin.HasValue ? $" pin={(TheLongestYear.Core.Season)pin.Value}" : "") +
+                            (catalogById.ContainsKey(id) ? "" : " (not in catalog)"),
+                            LogLevel.Info);
                 }
-                bundles.Add(new BudgetBundle(parsed.Room, parsed.Name, parsed.NumberOfSlots, slots, 0));
+
+                int? seasonal = requirement?.Kind == BundleKind.Seasonal && requirement.SeasonalSeason.HasValue
+                    ? (int)requirement.SeasonalSeason.Value : (int?)null;
+                IReadOnlyList<int> quota = requirement?.Kind == BundleKind.Percentage
+                    ? requirement.CumulativeRequiredBySeason : null;
+                bundles.Add(new BudgetBundle(parsed.Room, parsed.Name, parsed.NumberOfSlots, slots, 0, seasonal, quota));
             }
 
             JpBudgetReport report = JpBudgetCalculator.Compute(
@@ -1678,22 +1698,35 @@ namespace TheLongestYear
 
             this.Monitor.Log(
                 $"tly_jpbudget: loop {_meta.State.CompletedResets} (run {_meta.Run.RunNumber}), {bundles.Count} bundles, " +
-                $"{report.SlotsBySeason.Sum()} item slots ({unknownItems} not in the catalog → Spring/price-rarity fallback). " +
-                "Baseline economy, no jp_boost. Model: each slot paid once at its EARLIEST obtainable season.",
+                $"{bundles.Sum(b => b.Slots.Count)} item slots ({bundles.Sum(b => b.VaultGold > 0 ? 0 : Math.Min(b.NumberOfSlots, b.Slots.Count))} payable). " +
+                "Baseline economy, no jp_boost.",
                 LogLevel.Info);
-            this.Monitor.Log("  season  slots  donation  selBonus  bundles  rooms  weekly  checkpoint  vault  TOTAL", LogLevel.Info);
+            if (notInCatalog.Count > 0)
+                this.Monitor.Log($"  not in the CcItem catalog (Spring/price-rarity fallback): {string.Join(", ", notInCatalog)}", LogLevel.Info);
+            LogModel("EARLIEST model (donate as soon as obtainable)", report.Earliest, report);
+            LogModel("STRONG model (checkpoint minimums only, hoard the rest for Winter)", report.Strong, report);
+            this.Monitor.Log(
+                $"  TOTALS: earliest = {report.EarliestTotal} JP; strong = {report.StrongTotal} JP; " +
+                $"hoard-everything ceiling = {report.HoardCeiling} JP (ignores checkpoints — upper bound only). " +
+                $"Fixed awards inside each total: {report.FixedAwards} (weekly {report.WeeklyQuest.Sum()}, checkpoints {report.Checkpoint.Sum()}, vault {report.Vault.Sum()}).",
+                LogLevel.Info);
+            foreach (string gate in report.ImpossibleGates)
+                this.Monitor.Log($"  IMPOSSIBLE GATE: {gate}", LogLevel.Warn);
+        }
+
+        private void LogModel(string title, JpBudgetModel model, JpBudgetReport report)
+        {
+            this.Monitor.Log($"  {title}:", LogLevel.Info);
+            this.Monitor.Log("    season  slots  donation  selBonus  bundles  rooms  weekly  checkpoint  vault  TOTAL", LogLevel.Info);
             for (int s = 0; s < Calendar.MonthsPerYear; s++)
             {
+                long total = model.Donation[s] + model.SelectionBonus[s] + model.BundleBonus[s] + model.RoomBonus[s] + report.FixedAwardsFor(s);
                 this.Monitor.Log(
-                    $"  {(TheLongestYear.Core.Season)s,-6}  {report.SlotsBySeason[s],5}  {report.Donation[s],8}  {report.SelectionBonus[s],8}  " +
-                    $"{report.BundleBonus[s],7}  {report.RoomBonus[s],5}  {report.WeeklyQuest[s],6}  {report.Checkpoint[s],10}  " +
-                    $"{report.Vault[s],5}  {report.SeasonTotal(s),5}",
+                    $"    {(TheLongestYear.Core.Season)s,-6}  {model.Slots[s],5}  {model.Donation[s],8}  {model.SelectionBonus[s],8}  " +
+                    $"{model.BundleBonus[s],7}  {model.RoomBonus[s],5}  {report.WeeklyQuest[s],6}  {report.Checkpoint[s],10}  " +
+                    $"{report.Vault[s],5}  {total,5}",
                     LogLevel.Info);
             }
-            this.Monitor.Log(
-                $"  TOTAL (earliest-season model) = {report.Total} JP; hoard-everything-for-Winter ceiling = {report.HoardCeiling} JP " +
-                "(ignores checkpoint quotas — upper bound only).",
-                LogLevel.Info);
         }
 
         private void CmdOpenShop(string command, string[] args)
