@@ -19,6 +19,7 @@ namespace TheLongestYear.UI
             "Rain" => (Game1.mouseCursors, new Rectangle(465, 333, 13, 13)),
             "Storm" => (Game1.mouseCursors, new Rectangle(413, 346, 13, 13)),
             "Snow" => (Game1.mouseCursors, new Rectangle(465, 346, 13, 13)),
+            "Wind" => (Game1.mouseCursors, Game1.IsFall ? new Rectangle(413, 359, 13, 13) : new Rectangle(465, 359, 13, 13)), // TV debris icon (leaves / petals)
             "Festival" => (Game1.mouseCursors, new Rectangle(413, 372, 13, 13)),
             WeatherScheduler.GreenRain => (Game1.mouseCursors_1_6, new Rectangle(178, 363, 13, 13)),
             _ => (Game1.mouseCursors, new Rectangle(413, 333, 13, 13)), // Sun / default
