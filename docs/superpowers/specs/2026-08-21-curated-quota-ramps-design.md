@@ -1,4 +1,9 @@
-# Curated per-name quota ramps for the remix pool — proposal (2026-08-21, awaiting ruling)
+# Curated per-name quota ramps for the remix pool — RULED + SHIPPED v0.12.8 (2026-08-21)
+
+**Ruling (user):** "yes, do it for all, use your best judgement" — all twelve ramps below are in
+`GameplayConfig.DefaultBundleQuotas` and `_gilTrophies` is trimmed to the 7 year-1-feasible ids
+(`CuratedQuotaRampTests`, 703 tests green).
+
 
 ## Problem
 

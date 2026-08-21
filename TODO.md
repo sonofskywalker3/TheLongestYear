@@ -11,9 +11,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 session scratchpad showed "Themed donations completed" cleanly under "Bonus this week (1.5x):"), A3 ✅ v0.12.4,
 B5 ✅ v0.12.5–0.12.6 + `notes/2026-08-21-jp-budget.md`. Three specs await the user's ruling before code:*
 
-- **A4 quota ramps** — `specs/2026-08-21-curated-quota-ramps-design.md`: 18 uncurated pick-X-of-Y bundles;
-  must-fix Winter Star `[0,0,0,2]`, Forager's `[0,0,2,2]`, Gil's Trophies `[0,0,1,2]` (+ trim 4 late-game
-  trophies), Brewer's/Preserver's `[0,1,2,4]`, Mineral `[0,1,3,4]`; should-fix six more.
+- ✅ **A4 quota ramps — RULED (all) + SHIPPED v0.12.8**: 12 curated ramps + Gil's Trophies trimmed to 7 ids.
 - ✅ **B6 repricing — RULED + SHIPPED v0.12.7**: cult_starfruit removed, cult_red_cabbage 750 → 5,000, new
   pierre_year2_seeds 10,000 (Pierre sells Garlic/Red Cabbage/Artichoke seeds in year 1; smoked live). Bus /
   rare-fish / Cart Stall untouched (not ruled).
