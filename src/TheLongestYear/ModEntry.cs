@@ -30,6 +30,7 @@ namespace TheLongestYear
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
         private DonationObserver _donationObserver;
+        private CartStallIntro _cartStallIntro;
         private CaveChoicePrompt _caveChoicePrompt;
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
@@ -71,6 +72,7 @@ namespace TheLongestYear
                     : this.Helper.Translation.Get(key, tokens).Default(key).ToString());
 
             _config = helper.ReadConfig<GameplayConfig>();
+            CartSlotLimitPatch.Enabled = _config.LimitTravelingCartStock;
 
             // One-shot config migration.
             bool migrated = false;
@@ -182,6 +184,8 @@ namespace TheLongestYear
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
             // showed it didn't fire on real CC deposits).
             _donationObserver = new DonationObserver(helper, this.Monitor);
+            // One-time in-fiction explanation for the one-item Traveling Cart (Cart Stall cap).
+            _cartStallIntro = new CartStallIntro(helper, this.Monitor, () => _meta?.State, () => _config);
 
             // Per-loop mushrooms-vs-bats re-choice on cave entry — replaces the replaying
             // Demetrius cutscene (event-hygiene pass; see CaveChoicePrompt).
@@ -1111,6 +1115,12 @@ namespace TheLongestYear
                 setValue: v => _config.ShowJpHud = v,
                 name: () => Strings.Get("gmcm.jp-hud.name"),
                 tooltip: () => Strings.Get("gmcm.jp-hud.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.LimitTravelingCartStock,
+                setValue: v => { _config.LimitTravelingCartStock = v; CartSlotLimitPatch.Enabled = v; },
+                name: () => Strings.Get("gmcm.cart-limit.name"),
+                tooltip: () => Strings.Get("gmcm.cart-limit.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.AutoDetectReplayableUnlockCutscenes,

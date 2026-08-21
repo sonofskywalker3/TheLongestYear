@@ -26,6 +26,7 @@
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
     "dialog.mines.uneasy-1": "The mines feel uneasy this week. The elevator and lower ladders will not respond.",
     "dialog.mines.uneasy-2": "The mines feel uneasy this week. The entrance has been closed off.",
+    "dialog.cart.first-visit": "The merchant gives an apologetic shrug. \"Joja's been leaning on every supplier between here and Zuzu City - nobody will sell to me. This is all I could scrape together for now.\"\n\nThe Junimos might know a way around that.",
 
     // -- upgrades (hand-authored) — keys derive from the upgrade id ---------------
     "upgrade.backpack_1.name": "Backpack I",
@@ -357,6 +358,8 @@
     "gmcm.jp-hud.name": "Show JP HUD",
     "gmcm.jp-hud.tooltip": "Always-on corner counter showing banked JP and the current week's theme.",
     "gmcm.auto-detect.name": "Auto-detect mod unlock cutscenes",
+    "gmcm.cart-limit.name": "Limit Traveling Cart stock",
+    "gmcm.cart-limit.tooltip": "Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). Off = full vanilla cart; the Cart Stall upgrades do nothing.",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
 
     // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------

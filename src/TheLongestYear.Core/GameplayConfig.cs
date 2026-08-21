@@ -223,4 +223,10 @@ public sealed class GameplayConfig
     /// was already composed with weapon/hat slots leaves those slots un-donatable (and possibly
     /// the bundle uncompletable) until the next reset regenerates rings-only.</summary>
     public bool EnableNonObjectDonations { get; set; } = true;
+
+    /// <summary>When true (default), the Traveling Cart is capped to the number of stalls unlocked
+    /// by the Cart Stall shrine upgrades (one item until Cart Stall II is bought). Set false to
+    /// leave the cart's full vanilla (and other-mod) stock untouched — the Cart Stall upgrades then
+    /// do nothing. Takes effect the next time the cart menu opens.</summary>
+    public bool LimitTravelingCartStock { get; set; } = true;
 }
