@@ -6,6 +6,41 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 🐞 6th sweep (2026-08-21): Nexus bugs tab 07-17 → 08-21 — 9 new bugs, ALL root-caused, 9 fixed locally (v0.11.101–110)
+*Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-21-12-00_*` + `tly-bug-bodies.json`.
+Every report is against public 0.11.60. Nothing new on Nap Time / Cart Catalog; AC got two feature
+asks (furniture-catalogue categories — Junimo3738299202; make LB row-switch rebindable for Grandpa's
+Toolbelt — denipadliilaziim). Fixes are LOCAL commits on master, not released. Decision still open:
+ship master as **0.12.0-beta.1** (recommended — already 55 commits past 0.11.60, reviewed, and the
+engine makes #1 moot) vs. backport onto 0.11.60.*
+
+| # | Bug (Nexus id / reporters) | Root cause | Fix |
+|---|---|---|---|
+| 1 | **Remixed bundles come back vanilla after reset** (1108030; theunderscore76, Alexrandia314, RosieMermaid7, jadster0, nothumanafterall, Bumblewyn + posts) | `Game1.bundleType` is a non-persisted static; 0.11.60's `loadForNewGame` → `GenerateBundles(Default)` always wrote the STANDARD board. | **Moot on master** — the bundle engine (v0.11.75+) overwrites the board every reset. ⚠ Open design point: the engine ignores the Standard/Remixed choice entirely, so Standard players silently get the authored hybrid set. Consider a `BundleSource: Engine|Vanilla` config. |
+| 2 | **CC ceremony never plays; Joja open, Pierre closed Wed, no lightning** (1113630; GoddessSword, gazumbrado; newmaaly post) | `EventSuppressionPatch` suppressed **191393** believing it was the CC intro — it's the COMPLETION ceremony. Intro is 611439. | ✅ v0.11.102 — id swapped. Affected saves self-heal (ceremony fires next sunny Town entry). |
+| 3 | **Museum rewards one-shot across loops** (1107194; RoseLightning05, RayAndRain, Sihara, Thrippa, IshoMoogoo) | 1.6 gates `RewardItemIsSpecial` rewards on `Farmer.specialItems`/`specialBigCraftables`, never cleared by the reset. Count-milestone seeds are mail-gated → they DID return. | ✅ v0.11.103 — both lists cleared in `FarmerReset`. Takes effect from the next reset. |
+| 4 | **Caroline Tea Sapling event never replays** (1115192; RiseiJaku) | Event 719926 grants via `mail CarolineTea`; `mail` wasn't in `GrantCommandTokens`, so the replayable scan kept it in `SeenEventsEver`. | ✅ v0.11.104 — `mail`/`mailToday`/`hostMail` added (+test). Next reset. |
+| 5 | **Mixed Seeds never give Red Cabbage/Starfruit; Summer Seeds DO** (1109718; painspinner, GatewayMidnight, Sihara, IshoMoogoo) | Patch targeted `Crop.getRandomWildCropForSeason(bool)` — the WILD-seeds path. Mixed Seeds go through `Crop.ResolveSeedId("770")`. | ✅ v0.11.105 — retargeted to `ResolveSeedId`, emits seed ids 485/486. |
+| 6 | **Rain never occurs / totems do nothing / CJB "forces sun"** (1107279 Holdeborg; 1116791 gazumbrado) | `WeatherModificationsPatch` returned the schedule unconditionally every morning (clobbering totem/CJB/console), and the scheduler filled every unplaced day with Sun → exactly 2 wet days/season. | ✅ v0.11.109 — schedule written for TOMORROW in an `UpdateWeatherForNewDay` postfix (player overrides later in the day win); modifications postfix only neutralises the DaysPlayed≤4/==3/Summer%13 rules; density now Spring/Fall 5 rain + 2 wind, Summer 3 rain + 2 storm, Winter 10 snow (**tuning knobs in `WeatherScheduler`, user to ratify**). |
+| 7 | **Junimo Stash loses day-28 deposits** (1111046; gazumbrado, gemscout, jadster0) | Stash only banked on `Saving`; reset restored from the snapshot without re-reading the live chest. | ✅ v0.11.106 — `BankToMeta()` immediately before `loadForNewGame`. |
+| 8 | **Kept coop/barn has no hay hopper** (1110130; illuvitas, shadetheghost) | `Building.load()` → `InitializeIndoor(forConstruction:false)` skips `IndoorItems`. Upgrading re-ran it with `forUpgrade:true` — hence the workaround. | ✅ v0.11.107 — `Building.CreateInstanceFromId` + `InitializeIndoor(forConstruction:true)`. Existing hopper-less coops need a reset (or the upgrade workaround). |
+| 9 | **Kept rod loses bait** (CausticOptimist post) | Keep-tool re-creates a blank registry instance; attachments/enchantments/water never copied. | ✅ v0.11.108 — `TransplantToolState` for kept tiers. |
+| 10 | **Day-28 fail scene flashes → Summer 1, reset lost** (faldans post, reproducible w/ owl event) | Vanilla nulls `farmEvent` 1–2 ticks before the post-event warp runs `showEndOfNightStuff` (→ `SaveGameMenu` replaces our menu, no exitFunction). Owl's `pauseThenMessage` opens the window deterministically. | ✅ v0.11.110 — `pickFarmEvent` returns null on FAIL nights; driver defers on `locationRequest`, re-arms if its menu is replaced; shrine continuation watchdog. |
+
+**Not bugs / answered:** one-item Traveling Cart (Thrippalan, Reddit) = Cart Stall cap by design →
+✅ v0.11.101 adds `LimitTravelingCartStock` config/GMCM, a first-visit merchant line (Joja squeezing
+suppliers), and README/Nexus docs. "Keep Coop" = basic coop unless `keep_big_coop`/`keep_deluxe_coop`
+are bought (SilencedLink — reply owed). Empty weekly themes lift the drawback by design (Bumblewyn —
+consider a clearer HUD line). Feature asks: multiplayer (CausticOptimist), Challenging CC Bundles
+compat + rewards preset (ada113, ErraticPixel), difficulty toggle / JP spend on successful seasons /
+befriending quests (newmaaly, ThornDennan).
+
+**Still to do for the release:** human smoke of a reset on the deployed build (stash day-28 deposit,
+kept coop hopper, rod bait, museum re-donate, tea event, totem → rain, mixed seeds in summer, CC win
+→ ceremony); What's New + CHANGELOG + Nexus changelog paste; reply on each bug thread + set status;
+answer SilencedLink / Thrippalan / CausticOptimist. **No push/release without explicit "yes, push."**
+
+
 ### ✅ Nexus upload v3 migration — VERIFIED LIVE by the 0.11.60 release (2026-07-14)
 The v3 mod-file id IS the old `file_group_id` (probe run 29268259621). All three repos use
 post-migration pin `f6e1e2ea` with `file_id` = TLY 7502657 / AC 7118491 / CartCatalog

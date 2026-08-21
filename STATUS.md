@@ -1,12 +1,26 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-07-20 (0.12.0 engine work code-complete at v0.11.100 — beta-release decision point)
+**Last updated:** 2026-08-21 (6th forum sweep → 10 bugfixes landed locally as v0.11.101–110; release vehicle decision pending)
 **Branch:** `master` (clean)
-**Tests:** 662 passing, 0 failing
-**Build:** clean; deployed to PC Mods, smoked on cloned saves
+**Tests:** 670 passing, 0 failing
+**Build:** clean; deployed to PC Mods (v0.11.110), NOT yet human-smoked
 **Last public release:** 0.11.60 (Nexus, 2026-07-14; changelog posted 07-15 — fully closed)
 
-## Current state (2026-07-20) — beta-release decision point
+## Current state (2026-08-21) — post-sweep bugfix pass, ready for smoke + beta decision
+
+The 07-17→08-21 sweep surfaced nine 0.11.60 bug threads (see `TODO.md` "6th sweep" table for the
+full root-cause/fix matrix). All are fixed on master as one-commit-each v0.11.101–110 — CC ceremony
+id swap, museum `specialItems` wipe, `mail`-granted event replay, Mixed Seeds retarget, weather
+rewrite (totems/CJB survive; vanilla-like density), stash banked pre-wipe, kept-building
+`InitializeIndoor`, kept-tool state transplant, fail-night FarmEvent suppression + scene watchdog,
+plus the Cart Stall cap toggle/flavour/docs. The remix-bundles thread (the loudest one) is already
+moot on master because the engine writes the board.
+
+**Next:** (1) human smoke of a reset on the deployed build; (2) decide 0.12.0-beta.1 (recommended)
+vs 0.11.60 backport; (3) What's New / changelog / Nexus replies (drafts in
+`release-notes/2026-08-21-nexus-replies-draft.md`); (4) "yes, push" → release.
+
+## Previous state (2026-07-20) — beta-release decision point
 
 All three 0.12.0 engine plans are shipped (v0.11.61→v0.11.100): authored bundles (11 defs
 incl. Gil's Trophies with Warrior Ring), weapon/hat donations (`EnableNonObjectDonations`),

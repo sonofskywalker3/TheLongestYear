@@ -3,6 +3,42 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased — 0.11.101–0.11.110 (2026-08-21), bugfix pass on the 0.11.60 reports
+
+### Fixed
+- **Community Center completion ceremony never played** (Joja stayed open, Pierre
+  stayed closed on Wednesdays, the JojaMart lightning never struck). The mod
+  suppressed event 191393 thinking it was the Spring-5 CC intro; 191393 is the
+  ceremony. The intro (611439) is what's suppressed now. Affected saves recover
+  on the next sunny day you enter Town.
+- **Museum rewards only came once per profile** (Ancient Seeds + recipe, the
+  artifact statues, Singing Stone, geodes). 1.6 tracks those on the farmer's
+  `specialItems` lists, which the reset now clears.
+- **Caroline's Tea Sapling event didn't replay after a reset** — the replayable-
+  cutscene scan now recognises letter-delivered unlocks (`mail` / `mailToday`).
+- **Cultivation upgrades never fired for Mixed Seeds** (and Summer Seeds grew Red
+  Cabbage instead). The patch now sits on the actual Mixed Seeds path.
+- **It never rained, Rain Totems did nothing, CJB said "the game forces sun".**
+  The schedule is now written for *tomorrow* each morning so totems, CJB and
+  console weather set later in the day stick; and the schedule itself has
+  vanilla-like density (Spring/Fall 5 rain + 2 wind, Summer 3 rain + 2 storm,
+  Winter 10 snow) instead of two wet days a season.
+- **Junimo Stash lost anything put in on day 28** — the chest is banked right
+  before the world rewinds, not only on save.
+- **Kept coop/barn came back without its hay hopper** — kept buildings are now
+  initialised the way construction does it.
+- **Kept fishing rod lost its bait/tackle** (and kept tools their enchantments,
+  watering cans their water).
+- **A fail-night overnight event (owl/UFO sound, meteorite, fairy…) could swallow
+  the Junimo scene and skip the rewind entirely**, leaving you on Summer 1. Fail
+  nights now skip the overnight event, and the scene re-arms if anything
+  replaces it.
+
+### Added
+- `LimitTravelingCartStock` (config + GMCM) — turn off the one-item Traveling
+  Cart cap if you'd rather have the full vanilla cart. The cap is now explained
+  in-game the first time you visit the cart, and documented on the mod page.
+
 ## 0.11.60 — 2026-07-14
 
 Localization release: the mod is now fully translatable. Consolidates the
