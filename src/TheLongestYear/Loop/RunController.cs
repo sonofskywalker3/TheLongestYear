@@ -470,6 +470,10 @@ namespace TheLongestYear.Loop
             // guarded rather than trusted so a future refactor can't silently null out the run).
             if (_reset.LastGeneratedRequirements != null)
                 ReplaceRequirements(_reset.LastGeneratedRequirements);
+            else if (BundleSourceNames.IsVanilla(_store.State.BundleSource))
+                _monitor.Log(
+                    $"FinalizeReset ({reason}): Vanilla mode — the game's own board is classified on the post-reset reload.",
+                    LogLevel.Info);
             else
                 _monitor.Log(
                     $"FinalizeReset ({reason}): WorldResetService.LastGeneratedRequirements was null — " +
