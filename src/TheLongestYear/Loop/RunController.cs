@@ -302,11 +302,36 @@ namespace TheLongestYear.Loop
             _launcher?.OpenShrineShop();
             if (Game1.activeClickableMenu is TheLongestYear.UI.JunimoShrineMenu shrine)
             {
-                shrine.exitFunction = () => onContinue();
+                _shrineWatch = (shrine, onContinue);
+                shrine.exitFunction = () =>
+                {
+                    _shrineWatch = null;
+                    onContinue();
+                };
                 return;
             }
             // Menu didn't open — fall through.
             onContinue();
+        }
+
+        /// <summary>The shrine opened by <see cref="TryOpenShrineThenContinue"/> whose
+        /// <c>exitFunction</c> hasn't fired yet, with the continuation it owes.</summary>
+        private (StardewValley.Menus.IClickableMenu menu, System.Action onContinue)? _shrineWatch;
+
+        /// <summary>Polled every tick by the day-28 driver. If the shrine was torn down without its
+        /// exitFunction (a menu swapped in over it — vanilla's end-of-night SaveGameMenu is the known
+        /// case) run the owed continuation once the surface is clear, so a FAIL night always ends in
+        /// a reset. JP stays banked for the next shrine visit.</summary>
+        public void TickShrineWatchdog()
+        {
+            if (_shrineWatch is not { } watch) return;
+            if (ReferenceEquals(Game1.activeClickableMenu, watch.menu)) return;   // still up
+            if (Game1.activeClickableMenu != null) return;                        // wait for the intruder to close
+            _shrineWatch = null;
+            _monitor.Log(
+                "Junimo Shrine was replaced before it closed normally — running its continuation now " +
+                "(banked JP is untouched; spend it next time the shrine opens).", LogLevel.Warn);
+            watch.onContinue();
         }
 
         /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the

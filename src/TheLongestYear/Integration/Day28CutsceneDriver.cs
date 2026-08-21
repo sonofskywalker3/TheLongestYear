@@ -2,6 +2,7 @@ using System;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Menus;
 using TheLongestYear.Core.Day28;
 using TheLongestYear.Loop;
 using TheLongestYear.UI;
@@ -21,6 +22,7 @@ namespace TheLongestYear.Integration
         private readonly IMonitor _monitor;
         private Func<RunController> _runController;
         private bool _opened;
+        private IClickableMenu _openedMenu;
         private bool _farmEventDeferLogged;
 
         public Day28CutsceneDriver(IMonitor monitor)
@@ -41,6 +43,7 @@ namespace TheLongestYear.Integration
             if (!TheLongestYear.Core.RunActivation.IsActive) return; // dormant on non-TLY saves
             RunController rc = _runController?.Invoke();
             if (rc == null) return;
+            rc.TickShrineWatchdog();
 
             if (rc.PendingCutscene == Day28Branch.None)
             {
@@ -49,7 +52,25 @@ namespace TheLongestYear.Integration
                 return;
             }
 
-            if (_opened) return;                                   // our menu is up (or its continuation)
+            if (_opened)
+            {
+                // Watchdog: our scene is gone but the branch is still pending, so its completion
+                // callback never ran — something replaced activeClickableMenu underneath us (vanilla's
+                // showEndOfNightStuff → SaveGameMenu after a FarmEvent is the known case; the owl event
+                // pauses on the exact tick that opens the window, Nexus post faldans 2026-08-11). Re-arm
+                // so the scene reopens once the surface is clear instead of stranding the loop on a
+                // morning that never resets.
+                if (_openedMenu != null && !ReferenceEquals(Game1.activeClickableMenu, _openedMenu))
+                {
+                    _monitor.Log(
+                        $"Day-28 cutscene: the {rc.PendingCutscene} scene was replaced by " +
+                        $"{Game1.activeClickableMenu?.GetType().Name ?? "nothing"} before it finished — re-arming.",
+                        LogLevel.Warn);
+                    _opened = false;
+                    _openedMenu = null;
+                }
+                return;                                            // our menu is up (or its continuation)
+            }
             if (!Context.IsWorldReady || Game1.currentMinigame != null) return;
             // Open as soon as the night-save / new-day sequence is done, but WHILE the wake-up fade
             // is still dark — so the black cutscene takes over before the farmhouse fades into view
@@ -76,6 +97,9 @@ namespace TheLongestYear.Integration
                 }
                 return;                                            // let the save / new-day / FarmEvent finish first
             }
+            // The post-FarmEvent warp is queued (locationRequest) until the fade completes, and
+            // showEndOfNightStuff runs from that warp — opening before it lands gets us clobbered.
+            if (Game1.locationRequest != null) return;
             if (Game1.activeClickableMenu != null) return;         // don't stack on another menu
 
             Day28Branch branch = rc.PendingCutscene;
@@ -86,6 +110,7 @@ namespace TheLongestYear.Integration
             Game1.activeClickableMenu = branch == Day28Branch.Win
                 ? new VictoryMenu(rc.CurrentRunNumber, onComplete)
                 : new Day28CutsceneMenu(branch, onComplete);
+            _openedMenu = Game1.activeClickableMenu;
             _opened = true;
         }
     }
