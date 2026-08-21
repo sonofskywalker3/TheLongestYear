@@ -1,10 +1,10 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-21 (v0.12.11 local — RELEASE CANDIDATE, awaiting "yes, push")
+**Last updated:** 2026-08-21 (v0.12.11 RELEASED — GitHub + Nexus, description/version/changelog/gallery synced)
 **Branch:** `master` (clean)
 **Tests:** 711 passing, 0 failing
 **Build:** clean; deployed to PC Mods (v0.12.10 smoked; 0.12.11 is a log-level change)
-**Last public release:** 0.12.0-beta.1 (Nexus + GitHub, 2026-08-21)
+**Last public release:** 0.12.11 (Nexus + GitHub, 2026-08-21 evening — fully closed)
 
 ## Current state (2026-08-21 night) — 0.12.11 release candidate
 

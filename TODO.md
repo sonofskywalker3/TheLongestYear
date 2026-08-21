@@ -6,8 +6,8 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 🚀 RELEASE CANDIDATE v0.12.11 (2026-08-21 night) — awaiting "yes, push"
-*All pre-0.12 handoff items shipped + smoked (see STATUS). Rulings taken: A4 all twelve ramps + trophy trim;
+### ✅ RELEASED v0.12.11 (2026-08-21 19:39) — GitHub + Nexus file/description/version/changelog/gallery all live
+*Released via `release.ps1 -SkipNexusDesc` + Claude-in-Chrome (the new Nexus editor: Media → file input for the gallery; General → SCEditor `.val()` + a keystroke + Save; ⋮ → Documents → Add changelog, file/version auto-matched; only the CURRENT file is selectable, so the beta.1 changelog can't be backfilled). Still owed: replies on bug 1108030 (fixed at the root) and the ada113/ErraticPixel CCCB compat ask. All pre-0.12 handoff items shipped + smoked (see STATUS). Rulings taken: A4 all twelve ramps + trophy trim;
 B6 starfruit removed / red cabbage 5k / Pierre's Special Order 10k (bus, rare-fish, Cart Stall untouched);
 C7 TLY Custom stays the default dropdown entry, config flips apply at the next reset. Release docs written.
 Release mechanics: `release.ps1 -SkipNexusDesc` → description/version sync + changelog paste via
