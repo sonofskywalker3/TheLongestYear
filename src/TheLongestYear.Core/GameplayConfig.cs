@@ -236,6 +236,13 @@ public sealed class GameplayConfig
     /// <summary>Windowed height the mod forces on launch. See <see cref="WindowWidth"/>.</summary>
     public int WindowHeight { get; set; } = 1080;
 
+    /// <summary>Where the Community Center board comes from. "Engine" (default): The Longest Year
+    /// builds its own board every loop. "Vanilla": keep the game's own Standard/Remixed board (or
+    /// another bundle mod's) and re-roll it the same way on every reset. Takes effect at the next
+    /// reset; the new-game Advanced Options dropdown sets it per save. See
+    /// <see cref="BundleSourceNames"/>.</summary>
+    public string BundleSource { get; set; } = BundleSourceNames.Engine;
+
     /// <summary>Kill-switch for the weapon/hat donation patches. When false, Gil's Trophies
     /// composes rings-only (no weapon/hat slots offered), for compatibility with mods that
     /// conflict with those patches. Governs the NEXT generated board: a board already composed

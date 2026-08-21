@@ -55,7 +55,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
 4. **Start a new game on the Standard farm.** The farm-type and skip-intro options are managed for you — the mod's own intro plays in their place.
-5. Bundles are the mod's own: every loop rolls a fresh board from the vanilla + remix pools plus the mod's authored bundles. While the mod is enabled, the **Community Center Bundles** row under **New → Advanced Options** shows a single **TLY Custom** entry (hover it for the explanation) — there is no Standard/Remixed choice to make.
+5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead — the mod keeps that board and re-rolls it the same way on every reset. (`BundleSource` in the config/GMCM is the default for new games and switches an existing save at its next reset.)
 
    ![New game → Advanced Options → Community Center Bundles showing TLY Custom](release-notes/advanced-options-tly-custom.png)
 
@@ -82,6 +82,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `BundleQuotas` | per-bundle | How much each percentage-bundle asks for |
 | `StashTileX/Y` | `0,0` (auto) | Where the Junimo Stash chest is placed (`0,0` = auto-pick near the farmhouse). The Bundle Log / Cookbook / Craftbook are placeable furniture you can put anywhere. |
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
+| `BundleSource` | `Engine` | `Engine` = the mod's own board every loop (the new-game **TLY Custom** choice). `Vanilla` = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
 Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 JP). Feedback on these is welcome.

@@ -37,13 +37,19 @@ namespace TheLongestYear.Donations
 
         public IReadOnlySet<CoreSeason> SeasonsFor(string qualifiedItemId)
         {
-            // Crops first — unambiguous, highest priority.
-            if (_cropSeasonsByHarvestId.TryGetValue(qualifiedItemId, out var cropSeasons))
-                return cropSeasons;
-
-            // Forage second — pulled from Data/Locations spawn tables.
-            if (_forageSeasonsByItemId.TryGetValue(qualifiedItemId, out var forageSeasons))
-                return forageSeasons;
+            // Crop harvest seasons UNION forage spawn seasons — an item that is both (Grape:
+            // Fall crop, Summer forage) is obtainable in either. Before 2026-08-21 crops won
+            // outright, which hid Grape from Summer weekly goals.
+            bool hasCrop = _cropSeasonsByHarvestId.TryGetValue(qualifiedItemId, out var cropSeasons);
+            bool hasForage = _forageSeasonsByItemId.TryGetValue(qualifiedItemId, out var forageSeasons);
+            if (hasCrop && hasForage)
+            {
+                var union = new HashSet<CoreSeason>(cropSeasons);
+                union.UnionWith(forageSeasons);
+                return union;
+            }
+            if (hasCrop) return cropSeasons;
+            if (hasForage) return forageSeasons;
 
             // Everything else (fish, minerals, bars, artisan, animal products, etc.): year-round.
             // Progression-locked items are denied before this point by BundleCatalogBuilder.

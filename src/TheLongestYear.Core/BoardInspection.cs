@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace TheLongestYear.Core;
 
@@ -31,5 +33,35 @@ public static class BoardInspection
             }
         }
         return false;
+    }
+
+    /// <summary>Order-independent fingerprint of a board (keys + values). Used to notice a
+    /// bundle mod rewriting BundleData mid-day (Challenging CC Bundles swaps values on
+    /// DayStarted) so Vanilla mode can re-classify.</summary>
+    public static string Fingerprint(IReadOnlyDictionary<string, string> bundleData)
+    {
+        if (bundleData == null) throw new ArgumentNullException(nameof(bundleData));
+        var sb = new StringBuilder();
+        foreach (string key in bundleData.Keys.OrderBy(k => k, StringComparer.Ordinal))
+            sb.Append(key).Append('=').Append(bundleData[key]).Append('\n');
+        return sb.ToString();
+    }
+
+    /// <summary>True when every live entry exists in <paramref name="reference"/> with an
+    /// identical value — i.e. the live board IS the reference (Standard) set. Any differing
+    /// value ⇒ not the reference (a Remixed roll, or an engine board). Extra reference keys the
+    /// live board lacks are ignored.</summary>
+    public static bool MatchesReference(
+        IReadOnlyDictionary<string, string> live, IReadOnlyDictionary<string, string> reference)
+    {
+        if (live == null) throw new ArgumentNullException(nameof(live));
+        if (reference == null) throw new ArgumentNullException(nameof(reference));
+        if (live.Count == 0) return false;
+        foreach (KeyValuePair<string, string> kvp in live)
+        {
+            if (!reference.TryGetValue(kvp.Key, out string? refValue)) return false;
+            if (!string.Equals(refValue, kvp.Value, StringComparison.Ordinal)) return false;
+        }
+        return true;
     }
 }

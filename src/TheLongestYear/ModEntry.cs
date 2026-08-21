@@ -29,6 +29,10 @@ namespace TheLongestYear
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
         private IReadOnlyList<BundleRequirement> _requirements = new List<BundleRequirement>();
+        // Vanilla-mode board tracking: a bundle mod (Challenging CC Bundles) can rewrite BundleData
+        // values on DayStarted; when the fingerprint moves we re-classify from the live data.
+        private string _boardFingerprint;
+        private BundleCatalogBuilder _boardBuilder;
         private DonationObserver _donationObserver;
         private CartStallIntro _cartStallIntro;
         private CaveChoicePrompt _caveChoicePrompt;
@@ -158,6 +162,7 @@ namespace TheLongestYear
             // entry while the mod is enabled (the engine owns the board; the vanilla choice is moot).
             BundleOptionPatch.Enabled = () => _config.Enabled;
             BundleOptionPatch.Monitor = this.Monitor;
+            BundleOptionPatch.ConfiguredSource = () => _config.BundleSource;
             _standardFarmEnforcer.Attach(helper);
 
             // 2026-05-29 round 11: PatchAll iterates [HarmonyPatch] classes in assembly order,
@@ -313,6 +318,7 @@ namespace TheLongestYear
             // Any other save — a normal vanilla playthrough loaded with the mod installed — leaves
             // TLY fully dormant: no Harmony effects, no HUD, no reset loop. _metaLoaded stays false
             // so OnSaving never persists empty defaults over the player's real save data.
+            bool wasNewGame = _isNewGame;
             bool isLongestYearSave = _isNewGame || _meta.State.IsLongestYearRun || _meta.LoadedExistingData;
             _isNewGame = false; // consume — only the load right after SaveCreating counts as new
             if (!isLongestYearSave)
@@ -328,6 +334,21 @@ namespace TheLongestYear
             // Stamp the marker so new games (and back-filled legacy TLY saves) take the clean flag
             // path next load; it persists with the game's own save via OnSaving.
             _meta.State.IsLongestYearRun = true;
+            if (wasNewGame)
+            {
+                // Per-save bundle source from the Advanced Options dropdown (BundleOptionPatch):
+                // TLY Custom (default) → Engine; Normal/Remixed → Vanilla + the vanilla type so
+                // every reset regenerates the same kind of board (Nexus bug 1108030 root cause:
+                // Game1.bundleType is never persisted by the game).
+                BundleOptionPatch.Choice choice = BundleOptionPatch.ConsumeLastChoice();
+                _meta.State.BundleSource = choice == BundleOptionPatch.Choice.TlyCustom
+                    ? BundleSourceNames.Engine : BundleSourceNames.Vanilla;
+                _meta.State.VanillaBundleType = choice == BundleOptionPatch.Choice.VanillaRemixed
+                    ? Game1.BundleType.Remixed.ToString() : Game1.BundleType.Default.ToString();
+                this.Monitor.Log(
+                    $"New game: BundleSource={_meta.State.BundleSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
+                    LogLevel.Info);
+            }
             RunActivation.Activate();
             _metaLoaded = true;
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
@@ -373,11 +394,22 @@ namespace TheLongestYear
                 itemSeasonPins, bundleQuotas);
 
             _seasonResolver = new SeasonResolver();
-            var builder = new BundleCatalogBuilder(
+            _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 themeOverrides, itemSeasonPins, bundleQuotas);
+            // Obtainability clamp for the read-and-classify path: curated pins + the engine's
+            // derived (earliest-obtainable) pins, so a Remixed/modded board can't demand an
+            // unobtainable minimum. Due-date (PerItem) pins stay the curated set.
+            var obtainabilityPins = new Dictionary<string, TheLongestYear.Core.Season>(
+                new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning).DerivedSeasonPins,
+                StringComparer.Ordinal);
+            foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in itemSeasonPins)
+                obtainabilityPins[pin.Key] = pin.Value;
+            _boardBuilder.ObtainabilityPins = obtainabilityPins;
+            var builder = _boardBuilder;
             _catalog = builder.Build();
             _requirements = ResolveRequirements(builder, itemSeasonPins, bundleQuotas);
+            _boardFingerprint = BoardInspection.Fingerprint(Game1.netWorldState.Value.BundleData);
             // The weapon/hat donation patches must stay live for a board that already carries
             // (W)/(H) slots, whatever EnableNonObjectDonations says now (it governs the NEXT
             // board). Read the live data AFTER ResolveRequirements so a fresh-run write counts.
@@ -461,6 +493,9 @@ namespace TheLongestYear
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
+            BundleOptionPatch.ResetChoice();
+            _boardBuilder = null;
+            _boardFingerprint = null;
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
             DonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
@@ -1157,6 +1192,14 @@ namespace TheLongestYear
                 name: () => Strings.Get("gmcm.cart-limit.name"),
                 tooltip: () => Strings.Get("gmcm.cart-limit.tooltip"));
 
+            gmcm.AddTextOption(this.ModManifest,
+                getValue: () => BundleSourceNames.Normalize(_config.BundleSource),
+                setValue: v => _config.BundleSource = BundleSourceNames.Normalize(v),
+                name: () => Strings.Get("gmcm.bundle-source.name"),
+                tooltip: () => Strings.Get("gmcm.bundle-source.tooltip"),
+                allowedValues: BundleSourceNames.All,
+                formatAllowedValue: v => BundleSourceNames.IsVanilla(v) ? Strings.Get("gmcm.bundle-source.vanilla") : Strings.Get("gmcm.bundle-source.engine"));
+
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.AutoDetectReplayableUnlockCutscenes,
                 setValue: v => _config.AutoDetectReplayableUnlockCutscenes = v,
@@ -1190,6 +1233,7 @@ namespace TheLongestYear
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
+            ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);
         }
@@ -1846,8 +1890,9 @@ namespace TheLongestYear
             // to begin with) -- it must match exactly what generated whatever is currently live.
             ulong seedBasis = unchecked((ulong)Game1.player.UniqueMultiplayerID);
 
+            bool vanillaSource = BundleSourceNames.IsVanilla(state.BundleSource);
             RequirementsSource source = EngineModeDecider.Decide(
-                state.BundlesGeneratedForReset, state.CompletedResets, AnyBundleSlotComplete());
+                state.BundlesGeneratedForReset, state.CompletedResets, AnyBundleSlotComplete(), vanillaSource);
 
             if (source == RequirementsSource.EngineManifest)
             {
@@ -1896,10 +1941,64 @@ namespace TheLongestYear
             }
 
             var legacyRequirements = builder.BuildRequirements();
-            this.Monitor.Log(
-                "Requirements source: legacy read-and-classify (pre-engine save; regenerates at next reset).",
-                LogLevel.Info);
+            if (vanillaSource)
+            {
+                if (string.IsNullOrEmpty(state.VanillaBundleType))
+                    state.VanillaBundleType = InferVanillaBundleType();
+                this.Monitor.Log(
+                    $"Requirements source: vanilla board (BundleSource=Vanilla, {state.VanillaBundleType}; read-and-classify, {legacyRequirements.Count} bundles; regenerated the same way at each reset).",
+                    LogLevel.Info);
+            }
+            else
+            {
+                this.Monitor.Log(
+                    "Requirements source: legacy read-and-classify (pre-engine save; regenerates at next reset).",
+                    LogLevel.Info);
+            }
             return legacyRequirements;
+        }
+
+        /// <summary>Standard vs Remixed for a Vanilla-mode save that predates the persisted
+        /// choice: the live board IS the Data/Bundles asset (value-for-value) ⇒ Default,
+        /// anything else ⇒ Remixed. A Content-Patcher-edited Data/Bundles compares equal too,
+        /// which is right — GenerateBundles(Default) reproduces it.</summary>
+        private string InferVanillaBundleType()
+        {
+            try
+            {
+                var standard = Game1.content.Load<Dictionary<string, string>>("Data\\Bundles");
+                bool isStandard = BoardInspection.MatchesReference(Game1.netWorldState.Value.BundleData, standard);
+                string type = isStandard ? Game1.BundleType.Default.ToString() : Game1.BundleType.Remixed.ToString();
+                this.Monitor.Log($"VanillaBundleType inferred from the live board: {type}.", LogLevel.Info);
+                return type;
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"VanillaBundleType inference failed ({ex.GetType().Name}: {ex.Message}) — assuming Default.", LogLevel.Warn);
+                return Game1.BundleType.Default.ToString();
+            }
+        }
+
+        /// <summary>Vanilla mode only: if another mod rewrote BundleData since we classified
+        /// (Challenging CC Bundles swaps values on DayStarted, AFTER our SaveLoaded), rebuild
+        /// the catalog + requirements from the live board so season goals, weekly-theme pools
+        /// and the donation patches follow what the CC actually shows.</summary>
+        private void ReclassifyIfBoardChanged()
+        {
+            if (_boardBuilder == null || !BundleSourceNames.IsVanilla(_meta.State.BundleSource)) return;
+            string fingerprint = BoardInspection.Fingerprint(Game1.netWorldState.Value.BundleData);
+            if (fingerprint == _boardFingerprint) return;
+
+            _boardFingerprint = fingerprint;
+            _catalog = _boardBuilder.Build();
+            _requirements = _boardBuilder.BuildRequirements();
+            _runController?.ReplaceCatalog(_catalog);
+            _runController?.ReplaceRequirements(_requirements);
+            TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots =
+                BoardInspection.HasNonObjectIngredients(Game1.netWorldState.Value.BundleData);
+            this.Monitor.Log(
+                $"Board changed by another mod since load — re-classified from the live data ({_requirements.Count} bundles, {_catalog.Count} catalog items).",
+                LogLevel.Info);
         }
 
         /// <summary>True when any CC bundle completion slot is already marked complete. Same

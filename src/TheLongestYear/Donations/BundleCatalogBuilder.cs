@@ -50,6 +50,11 @@ namespace TheLongestYear.Donations
             _bundleQuotas = bundleQuotas ?? new Dictionary<string, int[]>();
         }
 
+        /// <summary>Pins used ONLY for the obtainability clamp on Percentage ramps (curated +
+        /// engine-derived earliest-obtainable seasons). Defaults to the curated pins. Set by
+        /// ModEntry after construction.</summary>
+        public IReadOnlyDictionary<string, CoreSeason> ObtainabilityPins { get; set; }
+
         public IReadOnlyList<CcItem> Build()
         {
             var items = new List<CcItem>();
@@ -64,8 +69,11 @@ namespace TheLongestYear.Donations
                 if (!RoomThemeMap.TryGetTheme(bundle.Room, out Theme theme))
                     continue;
 
-                int take = System.Math.Min(bundle.NumberOfSlots, bundle.Ingredients.Count);
-                for (int i = 0; i < take; i++)
+                // Every concrete ingredient, not just the first NumberOfSlots: on a pick-X-of-Y
+                // bundle any of the Y can be donated until X are in, and the weekly-theme
+                // sampler / season goals need rarity + season data for all of them
+                // (2026-08-21 audit: 12–28 ids per loop were silently missing).
+                for (int i = 0; i < bundle.Ingredients.Count; i++)
                 {
                     string itemRef = bundle.Ingredients[i].ItemRef;
                     if (BundleParsing.IsCategoryRef(itemRef))
@@ -148,6 +156,20 @@ namespace TheLongestYear.Donations
                     // bundles get a derived quota (see BundleClassifier decision order #4).
                     categorySkipped++;
                     continue;
+                }
+
+                // Obtainability clamp (same rule as the engine path, GeneratedBundleSet.
+                // BuildRequirements): no season may demand more slots than are obtainable by
+                // its end. Read-and-classify boards (Vanilla mode, pre-engine saves, bundle
+                // mods) had no such guard before 2026-08-21.
+                if (req.CumulativeRequiredBySeason != null)
+                {
+                    int[] clamped = GeneratedBundleSet.ClampRampForObtainability(
+                        new List<int>(req.CumulativeRequiredBySeason).ToArray(), req.Ingredients,
+                        req.NumberOfSlots, ObtainabilityPins ?? _itemSeasonPins);
+                    req = BundleRequirement.CreatePercentage(
+                        req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
+                        req.IngredientStacks, req.IngredientQualities);
                 }
 
                 if (req.Kind == BundleKind.Percentage && !_bundleQuotas.ContainsKey(bundle.Name))

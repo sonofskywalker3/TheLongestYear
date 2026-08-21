@@ -56,6 +56,20 @@ public sealed class MetaState
     /// read-and-classify path serves the in-flight loop.</summary>
     public int BundlesGeneratedForReset { get; set; } = -1;
 
+    /// <summary>Which board this save runs under — <see cref="BundleSourceNames.Engine"/> (TLY
+    /// writes its own board every loop) or <see cref="BundleSourceNames.Vanilla"/> (keep the
+    /// game's Standard/Remixed or another bundle mod's board, regenerated the same way on every
+    /// reset). Stamped from the Advanced Options choice on the new-game load and re-stamped from
+    /// the config at every reset; SaveLoaded reads THIS, never the config, so a config flip only
+    /// takes effect at the next reset (spec 2026-08-21).</summary>
+    public string BundleSource { get; set; } = BundleSourceNames.Engine;
+
+    /// <summary>The player's vanilla Standard/Remixed choice ("Default" / "Remixed") — what
+    /// <c>Game1.bundleType</c> must be set to before <c>loadForNewGame</c> on a Vanilla-mode
+    /// reset. Vanilla never persists it (Nexus bug 1108030). Null until captured (new game) or
+    /// inferred from the live board against the Data/Bundles asset.</summary>
+    public string? VanillaBundleType { get; set; }
+
     /// <summary>
     /// True once the player has chosen "Keep playing" after winning the loop (CC restored on
     /// Winter 28). Set inside the post-win JP-spend → choice flow; when true, the Winter 28
