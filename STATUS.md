@@ -1,12 +1,30 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-21 (v0.12.1 deployed + human-smoked: TLY Custom dropdown eyeballed, full loop-reset checklist PASSED — see TODO "SMOKED 2026-08-21")
+**Last updated:** 2026-08-21 (v0.12.6 local, unreleased — pre-0.12 release work in progress; three rulings pending, see TODO "RULINGS PENDING")
 **Branch:** `master` (clean)
-**Tests:** 670 passing, 0 failing
-**Build:** clean; deployed to PC Mods (v0.12.1) and smoked 2026-08-21 (all 9 bugfix checks + TLY Custom dropdown green, 0 errors)
+**Tests:** 686 passing, 0 failing
+**Build:** clean; deployed to PC Mods (v0.12.6)
 **Last public release:** 0.12.0-beta.1 (Nexus + GitHub, 2026-08-21 — fully closed incl. replies)
 
-## Current state (2026-08-21) — post-sweep bugfix pass, ready for smoke + beta decision
+## Current state (2026-08-21 evening) — pre-0.12 release work (handoff `HANDOFF-2026-08-21-pre-0.12-release-work.md`)
+
+Done this session (one commit each): **A1** Advanced Options "TLY Custom" screenshot wired into README +
+Nexus Install step (`release-notes/advanced-options-tly-custom.png`; the Nexus `[img]` URL is a placeholder
+until the gallery upload); **A2** empty-theme hub card eyeballed on a live board (Mining pool emptied via
+`debug bundle 20/21/22`) — "Themed donations completed" renders cleanly under the bonus header, no fix needed;
+**A3 v0.12.4** `EnableNonObjectDonations` now governs the NEXT board only (patches stay live while the live
+board has (W)/(H) slots; manifest match tries the opposite flag) — beta caveat deleted from README/Nexus;
+**B5 v0.12.5–0.12.6** `tly_jpbudget` + 5-loop measurement (`docs/superpowers/notes/2026-08-21-jp-budget.md`:
+strong player 8.0–9.5k JP/loop, "donate ASAP" 4.4–4.9k, fixed awards 1,933).
+
+**Awaiting rulings** (all three specs committed): A4 curated quota ramps
+(`specs/2026-08-21-curated-quota-ramps-design.md`), B6 cult repricing
+(`specs/2026-08-21-cult-repricing-proposal.md`), C7 BundleSource Engine|Vanilla
+(`specs/2026-08-21-bundle-source-engine-vanilla-design.md` — includes the classification audit; Challenging CC
+Bundles turned out to swap BundleData values at DayStarted, which is ada113's bug). Then: implement A4 → B6 →
+C7 (plan → tests → smoke a reset in each mode) → D8 release docs once → "yes, push".
+
+## Previous state (2026-08-21 midday) — post-sweep bugfix pass, ready for smoke + beta decision
 
 The 07-17→08-21 sweep surfaced nine 0.11.60 bug threads (see `TODO.md` "6th sweep" table for the
 full root-cause/fix matrix). All are fixed on master as one-commit-each v0.11.101–110 — CC ceremony

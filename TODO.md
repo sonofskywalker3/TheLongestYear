@@ -6,6 +6,28 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### ⏸ RULINGS PENDING (2026-08-21 evening) — pre-0.12 release work, v0.12.6 local
+*Session log: A1 screenshot ✅ (docs commit), A2 empty-theme card ✅ eyeballed (no fix: `a2-rr3.png` in the
+session scratchpad showed "Themed donations completed" cleanly under "Bonus this week (1.5x):"), A3 ✅ v0.12.4,
+B5 ✅ v0.12.5–0.12.6 + `notes/2026-08-21-jp-budget.md`. Three specs await the user's ruling before code:*
+
+- **A4 quota ramps** — `specs/2026-08-21-curated-quota-ramps-design.md`: 18 uncurated pick-X-of-Y bundles;
+  must-fix Winter Star `[0,0,0,2]`, Forager's `[0,0,2,2]`, Gil's Trophies `[0,0,1,2]` (+ trim 4 late-game
+  trophies), Brewer's/Preserver's `[0,1,2,4]`, Mineral `[0,1,3,4]`; should-fix six more.
+- **B6 repricing** — `specs/2026-08-21-cult-repricing-proposal.md`: cult_red_cabbage/starfruit 750 → 10,000
+  (rule: > max strong loop 9,512), keep_bus_unlocked 1,500 → 4,500, fortune_rare_fish stays, Cart Stall
+  60…2,000 (Σ 6,720); plus the question of replacing the Mixed-Seeds roll with 2-tier obtainability chains.
+- **C7 BundleSource** — `specs/2026-08-21-bundle-source-engine-vanilla-design.md`: rulings on (1) "TLY Custom"
+  as a third AGO dropdown entry (recommended) vs config-driven row, (2) config flip applies at next reset
+  (recommended). Audit found: catalog only takes the first X ingredients, SeasonResolver crop-over-forage
+  (Grape), legacy path has no obtainability clamp, and **CCCB swaps BundleData values at DayStarted** (TLY
+  classifies at SaveLoaded → ada113's bug; fix = fingerprint + re-classify on DayStarted in Vanilla mode).
+
+*Housekeeping: my scratch saves deleted; the user's older `ZZZ-DELETEME-smoke5-None_443632257` clone (Jul 20)
+is still in Saves — delete when convenient. Game-driving notes: `sv.ps1` click coords need
+`SetProcessDpiAwarenessContext(-4)` (game window on the left monitor), and PrintWindow captures include the
+title bar (+~20,+65 px offset vs client coords).*
+
 ### ✅ RELEASED 0.12.0-beta.1 (2026-08-21) — 6th sweep: 9 new bugs root-caused + fixed, all threads answered + marked Fixed
 *Release closed 2026-08-21: GitHub release v0.12.0-beta.1 + Nexus file (workflow 32484136636) + description/version
 synced via Claude-in-Chrome (the Playwright automation profile's Nexus session expired — `nexus-wait-login.mjs`

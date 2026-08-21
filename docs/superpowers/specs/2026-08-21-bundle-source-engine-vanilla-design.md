@@ -62,21 +62,40 @@ building `tly_jpbudget` + the A4 survey, all to be closed in this task:
 3. **Legacy `BuildRequirements` applies no obtainability clamp** (the engine path does, via
    `GeneratedBundleSet.ClampRampForObtainability`). Fix: apply the same clamp with the merged
    pins in the legacy builder so a Remixed/modded board can't demand an unobtainable minimum.
-4. **Category-ref ingredients** (`-5` any egg, `-79` any fruit, …) are skipped everywhere
-   (catalog, requirements, slot pool). A bundle that is category-only classifies as null and is
-   dropped from the gate. Challenging CC Bundles' use of categories is being checked (research
-   pending); if it uses them, the minimum viable support is: count a category slot as satisfied
-   when the live CC slot state flips (vanilla already does the matching) and exclude it from the
-   item-based in-play pools.
-5. **Quality / quantity asks** are read per ingredient (`IngredientStacks/Qualities`, MAX across
+4. **Challenging Community Center Bundles (CCCB, Nexus 6361, `alja.CCCB`) is a C# mod, not a
+   Content Patcher pack** (source: github.com/Jaksha6472/ChallengingCommunityCenterBundles, v3.1.0;
+   its `Vanilla` pack is saved at `docs/superpowers/notes/ccb/content_Vanilla.json`). It rewrites
+   `Game1.netWorldState.Value.BundleData` **values** under the game's own keys on **`DayStarted`**
+   and writes the vanilla strings back on `Saving`/`DayEnding`. TLY classifies at `SaveLoaded` —
+   i.e. it sees the vanilla board, and the live CC then shows CCCB's 9–11-item, pick-5–10,
+   quality-2/4, ×10–99 asks. **That is ada113's report exactly** ("some extra items added, not all,
+   lower quantities/wrong qualities"). Fix for Vanilla mode: fingerprint `BundleData` (ordinal join
+   of values) at `SaveLoaded`, re-check on every `DayStarted`, and when it changed rebuild the CcItem
+   catalog + requirements from the live data (log `board changed by another mod — re-classified`),
+   then re-derive the week's open-slot pools. Engine mode keeps overwriting (as today) — CCCB's
+   name-matched swap would also re-apply over engine names it knows (Spring Crops, Animal, …) every
+   morning, so Engine + CCCB stays unsupported and documented as such.
+5. **Format features CCCB actually uses** (all supported by the parser, to be covered by fixtures):
+   bare string object ids (`Moss`, `Powdermelon`, `FlashShifter.StardewValleyExpandedCP_Butterfish`
+   → `NormalizeItemId` prefixes `(O)`), quality 2/4 asks, stacks to 99, pick-X-of-Y with X up to 10
+   (derived ramp `[X/4, X/2, 3X/4, X]` — e.g. Crab Pot 10-of-10 becomes PerItem), raised Vault
+   amounts (8k/15k/25k/50k — `VaultBundleMap` reads the live value), `C`/`R`/`F`/`BO` reward ids
+   (ignored), artifacts/placeables as requirements (Ancient Sword, Crystal Path ×50, Torch ×30).
+   **Not used:** category refs, `(O)`-qualified ids, (BC)/(W)/(H)/(F) requirement ids, new bundles,
+   rooms or keys, `Data/RandomBundles` edits.
+6. **Category-ref ingredients** (`-5` any egg …) remain skipped everywhere; a category-only bundle
+   classifies as null and is dropped from the gate (logged). CCCB doesn't use them; SVE's own
+   bundles don't either. Left as a documented limitation.
+7. **Quality / quantity asks** are read per ingredient (`IngredientStacks/Qualities`, MAX across
    duplicates) and shown on the hub; the gate is slot-state based so vanilla enforces them.
-   Verify against the pack's strings once fetched.
-6. **The Missing** (Abandoned Joja Mart) is never classified (room has no theme) — by design; it
+8. **The Missing** (Abandoned Joja Mart) is never classified (room has no theme) — by design; it
    does not gate.
-7. Curated quotas (A4) apply by name in both paths.
+9. Curated quotas (A4) apply by name in both paths.
 
-Deliverable of the audit: a test fixture per gap (synthetic bundle strings), plus a
-`tly_classify` run over the real pack data if obtainable.
+Deliverable of the audit: a test fixture per gap (synthetic bundle strings) plus a fixture that
+runs `BundleClassifier` over every string in `content_Vanilla.json` (48 bundles) and asserts
+48 classified, 0 dropped, monotone ramps ending at X; a `tly_classify` run on a `debug
+ShuffleBundles` board for the remixed path.
 
 ## UX — Advanced Options row (RULING 1)
 
