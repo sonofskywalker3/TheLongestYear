@@ -731,10 +731,18 @@ namespace TheLongestYear.Loop
                 if (farm.buildings.Any(b => b.buildingType.Value == blueprint))
                     continue;
 
-                var b = new Building(blueprint, tile);
+                // 1.6 factory: honours BuildingData.BuildingType (typed subclasses) where new Building()
+                // would not — same result for Coop/Barn today, safer for Silo + mod-added buildings.
+                var b = Building.CreateInstanceFromId(blueprint, tile);
                 b.daysOfConstructionLeft.Value = 0;   // skip the construction animation
                 b.load();                              // initialises interior
                 farm.buildings.Add(b);
+                // Building.load() -> LoadFromBuildingData(data) defaults forConstruction:false, so
+                // InitializeIndoor bails before placing BuildingData.IndoorItems — the coop/barn hay
+                // hopper. Vanilla only places them on construction (forConstruction:true) or upgrade,
+                // which is why "upgrade the coop" fixed it for users (Nexus bug 1110130). Preferred
+                // over performActionOnConstruction (sounds, construction timer, AddMailOnBuild).
+                b.InitializeIndoor(b.GetData(), forConstruction: true, forUpgrade: false);
 
                 // Bulldoze the footprint. The fresh farm regenerates random debris, trees, and
                 // stump/boulder clumps anywhere — including on the player's chosen spot — so
