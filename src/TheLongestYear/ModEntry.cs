@@ -238,6 +238,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
+            helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the config's BundleSource so the next reset honours it.", this.CmdBundleSource);
             helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
@@ -1348,6 +1349,7 @@ namespace TheLongestYear
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
+                case "tly_bundlesource": this.CmdBundleSource(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
@@ -1768,6 +1770,26 @@ namespace TheLongestYear
                 LogLevel.Info);
             foreach (string gate in report.ImpossibleGates)
                 this.Monitor.Log($"  IMPOSSIBLE GATE: {gate}", LogLevel.Warn);
+        }
+
+        /// <summary>Diagnostics: read/set MetaState.BundleSource + VanillaBundleType and the
+        /// config's BundleSource in memory so an unattended smoke can reset in each mode.</summary>
+        private void CmdBundleSource(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length >= 1)
+            {
+                string source = BundleSourceNames.Normalize(args[0]);
+                _config.BundleSource = source;
+                _meta.State.BundleSource = source;
+            }
+            if (args.Length >= 2)
+                _meta.State.VanillaBundleType = string.Equals(args[1], "Remixed", StringComparison.OrdinalIgnoreCase)
+                    ? Game1.BundleType.Remixed.ToString() : Game1.BundleType.Default.ToString();
+            this.Monitor.Log(
+                $"tly_bundlesource: save BundleSource={_meta.State.BundleSource}, VanillaBundleType={_meta.State.VanillaBundleType ?? "(unknown)"}, " +
+                $"config BundleSource={_config.BundleSource}, marker={_meta.State.BundlesGeneratedForReset}, loop={_meta.State.CompletedResets}.",
+                LogLevel.Info);
         }
 
         private void LogModel(string title, JpBudgetModel model, JpBudgetReport report)
