@@ -17,7 +17,7 @@ silently drops a bug-reply submit fired within ~30 s of the previous one — cli
 1113831 "Day 3 1st year crash" (5 Aug — hard crash a few seconds after accepting Emily's Wild Horseradish help-wanted
 post, no error log). **Both replied 2026-08-21 + set "Needs more info"** (asked for smapi.io log links; crash report also asked to retest on 0.12.0-beta.1 + offer a save). The mute log excerpt ends in `[ALSOFT] (EE) Failed to get padding: 0x88890004` = OpenAL lost the audio device (AUDCLNT_E_DEVICE_INVALIDATED) — Windows audio, not TLY; mark not-a-bug once the full log confirms.*
 
-### 🟡 Unreleased on master: v0.12.0-beta.2 — new-game Advanced Options "Community Center Bundles" dropdown shows a single **TLY Custom** entry (+tooltip) while the mod is enabled (`BundleOptionPatch`, user ruling 2026-08-21: replace rather than remove). Needs a title-screen eyeball (open New → Advanced Options) before it ships with the next beta.
+### 🟡 Unreleased on master: v0.12.1 — new-game Advanced Options "Community Center Bundles" dropdown shows a single **TLY Custom** entry (+tooltip) while the mod is enabled (`BundleOptionPatch`, user ruling 2026-08-21: replace rather than remove). Needs a title-screen eyeball (open New → Advanced Options) before it ships with the next beta.
 
 #### Original sweep table (2026-08-21)
 *Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-21-12-00_*` + `tly-bug-bodies.json`.
