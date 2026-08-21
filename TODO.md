@@ -17,7 +17,27 @@ silently drops a bug-reply submit fired within ~30 s of the previous one — cli
 1113831 "Day 3 1st year crash" (5 Aug — hard crash a few seconds after accepting Emily's Wild Horseradish help-wanted
 post, no error log). **Both replied 2026-08-21 + set "Needs more info"** (asked for smapi.io log links; crash report also asked to retest on 0.12.0-beta.1 + offer a save). The mute log excerpt ends in `[ALSOFT] (EE) Failed to get padding: 0x88890004` = OpenAL lost the audio device (AUDCLNT_E_DEVICE_INVALIDATED) — Windows audio, not TLY; mark not-a-bug once the full log confirms.*
 
-### 🟡 Unreleased on master: v0.12.1 — new-game Advanced Options "Community Center Bundles" dropdown shows a single **TLY Custom** entry (+tooltip) while the mod is enabled (`BundleOptionPatch`, user ruling 2026-08-21: replace rather than remove). Needs a title-screen eyeball (open New → Advanced Options) before it ships with the next beta.
+### ✅ SMOKED 2026-08-21 — v0.12.1 on master (unreleased): TLY Custom dropdown eyeballed + full loop-reset smoke PASSED
+*v0.12.1 = new-game Advanced Options "Community Center Bundles" dropdown shows a single **TLY Custom** entry (+tooltip) while the mod is enabled (`BundleOptionPatch`, user ruling 2026-08-21: replace rather than remove). **Eyeballed 2026-08-21 on the deployed 0.12.1 build** (the Mods folder had still held the beta.1 release DLL — redeployed via `tools/deploy.ps1` first): the row shows only "TLY Custom", the tooltip renders on both the label and the box, the other AGO rows are untouched, and a brand-new farm starts normally (Lewis intro, `BundleEngine: wrote 31 bundles`, stash + shrine placed, `TLY_Intro` letter). No change to `BundleOptionPatch` needed.*
+
+**Loop-reset smoke (2026-08-21, agent-driven on a clone of `None_443632257`, Run 31 → 32; console injection + screenshots; post-reset state verified in the written save file; game reloaded from title once):**
+
+| Check | Result | Evidence |
+|---|---|---|
+| Junimo Stash deposit on day 28 survives | ✅ | Prismatic Shard put in the stash on Spring 28 → `restored 4/4 items` after reset; save chest = Copper Bar×5, Coal×87, Smoked Legend, Prismatic Shard |
+| Kept coop comes back WITH hay hopper | ✅ | `Reset: kept building 'Coop' placed at (60,20)`; post-reset save Coop interior objects = `[99]` (Hay Hopper) |
+| Kept rod keeps bait | ✅ | Fiberglass Rod + 25 Bait attached pre-reset → `Reset: transplanted tool state — fishing_rod:attachment[0]=Bait`; save shows Bait×25 on the rod |
+| Re-donate an artifact → museum reward re-granted | ✅ | Run 31: donated Ancient Seed (114), collected Ancient Seeds pack + recipe. Reset: `cleared 1 museum donation(s)`, `specialItems`/`specialBigCraftables` empty, no `museumCollectedReward*`/`artifactFound` mail. Run 32: re-donated → "Collect Rewards" offered again, both rewards collected |
+| Caroline's 2-heart tea event (719926) replays | ✅ (state) | Played via `debug ebi 719926` pre-reset (grants `mail CarolineTea`). Post-reset save: 719926 NOT in `eventsSeen`, `CarolineTea` NOT in `mailReceived`; `tly_dumpreplayable` flags it `grant='mail' excluded=False` and `FarmerReset` skips replayable ids when re-marking → eligible to re-fire naturally |
+| Rain Totem → rain next day | ✅ | Totem used Spring 1 ("Clouds gather…"), schedule said Sun for day 2 → Spring 2 was Rain (HUD icon; save `Default` context `isRaining=true`, `Weather=Rain`); day 3 back on schedule (Sun) |
+| A season has >2 wet days | ✅ | `WeatherScheduler.BuildSchedule(447004781, s)` computed offline for the post-reset seed: Spring 6 wet (R 4/7/9/14/16/21), Summer 9 (storms+rain+green rain), Fall 5, Winter 14 snow |
+| Mixed Seeds in Summer roll Red Cabbage/Starfruit (cult upgrades owned) | ✅ | `debug season summer`, 29 Mixed Seeds planted on the farm, `debug growcrops 30` → ≥2 Red Cabbage + ≥2 Starfruit visible among wheat/hot pepper (10% each per seed) |
+| CC win → Town ceremony plays | ✅ | `debug completecc` (TLY paid 6×63 JP room bonuses) → entering Town fired event 191393 (balloons, Lewis + crowd at the CC); `EventSuppressionPatch` only blocks 611439 |
+| FAIL night with an overnight farm event still rewinds | ✅ | `debug setfarmevent owl` + sleep on day 28 (gate unmet): vanilla applies the override only when `pickFarmEvent()` returns null, so `SoundInTheNightEvent` played; driver logged `deferring the Fail scene until the overnight FarmEvent … finishes` → Fail scene opened → shrine → `In-place reset: complete. Spring 1 … Reset #31` → Run 32. (The postfix's own "suppressed tonight's overnight FarmEvent" branch wasn't hit — no natural event rolled — but the deferral fallback it guards was.) |
+| Reload after reset | ✅ | `Requirements source: engine manifest (loop 31, 26 bundles)`, no mismatch WARN |
+| Zero errors | ✅ | 0 game/TLY ERROR lines across both sessions (only ERROR = an invalid `debug action` I typed) |
+
+*Notes, not bugs: (1) running `tly_select` from the console while the week-1 hub is still open and then clicking a card logs `WARN Farming is not offered this week` and re-rolls the offer — debug-only sequence, real players pick from the hub. (2) The in-place reset rotates the save folder (`None_<newUniqueId>`) and deletes the pre-reset folder, as designed; a clone must keep the `<Name>_<id>` shape. (3) Gunther's "Action" tile is the counter front, not his own tile — cost an hour of automation, not a mod issue.*
 
 #### Original sweep table (2026-08-21)
 *Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-21-12-00_*` + `tly-bug-bodies.json`.

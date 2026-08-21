@@ -1,9 +1,9 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-21 (0.12.0-beta.1 RELEASED — GitHub + Nexus file + description; all bug threads answered)
+**Last updated:** 2026-08-21 (v0.12.1 deployed + human-smoked: TLY Custom dropdown eyeballed, full loop-reset checklist PASSED — see TODO "SMOKED 2026-08-21")
 **Branch:** `master` (clean)
 **Tests:** 670 passing, 0 failing
-**Build:** clean; deployed to PC Mods (v0.11.110), NOT yet human-smoked
+**Build:** clean; deployed to PC Mods (v0.12.1) and smoked 2026-08-21 (all 9 bugfix checks + TLY Custom dropdown green, 0 errors)
 **Last public release:** 0.12.0-beta.1 (Nexus + GitHub, 2026-08-21 — fully closed incl. replies)
 
 ## Current state (2026-08-21) — post-sweep bugfix pass, ready for smoke + beta decision
@@ -16,7 +16,8 @@ rewrite (totems/CJB survive; vanilla-like density), stash banked pre-wipe, kept-
 plus the Cart Stall cap toggle/flavour/docs. The remix-bundles thread (the loudest one) is already
 moot on master because the engine writes the board.
 
-**Released as 0.12.0-beta.1 on 2026-08-21** (user call: ship master, no backport). **Next:** watch the beta
+**Released as 0.12.0-beta.1 on 2026-08-21** (user call: ship master, no backport). **v0.12.1 smoke PASSED 2026-08-21**
+(TLY Custom dropdown + every bugfix from the sweep re-verified on a real loop reset — TODO has the table). **Next:** watch the beta
 feedback; answer the two PRIVATE bug reports (see TODO); decide the Standard-vs-engine bundle opt-out; the
 Normal-bar PoolTuning playtest loop + cult repricing remain the gate for a non-beta 0.12.0.
 
