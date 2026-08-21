@@ -130,6 +130,12 @@ namespace TheLongestYear.Loop
             p.mailReceived.Clear();
             p.eventsSeen.Clear();
             p.questLog.Clear();
+            // 1.6 gates every RewardItemIsSpecial museum reward (artifact statues, Singing Stone, the
+            // Ancient Seeds item AND its recipe) on these two lists, not on mailReceived
+            // (LibraryMuseum.CanCollectReward). They live on the persistent Farmer, so without this
+            // the artifact-reward ladder was one-shot across the whole profile (Nexus bug 1107194).
+            p.specialItems.Clear();
+            p.specialBigCraftables.Clear();
 
             // Cave gift — back to unchosen each loop. loadForNewGame rebuilds the FarmCave (mushroom
             // boxes gone) but keeps the persistent Farmer, so a stale caveChoice would otherwise
