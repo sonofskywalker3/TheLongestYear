@@ -3,7 +3,32 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased — 0.11.101–0.11.110 (2026-08-21), bugfix pass on the 0.11.60 reports
+## 0.12.0-beta.1 — 2026-08-21
+
+Public beta of the 0.12.0 line. Consolidates the 0.11.61–0.11.111 dev line: the
+owned-bundle engine (three plans), the economy/clarity pass, and the bugfix pass
+on everything reported against 0.11.60.
+
+### Added
+- **Owned-bundle engine (0.11.69–0.11.100).** TLY writes its own Community
+  Center board at run-create and every reset, seeded per loop, from the vanilla
+  + remix pools. Picked bundles re-roll their slot contents from pools derived
+  from the game's own data (season-valid crops/forage, habitat-matched fish,
+  monster loot, metals, artisan goods) — SVE-proof by construction. Eleven
+  authored bundles join the pools (Artifact, Mineral, Book, Tapper's, Four
+  Seasons Sampler, Orchard, Preserver's, Home Cook's Feast, Weatherman's,
+  Gil's Trophies, Recycler's). Weapon/hat donations (`EnableNonObjectDonations`
+  kill-switch). Vault asks +25%. `ExcludedLocationMarkers` config for SVE/Island
+  exclusives. `tly_genbundles` / `tly_classify` / `tly_trophytest` diagnostics.
+- **Economy/clarity (0.11.61–0.11.68).** Season-checkpoint JP award
+  (150/250/400), donation JP single-pay, `xp_mult` upgrade family (5 skills ×
+  ×2–×5 + the ×10 "Junimo Insight" capstone), hub line for the season
+  multiplier.
+- `LimitTravelingCartStock` (config + GMCM) — turn off the one-item Traveling
+  Cart cap. The cap is explained in-game on the first cart visit and on the
+  mod page.
+
+### Fixed (0.11.101–0.11.111, the 0.11.60 bug reports)
 
 ### Fixed
 - **Community Center completion ceremony never played** (Joja stayed open, Pierre

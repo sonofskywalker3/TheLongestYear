@@ -1,0 +1,12 @@
+The mod now builds the Community Center board itself: every rewind rolls a fresh set of bundles from the vanilla + remix pools plus eleven new authored bundles (Gil's Trophies, Orchard, Four Seasons Sampler, Preserver's, Home Cook's Feast, Weatherman's, Recycler's and more). Picked bundles re-roll their contents from the game's own data, so it's SVE-proof and no two runs match. Weapons and hats can be donated where asked. Vault asks +25%.
+Remixed bundles no longer turn vanilla after a reset.
+The Community Center ceremony plays again after completion (Joja closes, Pierre opens Wednesdays, lightning strikes).
+Museum rewards return every loop (Ancient Seeds + recipe, statues, Singing Stone).
+Caroline's Tea Sapling event replays after a reset.
+Mixed Seeds roll Red Cabbage / Starfruit with the Cultivation upgrades; Summer Seeds stop growing cabbage.
+Weather: Rain Totems / CJB / console work again; minimums guaranteed, every other day rolled per loop at vanilla-like odds.
+Junimo Stash keeps day-28 deposits. Kept coops/barns come back with their hay hopper. Kept rods keep bait/tackle; kept tools keep enchantments.
+A fail-night overnight event can no longer swallow the rewind.
+Economy: season checkpoints award JP (150/250/400), donation JP paid once, new xp multiplier upgrades.
+Traveling Cart: one-item cart explained in-game; LimitTravelingCartStock config turns the cap off.
+Beta caveat: flipping EnableNonObjectDonations off mid-loop can leave an in-flight Gil's Trophies bundle un-donatable until the next reset.

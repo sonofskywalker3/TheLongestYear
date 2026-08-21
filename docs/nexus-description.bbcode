@@ -1,16 +1,27 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.11.60).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.12.0-beta.1).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.11.60[/b][/size]
-[b]The Longest Year is now fully translatable.[/b] Every player-visible string — the ~180-entry upgrade catalog, all the menus, weekly quests, dialogue, mail, and config options — now lives in a plain JSON file ([font=Courier New]i18n/default.json[/font]). Adding a language means copying that file, translating the values, and dropping it into the mod folder: no DLL edits, no rebuilds, and any line you haven't translated yet falls back to English automatically. See [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/docs/TRANSLATING.md]TRANSLATING.md[/url] — and if you make one, let us know so we can link it from the mod page.
+[size=5][b]What's New in 0.12.0-beta.1[/b][/size]
+[b]The mod now builds the Community Center board itself — and ten of the bugs you reported on 0.11.60 are fixed.[/b]
 [list]
-[*][b]Nothing changes in English.[/b] Every string renders exactly as it did in 0.11.44 — this release is plumbing.
-[*][b]Reset hardening.[/b] A one-time audit of every world-level state field closed the last known class of "survived the loop" leaks.
+[*][b]A new board every loop.[/b] Each rewind rolls a fresh set of bundles from the vanilla [i]and[/i] remix pools plus eleven new authored ones — Gil's Trophies (donate eradication rewards, Warrior Ring included), Orchard, Four Seasons Sampler (Tea Saplings), Preserver's, Home Cook's Feast, Weatherman's, Recycler's and more. Picked bundles re-roll their contents from the game's own data (crops keep their season but can ask for anything season-valid; fish stay in their habitat), so it's SVE-proof and no two runs match. Weapons and hats can now be donated where a bundle asks for them. Vault asks are +25%.
+[*][b]Remixed bundles no longer turn vanilla after a reset[/b] — the board is the mod's own now, so the farm-creation choice doesn't matter.
+[*][b]The Community Center ceremony plays again[/b] after you finish the Center (Joja closes, Pierre opens Wednesdays, the lightning strikes). We had the wrong event suppressed.
+[*][b]Museum rewards return every loop[/b] — Ancient Seeds + recipe, the statues, the Singing Stone.
+[*][b]Caroline's Tea Sapling event replays[/b] after a reset.
+[*][b]Mixed Seeds finally roll Red Cabbage / Starfruit[/b] with the Cultivation upgrades (and Summer Seeds stop growing cabbage).
+[*][b]Weather:[/b] Rain Totems, CJB and console weather work again, and seasons have real variety — the 2-rain / 2-storm / 2-snow minimums are guaranteed, every other day is rolled per loop at vanilla-like odds.
+[*][b]Junimo Stash keeps day-28 deposits.[/b] Kept coops/barns come back [b]with their hay hopper[/b]. Kept rods keep their [b]bait and tackle[/b] (kept tools keep enchantments).
+[*][b]A fail-night overnight event can no longer swallow the rewind[/b] and drop you on Summer 1.
+[*][b]Economy:[/b] season checkpoints now award JP (150/250/400), donation JP is paid once, and a new [i]xp multiplier[/i] upgrade family (×2–×5 per skill, plus a ×10 capstone).
+[*][b]Traveling Cart:[/b] the one-item cart is explained in-game on your first visit, and [font=Courier New]LimitTravelingCartStock[/font] turns the cap off if you'd rather have the full cart.
 [/list]
+Beta caveat: flipping [font=Courier New]EnableNonObjectDonations[/font] off mid-loop can leave an in-flight Gil's Trophies bundle un-donatable until the next reset.
+
 Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
 
 [line]
@@ -42,7 +53,7 @@ The Longest Year turns Stardew's first year into a roguelite loop. Each season, 
 [*]Install SMAPI 4.0.0 or newer.
 [*]Unzip into your [font=Courier New]Stardew Valley/Mods[/font] folder.
 [*]Launch through SMAPI and [b]start a new game on the Standard farm[/b]. Farm-type and intro options are handled for you.
-[*][b]Recommended: turn ON "remix bundles"[/b] (Advanced Options → Community Center Bundles → Remixed when creating the farm). Every loop reshuffles which bundles you get and what they ask for, so no two runs play the same — it's the setup the mod is balanced around. Standard bundles work fine too if you prefer to master one fixed set.
+[*]Bundles are the mod's own: every loop rolls a fresh board from the vanilla + remix pools plus the mod's authored bundles, so the Standard/Remixed choice at farm creation doesn't matter.
 [/list]
 
 [size=5][b]Limitations (beta)[/b][/size]

@@ -8,16 +8,27 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.11.60`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.12.0-beta.1`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.11.60
+## What's New in 0.12.0-beta.1
 
-**The Longest Year is now fully translatable.** Every player-visible string — the ~180-entry upgrade catalog, all the menus, weekly quests, dialogue, mail, and config options — now lives in a plain JSON file (`i18n/default.json`). Adding a language means copying that file, translating the values, and dropping it into the mod folder: no DLL edits, no rebuilds, and any line you haven't translated yet falls back to English automatically. See [TRANSLATING.md](docs/TRANSLATING.md) — and if you make one, let us know so we can link it from the mod page.
+**The mod now builds the Community Center board itself — and ten of the bugs you reported on 0.11.60 are fixed.**
 
-- **Nothing changes in English.** Every string renders exactly as it did in 0.11.44 — this release is plumbing.
-- **Reset hardening.** A one-time audit of every world-level state field closed the last known class of "survived the loop" leaks.
+- **A new board every loop.** Each rewind rolls a fresh set of bundles from the vanilla *and* remix pools plus eleven new authored ones — Gil's Trophies (donate eradication rewards, Warrior Ring included), Orchard, Four Seasons Sampler (Tea Saplings), Preserver's, Home Cook's Feast, Weatherman's, Recycler's and more. Picked bundles re-roll their contents from the game's own data (crops keep their season but can ask for anything season-valid; fish stay in their habitat), so it's SVE-proof and no two runs match. Weapons and hats can now be donated where a bundle asks for them. Vault asks are +25%.
+- **Remixed bundles no longer turn vanilla after a reset** — the board is the mod's own now, so the farm-creation choice doesn't matter.
+- **The Community Center ceremony plays again** after you finish the Center (Joja closes, Pierre opens Wednesdays, the lightning strikes). We had the wrong event suppressed.
+- **Museum rewards return every loop** — Ancient Seeds + recipe, the statues, the Singing Stone.
+- **Caroline's Tea Sapling event replays** after a reset.
+- **Mixed Seeds finally roll Red Cabbage / Starfruit** with the Cultivation upgrades (and Summer Seeds stop growing cabbage).
+- **Weather:** Rain Totems, CJB and console weather work again, and seasons have real variety — the 2-rain / 2-storm / 2-snow minimums are guaranteed, every other day is rolled per loop at vanilla-like odds.
+- **Junimo Stash keeps day-28 deposits.** Kept coops/barns come back **with their hay hopper**. Kept rods keep their **bait and tackle** (kept tools keep enchantments).
+- **A fail-night overnight event can no longer swallow the rewind** and drop you on Summer 1.
+- **Economy:** season checkpoints now award JP (150/250/400), donation JP is paid once, and a new *xp multiplier* upgrade family (×2–×5 per skill, plus a ×10 capstone).
+- **Traveling Cart:** the one-item cart is explained in-game on your first visit, and `LimitTravelingCartStock` turns the cap off if you'd rather have the full cart.
+
+Beta caveat: flipping `EnableNonObjectDonations` off mid-loop can leave an in-flight Gil's Trophies bundle un-donatable until the next reset.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -46,7 +57,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
 4. **Start a new game on the Standard farm.** The farm-type and skip-intro options are managed for you — the mod's own intro plays in their place.
-5. **Recommended: turn ON "remix bundles"** (Advanced Options → Community Center Bundles → Remixed when creating the farm). Every loop reshuffles which bundles you get and what they ask for, so no two runs play the same — it's the setup the mod is balanced around. Standard bundles work fine too if you prefer to master one fixed set.
+5. Bundles are the mod's own: every loop rolls a fresh board from the vanilla + remix pools plus the mod's authored bundles, so the Standard/Remixed choice at farm creation doesn't matter.
 
 ## How it works
 
