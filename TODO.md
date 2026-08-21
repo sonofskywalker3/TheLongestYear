@@ -6,7 +6,18 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 🐞 6th sweep (2026-08-21): Nexus bugs tab 07-17 → 08-21 — 9 new bugs, ALL root-caused, 9 fixed locally (v0.11.101–110)
+### ✅ RELEASED 0.12.0-beta.1 (2026-08-21) — 6th sweep: 9 new bugs root-caused + fixed, all threads answered + marked Fixed
+*Release closed 2026-08-21: GitHub release v0.12.0-beta.1 + Nexus file (workflow 32484136636) + description/version
+synced via Claude-in-Chrome (the Playwright automation profile's Nexus session expired — `nexus-wait-login.mjs`
+added but the regular browser was used instead). Replies posted on all 9 bug threads (status → Fixed), posts-tab
+replies to faldans / CausticOptimist / SilencedLink / Bumblewyn, Reddit reply to Thrippalan. Nexus flood control
+silently drops a bug-reply submit fired within ~30 s of the previous one — click again after a screenshot.
+**Two PRIVATE bug reports the sweep can't see (logged-in only):** 1117543 "Game randomly muting" (IshoMoogoo,
+13 Aug — random audio mute, 5 mods, log excerpt; likely a vanilla/Windows audio-device issue, needs a full log) and
+1113831 "Day 3 1st year crash" (5 Aug — hard crash a few seconds after accepting Emily's Wild Horseradish help-wanted
+post, no error log; unreplied). Both still New issue — reply/ask for SMAPI logs next session.*
+
+#### Original sweep table (2026-08-21)
 *Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-21-12-00_*` + `tly-bug-bodies.json`.
 Every report is against public 0.11.60. Nothing new on Nap Time / Cart Catalog; AC got two feature
 asks (furniture-catalogue categories — Junimo3738299202; make LB row-switch rebindable for Grandpa's

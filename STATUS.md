@@ -1,10 +1,10 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-21 (6th forum sweep → 10 bugfixes landed locally as v0.11.101–110; release vehicle decision pending)
+**Last updated:** 2026-08-21 (0.12.0-beta.1 RELEASED — GitHub + Nexus file + description; all bug threads answered)
 **Branch:** `master` (clean)
 **Tests:** 670 passing, 0 failing
 **Build:** clean; deployed to PC Mods (v0.11.110), NOT yet human-smoked
-**Last public release:** 0.11.60 (Nexus, 2026-07-14; changelog posted 07-15 — fully closed)
+**Last public release:** 0.12.0-beta.1 (Nexus + GitHub, 2026-08-21 — fully closed incl. replies)
 
 ## Current state (2026-08-21) — post-sweep bugfix pass, ready for smoke + beta decision
 
@@ -16,9 +16,9 @@ rewrite (totems/CJB survive; vanilla-like density), stash banked pre-wipe, kept-
 plus the Cart Stall cap toggle/flavour/docs. The remix-bundles thread (the loudest one) is already
 moot on master because the engine writes the board.
 
-**Next:** (1) human smoke of a reset on the deployed build; (2) decide 0.12.0-beta.1 (recommended)
-vs 0.11.60 backport; (3) What's New / changelog / Nexus replies (drafts in
-`release-notes/2026-08-21-nexus-replies-draft.md`); (4) "yes, push" → release.
+**Released as 0.12.0-beta.1 on 2026-08-21** (user call: ship master, no backport). **Next:** watch the beta
+feedback; answer the two PRIVATE bug reports (see TODO); decide the Standard-vs-engine bundle opt-out; the
+Normal-bar PoolTuning playtest loop + cult repricing remain the gate for a non-beta 0.12.0.
 
 ## Previous state (2026-07-20) — beta-release decision point
 
