@@ -37,6 +37,7 @@ public static class WeatherScheduler
     private const string Rain      = "Rain";
     private const string Storm     = "Storm";
     private const string Snow      = "Snow";
+    private const string Wind      = "Wind";
     private const string Festival  = "Festival";
 
     /// <summary>Vanilla 1.6's green-rain weather string — public so UI/patch code compares
@@ -50,6 +51,20 @@ public static class WeatherScheduler
     private static readonly int[] FallFestivals   = { 16, 27 };
     private static readonly int[] WinterFestivals = { 8, 25 };
 
+    // Per-season special-weather day counts. The original 2026-05-27 ask was a MINIMUM ("at least
+    // 2 rain every season, at least 2 storms in summer") but because every unassigned day is
+    // filled with Sun (so Weather Sage foresight is exact), these counts are also the MAXIMUM a
+    // player will ever see. 0.9.18–0.11.60 used 2/season, i.e. 24 sunny days — vanilla averages
+    // ~5 wet days in Spring/Fall and snows most of Winter — and players reported "it never rains"
+    // (Nexus bug 1107279). Tuned up to vanilla-comparable density 2026-08-21.
+    private const int SpringRainDays = 5;
+    private const int SpringWindDays = 2;
+    private const int SummerStormDays = 2;
+    private const int SummerRainDays = 3;
+    private const int FallRainDays = 5;
+    private const int FallWindDays = 2;
+    private const int WinterSnowDays = 10;
+
     private const int ForcedSunDay1 = 1;
     private const int ForcedSunDay2 = 2;
 
@@ -59,7 +74,7 @@ public static class WeatherScheduler
 
     /// <summary>
     /// Build the 28-day weather schedule for a season as a 1-indexed array (index 0 unused).
-    /// Result strings are one of: Sun, Rain, Storm, Snow, Festival, GreenRain.
+    /// Result strings are one of: Sun, Rain, Storm, Snow, Wind, Festival, GreenRain.
     /// </summary>
     /// <param name="summerGreenRainDay">Vanilla 1.6's green-rain day for this year's summer
     /// (one of 5/6/7/14/15/16/18/23, from <c>Utility.isGreenRainDay</c>), or -1 for none.
@@ -104,22 +119,24 @@ public static class WeatherScheduler
 
         switch (seasonIndex)
         {
-            case 0: // Spring: ≥2 rain, no storms; one rain in week 1.
+            case 0: // Spring: rain + wind, no storms; one rain in week 1.
                 PlaceOneInWeekOne(schedule, available, rng, Rain);
-                PlaceN(schedule, available, rng, Rain, 1);
+                PlaceN(schedule, available, rng, Rain, SpringRainDays - 1);
+                PlaceN(schedule, available, rng, Wind, SpringWindDays);
                 break;
-            case 1: // Summer: ≥2 storms; ≥2 rain; one rain in week 1.
-                PlaceN(schedule, available, rng, Storm, 2);
+            case 1: // Summer: storms + rain; one rain in week 1. (Vanilla has no summer wind.)
+                PlaceN(schedule, available, rng, Storm, SummerStormDays);
                 PlaceOneInWeekOne(schedule, available, rng, Rain);
-                PlaceN(schedule, available, rng, Rain, 1);
+                PlaceN(schedule, available, rng, Rain, SummerRainDays - 1);
                 break;
-            case 2: // Fall: ≥2 rain; one rain in week 1.
+            case 2: // Fall: rain + wind; one rain in week 1.
                 PlaceOneInWeekOne(schedule, available, rng, Rain);
-                PlaceN(schedule, available, rng, Rain, 1);
+                PlaceN(schedule, available, rng, Rain, FallRainDays - 1);
+                PlaceN(schedule, available, rng, Wind, FallWindDays);
                 break;
-            case 3: // Winter: ≥2 snow; one snow in week 1.
+            case 3: // Winter: snow; one snow in week 1.
                 PlaceOneInWeekOne(schedule, available, rng, Snow);
-                PlaceN(schedule, available, rng, Snow, 1);
+                PlaceN(schedule, available, rng, Snow, WinterSnowDays - 1);
                 break;
         }
 

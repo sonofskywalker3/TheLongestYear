@@ -47,7 +47,7 @@ public class WeatherForecastTests
         foreach (var day in forecast)
         {
             Assert.NotEqual("?", day.Weather);
-            Assert.Contains(day.Weather, new[] { "Sun", "Rain", "Storm", "Snow", "Festival" });
+            Assert.Contains(day.Weather, new[] { "Sun", "Rain", "Storm", "Snow", "Wind", "Festival" });
         }
     }
 
