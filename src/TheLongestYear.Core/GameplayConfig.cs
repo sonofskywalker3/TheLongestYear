@@ -219,9 +219,9 @@ public sealed class GameplayConfig
 
     /// <summary>Kill-switch for the weapon/hat donation patches. When false, Gil's Trophies
     /// composes rings-only (no weapon/hat slots offered), for compatibility with mods that
-    /// conflict with those patches. Flipping this OFF mid-loop on a board whose Gil's Trophies
-    /// was already composed with weapon/hat slots leaves those slots un-donatable (and possibly
-    /// the bundle uncompletable) until the next reset regenerates rings-only.</summary>
+    /// conflict with those patches. Governs the NEXT generated board: a board already composed
+    /// with weapon/hat slots keeps its donation patches live until the next reset regenerates
+    /// rings-only (spec 2026-08-21).</summary>
     public bool EnableNonObjectDonations { get; set; } = true;
 
     /// <summary>When true (default), the Traveling Cart is capped to the number of stalls unlocked

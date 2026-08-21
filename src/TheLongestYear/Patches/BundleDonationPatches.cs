@@ -63,8 +63,18 @@ namespace TheLongestYear.Patches
             _config = config;
         }
 
-        /// <summary>Kill-switch + per-save gate. Both patches no-op entirely when this is false.</summary>
-        private static bool Enabled => RunActivation.IsActive && _config != null && _config.EnableNonObjectDonations;
+        /// <summary>True when the LIVE board has at least one weapon/hat ingredient slot (set at
+        /// save-load from the resolved BundleData, cleared on return-to-title). Keeps both patches
+        /// live for the rest of a loop whose Gil's Trophies was composed with (W)/(H) slots even
+        /// after <see cref="GameplayConfig.EnableNonObjectDonations"/> is turned off — the flag
+        /// governs the NEXT generated board, not an in-flight one (spec 2026-08-21).</summary>
+        internal static bool LiveBoardHasNonObjectSlots { get; set; }
+
+        /// <summary>Kill-switch + per-save gate. Both patches no-op entirely when this is false.
+        /// The config flag OR a live board that still needs the patches enables them.</summary>
+        private static bool Enabled =>
+            RunActivation.IsActive && _config != null
+            && (_config.EnableNonObjectDonations || LiveBoardHasNonObjectSlots);
 
         private static void Warn(string message) => _monitor?.Log($"BundleDonationPatches: {message}", LogLevel.Warn);
 

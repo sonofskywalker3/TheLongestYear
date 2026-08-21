@@ -28,8 +28,6 @@ This is a **beta** (`0.12.0-beta.1`). It is feature-complete for v1 and stable i
 - **Economy:** season checkpoints now award JP (150/250/400), donation JP is paid once, and a new *xp multiplier* upgrade family (×2–×5 per skill, plus a ×10 capstone).
 - **Traveling Cart:** the one-item cart is explained in-game on your first visit, and `LimitTravelingCartStock` turns the cap off if you'd rather have the full cart.
 
-Beta caveat: flipping `EnableNonObjectDonations` off mid-loop can leave an in-flight Gil's Trophies bundle un-donatable until the next reset.
-
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
 ---

@@ -371,6 +371,16 @@ namespace TheLongestYear
                 themeOverrides, itemSeasonPins, bundleQuotas);
             _catalog = builder.Build();
             _requirements = ResolveRequirements(builder, itemSeasonPins, bundleQuotas);
+            // The weapon/hat donation patches must stay live for a board that already carries
+            // (W)/(H) slots, whatever EnableNonObjectDonations says now (it governs the NEXT
+            // board). Read the live data AFTER ResolveRequirements so a fresh-run write counts.
+            TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots =
+                BoardInspection.HasNonObjectIngredients(Game1.netWorldState.Value.BundleData);
+            if (TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots && !_config.EnableNonObjectDonations)
+                this.Monitor.Log(
+                    "EnableNonObjectDonations is off but the live board still has weapon/hat slots — " +
+                    "keeping the donation patches on for this loop; rings-only from the next reset.",
+                    LogLevel.Info);
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
 
             _questService = new WeeklyThemeQuestService(
@@ -436,6 +446,7 @@ namespace TheLongestYear
         private void DeactivateTly()
         {
             RunActivation.Deactivate();
+            TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             DonationService.Active = null;
@@ -1719,16 +1730,27 @@ namespace TheLongestYear
 
             if (source == RequirementsSource.EngineManifest)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
-                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, state.CompletedResets));
-
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
-                bool matches = EngineManifestCheck.Matches(set.ToBundleData(), liveData);
-                if (matches)
+                var seed = BundleEngineSeed.For(seedBasis, state.CompletedResets);
+
+                // Generate with the CURRENT EnableNonObjectDonations first; if the live board
+                // doesn't match, try the OPPOSITE flag — the only generation input that can
+                // change between launches mid-loop. A flipped flag must not demote a healthy
+                // engine board to the legacy read path (spec 2026-08-21): the board on disk was
+                // composed with the old value and stays valid until the next reset regenerates.
+                foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
+                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, nonObject);
+                    GeneratedBundleSet set = engine.Generate(seed);
+                    if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
+                        continue;
+
                     var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
+                    string flagNote = nonObject == _config.EnableNonObjectDonations
+                        ? ""
+                        : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
                     this.Monitor.Log(
-                        $"Requirements source: engine manifest (loop {state.CompletedResets}, {requirements.Count} bundles).",
+                        $"Requirements source: engine manifest (loop {state.CompletedResets}, {requirements.Count} bundles{flagNote}).",
                         LogLevel.Info);
                     return requirements;
                 }
