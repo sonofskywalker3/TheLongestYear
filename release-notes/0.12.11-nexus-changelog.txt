@@ -1,0 +1,7 @@
+Pick your board: New > Advanced Options > Community Center Bundles now offers TLY Custom (default, the mod's own board every loop), Normal and Remixed. Normal/Remixed keep the game's own board and it comes back the SAME kind after every reset (remixed-turns-vanilla fixed at the root). Other bundle mods (e.g. Challenging Community Center Bundles) work: the mod re-reads the board when another mod changes it. BundleSource (config/GMCM) switches an existing save at its next reset.
+Twelve bundles could brick or bully a run (Winter Star, Forager's, Gil's Trophies, Brewer's, Preserver's, Mineral, Home Cook's Feast, Fish Farmer's, Artifact, Four Seasons Sampler, Rare Crops, Garden) - hand-set season schedules now; Gil's Trophies only rolls year-1 trophies.
+The red-cabbage gate is priced like a gate: Cultivation: Red Cabbage costs 5,000 JP; new Pierre's Special Order (10,000 JP) has Pierre sell his year-2 seeds (Garlic, Red Cabbage, Artichoke) from year 1. Cultivation: Starfruit removed.
+Weekly themes with nothing left to donate say "Themed donations completed" and lift the drawback.
+Weekly-theme goals know every bundle item (items past a bundle's first slots were invisible); Grape counts as Summer forage; read boards get the never-ask-for-the-unobtainable guard.
+EnableNonObjectDonations can be flipped any time - an in-flight Gil's Trophies stays donatable until the next reset.
+Mod page: Advanced Options screenshot. Diagnostics: tly_jpbudget, tly_bundlesource.
