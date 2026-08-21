@@ -150,6 +150,11 @@ namespace TheLongestYear.Loop
             // fresh even before the keep is purchased means the first keep-owning reset already knows it.
             SnapshotKeptBuildingSpots();
 
+            // 0d. Bank the LIVE stash chest before loadForNewGame wipes the Farm. StashItems is
+            // otherwise refreshed only on the Saving event, so anything deposited after the last
+            // save (all of day 28) was restored from a stale snapshot at step 13 (Nexus bug 1111046).
+            _stashService?.BankToMeta();
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
