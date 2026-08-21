@@ -51,19 +51,23 @@ public static class WeatherScheduler
     private static readonly int[] FallFestivals   = { 16, 27 };
     private static readonly int[] WinterFestivals = { 8, 25 };
 
-    // Per-season special-weather day counts. The original 2026-05-27 ask was a MINIMUM ("at least
-    // 2 rain every season, at least 2 storms in summer") but because every unassigned day is
-    // filled with Sun (so Weather Sage foresight is exact), these counts are also the MAXIMUM a
-    // player will ever see. 0.9.18–0.11.60 used 2/season, i.e. 24 sunny days — vanilla averages
-    // ~5 wet days in Spring/Fall and snows most of Winter — and players reported "it never rains"
-    // (Nexus bug 1107279). Tuned up to vanilla-comparable density 2026-08-21.
-    private const int SpringRainDays = 5;
-    private const int SpringWindDays = 2;
-    private const int SummerStormDays = 2;
-    private const int SummerRainDays = 3;
-    private const int FallRainDays = 5;
-    private const int FallWindDays = 2;
-    private const int WinterSnowDays = 10;
+    // Guaranteed MINIMUMS per season (2026-05-27 design ask: "at least 2 days of rain every season,
+    // at least 2 storms in summer, but mix them up every new seed"). Placed first, then every other
+    // open day is ROLLED with the same per-loop seeded RNG at vanilla-like odds — so the total number
+    // of wet days varies loop to loop, the minimums always hold, and Weather Sage foresight stays
+    // exact (same seed → same roll). 0.9.18–0.11.60 filled the remainder with Sun, which turned the
+    // minimums into a hard cap of 2 wet days a season ("it never rains", Nexus bug 1107279).
+    private const int MinRainDays = 2;
+    private const int MinSummerStormDays = 2;
+    private const int MinSnowDays = 2;
+
+    // Per-day odds for the random fill (cumulative thresholds, roughly vanilla Data/LocationContexts
+    // Default). Spring/Fall: ~18% rain, ~15% wind. Summer: ~10% storm, ~12% rain. Winter: ~63% snow.
+    private const double SpringFallRainChance = 0.18;
+    private const double SpringFallWindChance = 0.15;
+    private const double SummerStormChance = 0.10;
+    private const double SummerRainChance = 0.12;
+    private const double WinterSnowChance = 0.63;
 
     private const int ForcedSunDay1 = 1;
     private const int ForcedSunDay2 = 2;
@@ -119,31 +123,29 @@ public static class WeatherScheduler
 
         switch (seasonIndex)
         {
-            case 0: // Spring: rain + wind, no storms; one rain in week 1.
+            case 0: // Spring: ≥2 rain, no storms; one rain in week 1.
                 PlaceOneInWeekOne(schedule, available, rng, Rain);
-                PlaceN(schedule, available, rng, Rain, SpringRainDays - 1);
-                PlaceN(schedule, available, rng, Wind, SpringWindDays);
+                PlaceN(schedule, available, rng, Rain, MinRainDays - 1);
                 break;
-            case 1: // Summer: storms + rain; one rain in week 1. (Vanilla has no summer wind.)
-                PlaceN(schedule, available, rng, Storm, SummerStormDays);
+            case 1: // Summer: ≥2 storms; ≥2 rain; one rain in week 1.
+                PlaceN(schedule, available, rng, Storm, MinSummerStormDays);
                 PlaceOneInWeekOne(schedule, available, rng, Rain);
-                PlaceN(schedule, available, rng, Rain, SummerRainDays - 1);
+                PlaceN(schedule, available, rng, Rain, MinRainDays - 1);
                 break;
-            case 2: // Fall: rain + wind; one rain in week 1.
+            case 2: // Fall: ≥2 rain; one rain in week 1.
                 PlaceOneInWeekOne(schedule, available, rng, Rain);
-                PlaceN(schedule, available, rng, Rain, FallRainDays - 1);
-                PlaceN(schedule, available, rng, Wind, FallWindDays);
+                PlaceN(schedule, available, rng, Rain, MinRainDays - 1);
                 break;
-            case 3: // Winter: snow; one snow in week 1.
+            case 3: // Winter: ≥2 snow; one snow in week 1.
                 PlaceOneInWeekOne(schedule, available, rng, Snow);
-                PlaceN(schedule, available, rng, Snow, WinterSnowDays - 1);
+                PlaceN(schedule, available, rng, Snow, MinSnowDays - 1);
                 break;
         }
 
-        // Fill remaining open days with Sun.
+        // Roll every remaining open day (ascending, so the seeded sequence is stable).
         for (int d = 1; d <= DaysPerMonth; d++)
             if (schedule[d] == null)
-                schedule[d] = Sun;
+                schedule[d] = RollDay(seasonIndex, rng);
 
         return schedule;
     }
@@ -154,6 +156,28 @@ public static class WeatherScheduler
         if (dayOfMonth < 1 || dayOfMonth > DaysPerMonth) return null;
         if (seasonIndex < 0 || seasonIndex > 3) return null;
         return BuildSchedule(uniqueId, seasonIndex, summerGreenRainDay)[dayOfMonth];
+    }
+
+    /// <summary>One day's random weather for the fill step, at vanilla-like odds per season.</summary>
+    private static string RollDay(int seasonIndex, Random rng)
+    {
+        double r = rng.NextDouble();
+        switch (seasonIndex)
+        {
+            case 0:
+            case 2:
+                if (r < SpringFallRainChance) return Rain;
+                if (r < SpringFallRainChance + SpringFallWindChance) return Wind;
+                return Sun;
+            case 1:
+                if (r < SummerStormChance) return Storm;
+                if (r < SummerStormChance + SummerRainChance) return Rain;
+                return Sun;
+            case 3:
+                return r < WinterSnowChance ? Snow : Sun;
+            default:
+                return Sun;
+        }
     }
 
     private static void PlaceN(string[] schedule, List<int> available, Random rng, string weather, int n)
