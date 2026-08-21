@@ -50,7 +50,10 @@ public sealed class EventGatingTables
     /// any of these re-teaches/re-unlocks something <c>FarmerReset</c> clears, so it must re-fire each
     /// loop. "mailReceived" is the vanilla alias of "addMailReceived" (Event.cs DefaultCommands).</summary>
     private static readonly string[] GrantCommandTokens =
-        { "addCraftingRecipe", "addCookingRecipe", "addMailReceived", "mailReceived", "addQuest" };
+        { "addCraftingRecipe", "addCookingRecipe", "addMailReceived", "mailReceived", "addQuest",
+          // Letter-delivering commands: the letter carries the unlock (e.g. Caroline's 2-heart Sunroom
+          // event 719926 grants the Tea Sapling recipe via "mail CarolineTea" — Nexus bug 1115192).
+          "mail", "mailToday", "hostMail" };
 
     /// <summary>The grant command this script runs (for diagnostics), or null if none. Event scripts
     /// are "/"-delimited command segments; a grant is detected when a segment STARTS WITH a token
