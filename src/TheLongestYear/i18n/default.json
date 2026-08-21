@@ -352,6 +352,10 @@
     "furniture.planning-shrine": "Junimo Planning Shrine",
 
     // -- gmcm -------------------------------------------------------------------------
+    // -- new-game Advanced Options (vanilla CC-bundles dropdown replaced) -------
+    "ago.bundles.tly-custom": "TLY Custom",
+    "ago.bundles.tly-custom.tooltip": "The Longest Year builds its own Community Center board every loop (vanilla + remixed pools plus its authored bundles), so the vanilla Normal/Remixed choice doesn't apply.",
+
     "gmcm.section": "The Longest Year",
     "gmcm.master-blurb": "Master switch. When off, TLY skips all setup at save load and no effects fire. Toggling takes effect on the next save load.",
     "gmcm.enabled.name": "Enabled",
