@@ -41,6 +41,7 @@ namespace TheLongestYear
         private BookFurniture _bookFurniture;
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
+        private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -124,6 +125,9 @@ namespace TheLongestYear
             // hooked before the first asset load (same reason as _introInjector above).
             _onboardingMail = new TheLongestYear.Loop.OnboardingMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _onboardingMail.OnAssetRequested;
+            // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
+            _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
+            helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -330,6 +334,8 @@ namespace TheLongestYear
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
+            // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
+            this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
             // unlock-granting cutscene (recipe/mail/quest) so a mod's teach/unlock scene re-fires each
             // loop, merged with the vanilla furnace/cave ids. FarmerReset consults it at reset time.
@@ -404,6 +410,11 @@ namespace TheLongestYear
             _stashService.PopulateFromMeta();
             _planningShrine.Place(_stashService.LastPlacedTile);
             _purchases = new UpgradePurchaseService(this.Monitor, _meta);
+            _purchases.Purchased = id =>
+            {
+                if (id == TheLongestYear.Loop.PierreYear2SeedsService.UpgradeId)
+                    this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            };
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
@@ -450,6 +461,7 @@ namespace TheLongestYear
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
+            this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
             DonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of

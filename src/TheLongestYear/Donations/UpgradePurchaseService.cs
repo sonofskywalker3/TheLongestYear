@@ -20,12 +20,18 @@ namespace TheLongestYear.Donations
             _store = store;
         }
 
+        /// <summary>Fires with the upgrade id after a successful purchase (wired by ModEntry for
+        /// upgrades whose effect needs a live refresh, e.g. a Data/Shops cache invalidation).</summary>
+        public System.Action<string> Purchased;
+
         /// <summary>Attempt to buy by id. Returns the rule's result so the caller can react.</summary>
         public UpgradePurchase.PurchaseResult TryPurchase(string upgradeId)
         {
             UpgradeDefinition def = UpgradeCatalog.TryGet(upgradeId);
             UpgradePurchase.PurchaseResult result = UpgradePurchase.TryPurchase(_store.State, def);
             LogResult(upgradeId, def, result);
+            if (result == UpgradePurchase.PurchaseResult.Success)
+                Purchased?.Invoke(def.Id);
             return result;
         }
 

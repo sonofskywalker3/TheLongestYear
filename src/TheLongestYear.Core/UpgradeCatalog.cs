@@ -117,12 +117,14 @@ public static class UpgradeCatalog
         new UpgradeDefinition("jp_boost_4", UpgradeCategory.Efficiency, 850, "jp_boost_3"),
         new UpgradeDefinition("jp_boost_5", UpgradeCategory.Efficiency, 1300, "jp_boost_4"),
 
-        // Obtainability
-        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 750),
-        // 2026-05-29 user spec: starfruit decoupled from red cabbage — picker should be able
-        // to grab either independently. Cost dropped 1125 → 750 to match cult_red_cabbage
-        // ("change the starfruit cost to the same cost as the red cabbage").
-        new UpgradeDefinition("cult_starfruit", UpgradeCategory.Obtainability, 750),
+        // Obtainability — user ruling 2026-08-21 (JP budget: a strong loop banks ~8–9.5k):
+        //   cult_red_cabbage 750 → 5,000 (RNG route, "hefty but not impossible"; red cabbage
+        //   may not even be asked on a remix/engine board);
+        //   pierre_year2_seeds 10,000 — the sure thing: Pierre sells his year-2 seeds
+        //   (Garlic / Red Cabbage / Artichoke) in year 1 (PierreYear2SeedsService);
+        //   cult_starfruit REMOVED — anyone can reach the desert, there's no RNG to buy off.
+        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 5000),
+        new UpgradeDefinition("pierre_year2_seeds", UpgradeCategory.Obtainability, 10000),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, 525),
 
         // Obtainability — Passive Accelerators (added 2026-05-29, cost-tuned 2026-05-29)
