@@ -75,23 +75,36 @@ public class WeatherSchedulerTests
         }
     }
 
-    // --- Density (Nexus bug 1107279 "rain will not occur": 2 wet days a season read as never) ---
+    // --- Density (Nexus bug 1107279 "rain will not occur"): minimums are guaranteed, the rest is a
+    //     per-loop seeded roll — so counts must vary across seeds but never drop below the floor. ---
 
     [Theory]
-    [InlineData(0, "Rain", 5)]
-    [InlineData(0, "Wind", 2)]
-    [InlineData(1, "Rain", 3)]
+    [InlineData(0, "Rain", 2)]
+    [InlineData(1, "Rain", 2)]
     [InlineData(1, "Storm", 2)]
-    [InlineData(2, "Rain", 5)]
-    [InlineData(2, "Wind", 2)]
-    [InlineData(3, "Snow", 10)]
-    public void Each_season_places_its_tuned_special_weather_count(int seasonIndex, string weather, int expected)
+    [InlineData(2, "Rain", 2)]
+    [InlineData(3, "Snow", 2)]
+    public void Special_weather_count_varies_by_seed_but_never_below_minimum(int seasonIndex, string weather, int minimum)
     {
-        for (int seed = 0; seed < 50; seed++)
+        var counts = new System.Collections.Generic.HashSet<int>();
+        for (int seed = 0; seed < 200; seed++)
         {
-            var schedule = WeatherScheduler.BuildSchedule(seed, seasonIndex);
-            Assert.Equal(expected, CountDays(schedule, weather));
+            int n = CountDays(WeatherScheduler.BuildSchedule(seed, seasonIndex), weather);
+            Assert.True(n >= minimum, $"Season {seasonIndex} (seed={seed}) had {n} {weather} days, below the {minimum} minimum.");
+            counts.Add(n);
         }
+        Assert.True(counts.Count > 1, $"Season {seasonIndex}: {weather} count was identical across 200 seeds — the fill is not rolling.");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void Spring_and_fall_sometimes_roll_wind(int seasonIndex)
+    {
+        int total = 0;
+        for (int seed = 0; seed < 100; seed++)
+            total += CountDays(WeatherScheduler.BuildSchedule(seed, seasonIndex), "Wind");
+        Assert.True(total > 0);
     }
 
     [Fact]
