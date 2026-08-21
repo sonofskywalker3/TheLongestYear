@@ -38,6 +38,8 @@ public class ReplayableDetectionTests
     public void ScriptGrantsUnlock_is_true_only_when_a_grant_command_runs()
     {
         Assert.True(EventGatingTables.ScriptGrantsUnlock("addMailReceived guildMember/end"));
+        Assert.True(EventGatingTables.ScriptGrantsUnlock("speak Caroline \"tea\"/mail CarolineTea/end"));
+        Assert.True(EventGatingTables.ScriptGrantsUnlock("mailToday someLetter/end"));
         Assert.False(EventGatingTables.ScriptGrantsUnlock("speak Lewis \"hi\"/end"));
     }
 
