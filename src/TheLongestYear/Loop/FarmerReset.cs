@@ -30,6 +30,11 @@ namespace TheLongestYear.Loop
             // preservation is Plan 07). p.Items.Clear() removes the slot list itself, which
             // leaves MaxItems lookups returning 0 → addItemToInventory always fails (round-3
             // playtest bug); reset MaxItems then re-pad nulls.
+            // Sub-state that lives on the tool INSTANCE, not in Data/Tools: rod bait/tackle,
+            // enchantments, water level. Items.Clear() destroys the tool and ApplyToolTiers re-creates
+            // a blank one from the registry, so capture here and transplant after (Nexus posts:
+            // "kept rod came back without its bait").
+            var outgoingTools = CaptureTools(p);
             p.MaxItems = baseline.MaxItems;
             p.Items.Clear();
             for (int i = 0; i < p.MaxItems; i++)
@@ -124,6 +129,7 @@ namespace TheLongestYear.Loop
             // (capped at the in-run peak by the baseline builder). Tools with no kept tier stay
             // basic. Tool.UpgradeLevel is settable directly (decompile: Tool.cs:167).
             ApplyToolTiers(p, baseline.ToolTiers, _monitor);
+            TransplantToolState(p, baseline.ToolTiers, outgoingTools, _monitor);
 
             // Relationships, mail, events, quests.
             p.friendshipData.Clear();
@@ -338,6 +344,59 @@ namespace TheLongestYear.Loop
             3 => "IridiumRod",
             _ => "BambooPole",
         };
+
+        private static string ToolSlug(Item it) =>
+            it is FishingRod ? "fishing_rod" :
+            it is Hoe ? "hoe" :
+            it is Pickaxe ? "pickaxe" :
+            it is Axe ? "axe" :
+            it is WateringCan ? "watering_can" : null;
+
+        /// <summary>Snapshot the player's tools by slug before the inventory wipe.</summary>
+        private static Dictionary<string, Tool> CaptureTools(Farmer p)
+        {
+            var tools = new Dictionary<string, Tool>();
+            foreach (Item it in p.Items)
+            {
+                string slug = ToolSlug(it);
+                if (slug != null && it is Tool t && !tools.ContainsKey(slug)) tools[slug] = t;
+            }
+            return tools;
+        }
+
+        /// <summary>Copy instance state (rod attachments, enchantments, water) from the outgoing tool
+        /// onto the re-granted KEPT tool of the same kind. Only kept tiers qualify — a tool that
+        /// wasn't kept is meant to be lost with the loop. Attachment copy is clamped to the new
+        /// tool's slot count so a lower kept tier (fewer tackle slots) can't overflow.</summary>
+        private static void TransplantToolState(Farmer p, IReadOnlyDictionary<string, int> keptTiers,
+            IReadOnlyDictionary<string, Tool> outgoing, IMonitor monitor)
+        {
+            var moved = new List<string>();
+            foreach (Item it in p.Items)
+            {
+                string slug = ToolSlug(it);
+                if (slug == null || it is not Tool fresh) continue;
+                if (!keptTiers.ContainsKey(slug)) continue;
+                if (!outgoing.TryGetValue(slug, out Tool old) || ReferenceEquals(old, fresh)) continue;
+
+                int slots = System.Math.Min(old.attachments.Count, fresh.attachments.Count);
+                for (int i = 0; i < slots; i++)
+                {
+                    if (old.attachments[i] == null) continue;
+                    fresh.attachments[i] = old.attachments[i];
+                    moved.Add($"{slug}:attachment[{i}]={old.attachments[i].Name}");
+                }
+                if (old.enchantments.Count > 0)
+                {
+                    old.CopyEnchantments(old, fresh);
+                    moved.Add($"{slug}:enchantments={old.enchantments.Count}");
+                }
+                if (old is WateringCan oldCan && fresh is WateringCan freshCan)
+                    freshCan.WaterLeft = System.Math.Min(oldCan.WaterLeft, freshCan.waterCanMax);
+            }
+            if (moved.Count > 0)
+                monitor.Log("Reset: transplanted tool state — " + string.Join(", ", moved), LogLevel.Trace);
+        }
 
         private static void ApplyToolTiers(Farmer p, IReadOnlyDictionary<string, int> tiers, IMonitor monitor)
         {
