@@ -37,7 +37,12 @@ namespace TheLongestYear.Loop
         internal static readonly System.Collections.Generic.HashSet<string> SuppressedEventIds
             = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal)
         {
-            "191393", // Demetrius + Lewis CC intro in Town (Spring 5 Y1)
+            // 611439 — Lewis walks you to the derelict CC ("what an eyesore"), grants ccDoorUnlock +
+            // quest 26. TLY opens the CC on Spring 1 (CommunityCenterUnlock), so the intro is stale.
+            // NOT 191393: that is the CC COMPLETION ceremony (Morris driven out), and it gates the
+            // Joja shutdown, the Pierre-Wednesday closure and the abandoned-JojaMart lightning.
+            // 0.11.60 suppressed 191393 by mistake -> post-completion world froze (Nexus bug 1113630).
+            "611439",
         };
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
