@@ -756,8 +756,21 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, Strings.Get("menu.hub.bonus-week"), Game1.smallFont,
                 new Vector2(textX, bonusHeaderY), Game1.textColor);
 
-            // Bonus item icons (pre-computed bounds).
-            DrawBonusIcons(b, bonus, bonusBounds);
+            // Bonus item icons (pre-computed bounds). An EMPTY pool (every slot this theme could
+            // ask for is already donated) used to render as a blank icon row, which players read
+            // as a bug (Bumblewyn, Nexus posts 2026-08-15). Say what it means instead — the
+            // selection path auto-lifts the drawback (RunController.ApplyEmptyPoolLiftIfNeeded).
+            if (bonus.Count == 0)
+            {
+                int iconRowY = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize;
+                string none = Game1.parseText(Strings.Get("menu.hub.bonus-none"), Game1.smallFont, textWidth);
+                Utility.drawTextWithShadow(b, none, Game1.smallFont,
+                    new Vector2(textX, iconRowY), Game1.textColor);
+            }
+            else
+            {
+                DrawBonusIcons(b, bonus, bonusBounds);
+            }
         }
 
         private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds)
