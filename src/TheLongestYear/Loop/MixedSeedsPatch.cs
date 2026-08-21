@@ -5,9 +5,10 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Obtainability upgrades: inject Red Cabbage Seeds / Starfruit Seeds into the Summer Mixed
-    /// Seeds roll when the player owns cult_red_cabbage / cult_starfruit respectively. 10%
-    /// substitution chance per upgrade, applied only in Summer. See <see cref="MixedSeedsPatch"/>.
+    /// Obtainability upgrade: inject Red Cabbage Seeds into the Summer Mixed Seeds roll when the
+    /// player owns cult_red_cabbage. 10% substitution chance, applied only in Summer. (The
+    /// Starfruit twin was removed 2026-08-21 — the desert is reachable without RNG.) See
+    /// <see cref="MixedSeedsPatch"/>.
     ///
     /// Upgrade ownership is read via <see cref="UpgradeChecker"/>, a static Func wired by
     /// ModEntry.OnSaveLoaded to avoid importing MetaStore into the patch.
@@ -45,7 +46,6 @@ namespace TheLongestYear.Loop
     {
         private const string MixedSeedsId = "770";
         private const string RedCabbageSeeds = "485";
-        private const string StarfruitSeeds = "486";
         private const double SubstitutionChance = 0.10;
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
@@ -55,15 +55,6 @@ namespace TheLongestYear.Loop
             if (itemId != MixedSeedsId) return;
             if (location == null || location.GetSeason() != StardewValley.Season.Summer) return;
             if (location is StardewValley.Locations.IslandLocation) return; // vanilla overrides island picks
-
-            // 2026-05-29 user spec: each cultivation upgrade is independent. Starfruit rolls first
-            // when both are owned so an earlier Red Cabbage hit can't suppress it.
-            if (UpgradeChecker.HasUpgrade("cult_starfruit")
-                && Game1.random.NextDouble() < SubstitutionChance)
-            {
-                __result = StarfruitSeeds;
-                return;
-            }
 
             if (UpgradeChecker.HasUpgrade("cult_red_cabbage")
                 && Game1.random.NextDouble() < SubstitutionChance)
