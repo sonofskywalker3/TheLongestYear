@@ -1,28 +1,23 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-21 (v0.12.6 local, unreleased — pre-0.12 release work in progress; three rulings pending, see TODO "RULINGS PENDING")
+**Last updated:** 2026-08-21 (v0.12.11 local — RELEASE CANDIDATE, awaiting "yes, push")
 **Branch:** `master` (clean)
-**Tests:** 686 passing, 0 failing
-**Build:** clean; deployed to PC Mods (v0.12.6)
-**Last public release:** 0.12.0-beta.1 (Nexus + GitHub, 2026-08-21 — fully closed incl. replies)
+**Tests:** 711 passing, 0 failing
+**Build:** clean; deployed to PC Mods (v0.12.10 smoked; 0.12.11 is a log-level change)
+**Last public release:** 0.12.0-beta.1 (Nexus + GitHub, 2026-08-21)
 
-## Current state (2026-08-21 evening) — pre-0.12 release work (handoff `HANDOFF-2026-08-21-pre-0.12-release-work.md`)
+## Current state (2026-08-21 night) — 0.12.11 release candidate
 
-Done this session (one commit each): **A1** Advanced Options "TLY Custom" screenshot wired into README +
-Nexus Install step (`release-notes/advanced-options-tly-custom.png`; the Nexus `[img]` URL is a placeholder
-until the gallery upload); **A2** empty-theme hub card eyeballed on a live board (Mining pool emptied via
-`debug bundle 20/21/22`) — "Themed donations completed" renders cleanly under the bonus header, no fix needed;
-**A3 v0.12.4** `EnableNonObjectDonations` now governs the NEXT board only (patches stay live while the live
-board has (W)/(H) slots; manifest match tries the opposite flag) — beta caveat deleted from README/Nexus;
-**B5 v0.12.5–0.12.6** `tly_jpbudget` + 5-loop measurement (`docs/superpowers/notes/2026-08-21-jp-budget.md`:
-strong player 8.0–9.5k JP/loop, "donate ASAP" 4.4–4.9k, fixed awards 1,933).
-
-**Awaiting rulings** (all three specs committed): A4 curated quota ramps
-(`specs/2026-08-21-curated-quota-ramps-design.md`), B6 cult repricing
-(`specs/2026-08-21-cult-repricing-proposal.md`), C7 BundleSource Engine|Vanilla
-(`specs/2026-08-21-bundle-source-engine-vanilla-design.md` — includes the classification audit; Challenging CC
-Bundles turned out to swap BundleData values at DayStarted, which is ada113's bug). Then: implement A4 → B6 →
-C7 (plan → tests → smoke a reset in each mode) → D8 release docs once → "yes, push".
+Everything in `HANDOFF-2026-08-21-pre-0.12-release-work.md` is done and smoked on the deployed build:
+A1 screenshot, A2 empty-theme card (no fix needed), A3 `EnableNonObjectDonations` next-board rule
+(v0.12.4), B5 `tly_jpbudget` + 5-loop measurement (v0.12.5–6), B6 cult repricing per ruling (v0.12.7:
+starfruit gone, red cabbage 5k, Pierre's Special Order 10k — smoked at Pierre's), A4 twelve curated ramps
++ trophy trim (v0.12.8), C7 `BundleSource` Engine|Vanilla with the TLY Custom / Normal / Remixed dropdown
+(v0.12.9–11 — smoked: Engine → Vanilla/Default → Vanilla/Remixed → Engine resets all classify correctly,
+dropdown eyeballed). Release docs written (README ≡ Nexus What's New, CHANGELOG 0.12.11, Nexus changelog
+file). **Next: user says "yes, push" → `release.ps1 -SkipNexusDesc`, description/version sync + changelog
+paste via Claude-in-Chrome, upload `release-notes/advanced-options-tly-custom.png` to the gallery and
+replace the `[img]` placeholder, verify live.**
 
 ## Previous state (2026-08-21 midday) — post-sweep bugfix pass, ready for smoke + beta decision
 

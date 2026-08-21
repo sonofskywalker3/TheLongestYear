@@ -12,21 +12,17 @@ This is a **beta** (`0.12.0-beta.1`). It is feature-complete for v1 and stable i
 
 ---
 
-## What's New in 0.12.0-beta.1
+## What's New in 0.12.11
 
-**The mod now builds the Community Center board itself — and ten of the bugs you reported on 0.11.60 are fixed.**
+**Pick your board (TLY Custom / Normal / Remixed), a fairly-priced red-cabbage gate, and twelve bundle schedules that could brick a run are fixed.**
 
-- **A new board every loop.** Each rewind rolls a fresh set of bundles from the vanilla *and* remix pools plus eleven new authored ones — Gil's Trophies (donate eradication rewards, Warrior Ring included), Orchard, Four Seasons Sampler (Tea Saplings), Preserver's, Home Cook's Feast, Weatherman's, Recycler's and more. Picked bundles re-roll their contents from the game's own data (crops keep their season but can ask for anything season-valid; fish stay in their habitat), so it's SVE-proof and no two runs match. Weapons and hats can now be donated where a bundle asks for them. Vault asks are +25%.
-- **Remixed bundles no longer turn vanilla after a reset** — the board is the mod's own now, so the farm-creation choice doesn't matter.
-- **The Community Center ceremony plays again** after you finish the Center (Joja closes, Pierre opens Wednesdays, the lightning strikes). We had the wrong event suppressed.
-- **Museum rewards return every loop** — Ancient Seeds + recipe, the statues, the Singing Stone.
-- **Caroline's Tea Sapling event replays** after a reset.
-- **Mixed Seeds finally roll Red Cabbage / Starfruit** with the Cultivation upgrades (and Summer Seeds stop growing cabbage).
-- **Weather:** Rain Totems, CJB and console weather work again, and seasons have real variety — the 2-rain / 2-storm / 2-snow minimums are guaranteed, every other day is rolled per loop at vanilla-like odds.
-- **Junimo Stash keeps day-28 deposits.** Kept coops/barns come back **with their hay hopper**. Kept rods keep their **bait and tackle** (kept tools keep enchantments).
-- **A fail-night overnight event can no longer swallow the rewind** and drop you on Summer 1.
-- **Economy:** season checkpoints now award JP (150/250/400), donation JP is paid once, and a new *xp multiplier* upgrade family (×2–×5 per skill, plus a ×10 capstone).
-- **Traveling Cart:** the one-item cart is explained in-game on your first visit, and `LimitTravelingCartStock` turns the cap off if you'd rather have the full cart.
+- **Pick your board: TLY Custom, Normal or Remixed.** **New → Advanced Options → Community Center Bundles** now offers all three. **TLY Custom** (the default) is the mod's own board, re-rolled every loop. **Normal** / **Remixed** keep the game's own board — and it comes back the *same kind* after every reset (the remixed-turns-vanilla bug is fixed at the root: the game never saved that choice; the mod does now). Other bundle mods work too — e.g. Challenging Community Center Bundles — because the mod re-reads the board whenever another mod changes it. `BundleSource` (config / GMCM) is the default for new games and switches an existing save at its next reset.
+- **Twelve bundles could brick or bully a run.** Winter Star, Forager's, Gil's Trophies, Brewer's, Preserver's, Mineral, Home Cook's Feast, Fish Farmer's, Artifact, Four Seasons Sampler, Rare Crops and Garden asked for a donation in a season where none of their items exist yet (or far too early). Each now has a hand-set schedule, and Gil's Trophies only rolls trophies you can earn in year 1.
+- **The red-cabbage gate is priced like a gate.** We measured what a loop can pay out (a strong player banks ~8–9.5k JP). *Cultivation: Red Cabbage* (Summer Mixed Seeds can roll Red Cabbage) now costs **5,000 JP**. New **Pierre's Special Order** (**10,000 JP**): Pierre sells his year-2 seeds — Garlic, Red Cabbage, Artichoke — from year 1. *Cultivation: Starfruit* is gone: anyone can reach the desert, there's no luck to buy off.
+- **Weekly themes with nothing left to donate say so.** The planning-hub card reads "Themed donations completed" instead of a blank row, and the drawback lifts for the week.
+- **Weekly-theme goals know every bundle item.** Items beyond a bundle's first few slots were invisible to the goal picker (wrong rarity, wrong seasons); Grape now counts as Summer forage; boards read from the game (Normal/Remixed/other mods) get the same "never ask for the unobtainable" guard the mod's own board had.
+- **`EnableNonObjectDonations` can be flipped any time.** An in-flight Gil's Trophies bundle stays donatable until the next reset (the beta caveat is gone).
+- **Mod page:** the Advanced Options screenshot khauser13 asked for. Diagnostics: `tly_jpbudget` (max JP a loop's board can pay), `tly_bundlesource`.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 

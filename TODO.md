@@ -6,26 +6,20 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### ⏸ RULINGS PENDING (2026-08-21 evening) — pre-0.12 release work, v0.12.6 local
-*Session log: A1 screenshot ✅ (docs commit), A2 empty-theme card ✅ eyeballed (no fix: `a2-rr3.png` in the
-session scratchpad showed "Themed donations completed" cleanly under "Bonus this week (1.5x):"), A3 ✅ v0.12.4,
-B5 ✅ v0.12.5–0.12.6 + `notes/2026-08-21-jp-budget.md`. Three specs await the user's ruling before code:*
+### 🚀 RELEASE CANDIDATE v0.12.11 (2026-08-21 night) — awaiting "yes, push"
+*All pre-0.12 handoff items shipped + smoked (see STATUS). Rulings taken: A4 all twelve ramps + trophy trim;
+B6 starfruit removed / red cabbage 5k / Pierre's Special Order 10k (bus, rare-fish, Cart Stall untouched);
+C7 TLY Custom stays the default dropdown entry, config flips apply at the next reset. Release docs written.
+Release mechanics: `release.ps1 -SkipNexusDesc` → description/version sync + changelog paste via
+Claude-in-Chrome → upload `release-notes/advanced-options-tly-custom.png` to the Nexus gallery and swap the
+`NEXUS_IMAGE_URL_advanced-options-tly-custom` placeholder in the live description (and
+`docs/nexus-description.bbcode`) → verify live → reply on bug 1108030 (root cause fixed: the game never
+persisted the Remixed choice; the mod does now) and the ada113/ErraticPixel CCCB compat ask.*
 
-- ✅ **A4 quota ramps — RULED (all) + SHIPPED v0.12.8**: 12 curated ramps + Gil's Trophies trimmed to 7 ids.
-- ✅ **B6 repricing — RULED + SHIPPED v0.12.7**: cult_starfruit removed, cult_red_cabbage 750 → 5,000, new
-  pierre_year2_seeds 10,000 (Pierre sells Garlic/Red Cabbage/Artichoke seeds in year 1; smoked live). Bus /
-  rare-fish / Cart Stall untouched (not ruled).
-- **C7 BundleSource** — `specs/2026-08-21-bundle-source-engine-vanilla-design.md`: **ruling 1 received** — "TLY
-  Custom" stays the DEFAULT, pre-selected entry of the Advanced Options dropdown; Normal/Remixed are the
-  options the player must pick deliberately (per save). Ruling 2 (config flip → next reset) recommended,
-  not contested. Audit found: catalog only takes the first X ingredients, SeasonResolver crop-over-forage
-  (Grape), legacy path has no obtainability clamp, and **CCCB swaps BundleData values at DayStarted** (TLY
-  classifies at SaveLoaded → ada113's bug; fix = fingerprint + re-classify on DayStarted in Vanilla mode).
-
-*Housekeeping: my scratch saves deleted; the user's older `ZZZ-DELETEME-smoke5-None_443632257` clone (Jul 20)
-is still in Saves — delete when convenient. Game-driving notes: `sv.ps1` click coords need
-`SetProcessDpiAwarenessContext(-4)` (game window on the left monitor), and PrintWindow captures include the
-title bar (+~20,+65 px offset vs client coords).*
+*Follow-ups parked (0.13.0): `DerivePins` for artisan goods / dishes / geode tiers so the clamp catches
+those structurally; category-ref ingredients stay unsupported (documented); `The Missing` never gates;
+curated Chef's never fires in the engine era (RandomBundles Chef's is 6/6); `pull-logs.ps1` prunes three
+TRACKED log archives on every deploy — `git checkout -- test-output/log-archive/` after deploying.*
 
 ### ✅ RELEASED 0.12.0-beta.1 (2026-08-21) — 6th sweep: 9 new bugs root-caused + fixed, all threads answered + marked Fixed
 *Release closed 2026-08-21: GitHub release v0.12.0-beta.1 + Nexus file (workflow 32484136636) + description/version

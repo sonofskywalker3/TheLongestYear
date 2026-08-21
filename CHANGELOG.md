@@ -3,6 +3,54 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.12.11 — 2026-08-21
+
+Release candidate of the 0.12 line after the beta: the bundle-source choice, the cult-upgrade
+repricing (measured), the curated quota ramps, and the small follow-ups from the beta feedback.
+Covers 0.12.1 – 0.12.11.
+
+### Added
+- **`BundleSource: Engine | Vanilla` (0.12.9–0.12.11).** The new-game Advanced Options
+  "Community Center Bundles" dropdown offers **TLY Custom** (default), **Normal** and **Remixed**.
+  The choice is stored per save: TLY Custom = the engine writes its own board every loop; Normal /
+  Remixed = the game's own board, regenerated the same way on every reset (`Game1.bundleType` is
+  persisted in the mod's meta — the root cause of Nexus bug 1108030 "remixed comes back vanilla").
+  Vanilla mode reads-and-classifies the live board and re-classifies on DayStarted when another
+  mod rewrites it (Challenging Community Center Bundles swaps bundle values each morning). GMCM
+  dropdown; a config flip takes effect at the next reset. Diagnostics `tly_bundlesource`.
+- **Pierre's Special Order** (`pierre_year2_seeds`, 10,000 JP): Pierre stocks Garlic / Red Cabbage /
+  Artichoke seeds from year 1 (Data/Shops edit while owned). (0.12.7)
+- `tly_jpbudget` diagnostics: the maximum JP one loop's board can pay out — "donate ASAP" and
+  "strong player" models plus a ceiling — with a per-season breakdown and impossible-gate
+  detection. Measured on five loops: strong player 8.0–9.5k JP, fixed awards 1,933
+  (`docs/superpowers/notes/2026-08-21-jp-budget.md`). (0.12.5–0.12.6)
+- Advanced Options screenshot on the mod page (khauser13). (docs)
+
+### Changed
+- **Cult repricing (0.12.7, user ruling).** `cult_red_cabbage` 750 → 5,000 JP; `cult_starfruit`
+  removed (the desert needs no RNG); the 10,000-JP Pierre upgrade is the sure thing.
+- **Curated quota ramps (0.12.8).** Twelve remix/authored pick-X-of-Y bundles whose derived
+  schedule demanded a donation before any item could exist (or was plainly harsh/lax) now have
+  hand-set ramps: Winter Star `[0,0,0,2]`, Forager's `[0,0,2,2]`, Gil's Trophies `[0,0,1,2]`,
+  Brewer's / Preserver's / Home Cook's Feast / Artifact `[0,1,2,4]`, Mineral `[0,1,3,4]`,
+  Fish Farmer's `[0,0,1,2]`, Four Seasons Sampler `[1,3,4,5]`, Rare Crops `[0,0,1,1]`, Garden
+  `[1,2,4,4]`. Gil's Trophies draws from the 7 year-1-feasible trophies (Slime Charmer, Napalm,
+  Knight's Helmet, Arcane Hat dropped).
+- **`EnableNonObjectDonations` governs the next board only (0.12.4).** The weapon/hat donation
+  patches stay live while the live board has (W)/(H) slots, and the engine-manifest check tries
+  the opposite flag before falling back — the beta caveat is gone.
+- Empty weekly theme: hub card "Themed donations completed", HUD "Themed donations completed -
+  drawback lifted." (0.12.2–0.12.3, Bumblewyn).
+- Version scheme: plain semver, no prerelease tags (0.12.1).
+
+### Fixed
+- The CcItem catalog only covered a bundle's first X ingredients — the remaining Y−X items had no
+  rarity/season data (weekly-theme sampler treated them as Common + year-round). Every concrete
+  ingredient is catalogued now. (0.12.9)
+- Grape (Summer forage, Fall crop) read as Fall-only; crop and forage seasons are unioned. (0.12.9)
+- Boards read from the game (Vanilla mode, pre-engine saves, bundle mods) get the same
+  obtainability clamp on Percentage ramps the engine path had. (0.12.9)
+
 ## 0.12.0-beta.1 — 2026-08-21
 
 Public beta of the 0.12.0 line. Consolidates the 0.11.61–0.11.111 dev line: the
