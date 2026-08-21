@@ -28,11 +28,16 @@ public class AuthoredBundlesTests
     }
 
     [Fact]
-    public void GilTrophies_ElevenQualifiedIds_RingsOnlySubsetIsObjects()
+    public void GilTrophies_SevenYearOneFeasibleIds_RingsOnlySubsetIsObjects()
     {
-        Assert.Equal(11, AuthoredBundleCatalog.GilTrophies.Count);
+        Assert.Equal(7, AuthoredBundleCatalog.GilTrophies.Count);
         Assert.All(AuthoredBundleCatalog.GilTrophies, id => Assert.StartsWith("(", id));
-        Assert.Equal(6, AuthoredBundleCatalog.GilTrophyRingsOnly.Count);
+        Assert.Equal(4, AuthoredBundleCatalog.GilTrophyRingsOnly.Count);
+        // Late-game trophies are gone (user ruling 2026-08-21).
+        Assert.DoesNotContain("(O)520", AuthoredBundleCatalog.GilTrophies);
+        Assert.DoesNotContain("(O)811", AuthoredBundleCatalog.GilTrophies);
+        Assert.DoesNotContain("(H)50", AuthoredBundleCatalog.GilTrophies);
+        Assert.DoesNotContain("(H)60", AuthoredBundleCatalog.GilTrophies);
         Assert.All(AuthoredBundleCatalog.GilTrophyRingsOnly, id => Assert.StartsWith("(O)", id));
         Assert.Contains("(W)13", AuthoredBundleCatalog.GilTrophies);
         Assert.Contains("(H)8", AuthoredBundleCatalog.GilTrophies);

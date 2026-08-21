@@ -29,14 +29,18 @@ public sealed record AuthoredBundleDef(
 /// The All list is ordinal-stable; trophy lists feed Gil's Trophies bundle composition.</summary>
 public static class AuthoredBundleCatalog
 {
+    // Year-1-feasible trophies only (user ruling 2026-08-21). Dropped: (H)50 Knight's Helmet
+    // (50 Pepper Rex), (H)60 Arcane Hat (100 Mummies), (O)520 Slime Charmer (1,000 slimes),
+    // (O)811 Napalm Ring (250 Serpents) — all Skull Cavern / multi-year kill counts that made
+    // ~9% of loops roll an uncompletable Gil's Trophies.
     private static readonly string[] _gilTrophies = new[]
     {
-        "(H)27", "(H)50", "(H)60", "(H)8", "(O)520", "(O)522", "(O)523", "(O)526", "(O)810", "(O)811", "(W)13"
+        "(H)27", "(H)8", "(O)522", "(O)523", "(O)526", "(O)810", "(W)13"
     };
 
     private static readonly string[] _gilTrophyRingsOnly = new[]
     {
-        "(O)520", "(O)522", "(O)523", "(O)526", "(O)810", "(O)811"
+        "(O)522", "(O)523", "(O)526", "(O)810"
     };
 
     private static readonly AuthoredBundleDef[] _all = new[]
