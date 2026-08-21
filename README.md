@@ -31,6 +31,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 - **Weekly themes.** Each week, pick a theme that grants a bonus and a paired liability. Plan around it.
 - **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
 - **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
+- **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.
 - **Break the loop.** Finish the Center in a year to win — then keep playing or start fresh.
 
 ## Requirements
@@ -69,6 +70,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `StartingMoney` | 500 | Gold at the start of each loop |
 | `BundleQuotas` | per-bundle | How much each percentage-bundle asks for |
 | `StashTileX/Y` | `0,0` (auto) | Where the Junimo Stash chest is placed (`0,0` = auto-pick near the farmhouse). The Bundle Log / Cookbook / Craftbook are placeable furniture you can put anywhere. |
+| `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
 Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 JP). Feedback on these is welcome.

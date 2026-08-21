@@ -19,12 +19,17 @@ namespace TheLongestYear.Loop
     [HarmonyPatch(typeof(ShopBuilder), nameof(ShopBuilder.GetShopStock), new[] { typeof(string), typeof(ShopData) })]
     internal static class CartSlotLimitPatch
     {
-        private const string TravelerShopId = "Traveler";
+        internal const string TravelerShopId = "Traveler";
+
+        /// <summary>Mirrors <c>GameplayConfig.LimitTravelingCartStock</c>; set by ModEntry at
+        /// config load and whenever GMCM changes it. False = postfix is a no-op.</summary>
+        internal static bool Enabled = true;
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(string shopId, ref Dictionary<ISalable, ItemStockInformation> __result)
         {
+            if (!Enabled) return;                                // config kill-switch
             if (UpgradeChecker.HasUpgrade == null) return;       // dormant on non-TLY saves
             if (shopId != TravelerShopId) return;
             if (__result == null || __result.Count == 0) return;
