@@ -12,9 +12,14 @@ This is a **beta** (`0.12.0-beta.1`). It is feature-complete for v1 and stable i
 
 ---
 
-## What's New in 0.12.0-beta.1
+## What's New in 0.12.2
 
-**The mod now builds the Community Center board itself — and ten of the bugs you reported on 0.11.60 are fixed.**
+**Two clarity fixes on top of the 0.12.0 beta — and every bugfix in that beta has now been re-verified on a real loop reset.**
+
+- **New-game Advanced Options:** the "Community Center Bundles" dropdown shows a single **TLY Custom** entry (with a tooltip) while the mod is enabled. The mod builds its own board every loop, so the vanilla Normal/Remixed choice never applied.
+- **Empty weekly themes are explained, not silent.** When a theme has nothing left to ask for (everything it could want is already in the Center), the planning-hub card and the morning message now say so: no request that week, drawback lifted. That's intended, not a bug.
+
+**From 0.12.0-beta.1 (same day) — the mod now builds the Community Center board itself, and ten of the bugs you reported on 0.11.60 are fixed.**
 
 - **A new board every loop.** Each rewind rolls a fresh set of bundles from the vanilla *and* remix pools plus eleven new authored ones — Gil's Trophies (donate eradication rewards, Warrior Ring included), Orchard, Four Seasons Sampler (Tea Saplings), Preserver's, Home Cook's Feast, Weatherman's, Recycler's and more. Picked bundles re-roll their contents from the game's own data (crops keep their season but can ask for anything season-valid; fish stay in their habitat), so it's SVE-proof and no two runs match. Weapons and hats can now be donated where a bundle asks for them. Vault asks are +25%.
 - **Remixed bundles no longer turn vanilla after a reset** — the board is the mod's own now, so the farm-creation choice doesn't matter.
