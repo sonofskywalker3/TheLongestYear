@@ -9,8 +9,11 @@ public static class EngineModeDecider
     /// already donated. Engine mode when the live set was generated for THIS loop; fresh
     /// generation only on a pristine first run; everything else (pre-engine saves mid-loop)
     /// keeps the legacy path until their next reset (spec migration rule).</summary>
-    public static RequirementsSource Decide(int marker, int completedResets, bool ccTouched)
+    public static RequirementsSource Decide(int marker, int completedResets, bool ccTouched, bool vanillaSource = false)
     {
+        // Vanilla mode (spec 2026-08-21): the board is the game's own (or another mod's) —
+        // always read-and-classify it, never regenerate or write.
+        if (vanillaSource) return RequirementsSource.LegacyReadAndClassify;
         if (marker == completedResets) return RequirementsSource.EngineManifest;
         if (completedResets == 0 && marker == -1 && !ccTouched) return RequirementsSource.GenerateFreshRun;
         return RequirementsSource.LegacyReadAndClassify;

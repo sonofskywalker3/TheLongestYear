@@ -114,6 +114,27 @@ namespace TheLongestYear.Loop
             // (user playtest 2026-05-27: "I've still got 2 saves"). Compute the new folder name
             // ourselves from the old path: keep everything before the last underscore (the player
             // name component), append the new uniqueID.
+            // BundleSource (spec 2026-08-21): a config flip takes effect HERE, at the reset. Stamp
+            // the save with the mode this loop runs under, and in Vanilla mode hand vanilla the
+            // player's Standard/Remixed choice BEFORE loadForNewGame — Game1.bundleType is a
+            // non-persisted static (Nexus bug 1108030), so without this every reset wrote the
+            // Standard set. Remixed re-rolls off the fresh uniqueIDForThisGame below.
+            bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
+            _meta.BundleSource = vanillaBoard
+                ? TheLongestYear.Core.BundleSourceNames.Vanilla : TheLongestYear.Core.BundleSourceNames.Engine;
+            if (vanillaBoard)
+            {
+                bool remixed = string.Equals(_meta.VanillaBundleType, Game1.BundleType.Remixed.ToString(), StringComparison.OrdinalIgnoreCase);
+                Game1.bundleType = remixed ? Game1.BundleType.Remixed : Game1.BundleType.Default;
+                if (string.IsNullOrEmpty(_meta.VanillaBundleType))
+                    _meta.VanillaBundleType = Game1.bundleType.ToString();
+                _monitor.Log($"Reset: BundleSource=Vanilla — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
+            }
+            else
+            {
+                Game1.bundleType = Game1.BundleType.Default;
+            }
+
             string oldSavePath = Constants.CurrentSavePath;
             Game1.uniqueIDForThisGame = Utility.NewUniqueIdForThisGame();
             Game1.weatherForTomorrow = "Sun";
@@ -438,12 +459,23 @@ namespace TheLongestYear.Loop
             // across a replayed reset (satisfies the anti-scum guarantee) AND identical on every
             // later reload of this loop's save (satisfies SaveLoaded's manifest-first re-derivation) --
             // the one value that is simultaneously stable across both.
-            var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
-            int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.CompletedResets);
-            GeneratedBundleSet generatedSet = engine.Generate(seed);
-            engine.WriteToWorld(generatedSet, _monitor);
-            _meta.BundlesGeneratedForReset = _meta.CompletedResets;
-            LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas);
+            if (vanillaBoard)
+            {
+                // Vanilla mode: the board loadForNewGame just wrote IS the board. No engine write,
+                // no manifest marker; the post-reset reload classifies it (read-and-classify).
+                _meta.BundlesGeneratedForReset = -1;
+                LastGeneratedRequirements = null;
+                _monitor.Log("Reset: BundleSource=Vanilla — keeping the game's own board (no engine write).", LogLevel.Info);
+            }
+            else
+            {
+                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
+                int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.CompletedResets);
+                GeneratedBundleSet generatedSet = engine.Generate(seed);
+                engine.WriteToWorld(generatedSet, _monitor);
+                _meta.BundlesGeneratedForReset = _meta.CompletedResets;
+                LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas);
+            }
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();

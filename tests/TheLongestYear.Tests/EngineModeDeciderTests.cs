@@ -13,6 +13,14 @@ public class EngineModeDeciderTests
             EngineModeDecider.Decide(marker: 3, completedResets: 3, ccTouched: false));
     }
 
+    [Theory]
+    [InlineData(3, 3, false)]
+    [InlineData(-1, 0, false)]
+    [InlineData(-1, 5, true)]
+    public void Vanilla_source_always_reads_and_classifies(int marker, int resets, bool touched)
+        => Assert.Equal(RequirementsSource.LegacyReadAndClassify,
+            EngineModeDecider.Decide(marker, resets, touched, vanillaSource: true));
+
     [Fact]
     public void Decide_ReturnsEngineManifest_WhenMarkerEqualsCompletedResets_FreshGenerationStampedZero()
     {

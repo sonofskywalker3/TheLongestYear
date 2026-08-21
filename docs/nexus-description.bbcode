@@ -52,7 +52,7 @@ The Longest Year turns Stardew's first year into a roguelite loop. Each season, 
 [*]Install SMAPI 4.0.0 or newer.
 [*]Unzip into your [font=Courier New]Stardew Valley/Mods[/font] folder.
 [*]Launch through SMAPI and [b]start a new game on the Standard farm[/b]. Farm-type and intro options are handled for you.
-[*]Bundles are the mod's own: every loop rolls a fresh board from the vanilla + remix pools plus the mod's authored bundles. While the mod is enabled, the [b]Community Center Bundles[/b] row under [b]New → Advanced Options[/b] shows a single [b]TLY Custom[/b] entry (hover it for the explanation) — there is no Standard/Remixed choice to make.
+[*][b]Community Center Bundles[/b] under [b]New → Advanced Options[/b] defaults to [b]TLY Custom[/b]: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick [b]Normal[/b] or [b]Remixed[/b] there instead — the mod keeps that board and re-rolls it the same way on every reset. ([font=Courier New]BundleSource[/font] in the config/GMCM is the default for new games and switches an existing save at its next reset.)
 [img]NEXUS_IMAGE_URL_advanced-options-tly-custom[/img]
 [/list]
 
@@ -66,7 +66,7 @@ The Longest Year turns Stardew's first year into a roguelite loop. Each season, 
 [/list]
 
 [size=5][b]Tuning[/b][/size]
-Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart.
+Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save.
 
 [line]
 

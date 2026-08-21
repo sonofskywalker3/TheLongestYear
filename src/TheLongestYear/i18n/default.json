@@ -355,7 +355,7 @@
     // -- gmcm -------------------------------------------------------------------------
     // -- new-game Advanced Options (vanilla CC-bundles dropdown replaced) -------
     "ago.bundles.tly-custom": "TLY Custom",
-    "ago.bundles.tly-custom.tooltip": "The Longest Year builds its own Community Center board every loop (vanilla + remixed pools plus its authored bundles), so the vanilla Normal/Remixed choice doesn't apply.",
+    "ago.bundles.tly-custom.tooltip": "TLY Custom (default): The Longest Year builds its own Community Center board every loop (vanilla + remixed pools plus its authored bundles). Pick Normal or Remixed instead to keep the game's own board - the mod then re-rolls it the same way on every reset.",
 
     "gmcm.section": "The Longest Year",
     "gmcm.master-blurb": "Master switch. When off, TLY skips all setup at save load and no effects fire. Toggling takes effect on the next save load.",
@@ -363,6 +363,10 @@
     "gmcm.jp-hud.name": "Show JP HUD",
     "gmcm.jp-hud.tooltip": "Always-on corner counter showing banked JP and the current week's theme.",
     "gmcm.auto-detect.name": "Auto-detect mod unlock cutscenes",
+    "gmcm.bundle-source.name": "Bundle source",
+    "gmcm.bundle-source.tooltip": "Engine: The Longest Year builds its own board every loop (the new-game 'TLY Custom' choice). Vanilla: keep the game's own Standard/Remixed board (or another bundle mod's) and re-roll it the same way on every reset. Takes effect at the next reset; the new-game Advanced Options dropdown sets it per save.",
+    "gmcm.bundle-source.engine": "Engine (TLY Custom)",
+    "gmcm.bundle-source.vanilla": "Vanilla (Normal / Remixed)",
     "gmcm.cart-limit.name": "Limit Traveling Cart stock",
     "gmcm.cart-limit.tooltip": "Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). Off = full vanilla cart; the Cart Stall upgrades do nothing.",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",

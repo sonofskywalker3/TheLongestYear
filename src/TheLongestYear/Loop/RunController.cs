@@ -24,7 +24,7 @@ namespace TheLongestYear.Loop
         private readonly WorldResetService _reset;
         private readonly RunManager _runManager = new RunManager(new GateEvaluator());
         private readonly JpCalculator _jp;
-        private readonly System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
+        private System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
         // Not readonly: ReplaceRequirements (owned-bundle engine wiring) swaps this after a
         // reset regenerates the manifest -- see that method's doc comment.
         private System.Collections.Generic.IReadOnlyList<BundleRequirement> _requirements;
@@ -56,6 +56,11 @@ namespace TheLongestYear.Loop
         /// are otherwise fixed for the lifetime of a RunController instance.</summary>
         public void ReplaceRequirements(System.Collections.Generic.IReadOnlyList<BundleRequirement> requirements)
             => _requirements = requirements;
+
+        /// <summary>Swaps the CcItem catalog — Vanilla mode re-classifies when another mod
+        /// rewrites the board mid-day (ModEntry.ReclassifyIfBoardChanged).</summary>
+        public void ReplaceCatalog(System.Collections.Generic.IReadOnlyList<CcItem> catalog)
+            => _catalog = catalog;
 
         /// <summary>CcItem catalog (rarity/season/theme metadata); exposed so the UI can look up
         /// per-season obtainability when computing the bonus-item preview per card.</summary>
