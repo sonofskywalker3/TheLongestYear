@@ -10,7 +10,7 @@
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
     "hud.theme-complete": "Weekly theme complete! +{{jp}} JP, drawback lifted.",
-    "hud.nothing-to-donate": "Nothing left to donate for this theme - everything it could ask for is already in the Community Center. No request this week, and the drawback is lifted (this is normal, not a bug).",
+    "hud.nothing-to-donate": "Themed donations completed - drawback lifted.",
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
     "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
@@ -291,7 +291,7 @@
     "menu.hub.reroll-count": "Re-roll ({{count}})",
     "menu.hub.no-offer": "(no offer)",
     "menu.hub.bonus-week": "Bonus this week (1.5x):",
-    "menu.hub.bonus-none": "Nothing left to donate for this theme - picking it means no request this week and the drawback is lifted.",
+    "menu.hub.bonus-none": "Themed donations completed",
     "menu.hub.bonus-hover": "{{name}}{{qty}} (1.5x)",
     "menu.hub.qty-suffix": " x{{count}}",
     "menu.hub.weather-header": "Weather",
