@@ -5,12 +5,9 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Obtainability upgrades: inject Red Cabbage (266) and Starfruit (398) into the Summer
-    /// Mixed Seeds pool when the player owns cult_red_cabbage / cult_starfruit respectively.
-    ///
-    /// Hooks <see cref="Crop.getRandomWildCropForSeason"/> (or the wild-seed crop resolution
-    /// path in Crop.newDay if the method is not directly patchable). 10% substitution chance
-    /// per upgrade, applied only in Summer.
+    /// Obtainability upgrades: inject Red Cabbage Seeds / Starfruit Seeds into the Summer Mixed
+    /// Seeds roll when the player owns cult_red_cabbage / cult_starfruit respectively. 10%
+    /// substitution chance per upgrade, applied only in Summer. See <see cref="MixedSeedsPatch"/>.
     ///
     /// Upgrade ownership is read via <see cref="UpgradeChecker"/>, a static Func wired by
     /// ModEntry.OnSaveLoaded to avoid importing MetaStore into the patch.
@@ -33,30 +30,45 @@ namespace TheLongestYear.Loop
         }
     }
 
-    [HarmonyPatch(typeof(Crop), "getRandomWildCropForSeason", new System.Type[] { typeof(bool) })]
+    /// <summary>
+    /// Postfix on <c>Crop.ResolveSeedId(string, GameLocation)</c> — the ONLY path Mixed Seeds (770)
+    /// take when planted (Crop ctor → ResolveSeedId → getRandomLowGradeCropForThisSeason). Returns
+    /// UNQUALIFIED seed ids, matching what vanilla returns on that path ("485" Red Cabbage Seeds,
+    /// "486" Starfruit Seeds — Data/Crops keys).
+    ///
+    /// History: 0.9.x–0.11.60 patched <c>Crop.getRandomWildCropForSeason(bool)</c> instead, which is
+    /// the WILD-seeds (Spring/Summer/Fall/Winter Seeds) path — so Mixed Seeds never hit and Summer
+    /// Seeds grew Red Cabbage (Nexus bug 1109718, four reporters).
+    /// </summary>
+    [HarmonyPatch(typeof(Crop), nameof(Crop.ResolveSeedId), new System.Type[] { typeof(string), typeof(GameLocation) })]
     internal static class MixedSeedsPatch
     {
-        private static void Postfix(ref string __result)
+        private const string MixedSeedsId = "770";
+        private const string RedCabbageSeeds = "485";
+        private const string StarfruitSeeds = "486";
+        private const double SubstitutionChance = 0.10;
+
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Postfix(string itemId, GameLocation location, ref string __result)
         {
             if (UpgradeChecker.HasUpgrade == null) return;
-            if (Game1.season != StardewValley.Season.Summer) return;
+            if (itemId != MixedSeedsId) return;
+            if (location == null || location.GetSeason() != StardewValley.Season.Summer) return;
+            if (location is StardewValley.Locations.IslandLocation) return; // vanilla overrides island picks
 
-            // 2026-05-29 user spec: starfruit no longer requires cult_red_cabbage — each
-            // cultivation upgrade is independent. Either-or order preserved (Starfruit first
-            // when both owned) so a player who bought both doesn't see Starfruit roll get
-            // suppressed by an earlier Red Cabbage hit.
+            // 2026-05-29 user spec: each cultivation upgrade is independent. Starfruit rolls first
+            // when both are owned so an earlier Red Cabbage hit can't suppress it.
             if (UpgradeChecker.HasUpgrade("cult_starfruit")
-                && Game1.random.NextDouble() < 0.10)
+                && Game1.random.NextDouble() < SubstitutionChance)
             {
-                __result = "(O)398"; // Starfruit item id (produce — passed to ItemRegistry.Create<Object> for the harvested crop)
+                __result = StarfruitSeeds;
                 return;
             }
 
-            // Try Red Cabbage.
             if (UpgradeChecker.HasUpgrade("cult_red_cabbage")
-                && Game1.random.NextDouble() < 0.10)
+                && Game1.random.NextDouble() < SubstitutionChance)
             {
-                __result = "(O)266"; // Red Cabbage item id (produce — same path as Starfruit above)
+                __result = RedCabbageSeeds;
             }
         }
     }
