@@ -3,29 +3,6 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.12.2 — 2026-08-21
-
-Clarity follow-ups to the 0.12.0 beta. Also the first release after the full
-loop-reset smoke of every 0.11.60 bugfix (stash day-28 deposits, kept-coop hay
-hopper, kept-rod bait, museum re-rewards, tea-event replay, totem + weather
-density, Summer Mixed Seeds, CC ceremony, fail-night overnight events) — all
-passed on the deployed build.
-
-### Changed
-- **New-game Advanced Options (0.12.1):** the vanilla "Community Center Bundles:
-  Normal / Remixed" dropdown becomes a single **TLY Custom** entry with a tooltip
-  while the mod is enabled (`BundleOptionPatch`). The bundle engine writes its
-  own board at run-create and every reset, so the vanilla choice never applied;
-  showing it invited the "my remixed bundles turned vanilla" confusion.
-- **Empty weekly theme message (0.12.2):** the HUD line now reads "Nothing left
-  to donate for this theme … no request this week, and the drawback is lifted
-  (this is normal, not a bug)", and the planning-hub card shows that note in
-  place of a blank bonus-icon row when a theme's open-slot pool is empty.
-
-### Versioning
-- No more `-beta` / `-rc` suffixes — everything below 1.0 is the beta. Patch
-  bumps per change (0.12.1, 0.12.2, …) until 0.13.0 is declared.
-
 ## 0.12.0-beta.1 — 2026-08-21
 
 Public beta of the 0.12.0 line. Consolidates the 0.11.61–0.11.111 dev line: the
