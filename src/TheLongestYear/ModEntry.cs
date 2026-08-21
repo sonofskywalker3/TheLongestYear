@@ -150,6 +150,10 @@ namespace TheLongestYear
             // because the enforcer needs to fire on the title screen / character-creation flow,
             // which is before any save is loaded.
             _standardFarmEnforcer = new StandardFarmEnforcer(this.Monitor, _config);
+            // Same gate: the new-game "Community Center Bundles" dropdown becomes a single "TLY Custom"
+            // entry while the mod is enabled (the engine owns the board; the vanilla choice is moot).
+            BundleOptionPatch.Enabled = () => _config.Enabled;
+            BundleOptionPatch.Monitor = this.Monitor;
             _standardFarmEnforcer.Attach(helper);
 
             // 2026-05-29 round 11: PatchAll iterates [HarmonyPatch] classes in assembly order,
