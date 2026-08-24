@@ -302,7 +302,11 @@ namespace TheLongestYear.Loop
         /// <summary>Fail-night "hold the town's wishes" choice (spec 2026-08-24). Asked BEFORE the
         /// shrine so the player can't accidentally spend the JP they meant for the hold. Either
         /// answer runs BundleHold.Apply then continues into the shrine -> reset chain. If the
-        /// dialogue is clobbered, the watchdog treats it as reshuffle (today's behaviour).</summary>
+        /// dialogue is clobbered, the watchdog treats it as reshuffle (today's behaviour). A
+        /// NotEnoughJp re-ask is deferred a tick (via _holdReaskPending, drained by
+        /// TickShrineWatchdog) instead of being called from inside this callback, because
+        /// GameLocation.answerDialogue nulls afterQuestion right after this callback returns and
+        /// would wipe the nested dialogue's own callback before the player could answer it.</summary>
         private void ShowHoldChoice()
         {
             MetaState meta = _store.State;
@@ -335,7 +339,8 @@ namespace TheLongestYear.Loop
                         Game1.playSound("cancel");
                         Game1.addHUDMessage(new HUDMessage(Strings.Get("dialog.hold.not-enough-jp",
                             new Dictionary<string, string> { ["cost"] = cost.ToString(), ["have"] = meta.JunimoPoints.ToString() }), HUDMessage.error_type));
-                        ShowHoldChoice();   // re-ask; the player can pick reshuffle
+                        _menuWatch = null;
+                        _holdReaskPending = true;   // re-ask next tick; see ShowHoldChoice's doc comment
                         return;
                     }
                     _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}).", LogLevel.Info);
@@ -382,12 +387,23 @@ namespace TheLongestYear.Loop
         /// <c>exitFunction</c> hasn't fired yet, with the continuation it owes.</summary>
         private (StardewValley.Menus.IClickableMenu menu, System.Action onContinue)? _menuWatch;
 
+        /// <summary>Set by ShowHoldChoice's NotEnoughJp branch; drained here (not called inline)
+        /// so the re-ask's own answer callback survives GameLocation.answerDialogue nulling
+        /// afterQuestion after the first callback returns.</summary>
+        private bool _holdReaskPending;
+
         /// <summary>Polled every tick by the day-28 driver. If the shrine was torn down without its
         /// exitFunction (a menu swapped in over it — vanilla's end-of-night SaveGameMenu is the known
         /// case) run the owed continuation once the surface is clear, so a FAIL night always ends in
         /// a reset. JP stays banked for the next shrine visit.</summary>
         public void TickShrineWatchdog()
         {
+            if (_holdReaskPending && Game1.activeClickableMenu == null)
+            {
+                _holdReaskPending = false;
+                ShowHoldChoice();
+                return;
+            }
             if (_menuWatch is not { } watch) return;
             if (ReferenceEquals(Game1.activeClickableMenu, watch.menu)) return;   // still up
             if (Game1.activeClickableMenu != null) return;                        // wait for the intruder to close
