@@ -432,7 +432,7 @@ namespace TheLongestYear.Loop
                     Game1.displayHUD = false;
                     // Vanilla mode's reset regenerates the board via loadForNewGame and never
                     // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
-                    // Read _config, not _store.State.BundleSource — PerformReset re-stamps the
+                    // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
                     // save's BundleSource from config at reset time, so config is what this reset
                     // will actually run under.
                     if (!BundleHold.IsOfferable(_config.BundleSource))
