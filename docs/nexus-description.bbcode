@@ -1,18 +1,19 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.12.16).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.12.17).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.12.16[/b][/size]
+[size=5][b]What's New in 0.12.17[/b][/size]
 
-[b]Every bug from this weekend's reports is fixed: impossible bundle items, out-of-season weekly goals, the Remixed soft-lock, and double-charged shrine upgrades.[/b]
+[b]On a Fail night you can now keep your bundle board for the next loop instead of letting the Junimos reshuffle it.[/b]
 [list]
-[*][b]Bundles can no longer ask for the impossible.[/b] Ginger Island and Mr. Qi content — Qi Fruit, Pineapple, Taro Root, Radioactive Ore/Bar, Cinder Shard, the island dishes, Slimejack and friends — is vetted out of every bundle pool. The island is post-CC, so nothing from it belongs in a year-1 board. (Void Salmon stays: hard, not impossible.) Algae and Seaweed never get silver/gold-quality asks — the game never gives them quality, so those slots could not be donated. Existing saves pick up the clean board at their next reset.
-[*][b]Weekly themes respect fish seasons.[/b] A Spring theme could ask for Pike, a Summer/Winter fish. Weekly goals now only sample bundle slots whose item is actually obtainable in the current season, using the game's own spawn data.
-[*][b]Advanced Options: picking Remixed no longer locks up OK.[/b] Selecting the Remixed bundle option on a new character made the OK button unresponsive; fixed at the root. This also un-breaks the "Guarantee Year 1 Completable" checkbox, which the same bug was silently eating.
-[*][b]The Junimo Shrine sells one upgrade tier per press.[/b] Buying a tiered upgrade (e.g. Mine Upgrade 1) with a controller could buy the next tier too in the same press and charge for both.
+[*][b]Keep these bundles, or let time reshuffle them.[/b] After the Junimos' Fail-night speech and before the shrine, you choose: hold the same bundle board into the next loop, or roll a fresh one. A kept board asks for exactly the same things, so anything you gathered for a bundle you almost finished is still worth having.
+[*][b]The first hold is free; holding again in a row costs JP.[/b] 50, 100, 200, then 300 JP for each further consecutive hold (config [font=Courier New]BundleHoldCosts[/font]). Letting time reshuffle resets the price back to free.
+[*][b]TLY Custom boards only.[/b] The hold applies to the mod's own board (the new-game [b]TLY Custom[/b] choice). Normal and Remixed vanilla boards keep regenerating the game's way on every reset, as before.
+[*][b]The Season Goals title shows how many times the board has been held[/b], and the day-1 Junimo now says up front that impossible-looking asks are expected, can be set aside for later, and can be held across a rewind.
+[*][b]Text cleanup[/b] across all in-game strings.
 [/list]
 
 Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
@@ -60,7 +61,7 @@ The Longest Year turns Stardew's first year into a roguelite loop. Each season, 
 [/list]
 
 [size=5][b]Tuning[/b][/size]
-Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save.
+Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save. [font=Courier New]BundleHoldCosts[/font] sets the JP price of keeping the same bundle board on a Fail night by consecutive holds (default 0, 50, 100, 200, 300; reshuffling resets the count).
 
 [line]
 
