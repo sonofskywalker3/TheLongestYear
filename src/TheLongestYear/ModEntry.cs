@@ -394,7 +394,13 @@ namespace TheLongestYear
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
                 itemSeasonPins, bundleQuotas);
 
-            _seasonResolver = new SeasonResolver();
+            // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed
+            // the SeasonResolver (so weekly themes can't ask for out-of-season fish, Nexus
+            // 1122423) and DerivedSeasonPins feed the obtainability clamp below.
+            TheLongestYear.Core.ItemPools enginePools =
+                new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning);
+            _seasonResolver = new SeasonResolver(
+                TheLongestYear.Core.SpawnSeasonMap.FromPools(enginePools));
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 themeOverrides, itemSeasonPins, bundleQuotas);
@@ -402,7 +408,7 @@ namespace TheLongestYear
             // derived (earliest-obtainable) pins, so a Remixed/modded board can't demand an
             // unobtainable minimum. Due-date (PerItem) pins stay the curated set.
             var obtainabilityPins = new Dictionary<string, TheLongestYear.Core.Season>(
-                new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning).DerivedSeasonPins,
+                enginePools.DerivedSeasonPins,
                 StringComparer.Ordinal);
             foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in itemSeasonPins)
                 obtainabilityPins[pin.Key] = pin.Value;

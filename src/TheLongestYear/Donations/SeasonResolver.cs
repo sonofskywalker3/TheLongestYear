@@ -28,30 +28,38 @@ namespace TheLongestYear.Donations
 
         private readonly Dictionary<string, IReadOnlySet<CoreSeason>> _cropSeasonsByHarvestId;
         private readonly Dictionary<string, IReadOnlySet<CoreSeason>> _forageSeasonsByItemId;
+        private readonly IReadOnlyDictionary<string, IReadOnlySet<CoreSeason>> _spawnSeasonsByItemId;
 
-        public SeasonResolver()
+        /// <param name="spawnSeasons">Optional fish/crab-pot spawn seasons from the engine
+        /// pools (<see cref="SpawnSeasonMap.FromPools"/>). Without it, fish keep the old
+        /// year-round fallback — which let a Spring weekly theme ask for Pike, a
+        /// Summer/Winter fish (Nexus 1122423).</param>
+        public SeasonResolver(
+            IReadOnlyDictionary<string, IReadOnlySet<CoreSeason>> spawnSeasons = null)
         {
             _cropSeasonsByHarvestId = BuildCropSeasonMap();
             _forageSeasonsByItemId = BuildForageSeasonMap();
+            _spawnSeasonsByItemId = spawnSeasons ?? new Dictionary<string, IReadOnlySet<CoreSeason>>();
         }
 
         public IReadOnlySet<CoreSeason> SeasonsFor(string qualifiedItemId)
         {
-            // Crop harvest seasons UNION forage spawn seasons — an item that is both (Grape:
-            // Fall crop, Summer forage) is obtainable in either. Before 2026-08-21 crops won
-            // outright, which hid Grape from Summer weekly goals.
-            bool hasCrop = _cropSeasonsByHarvestId.TryGetValue(qualifiedItemId, out var cropSeasons);
-            bool hasForage = _forageSeasonsByItemId.TryGetValue(qualifiedItemId, out var forageSeasons);
-            if (hasCrop && hasForage)
+            // Crop harvest seasons UNION forage spawn seasons UNION fish spawn seasons — an
+            // item obtainable through any path in a season counts for that season (Grape:
+            // Fall crop, Summer forage). Before 2026-08-21 crops won outright, which hid
+            // Grape from Summer weekly goals; before 2026-08-24 fish had no map at all.
+            HashSet<CoreSeason> union = null;
+            foreach (var map in new[] { (IReadOnlyDictionary<string, IReadOnlySet<CoreSeason>>)_cropSeasonsByHarvestId, _forageSeasonsByItemId, _spawnSeasonsByItemId })
             {
-                var union = new HashSet<CoreSeason>(cropSeasons);
-                union.UnionWith(forageSeasons);
-                return union;
+                if (!map.TryGetValue(qualifiedItemId, out IReadOnlySet<CoreSeason> seasons))
+                    continue;
+                if (union == null) union = new HashSet<CoreSeason>(seasons);
+                else union.UnionWith(seasons);
             }
-            if (hasCrop) return cropSeasons;
-            if (hasForage) return forageSeasons;
+            if (union != null)
+                return union;
 
-            // Everything else (fish, minerals, bars, artisan, animal products, etc.): year-round.
+            // Everything else (minerals, bars, artisan, animal products, etc.): year-round.
             // Progression-locked items are denied before this point by BundleCatalogBuilder.
             return AllSeasons;
         }
