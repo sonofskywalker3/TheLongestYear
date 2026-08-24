@@ -299,6 +299,69 @@ namespace TheLongestYear.Loop
             DoDayStartSeasonAndHub();
         }
 
+        /// <summary>Fail-night "hold the town's wishes" choice (spec 2026-08-24). Asked BEFORE the
+        /// shrine so the player can't accidentally spend the JP they meant for the hold. Either
+        /// answer runs BundleHold.Apply then continues into the shrine -> reset chain. If the
+        /// dialogue is clobbered, the watchdog treats it as reshuffle (today's behaviour). A
+        /// NotEnoughJp re-ask is deferred a tick (via _holdReaskPending, drained by
+        /// TickShrineWatchdog) instead of being called from inside this callback, because
+        /// GameLocation.answerDialogue nulls afterQuestion right after this callback returns and
+        /// would wipe the nested dialogue's own callback before the player could answer it.</summary>
+        private void ShowHoldChoice()
+        {
+            MetaState meta = _store.State;
+            long cost = BundleHold.NextCost(meta, _config.BundleHoldCosts);
+            string keepLabel = cost == 0
+                ? Strings.Get("dialog.hold.keep-free")
+                : Strings.Get("dialog.hold.keep", new Dictionary<string, string> { ["cost"] = cost.ToString() });
+            var responses = new[]
+            {
+                new StardewValley.Response("keep",      keepLabel),
+                new StardewValley.Response("reshuffle", Strings.Get("dialog.hold.reshuffle"))
+            };
+
+            GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
+            if (loc == null)
+            {
+                _monitor.Log("Hold choice: no currentLocation available, defaulting to reshuffle.", LogLevel.Warn);
+                ApplyHoldChoice(keep: false);
+                return;
+            }
+
+            loc.createQuestionDialogue(Strings.Get("dialog.hold.prompt"), responses, (Farmer who, string key) =>
+            {
+                _menuWatch = null;
+                if (key == "keep")
+                {
+                    BundleHold.HoldResult result = BundleHold.Apply(meta, keep: true, _config.BundleHoldCosts);
+                    if (result == BundleHold.HoldResult.NotEnoughJp)
+                    {
+                        Game1.playSound("cancel");
+                        Game1.addHUDMessage(new HUDMessage(Strings.Get("dialog.hold.not-enough-jp",
+                            new Dictionary<string, string> { ["cost"] = cost.ToString(), ["have"] = meta.JunimoPoints.ToString() }), HUDMessage.error_type));
+                        _holdReaskPending = true;   // re-ask next tick; see ShowHoldChoice's doc comment
+                        return;
+                    }
+                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}).", LogLevel.Info);
+                    Game1.playSound("junimoMeep1");
+                    TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    return;
+                }
+                ApplyHoldChoice(keep: false);
+            });
+
+            // Watchdog: if something replaces the question box before an answer, default to reshuffle.
+            if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
+                _menuWatch = (box, () => ApplyHoldChoice(keep: false));
+        }
+
+        private void ApplyHoldChoice(bool keep)
+        {
+            BundleHold.HoldResult result = BundleHold.Apply(_store.State, keep, _config.BundleHoldCosts);
+            _monitor.Log($"Hold choice: {result} (seed loop {_store.State.BundleSeedLoop}).", LogLevel.Info);
+            TryOpenShrineThenContinue(ContinueAfterResetSpend);
+        }
+
         /// <summary>Try to open the Junimo Shrine menu; on close, run <paramref name="onContinue"/>.
         /// If the menu can't open (cutscene blocking, already-open menu), run onContinue
         /// immediately so the gameplay path never gets stranded waiting for a missed popup.</summary>
@@ -307,10 +370,10 @@ namespace TheLongestYear.Loop
             _launcher?.OpenShrineShop();
             if (Game1.activeClickableMenu is TheLongestYear.UI.JunimoShrineMenu shrine)
             {
-                _shrineWatch = (shrine, onContinue);
+                _menuWatch = (shrine, onContinue);
                 shrine.exitFunction = () =>
                 {
-                    _shrineWatch = null;
+                    _menuWatch = null;
                     onContinue();
                 };
                 return;
@@ -321,7 +384,12 @@ namespace TheLongestYear.Loop
 
         /// <summary>The shrine opened by <see cref="TryOpenShrineThenContinue"/> whose
         /// <c>exitFunction</c> hasn't fired yet, with the continuation it owes.</summary>
-        private (StardewValley.Menus.IClickableMenu menu, System.Action onContinue)? _shrineWatch;
+        private (StardewValley.Menus.IClickableMenu menu, System.Action onContinue)? _menuWatch;
+
+        /// <summary>Set by ShowHoldChoice's NotEnoughJp branch; drained here (not called inline)
+        /// so the re-ask's own answer callback survives GameLocation.answerDialogue nulling
+        /// afterQuestion after the first callback returns.</summary>
+        private bool _holdReaskPending;
 
         /// <summary>Polled every tick by the day-28 driver. If the shrine was torn down without its
         /// exitFunction (a menu swapped in over it — vanilla's end-of-night SaveGameMenu is the known
@@ -329,12 +397,18 @@ namespace TheLongestYear.Loop
         /// a reset. JP stays banked for the next shrine visit.</summary>
         public void TickShrineWatchdog()
         {
-            if (_shrineWatch is not { } watch) return;
+            if (_holdReaskPending && Game1.activeClickableMenu == null)
+            {
+                _holdReaskPending = false;
+                ShowHoldChoice();
+                return;
+            }
+            if (_menuWatch is not { } watch) return;
             if (ReferenceEquals(Game1.activeClickableMenu, watch.menu)) return;   // still up
             if (Game1.activeClickableMenu != null) return;                        // wait for the intruder to close
-            _shrineWatch = null;
+            _menuWatch = null;
             _monitor.Log(
-                "Junimo Shrine was replaced before it closed normally — running its continuation now " +
+                "A day-28 menu (hold choice or Junimo Shrine) was replaced before it closed normally; running its continuation now " +
                 "(banked JP is untouched; spend it next time the shrine opens).", LogLevel.Warn);
             watch.onContinue();
         }
@@ -352,11 +426,24 @@ namespace TheLongestYear.Loop
             switch (branch)
             {
                 case Day28Branch.Fail:
-                    // Hide the day/time HUD across the shop → reset so the stale (pre-rewind)
-                    // calendar date isn't shown on the clock panel while the player shops.
+                    // Hide the day/time HUD across the choice -> shop -> reset so the stale
+                    // (pre-rewind) calendar date isn't shown while the player decides and shops.
                     // ContinueAfterResetSpend restores it once the world is back on Spring 1.
                     Game1.displayHUD = false;
-                    TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    // Vanilla mode's reset regenerates the board via loadForNewGame and never
+                    // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
+                    // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
+                    // save's BundleSource from config at reset time, so config is what this reset
+                    // will actually run under.
+                    if (!BundleHold.IsOfferable(_config.BundleSource))
+                    {
+                        _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
+                        TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    }
+                    else
+                    {
+                        ShowHoldChoice();
+                    }
                     break;
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();

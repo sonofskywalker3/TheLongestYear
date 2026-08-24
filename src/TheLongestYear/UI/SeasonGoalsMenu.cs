@@ -397,11 +397,24 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             // Title bar.
-            string title = Strings.Get("menu.goals.title", new Dictionary<string, string>
+            string title;
+            if (_meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0)
             {
-                ["season"] = SeasonName(_season),
-                ["day"] = _run.DayOfMonth.ToString(),
-            });
+                title = Strings.Get("menu.goals.title-held", new Dictionary<string, string>
+                {
+                    ["season"] = SeasonName(_season),
+                    ["day"] = _run.DayOfMonth.ToString(),
+                    ["holds"] = _meta.ConsecutiveHolds.ToString(),
+                });
+            }
+            else
+            {
+                title = Strings.Get("menu.goals.title", new Dictionary<string, string>
+                {
+                    ["season"] = SeasonName(_season),
+                    ["day"] = _run.DayOfMonth.ToString(),
+                });
+            }
             SpriteText.drawStringHorizontallyCenteredAt(b, title,
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 

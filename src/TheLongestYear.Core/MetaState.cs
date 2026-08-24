@@ -56,6 +56,28 @@ public sealed class MetaState
     /// read-and-classify path serves the in-flight loop.</summary>
     public int BundlesGeneratedForReset { get; set; } = -1;
 
+    /// <summary>The loop number the CURRENT bundle board's seed derives from
+    /// (<see cref="BundleEngineSeed.For"/>'s second argument). Normally equals
+    /// <see cref="CompletedResets"/>; stays behind it while the player holds the board across
+    /// resets (keep-bundles hold, spec 2026-08-24). -1 = never set (legacy saves), which
+    /// <see cref="EffectiveBundleSeedLoop"/> resolves to CompletedResets.</summary>
+    public int BundleSeedLoop { get; set; } = -1;
+
+    /// <summary>How many times in a row the player has held the board at a Fail night. Drives
+    /// the hold price (first hold free). Reset to 0 whenever they let the board reshuffle.</summary>
+    public int ConsecutiveHolds { get; set; }
+
+    /// <summary>True between the Fail-night hold choice and the reset that consumes it, so
+    /// PerformReset can tell "player chose" from "reset arrived some other way" (console
+    /// tly_reset, post-win new loop), which must reshuffle. Cleared by PerformReset.</summary>
+    public bool HoldChoiceMadeForReset { get; set; }
+
+    /// <summary>The loop number to seed bundle generation with: <see cref="BundleSeedLoop"/>
+    /// when set, else <see cref="CompletedResets"/>. Both the reset-time generation and the
+    /// load-time manifest re-check MUST use this, or a held board is flagged stale on reload.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public int EffectiveBundleSeedLoop => BundleSeedLoop >= 0 ? BundleSeedLoop : CompletedResets;
+
     /// <summary>Which board this save runs under — <see cref="BundleSourceNames.Engine"/> (TLY
     /// writes its own board every loop) or <see cref="BundleSourceNames.Vanilla"/> (keep the
     /// game's Standard/Remixed or another bundle mod's board, regenerated the same way on every

@@ -234,7 +234,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
-            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [completedResets]", this.CmdGenBundles);
+            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] (default: the current board's seed loop)", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
@@ -246,6 +246,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
+            helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1360,6 +1361,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
+                case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
@@ -1448,15 +1450,15 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
 
-            int completedResets = args.Length > 0 && int.TryParse(args[0], out int resets)
+            int seedLoop = args.Length > 0 && int.TryParse(args[0], out int resets)
                 ? resets
-                : _meta.State.CompletedResets;
+                : _meta.State.EffectiveBundleSeedLoop;
 
             // Same seed basis as ResolveRequirements/WorldResetService.PerformReset — see
             // ResolveRequirements' comment for why (Game1.uniqueIDForThisGame is time-based and
             // re-seeded by our own reset every loop, so it can't be the basis).
             ulong seedBasis = unchecked((ulong)Game1.player.UniqueMultiplayerID);
-            int seed = BundleEngineSeed.For(seedBasis, completedResets);
+            int seed = BundleEngineSeed.For(seedBasis, seedLoop);
 
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
@@ -1464,7 +1466,7 @@ namespace TheLongestYear
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
             GeneratedBundleSet first = firstEngine.Generate(seed);
             this.Monitor.Log(
-                $"tly_genbundles: generated for loop {completedResets} (seed {seed}), diagnostics only — nothing written.",
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
@@ -1842,6 +1844,25 @@ namespace TheLongestYear
             _purchases?.TryPurchase(args[0]);
         }
 
+        private void CmdHold(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            MetaState s = _meta.State;
+            string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            switch (mode)
+            {
+                case "keep":
+                case "reshuffle":
+                    var result = BundleHold.Apply(s, keep: mode == "keep", _config.BundleHoldCosts);
+                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    this.Monitor.Log("tly_hold: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
+                    break;
+                default:
+                    this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    break;
+            }
+        }
+
         private void CmdPayVault(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -1925,7 +1946,7 @@ namespace TheLongestYear
             if (source == RequirementsSource.EngineManifest)
             {
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
-                var seed = BundleEngineSeed.For(seedBasis, state.CompletedResets);
+                var seed = BundleEngineSeed.For(seedBasis, state.EffectiveBundleSeedLoop);
 
                 // Generate with the CURRENT EnableNonObjectDonations first; if the live board
                 // doesn't match, try the OPPOSITE flag — the only generation input that can
@@ -1944,7 +1965,7 @@ namespace TheLongestYear
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
                     this.Monitor.Log(
-                        $"Requirements source: engine manifest (loop {state.CompletedResets}, {requirements.Count} bundles{flagNote}).",
+                        $"Requirements source: engine manifest (loop {state.CompletedResets}, seed loop {state.EffectiveBundleSeedLoop}, {requirements.Count} bundles{flagNote}).",
                         LogLevel.Info);
                     return requirements;
                 }
