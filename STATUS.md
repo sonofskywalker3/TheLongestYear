@@ -1,12 +1,31 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-21 (v0.12.11 RELEASED — GitHub + Nexus, description/version/changelog/gallery synced)
-**Branch:** `master` (clean)
-**Tests:** 711 passing, 0 failing
-**Build:** clean; deployed to PC Mods (v0.12.10 smoked; 0.12.11 is a log-level change)
-**Last public release:** 0.12.11 (Nexus + GitHub, 2026-08-21 evening — fully closed)
+**Last updated:** 2026-08-24 evening (keep-bundles hold merged to master as v0.12.17, UNRELEASED)
+**Branch:** `master` (clean, pushed)
+**Tests:** 750 passing, 0 failing
+**Build:** clean (6 pre-existing warnings); v0.12.17 build was deployed to PC Mods for the smoke, game closed
+**Last public release:** 0.12.16 (Nexus + GitHub, 2026-08-24 afternoon, fully closed)
 
-## Current state (2026-08-21 night) — 0.12.11 release candidate
+## Current state (2026-08-24 evening): v0.12.17 on master, keep-bundles hold done, not released
+
+Merged `feat/keep-bundles-hold` (spec `docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`,
+plan `docs/superpowers/plans/2026-08-24-keep-bundles-hold.md`). Fail night now asks, before the shrine,
+whether to keep the same bundle board next loop (first hold free, then 50/100/200/300 JP via
+`GameplayConfig.BundleHoldCosts`, counter resets on reshuffle). State: `MetaState.BundleSeedLoop`,
+`ConsecutiveHolds`, `HoldChoiceMadeForReset`; rules in `Core/BundleHold.cs` + `BundleHoldPricing.cs`;
+both seed call sites use `EffectiveBundleSeedLoop`. Day-1 CC speech gained `event.intro.junimo-9b`;
+Season Goals title shows "held Nx"; `tly_hold keep|reshuffle|status` debug command; every em dash removed
+from player-facing strings (house rule: never use em dashes in anything for Jeff). Live-smoked on the
+Rodger throwaway save (TODO.md table): free/paid hold, reload from title, reshuffle, full Fail-night chain,
+too-little-JP re-ask (fixed to defer one tick). Not eyeballed: the held title and the intro line.
+
+**Next:** release 0.12.17 as a normal patch release (or a minor if Jeff declares it): write README +
+Nexus "What's New" (identical content), move the CHANGELOG `## Unreleased` entry under the version,
+`release.ps1 -SkipNexusDesc` + Claude-in-Chrome description/version/changelog, all only on "yes, push".
+Then the 0.13.x DerivePins brainstorm parked in TODO.md (escalating per-season likelihood, pity counter).
+Open Nexus bug: 1113831 Day-3 crash (Needs more info, silent). 1117543 muting closed Not a bug today.
+
+## Previous state (2026-08-21 night) — 0.12.11 release candidate
 
 Everything in `HANDOFF-2026-08-21-pre-0.12-release-work.md` is done and smoked on the deployed build:
 A1 screenshot, A2 empty-theme card (no fix needed), A3 `EnableNonObjectDonations` next-board rule
