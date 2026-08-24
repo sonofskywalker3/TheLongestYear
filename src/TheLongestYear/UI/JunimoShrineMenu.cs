@@ -252,8 +252,19 @@ namespace TheLongestYear.UI
             base.receiveGamePadButton(b);
         }
 
+        /// <summary>Game tick of the last purchase attempt. With gamepad controls, one A
+        /// press dispatches BOTH receiveGamePadButton and a synthesized receiveLeftClick in
+        /// the same update tick (areGamePadControlsImplemented() is false); after the first
+        /// purchase the bought row disappears and the NEXT tier slides into the same slot,
+        /// so the second dispatch bought it too — "buying upgrades maxed possible levels"
+        /// (Nexus 1122027: Mine Upgrade 1 + 2 for ~200 JP in one press).</summary>
+        private int _lastPurchaseTick = -1;
+
         private void TryBuy(UpgradeDefinition def)
         {
+            if (Game1.ticks == _lastPurchaseTick)
+                return; // duplicate dispatch of the same press — see _lastPurchaseTick
+            _lastPurchaseTick = Game1.ticks;
             _purchases.TryPurchase(def.Id);
             // The list redraws next frame from the updated MetaState — no extra refresh needed.
         }
