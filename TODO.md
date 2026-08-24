@@ -6,6 +6,35 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 🐞 NEW — 7th sweep (2026-08-24): 4 new Nexus bugs, all unanswered
+*Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-24-15-09_*`. Sweep script is now
+profile-free (public pages only); bug bodies + private bugs read via Claude-in-Chrome on the
+regular browser. Reddit unchanged (63). Nap Time / Cart Catalog quiet.*
+
+- **1122358 — Engine bundles roll CC-gated / impossible items** (SincerelyZoey + IshoMoogoo,
+  23 Aug, 0.12.11): pineapple, Qi Fruit, taro root, void salmon, silver/gold-quality algae
+  (quality algae may not exist unmodded); "my spring crops bundle is asking for q fruit."
+  Echoed on the posts tab by gazumbrado (slime jack, Qi Fruit, pineapples, taro root on a
+  fresh save). → bundle-pool item filter needed (exclude Ginger Island / Qi / CC-gated items,
+  clamp qualities to obtainable).
+- **1122423 — Weekly theme asks for out-of-season / unreachable items** (spenderg, 23 Aug,
+  0.12.11; + lexihope): Pike in a Spring theme right after reset; lexihope: "10 corn or 68
+  daffodils" — goals that were "basically never going to happen." Likely same root as 1122358
+  (slot sampler inherits the bad bundle slots) — verify overlap before treating separately.
+- **1122619 — Advanced Options: picking Remixed soft-locks the OK button** (SincerelyZoey,
+  24 Aug, 0.12.11): with TLY installed, selecting the remix bundle option in new-character
+  Advanced Options makes OK unresponsive; must switch back to TLY Custom or Normal to exit.
+  Unexpected — `BundleOptionPatch` (v0.12.1) was supposed to show ONLY "TLY Custom"; find out
+  how Remixed is still selectable (arrow cycling? non-dropdown path?) and why OK dead-ends.
+- **1122027 — Shrine upgrade purchase buys every affordable tier in one click** (spenderg,
+  22 Aug, reported vs 0.11.60): bought Mine Upgrade 1, was charged ~200 JP and received tiers
+  1+2. Check if the chained-upgrade purchase loop still exists in 0.12.11 before answering.
+
+**Comments:** gazumbrado — "I love the new update. Thanks for fixing all the bugs." + the gated-items
+note above; SilencedLink — thanks (closed). **Private bugs:** 1117543 muting — IshoMoogoo replied
+21 Aug: hasn't recurred, no log to send, will follow up if it returns (candidate: not-a-bug per the
+ALSOFT device-loss diagnosis, or leave at Needs more info); 1113831 Day-3 crash — still silent.
+
 ### ✅ RELEASED v0.12.11 (2026-08-21 19:39) — GitHub + Nexus file/description/version/changelog/gallery all live
 *Released via `release.ps1 -SkipNexusDesc` + Claude-in-Chrome (the new Nexus editor: Media → file input for the gallery; General → SCEditor `.val()` + a keystroke + Save; ⋮ → Documents → Add changelog, file/version auto-matched; only the CURRENT file is selectable, so the beta.1 changelog can't be backfilled). Still owed: replies on bug 1108030 (fixed at the root) and the ada113/ErraticPixel CCCB compat ask. All pre-0.12 handoff items shipped + smoked (see STATUS). Rulings taken: A4 all twelve ramps + trophy trim;
 B6 starfruit removed / red cabbage 5k / Pierre's Special Order 10k (bus, rare-fish, Cart Stall untouched);
