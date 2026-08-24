@@ -63,13 +63,26 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            // The vanilla apply callback for this dropdown: callbacks are appended one per
-            // non-label element in option order, so its index = non-label elements before it.
+            // The vanilla apply callback for this dropdown, located by what its closure
+            // CAPTURED (it holds the dropdown instance). Never locate it positionally:
+            // AGO's header rows use the Default element style, so the old "count the
+            // non-label options before it" index was off by one — it replaced the
+            // Year1Completable checkbox's callback, left vanilla's 2-entry capture live,
+            // and picking Remixed (index 2) threw out-of-range on OK, soft-locking the
+            // screen (Nexus 1122619).
             int index = __instance.options.IndexOf(dropdown);
-            int callbackIndex = __instance.options.Take(index).Count(o => o.style != OptionsElement.Style.OptionLabel);
-            if (callbackIndex < 0 || callbackIndex >= __instance.applySettingCallbacks.Count)
+            int callbackIndex = -1;
+            for (int i = 0; i < __instance.applySettingCallbacks.Count; i++)
             {
-                Monitor?.Log($"Advanced Options: apply-callback index {callbackIndex} out of range ({__instance.applySettingCallbacks.Count}) — leaving vanilla options.", LogLevel.Warn);
+                if (DelegateClosures.References(__instance.applySettingCallbacks[i], dropdown))
+                {
+                    callbackIndex = i;
+                    break;
+                }
+            }
+            if (callbackIndex < 0)
+            {
+                Monitor?.Log("Advanced Options: couldn't locate the CC-bundles apply callback by its closure — leaving vanilla options.", LogLevel.Warn);
                 return;
             }
 
