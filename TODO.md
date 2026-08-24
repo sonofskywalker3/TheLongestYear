@@ -11,6 +11,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 Keep-bundles hold implemented on branch `feat/keep-bundles-hold` (spec
 `docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`), awaiting merge + release.
 
+**Smoke 2026-08-24 (branch build, Rodger throwaway save, screenshots `test-output/hold-*.png`):**
+
+| Check | Result | Evidence |
+|---|---|---|
+| Free first hold, reset keeps the board | PASS | `tly_hold keep: Kept. JP 403` unchanged; `Reset: bundle seed loop 30 (CompletedResets 31, consecutive holds 1)`, seed 743281092 |
+| Paid hold (50 JP), same board again | PASS | JP 403 to 353; second reset seed 743281092 again, holds 2 |
+| Reload from title after a hold | PASS | `Requirements source: engine manifest (loop 32, seed loop 30, 26 bundles)`, no mismatch WARN |
+| Reshuffle resets counter and rerolls | PASS | seed -1007977301 at seed loop 33, holds 0, next hold free |
+| Real Fail night: cutscene, prompt, shrine, reset | PASS | prompt shows "Keep these bundles (50 JP)" / "Let time reshuffle them" before the shrine (hold-11-prompt.png); reset to loop 34 |
+| Keep with too little JP re-asks | PASS after fix 6bf175c | HUD "The Junimos need 50 JP" + prompt re-rendered twice (hold-21/22); first build lost the re-ask callback (SDV nulls afterQuestion after invoking it), fixed by deferring one tick |
+| Held Nx title, junimo-9b intro line | not eyeballed | covered by review + I18nGuardTests; check on the next new-farm playtest |
+
+
 Parked note (moved from the RELEASED v0.12.11 block below): `DerivePins` for artisan goods /
 dishes / geode tiers so the clamp catches those structurally.
 
