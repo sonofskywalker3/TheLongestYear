@@ -88,6 +88,32 @@ public class BundleHoldTests
     }
 
     [Fact]
+    public void ConsumeChoiceAtReset_with_no_choice_snaps_seed_loop_and_zeroes_counter()
+    {
+        var s = new MetaState { CompletedResets = 3, BundleSeedLoop = 1, ConsecutiveHolds = 2, HoldChoiceMadeForReset = false };
+
+        bool choiceMade = BundleHold.ConsumeChoiceAtReset(s);
+
+        Assert.False(choiceMade);
+        Assert.Equal(3, s.BundleSeedLoop);
+        Assert.Equal(0, s.ConsecutiveHolds);
+        Assert.False(s.HoldChoiceMadeForReset);
+    }
+
+    [Fact]
+    public void ConsumeChoiceAtReset_with_a_choice_leaves_seed_loop_and_counter_untouched()
+    {
+        var s = new MetaState { CompletedResets = 3, BundleSeedLoop = 1, ConsecutiveHolds = 2, HoldChoiceMadeForReset = true };
+
+        bool choiceMade = BundleHold.ConsumeChoiceAtReset(s);
+
+        Assert.True(choiceMade);
+        Assert.Equal(1, s.BundleSeedLoop);
+        Assert.Equal(2, s.ConsecutiveHolds);
+        Assert.False(s.HoldChoiceMadeForReset);
+    }
+
+    [Fact]
     public void IsOfferable_is_true_for_Engine_and_false_for_Vanilla()
     {
         Assert.True(BundleHold.IsOfferable(BundleSourceNames.Engine));

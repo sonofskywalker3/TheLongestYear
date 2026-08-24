@@ -47,4 +47,22 @@ public static class BundleHold
         state.HoldChoiceMadeForReset = true;
         return HoldResult.Kept;
     }
+
+    /// <summary>A reset that skipped the Fail-night hold choice (console tly_reset, post-win new
+    /// loop) must behave like a reshuffle: pin the seed loop back to CompletedResets and zero the
+    /// counter. Called by WorldResetService.PerformReset BEFORE it bumps CompletedResets. Always
+    /// clears <see cref="MetaState.HoldChoiceMadeForReset"/>. Returns whether a choice had in fact
+    /// been made (true = the hold/reshuffle answer from ShowHoldChoice or ApplyHoldChoice already
+    /// applied its own state changes and this call is a no-op besides clearing the flag).</summary>
+    public static bool ConsumeChoiceAtReset(MetaState state)
+    {
+        bool choiceMade = state.HoldChoiceMadeForReset;
+        if (!choiceMade)
+        {
+            state.BundleSeedLoop = state.CompletedResets;
+            state.ConsecutiveHolds = 0;
+        }
+        state.HoldChoiceMadeForReset = false;
+        return choiceMade;
+    }
 }
