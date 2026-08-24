@@ -339,7 +339,6 @@ namespace TheLongestYear.Loop
                         Game1.playSound("cancel");
                         Game1.addHUDMessage(new HUDMessage(Strings.Get("dialog.hold.not-enough-jp",
                             new Dictionary<string, string> { ["cost"] = cost.ToString(), ["have"] = meta.JunimoPoints.ToString() }), HUDMessage.error_type));
-                        _menuWatch = null;
                         _holdReaskPending = true;   // re-ask next tick; see ShowHoldChoice's doc comment
                         return;
                     }
