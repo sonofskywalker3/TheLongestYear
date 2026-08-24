@@ -431,7 +431,20 @@ namespace TheLongestYear.Loop
                     // (pre-rewind) calendar date isn't shown while the player decides and shops.
                     // ContinueAfterResetSpend restores it once the world is back on Spring 1.
                     Game1.displayHUD = false;
-                    ShowHoldChoice();
+                    // Vanilla mode's reset regenerates the board via loadForNewGame and never
+                    // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
+                    // Read _config, not _store.State.BundleSource — PerformReset re-stamps the
+                    // save's BundleSource from config at reset time, so config is what this reset
+                    // will actually run under.
+                    if (!BundleHold.IsOfferable(_config.BundleSource))
+                    {
+                        _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
+                        TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    }
+                    else
+                    {
+                        ShowHoldChoice();
+                    }
                     break;
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();

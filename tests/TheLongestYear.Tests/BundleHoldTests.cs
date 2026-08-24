@@ -88,6 +88,13 @@ public class BundleHoldTests
     }
 
     [Fact]
+    public void IsOfferable_is_true_for_Engine_and_false_for_Vanilla()
+    {
+        Assert.True(BundleHold.IsOfferable(BundleSourceNames.Engine));
+        Assert.False(BundleHold.IsOfferable(BundleSourceNames.Vanilla));
+    }
+
+    [Fact]
     public void Both_answers_stamp_the_choice_flag_but_NotEnoughJp_does_not()
     {
         var kept = new MetaState { JunimoPoints = 0 };
