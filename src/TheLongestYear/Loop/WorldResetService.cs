@@ -460,16 +460,8 @@ namespace TheLongestYear.Loop
             // later reload of this loop's save (satisfies SaveLoaded's manifest-first re-derivation) --
             // the one value that is simultaneously stable across both.
             // A reset that skipped the Fail-night hold choice (console tly_reset, post-win new loop)
-            // must behave like a reshuffle. RunController stamps HoldChoiceMadeForReset = true on
-            // either answer (via BundleHold.Apply); anything else lands here with it false.
-            // Note: BundleSeedLoop itself can't be used for this check; two consecutive holds leave
-            // it two loops behind CompletedResets, which is legitimate.
-            if (!_meta.HoldChoiceMadeForReset)
-            {
-                _meta.BundleSeedLoop = _meta.CompletedResets;
-                _meta.ConsecutiveHolds = 0;
-            }
-            _meta.HoldChoiceMadeForReset = false;
+            // must behave like a reshuffle; BundleHold.ConsumeChoiceAtReset owns that rule.
+            TheLongestYear.Core.BundleHold.ConsumeChoiceAtReset(_meta);
 
             if (vanillaBoard)
             {
