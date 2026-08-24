@@ -16,6 +16,16 @@ public static class BundleSlotFiller
     private const int QualityGold = 2;
     private const int QualitySilver = 1;
 
+    /// <summary>Items that fish out at base quality only, whatever the roll says —
+    /// see <see cref="RollQuality"/>.</summary>
+    private static readonly IReadOnlySet<string> BuiltInQualityIneligibleItemIds =
+        new HashSet<string>(StringComparer.Ordinal)
+        {
+            "(O)152", // Seaweed
+            "(O)153", // Green Algae
+            "(O)157", // White Algae
+        };
+
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng)
@@ -124,7 +134,10 @@ public static class BundleSlotFiller
     {
         // Items that can never carry a quality star (algae/seaweed) must not get a
         // silver/gold ask — the slot would be impossible to donate (Nexus 1122358).
-        if (tuning.QualityIneligibleItemIds.Contains(item.ItemId))
+        // Built-in set + config extension list (built-in because an existing config.json
+        // overrides serialized list defaults wholesale — see ItemPoolBuilder.BuiltInExcludedItemIds).
+        if (BuiltInQualityIneligibleItemIds.Contains(item.ItemId)
+            || tuning.QualityIneligibleItemIds.Contains(item.ItemId))
             return 0;
         switch (domain)
         {
