@@ -234,7 +234,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
-            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [completedResets]", this.CmdGenBundles);
+            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] (default: the current board's seed loop)", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
@@ -1450,7 +1450,7 @@ namespace TheLongestYear
 
             int completedResets = args.Length > 0 && int.TryParse(args[0], out int resets)
                 ? resets
-                : _meta.State.CompletedResets;
+                : _meta.State.EffectiveBundleSeedLoop;
 
             // Same seed basis as ResolveRequirements/WorldResetService.PerformReset — see
             // ResolveRequirements' comment for why (Game1.uniqueIDForThisGame is time-based and
@@ -1925,7 +1925,7 @@ namespace TheLongestYear
             if (source == RequirementsSource.EngineManifest)
             {
                 Dictionary<string, string> liveData = Game1.netWorldState.Value.BundleData;
-                var seed = BundleEngineSeed.For(seedBasis, state.CompletedResets);
+                var seed = BundleEngineSeed.For(seedBasis, state.EffectiveBundleSeedLoop);
 
                 // Generate with the CURRENT EnableNonObjectDonations first; if the live board
                 // doesn't match, try the OPPOSITE flag — the only generation input that can
@@ -1944,7 +1944,7 @@ namespace TheLongestYear
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
                     this.Monitor.Log(
-                        $"Requirements source: engine manifest (loop {state.CompletedResets}, {requirements.Count} bundles{flagNote}).",
+                        $"Requirements source: engine manifest (loop {state.CompletedResets}, seed loop {state.EffectiveBundleSeedLoop}, {requirements.Count} bundles{flagNote}).",
                         LogLevel.Info);
                     return requirements;
                 }
