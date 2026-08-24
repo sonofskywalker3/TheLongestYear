@@ -3,6 +3,40 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.12.16 — 2026-08-24
+
+All four bugs from the 2026-08-24 feedback sweep, root-caused and fixed same day (covers
+0.12.12 – 0.12.16). Verified by unit tests (724) and an agent-driven live playtest on the
+deployed build.
+
+### Fixed
+- **Engine bundles rolled Ginger Island / Qi-gated items** (Nexus 1122358; SincerelyZoey,
+  IshoMoogoo, gazumbrado). Location markers could not catch them — crops derive from Data/Crops
+  (no location field) and the metals/cooking/geode pools scan all of Data/Objects. Structural
+  built-in exclusions (`ItemPoolBuilder.BuiltInExcludedItemIds`) now vet Qi Fruit, Pineapple,
+  Taro Root/Tuber, Banana, Mango, Ginger, Magma Cap, Radioactive Ore/Bar, Cinder Shard, Dragon
+  Tooth, Fossilized Skull, the five island dishes and Piña Colada; BugLand (Mutant Bug Lair —
+  Dark Talisman is post-CC) joins the excluded-location markers, so Slimejack is out. Void
+  Salmon stays (hard, not impossible — design ruling). Algae/Seaweed can no longer receive
+  silver/gold quality asks (the game never gives them quality). (0.12.12, 0.12.16)
+- **Config-override trap:** SMAPI's ReadConfig replaces serialized list defaults wholesale, so
+  exclusions that lived only in tuning defaults were inert on any install with a saved
+  config.json. All structural exclusions moved into code; the tuning lists are pure extension
+  points; regression-tested against emptied lists. (0.12.16)
+- **Weekly themes asked for out-of-season fish** (Nexus 1122423; spenderg, lexihope — Pike in a
+  Spring theme). The CcItem catalog treated every fish as year-round; the new `SpawnSeasonMap`
+  feeds it real fish/crab-pot spawn seasons from the engine pools. (0.12.13)
+- **Advanced Options: selecting Remixed soft-locked the OK button** (Nexus 1122619;
+  SincerelyZoey). The patch located vanilla's dropdown apply-callback positionally, but AGO
+  header rows use the Default element style — off by one: the wrong callback was replaced,
+  vanilla's 2-entry capture stayed live and threw on Remixed (index 2). The callback is now
+  found by closure inspection (`DelegateClosures`), which also un-breaks the silently-eaten
+  Year1Completable checkbox. (0.12.14)
+- **Junimo Shrine bought every affordable tier of an upgrade in one press** (Nexus 1122027;
+  spenderg). One gamepad A press dispatches both `receiveGamePadButton` and a synthesized
+  `receiveLeftClick` in the same tick; after the first buy the next tier slid into the same row
+  slot and was bought too. Same-tick purchase guard. (0.12.15)
+
 ## 0.12.11 — 2026-08-21
 
 Release candidate of the 0.12 line after the beta: the bundle-source choice, the cult-upgrade
