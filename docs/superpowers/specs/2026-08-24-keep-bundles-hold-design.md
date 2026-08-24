@@ -46,8 +46,8 @@ dialogue:
 - `cutscene.day28.fail` gains a closing sentence pointing at the choice.
 
 **After reset.** With a hold, the season-goals board is the same set of bundles. Weekly theme
-offers still roll fresh (they use `RunState.Seed`, unrelated). The board header shows
-"Held (loop N)" while `ConsecutiveHolds > 0`.
+offers still roll fresh (they use `RunState.Seed`, unrelated). The Season Goals title ends in
+"held Nx" while `ConsecutiveHolds > 0`.
 
 ## Cost curve
 
@@ -96,13 +96,14 @@ leaves it at the current one.
   calls `BundleHold.Apply` then continues into the existing `TryOpenShrineThenContinue` chain.
 - Clobber guard: same idea as `TickShrineWatchdog`; if the question menu is replaced before an
   answer, apply reshuffle and continue.
-- `SeasonGoalsBoard`: "Held (loop N)" header when `ConsecutiveHolds > 0`.
+- `SeasonGoalsBoard`: "held Nx" title suffix when `ConsecutiveHolds > 0`.
 - Console: `tly_hold keep|reshuffle` forces the choice for smoke testing.
 
 ## Text (`i18n/default.json`)
 
-New keys: `event.intro.junimo-9b`, `hold.question`, `hold.keep`, `hold.keep.free`,
-`hold.reshuffle`, `hold.not-enough-jp`, `board.held`. `cutscene.day28.fail` amended.
+New keys: `event.intro.junimo-9b`, `dialog.hold.prompt`, `dialog.hold.keep`,
+`dialog.hold.keep-free`, `dialog.hold.reshuffle`, `dialog.hold.not-enough-jp`,
+`menu.goals.title-held`. `cutscene.day28.fail` amended.
 `IntroEventInjector` gets the matching `speak` entry between 9 and 10.
 
 Separate commit in the same release: rewrite the 29 existing player-facing lines that contain
@@ -120,7 +121,7 @@ Core (xUnit, `tests/TheLongestYear.Tests`):
 - I18n guard picks up new keys automatically.
 
 Live smoke on a throwaway clone (never `None_443632257`):
-1. Fail Spring, hold (free): board identical, JP unchanged, header shows Held (loop 1).
+1. Fail Spring, hold (free): board identical, JP unchanged, title shows held 1x.
 2. Fail again, hold (50 JP): deduction visible, board still identical.
 3. Reload from title after step 2: no manifest mismatch WARN.
 4. Fail again, reshuffle: different board, counter back to 0, next hold offered free.
