@@ -6,7 +6,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 🐞 NEW — 7th sweep (2026-08-24): 4 new Nexus bugs, all unanswered
+### 🔧 FIXED ON MASTER (unreleased) — 7th sweep (2026-08-24): all 4 bugs root-caused + fixed same day
 *Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-24-15-09_*`. Sweep script is now
 profile-free (public pages only); bug bodies + private bugs read via Claude-in-Chrome on the
 regular browser. Reddit unchanged (63). Nap Time / Cart Catalog quiet.*
@@ -29,6 +29,33 @@ regular browser. Reddit unchanged (63). Nap Time / Cart Catalog quiet.*
 - **1122027 — Shrine upgrade purchase buys every affordable tier in one click** (spenderg,
   22 Aug, reported vs 0.11.60): bought Mine Upgrade 1, was charged ~200 JP and received tiers
   1+2. Check if the chained-upgrade purchase loop still exists in 0.12.11 before answering.
+
+**Fixes (commits 8c04dbb → effe3c2, v0.12.12–0.12.15, 723 tests pass, replies NOT yet posted):**
+- **1122358 → v0.12.12** — island/Qi items could never be caught by location markers (crops have no
+  location; category pools scan all of Data/Objects). Default `ExcludedItemIds` now vets Qi Fruit,
+  Pineapple, Taro Root/Tuber, Banana, Mango, Ginger, Magma Cap, Radioactive Ore/Bar, Cinder Shard,
+  Dragon Tooth, Fossilized Skull, the 5 island dishes + Piña Colada (ids verified against the game's
+  own Data/Objects via the Android content dump). `BugLand` joins the location markers (Slimejack 796 —
+  Dark Talisman is post-CC); WitchSwamp stays (Void Salmon = hard-but-fair, user ruling 2026-08-24).
+  New `QualityIneligibleItemIds` (Seaweed/algae) stops silver/gold asks on quality-incapable items.
+  ⚠ Existing saves keep their current board until the next reset regenerates bundles.
+- **1122423 → v0.12.13** — SeasonResolver treated all fish as year-round (only crop/forage maps), so
+  the weekly obtainability filter passed Pike into Spring. New Core `SpawnSeasonMap` feeds the
+  resolver real fish/crab-pot spawn seasons from the engine pools. (lexihope's "68 daffodils" is the
+  intended LargeQuantityForage roll, 40–99 — flag if it should be tuned down.)
+- **1122619 → v0.12.14** — the AGO patch found vanilla's dropdown callback by counting non-label
+  options, but AGO headers use the Default style → off by one: we replaced the Year1Completable
+  checkbox's callback, vanilla's 2-entry capture stayed live, Remixed (index 2) threw on OK.
+  Now located via closure inspection (`DelegateClosures.References`); also un-breaks the silently
+  eaten Year1Completable setting.
+- **1122027 → v0.12.15** — one gamepad A press dispatches receiveGamePadButton AND a synthesized
+  receiveLeftClick in the same tick; after the first buy the next tier slid into the same row slot
+  and the second dispatch bought it. Same-tick guard in TryBuy.
+
+**Needs playtest before release:** new save → Advanced Options: pick Remixed → OK works (and creates a
+vanilla-remix board recorded as VanillaRemixed); fresh TLY board has no island/Qi items and no quality
+algae asks; a Spring weekly theme offers no out-of-season fish; controller A on a shrine upgrade buys
+exactly one tier. **Bug-thread replies + status flips owed after release.**
 
 **Comments:** gazumbrado — "I love the new update. Thanks for fixing all the bugs." + the gated-items
 note above; SilencedLink — thanks (closed). **Private bugs:** 1117543 muting — IshoMoogoo replied
