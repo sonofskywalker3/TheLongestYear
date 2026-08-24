@@ -44,6 +44,11 @@ public sealed class GameplayConfig
     /// forage additions, exclude-list). See BundleGenerationTuning.</summary>
     public BundleGenerationTuning PoolTuning { get; set; } = new();
 
+    /// <summary>JP price of holding the bundle board across a Fail-night reset, indexed by how
+    /// many holds the player has taken in a row (index 0 = first hold). The last value repeats.
+    /// Reshuffling resets the counter. Spec 2026-08-24 keep-bundles hold.</summary>
+    public List<long> BundleHoldCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
+
     /// <summary>
     /// Design-default per-item season pins for KIND 2 PerItem bundles. Sourced from the
     /// bundle-gate handoff doc (2026-05-26) — each pin reflects a realistic obtainability
