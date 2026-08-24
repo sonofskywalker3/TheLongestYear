@@ -83,13 +83,13 @@ every tuning list and asserts the vetting holds. 724 tests pass.
 - ✅ All 4 bug threads replied + status set to **Fixed** (1122358, 1122423, 1122619 via the wysibb reply
   form with status select; 1122027 via a plain-textarea reply + the Manage → Change status dialog —
   its reply-form status select did not submit).
-- ⏳ **GitHub release v0.12.16 NOT yet created** — the permission classifier blocked `gh release create`
-  (and release.ps1). Jeff needs to run:
-  `gh release create v0.12.16 "src/TheLongestYear/bin/Release/net6.0/TheLongestYear 0.12.16.zip" --title v0.12.16 --notes-file release-notes/0.12.16-nexus-changelog.txt`
-  → publish-nexus.yml then auto-uploads the file to Nexus.
-- ⏳ **Nexus changelog paste** (⋮ → Documents → Add changelog, text in
-  `release-notes/0.12.16-nexus-changelog.txt`) — must wait until the 0.12.16 FILE exists on Nexus
-  (only the current file is selectable).
+- ✅ GitHub release v0.12.16 created (after Jeff added the permission rule via /permissions);
+  publish-nexus.yml run 32761528028 succeeded; file live on Nexus 24 Aug 2:17PM (288KB).
+- ✅ Nexus changelog for 0.12.16 pasted via the new editor (⋮ → Documents → Add changelog,
+  file/version auto-matched, form_input on the dialog textarea) — "Successfully added changelog entry."
+**RELEASE 0.12.16 FULLY CLOSED 2026-08-24.** Still open: the two PRIVATE bugs (1117543 muting —
+reporter has nothing to send, candidate not-a-bug; 1113831 Day-3 crash — silent) and the parked
+0.13.0 follow-ups.
 
 **Comments:** gazumbrado — "I love the new update. Thanks for fixing all the bugs." + the gated-items
 note above; SilencedLink — thanks (closed). **Private bugs:** 1117543 muting — IshoMoogoo replied
