@@ -88,6 +88,18 @@ public class BundleHoldTests
     }
 
     [Fact]
+    public void Null_curve_is_free()
+    {
+        Assert.Equal(0, BundleHold.NextCost(new MetaState(), null));
+
+        var s = new MetaState { CompletedResets = 2, JunimoPoints = 10 };
+        var result = BundleHold.Apply(s, keep: true, null);
+
+        Assert.Equal(BundleHold.HoldResult.Kept, result);
+        Assert.Equal(10, s.JunimoPoints);
+    }
+
+    [Fact]
     public void ConsumeChoiceAtReset_with_no_choice_snaps_seed_loop_and_zeroes_counter()
     {
         var s = new MetaState { CompletedResets = 3, BundleSeedLoop = 1, ConsecutiveHolds = 2, HoldChoiceMadeForReset = false };

@@ -24,10 +24,10 @@ public static class BundleHold
     public static bool IsOfferable(string? bundleSource) => !BundleSourceNames.IsVanilla(bundleSource);
 
     /// <summary>Price the player would pay to hold right now.</summary>
-    public static long NextCost(MetaState state, IReadOnlyList<long> curve)
+    public static long NextCost(MetaState state, IReadOnlyList<long>? curve)
         => BundleHoldPricing.CostFor(state.ConsecutiveHolds, curve);
 
-    public static HoldResult Apply(MetaState state, bool keep, IReadOnlyList<long> curve)
+    public static HoldResult Apply(MetaState state, bool keep, IReadOnlyList<long>? curve)
     {
         if (!keep)
         {
