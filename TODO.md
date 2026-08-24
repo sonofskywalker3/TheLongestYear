@@ -52,10 +52,31 @@ regular browser. Reddit unchanged (63). Nap Time / Cart Catalog quiet.*
   receiveLeftClick in the same tick; after the first buy the next tier slid into the same row slot
   and the second dispatch bought it. Same-tick guard in TryBuy.
 
-**Needs playtest before release:** new save → Advanced Options: pick Remixed → OK works (and creates a
-vanilla-remix board recorded as VanillaRemixed); fresh TLY board has no island/Qi items and no quality
-algae asks; a Spring weekly theme offers no out-of-season fish; controller A on a shrine upgrade buys
-exactly one tier. **Bug-thread replies + status flips owed after release.**
+**⚠ v0.12.16 added same-day:** the live-install playtest caught that SMAPI's ReadConfig REPLACES
+serialized list defaults — this machine's config.json had `ExcludedItemIds: []`, so config-default-only
+excludes were inert on every existing install. All structural exclusions moved into code
+(`ItemPoolBuilder.BuiltInExcludedItemIds` / `BuiltInExcludedLocationMarkers`, BundleSlotFiller's
+built-in quality-ineligible set); tuning lists are pure extension points again; regression test empties
+every tuning list and asserts the vetting holds. 724 tests pass.
+
+**✅ PLAYTESTED 2026-08-24 (agent-driven, deployed 0.12.16, screenshots `test-output/pt-*.png`):**
+- **AGO/1122619:** new-character → wrench → CCB dropdown shows TLY Custom/Normal/Remixed (default TLY
+  Custom) → picked **Remixed** → **OK closed the screen** (old build soft-locked); log:
+  `CC-bundles choice = VanillaRemixed (Game1.bundleType=Remixed)` — our replacement callback fired.
+- **Pools/1122358:** pool counts dropped exactly on target after 0.12.16 (crops 49→46, fish 54→53
+  [Slimejack], metals 14→11 [Radioactive×2+Cinder], cooking 84→78 [5 dishes+Piña Colada],
+  geode-minerals 77→73, saplings 7→6). `tly_reset` on a throwaway clone (Reset #32) wrote 31 bundles;
+  save-file parse: **0 gated-item violations, 0 algae quality asks** across all 31.
+- **Weekly/1122423:** week-1 Fishing goals = Cockle/Snail/Mussel/Clam; Foraging goals =
+  Hardwood/Common Mushroom/Mussel/Maple Seed — all Spring-obtainable, no out-of-season asks.
+- **Shrine/1122027:** Shop Discount II clicked once with 903 JP (tiers II+III affordable) → exactly ONE
+  purchase (175 JP, 728 left), no tier-chaining. (Gamepad double-dispatch itself can't be simulated
+  without hardware; the same-tick guard covers it by construction.)
+- Throwaway clone save deleted after (None_447267231); original `None_443632257` untouched.
+- *Note (debug-only, pre-existing):* console `tly_select` while the week-1 hub is deferred still
+  re-presents the hub afterward — the known quirk, not a regression.
+
+**Ready for release + bug-thread replies (needs explicit "yes, push").**
 
 **Comments:** gazumbrado — "I love the new update. Thanks for fixing all the bugs." + the gated-items
 note above; SilencedLink — thanks (closed). **Private bugs:** 1117543 muting — IshoMoogoo replied
