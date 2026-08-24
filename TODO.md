@@ -11,6 +11,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 profile-free (public pages only); bug bodies + private bugs read via Claude-in-Chrome on the
 regular browser. Reddit unchanged (63). Nap Time / Cart Catalog quiet.*
 
+**Post-release sweep 2026-08-24 18:30** (`forum-sweeps/2026-08-24-18-30_*`): NO new activity anywhere.
+Nexus posts/bugs identical for all four mods (only diff = our four 0.12.16 replies + Fixed flips, no
+reactions yet); Reddit verified in-browser at 63 comments, newest 21 Aug (the sweep script's Reddit
+fetch returned 0 comments this run without erroring — a silent-empty case worth guarding in
+`sweep-forums.mjs`). Private bugs unchanged: 1117543 muting = 2 replies, last 21 Aug 14:37 (Needs
+more info); 1113831 Day-3 crash = 1 reply (ours), last 21 Aug 10:49. Awaiting Jeff's call on
+flipping 1117543 to Not a bug.
+
 - **1122358 — Engine bundles roll CC-gated / impossible items** (SincerelyZoey + IshoMoogoo,
   23 Aug, 0.12.11): pineapple, Qi Fruit, taro root, void salmon, silver/gold-quality algae
   (quality algae may not exist unmodded); "my spring crops bundle is asking for q fruit."
