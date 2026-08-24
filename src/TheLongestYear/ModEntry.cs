@@ -1450,7 +1450,7 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
 
-            int completedResets = args.Length > 0 && int.TryParse(args[0], out int resets)
+            int seedLoop = args.Length > 0 && int.TryParse(args[0], out int resets)
                 ? resets
                 : _meta.State.EffectiveBundleSeedLoop;
 
@@ -1458,7 +1458,7 @@ namespace TheLongestYear
             // ResolveRequirements' comment for why (Game1.uniqueIDForThisGame is time-based and
             // re-seeded by our own reset every loop, so it can't be the basis).
             ulong seedBasis = unchecked((ulong)Game1.player.UniqueMultiplayerID);
-            int seed = BundleEngineSeed.For(seedBasis, completedResets);
+            int seed = BundleEngineSeed.For(seedBasis, seedLoop);
 
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
@@ -1466,7 +1466,7 @@ namespace TheLongestYear
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
             GeneratedBundleSet first = firstEngine.Generate(seed);
             this.Monitor.Log(
-                $"tly_genbundles: generated for loop {completedResets} (seed {seed}), diagnostics only — nothing written.",
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
