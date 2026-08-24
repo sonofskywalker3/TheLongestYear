@@ -142,6 +142,8 @@ namespace TheLongestYear.Integration
             "pause 300",
             $"speak Junimo \"{Strings.Get("event.intro.junimo-9")}\"",
             "pause 300",
+            $"speak Junimo \"{Strings.Get("event.intro.junimo-9b")}\"",
+            "pause 300",
             $"speak Junimo \"{Strings.Get("event.intro.junimo-10")}\"",
             "pause 800",
             $"speak Junimo \"{Strings.Get("event.intro.junimo-11")}\"",

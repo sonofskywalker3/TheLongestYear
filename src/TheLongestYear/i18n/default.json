@@ -303,6 +303,7 @@
     "menu.hub.day-label": "Day {{day}} - {{weather}}",
     "menu.hub.cart-label": "Cart: {{label}}",
     "menu.goals.title": "Season Goals — {{season}} (day {{day}})",
+    "menu.goals.title-held": "Season Goals: {{season}} (day {{day}}) held {{holds}}x",
     "menu.goals.badge-met": "checkpoint met",
     "menu.goals.badge-needs-before": "needs {{count}} before {{season}} 1",
     "menu.goals.badge-needs-end": "needs {{count}} by run end",
@@ -394,6 +395,7 @@
     "event.intro.junimo-7": "Even keeping pace, a single year is too short to make the valley whole.#$b#You will not finish on this first turning.$s",
     "event.intro.junimo-8": "When the year unwinds, all of it returns — the fields, the buildings, even the folk you have come to know.#$b#What you gathered in the world is lost.$s",
     "event.intro.junimo-9": "But the skills you have learned, and some of what you have done, need not be lost.#$b#The offerings you give us become our power...#$b#...and we will spend it to help you hold on to some of what you have gained, so each beginning is a little kinder than the last.$h",
+    "event.intro.junimo-9b": "Some of what a season asks may look beyond your reach. That is no mistake. It is the shape of the work.#$b#Gather what you can, and keep for later what you cannot yet use. When the year unwinds, we can even hold the town's wishes steady, so the next spring asks the same of you.$h",
     "event.intro.junimo-10": "We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Will you work the land with us, @?$h",
     "event.intro.junimo-11": "Then go. Spring is yours.$h",
 
