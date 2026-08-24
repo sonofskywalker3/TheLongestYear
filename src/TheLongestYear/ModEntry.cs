@@ -246,6 +246,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
+            helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1360,6 +1361,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
+                case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
@@ -1840,6 +1842,24 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_buyupgrade <id>", LogLevel.Warn); return; }
             _purchases?.TryPurchase(args[0]);
+        }
+
+        private void CmdHold(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            MetaState s = _meta.State;
+            string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            switch (mode)
+            {
+                case "keep":
+                case "reshuffle":
+                    var result = BundleHold.Apply(s, keep: mode == "keep", _config.BundleHoldCosts);
+                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    break;
+                default:
+                    this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    break;
+            }
         }
 
         private void CmdPayVault(string command, string[] args)
