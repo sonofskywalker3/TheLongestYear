@@ -398,7 +398,7 @@ namespace TheLongestYear.UI
 
             // Title bar.
             string title;
-            if (_meta != null && _meta.ConsecutiveHolds > 0)
+            if (_meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0)
             {
                 title = Strings.Get("menu.goals.title-held", new Dictionary<string, string>
                 {

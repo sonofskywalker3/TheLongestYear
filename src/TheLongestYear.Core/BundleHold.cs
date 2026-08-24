@@ -17,6 +17,12 @@ public static class BundleHold
         NotEnoughJp
     }
 
+    /// <summary>True when the hold choice is meaningful for this save's bundle board. In
+    /// Vanilla mode (<see cref="BundleSourceNames.IsVanilla"/>) the reset regenerates the board
+    /// via <c>loadForNewGame</c> and never consults <see cref="MetaState.BundleSeedLoop"/>, so
+    /// holding would be a no-op that still charges JP; the hold prompt must not be offered.</summary>
+    public static bool IsOfferable(string? bundleSource) => !BundleSourceNames.IsVanilla(bundleSource);
+
     /// <summary>Price the player would pay to hold right now.</summary>
     public static long NextCost(MetaState state, IReadOnlyList<long> curve)
         => BundleHoldPricing.CostFor(state.ConsecutiveHolds, curve);
