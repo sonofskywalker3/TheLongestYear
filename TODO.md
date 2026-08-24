@@ -76,7 +76,20 @@ every tuning list and asserts the vetting holds. 724 tests pass.
 - *Note (debug-only, pre-existing):* console `tly_select` while the week-1 hub is deferred still
   re-presents the hub afterward — the known quirk, not a regression.
 
-**Ready for release + bug-thread replies (needs explicit "yes, push").**
+**RELEASE 0.12.16 (2026-08-24, user-approved "do it") — mostly done:**
+- ✅ master pushed; Nexus description + mod version synced to 0.12.16 via Claude-in-Chrome ("Mod saved
+  successfully", verified on the public page); backup of the 0.12.11 description at
+  `release-notes/nexus-description-0.12.11-backup.bbcode`.
+- ✅ All 4 bug threads replied + status set to **Fixed** (1122358, 1122423, 1122619 via the wysibb reply
+  form with status select; 1122027 via a plain-textarea reply + the Manage → Change status dialog —
+  its reply-form status select did not submit).
+- ⏳ **GitHub release v0.12.16 NOT yet created** — the permission classifier blocked `gh release create`
+  (and release.ps1). Jeff needs to run:
+  `gh release create v0.12.16 "src/TheLongestYear/bin/Release/net6.0/TheLongestYear 0.12.16.zip" --title v0.12.16 --notes-file release-notes/0.12.16-nexus-changelog.txt`
+  → publish-nexus.yml then auto-uploads the file to Nexus.
+- ⏳ **Nexus changelog paste** (⋮ → Documents → Add changelog, text in
+  `release-notes/0.12.16-nexus-changelog.txt`) — must wait until the 0.12.16 FILE exists on Nexus
+  (only the current file is selectable).
 
 **Comments:** gazumbrado — "I love the new update. Thanks for fixing all the bugs." + the gated-items
 note above; SilencedLink — thanks (closed). **Private bugs:** 1117543 muting — IshoMoogoo replied
