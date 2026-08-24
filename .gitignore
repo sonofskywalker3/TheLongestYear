@@ -23,3 +23,6 @@ tools/preview/
 
 # Local test/dev artifacts (logs, scrapes, recon screenshots, evidence saves) — not part of the repo
 test-output/
+
+# Claude Code worktrees
+.claude/worktrees/
