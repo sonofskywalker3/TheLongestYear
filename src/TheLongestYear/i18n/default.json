@@ -1,6 +1,6 @@
 {
     // ============================================================================
-    // The Longest Year — English source of truth.
+    // The Longest Year: English source of truth.
     // TRANSLATORS: copy this file to <locale>.json (e.g. zh.json), translate the
     // VALUES only. Preserve exactly: {{token}} placeholders, @ (player name),
     // #$b# (page break), $h/$s/$a (portrait poses). Keys missing from your file
@@ -23,12 +23,17 @@
     "dialog.win.prompt": "The Junimos sing! The Community Center is restored.\n{{loopline}}\nDo you want to begin a new loop now, or keep playing this run?",
     "dialog.win.new-loop": "Start a new loop",
     "dialog.win.keep-playing": "Keep playing this run",
+    "dialog.hold.prompt": "Should we hold the town's wishes steady for your next spring?",
+    "dialog.hold.keep-free": "Keep these bundles (free)",
+    "dialog.hold.keep": "Keep these bundles ({{cost}} JP)",
+    "dialog.hold.reshuffle": "Let time reshuffle them",
+    "dialog.hold.not-enough-jp": "The Junimos need {{cost}} JP to hold the town's wishes. You have {{have}}.",
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
     "dialog.mines.uneasy-1": "The mines feel uneasy this week. The elevator and lower ladders will not respond.",
     "dialog.mines.uneasy-2": "The mines feel uneasy this week. The entrance has been closed off.",
     "dialog.cart.first-visit": "The merchant gives an apologetic shrug. \"Joja's been leaning on every supplier between here and Zuzu City - nobody will sell to me. This is all I could scrape together for now.\"\n\nThe Junimos might know a way around that.",
 
-    // -- upgrades (hand-authored) — keys derive from the upgrade id ---------------
+    // -- upgrades (hand-authored), keys derive from the upgrade id ---------------
     "upgrade.backpack_1.name": "Backpack I",
     "upgrade.backpack_1.desc": "Start each loop with the 24-slot backpack.",
     "upgrade.backpack_2.name": "Backpack II",
@@ -194,7 +199,7 @@
     "upgrade.keep_pet.name": "Keep Pet",
     "upgrade.keep_pet.desc": "Your pet returns at the start of every loop with its name and friendship hearts intact.",
     "upgrade.keep_bus_unlocked.name": "Keep Bus Unlocked",
-    "upgrade.keep_bus_unlocked.desc": "Start each loop with all four Vault bundles already paid — the bus is restored from day 1.",
+    "upgrade.keep_bus_unlocked.desc": "Start each loop with all four Vault bundles already paid. The bus is restored from day 1.",
     "upgrade.start_chicken.name": "Start with Chicken",
     "upgrade.start_chicken.desc": "Start each loop with a Chicken in your Coop.",
     "upgrade.start_void_chicken.name": "Start with Void Chicken",
@@ -220,8 +225,8 @@
     "upgrade-tpl.keep-tool.name": "Keep {{tier}} {{tool}}",
     "upgrade-tpl.keep-tool.desc": "Start each loop with your {{tool}} at the {{tier}} tier.",
     "upgrade-tpl.keep-skill.name": "Keep {{skill}} Level {{level}}",
-    "upgrade-tpl.keep-skill.desc": "Start each loop at {{skill}} Level {{level}}. XP is set to the level threshold — no half-progress preserved.",
-    "upgrade-tpl.keep-skill.desc-profession": "Start each loop at {{skill}} Level {{level}}. XP is set to the level threshold — no half-progress preserved. Re-triggers the profession picker for Level {{level}}.",
+    "upgrade-tpl.keep-skill.desc": "Start each loop at {{skill}} Level {{level}}. XP is set to the level threshold: no half-progress preserved.",
+    "upgrade-tpl.keep-skill.desc-profession": "Start each loop at {{skill}} Level {{level}}. XP is set to the level threshold: no half-progress preserved. Re-triggers the profession picker for Level {{level}}.",
     "upgrade-tpl.keep-elevator.name": "Keep Mine Elevator Floor {{floor}}",
     "upgrade-tpl.keep-elevator.desc": "Start each loop with the mine elevator accessible to floor {{floor}}.",
     "upgrade-tpl.keep-mastery.name": "Keep Mastery {{level}}",
@@ -246,7 +251,7 @@
     "upgrade-category.efficiency": "Efficiency", "upgrade-category.obtainability": "Obtainability",
     "upgrade-category.foresight": "Foresight", "upgrade-category.stash": "Stash",
     "upgrade-category.buildings": "Buildings",
-    // Plain ASCII only in modifier.* values (no U+2212 minus sign) — Stardew's smallFont
+    // Plain ASCII only in modifier.* values (no U+2212 minus sign): Stardew's smallFont
     // doesn't include the typographic minus and renders it as tofu. Keep entries concise
     // enough to wrap to two lines max on a 460px-wide card (Game1.parseText word-wrapping).
     "modifier.forage_yield_up": "20% chance to find an extra foraged item",
@@ -269,13 +274,13 @@
     "menu.shrine.hover": "{{name}}\n{{description}}\n{{footer}}",
     "menu.shrine-preview.title": "Junimo Shrine - Planning",
     "menu.shrine-preview.banked": "Junimo Points banked: {{jp}}",
-    "menu.shrine-preview.planning-note": "Planning view — you spend JP when a loop resets or you win, not here.",
-    "menu.shrine-preview.nothing-new": "Nothing new to plan for yet — reach further this run!",
+    "menu.shrine-preview.planning-note": "Planning view: you spend JP when a loop resets or you win, not here.",
+    "menu.shrine-preview.nothing-new": "Nothing new to plan for yet. Reach further this run!",
     "menu.shrine-preview.weather-header": "Weather",
     "menu.shrine-preview.weather-day-hover": "Day {{day}} - {{weather}}",
-    "menu.shrine-preview.cart-away": "Traveling Cart — not in town (next: {{day}})",
-    "menu.shrine-preview.cart-catalog-header": "Cart Catalog — bundle items today",
-    "menu.shrine-preview.cart-traveling-header": "Traveling Cart — bundle items today",
+    "menu.shrine-preview.cart-away": "Traveling Cart: not in town (next: {{day}})",
+    "menu.shrine-preview.cart-catalog-header": "Cart Catalog: bundle items today",
+    "menu.shrine-preview.cart-traveling-header": "Traveling Cart: bundle items today",
     "menu.shrine-preview.cart-nothing": "Nothing here for a bundle today.",
     "menu.shrine-preview.cart-item-hover": "{{name}}\n{{price}}g",
     "menu.shrine-preview.tooltip-owned": "{{description}}\nOwned.",
@@ -297,7 +302,8 @@
     "menu.hub.weather-header": "Weather",
     "menu.hub.day-label": "Day {{day}} - {{weather}}",
     "menu.hub.cart-label": "Cart: {{label}}",
-    "menu.goals.title": "Season Goals — {{season}} (day {{day}})",
+    "menu.goals.title": "Season Goals: {{season}} (day {{day}})",
+    "menu.goals.title-held": "Season Goals: {{season}} (day {{day}}) held {{holds}}x",
     "menu.goals.badge-met": "checkpoint met",
     "menu.goals.badge-needs-before": "needs {{count}} before {{season}} 1",
     "menu.goals.badge-needs-end": "needs {{count}} by run end",
@@ -318,7 +324,7 @@
     "quest.weekly.qty": " x{{count}}",
     "quest.weekly.tip": "Tip: hold matching donations for their theme week - completing a goal slot pays 1.5x JP, and finishing every goal lifts the drawback.",
     "quest.stash.title": "A gift from the Junimos",
-    "quest.stash.desc": "The Junimos placed a special chest on your farm — it will survive the seasons. Find it and use it wisely; it has very limited space.",
+    "quest.stash.desc": "The Junimos placed a special chest on your farm. It will survive the seasons. Find it and use it wisely; it has very limited space.",
     "quest.shrine.title": "The Junimo Shrine",
     "quest.shrine.desc": "There's a small Junimo shrine just left of your farmhouse. Check it to see what you've unlocked and what you can plan for next loop.",
     "quality.silver": " (silver)",
@@ -328,14 +334,14 @@
     "egg-color.brown": " (Brown)",
 
     // -- book menus / victory / cutscene hint ---------------------------------------
-    // menu.books.* are shared by BOTH CookbookMenu and CraftbookMenu — keep the key
+    // menu.books.* are shared by BOTH CookbookMenu and CraftbookMenu, keep the key
     // family-neutral so a translator doesn't bake cookbook-only wording into text the
     // craftbook also displays (renaming later would break existing translation files).
-    "menu.books.no-new": "No new recipes to add — learn more recipes first.",
+    "menu.books.no-new": "No new recipes to add. Learn more recipes first.",
     "menu.books.choose": "Choose a recipe to bank:",
-    "menu.cookbook.title": "Cookbook — {{used}} / {{total}} slots",
-    "menu.craftbook.title": "Craftbook — {{used}} / {{total}} slots",
-    "menu.books.empty-slot": "[empty — click to add]",
+    "menu.cookbook.title": "Cookbook: {{used}} / {{total}} slots",
+    "menu.craftbook.title": "Craftbook: {{used}} / {{total}} slots",
+    "menu.books.empty-slot": "[empty, click to add]",
     "menu.cookbook.remove-confirm": "Remove \"{{recipe}}\" from the cookbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.craftbook.remove-confirm": "Remove \"{{recipe}}\" from the craftbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.victory.restored": "You have restored the Community Center. The valley is saved!",
@@ -372,27 +378,28 @@
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
 
     // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
-    "event.intro.lewis-1": "Hi there, @. Welcome to the valley.#$b#I'm Lewis — mayor of Pelican Town. I came up to greet you and your new farm.$h",
+    "event.intro.lewis-1": "Hi there, @. Welcome to the valley.#$b#I'm Lewis, mayor of Pelican Town. I came up to greet you and your new farm.$h",
     "event.intro.lewis-2": "I wanted to be the first to say it... but I'm afraid I have to apologize for the timing.$s",
     "event.intro.lewis-3": "Joja Corporation rolled out a 'revitalization initiative' this spring. They've already filed permits to demolish our old Community Center. They're calling it an 'eyesore.'$a",
     "event.intro.lewis-4": "Deadline is Winter 28. If nothing changes by then, it'll be a Joja warehouse by next year.$s",
-    "event.intro.lewis-5": "If only there was a way for us to repair the old Community Center.$s#$b#It's a registered historical landmark, you know. The state will protect it — but only if it's restored to full working condition before that deadline.$h",
+    "event.intro.lewis-5": "If only there was a way for us to repair the old Community Center.$s#$b#It's a registered historical landmark, you know. The state will protect it, but only if it's restored to full working condition before that deadline.$h",
     "event.intro.lewis-6": "Truth be told, nobody's got the time or the skill to take it on. Folks have their own troubles, and that old place needs more than goodwill.$s",
-    "event.intro.lewis-7": "Here — take the key to the front door. If you ever want to see the old place before they tear it down, it's worth a look.$h",
+    "event.intro.lewis-7": "Here, take the key to the front door. If you ever want to see the old place before they tear it down, it's worth a look.$h",
     "event.intro.lewis-8": "Good luck out there, @. Pelican Town's rooting for you.$h",
-    "event.intro.junimo-1": "Hello, @. We are the spirits of this land — the Junimos.#$b#Few folk can see us anymore.$h",
+    "event.intro.junimo-1": "Hello, @. We are the spirits of this land, the Junimos.#$b#Few folk can see us anymore.$h",
     "event.intro.junimo-2": "Long ago, the people of this valley worked the soil together and shared what nature gave them.#$b#In that kindness we flourished, and this old hall was the heart of it.$h",
-    "event.intro.junimo-3": "But the world grew busy — they chased coin and comfort, and forgot one another.#$b#The shared work stopped, the hall fell quiet, and the spirit of the land thinned.#$b#As the people drifted apart, we faded with them, until there was nothing left to wake for. And so we slept.$s",
-    "event.intro.junimo-4": "Lately, though, we feel a stirring.#$b#The people are weary of their 'progress,' and miss what they traded away — the valley whole, and alive.#$b#That longing is what woke us... that, and you.$h",
-    "event.intro.junimo-5": "We can make the land strong again — but not alone, and neither can you.#$b#Work the soil. Draw the townsfolk back together.#$b#As they share in the land's bounty once more, our power returns, and this hall is restored.$h",
-    "event.intro.junimo-6": "But the seasons bind you, @. Each one asks its share.#$b#Bring enough of the land's bounty to this hall before a season turns.#$b#Fall short, and the year unwinds to spring — and you begin again.$s",
+    "event.intro.junimo-3": "But the world grew busy. They chased coin and comfort, and forgot one another.#$b#The shared work stopped, the hall fell quiet, and the spirit of the land thinned.#$b#As the people drifted apart, we faded with them, until there was nothing left to wake for. And so we slept.$s",
+    "event.intro.junimo-4": "Lately, though, we feel a stirring.#$b#The people are weary of their 'progress,' and miss what they traded away: the valley whole, and alive.#$b#That longing is what woke us... that, and you.$h",
+    "event.intro.junimo-5": "We can make the land strong again, but not alone, and neither can you.#$b#Work the soil. Draw the townsfolk back together.#$b#As they share in the land's bounty once more, our power returns, and this hall is restored.$h",
+    "event.intro.junimo-6": "But the seasons bind you, @. Each one asks its share.#$b#Bring enough of the land's bounty to this hall before a season turns.#$b#Fall short, and the year unwinds to spring, and you begin again.$s",
     "event.intro.junimo-7": "Even keeping pace, a single year is too short to make the valley whole.#$b#You will not finish on this first turning.$s",
-    "event.intro.junimo-8": "When the year unwinds, all of it returns — the fields, the buildings, even the folk you have come to know.#$b#What you gathered in the world is lost.$s",
+    "event.intro.junimo-8": "When the year unwinds, all of it returns: the fields, the buildings, even the folk you have come to know.#$b#What you gathered in the world is lost.$s",
     "event.intro.junimo-9": "But the skills you have learned, and some of what you have done, need not be lost.#$b#The offerings you give us become our power...#$b#...and we will spend it to help you hold on to some of what you have gained, so each beginning is a little kinder than the last.$h",
+    "event.intro.junimo-9b": "Some of what a season asks may look beyond your reach. That is no mistake. It is the shape of the work.#$b#Gather what you can, and keep for later what you cannot yet use. When the year unwinds, we can even hold the town's wishes steady, so the next spring asks the same of you.$h",
     "event.intro.junimo-10": "We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Will you work the land with us, @?$h",
     "event.intro.junimo-11": "Then go. Spring is yours.$h",
 
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
-    "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year — but don't worry. We have enough power left over to give you a head-start this time.$h",
-    "cutscene.day28.continue": "Great job, @ — you're doing well!#$b#Keep this up and we'll save the valley together. We'll gain even more power from the work you do this season.$h"
+    "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year. Don't worry, we have enough power left over to give you a head-start this time.#$b#Before we do, tell us: should we hold the town's wishes steady, or let time reshuffle them?$h",
+    "cutscene.day28.continue": "Great job, @, you're doing well!#$b#Keep this up and we'll save the valley together. We'll gain even more power from the work you do this season.$h"
 }

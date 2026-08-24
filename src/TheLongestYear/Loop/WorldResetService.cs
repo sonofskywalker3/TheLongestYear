@@ -459,6 +459,10 @@ namespace TheLongestYear.Loop
             // across a replayed reset (satisfies the anti-scum guarantee) AND identical on every
             // later reload of this loop's save (satisfies SaveLoaded's manifest-first re-derivation) --
             // the one value that is simultaneously stable across both.
+            // A reset that skipped the Fail-night hold choice (console tly_reset, post-win new loop)
+            // must behave like a reshuffle; BundleHold.ConsumeChoiceAtReset owns that rule.
+            TheLongestYear.Core.BundleHold.ConsumeChoiceAtReset(_meta);
+
             if (vanillaBoard)
             {
                 // Vanilla mode: the board loadForNewGame just wrote IS the board. No engine write,
@@ -470,9 +474,15 @@ namespace TheLongestYear.Loop
             else
             {
                 var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
-                int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.CompletedResets);
+                // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
+                // RunController's Fail-night choice already pinned (hold) or advanced to this loop
+                // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
+                int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
                 GeneratedBundleSet generatedSet = engine.Generate(seed);
                 engine.WriteToWorld(generatedSet, _monitor);
+                _monitor.Log(
+                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}).",
+                    LogLevel.Info);
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
                 LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas);
             }
