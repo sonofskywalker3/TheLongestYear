@@ -16,8 +16,11 @@ Nexus posts/bugs identical for all four mods (only diff = our four 0.12.16 repli
 reactions yet); Reddit verified in-browser at 63 comments, newest 21 Aug (the sweep script's Reddit
 fetch returned 0 comments this run without erroring — a silent-empty case worth guarding in
 `sweep-forums.mjs`). Private bugs unchanged: 1117543 muting = 2 replies, last 21 Aug 14:37 (Needs
-more info); 1113831 Day-3 crash = 1 reply (ours), last 21 Aug 10:49. Awaiting Jeff's call on
-flipping 1117543 to Not a bug.
+more info); 1113831 Day-3 crash = 1 reply (ours), last 21 Aug 10:49.
+**1117543 CLOSED 2026-08-24 14:14 as Not a bug** (Jeff: "yes") — reply posted via Claude-in-Chrome
+(ALSOFT 0x88890004 = Windows audio-device loss; reopen if a full log shows otherwise). Gotcha: a reply
+form left open for a long time POSTs 401 ("Something went wrong saving your reply") — reload the page
+and re-expand before submitting. Only 1113831 remains open (Needs more info, silent since 5 Aug).
 
 - **1122358 — Engine bundles roll CC-gated / impossible items** (SincerelyZoey + IshoMoogoo,
   23 Aug, 0.12.11): pineapple, Qi Fruit, taro root, void salmon, silver/gold-quality algae
