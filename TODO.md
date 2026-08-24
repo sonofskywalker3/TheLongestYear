@@ -6,6 +6,25 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 0.13.x brainstorm: DerivePins / obtainability
+
+Keep-bundles hold implemented on branch `feat/keep-bundles-hold` (spec
+`docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`), awaiting merge + release.
+
+Parked note (moved from the RELEASED v0.12.11 block below): `DerivePins` for artisan goods /
+dishes / geode tiers so the clamp catches those structurally.
+
+Ideas to discuss before building it:
+- Escalating per-season likelihood instead of hard pins, so an item gets more likely to appear
+  as the loop runs longer rather than being forced in outright.
+- A pity counter that eases the board after N consecutive fails. User's note (2026-08-24): a
+  player can loop 40 times without ever reaching Fall and start run 41 with a huge stash, a
+  barn, coop, silo, and every crafting station already built, so full pins on run 41 would be
+  wrong; the board needs to ease off gradually, not snap to guaranteed asks.
+- Wording: the weekly-theme card and journal text should say plainly that weekly goals point at
+  season bundle slots, not at a one-week target. lexihope read "68 daffodils" as something to
+  gather in a single week when it was actually the season-slot ask.
+
 ### 🔧 FIXED ON MASTER (unreleased) — 7th sweep (2026-08-24): all 4 bugs root-caused + fixed same day
 *Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-24-15-09_*`. Sweep script is now
 profile-free (public pages only); bug bodies + private bugs read via Claude-in-Chrome on the
@@ -117,8 +136,7 @@ Claude-in-Chrome → upload `release-notes/advanced-options-tly-custom.png` to t
 `docs/nexus-description.bbcode`) → verify live → reply on bug 1108030 (root cause fixed: the game never
 persisted the Remixed choice; the mod does now) and the ada113/ErraticPixel CCCB compat ask.*
 
-*Follow-ups parked (0.13.0): `DerivePins` for artisan goods / dishes / geode tiers so the clamp catches
-those structurally; category-ref ingredients stay unsupported (documented); `The Missing` never gates;
+*Follow-ups parked (0.13.0): category-ref ingredients stay unsupported (documented); `The Missing` never gates;
 curated Chef's never fires in the engine era (RandomBundles Chef's is 6/6); `pull-logs.ps1` prunes three
 TRACKED log archives on every deploy — `git checkout -- test-output/log-archive/` after deploying.*
 
