@@ -67,8 +67,10 @@ repeats for further holds. Tunable without code.
 | `BundleSeedLoop` | int | -1 | Loop number the board seed derives from. -1 means "same as `CompletedResets`" (legacy saves). |
 | `ConsecutiveHolds` | int | 0 | Holds taken in a row; drives the price. |
 
-No pending flag: the choice is applied at the prompt and persisted by the `_store.Save()`
-`FinalizeReset` already performs.
+The choice is applied at the prompt and persisted by the `_store.Save()` `FinalizeReset`
+already performs. One bool, `HoldChoiceMadeForReset`, marks that a choice was made so a reset
+that arrives without the prompt (console `tly_reset`, the post-win new-loop path) behaves as a
+reshuffle; `PerformReset` clears it.
 
 `BundleHoldPricing.CostFor(consecutiveHolds, config)` returns the price for the *next* hold.
 
