@@ -424,12 +424,52 @@ public static class ItemPoolBuilder
         return Finish(items);
     }
 
+    /// <summary>Built-in structural exclusions: Ginger Island / Qi-gated content, which is
+    /// post-CC and never year-1 obtainable (Nexus 1122358, 2026-08-24 — engine bundles
+    /// rolled these on fresh saves). Location markers can't catch them (crops come from
+    /// Data/Crops, which has no location; category pools scan all of Data/Objects), and
+    /// they must NOT live only in the tuning defaults: an existing config.json overrides
+    /// serialized lists wholesale, so config-default-only excludes silently vanish on
+    /// every install that has saved a config. Ids verified against the game's Data/Objects.</summary>
+    public static readonly IReadOnlySet<string> BuiltInExcludedItemIds = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)69",  // Banana Sapling
+        "(O)835", // Mango Sapling
+        "(O)889", // Qi Fruit          — Qi challenge crop (Data/Crops lists all four seasons)
+        "(O)832", // Pineapple         — island crop
+        "(O)830", // Taro Root         — island crop
+        "(O)831", // Taro Tuber        — island seed (Golden Coconut geode drop)
+        "(O)833", // Pineapple Seeds   — island seed (Golden Coconut geode drop)
+        "(O)91",  // Banana            — island fruit tree
+        "(O)834", // Mango             — island fruit tree
+        "(O)829", // Ginger            — island forage (also a Golden Coconut drop)
+        "(O)851", // Magma Cap         — Volcano forage
+        "(O)909", // Radioactive Ore   — island-only (metals pool)
+        "(O)910", // Radioactive Bar   — island-only (metals pool)
+        "(O)848", // Cinder Shard      — Volcano-only (metals pool)
+        "(O)852", // Dragon Tooth      — Volcano-only (Golden Coconut drop)
+        "(O)820", // Fossilized Skull  — Golden Coconut drop (island fossil)
+        "(O)903", // Ginger Ale        — island dish (cooking pool)
+        "(O)904", // Banana Pudding    — island dish
+        "(O)905", // Mango Sticky Rice — island dish
+        "(O)906", // Poi               — island dish
+        "(O)907", // Tropical Curry    — island dish
+        "(O)873", // Piña Colada       — island resort drink
+    };
+
+    /// <summary>Built-in excluded location markers, merged with the config list by
+    /// <see cref="IsExcludedLocation"/> (same config-override rationale as
+    /// <see cref="BuiltInExcludedItemIds"/>). BugLand = Mutant Bug Lair: behind the Dark
+    /// Talisman quest, which is itself post-CC — never year-1 content. WitchSwamp stays
+    /// in: Void Salmon is hard-but-fair (user ruling 2026-08-24).</summary>
+    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers = new[] { "BugLand" };
+
     /// <summary>Structural + configured vetting. False = never offer this item.</summary>
     private static bool Vets(
         string bareId, string qualifiedId,
         IReadOnlyDictionary<string, RawObjectEntry> objects, HashSet<string> excluded)
     {
-        if (excluded.Contains(qualifiedId))
+        if (BuiltInExcludedItemIds.Contains(qualifiedId) || excluded.Contains(qualifiedId))
             return false;
         if (!objects.TryGetValue(bareId, out RawObjectEntry? obj))
             return false; // unknown to Data/Objects — can't price/vet it, drop it
@@ -489,11 +529,12 @@ public static class ItemPoolBuilder
     private static IReadOnlyList<PoolItem> Finish(IEnumerable<PoolItem> items)
         => items.OrderBy(p => p.ItemId, StringComparer.Ordinal).ToList();
 
-    /// <summary>True when a Data/Locations key matches any excluded-location marker
-    /// (case-insensitive substring) — such locations never feed the pools.</summary>
+    /// <summary>True when a Data/Locations key matches any excluded-location marker —
+    /// built-in (<see cref="BuiltInExcludedLocationMarkers"/>) or configured —
+    /// (case-insensitive substring): such locations never feed the pools.</summary>
     public static bool IsExcludedLocation(string locationKey, IReadOnlyList<string> markers)
     {
-        foreach (string marker in markers)
+        foreach (string marker in BuiltInExcludedLocationMarkers.Concat(markers))
         {
             if (!string.IsNullOrEmpty(marker)
                 && locationKey.Contains(marker, StringComparison.OrdinalIgnoreCase))

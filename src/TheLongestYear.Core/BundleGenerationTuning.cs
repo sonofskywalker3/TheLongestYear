@@ -29,33 +29,11 @@ public sealed class BundleGenerationTuning
     /// island-only obtainability without needing special-case derivation code.</summary>
     public List<string> ExcludedItemIds { get; set; } = new()
     {
-        "(O)69",  // Banana Sapling
-        "(O)835", // Mango Sapling
-
-        // Ginger Island / Qi-gated content (Nexus 1122358 + 1122423, 2026-08-24: engine
-        // bundles rolled these on fresh saves; the island is post-CC, so nothing from it is
-        // year-1 obtainable). Location markers can't catch these — crops come from Data/Crops
-        // (no location) and category pools scan all of Data/Objects.
-        "(O)889", // Qi Fruit         — Qi challenge crop (Data/Crops lists all four seasons)
-        "(O)832", // Pineapple       — island crop
-        "(O)830", // Taro Root       — island crop
-        "(O)831", // Taro Tuber      — island seed (Golden Coconut geode drop)
-        "(O)833", // Pineapple Seeds — island seed (Golden Coconut geode drop)
-        "(O)91",  // Banana          — island fruit tree
-        "(O)834", // Mango           — island fruit tree
-        "(O)829", // Ginger          — island forage (also a Golden Coconut drop)
-        "(O)851", // Magma Cap       — Volcano forage
-        "(O)909", // Radioactive Ore — island-only (metals pool)
-        "(O)910", // Radioactive Bar — island-only (metals pool)
-        "(O)848", // Cinder Shard    — Volcano-only (metals pool)
-        "(O)852", // Dragon Tooth    — Volcano-only (Golden Coconut drop)
-        "(O)820", // Fossilized Skull — Golden Coconut drop (island fossil)
-        "(O)903", // Ginger Ale        — island dish (cooking pool)
-        "(O)904", // Banana Pudding    — island dish
-        "(O)905", // Mango Sticky Rice — island dish
-        "(O)906", // Poi               — island dish
-        "(O)907", // Tropical Curry    — island dish
-        "(O)873", // Piña Colada       — island resort drink
+        // NOTE: this list is a config EXTENSION point only. Structural exclusions
+        // (Ginger Island / Qi-gated content, the two island saplings) live in
+        // ItemPoolBuilder.BuiltInExcludedItemIds — an existing config.json overrides
+        // serialized list defaults wholesale, so anything that MUST be excluded cannot
+        // live here (Nexus 1122358: a saved config wiped the old sapling defaults).
     };
 
     /// <summary>Spawn locations whose key contains any of these markers (case-insensitive)
@@ -65,21 +43,16 @@ public sealed class BundleGenerationTuning
     public List<string> ExcludedLocationMarkers { get; set; } = new()
     {
         "Island", "FableReef", "CrimsonBadlands",
-        // Mutant Bug Lair (Slimejack): behind the Dark Talisman quest, which itself is
-        // post-CC/Joja — never year-1 content. WitchSwamp stays IN: Void Salmon is
-        // hard-but-fair (user ruling 2026-08-24).
-        "BugLand",
+        // BugLand (Mutant Bug Lair) is a BUILT-IN marker in ItemPoolBuilder — see
+        // ExcludedItemIds note for why mandatory exclusions can't live in this list.
     };
 
-    /// <summary>Qualified item ids that can never carry a quality star in-game (algae and
-    /// seaweed fish out at base quality only), so slot re-rolls must never put a
-    /// silver/gold ask on them (Nexus 1122358: "silver and gold quality algaes").</summary>
-    public List<string> QualityIneligibleItemIds { get; set; } = new()
-    {
-        "(O)152", // Seaweed
-        "(O)153", // Green Algae
-        "(O)157", // White Algae
-    };
+    /// <summary>Config extension point: additional qualified item ids that can never carry
+    /// a quality star, so slot re-rolls must never put a silver/gold ask on them. The
+    /// built-in set (Seaweed/Green Algae/White Algae — Nexus 1122358: "silver and gold
+    /// quality algaes") lives in BundleSlotFiller for the same config-override reason as
+    /// <see cref="ExcludedItemIds"/>.</summary>
+    public List<string> QualityIneligibleItemIds { get; set; } = new();
 
     /// <summary>Curated harder additions to the seasonal forage pools (spec seasonal-forage
     /// ruling 2026-07-14). Keys are Season names; values are qualified item ids.</summary>

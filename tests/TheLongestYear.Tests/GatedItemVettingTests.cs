@@ -93,6 +93,51 @@ public class GatedItemVettingTests
         Assert.False(ItemPoolBuilder.IsExcludedLocation("WitchSwamp", markers)); // Void Salmon stays: hard, not impossible (user ruling 2026-08-24)
     }
 
+    /// <summary>Regression for the config-override trap found on the live install
+    /// (2026-08-24): SMAPI's ReadConfig replaces serialized LIST defaults wholesale, and
+    /// the machine's config.json carried `ExcludedItemIds: []` — so exclusions that lived
+    /// only in tuning defaults silently vanished. The island/Qi vetting must hold even
+    /// when every tuning list has been emptied by a saved config.</summary>
+    [Fact]
+    public void Vetting_SurvivesConfigOverride_EmptiedTuningLists()
+    {
+        var overridden = new BundleGenerationTuning
+        {
+            ExcludedItemIds = new List<string>(),
+            ExcludedLocationMarkers = new List<string>(),
+            QualityIneligibleItemIds = new List<string>(),
+        };
+        var pools = ItemPoolBuilder.Build(
+            new[]
+            {
+                new RawCropEntry("889", new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter }),
+                new RawCropEntry("24", new[] { Season.Spring }),
+            },
+            Objects(("889", Obj()), ("24", Obj())),
+            new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), overridden);
+        Assert.Equal(new[] { "(O)24" }, pools.Crops.Select(p => p.ItemId));
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("BugLand", overridden.ExcludedLocationMarkers));
+
+        // Quality-ineligibility also holds with an emptied config list.
+        overridden.GoldQualityChance = 1.0;
+        var fishPools = new ItemPools
+        {
+            Fish = new[]
+            {
+                new PoolItem("(O)153", 15, 3, Array.Empty<Season>(), Array.Empty<string>()),
+                new PoolItem("(O)144", 100, 3, Array.Empty<Season>(), Array.Empty<string>()),
+            },
+        };
+        var spec2 = new BundleSpec("Fish Tank", 0, "F", "F", "O 495 30", 0, 2,
+            new List<BundleSlotSpec> { new("901", 1, 0), new("902", 1, 0) });
+        var filled = BundleSlotFiller.Fill(
+            spec2, new DomainMatch(PoolDomain.Fish, null), fishPools, overridden, new Random(3));
+        foreach (BundleSlotSpec slot in filled.Slots)
+            Assert.Equal(slot.ItemId == "(O)153" ? 0 : 2, slot.Quality);
+    }
+
     [Fact]
     public void SlotFiller_NeverAsksQualityOnAlgae_QualityIneligibleIds()
     {
