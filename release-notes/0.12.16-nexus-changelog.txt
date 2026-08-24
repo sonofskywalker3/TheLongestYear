@@ -1,0 +1,4 @@
+Bundles can no longer ask for the impossible: Ginger Island / Mr. Qi content (Qi Fruit, Pineapple, Taro Root, Radioactive Ore/Bar, Cinder Shard, the island dishes, Slimejack) is vetted out of every bundle pool - the island is post-CC, so nothing from it belongs in a year-1 board. Void Salmon stays (hard, not impossible). Algae/Seaweed never get silver/gold-quality asks (the game never gives them quality). Existing saves get the clean board at their next reset.
+Weekly themes respect fish seasons: a Spring theme could ask for Pike (Summer/Winter). Goals now only sample slots whose item is obtainable in the current season, from the game's own spawn data.
+Advanced Options: picking Remixed no longer locks up the OK button (also un-breaks the "Guarantee Year 1 Completable" checkbox, which the same bug ate silently).
+The Junimo Shrine sells one upgrade tier per press - a controller press could buy the next tier too and charge for both.

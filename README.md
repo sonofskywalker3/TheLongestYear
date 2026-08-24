@@ -12,17 +12,14 @@ This is a **beta** (`0.12.11`). It is feature-complete for v1 and stable in test
 
 ---
 
-## What's New in 0.12.11
+## What's New in 0.12.16
 
-**Pick your board (TLY Custom / Normal / Remixed), a fairly-priced red-cabbage gate, and twelve bundle schedules that could brick a run are fixed.**
+**Every bug from this weekend's reports is fixed: impossible bundle items, out-of-season weekly goals, the Remixed soft-lock, and double-charged shrine upgrades.**
 
-- **Pick your board: TLY Custom, Normal or Remixed.** **New → Advanced Options → Community Center Bundles** now offers all three. **TLY Custom** (the default) is the mod's own board, re-rolled every loop. **Normal** / **Remixed** keep the game's own board — and it comes back the *same kind* after every reset (the remixed-turns-vanilla bug is fixed at the root: the game never saved that choice; the mod does now). Other bundle mods work too — e.g. Challenging Community Center Bundles — because the mod re-reads the board whenever another mod changes it. `BundleSource` (config / GMCM) is the default for new games and switches an existing save at its next reset.
-- **Twelve bundles could brick or bully a run.** Winter Star, Forager's, Gil's Trophies, Brewer's, Preserver's, Mineral, Home Cook's Feast, Fish Farmer's, Artifact, Four Seasons Sampler, Rare Crops and Garden asked for a donation in a season where none of their items exist yet (or far too early). Each now has a hand-set schedule, and Gil's Trophies only rolls trophies you can earn in year 1.
-- **The red-cabbage gate is priced like a gate.** We measured what a loop can pay out (a strong player banks ~8–9.5k JP). *Cultivation: Red Cabbage* (Summer Mixed Seeds can roll Red Cabbage) now costs **5,000 JP**. New **Pierre's Special Order** (**10,000 JP**): Pierre sells his year-2 seeds — Garlic, Red Cabbage, Artichoke — from year 1. *Cultivation: Starfruit* is gone: anyone can reach the desert, there's no luck to buy off.
-- **Weekly themes with nothing left to donate say so.** The planning-hub card reads "Themed donations completed" instead of a blank row, and the drawback lifts for the week.
-- **Weekly-theme goals know every bundle item.** Items beyond a bundle's first few slots were invisible to the goal picker (wrong rarity, wrong seasons); Grape now counts as Summer forage; boards read from the game (Normal/Remixed/other mods) get the same "never ask for the unobtainable" guard the mod's own board had.
-- **`EnableNonObjectDonations` can be flipped any time.** An in-flight Gil's Trophies bundle stays donatable until the next reset (the beta caveat is gone).
-- **Mod page:** the Advanced Options screenshot khauser13 asked for. Diagnostics: `tly_jpbudget` (max JP a loop's board can pay), `tly_bundlesource`.
+- **Bundles can no longer ask for the impossible.** Ginger Island and Mr. Qi content — Qi Fruit, Pineapple, Taro Root, Radioactive Ore/Bar, Cinder Shard, the island dishes, Slimejack and friends — is vetted out of every bundle pool. The island is post-CC, so nothing from it belongs in a year-1 board. (Void Salmon stays: hard, not impossible.) Algae and Seaweed never get silver/gold-quality asks — the game never gives them quality, so those slots could not be donated. Existing saves pick up the clean board at their next reset.
+- **Weekly themes respect fish seasons.** A Spring theme could ask for Pike, a Summer/Winter fish. Weekly goals now only sample bundle slots whose item is actually obtainable in the current season, using the game's own spawn data.
+- **Advanced Options: picking Remixed no longer locks up OK.** Selecting the Remixed bundle option on a new character made the OK button unresponsive; fixed at the root. This also un-breaks the "Guarantee Year 1 Completable" checkbox, which the same bug was silently eating.
+- **The Junimo Shrine sells one upgrade tier per press.** Buying a tiered upgrade (e.g. Mine Upgrade 1) with a controller could buy the next tier too in the same press and charge for both.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
