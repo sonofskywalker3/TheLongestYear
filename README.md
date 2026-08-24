@@ -8,18 +8,19 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.12.16`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.12.17`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.12.16
+## What's New in 0.12.17
 
-**Every bug from this weekend's reports is fixed: impossible bundle items, out-of-season weekly goals, the Remixed soft-lock, and double-charged shrine upgrades.**
+**On a Fail night you can now keep your bundle board for the next loop instead of letting the Junimos reshuffle it.**
 
-- **Bundles can no longer ask for the impossible.** Ginger Island and Mr. Qi content — Qi Fruit, Pineapple, Taro Root, Radioactive Ore/Bar, Cinder Shard, the island dishes, Slimejack and friends — is vetted out of every bundle pool. The island is post-CC, so nothing from it belongs in a year-1 board. (Void Salmon stays: hard, not impossible.) Algae and Seaweed never get silver/gold-quality asks — the game never gives them quality, so those slots could not be donated. Existing saves pick up the clean board at their next reset.
-- **Weekly themes respect fish seasons.** A Spring theme could ask for Pike, a Summer/Winter fish. Weekly goals now only sample bundle slots whose item is actually obtainable in the current season, using the game's own spawn data.
-- **Advanced Options: picking Remixed no longer locks up OK.** Selecting the Remixed bundle option on a new character made the OK button unresponsive; fixed at the root. This also un-breaks the "Guarantee Year 1 Completable" checkbox, which the same bug was silently eating.
-- **The Junimo Shrine sells one upgrade tier per press.** Buying a tiered upgrade (e.g. Mine Upgrade 1) with a controller could buy the next tier too in the same press and charge for both.
+- **Keep these bundles, or let time reshuffle them.** After the Junimos' Fail-night speech and before the shrine, you choose: hold the same bundle board into the next loop, or roll a fresh one. A kept board asks for exactly the same things, so anything you gathered for a bundle you almost finished is still worth having.
+- **The first hold is free; holding again in a row costs JP.** 50, 100, 200, then 300 JP for each further consecutive hold (config `BundleHoldCosts`). Letting time reshuffle resets the price back to free.
+- **TLY Custom boards only.** The hold applies to the mod's own board (the new-game **TLY Custom** choice). Normal and Remixed vanilla boards keep regenerating the game's way on every reset, as before.
+- **The Season Goals title shows how many times the board has been held**, and the day-1 Junimo now says up front that impossible-looking asks are expected, can be set aside for later, and can be held across a rewind.
+- **Text cleanup** across all in-game strings.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -57,6 +58,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 - **The intro.** On a fresh game, Lewis greets you on the porch, then a Junimo explains the loop. You wake on Spring 1 and pick your first **weekly theme**.
 - **Weekly themes.** Each week you choose a theme that grants a bonus and a matching liability (e.g. more forage on pickup, but the mines are closed). The planning hub opens at the start of each week.
 - **Seasonal goals.** The **Bundle Log** book (click to open) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
+- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the shrine they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.)
 - **Junimo Points (JP).** Donations earn JP, scaled by rarity and by how late in the year you give (later seasons are worth much more). JP banks across loops.
 - **The Junimo Shrine.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, and more.
 - **Carryover surfaces on the farm.** A **Cookbook** (kitchen) and **Craftbook** (table) let you bank recipes to keep; a **Junimo Stash** chest preserves a few items across resets.
@@ -76,6 +78,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `StashTileX/Y` | `0,0` (auto) | Where the Junimo Stash chest is placed (`0,0` = auto-pick near the farmhouse). The Bundle Log / Cookbook / Craftbook are placeable furniture you can put anywhere. |
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
 | `BundleSource` | `Engine` | `Engine` = the mod's own board every loop (the new-game **TLY Custom** choice). `Vanilla` = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save |
+| `BundleHoldCosts` | `[0, 50, 100, 200, 300]` | JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
 Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 JP). Feedback on these is welcome.

@@ -3,11 +3,18 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.12.17 - 2026-08-24
+
+Keep-bundles hold (spec `docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`). 750 tests;
+live-smoked on a throwaway save. Applies to Engine (TLY Custom) boards only; Vanilla boards are unaffected.
+
+### Added
 
 - New: on a Fail night the Junimos ask whether to hold the town's wishes (keep the same bundle board for the next loop) or let time reshuffle them. The first hold is free; holding again in a row costs 50, 100, 200, then 300 JP (config `BundleHoldCosts`). Reshuffling resets the price.
 - New: the day-1 Junimo speech says up front that impossible-looking asks are expected and can be held across a rewind.
 - Season Goals title shows how many times the board has been held.
+
+### Changed
 - Text: removed all em dashes from in-game strings.
 - Debug: `tly_hold keep|reshuffle|status`.
 
