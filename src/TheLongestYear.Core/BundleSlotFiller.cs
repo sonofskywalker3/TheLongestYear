@@ -34,7 +34,7 @@ public static class BundleSlotFiller
         var slots = chosen.Select(item => new BundleSlotSpec(
             item.ItemId,
             RollStack(match.Domain, item, tuning, rng),
-            RollQuality(match.Domain, tuning, rng))).ToList();
+            RollQuality(match.Domain, item, tuning, rng))).ToList();
 
         if (match.Domain == PoolDomain.SeasonalForage
             && rng.NextDouble() < tuning.LargeQuantityForageChance)
@@ -119,8 +119,13 @@ public static class BundleSlotFiller
         }
     }
 
-    private static int RollQuality(PoolDomain domain, BundleGenerationTuning tuning, Random rng)
+    private static int RollQuality(
+        PoolDomain domain, PoolItem item, BundleGenerationTuning tuning, Random rng)
     {
+        // Items that can never carry a quality star (algae/seaweed) must not get a
+        // silver/gold ask — the slot would be impossible to donate (Nexus 1122358).
+        if (tuning.QualityIneligibleItemIds.Contains(item.ItemId))
+            return 0;
         switch (domain)
         {
             case PoolDomain.QualityCrops:
