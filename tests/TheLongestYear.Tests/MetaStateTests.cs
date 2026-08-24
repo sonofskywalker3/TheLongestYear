@@ -333,4 +333,29 @@ public class MetaStateTests
     {
         Assert.Equal(-1, new MetaState().BundlesGeneratedForReset);
     }
+
+    [Fact]
+    public void BundleSeedLoop_defaults_to_minus_one_and_round_trips()
+    {
+        Assert.Equal(-1, new MetaState().BundleSeedLoop);
+        Assert.Equal(0, new MetaState().ConsecutiveHolds);
+        Assert.False(new MetaState().HoldChoiceMadeForReset);
+
+        var original = new MetaState { BundleSeedLoop = 3, ConsecutiveHolds = 2, HoldChoiceMadeForReset = true };
+        string json = System.Text.Json.JsonSerializer.Serialize(original);
+        MetaState restored = System.Text.Json.JsonSerializer.Deserialize<MetaState>(json)!;
+        Assert.Equal(3, restored.BundleSeedLoop);
+        Assert.Equal(2, restored.ConsecutiveHolds);
+        Assert.True(restored.HoldChoiceMadeForReset);
+    }
+
+    [Fact]
+    public void EffectiveBundleSeedLoop_falls_back_to_CompletedResets_when_unset()
+    {
+        var legacy = new MetaState { CompletedResets = 5 };
+        Assert.Equal(5, legacy.EffectiveBundleSeedLoop);
+
+        var held = new MetaState { CompletedResets = 5, BundleSeedLoop = 2 };
+        Assert.Equal(2, held.EffectiveBundleSeedLoop);
+    }
 }
