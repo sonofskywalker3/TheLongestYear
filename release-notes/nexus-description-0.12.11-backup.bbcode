@@ -1,0 +1,102 @@
+[size=6][b]The Longest Year[/b][/size]
+[size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
+
+[color=yellow][b]BETA (0.12.11).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+
+[line]
+
+[size=5][b]What's New in 0.12.11[/b][/size]
+[b]Pick your board (TLY Custom / Normal / Remixed), a fairly-priced red-cabbage gate, and twelve bundle schedules that could brick a run are fixed.[/b]
+[list]
+[*][b]Pick your board: TLY Custom, Normal or Remixed.[/b] [b]New → Advanced Options → Community Center Bundles[/b] now offers all three. [b]TLY Custom[/b] (the default) is the mod's own board, re-rolled every loop. [b]Normal[/b] / [b]Remixed[/b] keep the game's own board — and it comes back the [i]same kind[/i] after every reset (the remixed-turns-vanilla bug is fixed at the root: the game never saved that choice; the mod does now). Other bundle mods work too — e.g. Challenging Community Center Bundles — because the mod re-reads the board whenever another mod changes it. [font=Courier New]BundleSource[/font] (config / GMCM) is the default for new games and switches an existing save at its next reset.
+[*][b]Twelve bundles could brick or bully a run.[/b] Winter Star, Forager's, Gil's Trophies, Brewer's, Preserver's, Mineral, Home Cook's Feast, Fish Farmer's, Artifact, Four Seasons Sampler, Rare Crops and Garden asked for a donation in a season where none of their items exist yet (or far too early). Each now has a hand-set schedule, and Gil's Trophies only rolls trophies you can earn in year 1.
+[*][b]The red-cabbage gate is priced like a gate.[/b] We measured what a loop can pay out (a strong player banks ~8–9.5k JP). [i]Cultivation: Red Cabbage[/i] (Summer Mixed Seeds can roll Red Cabbage) now costs [b]5,000 JP[/b]. New [b]Pierre's Special Order[/b] ([b]10,000 JP[/b]): Pierre sells his year-2 seeds — Garlic, Red Cabbage, Artichoke — from year 1. [i]Cultivation: Starfruit[/i] is gone: anyone can reach the desert, there's no luck to buy off.
+[*][b]Weekly themes with nothing left to donate say so.[/b] The planning-hub card reads "Themed donations completed" instead of a blank row, and the drawback lifts for the week.
+[*][b]Weekly-theme goals know every bundle item.[/b] Items beyond a bundle's first few slots were invisible to the goal picker (wrong rarity, wrong seasons); Grape now counts as Summer forage; boards read from the game (Normal/Remixed/other mods) get the same "never ask for the unobtainable" guard the mod's own board had.
+[*][b][font=Courier New]EnableNonObjectDonations[/font] can be flipped any time.[/b] An in-flight Gil's Trophies bundle stays donatable until the next reset (the beta caveat is gone).
+[*][b]Mod page:[/b] the Advanced Options screenshot khauser13 asked for. Diagnostics: [font=Courier New]tly_jpbudget[/font] (max JP a loop's board can pay), [font=Courier New]tly_bundlesource[/font].
+[/list]
+
+Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
+
+[line]
+
+[size=5][b]What it is[/b][/size]
+The Longest Year turns Stardew's first year into a roguelite loop. Each season, you must give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned, and the power your offerings have banked, can carry forward. Restore the whole Center inside one year to break the loop for good.
+
+[size=5][b]Features[/b][/size]
+[list]
+[*][b]Seasonal time-loop.[/b] Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
+[*][b]Junimo Points.[/b] Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
+[*][b]The Junimo Shrine.[/b] Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, and more.
+[*][b]Weekly themes.[/b] Each week, pick a theme that grants a bonus and a paired liability. Plan around it.
+[*][b]Carryover surfaces.[/b] A Bundle Log book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
+[*][b]A real intro.[/b] Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
+[*][b]A starved Traveling Cart.[/b] Joja has squeezed the merchant's suppliers — the cart carries [b]one item[/b] per visit until you unlock more stalls with the [b]Cart Stall[/b] upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off [font=Courier New]LimitTravelingCartStock[/font].
+[*][b]Break the loop.[/b] Finish the Center in a year to win — then keep playing or start fresh.
+[/list]
+
+[size=5][b]Requirements[/b][/size]
+[list]
+[*]Stardew Valley 1.6+ (PC)
+[*]SMAPI 4.0.0+
+[*]A [b]new save[/b] on the [b]Standard farm[/b]
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install SMAPI 4.0.0 or newer.
+[*]Unzip into your [font=Courier New]Stardew Valley/Mods[/font] folder.
+[*]Launch through SMAPI and [b]start a new game on the Standard farm[/b]. Farm-type and intro options are handled for you.
+[*][b]Community Center Bundles[/b] under [b]New → Advanced Options[/b] defaults to [b]TLY Custom[/b]: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick [b]Normal[/b] or [b]Remixed[/b] there instead — the mod keeps that board and re-rolls it the same way on every reset. ([font=Courier New]BundleSource[/font] in the config/GMCM is the default for new games and switches an existing save at its next reset.)
+[img]https://staticdelivery.nexusmods.com/mods/1303/images/47192/47192-1787355673-935410882.png[/img]
+[/list]
+
+[size=5][b]Limitations (beta)[/b][/size]
+[list]
+[*]PC only — no Android port yet.
+[*]Standard farm only.
+[*]A run can only be started from a new game (other saves load normally and are left untouched).
+[*]Intro cutscene and dialogue are a first pass.
+[*]Multiplayer untested.
+[/list]
+
+[size=5][b]Tuning[/b][/size]
+Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save.
+
+[line]
+
+[size=5][b]Feedback wanted[/b][/size]
+[list]
+[*][b]Difficulty[/b] — are the seasonal minimums fair? Which wall hit hardest?
+[*][b]Pricing[/b] — do JP earnings and shrine costs feel balanced? What did you save for first?
+[*][b]Pacing[/b] — how many loops before it "clicked"? Did carryover make later loops feel stronger?
+[*][b]Bugs[/b] — please attach your [font=Courier New]SMAPI-latest.txt[/font] (from [font=Courier New]Stardew Valley/ErrorLogs/[/font]).
+[/list]
+
+[line]
+
+[size=5][b]Art wanted[/b][/size]
+The mod leans on vanilla sprites throughout. If anyone would enjoy making some custom book/sprite artwork (the Cookbook and Craftbook especially), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+
+[i]Banner art by [b]cwybabiesucks[/b] — thank you![/i]
+
+[line]
+
+[size=5][b]Translations[/b][/size]
+As of 0.11.60, every player-visible string in the mod lives in a JSON file ([font=Courier New]i18n/default.json[/font]) — the mod is fully translatable with no DLL edits or rebuilds. See [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/docs/TRANSLATING.md]TRANSLATING.md[/url] for how to add a language. If you translate it, let us know (Nexus DM or GitHub issue) and we'll link your work from the mod page.
+
+[line]
+
+[size=4][b]Also by this author[/b][/size]
+[list]
+[*][url=https://www.nexusmods.com/stardewvalley/mods/41869][b]Android Consolizer[/b][/url] — Full console-style controller support for Stardew Valley on Android.
+[*][url=https://www.nexusmods.com/stardewvalley/mods/47146][b]Cart Catalog[/b][/url] — Order from the Traveling Cart's daily stock; items arrive in a package on your porch the next morning.
+[*][url=https://www.nexusmods.com/stardewvalley/mods/42616][b]Nap Time[/b][/url] — Nap in bed to recover energy without ending the day. Configurable rate and wake-up cap. PC + Android.
+[/list]
+
+[line]
+[size=4][b]Source[/b][/size]
+Open source (MIT) — [url=https://github.com/sonofskywalker3/TheLongestYear][b]github.com/sonofskywalker3/TheLongestYear[/b][/url]
+
+[size=3][i]By sonofskywalker3. Built on SMAPI and HarmonyX. Stardew Valley is a trademark of ConcernedApe.[/i][/size]
