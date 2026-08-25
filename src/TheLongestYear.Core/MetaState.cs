@@ -138,14 +138,13 @@ public sealed class MetaState
     /// </summary>
     public bool HasSeenIntro { get; set; }
 
-    /// <summary>
-    /// Snapshot of the player's pet (kind, breed, name, friendship) captured before a loop
-    /// reset and restored after, when the <c>keep_pet</c> upgrade is owned. Null when the
-    /// upgrade isn't owned, when there was no pet to snapshot, or for the very first run
-    /// (no prior reset has populated it). See <see cref="PetSnapshot"/> for field meanings.
-    /// 2026-05-29 spec: sentimental upgrade only — barn/coop animals stay 0-hearts every loop.
-    /// </summary>
+    /// <summary>Legacy single-pet snapshot (pre 0.13.0). Migrated into <see cref="PetStates"/>
+    /// by PetCarryover.MigrateLegacy; null afterwards.</summary>
     public PetSnapshot? PetState { get; set; }
+
+    /// <summary>Every pet on the farm at the last snapshot (keep_pet, 0.13.0: Nexus 1122901,
+    /// a second pet bought from Marnie was the only one kept).</summary>
+    public List<PetSnapshot> PetStates { get; set; } = new();
 
     /// <summary>
     /// Snapshot of the player's stable + horse (tile, name, hat) captured before a loop reset and
