@@ -473,7 +473,8 @@ namespace TheLongestYear.Loop
             }
             else
             {
-                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds);
+                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade));
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.

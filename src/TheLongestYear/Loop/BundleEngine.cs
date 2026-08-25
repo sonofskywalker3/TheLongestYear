@@ -96,6 +96,9 @@ namespace TheLongestYear.Loop
         private readonly bool _nonObjectDonationsEnabled;
         private readonly Dictionary<int, DomainMatch> _lastDomains = new();
         private readonly RarityThresholds _thresholds;
+        /// <summary>Save-specific pool exclusions (YearTwoCrops.ExcludedFor). Part of the
+        /// generation inputs: reset and reload must pass the same set.</summary>
+        private readonly IReadOnlySet<string> _extraExcludedIds;
         private int _lastSeed;
 
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
@@ -105,8 +108,9 @@ namespace TheLongestYear.Loop
         /// cref="Generate"/> call, keyed by absolute index (diagnostics; see tly_genbundles).</summary>
         public IReadOnlyDictionary<int, DomainMatch> LastDomains => _lastDomains;
 
-        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null)
+        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null)
         {
+            _extraExcludedIds = extraExcludedIds;
             _monitor = monitor;
             _pool = new VanillaBundlePool(monitor);
             _tuning = tuning ?? new BundleGenerationTuning();
@@ -127,7 +131,7 @@ namespace TheLongestYear.Loop
         {
             _lastSeed = seed;
             _lastDomains.Clear();
-            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning);
+            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds);
             LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
 
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =

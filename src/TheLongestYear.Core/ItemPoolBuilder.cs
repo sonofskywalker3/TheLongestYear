@@ -52,9 +52,13 @@ public static class ItemPoolBuilder
         IReadOnlyList<RawMonsterDropEntry> monsterDrops,
         IReadOnlyList<RawFruitTreeEntry> fruitTrees,
         IReadOnlyList<RawGeodeDropEntry> geodeDrops,
-        BundleGenerationTuning tuning)
+        BundleGenerationTuning tuning,
+        IReadOnlySet<string>? extraExcludedIds = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
+        // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
+        if (extraExcludedIds != null)
+            excluded.UnionWith(extraExcludedIds);
 
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
         var (fishPool, crabPotPool) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning);
