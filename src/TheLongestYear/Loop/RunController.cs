@@ -328,7 +328,19 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            loc.createQuestionDialogue(Strings.Get("dialog.hold.prompt"), responses, (Farmer who, string key) =>
+            int easeSteps = SeasonPity.IsValidSeasonIndex(meta.LastFailSeason)
+                ? SeasonPity.EaseSteps(meta, (CoreSeason)meta.LastFailSeason, _config)
+                : 0;
+            string prompt;
+            if (easeSteps > 0 && meta.LastFailSeason == (int)CoreSeason.Winter)
+                prompt = Strings.Get("dialog.hold.prompt-eased-winter");
+            else if (easeSteps > 0)
+                prompt = Strings.Get("dialog.hold.prompt-eased", new Dictionary<string, string>
+                    { ["season"] = TheLongestYear.UI.SeasonGoalsMenu.SeasonName((CoreSeason)meta.LastFailSeason) });
+            else
+                prompt = Strings.Get("dialog.hold.prompt");
+
+            loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
             {
                 _menuWatch = null;
                 if (key == "keep")
@@ -342,7 +354,8 @@ namespace TheLongestYear.Loop
                         _holdReaskPending = true;   // re-ask next tick; see ShowHoldChoice's doc comment
                         return;
                     }
-                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}).", LogLevel.Info);
+                    SeasonPity.StampKeepEase(meta, _config);
+                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}, ease {meta.BoardEaseSeason}/{meta.BoardEaseSteps}).", LogLevel.Info);
                     Game1.playSound("junimoMeep1");
                     TryOpenShrineThenContinue(ContinueAfterResetSpend);
                     return;
@@ -358,7 +371,9 @@ namespace TheLongestYear.Loop
         private void ApplyHoldChoice(bool keep)
         {
             BundleHold.HoldResult result = BundleHold.Apply(_store.State, keep, _config.BundleHoldCosts);
-            _monitor.Log($"Hold choice: {result} (seed loop {_store.State.BundleSeedLoop}).", LogLevel.Info);
+            if (!keep)
+                SeasonPity.StampReshuffleTrim(_store.State, _config);   // reshuffle-path pity: the reset reads this stamp
+            _monitor.Log($"Hold choice: {result} (seed loop {_store.State.BundleSeedLoop}, board trim {_store.State.BoardTrimSeason}/{_store.State.BoardTrimSteps}).", LogLevel.Info);
             TryOpenShrineThenContinue(ContinueAfterResetSpend);
         }
 
@@ -717,6 +732,7 @@ namespace TheLongestYear.Loop
 
                 case RunAction.AdvanceMonth:
                     _monitor.Log($"Month cleared ({Run.Season}). Advancing.", LogLevel.Info);
+                    SeasonPity.RecordPass(_store.State, Run.Season, _config);   // season pity: passed gates fall back to the threshold
                     // Season-checkpoint award (spec 2026-07-14 economy Change 2): pays at the ENTERING
                     // season's multiplier so progressing always out-earns re-farming spring.
                     long checkpointJp = JpBoostHelper.Apply(_store.State, _jp.CheckpointBonus(Run.WeekOfYear + 1));
@@ -734,6 +750,8 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.FailReset:
+                    SeasonPity.RecordFail(_store.State, Run.Season);   // season pity: counted before the Fail-night choice reads it
+                    _monitor.Log($"Season pity: {Run.Season} fails now {SeasonPity.Counts(_store.State)[(int)Run.Season]}, ease steps next loop {SeasonPity.EaseSteps(_store.State, Run.Season, _config)}.", LogLevel.Info);
                     // The morning rewind un-restores every CC room. Strip any room the player
                     // FINISHED TODAY out of mailForTomorrow so its overnight restoration scene
                     // (the bus/greenhouse/minecart WorldChangeEvent) never plays — otherwise the
@@ -745,6 +763,7 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.Win:
+                    SeasonPity.RecordPass(_store.State, CoreSeason.Winter, _config);
                     // 2026-05-29 continue-after-victory: only award the win-JP + queue the
                     // post-win choice popup on the FIRST win this playthrough. Subsequent
                     // Winter 28 wins (after the player chose Keep playing) re-fire RunAction.Win

@@ -54,6 +54,7 @@ namespace TheLongestYear.UI
         private readonly MetaState _meta;
         private readonly IReadOnlyList<BundleRequirement> _requirements;
         private readonly CoreSeason _season;
+        private readonly int _easeSteps;
 
         private List<BundleEntry> _entries = new();
         private int _scrollIndex;
@@ -66,7 +67,7 @@ namespace TheLongestYear.UI
         private string _hoverText = "";
 
         public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
-            IReadOnlyList<BundleRequirement> requirements)
+            IReadOnlyList<BundleRequirement> requirements, int easeSteps = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _monitor = monitor;
@@ -74,6 +75,7 @@ namespace TheLongestYear.UI
             _meta = meta;
             _requirements = requirements ?? new List<BundleRequirement>();
             _season = run.Season;
+            _easeSteps = easeSteps;
 
             BuildEntries();
             RecomputeBoundsAndLayout();
@@ -397,24 +399,45 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             // Title bar.
-            string title;
-            if (_meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0)
+            // NOTE: each Strings.Get() call below keeps its own inline token-dictionary literal
+            // (rather than sharing one `tokens` variable across the switch) because
+            // I18nGuardTests.EveryTokenedKey_HasCallSiteSupplyingAllTokens statically scans source
+            // text for "Strings.Get(\"key\", new Dictionary<string, string> { ... })" at each call
+            // site: a shared variable passed by reference is invisible to that regex and would
+            // make every key here report as having no call site.
+            bool held = _meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0;
+            bool eased = _easeSteps > 0 && _meta != null && _meta.BundlesGeneratedForReset >= 0;
+            string season = SeasonName(_season);
+            string day = _run.DayOfMonth.ToString();
+            string holds = held ? _meta.ConsecutiveHolds.ToString() : "0";
+            string steps = _easeSteps.ToString();
+            string title = (held, eased) switch
             {
-                title = Strings.Get("menu.goals.title-held", new Dictionary<string, string>
+                (true, true) => Strings.Get("menu.goals.title-held-eased", new Dictionary<string, string>
                 {
-                    ["season"] = SeasonName(_season),
-                    ["day"] = _run.DayOfMonth.ToString(),
-                    ["holds"] = _meta.ConsecutiveHolds.ToString(),
-                });
-            }
-            else
-            {
-                title = Strings.Get("menu.goals.title", new Dictionary<string, string>
+                    ["season"] = season,
+                    ["day"] = day,
+                    ["holds"] = holds,
+                    ["steps"] = steps,
+                }),
+                (true, false) => Strings.Get("menu.goals.title-held", new Dictionary<string, string>
                 {
-                    ["season"] = SeasonName(_season),
-                    ["day"] = _run.DayOfMonth.ToString(),
-                });
-            }
+                    ["season"] = season,
+                    ["day"] = day,
+                    ["holds"] = holds,
+                }),
+                (false, true) => Strings.Get("menu.goals.title-eased", new Dictionary<string, string>
+                {
+                    ["season"] = season,
+                    ["day"] = day,
+                    ["steps"] = steps,
+                }),
+                _ => Strings.Get("menu.goals.title", new Dictionary<string, string>
+                {
+                    ["season"] = season,
+                    ["day"] = day,
+                }),
+            };
             SpriteText.drawStringHorizontallyCenteredAt(b, title,
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
@@ -550,7 +573,7 @@ namespace TheLongestYear.UI
         /// <c>menu.goals.badge-needs-before</c> i18n keys so translated builds get the game's
         /// own "Spring"/"Summer"/"Fall"/"Winter" instead of our own (unmaintained) season key.
         /// English output is byte-identical to the prior <c>(CoreSeason)n</c> enum-name rendering.</summary>
-        private static string SeasonName(CoreSeason season)
+        internal static string SeasonName(CoreSeason season)
             => StardewValley.Utility.getSeasonNameFromNumber((int)season);
 
         private static Item ResolveItem(string id, int stack = 1, int quality = 0)

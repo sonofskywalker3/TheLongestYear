@@ -33,6 +33,16 @@ threshold, and nothing gets harder because of what the player owns.
 `MetaState.SeasonFailCounts` : `int[4]`, index = `(int)Season` (Spring 0 .. Winter 3).
 Serialized with MetaState; missing on old saves = all zeros.
 
+The requirements a reload rebuilds must match what the player was told, so both pity paths are
+stamped on the board rather than re-derived from live counters at load time (review finding F1):
+`MetaState.BoardEaseSeason` / `BoardEaseSteps` (keep path, this section) and `BoardTrimSeason` /
+`BoardTrimSteps` (reshuffle path, section 3). The keep-path stamp is written by
+`SeasonPity.StampKeepEase` at the Fail-night KEEP choice and read back by
+`SeasonPity.CurrentQuotaEase` on every requirements build (including a reload) instead of
+re-deriving from `SeasonFailCounts`/held state; passing season S clears the stamp on the next
+loop's fail/keep cycle (the stamp is only written on a fresh keep, never refreshed by
+`RecordPass`), so passing S removes the easing from the next loop as intended.
+
 Rules (pure functions in `Core/SeasonPity.cs`, same shape as `BundleHold` /
 `BundleHoldPricing`):
 
@@ -70,8 +80,13 @@ state and a reload reproduces the same requirements (same reason the hold uses
   capped at Winter.
 - Only season S eases. Every other season's requirement is untouched, whatever its own count.
 - Vault gate is unaffected.
-- The adjustment is recomputed from `SeasonFailCounts` every time requirements are built, so
-  passing S (which drops the counter to the threshold) removes the easing automatically.
+- The adjustment comes from the `BoardEaseSeason`/`BoardEaseSteps` stamp (section 1), not a
+  live recompute from `SeasonFailCounts`, so a reload of a held board reproduces the same eased
+  requirements even after `RecordPass` has dropped the counter mid-loop. The stamp is only
+  written at a keep choice, so passing S removes the easing starting the next fail/keep cycle.
+- Winter is never stamped and `CurrentQuotaEase` is null whenever the stamped season is Winter,
+  even past the threshold (review finding F2): the prompt below has a dedicated Winter variant
+  that never claims the quota itself will ease.
 
 ## 3. Reshuffle path: hardness trim
 
@@ -81,7 +96,12 @@ the candidate pool for each bundle that contributes to season S's gate is trimme
 roll from the full pool.
 
 "Contributes to season S's gate" = Percentage bundles with `ramp[S] > 0`, PerItem bundles due
-in S, Seasonal bundles for S.
+in S, Seasonal bundles for S. This is implemented at fill time (`BundleSlotFiller.TrimApplies`)
+by the pool domain's own season, not by a lookup against the eventual requirement classification:
+a candidate pool is trimmed when `match.Season == null` (season-agnostic pools such as Metals,
+ArtisanGoods, Fish, CrabPot, MonsterDrops, which feed every season) or `match.Season == S`.
+Requirement classification (Percentage/PerItem/Seasonal, due seasons) runs later, off the
+already-filled board, so it cannot be the trim's own gate.
 
 Hardness score (`Core/ItemHardness.cs`), higher = harder, ties broken by ordinal item id so
 the trim is deterministic:
@@ -92,9 +112,7 @@ the trim is deterministic:
 | Needs a station or recipe (ArtisanGoods, Cooking, crafted, TapperGoods pools) | +2 |
 | Earliest spawn season Fall or Winter | +1 |
 
-Quality asks: before any item is removed, silver/gold quality asks on that bundle's slots are
-downgraded to base quality, each counting as half a trim (two quality downgrades = one trim
-unit). Then whole items are removed.
+Quality asks: when a trim applies to a bundle whose domain can roll quality (Quality Crops, seasonal crops, seasonal forage, fish), every slot in that bundle is forced to base quality and that costs one trim unit for the bundle; the remaining units remove whole items. Domains without quality rolls spend every unit on items.
 
 Guard: a pool is never trimmed below the number of distinct items its bundle needs
 (`targetCount` in `BundleSlotFiller.Fill`). If the trim would cross that line it stops early;
@@ -114,10 +132,14 @@ goods and geode tiers are deliberately outside this invariant; the pity system c
 
 ## 5. Player-facing
 
-- **Fail-night prompt** (`cutscene.day28.fail` flow, before the shrine): when `EaseSteps(S)` will
-  be > 0 for the next loop, the prompt gains one line. Keep: "The Junimos will ask a little less
-  of {{season}} next time." Reshuffle: "The Junimos will leave out the hardest of {{season}}'s
-  asks." Standard fails (steps = 0) show nothing new.
+- **Fail-night prompt** (`ShowHoldChoice`, before the shrine): when `EaseSteps(S)` will be > 0
+  for the next loop, the prompt is a single combined sentence variant covering both choices
+  (`dialog.hold.prompt-eased`) rather than an extra line per choice: "...Keep them and we will
+  ask a little less of {{season}}. Let time reshuffle them and we will leave out the hardest of
+  {{season}}'s asks." Winter uses a dedicated variant (`dialog.hold.prompt-eased-winter`, no
+  tokens) that drops the keep-side promise, since the quota itself never eases for Winter
+  (section 2 / review finding F2): "...Let time reshuffle them and we will leave out the hardest
+  of Winter's asks." Standard fails (steps = 0) show the plain `dialog.hold.prompt`.
 - **Season Goals title:** "Season Goals: {{season}} (day {{day}}) eased {{steps}}x". Combines
   with the existing held title: "... held {{holds}}x eased {{steps}}x".
 - **Bundle Log:** the eased season's quota lines show the eased number (no strike-through of
@@ -138,10 +160,22 @@ No em dashes in any player-facing string (house rule).
 
 ## 6. Error handling
 
-- Missing or short `SeasonFailCounts` on load: pad with zeros, log at Trace.
-- Config outside sane ranges (`PityThreshold < 0`, step or floor outside 0..1, trim < 0): clamp
-  at read time and log a Warn once, same pattern as other tuning lists.
-- Trim guard hit: Info log listing the bundle and how many items were actually removed.
+Documented deviation from the original plan (review finding F3): `Core/` has no `IMonitor` and
+takes no logging dependency, so the pad and clamp cases below are silent in Core, not Trace/Warn
+logs as originally specced. Only the trim guard logs, and it does so through a delegate the
+caller supplies rather than a monitor reference held by Core.
+
+- Missing or short `SeasonFailCounts` on load: `SeasonPity.Counts` silently pads with zeros
+  (`MetaState.SeasonFailCounts` itself is padded to four entries the first time it's read).
+- Config outside sane ranges (`PityThreshold < 0`, step or floor outside 0..1, trim < 0):
+  `SeasonPity`'s pure functions (`QuotaFactor`, `TrimUnits`, `EaseSteps`) silently clamp at read
+  time with `Math.Max`/`Math.Clamp`; there is no separate logged clamp pass.
+- Trim guard hit: `BundleSlotFiller.Fill` takes an optional `Action<string>? log` delegate; when
+  a trim applies it reports the before/after candidate counts, the units spent, whether quality
+  was forced off, and (when the guard stopped the trim early) says so in the same message.
+  `BundleEngine.Generate` is the only caller that supplies one, wiring it to
+  `_monitor.Log("BundleEngine: " + msg, LogLevel.Info)` so the log only exists on the mod side,
+  where a monitor is actually available.
 
 ## 7. Testing
 

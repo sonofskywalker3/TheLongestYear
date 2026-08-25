@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+- **Season pity** (spec `docs/superpowers/specs/2026-08-25-season-pity-design.md`). Fails are counted per
+  season gate. The first 5 fails at a season are standard difficulty; from the 6th, keeping the board
+  lowers that season's quota by 10% per extra fail (floor 50%), and reshuffling leaves the hardest
+  eligible items out of the roll (2 per extra fail; quality asks go first). Passing a season drops its
+  count back to 5. Season Goals title shows "eased Nx". Config `PityEnabled`, `PityThreshold`,
+  `PityQuotaStep`, `PityQuotaFloor`, `PityTrimPerStep` (GMCM section "Season pity"). Debug `tly_pity`.
+  TLY Custom boards only.
+
 ## 0.12.18 - 2026-08-24
 
 ### Fixed

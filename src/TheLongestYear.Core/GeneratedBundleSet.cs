@@ -22,7 +22,8 @@ public sealed class GeneratedBundleSet
 
     public IReadOnlyList<BundleRequirement> BuildRequirements(
         IReadOnlyDictionary<string, Season> itemSeasonPins,
-        IReadOnlyDictionary<string, int[]> bundleQuotas)
+        IReadOnlyDictionary<string, int[]> bundleQuotas,
+        SeasonEase? ease = null)
     {
         var result = new List<BundleRequirement>();
         foreach (var spec in Bundles)
@@ -49,6 +50,8 @@ public sealed class GeneratedBundleSet
                     req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
                     req.IngredientStacks, req.IngredientQualities);
             }
+            if (ease != null)
+                req = SeasonEase.Apply(req, ease);   // season pity, keep path (spec 2026-08-25)
             result.Add(req);
         }
         return result;

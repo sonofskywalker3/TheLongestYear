@@ -67,4 +67,57 @@ public class GeneratedBundleSetTests
         Assert.Equal(new[] { 0, 0, 0, 3 }, ramp); // nothing obtainable before Winter
         for (int i = 1; i < 4; i++) Assert.True(ramp[i] >= ramp[i - 1]);
     }
+
+    /// <summary>Spec 2026-08-25 section 4: the season filter keeps Fall crops out of the
+    /// Spring-named bundle, and the clamp drops a Spring quota that only non-Spring items
+    /// could satisfy to zero. Rolls a Spring-named crop bundle (Spring ingredients only) and a
+    /// derived-quota percentage bundle whose five ingredients are all Fall-or-later, builds
+    /// the manifest with the derived pins, and verifies the clamp engaged: Spring required = 0.</summary>
+    [Fact]
+    public void SpringGate_NeverRequires_FallOrWinterOnlyProduce()
+    {
+        var pools = ItemPoolBuilder.Build(
+            new[]
+            {
+                new RawCropEntry("24", new[] { Season.Spring }),
+                new RawCropEntry("188", new[] { Season.Spring }),
+                new RawCropEntry("190", new[] { Season.Spring }),
+                new RawCropEntry("192", new[] { Season.Spring }),
+                new RawCropEntry("270", new[] { Season.Summer, Season.Fall }),  // Corn
+                new RawCropEntry("276", new[] { Season.Fall }),                  // Pumpkin
+                new RawCropEntry("278", new[] { Season.Fall }),                  // Bok Choy
+                new RawCropEntry("280", new[] { Season.Fall }),                  // Yam
+                new RawCropEntry("282", new[] { Season.Fall }),                  // Cranberries
+            },
+            GatedItemVettingTests.Objects(("24", GatedItemVettingTests.Obj()), ("188", GatedItemVettingTests.Obj()),
+                ("190", GatedItemVettingTests.Obj()), ("192", GatedItemVettingTests.Obj()),
+                ("270", GatedItemVettingTests.Obj()), ("276", GatedItemVettingTests.Obj()),
+                ("278", GatedItemVettingTests.Obj()), ("280", GatedItemVettingTests.Obj()),
+                ("282", GatedItemVettingTests.Obj())),
+            new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), new BundleGenerationTuning());
+
+        var springSpec = new BundleSpec("Pantry", 0, "Spring Crops", "Spring Crops", "O 495 30", 0, 4,
+            new[] { "(O)24", "(O)188", "(O)190", "(O)192" }.Select(id => new BundleSlotSpec(id, 1, 0)).ToList());
+        var filledSpring = BundleSlotFiller.Fill(springSpec, new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring),
+            pools, new BundleGenerationTuning(), new Random(11));
+        Assert.All(filledSpring.Slots, s => Assert.DoesNotContain(s.ItemId, pools.DerivedSeasonPins.Keys));
+
+        var anySpec = new BundleSpec("Pantry", 1, "Totally Unknown Bundle", "Totally Unknown Bundle", "O 495 30", 0, 4,
+            new[] { "(O)270", "(O)276", "(O)278", "(O)280", "(O)282" }.Select(id => new BundleSlotSpec(id, 1, 0)).ToList());
+        var set = new GeneratedBundleSet(new[] { filledSpring, anySpec });
+        var reqs = set.BuildRequirements(pools.DerivedSeasonPins, GameplayConfig.DefaultBundleQuotas);
+
+        // The non-Spring bundle must have its Spring quota clamped to 0 because all five ingredients are unobtainable in Spring.
+        var unknown = Assert.Single(reqs, r => r.Name == "Totally Unknown Bundle");
+        Assert.Equal(0, unknown.CumulativeRequiredBySeason![0]);
+        Assert.True(unknown.CumulativeRequiredBySeason[3] >= 4);
+
+        // Donating only the Spring-obtainable items must satisfy every bundle's Spring gate.
+        var springOnly = new HashSet<string>(
+            filledSpring.Slots.Select(s => s.ItemId).Concat(new[] { "(O)24" }), StringComparer.Ordinal);
+        Assert.All(reqs, r => Assert.True(r.IsSatisfiedAtSeasonEnd(Season.Spring, springOnly),
+            $"{r.Name} demands Fall/Winter-only produce in Spring"));
+    }
 }
