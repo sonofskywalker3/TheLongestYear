@@ -29,7 +29,7 @@ public static class BundleSlotFiller
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
-        PityTrim? trim = null, RarityThresholds? thresholds = null)
+        PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -45,6 +45,7 @@ public static class BundleSlotFiller
         bool qualityOff = false;
         if (TrimApplies(match, trim))
         {
+            int before = candidates.Count;
             int units = trim!.Units;
             if (DomainRollsQuality(match.Domain) && units > 0)
             {
@@ -52,6 +53,13 @@ public static class BundleSlotFiller
                 units -= 1;
             }
             candidates = ItemHardness.Trim(candidates, units, targetCount, match.Domain, thresholds ?? new RarityThresholds());
+            int after = candidates.Count;
+            if (log != null)
+            {
+                int removed = before - after;
+                string guardNote = after == targetCount && removed < units ? " (guard stopped early)" : "";
+                log($"pity trim '{spec.Name}': {before} candidates -> {after} (units {trim.Units}, quality off {qualityOff}, need {targetCount}){guardNote}");
+            }
         }
 
         if (candidates.Count < targetCount)

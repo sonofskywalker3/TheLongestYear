@@ -190,7 +190,8 @@ namespace TheLongestYear.Loop
                     {
                         var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                         DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
-                        composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng, trim, _thresholds);
+                        composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng, trim, _thresholds,
+                            msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info));
                         if (ReferenceEquals(composed, pick))
                         {
                             if (match.Domain != PoolDomain.None)
