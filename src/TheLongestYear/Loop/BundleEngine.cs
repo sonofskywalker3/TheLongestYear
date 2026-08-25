@@ -95,6 +95,7 @@ namespace TheLongestYear.Loop
         private readonly BundleGenerationTuning _tuning;
         private readonly bool _nonObjectDonationsEnabled;
         private readonly Dictionary<int, DomainMatch> _lastDomains = new();
+        private readonly RarityThresholds _thresholds;
         private int _lastSeed;
 
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
@@ -104,17 +105,25 @@ namespace TheLongestYear.Loop
         /// cref="Generate"/> call, keyed by absolute index (diagnostics; see tly_genbundles).</summary>
         public IReadOnlyDictionary<int, DomainMatch> LastDomains => _lastDomains;
 
-        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled)
+        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null)
         {
             _monitor = monitor;
             _pool = new VanillaBundlePool(monitor);
             _tuning = tuning ?? new BundleGenerationTuning();
             _nonObjectDonationsEnabled = nonObjectDonationsEnabled;
+            _thresholds = thresholds ?? new RarityThresholds();
         }
+
+        /// <summary>The reshuffle-path pity trim stamped on the CURRENT board, or null. Every
+        /// Generate call for a live board must pass this so a reload reproduces the same set.</summary>
+        public static PityTrim TrimFor(MetaState meta)
+            => meta.BoardTrimSeason >= 0 && meta.BoardTrimSeason < Calendar.MonthsPerYear && meta.BoardTrimSteps > 0
+                ? new PityTrim((Core.Season)meta.BoardTrimSeason, meta.BoardTrimSteps)
+                : null;
 
         /// <summary>Draws one bundle per room-position (Vault unmodified) and returns the
         /// generated set. Deterministic for a given seed (see <see cref="BundleEngineSeed"/>).</summary>
-        public GeneratedBundleSet Generate(int seed)
+        public GeneratedBundleSet Generate(int seed, PityTrim trim = null)
         {
             _lastSeed = seed;
             _lastDomains.Clear();
@@ -181,7 +190,7 @@ namespace TheLongestYear.Loop
                     {
                         var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                         DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
-                        composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng);
+                        composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng, trim, _thresholds);
                         if (ReferenceEquals(composed, pick))
                         {
                             if (match.Domain != PoolDomain.None)
@@ -207,12 +216,13 @@ namespace TheLongestYear.Loop
         public IReadOnlyList<BundleRequirement> BuildRequirements(
             GeneratedBundleSet set,
             IReadOnlyDictionary<string, Core.Season> basePins,
-            IReadOnlyDictionary<string, int[]> bundleQuotas)
+            IReadOnlyDictionary<string, int[]> bundleQuotas,
+            SeasonEase ease = null)
         {
             var merged = new Dictionary<string, Core.Season>(LastDerivedSeasonPins, StringComparer.Ordinal);
             foreach (KeyValuePair<string, Core.Season> pin in basePins)
                 merged[pin.Key] = pin.Value;
-            return set.BuildRequirements(merged, bundleQuotas);
+            return set.BuildRequirements(merged, bundleQuotas, ease);
         }
 
         /// <summary>Writes the generated set into <c>Game1.netWorldState</c> and re-syncs the CC
