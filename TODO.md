@@ -6,7 +6,20 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): ALL THREE FIXED on master (v0.13.0, unreleased)
+### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): ALL THREE FIXED on master (v0.13.0, unreleased), smoke PASSED
+
+**Smoke 2026-08-25 (deployed 0.13.0, Rodger throwaway save, `test-output/cart-*.png`):**
+
+| Check | Result | Evidence |
+|---|---|---|
+| Board has no quality asks on Fiber / jellies / Tea Leaves | PASS | `tly_genbundles` "quality asks:" lines: only `The Missing` (vanilla slots, Abandoned Joja Mart: 348 q1, 454 q2, 795 q2) plus the Vault money bundles printed as `-1 qNNNN` (diagnostic quirk, cosmetic) |
+| Cart: buy the only item, reopen | PASS | `debug shop Traveler`: Pumpkin bought, reopen shows "Out of stock" instead of the next item (cart-06-reopen.png) |
+| Keep every pet | path ran, not proven | save has no pets: `PetCarryover: no pets on the farm; snapshot cleared`; the two-pet case is unit-tested only |
+
+Jeff (watching the smoke): the merchant's "The Junimos might know a way around that." breaks the lore
+(only the farmer and the Wizard see Junimos); removed from `dialog.cart.first-visit`. The cart intro
+popping up in the farmhouse was the `debug shop Traveler` test, not a player path. Follow-up nit:
+`tly_genbundles` quality-asks line should skip Vault slots (id -1, the "quality" is the gold amount).
 
 Plan `docs/superpowers/plans/2026-08-25-0-13-0-fixes.md`. Final-review finding worth remembering: Fiber
 enters the pools as a CROP (Fiber Seeds 885 -> 771), and vanilla marks it base-only with

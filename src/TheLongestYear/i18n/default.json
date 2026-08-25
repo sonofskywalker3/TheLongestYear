@@ -33,7 +33,7 @@
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
     "dialog.mines.uneasy-1": "The mines feel uneasy this week. The elevator and lower ladders will not respond.",
     "dialog.mines.uneasy-2": "The mines feel uneasy this week. The entrance has been closed off.",
-    "dialog.cart.first-visit": "The merchant gives an apologetic shrug. \"Joja's been leaning on every supplier between here and Zuzu City - nobody will sell to me. This is all I could scrape together for now.\"\n\nThe Junimos might know a way around that.",
+    "dialog.cart.first-visit": "The merchant gives an apologetic shrug. \"Joja's been leaning on every supplier between here and Zuzu City - nobody will sell to me. This is all I could scrape together for now.\"",
 
     // -- upgrades (hand-authored), keys derive from the upgrade id ---------------
     "upgrade.backpack_1.name": "Backpack I",

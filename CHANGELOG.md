@@ -44,6 +44,7 @@ live-smoked on a throwaway save. Applies to Engine (TLY Custom) boards only; Van
 - Season Goals title shows how many times the board has been held.
 
 ### Changed
+- The Traveling Cart merchant no longer mentions the Junimos (only the farmer and the Wizard can see them).
 - Text: removed all em dashes from in-game strings.
 - Debug: `tly_hold keep|reshuffle|status`.
 
