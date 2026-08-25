@@ -261,4 +261,42 @@ public class BundleSlotFillerTests
         Assert.False(BundleSlotFiller.DomainRollsQuality(PoolDomain.Metals));
         Assert.False(BundleSlotFiller.DomainRollsQuality(PoolDomain.ArtisanGoods));
     }
+
+    [Fact]
+    public void QualityAsk_OnlyForEligibleIds_WhenEligibilityKnown()
+    {
+        var tuning = new BundleGenerationTuning { GoldQualityChance = 1.0 };
+        var pools = new ItemPools
+        {
+            Forage = new[] { Item("(O)16", seasons: new[] { Season.Spring }), Item("(O)815", seasons: new[] { Season.Spring }) },
+            QualityEligibleIds = new HashSet<string> { "(O)16" },
+        };
+        var filled = BundleSlotFiller.Fill(Spec("Spring Foraging", 2, 2),
+            new DomainMatch(PoolDomain.SeasonalForage, Season.Spring), pools, tuning, new Random(3));
+        foreach (BundleSlotSpec slot in filled.Slots)
+            Assert.Equal(slot.ItemId == "(O)16" ? 2 : 0, slot.Quality);
+    }
+
+    [Fact]
+    public void QualityAsk_AllowedEverywhere_WhenEligibilityUnknown()
+    {
+        var tuning = new BundleGenerationTuning { GoldQualityChance = 1.0 };
+        var pools = new ItemPools { Forage = new[] { Item("(O)815", seasons: new[] { Season.Spring }) } };   // QualityEligibleIds null
+        var filled = BundleSlotFiller.Fill(Spec("Spring Foraging", 1, 1),
+            new DomainMatch(PoolDomain.SeasonalForage, Season.Spring), pools, tuning, new Random(3));
+        Assert.Equal(2, filled.Slots[0].Quality);
+    }
+
+    [Fact]
+    public void QualityCrops_IneligibleItemGetsBaseQualityEvenThere()
+    {
+        var pools = new ItemPools
+        {
+            Crops = new[] { Item("(O)24", seasons: new[] { Season.Spring }) },
+            QualityEligibleIds = new HashSet<string>(),   // known, and nothing is eligible
+        };
+        var filled = BundleSlotFiller.Fill(Spec("Quality Crops", 1, 1),
+            new DomainMatch(PoolDomain.QualityCrops, null), pools, Tuning, new Random(3));
+        Assert.Equal(0, filled.Slots[0].Quality);
+    }
 }
