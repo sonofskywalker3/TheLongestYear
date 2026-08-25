@@ -14,6 +14,18 @@ aims to follow [Semantic Versioning](https://semver.org/).
   `PityQuotaStep`, `PityQuotaFloor`, `PityTrimPerStep` (GMCM section "Season pity"). Debug `tly_pity`.
   TLY Custom boards only.
 
+### Fixed
+- **Quality asks only on items that can carry quality** (Nexus 1122358 follow-ups: gold Fiber, gold
+  River Jelly, silver Tea Leaves). The engine now derives which items the game itself gives quality
+  to (crop harvests, rod-caught fish that are not jellies, spawned forage in a forage category) and
+  never asks for silver/gold on anything else, including curated forage additions such as Tea Leaves
+  and bush drops. `tly_genbundles` lists every quality ask on the board.
+- **Keep Pet keeps every pet** (Nexus 1122901). A second pet from Marnie used to be the only one that
+  survived a reset; all pets are snapshotted and restored (old single-pet saves migrate on load).
+- **Traveling Cart cap is per day, not per view** (Nexus post, lexihope). Buying an item used to pull
+  the next item in the merchant's list into the freed slot; the day's selection is now remembered, so a
+  purchase leaves a gap until tomorrow.
+
 ## 0.12.18 - 2026-08-24
 
 ### Fixed
