@@ -403,7 +403,7 @@ namespace TheLongestYear.UI
             // (rather than sharing one `tokens` variable across the switch) because
             // I18nGuardTests.EveryTokenedKey_HasCallSiteSupplyingAllTokens statically scans source
             // text for "Strings.Get(\"key\", new Dictionary<string, string> { ... })" at each call
-            // site — a shared variable passed by reference is invisible to that regex and would
+            // site: a shared variable passed by reference is invisible to that regex and would
             // make every key here report as having no call site.
             bool held = _meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0;
             bool eased = _easeSteps > 0 && _meta != null && _meta.BundlesGeneratedForReset >= 0;
