@@ -94,7 +94,8 @@ namespace TheLongestYear.UI
             if (!CanOpen()) return;
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
-            Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _store.State, _runController.Requirements);
+            int easeSteps = TheLongestYear.Core.SeasonPity.DisplaySteps(_store.State, _config);
+            Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _store.State, _runController.Requirements, easeSteps);
             _monitor.Log(
                 $"Opened Season Goals ({_store.Run.Season} day {_store.Run.DayOfMonth}, " +
                 $"{_runController.Requirements.Count} bundles tracked).",
