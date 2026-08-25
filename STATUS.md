@@ -1,12 +1,29 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-25 00:30 (v0.12.18 RELEASED: keep-bundles hold + Void Salmon exclusion)
-**Branch:** `master` (clean, pushed)
-**Tests:** 750 passing, 0 failing
-**Build:** clean; v0.12.17 build is what's deployed to PC Mods (0.12.18 differs only by the Void Salmon exclusion)
-**Last public release:** 0.12.18 (GitHub v0.12.17 + v0.12.18 tags; Nexus file, version, description, changelog all synced 2026-08-25 00:30 via Claude-in-Chrome)
+**Last updated:** 2026-08-25 (season pity merged to master as v0.12.19, UNRELEASED, not yet live-smoked)
+**Branch:** `master`
+**Tests:** 794 passing, 0 failing
+**Build:** clean; PC Mods still has the 0.12.17 build deployed (0.12.19 not deployed yet)
+**Last public release:** 0.12.18 (2026-08-25 00:30, fully closed)
 
-## Current state (2026-08-25): 0.12.18 released, fully closed
+## Current state (2026-08-25): v0.12.19 on master, season pity merged, not released
+
+Merged `worktree-season-pity` (spec `docs/superpowers/specs/2026-08-25-season-pity-design.md`, plan
+`docs/superpowers/plans/2026-08-25-season-pity.md`, 15 commits, subagent-driven with per-task reviews
+and a final whole-branch review). Per-season fail counter (`MetaState.SeasonFailCounts`); first 5 fails
+at a season are standard; from the 6th, KEEP lowers that season's quota 10%/step (floor 50%) via a
+`BoardEaseSeason/Steps` stamp read back on load, RESHUFFLE trims the 2 hardest eligible items/step via
+`BoardTrimSeason/Steps` (both stamps keep reloads byte-identical to the reset). Passing a season drops
+its count to 5; Winter never gets the keep-path ease. `tly_pity status|set`, GMCM "Season pity" section,
+eased Fail-night prompt (+ Winter variant), "eased Nx" title. Rules in `Core/SeasonPity.cs`,
+`SeasonEase.cs`, `ItemHardness.cs`, `PityTrim.cs`; trim inside `BundleSlotFiller.Fill`.
+
+**Not done:** the live smoke in the plan's Task 10 step 4 (needs Jeff's yes to drive the game:
+`tly_pity set spring 7`, fail, keep -> title "held 1x eased 2x" and lower Spring quota, reload no
+mismatch WARN, reshuffle -> log `pity trim Spring x6`, reload, `tly_day28continue` -> Spring back to 5).
+Then README + Nexus "What's New" (identical content) and the release on "yes, push".
+
+## Previous state (2026-08-25): 0.12.18 released, fully closed
 
 0.12.17 (hold feature) and 0.12.18 (Void Salmon out: WitchSwamp joins the built-in excluded
 location markers and `(O)795` the built-in excluded ids, since the Witch's Swamp is behind the

@@ -6,12 +6,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 0.13.x: season pity (spec written 2026-08-25, plan next)
+### Season pity: MERGED to master as v0.12.19 (2026-08-25), unreleased, live smoke pending
 
-Brainstormed and approved 2026-08-25: `docs/superpowers/specs/2026-08-25-season-pity-design.md`.
-Per-season fail counter; first 5 fails standard; from the 6th, keep = quota -10%/step (floor 50%),
-reshuffle = trim the 2 hardest eligible items/step; passing a season drops its counter back to 5.
-Next: `superpowers:writing-plans` for the implementation plan.
+Spec `docs/superpowers/specs/2026-08-25-season-pity-design.md`, plan
+`docs/superpowers/plans/2026-08-25-season-pity.md` (Task 10 step 4 is the smoke script). 794 tests.
+Open follow-ups parked by the final review (cosmetic): trim log prints raw units and fires before the
+can't-fill bail; `SeasonPity` class doc lists the old mutator set; `BundleEngine.TrimFor` hand-rolls
+the season bound check; turning `PityEnabled` off mid-loop drops the quota ease on the next reload
+while the trimmed board stays (config-driven, accepted).
 
 ### (superseded) 0.13.x brainstorm: DerivePins / obtainability
 
