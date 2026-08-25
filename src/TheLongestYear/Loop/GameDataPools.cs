@@ -29,7 +29,9 @@ namespace TheLongestYear.Loop
 
         public GameDataPools(IMonitor monitor) => _monitor = monitor;
 
-        public ItemPools Build(BundleGenerationTuning tuning)
+        /// <param name="extraExcludedIds">Save-specific exclusions merged into the tuning's
+        /// excluded ids (YearTwoCrops.ExcludedFor on the current MetaState); null = none.</param>
+        public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null)
         {
             var crops = new List<RawCropEntry>();
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
@@ -114,7 +116,7 @@ namespace TheLongestYear.Loop
 
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
-                fruitTrees, geodeDrops, tuning);
+                fruitTrees, geodeDrops, tuning, extraExcludedIds);
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +

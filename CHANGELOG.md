@@ -22,6 +22,10 @@ aims to follow [Semantic Versioning](https://semver.org/).
   and bush drops. `tly_genbundles` lists every quality ask on the board.
 - **Keep Pet keeps every pet** (Nexus 1122901). A second pet from Marnie used to be the only one that
   survived a reset; all pets are snapshotted and restored (old single-pet saves migrate at their next reset).
+- **No bundle or weekly goal asks for Pierre's year-2 crops until you can grow them.** Garlic and
+  Artichoke stay out of every pool until you own Pierre's Special Order; Red Cabbage until you own
+  that or the Cultivation: Red Cabbage upgrade. On run 1 the only source of those seeds is a shrine
+  upgrade, so a Garlic weekly goal was unwinnable by construction (Jeff, 2026-08-25 smoke).
 - **Traveling Cart cap is per day, not per view** (Nexus post, lexihope). Buying an item used to pull
   the next item in the merchant's list into the freed slot; the day's selection is now remembered, so a
   purchase leaves a gap until tomorrow. The Cart Whisperer preview locks in the same selection, so what
