@@ -34,9 +34,9 @@ public class PetCarryoverTests
 
     [Theory]
     [InlineData(0, 54, 8)]
-    [InlineData(1, 56, 8)]
-    [InlineData(3, 60, 8)]
-    public void RestoreTile_staggers_by_two_columns(int index, int x, int y)
+    [InlineData(1, 52, 8)]
+    [InlineData(3, 48, 8)]
+    public void RestoreTile_staggers_west_by_two_columns(int index, int x, int y)
         => Assert.Equal((x, y), PetCarryover.RestoreTile(index));
 
     [Fact]
