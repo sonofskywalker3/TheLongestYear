@@ -189,8 +189,11 @@ public class BundleSlotFillerTests
                 seasons: new[] { Season.Spring })).ToList(),
         };
         var spec = Spec("Spring Crops", 4, numberOfSlots: 4);
-        var match = new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring);
-        // 3 units: 1 spent on quality-off (crops roll quality), 2 remove the two priciest items.
+        // QualityCrops (rather than SeasonalCrops) makes the quality-off assertion load-bearing:
+        // RollQuality always asks gold for this domain, so an untrimmed fill would show Quality 2
+        // on every slot; only the trim's quality-off unit can bring that back to 0.
+        var match = new DomainMatch(PoolDomain.QualityCrops, Season.Spring);
+        // 3 units: 1 spent on quality-off, 2 remove the two priciest items.
         var filled = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(5),
             new PityTrim(Season.Spring, 3), Thresholds);
         Assert.DoesNotContain(filled.Slots, s => s.ItemId is "(O)107" or "(O)106");
@@ -230,6 +233,24 @@ public class BundleSlotFillerTests
         Assert.NotSame(spec, filled);              // still filled (guard stopped at 3 candidates)
         Assert.Equal(3, filled.Slots.Count);
         Assert.DoesNotContain(filled.Slots, s => s.ItemId == "(O)203");
+    }
+
+    [Fact]
+    public void Fill_logs_the_trim_before_and_after_counts_and_flags_the_guard()
+    {
+        var pools = new ItemPools
+        {
+            Metals = Enumerable.Range(0, 4).Select(i => Item($"(O){200 + i}", price: 10 + i * 150)).ToList(),
+        };
+        var spec = Spec("Blacksmith's", 3, 3);
+        var messages = new List<string>();
+        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null),
+            pools, Tuning, new Random(5), new PityTrim(Season.Spring, 10), Thresholds, messages.Add);
+        Assert.NotSame(spec, filled);
+        Assert.Single(messages);
+        Assert.Contains("4 candidates -> 3", messages[0]);
+        Assert.Contains("need 3", messages[0]);
+        Assert.Contains("guard stopped early", messages[0]);
     }
 
     [Fact]
