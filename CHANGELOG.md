@@ -3,6 +3,11 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.12.18 - 2026-08-24
+
+### Fixed
+- **Void Salmon removed from the bundle pools** (Nexus 1122358 follow-up). `WitchSwamp` joins the built-in excluded location markers and `(O)795` the built-in excluded ids: the Witch's Swamp is behind the Dark Talisman quest, which is post-CC, so the 0.12.16 "hard but fair" ruling was wrong. Existing saves get the change at their next reset.
+
 ## 0.12.17 - 2026-08-24
 
 Keep-bundles hold (spec `docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`). 750 tests;

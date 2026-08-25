@@ -455,14 +455,16 @@ public static class ItemPoolBuilder
         "(O)906", // Poi               — island dish
         "(O)907", // Tropical Curry    — island dish
         "(O)873", // Piña Colada       — island resort drink
+        "(O)795", // Void Salmon       — Witch's Swamp only, behind the Dark Talisman quest (post-CC)
     };
 
     /// <summary>Built-in excluded location markers, merged with the config list by
     /// <see cref="IsExcludedLocation"/> (same config-override rationale as
     /// <see cref="BuiltInExcludedItemIds"/>). BugLand = Mutant Bug Lair: behind the Dark
-    /// Talisman quest, which is itself post-CC — never year-1 content. WitchSwamp stays
-    /// in: Void Salmon is hard-but-fair (user ruling 2026-08-24).</summary>
-    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers = new[] { "BugLand" };
+    /// Talisman quest, which is itself post-CC — never year-1 content. WitchSwamp is behind
+    /// the same quest, so Void Salmon is out too (0.12.18; the 2026-08-24 "hard but fair"
+    /// ruling assumed the swamp was reachable in year 1, which it is not).</summary>
+    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers = new[] { "BugLand", "WitchSwamp" };
 
     /// <summary>Structural + configured vetting. False = never offer this item.</summary>
     private static bool Vets(

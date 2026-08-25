@@ -1,0 +1,5 @@
+Fail night: after the Junimos' speech and before the shrine, choose to keep the same bundle board for the next loop or let time reshuffle it. First hold is free; each further hold in a row costs 50, 100, 200, then 300 JP (config BundleHoldCosts); reshuffling resets the price. TLY Custom boards only (Normal/Remixed vanilla boards regenerate as before).
+Season Goals title shows how many times the board has been held.
+The day-1 Junimo explains that impossible-looking asks are expected, can be set aside for later, and can be held across a rewind.
+Text cleanup across all in-game strings.
+Void Salmon removed from the bundle pools: the Witch's Swamp is behind the post-CC Dark Talisman quest, so it was never reachable in a year-1 loop (0.12.16 kept it as "hard but fair" by mistake). Existing saves get the change at their next reset.
