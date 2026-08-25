@@ -68,16 +68,15 @@ public static class SeasonPity
         state.BoardTrimSteps = 0;
     }
 
-    /// <summary>The keep-path quota easing in force for the current board: the last failed
-    /// season and its ease steps, only while the board is held (ConsecutiveHolds > 0).
-    /// (Season, Steps, Factor); Steps == 0 means no easing.</summary>
-    public static (Season Season, int Steps, double Factor) CurrentQuotaEase(MetaState state, GameplayConfig config)
+    /// <summary>The keep-path quota easing in force for the current board, or null: the last
+    /// failed season and its ease steps, only while the board is held (ConsecutiveHolds > 0).</summary>
+    public static SeasonEase? CurrentQuotaEase(MetaState state, GameplayConfig config)
     {
         if (state.ConsecutiveHolds <= 0 || state.LastFailSeason < 0 || state.LastFailSeason >= Calendar.MonthsPerYear)
-            return (Season.Spring, 0, 1.0);
+            return null;
         var season = (Season)state.LastFailSeason;
         int steps = EaseSteps(state, season, config);
-        return (season, steps, QuotaFactor(steps, config));
+        return steps > 0 ? new SeasonEase(season, steps, QuotaFactor(steps, config)) : null;
     }
 
     /// <summary>Steps to show in the Season Goals title: the quota ease while held, else the
@@ -85,7 +84,7 @@ public static class SeasonPity
     public static int DisplaySteps(MetaState state, GameplayConfig config)
     {
         var ease = CurrentQuotaEase(state, config);
-        if (ease.Steps > 0) return ease.Steps;
+        if (ease != null) return ease.Steps;
         if (state.BoardTrimSeason >= 0 && config.PityTrimPerStep > 0)
             return state.BoardTrimSteps / config.PityTrimPerStep;
         return 0;
