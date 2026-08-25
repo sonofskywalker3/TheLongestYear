@@ -92,9 +92,7 @@ the trim is deterministic:
 | Needs a station or recipe (ArtisanGoods, Cooking, crafted, TapperGoods pools) | +2 |
 | Earliest spawn season Fall or Winter | +1 |
 
-Quality asks: before any item is removed, silver/gold quality asks on that bundle's slots are
-downgraded to base quality, each counting as half a trim (two quality downgrades = one trim
-unit). Then whole items are removed.
+Quality asks: when a trim applies to a bundle whose domain can roll quality (Quality Crops, seasonal crops, seasonal forage, fish), every slot in that bundle is forced to base quality and that costs one trim unit for the bundle; the remaining units remove whole items. Domains without quality rolls spend every unit on items.
 
 Guard: a pool is never trimmed below the number of distinct items its bundle needs
 (`targetCount` in `BundleSlotFiller.Fill`). If the trim would cross that line it stops early;
