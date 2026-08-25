@@ -27,9 +27,11 @@ public static class PetCarryover
     }
 
     /// <summary>Where pet number <paramref name="index"/> lands on the Farm: the porch tile,
-    /// two columns further right per pet so they do not stack.</summary>
+    /// staggered two columns further WEST per pet so they do not stack. West, not east:
+    /// x59-67 above the farmhouse is a no-go footprint per WorldResetService, so marching
+    /// east would walk pets into the house.</summary>
     public static (int X, int Y) RestoreTile(int index)
-        => (RestoreTileX + ColumnsPerPet * Math.Max(0, index), RestoreTileY);
+        => (RestoreTileX - ColumnsPerPet * Math.Max(0, index), RestoreTileY);
 
     public static int ClampFriendship(int value) => Math.Clamp(value, 0, MaxFriendship);
 }
