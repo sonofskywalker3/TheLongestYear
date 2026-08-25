@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -28,7 +29,7 @@ namespace TheLongestYear.Loop
 
         /// <summary>Set by ModEntry.OnSaveLoaded (null when no TLY run is loaded): the live RunState
         /// that remembers today's cart selection.</summary>
-        internal static System.Func<RunState> RunProvider;
+        internal static Func<RunState> RunProvider;
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
@@ -53,14 +54,16 @@ namespace TheLongestYear.Loop
             }
 
             var entries = __result.ToList();
-            var ids = entries.Select(kv => kv.Key.QualifiedItemId).ToList();
-            var keep = new HashSet<string>(CartDayStock.Select(run, Game1.Date.TotalDays, ids, allowed), System.StringComparer.Ordinal);
+            var ids = entries
+                .Select(kv => CartDayStock.KeyFor(kv.Key.QualifiedItemId, (kv.Key as StardewValley.Object)?.IsRecipe ?? false))
+                .ToList();
+            var keep = new HashSet<string>(CartDayStock.Select(run, Game1.Date.TotalDays, ids, allowed), StringComparer.Ordinal);
             __result.Clear();
-            var seen = new HashSet<string>(System.StringComparer.Ordinal);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var kv in entries)
             {
-                string id = kv.Key.QualifiedItemId;
-                if (keep.Contains(id) && seen.Add(id))
+                string key = CartDayStock.KeyFor(kv.Key.QualifiedItemId, (kv.Key as StardewValley.Object)?.IsRecipe ?? false);
+                if (keep.Contains(key) && seen.Add(key))
                     __result.Add(kv.Key, kv.Value);
             }
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,14 +11,21 @@ namespace TheLongestYear.Core;
 public static class CartDayStock
 {
     private const int NoDay = -1;
+    private const string RecipeSuffix = "#Recipe";
+
+    /// <summary>Mirrors vanilla ShopBuilder.TrackSeenItems' dedupe key: a recipe listing
+    /// gets its own slot alongside the plain item, matching the game's own "#Recipe" suffix
+    /// (F3 — without this, an item and its recipe collapsed to one slot and the cart showed
+    /// fewer items than its tier allows).</summary>
+    public static string KeyFor(string qualifiedItemId, bool isRecipe)
+        => isRecipe ? qualifiedItemId + RecipeSuffix : qualifiedItemId;
 
     public static IReadOnlyList<string> Select(RunState run, int day, IReadOnlyList<string> stockIds, int allowed)
     {
         if (allowed <= 0)
-            return System.Array.Empty<string>();
-        run.CartStockIds ??= new List<string>();
+            return Array.Empty<string>();
 
-        bool sameDay = run.CartStockDay == day && run.CartStockIds.Count > 0;
+        bool sameDay = run.CartStockDay == day && run.CartStockIds is { Count: > 0 };
         if (!sameDay)
         {
             var chosen = stockIds.Take(allowed).ToList();
@@ -26,7 +34,7 @@ public static class CartDayStock
             return chosen;
         }
 
-        var remembered = new HashSet<string>(run.CartStockIds, System.StringComparer.Ordinal);
+        var remembered = new HashSet<string>(run.CartStockIds, StringComparer.Ordinal);
         return stockIds.Where(remembered.Contains).ToList();
     }
 }
