@@ -60,4 +60,20 @@ public class CartDayStockTests
         var run = new RunState();
         Assert.Equal(Stock, CartDayStock.Select(run, day: 10, Stock, allowed: 10));
     }
+
+    [Fact]
+    public void KeyFor_distinguishes_recipe_from_item()
+    {
+        Assert.Equal("(O)1", CartDayStock.KeyFor("(O)1", isRecipe: false));
+        Assert.Equal("(O)1#Recipe", CartDayStock.KeyFor("(O)1", isRecipe: true));
+    }
+
+    [Fact]
+    public void Select_treats_item_and_recipe_as_two_slots()
+    {
+        var run = new RunState();
+        var stock = new[] { "(O)1", "(O)1#Recipe", "(O)2" };
+        var kept = CartDayStock.Select(run, day: 10, stock, allowed: 2);
+        Assert.Equal(new[] { "(O)1", "(O)1#Recipe" }, kept);
+    }
 }
