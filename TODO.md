@@ -16,6 +16,15 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 | Cart: buy the only item, reopen | PASS | `debug shop Traveler`: Pumpkin bought, reopen shows "Out of stock" instead of the next item (cart-06-reopen.png) |
 | Keep every pet | path ran, not proven | save has no pets: `PetCarryover: no pets on the farm; snapshot cleared`; the two-pet case is unit-tested only |
 
+**Opt-in pity offer smoke 2026-08-25 (`test-output/offer-*.png`):** plain hold prompt (offer-02), then
+"It looks like Spring has been giving you a hard time... We would ask a little less of Spring next time."
+with "Yes please (free)" / "No thank you, I will manage" (offer-06). Accept: `Pity offer: ACCEPTED (Ease,
+cost 0 JP, consecutive uses now 1, ease 0/2)`, reset `pity ease Spring 2 steps`, next offer 50 JP.
+Second Fail night, Reshuffle: trim wording + "Yes please (50 JP)" (offer-08); declined: `uses reset, no
+easing stamped`, reset `pity trim none, pity ease none`. First attempt failed: the offer was created inside
+the hold answer's callback and the game tore it down (watchdog "replaced before it closed"); fixed by
+deferring the offer one tick via the watchdog drain (same trick as the NotEnoughJp re-ask).
+
 Jeff (watching the smoke): the merchant's "The Junimos might know a way around that." breaks the lore
 (only the farmer and the Wizard see Junimos); removed from `dialog.cart.first-visit`. The cart intro
 popping up in the farmhouse was the `debug shop Traveler` test, not a player path. Follow-up nit:
