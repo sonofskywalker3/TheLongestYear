@@ -328,19 +328,7 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            int easeSteps = SeasonPity.IsValidSeasonIndex(meta.LastFailSeason)
-                ? SeasonPity.EaseSteps(meta, (CoreSeason)meta.LastFailSeason, _config)
-                : 0;
-            string prompt;
-            if (easeSteps > 0 && meta.LastFailSeason == (int)CoreSeason.Winter)
-                prompt = Strings.Get("dialog.hold.prompt-eased-winter");
-            else if (easeSteps > 0)
-                prompt = Strings.Get("dialog.hold.prompt-eased", new Dictionary<string, string>
-                    { ["season"] = TheLongestYear.UI.SeasonGoalsMenu.SeasonName((CoreSeason)meta.LastFailSeason) });
-            else
-                prompt = Strings.Get("dialog.hold.prompt");
-
-            loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
+            loc.createQuestionDialogue(Strings.Get("dialog.hold.prompt"), responses, (Farmer who, string key) =>
             {
                 _menuWatch = null;
                 if (key == "keep")
@@ -354,10 +342,9 @@ namespace TheLongestYear.Loop
                         _holdReaskPending = true;   // re-ask next tick; see ShowHoldChoice's doc comment
                         return;
                     }
-                    SeasonPity.StampKeepEase(meta, _config);
-                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}, ease {meta.BoardEaseSeason}/{meta.BoardEaseSteps}).", LogLevel.Info);
+                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}).", LogLevel.Info);
                     Game1.playSound("junimoMeep1");
-                    TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    AfterHoldChoice(held: true);
                     return;
                 }
                 ApplyHoldChoice(keep: false);
@@ -371,11 +358,90 @@ namespace TheLongestYear.Loop
         private void ApplyHoldChoice(bool keep)
         {
             BundleHold.HoldResult result = BundleHold.Apply(_store.State, keep, _config.BundleHoldCosts);
-            if (!keep)
-                SeasonPity.StampReshuffleTrim(_store.State, _config);   // reshuffle-path pity: the reset reads this stamp
-            _monitor.Log($"Hold choice: {result} (seed loop {_store.State.BundleSeedLoop}, board trim {_store.State.BoardTrimSeason}/{_store.State.BoardTrimSteps}).", LogLevel.Info);
+            _monitor.Log($"Hold choice: {result} (seed loop {_store.State.BundleSeedLoop}).", LogLevel.Info);
+            AfterHoldChoice(held: keep);
+        }
+
+        /// <summary>Second Fail-night question (Jeff, 2026-08-25, "like Mario's assist offer"):
+        /// once the board's fate is decided, the Junimos offer to ease the failed season when
+        /// enough fails have piled up. Nothing is stamped unless the player says yes; declining
+        /// (or nothing to offer) clears any easing and resets the accept counter.</summary>
+        private void AfterHoldChoice(bool held)
+        {
+            MetaState meta = _store.State;
+            if (SeasonPity.OfferFor(meta, held, _config) == SeasonPity.PityOffer.None)
+            {
+                SeasonPity.DeclinePity(meta, held);
+                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                return;
+            }
+            ShowPityChoice(held);
+        }
+
+        private void ShowPityChoice(bool held)
+        {
+            MetaState meta = _store.State;
+            long cost = SeasonPity.PityCost(meta, _config);
+            string season = TheLongestYear.UI.SeasonGoalsMenu.SeasonName((CoreSeason)meta.LastFailSeason);
+            var offer = SeasonPity.OfferFor(meta, held, _config);
+            string prompt = offer == SeasonPity.PityOffer.Ease
+                ? Strings.Get("dialog.pity.prompt-ease", new Dictionary<string, string> { ["season"] = season })
+                : Strings.Get("dialog.pity.prompt-trim", new Dictionary<string, string> { ["season"] = season });
+            string yesLabel = cost == 0
+                ? Strings.Get("dialog.pity.yes-free")
+                : Strings.Get("dialog.pity.yes", new Dictionary<string, string> { ["cost"] = cost.ToString() });
+            var responses = new[]
+            {
+                new StardewValley.Response("yes", yesLabel),
+                new StardewValley.Response("no",  Strings.Get("dialog.pity.no"))
+            };
+
+            GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
+            if (loc == null)
+            {
+                _monitor.Log("Pity offer: no currentLocation available, treating as declined.", LogLevel.Warn);
+                ApplyPityChoice(held, accept: false);
+                return;
+            }
+
+            loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
+            {
+                _menuWatch = null;
+                if (key == "yes")
+                {
+                    SeasonPity.PityResult result = SeasonPity.AcceptPity(meta, held, _config);
+                    if (result == SeasonPity.PityResult.NotEnoughJp)
+                    {
+                        Game1.playSound("cancel");
+                        Game1.addHUDMessage(new HUDMessage(Strings.Get("dialog.pity.not-enough-jp",
+                            new Dictionary<string, string> { ["cost"] = cost.ToString(), ["have"] = meta.JunimoPoints.ToString() }), HUDMessage.error_type));
+                        _pityReaskHeld = held;   // re-ask next tick, same reason as the hold re-ask
+                        return;
+                    }
+                    _monitor.Log($"Pity offer: ACCEPTED ({offer}, cost {cost} JP, consecutive uses now {meta.ConsecutivePityUses}, ease {meta.BoardEaseSeason}/{meta.BoardEaseSteps}, trim {meta.BoardTrimSeason}/{meta.BoardTrimSteps}).", LogLevel.Info);
+                    Game1.playSound("junimoMeep1");
+                    TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    return;
+                }
+                ApplyPityChoice(held, accept: false);
+            });
+
+            if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
+                _menuWatch = (box, () => ApplyPityChoice(held, accept: false));
+        }
+
+        private void ApplyPityChoice(bool held, bool accept)
+        {
+            if (!accept)
+            {
+                SeasonPity.DeclinePity(_store.State, held);
+                _monitor.Log("Pity offer: declined (uses reset, no easing stamped).", LogLevel.Info);
+            }
             TryOpenShrineThenContinue(ContinueAfterResetSpend);
         }
+
+        /// <summary>Set by ShowPityChoice's NotEnoughJp branch; drained by TickShrineWatchdog.</summary>
+        private bool? _pityReaskHeld;
 
         /// <summary>Try to open the Junimo Shrine menu; on close, run <paramref name="onContinue"/>.
         /// If the menu can't open (cutscene blocking, already-open menu), run onContinue
@@ -416,6 +482,12 @@ namespace TheLongestYear.Loop
             {
                 _holdReaskPending = false;
                 ShowHoldChoice();
+                return;
+            }
+            if (_pityReaskHeld is bool reaskHeld && Game1.activeClickableMenu == null)
+            {
+                _pityReaskHeld = null;
+                ShowPityChoice(reaskHeld);
                 return;
             }
             if (_menuWatch is not { } watch) return;

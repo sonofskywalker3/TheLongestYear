@@ -88,6 +88,10 @@ public sealed class MetaState
     /// <summary>Trim units applied when the current board was rolled (see <see cref="BoardTrimSeason"/>).</summary>
     public int BoardTrimSteps { get; set; }
 
+    /// <summary>How many Fail-night pity offers the player has accepted in a row. Drives the
+    /// offer's price (first accept free, then the <c>PityCosts</c> curve). Declining resets it.</summary>
+    public int ConsecutivePityUses { get; set; }
+
     /// <summary>Season index the keep-path quota ease applies to for the CURRENT board, -1 = no
     /// ease. Stamped by <see cref="SeasonPity.StampKeepEase"/> at the Fail-night KEEP choice;
     /// cleared on reshuffle (<see cref="SeasonPity.StampReshuffleTrim"/>) and on a choiceless
