@@ -1463,14 +1463,15 @@ namespace TheLongestYear
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
 
-            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
-            GeneratedBundleSet first = firstEngine.Generate(seed);
+            PityTrim trim = TheLongestYear.Loop.BundleEngine.TrimFor(_meta.State);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds);
+            GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations).Generate(seed);
+            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds).Generate(seed, trim);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -1955,12 +1956,12 @@ namespace TheLongestYear
                 // composed with the old value and stays valid until the next reset regenerates.
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
-                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, nonObject);
-                    GeneratedBundleSet set = engine.Generate(seed);
+                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, nonObject, _config.RarityThresholds);
+                    GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
                     if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
                         continue;
 
-                    var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
+                    var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, SeasonPity.CurrentQuotaEase(state, _config));
                     string flagNote = nonObject == _config.EnableNonObjectDonations
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
@@ -1978,11 +1979,11 @@ namespace TheLongestYear
             }
             else if (source == RequirementsSource.GenerateFreshRun)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
-                var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
+                var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, ease: null);
                 this.Monitor.Log(
                     $"Requirements source: engine generation (fresh run, {requirements.Count} bundles written).",
                     LogLevel.Info);
