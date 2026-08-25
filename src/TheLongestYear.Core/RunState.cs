@@ -212,7 +212,7 @@ public sealed class RunState
         OfferPresentedWeek = -1;
         PeakMineFloor = 0;
         CartStockDay = -1;
-        CartStockIds.Clear();
+        (CartStockIds ??= new()).Clear();
         LiabilitySuppressedThisWeek = false;
     }
 }

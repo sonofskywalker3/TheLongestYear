@@ -55,14 +55,14 @@ namespace TheLongestYear.Loop
 
             var entries = __result.ToList();
             var ids = entries
-                .Select(kv => CartDayStock.KeyFor(kv.Key.QualifiedItemId, (kv.Key as StardewValley.Object)?.IsRecipe ?? false))
+                .Select(kv => CartDayStock.KeyFor(kv.Key.QualifiedItemId, kv.Key.IsRecipe))
                 .ToList();
             var keep = new HashSet<string>(CartDayStock.Select(run, Game1.Date.TotalDays, ids, allowed), StringComparer.Ordinal);
             __result.Clear();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var kv in entries)
             {
-                string key = CartDayStock.KeyFor(kv.Key.QualifiedItemId, (kv.Key as StardewValley.Object)?.IsRecipe ?? false);
+                string key = CartDayStock.KeyFor(kv.Key.QualifiedItemId, kv.Key.IsRecipe);
                 if (keep.Contains(key) && seen.Add(key))
                     __result.Add(kv.Key, kv.Value);
             }
