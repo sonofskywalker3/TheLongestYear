@@ -8,20 +8,21 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.12.18`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.13.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.12.18
+## What's New in 0.13.0
 
-**On a Fail night you can now keep your bundle board for the next loop instead of letting the Junimos reshuffle it.**
+**Struggling at one season? The Junimos now offer to ease that gate, plus fixes for impossible quality asks, year-2 crops on run 1, multiple pets, and the Traveling Cart cap.**
 
-- **Keep these bundles, or let time reshuffle them.** After the Junimos' Fail-night speech and before the shrine, you choose: hold the same bundle board into the next loop, or roll a fresh one. A kept board asks for exactly the same things, so anything you gathered for a bundle you almost finished is still worth having.
-- **The first hold is free; holding again in a row costs JP.** 50, 100, 200, then 300 JP for each further consecutive hold (config `BundleHoldCosts`). Letting time reshuffle resets the price back to free.
-- **TLY Custom boards only.** The hold applies to the mod's own board (the new-game **TLY Custom** choice). Normal and Remixed vanilla boards keep regenerating the game's way on every reset, as before.
-- **The Season Goals title shows how many times the board has been held**, and the day-1 Junimo now says up front that impossible-looking asks are expected, can be set aside for later, and can be held across a rewind.
-- **Void Salmon is out of the bundle pools.** The Witch's Swamp sits behind the Dark Talisman quest, which only starts after the Community Center is finished, so it was never reachable inside a year-1 loop. 0.12.16 kept it in as "hard but fair"; that was my mistake. Existing saves pick up the change at their next reset.
-- **Text cleanup** across all in-game strings.
+- **Season pity.** Fails are counted per season. The first five fails at a season are standard difficulty on purpose: that is the time to build a routine and buy the upgrades that gate needs. From the sixth fail at the same season, after the keep-or-reshuffle question on a Fail night, the Junimos ask whether to use their power to make the town's requests easier. Keep the board and that season's quota comes down 10% per extra fail (floor 50%). Let time reshuffle and the hardest items eligible for that season are left out of the roll (two per extra fail; quality asks go first). Say no and you get a standard board. Accepting is free the first time, then 50, 100, 200 and 300 JP in a row, the same curve as the hold; declining resets the price. Passing the season drops its count back to five. The Season Goals title shows "eased Nx". TLY Custom boards only.
+- **No quality asks on items that cannot carry quality.** Gold Fiber, gold River Jelly and silver Tea Leaves were reported in 0.12.16. The engine now works out from the game's own data which items actually receive quality (crop harvests, rod-caught fish, spawned forage) and only asks for silver or gold on those.
+- **Pierre's year-2 crops stay off the board until you can grow them.** Garlic and Artichoke are excluded until you own Pierre's Special Order; Red Cabbage until you own that or Cultivation: Red Cabbage. On a fresh farm those seeds have no other source, so a Garlic weekly goal on run 1 could never be met.
+- **Keep Pet keeps every pet.** A second pet from Marnie used to be the only one that survived a reset. All pets come back now, with their names and hearts.
+- **The Traveling Cart's cap is per day.** Buying an item leaves that slot empty until the merchant's next visit instead of pulling the next item in her list into view. The Cart Whisperer preview shows the same selection the cart sells.
+- **Text:** the merchant no longer mentions the Junimos (only you and the Wizard can see them).
+- **Config:** `PityEnabled`, `PityThreshold`, `PityQuotaStep`, `PityQuotaFloor`, `PityTrimPerStep`, `PityCosts` (GMCM section "Season pity").
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -59,7 +60,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 - **The intro.** On a fresh game, Lewis greets you on the porch, then a Junimo explains the loop. You wake on Spring 1 and pick your first **weekly theme**.
 - **Weekly themes.** Each week you choose a theme that grants a bonus and a matching liability (e.g. more forage on pickup, but the mines are closed). The planning hub opens at the start of each week.
 - **Seasonal goals.** The **Bundle Log** book (click to open) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
-- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the shrine they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.)
+- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the shrine they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.) After five fails at the same season, the Junimos also offer to ease that season's gate for a JP price on the same curve.
 - **Junimo Points (JP).** Donations earn JP, scaled by rarity and by how late in the year you give (later seasons are worth much more). JP banks across loops.
 - **The Junimo Shrine.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, and more.
 - **Carryover surfaces on the farm.** A **Cookbook** (kitchen) and **Craftbook** (table) let you bank recipes to keep; a **Junimo Stash** chest preserves a few items across resets.
@@ -80,6 +81,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
 | `BundleSource` | `Engine` | `Engine` = the mod's own board every loop (the new-game **TLY Custom** choice). `Vanilla` = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save |
 | `BundleHoldCosts` | `[0, 50, 100, 200, 300]` | JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count |
+| `PityThreshold` / `PityQuotaStep` / `PityQuotaFloor` / `PityTrimPerStep` / `PityCosts` | 5 / 0.10 / 0.50 / 2 / `[0, 50, 100, 200, 300]` | Season pity: fails at one season before the Junimos offer help; quota cut per extra fail on a kept board and its floor; hardest items trimmed per extra fail on a reshuffle; JP price of accepting, by consecutive accepts. `PityEnabled` turns the offer off (fails are still counted) |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
 Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 JP). Feedback on these is welcome.

@@ -3,7 +3,10 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.13.0 - 2026-08-25
+
+Season pity (opt-in Junimo offer after five fails at one season) plus the 2026-08-25 sweep fixes.
+830 tests; live-smoked on a throwaway save (TODO.md tables). Engine (TLY Custom) boards only.
 
 ### Added
 - **Season pity** (spec `docs/superpowers/specs/2026-08-25-season-pity-design.md`). Fails are counted per
@@ -20,6 +23,9 @@ aims to follow [Semantic Versioning](https://semver.org/).
   quota; reshuffled board: hardest items left out) and costs JP on the same curve as the hold (first
   free, then `PityCosts` 50/100/200/300, reset by declining). No means a standard board. Debug
   `tly_pity accept|decline`.
+
+### Changed
+- The Traveling Cart merchant no longer mentions the Junimos (only the farmer and the Wizard can see them).
 
 ### Fixed
 - **Quality asks only on items that can carry quality** (Nexus 1122358 follow-ups: gold Fiber, gold
@@ -55,7 +61,6 @@ live-smoked on a throwaway save. Applies to Engine (TLY Custom) boards only; Van
 - Season Goals title shows how many times the board has been held.
 
 ### Changed
-- The Traveling Cart merchant no longer mentions the Junimos (only the farmer and the Wizard can see them).
 - Text: removed all em dashes from in-game strings.
 - Debug: `tly_hold keep|reshuffle|status`.
 
