@@ -11,10 +11,10 @@ namespace TheLongestYear.Tests;
 /// can never carry quality. Default tuning must vet all of it out.</summary>
 public class GatedItemVettingTests
 {
-    private static Dictionary<string, RawObjectEntry> Objects(params (string id, RawObjectEntry e)[] entries)
+    internal static Dictionary<string, RawObjectEntry> Objects(params (string id, RawObjectEntry e)[] entries)
         => entries.ToDictionary(x => x.id, x => x.e);
 
-    private static RawObjectEntry Obj(int category = -75, int price = 50, string type = "Basic",
+    internal static RawObjectEntry Obj(int category = -75, int price = 50, string type = "Basic",
         bool excludeFromRandomSale = false, params string[] tags)
         => new(type, category, price, excludeFromRandomSale, tags);
 
