@@ -88,6 +88,17 @@ public sealed class MetaState
     /// <summary>Trim units applied when the current board was rolled (see <see cref="BoardTrimSeason"/>).</summary>
     public int BoardTrimSteps { get; set; }
 
+    /// <summary>Season index the keep-path quota ease applies to for the CURRENT board, -1 = no
+    /// ease. Stamped by <see cref="SeasonPity.StampKeepEase"/> at the Fail-night KEEP choice;
+    /// cleared on reshuffle (<see cref="SeasonPity.StampReshuffleTrim"/>) and on a choiceless
+    /// reset (<see cref="BundleHold.ConsumeChoiceAtReset"/>'s no-choice branch). The load path
+    /// reads this stamp (not live fail counts) so a reload reproduces the same eased
+    /// requirements instead of snapping back to standard difficulty.</summary>
+    public int BoardEaseSeason { get; set; } = -1;
+
+    /// <summary>Ease steps applied when the current board was kept (see <see cref="BoardEaseSeason"/>).</summary>
+    public int BoardEaseSteps { get; set; }
+
     /// <summary>The loop number to seed bundle generation with: <see cref="BundleSeedLoop"/>
     /// when set, else <see cref="CompletedResets"/>. Both the reset-time generation and the
     /// load-time manifest re-check MUST use this, or a held board is flagged stale on reload.</summary>
