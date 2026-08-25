@@ -49,6 +49,23 @@ public sealed class GameplayConfig
     /// Reshuffling resets the counter. Spec 2026-08-24 keep-bundles hold.</summary>
     public List<long> BundleHoldCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
 
+    /// <summary>Season pity (spec 2026-08-25): after <see cref="PityThreshold"/> fails at the SAME
+    /// season, each further fail eases that season's gate. Counting always runs; this switch only
+    /// zeroes the effect so it can be turned on later without losing history.</summary>
+    public bool PityEnabled { get; set; } = true;
+
+    /// <summary>Fails at one season before easing starts (the first N are standard difficulty).</summary>
+    public int PityThreshold { get; set; } = 5;
+
+    /// <summary>Quota reduction per ease step when the player KEEPS the board (0.10 = -10%).</summary>
+    public double PityQuotaStep { get; set; } = 0.10;
+
+    /// <summary>Lowest quota factor the keep-path easing can reach.</summary>
+    public double PityQuotaFloor { get; set; } = 0.50;
+
+    /// <summary>Hardest items removed from that season's slot pools per ease step when the player RESHUFFLES.</summary>
+    public int PityTrimPerStep { get; set; } = 2;
+
     /// <summary>
     /// Design-default per-item season pins for KIND 2 PerItem bundles. Sourced from the
     /// bundle-gate handoff doc (2026-05-26) — each pin reflects a realistic obtainability

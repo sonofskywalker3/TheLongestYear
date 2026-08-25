@@ -358,4 +358,22 @@ public class MetaStateTests
         var held = new MetaState { CompletedResets = 5, BundleSeedLoop = 2 };
         Assert.Equal(2, held.EffectiveBundleSeedLoop);
     }
+
+    [Fact]
+    public void Pity_fields_round_trip_and_default()
+    {
+        var fresh = new MetaState();
+        Assert.Equal(new[] { 0, 0, 0, 0 }, fresh.SeasonFailCounts);
+        Assert.Equal(-1, fresh.LastFailSeason);
+        Assert.Equal(-1, fresh.BoardTrimSeason);
+        Assert.Equal(0, fresh.BoardTrimSteps);
+
+        var original = new MetaState { SeasonFailCounts = new System.Collections.Generic.List<int> { 1, 6, 0, 0 }, LastFailSeason = 1, BoardTrimSeason = 1, BoardTrimSteps = 2 };
+        string json = JsonSerializer.Serialize(original);
+        MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
+        Assert.Equal(new[] { 1, 6, 0, 0 }, restored.SeasonFailCounts);
+        Assert.Equal(1, restored.LastFailSeason);
+        Assert.Equal(1, restored.BoardTrimSeason);
+        Assert.Equal(2, restored.BoardTrimSteps);
+    }
 }
