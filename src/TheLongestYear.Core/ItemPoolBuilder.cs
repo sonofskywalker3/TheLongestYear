@@ -59,6 +59,7 @@ public static class ItemPoolBuilder
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
         var (fishPool, crabPotPool) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning);
         var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning);
+        var qualityEligible = BuildQualityEligibleIds(crops, objects, forageSpawns, fishSpawns, trapFishIds, excluded);
         var monsterPool = BuildMonsterPool(monsterDrops, objects, excluded, tuning);
         var metalsPool = BuildCategoryPool(objects, MetalCategory, excluded, tuning);
         var artisanPool = BuildCategoryPool(objects, ArtisanCategory, excluded, tuning);
@@ -86,6 +87,7 @@ public static class ItemPoolBuilder
             Cooking = cookingPool,
             TapperGoods = tapperGoodsPool,
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
+            QualityEligibleIds = qualityEligible,
         };
     }
 
@@ -494,6 +496,60 @@ public static class ItemPoolBuilder
             : bare.All(char.IsDigit) ? tuning.VanillaItemWeight
             : tuning.ModdedItemWeight;
         return new PoolItem(qualifiedId, price, Math.Max(1, weight), seasons, locations);
+    }
+
+    private const string ForageItemTag = "forage_item";
+    private const string TruffleId = "(O)430";
+    private static readonly int[] ForageCategories = { -79, -80, -81, -75, -23 };
+
+    /// <summary>Mirrors StardewValley.Object.isForage(): the only objects the game gives
+    /// forage quality to when picked up.</summary>
+    public static bool IsForageCategory(RawObjectEntry obj, string qualifiedId)
+        => Array.IndexOf(ForageCategories, obj.Category) >= 0
+           || (obj.ContextTags != null && obj.ContextTags.Contains(ForageItemTag))
+           || qualifiedId == TruffleId;
+
+    /// <summary>River/Sea/Cave Jelly are rod catches that never carry quality.</summary>
+    public static bool IsJelly(string qualifiedId)
+        => Unqualify(qualifiedId).EndsWith("Jelly", StringComparison.Ordinal);
+
+    private static IReadOnlySet<string> BuildQualityEligibleIds(
+        IReadOnlyList<RawCropEntry> crops,
+        IReadOnlyDictionary<string, RawObjectEntry> objects,
+        IReadOnlyList<RawSpawnEntry> forageSpawns,
+        IReadOnlyList<RawSpawnEntry> fishSpawns,
+        IReadOnlySet<string> trapFishIds,
+        HashSet<string> excluded)
+    {
+        var result = new HashSet<string>(StringComparer.Ordinal);
+        foreach (RawCropEntry crop in crops)
+        {
+            if (string.IsNullOrEmpty(crop.HarvestItemId)) continue;
+            string bare = Unqualify(crop.HarvestItemId);
+            string id = Qualify(bare);
+            if (Vets(bare, id, objects, excluded)) result.Add(id);
+        }
+        foreach (RawSpawnEntry spawn in fishSpawns)
+        {
+            if (string.IsNullOrEmpty(spawn.ItemId)) continue;
+            string bare = Unqualify(spawn.ItemId);
+            string id = Qualify(bare);
+            if (!Vets(bare, id, objects, excluded)) continue;
+            if (!objects.TryGetValue(bare, out RawObjectEntry? obj)
+                || !string.Equals(obj.Type, FishType, StringComparison.OrdinalIgnoreCase)) continue;
+            if (trapFishIds.Contains(bare) || IsJelly(id)) continue;
+            result.Add(id);
+        }
+        foreach (RawSpawnEntry spawn in forageSpawns)
+        {
+            if (string.IsNullOrEmpty(spawn.ItemId)) continue;
+            string bare = Unqualify(spawn.ItemId);
+            string id = Qualify(bare);
+            if (!Vets(bare, id, objects, excluded)) continue;
+            if (objects.TryGetValue(bare, out RawObjectEntry? obj) && IsForageCategory(obj, id))
+                result.Add(id);
+        }
+        return result;
     }
 
     private static IReadOnlyDictionary<string, Season> DerivePins(

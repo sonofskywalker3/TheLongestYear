@@ -36,6 +36,13 @@ public sealed class ItemPools
     /// bundles can never be demanded before their items exist (spec safety rule).</summary>
     public IReadOnlyDictionary<string, Season> DerivedSeasonPins { get; init; }
         = new Dictionary<string, Season>();
+
+    /// <summary>Qualified ids that can carry a silver/gold quality ask: crop harvests,
+    /// rod-caught non-jelly fish, and spawned forage in a forage category (the game's own
+    /// isForage() test). Null = no eligibility data (hand-built pools in tests): the filler
+    /// then allows quality as before. Nexus 1122358 follow-ups (gold Fiber, gold River
+    /// Jelly, silver Tea Leaves), 2026-08-25.</summary>
+    public IReadOnlySet<string>? QualityEligibleIds { get; init; }
 }
 
 /// <summary>Which item pool a picked bundle's slots re-roll from. None = keep the
