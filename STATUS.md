@@ -1,12 +1,32 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-25 (season pity merged to master as v0.12.19, UNRELEASED, live smoke PASSED)
+**Last updated:** 2026-08-25 (v0.13.0 on master: season pity + three sweep fixes, UNRELEASED)
 **Branch:** `master`
-**Tests:** 794 passing, 0 failing
-**Build:** clean; 0.12.19 deployed to PC Mods for the smoke, game closed
+**Tests:** 818 passing, 0 failing
+**Build:** clean; PC Mods has the 0.12.19 smoke build (0.13.0 not deployed yet)
 **Last public release:** 0.12.18 (2026-08-25 00:30, fully closed)
 
-## Current state (2026-08-25): v0.12.19 on master, season pity merged, not released
+## Current state (2026-08-25): v0.13.0 on master, not released, three fixes not yet live-smoked
+
+Merged `worktree-fixes-0-13-0` (plan `docs/superpowers/plans/2026-08-25-0-13-0-fixes.md`, 11 commits,
+subagent-driven with per-task reviews + final review) on top of the season pity merge:
+- **Quality-ask vetting v2** (Nexus 1122358 follow-ups): `ItemPools.QualityEligibleIds` derived from
+  Data/Crops (skipping `HarvestMaxQuality == 0`, i.e. Fiber), rod-caught non-jelly fish, and spawned
+  forage passing the game's isForage category test; `BundleSlotFiller.RollQuality` refuses quality on
+  anything else; `tly_genbundles` prints "quality asks:" per bundle. Curated additions (Tea Leaves,
+  Red/Purple Mushroom) never carry quality (accepted).
+- **Keep Pet keeps every pet** (Nexus 1122901): `MetaState.PetStates` list, legacy `PetState`
+  migrates at the next reset, restore tiles stagger west from (54,8).
+- **Traveling Cart cap per day** (lexihope): `CartDayStock` remembers the day's ids on
+  `RunState.CartStockDay/Ids`; `CartSlotLimitPatch` filters later builds; recipes keyed `#Recipe`.
+Reply drafts for all three: `release-notes/2026-08-25-replies-draft.md` (post only on "yes, push").
+
+**Next:** live smoke of the three fixes on the Rodger save (`tly_genbundles` quality-asks lines: no
+771 / jellies / 815; buy from the cart then reopen it, the slot stays empty; reset with two pets,
+both come back), then README + Nexus "What's New in 0.13.0" (identical content), CHANGELOG
+`## Unreleased` -> `## 0.13.0`, release on "yes, push", post the three replies, flip 1122901 to Fixed.
+
+## Previous state (2026-08-25): v0.12.19 on master, season pity merged, not released
 
 Merged `worktree-season-pity` (spec `docs/superpowers/specs/2026-08-25-season-pity-design.md`, plan
 `docs/superpowers/plans/2026-08-25-season-pity.md`, 15 commits, subagent-driven with per-task reviews

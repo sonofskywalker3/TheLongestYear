@@ -6,7 +6,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): 13.0 candidates
+### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): ALL THREE FIXED on master (v0.13.0, unreleased)
+
+Plan `docs/superpowers/plans/2026-08-25-0-13-0-fixes.md`. Final-review finding worth remembering: Fiber
+enters the pools as a CROP (Fiber Seeds 885 -> 771), and vanilla marks it base-only with
+`CropData.HarvestMaxQuality == 0`; the eligibility rule now honours that field. Parked: crops with
+`HarvestMaxQuality == 1` (none in vanilla) could still draw a gold ask; curated forage additions never
+carry quality; the Cart Whisperer preview stamps the day's cart selection early (benign). Replies drafted
+in `release-notes/2026-08-25-replies-draft.md`, NOT posted.
 
 Nexus bugs (read in-browser; the logged-out sweep shows 0 bugs, known):
 - **1122358 (Fixed) got two new replies after the Void Salmon follow-up:** ChaoticMindset (24 Aug 20:46,
