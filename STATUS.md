@@ -1,12 +1,24 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-24 evening (keep-bundles hold merged to master as v0.12.17, UNRELEASED)
+**Last updated:** 2026-08-25 00:30 (v0.12.18 RELEASED: keep-bundles hold + Void Salmon exclusion)
 **Branch:** `master` (clean, pushed)
 **Tests:** 750 passing, 0 failing
-**Build:** clean (6 pre-existing warnings); v0.12.17 build was deployed to PC Mods for the smoke, game closed
-**Last public release:** 0.12.16 (Nexus + GitHub, 2026-08-24 afternoon, fully closed)
+**Build:** clean; v0.12.17 build is what's deployed to PC Mods (0.12.18 differs only by the Void Salmon exclusion)
+**Last public release:** 0.12.18 (GitHub v0.12.17 + v0.12.18 tags; Nexus file, version, description, changelog all synced 2026-08-25 00:30 via Claude-in-Chrome)
 
-## Current state (2026-08-24 evening): v0.12.17 on master, keep-bundles hold done, not released
+## Current state (2026-08-25): 0.12.18 released, fully closed
+
+0.12.17 (hold feature) and 0.12.18 (Void Salmon out: WitchSwamp joins the built-in excluded
+location markers and `(O)795` the built-in excluded ids, since the Witch's Swamp is behind the
+post-CC Dark Talisman quest; Jeff's "hard but fair" ruling from 0.12.16 reversed) went out
+back-to-back. Nexus description = README (What's New in 0.12.18 incl. the Void Salmon apology),
+changelog entry added, version 0.12.18. Bug 1122358 got a follow-up reply with the apology
+(status stays Fixed). Release mechanics note: `release.ps1` step 3 (Playwright description
+sync) is retired; run it with `-SkipNexusDesc` and do the Nexus page via Claude-in-Chrome.
+
+**Next:** the 0.13.x DerivePins brainstorm (TODO.md); open Nexus bug 1113831 (Day-3 crash, silent).
+
+## Previous state (2026-08-24 evening): v0.12.17 on master, keep-bundles hold done, not released
 
 Merged `feat/keep-bundles-hold` (spec `docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`,
 plan `docs/superpowers/plans/2026-08-24-keep-bundles-hold.md`). Fail night now asks, before the shrine,

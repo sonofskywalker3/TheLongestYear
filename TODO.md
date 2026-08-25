@@ -8,8 +8,10 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### 0.13.x brainstorm: DerivePins / obtainability
 
-Keep-bundles hold implemented on branch `feat/keep-bundles-hold` (spec
-`docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`), awaiting merge + release.
+Keep-bundles hold RELEASED in 0.12.17/0.12.18 (spec
+`docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`). 0.12.18 also pulled Void Salmon
+(WitchSwamp is post-CC Dark Talisman content; the 0.12.16 "hard but fair" ruling was reversed and
+an apology posted on bug 1122358).
 
 **Smoke 2026-08-24 (branch build, Rodger throwaway save, screenshots `test-output/hold-*.png`):**
 
