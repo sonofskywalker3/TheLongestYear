@@ -6,7 +6,17 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): ALL THREE FIXED on master (v0.13.0, unreleased), smoke PASSED
+### NEW (2026-08-25 12:41, Nexus post, rose1729): no pet offer after declining Keep Pet
+
+"I didn't keep my pet at the end of my first loop. I thought this would mean I get offered a new pet
+with 0 hearts in future loops, but I haven't been offered the pet at all in my 2nd/3rd loops. Is this
+intended behavior?" Not answered yet. Suspect: the vanilla adoption offer is gated on a flag the reset
+does not clear (see `MarniePetAdoption` in PetCarryoverService / WorldResetService) or on
+`Game1.player.whichPetType`/day counters the loop rewinds past. Decide: should a fresh loop re-offer a
+pet (0 hearts) when keep_pet is not owned? Jeff's earlier ruling for animals was "start over with 0
+hearts", so probably yes.
+
+### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): ALL THREE RELEASED in v0.13.0 (2026-08-25), smoke PASSED
 
 **Smoke 2026-08-25 (deployed 0.13.0, Rodger throwaway save, `test-output/cart-*.png`):**
 

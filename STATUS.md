@@ -1,12 +1,30 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-25 (v0.13.0 on master: season pity + three sweep fixes, UNRELEASED)
+**Last updated:** 2026-08-25 afternoon (v0.13.0 RELEASED and fully closed)
 **Branch:** `master`
-**Tests:** 818 passing, 0 failing
-**Build:** clean; PC Mods has the 0.12.19 smoke build (0.13.0 not deployed yet)
-**Last public release:** 0.12.18 (2026-08-25 00:30, fully closed)
+**Tests:** 830 passing, 0 failing
+**Build:** clean; 0.13.0 deployed to PC Mods for the smokes, game closed
+**Last public release:** 0.13.0 (2026-08-25 ~13:40: GitHub v0.13.0, Nexus file via workflow, Nexus version/description/changelog synced via Claude-in-Chrome, replies posted on bugs 1122358 and 1122901 and lexihope's post)
 
-## Current state (2026-08-25): v0.13.0 on master, not released, three fixes not yet live-smoked
+## Current state (2026-08-25 afternoon): 0.13.0 released, fully closed
+
+Shipped on top of the merge below, all live-smoked on the Rodger throwaway save (TODO.md tables):
+the year-2 crop gate (Garlic/Artichoke need Pierre's Special Order, Red Cabbage that or Cultivation),
+the merchant's Junimo line removed, and **season pity as an opt-in offer** (second Fail-night question
+after keep/reshuffle; `PityCosts` curve like the hold; `tly_pity accept|decline`; the offer is deferred
+one tick because a nested question inside the hold callback gets torn down by answerDialogue).
+Bug 1122901 (Keep pet) left OPEN on purpose: the reply asks a multi-pet tester to confirm on 0.13.0.
+Bug 1122358 stays Fixed; reply asks the reporters to run a loop on 0.13.0 and report any leftover
+impossible ask. Chrome-extension gotcha: after a long session the automation bridge went stale even
+though chat worked; `/mcp` reconnect was not enough, killing and relaunching Chrome fixed it.
+
+**Open (new, 2026-08-25 12:41 post by rose1729):** did NOT keep the pet at the end of loop 1 and was
+never offered a pet again in loops 2/3. Likely the reset leaves a vanilla pet-adoption flag set
+(check `MarniePetAdoption` handling in the reset path); needs a code check + reply. Not yet answered.
+
+**Next:** rose1729's pet-offer question; watch the 0.13.0 replies; 1113831 Day-3 crash still silent.
+
+## Previous state (2026-08-25): v0.13.0 on master, not released, three fixes not yet live-smoked
 
 Merged `worktree-fixes-0-13-0` (plan `docs/superpowers/plans/2026-08-25-0-13-0-fixes.md`, 11 commits,
 subagent-driven with per-task reviews + final review) on top of the season pity merge:
