@@ -25,6 +25,7 @@
     "dialog.win.keep-playing": "Keep playing this run",
     "dialog.hold.prompt": "Should we hold the town's wishes steady for your next spring?",
     "dialog.hold.prompt-eased": "Should we hold the town's wishes steady for your next spring? Keep them and we will ask a little less of {{season}}. Let time reshuffle them and we will leave out the hardest of {{season}}'s asks.",
+    "dialog.hold.prompt-eased-winter": "Should we hold the town's wishes steady for your next spring? Let time reshuffle them and we will leave out the hardest of Winter's asks.",
     "dialog.hold.keep-free": "Keep these bundles (free)",
     "dialog.hold.keep": "Keep these bundles ({{cost}} JP)",
     "dialog.hold.reshuffle": "Let time reshuffle them",

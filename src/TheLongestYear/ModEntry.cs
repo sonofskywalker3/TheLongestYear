@@ -1887,8 +1887,13 @@ namespace TheLongestYear
             {
                 case "keep":
                 case "reshuffle":
-                    var result = BundleHold.Apply(s, keep: mode == "keep", _config.BundleHoldCosts);
-                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    bool keep = mode == "keep";
+                    var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts);
+                    if (keep && result == BundleHold.HoldResult.Kept)
+                        SeasonPity.StampKeepEase(s, _config);
+                    else if (!keep)
+                        SeasonPity.StampReshuffleTrim(s, _config);
+                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}, ease {s.BoardEaseSeason}/{s.BoardEaseSteps}, trim {s.BoardTrimSeason}/{s.BoardTrimSteps}.", LogLevel.Info);
                     this.Monitor.Log("tly_hold: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
                     break;
                 default:
@@ -1920,6 +1925,7 @@ namespace TheLongestYear
                 $"tly_pity status: fails Spring {counts[0]} / Summer {counts[1]} / Fall {counts[2]} / Winter {counts[3]}; threshold {_config.PityThreshold}; " +
                 $"steps Spring {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Spring, _config)} / Summer {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Summer, _config)} / Fall {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Fall, _config)} / Winter {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Winter, _config)}; " +
                 $"last fail season {s.LastFailSeason}; held {s.ConsecutiveHolds}; quota ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps factor {ease.Factor:0.00}")}; " +
+                $"ease stamp season {s.BoardEaseSeason} steps {s.BoardEaseSteps}; " +
                 $"board trim season {s.BoardTrimSeason} units {s.BoardTrimSteps}; enabled {_config.PityEnabled}.",
                 LogLevel.Info);
         }
@@ -2032,8 +2038,8 @@ namespace TheLongestYear
                 }
 
                 this.Monitor.Log(
-                    "ResolveRequirements: engine manifest mismatch (stale or foreign bundle data) — " +
-                    "falling back to read path.",
+                    "ResolveRequirements: engine manifest mismatch (stale or foreign bundle data), " +
+                    "falling back to read path; any season-pity easing on the held board is not applied on this path.",
                     LogLevel.Warn);
                 // fall through to the legacy read-and-classify path below.
             }
