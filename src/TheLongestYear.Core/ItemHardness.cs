@@ -30,7 +30,11 @@ public static class ItemHardness
 
     /// <summary>Removes up to <paramref name="count"/> items, hardest first (ties: higher ordinal
     /// id first, so the result is deterministic), never leaving fewer than
-    /// <paramref name="minKeep"/>. Preserves the input order of the survivors.</summary>
+    /// <paramref name="minKeep"/>. Preserves the input order of the survivors. Drops by item id,
+    /// which relies on the pool's items carrying distinct ids -- an invariant
+    /// <see cref="ItemPoolBuilder"/> establishes by building each pool from an id-keyed
+    /// dictionary before emitting it; a pool with duplicate ids would have this over-remove (one
+    /// drop decision silently removing every item sharing that id).</summary>
     public static IReadOnlyList<PoolItem> Trim(
         IReadOnlyList<PoolItem> pool, int count, int minKeep, PoolDomain domain, RarityThresholds thresholds)
     {
