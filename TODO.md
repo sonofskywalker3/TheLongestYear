@@ -6,6 +6,31 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 8th sweep (2026-08-25 10:38, `forum-sweeps/2026-08-25-10-38_*`): 13.0 candidates
+
+Nexus bugs (read in-browser; the logged-out sweep shows 0 bugs, known):
+- **1122358 (Fixed) got two new replies after the Void Salmon follow-up:** ChaoticMindset (24 Aug 20:46,
+  0.12.16): asked for GOLD-star Fiber and GOLD River Jelly, "neither can be obtained without mods";
+  gazumbrado (24 Aug 23:39): SILVER Tea Leaves. Decompile check: `Bush.GetShakeOffItem` items are
+  created via `ItemRegistry.Create` at base quality, so Tea Leaves (and salmonberry/blackberry from
+  bushes) never carry quality; Fiber and jellies likewise per the reporters. Root cause: quality asks
+  are rolled per DOMAIN (SeasonalForage/Fish/crops) with only a hand list of exceptions
+  (`BundleSlotFiller.BuiltInQualityIneligibleItemIds` = algae). Needs a structural rule: quality only
+  for items that actually receive quality in vanilla (crop harvests, rod-caught real fish, true
+  spawned forage), never for curated additions (`SeasonalForageAdditions` = Tea Leaves), bush drops,
+  Fiber, jellies. Reply not yet posted.
+- **1122901 NEW (Bumblewyn, 24 Aug 16:35, 0.12.0-beta.1): "Keep pet" only keeps one pet.** Confirmed
+  in code: `PetCarryoverService.SnapshotPet` takes `pets[0]` (`MetaState.PetState` is a single
+  `PetSnapshot`). Fix = snapshot/restore a list. Reply not yet posted.
+- 1113831 Day-3 crash still silent (Needs more info since 21 Aug).
+
+Nexus posts (102 total; the sweep's 28-vs-31 page-1 count is pagination, not deletions):
+- **lexihope (25 Aug 01:18): does the Traveling Cart restock further down its list after you buy the
+  initial items?** Observed after buying Cart Stall II. Needs a code check of `CartSlotLimitPatch`
+  (is the cap on the number of visible stalls, or on purchases?) and a reply either way.
+
+Reddit: 63 comments, newest 21 Aug, no other threads. AC / Nap Time / Cart Catalog: quiet.
+
 ### Season pity: MERGED to master as v0.12.19 (2026-08-25), unreleased, live smoke PASSED
 
 **Smoke 2026-08-25 (deployed 0.12.19, Rodger throwaway save, screenshots `test-output/pity-*.png`):**
