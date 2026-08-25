@@ -2,7 +2,7 @@ namespace TheLongestYear.Core;
 
 /// <summary>
 /// Captured state of the player's pet for the <c>keep_pet</c> upgrade. Persisted in
-/// <see cref="MetaState.PetState"/> so the pet survives loop resets — the pet kind, breed,
+/// <see cref="MetaState.PetStates"/> so the pet survives loop resets: the pet kind, breed,
 /// player-given name, and accumulated friendship are all restored on the post-reset Spring 1
 /// so a long-tenured pet stays maxed out between runs.
 ///

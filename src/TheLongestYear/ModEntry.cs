@@ -358,6 +358,7 @@ namespace TheLongestYear
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
+            CartSlotLimitPatch.RunProvider = () => _meta.Run;
             // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
@@ -502,6 +503,7 @@ namespace TheLongestYear
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
+            TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
             BundleOptionPatch.ResetChoice();
             _boardBuilder = null;
             _boardFingerprint = null;
@@ -1548,6 +1550,11 @@ namespace TheLongestYear
                     this.Monitor.Log(
                         $"      {spec.Room}/{spec.Index} '{spec.Name}' [{spec.Slots.Count} slots, need {spec.NumberOfSlots}] — {source}",
                         LogLevel.Info);
+
+                    var qualityAsks = spec.Slots.Where(s => s.Quality > 0)
+                        .Select(s => $"{s.ItemId} q{s.Quality}").ToList();
+                    if (qualityAsks.Count > 0)
+                        this.Monitor.Log($"        quality asks: {string.Join(", ", qualityAsks)}", LogLevel.Info);
                 }
             }
             this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
