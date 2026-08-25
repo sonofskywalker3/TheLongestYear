@@ -96,4 +96,19 @@ public class SeasonPityTests
         Assert.Equal(2, SeasonPity.DisplaySteps(shuffled, Cfg()));   // 4 units / 2 per step
         Assert.Equal(0, SeasonPity.DisplaySteps(new MetaState(), Cfg()));
     }
+
+    [Fact]
+    public void CurrentQuotaEase_is_null_unless_held_with_steps()
+    {
+        var cfg = Cfg();
+        Assert.Null(SeasonPity.CurrentQuotaEase(new MetaState(), cfg));
+        var notHeld = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0 };
+        Assert.Null(SeasonPity.CurrentQuotaEase(notHeld, cfg));
+        var held = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0, ConsecutiveHolds = 1 };
+        var ease = SeasonPity.CurrentQuotaEase(held, cfg);
+        Assert.NotNull(ease);
+        Assert.Equal(Season.Spring, ease!.Season);
+        Assert.Equal(2, ease.Steps);
+        Assert.Equal(0.8, ease.Factor, 6);
+    }
 }
