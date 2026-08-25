@@ -1,0 +1,6 @@
+Season pity: fails are counted per season; the first five at a season are standard difficulty. From the sixth fail at the same season, after the keep-or-reshuffle question, the Junimos offer to make the town's requests easier: a kept board's quota for that season comes down 10% per extra fail (floor 50%); a reshuffled board leaves out the hardest items eligible for that season (two per extra fail, quality asks first). Say no for a standard board. Accepting is free the first time, then 50/100/200/300 JP in a row (config PityCosts); declining resets the price. Passing the season drops its count back to five. TLY Custom boards only.
+No quality asks on items that cannot carry quality (gold Fiber, gold River Jelly, silver Tea Leaves reported in 0.12.16): the engine derives from the game's data which items receive quality (crop harvests, rod-caught fish, spawned forage) and only asks for silver or gold on those.
+Pierre's year-2 crops (Garlic, Red Cabbage, Artichoke) stay out of every bundle and weekly goal until you own the shrine upgrade that lets you grow them in year 1.
+Keep Pet keeps every pet, not just the first one found.
+Traveling Cart cap is per day: buying an item leaves the slot empty until the next visit instead of pulling the next item into view; the Cart Whisperer preview matches.
+The merchant no longer mentions the Junimos.
