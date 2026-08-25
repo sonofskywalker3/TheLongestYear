@@ -21,10 +21,11 @@ aims to follow [Semantic Versioning](https://semver.org/).
   never asks for silver/gold on anything else, including curated forage additions such as Tea Leaves
   and bush drops. `tly_genbundles` lists every quality ask on the board.
 - **Keep Pet keeps every pet** (Nexus 1122901). A second pet from Marnie used to be the only one that
-  survived a reset; all pets are snapshotted and restored (old single-pet saves migrate on load).
+  survived a reset; all pets are snapshotted and restored (old single-pet saves migrate at their next reset).
 - **Traveling Cart cap is per day, not per view** (Nexus post, lexihope). Buying an item used to pull
   the next item in the merchant's list into the freed slot; the day's selection is now remembered, so a
-  purchase leaves a gap until tomorrow.
+  purchase leaves a gap until tomorrow. The Cart Whisperer preview locks in the same selection, so what
+  it shows is what the cart sells.
 
 ## 0.12.18 - 2026-08-24
 

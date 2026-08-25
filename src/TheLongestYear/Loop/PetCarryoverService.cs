@@ -18,7 +18,7 @@ namespace TheLongestYear.Loop
     ///
     /// Lifecycle:
     /// <list type="number">
-    ///   <item><see cref="SnapshotPet"/> — call BEFORE <c>loadForNewGame</c>. Finds every
+    ///   <item><see cref="SnapshotPet"/>: call BEFORE <c>loadForNewGame</c>. Finds every
     ///         pet via <c>Utility.getAllPets()</c>, captures kind/breed/name/friendship of
     ///         each into <c>MetaState.PetStates</c>. Bails silently if the upgrade isn't
     ///         owned.</item>
