@@ -298,7 +298,7 @@ public class ItemPoolBuilderTests
                 ("RiverJelly", Obj(type: "Fish", category: -4)),  // jelly (rod, never quality)
                 ("715", Obj(type: "Fish", category: -4)),         // Lobster (trap)
                 ("16", Obj(category: -81)),                       // Wild Horseradish (forage spawn, Greens)
-                ("771", Obj(category: 0)),                        // Fiber spawn with a non-forage category
+                ("771", Obj(category: -16)),                       // Fiber spawn with a non-forage category
                 ("430", Obj(category: 0)),                        // Truffle: special-cased by the game
                 ("815", Obj(category: -81))),                     // Tea Leaves: curated addition only
             forage: new[]
@@ -325,6 +325,25 @@ public class ItemPoolBuilderTests
         Assert.DoesNotContain("(O)771", eligible);
         Assert.DoesNotContain("(O)815", eligible);   // in the Crops pool via the curated CropPoolAdditions list, still not eligible
         Assert.Contains(pools.Crops, p => p.ItemId == "(O)815");
+    }
+
+    [Fact]
+    public void QualityEligible_CropWithHarvestMaxQualityZero_IsNotEligible()
+    {
+        var pools = Build(
+            crops: new[]
+            {
+                new RawCropEntry("771", new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter },
+                    HarvestMaxQuality: 0),                        // Fiber: quality clamped to base by CropData
+                new RawCropEntry("24", new[] { Season.Spring }),  // Parsnip: uncapped (null), stays eligible
+            },
+            objects: Objects(
+                ("771", Obj(category: -16)),
+                ("24", Obj(category: -75))));
+
+        Assert.Contains(pools.Crops, p => p.ItemId == "(O)771");
+        Assert.DoesNotContain("(O)771", pools.QualityEligibleIds!);
+        Assert.Contains("(O)24", pools.QualityEligibleIds!);
     }
 
     [Fact]

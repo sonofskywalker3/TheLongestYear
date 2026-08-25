@@ -525,6 +525,7 @@ public static class ItemPoolBuilder
         foreach (RawCropEntry crop in crops)
         {
             if (string.IsNullOrEmpty(crop.HarvestItemId)) continue;
+            if (crop.HarvestMaxQuality == 0) continue; // CropData clamps to base quality (e.g. Fiber)
             string bare = Unqualify(crop.HarvestItemId);
             string id = Qualify(bare);
             if (Vets(bare, id, objects, excluded)) result.Add(id);
