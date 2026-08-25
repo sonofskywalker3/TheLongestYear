@@ -177,4 +177,67 @@ public class BundleSlotFillerTests
         Assert.Equal(4, filled.Slots.Count);
         Assert.Equal(2, filled.NumberOfSlots);
     }
+
+    private static readonly RarityThresholds Thresholds = new();
+
+    [Fact]
+    public void Trim_removes_hardest_items_from_candidates_for_matching_season()
+    {
+        var pools = new ItemPools
+        {
+            Crops = Enumerable.Range(0, 8).Select(i => Item($"(O){100 + i}", price: 10 + i * 100,
+                seasons: new[] { Season.Spring })).ToList(),
+        };
+        var spec = Spec("Spring Crops", 4, numberOfSlots: 4);
+        var match = new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring);
+        // 3 units: 1 spent on quality-off (crops roll quality), 2 remove the two priciest items.
+        var filled = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(5),
+            new PityTrim(Season.Spring, 3), Thresholds);
+        Assert.DoesNotContain(filled.Slots, s => s.ItemId is "(O)107" or "(O)106");
+        Assert.All(filled.Slots, s => Assert.Equal(0, s.Quality));
+    }
+
+    [Fact]
+    public void Trim_ignores_bundles_for_other_seasons_and_applies_to_season_agnostic_pools()
+    {
+        var pools = new ItemPools
+        {
+            Crops = Enumerable.Range(0, 8).Select(i => Item($"(O){100 + i}", price: 10 + i * 100,
+                seasons: new[] { Season.Summer })).ToList(),
+            Metals = Enumerable.Range(0, 6).Select(i => Item($"(O){200 + i}", price: 10 + i * 150)).ToList(),
+        };
+        var summer = BundleSlotFiller.Fill(Spec("Summer Crops", 4, 4), new DomainMatch(PoolDomain.SeasonalCrops, Season.Summer),
+            pools, Tuning, new Random(5), new PityTrim(Season.Spring, 4), Thresholds);
+        var plain = BundleSlotFiller.Fill(Spec("Summer Crops", 4, 4), new DomainMatch(PoolDomain.SeasonalCrops, Season.Summer),
+            pools, Tuning, new Random(5));
+        Assert.Equal(plain.Slots, summer.Slots);
+
+        var metals = BundleSlotFiller.Fill(Spec("Blacksmith's", 3, 3), new DomainMatch(PoolDomain.Metals, null),
+            pools, Tuning, new Random(5), new PityTrim(Season.Spring, 2), Thresholds);
+        Assert.DoesNotContain(metals.Slots, s => s.ItemId is "(O)205" or "(O)204");
+    }
+
+    [Fact]
+    public void Trim_never_starves_the_bundle_below_its_slot_count()
+    {
+        var pools = new ItemPools
+        {
+            Metals = Enumerable.Range(0, 4).Select(i => Item($"(O){200 + i}", price: 10 + i * 150)).ToList(),
+        };
+        var spec = Spec("Blacksmith's", 3, 3);
+        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null),
+            pools, Tuning, new Random(5), new PityTrim(Season.Spring, 10), Thresholds);
+        Assert.NotSame(spec, filled);              // still filled (guard stopped at 3 candidates)
+        Assert.Equal(3, filled.Slots.Count);
+        Assert.DoesNotContain(filled.Slots, s => s.ItemId == "(O)203");
+    }
+
+    [Fact]
+    public void DomainRollsQuality_matches_RollQuality_domains()
+    {
+        Assert.True(BundleSlotFiller.DomainRollsQuality(PoolDomain.QualityCrops));
+        Assert.True(BundleSlotFiller.DomainRollsQuality(PoolDomain.Fish));
+        Assert.False(BundleSlotFiller.DomainRollsQuality(PoolDomain.Metals));
+        Assert.False(BundleSlotFiller.DomainRollsQuality(PoolDomain.ArtisanGoods));
+    }
 }
