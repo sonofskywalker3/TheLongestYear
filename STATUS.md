@@ -1,9 +1,9 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-25 (season pity merged to master as v0.12.19, UNRELEASED, not yet live-smoked)
+**Last updated:** 2026-08-25 (season pity merged to master as v0.12.19, UNRELEASED, live smoke PASSED)
 **Branch:** `master`
 **Tests:** 794 passing, 0 failing
-**Build:** clean; PC Mods still has the 0.12.17 build deployed (0.12.19 not deployed yet)
+**Build:** clean; 0.12.19 deployed to PC Mods for the smoke, game closed
 **Last public release:** 0.12.18 (2026-08-25 00:30, fully closed)
 
 ## Current state (2026-08-25): v0.12.19 on master, season pity merged, not released
@@ -18,10 +18,14 @@ its count to 5; Winter never gets the keep-path ease. `tly_pity status|set`, GMC
 eased Fail-night prompt (+ Winter variant), "eased Nx" title. Rules in `Core/SeasonPity.cs`,
 `SeasonEase.cs`, `ItemHardness.cs`, `PityTrim.cs`; trim inside `BundleSlotFiller.Fill`.
 
-**Not done:** the live smoke in the plan's Task 10 step 4 (needs Jeff's yes to drive the game:
-`tly_pity set spring 7`, fail, keep -> title "held 1x eased 2x" and lower Spring quota, reload no
-mismatch WARN, reshuffle -> log `pity trim Spring x6`, reload, `tly_day28continue` -> Spring back to 5).
-Then README + Nexus "What's New" (identical content) and the release on "yes, push".
+**Live smoke PASSED 2026-08-25** (table in TODO.md): eased prompt, keep stamps the ease and the reset
+applies it, reload clean, reshuffle trims (Blacksmith's 11 -> 7) and clears the ease, reload clean,
+`tly_genbundles` determinism OK. Not eyeballed: the "eased Nx" title (book not placed). Not exercised
+live: the real day-28 RecordFail/RecordPass path (unit-tested).
+
+**Next:** README + Nexus "What's New in 0.12.19" (identical content, TLY Custom only), CHANGELOG
+`## Unreleased` -> version, then the release on "yes, push" (`release.ps1`, then the Nexus page via
+Claude-in-Chrome).
 
 ## Previous state (2026-08-25): 0.12.18 released, fully closed
 

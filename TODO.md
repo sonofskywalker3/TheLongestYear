@@ -6,7 +6,24 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### Season pity: MERGED to master as v0.12.19 (2026-08-25), unreleased, live smoke pending
+### Season pity: MERGED to master as v0.12.19 (2026-08-25), unreleased, live smoke PASSED
+
+**Smoke 2026-08-25 (deployed 0.12.19, Rodger throwaway save, screenshots `test-output/pity-*.png`):**
+
+| Check | Result | Evidence |
+|---|---|---|
+| `tly_pity set spring 7` gives 2 ease steps | PASS | status: `steps Spring 2`, `ease stamp -1`, `board trim -1` |
+| Fail night prompt shows the eased text | PASS | pity-04-prompt.png: "Keep them and we will ask a little less of Spring. Let time reshuffle them and we will leave out the hardest of Spring's asks." |
+| Keep stamps the ease; reset applies it | PASS | `Reset: ... consecutive holds 1, pity trim none, pity ease Spring 2 steps`; status `quota ease Spring 2 steps factor 0.80; ease stamp season 0 steps 2` |
+| Reload after keep | PASS | relaunch + `tly_loadsave`: `Requirements source: engine manifest (loop 37, seed loop 36)`, no mismatch WARN, stamp intact |
+| `tly_genbundles` determinism with the stamp | PASS | "determinism OK (second generation matched the first byte-for-byte)" |
+| Second Fail night: hold priced 50 JP, eased text again | PASS | pity-09-prompt2.png |
+| Reshuffle trims and clears the ease | PASS | `BundleEngine: pity trim 'Blacksmith's': 11 candidates -> 7 (units 4, quality off False, need 3)`, fish/Quality Crops 3 items + quality off; `Reset: ... pity trim Spring x4, pity ease none`; status `board trim season 0 units 4`, ease stamp cleared |
+| Reload after reshuffle | PASS | same trim log lines on the load-time regeneration, `engine manifest (loop 38, seed loop 38)`, no mismatch |
+| "eased Nx" title in the Season Goals menu | not eyeballed | the Bundle Log book was in the inventory, not placed; covered by review + I18nGuardTests |
+| Real day-28 `RecordFail` / `RecordPass` path | not exercised live | `tly_failreset` queues the cutscene directly and skips `OnDayEnding`; both are unit-tested (SeasonPityTests) |
+
+Note: with `tly_failreset` the counter stays at the value set by `tly_pity set` (no `RecordFail`), which is why the reshuffle trimmed 4 units, not the plan's 6.
 
 Spec `docs/superpowers/specs/2026-08-25-season-pity-design.md`, plan
 `docs/superpowers/plans/2026-08-25-season-pity.md` (Task 10 step 4 is the smoke script). 794 tests.
