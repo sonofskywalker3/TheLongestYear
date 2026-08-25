@@ -247,6 +247,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
+            helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails>.", this.CmdPity);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1214,6 +1215,37 @@ namespace TheLongestYear
                 name: () => Strings.Get("gmcm.auto-detect.name"),
                 tooltip: () => Strings.Get("gmcm.auto-detect.tooltip"));
 
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.pity.section"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.PityEnabled,
+                setValue: v => _config.PityEnabled = v,
+                name: () => Strings.Get("gmcm.pity.enabled.name"),
+                tooltip: () => Strings.Get("gmcm.pity.enabled.tooltip"));
+            gmcm.AddNumberOption(this.ModManifest,
+                getValue: () => _config.PityThreshold,
+                setValue: v => _config.PityThreshold = v,
+                name: () => Strings.Get("gmcm.pity.threshold.name"),
+                tooltip: () => Strings.Get("gmcm.pity.threshold.tooltip"),
+                min: 0, max: 20, interval: 1);
+            gmcm.AddNumberOption(this.ModManifest,
+                getValue: () => (float)_config.PityQuotaStep,
+                setValue: v => _config.PityQuotaStep = v,
+                name: () => Strings.Get("gmcm.pity.quota-step.name"),
+                tooltip: () => Strings.Get("gmcm.pity.quota-step.tooltip"),
+                min: 0f, max: 0.5f, interval: 0.05f);
+            gmcm.AddNumberOption(this.ModManifest,
+                getValue: () => (float)_config.PityQuotaFloor,
+                setValue: v => _config.PityQuotaFloor = v,
+                name: () => Strings.Get("gmcm.pity.quota-floor.name"),
+                tooltip: () => Strings.Get("gmcm.pity.quota-floor.tooltip"),
+                min: 0.1f, max: 1f, interval: 0.05f);
+            gmcm.AddNumberOption(this.ModManifest,
+                getValue: () => _config.PityTrimPerStep,
+                setValue: v => _config.PityTrimPerStep = v,
+                name: () => Strings.Get("gmcm.pity.trim.name"),
+                tooltip: () => Strings.Get("gmcm.pity.trim.tooltip"),
+                min: 0, max: 10, interval: 1);
+
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
 
@@ -1362,6 +1394,7 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_hold": this.CmdHold(command, args); break;
+                case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
@@ -1862,6 +1895,33 @@ namespace TheLongestYear
                     this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
                     break;
             }
+        }
+
+        private void CmdPity(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            MetaState s = _meta.State;
+            string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            if (mode == "set")
+            {
+                if (args.Length < 3 || !Enum.TryParse(args[1], ignoreCase: true, out TheLongestYear.Core.Season season) || !int.TryParse(args[2], out int fails))
+                {
+                    this.Monitor.Log("Usage: tly_pity set <spring|summer|fall|winter> <fails>", LogLevel.Warn);
+                    return;
+                }
+                SeasonPity.Counts(s)[(int)season] = Math.Max(0, fails);
+                s.LastFailSeason = (int)season;
+                _meta.Save();
+                this.Monitor.Log($"tly_pity: {season} fails set to {fails} (LastFailSeason = {season}). Saved.", LogLevel.Info);
+            }
+            var counts = SeasonPity.Counts(s);
+            var ease = SeasonPity.CurrentQuotaEase(s, _config);
+            this.Monitor.Log(
+                $"tly_pity status: fails Spring {counts[0]} / Summer {counts[1]} / Fall {counts[2]} / Winter {counts[3]}; threshold {_config.PityThreshold}; " +
+                $"steps Spring {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Spring, _config)} / Summer {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Summer, _config)} / Fall {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Fall, _config)} / Winter {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Winter, _config)}; " +
+                $"last fail season {s.LastFailSeason}; held {s.ConsecutiveHolds}; quota ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps factor {ease.Factor:0.00}")}; " +
+                $"board trim season {s.BoardTrimSeason} units {s.BoardTrimSteps}; enabled {_config.PityEnabled}.",
+                LogLevel.Info);
         }
 
         private void CmdPayVault(string command, string[] args)
