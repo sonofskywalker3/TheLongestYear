@@ -328,13 +328,17 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            int easeSteps = meta.LastFailSeason >= 0
+            int easeSteps = SeasonPity.IsValidSeasonIndex(meta.LastFailSeason)
                 ? SeasonPity.EaseSteps(meta, (CoreSeason)meta.LastFailSeason, _config)
                 : 0;
-            string prompt = easeSteps > 0
-                ? Strings.Get("dialog.hold.prompt-eased", new Dictionary<string, string>
-                    { ["season"] = TheLongestYear.UI.SeasonGoalsMenu.SeasonName((CoreSeason)meta.LastFailSeason) })
-                : Strings.Get("dialog.hold.prompt");
+            string prompt;
+            if (easeSteps > 0 && meta.LastFailSeason == (int)CoreSeason.Winter)
+                prompt = Strings.Get("dialog.hold.prompt-eased-winter");
+            else if (easeSteps > 0)
+                prompt = Strings.Get("dialog.hold.prompt-eased", new Dictionary<string, string>
+                    { ["season"] = TheLongestYear.UI.SeasonGoalsMenu.SeasonName((CoreSeason)meta.LastFailSeason) });
+            else
+                prompt = Strings.Get("dialog.hold.prompt");
 
             loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
             {
@@ -350,7 +354,8 @@ namespace TheLongestYear.Loop
                         _holdReaskPending = true;   // re-ask next tick; see ShowHoldChoice's doc comment
                         return;
                     }
-                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}).", LogLevel.Info);
+                    SeasonPity.StampKeepEase(meta, _config);
+                    _monitor.Log($"Hold choice: KEEP (cost {cost} JP, consecutive holds now {meta.ConsecutiveHolds}, seed loop {meta.BundleSeedLoop}, ease {meta.BoardEaseSeason}/{meta.BoardEaseSteps}).", LogLevel.Info);
                     Game1.playSound("junimoMeep1");
                     TryOpenShrineThenContinue(ContinueAfterResetSpend);
                     return;
