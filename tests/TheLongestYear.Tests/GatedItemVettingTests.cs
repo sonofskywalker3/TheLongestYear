@@ -90,7 +90,8 @@ public class GatedItemVettingTests
     {
         var markers = new BundleGenerationTuning().ExcludedLocationMarkers;
         Assert.True(ItemPoolBuilder.IsExcludedLocation("BugLand", markers));
-        Assert.False(ItemPoolBuilder.IsExcludedLocation("WitchSwamp", markers)); // Void Salmon stays: hard, not impossible (user ruling 2026-08-24)
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("WitchSwamp", markers)); // Void Salmon: Witch's Swamp is behind the post-CC Dark Talisman quest (0.12.18)
+        Assert.Contains("(O)795", ItemPoolBuilder.BuiltInExcludedItemIds);
     }
 
     /// <summary>Regression for the config-override trap found on the live install

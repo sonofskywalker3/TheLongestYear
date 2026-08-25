@@ -8,11 +8,11 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.12.17`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.12.18`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.12.17
+## What's New in 0.12.18
 
 **On a Fail night you can now keep your bundle board for the next loop instead of letting the Junimos reshuffle it.**
 
@@ -20,6 +20,7 @@ This is a **beta** (`0.12.17`). It is feature-complete for v1 and stable in test
 - **The first hold is free; holding again in a row costs JP.** 50, 100, 200, then 300 JP for each further consecutive hold (config `BundleHoldCosts`). Letting time reshuffle resets the price back to free.
 - **TLY Custom boards only.** The hold applies to the mod's own board (the new-game **TLY Custom** choice). Normal and Remixed vanilla boards keep regenerating the game's way on every reset, as before.
 - **The Season Goals title shows how many times the board has been held**, and the day-1 Junimo now says up front that impossible-looking asks are expected, can be set aside for later, and can be held across a rewind.
+- **Void Salmon is out of the bundle pools.** The Witch's Swamp sits behind the Dark Talisman quest, which only starts after the Community Center is finished, so it was never reachable inside a year-1 loop. 0.12.16 kept it in as "hard but fair"; that was my mistake. Existing saves pick up the change at their next reset.
 - **Text cleanup** across all in-game strings.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
