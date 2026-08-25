@@ -375,7 +375,12 @@ namespace TheLongestYear.Loop
                 TryOpenShrineThenContinue(ContinueAfterResetSpend);
                 return;
             }
-            ShowPityChoice(held);
+            // Deferred one tick (drained by TickShrineWatchdog): this runs inside the hold
+            // question's answer callback, and GameLocation.answerDialogue tears down the
+            // dialogue box right after that callback returns, which would wipe a nested
+            // question's own callback (2026-08-25 smoke: the offer showed, then the watchdog
+            // treated it as replaced and declined it). Same fix as the NotEnoughJp re-ask.
+            _pityReaskHeld = held;
         }
 
         private void ShowPityChoice(bool held)
@@ -440,7 +445,9 @@ namespace TheLongestYear.Loop
             TryOpenShrineThenContinue(ContinueAfterResetSpend);
         }
 
-        /// <summary>Set by ShowPityChoice's NotEnoughJp branch; drained by TickShrineWatchdog.</summary>
+        /// <summary>Set by AfterHoldChoice (first ask) and ShowPityChoice's NotEnoughJp branch
+        /// (re-ask); drained by TickShrineWatchdog once no menu is up. Holds which path the
+        /// offer applies to.</summary>
         private bool? _pityReaskHeld;
 
         /// <summary>Try to open the Junimo Shrine menu; on close, run <paramref name="onContinue"/>.
