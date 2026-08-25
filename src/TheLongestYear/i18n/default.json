@@ -379,6 +379,17 @@
     "gmcm.cart-limit.name": "Limit Traveling Cart stock",
     "gmcm.cart-limit.tooltip": "Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). Off = full vanilla cart; the Cart Stall upgrades do nothing.",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
+    "gmcm.pity.section": "Season pity",
+    "gmcm.pity.enabled.name": "Ease a gate after repeated fails",
+    "gmcm.pity.enabled.tooltip": "After the threshold number of fails at the same season, each further fail eases that season: a kept board asks for a lower quota, a reshuffled board leaves out the hardest items. Fails are always counted; this only turns the easing on or off.",
+    "gmcm.pity.threshold.name": "Fails before easing",
+    "gmcm.pity.threshold.tooltip": "How many fails at one season are played at standard difficulty before easing starts. Passing a season drops its count back to this number.",
+    "gmcm.pity.quota-step.name": "Quota reduction per step",
+    "gmcm.pity.quota-step.tooltip": "On a kept board, the failed season's quota is reduced by this fraction per fail beyond the threshold.",
+    "gmcm.pity.quota-floor.name": "Lowest quota factor",
+    "gmcm.pity.quota-floor.tooltip": "The kept-board quota never drops below this fraction of the standard quota.",
+    "gmcm.pity.trim.name": "Items trimmed per step",
+    "gmcm.pity.trim.tooltip": "On a reshuffle, this many of the hardest items eligible for the failed season are left out of the roll per fail beyond the threshold.",
 
     // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
     "event.intro.lewis-1": "Hi there, @. Welcome to the valley.#$b#I'm Lewis, mayor of Pelican Town. I came up to greet you and your new farm.$h",
