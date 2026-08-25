@@ -1548,6 +1548,11 @@ namespace TheLongestYear
                     this.Monitor.Log(
                         $"      {spec.Room}/{spec.Index} '{spec.Name}' [{spec.Slots.Count} slots, need {spec.NumberOfSlots}] — {source}",
                         LogLevel.Info);
+
+                    var qualityAsks = spec.Slots.Where(s => s.Quality > 0)
+                        .Select(s => $"{s.ItemId} q{s.Quality}").ToList();
+                    if (qualityAsks.Count > 0)
+                        this.Monitor.Log($"        quality asks: {string.Join(", ", qualityAsks)}", LogLevel.Info);
                 }
             }
             this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
