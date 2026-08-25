@@ -136,6 +136,16 @@ public class BundleHoldTests
     }
 
     [Fact]
+    public void ConsumeChoiceAtReset_without_a_choice_clears_the_ease_stamp()
+    {
+        var s = new MetaState { CompletedResets = 4, BoardEaseSeason = 0, BoardEaseSteps = 2 };
+        bool made = BundleHold.ConsumeChoiceAtReset(s);
+        Assert.False(made);
+        Assert.Equal(-1, s.BoardEaseSeason);
+        Assert.Equal(0, s.BoardEaseSteps);
+    }
+
+    [Fact]
     public void ConsumeChoiceAtReset_with_a_choice_keeps_the_board_trim_stamp()
     {
         var s = new MetaState { CompletedResets = 4, BoardTrimSeason = 0, BoardTrimSteps = 4, HoldChoiceMadeForReset = true };

@@ -88,27 +88,103 @@ public class SeasonPityTests
     }
 
     [Fact]
-    public void DisplaySteps_uses_quota_ease_when_held_else_board_trim()
+    public void DisplaySteps_uses_quota_ease_stamp_else_board_trim()
     {
-        var held = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0, ConsecutiveHolds = 1, BoardTrimSeason = -1 };
-        Assert.Equal(2, SeasonPity.DisplaySteps(held, Cfg()));
-        var shuffled = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0, ConsecutiveHolds = 0, BoardTrimSeason = 0, BoardTrimSteps = 4 };
+        var eased = new MetaState { BoardEaseSeason = (int)Season.Spring, BoardEaseSteps = 2, BoardTrimSeason = -1 };
+        Assert.Equal(2, SeasonPity.DisplaySteps(eased, Cfg()));
+        var shuffled = new MetaState { BoardEaseSeason = -1, BoardTrimSeason = 0, BoardTrimSteps = 4 };
         Assert.Equal(2, SeasonPity.DisplaySteps(shuffled, Cfg()));   // 4 units / 2 per step
         Assert.Equal(0, SeasonPity.DisplaySteps(new MetaState(), Cfg()));
     }
 
     [Fact]
-    public void CurrentQuotaEase_is_null_unless_held_with_steps()
+    public void CurrentQuotaEase_is_null_without_a_stamp_or_when_disabled()
     {
         var cfg = Cfg();
         Assert.Null(SeasonPity.CurrentQuotaEase(new MetaState(), cfg));
-        var notHeld = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0 };
-        Assert.Null(SeasonPity.CurrentQuotaEase(notHeld, cfg));
-        var held = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0, ConsecutiveHolds = 1 };
-        var ease = SeasonPity.CurrentQuotaEase(held, cfg);
+        var stamped = new MetaState { BoardEaseSeason = (int)Season.Spring, BoardEaseSteps = 2 };
+        Assert.Null(SeasonPity.CurrentQuotaEase(stamped, Cfg(enabled: false)));
+        var ease = SeasonPity.CurrentQuotaEase(stamped, cfg);
         Assert.NotNull(ease);
         Assert.Equal(Season.Spring, ease!.Season);
         Assert.Equal(2, ease.Steps);
         Assert.Equal(0.8, ease.Factor, 6);
     }
+
+    [Fact]
+    public void CurrentQuotaEase_reads_the_stamp_not_live_counts()
+    {
+        // Fail counters have already dropped back to the threshold (RecordPass ran), but the
+        // stamp from the keep choice still governs the requirements for this held board.
+        var s = new MetaState
+        {
+            BoardEaseSeason = (int)Season.Spring,
+            BoardEaseSteps = 2,
+            SeasonFailCounts = new List<int> { 5, 0, 0, 0 },
+        };
+        var ease = SeasonPity.CurrentQuotaEase(s, Cfg());
+        Assert.NotNull(ease);
+        Assert.Equal(Season.Spring, ease!.Season);
+        Assert.Equal(2, ease.Steps);
+        Assert.Equal(0.8, ease.Factor, 6);
+    }
+
+    [Fact]
+    public void CurrentQuotaEase_is_null_for_Winter_even_past_the_threshold()
+    {
+        var s = new MetaState { SeasonFailCounts = new List<int> { 0, 0, 0, 8 }, LastFailSeason = (int)Season.Winter };
+        SeasonPity.StampKeepEase(s, Cfg());
+        Assert.Equal(-1, s.BoardEaseSeason);
+        Assert.Equal(0, s.BoardEaseSteps);
+        Assert.Null(SeasonPity.CurrentQuotaEase(s, Cfg()));
+    }
+
+    [Fact]
+    public void StampKeepEase_records_or_clears()
+    {
+        var s = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0 };
+        SeasonPity.StampKeepEase(s, Cfg());
+        Assert.Equal(0, s.BoardEaseSeason);
+        Assert.Equal(2, s.BoardEaseSteps);
+
+        var none = new MetaState { SeasonFailCounts = new List<int> { 3, 0, 0, 0 }, LastFailSeason = 0 };
+        SeasonPity.StampKeepEase(none, Cfg());
+        Assert.Equal(-1, none.BoardEaseSeason);
+        Assert.Equal(0, none.BoardEaseSteps);
+    }
+
+    [Fact]
+    public void StampReshuffleTrim_clears_the_ease_stamp()
+    {
+        var s = new MetaState
+        {
+            BoardEaseSeason = 1,
+            BoardEaseSteps = 3,
+            SeasonFailCounts = new List<int> { 0, 0, 0, 0 },
+            LastFailSeason = -1,
+        };
+        SeasonPity.StampReshuffleTrim(s, Cfg());
+        Assert.Equal(-1, s.BoardEaseSeason);
+        Assert.Equal(0, s.BoardEaseSteps);
+    }
+
+    [Fact]
+    public void Ease_survives_RecordPass_within_the_loop()
+    {
+        var s = new MetaState { SeasonFailCounts = new List<int> { 7, 0, 0, 0 }, LastFailSeason = 0 };
+        SeasonPity.StampKeepEase(s, Cfg());
+        SeasonPity.RecordPass(s, Season.Spring, Cfg());   // counter drops to threshold mid-loop
+        var ease = SeasonPity.CurrentQuotaEase(s, Cfg());
+        Assert.NotNull(ease);
+        Assert.Equal(Season.Spring, ease!.Season);
+        Assert.Equal(2, ease.Steps);
+    }
+
+    [Theory]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(3, true)]
+    [InlineData(4, false)]
+    public void IsValidSeasonIndex_is_0_to_3(int index, bool expected)
+        => Assert.Equal(expected, SeasonPity.IsValidSeasonIndex(index));
 }

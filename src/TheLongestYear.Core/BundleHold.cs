@@ -63,6 +63,7 @@ public static class BundleHold
             state.BundleSeedLoop = state.CompletedResets;
             state.ConsecutiveHolds = 0;
             SeasonPity.ClearBoardTrim(state);
+            SeasonPity.ClearBoardEase(state);
         }
         state.HoldChoiceMadeForReset = false;
         return choiceMade;
