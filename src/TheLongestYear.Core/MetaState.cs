@@ -72,6 +72,22 @@ public sealed class MetaState
     /// tly_reset, post-win new loop), which must reshuffle. Cleared by PerformReset.</summary>
     public bool HoldChoiceMadeForReset { get; set; }
 
+    /// <summary>Fails recorded at each season gate, index = (int)Season. Drives season pity
+    /// (spec 2026-08-25). Padded to four entries by <see cref="SeasonPity"/> on read.</summary>
+    public List<int> SeasonFailCounts { get; set; } = new() { 0, 0, 0, 0 };
+
+    /// <summary>The season index of the most recent Fail night, -1 before the first fail. The
+    /// keep-path quota easing applies to this season only.</summary>
+    public int LastFailSeason { get; set; } = -1;
+
+    /// <summary>Season index whose slot pools were trimmed when the CURRENT board was rolled
+    /// (reshuffle-path pity), -1 = no trim. Stamped by SeasonPity.StampReshuffleTrim before the
+    /// reset generates; a reload must regenerate with the same values or the manifest check fails.</summary>
+    public int BoardTrimSeason { get; set; } = -1;
+
+    /// <summary>Trim units applied when the current board was rolled (see <see cref="BoardTrimSeason"/>).</summary>
+    public int BoardTrimSteps { get; set; }
+
     /// <summary>The loop number to seed bundle generation with: <see cref="BundleSeedLoop"/>
     /// when set, else <see cref="CompletedResets"/>. Both the reset-time generation and the
     /// load-time manifest re-check MUST use this, or a held board is flagged stale on reload.</summary>
