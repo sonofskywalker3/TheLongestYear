@@ -15,7 +15,7 @@ public static class CartDayStock
 
     /// <summary>Mirrors vanilla ShopBuilder.TrackSeenItems' dedupe key: a recipe listing
     /// gets its own slot alongside the plain item, matching the game's own "#Recipe" suffix
-    /// (F3 — without this, an item and its recipe collapsed to one slot and the cart showed
+    /// (F3: without this, an item and its recipe collapsed to one slot and the cart showed
     /// fewer items than its tier allows).</summary>
     public static string KeyFor(string qualifiedItemId, bool isRecipe)
         => isRecipe ? qualifiedItemId + RecipeSuffix : qualifiedItemId;
