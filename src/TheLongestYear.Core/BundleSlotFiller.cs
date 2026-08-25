@@ -28,7 +28,8 @@ public static class BundleSlotFiller
 
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
-        BundleGenerationTuning tuning, Random rng)
+        BundleGenerationTuning tuning, Random rng,
+        PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -37,6 +38,30 @@ public static class BundleSlotFiller
         int targetCount = spec.PickCount > 0
             ? Math.Min(spec.PickCount, spec.Slots.Count)
             : spec.Slots.Count;
+
+        // Season pity, reshuffle path (spec 2026-08-25): quality-off costs one unit for the whole
+        // bundle when the domain rolls quality; the rest remove the hardest candidates, never
+        // below what this bundle needs to fill.
+        bool qualityOff = false;
+        if (TrimApplies(match, trim))
+        {
+            int before = candidates.Count;
+            int units = trim!.Units;
+            if (DomainRollsQuality(match.Domain) && units > 0)
+            {
+                qualityOff = true;
+                units -= 1;
+            }
+            candidates = ItemHardness.Trim(candidates, units, targetCount, match.Domain, thresholds ?? new RarityThresholds());
+            int after = candidates.Count;
+            if (log != null)
+            {
+                int removed = before - after;
+                string guardNote = after == targetCount && removed < units ? " (guard stopped early)" : "";
+                log($"pity trim '{spec.Name}': {before} candidates -> {after} (units {trim.Units}, quality off {qualityOff}, need {targetCount}){guardNote}");
+            }
+        }
+
         if (candidates.Count < targetCount)
             return spec;
 
@@ -44,7 +69,7 @@ public static class BundleSlotFiller
         var slots = chosen.Select(item => new BundleSlotSpec(
             item.ItemId,
             RollStack(match.Domain, item, tuning, rng),
-            RollQuality(match.Domain, item, tuning, rng))).ToList();
+            qualityOff ? 0 : RollQuality(match.Domain, item, tuning, rng))).ToList();
 
         if (match.Domain == PoolDomain.SeasonalForage
             && rng.NextDouble() < tuning.LargeQuantityForageChance)
@@ -60,6 +85,17 @@ public static class BundleSlotFiller
             NumberOfSlots = Math.Min(spec.NumberOfSlots, slots.Count),
         };
     }
+
+    /// <summary>A trim applies to bundles feeding the trimmed season's gate: season-agnostic
+    /// pools (Metals, ArtisanGoods, Fish, CrabPot, MonsterDrops, generic crops) feed every
+    /// season, so they count; season-named bundles count only for their own season.</summary>
+    public static bool TrimApplies(DomainMatch match, PityTrim? trim)
+        => trim != null && trim.Units > 0 && match.Domain != PoolDomain.None
+           && (match.Season == null || match.Season == trim.Season);
+
+    /// <summary>Mirrors the domains <see cref="RollQuality"/> can give a silver/gold ask.</summary>
+    public static bool DomainRollsQuality(PoolDomain domain)
+        => domain is PoolDomain.QualityCrops or PoolDomain.SeasonalCrops or PoolDomain.SeasonalForage or PoolDomain.Fish;
 
     private static IReadOnlyList<PoolItem> Candidates(
         BundleSpec spec, DomainMatch match, ItemPools pools)

@@ -473,18 +473,21 @@ namespace TheLongestYear.Loop
             }
             else
             {
-                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations);
+                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds);
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
-                GeneratedBundleSet generatedSet = engine.Generate(seed);
+                PityTrim trim = BundleEngine.TrimFor(_meta);
+                GeneratedBundleSet generatedSet = engine.Generate(seed, trim);
                 engine.WriteToWorld(generatedSet, _monitor);
+                SeasonEase ease = SeasonPity.CurrentQuotaEase(_meta, _config);
                 _monitor.Log(
-                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}).",
+                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}, " +
+                    $"pity trim {(trim == null ? "none" : $"{trim.Season} x{trim.Units}")}, pity ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps")}).",
                     LogLevel.Info);
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
-                LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas);
+                LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas, ease);
             }
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
