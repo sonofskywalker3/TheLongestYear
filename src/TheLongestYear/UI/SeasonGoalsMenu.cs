@@ -550,7 +550,7 @@ namespace TheLongestYear.UI
         /// <c>menu.goals.badge-needs-before</c> i18n keys so translated builds get the game's
         /// own "Spring"/"Summer"/"Fall"/"Winter" instead of our own (unmaintained) season key.
         /// English output is byte-identical to the prior <c>(CoreSeason)n</c> enum-name rendering.</summary>
-        private static string SeasonName(CoreSeason season)
+        internal static string SeasonName(CoreSeason season)
             => StardewValley.Utility.getSeasonNameFromNumber((int)season);
 
         private static Item ResolveItem(string id, int stack = 1, int quality = 0)
