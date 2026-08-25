@@ -75,6 +75,14 @@ public sealed class RunState
     /// PeakMineFloorTracker (mod-side) on Player.Warped into a MineShaft.</summary>
     public int PeakMineFloor { get; set; }
 
+    /// <summary>The day (Game1.Date.TotalDays) whose Traveling Cart selection is remembered in
+    /// <see cref="CartStockIds"/>; -1 = none. Makes the cart cap per DAY: buying an item leaves
+    /// a gap instead of pulling the next item up (Nexus post, lexihope, 2026-08-25).</summary>
+    public int CartStockDay { get; set; } = -1;
+
+    /// <summary>Qualified item ids the cart exposed first on <see cref="CartStockDay"/>.</summary>
+    public List<string> CartStockIds { get; set; } = new();
+
     /// <summary>True when this week's theme quest has been completed (every sampled goal slot
     /// donated — the goal count varies by season, see BonusItemSampler.DefaultMaxCountBySeason)
     /// and the liability is lifted for the rest of the week. Also set by the empty-pool
@@ -203,6 +211,8 @@ public sealed class RunState
         CurrentWeekBonusSlots.Clear();
         OfferPresentedWeek = -1;
         PeakMineFloor = 0;
+        CartStockDay = -1;
+        (CartStockIds ??= new()).Clear();
         LiabilitySuppressedThisWeek = false;
     }
 }

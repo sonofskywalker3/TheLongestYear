@@ -309,4 +309,17 @@ public class RunStateTests
         run.Select(Theme.Farming);
         Assert.Empty(run.CurrentWeekBonusSlots);
     }
+
+    [Fact]
+    public void Cart_day_stock_round_trips_and_resets_on_new_run()
+    {
+        var run = new RunState { CartStockDay = 4, CartStockIds = new System.Collections.Generic.List<string> { "(O)1" } };
+        string json = System.Text.Json.JsonSerializer.Serialize(run);
+        RunState back = System.Text.Json.JsonSerializer.Deserialize<RunState>(json)!;
+        Assert.Equal(4, back.CartStockDay);
+        Assert.Equal(new[] { "(O)1" }, back.CartStockIds);
+        back.BeginNewRun(7);
+        Assert.Equal(-1, back.CartStockDay);
+        Assert.Empty(back.CartStockIds);
+    }
 }

@@ -68,7 +68,7 @@ namespace TheLongestYear.Loop
                 {
                     CropData c = kv.Value;
                     if (c?.HarvestItemId == null) continue;
-                    crops.Add(new RawCropEntry(c.HarvestItemId, MapSeasons(c.Seasons)));
+                    crops.Add(new RawCropEntry(c.HarvestItemId, MapSeasons(c.Seasons), c.HarvestMaxQuality));
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))

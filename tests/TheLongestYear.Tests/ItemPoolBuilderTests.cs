@@ -286,4 +286,85 @@ public class ItemPoolBuilderTests
         Assert.NotNull(tea);
         Assert.Equal(new[] { Season.Spring, Season.Summer, Season.Fall }, tea!.Seasons);
     }
+
+    [Fact]
+    public void QualityEligible_CropHarvests_RodFish_SpawnedForage_OnlyThose()
+    {
+        var pools = Build(
+            crops: new[] { new RawCropEntry("24", new[] { Season.Spring }) },
+            objects: Objects(
+                ("24", Obj(category: -75)),                       // Parsnip (crop)
+                ("128", Obj(type: "Fish", category: -4)),         // Pufferfish (rod)
+                ("RiverJelly", Obj(type: "Fish", category: -4)),  // jelly (rod, never quality)
+                ("715", Obj(type: "Fish", category: -4)),         // Lobster (trap)
+                ("16", Obj(category: -81)),                       // Wild Horseradish (forage spawn, Greens)
+                ("771", Obj(category: -16)),                       // Fiber spawn with a non-forage category
+                ("430", Obj(category: 0)),                        // Truffle: special-cased by the game
+                ("815", Obj(category: -81))),                     // Tea Leaves: curated addition only
+            forage: new[]
+            {
+                new RawSpawnEntry("(O)16", Season.Spring, null, "Forest"),
+                new RawSpawnEntry("(O)771", null, null, "Forest"),
+                new RawSpawnEntry("(O)430", Season.Fall, null, "Forest"),
+            },
+            fish: new[]
+            {
+                new RawSpawnEntry("(O)128", Season.Summer, null, "Beach"),
+                new RawSpawnEntry("(O)RiverJelly", null, null, "Town"),
+                new RawSpawnEntry("(O)715", null, null, "Beach"),
+            },
+            trap: new HashSet<string> { "715" });
+
+        var eligible = pools.QualityEligibleIds!;
+        Assert.Contains("(O)24", eligible);
+        Assert.Contains("(O)128", eligible);
+        Assert.Contains("(O)16", eligible);
+        Assert.Contains("(O)430", eligible);
+        Assert.DoesNotContain("(O)RiverJelly", eligible);
+        Assert.DoesNotContain("(O)715", eligible);
+        Assert.DoesNotContain("(O)771", eligible);
+        Assert.DoesNotContain("(O)815", eligible);   // in the Crops pool via the curated CropPoolAdditions list, still not eligible
+        Assert.Contains(pools.Crops, p => p.ItemId == "(O)815");
+    }
+
+    [Fact]
+    public void QualityEligible_CropWithHarvestMaxQualityZero_IsNotEligible()
+    {
+        var pools = Build(
+            crops: new[]
+            {
+                new RawCropEntry("771", new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter },
+                    HarvestMaxQuality: 0),                        // Fiber: quality clamped to base by CropData
+                new RawCropEntry("24", new[] { Season.Spring }),  // Parsnip: uncapped (null), stays eligible
+            },
+            objects: Objects(
+                ("771", Obj(category: -16)),
+                ("24", Obj(category: -75))));
+
+        Assert.Contains(pools.Crops, p => p.ItemId == "(O)771");
+        Assert.DoesNotContain("(O)771", pools.QualityEligibleIds!);
+        Assert.Contains("(O)24", pools.QualityEligibleIds!);
+    }
+
+    [Fact]
+    public void QualityEligible_ForageTagCountsLikeCategory()
+    {
+        var pools = Build(
+            objects: Objects(("999", Obj(category: 0, tags: "forage_item"))),
+            forage: new[] { new RawSpawnEntry("(O)999", null, null, "Forest") });
+        Assert.Contains("(O)999", pools.QualityEligibleIds!);
+    }
+
+    [Fact]
+    public void IsJelly_MatchesTheThreeJellies()
+    {
+        Assert.True(ItemPoolBuilder.IsJelly("(O)RiverJelly"));
+        Assert.True(ItemPoolBuilder.IsJelly("(O)SeaJelly"));
+        Assert.True(ItemPoolBuilder.IsJelly("(O)CaveJelly"));
+        Assert.False(ItemPoolBuilder.IsJelly("(O)128"));
+    }
+
+    [Fact]
+    public void HandBuiltPools_HaveNullEligibility()
+        => Assert.Null(new ItemPools().QualityEligibleIds);
 }
