@@ -6,7 +6,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### 0.13.x brainstorm: DerivePins / obtainability
+### 0.13.x: season pity (spec written 2026-08-25, plan next)
+
+Brainstormed and approved 2026-08-25: `docs/superpowers/specs/2026-08-25-season-pity-design.md`.
+Per-season fail counter; first 5 fails standard; from the 6th, keep = quota -10%/step (floor 50%),
+reshuffle = trim the 2 hardest eligible items/step; passing a season drops its counter back to 5.
+Next: `superpowers:writing-plans` for the implementation plan.
+
+### (superseded) 0.13.x brainstorm: DerivePins / obtainability
 
 Keep-bundles hold RELEASED in 0.12.17/0.12.18 (spec
 `docs/superpowers/specs/2026-08-24-keep-bundles-hold-design.md`). 0.12.18 also pulled Void Salmon
