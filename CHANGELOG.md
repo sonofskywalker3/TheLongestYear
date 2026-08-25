@@ -14,6 +14,13 @@ aims to follow [Semantic Versioning](https://semver.org/).
   `PityQuotaStep`, `PityQuotaFloor`, `PityTrimPerStep` (GMCM section "Season pity"). Debug `tly_pity`.
   TLY Custom boards only.
 
+- **The easing is an offer, not automatic.** After the keep/reshuffle question on a Fail night where
+  the season has been failed more than the threshold, the Junimos ask whether to use their power to
+  make the town's requests easier. Yes applies the easing for the path you chose (kept board: lower
+  quota; reshuffled board: hardest items left out) and costs JP on the same curve as the hold (first
+  free, then `PityCosts` 50/100/200/300, reset by declining). No means a standard board. Debug
+  `tly_pity accept|decline`.
+
 ### Fixed
 - **Quality asks only on items that can carry quality** (Nexus 1122358 follow-ups: gold Fiber, gold
   River Jelly, silver Tea Leaves). The engine now derives which items the game itself gives quality

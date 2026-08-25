@@ -187,4 +187,94 @@ public class SeasonPityTests
     [InlineData(4, false)]
     public void IsValidSeasonIndex_is_0_to_3(int index, bool expected)
         => Assert.Equal(expected, SeasonPity.IsValidSeasonIndex(index));
+
+    // ---- Opt-in offer ----
+
+    private static MetaState Struggling(int springFails = 7, long jp = 500, int uses = 0)
+        => new() { SeasonFailCounts = new List<int> { springFails, 0, 0, 0 }, LastFailSeason = 0, JunimoPoints = jp, ConsecutivePityUses = uses };
+
+    [Fact]
+    public void OfferFor_none_below_threshold_ease_when_held_trim_when_reshuffled()
+    {
+        Assert.Equal(SeasonPity.PityOffer.None, SeasonPity.OfferFor(Struggling(springFails: 5), held: true, Cfg()));
+        Assert.Equal(SeasonPity.PityOffer.Ease, SeasonPity.OfferFor(Struggling(), held: true, Cfg()));
+        Assert.Equal(SeasonPity.PityOffer.Trim, SeasonPity.OfferFor(Struggling(), held: false, Cfg()));
+    }
+
+    [Fact]
+    public void OfferFor_winter_keep_has_nothing_but_winter_reshuffle_trims()
+    {
+        var s = new MetaState { SeasonFailCounts = new List<int> { 0, 0, 0, 8 }, LastFailSeason = 3, JunimoPoints = 500 };
+        Assert.Equal(SeasonPity.PityOffer.None, SeasonPity.OfferFor(s, held: true, Cfg()));
+        Assert.Equal(SeasonPity.PityOffer.Trim, SeasonPity.OfferFor(s, held: false, Cfg()));
+    }
+
+    [Fact]
+    public void PityCost_follows_the_curve_by_consecutive_uses()
+    {
+        var cfg = Cfg();
+        Assert.Equal(0, SeasonPity.PityCost(Struggling(uses: 0), cfg));
+        Assert.Equal(50, SeasonPity.PityCost(Struggling(uses: 1), cfg));
+        Assert.Equal(300, SeasonPity.PityCost(Struggling(uses: 9), cfg));
+    }
+
+    [Fact]
+    public void AcceptPity_first_is_free_charges_next_stamps_ease_when_held()
+    {
+        var s = Struggling(jp: 60);
+        Assert.Equal(SeasonPity.PityResult.Applied, SeasonPity.AcceptPity(s, held: true, Cfg()));
+        Assert.Equal(60, s.JunimoPoints);
+        Assert.Equal(1, s.ConsecutivePityUses);
+        Assert.Equal(0, s.BoardEaseSeason);
+        Assert.Equal(2, s.BoardEaseSteps);
+
+        Assert.Equal(SeasonPity.PityResult.Applied, SeasonPity.AcceptPity(s, held: true, Cfg()));
+        Assert.Equal(10, s.JunimoPoints);
+        Assert.Equal(2, s.ConsecutivePityUses);
+    }
+
+    [Fact]
+    public void AcceptPity_reshuffled_stamps_trim_and_clears_ease()
+    {
+        var s = Struggling();
+        s.BoardEaseSeason = 0; s.BoardEaseSteps = 2;
+        Assert.Equal(SeasonPity.PityResult.Applied, SeasonPity.AcceptPity(s, held: false, Cfg()));
+        Assert.Equal(0, s.BoardTrimSeason);
+        Assert.Equal(4, s.BoardTrimSteps);
+        Assert.Equal(-1, s.BoardEaseSeason);
+    }
+
+    [Fact]
+    public void AcceptPity_not_enough_jp_changes_nothing()
+    {
+        var s = Struggling(jp: 20, uses: 1);   // next costs 50
+        Assert.Equal(SeasonPity.PityResult.NotEnoughJp, SeasonPity.AcceptPity(s, held: true, Cfg()));
+        Assert.Equal(20, s.JunimoPoints);
+        Assert.Equal(1, s.ConsecutivePityUses);
+        Assert.Equal(-1, s.BoardEaseSeason);
+    }
+
+    [Fact]
+    public void DeclinePity_resets_uses_and_clears_stamps_reshuffle_clears_trim_too()
+    {
+        var held = Struggling(uses: 3);
+        held.BoardEaseSeason = 0; held.BoardEaseSteps = 2; held.BoardTrimSeason = 0; held.BoardTrimSteps = 4;
+        SeasonPity.DeclinePity(held, held: true);
+        Assert.Equal(0, held.ConsecutivePityUses);
+        Assert.Equal(-1, held.BoardEaseSeason);
+        Assert.Equal(0, held.BoardTrimSeason);   // a kept board keeps its trim stamp
+
+        var shuffled = Struggling(uses: 3);
+        shuffled.BoardTrimSeason = 0; shuffled.BoardTrimSteps = 4;
+        SeasonPity.DeclinePity(shuffled, held: false);
+        Assert.Equal(-1, shuffled.BoardTrimSeason);
+    }
+
+    [Fact]
+    public void AcceptPity_with_nothing_to_offer_declines()
+    {
+        var s = Struggling(springFails: 2, uses: 2);
+        Assert.Equal(SeasonPity.PityResult.Declined, SeasonPity.AcceptPity(s, held: true, Cfg()));
+        Assert.Equal(0, s.ConsecutivePityUses);
+    }
 }

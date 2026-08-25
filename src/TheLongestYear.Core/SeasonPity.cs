@@ -102,6 +102,70 @@ public static class SeasonPity
         state.BoardEaseSteps = 0;
     }
 
+    // ---- Opt-in offer (Jeff, 2026-08-25): the easing is offered as a separate Fail-night
+    // ---- question after the hold choice, priced like the hold, and only applied on "yes".
+
+    public enum PityOffer
+    {
+        /// <summary>Nothing to offer: no ease steps due, or a kept board on a Winter fail.</summary>
+        None,
+        /// <summary>Kept board: the failed season's quota comes down.</summary>
+        Ease,
+        /// <summary>Reshuffled board: the hardest eligible items are trimmed from the roll.</summary>
+        Trim,
+    }
+
+    public enum PityResult { Applied, Declined, NotEnoughJp }
+
+    /// <summary>What the Junimos can offer after the hold choice, given whether the board was
+    /// kept (<paramref name="held"/>) or reshuffled.</summary>
+    public static PityOffer OfferFor(MetaState state, bool held, GameplayConfig config)
+    {
+        int season = state.LastFailSeason;
+        if (!IsValidSeasonIndex(season)) return PityOffer.None;
+        int steps = EaseSteps(state, (Season)season, config);
+        if (steps <= 0) return PityOffer.None;
+        if (held)
+            return season == (int)Season.Winter ? PityOffer.None : PityOffer.Ease;
+        return TrimUnits(steps, config) > 0 ? PityOffer.Trim : PityOffer.None;
+    }
+
+    /// <summary>Price of accepting the next offer (first accept free by default).</summary>
+    public static long PityCost(MetaState state, GameplayConfig config)
+        => BundleHoldPricing.CostFor(state.ConsecutivePityUses, config.PityCosts);
+
+    /// <summary>The player said yes: charge the JP, count the accept, and stamp the easing for
+    /// the chosen path. Nothing changes on NotEnoughJp.</summary>
+    public static PityResult AcceptPity(MetaState state, bool held, GameplayConfig config)
+    {
+        if (OfferFor(state, held, config) == PityOffer.None)
+        {
+            DeclinePity(state, held);
+            return PityResult.Declined;
+        }
+        long cost = PityCost(state, config);
+        if (state.JunimoPoints < cost)
+            return PityResult.NotEnoughJp;
+        state.JunimoPoints -= cost;
+        state.ConsecutivePityUses += 1;
+        if (held)
+            StampKeepEase(state, config);
+        else
+            StampReshuffleTrim(state, config);
+        return PityResult.Applied;
+    }
+
+    /// <summary>The player said no (or nothing was offered): reset the accept counter and make
+    /// sure no easing is stamped for the coming board. A kept board keeps its existing trim
+    /// stamp (it is the same board); a reshuffled board starts clean.</summary>
+    public static void DeclinePity(MetaState state, bool held)
+    {
+        state.ConsecutivePityUses = 0;
+        ClearBoardEase(state);
+        if (!held)
+            ClearBoardTrim(state);
+    }
+
     /// <summary>The keep-path quota easing in force for the current board, or null. Reads the
     /// stamp set by <see cref="StampKeepEase"/> at the Fail-night keep choice -- NOT live
     /// SeasonFailCounts/ConsecutiveHolds -- so a reload of a held board reproduces the same

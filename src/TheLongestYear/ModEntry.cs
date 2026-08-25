@@ -247,7 +247,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
-            helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails>.", this.CmdPity);
+            helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters and the Fail-night offer. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails> | tly_pity accept|decline (after tly_hold keep|reshuffle, before tly_reset).", this.CmdPity);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1897,11 +1897,9 @@ namespace TheLongestYear
                 case "reshuffle":
                     bool keep = mode == "keep";
                     var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts);
-                    if (keep && result == BundleHold.HoldResult.Kept)
-                        SeasonPity.StampKeepEase(s, _config);
-                    else if (!keep)
-                        SeasonPity.StampReshuffleTrim(s, _config);
-                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}, ease {s.BoardEaseSeason}/{s.BoardEaseSteps}, trim {s.BoardTrimSeason}/{s.BoardTrimSteps}.", LogLevel.Info);
+                    if (result != BundleHold.HoldResult.NotEnoughJp)
+                        SeasonPity.DeclinePity(s, held: keep);   // the offer is a separate step: tly_pity accept|decline
+                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}, ease {s.BoardEaseSeason}/{s.BoardEaseSteps}, trim {s.BoardTrimSeason}/{s.BoardTrimSteps}; offer now {SeasonPity.OfferFor(s, keep, _config)} at {SeasonPity.PityCost(s, _config)} JP (tly_pity accept|decline).", LogLevel.Info);
                     this.Monitor.Log("tly_hold: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
                     break;
                 default:
@@ -1927,6 +1925,22 @@ namespace TheLongestYear
                 _meta.Save();
                 this.Monitor.Log($"tly_pity: {season} fails set to {fails} (LastFailSeason = {season}). Saved.", LogLevel.Info);
             }
+            else if (mode == "accept" || mode == "decline")
+            {
+                bool held = s.ConsecutiveHolds > 0;   // the pending tly_hold choice decides the path
+                if (mode == "accept")
+                {
+                    var offer = SeasonPity.OfferFor(s, held, _config);
+                    var pity = SeasonPity.AcceptPity(s, held, _config);
+                    this.Monitor.Log($"tly_pity accept ({(held ? "kept" : "reshuffled")} board, offer {offer}): {pity}. JP {s.JunimoPoints}, consecutive uses {s.ConsecutivePityUses}.", LogLevel.Info);
+                }
+                else
+                {
+                    SeasonPity.DeclinePity(s, held);
+                    this.Monitor.Log($"tly_pity decline ({(held ? "kept" : "reshuffled")} board): uses reset, stamps cleared.", LogLevel.Info);
+                }
+                this.Monitor.Log("tly_pity: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
+            }
             var counts = SeasonPity.Counts(s);
             var ease = SeasonPity.CurrentQuotaEase(s, _config);
             this.Monitor.Log(
@@ -1934,7 +1948,7 @@ namespace TheLongestYear
                 $"steps Spring {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Spring, _config)} / Summer {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Summer, _config)} / Fall {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Fall, _config)} / Winter {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Winter, _config)}; " +
                 $"last fail season {s.LastFailSeason}; held {s.ConsecutiveHolds}; quota ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps factor {ease.Factor:0.00}")}; " +
                 $"ease stamp season {s.BoardEaseSeason} steps {s.BoardEaseSteps}; " +
-                $"board trim season {s.BoardTrimSeason} units {s.BoardTrimSteps}; enabled {_config.PityEnabled}.",
+                $"board trim season {s.BoardTrimSeason} units {s.BoardTrimSteps}; consecutive pity uses {s.ConsecutivePityUses} (next offer {SeasonPity.PityCost(s, _config)} JP); enabled {_config.PityEnabled}.",
                 LogLevel.Info);
         }
 

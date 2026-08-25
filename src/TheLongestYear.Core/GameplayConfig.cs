@@ -66,6 +66,11 @@ public sealed class GameplayConfig
     /// <summary>Hardest items removed from that season's slot pools per ease step when the player RESHUFFLES.</summary>
     public int PityTrimPerStep { get; set; } = 2;
 
+    /// <summary>JP price of accepting the Junimos' pity offer on a Fail night, indexed by how
+    /// many offers the player has accepted in a row (index 0 = first accept, free). Same shape
+    /// and default as <see cref="BundleHoldCosts"/>; declining resets the counter.</summary>
+    public List<long> PityCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
+
     /// <summary>
     /// Design-default per-item season pins for KIND 2 PerItem bundles. Sourced from the
     /// bundle-gate handoff doc (2026-05-26) — each pin reflects a realistic obtainability

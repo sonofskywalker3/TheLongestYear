@@ -130,6 +130,18 @@ regression test that generates a full board from the engine pools, builds requir
 asserts that no Spring requirement can only be met with a Fall/Winter-pinned item. Station-made
 goods and geode tiers are deliberately outside this invariant; the pity system covers them.
 
+## 4b. The easing is an offer (added 2026-08-25, Jeff: "like Mario's assist offer")
+
+The easing never applies silently. After the keep/reshuffle answer, when `EaseSteps(S) > 0`
+(and, for a kept board, S is not Winter), a second question asks whether to use the Junimos'
+power to make the town's requests easier. **Yes** charges `PityCosts[ConsecutivePityUses]`
+(same default curve as the hold: 0, 50, 100, 200, 300), increments `MetaState.ConsecutivePityUses`,
+and stamps the easing for the chosen path (`StampKeepEase` on a kept board, `StampReshuffleTrim` on
+a reshuffle). **No** (or nothing to offer) resets the counter and clears the ease stamp (and the trim
+stamp on a reshuffle; a kept board keeps its existing trim). Not enough JP nudges and re-asks, like
+the hold. Pure rules: `SeasonPity.OfferFor`, `PityCost`, `AcceptPity`, `DeclinePity`. Debug:
+`tly_pity accept|decline` after `tly_hold keep|reshuffle`.
+
 ## 5. Player-facing
 
 - **Fail-night prompt** (`ShowHoldChoice`, before the shrine): when `EaseSteps(S)` will be > 0
@@ -155,6 +167,7 @@ goods and geode tiers are deliberately outside this invariant; the pity system c
 | `PityQuotaStep` | `0.10` | Quota reduction per ease step on a kept board |
 | `PityQuotaFloor` | `0.50` | Lowest quota factor |
 | `PityTrimPerStep` | `2` | Hardest items removed per ease step on a reshuffle |
+| `PityCosts` | `[0, 50, 100, 200, 300]` | JP price of accepting the offer, by consecutive accepts (section 4b) |
 
 No em dashes in any player-facing string (house rule).
 
