@@ -305,6 +305,8 @@
     "menu.hub.cart-label": "Cart: {{label}}",
     "menu.goals.title": "Season Goals: {{season}} (day {{day}})",
     "menu.goals.title-held": "Season Goals: {{season}} (day {{day}}) held {{holds}}x",
+    "menu.goals.title-eased": "Season Goals: {{season}} (day {{day}}) eased {{steps}}x",
+    "menu.goals.title-held-eased": "Season Goals: {{season}} (day {{day}}) held {{holds}}x eased {{steps}}x",
     "menu.goals.badge-met": "checkpoint met",
     "menu.goals.badge-needs-before": "needs {{count}} before {{season}} 1",
     "menu.goals.badge-needs-end": "needs {{count}} by run end",
