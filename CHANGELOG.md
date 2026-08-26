@@ -3,7 +3,9 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.14.0 - 2026-08-26
+
+Fix release for the 0.12.17 shrine regression, plus two fixes from player reports. 839 tests.
 
 ### Fixed
 
@@ -14,6 +16,15 @@ aims to follow [Semantic Versioning](https://semver.org/).
   the reset with no shop shown (and no JP spent). The shrine open is now deferred a tick and drained by
   the day-28 watchdog, the same fix the hold re-ask and the pity offer already use. A shrine that still
   cannot open now logs a warning instead of failing silently. Banked JP was never lost.
+- **Weekly theme goals could tick without you donating anything** (@ggrace67, via emmalution's
+  stream). Vanilla marks every ingredient slot in a bundle as filled the moment that bundle
+  completes, so in a bundle that only needs some of its listed items, finishing it with the others
+  ticked your goal, paid the weekly JP and lifted the drawback for free. A goal now needs an actual
+  deposit into that slot. Goals you have already finished this week are kept.
+- **No way to get another pet after letting one go** (Nexus post, rose1729). Declining Keep Pet left
+  you with no pet and no offer of one, ever: the rewind re-marks the pet cutscene as seen and puts
+  the year back to 1, which is what vanilla's adoption option keys off. A loop that ends with no pet
+  on the farm now re-opens the Adopt option at Marnie's counter, at 0 hearts like the animals.
 
 
 ## 0.13.0 - 2026-08-25

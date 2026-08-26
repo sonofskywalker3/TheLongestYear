@@ -12,17 +12,13 @@ This is a **beta** (`0.13.0`). It is feature-complete for v1 and stable in testi
 
 ---
 
-## What's New in 0.13.0
+## What's New in 0.14.0
 
-**Struggling at one season? The Junimos now offer to ease that gate, plus fixes for impossible quality asks, year-2 crops on run 1, multiple pets, and the Traveling Cart cap.**
+**A fix release: the Junimo Shrine opens on Fail nights again, weekly goals stop ticking themselves, and a pet is reachable again after you let one go.**
 
-- **Season pity.** Fails are counted per season. The first five fails at a season are standard difficulty on purpose: that is the time to build a routine and buy the upgrades that gate needs. From the sixth fail at the same season, after the keep-or-reshuffle question on a Fail night, the Junimos ask whether to use their power to make the town's requests easier. Keep the board and that season's quota comes down 10% per extra fail (floor 50%). Let time reshuffle and the hardest items eligible for that season are left out of the roll (two per extra fail; quality asks go first). Say no and you get a standard board. Accepting is free the first time, then 50, 100, 200 and 300 JP in a row, the same curve as the hold; declining resets the price. Passing the season drops its count back to five. The Season Goals title shows "eased Nx". TLY Custom boards only.
-- **No quality asks on items that cannot carry quality.** Gold Fiber, gold River Jelly and silver Tea Leaves were reported in 0.12.16. The engine now works out from the game's own data which items actually receive quality (crop harvests, rod-caught fish, spawned forage) and only asks for silver or gold on those.
-- **Pierre's year-2 crops stay off the board until you can grow them.** Garlic and Artichoke are excluded until you own Pierre's Special Order; Red Cabbage until you own that or Cultivation: Red Cabbage. On a fresh farm those seeds have no other source, so a Garlic weekly goal on run 1 could never be met.
-- **Keep Pet keeps every pet.** A second pet from Marnie used to be the only one that survived a reset. All pets come back now, with their names and hearts.
-- **The Traveling Cart's cap is per day.** Buying an item leaves that slot empty until the merchant's next visit instead of pulling the next item in her list into view. The Cart Whisperer preview shows the same selection the cart sells.
-- **Text:** the merchant no longer mentions the Junimos (only you and the Wizard can see them).
-- **Config:** `PityEnabled`, `PityThreshold`, `PityQuotaStep`, `PityQuotaFloor`, `PityTrimPerStep`, `PityCosts` (GMCM section "Season pity").
+- **Fail nights open the Junimo Shrine again.** Since 0.12.17 the keep-or-reshuffle question was shown in front of the shrine, and that stopped the shrine from opening at all: the night went question, weekly focus, Day 1, with no chance to spend your Junimo Points. Every Fail night was affected. Your banked JP was never lost, and it is all still there to spend on the first Fail night after updating.
+- **Weekly goals need you to actually donate the item.** Bundles that only require some of their listed items marked every slot as filled the moment the bundle completed, which ticked off your weekly goal, paid the bonus and lifted the drawback without you handing in the goal item. The goal now waits for the real donation. Goals you have already finished this week stay finished.
+- **A pet again after letting one go.** Turning down Keep Pet left you with no pet and no way to get another one, because the rewind puts the year back to 1 and re-marks the pet cutscene as already seen. End a loop with no pet on the farm and Marnie's counter now offers to let you adopt one, starting at zero hearts like the rest of your animals.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
