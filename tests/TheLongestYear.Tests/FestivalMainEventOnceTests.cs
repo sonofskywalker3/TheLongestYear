@@ -88,3 +88,40 @@ public class FestivalMainEventOnceTests
         Assert.True(FestivalMainEvent.AlreadyPlayed(run, "spring13", totalDays: 12));
     }
 }
+
+/// <summary>
+/// Jeff's ruling (2026-08-26): "a new loop should absolutely let you do the festivals again, it's
+/// not locked to one per playthrough because time is reset - but you can't do the egg hunt more
+/// than once each day because it only happens once. Once time loops it has never happened, so it
+/// happens once again."
+///
+/// This is not academic. The stamp is keyed on Game1.Date.TotalDays, and a rewind puts the calendar
+/// back to Spring 1, so loop 2's Spring 13 has the SAME TotalDays as loop 1's. Without an explicit
+/// clear the stamp survives the rewind and blocks the festival in every later loop.
+/// </summary>
+public class FestivalMainEventAcrossLoopsTests
+{
+    [Fact]
+    public void A_rewind_forgets_that_the_festival_happened()
+    {
+        var run = new RunState();
+        FestivalMainEvent.MarkPlayed(run, "festival_spring13", totalDays: 12);
+        Assert.True(FestivalMainEvent.AlreadyPlayed(run, "festival_spring13", totalDays: 12));
+
+        run.BeginNewRun(seed: 999);
+
+        // Same calendar day, new loop: for this farmer the Egg Festival has never happened.
+        Assert.False(FestivalMainEvent.AlreadyPlayed(run, "festival_spring13", totalDays: 12));
+    }
+
+    [Fact]
+    public void And_the_once_per_day_rule_still_applies_inside_the_new_loop()
+    {
+        var run = new RunState();
+        run.BeginNewRun(seed: 1);
+
+        FestivalMainEvent.MarkPlayed(run, "festival_spring13", totalDays: 12);
+
+        Assert.True(FestivalMainEvent.AlreadyPlayed(run, "festival_spring13", totalDays: 12));
+    }
+}

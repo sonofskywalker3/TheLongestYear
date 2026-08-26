@@ -25,6 +25,11 @@ namespace TheLongestYear.Loop
     [HarmonyPatch(typeof(Event), nameof(Event.answerDialogueQuestion))]
     internal static class FestivalMainEventOncePatch
     {
+        /// <summary>Mirrors GameplayConfig.FestivalMainEventOncePerDay; set by ModEntry at config
+        /// load and whenever GMCM changes it. False = vanilla, festivals repeat as often as you
+        /// can re-enter them.</summary>
+        internal static bool Enabled = true;
+
         /// <summary>Set by ModEntry.OnSaveLoaded (null when no TLY run is loaded).</summary>
         internal static Func<RunState> RunProvider;
 
@@ -38,6 +43,7 @@ namespace TheLongestYear.Loop
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static bool Prefix(Event __instance, string answerKey)
         {
+            if (!Enabled) return true;                             // config kill-switch
             if (!RunActivation.IsActive) return true;              // dormant on non-TLY saves
             if (__instance == null || !__instance.isFestival) return true;
             if (!string.Equals(answerKey, YesKey, StringComparison.Ordinal)) return true;
