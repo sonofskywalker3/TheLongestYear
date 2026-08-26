@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- **The Junimo Shrine (JP perk) screen never opened on a Fail night** (Nexus 1123181, SincerelyZoey +
+  SilencedLink). Regression from 0.12.17: the keep/reshuffle hold prompt put a question in front of the
+  shrine, and the shrine was opened from inside that question’s answer callback. Vanilla still has the
+  DialogueBox up at that moment, so the launcher refused to open over it and the night fell through to
+  the reset with no shop shown (and no JP spent). The shrine open is now deferred a tick and drained by
+  the day-28 watchdog, the same fix the hold re-ask and the pity offer already use. A shrine that still
+  cannot open now logs a warning instead of failing silently. Banked JP was never lost.
+
+
 ## 0.13.0 - 2026-08-25
 
 Season pity (opt-in Junimo offer after five fails at one season) plus the 2026-08-25 sweep fixes.
