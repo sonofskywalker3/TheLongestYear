@@ -43,6 +43,8 @@ namespace TheLongestYear.Loop
 
             foreach (var key in new System.Collections.Generic.List<ISalable>(__result.Keys))
             {
+                if (IsToolUpgrade(key)) continue;      // Jeff's ruling: upgrades pay full price
+
                 ItemStockInformation info = __result[key];
                 int discounted = ShopDiscount.Apply(info.Price, tier);
                 if (discounted != info.Price)
@@ -52,6 +54,15 @@ namespace TheLongestYear.Loop
                 }
             }
         }
+
+        /// <summary>Tool upgrades are excluded from the discount (Jeff, 2026-08-26). They are one
+        /// of the run's real gold gates, and the Efficiency chain is already five compounding
+        /// tiers; knocking 25% off the axe/pickaxe/can ladder on top of that moves the early game
+        /// too much. An upgrade entry is a Tool above base level - Clint's copper-through-iridium
+        /// ladder, and by the same rule Willy's upgraded rods. Plain tools sold at base level
+        /// (a starter rod) still get the discount like any other stock item.</summary>
+        private static bool IsToolUpgrade(ISalable salable) =>
+            salable is StardewValley.Tool tool && tool.UpgradeLevel > 0;
     }
 
     /// <summary>
