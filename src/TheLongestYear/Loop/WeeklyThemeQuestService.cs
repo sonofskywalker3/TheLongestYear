@@ -125,6 +125,15 @@ namespace TheLongestYear.Loop
         /// </summary>
         public void OnRunLoaded()
         {
+            // Saves written before the deposit rule existed carry no deposit records, so goals the
+            // player legitimately finished would silently un-tick. Trust what is already complete
+            // once, here, and let the rule govern from this point on.
+            int grandfathered = WeeklyGoalCredit.GrandfatherCompleted(Run.CurrentWeekBonusSlots, IsSlotFlaggedInCc);
+            if (grandfathered > 0)
+                _monitor.Log(
+                    $"WeeklyThemeQuest: credited {grandfathered} already-complete goal slot(s) from a pre-0.14.0 save.",
+                    LogLevel.Info);
+
             Quest q = FindCurrentWeeklyQuest();
             if (q != null)
             {
@@ -179,7 +188,9 @@ namespace TheLongestYear.Loop
             }
         }
 
-        private bool IsSlotComplete(BonusSlot slot)
+        /// <summary>Vanilla's own flag for the slot. NOT sufficient on its own to credit a goal,
+        /// because completing a bundle blanket-sets every flag in it - see WeeklyGoalCredit.</summary>
+        private bool IsSlotFlaggedInCc(BonusSlot slot)
         {
             bool[] state = _slotStateForBundle(slot.BundleIndex);
             return state != null
@@ -187,6 +198,12 @@ namespace TheLongestYear.Loop
                 && slot.IngredientIndex < state.Length
                 && state[slot.IngredientIndex];
         }
+
+        /// <summary>A goal counts only when the player actually deposited into the slot AND vanilla
+        /// agrees it is filled (@ggrace67, 2026-08-26: finishing an n-of-m bundle with other items
+        /// used to tick the goal, pay the JP and lift the drawback for free).</summary>
+        private bool IsSlotComplete(BonusSlot slot) =>
+            WeeklyGoalCredit.IsSatisfied(slot, IsSlotFlaggedInCc(slot));
 
         private void AwardCompletionRewards()
         {

@@ -129,6 +129,19 @@ namespace TheLongestYear.Donations
 
                 int n = b.ingredients.Count;
                 int compareLen = n < prev.Length ? n : prev.Length;
+                // A bundle that was ALREADY complete at snapshot time cannot receive new deposits,
+                // so any flag that flips true on it now is vanilla's blanket set-everything on
+                // completion (JunimoNoteMenu.cs:1009-1011) resurfacing when the menu is rebuilt and
+                // re-reads netWorldState. Paying per-item JP for those would mint JP for items
+                // nobody donated. Sync the snapshot and award nothing.
+                bool alreadyComplete = _bundleCompleteSnapshot.TryGetValue(b.bundleIndex, out bool wasCompleteAtSnapshot)
+                    && wasCompleteAtSnapshot;
+                if (alreadyComplete)
+                {
+                    for (int i = 0; i < compareLen; i++)
+                        prev[i] = b.ingredients[i].completed;
+                    continue;
+                }
                 for (int i = 0; i < compareLen; i++)
                 {
                     if (!prev[i] && b.ingredients[i].completed)

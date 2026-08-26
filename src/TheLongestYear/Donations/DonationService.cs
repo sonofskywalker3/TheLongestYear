@@ -52,6 +52,12 @@ namespace TheLongestYear.Donations
             long baseJp = _jp.PerItem(rarity, Run.WeekOfYear) * count;
 
             bool bonusApplies = IsSelectedBonusSlot(bundleIndex, ingredientIndex);
+            // A real deposit is the ONLY thing that credits a weekly goal. Vanilla blanket-sets
+            // every ingredient flag when a bundle completes, so the live flag alone would tick
+            // goals nobody filled (see WeeklyGoalCredit). This call site is the one place that
+            // both sees genuine deposits and knows the slot identity.
+            if (bonusApplies)
+                WeeklyGoalCredit.RecordDeposit(Run.CurrentWeekBonusSlots, bundleIndex, ingredientIndex);
             long awarded = bonusApplies
                 ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;

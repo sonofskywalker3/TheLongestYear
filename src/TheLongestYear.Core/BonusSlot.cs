@@ -14,4 +14,11 @@ public sealed class BonusSlot
     public int Stack { get; set; } = 1;
     public int Quality { get; set; }
     public string BundleName { get; set; } = "";
+
+    /// <summary>True once the player has actually deposited into this exact slot this week.
+    /// Required alongside the live CC flag before the goal counts: vanilla blanket-sets every
+    /// ingredient flag in a bundle the moment the bundle completes (JunimoNoteMenu.cs:1009-1011),
+    /// so in an n-of-m bundle the flag alone credits slots nobody filled (@ggrace67, 2026-08-26).
+    /// Recorded by DonationService.OnItemDonated, which only ever sees real deposits.</summary>
+    public bool Deposited { get; set; }
 }
