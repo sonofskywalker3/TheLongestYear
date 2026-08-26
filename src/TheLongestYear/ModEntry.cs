@@ -359,6 +359,10 @@ namespace TheLongestYear
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
+            // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
+            // not end the day, so the map stays re-entrant and vanilla would offer the hunt again.
+            TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = () => _meta.Run;
+            TheLongestYear.Loop.FestivalMainEventOncePatch.Monitor = this.Monitor;
             // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
@@ -505,6 +509,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
+            TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;
             BundleOptionPatch.ResetChoice();
             _boardBuilder = null;
             _boardFingerprint = null;
