@@ -1,32 +1,56 @@
 using HarmonyLib;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Internal;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>Shop Discount (shop_discount_1..5): permanent X% discount on gold shop
-    /// purchases (5/10/15/20/25% by tier). Patches the static <c>ShopMenu.chargePlayer</c>
-    /// which is the single chokepoint every vanilla shop screen routes its
-    /// "subtract gold from player" call through. Currency-type gate (only 0 = gold)
-    /// keeps it from affecting Casino tokens / festival score / club coins / QiGems.
-    /// Negative-amount gate keeps it from boosting sell prices (the sell path calls
-    /// the same method with a negative amount to ADD gold).</summary>
-    [HarmonyPatch(typeof(ShopMenu), nameof(ShopMenu.chargePlayer))]
+    /// <summary>Shop Discount (shop_discount_1..5): permanent X% off gold shop prices
+    /// (5/10/15/20/25% by tier).
+    ///
+    /// Discounts the shop's PRICE, not the gold deduction. Until 0.14.2 this patched the static
+    /// <c>ShopMenu.chargePlayer</c> - the chokepoint every shop routes its "subtract gold" call
+    /// through - which meant the shelf still showed vanilla's price, and worse, vanilla gates the
+    /// sale on that full price before it ever calls chargePlayer (decompile ShopMenu.cs:1631
+    /// compares the player's gold against the undiscounted amount). Shop Discount V with 90g in
+    /// pocket still could not buy a 100g item it would only have charged 75g for (Jeff,
+    /// 2026-08-26). Postfixing the stock build fixes the posted price and the affordability gate
+    /// together.
+    ///
+    /// Coverage note: this reaches every data-driven shop, which in 1.6 is every ShopMenu shop -
+    /// Pierre, Clint (items AND tool upgrades, which resolve through ItemQueryResolver into this
+    /// same stock), Willy, Marnie, Robin's supplies, the Traveling Cart, festival stalls. Building
+    /// construction (CarpenterMenu) and animal purchases (PurchaseAnimalsMenu) deduct gold
+    /// directly and were never covered by the chargePlayer patch either, so nothing regressed.
+    /// Currency-gated to gold (ShopData.Currency == 0) so Casino tokens, Qi gems and club coins
+    /// are untouched.</summary>
+    [HarmonyPatch(typeof(StardewValley.Internal.ShopBuilder), nameof(StardewValley.Internal.ShopBuilder.GetShopStock),
+        new[] { typeof(string), typeof(StardewValley.GameData.Shops.ShopData) })]
     internal static class ShopDiscountPatch
     {
-        // ReSharper disable InconsistentNaming — Harmony convention.
-        private static void Prefix(Farmer who, int currencyType, ref int amount)
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
+        private static void Postfix(StardewValley.GameData.Shops.ShopData shop,
+            ref System.Collections.Generic.Dictionary<ISalable, ItemStockInformation> __result)
         {
-            if (currencyType != 0) return;
-            if (amount <= 0) return;
+            if (__result == null || __result.Count == 0) return;
+            if (shop != null && shop.Currency != 0) return;      // not gold: leave it alone
+            if (UpgradeChecker.HasUpgrade == null) return;       // dormant on non-TLY saves
 
-            int tier = UpgradeChecker.GetTier("shop_discount", 5);
+            int tier = UpgradeChecker.GetTier("shop_discount", ShopDiscount.MaxTier);
             if (tier == 0) return;
 
-            double discount = tier * 0.05;
-            amount = (int)System.Math.Round(amount * (1.0 - discount),
-                System.MidpointRounding.AwayFromZero);
+            foreach (var key in new System.Collections.Generic.List<ISalable>(__result.Keys))
+            {
+                ItemStockInformation info = __result[key];
+                int discounted = ShopDiscount.Apply(info.Price, tier);
+                if (discounted != info.Price)
+                {
+                    info.Price = discounted;
+                    __result[key] = info;
+                }
+            }
         }
     }
 
