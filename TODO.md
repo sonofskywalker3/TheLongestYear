@@ -6,6 +6,34 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### RELEASED 0.14.1 (2026-08-26) - festival main events once per day + weekly-goal bundle cap
+
+Both from Jeff watching emmalution's stream.
+
+**Festival repeat (Egg Hunt x3 in one day, and the Luau soup the same way).** Not a loop problem:
+TLY festivals deliberately do not end the day (FestivalTimeFlow), so the festival map stays
+re-entrant for the rest of its window and walking back in restarts the whole festival with the host
+offering the main event again. Confirmed live: warped into Town at 10:20am on Spring 13, left,
+re-entered, and the complete festival came back at 12:40pm. Guard is on
+`Event.answerDialogueQuestion` (the one place a "yes" to the host starts a main event, so it covers
+every festival, not just the Egg Hunt); the stamp is festival id + day so it expires at sunrise.
+Verified from the decompile that "yes" ONLY ever means start-the-main-event (the Flower Dance
+partner ask is a separate "danceAsk" key), so the guard cannot misfire.
+
+**Weekly goal asking for 3 items from a 2-slot bundle.** Real, and 0.14.0 made it worse: the pool
+holds every open line of a bundle that only requires some of them, so the sampler could put three
+goals in a bundle that needs two. Until 0.14.0 vanilla's blanket flag flip on completion ticked the
+leftover goal; with the deposit rule that ask is impossible and the week cannot be completed.
+`BonusSlotSampler` now takes `remainingNeedForBundle` and never exceeds it;
+`RunController.RemainingNeedForBundle` computes required-minus-completed from live CC state.
+
+**NOT verified in-game:** the festival guard actually blocking a second "yes". The patch applies
+clean (55 classes, 0 failed) and the re-entry mechanism is confirmed, but reaching Lewis needs the
+player to walk and keyboard input does not reach the game window through the automation path
+(mouse clicks do, key presses do not move the farmer - worth solving before the next game-driving
+session). 853 unit tests cover the guard and the cap.
+
+
 ### OPEN QUESTION (Jeff, 2026-08-26, from emmalution's stream): repeating the Egg Hunt every loop
 
 Jeff watching the video: "she did go do the egg hunt twice, that shouldn't happen, can we avoid that?"
