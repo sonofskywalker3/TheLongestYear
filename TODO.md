@@ -6,6 +6,33 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### OPEN QUESTION (Jeff, 2026-08-26, from emmalution's stream): repeating the Egg Hunt every loop
+
+Jeff watching the video: "she did go do the egg hunt twice, that shouldn't happen, can we avoid that?"
+
+What happens today: nothing suppresses festivals across loops. Every rewind puts the player back at
+Spring 1, so Spring 13 comes round again and the Egg Festival plays in full, egg hunt minigame and all.
+`FestivalTimeFlow` already treats a festival as a real time cost (time runs normally inside it, the
+player is ejected at the scheduled end), which is deliberate: attending is meant to be a choice that
+costs hours. What it does not do is notice that the player has seen this one before.
+
+Hard constraint on any fix: **the Egg Festival is the only source of Strawberry Seeds**, which matter
+a lot on a Spring-heavy board. Blocking attendance outright would quietly nerf every run.
+
+Options, needs a ruling before anything is built:
+- **(a) Skip prompt on entry.** "You have done this one before. Take part / just browse the stalls."
+  Skipping hands over the participation reward and gives the rest of the day back. Keeps the shop and
+  the seeds, drops the repeat minigame.
+- **(b) Auto-award on repeat.** Walking in grants the egg hunt prize immediately and leaves the player
+  free to shop. No prompt, less friction, but it removes the choice.
+- **(c) Leave the minigame, cut the time cost on repeats.** The festival still plays but a repeat
+  costs fewer in-game hours.
+- **(d) Do nothing.** A player who does not want the hunt can already walk out.
+
+This is the same class as the event-hygiene pass (event 65 / CaveChoicePrompt): keep the mechanic the
+scene carried, drop the scene once it has been watched. The festival version of that is (a).
+
+
 ### Smoke 2026-08-26 (0.14.0 deployed, Clone throwaway save `None_447355732`): ALL PASS
 
 Driven with `tools/send-smapi-command.ps1` + `test-output/click.ps1` (which gained a `-Key` switch for
