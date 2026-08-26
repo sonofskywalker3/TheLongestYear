@@ -12,13 +12,12 @@ This is a **beta** (`0.13.0`). It is feature-complete for v1 and stable in testi
 
 ---
 
-## What's New in 0.14.0
+## What's New in 0.14.1
 
-**A fix release: the Junimo Shrine opens on Fail nights again, weekly goals stop ticking themselves, and a pet is reachable again after you let one go.**
+**Festival minigames stop repeating, and a week can no longer ask for a bundle slot it cannot fill.**
 
-- **Fail nights open the Junimo Shrine again.** Since 0.12.17 the keep-or-reshuffle question was shown in front of the shrine, and that stopped the shrine from opening at all: the night went question, weekly focus, Day 1, with no chance to spend your Junimo Points. Every Fail night was affected. Your banked JP was never lost, and it is all still there to spend on the first Fail night after updating.
-- **Weekly goals need you to actually donate the item.** Bundles that only require some of their listed items marked every slot as filled the moment the bundle completed, which ticked off your weekly goal, paid the bonus and lifted the drawback without you handing in the goal item. The goal now waits for the real donation. Goals you have already finished this week stay finished.
-- **A pet again after letting one go.** Turning down Keep Pet left you with no pet and no way to get another one, because the rewind puts the year back to 1 and re-marks the pet cutscene as already seen. End a loop with no pet on the farm and Marnie's counter now offers to let you adopt one, starting at zero hearts like the rest of your animals.
+- **Festival minigames run once a day.** Because a TLY festival does not end your day, you could walk out of the festival and back in and the whole thing would start over, host and all. The Egg Hunt could be run three times in one afternoon, the Luau soup tasting the same way. Each festival's main event now happens once per day; the stalls, the shop and everyone at the festival still work on a repeat visit.
+- **Weekly goals never ask for more than a bundle can take.** Bundles that only need some of their listed items could hand you three goals in a bundle that needs two. With 0.14.0 requiring a real donation per goal, that third one was impossible and the week could not be completed. A bundle is now only ever asked for what it can still accept.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
