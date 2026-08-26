@@ -6,6 +6,30 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Smoke 2026-08-26 (0.14.0 deployed, Clone throwaway save `None_447355732`): ALL PASS
+
+Driven with `tools/send-smapi-command.ps1` + `test-output/click.ps1` (which gained a `-Key` switch for
+real virtual keys). Screenshots `test-output/smoke-0*.png`.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Fail night -> hold prompt -> KEEP -> pity DECLINED -> shrine opens | PASS | `Hold choice: KEEP (cost 0 JP)`, `Pity offer: declined`, **`Opened Junimo Shrine (JP: 38)`** (smoke-07) |
+| Fail night -> hold prompt -> RESHUFFLE -> pity ACCEPTED -> shrine opens | PASS | `Hold choice: Reshuffled (seed loop 43)`, `Pity offer: ACCEPTED (Trim...)`, **`Opened Junimo Shrine (JP: 38)`** |
+| Shrine closes -> reset runs, JP intact | PASS | `Loop reset complete. Run 43 begins` then `Run 44 begins`; JP stayed 38 across both |
+| No silent fall-through | PASS | the new `Junimo Shrine could not open` warning never fired |
+| Petless rewind re-opens adoption | PASS | `PetCarryover: no pet on the farm after the rewind; stamped MarniePetRejectedAdoption`, on both resets |
+
+Before this fix the shrine line was simply absent and the night went hold prompt -> weekly focus -> Day 1,
+which is what SincerelyZoey and SilencedLink reported. Both of 0.13.0's Fail-night paths were affected;
+only the Win path and the Vanilla-board path (called from OnCutsceneEnded, not from inside a question
+callback) were ever fine.
+
+NOT verified in-game: that Marnie's counter actually lists "Adopt" on the next loop (that needs a walk to
+Marnie's in a fresh loop). The mail flag is the documented gate in the decompile and the stamp is
+confirmed in the log. Also unverified live: the weekly-goal deposit rule (Core-tested, 9 new unit tests) -
+proving it in-game needs an n-of-m bundle finished with other items, which is a long grind.
+
+
 ### Triage of the 2026-08-26 YouTube + Nexus findings (code-checked, no game run)
 
 **1. Weekly theme goals tick for items you never donated - REAL, needs a ruling.**

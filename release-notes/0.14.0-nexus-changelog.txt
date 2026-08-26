@@ -1,0 +1,5 @@
+Fix release.
+
+- Fail nights open the Junimo Shrine again. Since 0.12.17 the keep-or-reshuffle question was shown in front of the shrine and stopped it opening at all, so the night went question, weekly focus, Day 1 with no chance to spend your Junimo Points. Banked JP was never lost and is still there to spend on the first Fail night after updating.
+- Weekly goals need you to actually donate the item. Bundles that only require some of their listed items marked every slot as filled the moment the bundle completed, which ticked off the goal, paid the bonus and lifted the drawback for free. Goals already finished this week stay finished.
+- A pet again after letting one go. Turning down Keep Pet left you with no pet and no way to get another. End a loop with no pet on the farm and Marnie's counter now offers to let you adopt one, at zero hearts.
