@@ -102,5 +102,38 @@ namespace TheLongestYear.Loop
             if (restored > 0 && !Game1.player.mailReceived.Contains("MarniePetAdoption"))
                 Game1.player.mailReceived.Add("MarniePetAdoption");
         }
+
+        /// <summary>Mail flag vanilla accepts as "this farmer has already been through the pet
+        /// adoption question", which is one of the three gates that put the Adopt option on
+        /// Marnie counter menu.</summary>
+        private const string RejectedAdoptionMail = "MarniePetRejectedAdoption";
+
+        /// <summary>Give a petless post-reset farm a way to get a pet again (Nexus post, rose1729:
+        /// declined Keep Pet on loop 1, then was never offered a pet in loops 2 or 3).
+        ///
+        /// Both vanilla doors are shut by the rewind. The pet-arrival cutscene is re-marked seen by
+        /// FarmerReset eventsSeen re-seed (only the furnace teach and the Demetrius cave are
+        /// exempt), and Marnie counter "Adopt" option is gated on
+        /// <c>(Utility.getAllPets().Count == 0 &amp;&amp; Game1.year >= 2) || mailReceived
+        /// "MarniePetAdoption" || "MarniePetRejectedAdoption"</c> (decompile GameLocation.cs:10908
+        /// and :10935), and the reset puts the year back to 1 and clears mailReceived. So a player
+        /// who let the pet go could never get another one.
+        ///
+        /// Stamping the rejected-adoption flag on a petless loop re-opens the Marnie route without
+        /// touching the cutscene or handing out a free pet: the player still has to walk to Marnie
+        /// and adopt, and it starts at 0 hearts like the animals ruling. No-op when a pet survived
+        /// the rewind (Keep Pet) or when the flag is already set. Call AFTER RestorePet.</summary>
+        public static void EnableAdoptionIfPetless(IMonitor monitor)
+        {
+            if (Game1.player == null) return;
+            if (Utility.getAllPets().Any()) return;                       // Keep Pet brought one back
+            if (Game1.player.mailReceived.Contains("MarniePetAdoption")) return;
+            if (Game1.player.mailReceived.Contains(RejectedAdoptionMail)) return;
+
+            Game1.player.mailReceived.Add(RejectedAdoptionMail);
+            monitor?.Log(
+                "PetCarryover: no pet on the farm after the rewind; stamped " + RejectedAdoptionMail +
+                " so Marnie counter offers the Adopt option this loop.", LogLevel.Info);
+        }
     }
 }

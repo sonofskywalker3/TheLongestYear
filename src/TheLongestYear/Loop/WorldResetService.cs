@@ -425,6 +425,10 @@ namespace TheLongestYear.Loop
             // when the upgrade isn't owned or no prior snapshot exists. Also sets the
             // MarniePetAdoption mail flag so vanilla's day-1 adoption offer is suppressed.
             PetCarryoverService.RestorePet(_meta, _monitor);
+            // 10b. If the rewind left the farm petless (no Keep Pet, or the upgrade was never
+            //      bought), re-open vanilla adoption route at Marnie counter: the rewind
+            //      otherwise shuts every door to a new pet. See EnableAdoptionIfPetless.
+            PetCarryoverService.EnableAdoptionIfPetless(_monitor);
 
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
