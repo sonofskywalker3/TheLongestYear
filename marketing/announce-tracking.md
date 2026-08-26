@@ -66,3 +66,16 @@ OP Reddit handle: **u/Plastic-Difference-3**. Thread: **98 upvotes, 30 comments,
   worry — OP noted an upgrade eases it (ties to the JP-makes-items-reachable design).
 - **forums.stardewvalley.net:** **0 replies** yet. (Title confirms the **WIP** prefix applied correctly.)
 - **YouTuber outreach list:** `marketing/youtuber-outreach.md` (CharlieBarley, Salmence, Fungus, Emmalution).
+
+## Sweep 2026-08-26: a streamer found the mod
+
+**emmalution** (YouTube, 82.7K subs) has been running TLY as a challenge series since 16 Jul 2026.
+Spring episode 53.7K views, Summer 17K, plus livestreams LIVE 01-05. Nexus link + beta/Standard-Farm
+caveat in every description; suggested to her by Tired Ginger Bri in her Discord. Details and the
+bug/design signal harvested from ~140 of her comments are in TODO.md (2026-08-26 sweep) and
+marketing/youtuber-outreach.md.
+
+Reddit r/StardewValley thread picked it up too: Thrippalan (26 Aug) said her husband started the mod
+after emmalution's videos. Jeff replied there and left a comment on the Spring video asking for
+feedback. Other venues unchanged: r/StardewValleyMods and r/SMAPI quiet since 13 Jul, the SDV forum
+thread still has zero outside replies, playstarbound still unposted.

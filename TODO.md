@@ -6,6 +6,79 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### CRITICAL (2026-08-26 sweep) - Nexus bug 1123181: the JP perk screen never opens on reset
+
+**Two reporters, reproduced on a clean save and a clean reinstall. This kills meta-progression.**
+
+- **SincerelyZoey** (premium, 25 Aug 8:22AM, 0.12.18): "On reset, the JP perk buying page no longer
+  shows up. Instead, you get the option to keep or remix bundles, then you can choose the weekly focus
+  and then the game goes straight into Day 1." Follow-up 8:24AM: most of that save was on an older
+  version, so she started a **new save - the JP perk screen still doesn't trigger**.
+- **SilencedLink** (member, 25 Aug 6:57PM): same bug after deleting the mod folder and redownloading;
+  clicked exactly once; "After I chose reshuffle the game froze and then just went on to Spring 1."
+- Reported against **0.12.18**; nobody has retested on 0.13.0 yet. Status still **New issue**, unanswered.
+
+Prime suspect: the same teardown that bit the season-pity offer - a question opened from inside another
+question's answer callback gets torn down by `answerDialogue` (fixed there by deferring one tick via the
+watchdog drain). The reset chain is keep/reshuffle -> perk buy -> weekly focus, so the perk question is
+exactly that nested case. 0.13.0 inserted the pity offer into the same chain, which could make it worse
+or accidentally mask it. Reproduce on the Rodger save first, then check the reset question chain.
+
+### NEW (2026-08-26 sweep) - a streamer picked the mod up: emmalution (82.7K subs)
+
+Found via the r/StardewValley thread (Thrippalan, 26 Aug). **emmalution** is running TLY as a full
+challenge series, credited and linked to the Nexus page in every description ("The main mod is called
+The Longest Year... currently in beta and you MUST use the Standard Farm"). She got the suggestion from
+**Tired Ginger Bri** in her Discord. She was already #1 on `marketing/youtuber-outreach.md` (suggested
+by u/Khajiit-ify back in June) - she found it on her own.
+
+| Video | Date | Views |
+|---|---|---|
+| Time-Loop Roguelite (Spring), edited | 16 Jul 2026 | **53.7K** (2.6K likes, 87 comments) |
+| Time-Loop Roguelite (Summer), edited | ~12 Aug 2026 | 17K (1K likes, 56 comments) |
+| LIVE 01 | ~1 month ago | 8.4K |
+| LIVE 02 | ~1 month ago | 6.7K |
+| LIVE 05 ("I'm scared to check the Summer deadlines...") | ~18 Aug 2026 | 3.4K |
+
+(LIVE 03/04 exist but YouTube's lazy list wouldn't page far enough to confirm counts.)
+
+**Bug/design signal harvested from her comment sections** (none of this is on Nexus):
+
+- **Weekly theme completion is credited by bundle, not by hand-in** - @ggrace67 (Summer, 15:38):
+  "if you complete a bundle it counts all items in it as used for the weekly theme even if you didn't
+  donate them so it still completes and lifts the drawback." That's a free drawback-clear exploit.
+- **Demetrius' cave cutscene doesn't re-trigger after a reset** - @nancyjohnson7147 (5 likes): you have
+  to walk over the cave, then a "this cave seems familiar to you" popup asks mushrooms or bats. Might be
+  the intended fallback, but nobody knows that; either fix the cutscene or say so in the notes.
+- **A hat permanently eats a Junimo Stash slot** - @whisperinwind87: "not one of my slots of my stash
+  will be forever taken by a certain hat I got outside the pub." Non-donatable item stuck in the stash.
+- **Difficulty setting wanted** - @maglomanic-mama: "A difficulty setting would be nice, like you
+  mentioned. Having to restart more would make it more fun." emmalution raised it on stream too.
+- **Perfection-goals variant** - @fernandothehorse: extend the deadline pressure past the CC to
+  Perfection goals (8 hearts by Summer 1, 10 recipes crafted, etc).
+- **Red cabbage RNG still hurts** - @localinternetclown: got stuck grinding the Skull Cavern for a seed.
+  Third independent report of this (u/Lagao, Thrippalan, now this).
+- The **one-item cart reads as intended design** to viewers: @pokadotplot, "Nuking the traveling cart is
+  an excellent difficulty adjustment" (8 likes).
+- No other bug reports across ~140 comments; sentiment is uniformly positive.
+
+Jeff commented on the Spring video as @sonofskywalker3 asking for feedback (26 Aug).
+
+### 9th sweep (2026-08-26 18:02, `forum-sweeps/2026-08-26-18-02_*`) - everything else is quiet
+
+- **Nexus TLY**: 104 posts, 3 open bugs. Newest post is still rose1729 (25 Aug 12:41, pet offer, below).
+  Nothing new today. Page stats: 916 unique DLs / 1,220 total / 9,502 views / 17 endorsements on 0.13.0.
+- **Nexus bugs**: 1123181 (above, NEW), 1122901 Keep pet (open on purpose, awaiting a multi-pet
+  confirmation on 0.13.0), 1122358 Fixed, 1113831 Day-3 crash still silent since 21 Aug.
+- **Reddit**: r/StardewValley 64 comments - one new exchange, Thrippalan (26 Aug) explaining her husband
+  got inspired by emmalution's videos and was confused by the one-item cart; Jeff already replied.
+  r/StardewValleyMods (33) and r/SMAPI (1) unchanged since 13 Jul.
+- **forums.stardewvalley.net** thread 52534: still zero replies from anyone else. playstarbound: still
+  never posted (account activation).
+- **Android Consolizer**: one unanswered feature request - Estallking (22 Aug): hold LT/RT to scroll the
+  toolbar instead of tapping per slot. **Nap Time / Cart Catalog**: quiet.
+
+
 ### NEW (2026-08-25 12:41, Nexus post, rose1729): no pet offer after declining Keep Pet
 
 "I didn't keep my pet at the end of my first loop. I thought this would mean I get offered a new pet
