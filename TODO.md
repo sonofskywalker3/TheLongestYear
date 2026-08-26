@@ -27,11 +27,19 @@ leftover goal; with the deposit rule that ask is impossible and the week cannot 
 `BonusSlotSampler` now takes `remainingNeedForBundle` and never exceeds it;
 `RunController.RemainingNeedForBundle` computes required-minus-completed from live CC state.
 
-**NOT verified in-game:** the festival guard actually blocking a second "yes". The patch applies
-clean (55 classes, 0 failed) and the re-entry mechanism is confirmed, but reaching Lewis needs the
-player to walk and keyboard input does not reach the game window through the automation path
-(mouse clicks do, key presses do not move the farmer - worth solving before the next game-driving
-session). 853 unit tests cover the guard and the cap.
+**VERIFIED IN-GAME 2026-08-26 (Jeff played it, 0.14.1 deployed, Spring 13):**
+
+    [16:49:14] Festival main event starting: 'festival_spring13' (day 12); further runs today are blocked.
+    [16:53:13] Festival main event blocked: 'festival_spring13' already ran today (day 12).
+
+First Egg Hunt ran, then leaving Town and asking Lewis again was refused. End to end, on a real save.
+
+Game-driving note for next time: the automation path could NOT set this up. Keyboard input never
+moves the farmer (mouse clicks land, key presses do not), and with the window unfocused the game
+pauses so queued `debug warp` commands sit unprocessed and PrintWindow keeps returning a stale
+frame - which reads exactly like a warp that failed. Deploy, load the save and set the date from
+the console, then hand the keyboard over; do not try to drive the farmer. Worth solving properly
+(SendInput to an unfocused SDL window) before the next session that needs a walked repro.
 
 
 ### OPEN QUESTION (Jeff, 2026-08-26, from emmalution's stream): repeating the Egg Hunt every loop
