@@ -6,6 +6,51 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Triage of the 2026-08-26 YouTube + Nexus findings (code-checked, no game run)
+
+**1. Weekly theme goals tick for items you never donated - REAL, needs a ruling.**
+@ggrace67 is right. `WeeklyThemeQuestService.IsSlotComplete` reads vanilla's per-ingredient bools
+(`Game1.netWorldState.Value.Bundles[bundleIndex][ingredientIndex]`, via `RunController.SlotStateForBundle`).
+The service's doc comment assumes "vanilla only marks a slot complete once the full required stack and
+quality are deposited" - that assumption is wrong for n-of-m bundles. On completion vanilla blanket-flips
+**every** ingredient bool in the bundle to true (decompile: `JunimoNoteMenu.cs` lines 1009-1011, and again
+at 1085), so a goal slot in a "5 of 9" bundle you finished with the other 4 items ticks for free, pays the
+weekly JP and lifts the drawback. Ruling needed:
+  (a) require a real donation: record `(bundleIndex, ingredientIndex)` in `DonationService.OnItemDonated`
+      into a new per-week set on RunState and AND it with the live bool. Goals are only ever sampled from
+      OPEN slots, so nothing legitimate is lost; costs one small persisted list.
+  (b) accept it as-is: finishing a whole bundle is not nothing, and the goal slot was genuinely part of it.
+  (c) middle: credit it, but only if the bundle completed AFTER the theme was picked.
+Recommend (a) - the drawback is meant to be paid off with hand-ins, and (b) makes "pick a theme whose goals
+sit in a bundle you were about to finish anyway" the dominant strategy.
+
+**2. Demetrius' cave cutscene not re-firing - NOT A BUG, working as designed.**
+@nancyjohnson7147's "this cave seems familiar to you" popup IS the mod: `CaveChoicePrompt` (event-hygiene
+pass, 2026-06-10). Event 65 plays once per playthrough and from loop 2 stays in the eventsSeen re-seed;
+the mushrooms-vs-bats choice is re-offered by a one-line question on cave entry because `FarmerReset`
+clears `caveChoice`. Nothing to fix. It is not written down anywhere a player would find it, which is why
+it reads as a bug: worth a line in the Nexus description / README FAQ.
+
+**3. rose1729's missing pet offer - root cause found, needs a ruling.**
+Both vanilla doors to a new pet are shut after a reset, which is why loops 2 and 3 never offered one:
+  - The pet-arrival cutscene: `FarmerReset` clears `eventsSeen` and then re-seeds it from the cross-loop
+    "seen ever" set, marking every non-replayable id as already seen. Only the furnace teach (992553) and
+    the Demetrius cave (65) are exempt (`EventGatingTables.Default`), so the pet scene is re-marked seen
+    every loop and can never re-fire.
+  - Marnie's counter "Adopt" option: vanilla gates it on `(Utility.getAllPets().Count == 0 && Game1.year >= 2)
+    || mailReceived "MarniePetAdoption" || "MarniePetRejectedAdoption"` (decompile `GameLocation.cs:10908`
+    and `:10935`). After a reset the year is back to 1 and `FarmerReset` clears mailReceived, so the option
+    is not on the list either.
+Options: (a) add `MarniePetRejectedAdoption` to mailReceived on reset when no pet was restored, which turns
+Marnie's Adopt option on immediately and costs nothing else; (b) mark the pet-arrival event replayable when
+the farm has no pet (needs its id - `tly_dumpevents` in-game will give it); (c) leave it and say so in the
+Keep Pet upgrade text. (a) is the smallest and matches the earlier animals ruling ("start over at 0 hearts").
+
+**4. Stash slot eaten by a hat (@whisperinwind87) - not reproduced, needs more info.**
+Nothing in `JunimoStashService` / `JunimoStashCapPatch` treats hats specially. The report is one sentence
+and ambiguous (a hat stuck in the stash, or a hat they chose to store and now regret). Ask before digging.
+
+
 ### CRITICAL (2026-08-26 sweep) - Nexus bug 1123181: the JP perk screen never opens on reset
 
 **ROOT CAUSE FOUND + FIXED IN CODE (0.13.1, not smoked yet, not released).**
