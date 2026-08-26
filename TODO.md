@@ -6,6 +6,59 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 0.14.2 (built, NOT released) - Shop Discount discounts the price, not the payment
+
+Jeff: "why doesn't the price reduction jp buy change the posted item prices?" Because it patched
+`ShopMenu.chargePlayer`, the gold-deduction chokepoint, so the shelf kept vanilla's number - and
+worse, vanilla gates the sale on that full price before it ever charges you (decompile
+ShopMenu.cs:1631), so Shop Discount V with 90g could not buy a 100g item it would only have charged
+75g for. Now postfixes `ShopBuilder.GetShopStock`, which fixes the posted price and the
+affordability gate together.
+
+Jeff's rulings: do NOT extend it to buildings (CarpenterMenu) or animals (PurchaseAnimalsMenu) -
+both deduct gold directly and were never covered by the old patch either - and do NOT discount tool
+upgrades. Descriptions reworded from "X% off all shop purchases" to name the exclusions.
+
+**Verified in-game 2026-08-26 (0.14.2 deployed, save None_447449779, shop_discount_1 owned = 5%):**
+
+| Shop | Vanilla | Shown | |
+|---|---|---|---|
+| Pierre, Parsnip Seeds | 20 | 19 | discounted |
+| Pierre, Bean Starter | 60 | 57 | discounted |
+| Pierre, Cauliflower Seeds | 80 | 76 | discounted |
+| Pierre, Potato Seeds | 50 | 48 | discounted (47.5 rounds away from zero) |
+| Clint, Copper/Iron/Gold Ore | 75/150/400 | 71/143/380 | discounted (regular stock) |
+| Clint, Steel Axe upgrade | 5000 | 5000 | EXEMPT |
+| Clint, Copper Hoe / Pickaxe | 2000 | 2000 | EXEMPT |
+| Clint, Gold Watering Can | 10000 | 10000 | EXEMPT |
+
+Screenshots `test-output/shop-0*.png`. Tool upgrades are only in the `ClintUpgrade` shop, not
+`Blacksmith` - `debug shop Blacksmith` shows ore only.
+
+### Playtest tooling rebuilt (2026-08-26) - `tools/game.ps1` + `tools/screenshot.ps1`
+
+The old helpers lived in `test-output/`, which is gitignored, so they were never in the repo. They
+are in `tools/` now, and the input problem that blocked two repros this session is fixed:
+
+- **An unfocused SDV is a PAUSED SDV.** Queued `debug warp` commands do not run and PrintWindow
+  keeps returning the last frame, so a sleeping game looks exactly like a failed command. Every
+  action in game.ps1 focuses first.
+- **SetForegroundWindow alone does not work and fails silently.** The foreground lock ignores it
+  unless the caller owns the foreground. Keyboard input then goes nowhere, because XNA reads keys
+  with GetKeyboardState (per input queue) - which is precisely why key presses "did not move the
+  farmer" while mouse clicks worked (a click focuses the window under the cursor as a side effect).
+  Focus() attaches our input queue to the foreground thread to lift the lock, then VERIFIES with
+  GetForegroundWindow, and the script exits non-zero if it cannot.
+- Walking needs a HELD key (`-Walk right -Ms 1500`); a tap moves the farmer a couple of pixels.
+- `pwsh -File` passes every argument as a string, so `-Click 707,530` arrived as one string and an
+  `[int[]]` cast silently produced 707530: a click at nonsense coordinates that still reported
+  success. Coordinates are parsed explicitly now.
+- Add-Type failures used to leave every later call a silent no-op that still printed success;
+  game.ps1 now proves the type exists and aborts if not. Capture stayed in screenshot.ps1 because
+  input and capture need different assemblies, and screenshot.ps1 now honours absolute paths
+  instead of quietly writing next to itself.
+
+
 ### RELEASED 0.14.1 (2026-08-26) - festival main events once per day + weekly-goal bundle cap
 
 Both from Jeff watching emmalution's stream.
