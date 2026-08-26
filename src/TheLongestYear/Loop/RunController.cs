@@ -372,7 +372,7 @@ namespace TheLongestYear.Loop
             if (SeasonPity.OfferFor(meta, held, _config) == SeasonPity.PityOffer.None)
             {
                 SeasonPity.DeclinePity(meta, held);
-                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                DeferShrineThenContinue(ContinueAfterResetSpend);
                 return;
             }
             // Deferred one tick (drained by TickShrineWatchdog): this runs inside the hold
@@ -425,7 +425,7 @@ namespace TheLongestYear.Loop
                     }
                     _monitor.Log($"Pity offer: ACCEPTED ({offer}, cost {cost} JP, consecutive uses now {meta.ConsecutivePityUses}, ease {meta.BoardEaseSeason}/{meta.BoardEaseSteps}, trim {meta.BoardTrimSeason}/{meta.BoardTrimSteps}).", LogLevel.Info);
                     Game1.playSound("junimoMeep1");
-                    TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                    DeferShrineThenContinue(ContinueAfterResetSpend);
                     return;
                 }
                 ApplyPityChoice(held, accept: false);
@@ -442,13 +442,32 @@ namespace TheLongestYear.Loop
                 SeasonPity.DeclinePity(_store.State, held);
                 _monitor.Log("Pity offer: declined (uses reset, no easing stamped).", LogLevel.Info);
             }
-            TryOpenShrineThenContinue(ContinueAfterResetSpend);
+            DeferShrineThenContinue(ContinueAfterResetSpend);
         }
 
         /// <summary>Set by AfterHoldChoice (first ask) and ShowPityChoice's NotEnoughJp branch
         /// (re-ask); drained by TickShrineWatchdog once no menu is up. Holds which path the
         /// offer applies to.</summary>
         private bool? _pityReaskHeld;
+
+        /// <summary>Queue the shrine open for the next tick instead of opening it now.
+        /// MUST be used by every caller that runs inside a question’s answer callback (the hold
+        /// choice and both pity outcomes): vanilla calls answerDialogue -> our callback and only
+        /// then tryOutro()s the DialogueBox (GameLocation.cs answerDialogue, DialogueBox
+        /// receiveLeftClick), so the box is still Game1.activeClickableMenu while we run.
+        /// MenuLauncher.CanOpen refuses to open over it, TryOpenShrineThenContinue would take its
+        /// fall-through and run the continuation with no shop shown, and even if it did open, the
+        /// outro would tear the shrine down. Nexus bug 1123181, regression from 0.12.17 (the hold
+        /// prompt put a question in front of a shrine open that used to be called from
+        /// OnCutsceneEnded directly). Drained by <see cref="TickShrineWatchdog"/>.</summary>
+        private void DeferShrineThenContinue(System.Action onContinue)
+        {
+            _shrineOpenPending = onContinue;
+        }
+
+        /// <summary>Continuation owed a shrine open, queued by <see cref="DeferShrineThenContinue"/>
+        /// and drained by <see cref="TickShrineWatchdog"/> once no menu is up.</summary>
+        private System.Action _shrineOpenPending;
 
         /// <summary>Try to open the Junimo Shrine menu; on close, run <paramref name="onContinue"/>.
         /// If the menu can't open (cutscene blocking, already-open menu), run onContinue
@@ -466,7 +485,13 @@ namespace TheLongestYear.Loop
                 };
                 return;
             }
-            // Menu didn't open — fall through.
+            // Menu did not open (blocked or torn down): run the continuation so the night is
+            // never stranded, but say so loudly - a silently skipped shrine is Nexus bug 1123181.
+            string blockingMenu = Game1.activeClickableMenu?.GetType().Name ?? "none";
+            _monitor.Log(
+                "Junimo Shrine could not open before the reset; continuing without it (JP stays banked). " +
+                $"activeClickableMenu={blockingMenu}, eventUp={Game1.eventUp}.",
+                LogLevel.Warn);
             onContinue();
         }
 
@@ -495,6 +520,13 @@ namespace TheLongestYear.Loop
             {
                 _pityReaskHeld = null;
                 ShowPityChoice(reaskHeld);
+                return;
+            }
+            if (_shrineOpenPending != null && Game1.activeClickableMenu == null)
+            {
+                System.Action owed = _shrineOpenPending;
+                _shrineOpenPending = null;
+                TryOpenShrineThenContinue(owed);
                 return;
             }
             if (_menuWatch is not { } watch) return;

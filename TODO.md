@@ -8,6 +8,25 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### CRITICAL (2026-08-26 sweep) - Nexus bug 1123181: the JP perk screen never opens on reset
 
+**ROOT CAUSE FOUND + FIXED IN CODE (0.13.1, not smoked yet, not released).**
+
+Vanilla runs `GameLocation.answerDialogue` (which calls our afterQuestion callback) and only *then*
+`tryOutro()`s the DialogueBox (verified in the decompile: DialogueBox.receiveLeftClick line 528 calls
+answerDialogue before tryOutro). So while the hold callback runs, the DialogueBox is still
+`Game1.activeClickableMenu`, `MenuLauncher.CanOpen` refuses ("another menu is already open", Trace, so
+invisible), and `TryOpenShrineThenContinue` takes its silent fall-through straight into
+`ContinueAfterResetSpend`: reset, no shop. Introduced in **0.12.17** (`e352fff`, the hold prompt), which
+is exactly the version the reports start at. All three Fail-night call sites were affected (hold, pity
+accept, pity decline); the Win path and the Vanilla-board path call it from `OnCutsceneEnded` and were
+always fine. The 0.13.0 pity smoke passed because the pity offer path defers a tick already.
+
+Fix: `DeferShrineThenContinue` queues the open, `TickShrineWatchdog` drains it once no menu is up (same
+pattern as `_holdReaskPending` / `_pityReaskHeld`), and the fall-through now logs a Warn with the
+blocking menu name. Build clean, 830 tests pass. **Still owed: live smoke on the Rodger save** (fail a
+season, answer keep and reshuffle, confirm the shrine opens both times and JP can be spent), then a
+release + replies to SincerelyZoey and SilencedLink (and a status flip on 1123181).
+
+
 **Two reporters, reproduced on a clean save and a clean reinstall. This kills meta-progression.**
 
 - **SincerelyZoey** (premium, 25 Aug 8:22AM, 0.12.18): "On reset, the JP perk buying page no longer
