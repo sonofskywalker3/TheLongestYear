@@ -12,12 +12,13 @@ This is a **beta** (`0.13.0`). It is feature-complete for v1 and stable in testi
 
 ---
 
-## What's New in 0.14.1
+## What's New in 0.14.2
 
-**Festival minigames stop repeating, and a week can no longer ask for a bundle slot it cannot fill.**
+**Shop Discount finally changes the prices you see, festivals come back in later loops, and the mod settings gained a Features section.**
 
-- **Festival minigames run once a day.** Because a TLY festival does not end your day, you could walk out of the festival and back in and the whole thing would start over, host and all. The Egg Hunt could be run three times in one afternoon, the Luau soup tasting the same way. Each festival's main event now happens once per day; the stalls, the shop and everyone at the festival still work on a repeat visit.
-- **Weekly goals never ask for more than a bundle can take.** Bundles that only need some of their listed items could hand you three goals in a bundle that needs two. With 0.14.0 requiring a real donation per goal, that third one was impossible and the week could not be completed. A bundle is now only ever asked for what it can still accept.
+- **Shop Discount now changes the price on the shelf.** It used to take the money off at the till, so shops still showed full price - and worse, the game checks whether you can afford the FULL price before it charges you, so the discount never extended your buying power. Tool upgrades are deliberately not discounted, and neither are buildings or animals (they never were); the upgrade text says so now.
+- **Festivals work again in later loops.** 0.14.1's once-per-day rule leaked across a rewind: because the calendar goes back to Spring 1, loop 2's Egg Festival landed on the same day number and got refused. A rewind means the festival has not happened yet, so every loop gets its festivals back. Once per day still holds inside a loop.
+- **New Features section in the mod settings.** Turn individual parts of the mod off or tune them without editing config.json: festival time-flow, the one-minigame-per-day rule, theme re-rolls, donating tools and rings, the weekly goal JP multiplier, and starting gold. Changes apply straight away.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
@@ -60,6 +61,32 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 - **The Junimo Shrine.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, and more.
 - **Carryover surfaces on the farm.** A **Cookbook** (kitchen) and **Craftbook** (table) let you bank recipes to keep; a **Junimo Stash** chest preserves a few items across resets.
 - **Winning.** Restore the entire Community Center within a year to break the loop. You can then choose to keep playing that run or start a fresh loop.
+
+## Is this a bug?
+
+A few things get reported often enough to be worth answering up front.
+
+**Demetrius never shows up about the cave, I just get a popup asking mushrooms or bats.**
+
+That is the mod, working as intended. His scene plays once per playthrough; from the second loop on, walking into the farm cave gives you the choice directly instead of replaying a cutscene you have already watched. The mushrooms-or-bats decision is re-offered every loop because the rewind clears it.
+
+**The Traveling Cart only has one item.**
+
+Also intended. Joja is squeezing the merchant's suppliers, and the Cart Stall upgrades at the Junimo Shrine add slots back. If you would rather have the full cart, turn off LimitTravelingCartStock in the config.
+
+**I did the Egg Hunt and now Lewis will not let me do it again today.**
+
+Since 0.14.1, a festival's main event runs once per day. Festivals in this mod do not end your day, so you can walk out and back in - which used to restart the whole festival and let the hunt be repeated for the prize. The stalls, the shop and everyone at the festival still work on a repeat visit. A new loop is a clean slate: as far as the valley is concerned the festival has not happened yet, so you get to do it again.
+
+**A bundle is asking for silver or gold on something that cannot have a quality.**
+
+That was a bug and it is fixed. Quality is only ever asked for on things the game itself gives quality to (crop harvests, rod-caught fish, spawned forage). Existing boards pick the change up at the next reset.
+
+**A weekly goal ticked off without me donating anything.**
+
+Fixed in 0.14.0. Finishing a bundle that only needs some of its listed items used to mark the rest as filled, which credited goals you never handed in. A goal now waits for the real donation.
+
+Anything not on this list, please do report - the bugs tab on Nexus is read.
 
 ## Configuration
 

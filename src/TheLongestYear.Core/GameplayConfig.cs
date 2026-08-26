@@ -282,4 +282,15 @@ public sealed class GameplayConfig
     /// leave the cart's full vanilla (and other-mod) stock untouched — the Cart Stall upgrades then
     /// do nothing. Takes effect the next time the cart menu opens.</summary>
     public bool LimitTravelingCartStock { get; set; } = true;
+
+    /// <summary>Festival time-flow: hours pass normally inside a festival and leaving does not end
+    /// the day (see FestivalTimeFlow). Off = vanilla, where walking into a festival costs the whole
+    /// day. On by default: a time-loop cannot afford to hand away a day.</summary>
+    public bool FestivalTimeFlows { get; set; } = true;
+
+    /// <summary>Run each festival's main event (Egg Hunt, Luau soup, ice fishing, Flower Dance)
+    /// at most once per day. Only meaningful while <see cref="FestivalTimeFlows"/> is on, which is
+    /// what makes the festival map re-enterable in the first place. A new loop always starts
+    /// clean - the rewind means the festival has not happened yet.</summary>
+    public bool FestivalMainEventOncePerDay { get; set; } = true;
 }

@@ -186,9 +186,12 @@ Marnie's Adopt option on immediately and costs nothing else; (b) mark the pet-ar
 the farm has no pet (needs its id - `tly_dumpevents` in-game will give it); (c) leave it and say so in the
 Keep Pet upgrade text. (a) is the smallest and matches the earlier animals ruling ("start over at 0 hearts").
 
-**4. Stash slot eaten by a hat (@whisperinwind87) - not reproduced, needs more info.**
-Nothing in `JunimoStashService` / `JunimoStashCapPatch` treats hats specially. The report is one sentence
-and ambiguous (a hat stuck in the stash, or a hat they chose to store and now regret). Ask before digging.
+**4. Stash slot "eaten" by a hat (@whisperinwind87) - NOT A BUG REPORT. Closed 2026-08-26.**
+"You inspired me to try this mod, and not [now] one of my slots of my stash will be forever taken by
+a certain hat I got outside the pub." That is a player telling us about a souvenir they intend to
+carry through every loop even though it does nothing for them. Nothing is broken; it was logged as a
+defect only because the sweep was reading comments looking for defects. Filed here as the correction,
+not the investigation: ask "does this describe something broken?" before it goes on a docket.
 
 
 ### CRITICAL (2026-08-26 sweep) - Nexus bug 1123181: the JP perk screen never opens on reset

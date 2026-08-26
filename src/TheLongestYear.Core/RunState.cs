@@ -222,6 +222,11 @@ public sealed class RunState
         OfferPresentedWeek = -1;
         PeakMineFloor = 0;
         CartStockDay = -1;
+        // A rewind means the festival has not happened yet for this farmer: the calendar is back
+        // at Spring 1, so loop 2 hits the same TotalDays and would inherit loop 1 stamp and
+        // refuse the Egg Hunt forever. Once per DAY, not once per playthrough (Jeff, 2026-08-26).
+        FestivalMainEventId = "";
+        FestivalMainEventDay = -1;
         (CartStockIds ??= new()).Clear();
         LiabilitySuppressedThisWeek = false;
     }

@@ -5,12 +5,13 @@
 
 [line]
 
-[size=5][b]What's New in 0.14.1[/b][/size]
+[size=5][b]What's New in 0.14.2[/b][/size]
 
-[b]Festival minigames stop repeating, and a week can no longer ask for a bundle slot it cannot fill.[/b]
+[b]Shop Discount finally changes the prices you see, festivals come back in later loops, and the mod settings gained a Features section.[/b]
 [list]
-[*][b]Festival minigames run once a day.[/b] Because a TLY festival does not end your day, you could walk out of the festival and back in and the whole thing would start over, host and all. The Egg Hunt could be run three times in one afternoon, the Luau soup tasting the same way. Each festival's main event now happens once per day; the stalls, the shop and everyone at the festival still work on a repeat visit.
-[*][b]Weekly goals never ask for more than a bundle can take.[/b] Bundles that only need some of their listed items could hand you three goals in a bundle that needs two. With 0.14.0 requiring a real donation per goal, that third one was impossible and the week could not be completed. A bundle is now only ever asked for what it can still accept.
+[*][b]Shop Discount now changes the price on the shelf.[/b] It used to take the money off at the till, so shops still showed full price - and worse, the game checks whether you can afford the FULL price before it charges you, so the discount never extended your buying power. Tool upgrades are deliberately not discounted, and neither are buildings or animals (they never were); the upgrade text says so now.
+[*][b]Festivals work again in later loops.[/b] 0.14.1's once-per-day rule leaked across a rewind: because the calendar goes back to Spring 1, loop 2's Egg Festival landed on the same day number and got refused. A rewind means the festival has not happened yet, so every loop gets its festivals back. Once per day still holds inside a loop.
+[*][b]New Features section in the mod settings.[/b] Turn individual parts of the mod off or tune them without editing config.json: festival time-flow, the one-minigame-per-day rule, theme re-rolls, donating tools and rings, the weekly goal JP multiplier, and starting gold. Changes apply straight away.
 [/list]
 
 Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
@@ -56,6 +57,29 @@ The Longest Year turns Stardew's first year into a roguelite loop. Each season, 
 [*]Intro cutscene and dialogue are a first pass.
 [*]Multiplayer untested.
 [/list]
+
+[size=5][b]Is this a bug?[/b][/size]
+
+A few things get reported often enough to be worth answering up front.
+
+[b]Demetrius never shows up about the cave, I just get a popup asking mushrooms or bats.[/b]
+That is the mod, working as intended. His scene plays once per playthrough; from the second loop on, walking into the farm cave gives you the choice directly instead of replaying a cutscene you have already watched. The mushrooms-or-bats decision is re-offered every loop because the rewind clears it.
+
+[b]The Traveling Cart only has one item.[/b]
+Also intended. Joja is squeezing the merchant's suppliers, and the Cart Stall upgrades at the Junimo Shrine add slots back. If you would rather have the full cart, turn off LimitTravelingCartStock in the config.
+
+[b]I did the Egg Hunt and now Lewis will not let me do it again today.[/b]
+Since 0.14.1, a festival's main event runs once per day. Festivals in this mod do not end your day, so you can walk out and back in - which used to restart the whole festival and let the hunt be repeated for the prize. The stalls, the shop and everyone at the festival still work on a repeat visit. A new loop is a clean slate: as far as the valley is concerned the festival has not happened yet, so you get to do it again.
+
+[b]A bundle is asking for silver or gold on something that cannot have a quality.[/b]
+That was a bug and it is fixed. Quality is only ever asked for on things the game itself gives quality to (crop harvests, rod-caught fish, spawned forage). Existing boards pick the change up at the next reset.
+
+[b]A weekly goal ticked off without me donating anything.[/b]
+Fixed in 0.14.0. Finishing a bundle that only needs some of its listed items used to mark the rest as filled, which credited goals you never handed in. A goal now waits for the real donation.
+
+Anything not on this list, please do report - the bugs tab is read.
+
+[line]
 
 [size=5][b]Tuning[/b][/size]
 Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save. [font=Courier New]BundleHoldCosts[/font] sets the JP price of keeping the same bundle board on a Fail night by consecutive holds (default 0, 50, 100, 200, 300; reshuffling resets the count). Season pity ([font=Courier New]PityThreshold[/font] 5, [font=Courier New]PityQuotaStep[/font] 0.10, [font=Courier New]PityQuotaFloor[/font] 0.50, [font=Courier New]PityTrimPerStep[/font] 2, [font=Courier New]PityCosts[/font] 0/50/100/200/300, [font=Courier New]PityEnabled[/font]) tunes when and how much the Junimos offer to ease a season you keep failing.

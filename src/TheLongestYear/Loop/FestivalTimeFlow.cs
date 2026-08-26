@@ -28,6 +28,11 @@ namespace TheLongestYear.Loop
     /// </summary>
     internal static class FestivalTimeFlow
     {
+        /// <summary>Mirrors GameplayConfig.FestivalTimeFlows; set by ModEntry at config load and
+        /// whenever GMCM changes it. False = vanilla festival behaviour (the clock freezes and the
+        /// festival eats the day), which every patch below defers to.</summary>
+        internal static bool Enabled = true;
+
         /// <summary>Guard so OnUpdateTicked's auto-eject only triggers once per festival.</summary>
         private static bool _pendingAutoEnd;
 
@@ -37,6 +42,7 @@ namespace TheLongestYear.Loop
         /// scheduled end time. Called from ModEntry.OnUpdateTicked.</summary>
         public static bool ShouldAutoEnd()
         {
+            if (!Enabled) return false;        // config kill-switch: vanilla ends the festival itself
             if (_pendingAutoEnd) return false; // already firing — wait for end-behaviours to clear it
             if (!Game1.isFestival()) return false;
             if (Game1.CurrentEvent == null) return false;
@@ -86,6 +92,7 @@ namespace TheLongestYear.Loop
             // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
             private static bool Prefix(bool ignore_multiplayer, ref bool __result)
             {
+                if (!Enabled) return true;                     // config kill-switch: vanilla behaviour
                 if (!Core.RunActivation.IsActive) return true; // dormant on non-TLY saves
                 if (!Game1.isFestival()) return true; // defer to vanilla
 
@@ -124,6 +131,7 @@ namespace TheLongestYear.Loop
             // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
             private static bool Prefix(Event __instance, Farmer who, ref bool __result)
             {
+                if (!Enabled) return true;                     // config kill-switch: vanilla prompt
                 if (!Core.RunActivation.IsActive) return true; // dormant on non-TLY saves — vanilla prompt
                 if (__instance == null || who == null || !who.IsLocalPlayer || !__instance.isFestival)
                 {
@@ -197,7 +205,7 @@ namespace TheLongestYear.Loop
             // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
             private static void Prefix(Event __instance, out int __state)
             {
-                __state = Core.RunActivation.IsActive && __instance != null && __instance.isFestival ? Game1.timeOfDay : -1;
+                __state = Enabled && Core.RunActivation.IsActive && __instance != null && __instance.isFestival ? Game1.timeOfDay : -1;
             }
 
             // ReSharper disable once InconsistentNaming — Harmony convention.

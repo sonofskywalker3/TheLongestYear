@@ -3,6 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.14.2 - 2026-08-26
+
+865 tests.
+
+### Fixed
+
+- **Shop Discount now changes the price on the shelf.** It used to take the money off at the till, so shops still showed full price - and worse, the game checks whether you can afford the FULL price before it charges you, so the discount never extended your buying power. Tool upgrades are deliberately not discounted, and neither are buildings or animals (they never were); the upgrade text says so now.
+- **Festivals work again in later loops.** 0.14.1's once-per-day rule leaked across a rewind: because the calendar goes back to Spring 1, loop 2's Egg Festival landed on the same day number and got refused. A rewind means the festival has not happened yet, so every loop gets its festivals back. Once per day still holds inside a loop.
+
+### Added
+
+- **New Features section in the mod settings.** Turn individual parts of the mod off or tune them without editing config.json: festival time-flow, the one-minigame-per-day rule, theme re-rolls, donating tools and rings, the weekly goal JP multiplier, and starting gold. Changes apply straight away.
+- **A short "Is this a bug?" section on the mod page**, covering the things reported most often that are working as designed: the cave prompt that replaced Demetrius' cutscene, the one-item Traveling Cart, and the once-per-day festival rule.
+
 ## 0.14.1 - 2026-08-26
 
 Two fixes from emmalution's stream. 853 tests.

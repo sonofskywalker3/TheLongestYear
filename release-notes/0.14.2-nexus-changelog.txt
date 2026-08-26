@@ -1,0 +1,4 @@
+Shop Discount now changes the price on the shelf. It used to take the money off at the till, so shops still showed full price, and the game checks whether you can afford the FULL price before charging you - so the discount never extended your buying power. Tool upgrades are deliberately not discounted, and neither are buildings or animals (they never were).
+Festivals work again in later loops. The 0.14.1 once-per-day rule leaked across a rewind: the calendar goes back to Spring 1, so loop 2's Egg Festival landed on the same day number and got refused. Once per day still holds inside a loop.
+New Features section in the mod settings: turn festival time-flow, the one-minigame-per-day rule, theme re-rolls and donating tools/rings off, and tune the weekly goal JP multiplier and starting gold.
+A short "Is this a bug?" section on the mod page for the things reported most often that are working as designed.

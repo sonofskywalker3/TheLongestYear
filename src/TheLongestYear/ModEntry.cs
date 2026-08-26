@@ -78,6 +78,8 @@ namespace TheLongestYear
 
             _config = helper.ReadConfig<GameplayConfig>();
             CartSlotLimitPatch.Enabled = _config.LimitTravelingCartStock;
+            TheLongestYear.Loop.FestivalTimeFlow.Enabled = _config.FestivalTimeFlows;
+            TheLongestYear.Loop.FestivalMainEventOncePatch.Enabled = _config.FestivalMainEventOncePerDay;
 
             // One-shot config migration.
             bool migrated = false;
@@ -1222,6 +1224,47 @@ namespace TheLongestYear
                 setValue: v => _config.AutoDetectReplayableUnlockCutscenes = v,
                 name: () => Strings.Get("gmcm.auto-detect.name"),
                 tooltip: () => Strings.Get("gmcm.auto-detect.tooltip"));
+
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.features.section"));
+            gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.features.blurb"));
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.FestivalTimeFlows,
+                setValue: v => { _config.FestivalTimeFlows = v; TheLongestYear.Loop.FestivalTimeFlow.Enabled = v; },
+                name: () => Strings.Get("gmcm.festival-time.name"),
+                tooltip: () => Strings.Get("gmcm.festival-time.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.FestivalMainEventOncePerDay,
+                setValue: v => { _config.FestivalMainEventOncePerDay = v; TheLongestYear.Loop.FestivalMainEventOncePatch.Enabled = v; },
+                name: () => Strings.Get("gmcm.festival-once.name"),
+                tooltip: () => Strings.Get("gmcm.festival-once.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableThemeReroll,
+                setValue: v => _config.EnableThemeReroll = v,
+                name: () => Strings.Get("gmcm.theme-reroll.name"),
+                tooltip: () => Strings.Get("gmcm.theme-reroll.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableNonObjectDonations,
+                setValue: v => _config.EnableNonObjectDonations = v,
+                name: () => Strings.Get("gmcm.non-object.name"),
+                tooltip: () => Strings.Get("gmcm.non-object.tooltip"));
+
+            gmcm.AddNumberOption(this.ModManifest,
+                getValue: () => (float)_config.SelectionBonusMultiplier,
+                setValue: v => _config.SelectionBonusMultiplier = v,
+                name: () => Strings.Get("gmcm.bonus-mult.name"),
+                tooltip: () => Strings.Get("gmcm.bonus-mult.tooltip"),
+                min: 1f, max: 3f, interval: 0.1f);
+
+            gmcm.AddNumberOption(this.ModManifest,
+                getValue: () => _config.StartingMoney,
+                setValue: v => _config.StartingMoney = v,
+                name: () => Strings.Get("gmcm.starting-money.name"),
+                tooltip: () => Strings.Get("gmcm.starting-money.tooltip"),
+                min: 0, max: 5000, interval: 100);
 
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.pity.section"));
             gmcm.AddBoolOption(this.ModManifest,
