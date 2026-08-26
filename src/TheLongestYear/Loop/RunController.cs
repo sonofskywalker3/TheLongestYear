@@ -1046,7 +1046,39 @@ namespace TheLongestYear.Loop
                 bundleData, SlotStateForBundle, _requirements,
                 theme, season, id => IsObtainableInSeason(id, season));
             return BonusSlotSampler.SampleSlots(
-                Run.Seed, weekOfYear, theme, pool, RarityForItem, BonusListSizeFor(season));
+                Run.Seed, weekOfYear, theme, pool, RarityForItem, BonusListSizeFor(season),
+                remainingNeedForBundle: RemainingNeedForBundle);
+        }
+
+        /// <summary>How many more ingredient lines a bundle can still take: its required count
+        /// minus the lines already filled. A bundle that only needs some of its listed items puts
+        /// every open line in the goal pool, so without this the week can ask for three items from
+        /// a bundle that needs two (Jeff, 2026-08-26, from emmalution's stream) - and since a goal
+        /// needs a real deposit, the extra ask can never be met. Returns int.MaxValue when the
+        /// bundle cannot be resolved, so an unknown bundle is never over-restricted.</summary>
+        private int RemainingNeedForBundle(int bundleIndex)
+        {
+            var bundleData = Game1.netWorldState?.Value?.BundleData;
+            if (bundleData == null) return int.MaxValue;
+
+            foreach (var kvp in bundleData)
+            {
+                ParsedBundle parsed = BundleParsing.Parse(kvp.Key, kvp.Value);
+                if (parsed.Index != bundleIndex) continue;
+
+                int required = parsed.NumberOfSlots > 0 ? parsed.NumberOfSlots : parsed.Ingredients.Count;
+                bool[] state = SlotStateForBundle(bundleIndex);
+                int completed = 0;
+                if (state != null)
+                {
+                    int lines = System.Math.Min(parsed.Ingredients.Count, state.Length);
+                    for (int i = 0; i < lines; i++)
+                        if (state[i]) completed++;
+                }
+                int remaining = required - completed;
+                return remaining > 0 ? remaining : 0;
+            }
+            return int.MaxValue;
         }
 
         /// <summary>How big the per-card bonus-item preview list should be for the given season.

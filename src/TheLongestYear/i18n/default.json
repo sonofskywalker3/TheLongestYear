@@ -9,6 +9,7 @@
 
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
+    "dialog.festival.already-done": "You have already taken part in this today.",
     "hud.theme-complete": "Weekly theme complete! +{{jp}} JP, drawback lifted.",
     "hud.nothing-to-donate": "Themed donations completed - drawback lifted.",
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",

@@ -83,6 +83,16 @@ public sealed class RunState
     /// <summary>Qualified item ids the cart exposed first on <see cref="CartStockDay"/>.</summary>
     public List<string> CartStockIds { get; set; } = new();
 
+    /// <summary>Festival whose main event (Egg Hunt, ice fishing, Flower Dance, grange judging) has
+    /// already been played, paired with <see cref="FestivalMainEventDay"/>. See FestivalMainEvent:
+    /// TLY festivals do not end the day, so without this the player can walk out and back in and run
+    /// the main event again (Jeff, 2026-08-26: three Egg Hunts in one day on emmalution stream).</summary>
+    public string FestivalMainEventId { get; set; } = "";
+
+    /// <summary>The day (Game1.Date.TotalDays) <see cref="FestivalMainEventId"/> was played on;
+    /// -1 = none. Keying on the day means the stamp expires at the next sunrise on its own.</summary>
+    public int FestivalMainEventDay { get; set; } = -1;
+
     /// <summary>True when this week's theme quest has been completed (every sampled goal slot
     /// donated — the goal count varies by season, see BonusItemSampler.DefaultMaxCountBySeason)
     /// and the liability is lifted for the rest of the week. Also set by the empty-pool
