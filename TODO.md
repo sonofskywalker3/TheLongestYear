@@ -6,12 +6,18 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### ▶ NEXT SESSION: run the netWorldState audit
+### ▶ NEXT SESSION: smoke the netWorldState audit fixes in game
 
-Jeff, 2026-08-26 evening: a fresh agent should run the audit tonight. Everything that agent needs is
-in **`docs/superpowers/HANDOFF-2026-08-26-networldstate-audit.md`** - it is self-contained, so start
-there rather than reading this file top to bottom. Background and rationale are in the SYSTEMATIC
-entry further down.
+The audit itself is DONE (2026-08-26, code + full ruling table, see the SYSTEMATIC entry below).
+What is left is the one thing an agent could not do: **nobody has seen the five fixes work.** Load
+the throwaway save, `tly_reset`, and check:
+
+1. The quest board on Spring 1 is EMPTY. This is the one that was handing out gold, so it is the
+   check worth doing first.
+2. The Saloon has no Dish of the Day on Spring 1.
+3. JP, upgrades, stash contents, kept pet/horse/buildings all survived - the audit added an
+   `UpdateFromGame1()` call mid-reset that touches shared state.
+4. Spring 1 weather still matches the new run's schedule (same call syncs weather).
 
 Also queued, needing Jeff first: **the difficulty setting** (top ask from emmalution's stream). Jeff
 is brainstorming it tomorrow - do not design it unilaterally. The GMCM "Features" section added in
@@ -882,11 +888,33 @@ ItemId 130 in its default EnabledIds). Suppressing would require nulling the men
 sourceItem FIELD, which vanilla's window-resize rebuild and our color-picker draw guard both
 need intact — disproportionate; leave unless a US user reports it.
 
-### 🧾 SYSTEMATIC — one-time complete netWorldState keep/wipe audit (user request 2026-07-10)
+### ✅ DONE v0.14.8 (2026-08-26) — one-time complete netWorldState keep/wipe audit (user request 2026-07-10)
 
-> **NEXT UP (2026-08-26): Jeff wants a fresh agent to run this. Full brief, including the reset
-> philosophy, where everything lives, how to drive the game, and the definition of done:
-> `docs/superpowers/HANDOFF-2026-08-26-networldstate-audit.md`. Say "run the audit" and start there.**
+> **Ruling table: `docs/superpowers/2026-08-26-networldstate-field-rulings.md`.** All 51 net fields
+> plus the 3 plain cache fields on the 1.6.15 class, ruled once. It supersedes the partial
+> `specs/2026-07-13-networldstate-audit-design.md`, which had covered most of the class but left
+> three real holes:
+>
+> - **`netQuestOfTheDay` was missed entirely.** `loadForNewGame` refreshes the board quest while the
+>   calendar is still the PRE-reset one, seeding it off the old run's `DaysPlayed` and, on the
+>   slay-monster branch, the old run's deepest mine floor. Every loop's Spring 1 therefore opened
+>   with a quest, and its gold reward, that a real day 1 cannot offer.
+> - **`dishOfTheDay` was ruled KEEP on a wrong premise** ("loadForNewGame re-rolls it" - it does
+>   not; only the night chain the rewind skips does). The Saloon opened Spring 1 selling the dish
+>   from the day the reset fired.
+> - **`visitsUntilY1Guarantee` was set to -1 as "the new-game sentinel"** when -1 actually means
+>   DISABLED, so on a `YearOneCompletable` save the first rewind permanently killed the year-1
+>   red-cabbage guarantee. Now re-rolled with vanilla's own formula.
+>
+> Also removed three no-op lines: `NetWorldState.Date` is a computed `=> WorldDate.Now()`, so the
+> reset's `Date.Year/Season/DayOfMonth` assignments were writing to a throwaway object. netWorldState
+> is now synced from Game1 with vanilla's `UpdateFromGame1()` instead, which also closes a window
+> where `WriteToGame1` could copy the pre-reset `uniqueIDForThisGame` back over the re-seeded one.
+>
+> **NOT smoked in game** - see the NEXT SESSION entry at the top of this file. Left open on purpose:
+> `farmhandData` stays KEEP because TLY is single-player; it holds whole `Farmer` objects and would
+> become a progression leak if multiplayer support were ever added (own item below).
+
 Bundles, museum pieces, and lost books were all caught ONE REPORT AT A TIME from the same
 survival class: fields on `NetWorldState` that the reset's loadForNewGame path never rebuilds.
 `NetWorldState` is a finite class — enumerate every field once (decompile
@@ -894,6 +922,14 @@ StardewValley.Network/NetWorldState.cs), rule each keep/wipe against the full-re
 philosophy, implement the wipes, and this class of leak is closed permanently instead of
 reactively. Pairs with the 0.11.38 StatResetRules wipe-by-default flip (same philosophy:
 enumerate the exemptions, not the leaks).
+
+### netWorldState `farmhandData` would leak if TLY ever went multiplayer
+
+Carried out of the 2026-08-26 audit rather than dropped. `farmhandData` is ruled KEEP today purely
+because it is empty in single-player, which is all TLY supports. It stores whole `Farmer` objects,
+each with its own skills, inventory and progression, so the moment multiplayer is on the table it
+becomes a progression leak across the rewind and needs its own reset pass. Not actionable now; here
+so the ruling's assumption is written down where it will be seen if that assumption changes.
 
 ### ✅ DONE v0.11.1 (2026-06-10) — event-hygiene pass: cave re-choice prompt replaces replaying Demetrius scene
 The Demetrius cave cutscene (65) no longer replays every loop: it plays once (Spring-5 hold kept),
