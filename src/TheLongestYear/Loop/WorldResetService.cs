@@ -766,6 +766,15 @@ namespace TheLongestYear.Loop
             ws.canDriveYourselfToday.Value = false;
             ws.goldenClocksTurnedOff.Value = false;
 
+            // Dish of the Day. Corrects the 2026-07-13 ruling, which kept it on the reasoning that
+            // loadForNewGame re-rolls it — it does not. Game1.UpdateDishOfTheDay (Game1.cs:9432) is
+            // reached only from the _newDayAfterFade night chain, which the rewind skips entirely, so
+            // Gus opened Spring 1 still selling the dish from the day the reset fired. A real vanilla
+            // Spring 1 has NO dish of the day for the same reason, and every consumer null-checks it
+            // (ItemQueryResolver.cs:145, DefaultPhoneHandler.cs:394), so null is both the safe value
+            // and the vanilla-accurate one. Day 2's night pass rolls the new run's first dish.
+            ws.DishOfTheDay = null;
+
             // Traveling Cart year-1 red-cabbage guarantee counter — back to its new-game
             // sentinel so every loop gets the same guarantee window.
             ws.visitsUntilY1Guarantee.Value = -1;
