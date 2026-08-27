@@ -6,6 +6,37 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BRAINSTORM NEEDED (Jeff, 2026-08-27): keep granted powers across a reset
+
+Jeff wants permanent powers granted by an in-world source to SURVIVE the loop reset, starting with
+the books. Today they do not: `StatResetRules` is wipe-by-default and its own header comment names
+`Book_*` and `mastery_*` as the class it was written to stop leaking (user ruling 2026-07-10,
+reversing the earlier allow-list). So this is a deliberate reversal of a past decision, not a bug,
+and it needs a design pass before any code.
+
+The brainstorm has to settle, in Jeff's words, "either per power or one big one":
+
+- **One switch** for the whole class of granted powers. Simple, one config entry, but it lumps a
+  +1 combat book in with mastery levels and trinket slots.
+- **Per power.** Each grantable power is its own keep, which is finer grained and fits the JP
+  shop model, but it needs a catalogue of every power and a UI to manage it.
+
+Things the brainstorm needs to look at, because they are already in the code:
+
+- `StatResetRules.KeptKeys` and its three documented classes. Anything kept has to be argued
+  against that header comment, which is currently the reason these are wiped.
+- The books specifically: the `Book_*` stat keys, and `_bookFurniture` / `BookKit` in `ModEntry`,
+  which already handle book objects across a reset.
+- Whether a kept power should be free or bought with JP, since the upgrade catalogue
+  (`UpgradeCatalog`) is the existing home for permanent cross-loop power and already has pricing.
+- Balance: a power kept across loops compounds every reset, which is exactly the thing the loop is
+  supposed to take away. Anything kept probably needs to be either bought or capped.
+- What counts as "another source" beyond books: mastery, trinket slots, perfection perks, the
+  Special Order prize ticket ladder, and whatever a mod adds.
+
+Not scoped, not planned. Brainstorm first.
+
+
 ### ▶ NEXT SESSION: smoke the netWorldState audit fixes in game
 
 The audit itself is DONE (2026-08-26, code + full ruling table, see the SYSTEMATIC entry below).
@@ -1516,6 +1547,47 @@ JP cost ballpark (relative to bus repair = 100 JP):
 
 Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
+
+### ▶ NEXT SESSION: smoke the difficulty modifiers in game
+
+Built overnight 2026-08-26/27 on `feat/difficulty-modifiers` (18 commits, local only, 994 tests
+passing). Spec `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md`, plan
+`docs/superpowers/plans/2026-08-26-difficulty-modifiers.md`. **Nobody has seen it run.**
+
+1. `tly_difficulty` prints the configured steps, the in-force steps, and every resolved value.
+2. GMCM shows a "Difficulty" section with ten dropdowns; a change survives save and reload.
+3. Stack size + required slots to Hard, `tly_reset`, then `tly_genbundles`: bigger stacks, higher
+   pick-X counts.
+4. **Riskiest:** on a `BundleSource=Vanilla` save, reset at Hard. That path used to write NOTHING
+   at reset and now rewrites the board. Confirm the CC menu opens, ingredient ITEMS are unchanged,
+   and only stacks / quality / pick-X moved.
+5. Everything back to Normal, reset, board matches a pre-branch one.
+
+Then Jeff decides: merge to `master` (with a version bump and a "What's New" entry, neither of
+which the branch touched), or keep iterating.
+
+
+### PARKED (post-1.0): Impossible mode
+
+Jeff, 2026-08-26, ruled during the difficulty-modifier brainstorm. NOT part of that work; a
+separate session, and probably a post-1.0 release.
+
+Impossible is not another step on the per-modifier ramp. It is a mode that **disables the custom
+difficulty settings entirely** and takes over board generation:
+
+- Bundles are composed **completely at random from any item in the game that can be obtained by any
+  means**. No seasonal gating, no room theming, no obtainability ramp. A Qi Fruit can sit in the
+  Spring gate.
+- The only exclusions are things that genuinely cannot be had: impossible quality variants, debug /
+  unobtainable items, and the existing structural exclusions (Quest items, ExcludeFromRandomSale,
+  legendary fish).
+- The intended experience: the only way to beat it is to loop until you have bought **every single
+  JP upgrade** and then still get a great deal of lucky RNG. It is meant to be a wall you grind the
+  meta-progression against, not a run you plan.
+
+Open when it is picked up: does Impossible force BundleSource=Engine (it must, since it composes its
+own board), and does it turn season pity off the way the Hard step does.
+
 
 ## Resolved / closed
 

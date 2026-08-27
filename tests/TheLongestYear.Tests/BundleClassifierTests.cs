@@ -80,11 +80,12 @@ public class BundleClassifierTests
     }
 
     [Fact]
-    public void Quota_lookup_with_X_GE_Y_falls_through_to_perItem()
+    public void Quota_lookup_with_X_EQ_Y_keeps_the_quota_and_shifts_the_ramp()
     {
-        // CB2: SVE-edited save data can leave a Chef's-style bundle with X=Y=7 (quota table
-        // matches by name but the structural Percentage shape — X < Y — no longer holds).
-        // The classifier must fall through to PerItem instead of throwing.
+        // Changed 2026-08-27 (Jeff): X == Y used to fall through to PerItem, which threw the
+        // curated quota away and left the bundle with NO season gate at all. That mattered
+        // because the required-slots difficulty modifier raises X, so a HARDER bundle became an
+        // UNGATED one. A bundle that must be donated in full still has a meaningful ramp.
         var parsed = Make("Chef's", 7,
             "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6", "(O)7");
         var quotas = new Dictionary<string, int[]> { ["Chef's"] = new[] { 1, 2, 3, 4 } };
@@ -92,10 +93,26 @@ public class BundleClassifierTests
         var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, quotas);
 
         Assert.NotNull(req);
-        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Equal(BundleKind.Percentage, req!.Kind);
         Assert.Equal(7, req.NumberOfSlots);
-        Assert.Equal(7, req.Ingredients.Count);
-        // Quota array is ignored on the PerItem path.
+        // The ramp moves with X so its endpoint is what the bundle now requires: +3 throughout.
+        Assert.Equal(new[] { 4, 5, 6, 7 }, req.CumulativeRequiredBySeason);
+    }
+
+    /// <summary>The SVE case the old test was really protecting: X strictly GREATER than Y (the
+    /// slot list repeats an ingredient, so more slots than distinct items). Percentage cannot
+    /// model that, because you can never donate more distinct items than exist.</summary>
+    [Fact]
+    public void Quota_lookup_with_X_GT_Y_still_falls_through_to_perItem()
+    {
+        var parsed = Make("Chef's", 8,
+            "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6", "(O)7");
+        var quotas = new Dictionary<string, int[]> { ["Chef's"] = new[] { 1, 2, 3, 4 } };
+
+        var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, quotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
         Assert.Null(req.CumulativeRequiredBySeason);
     }
 
@@ -266,5 +283,138 @@ public class BundleClassifierTests
         Assert.NotNull(req);
         Assert.Contains("(O)16", req!.Ingredients);
         Assert.Contains("(O)22", req.Ingredients);
+    }
+}
+
+public class BundleClassifierQuotaClampTests
+{
+    // X=2, Y=4. A quota asking for 3 by Winter cannot be met and CreatePercentage rejects it
+    // outright, so the classifier has to clamp before it constructs the requirement.
+    private const string ArtisanKey = "Pantry/5";
+    private const string ArtisanXTwoYFour =
+        "Artisan/O 12 1/348 1 0 424 1 0 426 1 0 428 1 0/2/2//Artisan";
+
+    [Fact]
+    public void Quota_Above_The_Slot_Count_Is_Clamped_Not_Thrown()
+    {
+        ParsedBundle parsed = BundleParsing.Parse(ArtisanKey, ArtisanXTwoYFour);
+        var quotas = new Dictionary<string, int[]> { ["Artisan"] = new[] { 0, 1, 2, 3 } };
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            parsed, Theme.Farming, new Dictionary<string, Season>(), quotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.Percentage, req!.Kind);
+        Assert.Equal(2, req.NumberOfSlots);
+        Assert.All(req.CumulativeRequiredBySeason!, n => Assert.True(n <= req.NumberOfSlots));
+        Assert.Equal(2, req.CumulativeRequiredBySeason![3]);
+    }
+
+    [Fact]
+    public void A_Quota_That_Already_Fits_Is_Untouched()
+    {
+        ParsedBundle parsed = BundleParsing.Parse(ArtisanKey, ArtisanXTwoYFour);
+        var quotas = new Dictionary<string, int[]> { ["Artisan"] = new[] { 0, 1, 1, 2 } };
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            parsed, Theme.Farming, new Dictionary<string, Season>(), quotas);
+
+        Assert.Equal(new[] { 0, 1, 1, 2 }, req!.CumulativeRequiredBySeason);
+    }
+
+    [Fact]
+    public void A_Negative_Quota_Entry_Is_Clamped_To_Zero()
+    {
+        ParsedBundle parsed = BundleParsing.Parse(ArtisanKey, ArtisanXTwoYFour);
+        var quotas = new Dictionary<string, int[]> { ["Artisan"] = new[] { -1, 0, 1, 2 } };
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            parsed, Theme.Farming, new Dictionary<string, Season>(), quotas);
+
+        Assert.Equal(0, req!.CumulativeRequiredBySeason![0]);
+    }
+}
+
+/// <summary>Covers the derived-availability path on the PerItem branch: when a model is supplied
+/// every ingredient gets a computed deadline instead of only the ones the hand written pin table
+/// happens to name.</summary>
+public class BundleClassifierAvailabilityTests
+{
+    private static ParsedBundle Bundle(string name, params string[] ingredientIds)
+        => new ParsedBundle(
+            "CraftsRoom", 0, name,
+            ingredientIds.Select(id => new BundleIngredient(id, 1, 0)).ToList(),
+            ingredientIds.Length);
+
+    private static ItemAvailabilityModel Model(params (string Id, Season Floor, int Effort)[] items)
+        => new ItemAvailabilityModel(
+            items.ToDictionary(
+                i => i.Id,
+                i => new ItemAvailability(i.Floor, i.Effort, "test"),
+                System.StringComparer.Ordinal));
+
+    /// <summary>The bug this whole change exists to fix: a PerItem bundle whose ingredients are
+    /// absent from the pin table gates on nothing until the Winter win check.</summary>
+    [Fact]
+    public void Without_A_Model_An_Unpinned_PerItem_Bundle_Is_Still_Ungated()
+    {
+        BundleRequirement? req = BundleClassifier.Classify(
+            Bundle("Helper's", "(O)9999", "(O)9998"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>());
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Empty(req.ItemSeasonPins);
+    }
+
+    [Fact]
+    public void With_A_Model_Every_Ingredient_Gets_A_Deadline()
+    {
+        var model = Model(
+            ("(O)9999", Season.Spring, 2),
+            ("(O)9998", Season.Spring, 4));
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            Bundle("Helper's", "(O)9999", "(O)9998"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Equal(2, req.ItemSeasonPins.Count);
+        Assert.Equal(Season.Fall, req.ItemSeasonPins["(O)9999"]);
+        Assert.Equal(Season.Winter, req.ItemSeasonPins["(O)9998"]);
+    }
+
+    [Fact]
+    public void With_A_Model_The_Bundle_Demands_Something_Before_Winter()
+    {
+        var model = Model(
+            ("(O)9999", Season.Spring, 2),
+            ("(O)9998", Season.Spring, 4));
+
+        BundleRequirement req = BundleClassifier.Classify(
+            Bundle("Helper's", "(O)9999", "(O)9998"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model)!;
+
+        // Real pressure: with nothing donated, the Fall day-28 gate must already fail.
+        // BundleRequirement has no DemandAtSeason member (the brief named one); the season
+        // gate itself is the honest expression of "this bundle demands something by Fall".
+        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Fall, new HashSet<string>()),
+            "an all-of-them bundle must apply pressure before the Winter win check");
+    }
+
+    [Fact]
+    public void A_Model_Does_Not_Change_A_Seasonal_Bundle()
+    {
+        var model = Model(("(O)16", Season.Spring, 1));
+
+        BundleRequirement req = BundleClassifier.Classify(
+            Bundle("Spring Foraging", "(O)16"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model)!;
+
+        Assert.Equal(BundleKind.Seasonal, req.Kind);
     }
 }

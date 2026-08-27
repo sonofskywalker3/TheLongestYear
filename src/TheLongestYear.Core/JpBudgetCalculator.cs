@@ -88,13 +88,14 @@ public static class JpBudgetCalculator
         IReadOnlyList<BudgetBundle> bundles,
         JpSettings settings,
         double selectionBonusMultiplier,
-        IReadOnlyList<int> goalSlotsPerWeekBySeason)
+        IReadOnlyList<int> goalSlotsPerWeekBySeason,
+        double jpEarnedMultiplier = 1.0)
     {
         if (bundles == null) throw new ArgumentNullException(nameof(bundles));
         if (settings == null) throw new ArgumentNullException(nameof(settings));
         if (goalSlotsPerWeekBySeason == null) throw new ArgumentNullException(nameof(goalSlotsPerWeekBySeason));
 
-        var calc = new JpCalculator(settings);
+        var calc = new JpCalculator(settings, jpEarnedMultiplier);
         var report = new JpBudgetReport();
 
         var earliestPaid = new List<Paid>();

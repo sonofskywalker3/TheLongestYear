@@ -43,6 +43,11 @@ public sealed class ItemPools
     /// then allows quality as before. Nexus 1122358 follow-ups (gold Fiber, gold River
     /// Jelly, silver Tea Leaves), 2026-08-25.</summary>
     public IReadOnlySet<string>? QualityEligibleIds { get; init; }
+
+    /// <summary>Raw Data/Fish rows keyed by UNQUALIFIED item id, for the availability model.
+    /// The pools themselves carry qualified ids; this table mirrors the game's own keying.</summary>
+    public IReadOnlyDictionary<string, RawFishEntry> FishRows { get; init; }
+        = new Dictionary<string, RawFishEntry>();
 }
 
 /// <summary>Which item pool a picked bundle's slots re-roll from. None = keep the
@@ -91,3 +96,43 @@ public sealed record RawFruitTreeEntry(string SaplingItemId);
 /// merged with a curated default-mineral list (the vanilla default geode table is code,
 /// not data) and then filtered to exclude gem-category items.</summary>
 public sealed record RawGeodeDropEntry(string ItemId);
+
+/// <summary>One Data/Fish row, reduced to the fields the availability model gates on.
+///
+/// Field indices verified against the decompiled Android source, GameLocation.
+/// CheckGenericFishRequirements: 1 = difficulty or the literal "trap", 5 = time spans,
+/// 7 = weather, 9 = max depth, 12 = minimum fishing level. Do not reorder from memory.
+///
+/// Parse never throws. A row the game itself would reject degrades to zeros, and the fish then
+/// scores as an easy year-round catch, which is the lenient direction.</summary>
+public sealed record RawFishEntry(
+    string ItemId, bool IsTrap, int Difficulty, string RawTimeSpans,
+    string Weather, int MaxDepth, int MinFishingLevel)
+{
+    private const int DifficultyIndex = 1;
+    private const int TimeSpansIndex = 5;
+    private const int WeatherIndex = 7;
+    private const int MaxDepthIndex = 9;
+    private const int MinFishingLevelIndex = 12;
+    private const string TrapMarker = "trap";
+
+    public static RawFishEntry Parse(string itemId, string? row)
+    {
+        string[] fields = (row ?? "").Split('/');
+        bool isTrap = Field(fields, DifficultyIndex) == TrapMarker;
+        return new RawFishEntry(
+            ItemId: itemId,
+            IsTrap: isTrap,
+            Difficulty: isTrap ? 0 : Int(fields, DifficultyIndex),
+            RawTimeSpans: isTrap ? "" : Field(fields, TimeSpansIndex),
+            Weather: isTrap ? "" : Field(fields, WeatherIndex),
+            MaxDepth: isTrap ? 0 : Int(fields, MaxDepthIndex),
+            MinFishingLevel: isTrap ? 0 : Int(fields, MinFishingLevelIndex));
+    }
+
+    private static string Field(string[] fields, int index)
+        => index < fields.Length ? fields[index] : "";
+
+    private static int Int(string[] fields, int index)
+        => int.TryParse(Field(fields, index), out int value) ? value : 0;
+}

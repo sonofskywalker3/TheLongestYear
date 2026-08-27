@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace TheLongestYear.Core;
@@ -35,6 +36,34 @@ public static class BundleClassifier
         @"^(?<season>Spring|Summer|Fall|Winter)\s+(?<kind>Foraging|Crops)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>Moves a curated quota ramp so its endpoint matches how many slots the bundle now
+    /// requires, then clamps every entry into [0, X] and restores monotonicity.
+    ///
+    /// Why: the required-slots difficulty modifier changes X, and a ramp authored against the old
+    /// X no longer says what it meant. Animal is curated [1,3,5,5] at X=5; at X=6 the same intent
+    /// is [2,4,6,6] (Jeff's own example, 2026-08-27). Leaving the ramp alone would have made a
+    /// HARDER bundle demand a SMALLER fraction of itself at every checkpoint.
+    ///
+    /// The shift is derived from the ramp itself rather than from the difficulty profile, so it is
+    /// self-correcting for any reason X differs from what the table assumed, including SVE-edited
+    /// save data.
+    ///
+    /// A ramp whose endpoint is zero is left alone: those are the deliberately never-gated
+    /// bundles, and shifting them would invent a Spring demand out of nothing.</summary>
+    public static int[] ShiftRampToSlotCount(int[] ramp, int numberOfSlots)
+    {
+        int last = ramp.Length - 1;
+        int shift = ramp[last] > 0 ? numberOfSlots - ramp[last] : 0;
+
+        var result = new int[ramp.Length];
+        for (int i = 0; i < ramp.Length; i++)
+            result[i] = Math.Clamp(ramp[i] + shift, 0, numberOfSlots);
+
+        for (int i = 1; i < result.Length; i++)
+            result[i] = Math.Max(result[i], result[i - 1]);
+        return result;
+    }
+
     /// <summary>Classify one bundle. Returns null if the bundle name doesn't match any rule
     /// (i.e. an SVE-added or otherwise unknown bundle the caller should log and skip).</summary>
     /// <param name="parsed">Parsed vanilla bundle data (Data/Bundles entry).</param>
@@ -43,10 +72,15 @@ public static class BundleClassifier
     /// defaults + user). Keyed by qualified item id.</param>
     /// <param name="bundleQuotas">Per-bundle cumulative quotas for KIND 3 bundles (merged
     /// defaults + user). Keyed by bundle name.</param>
+    /// <param name="availability">Derived item model. When supplied, the PerItem branch computes
+    /// deadlines with <see cref="BundleDeadlines"/> instead of looking ingredients up in
+    /// <paramref name="itemSeasonPins"/>. Null keeps the legacy pin-table behaviour, which exists
+    /// only until every caller passes a model (Phase 4 of the availability spec).</param>
     public static BundleRequirement? Classify(
         ParsedBundle parsed, Theme theme,
         IReadOnlyDictionary<string, Season> itemSeasonPins,
-        IReadOnlyDictionary<string, int[]> bundleQuotas)
+        IReadOnlyDictionary<string, int[]> bundleQuotas,
+        ItemAvailabilityModel? availability = null)
     {
         if (parsed == null) throw new ArgumentNullException(nameof(parsed));
         if (itemSeasonPins == null) throw new ArgumentNullException(nameof(itemSeasonPins));
@@ -90,15 +124,21 @@ public static class BundleClassifier
         // bundle is in the quota table (e.g. Chef's with the SVE Candy entry baked in:
         // X=Y=7 instead of vanilla X=10, Y=6). In that case the Percentage model doesn't
         // apply — fall through to PerItem.
-        if (parsed.NumberOfSlots < ingredients.Count
+        if (parsed.NumberOfSlots <= ingredients.Count
             && bundleQuotas.TryGetValue(name, out int[]? quota) && quota != null)
         {
             // numberOfSlots = X (the parsed bundle's slot count), ingredients = Y (deduped list).
-            // CreatePercentage validates X < Y and Y entries within [0..X].
+            // CreatePercentage validates X < Y and Y entries within [0..X] -- it THROWS on a quota
+            // entry above X, which would take the whole reset down with it. A configured quota can
+            // legitimately exceed this board's X in two ways: the difficulty "required slots"
+            // modifier at Easy lowers X by one (spec 2026-08-26), and SVE-edited save data can
+            // reshape a bundle. Either way an unsatisfiable quota bricks the run, so clamp rather
+            // than trust the table.
+            int[] clampedQuota = ShiftRampToSlotCount(quota, parsed.NumberOfSlots);
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
-                cumulativeRequiredBySeason: quota,
+                cumulativeRequiredBySeason: clampedQuota,
                 ingredientStacks: ingredientStacks,
                 ingredientQualities: ingredientQualities);
         }
@@ -109,12 +149,24 @@ public static class BundleClassifier
         // duplicate slot implicitly when wood is donated once.
         if (parsed.NumberOfSlots >= ingredients.Count)
         {
-            // Pull pins for THIS bundle's ingredients only. Unpinned items don't gate any
-            // season but still count toward IsFullyComplete.
             Dictionary<string, Season> pins = new();
-            foreach (string id in ingredients)
-                if (itemSeasonPins.TryGetValue(id, out Season s))
-                    pins[id] = s;
+            if (availability != null)
+            {
+                // Derived model: every ingredient gets a deadline, spread by effort and clamped
+                // up to the season it can first exist in. No ingredient can fall through
+                // ungated, which is the whole point of the change.
+                foreach (KeyValuePair<string, Season> deadline
+                         in BundleDeadlines.For(ingredients, availability))
+                    pins[deadline.Key] = deadline.Value;
+            }
+            else
+            {
+                // Legacy path: only ingredients named in the hand written table gate anything.
+                // Unpinned items don't gate any season but still count toward IsFullyComplete.
+                foreach (string id in ingredients)
+                    if (itemSeasonPins.TryGetValue(id, out Season s))
+                        pins[id] = s;
+            }
             return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
                 ingredientStacks, ingredientQualities);
         }

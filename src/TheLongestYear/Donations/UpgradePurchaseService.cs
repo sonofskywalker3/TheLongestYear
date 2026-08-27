@@ -13,12 +13,23 @@ namespace TheLongestYear.Donations
     {
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
+        private readonly GameplayConfig _config;
 
-        public UpgradePurchaseService(IMonitor monitor, MetaStore store)
+        public UpgradePurchaseService(IMonitor monitor, MetaStore store, GameplayConfig config)
         {
             _monitor = monitor;
             _store = store;
+            _config = config;
         }
+
+        /// <summary>The run's stamped shrine-price factor. Read per call, not cached: a reset
+        /// re-stamps the profile mid-session.</summary>
+        private double PriceFactor => _store.State.EffectiveDifficulty(_config).ShrinePriceFactor;
+
+        /// <summary>What this upgrade actually costs at the current difficulty. The menus use the
+        /// same helper, so the shown price and the charged price are the same number.</summary>
+        public long EffectiveCost(UpgradeDefinition definition)
+            => UpgradePricing.EffectiveCost(definition, PriceFactor);
 
         /// <summary>Fires with the upgrade id after a successful purchase (wired by ModEntry for
         /// upgrades whose effect needs a live refresh, e.g. a Data/Shops cache invalidation).</summary>
@@ -28,7 +39,7 @@ namespace TheLongestYear.Donations
         public UpgradePurchase.PurchaseResult TryPurchase(string upgradeId)
         {
             UpgradeDefinition def = UpgradeCatalog.TryGet(upgradeId);
-            UpgradePurchase.PurchaseResult result = UpgradePurchase.TryPurchase(_store.State, def);
+            UpgradePurchase.PurchaseResult result = UpgradePurchase.TryPurchase(_store.State, def, PriceFactor);
             LogResult(upgradeId, def, result);
             if (result == UpgradePurchase.PurchaseResult.Success)
                 Purchased?.Invoke(def.Id);
@@ -42,7 +53,7 @@ namespace TheLongestYear.Donations
                 case UpgradePurchase.PurchaseResult.Success:
                     Game1.playSound("purchase");
                     _monitor.Log(
-                        $"Purchased '{def.Id}' ({def.DisplayName}) for {def.Cost} JP. " +
+                        $"Purchased '{def.Id}' ({def.DisplayName}) for {EffectiveCost(def)} JP. " +
                         $"JP remaining: {_store.State.JunimoPoints}.",
                         LogLevel.Info);
                     break;
@@ -57,7 +68,7 @@ namespace TheLongestYear.Donations
                     break;
                 case UpgradePurchase.PurchaseResult.NotEnoughJp:
                     _monitor.Log(
-                        $"Cannot purchase '{def.Id}': costs {def.Cost} JP, you have {_store.State.JunimoPoints}.",
+                        $"Cannot purchase '{def.Id}': costs {EffectiveCost(def)} JP, you have {_store.State.JunimoPoints}.",
                         LogLevel.Info);
                     break;
                 case UpgradePurchase.PurchaseResult.MetaRequirementMissing:

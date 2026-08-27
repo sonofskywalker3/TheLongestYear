@@ -73,10 +73,15 @@ namespace TheLongestYear.UI
         private ClickableTextureComponent _scrollDown;
         private string _hoverText = "";
 
-        public ShrinePreviewMenu(MetaState state)
+        /// <summary>The run's stamped shrine-price factor. Passed in rather than read off the
+        /// state, so this read-only preview shows exactly the number the shrine will charge.</summary>
+        private readonly double _priceFactor;
+
+        public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
+            _priceFactor = priceFactor;
             BuildRows();
             BuildForesight();
             RecomputeBoundsAndLayout();
@@ -438,11 +443,12 @@ namespace TheLongestYear.UI
                 }
                 else
                 {
-                    bool affordable = _state.JunimoPoints >= row.Def.Cost;
+                    long costJp = UpgradePricing.EffectiveCost(row.Def, _priceFactor);
+                    bool affordable = _state.JunimoPoints >= costJp;
                     Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
                         new Vector2(_listX + 24, rowY + 6), Game1.textColor);
                     string cost = Strings.Get("menu.shrine-preview.cost",
-                        new Dictionary<string, string> { ["cost"] = row.Def.Cost.ToString() });
+                        new Dictionary<string, string> { ["cost"] = costJp.ToString() });
                     Vector2 costSize = Game1.smallFont.MeasureString(cost);
                     Utility.drawTextWithShadow(b, cost, Game1.smallFont,
                         new Vector2(_listX + _listWidth - 64 - costSize.X, rowY + 6),

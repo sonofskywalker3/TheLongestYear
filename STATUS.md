@@ -1,4 +1,92 @@
-# The Longest Year — Status
+# The Longest Year - Status
+
+**Last updated:** 2026-08-27 (derived item availability model, Phase 1, built and smoked)
+**Branch:** `feat/difficulty-modifiers`, 52 commits ahead of `master`, **LOCAL ONLY (not pushed, not merged)**
+**Tests:** 1113 passing, 0 failing
+**Build:** clean
+**Last public release:** 0.15.0
+
+## THE PERITEM GATE BASELINE HAS SHIFTED. The next release notes must say so.
+
+Bundles that require every item they show used to take their per-item due dates from a
+40-entry hand table (`GameplayConfig.DefaultItemSeasonPins`). Anything outside it had no due date
+and applied no pressure until the Winter win check. Because the engine re-rolls the six fish
+bundles from a 52-item pool and the two metals bundles from an 11-item pool, most re-rolled boards
+were partly or wholly ungated.
+
+Phase 1 replaces that with a model the engine derives from the game's own data: per item an
+earliest-possible season and an effort score; per bundle, deadlines spread across the four
+checkpoints by effort and clamped upward to each item's floor so an impossible gate cannot be
+expressed.
+
+**This makes the game harder at every difficulty, deliberately** (Jeff's ruling, 2026-08-27).
+`DifficultyResolverTests.Normal_Resolves_To_Todays_Config_Values` still passes because it asserts
+difficulty dial values, not gate outcomes, but "Normal equals the 0.12 shipping balance" is no
+longer true of season gates.
+
+Measured on three live boards, two configurations including a full Hard sweep: no impossible
+gates, 0 never-gated bundles, 66 ids derived, 0 curated pins rejected. Numbers and per-bundle
+detail are in the plan's Results section.
+
+- Spec: `docs/superpowers/specs/2026-08-27-derived-item-availability-design.md`
+- Plan + results: `docs/superpowers/plans/2026-08-27-derived-item-availability-phase-1.md`
+
+**Phases 2 to 4 are not built.** Orchard, Tapper's, Forest, Spirit's Eve, Home Cook's and Wild
+Medicine still wait for Winter, because their ingredients come from domains Phase 1 does not model
+(crops, forage, monster drops, artisan goods, cooking, artifacts, books, saplings, geode minerals,
+tapper goods). Each later phase needs its own plan.
+
+## NEXT SESSION: difficulty modifiers need an in-game smoke, then a merge decision
+
+Jeff brainstormed this the night of 2026-08-26 and said "write the spec, plan, and build" before
+going to bed. All 16 planned tasks are done and committed on `feat/difficulty-modifiers`. Nothing
+is pushed and nothing is merged to `master`: both are Jeff's call.
+
+- Spec: `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md`
+- Plan: `docs/superpowers/plans/2026-08-26-difficulty-modifiers.md`
+
+**What it is:** ten independent Easy/Normal/Hard/Extreme dials in a new GMCM "Difficulty" section.
+No overall tier (Jeff killed that mid-brainstorm). Everything defaults to Normal, which resolves to
+today's exact config values, so an untouched save is unchanged. A change applies at the NEXT reset,
+because the resolved profile is stamped onto the save and every consumer reads the stamp.
+
+**Nobody has seen any of it run.** The whole thing is unit-tested and builds, but it has never been
+loaded in the game. What needs smoking, in rough priority order:
+
+1. `tly_difficulty` on a loaded save prints sensible output and says whether the stamp or live
+   config is in force.
+2. GMCM shows the Difficulty section with ten dropdowns, and a change survives a save/reload.
+3. Set stack size + required slots to Hard, `tly_reset`, and check the board actually changed:
+   `tly_genbundles` should show bigger stacks and higher pick-X counts.
+4. **The Vanilla post-pass is the riskiest change here.** `BundleSource=Vanilla` previously wrote
+   NOTHING at reset; it now rewrites the board when any ask-side dial is off Normal. On a Vanilla
+   save, reset at Hard and confirm the CC menu still opens, ingredient ITEMS are unchanged, and
+   stacks/pick-X moved.
+5. Set everything back to Normal, reset, and confirm a board identical to a pre-branch one.
+
+**Known gap, minor:** a brand-new VANILLA-source save has no stamp until its first reset, so a GMCM
+change during loop 1 of such a save applies immediately rather than next loop. Self-corrects at the
+first reset. Engine saves stamp during fresh-run generation, so they do not have this.
+
+**Resolved 2026-08-27 on deploy (was flagged overnight as an open question).** The ten steps
+serialize into config.json as readable NAMES, not integers: the deployed
+`Mods/TheLongestYear/config.json` shows `"StackSize": "Normal"` and so on for all ten. The
+overnight worry, based on `StringEnumConverter` not appearing in StardewModdingAPI.dll, was wrong.
+No fix needed and no ruling required.
+
+**Deliberate deviation from the spec, recorded:** the spec describes the rarity bias as applying
+inside the sampler. It is applied to `ItemPools` before generation instead, and the stack/quality
+modifiers are applied by scaling the tuning block. Same effect, and it meant `BundleSlotFiller` and
+`AuthoredBundleComposer` needed no edits at all.
+
+**Also parked this session:** Impossible mode (post-1.0), written up in `TODO.md`.
+
+**Two things NOT done, both waiting on Jeff:**
+- No manifest version bump (branch rule: only the release line bumps).
+- No "What's New" entry in the README or Nexus description, because the release number is not
+  decided. The Difficulty section itself is written into both, content-identical.
+
+## Previous state
 
 **Last updated:** 2026-08-26 evening (0.14.0, 0.14.1 and 0.14.2 all released today)
 **Branch:** `master`, pushed

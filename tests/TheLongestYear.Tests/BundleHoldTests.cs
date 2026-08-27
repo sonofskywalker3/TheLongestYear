@@ -154,11 +154,16 @@ public class BundleHoldTests
         Assert.Equal(4, s.BoardTrimSteps);
     }
 
+    /// <summary>Jeff's ruling 2026-08-27: all three sources can hold the current board. A vanilla
+    /// board used to be refused because its reset regenerates through loadForNewGame; the reset
+    /// now snapshots the live board and writes it back, so the hold is real everywhere.</summary>
     [Fact]
-    public void IsOfferable_is_true_for_Engine_and_false_for_Vanilla()
+    public void IsOfferable_is_true_for_every_source()
     {
         Assert.True(BundleHold.IsOfferable(BundleSourceNames.Engine));
-        Assert.False(BundleHold.IsOfferable(BundleSourceNames.Vanilla));
+        Assert.True(BundleHold.IsOfferable(BundleSourceNames.Normal));
+        Assert.True(BundleHold.IsOfferable(BundleSourceNames.Remixed));
+        Assert.True(BundleHold.IsOfferable(BundleSourceNames.LegacyVanilla));
     }
 
     [Fact]

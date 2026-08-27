@@ -134,7 +134,13 @@ public sealed class GameplayConfig
             ["(O)266"] = "Summer",   // Red Cabbage
 
             // --- Field Research (Bulletin, X=Y) ---
-            ["(O)422"] = "Winter",   // Purple Mushroom
+            // Purple Mushroom is NOT winter-gated (Jeff, 2026-08-27): the Mushroom Cave farm
+            // choice produces it, the mines drop it from floor 80, and a mushroom log grows it.
+            // The old Winter pin also contradicted this mod's own Fall forage pool, which adds
+            // it, and that disagreement made a Fall Foraging bundle that drew it unsatisfiable
+            // at its own Fall gate (found by tly_gatecheck). Fall keeps the two tables agreeing
+            // and is comfortably reachable by any of the three routes.
+            ["(O)422"] = "Fall",     // Purple Mushroom
             ["(O)392"] = "Winter",   // Nautilus Shell
             ["(O)702"] = "Spring",   // Chub
             ["(O)536"] = "Summer",   // Frozen Geode
@@ -192,6 +198,13 @@ public sealed class GameplayConfig
             ["Rare Crops"]           = new[] { 0, 0, 1, 1 },   // X=1 of 2 — force the one donation by Fall 28, not Winter 28
             ["Garden"]               = new[] { 1, 2, 4, 4 },   // X=4 of 5 — complete by Fall 28 while crops still grow
         };
+
+    /// <summary>The ten difficulty modifiers (spec 2026-08-26). Each is an independent
+    /// Easy/Normal/Hard/Extreme step; there is no overall tier. Every one defaults to Normal,
+    /// which is the mod's shipping balance, so leaving this alone changes nothing. A change takes
+    /// effect at the NEXT reset, not mid-run: the resolved profile is stamped into
+    /// <see cref="MetaState.Difficulty"/> when a loop begins and consumers read that stamp.</summary>
+    public DifficultySettings Difficulty { get; set; } = new();
 
     public JpSettings Jp { get; set; } = new JpSettings();
 

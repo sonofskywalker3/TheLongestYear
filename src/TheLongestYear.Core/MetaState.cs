@@ -109,6 +109,39 @@ public sealed class MetaState
     [System.Text.Json.Serialization.JsonIgnore]
     public int EffectiveBundleSeedLoop => BundleSeedLoop >= 0 ? BundleSeedLoop : CompletedResets;
 
+    /// <summary>The difficulty profile this loop runs under, stamped from the live config when
+    /// the loop begins. Every consumer reads THIS, never <c>config.Difficulty</c>, which is what
+    /// makes a GMCM change apply at the next reset rather than mid-season.
+    ///
+    /// RESOLVED VALUES are stamped rather than the ten steps, matching the
+    /// <see cref="BoardEaseSeason"/> idiom: a reload has to reproduce the reset exactly, and
+    /// stamping steps would let a future release that retunes what "Hard" means silently change
+    /// an in-flight run's economy.
+    ///
+    /// Null on a save from before difficulty modifiers existed. See
+    /// <see cref="EffectiveDifficulty"/> for the fallback, which is all-Normal and therefore
+    /// identical to that save's previous behaviour. Spec 2026-08-26.</summary>
+    public DifficultyProfile? Difficulty { get; set; }
+
+    /// <summary>The profile in force for ECONOMY reads (JP, prices, cart, pity): the stamp when
+    /// present, otherwise resolved live from config so a player who has never reset still gets the
+    /// setting he just chose.</summary>
+    public DifficultyProfile EffectiveDifficulty(GameplayConfig config)
+        => Difficulty ?? DifficultyResolver.Resolve(config.Difficulty, config);
+
+    /// <summary>The profile that produced the board currently ON DISK, for re-deriving it at load.
+    ///
+    /// Deliberately NOT <see cref="EffectiveDifficulty"/>: that falls back to LIVE config, and a
+    /// save with no stamp is one whose board was generated before difficulty modifiers existed, so
+    /// it was necessarily all-Normal. Re-deriving such a board against a config the player has
+    /// since changed produces a different board, the manifest check fails, and a perfectly healthy
+    /// engine save is demoted to the legacy read-and-classify path (verified in game 2026-08-27).
+    ///
+    /// Same principle the EnableNonObjectDonations retry already encodes: the board on disk was
+    /// composed with the old value and stays valid until the next reset regenerates it.</summary>
+    public DifficultyProfile BoardDifficulty(GameplayConfig config)
+        => Difficulty ?? DifficultyProfile.Normal(config);
+
     /// <summary>Which board this save runs under — <see cref="BundleSourceNames.Engine"/> (TLY
     /// writes its own board every loop) or <see cref="BundleSourceNames.Vanilla"/> (keep the
     /// game's Standard/Remixed or another bundle mod's board, regenerated the same way on every

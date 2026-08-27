@@ -35,6 +35,11 @@ namespace TheLongestYear
         // values on DayStarted; when the fingerprint moves we re-classify from the live data.
         private string _boardFingerprint;
         private BundleCatalogBuilder _boardBuilder;
+        /// <summary>Derived per-item availability (earliest season + effort), built from the live
+        /// engine pools once a save is loaded and handed to every path that classifies bundles so
+        /// PerItem due dates come from the model instead of the 40-entry curated pin table.
+        /// Null before a save is loaded, so every reader must tolerate null.</summary>
+        private TheLongestYear.Core.ItemAvailabilityModel _availability;
         private DonationObserver _donationObserver;
         private CartStallIntro _cartStallIntro;
         private CaveChoicePrompt _caveChoicePrompt;
@@ -237,6 +242,10 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
+            helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
+            helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
+            helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
+            helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] (default: the current board's seed loop)", this.CmdGenBundles);
@@ -349,12 +358,28 @@ namespace TheLongestYear
                 // every reset regenerates the same kind of board (Nexus bug 1108030 root cause:
                 // Game1.bundleType is never persisted by the game).
                 BundleOptionPatch.Choice choice = BundleOptionPatch.ConsumeLastChoice();
-                _meta.State.BundleSource = choice == BundleOptionPatch.Choice.TlyCustom
-                    ? BundleSourceNames.Engine : BundleSourceNames.Vanilla;
-                _meta.State.VanillaBundleType = choice == BundleOptionPatch.Choice.VanillaRemixed
-                    ? Game1.BundleType.Remixed.ToString() : Game1.BundleType.Default.ToString();
+                string chosenSource = choice switch
+                {
+                    BundleOptionPatch.Choice.VanillaRemixed => BundleSourceNames.Remixed,
+                    BundleOptionPatch.Choice.VanillaStandard => BundleSourceNames.Normal,
+                    _ => BundleSourceNames.Engine,
+                };
+                _meta.State.BundleSource = BundleSourceNames.IsVanilla(chosenSource)
+                    ? BundleSourceNames.LegacyVanilla : BundleSourceNames.Engine;
+                _meta.State.VanillaBundleType =
+                    BundleSourceNames.VanillaTypeFor(chosenSource) ?? Game1.BundleType.Default.ToString();
+
+                // Mirror the Advanced Options pick into the config, which is the ONE setting that
+                // owns this from now on. Without this the first reset would re-stamp from a config
+                // the player never touched and silently undo the choice he just made.
+                if (!string.Equals(_config.BundleSource, chosenSource, StringComparison.OrdinalIgnoreCase))
+                {
+                    _config.BundleSource = chosenSource;
+                    this.Helper.WriteConfig(_config);
+                }
+
                 this.Monitor.Log(
-                    $"New game: BundleSource={_meta.State.BundleSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
+                    $"New game: bundle source={chosenSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
                     LogLevel.Info);
             }
             RunActivation.Activate();
@@ -364,6 +389,7 @@ namespace TheLongestYear
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
+            CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
             // not end the day, so the map stays re-entrant and vanilla would offer the hunt again.
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = () => _meta.Run;
@@ -414,9 +440,28 @@ namespace TheLongestYear
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
             _seasonResolver = new SeasonResolver(
                 TheLongestYear.Core.SpawnSeasonMap.FromPools(enginePools));
+            // Derived item model: earliest-possible season and effort per item, from the same
+            // live pools the engine generates from. Curated pins ride along as season overrides.
+            // Built here because it needs enginePools, and consumed by everything below that
+            // classifies bundles. _reset is constructed above (it does not need the pools), so it
+            // takes the model through its settable AvailabilityModel property instead.
+            _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
+                enginePools, seasonOverrides: itemSeasonPins);
+            _reset.AvailabilityModel = _availability;
+            this.Monitor.Log(
+                $"Item availability model built from live pools: "
+                + $"{_availability.DerivedCount} id(s) derived, "
+                + $"{_availability.RejectedSeasonOverrides.Count} curated season pin(s) rejected for "
+                + "demanding an item earlier than it can exist.",
+                LogLevel.Trace);
+            if (_availability.RejectedSeasonOverrides.Count > 0)
+                this.Monitor.Log(
+                    "Rejected season pins (derived floor kept instead): "
+                    + string.Join(", ", _availability.RejectedSeasonOverrides),
+                    LogLevel.Warn);
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
-                themeOverrides, itemSeasonPins, bundleQuotas);
+                themeOverrides, itemSeasonPins, bundleQuotas, _availability);
             // Obtainability clamp for the read-and-classify path: curated pins + the engine's
             // derived (earliest-obtainable) pins, so a Remixed/modded board can't demand an
             // unobtainable minimum. Due-date (PerItem) pins stay the curated set.
@@ -461,7 +506,7 @@ namespace TheLongestYear
             _stashService.PlaceChest();
             _stashService.PopulateFromMeta();
             _planningShrine.Place(_stashService.LastPlacedTile);
-            _purchases = new UpgradePurchaseService(this.Monitor, _meta);
+            _purchases = new UpgradePurchaseService(this.Monitor, _meta, _config);
             _purchases.Purchased = id =>
             {
                 if (id == TheLongestYear.Loop.PierreYear2SeedsService.UpgradeId)
@@ -471,6 +516,7 @@ namespace TheLongestYear
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
+            _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
@@ -514,6 +560,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
+            TheLongestYear.Loop.CartSlotLimitPatch.StartingSlotsProvider = null;
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;
             BundleOptionPatch.ResetChoice();
             _boardBuilder = null;
@@ -711,6 +758,26 @@ namespace TheLongestYear
             if (args.Length < 1 || string.IsNullOrWhiteSpace(args[0]))
             {
                 this.Monitor.Log("Usage: tly_loadsave <saveFolderName>  (e.g. tly_loadsave None_123456789)", LogLevel.Info);
+                return;
+            }
+
+            // SaveGame.Load on a folder that does not exist fails SILENTLY: the game drops to the
+            // title screen and simply never finishes loading, which reads exactly like a hang.
+            // That is easy to hit because a TLY reset RENAMES the save folder (it re-seeds
+            // uniqueIDForThisGame, and the folder name embeds it), so yesterday's folder name is
+            // stale after any loop. Check first and list what is actually there.
+            string savesDir = System.IO.Path.Combine(
+                StardewModdingAPI.Constants.DataPath ?? "", "Saves");
+            string target = System.IO.Path.Combine(savesDir, args[0]);
+            if (System.IO.Directory.Exists(savesDir) && !System.IO.Directory.Exists(target))
+            {
+                string[] available = System.IO.Directory.GetDirectories(savesDir)
+                    .Select(System.IO.Path.GetFileName).OrderBy(n => n, System.StringComparer.Ordinal).ToArray();
+                this.Monitor.Log(
+                    $"tly_loadsave: no save folder named '{args[0]}'. A TLY reset renames the folder " +
+                    $"(the name embeds uniqueIDForThisGame), so an older name goes stale. Available: " +
+                    $"{(available.Length > 0 ? string.Join(", ", available) : "(none)")}",
+                    LogLevel.Warn);
                 return;
             }
 
@@ -1215,12 +1282,21 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.cart-limit.tooltip"));
 
             gmcm.AddTextOption(this.ModManifest,
-                getValue: () => BundleSourceNames.Normalize(_config.BundleSource),
+                // One setting, three choices. A config written before this change says the legacy
+                // "Vanilla", which names no layout, so show it as whichever layout the loaded save
+                // is actually on rather than defaulting a remixed save to Normal.
+                getValue: () =>
+                {
+                    string stored = BundleSourceNames.Normalize(_config.BundleSource);
+                    return stored == BundleSourceNames.LegacyVanilla
+                        ? BundleSourceNames.ForVanillaType(_meta?.State?.VanillaBundleType)
+                        : stored;
+                },
                 setValue: v => _config.BundleSource = BundleSourceNames.Normalize(v),
                 name: () => Strings.Get("gmcm.bundle-source.name"),
                 tooltip: () => Strings.Get("gmcm.bundle-source.tooltip"),
                 allowedValues: BundleSourceNames.All,
-                formatAllowedValue: v => BundleSourceNames.IsVanilla(v) ? Strings.Get("gmcm.bundle-source.vanilla") : Strings.Get("gmcm.bundle-source.engine"));
+                formatAllowedValue: FormatBundleSource);
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.AutoDetectReplayableUnlockCutscenes,
@@ -1268,6 +1344,67 @@ namespace TheLongestYear
                 name: () => Strings.Get("gmcm.starting-money.name"),
                 tooltip: () => Strings.Get("gmcm.starting-money.tooltip"),
                 min: 0, max: 5000, interval: 100);
+
+            // ---- Difficulty modifiers (spec 2026-08-26) ----
+            // Ten independent dials, no overall tier. Everything defaults to Normal, which is the
+            // shipping balance, and a change lands at the NEXT reset because WorldResetService
+            // stamps the resolved profile onto the save and every consumer reads that stamp.
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.difficulty.section"));
+            gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.difficulty.blurb"));
+
+            void AddDifficultyOption(
+                Func<DifficultyStep> get, Action<DifficultyStep> set,
+                Func<string> name, Func<string> tooltip)
+            {
+                gmcm.AddTextOption(this.ModManifest,
+                    getValue: () => get().ToString(),
+                    setValue: v => set(DifficultySteps.Parse(v)),
+                    name: name,
+                    tooltip: tooltip,
+                    allowedValues: DifficultySteps.AllNames,
+                    formatAllowedValue: FormatDifficultyStep);
+            }
+
+            AddDifficultyOption(
+                () => _config.Difficulty.StackSize, v => _config.Difficulty.StackSize = v,
+                () => Strings.Get("gmcm.difficulty.stack-size.name"),
+                () => Strings.Get("gmcm.difficulty.stack-size.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.QualityAsks, v => _config.Difficulty.QualityAsks = v,
+                () => Strings.Get("gmcm.difficulty.quality-asks.name"),
+                () => Strings.Get("gmcm.difficulty.quality-asks.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.RequiredSlots, v => _config.Difficulty.RequiredSlots = v,
+                () => Strings.Get("gmcm.difficulty.required-slots.name"),
+                () => Strings.Get("gmcm.difficulty.required-slots.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.ItemRarity, v => _config.Difficulty.ItemRarity = v,
+                () => Strings.Get("gmcm.difficulty.item-rarity.name"),
+                () => Strings.Get("gmcm.difficulty.item-rarity.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.JpEarned, v => _config.Difficulty.JpEarned = v,
+                () => Strings.Get("gmcm.difficulty.jp-earned.name"),
+                () => Strings.Get("gmcm.difficulty.jp-earned.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.ShrinePrices, v => _config.Difficulty.ShrinePrices = v,
+                () => Strings.Get("gmcm.difficulty.shrine-prices.name"),
+                () => Strings.Get("gmcm.difficulty.shrine-prices.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.StartingGold, v => _config.Difficulty.StartingGold = v,
+                () => Strings.Get("gmcm.difficulty.starting-gold.name"),
+                () => Strings.Get("gmcm.difficulty.starting-gold.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.CartSlots, v => _config.Difficulty.CartSlots = v,
+                () => Strings.Get("gmcm.difficulty.cart-slots.name"),
+                () => Strings.Get("gmcm.difficulty.cart-slots.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.HoldPrices, v => _config.Difficulty.HoldPrices = v,
+                () => Strings.Get("gmcm.difficulty.hold-prices.name"),
+                () => Strings.Get("gmcm.difficulty.hold-prices.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.SeasonPity, v => _config.Difficulty.SeasonPity = v,
+                () => Strings.Get("gmcm.difficulty.season-pity.name"),
+                () => Strings.Get("gmcm.difficulty.season-pity.tooltip"));
 
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.pity.section"));
             gmcm.AddBoolOption(this.ModManifest,
@@ -1448,6 +1585,10 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_hold": this.CmdHold(command, args); break;
+                case "tly_difficulty": this.CmdDifficulty(command, args); break;
+                case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
+                case "tly_gatecheck": this.CmdGateCheck(command, args); break;
+                case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
@@ -1498,6 +1639,455 @@ namespace TheLongestYear
         /// test project cannot construct — so the only way to verify a reset actually wiped what
         /// the table says is to print both sides of it and compare. Run before and after a
         /// tly_reset.</summary>
+        /// <summary>Read-only difficulty probe. Prints the CONFIGURED steps next to the STAMPED
+        /// ones, because those two disagree by design whenever the player has changed GMCM since
+        /// the last reset, and a balance report is worthless without knowing which was in force.
+        /// Same read-only shape as <see cref="CmdNetState"/>.</summary>
+        /// <summary>Writes a Markdown catalogue of everything the engine can put on a board: every
+        /// candidate bundle per room position, and for each one either its fixed item list or the
+        /// pool it re-rolls from, plus the rules that decide quantities.
+        ///
+        /// Built from LIVE game data (Data/Bundles, Data/RandomBundles, Data/Crops, Data/Fish,
+        /// Data/Locations, Data/Monsters ...) rather than a hand-written table, so it stays true
+        /// for whatever content mods are installed and cannot drift from the generator.
+        /// Diagnostics only: nothing is written to the save.</summary>
+        /// <summary>Audits every season gate on the live board: for each bundle and each season,
+        /// what the gate demands against how many of that bundle's ingredients can actually exist
+        /// by that season's day 28.
+        ///
+        /// The question it answers is "hard but possible". IMPOSSIBLE means the gate demands more
+        /// than the world can supply by then, which bricks the run; FREE means the gate demands
+        /// nothing that season. Both are reported per bundle so a curated quota can be judged.
+        ///
+        /// LIMIT, stated plainly: this checks SEASON feasibility only. An item obtainable in Spring
+        /// but needing a keg, a fish pond or a 10,000g tool upgrade counts as obtainable here.
+        /// It proves nothing is impossible for calendar reasons; it does not prove anything is
+        /// comfortable. Read-only.</summary>
+        /// <summary>Prints the derived availability model for one item id, or for every
+        /// ingredient of a named bundle. Diagnostics only, read-only.</summary>
+        private void CmdItemModel(string command, string[] args)
+        {
+            if (_availability == null)
+            {
+                this.Monitor.Log("No availability model yet; load a save first.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length == 0)
+            {
+                this.Monitor.Log("Usage: tly_itemmodel <itemId|bundleName>", LogLevel.Info);
+                return;
+            }
+
+            string target = string.Join(" ", args);
+            // Read the live requirements the way tly_gatecheck does. The _requirements field is
+            // not refreshed when a reset regenerates the board, so sourcing from it would report
+            // due dates from the previous board and disagree with tly_gatecheck on the same save.
+            var requirements = _runController?.Requirements ?? _requirements;
+            BundleRequirement req = requirements?
+                .FirstOrDefault(r => string.Equals(r.Name, target, StringComparison.OrdinalIgnoreCase));
+
+            if (req != null)
+            {
+                this.Monitor.Log($"Bundle '{req.Name}' ({req.Kind}):", LogLevel.Info);
+                foreach (string id in req.Ingredients)
+                {
+                    TheLongestYear.Core.ItemAvailability a = _availability.For(id);
+                    string due = req.ItemSeasonPins != null
+                        && req.ItemSeasonPins.TryGetValue(id, out TheLongestYear.Core.Season d)
+                        ? d.ToString()
+                        : "never";
+                    this.Monitor.Log(
+                        $"  {id}: due {due}; earliest {a.EarliestSeason}, effort {a.Effort} [{a.Basis}]",
+                        LogLevel.Info);
+                }
+                return;
+            }
+
+            string itemId = target.StartsWith("(", StringComparison.Ordinal) ? target : $"(O){target}";
+            TheLongestYear.Core.ItemAvailability single = _availability.For(itemId);
+            this.Monitor.Log(
+                $"{itemId}: earliest {single.EarliestSeason}, effort {single.Effort} [{single.Basis}]",
+                LogLevel.Info);
+        }
+
+        private void CmdGateCheck(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            var requirements = _runController?.Requirements;
+            if (requirements == null || requirements.Count == 0)
+            {
+                this.Monitor.Log("No requirements on this save yet.", LogLevel.Warn);
+                return;
+            }
+
+            // Earliest season each item can exist: the curated pins merged over the pins derived
+            // from live game data. Anything unpinned is treated as Spring-obtainable, which is the
+            // same assumption the generator's own ramp clamp makes.
+            var pins = new Dictionary<string, TheLongestYear.Core.Season>(StringComparer.Ordinal);
+            MetaState state = _meta.State;
+            try
+            {
+                BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(
+                    _config.PoolTuning, state.BoardDifficulty(_config));
+                foreach (var kv in new TheLongestYear.Loop.GameDataPools(this.Monitor)
+                        .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade))
+                        .DerivedSeasonPins)
+                    pins[kv.Key] = kv.Value;
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"tly_gatecheck: could not derive season pins ({ex.Message}); using curated pins only.", LogLevel.Warn);
+            }
+            foreach (var kv in ParseItemSeasonPins())
+                pins[kv.Key] = kv.Value;
+
+            int impossible = 0, free = 0, tight = 0;
+            var lines = new List<string>();
+            var blocked = new List<string>();
+
+            foreach (BundleRequirement req in requirements.OrderBy(r => r.Theme).ThenBy(r => r.Name, StringComparer.Ordinal))
+            {
+                int[] obtainable = new int[Calendar.MonthsPerYear];
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                    obtainable[season] = req.Ingredients.Count(id =>
+                        !pins.TryGetValue(id, out TheLongestYear.Core.Season pinned) || (int)pinned <= season);
+
+                int[] demanded = new int[Calendar.MonthsPerYear];
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                    demanded[season] = DemandAtSeason(req, (TheLongestYear.Core.Season)season, pins);
+
+                var cells = new List<string>();
+                string worst = "ok";
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                {
+                    string flag = "";
+                    if (demanded[season] > obtainable[season])
+                    {
+                        flag = " IMPOSSIBLE";
+                        worst = "IMPOSSIBLE";
+                        impossible++;
+                        // Name the culprits: an audit that says "4/3" without saying WHICH
+                        // ingredient is out of reach leaves the reader to re-derive it by hand.
+                        string blockers = string.Join(", ", req.Ingredients
+                            .Where(id => pins.TryGetValue(id, out var p2) && (int)p2 > season)
+                            .Select(id => _availability != null
+                                ? $"{DisplayName(id)} (needs {pins[id]}) [{_availability.For(id).Basis}]"
+                                : $"{DisplayName(id)} (needs {pins[id]})"));
+                        if (blockers.Length > 0)
+                            blocked.Add($"      {req.Name} at {(TheLongestYear.Core.Season)season}: blocked by {blockers}");
+                    }
+                    else if (demanded[season] == obtainable[season] && demanded[season] > 0)
+                    {
+                        flag = " tight";
+                        if (worst == "ok") worst = "tight";
+                        tight++;
+                    }
+                    cells.Add($"{(TheLongestYear.Core.Season)season}: {demanded[season]}/{obtainable[season]}{flag}");
+                }
+                if (demanded[Calendar.MonthsPerYear - 1] == 0) { free++; worst = "FREE ALL YEAR"; }
+
+                lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}");
+            }
+
+            this.Monitor.Log("=== Season gate audit (demanded / obtainable, by day 28 of each season) ===", LogLevel.Info);
+            foreach (string line in lines)
+                this.Monitor.Log(line, LogLevel.Info);
+
+            if (blocked.Count > 0)
+            {
+                this.Monitor.Log("  Ingredients out of reach at the gate that demands them:", LogLevel.Error);
+                foreach (string b in blocked)
+                    this.Monitor.Log(b, LogLevel.Error);
+            }
+
+            this.Monitor.Log(
+                $"  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter " +
+                $"(cheapest first: {string.Join(", ", VaultLadder())}). Owning '{VaultRules.KeepBusUnlockedId}' satisfies it outright.",
+                LogLevel.Info);
+
+            this.Monitor.Log(
+                impossible > 0
+                    ? $"  RESULT: {impossible} IMPOSSIBLE season gate(s) -- these brick the run and must be fixed."
+                    : $"  RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated.",
+                impossible > 0 ? LogLevel.Error : LogLevel.Info);
+            this.Monitor.Log(
+                "  NOTE: this checks CALENDAR feasibility only. An item that exists in Spring but needs a keg, "
+                + "a fish pond or a tool upgrade counts as obtainable here.",
+                LogLevel.Info);
+        }
+
+        /// <summary>How many distinct ingredients this bundle's gate demands by the end of
+        /// <paramref name="season"/>, expressed the same way for all three bundle kinds so they can
+        /// be compared against obtainability on one scale.</summary>
+        private static int DemandAtSeason(
+            BundleRequirement req, TheLongestYear.Core.Season season,
+            IReadOnlyDictionary<string, TheLongestYear.Core.Season> pins)
+        {
+            switch (req.Kind)
+            {
+                case BundleKind.Seasonal:
+                    // Everything, but only once its named season has arrived.
+                    return (int)req.SeasonalSeason.Value <= (int)season ? req.Ingredients.Count : 0;
+
+                case BundleKind.PerItem:
+                    // Each pinned ingredient is due at its own pin.
+                    return req.ItemSeasonPins.Count(kv => (int)kv.Value <= (int)season);
+
+                case BundleKind.Percentage:
+                    return req.CumulativeRequiredBySeason[(int)season];
+
+                default:
+                    return 0;
+            }
+        }
+
+        private static IEnumerable<string> VaultLadder()
+            => VaultRules.VaultIndices.Select(i => $"{VaultRules.GoldForIndex(i):N0}g");
+
+        private void CmdDumpBundles(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first (the pools are derived from live game data).", LogLevel.Warn);
+                return;
+            }
+
+            MetaState state = _meta.State;
+            TheLongestYear.Core.DifficultyProfile difficulty = state.BoardDifficulty(_config);
+            BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
+            ItemPools pools = new TheLongestYear.Loop.GameDataPools(this.Monitor)
+                .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade));
+            pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("# The Longest Year: engine bundle catalogue");
+            sb.AppendLine();
+            sb.AppendLine("Generated by `tly_dumpbundles` from live game data.");
+            sb.AppendLine();
+            sb.AppendLine("The engine picks ONE candidate per room position. For a bundle whose theme it recognises it discards the vanilla item list and re-rolls from a pool; otherwise it keeps vanilla's items exactly. Both kinds are listed here.");
+            sb.AppendLine();
+
+            AppendQuantityRules(sb, tuning, difficulty);
+            AppendCandidates(sb, pools);
+            AppendAuthored(sb);
+            AppendPools(sb, pools);
+
+            string fileName = args.Length > 0 && !string.IsNullOrWhiteSpace(args[0])
+                ? args[0] : "engine-bundle-catalogue.md";
+            string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
+            System.IO.File.WriteAllText(path, sb.ToString());
+            this.Monitor.Log($"tly_dumpbundles: wrote {path} ({sb.Length:N0} chars).", LogLevel.Info);
+        }
+
+        private void AppendQuantityRules(System.Text.StringBuilder sb, BundleGenerationTuning t, TheLongestYear.Core.DifficultyProfile d)
+        {
+            sb.AppendLine("## How quantities are decided");
+            sb.AppendLine();
+            sb.AppendLine("For a re-rolled slot the engine chooses the quantity itself, by pool:");
+            sb.AppendLine();
+            sb.AppendLine("| Pool | Quantity asked |");
+            sb.AppendLine("|---|---|");
+            sb.AppendLine("| Seasonal Crops, Seasonal Forage, Fish, Crab Pot, Metals, Artisan Goods | 1 |");
+            sb.AppendLine($"| Quality Crops | {t.QualityCropStack}, always at gold quality |");
+            sb.AppendLine($"| Monster Drops, item under {t.CheapPriceCeiling}g | {t.CheapMinStack} to {t.CheapMaxStack} |");
+            sb.AppendLine($"| Monster Drops, item under {t.MidPriceCeiling}g | {t.MidMinStack} to {t.MidMaxStack} |");
+            sb.AppendLine($"| Monster Drops, dearer than that | {t.DearMinStack} to {t.DearMaxStack} |");
+            sb.AppendLine($"| Seasonal Forage, big-ask roll (one slot per bundle, {t.LargeQuantityForageChance:P0} chance) | {t.LargeQuantityMinStack} to {t.LargeQuantityMaxStack} |");
+            sb.AppendLine();
+            sb.AppendLine($"Every quantity above, and every quantity kept from vanilla, is then multiplied by the stack-size difficulty dial (currently **x{d.StackFactor}**, step {d.Steps.StackSize}), rounded away from zero, floored at 1 and **capped at 99**. Money bundles are never scaled.");
+            sb.AppendLine();
+            sb.AppendLine($"Quality: a re-rolled crop, forage or fish slot rolls {t.GoldQualityChance:P1} for gold then {t.SilverQualityChance:P1} for silver, and only ever on an item the game itself can star.");
+            sb.AppendLine();
+        }
+
+        private void AppendCandidates(System.Text.StringBuilder sb, ItemPools pools)
+        {
+            sb.AppendLine("## Bundles by room");
+            sb.AppendLine();
+            // The engine's FULL candidate set, authored bundles included. Reading the vanilla pool
+            // alone understates every room: the mod's own bundles are widened into every position
+            // of their room, which is exactly what gives several positions their alternates.
+            var engine = new TheLongestYear.Loop.BundleEngine(
+                this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
+                TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), _meta.State.BoardDifficulty(_config));
+            int candidateSeed = BundleEngineSeed.For(
+                unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop);
+            var rooms = engine.BuildCandidatePools(pools, candidateSeed);
+
+            foreach (var room in rooms.OrderBy(r => r.Key, System.StringComparer.Ordinal))
+            {
+                sb.AppendLine($"### {room.Key}");
+                sb.AppendLine();
+                for (int position = 0; position < room.Value.Count; position++)
+                {
+                    var candidates = room.Value[position];
+                    if (candidates.Count == 0) continue;
+                    // Vanilla folds every alternate BundleSets entry in as its own candidate, so the
+                    // same bundle can appear several times at one position with an identical
+                    // description. Collapse those: the reader wants the distinct possibilities.
+                    var seen = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
+                    var described = new System.Collections.Generic.List<string>();
+                    foreach (BundleSpec c in candidates)
+                    {
+                        DomainMatch match = PoolDomainClassifier.Classify(c, pools);
+                        int shown = c.PickCount > 0 ? System.Math.Min(c.PickCount, c.Slots.Count) : c.Slots.Count;
+                        string body;
+                        if (match.Domain != PoolDomain.None)
+                        {
+                            string season = match.Season != null ? $", {match.Season} only" : "";
+                            body = $"  - Re-rolls from the **{match.Domain}** pool{season}. Any item in that pool can appear; see the pool tables below.";
+                        }
+                        else
+                        {
+                            body = $"  - Keeps vanilla's items: {DescribeSlots(c)}";
+                        }
+                        string entry = $"- **{c.Name}** — shows {shown}, needs {c.NumberOfSlots}"
+                            + System.Environment.NewLine + body;
+                        if (seen.Add(entry))
+                            described.Add(entry);
+                    }
+
+                    sb.AppendLine($"**Position {position}** — {described.Count} possible bundle(s):");
+                    sb.AppendLine();
+                    foreach (string entry in described)
+                        sb.AppendLine(entry);
+                    sb.AppendLine();
+                }
+            }
+        }
+
+        private static string DescribeSlots(BundleSpec spec)
+            => string.Join(", ", spec.Slots.Select(s =>
+            {
+                if (s.ItemId == "-1") return $"{s.Stack}g";
+                string q = s.Quality > 0 ? $" (quality {s.Quality})" : "";
+                return $"{DisplayName(s.ItemId)} x{s.Stack}{q}";
+            }));
+
+        private static string DisplayName(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId)) return "(none)";
+            if (BundleParsing.IsCategoryRef(itemId)) return $"any item in category {itemId}";
+            try
+            {
+                var data = StardewValley.ItemRegistry.GetData(BundleParsing.NormalizeItemId(itemId));
+                return data != null ? data.DisplayName : itemId;
+            }
+            catch { return itemId; }
+        }
+
+        private void AppendPools(System.Text.StringBuilder sb, ItemPools pools)
+        {
+            sb.AppendLine("## The item pools");
+            sb.AppendLine();
+            sb.AppendLine("A bundle marked above as re-rolling can ask for any item in its pool, filtered by season where the bundle names one (and, for fish, by the habitat of the bundle it replaced).");
+            sb.AppendLine();
+            AppendPool(sb, "Seasonal Crops (also the Quality Crops pool, at gold)", pools.Crops);
+            AppendPool(sb, "Seasonal Forage", pools.Forage);
+            AppendPool(sb, "Fish", pools.Fish);
+            AppendPool(sb, "Crab Pot", pools.CrabPot);
+            AppendPool(sb, "Monster Drops", pools.MonsterDrops);
+            AppendPool(sb, "Metals", pools.Metals);
+            AppendPool(sb, "Artisan Goods", pools.ArtisanGoods);
+            AppendPool(sb, "Artifacts (authored bundles)", pools.Artifacts);
+            AppendPool(sb, "Books (authored bundles)", pools.Books);
+            AppendPool(sb, "Saplings (authored bundles)", pools.Saplings);
+            AppendPool(sb, "Geode Minerals (authored bundles)", pools.GeodeMinerals);
+            AppendPool(sb, "Cooking (authored bundles)", pools.Cooking);
+            AppendPool(sb, "Tapper Goods (authored bundles)", pools.TapperGoods);
+        }
+
+        private static void AppendPool(System.Text.StringBuilder sb, string title, System.Collections.Generic.IReadOnlyList<PoolItem> items)
+        {
+            sb.AppendLine($"### {title} — {items.Count} items");
+            sb.AppendLine();
+            if (items.Count == 0) { sb.AppendLine("_(empty)_"); sb.AppendLine(); return; }
+            sb.AppendLine("| Item | Price | Seasons |");
+            sb.AppendLine("|---|---|---|");
+            foreach (PoolItem i in items.OrderBy(i => i.Price))
+            {
+                string seasons = i.Seasons.Count == 0 ? "any" : string.Join(" / ", i.Seasons);
+                sb.AppendLine($"| {DisplayName(i.ItemId)} | {i.Price}g | {seasons} |");
+            }
+            sb.AppendLine();
+        }
+
+        private static void AppendAuthored(System.Text.StringBuilder sb)
+        {
+            sb.AppendLine("## Bundles authored by the mod");
+            sb.AppendLine();
+            sb.AppendLine("These are added as extra candidates to every position of their room, so any of them can displace a vanilla bundle. Their slots are composed once and are final: the engine never re-rolls them.");
+            sb.AppendLine();
+            sb.AppendLine("| Bundle | Room | Shows | Needs | Items drawn from | Quality |");
+            sb.AppendLine("|---|---|---|---|---|---|");
+            foreach (var def in AuthoredBundleCatalog.All)
+            {
+                string source = def.Source == AuthoredSlotSource.FixedList
+                    ? "fixed: " + string.Join(", ", def.FixedItemIds.Select(DisplayName))
+                    : def.Source.ToString() + " pool";
+                string quality = def.QualityAsk > 0 ? def.QualityAsk.ToString() : "any";
+                sb.AppendLine($"| {def.Name} | {def.Room} | {def.SlotCount} | {def.NumberOfSlots} | {source} | {quality} |");
+            }
+            sb.AppendLine();
+        }
+
+        private void CmdDifficulty(string command, string[] args)
+        {
+            DifficultySettings configured = _config.Difficulty;
+            DifficultyProfile live = _meta?.State != null
+                ? _meta.State.EffectiveDifficulty(_config)
+                : DifficultyResolver.Resolve(configured, _config);
+            bool stamped = _meta?.State?.Difficulty != null;
+
+            this.Monitor.Log("=== The Longest Year: difficulty ===", LogLevel.Info);
+            this.Monitor.Log(
+                stamped
+                    ? "  In force: the profile STAMPED on this save. Config changes apply at your next loop."
+                    : "  In force: resolved live from config (this save has no stamp yet; the next reset writes one).",
+                LogLevel.Info);
+
+            this.Monitor.Log("  Step               configured -> in force", LogLevel.Info);
+            LogStep("stack size", configured.StackSize, live.Steps.StackSize);
+            LogStep("quality asks", configured.QualityAsks, live.Steps.QualityAsks);
+            LogStep("required slots", configured.RequiredSlots, live.Steps.RequiredSlots);
+            LogStep("item rarity", configured.ItemRarity, live.Steps.ItemRarity);
+            LogStep("JP earned", configured.JpEarned, live.Steps.JpEarned);
+            LogStep("shrine prices", configured.ShrinePrices, live.Steps.ShrinePrices);
+            LogStep("starting gold", configured.StartingGold, live.Steps.StartingGold);
+            LogStep("cart slots", configured.CartSlots, live.Steps.CartSlots);
+            LogStep("hold/pity prices", configured.HoldPrices, live.Steps.HoldPrices);
+            LogStep("season pity", configured.SeasonPity, live.Steps.SeasonPity);
+
+            this.Monitor.Log("  Resolved values in force:", LogLevel.Info);
+            this.Monitor.Log(
+                $"    asks: stack x{live.StackFactor}, quality x{live.QualityFactor}, " +
+                $"required slots {(live.RequireAllSlots ? "ALL shown" : live.RequiredSlotsDelta.ToString("+0;-0;0"))}, " +
+                $"rarity bias {live.RarityBias}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"    economy: JP x{live.JpEarnedFactor}, shrine prices x{live.ShrinePriceFactor}, " +
+                $"starting gold {live.StartingGold}g, starting cart slots {live.StartingCartSlots}, " +
+                $"hold/pity prices x{live.HoldPriceFactor}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"    season pity: {(live.Pity.Enabled ? "on" : "OFF")}, threshold {live.Pity.Threshold}, " +
+                $"quota step {live.Pity.QuotaStep}, floor {live.Pity.QuotaFloor}, trim {live.Pity.TrimPerStep}/step",
+                LogLevel.Info);
+
+            this.Monitor.Log(
+                $"  Board source: {_meta?.State?.BundleSource ?? BundleSourceNames.Engine}. " +
+                "Item rarity applies to Engine (TLY Custom) boards only; stack size, quality asks and " +
+                "required slots apply to vanilla boards too.",
+                LogLevel.Info);
+
+            void LogStep(string label, DifficultyStep configuredStep, DifficultyStep liveStep)
+            {
+                string note = configuredStep == liveStep ? "" : "   (pending: applies at your next loop)";
+                this.Monitor.Log($"    {label,-18} {configuredStep,-8} -> {liveStep}{note}", LogLevel.Info);
+            }
+        }
+
         private void CmdNetState(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -1581,7 +2171,8 @@ namespace TheLongestYear
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 ParseThemeOverrides(),
                 ParseItemSeasonPins(),
-                ParseBundleQuotas());
+                ParseBundleQuotas(),
+                _availability);
             IReadOnlyList<CcItem> catalog = builder.Build();
             IReadOnlyList<BundleRequirement> requirements = builder.BuildRequirements();
             this.Monitor.Log($"tly_classify: {catalog.Count} catalog items, {requirements.Count} requirements (diagnostics only — active run unchanged).", LogLevel.Info);
@@ -1613,14 +2204,20 @@ namespace TheLongestYear
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
 
             PityTrim trim = TheLongestYear.Loop.BundleEngine.TrimFor(_meta.State);
-            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
+            // Diagnostics have to show what the loop actually runs under, so this uses the STAMPED
+            // profile like every other generation path. A preview resolved from live config would
+            // report a board the save is not playing.
+            TheLongestYear.Core.DifficultyProfile genDifficulty = _meta.State.BoardDifficulty(_config);
+            BundleGenerationTuning genTuning =
+                TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
             GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade)).Generate(seed, trim);
+            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty).Generate(seed, trim);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -1673,11 +2270,21 @@ namespace TheLongestYear
                         .Select(s => $"{s.ItemId} q{s.Quality}").ToList();
                     if (qualityAsks.Count > 0)
                         this.Monitor.Log($"        quality asks: {string.Join(", ", qualityAsks)}", LogLevel.Info);
+
+                    // Stack asks above 1, so a balance report can show what the stack-size
+                    // difficulty modifier actually did. Money slots are excluded for the same
+                    // reason as above: a Vault "stack" is a gold amount, not an ask.
+                    var stackAsks = spec.Slots
+                        .Where(s => s.Stack > 1 && s.ItemId != "-1" && !string.IsNullOrEmpty(s.ItemId))
+                        .Select(s => $"{s.ItemId} x{s.Stack}").ToList();
+                    if (stackAsks.Count > 0)
+                        this.Monitor.Log($"        stack asks: {string.Join(", ", stackAsks)}", LogLevel.Info);
                 }
             }
             this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
 
-            IReadOnlyList<BundleRequirement> requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
+            IReadOnlyList<BundleRequirement> requirements = engine.BuildRequirements(
+                set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
             int generated = set.Bundles.Count;
             int classified = requirements.Count;
             int skipped = generated - classified;
@@ -1689,7 +2296,7 @@ namespace TheLongestYear
                     continue; // Vault / non-themed room — always classified out, not a problem.
 
                 var parsed = BundleParsing.Parse(BundleDataWriter.Key(spec), BundleDataWriter.Value(spec));
-                if (BundleClassifier.Classify(parsed, theme, itemSeasonPins, bundleQuotas) == null)
+                if (BundleClassifier.Classify(parsed, theme, itemSeasonPins, bundleQuotas, _availability) == null)
                     themedSkipsByRoom[spec.Room] = themedSkipsByRoom.TryGetValue(spec.Room, out int n) ? n + 1 : 1;
             }
             int themedSkipped = themedSkipsByRoom.Values.Sum();
@@ -1919,7 +2526,8 @@ namespace TheLongestYear
             }
 
             JpBudgetReport report = JpBudgetCalculator.Compute(
-                bundles, _config.Jp, _config.SelectionBonusMultiplier, BonusItemSampler.DefaultMaxCountBySeason);
+                bundles, _config.Jp, _config.SelectionBonusMultiplier, BonusItemSampler.DefaultMaxCountBySeason,
+                _meta.State.EffectiveDifficulty(_config).JpEarnedFactor);
 
             this.Monitor.Log(
                 $"tly_jpbudget: loop {_meta.State.CompletedResets} (run {_meta.Run.RunNumber}), {bundles.Count} bundles, " +
@@ -1991,7 +2599,7 @@ namespace TheLongestYear
                 {
                     string owned = _meta != null && _meta.State.HasUpgrade(u.Id) ? " [OWNED]" : "";
                     string prereq = u.PrerequisiteId != null ? $" (req {u.PrerequisiteId})" : "";
-                    this.Monitor.Log($"    - {u.Id}: {u.DisplayName} — {u.Cost} JP{prereq}{owned}", LogLevel.Info);
+                    this.Monitor.Log($"    - {u.Id}: {u.DisplayName} — {TheLongestYear.Core.UpgradePricing.EffectiveCost(u, _meta.State.EffectiveDifficulty(_config))} JP{prereq}{owned}", LogLevel.Info);
                 }
             }
         }
@@ -2013,14 +2621,14 @@ namespace TheLongestYear
                 case "keep":
                 case "reshuffle":
                     bool keep = mode == "keep";
-                    var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts);
+                    var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts, s.EffectiveDifficulty(_config).HoldPriceFactor);
                     if (result != BundleHold.HoldResult.NotEnoughJp)
                         SeasonPity.DeclinePity(s, held: keep);   // the offer is a separate step: tly_pity accept|decline
                     this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}, ease {s.BoardEaseSeason}/{s.BoardEaseSteps}, trim {s.BoardTrimSeason}/{s.BoardTrimSteps}; offer now {SeasonPity.OfferFor(s, keep, _config)} at {SeasonPity.PityCost(s, _config)} JP (tly_pity accept|decline).", LogLevel.Info);
                     this.Monitor.Log("tly_hold: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
                     break;
                 default:
-                    this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts, s.EffectiveDifficulty(_config).HoldPriceFactor)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
                     break;
             }
         }
@@ -2159,14 +2767,25 @@ namespace TheLongestYear
                 // change between launches mid-loop. A flipped flag must not demote a healthy
                 // engine board to the legacy read path (spec 2026-08-21): the board on disk was
                 // composed with the old value and stays valid until the next reset regenerates.
+                // Difficulty: re-derivation MUST use the STAMPED profile, never live config. The
+                // board on disk was generated under the stamp, so resolving the current GMCM
+                // values here would re-derive a different board and demote a healthy save to the
+                // legacy read path on the next launch. A legacy save has no stamp and resolves
+                // all-Normal, which is exactly what generated its board.
+                TheLongestYear.Core.DifficultyProfile difficulty = state.BoardDifficulty(_config);
+                BundleGenerationTuning difficultyTuning =
+                    TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
+
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
-                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade));
+                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade), difficulty);
                     GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
                     if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
                         continue;
 
-                    var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, SeasonPity.CurrentQuotaEase(state, _config));
+                    var requirements = engine.BuildRequirements(
+                        set, itemSeasonPins, bundleQuotas,
+                        SeasonPity.CurrentQuotaEase(state, _config), _availability);
                     string flagNote = nonObject == _config.EnableNonObjectDonations
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
@@ -2184,11 +2803,18 @@ namespace TheLongestYear
             }
             else if (source == RequirementsSource.GenerateFreshRun)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
+                // The first run has never been through a reset, so nothing has stamped a profile
+                // yet. Stamp it here, before generating, so this board and the rest of loop 1 run
+                // under the same values a later reset would re-stamp.
+                state.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
+                BundleGenerationTuning freshTuning =
+                    TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), state.Difficulty);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
-                var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, ease: null);
+                var requirements = engine.BuildRequirements(
+                    set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
                 this.Monitor.Log(
                     $"Requirements source: engine generation (fresh run, {requirements.Count} bundles written).",
                     LogLevel.Info);
@@ -2351,5 +2977,28 @@ namespace TheLongestYear
 
             return merged;
         }
+        /// <summary>Localised label for a difficulty step in the GMCM dropdown. Written as four
+        /// literal <see cref="Strings.Get"/> calls rather than an interpolated key so the i18n
+        /// guard's source scan can prove all four keys are reachable.</summary>
+        /// <summary>Localised label for a bundle-source choice. Written as literal
+        /// <see cref="Strings.Get"/> calls rather than an interpolated key so the i18n guard's
+        /// source scan can prove every key is reachable.</summary>
+        private static string FormatBundleSource(string rawValue)
+        {
+            if (string.Equals(rawValue, BundleSourceNames.Normal, StringComparison.OrdinalIgnoreCase))
+                return Strings.Get("gmcm.bundle-source.normal");
+            if (string.Equals(rawValue, BundleSourceNames.Remixed, StringComparison.OrdinalIgnoreCase))
+                return Strings.Get("gmcm.bundle-source.remixed");
+            return Strings.Get("gmcm.bundle-source.engine");
+        }
+
+        private static string FormatDifficultyStep(string rawValue) => DifficultySteps.Parse(rawValue) switch
+        {
+            DifficultyStep.Easy => Strings.Get("gmcm.difficulty.step.easy"),
+            DifficultyStep.Hard => Strings.Get("gmcm.difficulty.step.hard"),
+            DifficultyStep.Extreme => Strings.Get("gmcm.difficulty.step.extreme"),
+            _ => Strings.Get("gmcm.difficulty.step.normal"),
+        };
+
     }
 }

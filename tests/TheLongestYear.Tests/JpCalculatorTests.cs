@@ -100,4 +100,69 @@ public class JpCalculatorTests
         var jp = new JpCalculator(new JpSettings { CheckpointCompletionBonus = 40 });
         Assert.Equal(60, jp.CheckpointBonus(5)); // 40 * 1.5
     }
+
+    // ---- Difficulty: JP earned multiplier (spec 2026-08-26) ----
+
+    [Fact]
+    public void The_Default_Multiplier_Changes_Nothing()
+    {
+        var settings = new JpSettings();
+
+        Assert.Equal(new JpCalculator(settings).PerItem(Rarity.VeryRare, 13),
+                     new JpCalculator(settings, 1.0).PerItem(Rarity.VeryRare, 13));
+    }
+
+    [Fact]
+    public void The_Earned_Multiplier_Scales_Per_Item_Jp()
+    {
+        var settings = new JpSettings();
+
+        Assert.Equal(new JpCalculator(settings).PerItem(Rarity.Rare, 1) / 2,
+                     new JpCalculator(settings, 0.5).PerItem(Rarity.Rare, 1));
+    }
+
+    [Fact]
+    public void The_Earned_Multiplier_Scales_Completion_Bonuses()
+    {
+        var settings = new JpSettings();
+
+        Assert.Equal(new JpCalculator(settings).RoomBonus(1) * 3 / 2,
+                     new JpCalculator(settings, 1.5).RoomBonus(1));
+        // 15 * 1.5 = 22.5, rounded away from zero. Spelled out rather than computed, because
+        // integer arithmetic in the expectation would round the other way and hide a real change.
+        Assert.Equal(15, new JpCalculator(settings).BundleBonus(1));
+        Assert.Equal(23, new JpCalculator(settings, 1.5).BundleBonus(1));
+        Assert.Equal(new JpCalculator(settings).WeeklyQuestBonus(1) * 3 / 2,
+                     new JpCalculator(settings, 1.5).WeeklyQuestBonus(1));
+    }
+
+    [Fact]
+    public void The_Earned_Multiplier_Scales_Vault_Payments()
+    {
+        var settings = new JpSettings();
+
+        Assert.Equal(new JpCalculator(settings).VaultPayment(10000) / 2,
+                     new JpCalculator(settings, 0.5).VaultPayment(10000));
+    }
+
+    /// <summary>Paying the vault always pays something, at every difficulty.</summary>
+    [Fact]
+    public void A_Vault_Payment_Still_Awards_At_Least_One_Jp()
+    {
+        Assert.True(new JpCalculator(new JpSettings(), 0.5).VaultPayment(100) >= 1);
+    }
+
+    /// <summary>The season ramp's SHAPE must be identical at every step: only its height moves,
+    /// or late-season play would stop being worth more than early-season play.</summary>
+    [Fact]
+    public void The_Season_Ramp_Shape_Is_Unchanged_By_The_Multiplier()
+    {
+        var settings = new JpSettings();
+        var hard = new JpCalculator(settings, 0.5);
+
+        Assert.Equal(new JpCalculator(settings).Multiplier(13), hard.Multiplier(13));
+
+        double springToWinter = (double)hard.PerItem(Rarity.Rare, 13) / hard.PerItem(Rarity.Rare, 1);
+        Assert.Equal(4.0, springToWinter, 1);
+    }
 }
