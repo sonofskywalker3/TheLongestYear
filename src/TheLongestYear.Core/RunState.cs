@@ -63,6 +63,16 @@ public sealed class RunState
     /// <summary>Room/area numbers whose completion JP bonus has already been awarded this run.</summary>
     public List<int> AwardedRoomCompletions { get; set; } = new();
 
+    /// <summary>Deja-vu dialogue: villagers who already said their line this loop (one each).</summary>
+    public List<string> DejaVuShownTo { get; set; } = new();
+
+    /// <summary>Deja-vu dialogue: days-played stamp of the last line anywhere in town (-1 = none).</summary>
+    public int DejaVuLastDay { get; set; } = -1;
+
+    /// <summary>Deja-vu rollup: Farmer.eventsSeen as of the last rollup, so tonight's new heart
+    /// events can be counted by difference.</summary>
+    public List<string> EventsSeenAtDayStart { get; set; } = new();
+
     /// <summary>
     /// Vault bundle indices paid this run (vanilla 1.6: 34=2500g, 35=5000g, 36=10000g, 37=25000g).
     /// Each season's gate requires the bundle of matching tier to be paid by day 28; missing it
