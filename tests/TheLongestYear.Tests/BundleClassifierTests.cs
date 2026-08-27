@@ -80,11 +80,12 @@ public class BundleClassifierTests
     }
 
     [Fact]
-    public void Quota_lookup_with_X_GE_Y_falls_through_to_perItem()
+    public void Quota_lookup_with_X_EQ_Y_keeps_the_quota_and_shifts_the_ramp()
     {
-        // CB2: SVE-edited save data can leave a Chef's-style bundle with X=Y=7 (quota table
-        // matches by name but the structural Percentage shape — X < Y — no longer holds).
-        // The classifier must fall through to PerItem instead of throwing.
+        // Changed 2026-08-27 (Jeff): X == Y used to fall through to PerItem, which threw the
+        // curated quota away and left the bundle with NO season gate at all. That mattered
+        // because the required-slots difficulty modifier raises X, so a HARDER bundle became an
+        // UNGATED one. A bundle that must be donated in full still has a meaningful ramp.
         var parsed = Make("Chef's", 7,
             "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6", "(O)7");
         var quotas = new Dictionary<string, int[]> { ["Chef's"] = new[] { 1, 2, 3, 4 } };
@@ -92,10 +93,26 @@ public class BundleClassifierTests
         var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, quotas);
 
         Assert.NotNull(req);
-        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Equal(BundleKind.Percentage, req!.Kind);
         Assert.Equal(7, req.NumberOfSlots);
-        Assert.Equal(7, req.Ingredients.Count);
-        // Quota array is ignored on the PerItem path.
+        // The ramp moves with X so its endpoint is what the bundle now requires: +3 throughout.
+        Assert.Equal(new[] { 4, 5, 6, 7 }, req.CumulativeRequiredBySeason);
+    }
+
+    /// <summary>The SVE case the old test was really protecting: X strictly GREATER than Y (the
+    /// slot list repeats an ingredient, so more slots than distinct items). Percentage cannot
+    /// model that, because you can never donate more distinct items than exist.</summary>
+    [Fact]
+    public void Quota_lookup_with_X_GT_Y_still_falls_through_to_perItem()
+    {
+        var parsed = Make("Chef's", 8,
+            "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6", "(O)7");
+        var quotas = new Dictionary<string, int[]> { ["Chef's"] = new[] { 1, 2, 3, 4 } };
+
+        var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, quotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
         Assert.Null(req.CumulativeRequiredBySeason);
     }
 
