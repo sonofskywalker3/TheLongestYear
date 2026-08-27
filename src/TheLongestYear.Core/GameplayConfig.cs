@@ -134,7 +134,13 @@ public sealed class GameplayConfig
             ["(O)266"] = "Summer",   // Red Cabbage
 
             // --- Field Research (Bulletin, X=Y) ---
-            ["(O)422"] = "Winter",   // Purple Mushroom
+            // Purple Mushroom is NOT winter-gated (Jeff, 2026-08-27): the Mushroom Cave farm
+            // choice produces it, the mines drop it from floor 80, and a mushroom log grows it.
+            // The old Winter pin also contradicted this mod's own Fall forage pool, which adds
+            // it, and that disagreement made a Fall Foraging bundle that drew it unsatisfiable
+            // at its own Fall gate (found by tly_gatecheck). Fall keeps the two tables agreeing
+            // and is comfortably reachable by any of the three routes.
+            ["(O)422"] = "Fall",     // Purple Mushroom
             ["(O)392"] = "Winter",   // Nautilus Shell
             ["(O)702"] = "Spring",   // Chub
             ["(O)536"] = "Summer",   // Frozen Geode

@@ -36,6 +36,34 @@ public static class BundleClassifier
         @"^(?<season>Spring|Summer|Fall|Winter)\s+(?<kind>Foraging|Crops)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>Moves a curated quota ramp so its endpoint matches how many slots the bundle now
+    /// requires, then clamps every entry into [0, X] and restores monotonicity.
+    ///
+    /// Why: the required-slots difficulty modifier changes X, and a ramp authored against the old
+    /// X no longer says what it meant. Animal is curated [1,3,5,5] at X=5; at X=6 the same intent
+    /// is [2,4,6,6] (Jeff's own example, 2026-08-27). Leaving the ramp alone would have made a
+    /// HARDER bundle demand a SMALLER fraction of itself at every checkpoint.
+    ///
+    /// The shift is derived from the ramp itself rather than from the difficulty profile, so it is
+    /// self-correcting for any reason X differs from what the table assumed, including SVE-edited
+    /// save data.
+    ///
+    /// A ramp whose endpoint is zero is left alone: those are the deliberately never-gated
+    /// bundles, and shifting them would invent a Spring demand out of nothing.</summary>
+    public static int[] ShiftRampToSlotCount(int[] ramp, int numberOfSlots)
+    {
+        int last = ramp.Length - 1;
+        int shift = ramp[last] > 0 ? numberOfSlots - ramp[last] : 0;
+
+        var result = new int[ramp.Length];
+        for (int i = 0; i < ramp.Length; i++)
+            result[i] = Math.Clamp(ramp[i] + shift, 0, numberOfSlots);
+
+        for (int i = 1; i < result.Length; i++)
+            result[i] = Math.Max(result[i], result[i - 1]);
+        return result;
+    }
+
     /// <summary>Classify one bundle. Returns null if the bundle name doesn't match any rule
     /// (i.e. an SVE-added or otherwise unknown bundle the caller should log and skip).</summary>
     /// <param name="parsed">Parsed vanilla bundle data (Data/Bundles entry).</param>
@@ -91,7 +119,7 @@ public static class BundleClassifier
         // bundle is in the quota table (e.g. Chef's with the SVE Candy entry baked in:
         // X=Y=7 instead of vanilla X=10, Y=6). In that case the Percentage model doesn't
         // apply — fall through to PerItem.
-        if (parsed.NumberOfSlots < ingredients.Count
+        if (parsed.NumberOfSlots <= ingredients.Count
             && bundleQuotas.TryGetValue(name, out int[]? quota) && quota != null)
         {
             // numberOfSlots = X (the parsed bundle's slot count), ingredients = Y (deduped list).
@@ -101,7 +129,7 @@ public static class BundleClassifier
             // modifier at Easy lowers X by one (spec 2026-08-26), and SVE-edited save data can
             // reshape a bundle. Either way an unsatisfiable quota bricks the run, so clamp rather
             // than trust the table.
-            int[] clampedQuota = quota.Select(n => Math.Clamp(n, 0, parsed.NumberOfSlots)).ToArray();
+            int[] clampedQuota = ShiftRampToSlotCount(quota, parsed.NumberOfSlots);
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
