@@ -1517,6 +1517,28 @@ JP cost ballpark (relative to bus repair = 100 JP):
 Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
+### PARKED (post-1.0): Impossible mode
+
+Jeff, 2026-08-26, ruled during the difficulty-modifier brainstorm. NOT part of that work; a
+separate session, and probably a post-1.0 release.
+
+Impossible is not another step on the per-modifier ramp. It is a mode that **disables the custom
+difficulty settings entirely** and takes over board generation:
+
+- Bundles are composed **completely at random from any item in the game that can be obtained by any
+  means**. No seasonal gating, no room theming, no obtainability ramp. A Qi Fruit can sit in the
+  Spring gate.
+- The only exclusions are things that genuinely cannot be had: impossible quality variants, debug /
+  unobtainable items, and the existing structural exclusions (Quest items, ExcludeFromRandomSale,
+  legendary fish).
+- The intended experience: the only way to beat it is to loop until you have bought **every single
+  JP upgrade** and then still get a great deal of lucky RNG. It is meant to be a wall you grind the
+  meta-progression against, not a run you plan.
+
+Open when it is picked up: does Impossible force BundleSource=Engine (it must, since it composes its
+own board), and does it turn season pity off the way the Hard step does.
+
+
 ## Resolved / closed
 
 - **Vault/money gate invisible + unpayable** — fixed 2026-06-06 (v0.9.8–0.9.16, master).
