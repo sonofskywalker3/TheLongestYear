@@ -93,9 +93,12 @@ before the pick.
 
 ### The hazard that will bite you
 
-**Every position must keep at least one eligible candidate.** Some positions have exactly one
-candidate (check the catalogue: several show "1 possible bundle"). If your filter empties a
-position, the board loses a bundle, and the write-key space changes. Read the class comment at the
+**Every position must keep at least one eligible candidate.** Only FIVE positions have a single
+candidate, and they are the right ones: the four Vault money bundles and The Missing in the
+Abandoned Joja Mart. Everything else carries between 2 and 14 candidates once the mod's authored
+bundles are widened in. So a filter has real room to work, but it can still empty a thin position
+(Fish Tank positions 0 to 3 have only 2 each). If it does, the board loses a bundle and the
+write-key space changes. Read the class comment at the
 top of `BundleEngine.cs` about why the key space must be identical across generations: a shrinking
 room leaves stale bundles behind and can throw inside `Game1.AddLocations`, which surfaces to the
 player as "Couldn't create the CommunityCenter location".

@@ -314,6 +314,15 @@ namespace TheLongestYear.Loop
         /// enumeration order changes. SeasonSpread defs (Four Seasons Sampler) consume retry
         /// attempts only from their OWN stream inside <see cref="AuthoredBundleComposer"/>; no
         /// other def's stream is ever touched.</summary>
+        /// <summary>The COMPLETE candidate set a generation picks from: vanilla's own per-position
+        /// pools widened with the mod's authored bundles. Exposed for diagnostics (tly_dumpbundles)
+        /// so a catalogue cannot report a narrower set of possibilities than the engine actually
+        /// has -- reading BuildRoomPools alone omits every authored bundle and makes positions look
+        /// like they have no alternates when they do.</summary>
+        public IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> BuildCandidatePools(
+            ItemPools itemPools, int seed)
+            => WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed);
+
         private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> WidenWithAuthoredBundles(
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools,
             ItemPools itemPools, int seed)
