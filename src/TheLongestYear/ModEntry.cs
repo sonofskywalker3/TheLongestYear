@@ -7,6 +7,8 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Network;
+using StardewValley.Quests;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
 using TheLongestYear.Integration;
@@ -234,6 +236,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
+            helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] (default: the current board's seed loop)", this.CmdGenBundles);
@@ -1487,6 +1490,68 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _runController.PrintRunState();
+        }
+
+        /// <summary>Dump the <c>NetWorldState</c> fields the 2026-08-26 keep/wipe audit ruled on
+        /// (docs/superpowers/2026-08-26-networldstate-field-rulings.md). Read-only. Exists because
+        /// the audit's fixes all live in WorldResetService over live Game1 statics, which the Core
+        /// test project cannot construct — so the only way to verify a reset actually wiped what
+        /// the table says is to print both sides of it and compare. Run before and after a
+        /// tly_reset.</summary>
+        private void CmdNetState(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            NetWorldState ws = Game1.netWorldState.Value;
+            Quest quest = ws.QuestOfTheDay;
+            StardewValley.Object dish = ws.DishOfTheDay;
+
+            this.Monitor.Log("=== netWorldState audit probe ===", LogLevel.Info);
+            this.Monitor.Log(
+                $"  Game1 date: Y{Game1.year} {Game1.season} {Game1.dayOfMonth} @ {Game1.timeOfDay}, " +
+                $"DaysPlayed={Game1.stats.DaysPlayed}, uniqueID={Game1.uniqueIDForThisGame}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  netWorldState date: Y{ws.Date.Year} {ws.Date.Season} {ws.Date.DayOfMonth} " +
+                $"(NOTE: Date is a computed WorldDate.Now(), so this mirrors Game1 by construction)",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [row 59] QuestOfTheDay = {(quest == null ? "null (expected on Spring 1)" : quest.GetType().Name + " \"" + quest.questTitle + "\" reward=" + quest.moneyReward.Value + "g")}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [row 54] DishOfTheDay  = {(dish == null ? "null (expected on Spring 1)" : dish.Name + " x" + dish.Stack)}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [row 16] VisitsUntilY1Guarantee = {ws.VisitsUntilY1Guarantee} (-1 = guarantee not armed on this save)",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [rows 39-42] walnuts={ws.GoldenWalnuts}/{ws.GoldenWalnutsFound} coconut={ws.GoldenCoconutCracked} " +
+                $"buriedNuts={ws.FoundBuriedNuts.Count} islandVisitors={ws.IslandVisitors.Count}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [rows 7-8] minesDifficulty={ws.MinesDifficulty} skullCavesDifficulty={ws.SkullCavesDifficulty}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [rows 30-31,45,56] raccoonBundles=[{string.Join(",", ws.raccoonBundles)}] " +
+                $"season={ws.SeasonOfCurrentRacconBundle} timesFed={ws.TimesFedRaccoons} " +
+                $"lastFinishedDay={ws.DaysPlayedWhenLastRaccoonBundleWasFinished}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [rows 43-44,46] miniBins={ws.MiniShippingBinsObtained} waivers={ws.PerfectionWaivers} totems={ws.TreasureTotemsUsed}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [rows 49-53,57-58] builders={ws.Builders.Length} worldStateIDs={Game1.worldStateIDs.Count} (Game1 mirror) " +
+                $"passiveFestivals={ws.ActivePassiveFestivals.Count} checkedGarbage={ws.CheckedGarbage.Count} " +
+                $"canDrive={ws.canDriveYourselfToday.Value} clocksOff={ws.goldenClocksTurnedOff.Value}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [rows 35-38] lowestMineLevel={ws.LowestMineLevel}/{ws.LowestMineLevelForOrder} " +
+                $"museumPieces={ws.MuseumPieces.Length} lostBooks={ws.LostBooksFound}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"  [keeps] whichFarm={Game1.whichFarm} shuffleMineChests={ws.ShuffleMineChests} " +
+                $"farmhandData={ws.farmhandData.Length} locationsWithBuildings={ws.LocationsWithBuildings.Count}",
+                LogLevel.Info);
         }
 
         private void CmdCatalog(string command, string[] args)
