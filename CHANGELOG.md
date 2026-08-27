@@ -3,6 +3,25 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.15.0 - 2026-08-26
+
+865 tests.
+
+### Fixed
+
+- **The Help Wanted board starts empty again.** Spring 1 was inheriting the quest from the day your run ended, gold reward included. Worse, it was rolled against your OLD progress, so it could ask for a fish or a monster the fresh farmer had no way to reach yet. A new year now opens with a clean board, exactly as a new save does.
+- **The Saloon's Dish of the Day resets with the year.** Gus kept serving whatever he had cooked on the day the loop ended. A real first day has no dish yet, so neither does a rewound one; the new run's first dish arrives on day 2.
+- **The Traveling Cart's year-one guarantee survives a rewind.** On saves created with the "year one completable" option, the first rewind used to switch that guarantee off permanently. It is re-rolled for the new run instead.
+
+### Added
+
+- **`tly_netstate` debug command.** Prints every world-state field the loop reset is responsible for, so a reset can be checked field by field instead of by eye. Read-only.
+
+### Internal
+
+- These three came out of a one-time audit of every piece of world state the rewind was leaving behind, rather than being found one player report at a time. That whole class of leak is closed now. Ruling table: `docs/superpowers/2026-08-26-networldstate-field-rulings.md`.
+- Removed three no-op date assignments in the reset path, and synced the world state from the game's own statics after the calendar rewind so a night event cannot restore the pre-reset run seed.
+
 ## 0.14.2 - 2026-08-26
 
 865 tests.

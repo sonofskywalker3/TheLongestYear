@@ -8,17 +8,19 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.13.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.15.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 ---
 
-## What's New in 0.14.2
+## What's New in 0.15.0
 
-**Shop Discount finally changes the prices you see, festivals come back in later loops, and the mod settings gained a Features section.**
+**A rewind now clears out the day you lost, too. The quest board and the Saloon's dish no longer follow you into Spring 1.**
 
-- **Shop Discount now changes the price on the shelf.** It used to take the money off at the till, so shops still showed full price - and worse, the game checks whether you can afford the FULL price before it charges you, so the discount never extended your buying power. Tool upgrades are deliberately not discounted, and neither are buildings or animals (they never were); the upgrade text says so now.
-- **Festivals work again in later loops.** 0.14.1's once-per-day rule leaked across a rewind: because the calendar goes back to Spring 1, loop 2's Egg Festival landed on the same day number and got refused. A rewind means the festival has not happened yet, so every loop gets its festivals back. Once per day still holds inside a loop.
-- **New Features section in the mod settings.** Turn individual parts of the mod off or tune them without editing config.json: festival time-flow, the one-minigame-per-day rule, theme re-rolls, donating tools and rings, the weekly goal JP multiplier, and starting gold. Changes apply straight away.
+- **The Help Wanted board starts empty again.** Spring 1 was inheriting the quest from the day your run ended, gold reward included. Worse, it was rolled against your OLD progress, so it could ask for a fish or a monster the fresh farmer had no way to reach yet. A new year now opens with a clean board, exactly as a new save does.
+- **The Saloon's Dish of the Day resets with the year.** Gus kept serving whatever he had cooked on the day the loop ended. A real first day has no dish yet, so neither does a rewound one; the new run's first dish arrives on day 2.
+- **The Traveling Cart's year-one guarantee survives a rewind.** On saves created with the "year one completable" option, the first rewind used to switch that guarantee off permanently. It is re-rolled for the new run instead.
+
+These three came out of a one-time audit of every piece of world state the rewind was leaving behind, rather than being found one player report at a time. That whole class of leak is closed now.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
