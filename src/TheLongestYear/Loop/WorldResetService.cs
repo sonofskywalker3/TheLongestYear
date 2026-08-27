@@ -1013,7 +1013,7 @@ namespace TheLongestYear.Loop
         // Force-clear a building footprint on the fresh farm: spawned objects/forage
         // (removeObjectsAndSpawned), terrain features (trees, grass, hoed dirt), and
         // stump/boulder resource clumps. The kept building always wins its tiles.
-        private static void ClearFootprint(Farm farm, int tileX, int tileY, int width, int height)
+        internal static void ClearFootprint(Farm farm, int tileX, int tileY, int width, int height)
         {
             farm.removeObjectsAndSpawned(tileX, tileY, width, height);
 

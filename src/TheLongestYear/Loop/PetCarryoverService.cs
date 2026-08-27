@@ -1,6 +1,9 @@
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.Characters;
 using TheLongestYear.Core;
 
@@ -25,7 +28,8 @@ namespace TheLongestYear.Loop
     ///   <item><see cref="RestorePet"/> — call AFTER <c>loadForNewGame</c> (and after the
     ///         starting-animals placement so the farm is settled). Re-creates each
     ///         <see cref="Pet"/> from its snapshot and drops it on the farm porch, staggered
-    ///         so they don't stack.
+    ///         so they don't stack, then gives every restored pet a bowl of its own
+    ///         (<see cref="EnsureBowls"/>).
     ///         Also sets the <c>MarniePetAdoption</c> mail flag so vanilla's day-1 pet-
     ///         adoption offer doesn't fire on top of the restored pet(s).</item>
     /// </list>
@@ -80,7 +84,7 @@ namespace TheLongestYear.Loop
                 monitor?.Log("PetCarryover: Game1.getFarm() returned null; skipping restore.", LogLevel.Warn);
                 return;
             }
-            int restored = 0;
+            var restoredPets = new List<Pet>();
             for (int i = 0; i < meta.PetStates.Count; i++)
             {
                 PetSnapshot snap = meta.PetStates[i];
@@ -91,7 +95,7 @@ namespace TheLongestYear.Loop
                     if (pet.friendshipTowardFarmer != null)
                         pet.friendshipTowardFarmer.Value = PetCarryover.ClampFriendship(snap.Friendship);
                     farm.characters.Add(pet);
-                    restored++;
+                    restoredPets.Add(pet);
                     monitor?.Log($"PetCarryover: restored '{snap.Name}' ({snap.PetType}, breed {snap.WhichBreed}, friendship {snap.Friendship}/1000) at ({x}, {y}).", LogLevel.Info);
                 }
                 catch (System.Exception ex)
@@ -99,8 +103,73 @@ namespace TheLongestYear.Loop
                     monitor?.Log($"PetCarryover: restore of '{snap.Name}' threw {ex.GetType().Name}: {ex.Message}. Snapshot preserved for next attempt.", LogLevel.Error);
                 }
             }
-            if (restored > 0 && !Game1.player.mailReceived.Contains("MarniePetAdoption"))
+            EnsureBowls(farm, restoredPets, monitor);
+            if (restoredPets.Count > 0 && !Game1.player.mailReceived.Contains("MarniePetAdoption"))
                 Game1.player.mailReceived.Add("MarniePetAdoption");
+        }
+
+        private const string PetBowlBuildingId = "Pet Bowl";
+
+        /// <summary>How far west of <see cref="PetCarryover.BowlTile"/> to keep looking when that
+        /// tile can't take a building (map obstacle). One tile per try.</summary>
+        private const int BowlPlacementTries = 6;
+
+        /// <summary>Give every pet in <paramref name="pets"/> a bowl of its own. The rebuilt farm
+        /// ships exactly one bowl, and vanilla binds one pet per bowl (PetBowl.petId): a pet with
+        /// no bowl is warped into the farmhouse every morning and loses 10 friendship a day
+        /// (decompile Pet.dayUpdate, Pet.cs:447-484). Bumblewyn's cat "didn't reappear" after the
+        /// 0.13.0 all-pets restore for exactly this reason (Nexus bug 1122901, 27 Aug).
+        ///
+        /// A pet that already owns a bowl is left alone. Otherwise the first unclaimed bowl on the
+        /// farm is assigned; when none is left a new one is placed at
+        /// <see cref="PetCarryover.BowlTile"/> for that pet's index (walking west if the tile is
+        /// blocked by the map), debris cleared exactly like a kept building's footprint.
+        /// Placing is best-effort: a pet that still ends up bowl-less is logged, never dropped.</summary>
+        public static void EnsureBowls(Farm farm, IReadOnlyList<Pet> pets, IMonitor monitor)
+        {
+            if (farm == null || pets == null) return;
+            for (int i = 0; i < pets.Count; i++)
+            {
+                Pet pet = pets[i];
+                if (pet == null || pet.GetPetBowl() != null) continue;
+
+                PetBowl bowl = farm.buildings.OfType<PetBowl>().FirstOrDefault(b => !b.HasPet())
+                               ?? PlaceBowl(farm, i, monitor);
+                if (bowl == null)
+                {
+                    monitor?.Log($"PetCarryover: no bowl for '{pet.Name}' — vanilla will keep it indoors and dock friendship until one is built.", LogLevel.Warn);
+                    continue;
+                }
+                bowl.AssignPet(pet);
+                monitor?.Log($"PetCarryover: '{pet.Name}' owns the bowl at ({bowl.tileX.Value}, {bowl.tileY.Value}).", LogLevel.Info);
+            }
+        }
+
+        private static PetBowl PlaceBowl(Farm farm, int petIndex, IMonitor monitor)
+        {
+            (int startX, int y) = PetCarryover.BowlTile(petIndex);
+            for (int attempt = 0; attempt < BowlPlacementTries; attempt++)
+            {
+                int x = startX - attempt;
+                var tile = new Vector2(x, y);
+                // The fresh farm regenerates weeds/stones/twigs anywhere, including here; clear
+                // them first (same ruling as kept buildings) so only real map obstacles say no.
+                WorldResetService.ClearFootprint(farm, x, y, 1, 1);
+                if (!farm.isBuildable(tile)) continue;
+
+                if (Building.CreateInstanceFromId(PetBowlBuildingId, tile) is not PetBowl bowl)
+                {
+                    monitor?.Log($"PetCarryover: '{PetBowlBuildingId}' did not create a PetBowl; cannot place extra bowls.", LogLevel.Warn);
+                    return null;
+                }
+                bowl.daysOfConstructionLeft.Value = 0;
+                bowl.load();
+                farm.buildings.Add(bowl);
+                monitor?.Log($"PetCarryover: placed a pet bowl at ({x}, {y}).", LogLevel.Info);
+                return bowl;
+            }
+            monitor?.Log($"PetCarryover: no buildable tile for a pet bowl within {BowlPlacementTries} tiles west of ({startX}, {y}).", LogLevel.Warn);
+            return null;
         }
 
         /// <summary>Mail flag vanilla accepts as "this farmer has already been through the pet
