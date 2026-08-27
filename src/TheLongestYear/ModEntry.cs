@@ -351,12 +351,28 @@ namespace TheLongestYear
                 // every reset regenerates the same kind of board (Nexus bug 1108030 root cause:
                 // Game1.bundleType is never persisted by the game).
                 BundleOptionPatch.Choice choice = BundleOptionPatch.ConsumeLastChoice();
-                _meta.State.BundleSource = choice == BundleOptionPatch.Choice.TlyCustom
-                    ? BundleSourceNames.Engine : BundleSourceNames.Vanilla;
-                _meta.State.VanillaBundleType = choice == BundleOptionPatch.Choice.VanillaRemixed
-                    ? Game1.BundleType.Remixed.ToString() : Game1.BundleType.Default.ToString();
+                string chosenSource = choice switch
+                {
+                    BundleOptionPatch.Choice.VanillaRemixed => BundleSourceNames.Remixed,
+                    BundleOptionPatch.Choice.VanillaStandard => BundleSourceNames.Normal,
+                    _ => BundleSourceNames.Engine,
+                };
+                _meta.State.BundleSource = BundleSourceNames.IsVanilla(chosenSource)
+                    ? BundleSourceNames.LegacyVanilla : BundleSourceNames.Engine;
+                _meta.State.VanillaBundleType =
+                    BundleSourceNames.VanillaTypeFor(chosenSource) ?? Game1.BundleType.Default.ToString();
+
+                // Mirror the Advanced Options pick into the config, which is the ONE setting that
+                // owns this from now on. Without this the first reset would re-stamp from a config
+                // the player never touched and silently undo the choice he just made.
+                if (!string.Equals(_config.BundleSource, chosenSource, StringComparison.OrdinalIgnoreCase))
+                {
+                    _config.BundleSource = chosenSource;
+                    this.Helper.WriteConfig(_config);
+                }
+
                 this.Monitor.Log(
-                    $"New game: BundleSource={_meta.State.BundleSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
+                    $"New game: bundle source={chosenSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
                     LogLevel.Info);
             }
             RunActivation.Activate();
@@ -1240,12 +1256,21 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.cart-limit.tooltip"));
 
             gmcm.AddTextOption(this.ModManifest,
-                getValue: () => BundleSourceNames.Normalize(_config.BundleSource),
+                // One setting, three choices. A config written before this change says the legacy
+                // "Vanilla", which names no layout, so show it as whichever layout the loaded save
+                // is actually on rather than defaulting a remixed save to Normal.
+                getValue: () =>
+                {
+                    string stored = BundleSourceNames.Normalize(_config.BundleSource);
+                    return stored == BundleSourceNames.LegacyVanilla
+                        ? BundleSourceNames.ForVanillaType(_meta?.State?.VanillaBundleType)
+                        : stored;
+                },
                 setValue: v => _config.BundleSource = BundleSourceNames.Normalize(v),
                 name: () => Strings.Get("gmcm.bundle-source.name"),
                 tooltip: () => Strings.Get("gmcm.bundle-source.tooltip"),
                 allowedValues: BundleSourceNames.All,
-                formatAllowedValue: v => BundleSourceNames.IsVanilla(v) ? Strings.Get("gmcm.bundle-source.vanilla") : Strings.Get("gmcm.bundle-source.engine"));
+                formatAllowedValue: FormatBundleSource);
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.AutoDetectReplayableUnlockCutscenes,
@@ -2721,6 +2746,18 @@ namespace TheLongestYear
         /// <summary>Localised label for a difficulty step in the GMCM dropdown. Written as four
         /// literal <see cref="Strings.Get"/> calls rather than an interpolated key so the i18n
         /// guard's source scan can prove all four keys are reachable.</summary>
+        /// <summary>Localised label for a bundle-source choice. Written as literal
+        /// <see cref="Strings.Get"/> calls rather than an interpolated key so the i18n guard's
+        /// source scan can prove every key is reachable.</summary>
+        private static string FormatBundleSource(string rawValue)
+        {
+            if (string.Equals(rawValue, BundleSourceNames.Normal, StringComparison.OrdinalIgnoreCase))
+                return Strings.Get("gmcm.bundle-source.normal");
+            if (string.Equals(rawValue, BundleSourceNames.Remixed, StringComparison.OrdinalIgnoreCase))
+                return Strings.Get("gmcm.bundle-source.remixed");
+            return Strings.Get("gmcm.bundle-source.engine");
+        }
+
         private static string FormatDifficultyStep(string rawValue) => DifficultySteps.Parse(rawValue) switch
         {
             DifficultyStep.Easy => Strings.Get("gmcm.difficulty.step.easy"),

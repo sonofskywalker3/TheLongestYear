@@ -17,11 +17,19 @@ public static class BundleHold
         NotEnoughJp
     }
 
-    /// <summary>True when the hold choice is meaningful for this save's bundle board. In
-    /// Vanilla mode (<see cref="BundleSourceNames.IsVanilla"/>) the reset regenerates the board
-    /// via <c>loadForNewGame</c> and never consults <see cref="MetaState.BundleSeedLoop"/>, so
-    /// holding would be a no-op that still charges JP; the hold prompt must not be offered.</summary>
-    public static bool IsOfferable(string? bundleSource) => !BundleSourceNames.IsVanilla(bundleSource);
+    /// <summary>True for every bundle source (Jeff's ruling 2026-08-27: all three options can
+    /// hold the current board).
+    ///
+    /// This used to return false for a vanilla board. The reasoning was sound at the time: a
+    /// vanilla reset regenerates through <c>loadForNewGame</c> and never consults
+    /// <see cref="MetaState.BundleSeedLoop"/>, so a hold would have charged JP for nothing.
+    /// WorldResetService now snapshots the live board before the reset and writes it back
+    /// afterwards, which reproduces a vanilla board exactly, so the hold is real on every source
+    /// and the offer is no longer suppressed.
+    ///
+    /// Kept as a method rather than deleted: it documents the rule, and a future source that
+    /// genuinely cannot hold would have somewhere to say so.</summary>
+    public static bool IsOfferable(string? bundleSource) => true;
 
     /// <summary>Price the player would pay to hold right now.</summary>
     public static long NextCost(MetaState state, IReadOnlyList<long>? curve, double priceFactor = 1.0)
