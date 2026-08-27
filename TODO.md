@@ -1310,6 +1310,21 @@ the key. `FarmerReset` now clears active/previous dialogue events and re-seeds t
 systems write the same NPC dialogue slot.
 
 ### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
+
+**2026-08-27: brainstormed and spec'd** (`docs/superpowers/specs/2026-08-27-deja-vu-dialogue-design.md`,
+lines draft in `...-deja-vu-dialogue-lines.md`, awaiting Jeff's line review before coding). Jeff's
+rulings: nightly familiarity rollup (talk +1, gift +3, heart event +10) into
+`MetaState.VillagerFamiliarity`; threshold 60, 6% per talk, one line per villager per loop, one per
+week overall; a prepend on `NPC.checkForNewCurrentDialogue` that never touches an Introduction line;
+every line in the villager's own voice and reviewed by Jeff first.
+
+**Phase 2 (Jeff, 2026-08-27, not spec'd):** memories tied to events and festivals, fed by the same
+counters. Examples in Jeff's words: "Did you come to town for the dance last year?"; the Luau pot:
+"Just don't put X in the pot this year. Wait... why did I think that?" or, if the previous loop's
+ingredient was good, "For some reason I think Y would be amazing if you have any." Needs a per-loop
+record of festival outcomes (Luau soup ingredient and result, Flower Dance attendance/partner, Egg
+Hunt win, Fair grange score) in meta, and festival-script injection points, which are a different
+hook from daily dialogue.
 **Source / credit: u/Gribbleby** on the r/StardewValley beta announcement thread
 (https://www.reddit.com/r/StardewValley/comments/1txuhfb/ — 98 upvotes, 20k+ views). Their seed:
 *"I assume relationships will also be reset? If somehow the villagers retained some memory it could
