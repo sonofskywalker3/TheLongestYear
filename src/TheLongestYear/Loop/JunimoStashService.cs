@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.Objects;
 using TheLongestYear.Core;
 using TheLongestYear.UI;
@@ -338,6 +339,9 @@ namespace TheLongestYear.Loop
                     }
                 }
 
+                if (item is Tool enchanted && record.Enchantments != null)
+                    RestoreEnchantments(enchanted, record);
+
                 chest.Items.Add(item);
                 restored++;
             }
@@ -389,11 +393,21 @@ namespace TheLongestYear.Loop
                 (!string.IsNullOrEmpty(obj.preservedParentSheetIndex.Value) || obj.preserve.Value.HasValue);
 
             List<StashItemRecord> attachments = null;
-            if (item is Tool tool && tool.attachments.Count > 0)
+            List<StashEnchantmentRecord> enchantments = null;
+            if (item is Tool tool)
             {
-                attachments = new List<StashItemRecord>(tool.attachments.Count);
-                foreach (StardewValley.Object slot in tool.attachments)
-                    attachments.Add(slot == null ? null : ToRecord(slot));
+                if (tool.attachments.Count > 0)
+                {
+                    attachments = new List<StashItemRecord>(tool.attachments.Count);
+                    foreach (StardewValley.Object slot in tool.attachments)
+                        attachments.Add(slot == null ? null : ToRecord(slot));
+                }
+                if (tool.enchantments.Count > 0)
+                {
+                    enchantments = new List<StashEnchantmentRecord>(tool.enchantments.Count);
+                    foreach (BaseEnchantment e in tool.enchantments)
+                        enchantments.Add(new StashEnchantmentRecord(e.GetType().FullName, e.GetLevel()));
+                }
             }
 
             return new StashItemRecord(
@@ -403,7 +417,33 @@ namespace TheLongestYear.Loop
                 hasPreserveIdentity ? obj.preservedParentSheetIndex.Value : null,
                 hasPreserveIdentity && obj.preserve.Value.HasValue ? (int)obj.preserve.Value.Value : null,
                 hasPreserveIdentity ? obj.Price : null,
-                attachments);
+                attachments,
+                enchantments);
+        }
+
+        /// <summary>Put a banked tool's enchantments back. Mirrors vanilla Tool.CopyEnchantments
+        /// (add the instance, then ApplyTo) rather than AddEnchantment, which bumps a forge one
+        /// level per call instead of restoring the recorded level. Types resolve against the game
+        /// assembly; an unknown one is logged and skipped so a removed mod can't break the whole
+        /// stash.</summary>
+        private void RestoreEnchantments(Tool tool, StashItemRecord record)
+        {
+            foreach (StashEnchantmentRecord e in record.Enchantments)
+            {
+                if (e?.Type == null) continue;
+                System.Type type = System.Type.GetType(e.Type) ?? typeof(BaseEnchantment).Assembly.GetType(e.Type);
+                if (type == null || !typeof(BaseEnchantment).IsAssignableFrom(type))
+                {
+                    _monitor.Log(
+                        $"JunimoStashService: unknown enchantment type '{e.Type}' on '{record.ItemId}' — skipping.",
+                        LogLevel.Warn);
+                    continue;
+                }
+                if (System.Activator.CreateInstance(type) is not BaseEnchantment enchantment) continue;
+                enchantment.Level = e.Level;
+                tool.enchantments.Add(enchantment);
+                enchantment.ApplyTo(tool);
+            }
         }
 
         /// <summary>
