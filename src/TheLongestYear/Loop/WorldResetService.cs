@@ -711,6 +711,12 @@ namespace TheLongestYear.Loop
             ["Silo"]         = new Vector2(51f, 9f),
         };
 
+        // Vanilla's Traveling Cart year-1 guarantee window, transcribed from Game1.loadForNewGame
+        // (Game1.cs:4212-4218): seed = uniqueIDForThisGame * 12, window = random.Next(2, ((16-2)*2)+3).
+        private const double Y1GuaranteeSeedFactor = 12.0;
+        private const int Y1GuaranteeMinVisits = 2;
+        private const int Y1GuaranteeMaxVisits = 31;
+
         // The rest of the NetWorldState wipe-by-default pass (audit 2026-07-13). Rulings:
         // WIPE = run progression that must rewind with the year (island/walnut chain, raccoon
         // chain, perfection counters, Shrine-of-Challenge difficulty, in-flight Robin/Wizard
@@ -775,12 +781,24 @@ namespace TheLongestYear.Loop
             // and the vanilla-accurate one. Day 2's night pass rolls the new run's first dish.
             ws.DishOfTheDay = null;
 
-            // Traveling Cart year-1 red-cabbage guarantee counter — back to its new-game
-            // sentinel so every loop gets the same guarantee window.
-            ws.visitsUntilY1Guarantee.Value = -1;
+            // Traveling Cart year-1 red-cabbage guarantee. Corrects the 2026-07-13 ruling, which
+            // set this to -1 as "the new-game sentinel" — it is not. -1 means the guarantee is
+            // DISABLED: both consumers gate on `>= 0` before decrementing (Forest.cs:763,
+            // Game1.cs:9020). Vanilla rolls the window once, at save creation, and only when the
+            // YearOneCompletable new-game option is on (Game1.cs:4204-4219); loadForNewGame cannot
+            // re-roll it during a reset because newGameSetupOptions is not populated outside the
+            // new-game flow. So on a YearOneCompletable save the old line permanently killed the
+            // guarantee at the first rewind. Re-roll the window with vanilla's own formula off the
+            // freshly re-seeded uniqueIDForThisGame instead, and only when the save had it armed —
+            // a save that never enabled the option sits at -1 and is left alone.
+            if (ws.VisitsUntilY1Guarantee >= 0)
+                ws.VisitsUntilY1Guarantee =
+                    Utility.CreateRandom((double)Game1.uniqueIDForThisGame * Y1GuaranteeSeedFactor)
+                        .Next(Y1GuaranteeMinVisits, Y1GuaranteeMaxVisits);
 
             _monitor.Log("In-place reset: netWorldState leftovers wiped (island/walnuts, raccoons, " +
-                "perfection counters, mine difficulty, builders, world flags, daily ephemera).",
+                "perfection counters, mine difficulty, builders, world flags, daily ephemera, " +
+                "dish of the day).",
                 LogLevel.Trace);
         }
 
