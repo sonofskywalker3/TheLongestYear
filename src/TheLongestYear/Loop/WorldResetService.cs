@@ -345,6 +345,19 @@ namespace TheLongestYear.Loop
             Game1.ApplyWeatherForNewDay();
             Game1.updateWeatherIcon();
 
+            // 2c. Push the rewound Game1 statics into netWorldState's own copies (audit 2026-08-26).
+            //     UpdateFromGame1 (NetWorldState.cs:804) is vanilla's one-way Game1 -> netWorldState
+            //     sync for year / season / dayOfMonth / timeOfDay / daysPlayed / uniqueIDForThisGame /
+            //     whichFarm / the Default LocationWeather. Until it runs, netWorldState still holds
+            //     the PRE-reset values, and WriteToGame1 is the reverse sync: in single-player
+            //     (multiplayerMode == 0, so Game1.IsServer is false) its `if (!Game1.IsServer)` block
+            //     copies all of those back OVER Game1 — including the old uniqueIDForThisGame that
+            //     step 0 deliberately re-seeded for the new run's weather/forage RNG. Vanilla calls
+            //     WriteToGame1 whenever a farmEvent finishes (Game1.cs:4982), so the stale window was
+            //     real rather than theoretical. Sync here, right after the calendar and weather are
+            //     final, so both sides agree before anything can read either one.
+            Game1.netWorldState.Value.UpdateFromGame1();
+
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
