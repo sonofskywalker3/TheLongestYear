@@ -222,6 +222,11 @@ public sealed class MetaState
     /// </summary>
     public List<string> SeenEventsEver { get; set; } = new();
 
+    /// <summary>Deja-vu dialogue (spec 2026-08-27): cumulative interaction points per villager
+    /// (internal name) across EVERY loop. Talk +1, gift +3, heart event +10, rolled up nightly by
+    /// FamiliarityRollup. Hearts themselves still reset; this is the only thing that remembers.</summary>
+    public Dictionary<string, int> VillagerFamiliarity { get; set; } = new();
+
     /// <summary>
     /// Cooking recipe IDs banked in the Cookbook across runs. Keys match
     /// <c>Farmer.cookingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Fried_Egg").
