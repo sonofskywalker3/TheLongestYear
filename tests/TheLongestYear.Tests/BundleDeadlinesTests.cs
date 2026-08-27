@@ -132,7 +132,10 @@ public class BundleDeadlinesTests
 
         var result = BundleDeadlines.For(new List<string> { "(O)a", "(O)b" }, model);
 
-        Assert.All(result.Values, s => Assert.True(s <= Season.Winter));
+        // Both floor at Winter, so both clamp up to Winter. Asserted concretely: "s <= Winter"
+        // cannot fail, Winter being the top of the enum.
+        Assert.Equal(Season.Winter, result["(O)a"]);
+        Assert.Equal(Season.Winter, result["(O)b"]);
     }
 
     [Fact]
@@ -149,8 +152,17 @@ public class BundleDeadlinesTests
         var reversed = BundleDeadlines.For(
             new List<string> { "(O)d", "(O)c", "(O)b", "(O)a" }, model);
 
-        Assert.Equal(forward["(O)a"], reversed["(O)a"]);
-        Assert.Equal(forward["(O)d"], reversed["(O)d"]);
+        // Pinned to the concrete map, not just to agreement between the two runs: equal effort
+        // means the ordinal id tiebreak decides, so all four ids and all four seasons are stated.
+        // Comparing two runs alone would pass for a rule that returned Winter for everything.
+        foreach (var actual in new[] { forward, reversed })
+        {
+            Assert.Equal(4, actual.Count);
+            Assert.Equal(Season.Spring, actual["(O)a"]);
+            Assert.Equal(Season.Summer, actual["(O)b"]);
+            Assert.Equal(Season.Fall, actual["(O)c"]);
+            Assert.Equal(Season.Winter, actual["(O)d"]);
+        }
     }
 
     [Fact]
