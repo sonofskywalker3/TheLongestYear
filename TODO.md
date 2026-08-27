@@ -18,7 +18,8 @@ are items and can already be stashed; Jeff: "you wipe them, but they can stash t
 items and Stardrops flagged as the same class, out of scope. Spec
 `docs/superpowers/specs/2026-08-27-keep-power-books-design.md`, plan
 `docs/superpowers/plans/2026-08-27-keep-power-books.md`. Debug: `tly_readbook`.
-**Live smoke: pending** (see STATUS.md).
+**Live smoke PASSED 2026-08-27** (table in STATUS.md): bought Speed survives, read-but-unbought
+Defense wiped, Introduction window still seeded.
 
 <details><summary>Original brainstorm brief</summary>
 

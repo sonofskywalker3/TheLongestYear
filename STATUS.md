@@ -1,23 +1,28 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-27 evening (Keep power books built, 0.16.12 local, smoke pending)
+**Last updated:** 2026-08-27 evening (Keep power books built and live-smoked, 0.16.12 local)
 **Branch:** `master`, 0.16.8 through 0.16.12 committed locally, **NOT pushed, NOT released**
 **Tests:** 1138 passing, 0 failing
 **Build:** clean
 **Last public release:** 0.16.7
 
-## Keep power books (0.16.9 to 0.16.12): built and unit-tested, live smoke PENDING
+## Keep power books (0.16.9 to 0.16.12): built, unit-tested, LIVE SMOKE PASSED
+
+**Live smoke PASSED 2026-08-27 16:47 (0.16.12 deployed, save None_447536393, SMAPI console only):**
+
+| Step | Result |
+|---|---|
+| `tly_readbook Book_Speed` then `tly_readbook` | `Book_Speed=1`, all other 18 books 0 |
+| `tly_addjp 1000` + `tly_buyupgrade keep_book_speed` | "Purchased 'keep_book_speed' (Keep Way Of The Wind pt. 1) for 750 JP" (name from ItemRegistry) |
+| `tly_readbook Book_Defense` (read, NOT bought) then `tly_reset` | `FarmerReset: ... books=[Book_Speed] ... dialogueEvents=[Introduction:6]` |
+| `tly_readbook` after the reset | `Book_Speed=1`, `Book_Defense=0` (unbought book wiped), rest 0 |
+
+Not eyeballed: the shrine row itself (no desktop driving needed; the purchase log shows the resolved name).
 
 Jeff's brainstorm ruling (2026-08-27): per book, bought at the shrine. Nineteen `keep_book_*`
 Carryover rows, reach-gated on having read the book this loop, 150 / 350 / 500 to 750 JP.
 `StatResetRules` unchanged (wipe-by-default); `FarmerReset` re-grants bought flags from
 `RunBaseline.KeptBookStats`. Spec + plan in `docs/superpowers/{specs,plans}/2026-08-27-keep-power-books*`.
-
-**Smoke to run** (Rodger throwaway save, from the SMAPI console, tools/send-smapi-command.ps1):
-`tly_readbook Book_Speed` -> `tly_addjp 1000` -> `tly_buyupgrade keep_book_speed` -> `tly_reset`,
-then the `FarmerReset:` log line must show `books=[Book_Speed]` and `tly_readbook` must print
-`Book_Speed=1` with every other book at 0. Optional eyeball: the shrine row reads
-"Keep Way Of The Wind pt. 1" (item name from ItemRegistry).
 
 **Docs:** CHANGELOG `## Unreleased` covers 0.16.8 (first-meeting dialogue) and the books; README and
 Nexus Shrine feature line updated identically. "What's New" still says 0.16.7 until the release
