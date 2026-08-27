@@ -520,6 +520,7 @@ namespace TheLongestYear.Loop
                 _meta.BundlesGeneratedForReset = -1;
                 LastGeneratedRequirements = null;
                 _monitor.Log("Reset: BundleSource=Vanilla — keeping the game's own board (no engine write).", LogLevel.Info);
+                ApplyVanillaBoardDifficulty();
             }
             else
             {
@@ -1039,6 +1040,70 @@ namespace TheLongestYear.Loop
             Game1.player.questLog.Add(q);
 
             _monitor.Log($"WorldResetService: added quest intro '{title}' (id {id}).", LogLevel.Trace);
+        }
+
+        /// <summary>Gives a vanilla-generated board the three ask-side modifiers it can honour:
+        /// stack size, quality asks, and required slots. Never changes which item a slot asks for,
+        /// so a Standard or Remixed board keeps its identity and only its numbers move.
+        ///
+        /// Skipped entirely when those three are all Normal, which keeps the default Vanilla path
+        /// exactly as it was: zero writes, and no extra log line.
+        ///
+        /// Seeded from the same basis as the Engine path, so a replayed reset reproduces the same
+        /// board and the anti-save-scum guarantee still holds.</summary>
+        private void ApplyVanillaBoardDifficulty()
+        {
+            TheLongestYear.Core.DifficultyProfile difficulty = _meta.Difficulty;
+            if (difficulty == null || difficulty.Steps.AsksAllNormal())
+                return;
+
+            Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
+            if (live == null || live.Count == 0)
+            {
+                _monitor.Log(
+                    "Reset: Vanilla difficulty pass skipped — no bundle data to adjust.",
+                    LogLevel.Warn);
+                return;
+            }
+
+            // Quality eligibility is derived from the game's own data (crop harvests, rod-caught
+            // non-jelly fish, spawned forage), and it is what stops a gold star landing on Fiber
+            // or on algae (Nexus 1122358). Only built when the quality modifier is actually above
+            // Normal, because deriving the pools reads several data assets.
+            IReadOnlySet<string> qualityEligibleIds = null;
+            if (difficulty.QualityFactor > 1.0)
+            {
+                try
+                {
+                    qualityEligibleIds = new GameDataPools(_monitor)
+                        .Build(_config.PoolTuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade))
+                        .QualityEligibleIds;
+                }
+                catch (Exception ex)
+                {
+                    // Without the derived set the built-in never-quality list still guards the
+                    // known-impossible items, so degrade rather than abandon the reset.
+                    _monitor.Log(
+                        $"Reset: could not derive quality eligibility for the Vanilla difficulty pass ({ex.Message}); " +
+                        "falling back to the built-in ineligible list only.",
+                        LogLevel.Warn);
+                }
+            }
+
+            int seed = BundleEngineSeed.For(
+                unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
+
+            IDictionary<string, string> adjusted = TheLongestYear.Core.VanillaBoardDifficultyPass.Apply(
+                new Dictionary<string, string>(live), difficulty, _config.PoolTuning, seed, qualityEligibleIds);
+
+            Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(adjusted));
+
+            _monitor.Log(
+                $"Reset: Vanilla board adjusted for difficulty ({adjusted.Count} bundles; " +
+                $"stacks {difficulty.Steps.StackSize}, quality {difficulty.Steps.QualityAsks}, " +
+                $"required slots {difficulty.Steps.RequiredSlots}; seed {seed}). " +
+                "Item ids are unchanged.",
+                LogLevel.Info);
         }
 
     }
