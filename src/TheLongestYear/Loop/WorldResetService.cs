@@ -358,6 +358,16 @@ namespace TheLongestYear.Loop
             //     final, so both sides agree before anything can read either one.
             Game1.netWorldState.Value.UpdateFromGame1();
 
+            // 2d. Quest of the day. loadForNewGame calls RefreshQuestOfTheDay (Game1.cs:4229) while
+            //     the calendar is still the PRE-reset one, so the board quest was rolled from the old
+            //     run's Stats.DaysPlayed (Utility.getQuestOfTheDay seeds on DaysPlayed * 777) and,
+            //     for the SlayMonsterQuest branch, gated on the old run's MineShaft.lowestLevelReached
+            //     — which step 6 has not yet pinned back to the kept elevator floor. Nothing re-rolled
+            //     it afterwards, so Spring 1 of every loop opened with a stale quest, and its gold
+            //     reward, that a genuine day 1 cannot offer: getQuestOfTheDay returns null outright
+            //     while DaysPlayed <= 1. Re-run vanilla's refresh now that DaysPlayed is back to 1.
+            Game1.RefreshQuestOfTheDay();
+
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
