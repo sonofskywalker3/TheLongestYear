@@ -22,8 +22,6 @@ namespace TheLongestYear.Loop
     internal sealed class GameDataPools
     {
         private const int MonsterDropListFieldIndex = 6;
-        private const int FishTrapFieldIndex = 1;
-        private const string FishTrapMarker = "trap";
 
         private readonly IMonitor _monitor;
 
@@ -38,6 +36,7 @@ namespace TheLongestYear.Loop
             var forage = new List<RawSpawnEntry>();
             var fish = new List<RawSpawnEntry>();
             var trapIds = new HashSet<string>(StringComparer.Ordinal);
+            var fishRows = new List<RawFishEntry>();
             var drops = new List<RawMonsterDropEntry>();
             var fruitTrees = new List<RawFruitTreeEntry>();
             var geodeDrops = new List<RawGeodeDropEntry>();
@@ -89,8 +88,9 @@ namespace TheLongestYear.Loop
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Fish"))
                 {
-                    string[] fields = (kv.Value ?? "").Split('/');
-                    if (fields.Length > FishTrapFieldIndex && fields[FishTrapFieldIndex] == FishTrapMarker)
+                    RawFishEntry entry = RawFishEntry.Parse(kv.Key, kv.Value);
+                    fishRows.Add(entry);
+                    if (entry.IsTrap)
                         trapIds.Add(kv.Key);
                 }
 
@@ -116,7 +116,8 @@ namespace TheLongestYear.Loop
 
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
-                fruitTrees, geodeDrops, tuning, extraExcludedIds);
+                fruitTrees, geodeDrops, tuning, extraExcludedIds,
+                fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal));
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
