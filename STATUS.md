@@ -38,6 +38,16 @@ loaded in the game. What needs smoking, in rough priority order:
 change during loop 1 of such a save applies immediately rather than next loop. Self-corrects at the
 first reset. Engine saves stamp during fresh-run generation, so they do not have this.
 
+**Known cosmetic issue, NOT fixed, needs a ruling.** The ten steps are a C# enum, and SMAPI's JSON
+layer probably does not register Newtonsoft's StringEnumConverter (the type name does not appear in
+StardewModdingAPI.dll). If so, config.json will write them as INTEGERS (`"StackSize": 2`) rather
+than names (`"StackSize": "Hard"`). Reading still works either way, because Newtonsoft parses enum
+NAMES on deserialize, so a hand-written "Hard" is honoured and then rewritten as a number. This was
+left alone deliberately: it is cosmetic, difficulty is a GMCM-only surface by Jeff's own ruling, and
+the two clean fixes (string-backed properties with `XStep()` accessor methods, or a Newtonsoft
+package reference in Core) both wanted an in-game check before committing to them. **Confirm the
+actual behaviour during the smoke by opening config.json after touching a dial**, then decide.
+
 **Deliberate deviation from the spec, recorded:** the spec describes the rarity bias as applying
 inside the sampler. It is applied to `ItemPools` before generation instead, and the stack/quality
 modifiers are applied by scaling the tuning block. Same effect, and it meant `BundleSlotFiller` and
