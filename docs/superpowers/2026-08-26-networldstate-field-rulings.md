@@ -110,23 +110,40 @@ the real evidence - as the handoff anticipated.
 
 ---
 
-## Verification status - read this honestly
+## Verification status
 
-**Verified:** the full field enumeration against the 1.6.15 decompile; every line reference cited
-above was read, not recalled. Build clean, 865 of 865 tests pass.
+**Smoked in game 2026-08-26 on the throwaway save (`None_447449779`), v0.14.9.** Log archived at
+`log-archive/SMAPI-v0.14.10-20260826-211537.txt`; the probe used is `tly_netstate`, added for this
+(read-only, rows labelled with their table numbers above).
 
-**NOT verified in game.** No live smoke was run on the throwaway save. Nothing in this pass has been
-seen working; the rulings are decompile-derived. What a smoke should check after a `tly_reset`:
+The setup: load the save, `debug nd` five times to reach Spring 6 with `DaysPlayed=6`, probe, then
+`tly_reset`, then probe again.
 
-- The quest board on Spring 1 is EMPTY (row 59). Highest-value check of the five, since it is the
-  one that was handing out gold.
-- The Saloon has no Dish of the Day on Spring 1 (row 54).
-- Meta-progression intact - JP, upgrades, stash contents, kept pet, kept horse, kept buildings -
-  since row 1 now runs `UpdateFromGame1` mid-reset and that touches shared state.
-- Spring 1 weather still matches the new run's schedule. Row 1 syncs weather too, so a regression
-  there would surface as the wrong Spring 1 weather.
-- Row 16 is not reachable on a normal save: it needs one created with the `YearOneCompletable`
-  new-game option, which the throwaway save was not. Left unsmoked deliberately.
+| Check | Before reset | After reset | Verdict |
+|---|---|---|---|
+| Row 59 `QuestOfTheDay` | `FishingQuest "Fishing: Catfish"` | `null` | PASS |
+| Row 54 `DishOfTheDay` | `Tortilla x1` | `null` | PASS |
+| Row 1 `uniqueIDForThisGame` | 447449779 | 447470044, and it stayed re-seeded | PASS |
+| `DaysPlayed` | 6 | 1 | PASS |
+| JP | 38 | 38 | PASS |
+| Upgrades | 34 | same 34 | PASS |
+| Stash | 3 items banked | `restored 3/3 items into stash chest` | PASS |
+| Kept buildings | coop, barn, silo, stable | all replaced at their snapshotted tiles | PASS |
+| Spring 1 weather | - | Sun, and the week-ahead forecast is a varied Sun/rain mix off the new seed | PASS |
+
+The reset log line is `netWorldState leftovers wiped (... daily ephemera, dish of the day)`, and the
+run came back as `Run 45 loaded (Spring 1). JP banked: 38.` No exceptions anywhere in the reset.
+
+**The dish leak was caught in its natural state, before any of this ran.** The very first probe, on
+the save as it sat at Spring 1 with `DaysPlayed=1` from a PREVIOUS reset made by the old code, read
+`DishOfTheDay = Trout Soup x3`. A genuine vanilla Spring 1 has none. That is the bug, observed on a
+real save rather than argued from the decompile.
+
+**Still not verified:** row 16 (`visitsUntilY1Guarantee`). It reads -1 on this save, meaning the
+guarantee was never armed, and arming it needs a save created with the `YearOneCompletable`
+new-game option. The re-roll branch therefore never executed. Deliberately left unsmoked - it needs
+a purpose-made save, and the wrong-in-the-old-code direction (permanently disabling the guarantee)
+is not reachable on any save that has it at -1 already.
 
 ---
 
