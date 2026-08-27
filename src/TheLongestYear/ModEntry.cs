@@ -237,6 +237,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
+            helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] (default: the current board's seed loop)", this.CmdGenBundles);
@@ -1512,6 +1513,7 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_hold": this.CmdHold(command, args); break;
+                case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
@@ -1562,6 +1564,66 @@ namespace TheLongestYear
         /// test project cannot construct — so the only way to verify a reset actually wiped what
         /// the table says is to print both sides of it and compare. Run before and after a
         /// tly_reset.</summary>
+        /// <summary>Read-only difficulty probe. Prints the CONFIGURED steps next to the STAMPED
+        /// ones, because those two disagree by design whenever the player has changed GMCM since
+        /// the last reset, and a balance report is worthless without knowing which was in force.
+        /// Same read-only shape as <see cref="CmdNetState"/>.</summary>
+        private void CmdDifficulty(string command, string[] args)
+        {
+            DifficultySettings configured = _config.Difficulty;
+            DifficultyProfile live = _meta?.State != null
+                ? _meta.State.EffectiveDifficulty(_config)
+                : DifficultyResolver.Resolve(configured, _config);
+            bool stamped = _meta?.State?.Difficulty != null;
+
+            this.Monitor.Log("=== The Longest Year: difficulty ===", LogLevel.Info);
+            this.Monitor.Log(
+                stamped
+                    ? "  In force: the profile STAMPED on this save. Config changes apply at your next loop."
+                    : "  In force: resolved live from config (this save has no stamp yet; the next reset writes one).",
+                LogLevel.Info);
+
+            this.Monitor.Log("  Step               configured -> in force", LogLevel.Info);
+            LogStep("stack size", configured.StackSize, live.Steps.StackSize);
+            LogStep("quality asks", configured.QualityAsks, live.Steps.QualityAsks);
+            LogStep("required slots", configured.RequiredSlots, live.Steps.RequiredSlots);
+            LogStep("item rarity", configured.ItemRarity, live.Steps.ItemRarity);
+            LogStep("JP earned", configured.JpEarned, live.Steps.JpEarned);
+            LogStep("shrine prices", configured.ShrinePrices, live.Steps.ShrinePrices);
+            LogStep("starting gold", configured.StartingGold, live.Steps.StartingGold);
+            LogStep("cart slots", configured.CartSlots, live.Steps.CartSlots);
+            LogStep("hold/pity prices", configured.HoldPrices, live.Steps.HoldPrices);
+            LogStep("season pity", configured.SeasonPity, live.Steps.SeasonPity);
+
+            this.Monitor.Log("  Resolved values in force:", LogLevel.Info);
+            this.Monitor.Log(
+                $"    asks: stack x{live.StackFactor}, quality x{live.QualityFactor}, " +
+                $"required slots {(live.RequireAllSlots ? "ALL shown" : live.RequiredSlotsDelta.ToString("+0;-0;0"))}, " +
+                $"rarity bias {live.RarityBias}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"    economy: JP x{live.JpEarnedFactor}, shrine prices x{live.ShrinePriceFactor}, " +
+                $"starting gold {live.StartingGold}g, starting cart slots {live.StartingCartSlots}, " +
+                $"hold/pity prices x{live.HoldPriceFactor}",
+                LogLevel.Info);
+            this.Monitor.Log(
+                $"    season pity: {(live.Pity.Enabled ? "on" : "OFF")}, threshold {live.Pity.Threshold}, " +
+                $"quota step {live.Pity.QuotaStep}, floor {live.Pity.QuotaFloor}, trim {live.Pity.TrimPerStep}/step",
+                LogLevel.Info);
+
+            this.Monitor.Log(
+                $"  Board source: {_meta?.State?.BundleSource ?? BundleSourceNames.Engine}. " +
+                "Item rarity applies to Engine (TLY Custom) boards only; stack size, quality asks and " +
+                "required slots apply to vanilla boards too.",
+                LogLevel.Info);
+
+            void LogStep(string label, DifficultyStep configuredStep, DifficultyStep liveStep)
+            {
+                string note = configuredStep == liveStep ? "" : "   (pending: applies at your next loop)";
+                this.Monitor.Log($"    {label,-18} {configuredStep,-8} -> {liveStep}{note}", LogLevel.Info);
+            }
+        }
+
         private void CmdNetState(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
