@@ -32,10 +32,12 @@ rewind): a matching unplayed line clears the stack, is pushed, and is stamped pl
 `<Name>_<key>` mail flag. Step two tries location and day specific lines. When both miss, the
 morning's ordinary line already in `CurrentDialogue` plays.
 
-`CurrentDialogue` is a stack, so a line pushed on top plays first and the villager's own line follows
-on the next click. The deja-vu line is therefore a **prepend**, never a replacement, and it is skipped
-whenever the top of the stack came from an `activeDialogueEvents` key (the Introduction line always
-plays untouched).
+`CurrentDialogue` is a stack, so a line pushed on top plays first and the villager's own line stays
+underneath for the next talk that day (vanilla pops one Dialogue per conversation; verified live
+2026-08-27 with George). The deja-vu line is therefore a **prepend**, never a replacement, and it is
+skipped whenever the top of the stack came from an `activeDialogueEvents` key (the Introduction line
+always plays untouched; vanilla clears the rest of the stack when it plays one, so nothing else plays
+that day).
 
 ## Design
 

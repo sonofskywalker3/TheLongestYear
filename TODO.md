@@ -1311,8 +1311,9 @@ systems write the same NPC dialogue slot.
 
 ### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
 
-**2026-08-27: brainstormed and spec'd** (`docs/superpowers/specs/2026-08-27-deja-vu-dialogue-design.md`,
-lines draft in `...-deja-vu-dialogue-lines.md`, awaiting Jeff's line review before coding). Jeff's
+**2026-08-27: BUILT (0.16.13 to 0.16.17, not released) and live-smoked** (table in STATUS.md;
+spec `docs/superpowers/specs/2026-08-27-deja-vu-dialogue-design.md`, lines approved by Jeff in
+`...-deja-vu-dialogue-lines.md`). Jeff's
 rulings: nightly familiarity rollup (talk +1, gift +3, heart event +10) into
 `MetaState.VillagerFamiliarity`; threshold 60, 6% per talk, one line per villager per loop, one per
 week overall; a prepend on `NPC.checkForNewCurrentDialogue` that never touches an Introduction line;

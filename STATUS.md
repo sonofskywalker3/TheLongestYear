@@ -1,10 +1,41 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-27 evening (Keep power books built and live-smoked, 0.16.12 local)
-**Branch:** `master`, 0.16.8 through 0.16.12 committed locally, **NOT pushed, NOT released**
-**Tests:** 1138 passing, 0 failing
+**Last updated:** 2026-08-27 night (Keep power books + deja-vu dialogue built and live-smoked, 0.16.17 local)
+**Branch:** `master`, 0.16.8 through 0.16.17 committed locally, **NOT pushed, NOT released**
+**Tests:** 1153 passing, 0 failing
 **Build:** clean
 **Last public release:** 0.16.7
+
+## Deja-vu villager dialogue (0.16.13 to 0.16.17): built, unit-tested, LIVE SMOKE PASSED
+
+Spec `docs/superpowers/specs/2026-08-27-deja-vu-dialogue-design.md`, lines (all approved by Jeff)
+`...-deja-vu-dialogue-lines.md`, plan `docs/superpowers/plans/2026-08-27-deja-vu-dialogue.md`.
+Nightly rollup (talk +1, gift +3, heart event +10) into `MetaState.VillagerFamiliarity`; threshold
+60, 6% per talk, tier 2 at 180, one line per villager per loop, one per 7 days town-wide, never in
+loop 1; postfix on `NPC.checkForNewCurrentDialogue` prepends the line; GMCM "Deja-vu dialogue"
+toggle; `tly_dejavu status|set|force|reset`.
+
+**Live smoke PASSED 2026-08-27 17:26 to 17:46 (save None_447540453, loop 54, driven with game.ps1):**
+
+| Step | Result |
+|---|---|
+| Spring 1, `tly_dejavu set Pierre 200` + `force Pierre`, talk to Pierre | Introduction line played ("Hey, it's Mr. Clone..."), NO deja-vu line, force still armed (guard works) |
+| `debug sleep` | `Familiarity rollup: +1 across 1 villagers` (Pierre 200 -> 201); save carries `VillagerFamiliarity` |
+| Spring 2, talk to Pierre (warped beside the farmer) | "You're my best customer. Have been for... hm. How long, exactly?" in Pierre's portrait box; log `Deja-vu: Pierre tier 2 on day 2 (forced)`; status `shownThisLoop=[Pierre] lastDay=2`, Pierre eligible=False |
+| `set George 200`, `reset`, `force George`, Spring 2 talk at his chair | Introduction line; log "George is playing the 'Introduction' event line; not touching it" |
+| Spring 3, talk to George | "...You're all right. Don't let it go to your head."; log `Deja-vu: George tier 2 on day 3 (forced)` |
+| Talk to George again | His own daily line ("Alex is my grandson...") plays, so the ordinary line survives underneath ours |
+
+Findings: (1) vanilla clears the stack when it plays an Introduction, so nothing else can play that
+day (vanilla, not ours); (2) a villager WARPED off his schedule drops location lines flagged
+`removeOnNextMove` (NPC.cs 4263), so smoke on someone at his natural spot (George's chair). Not
+exercised live: the real 6% roll and the weekly cap (unit-tested).
+
+**Driving notes that cost time (now in TODO gotchas):** talk = `game.ps1 -RightClick x,y` on the
+villager (new switch, left click uses the tool); the farmer must FACE the villager
+(`debug fd farmer 0`); `debug wct <npc> <loc> <x> <y>` needs a location, `debug warpcharactertome`
+puts the NPC on the farmer's tile; keyboard walks did not move the farmer; indoor maps do not centre
+the camera, tile (tx,ty) in JoshHouse is at screen (1215+(tx-16)*64, 870+(ty-22)*64).
 
 ## Keep power books (0.16.9 to 0.16.12): built, unit-tested, LIVE SMOKE PASSED
 
