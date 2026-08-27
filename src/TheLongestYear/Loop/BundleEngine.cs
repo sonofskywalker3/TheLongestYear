@@ -96,6 +96,13 @@ namespace TheLongestYear.Loop
         private readonly bool _nonObjectDonationsEnabled;
         private readonly Dictionary<int, DomainMatch> _lastDomains = new();
         private readonly RarityThresholds _thresholds;
+        /// <summary>The difficulty profile this generation runs under. Supplies the item-rarity
+        /// pool bias and the required-slots adjustment; the stack and quality modifiers arrive
+        /// already baked into <see cref="_tuning"/> via DifficultyTuning.Scale, so they need no
+        /// handling here. MUST be the caller's STAMPED profile (MetaState.Difficulty), never live
+        /// config: the SaveLoaded re-derivation has to reproduce the board in the save, and a
+        /// GMCM change mid-loop would otherwise re-derive a different one.</summary>
+        private readonly Core.DifficultyProfile _difficulty;
         /// <summary>Save-specific pool exclusions (YearTwoCrops.ExcludedFor). Part of the
         /// generation inputs: reset and reload must pass the same set.</summary>
         private readonly IReadOnlySet<string> _extraExcludedIds;
@@ -108,7 +115,7 @@ namespace TheLongestYear.Loop
         /// cref="Generate"/> call, keyed by absolute index (diagnostics; see tly_genbundles).</summary>
         public IReadOnlyDictionary<int, DomainMatch> LastDomains => _lastDomains;
 
-        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null)
+        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null, Core.DifficultyProfile difficulty = null)
         {
             _extraExcludedIds = extraExcludedIds;
             _monitor = monitor;
@@ -116,6 +123,7 @@ namespace TheLongestYear.Loop
             _tuning = tuning ?? new BundleGenerationTuning();
             _nonObjectDonationsEnabled = nonObjectDonationsEnabled;
             _thresholds = thresholds ?? new RarityThresholds();
+            _difficulty = difficulty ?? new Core.DifficultyProfile();
         }
 
         /// <summary>The reshuffle-path pity trim stamped on the CURRENT board, or null. Every
@@ -132,6 +140,10 @@ namespace TheLongestYear.Loop
             _lastSeed = seed;
             _lastDomains.Clear();
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds);
+            // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
+            // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
+            // same instance, so the default path is untouched.
+            itemPools = Core.RarityBias.Apply(itemPools, _difficulty.RarityBias, _thresholds);
             LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
 
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
@@ -207,6 +219,11 @@ namespace TheLongestYear.Loop
                         }
                         _lastDomains[pick.Index] = match; // for diagnostics (see below)
                     }
+                    // Required-slots modifier: adjust the pick-X count only. Applied after
+                    // composition so it sees the FINAL shown-slot count (SlotTrimmer and the
+                    // filler can both shrink it), and never to the Vault, which RequiredSlots
+                    // skips on its own.
+                    composed = Core.RequiredSlots.Apply(composed, _difficulty);
                     allPicks.Add(Uniquify(composed, usedNameCounts));
                 }
             }

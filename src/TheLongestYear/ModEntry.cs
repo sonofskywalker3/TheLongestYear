@@ -1613,14 +1613,20 @@ namespace TheLongestYear
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
 
             PityTrim trim = TheLongestYear.Loop.BundleEngine.TrimFor(_meta.State);
-            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
+            // Diagnostics have to show what the loop actually runs under, so this uses the STAMPED
+            // profile like every other generation path. A preview resolved from live config would
+            // report a board the save is not playing.
+            TheLongestYear.Core.DifficultyProfile genDifficulty = _meta.State.EffectiveDifficulty(_config);
+            BundleGenerationTuning genTuning =
+                TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
             GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade)).Generate(seed, trim);
+            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty).Generate(seed, trim);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -2159,9 +2165,18 @@ namespace TheLongestYear
                 // change between launches mid-loop. A flipped flag must not demote a healthy
                 // engine board to the legacy read path (spec 2026-08-21): the board on disk was
                 // composed with the old value and stays valid until the next reset regenerates.
+                // Difficulty: re-derivation MUST use the STAMPED profile, never live config. The
+                // board on disk was generated under the stamp, so resolving the current GMCM
+                // values here would re-derive a different board and demote a healthy save to the
+                // legacy read path on the next launch. A legacy save has no stamp and resolves
+                // all-Normal, which is exactly what generated its board.
+                TheLongestYear.Core.DifficultyProfile difficulty = state.EffectiveDifficulty(_config);
+                BundleGenerationTuning difficultyTuning =
+                    TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
+
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
-                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade));
+                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade), difficulty);
                     GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
                     if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
                         continue;
@@ -2184,7 +2199,13 @@ namespace TheLongestYear
             }
             else if (source == RequirementsSource.GenerateFreshRun)
             {
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
+                // The first run has never been through a reset, so nothing has stamped a profile
+                // yet. Stamp it here, before generating, so this board and the rest of loop 1 run
+                // under the same values a later reset would re-stamp.
+                state.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
+                BundleGenerationTuning freshTuning =
+                    TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), state.Difficulty);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;

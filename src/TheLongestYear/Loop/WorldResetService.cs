@@ -119,6 +119,23 @@ namespace TheLongestYear.Loop
             // player's Standard/Remixed choice BEFORE loadForNewGame — Game1.bundleType is a
             // non-persisted static (Nexus bug 1108030), so without this every reset wrote the
             // Standard set. Remixed re-rolls off the fresh uniqueIDForThisGame below.
+            // Difficulty modifiers (spec 2026-08-26): resolve the ten configured steps ONCE, here,
+            // and stamp the result on the save. Everything downstream -- board generation this
+            // reset, and the JP / price / cart / pity reads for the whole loop -- reads the stamp,
+            // which is what makes a GMCM change take effect at the NEXT reset rather than
+            // mid-season. Stamped before the board is built, because the board is built from it.
+            _meta.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
+            if (!_meta.Difficulty.Steps.IsAllNormal())
+                _monitor.Log(
+                    "Reset: difficulty modifiers active -- " +
+                    $"stacks {_meta.Difficulty.Steps.StackSize}, quality {_meta.Difficulty.Steps.QualityAsks}, " +
+                    $"required slots {_meta.Difficulty.Steps.RequiredSlots}, rarity {_meta.Difficulty.Steps.ItemRarity}, " +
+                    $"JP {_meta.Difficulty.Steps.JpEarned}, prices {_meta.Difficulty.Steps.ShrinePrices}, " +
+                    $"gold {_meta.Difficulty.Steps.StartingGold} ({_meta.Difficulty.StartingGold}g), " +
+                    $"cart {_meta.Difficulty.Steps.CartSlots} ({_meta.Difficulty.StartingCartSlots} slots), " +
+                    $"holds {_meta.Difficulty.Steps.HoldPrices}, pity {_meta.Difficulty.Steps.SeasonPity}.",
+                    LogLevel.Info);
+
             bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
             _meta.BundleSource = vanillaBoard
                 ? TheLongestYear.Core.BundleSourceNames.Vanilla : TheLongestYear.Core.BundleSourceNames.Engine;
@@ -506,8 +523,13 @@ namespace TheLongestYear.Loop
             }
             else
             {
-                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade));
+                // Stack size and quality asks arrive as a SCALED TUNING BLOCK rather than as
+                // engine changes: BundleSlotFiller already reads every stack number and quality
+                // chance off this object, so scaling it applies both modifiers with no edit to
+                // generation. Scale returns the same instance at Normal.
+                var difficultyTuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, _meta.Difficulty);
+                var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade), _meta.Difficulty);
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
