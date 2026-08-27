@@ -268,3 +268,52 @@ public class BundleClassifierTests
         Assert.Contains("(O)22", req.Ingredients);
     }
 }
+
+public class BundleClassifierQuotaClampTests
+{
+    // X=2, Y=4. A quota asking for 3 by Winter cannot be met and CreatePercentage rejects it
+    // outright, so the classifier has to clamp before it constructs the requirement.
+    private const string ArtisanKey = "Pantry/5";
+    private const string ArtisanXTwoYFour =
+        "Artisan/O 12 1/348 1 0 424 1 0 426 1 0 428 1 0/2/2//Artisan";
+
+    [Fact]
+    public void Quota_Above_The_Slot_Count_Is_Clamped_Not_Thrown()
+    {
+        ParsedBundle parsed = BundleParsing.Parse(ArtisanKey, ArtisanXTwoYFour);
+        var quotas = new Dictionary<string, int[]> { ["Artisan"] = new[] { 0, 1, 2, 3 } };
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            parsed, Theme.Farming, new Dictionary<string, Season>(), quotas);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.Percentage, req!.Kind);
+        Assert.Equal(2, req.NumberOfSlots);
+        Assert.All(req.CumulativeRequiredBySeason!, n => Assert.True(n <= req.NumberOfSlots));
+        Assert.Equal(2, req.CumulativeRequiredBySeason![3]);
+    }
+
+    [Fact]
+    public void A_Quota_That_Already_Fits_Is_Untouched()
+    {
+        ParsedBundle parsed = BundleParsing.Parse(ArtisanKey, ArtisanXTwoYFour);
+        var quotas = new Dictionary<string, int[]> { ["Artisan"] = new[] { 0, 1, 1, 2 } };
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            parsed, Theme.Farming, new Dictionary<string, Season>(), quotas);
+
+        Assert.Equal(new[] { 0, 1, 1, 2 }, req!.CumulativeRequiredBySeason);
+    }
+
+    [Fact]
+    public void A_Negative_Quota_Entry_Is_Clamped_To_Zero()
+    {
+        ParsedBundle parsed = BundleParsing.Parse(ArtisanKey, ArtisanXTwoYFour);
+        var quotas = new Dictionary<string, int[]> { ["Artisan"] = new[] { -1, 0, 1, 2 } };
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            parsed, Theme.Farming, new Dictionary<string, Season>(), quotas);
+
+        Assert.Equal(0, req!.CumulativeRequiredBySeason![0]);
+    }
+}
