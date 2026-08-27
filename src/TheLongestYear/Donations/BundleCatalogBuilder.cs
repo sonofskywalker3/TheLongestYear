@@ -34,13 +34,19 @@ namespace TheLongestYear.Donations
         private readonly IReadOnlyDictionary<string, CoreSeason> _itemSeasonPins;
         private readonly IReadOnlyDictionary<string, int[]> _bundleQuotas;
 
+        /// <summary>Derived item model, forwarded to the classifier so PerItem bundles gate on a
+        /// computed deadline per ingredient rather than the 40-entry curated pin table. Null on a
+        /// builder constructed before a save is loaded, which keeps the legacy path.</summary>
+        private readonly ItemAvailabilityModel _availability;
+
         public BundleCatalogBuilder(
             RarityThresholds thresholds,
             SeasonResolver seasons,
             IMonitor monitor,
             IReadOnlyDictionary<string, Theme> themeOverrides = null,
             IReadOnlyDictionary<string, CoreSeason> itemSeasonPins = null,
-            IReadOnlyDictionary<string, int[]> bundleQuotas = null)
+            IReadOnlyDictionary<string, int[]> bundleQuotas = null,
+            ItemAvailabilityModel availability = null)
         {
             _thresholds = thresholds;
             _seasons = seasons;
@@ -48,6 +54,7 @@ namespace TheLongestYear.Donations
             _themeOverrides = themeOverrides ?? new Dictionary<string, Theme>();
             _itemSeasonPins = itemSeasonPins ?? new Dictionary<string, CoreSeason>();
             _bundleQuotas = bundleQuotas ?? new Dictionary<string, int[]>();
+            _availability = availability;
         }
 
         /// <summary>Pins used ONLY for the obtainability clamp on Percentage ramps (curated +
@@ -138,7 +145,8 @@ namespace TheLongestYear.Donations
                 BundleRequirement req;
                 try
                 {
-                    req = BundleClassifier.Classify(bundle, theme, _itemSeasonPins, _bundleQuotas);
+                    req = BundleClassifier.Classify(
+                        bundle, theme, _itemSeasonPins, _bundleQuotas, _availability);
                 }
                 catch (System.Exception ex)
                 {

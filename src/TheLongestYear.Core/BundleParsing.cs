@@ -77,4 +77,14 @@ public static class BundleParsing
         if (string.IsNullOrEmpty(itemRef)) return itemRef;
         return itemRef[0] == '(' ? itemRef : "(O)" + itemRef;
     }
+
+    /// <summary>"(O)128" to "128". Ids without a qualifier come back unchanged. The inverse of
+    /// the qualifying half of <see cref="NormalizeItemId"/>, needed wherever Core joins its
+    /// qualified ids against a raw game data table keyed by the game's unqualified ids.</summary>
+    public static string StripQualifier(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId) || itemId[0] != '(') return itemId;
+        int close = itemId.IndexOf(')');
+        return close < 0 ? itemId : itemId.Substring(close + 1);
+    }
 }

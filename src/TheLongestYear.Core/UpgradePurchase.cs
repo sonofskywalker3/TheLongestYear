@@ -24,7 +24,11 @@ public static class UpgradePurchase
         NotEnoughJp
     }
 
-    public static PurchaseResult TryPurchase(MetaState state, UpgradeDefinition? definition)
+    /// <param name="priceFactor">The run's difficulty shrine-price factor (spec 2026-08-26).
+    /// The affordability check and the deduction BOTH use it, via the same
+    /// <see cref="UpgradePricing"/> call, so what the menu shows is what the player pays.</param>
+    public static PurchaseResult TryPurchase(
+        MetaState state, UpgradeDefinition? definition, double priceFactor = 1.0)
     {
         if (definition == null)
             return PurchaseResult.NotInCatalog;
@@ -34,10 +38,11 @@ public static class UpgradePurchase
             return PurchaseResult.PrerequisiteMissing;
         if (!state.MeetsMetaRequirement(definition.MetaRequirement))
             return PurchaseResult.MetaRequirementMissing;
-        if (state.JunimoPoints < definition.Cost)
+        long cost = UpgradePricing.EffectiveCost(definition, priceFactor);
+        if (state.JunimoPoints < cost)
             return PurchaseResult.NotEnoughJp;
 
-        state.JunimoPoints -= definition.Cost;
+        state.JunimoPoints -= cost;
         state.OwnedUpgrades.Add(definition.Id);
         return PurchaseResult.Success;
     }

@@ -377,3 +377,122 @@ public class MetaStateTests
         Assert.Equal(2, restored.BoardTrimSteps);
     }
 }
+
+public class MetaStateDifficultyStampTests
+{
+    /// <summary>A save from before difficulty modifiers existed has no stamp, and must behave
+    /// exactly as it did: all-Normal, resolved live from config.</summary>
+    [Fact]
+    public void A_Legacy_Save_Resolves_Live_From_Config()
+    {
+        var meta = new MetaState();
+        var cfg = new GameplayConfig();
+
+        Assert.Null(meta.Difficulty);
+        Assert.Equal(cfg.StartingMoney, meta.EffectiveDifficulty(cfg).StartingGold);
+        Assert.True(meta.EffectiveDifficulty(cfg).Steps.IsAllNormal());
+    }
+
+    /// <summary>The whole point of stamping: a GMCM change mid-run must not reach the loop the
+    /// player is already inside.</summary>
+    [Fact]
+    public void The_Stamp_Wins_Over_A_Config_Changed_Mid_Run()
+    {
+        var cfg = new GameplayConfig();
+        var meta = new MetaState
+        {
+            Difficulty = DifficultyResolver.Resolve(new DifficultySettings(), cfg),
+        };
+
+        cfg.Difficulty.StartingGold = DifficultyStep.Extreme;
+        cfg.Difficulty.JpEarned = DifficultyStep.Extreme;
+
+        Assert.Equal(500, meta.EffectiveDifficulty(cfg).StartingGold);
+        Assert.Equal(1.0, meta.EffectiveDifficulty(cfg).JpEarnedFactor);
+    }
+
+    /// <summary>With no stamp yet, a config change DOES apply: that is the first-run case, before
+    /// any reset has stamped anything.</summary>
+    [Fact]
+    public void Without_A_Stamp_A_Config_Change_Applies()
+    {
+        var cfg = new GameplayConfig();
+        cfg.Difficulty.StartingGold = DifficultyStep.Extreme;
+
+        Assert.Equal(0, new MetaState().EffectiveDifficulty(cfg).StartingGold);
+    }
+
+    /// <summary>The stamp is nested state on a save-serialized object, so a round trip has to
+    /// bring back every resolved value AND the step names the diagnostics command reports.</summary>
+    [Fact]
+    public void The_Stamp_Survives_A_Save_Round_Trip()
+    {
+        var cfg = new GameplayConfig();
+        var original = new MetaState
+        {
+            Difficulty = DifficultyResolver.Resolve(
+                new DifficultySettings
+                {
+                    StackSize = DifficultyStep.Hard,
+                    JpEarned = DifficultyStep.Extreme,
+                    SeasonPity = DifficultyStep.Extreme,
+                },
+                cfg),
+        };
+
+        string json = JsonSerializer.Serialize(original);
+        MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
+
+        Assert.NotNull(restored.Difficulty);
+        Assert.Equal(1.5, restored.Difficulty!.StackFactor, 6);
+        Assert.Equal(0.5, restored.Difficulty.JpEarnedFactor, 6);
+        Assert.False(restored.Difficulty.Pity.Enabled);
+        Assert.Equal(DifficultyStep.Hard, restored.Difficulty.Steps.StackSize);
+        Assert.Equal(DifficultyStep.Extreme, restored.Difficulty.Steps.SeasonPity);
+    }
+}
+
+public class BoardDifficultyTests
+{
+    /// <summary>Regression, found in game 2026-08-27: re-deriving a stampless save's board against
+    /// LIVE config made the manifest check fail and demoted a healthy engine save to the legacy
+    /// read path. A save with no stamp predates difficulty modifiers, so its board is all-Normal.</summary>
+    [Fact]
+    public void A_Stampless_Save_Re_Derives_As_All_Normal_Even_When_Config_Has_Changed()
+    {
+        var cfg = new GameplayConfig();
+        cfg.Difficulty.StackSize = DifficultyStep.Hard;
+        cfg.Difficulty.RequiredSlots = DifficultyStep.Hard;
+        var meta = new MetaState();
+
+        DifficultyProfile board = meta.BoardDifficulty(cfg);
+
+        Assert.Equal(1.0, board.StackFactor);
+        Assert.Equal(0, board.RequiredSlotsDelta);
+        Assert.True(board.Steps.AsksAllNormal());
+    }
+
+    /// <summary>Economy reads still honour a config change on a stampless save, so a player who has
+    /// never reset gets the setting he just chose.</summary>
+    [Fact]
+    public void Economy_Reads_Still_Follow_Live_Config_On_A_Stampless_Save()
+    {
+        var cfg = new GameplayConfig();
+        cfg.Difficulty.StartingGold = DifficultyStep.Extreme;
+
+        Assert.Equal(0, new MetaState().EffectiveDifficulty(cfg).StartingGold);
+    }
+
+    [Fact]
+    public void A_Stamped_Save_Re_Derives_From_Its_Stamp()
+    {
+        var cfg = new GameplayConfig();
+        var meta = new MetaState
+        {
+            Difficulty = DifficultyResolver.Resolve(
+                new DifficultySettings { StackSize = DifficultyStep.Hard }, cfg),
+        };
+
+        Assert.Equal(1.5, meta.BoardDifficulty(cfg).StackFactor);
+    }
+}

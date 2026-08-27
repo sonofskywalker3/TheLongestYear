@@ -53,7 +53,8 @@ public static class ItemPoolBuilder
         IReadOnlyList<RawFruitTreeEntry> fruitTrees,
         IReadOnlyList<RawGeodeDropEntry> geodeDrops,
         BundleGenerationTuning tuning,
-        IReadOnlySet<string>? extraExcludedIds = null)
+        IReadOnlySet<string>? extraExcludedIds = null,
+        IReadOnlyDictionary<string, RawFishEntry>? fishRows = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
         // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
@@ -92,6 +93,7 @@ public static class ItemPoolBuilder
             TapperGoods = tapperGoodsPool,
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
             QualityEligibleIds = qualityEligible,
+            FishRows = fishRows ?? new Dictionary<string, RawFishEntry>(),
         };
     }
 

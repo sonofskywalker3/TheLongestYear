@@ -125,9 +125,12 @@ public sealed class BundleRequirement
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
         IReadOnlyDictionary<string, int>? ingredientQualities = null)
     {
-        if (ingredients == null || ingredients.Count <= numberOfSlots)
+        // Y >= X, not Y > X. A bundle that must be donated in FULL still has a meaningful season
+        // ramp ("this much of it by then"), and refusing X == Y here is what used to shunt such a
+        // bundle to PerItem and throw its curated quota away, leaving it ungated all year.
+        if (ingredients == null || ingredients.Count < numberOfSlots)
             throw new ArgumentException(
-                $"Percentage bundle needs Y > X; got Y={ingredients?.Count}, X={numberOfSlots}.",
+                $"Percentage bundle needs Y >= X; got Y={ingredients?.Count}, X={numberOfSlots}.",
                 nameof(ingredients));
         if (cumulativeRequiredBySeason == null || cumulativeRequiredBySeason.Count != Calendar.MonthsPerYear)
             throw new ArgumentException(

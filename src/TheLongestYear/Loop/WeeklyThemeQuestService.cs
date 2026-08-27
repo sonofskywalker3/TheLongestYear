@@ -50,7 +50,13 @@ namespace TheLongestYear.Loop
 
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
-        private readonly JpCalculator _jp;
+        private readonly GameplayConfig _config;
+        /// <summary>Built per call from the run's STAMPED difficulty profile, not cached in the
+        /// constructor: a reset re-stamps the profile mid-session, so a calculator captured at
+        /// construction time would keep paying the previous loop's rate for the rest of the
+        /// session. The object is tiny, so building one per award costs nothing worth saving.</summary>
+        private JpCalculator Jp =>
+            new JpCalculator(_config.Jp, _store.State.EffectiveDifficulty(_config).JpEarnedFactor);
         private readonly Func<int, bool[]> _slotStateForBundle;
 
         public WeeklyThemeQuestService(IMonitor monitor, MetaStore store,
@@ -58,7 +64,7 @@ namespace TheLongestYear.Loop
         {
             _monitor = monitor;
             _store = store;
-            _jp = new JpCalculator(config.Jp);
+            _config = config;
             _slotStateForBundle = slotStateForBundle ?? (_ => null);
         }
 
@@ -212,7 +218,7 @@ namespace TheLongestYear.Loop
             if (Run.LiabilitySuppressedThisWeek)
                 return;
 
-            long bonus = JpBoostHelper.Apply(_store.State, _jp.WeeklyQuestBonus(Run.WeekOfYear));
+            long bonus = JpBoostHelper.Apply(_store.State, Jp.WeeklyQuestBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
             Run.LiabilitySuppressedThisWeek = true;
             ActiveEffectsProvider.SuppressLiability();

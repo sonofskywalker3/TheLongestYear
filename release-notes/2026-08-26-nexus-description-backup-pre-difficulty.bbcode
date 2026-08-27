@@ -1,0 +1,124 @@
+[size=6][b]The Longest Year[/b][/size]
+[size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
+
+[color=yellow][b]BETA (0.15.0).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+
+[line]
+
+[size=5][b]What's New in 0.15.0[/b][/size]
+
+[b]A rewind now clears out the day you lost, too. The quest board and the Saloon's dish no longer follow you into Spring 1.[/b]
+[list]
+[*][b]The Help Wanted board starts empty again.[/b] Spring 1 was inheriting the quest from the day your run ended, gold reward included. Worse, it was rolled against your OLD progress, so it could ask for a fish or a monster the fresh farmer had no way to reach yet. A new year now opens with a clean board, exactly as a new save does.
+[*][b]The Saloon's Dish of the Day resets with the year.[/b] Gus kept serving whatever he had cooked on the day the loop ended. A real first day has no dish yet, so neither does a rewound one; the new run's first dish arrives on day 2.
+[*][b]The Traveling Cart's year-one guarantee survives a rewind.[/b] On saves created with the "year one completable" option, the first rewind used to switch that guarantee off permanently. It is re-rolled for the new run instead.
+[/list]
+
+These three came out of a one-time audit of every piece of world state the rewind was leaving behind, rather than being found one player report at a time. That whole class of leak is closed now.
+
+Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
+
+[line]
+
+[size=5][b]What it is[/b][/size]
+The Longest Year turns Stardew's first year into a roguelite loop. Each season, you must give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned, and the power your offerings have banked, can carry forward. Restore the whole Center inside one year to break the loop for good.
+
+[size=5][b]Features[/b][/size]
+[list]
+[*][b]Seasonal time-loop.[/b] Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
+[*][b]Junimo Points.[/b] Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
+[*][b]The Junimo Shrine.[/b] Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, and more.
+[*][b]Weekly themes.[/b] Each week, pick a theme that grants a bonus and a paired liability. Plan around it.
+[*][b]Carryover surfaces.[/b] A Bundle Log book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
+[*][b]A real intro.[/b] Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
+[*][b]A starved Traveling Cart.[/b] Joja has squeezed the merchant's suppliers — the cart carries [b]one item[/b] per visit until you unlock more stalls with the [b]Cart Stall[/b] upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off [font=Courier New]LimitTravelingCartStock[/font].
+[*][b]Break the loop.[/b] Finish the Center in a year to win — then keep playing or start fresh.
+[/list]
+
+[size=5][b]Requirements[/b][/size]
+[list]
+[*]Stardew Valley 1.6+ (PC)
+[*]SMAPI 4.0.0+
+[*]A [b]new save[/b] on the [b]Standard farm[/b]
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install SMAPI 4.0.0 or newer.
+[*]Unzip into your [font=Courier New]Stardew Valley/Mods[/font] folder.
+[*]Launch through SMAPI and [b]start a new game on the Standard farm[/b]. Farm-type and intro options are handled for you.
+[*][b]Community Center Bundles[/b] under [b]New → Advanced Options[/b] defaults to [b]TLY Custom[/b]: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick [b]Normal[/b] or [b]Remixed[/b] there instead — the mod keeps that board and re-rolls it the same way on every reset. ([font=Courier New]BundleSource[/font] in the config/GMCM is the default for new games and switches an existing save at its next reset.)
+[img]https://staticdelivery.nexusmods.com/mods/1303/images/47192/47192-1787355673-935410882.png[/img]
+[/list]
+
+[size=5][b]Limitations (beta)[/b][/size]
+[list]
+[*]PC only — no Android port yet.
+[*]Standard farm only.
+[*]A run can only be started from a new game (other saves load normally and are left untouched).
+[*]Intro cutscene and dialogue are a first pass.
+[*]Multiplayer untested.
+[/list]
+
+[size=5][b]Is this a bug?[/b][/size]
+
+A few things get reported often enough to be worth answering up front.
+
+[b]Demetrius never shows up about the cave, I just get a popup asking mushrooms or bats.[/b]
+That is the mod, working as intended. His scene plays once per playthrough; from the second loop on, walking into the farm cave gives you the choice directly instead of replaying a cutscene you have already watched. The mushrooms-or-bats decision is re-offered every loop because the rewind clears it.
+
+[b]The Traveling Cart only has one item.[/b]
+Also intended. Joja is squeezing the merchant's suppliers, and the Cart Stall upgrades at the Junimo Shrine add slots back. If you would rather have the full cart, turn off LimitTravelingCartStock in the config.
+
+[b]I did the Egg Hunt and now Lewis will not let me do it again today.[/b]
+Since 0.14.1, a festival's main event runs once per day. Festivals in this mod do not end your day, so you can walk out and back in - which used to restart the whole festival and let the hunt be repeated for the prize. The stalls, the shop and everyone at the festival still work on a repeat visit. A new loop is a clean slate: as far as the valley is concerned the festival has not happened yet, so you get to do it again.
+
+[b]A bundle is asking for silver or gold on something that cannot have a quality.[/b]
+That was a bug and it is fixed. Quality is only ever asked for on things the game itself gives quality to (crop harvests, rod-caught fish, spawned forage). Existing boards pick the change up at the next reset.
+
+[b]A weekly goal ticked off without me donating anything.[/b]
+Fixed in 0.14.0. Finishing a bundle that only needs some of its listed items used to mark the rest as filled, which credited goals you never handed in. A goal now waits for the real donation.
+
+Anything not on this list, please do report - the bugs tab is read.
+
+[line]
+
+[size=5][b]Tuning[/b][/size]
+Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save. [font=Courier New]BundleHoldCosts[/font] sets the JP price of keeping the same bundle board on a Fail night by consecutive holds (default 0, 50, 100, 200, 300; reshuffling resets the count). Season pity ([font=Courier New]PityThreshold[/font] 5, [font=Courier New]PityQuotaStep[/font] 0.10, [font=Courier New]PityQuotaFloor[/font] 0.50, [font=Courier New]PityTrimPerStep[/font] 2, [font=Courier New]PityCosts[/font] 0/50/100/200/300, [font=Courier New]PityEnabled[/font]) tunes when and how much the Junimos offer to ease a season you keep failing.
+
+[line]
+
+[size=5][b]Feedback wanted[/b][/size]
+[list]
+[*][b]Difficulty[/b] — are the seasonal minimums fair? Which wall hit hardest?
+[*][b]Pricing[/b] — do JP earnings and shrine costs feel balanced? What did you save for first?
+[*][b]Pacing[/b] — how many loops before it "clicked"? Did carryover make later loops feel stronger?
+[*][b]Bugs[/b] — please attach your [font=Courier New]SMAPI-latest.txt[/font] (from [font=Courier New]Stardew Valley/ErrorLogs/[/font]).
+[/list]
+
+[line]
+
+[size=5][b]Art wanted[/b][/size]
+The mod leans on vanilla sprites throughout. If anyone would enjoy making some custom book/sprite artwork (the Cookbook and Craftbook especially), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+
+[i]Banner art by [b]cwybabiesucks[/b] — thank you![/i]
+
+[line]
+
+[size=5][b]Translations[/b][/size]
+As of 0.11.60, every player-visible string in the mod lives in a JSON file ([font=Courier New]i18n/default.json[/font]) — the mod is fully translatable with no DLL edits or rebuilds. See [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/docs/TRANSLATING.md]TRANSLATING.md[/url] for how to add a language. If you translate it, let us know (Nexus DM or GitHub issue) and we'll link your work from the mod page.
+
+[line]
+
+[size=4][b]Also by this author[/b][/size]
+[list]
+[*][url=https://www.nexusmods.com/stardewvalley/mods/41869][b]Android Consolizer[/b][/url] — Full console-style controller support for Stardew Valley on Android.
+[*][url=https://www.nexusmods.com/stardewvalley/mods/47146][b]Cart Catalog[/b][/url] — Order from the Traveling Cart's daily stock; items arrive in a package on your porch the next morning.
+[*][url=https://www.nexusmods.com/stardewvalley/mods/42616][b]Nap Time[/b][/url] — Nap in bed to recover energy without ending the day. Configurable rate and wake-up cap. PC + Android.
+[/list]
+
+[line]
+[size=4][b]Source[/b][/size]
+Open source (MIT) — [url=https://github.com/sonofskywalker3/TheLongestYear][b]github.com/sonofskywalker3/TheLongestYear[/b][/url]
+
+[size=3][i]By sonofskywalker3. Built on SMAPI and HarmonyX. Stardew Valley is a trademark of ConcernedApe.[/i][/size]

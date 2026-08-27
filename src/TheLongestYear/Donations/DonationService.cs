@@ -19,7 +19,12 @@ namespace TheLongestYear.Donations
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
         private readonly GameplayConfig _config;
-        private readonly JpCalculator _jp;
+        /// <summary>Built per call from the run's STAMPED difficulty profile, not cached in the
+        /// constructor: a reset re-stamps the profile mid-session, so a calculator captured at
+        /// construction time would keep paying the previous loop's rate for the rest of the
+        /// session. The object is tiny, so building one per award costs nothing worth saving.</summary>
+        private JpCalculator Jp =>
+            new JpCalculator(_config.Jp, _store.State.EffectiveDifficulty(_config).JpEarnedFactor);
 
         /// <summary>Fires after a successful CC donation has been recorded to the ledger + JP
         /// awarded. WeeklyThemeQuestService subscribes to refresh the per-week quest's progress
@@ -32,7 +37,6 @@ namespace TheLongestYear.Donations
             _monitor = monitor;
             _store = store;
             _config = config;
-            _jp = new JpCalculator(config.Jp);
         }
 
         private RunState Run => _store.Run;
@@ -49,7 +53,7 @@ namespace TheLongestYear.Donations
                 return;
 
             Rarity rarity = ItemRarityResolver.Resolve(qualifiedItemId, _config.RarityThresholds);
-            long baseJp = _jp.PerItem(rarity, Run.WeekOfYear) * count;
+            long baseJp = Jp.PerItem(rarity, Run.WeekOfYear) * count;
 
             bool bonusApplies = IsSelectedBonusSlot(bundleIndex, ingredientIndex);
             // A real deposit is the ONLY thing that credits a weekly goal. Vanilla blanket-sets
@@ -97,7 +101,7 @@ namespace TheLongestYear.Donations
             if (!Run.TryMarkBundleAwarded(bundleIndex))
                 return;
 
-            long bonus = JpBoostHelper.Apply(_store.State, _jp.BundleBonus(Run.WeekOfYear));
+            long bonus = JpBoostHelper.Apply(_store.State, Jp.BundleBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
             _monitor.Log(
                 $"Bundle {bundleIndex} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
@@ -115,7 +119,7 @@ namespace TheLongestYear.Donations
                 return;
 
             int gold = Integration.VaultBundleMap.GoldForIndex(bundleIndex);
-            long jp = JpBoostHelper.Apply(_store.State, _jp.VaultPayment(gold));
+            long jp = JpBoostHelper.Apply(_store.State, Jp.VaultPayment(gold));
             _store.State.JunimoPoints += jp;
             _monitor.Log(
                 $"Vault bundle {bundleIndex} paid ({gold:N0}g) -> +{jp} JP (now {_store.State.JunimoPoints}).",
@@ -128,7 +132,7 @@ namespace TheLongestYear.Donations
             if (!Run.TryMarkRoomAwarded(area))
                 return;
 
-            long bonus = JpBoostHelper.Apply(_store.State, _jp.RoomBonus(Run.WeekOfYear));
+            long bonus = JpBoostHelper.Apply(_store.State, Jp.RoomBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
             _monitor.Log(
                 $"Room {area} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",

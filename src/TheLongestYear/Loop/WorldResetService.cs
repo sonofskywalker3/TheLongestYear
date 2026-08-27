@@ -48,6 +48,14 @@ namespace TheLongestYear.Loop
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
+        /// <summary>Derived item model, forwarded to the classifier when the reset regenerates a
+        /// board so its PerItem bundles gate on computed deadlines instead of the curated pin
+        /// table. Settable rather than a constructor argument because ModEntry builds this service
+        /// before the engine pools the model is derived from exist; ModEntry sets it in the same
+        /// pass, right after the pools are built. Null until then (and on any host that never sets
+        /// it), which keeps the legacy pin-table path.</summary>
+        public TheLongestYear.Core.ItemAvailabilityModel AvailabilityModel { get; set; }
+
         /// <summary>The bundle-requirement manifest the most recent <see cref="PerformReset"/> call
         /// generated for the new loop (owned-bundle engine wiring) -- RunController.FinalizeReset
         /// re-injects this into the run via RunController.ReplaceRequirements right after PerformReset
@@ -119,20 +127,77 @@ namespace TheLongestYear.Loop
             // player's Standard/Remixed choice BEFORE loadForNewGame — Game1.bundleType is a
             // non-persisted static (Nexus bug 1108030), so without this every reset wrote the
             // Standard set. Remixed re-rolls off the fresh uniqueIDForThisGame below.
+            // Difficulty modifiers (spec 2026-08-26): resolve the ten configured steps ONCE, here,
+            // and stamp the result on the save. Everything downstream -- board generation this
+            // reset, and the JP / price / cart / pity reads for the whole loop -- reads the stamp,
+            // which is what makes a GMCM change take effect at the NEXT reset rather than
+            // mid-season. Stamped before the board is built, because the board is built from it.
+            _meta.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
+            if (!_meta.Difficulty.Steps.IsAllNormal())
+                _monitor.Log(
+                    "Reset: difficulty modifiers active -- " +
+                    $"stacks {_meta.Difficulty.Steps.StackSize}, quality {_meta.Difficulty.Steps.QualityAsks}, " +
+                    $"required slots {_meta.Difficulty.Steps.RequiredSlots}, rarity {_meta.Difficulty.Steps.ItemRarity}, " +
+                    $"JP {_meta.Difficulty.Steps.JpEarned}, prices {_meta.Difficulty.Steps.ShrinePrices}, " +
+                    $"gold {_meta.Difficulty.Steps.StartingGold} ({_meta.Difficulty.StartingGold}g), " +
+                    $"cart {_meta.Difficulty.Steps.CartSlots} ({_meta.Difficulty.StartingCartSlots} slots), " +
+                    $"holds {_meta.Difficulty.Steps.HoldPrices}, pity {_meta.Difficulty.Steps.SeasonPity}.",
+                    LogLevel.Info);
+
             bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
             _meta.BundleSource = vanillaBoard
-                ? TheLongestYear.Core.BundleSourceNames.Vanilla : TheLongestYear.Core.BundleSourceNames.Engine;
+                ? TheLongestYear.Core.BundleSourceNames.LegacyVanilla : TheLongestYear.Core.BundleSourceNames.Engine;
             if (vanillaBoard)
             {
+                // One setting, three choices (Jeff 2026-08-27): Normal and Remixed each name a
+                // Game1.BundleType outright, so the config now owns the layout and a player can
+                // move between the two on an existing save. The legacy "Vanilla" value names no
+                // layout and returns null here, which deliberately leaves whatever the save
+                // already recorded in place rather than guessing and flipping a remixed save.
+                string configuredType = TheLongestYear.Core.BundleSourceNames.VanillaTypeFor(_config.BundleSource);
+                if (configuredType != null)
+                    _meta.VanillaBundleType = configuredType;
+
                 bool remixed = string.Equals(_meta.VanillaBundleType, Game1.BundleType.Remixed.ToString(), StringComparison.OrdinalIgnoreCase);
                 Game1.bundleType = remixed ? Game1.BundleType.Remixed : Game1.BundleType.Default;
                 if (string.IsNullOrEmpty(_meta.VanillaBundleType))
                     _meta.VanillaBundleType = Game1.bundleType.ToString();
-                _monitor.Log($"Reset: BundleSource=Vanilla — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
+                _monitor.Log($"Reset: bundle source {_config.BundleSource} — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
             }
             else
             {
                 Game1.bundleType = Game1.BundleType.Default;
+            }
+
+            // Keep-bundles hold on a VANILLA board (Jeff 2026-08-27: all three sources can hold).
+            // A vanilla reset regenerates through loadForNewGame off a freshly re-seeded
+            // uniqueIDForThisGame, so there is no seed to pin the way the engine path pins
+            // BundleSeedLoop. Snapshot the live board HERE, before loadForNewGame wipes it, and
+            // write it back afterwards: that reproduces the held board exactly, including any
+            // difficulty adjustments already baked into it.
+            //
+            // Read the flag before BundleHold.ConsumeChoiceAtReset clears it further down. No new
+            // saved field is needed: the board is in the save until this reset replaces it, so a
+            // quit between the Fail-night choice and the reset still snapshots the right board.
+            Dictionary<string, string> heldVanillaBoard = null;
+            if (vanillaBoard && _meta.HoldChoiceMadeForReset && _meta.ConsecutiveHolds > 0)
+            {
+                var live = Game1.netWorldState.Value.BundleData;
+                if (live != null && live.Count > 0)
+                {
+                    heldVanillaBoard = new Dictionary<string, string>(live);
+                    _monitor.Log(
+                        $"Reset: holding the vanilla board ({heldVanillaBoard.Count} bundles snapshotted; " +
+                        $"consecutive holds {_meta.ConsecutiveHolds}).",
+                        LogLevel.Info);
+                }
+                else
+                {
+                    _monitor.Log(
+                        "Reset: asked to hold the vanilla board but there was no bundle data to snapshot; " +
+                        "it will regenerate instead.",
+                        LogLevel.Warn);
+                }
             }
 
             string oldSavePath = Constants.CurrentSavePath;
@@ -375,7 +440,10 @@ namespace TheLongestYear.Loop
 
             // 4. Build the reset baseline + apply Farmer-side state (gold, items, tool
             //    tiers, skill levels, kitchen flag).
-            RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _config.StartingMoney);
+            // Starting gold comes from the STAMP resolved at the top of this reset, not straight
+            // from config: the step scales config.StartingMoney, so a hand-tuned baseline is
+            // still honoured and a GMCM change only lands on the next loop.
+            RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _meta.Difficulty.StartingGold);
             _farmerReset.Apply(Game1.player, baseline,
                 _meta.CookbookRecipes,
                 _meta.CraftbookRecipes,
@@ -502,12 +570,30 @@ namespace TheLongestYear.Loop
                 // no manifest marker; the post-reset reload classifies it (read-and-classify).
                 _meta.BundlesGeneratedForReset = -1;
                 LastGeneratedRequirements = null;
-                _monitor.Log("Reset: BundleSource=Vanilla — keeping the game's own board (no engine write).", LogLevel.Info);
+                if (heldVanillaBoard != null)
+                {
+                    // The held board already carries whatever difficulty adjustments it was built
+                    // with, so the ask-side pass must NOT run over it again and compound them.
+                    Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(heldVanillaBoard));
+                    _monitor.Log(
+                        $"Reset: restored the held vanilla board ({heldVanillaBoard.Count} bundles); no re-roll, no difficulty re-pass.",
+                        LogLevel.Info);
+                }
+                else
+                {
+                    _monitor.Log("Reset: vanilla board — keeping the game's own board (no engine write).", LogLevel.Info);
+                    ApplyVanillaBoardDifficulty();
+                }
             }
             else
             {
-                var engine = new BundleEngine(_monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade));
+                // Stack size and quality asks arrive as a SCALED TUNING BLOCK rather than as
+                // engine changes: BundleSlotFiller already reads every stack number and quality
+                // chance off this object, so scaling it applies both modifiers with no edit to
+                // generation. Scale returns the same instance at Normal.
+                var difficultyTuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, _meta.Difficulty);
+                var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade), _meta.Difficulty);
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
@@ -521,7 +607,8 @@ namespace TheLongestYear.Loop
                     $"pity trim {(trim == null ? "none" : $"{trim.Season} x{trim.Units}")}, pity ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps")}).",
                     LogLevel.Info);
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
-                LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas, ease);
+                LastGeneratedRequirements = engine.BuildRequirements(
+                    generatedSet, _itemSeasonPins, _bundleQuotas, ease, AvailabilityModel);
             }
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
@@ -1017,6 +1104,70 @@ namespace TheLongestYear.Loop
             Game1.player.questLog.Add(q);
 
             _monitor.Log($"WorldResetService: added quest intro '{title}' (id {id}).", LogLevel.Trace);
+        }
+
+        /// <summary>Gives a vanilla-generated board the three ask-side modifiers it can honour:
+        /// stack size, quality asks, and required slots. Never changes which item a slot asks for,
+        /// so a Standard or Remixed board keeps its identity and only its numbers move.
+        ///
+        /// Skipped entirely when those three are all Normal, which keeps the default Vanilla path
+        /// exactly as it was: zero writes, and no extra log line.
+        ///
+        /// Seeded from the same basis as the Engine path, so a replayed reset reproduces the same
+        /// board and the anti-save-scum guarantee still holds.</summary>
+        private void ApplyVanillaBoardDifficulty()
+        {
+            TheLongestYear.Core.DifficultyProfile difficulty = _meta.Difficulty;
+            if (difficulty == null || difficulty.Steps.AsksAllNormal())
+                return;
+
+            Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
+            if (live == null || live.Count == 0)
+            {
+                _monitor.Log(
+                    "Reset: Vanilla difficulty pass skipped — no bundle data to adjust.",
+                    LogLevel.Warn);
+                return;
+            }
+
+            // Quality eligibility is derived from the game's own data (crop harvests, rod-caught
+            // non-jelly fish, spawned forage), and it is what stops a gold star landing on Fiber
+            // or on algae (Nexus 1122358). Only built when the quality modifier is actually above
+            // Normal, because deriving the pools reads several data assets.
+            IReadOnlySet<string> qualityEligibleIds = null;
+            if (difficulty.QualityFactor > 1.0)
+            {
+                try
+                {
+                    qualityEligibleIds = new GameDataPools(_monitor)
+                        .Build(_config.PoolTuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade))
+                        .QualityEligibleIds;
+                }
+                catch (Exception ex)
+                {
+                    // Without the derived set the built-in never-quality list still guards the
+                    // known-impossible items, so degrade rather than abandon the reset.
+                    _monitor.Log(
+                        $"Reset: could not derive quality eligibility for the Vanilla difficulty pass ({ex.Message}); " +
+                        "falling back to the built-in ineligible list only.",
+                        LogLevel.Warn);
+                }
+            }
+
+            int seed = BundleEngineSeed.For(
+                unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
+
+            IDictionary<string, string> adjusted = TheLongestYear.Core.VanillaBoardDifficultyPass.Apply(
+                new Dictionary<string, string>(live), difficulty, _config.PoolTuning, seed, qualityEligibleIds);
+
+            Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(adjusted));
+
+            _monitor.Log(
+                $"Reset: Vanilla board adjusted for difficulty ({adjusted.Count} bundles; " +
+                $"stacks {difficulty.Steps.StackSize}, quality {difficulty.Steps.QualityAsks}, " +
+                $"required slots {difficulty.Steps.RequiredSlots}; seed {seed}). " +
+                "Item ids are unchanged.",
+                LogLevel.Info);
         }
 
     }

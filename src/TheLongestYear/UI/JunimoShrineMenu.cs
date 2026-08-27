@@ -196,7 +196,7 @@ namespace TheLongestYear.UI
                     UpgradeDefinition def = rows[i].Def;
                     string footer = rows[i].Owned
                         ? Strings.Get("menu.shrine.owned")
-                        : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = def.Cost.ToString() });
+                        : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = _purchases.EffectiveCost(def).ToString() });
                     _hoverText = Strings.Get("menu.shrine.hover", new Dictionary<string, string>
                     {
                         ["name"] = def.DisplayName,
@@ -390,7 +390,8 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            bool affordable = _store.State.JunimoPoints >= def.Cost;
+            long cost = _purchases.EffectiveCost(def);
+            bool affordable = _store.State.JunimoPoints >= cost;
 
             Color tint = affordable ? Color.White : Color.White * 0.55f;
 
@@ -400,7 +401,7 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, def.DisplayName, Game1.dialogueFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), Game1.textColor);
 
-            string statusLine = Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = def.Cost.ToString() })
+            string statusLine = Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = cost.ToString() })
                 + (!affordable ? Strings.Get("menu.shrine.insufficient") : "");
             Utility.drawTextWithShadow(b, statusLine, Game1.smallFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 56),
