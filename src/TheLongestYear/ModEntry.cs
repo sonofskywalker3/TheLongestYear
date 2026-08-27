@@ -2258,7 +2258,35 @@ namespace TheLongestYear
                 $"  [keeps] whichFarm={Game1.whichFarm} shuffleMineChests={ws.ShuffleMineChests} " +
                 $"farmhandData={ws.farmhandData.Length} locationsWithBuildings={ws.LocationsWithBuildings.Count}",
                 LogLevel.Info);
+
+            // Weather: the live Game1 flags, netWorldState's own copy (synced by UpdateFromGame1
+            // mid-reset), and the scheduler's pick for today/tomorrow so the three can be compared.
+            var defaultWeather = ws.GetWeatherForLocation(NetStateDefaultWeatherContext);
+            var tomorrow = new WorldDate(Game1.Date);
+            tomorrow.TotalDays++;
+            string scheduledToday = WeatherScheduleWriterPatch.ScheduledFor(Game1.Date) ?? "(vanilla)";
+            string scheduledTomorrow = WeatherScheduleWriterPatch.ScheduledFor(tomorrow) ?? "(vanilla)";
+            this.Monitor.Log(
+                $"  [weather] live: raining={Game1.isRaining} lightning={Game1.isLightning} snowing={Game1.isSnowing} " +
+                $"debris={Game1.isDebrisWeather} greenRain={Game1.isGreenRain}; " +
+                $"netWorldState Default: today={defaultWeather.Weather} tomorrow={defaultWeather.WeatherForTomorrow}; " +
+                $"Game1.weatherForTomorrow={Game1.weatherForTomorrow}; " +
+                $"schedule: today={scheduledToday} tomorrow={scheduledTomorrow}",
+                LogLevel.Info);
+
+            // `tly_netstate army1 <n>`: arm the Traveling Cart year-1 guarantee window in memory so
+            // a reset can be seen re-rolling it (a save that never enabled YearOneCompletable sits
+            // at -1 and the reset leaves it alone, so there is nothing to watch otherwise).
+            if (args.Length >= 2 && string.Equals(args[0], NetStateArmY1Arg, StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(args[1], out int visits))
+            {
+                ws.VisitsUntilY1Guarantee = visits;
+                this.Monitor.Log($"  [row 16] VisitsUntilY1Guarantee armed at {visits} (in memory; a reset re-rolls it).", LogLevel.Info);
+            }
         }
+
+        private const string NetStateDefaultWeatherContext = "Default";
+        private const string NetStateArmY1Arg = "army1";
 
         private void CmdCatalog(string command, string[] args)
         {
