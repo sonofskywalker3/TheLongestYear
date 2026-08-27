@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace TheLongestYear.Core;
@@ -94,11 +95,17 @@ public static class BundleClassifier
             && bundleQuotas.TryGetValue(name, out int[]? quota) && quota != null)
         {
             // numberOfSlots = X (the parsed bundle's slot count), ingredients = Y (deduped list).
-            // CreatePercentage validates X < Y and Y entries within [0..X].
+            // CreatePercentage validates X < Y and Y entries within [0..X] -- it THROWS on a quota
+            // entry above X, which would take the whole reset down with it. A configured quota can
+            // legitimately exceed this board's X in two ways: the difficulty "required slots"
+            // modifier at Easy lowers X by one (spec 2026-08-26), and SVE-edited save data can
+            // reshape a bundle. Either way an unsatisfiable quota bricks the run, so clamp rather
+            // than trust the table.
+            int[] clampedQuota = quota.Select(n => Math.Clamp(n, 0, parsed.NumberOfSlots)).ToArray();
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
-                cumulativeRequiredBySeason: quota,
+                cumulativeRequiredBySeason: clampedQuota,
                 ingredientStacks: ingredientStacks,
                 ingredientQualities: ingredientQualities);
         }
