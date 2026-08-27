@@ -47,7 +47,7 @@ derived-availability gates), so the fixed set of weekly themes and their bonus/l
 item domains a re-rolled board can now demand that no theme touches, and whether new themes are
 new enum members with new Harmony effects or a data-driven reshape. Not scoped, not planned.
 
-### BUILT 2026-08-27 (0.16.9 to 0.16.12, not released): keep power books across a reset
+### ✅ RELEASED 0.16.17 (2026-08-27; built 0.16.9 to 0.16.12): keep power books across a reset
 
 Brainstormed with Jeff the same day. Ruling: **per power, bought at the shrine**, not one big
 switch. Nineteen `keep_book_<slug>` Carryover rows reach-gated on `book:<Book_Id>` (the row only
@@ -113,12 +113,10 @@ the throwaway save, `tly_reset`, and check:
    `UpdateFromGame1()` call mid-reset that touches shared state.
 4. Spring 1 weather still matches the new run's schedule (same call syncs weather).
 
-Also queued, needing Jeff first: **the difficulty setting** (top ask from emmalution's stream). Jeff
-is brainstorming it tomorrow - do not design it unilaterally. The GMCM "Features" section added in
-0.14.2 is where it would live.
+(The difficulty setting queued here shipped as 0.16.0 on 2026-08-27.)
 
 
-### 0.14.2 (built, NOT released) - Shop Discount discounts the price, not the payment
+### ✅ RELEASED 0.14.2 (2026-08-26) - Shop Discount discounts the price, not the payment
 
 Jeff: "why doesn't the price reduction jp buy change the posted item prices?" Because it patched
 `ShopMenu.chargePlayer`, the gold-deduction chokepoint, so the shelf kept vanilla's number - and
@@ -268,7 +266,7 @@ proving it in-game needs an n-of-m bundle finished with other items, which is a 
 
 ### Triage of the 2026-08-26 YouTube + Nexus findings (code-checked, no game run)
 
-**1. Weekly theme goals tick for items you never donated - REAL, needs a ruling.**
+**1. Weekly theme goals tick for items you never donated - REAL, SHIPPED in 0.14.0 (option a: a goal needs a real donation).**
 @ggrace67 is right. `WeeklyThemeQuestService.IsSlotComplete` reads vanilla's per-ingredient bools
 (`Game1.netWorldState.Value.Bundles[bundleIndex][ingredientIndex]`, via `RunController.SlotStateForBundle`).
 The service's doc comment assumes "vanilla only marks a slot complete once the full required stack and
@@ -291,7 +289,7 @@ the mushrooms-vs-bats choice is re-offered by a one-line question on cave entry 
 clears `caveChoice`. Nothing to fix. It is not written down anywhere a player would find it, which is why
 it reads as a bug: worth a line in the Nexus description / README FAQ.
 
-**3. rose1729's missing pet offer - root cause found, needs a ruling.**
+**3. rose1729's missing pet offer - root cause found, SHIPPED in 0.14.0.**
 Both vanilla doors to a new pet are shut after a reset, which is why loops 2 and 3 never offered one:
   - The pet-arrival cutscene: `FarmerReset` clears `eventsSeen` and then re-seeds it from the cross-loop
     "seen ever" set, marking every non-replayable id as already seen. Only the furnace teach (992553) and
@@ -314,9 +312,9 @@ defect only because the sweep was reading comments looking for defects. Filed he
 not the investigation: ask "does this describe something broken?" before it goes on a docket.
 
 
-### CRITICAL (2026-08-26 sweep) - Nexus bug 1123181: the JP perk screen never opens on reset
+### ✅ RELEASED 0.14.0 (2026-08-26) - Nexus bug 1123181: the JP perk screen never opens on reset
 
-**ROOT CAUSE FOUND + FIXED IN CODE (0.13.1, not smoked yet, not released).**
+**Fixed in code as 0.13.1, shipped in 0.14.0 on 2026-08-26 (see STATUS.md). Entry kept for the root cause.**
 
 Vanilla runs `GameLocation.answerDialogue` (which calls our afterQuestion callback) and only *then*
 `tryOutro()`s the DialogueBox (verified in the decompile: DialogueBox.receiveLeftClick line 528 calls
@@ -406,7 +404,9 @@ Jeff commented on the Spring video as @sonofskywalker3 asking for feedback (26 A
   toolbar instead of tapping per slot. **Nap Time / Cart Catalog**: quiet.
 
 
-### NEW (2026-08-25 12:41, Nexus post, rose1729): no pet offer after declining Keep Pet
+### ✅ RELEASED 0.14.0 (2026-08-26) - rose1729: no pet offer after declining Keep Pet
+
+Shipped in 0.14.0 ("no way to get another pet after declining Keep Pet", STATUS.md). Original report:
 
 "I didn't keep my pet at the end of my first loop. I thought this would mean I get offered a new pet
 with 0 hearts in future loops, but I haven't been offered the pet at all in my 2nd/3rd loops. Is this
@@ -1345,7 +1345,7 @@ the Lewis day-1 intro cutscene renders a **black bar along the right side of the
 (xsansara's "black block" report; Jeff sees it too). Whatever causes the current intro's
 viewport/letterboxing to come up short, the rebuilt 1.0 intro should avoid the same approach.
 
-### Villager first-contact dialogue after a rewind (fixed in 0.16.8, needs live smoke)
+### ✅ RELEASED 0.16.17 - Villager first-contact dialogue after a rewind (fixed in 0.16.8; live-smoked 2026-08-27 alongside deja-vu, Introduction lines played for Pierre and George)
 
 Emmalution (stream, 2026-08-27): villagers met for the "first" time in a new loop skip their
 Introduction line and use their ordinary daily dialogue. Root cause: vanilla keys the Introduction
@@ -1357,7 +1357,7 @@ systems write the same NPC dialogue slot.
 
 ### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
 
-**2026-08-27: BUILT (0.16.13 to 0.16.17, not released) and live-smoked** (table in STATUS.md;
+**2026-08-27: BUILT (0.16.13 to 0.16.17), live-smoked, and RELEASED in 0.16.17** (table in STATUS.md;
 spec `docs/superpowers/specs/2026-08-27-deja-vu-dialogue-design.md`, lines approved by Jeff in
 `...-deja-vu-dialogue-lines.md`). Jeff's
 rulings: nightly familiarity rollup (talk +1, gift +3, heart event +10) into
@@ -1645,7 +1645,7 @@ JP cost ballpark (relative to bus repair = 100 JP):
 Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
-### ▶ NEXT SESSION: smoke the difficulty modifiers in game
+### ✅ RELEASED 0.16.0 (2026-08-27) - difficulty modifiers (the five-step smoke below was never written up as done; the GMCM Difficulty screen is on the mod page)
 
 Built overnight 2026-08-26/27 on `feat/difficulty-modifiers` (18 commits, local only, 994 tests
 passing). Spec `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md`, plan
