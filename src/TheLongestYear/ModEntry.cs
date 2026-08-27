@@ -290,6 +290,19 @@ namespace TheLongestYear
                 "Clear MetaState.HasSeenIntro + per-run intro mail flags so the day-1 Lewis+Junimo " +
                 "intro chain re-fires on the next Spring 1. Pair with tly_reset to test immediately.",
                 this.CmdReplayIntro);
+            helper.ConsoleCommands.Add("tly_addpet",
+                "Debug: add a pet to the Farm, or list every pet with its location and bowl. " +
+                "Usage: tly_addpet <Cat|Dog> [name] [breed] | tly_addpet check",
+                this.CmdAddPet);
+            helper.ConsoleCommands.Add("tly_fixbridge",
+                "Debug: mark the beach bridge repaired (Beach.bridgeFixed), or report the flag + the " +
+                "bridge tiles so a reset can be checked to un-fix it. Usage: tly_fixbridge | tly_fixbridge check",
+                this.CmdFixBridge);
+            helper.ConsoleCommands.Add("tly_stashrod",
+                "Debug: drop an Iridium Rod with bait, a spinner and an Auto-Hook enchantment into the " +
+                "Junimo Stash chest, or print every stashed tool's slots + enchantments. " +
+                "Usage: tly_stashrod | tly_stashrod check",
+                this.CmdStashRod);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -1006,6 +1019,91 @@ namespace TheLongestYear
             chest.ShowMenu();
         }
 
+        /// <summary>Debug: add a pet (or list them). Smoke scaffolding for Keep Pet with several
+        /// pets (Nexus bug 1122901): the throwaway save has none, and vanilla adoption needs Marnie.</summary>
+        private void CmdAddPet(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length == 0 || args[0] == "check")
+            {
+                foreach (StardewValley.Characters.Pet pet in Utility.getAllPets())
+                {
+                    var bowl = pet.GetPetBowl();
+                    this.Monitor.Log(
+                        $"tly_addpet: '{pet.Name}' ({pet.petType.Value}) in {pet.currentLocation?.Name ?? "?"} at " +
+                        $"({pet.Tile.X},{pet.Tile.Y}), friendship {pet.friendshipTowardFarmer.Value}, " +
+                        $"bowl={(bowl == null ? "NONE" : $"({bowl.tileX.Value},{bowl.tileY.Value})")}.", LogLevel.Info);
+                }
+                this.Monitor.Log($"tly_addpet: {Utility.getAllPets().Count} pet(s), " +
+                    $"{Game1.getFarm().buildings.OfType<StardewValley.Buildings.PetBowl>().Count()} bowl(s) on the Farm.", LogLevel.Info);
+                return;
+            }
+            string type = args[0];
+            string name = args.Length > 1 ? args[1] : type;
+            string breed = args.Length > 2 ? args[2] : "0";
+            var farm = Game1.getFarm();
+            var added = new StardewValley.Characters.Pet(54, 8, breed, type) { Name = name, displayName = name };
+            farm.characters.Add(added);
+            this.Monitor.Log($"tly_addpet: added {type} '{name}' (breed {breed}) on the Farm.", LogLevel.Info);
+        }
+
+        /// <summary>Debug: repair the beach bridge in place, or report its state. Smoke scaffolding
+        /// for Nexus bug 1124076 (the rewind must put the broken bridge back).</summary>
+        private void CmdFixBridge(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.getLocationFromName("Beach") is not StardewValley.Locations.Beach beach)
+            {
+                this.Monitor.Log("tly_fixbridge: no Beach location loaded.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length == 0)
+            {
+                beach.bridgeFixed.Value = true;   // fieldChangeEvent runs Beach.fixBridge on the live map
+                this.Monitor.Log("tly_fixbridge: bridgeFixed set; vanilla edited the Beach map in place.", LogLevel.Info);
+            }
+            int tile = beach.getTileIndexAt(58, 13, "Buildings");
+            bool hasAction = beach.doesTileHaveProperty(58, 13, "Action", "Buildings") != null;
+            this.Monitor.Log(
+                $"tly_fixbridge: bridgeFixed={beach.bridgeFixed.Value}, Buildings tile (58,13)={tile} " +
+                $"(284 = broken, 301 = repaired), Action property {(hasAction ? "present" : "MISSING")}, " +
+                $"walkable={beach.isTilePassable(new Microsoft.Xna.Framework.Vector2(59, 13))}.", LogLevel.Info);
+        }
+
+        /// <summary>Debug: put a fully loaded rod in the stash, or list stashed tools' state. Smoke
+        /// scaffolding for the 0.16.1/0.16.2 stash fixes.</summary>
+        private void CmdStashRod(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var chest = _stashService?.FindStashChest();
+            if (chest == null)
+            {
+                this.Monitor.Log("tly_stashrod: no stash chest found. Own stash_1 and reset/reload first.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length > 0 && args[0] == "check")
+            {
+                foreach (Item item in chest.Items)
+                {
+                    if (item is not Tool tool) continue;
+                    string slots = string.Join(", ", tool.attachments.Select((a, i) => $"[{i}]={(a == null ? "empty" : $"{a.QualifiedItemId} x{a.Stack}")}"));
+                    string ench = string.Join(", ", tool.enchantments.Select(e => $"{e.GetType().Name} L{e.GetLevel()}"));
+                    this.Monitor.Log($"tly_stashrod: {tool.QualifiedItemId} slots {slots}; enchantments [{ench}].", LogLevel.Info);
+                }
+                this.Monitor.Log($"tly_stashrod: {chest.Items.Count(i => i != null)} item(s) in the stash chest.", LogLevel.Info);
+                return;
+            }
+            var rod = ItemRegistry.Create("(T)IridiumRod") as Tool;
+            if (rod == null) { this.Monitor.Log("tly_stashrod: could not create (T)IridiumRod.", LogLevel.Warn); return; }
+            if (rod.attachments.Count > 0) rod.attachments[0] = ItemRegistry.Create<StardewValley.Object>("(O)685", 20);
+            if (rod.attachments.Count > 1) rod.attachments[1] = ItemRegistry.Create<StardewValley.Object>("(O)686");
+            var hook = new StardewValley.Enchantments.AutoHookEnchantment();
+            rod.enchantments.Add(hook);
+            hook.ApplyTo(rod);
+            chest.Items.Add(rod);
+            this.Monitor.Log($"tly_stashrod: stashed an Iridium Rod with {rod.attachments.Count} slot(s) filled and Auto-Hook.", LogLevel.Info);
+        }
+
         private void CmdStashClear(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -1599,6 +1697,9 @@ namespace TheLongestYear
                 case "tly_stashclear": this.CmdStashClear(command, args); break;
                 case "tly_wipemeta":   this.CmdWipeMeta(command, args); break;
                 case "tly_replayintro": this.CmdReplayIntro(command, args); break;
+                case "tly_addpet":    this.CmdAddPet(command, args); break;
+                case "tly_fixbridge": this.CmdFixBridge(command, args); break;
+                case "tly_stashrod":  this.CmdStashRod(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
