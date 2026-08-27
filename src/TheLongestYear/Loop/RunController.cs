@@ -23,7 +23,12 @@ namespace TheLongestYear.Loop
         private readonly GameplayConfig _config;
         private readonly WorldResetService _reset;
         private readonly RunManager _runManager = new RunManager(new GateEvaluator());
-        private readonly JpCalculator _jp;
+        /// <summary>Built per call from the run's STAMPED difficulty profile, not cached in the
+        /// constructor: a reset re-stamps the profile mid-session, so a calculator captured at
+        /// construction time would keep paying the previous loop's rate for the rest of the
+        /// session. The object is tiny, so building one per award costs nothing worth saving.</summary>
+        private JpCalculator Jp =>
+            new JpCalculator(_config.Jp, _store.State.EffectiveDifficulty(_config).JpEarnedFactor);
         private System.Collections.Generic.IReadOnlyList<CcItem> _catalog;
         // Not readonly: ReplaceRequirements (owned-bundle engine wiring) swaps this after a
         // reset regenerates the manifest -- see that method's doc comment.
@@ -74,7 +79,6 @@ namespace TheLongestYear.Loop
             _store = store;
             _config = config;
             _reset = reset;
-            _jp = new JpCalculator(config.Jp);
             _catalog = (catalog != null && catalog.Count > 0) ? catalog : CcItemCatalog.Items;
             _requirements = requirements ?? new System.Collections.Generic.List<BundleRequirement>();
         }
@@ -849,7 +853,7 @@ namespace TheLongestYear.Loop
                     SeasonPity.RecordPass(_store.State, Run.Season, _config);   // season pity: passed gates fall back to the threshold
                     // Season-checkpoint award (spec 2026-07-14 economy Change 2): pays at the ENTERING
                     // season's multiplier so progressing always out-earns re-farming spring.
-                    long checkpointJp = JpBoostHelper.Apply(_store.State, _jp.CheckpointBonus(Run.WeekOfYear + 1));
+                    long checkpointJp = JpBoostHelper.Apply(_store.State, Jp.CheckpointBonus(Run.WeekOfYear + 1));
                     _store.State.JunimoPoints += checkpointJp;
                     _monitor.Log(
                         $"Season checkpoint passed -> +{checkpointJp} JP (now {_store.State.JunimoPoints}).",
