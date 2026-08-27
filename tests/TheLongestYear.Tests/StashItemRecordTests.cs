@@ -113,3 +113,41 @@ public class StashItemRecordAttachmentTests
         Assert.Null(restored.Attachments);
     }
 }
+
+public class StashItemRecordEnchantmentTests
+{
+    [Fact]
+    public void Enchantments_default_to_null()
+    {
+        var r = new StashItemRecord("(T)IridiumRod", 1, 0);
+        Assert.Null(r.Enchantments);
+    }
+
+    [Fact]
+    public void Enchanted_rod_round_trips_through_json()
+    {
+        var original = new StashItemRecord("(T)IridiumRod", 1, 0,
+            Enchantments: new System.Collections.Generic.List<StashEnchantmentRecord>
+            {
+                new("StardewValley.Enchantments.AutoHookEnchantment", 1),
+                new("StardewValley.Enchantments.MasterEnchantment", 1),
+            });
+
+        string json = JsonSerializer.Serialize(original);
+        StashItemRecord restored = JsonSerializer.Deserialize<StashItemRecord>(json)!;
+
+        Assert.NotNull(restored.Enchantments);
+        Assert.Equal(2, restored.Enchantments!.Count);
+        Assert.Equal("StardewValley.Enchantments.AutoHookEnchantment", restored.Enchantments[0].Type);
+        Assert.Equal(1, restored.Enchantments[1].Level);
+    }
+
+    [Fact]
+    public void Legacy_json_without_enchantments_still_loads()
+    {
+        const string legacyJson = "{\"ItemId\":\"(T)IridiumRod\",\"Quantity\":1,\"Quality\":0,\"Attachments\":[null,null]}";
+        StashItemRecord restored = JsonSerializer.Deserialize<StashItemRecord>(legacyJson)!;
+        Assert.Null(restored.Enchantments);
+        Assert.Equal(2, restored.Attachments!.Count);
+    }
+}

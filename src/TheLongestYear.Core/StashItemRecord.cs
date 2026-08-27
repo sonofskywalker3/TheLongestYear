@@ -36,6 +36,8 @@ namespace TheLongestYear.Core;
 /// source's price in here); null for items whose price is purely data-driven.</param>
 /// <param name="Attachments">A tool's attachment slots in order (bait, tackle...), null entries
 /// for empty slots; null when the item has no slots.</param>
+/// <param name="Enchantments">A tool's enchantments/forges in order; null when it has none or the
+/// record predates the field.</param>
 public sealed record StashItemRecord(
     string ItemId,
     int Quantity,
@@ -43,4 +45,5 @@ public sealed record StashItemRecord(
     string? PreservedParentSheetIndex = null,
     int? Preserve = null,
     int? Price = null,
-    List<StashItemRecord?>? Attachments = null);
+    List<StashItemRecord?>? Attachments = null,
+    List<StashEnchantmentRecord>? Enchantments = null);
