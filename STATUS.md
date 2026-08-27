@@ -1,10 +1,40 @@
-# The Longest Year — Status
+# The Longest Year - Status
 
-**Last updated:** 2026-08-27 overnight (difficulty modifiers built on a branch)
-**Branch:** `feat/difficulty-modifiers`, 18 commits, **LOCAL ONLY (not pushed, not merged)**
-**Tests:** 994 passing, 0 failing (was 865 at the branch point)
+**Last updated:** 2026-08-27 (derived item availability model, Phase 1, built and smoked)
+**Branch:** `feat/difficulty-modifiers`, 52 commits ahead of `master`, **LOCAL ONLY (not pushed, not merged)**
+**Tests:** 1113 passing, 0 failing
 **Build:** clean
 **Last public release:** 0.15.0
+
+## THE PERITEM GATE BASELINE HAS SHIFTED. The next release notes must say so.
+
+Bundles that require every item they show used to take their per-item due dates from a
+40-entry hand table (`GameplayConfig.DefaultItemSeasonPins`). Anything outside it had no due date
+and applied no pressure until the Winter win check. Because the engine re-rolls the six fish
+bundles from a 52-item pool and the two metals bundles from an 11-item pool, most re-rolled boards
+were partly or wholly ungated.
+
+Phase 1 replaces that with a model the engine derives from the game's own data: per item an
+earliest-possible season and an effort score; per bundle, deadlines spread across the four
+checkpoints by effort and clamped upward to each item's floor so an impossible gate cannot be
+expressed.
+
+**This makes the game harder at every difficulty, deliberately** (Jeff's ruling, 2026-08-27).
+`DifficultyResolverTests.Normal_Resolves_To_Todays_Config_Values` still passes because it asserts
+difficulty dial values, not gate outcomes, but "Normal equals the 0.12 shipping balance" is no
+longer true of season gates.
+
+Measured on three live boards, two configurations including a full Hard sweep: no impossible
+gates, 0 never-gated bundles, 66 ids derived, 0 curated pins rejected. Numbers and per-bundle
+detail are in the plan's Results section.
+
+- Spec: `docs/superpowers/specs/2026-08-27-derived-item-availability-design.md`
+- Plan + results: `docs/superpowers/plans/2026-08-27-derived-item-availability-phase-1.md`
+
+**Phases 2 to 4 are not built.** Orchard, Tapper's, Forest, Spirit's Eve, Home Cook's and Wild
+Medicine still wait for Winter, because their ingredients come from domains Phase 1 does not model
+(crops, forage, monster drops, artisan goods, cooking, artifacts, books, saplings, geode minerals,
+tapper goods). Each later phase needs its own plan.
 
 ## NEXT SESSION: difficulty modifiers need an in-game smoke, then a merge decision
 
