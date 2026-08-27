@@ -122,4 +122,24 @@ public class KeepShopFilterTests
 
         Assert.Contains("early_horse", leaves);
     }
+
+    [Fact]
+    public void Book_keep_appears_only_once_the_book_was_read_this_loop()
+    {
+        var meta = new MetaState();
+        var reached = new Dictionary<string, int>();
+        List<string> Buyable() => KeepShopFilter
+            .BuyableInCategory(UpgradeCategory.Carryover, meta, Reach(reached))
+            .Select(d => d.Id).ToList();
+
+        Assert.DoesNotContain("keep_book_speed", Buyable());
+        reached["book:Book_Speed"] = 1;
+        Assert.Contains("keep_book_speed", Buyable());
+        Assert.DoesNotContain("keep_book_speed2", Buyable());   // chained on pt. 1
+
+        meta.OwnedUpgrades.Add("keep_book_speed");
+        reached["book:Book_Speed2"] = 1;
+        Assert.Contains("keep_book_speed2", Buyable());
+        Assert.DoesNotContain("keep_book_speed", Buyable());    // owned rows are not buyable
+    }
 }

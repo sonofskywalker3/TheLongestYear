@@ -30,8 +30,9 @@ public sealed class RunReachRequirement
             return null;
         string[] parts = raw.Split(':');
         // Keyed-flag form for metrics whose value is a name, not a number (the evaluator
-        // supplies 0/1): scythe:golden, building:Coop, building:Big Coop, ...
-        if (parts.Length == 2 && parts[1].Length > 0 && (parts[0] == "scythe" || parts[0] == "building"))
+        // supplies 0/1): scythe:golden, building:Coop, building:Big Coop, book:Book_Speed, ...
+        if (parts.Length == 2 && parts[1].Length > 0
+            && (parts[0] == "scythe" || parts[0] == "building" || parts[0] == BookKeepTable.ReachMetric))
             return new RunReachRequirement(parts[0], parts[1], 1);
         // 2-part numeric: metric:threshold (rod / backpack / mine / mastery).
         if (parts.Length == 2 && parts[0].Length > 0 && int.TryParse(parts[1], out int t2))
