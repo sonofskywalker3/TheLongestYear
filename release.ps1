@@ -5,21 +5,24 @@
 #   2. Pushes commits, creates the GitHub release (tag vX.Y.Z) with the zip.
 #      -> .github/workflows/publish-nexus.yml then auto-uploads the zip to Nexus
 #         (mod 47192) and archives the previous file. Zero-touch.
-#   3. (RETIRED 2026-08-25) The Nexus version field + description used to be synced
-#      by a Playwright script against a dedicated Chrome profile. That profile's
-#      logins kept expiring, so the Nexus page (version, description, changelog)
-#      is now edited through Claude-in-Chrome on the regular signed-in browser.
-#      Pass -LegacyNexusDesc to run the old Playwright step anyway.
+#   3. The Nexus PAGE (version field, description, changelog entry) is then driven
+#      by the agent through Claude-in-Chrome on Jeff's regular signed-in browser.
+#      There is no Nexus API for those fields, so a logged-in browser is the only
+#      route -- but nothing about it is hand-pasted. See docs/RELEASE_TOOLING.md
+#      for the exact steps and the user memory nexus-use-regular-chrome.
+#
+# The Playwright path (dedicated .nexus-automation-profile) was REMOVED 2026-08-26:
+# its Nexus session expired constantly and it forced a second login. Do not bring
+# it back -- Claude-in-Chrome on the regular browser is the only supported route.
 #
 # PREREQS: bump the version in manifest.json, update docs/nexus-description.bbcode
-# (+ README "What's New") and CHANGELOG.md, and commit -- all BEFORE running this.
+# (+ README "What's New") and CHANGELOG.md, write release-notes/<version>-nexus-changelog.txt,
+# and commit -- all BEFORE running this.
 #
 # Usage:  pwsh -NoProfile -File release.ps1            (build + GitHub release + Nexus file)
 #         pwsh -NoProfile -File release.ps1 -SkipBuild (reuse existing zip)
-#         pwsh -NoProfile -File release.ps1 -LegacyNexusDesc  (also run the retired Playwright sync)
-#         -SkipNexusDesc is accepted for compatibility and is now the default behaviour.
 
-param([switch]$SkipBuild, [switch]$SkipNexusDesc, [switch]$LegacyNexusDesc)
+param([switch]$SkipBuild)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $root
@@ -54,16 +57,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "gh release create failed." }
     Write-Host "GitHub release $tag created. publish-nexus.yml will upload the file to Nexus." -ForegroundColor Green
 
-    # 3. Retired: Nexus version field + description via Playwright. Opt-in only.
-    if ($LegacyNexusDesc) {
-        $env:NEXUS_PW_PROFILE = 'C:\Users\Jeff\.nexus-automation-profile'
-        $script = 'C:\Users\Jeff\Documents\Projects\Stardee Valoo\AndroidConsolizer\release-notes\tly-publish-general.mjs'
-        Push-Location (Split-Path $script)   # so 'playwright' resolves from release-notes/node_modules
-        try { node $script } finally { Pop-Location }
-        if ($LASTEXITCODE -ne 0) { throw "Nexus description/version sync failed (exit $LASTEXITCODE)." }
-        Write-Host "Nexus version field + description synced to $version." -ForegroundColor Green
-    }
-
-    Write-Host "=== Done. $tag is on GitHub; file auto-uploads to Nexus. Now sync the Nexus version/description/changelog via Claude-in-Chrome. ===" -ForegroundColor Cyan
+    Write-Host "=== Done. $tag is on GitHub; the workflow uploads the file to Nexus. ===" -ForegroundColor Cyan
+    Write-Host "Next: the agent drives the Nexus page (version + description + changelog) via Claude-in-Chrome -- see docs/RELEASE_TOOLING.md." -ForegroundColor Cyan
 }
 finally { Pop-Location }
