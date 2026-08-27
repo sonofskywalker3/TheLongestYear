@@ -1272,6 +1272,67 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.starting-money.tooltip"),
                 min: 0, max: 5000, interval: 100);
 
+            // ---- Difficulty modifiers (spec 2026-08-26) ----
+            // Ten independent dials, no overall tier. Everything defaults to Normal, which is the
+            // shipping balance, and a change lands at the NEXT reset because WorldResetService
+            // stamps the resolved profile onto the save and every consumer reads that stamp.
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.difficulty.section"));
+            gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.difficulty.blurb"));
+
+            void AddDifficultyOption(
+                Func<DifficultyStep> get, Action<DifficultyStep> set,
+                Func<string> name, Func<string> tooltip)
+            {
+                gmcm.AddTextOption(this.ModManifest,
+                    getValue: () => get().ToString(),
+                    setValue: v => set(DifficultySteps.Parse(v)),
+                    name: name,
+                    tooltip: tooltip,
+                    allowedValues: DifficultySteps.AllNames,
+                    formatAllowedValue: FormatDifficultyStep);
+            }
+
+            AddDifficultyOption(
+                () => _config.Difficulty.StackSize, v => _config.Difficulty.StackSize = v,
+                () => Strings.Get("gmcm.difficulty.stack-size.name"),
+                () => Strings.Get("gmcm.difficulty.stack-size.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.QualityAsks, v => _config.Difficulty.QualityAsks = v,
+                () => Strings.Get("gmcm.difficulty.quality-asks.name"),
+                () => Strings.Get("gmcm.difficulty.quality-asks.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.RequiredSlots, v => _config.Difficulty.RequiredSlots = v,
+                () => Strings.Get("gmcm.difficulty.required-slots.name"),
+                () => Strings.Get("gmcm.difficulty.required-slots.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.ItemRarity, v => _config.Difficulty.ItemRarity = v,
+                () => Strings.Get("gmcm.difficulty.item-rarity.name"),
+                () => Strings.Get("gmcm.difficulty.item-rarity.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.JpEarned, v => _config.Difficulty.JpEarned = v,
+                () => Strings.Get("gmcm.difficulty.jp-earned.name"),
+                () => Strings.Get("gmcm.difficulty.jp-earned.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.ShrinePrices, v => _config.Difficulty.ShrinePrices = v,
+                () => Strings.Get("gmcm.difficulty.shrine-prices.name"),
+                () => Strings.Get("gmcm.difficulty.shrine-prices.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.StartingGold, v => _config.Difficulty.StartingGold = v,
+                () => Strings.Get("gmcm.difficulty.starting-gold.name"),
+                () => Strings.Get("gmcm.difficulty.starting-gold.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.CartSlots, v => _config.Difficulty.CartSlots = v,
+                () => Strings.Get("gmcm.difficulty.cart-slots.name"),
+                () => Strings.Get("gmcm.difficulty.cart-slots.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.HoldPrices, v => _config.Difficulty.HoldPrices = v,
+                () => Strings.Get("gmcm.difficulty.hold-prices.name"),
+                () => Strings.Get("gmcm.difficulty.hold-prices.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.SeasonPity, v => _config.Difficulty.SeasonPity = v,
+                () => Strings.Get("gmcm.difficulty.season-pity.name"),
+                () => Strings.Get("gmcm.difficulty.season-pity.tooltip"));
+
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.pity.section"));
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.PityEnabled,
@@ -2376,5 +2437,16 @@ namespace TheLongestYear
 
             return merged;
         }
+        /// <summary>Localised label for a difficulty step in the GMCM dropdown. Written as four
+        /// literal <see cref="Strings.Get"/> calls rather than an interpolated key so the i18n
+        /// guard's source scan can prove all four keys are reachable.</summary>
+        private static string FormatDifficultyStep(string rawValue) => DifficultySteps.Parse(rawValue) switch
+        {
+            DifficultyStep.Easy => Strings.Get("gmcm.difficulty.step.easy"),
+            DifficultyStep.Hard => Strings.Get("gmcm.difficulty.step.hard"),
+            DifficultyStep.Extreme => Strings.Get("gmcm.difficulty.step.extreme"),
+            _ => Strings.Get("gmcm.difficulty.step.normal"),
+        };
+
     }
 }
