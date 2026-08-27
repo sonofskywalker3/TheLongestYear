@@ -244,6 +244,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
+            helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
@@ -1580,6 +1581,7 @@ namespace TheLongestYear
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
+                case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
@@ -1654,6 +1656,49 @@ namespace TheLongestYear
         /// but needing a keg, a fish pond or a 10,000g tool upgrade counts as obtainable here.
         /// It proves nothing is impossible for calendar reasons; it does not prove anything is
         /// comfortable. Read-only.</summary>
+        /// <summary>Prints the derived availability model for one item id, or for every
+        /// ingredient of a named bundle. Diagnostics only, read-only.</summary>
+        private void CmdItemModel(string command, string[] args)
+        {
+            if (_availability == null)
+            {
+                this.Monitor.Log("No availability model yet; load a save first.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length == 0)
+            {
+                this.Monitor.Log("Usage: tly_itemmodel <itemId|bundleName>", LogLevel.Info);
+                return;
+            }
+
+            string target = string.Join(" ", args);
+            BundleRequirement req = _requirements?
+                .FirstOrDefault(r => string.Equals(r.Name, target, StringComparison.OrdinalIgnoreCase));
+
+            if (req != null)
+            {
+                this.Monitor.Log($"Bundle '{req.Name}' ({req.Kind}):", LogLevel.Info);
+                foreach (string id in req.Ingredients)
+                {
+                    TheLongestYear.Core.ItemAvailability a = _availability.For(id);
+                    string due = req.ItemSeasonPins != null
+                        && req.ItemSeasonPins.TryGetValue(id, out TheLongestYear.Core.Season d)
+                        ? d.ToString()
+                        : "never";
+                    this.Monitor.Log(
+                        $"  {id}: due {due}; earliest {a.EarliestSeason}, effort {a.Effort} [{a.Basis}]",
+                        LogLevel.Info);
+                }
+                return;
+            }
+
+            string itemId = target.StartsWith("(", StringComparison.Ordinal) ? target : $"(O){target}";
+            TheLongestYear.Core.ItemAvailability single = _availability.For(itemId);
+            this.Monitor.Log(
+                $"{itemId}: earliest {single.EarliestSeason}, effort {single.Effort} [{single.Basis}]",
+                LogLevel.Info);
+        }
+
         private void CmdGateCheck(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -1715,7 +1760,9 @@ namespace TheLongestYear
                         // ingredient is out of reach leaves the reader to re-derive it by hand.
                         string blockers = string.Join(", ", req.Ingredients
                             .Where(id => pins.TryGetValue(id, out var p2) && (int)p2 > season)
-                            .Select(id => $"{DisplayName(id)} (needs {pins[id]})"));
+                            .Select(id => _availability != null
+                                ? $"{DisplayName(id)} (needs {pins[id]}) [{_availability.For(id).Basis}]"
+                                : $"{DisplayName(id)} (needs {pins[id]})"));
                         if (blockers.Length > 0)
                             blocked.Add($"      {req.Name} at {(TheLongestYear.Core.Season)season}: blocked by {blockers}");
                     }
@@ -2238,7 +2285,7 @@ namespace TheLongestYear
                     continue; // Vault / non-themed room — always classified out, not a problem.
 
                 var parsed = BundleParsing.Parse(BundleDataWriter.Key(spec), BundleDataWriter.Value(spec));
-                if (BundleClassifier.Classify(parsed, theme, itemSeasonPins, bundleQuotas) == null)
+                if (BundleClassifier.Classify(parsed, theme, itemSeasonPins, bundleQuotas, _availability) == null)
                     themedSkipsByRoom[spec.Room] = themedSkipsByRoom.TryGetValue(spec.Room, out int n) ? n + 1 : 1;
             }
             int themedSkipped = themedSkipsByRoom.Values.Sum();
