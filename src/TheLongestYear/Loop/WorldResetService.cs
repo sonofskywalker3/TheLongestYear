@@ -392,7 +392,10 @@ namespace TheLongestYear.Loop
 
             // 4. Build the reset baseline + apply Farmer-side state (gold, items, tool
             //    tiers, skill levels, kitchen flag).
-            RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _config.StartingMoney);
+            // Starting gold comes from the STAMP resolved at the top of this reset, not straight
+            // from config: the step scales config.StartingMoney, so a hand-tuned baseline is
+            // still honoured and a GMCM change only lands on the next loop.
+            RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _meta.Difficulty.StartingGold);
             _farmerReset.Apply(Game1.player, baseline,
                 _meta.CookbookRecipes,
                 _meta.CraftbookRecipes,
