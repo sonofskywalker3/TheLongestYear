@@ -1517,6 +1517,25 @@ JP cost ballpark (relative to bus repair = 100 JP):
 Status: spec'd, not planned. Out of scope for the current playtest
 batch; queue as its own commit chain.
 
+### ▶ NEXT SESSION: smoke the difficulty modifiers in game
+
+Built overnight 2026-08-26/27 on `feat/difficulty-modifiers` (18 commits, local only, 994 tests
+passing). Spec `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md`, plan
+`docs/superpowers/plans/2026-08-26-difficulty-modifiers.md`. **Nobody has seen it run.**
+
+1. `tly_difficulty` prints the configured steps, the in-force steps, and every resolved value.
+2. GMCM shows a "Difficulty" section with ten dropdowns; a change survives save and reload.
+3. Stack size + required slots to Hard, `tly_reset`, then `tly_genbundles`: bigger stacks, higher
+   pick-X counts.
+4. **Riskiest:** on a `BundleSource=Vanilla` save, reset at Hard. That path used to write NOTHING
+   at reset and now rewrites the board. Confirm the CC menu opens, ingredient ITEMS are unchanged,
+   and only stacks / quality / pick-X moved.
+5. Everything back to Normal, reset, board matches a pre-branch one.
+
+Then Jeff decides: merge to `master` (with a version bump and a "What's New" entry, neither of
+which the branch touched), or keep iterating.
+
+
 ### PARKED (post-1.0): Impossible mode
 
 Jeff, 2026-08-26, ruled during the difficulty-modifier brainstorm. NOT part of that work; a

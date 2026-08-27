@@ -1,5 +1,57 @@
 # The Longest Year — Status
 
+**Last updated:** 2026-08-27 overnight (difficulty modifiers built on a branch)
+**Branch:** `feat/difficulty-modifiers`, 18 commits, **LOCAL ONLY (not pushed, not merged)**
+**Tests:** 994 passing, 0 failing (was 865 at the branch point)
+**Build:** clean
+**Last public release:** 0.15.0
+
+## NEXT SESSION: difficulty modifiers need an in-game smoke, then a merge decision
+
+Jeff brainstormed this the night of 2026-08-26 and said "write the spec, plan, and build" before
+going to bed. All 16 planned tasks are done and committed on `feat/difficulty-modifiers`. Nothing
+is pushed and nothing is merged to `master`: both are Jeff's call.
+
+- Spec: `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md`
+- Plan: `docs/superpowers/plans/2026-08-26-difficulty-modifiers.md`
+
+**What it is:** ten independent Easy/Normal/Hard/Extreme dials in a new GMCM "Difficulty" section.
+No overall tier (Jeff killed that mid-brainstorm). Everything defaults to Normal, which resolves to
+today's exact config values, so an untouched save is unchanged. A change applies at the NEXT reset,
+because the resolved profile is stamped onto the save and every consumer reads the stamp.
+
+**Nobody has seen any of it run.** The whole thing is unit-tested and builds, but it has never been
+loaded in the game. What needs smoking, in rough priority order:
+
+1. `tly_difficulty` on a loaded save prints sensible output and says whether the stamp or live
+   config is in force.
+2. GMCM shows the Difficulty section with ten dropdowns, and a change survives a save/reload.
+3. Set stack size + required slots to Hard, `tly_reset`, and check the board actually changed:
+   `tly_genbundles` should show bigger stacks and higher pick-X counts.
+4. **The Vanilla post-pass is the riskiest change here.** `BundleSource=Vanilla` previously wrote
+   NOTHING at reset; it now rewrites the board when any ask-side dial is off Normal. On a Vanilla
+   save, reset at Hard and confirm the CC menu still opens, ingredient ITEMS are unchanged, and
+   stacks/pick-X moved.
+5. Set everything back to Normal, reset, and confirm a board identical to a pre-branch one.
+
+**Known gap, minor:** a brand-new VANILLA-source save has no stamp until its first reset, so a GMCM
+change during loop 1 of such a save applies immediately rather than next loop. Self-corrects at the
+first reset. Engine saves stamp during fresh-run generation, so they do not have this.
+
+**Deliberate deviation from the spec, recorded:** the spec describes the rarity bias as applying
+inside the sampler. It is applied to `ItemPools` before generation instead, and the stack/quality
+modifiers are applied by scaling the tuning block. Same effect, and it meant `BundleSlotFiller` and
+`AuthoredBundleComposer` needed no edits at all.
+
+**Also parked this session:** Impossible mode (post-1.0), written up in `TODO.md`.
+
+**Two things NOT done, both waiting on Jeff:**
+- No manifest version bump (branch rule: only the release line bumps).
+- No "What's New" entry in the README or Nexus description, because the release number is not
+  decided. The Difficulty section itself is written into both, content-identical.
+
+## Previous state
+
 **Last updated:** 2026-08-26 evening (0.14.0, 0.14.1 and 0.14.2 all released today)
 **Branch:** `master`, pushed
 **Tests:** 865 passing, 0 failing
