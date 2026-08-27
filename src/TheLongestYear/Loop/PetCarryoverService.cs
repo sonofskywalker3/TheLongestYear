@@ -108,6 +108,21 @@ namespace TheLongestYear.Loop
                 Game1.player.mailReceived.Add("MarniePetAdoption");
         }
 
+        /// <summary>Morning pass for saves already bitten by the one-bowl restore: a Keep Pet
+        /// owner whose extra pet is sitting bowl-less in the farmhouse (0.13.0 through 0.16.2)
+        /// gets it a bowl on the next day start instead of waiting for the next rewind, so it
+        /// stops losing 10 friendship a day. No-op without the upgrade or when every pet already
+        /// owns a bowl, so it costs nothing on a healthy save.</summary>
+        public static void EnsureBowlsForAllPets(MetaState meta, IMonitor monitor)
+        {
+            if (meta == null || !meta.HasUpgrade(UpgradeId)) return;
+            Farm farm = Game1.getFarm();
+            if (farm == null) return;
+            List<Pet> pets = Utility.getAllPets();
+            if (pets == null || pets.All(p => p.GetPetBowl() != null)) return;
+            EnsureBowls(farm, pets, monitor);
+        }
+
         private const string PetBowlBuildingId = "Pet Bowl";
 
         /// <summary>How far west of <see cref="PetCarryover.BowlTile"/> to keep looking when that
