@@ -1742,7 +1742,7 @@ namespace TheLongestYear
             // Diagnostics have to show what the loop actually runs under, so this uses the STAMPED
             // profile like every other generation path. A preview resolved from live config would
             // report a board the save is not playing.
-            TheLongestYear.Core.DifficultyProfile genDifficulty = _meta.State.EffectiveDifficulty(_config);
+            TheLongestYear.Core.DifficultyProfile genDifficulty = _meta.State.BoardDifficulty(_config);
             BundleGenerationTuning genTuning =
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
@@ -2297,7 +2297,7 @@ namespace TheLongestYear
                 // values here would re-derive a different board and demote a healthy save to the
                 // legacy read path on the next launch. A legacy save has no stamp and resolves
                 // all-Normal, which is exactly what generated its board.
-                TheLongestYear.Core.DifficultyProfile difficulty = state.EffectiveDifficulty(_config);
+                TheLongestYear.Core.DifficultyProfile difficulty = state.BoardDifficulty(_config);
                 BundleGenerationTuning difficultyTuning =
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
 

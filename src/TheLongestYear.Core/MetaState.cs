@@ -123,11 +123,24 @@ public sealed class MetaState
     /// identical to that save's previous behaviour. Spec 2026-08-26.</summary>
     public DifficultyProfile? Difficulty { get; set; }
 
-    /// <summary>The profile in force: the stamp when present, otherwise resolved live from
-    /// config. A legacy save resolves to all-Normal, so nothing about it changes until its next
-    /// reset writes a real stamp. No migration code, no save-format break.</summary>
+    /// <summary>The profile in force for ECONOMY reads (JP, prices, cart, pity): the stamp when
+    /// present, otherwise resolved live from config so a player who has never reset still gets the
+    /// setting he just chose.</summary>
     public DifficultyProfile EffectiveDifficulty(GameplayConfig config)
         => Difficulty ?? DifficultyResolver.Resolve(config.Difficulty, config);
+
+    /// <summary>The profile that produced the board currently ON DISK, for re-deriving it at load.
+    ///
+    /// Deliberately NOT <see cref="EffectiveDifficulty"/>: that falls back to LIVE config, and a
+    /// save with no stamp is one whose board was generated before difficulty modifiers existed, so
+    /// it was necessarily all-Normal. Re-deriving such a board against a config the player has
+    /// since changed produces a different board, the manifest check fails, and a perfectly healthy
+    /// engine save is demoted to the legacy read-and-classify path (verified in game 2026-08-27).
+    ///
+    /// Same principle the EnableNonObjectDonations retry already encodes: the board on disk was
+    /// composed with the old value and stays valid until the next reset regenerates it.</summary>
+    public DifficultyProfile BoardDifficulty(GameplayConfig config)
+        => Difficulty ?? DifficultyProfile.Normal(config);
 
     /// <summary>Which board this save runs under — <see cref="BundleSourceNames.Engine"/> (TLY
     /// writes its own board every loop) or <see cref="BundleSourceNames.Vanilla"/> (keep the
