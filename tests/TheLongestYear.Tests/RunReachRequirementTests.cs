@@ -15,6 +15,7 @@ public class RunReachRequirementTests
     [InlineData("scythe:golden", "scythe", "golden", 1)]
     [InlineData("building:Coop", "building", "Coop", 1)]
     [InlineData("building:Big Coop", "building", "Big Coop", 1)]
+    [InlineData("book:Book_Speed", "book", "Book_Speed", 1)]
     public void Parse_extracts_metric_key_threshold(string raw, string metric, string? key, int threshold)
     {
         RunReachRequirement? r = RunReachRequirement.Parse(raw);

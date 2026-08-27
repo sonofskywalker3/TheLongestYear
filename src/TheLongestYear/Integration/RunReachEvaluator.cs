@@ -65,6 +65,7 @@ namespace TheLongestYear.Integration
                 "skill"    => SkillLevel(p, r.Key),
                 "mine"     => p.deepestMineLevel,
                 "mastery"  => MasteryTrackerMenu.getCurrentMasteryLevel(),
+                "book"     => p.stats.Get(r.Key) != 0 ? 1 : 0,   // vanilla Book_* flag, set by Object.readBook
                 "scythe"   => p.mailReceived.Contains("gotGoldenScythe") ? 1 : 0,
                 "building" => HasBuildingAtLeast(r.Key) ? 1 : 0,
                 "house"    => p.HouseUpgradeLevel,
