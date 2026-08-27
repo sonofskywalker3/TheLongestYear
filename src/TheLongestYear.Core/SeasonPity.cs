@@ -25,28 +25,46 @@ public static class SeasonPity
         state.LastFailSeason = (int)season;
     }
 
+    /// <summary>The run's resolved pity dials. Read through the STAMP (spec 2026-08-26) rather
+    /// than straight off config, so the season-pity difficulty step applies and so a GMCM change
+    /// only lands at the next reset. A legacy save with no stamp resolves to the config values,
+    /// which is exactly what it used before.</summary>
+    private static PityProfile Dials(MetaState state, GameplayConfig config)
+        => state.EffectiveDifficulty(config).Pity;
+
     public static void RecordPass(MetaState state, Season season, GameplayConfig config)
     {
         List<int> counts = Counts(state);
-        int threshold = Math.Max(0, config.PityThreshold);
+        int threshold = Math.Max(0, Dials(state, config).Threshold);
         counts[(int)season] = Math.Min(counts[(int)season], threshold);
     }
 
     public static int EaseSteps(MetaState state, Season season, GameplayConfig config)
     {
-        if (!config.PityEnabled) return 0;
-        return Math.Max(0, Counts(state)[(int)season] - Math.Max(0, config.PityThreshold));
+        PityProfile dials = Dials(state, config);
+        if (!dials.Enabled) return 0;
+        return Math.Max(0, Counts(state)[(int)season] - Math.Max(0, dials.Threshold));
     }
 
     public static double QuotaFactor(int steps, GameplayConfig config)
+        => QuotaFactor(steps, new PityProfile
+        {
+            QuotaStep = config.PityQuotaStep,
+            QuotaFloor = config.PityQuotaFloor,
+        });
+
+    public static double QuotaFactor(int steps, PityProfile dials)
     {
-        double step = Math.Clamp(config.PityQuotaStep, 0.0, 1.0);
-        double floor = Math.Clamp(config.PityQuotaFloor, 0.0, 1.0);
+        double step = Math.Clamp(dials.QuotaStep, 0.0, 1.0);
+        double floor = Math.Clamp(dials.QuotaFloor, 0.0, 1.0);
         return Math.Max(floor, 1.0 - step * Math.Max(0, steps));
     }
 
     public static int TrimUnits(int steps, GameplayConfig config)
         => Math.Max(0, steps) * Math.Max(0, config.PityTrimPerStep);
+
+    public static int TrimUnits(int steps, PityProfile dials)
+        => Math.Max(0, steps) * Math.Max(0, dials.TrimPerStep);
 
     /// <summary>True for a season index in range 0..3 (Spring..Winter). Replaces hand-rolled
     /// range checks against <see cref="Calendar.MonthsPerYear"/> scattered across the mod.</summary>
@@ -60,7 +78,7 @@ public static class SeasonPity
     {
         int season = state.LastFailSeason;
         int units = IsValidSeasonIndex(season)
-            ? TrimUnits(EaseSteps(state, (Season)season, config), config)
+            ? TrimUnits(EaseSteps(state, (Season)season, config), Dials(state, config))
             : 0;
         state.BoardTrimSeason = units > 0 ? season : NoSeason;
         state.BoardTrimSteps = units;
@@ -132,7 +150,9 @@ public static class SeasonPity
 
     /// <summary>Price of accepting the next offer (first accept free by default).</summary>
     public static long PityCost(MetaState state, GameplayConfig config)
-        => BundleHoldPricing.CostFor(state.ConsecutivePityUses, config.PityCosts);
+        => BundleHoldPricing.CostFor(
+            state.ConsecutivePityUses, config.PityCosts,
+            state.EffectiveDifficulty(config).HoldPriceFactor);
 
     /// <summary>The player said yes: charge the JP, count the accept, and stamp the easing for
     /// the chosen path. Nothing changes on NotEnoughJp.</summary>
@@ -173,12 +193,12 @@ public static class SeasonPity
     /// threshold mid-loop. Winter is never eased.</summary>
     public static SeasonEase? CurrentQuotaEase(MetaState state, GameplayConfig config)
     {
-        if (!config.PityEnabled) return null;
+        if (!Dials(state, config).Enabled) return null;
         if (!IsValidSeasonIndex(state.BoardEaseSeason)) return null;
         if (state.BoardEaseSeason == (int)Season.Winter) return null;
         if (state.BoardEaseSteps <= 0) return null;
         var season = (Season)state.BoardEaseSeason;
-        return new SeasonEase(season, state.BoardEaseSteps, QuotaFactor(state.BoardEaseSteps, config));
+        return new SeasonEase(season, state.BoardEaseSteps, QuotaFactor(state.BoardEaseSteps, Dials(state, config)));
     }
 
     /// <summary>Steps to show in the Season Goals title: the quota ease stamp, else the
@@ -187,8 +207,9 @@ public static class SeasonPity
     {
         var ease = CurrentQuotaEase(state, config);
         if (ease != null) return ease.Steps;
-        if (IsValidSeasonIndex(state.BoardTrimSeason) && config.PityTrimPerStep > 0)
-            return state.BoardTrimSteps / config.PityTrimPerStep;
+        int trimPerStep = Dials(state, config).TrimPerStep;
+        if (IsValidSeasonIndex(state.BoardTrimSeason) && trimPerStep > 0)
+            return state.BoardTrimSteps / trimPerStep;
         return 0;
     }
 }

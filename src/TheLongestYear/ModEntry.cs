@@ -2023,14 +2023,14 @@ namespace TheLongestYear
                 case "keep":
                 case "reshuffle":
                     bool keep = mode == "keep";
-                    var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts);
+                    var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts, s.EffectiveDifficulty(_config).HoldPriceFactor);
                     if (result != BundleHold.HoldResult.NotEnoughJp)
                         SeasonPity.DeclinePity(s, held: keep);   // the offer is a separate step: tly_pity accept|decline
                     this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}, ease {s.BoardEaseSeason}/{s.BoardEaseSteps}, trim {s.BoardTrimSeason}/{s.BoardTrimSteps}; offer now {SeasonPity.OfferFor(s, keep, _config)} at {SeasonPity.PityCost(s, _config)} JP (tly_pity accept|decline).", LogLevel.Info);
                     this.Monitor.Log("tly_hold: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
                     break;
                 default:
-                    this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
+                    this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts, s.EffectiveDifficulty(_config).HoldPriceFactor)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
                     break;
             }
         }
