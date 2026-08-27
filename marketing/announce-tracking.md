@@ -9,20 +9,31 @@ across venues; only the title prefix differs.
 
 | Venue | Status | URL |
 |---|---|---|
-| r/StardewValleyMods | **POSTED** (no flair) | https://www.reddit.com/r/StardewValleyMods/comments/1w018co/the_longest_year_0160_is_out_harder_but_now_you/ |
-| r/SMAPI | **NOT POSTED** — blocked, see below | — |
-| r/StardewValley | **NOT POSTED** — blocked, see below | — |
+| r/StardewValleyMods | **POSTED** as a new thread (no flair) | https://www.reddit.com/r/StardewValleyMods/comments/1w018co/the_longest_year_0160_is_out_harder_but_now_you/ |
+| r/SMAPI | **POSTED** as an update comment on the original thread (Jeff's call after the new-post composer failed) | https://www.reddit.com/r/SMAPI/comments/1txtkb4/beta_the_longest_year_a_roguelite_timeloop_over/ |
+| r/StardewValley | **POSTED** as an update comment on the original thread | https://www.reddit.com/r/StardewValley/comments/1txuhfb/mods_my_timeloop_mod_the_longest_year_is_in_beta/ |
 | forums.stardewvalley.net (thread 52534) | not attempted this round | — |
 | playstarbound | still unposted (account activation, from 2026-06-05) | — |
 
-**Blocker (2026-08-27):** after the first successful post, Reddit's composer stopped accepting
-typed input on both r/SMAPI and r/StardewValley. The title field clicks fine and `find` resolves
-it, but typed text never lands, and on r/SMAPI the title element reports a zero-size bounding box
-(likely a shadow-root field the automation cannot focus). Tried: `?type=TEXT` re-navigation,
-element-ref clicks, coordinate clicks, and re-typing after clearing. Five-plus attempts across two
-subs. Not a login or rules problem: the account is signed in and both venues allow the post.
-Next attempt should try a fresh browser session first, since a rate-limit or composer state left
-over from the successful post is the most likely cause.
+**Automation lesson (2026-08-27), costly, read before the next round.** Reddit's composer and
+comment boxes accept a click WITHOUT taking keyboard focus: `document.activeElement` stays on
+`BODY`. Typing then goes to the page as **keyboard shortcuts**, not text. That silently ate the
+first paragraph of the r/SMAPI comment, and `h` hid the post twice (recovered both times with the
+"Undo" banner; verified afterwards via `r/SMAPI/comments/<id>.json` that `hidden` and `saved` were
+both false).
+
+**Always do this:** click the field, then check
+`document.activeElement.isContentEditable === true` with `javascript_tool`, and only then type.
+If focus is on `BODY`, scroll the field into view and click it by screen coordinates rather than
+by element ref; the ref click alone often does not focus it.
+
+Also: `ctrl+a` inside the comment editor can blur it, after which the next keystrokes act as
+shortcuts again (one of them navigated the tab to `/submit/`). Prefer replacing text by selecting
+inside the editor and retyping in one `type` action, and re-verify focus first.
+
+The new-post composer on r/SMAPI and r/StardewValley was never made to work for the same reason.
+Jeff's call was to post update comments on the existing threads instead, which is also what the
+0.11.44 round did.
 
 **Rules re-confirmed, and a correction:** r/StardewValley Rule 8 explicitly lists **"Mod pages"**
 as fine to post directly, and Rule 11 asks for the **Mods** flair. The pinned "Self-Promo Tuesday"
