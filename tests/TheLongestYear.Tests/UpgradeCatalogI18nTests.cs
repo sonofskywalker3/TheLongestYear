@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
@@ -9,6 +10,31 @@ public class UpgradeCatalogI18nTests
 {
     public UpgradeCatalogI18nTests(I18nFixture fixture) => _fixture = fixture;
     private readonly I18nFixture _fixture;
+
+    [Fact]
+    public void Item_token_resolves_through_item_name_provider()
+    {
+        Strings.InitItemNames(id => id == "(O)Book_Speed" ? "Way Of The Wind pt. 1" : id);
+        try
+        {
+            var def = new UpgradeDefinition("t_item", UpgradeCategory.Carryover,
+                "upgrade-tpl.keep-book.name", "upgrade-tpl.keep-book.desc",
+                new Dictionary<string, string> { ["book"] = "item:(O)Book_Speed" }, 10);
+            Assert.Equal("Keep Way Of The Wind pt. 1", def.DisplayName);
+            Assert.Equal("Start each loop with Way Of The Wind pt. 1 already read. Its power stays with you.", def.Description);
+        }
+        finally { Strings.ResetItemNames(); }
+    }
+
+    [Fact]
+    public void Item_token_falls_back_to_the_id_without_a_provider()
+    {
+        Strings.ResetItemNames();
+        var def = new UpgradeDefinition("t_item2", UpgradeCategory.Carryover,
+            "upgrade-tpl.keep-book.name", "upgrade-tpl.keep-book.desc",
+            new Dictionary<string, string> { ["book"] = "item:(O)Book_Speed" }, 10);
+        Assert.Equal("Keep (O)Book_Speed", def.DisplayName);
+    }
 
     [Fact]
     public void EveryCatalogRow_ResolvesNameAndDescription()

@@ -46,16 +46,23 @@ public sealed class UpgradeDefinition
     public string Description =>
         _tokens == null ? Strings.Get(_descKey!) : Strings.Get(_descKey!, ResolveTokens(_tokens));
 
-    /// <summary>Resolves any token value prefixed "i18n:" as a translation key
-    /// (<c>Strings.Get(value.Substring(5))</c>); other token values pass through unchanged.</summary>
+    /// <summary>Resolves token values by prefix: an i18n: prefix resolves the rest through <see cref="Strings.Get(string)"/>,
+    /// an item: prefix resolves a qualified item id through <see cref="Strings.ItemName"/> (the game's localized item name, used by
+    /// the Keep &lt;book&gt; rows); other token values pass through unchanged.</summary>
     private static IReadOnlyDictionary<string, string> ResolveTokens(IReadOnlyDictionary<string, string> tokens)
     {
         const string I18nTokenPrefix = "i18n:";
+        const string ItemTokenPrefix = "item:";
         var resolved = new Dictionary<string, string>(tokens.Count);
         foreach (var kv in tokens)
-            resolved[kv.Key] = kv.Value.StartsWith(I18nTokenPrefix, StringComparison.Ordinal)
-                ? Strings.Get(kv.Value.Substring(I18nTokenPrefix.Length))
-                : kv.Value;
+        {
+            if (kv.Value.StartsWith(I18nTokenPrefix, StringComparison.Ordinal))
+                resolved[kv.Key] = Strings.Get(kv.Value.Substring(I18nTokenPrefix.Length));
+            else if (kv.Value.StartsWith(ItemTokenPrefix, StringComparison.Ordinal))
+                resolved[kv.Key] = Strings.ItemName(kv.Value.Substring(ItemTokenPrefix.Length));
+            else
+                resolved[kv.Key] = kv.Value;
+        }
         return resolved;
     }
 
