@@ -45,6 +45,12 @@ and Auto-Hook. Loading the rotated save also placed the missing bowl on DayStart
 self-heal). One fix came out of it: vanilla isBuildable reads tile properties off
 Game1.currentLocation (the farmhouse during a reset), so 0.16.7 checks the Farm map directly.
 
+**Live smoke PASSED 2026-08-27 (0.16.8, villager first-contact dialogue):** after `tly_reset` the
+FarmerReset summary logs `dialogueEvents=[Introduction:6]`, and Pierre greets the player with his
+Introduction line ("Hey, it's Mr. Clone, the new farmer! I'm Pierre...") on reset #52. Driving note:
+left-click on an NPC only talks when the selected hotbar slot is EMPTY; with furniture selected the
+click tries to place it. `tools/game.ps1 -Key x` is now supported. 0.16.8 is local only, not released.
+
 ## NEXT SESSION: difficulty modifiers need an in-game smoke, then a merge decision
 
 Jeff brainstormed this the night of 2026-08-26 and said "write the spec, plan, and build" before
