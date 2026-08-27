@@ -1274,6 +1274,16 @@ the Lewis day-1 intro cutscene renders a **black bar along the right side of the
 (xsansara's "black block" report; Jeff sees it too). Whatever causes the current intro's
 viewport/letterboxing to come up short, the rebuilt 1.0 intro should avoid the same approach.
 
+### Villager first-contact dialogue after a rewind (fixed in 0.16.8, needs live smoke)
+
+Emmalution (stream, 2026-08-27): villagers met for the "first" time in a new loop skip their
+Introduction line and use their ordinary daily dialogue. Root cause: vanilla keys the Introduction
+line on `Farmer.activeDialogueEvents["Introduction"]`, set once in the Farmer constructor for 6 days,
+never on friendshipData. The rewind keeps the persistent Farmer, so no loop after the first ever had
+the key. `FarmerReset` now clears active/previous dialogue events and re-seeds the 6-day window.
+**Must be confirmed live before the déjà-vu dialogue work below starts** (Jeff's ruling): both
+systems write the same NPC dialogue slot.
+
 ### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
 **Source / credit: u/Gribbleby** on the r/StardewValley beta announcement thread
 (https://www.reddit.com/r/StardewValley/comments/1txuhfb/ — 98 upvotes, 20k+ views). Their seed:

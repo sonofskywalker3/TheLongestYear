@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using StardewModdingAPI;
 using StardewValley;
@@ -18,6 +19,13 @@ namespace TheLongestYear.Loop
         private readonly IMonitor _monitor;
 
         public FarmerReset(IMonitor monitor) => _monitor = monitor;
+
+        /// <summary>Farmer.activeDialogueEvents key that makes every villager use their
+        /// "Introduction" dialogue on first contact (vanilla Farmer ctor, Farmer.cs:2029).</summary>
+        private const string IntroductionDialogueKey = "Introduction";
+
+        /// <summary>Days vanilla keeps that key alive on a brand-new farmer (Farmer.cs:2029).</summary>
+        private const int IntroductionDialogueDays = 6;
 
         public void Apply(Farmer p, RunBaseline baseline,
             IReadOnlyList<string> cookbookRecipes,
@@ -136,6 +144,19 @@ namespace TheLongestYear.Loop
             p.mailReceived.Clear();
             p.eventsSeen.Clear();
             p.questLog.Clear();
+
+            // First-meeting dialogue. Vanilla does NOT key an NPC's "Introduction" line on
+            // friendshipData: NPC.checkForNewCurrentDialogue (NPC.cs:4009) walks
+            // Farmer.activeDialogueEvents and plays the dialogue named by each key, and the
+            // "Introduction" key is added exactly once, in the Farmer constructor with a 6-day
+            // window (Farmer.cs:2029), then counted down and dropped by dayUpdate (Farmer.cs:3550).
+            // loadForNewGame keeps the persistent Farmer, so no later loop ever had the key and
+            // villagers greeted a "stranger" with their ordinary daily line (Emmalution, 2026-08-27).
+            // Re-seed vanilla's window, and drop the previous loop's active/remembered events so a
+            // stale "_memory_oneweek" line can't fire in a year where the event never happened.
+            p.activeDialogueEvents.Clear();
+            p.previousActiveDialogueEvents.Clear();
+            p.activeDialogueEvents.Add(IntroductionDialogueKey, IntroductionDialogueDays);
             // 1.6 gates every RewardItemIsSpecial museum reward (artifact statues, Singing Stone, the
             // Ancient Seeds item AND its recipe) on these two lists, not on mailReceived
             // (LibraryMuseum.CanCollectReward). They live on the persistent Farmer, so without this
@@ -239,6 +260,7 @@ namespace TheLongestYear.Loop
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
                 $"goldenScythe={baseline.GrantGoldenScythe}, " +
+                $"dialogueEvents=[{string.Join(",", p.activeDialogueEvents.Keys.Select(k => k + ":" + p.activeDialogueEvents[k]))}], " +
                 $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count()}), " +
                 $"craftRecipes={craftbookRecipes.Count} banked (total {p.craftingRecipes.Count()}), " +
                 $"eventsReseeded={reseeded} (of {seenEventsEver.Count} seen-ever).",
