@@ -238,6 +238,9 @@ namespace TheLongestYear.Loop
             // Runs before the cutscene early-return: vanilla's morning ownership pass has already
             // blanked an unowned/unnamed horse by now, and it must be repaired on day-28 mornings too.
             HorseCarryoverService.EnsureHorseNamed(_store.State, _monitor);
+            // Same slot: a Keep Pet save where an extra pet has no bowl (pre-0.16.3 restores)
+            // gets one now rather than at the next rewind.
+            PetCarryoverService.EnsureBowlsForAllPets(_store.State, _monitor);
 
             if (_pendingCutscene != Day28Branch.None)
             {
