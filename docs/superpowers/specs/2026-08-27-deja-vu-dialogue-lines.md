@@ -39,7 +39,7 @@ Tier 2
 | Kent | You have a way of standing that I recognize. Can't say from where. | I don't let my guard down easily. With you it just... does. |
 | Krobus | Curious. I sense you have walked these tunnels many times. Yet I have only just met you. | You are... comfortable. Like an old stone in the wall. |
 | Leah | I swear I've sketched your face before. Maybe in a dream. | Being around you feels like sitting by the river. Easy. |
-| Leo | The parrots act like they know you. Did you visit the island before? | You feel like a friend from a long time ago. Even though it wasn't. |
+| Leo | The parrots act like they know you. Did you visit the island before? | Being with you feels like the island. Safe. |
 | Lewis | You know, for a moment I thought you'd been in the valley for years. | I trust you the way I trust folks I've known for decades. Strange, that. |
 | Linus | The wind knows you. I can tell. | You feel like an old friend. The land seems to think so too. |
 | Marnie | Oh! I nearly asked after your animals by name. Have you told me their names? | You're always welcome here, dear. Feels like you always have been. |
