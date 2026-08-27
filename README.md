@@ -14,21 +14,15 @@ This is a **beta** (`0.16.0`). It is feature-complete for v1 and stable in testi
 
 ---
 
-## What's New in 0.16.0
+## What's New in 0.16.7
 
-**You can now tune the difficulty yourself, and every bundle finally asks something of you before Winter.**
+**Three bug fixes from your reports, all on the rewind.**
 
-- **Ten independent difficulty dials.** In the mod's settings menu (GMCM) under **Difficulty**. There is no overall difficulty setting: turn up only what you want turned up. Each dial has four steps, Easy / Normal / Hard / Extreme, and every one starts on **Normal**, which is the balance the mod already shipped with, so changing nothing changes nothing. Stack sizes, quality asks, required slots, item rarity, JP earned, shrine prices, starting gold, starting cart slots, hold and pity prices, and how readily the Junimos take pity on you. Changes apply at your next loop. Full details in [Difficulty](#difficulty).
-- **Every bundle now pulls its weight at the season checkpoints.** Bundles that require *all* of the items they show used to take their due dates from a hand-written list of 40 items. An ingredient outside that list had no due date at all, so a bundle could sit there asking nothing of you until the Winter check. Since the mod re-rolls the six fish bundles from a pool of 52 and the two metals bundles from a pool of 11, most boards had at least one bundle you could safely ignore for three seasons.
-- **The mod now works this out for itself, from the game's own data.** For every fish and metal it derives the earliest season the item can exist and how much work it is (fishing level, weather, time of day, mine depth, smelting), then spreads a bundle's items across the four checkpoints, easiest first. It reads live game data rather than a list, so remixed boards and re-rolls are covered too.
-- **It can never ask for something before that thing exists.** A due date is clamped to the item's earliest possible season, so an unsatisfiable gate cannot be expressed at all. Verified across three boards and two difficulty settings before release: no impossible gates, and no bundle free all year.
-- **New: `tly_itemmodel`.** Type it in the SMAPI console with an item or a bundle name and it tells you what the mod believes and why. `tly_gatecheck` now explains its reasoning too.
+- **Tools in the Junimo Stash keep their bait, tackle and enchantments.** A rod banked in the stash was rebuilt from scratch on the next loop, so it came back empty and un-enchanted. The 0.12.0 fix only covered a kept rod that stayed in your inventory.
+- **Keep Pet gives every pet its own bowl.** The rebuilt farm has one bowl and the game binds one pet per bowl. Any pet without one is moved into the farmhouse each morning and loses friendship, so with two pets the second one looked like it had not come back. Extra bowls are now placed beside the first, and a save already in that state gets the missing bowl the next morning.
+- **The beach bridge is broken again after a rewind.** Repairing the bridge edits the game's cached map in place, so the next loop drew a repaired bridge under a "?" marker you could not interact with. The rewind now reloads the Beach, Forest, Mountain and Town maps from clean data, which also stops Robin's shortcuts leaking into a loop where you did not keep them.
 
-**Fair warning: this makes the year harder, on every difficulty including Normal.** That is deliberate. Bundles that quietly asked nothing of you now ask something, and the Difficulty dials are there if you want to push back the other way.
-
-**Still to come:** bundles built from crops, forage, cooking, saplings, artisan goods and tapper goods still only come due in Winter. Those item types are not modelled yet, and a late date is the safe default rather than a guessed one. They are next.
-
-Full history in [CHANGELOG.md](CHANGELOG.md).
+Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
