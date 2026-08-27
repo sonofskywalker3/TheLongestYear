@@ -6,6 +6,16 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BRAINSTORM NEEDED (Jeff, 2026-08-27): additional weekly themes
+
+Jeff: "I want to brainstorm additional themes since we've widened the bundles so much." The
+engine now re-rolls bundles from wide item pools (fish 52, metals 11, the authored bundles, the
+derived-availability gates), so the fixed set of weekly themes and their bonus/liability pairs
+(`ThemeModifiers`, `Theme` enum) covers a smaller share of what a board can ask for than it did in
+0.9. Brainstorm first: what a theme IS today (bonus + paired liability + bonus-item slots), which
+item domains a re-rolled board can now demand that no theme touches, and whether new themes are
+new enum members with new Harmony effects or a data-driven reshape. Not scoped, not planned.
+
 ### BUILT 2026-08-27 (0.16.9 to 0.16.12, not released): keep power books across a reset
 
 Brainstormed with Jeff the same day. Ruling: **per power, bought at the shrine**, not one big
