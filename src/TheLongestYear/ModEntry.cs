@@ -430,7 +430,7 @@ namespace TheLongestYear
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
-                itemSeasonPins, bundleQuotas);
+                itemSeasonPins, bundleQuotas, this.Helper.GameContent);
 
             // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed
             // the SeasonResolver (so weekly themes can't ask for out-of-season fish, Nexus
