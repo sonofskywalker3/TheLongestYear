@@ -193,6 +193,13 @@ public sealed class GameplayConfig
             ["Garden"]               = new[] { 1, 2, 4, 4 },   // X=4 of 5 — complete by Fall 28 while crops still grow
         };
 
+    /// <summary>The ten difficulty modifiers (spec 2026-08-26). Each is an independent
+    /// Easy/Normal/Hard/Extreme step; there is no overall tier. Every one defaults to Normal,
+    /// which is the mod's shipping balance, so leaving this alone changes nothing. A change takes
+    /// effect at the NEXT reset, not mid-run: the resolved profile is stamped into
+    /// <see cref="MetaState.Difficulty"/> when a loop begins and consumers read that stamp.</summary>
+    public DifficultySettings Difficulty { get; set; } = new();
+
     public JpSettings Jp { get; set; } = new JpSettings();
 
     /// <summary>Gold the farmer starts each run with after a reset.</summary>
