@@ -1,10 +1,10 @@
 # The Longest Year - Status
 
 **Last updated:** 2026-08-27 night (Keep power books + deja-vu dialogue built and live-smoked, 0.16.17 local)
-**Branch:** `master`, 0.16.8 through 0.16.17 committed locally, **NOT pushed, NOT released**
+**Branch:** `master`; 0.16.17 released 2026-08-27 (Jeff: "smoke it, push it, release it")
 **Tests:** 1153 passing, 0 failing
 **Build:** clean
-**Last public release:** 0.16.7
+**Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
 ## Deja-vu villager dialogue (0.16.13 to 0.16.17): built, unit-tested, LIVE SMOKE PASSED
 

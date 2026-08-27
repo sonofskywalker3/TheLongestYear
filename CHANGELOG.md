@@ -3,9 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.16.17 - 2026-08-27
 
-1138 tests.
+1153 tests. Both features live-smoked on the throwaway save (STATUS.md). 0.16.8 to 0.16.16 were
+internal builds. Also smoked once with Stardew Valley Expanded enabled: SVE's crops, fish, saplings
+and tapper goods join the engine pools and the board classifies fully, but the engine's own
+board manifest no longer matches the live data on an SVE save, so TLY uses its read-only
+classification path there and season-pity easing does not apply (tracked in TODO.md).
 
 ### Added
 

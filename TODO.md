@@ -6,6 +6,20 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### SVE board audit (found 2026-08-27 during the 0.16.17 release smoke)
+
+Smoked once with Stardew Valley Expanded enabled on the throwaway save (`tly_reset` + `tly_genbundles`):
+pools grew (crops 43 -> 47, fish 52 -> 54, saplings 6 -> 9, tapper 1 -> 10, cooking 78 -> 92, artisan
+20 -> 23), the engine wrote 31 bundles, 26 classified / 5 skipped (the Vault four + Abandoned Joja,
+same as vanilla), determinism OK. **But** `ResolveRequirements` logged "engine manifest mismatch
+(stale or foreign bundle data), falling back to read path" right after the engine wrote the board,
+which never happens on a non-SVE reset. Consequence: on an SVE save TLY classifies from live data
+(works) but season-pity easing on a held board is not applied. Needs: find what SVE changes between
+the engine write and the readback (CP edit to Data/Bundles re-applied over the written values?),
+decide whether the manifest check should tolerate it, and check which SVE areas beyond Fable Reef
+and Crimson Badlands should join `ExcludedLocationMarkers`. Do not tell anyone SVE is "supported"
+until this has a ruling.
+
 ### BRAINSTORM NEEDED (Jeff, 2026-08-27): additional weekly themes
 
 Jeff: "I want to brainstorm additional themes since we've widened the bundles so much." The

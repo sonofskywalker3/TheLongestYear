@@ -1,19 +1,20 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.16.7).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.16.17).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [color=yellow][b]This is the last big engine update.[/b] From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.16.7[/b][/size]
+[size=5][b]What's New in 0.16.17[/b][/size]
 
-[b]Three bug fixes from your reports, all on the rewind.[/b]
+[b]The town half-remembers you, and the books you read can stay read.[/b]
 [list]
-[*][b]Tools in the Junimo Stash keep their bait, tackle and enchantments.[/b] A rod banked in the stash was rebuilt from scratch on the next loop, so it came back empty and un-enchanted. The 0.12.0 fix only covered a kept rod that stayed in your inventory.
-[*][b]Keep Pet gives every pet its own bowl.[/b] The rebuilt farm has one bowl and the game binds one pet per bowl. Any pet without one is moved into the farmhouse each morning and loses friendship, so with two pets the second one looked like it had not come back. Extra bowls are now placed beside the first, and a save already in that state gets the missing bowl the next morning.
-[*][b]The beach bridge is broken again after a rewind.[/b] Repairing the bridge edits the game's cached map in place, so the next loop drew a repaired bridge under a "?" marker you could not interact with. The rewind now reloads the Beach, Forest, Mountain and Town maps from clean data, which also stops Robin's shortcuts leaking into a loop where you did not keep them.
+[*][b]Keep your power books.[/b] Nineteen new keeps at the Junimo Shrine, one per power book (Way of the Wind, Friendship 101, The Diamond Hunter and the rest). A row appears on a Fail night once you have read that book this loop; buy it and the book's power survives every rewind. 150 to 750 JP depending on how much the power is worth over a year. Nothing stacks and nothing is free: books you did not buy are still wiped.
+[*][b]Deja-vu dialogue.[/b] Villagers you have spent a lot of time with across loops (talks, gifts and heart events add up quietly; hearts themselves still reset) occasionally open with an uncanny line in their own voice. About one a week at most, never in your first loop, never on a villager's first-meeting day, and it never explains itself. Toggle "Deja-vu dialogue" in Features. Idea by u/Gribbleby.
+[*][b]Villagers introduce themselves again after a rewind.[/b] From loop 2 on, every villager greeted you with an ordinary line instead of their first-meeting one; the rewind now restores the game's six-day introduction window.
+[*]0.16.8 to 0.16.16 were internal builds; this is the first release since 0.16.7.
 [/list]
 
 Coming from 0.15.0 or earlier? 0.16.0 added ten independent [b]Difficulty[/b] dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
