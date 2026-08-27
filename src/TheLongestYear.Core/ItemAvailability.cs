@@ -23,7 +23,13 @@ public sealed record ItemAvailability(Season EarliestSeason, int Effort, string 
 /// here). An id with no derived entry and no override floors at WINTER, which is the safe
 /// direction: BundleDeadlines clamps a deadline UPWARD to the floor, so a floor guessed too
 /// early permits a gate the world cannot satisfy and bricks the run, while a floor guessed too
-/// late only makes the gate lenient.</summary>
+/// late only makes the gate lenient.
+///
+/// A season override may only move a floor LATER. An override that demands an item EARLIER than
+/// the derived floor is claiming the item exists before the game can produce it, which is the
+/// Purple Mushroom failure: the deadline is unsatisfiable, the year is lost on every loop, and
+/// the loop is permanently unwinnable. Such an override is rejected at construction, the derived
+/// floor stands, and the id is listed in <see cref="RejectedSeasonOverrides"/>.</summary>
 public sealed class ItemAvailabilityModel
 {
     /// <summary>Effort assigned to an item no rule recognised. Mid scale, so an unrecognised item
@@ -36,6 +42,7 @@ public sealed class ItemAvailabilityModel
     private readonly IReadOnlyDictionary<string, Season> _seasonOverrides;
     private readonly IReadOnlyDictionary<string, int> _effortOverrides;
     private readonly HashSet<string> _unrecognised = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _rejectedSeasonOverrides = new(StringComparer.Ordinal);
 
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
@@ -45,12 +52,30 @@ public sealed class ItemAvailabilityModel
         _derived = derived ?? throw new ArgumentNullException(nameof(derived));
         _seasonOverrides = seasonOverrides ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _effortOverrides = effortOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
+
+        // Validated once here rather than per lookup, so the count is meaningful the moment the
+        // model exists and a caller can log it at build time without waiting for traffic.
+        foreach (KeyValuePair<string, Season> pin in _seasonOverrides)
+        {
+            if (_derived.TryGetValue(pin.Key, out ItemAvailability? entry)
+                && pin.Value < entry.EarliestSeason)
+                _rejectedSeasonOverrides.Add(pin.Key);
+        }
     }
 
     /// <summary>Ids that fell through to the unrecognised default during this session's lookups.
     /// Surfaced by tly_itemmodel so a modded item the engine cannot place is visible rather than
     /// silently ungated.</summary>
     public IReadOnlyCollection<string> UnrecognisedIds => _unrecognised;
+
+    /// <summary>Ids whose curated season override was thrown out for demanding the item earlier
+    /// than the derived floor says it can exist. Populated at construction, so it is complete
+    /// before the first lookup.</summary>
+    public IReadOnlyCollection<string> RejectedSeasonOverrides => _rejectedSeasonOverrides;
+
+    /// <summary>How many ids the derivation rules actually placed. The useful build time number:
+    /// unlike the unrecognised count it is not zero until lookups start happening.</summary>
+    public int DerivedCount => _derived.Count;
 
     public ItemAvailability For(string qualifiedItemId)
     {
@@ -72,8 +97,16 @@ public sealed class ItemAvailabilityModel
 
         if (hasSeasonOverride)
         {
-            basis = $"season override to {overrideSeason} (derived: {basis})";
-            season = overrideSeason;
+            if (_rejectedSeasonOverrides.Contains(qualifiedItemId))
+            {
+                basis = $"season override to {overrideSeason} REJECTED, earlier than derived floor "
+                    + $"{season} (derived: {basis})";
+            }
+            else
+            {
+                basis = $"season override to {overrideSeason} (derived: {basis})";
+                season = overrideSeason;
+            }
         }
         if (hasEffortOverride)
         {

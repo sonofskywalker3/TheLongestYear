@@ -91,6 +91,82 @@ public class ItemAvailabilityTests
         Assert.Equal(Season.Spring, result.EarliestSeason);
     }
 
+    /// <summary>The Purple Mushroom failure, made non fatal. A curated pin demanding an item
+    /// EARLIER than the derivation says it can exist would put an unsatisfiable deadline on the
+    /// board and lose the year on every loop. Spec section 5: log it and ignore it.</summary>
+    [Fact]
+    public void A_Season_Override_Earlier_Than_The_Derived_Floor_Is_Rejected()
+    {
+        var model = Model(
+            new Dictionary<string, ItemAvailability>
+            {
+                ["(O)128"] = new ItemAvailability(Season.Summer, 7, "summer-only fish"),
+            },
+            seasonOverrides: new Dictionary<string, Season> { ["(O)128"] = Season.Spring });
+
+        ItemAvailability result = model.For("(O)128");
+
+        Assert.Equal(Season.Summer, result.EarliestSeason);
+        Assert.Contains("REJECTED", result.Basis);
+        Assert.Contains("summer-only fish", result.Basis);
+        Assert.Contains("(O)128", model.RejectedSeasonOverrides);
+    }
+
+    /// <summary>Rejections are known the moment the model exists, so the build time log line is
+    /// not reporting an empty collection that only fills up later.</summary>
+    [Fact]
+    public void A_Rejection_Is_Recorded_Before_Any_Lookup_Happens()
+    {
+        var model = Model(
+            new Dictionary<string, ItemAvailability>
+            {
+                ["(O)128"] = new ItemAvailability(Season.Fall, 7, "fall fish"),
+            },
+            seasonOverrides: new Dictionary<string, Season> { ["(O)128"] = Season.Spring });
+
+        Assert.Single(model.RejectedSeasonOverrides);
+    }
+
+    /// <summary>Later than the derived floor is a pacing choice, not a lie about availability,
+    /// and later is the safe direction. It stands.</summary>
+    [Fact]
+    public void A_Season_Override_Later_Than_The_Derived_Floor_Is_Honoured()
+    {
+        var model = Model(
+            new Dictionary<string, ItemAvailability>
+            {
+                ["(O)128"] = new ItemAvailability(Season.Summer, 7, "summer-only fish"),
+            },
+            seasonOverrides: new Dictionary<string, Season> { ["(O)128"] = Season.Winter });
+
+        Assert.Equal(Season.Winter, model.For("(O)128").EarliestSeason);
+        Assert.Empty(model.RejectedSeasonOverrides);
+    }
+
+    /// <summary>Nothing to validate against, so nothing to reject. An unrecognised id would
+    /// otherwise floor at Winter and apply no pressure at all.</summary>
+    [Fact]
+    public void An_Early_Override_On_An_Item_With_No_Derived_Entry_Is_Honoured()
+    {
+        var model = Model(
+            seasonOverrides: new Dictionary<string, Season> { ["(O)9999"] = Season.Spring });
+
+        Assert.Equal(Season.Spring, model.For("(O)9999").EarliestSeason);
+        Assert.Empty(model.RejectedSeasonOverrides);
+    }
+
+    [Fact]
+    public void The_Derived_Count_Reports_What_The_Rules_Placed()
+    {
+        var model = Model(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)128"] = new ItemAvailability(Season.Summer, 7, "test"),
+            ["(O)129"] = new ItemAvailability(Season.Spring, 2, "test"),
+        });
+
+        Assert.Equal(2, model.DerivedCount);
+    }
+
     [Fact]
     public void Lookup_Is_Ordinal_Not_Case_Insensitive()
     {
