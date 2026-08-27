@@ -237,6 +237,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
+            helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
@@ -1561,6 +1562,7 @@ namespace TheLongestYear
                 case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
+                case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
@@ -1623,6 +1625,151 @@ namespace TheLongestYear
         /// Data/Locations, Data/Monsters ...) rather than a hand-written table, so it stays true
         /// for whatever content mods are installed and cannot drift from the generator.
         /// Diagnostics only: nothing is written to the save.</summary>
+        /// <summary>Audits every season gate on the live board: for each bundle and each season,
+        /// what the gate demands against how many of that bundle's ingredients can actually exist
+        /// by that season's day 28.
+        ///
+        /// The question it answers is "hard but possible". IMPOSSIBLE means the gate demands more
+        /// than the world can supply by then, which bricks the run; FREE means the gate demands
+        /// nothing that season. Both are reported per bundle so a curated quota can be judged.
+        ///
+        /// LIMIT, stated plainly: this checks SEASON feasibility only. An item obtainable in Spring
+        /// but needing a keg, a fish pond or a 10,000g tool upgrade counts as obtainable here.
+        /// It proves nothing is impossible for calendar reasons; it does not prove anything is
+        /// comfortable. Read-only.</summary>
+        private void CmdGateCheck(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            var requirements = _runController?.Requirements;
+            if (requirements == null || requirements.Count == 0)
+            {
+                this.Monitor.Log("No requirements on this save yet.", LogLevel.Warn);
+                return;
+            }
+
+            // Earliest season each item can exist: the curated pins merged over the pins derived
+            // from live game data. Anything unpinned is treated as Spring-obtainable, which is the
+            // same assumption the generator's own ramp clamp makes.
+            var pins = new Dictionary<string, TheLongestYear.Core.Season>(StringComparer.Ordinal);
+            MetaState state = _meta.State;
+            try
+            {
+                BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(
+                    _config.PoolTuning, state.BoardDifficulty(_config));
+                foreach (var kv in new TheLongestYear.Loop.GameDataPools(this.Monitor)
+                        .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade))
+                        .DerivedSeasonPins)
+                    pins[kv.Key] = kv.Value;
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"tly_gatecheck: could not derive season pins ({ex.Message}); using curated pins only.", LogLevel.Warn);
+            }
+            foreach (var kv in ParseItemSeasonPins())
+                pins[kv.Key] = kv.Value;
+
+            int impossible = 0, free = 0, tight = 0;
+            var lines = new List<string>();
+            var blocked = new List<string>();
+
+            foreach (BundleRequirement req in requirements.OrderBy(r => r.Theme).ThenBy(r => r.Name, StringComparer.Ordinal))
+            {
+                int[] obtainable = new int[Calendar.MonthsPerYear];
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                    obtainable[season] = req.Ingredients.Count(id =>
+                        !pins.TryGetValue(id, out TheLongestYear.Core.Season pinned) || (int)pinned <= season);
+
+                int[] demanded = new int[Calendar.MonthsPerYear];
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                    demanded[season] = DemandAtSeason(req, (TheLongestYear.Core.Season)season, pins);
+
+                var cells = new List<string>();
+                string worst = "ok";
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                {
+                    string flag = "";
+                    if (demanded[season] > obtainable[season])
+                    {
+                        flag = " IMPOSSIBLE";
+                        worst = "IMPOSSIBLE";
+                        impossible++;
+                        // Name the culprits: an audit that says "4/3" without saying WHICH
+                        // ingredient is out of reach leaves the reader to re-derive it by hand.
+                        string blockers = string.Join(", ", req.Ingredients
+                            .Where(id => pins.TryGetValue(id, out var p2) && (int)p2 > season)
+                            .Select(id => $"{DisplayName(id)} (needs {pins[id]})"));
+                        if (blockers.Length > 0)
+                            blocked.Add($"      {req.Name} at {(TheLongestYear.Core.Season)season}: blocked by {blockers}");
+                    }
+                    else if (demanded[season] == obtainable[season] && demanded[season] > 0)
+                    {
+                        flag = " tight";
+                        if (worst == "ok") worst = "tight";
+                        tight++;
+                    }
+                    cells.Add($"{(TheLongestYear.Core.Season)season}: {demanded[season]}/{obtainable[season]}{flag}");
+                }
+                if (demanded[Calendar.MonthsPerYear - 1] == 0) { free++; worst = "FREE ALL YEAR"; }
+
+                lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}");
+            }
+
+            this.Monitor.Log("=== Season gate audit (demanded / obtainable, by day 28 of each season) ===", LogLevel.Info);
+            foreach (string line in lines)
+                this.Monitor.Log(line, LogLevel.Info);
+
+            if (blocked.Count > 0)
+            {
+                this.Monitor.Log("  Ingredients out of reach at the gate that demands them:", LogLevel.Error);
+                foreach (string b in blocked)
+                    this.Monitor.Log(b, LogLevel.Error);
+            }
+
+            this.Monitor.Log(
+                $"  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter " +
+                $"(cheapest first: {string.Join(", ", VaultLadder())}). Owning '{VaultRules.KeepBusUnlockedId}' satisfies it outright.",
+                LogLevel.Info);
+
+            this.Monitor.Log(
+                impossible > 0
+                    ? $"  RESULT: {impossible} IMPOSSIBLE season gate(s) -- these brick the run and must be fixed."
+                    : $"  RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated.",
+                impossible > 0 ? LogLevel.Error : LogLevel.Info);
+            this.Monitor.Log(
+                "  NOTE: this checks CALENDAR feasibility only. An item that exists in Spring but needs a keg, "
+                + "a fish pond or a tool upgrade counts as obtainable here.",
+                LogLevel.Info);
+        }
+
+        /// <summary>How many distinct ingredients this bundle's gate demands by the end of
+        /// <paramref name="season"/>, expressed the same way for all three bundle kinds so they can
+        /// be compared against obtainability on one scale.</summary>
+        private static int DemandAtSeason(
+            BundleRequirement req, TheLongestYear.Core.Season season,
+            IReadOnlyDictionary<string, TheLongestYear.Core.Season> pins)
+        {
+            switch (req.Kind)
+            {
+                case BundleKind.Seasonal:
+                    // Everything, but only once its named season has arrived.
+                    return (int)req.SeasonalSeason.Value <= (int)season ? req.Ingredients.Count : 0;
+
+                case BundleKind.PerItem:
+                    // Each pinned ingredient is due at its own pin.
+                    return req.ItemSeasonPins.Count(kv => (int)kv.Value <= (int)season);
+
+                case BundleKind.Percentage:
+                    return req.CumulativeRequiredBySeason[(int)season];
+
+                default:
+                    return 0;
+            }
+        }
+
+        private static IEnumerable<string> VaultLadder()
+            => VaultRules.VaultIndices.Select(i => $"{VaultRules.GoldForIndex(i):N0}g");
+
         private void CmdDumpBundles(string command, string[] args)
         {
             if (!Context.IsWorldReady)
