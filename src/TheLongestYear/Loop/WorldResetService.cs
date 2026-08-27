@@ -138,18 +138,58 @@ namespace TheLongestYear.Loop
 
             bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
             _meta.BundleSource = vanillaBoard
-                ? TheLongestYear.Core.BundleSourceNames.Vanilla : TheLongestYear.Core.BundleSourceNames.Engine;
+                ? TheLongestYear.Core.BundleSourceNames.LegacyVanilla : TheLongestYear.Core.BundleSourceNames.Engine;
             if (vanillaBoard)
             {
+                // One setting, three choices (Jeff 2026-08-27): Normal and Remixed each name a
+                // Game1.BundleType outright, so the config now owns the layout and a player can
+                // move between the two on an existing save. The legacy "Vanilla" value names no
+                // layout and returns null here, which deliberately leaves whatever the save
+                // already recorded in place rather than guessing and flipping a remixed save.
+                string configuredType = TheLongestYear.Core.BundleSourceNames.VanillaTypeFor(_config.BundleSource);
+                if (configuredType != null)
+                    _meta.VanillaBundleType = configuredType;
+
                 bool remixed = string.Equals(_meta.VanillaBundleType, Game1.BundleType.Remixed.ToString(), StringComparison.OrdinalIgnoreCase);
                 Game1.bundleType = remixed ? Game1.BundleType.Remixed : Game1.BundleType.Default;
                 if (string.IsNullOrEmpty(_meta.VanillaBundleType))
                     _meta.VanillaBundleType = Game1.bundleType.ToString();
-                _monitor.Log($"Reset: BundleSource=Vanilla — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
+                _monitor.Log($"Reset: bundle source {_config.BundleSource} — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
             }
             else
             {
                 Game1.bundleType = Game1.BundleType.Default;
+            }
+
+            // Keep-bundles hold on a VANILLA board (Jeff 2026-08-27: all three sources can hold).
+            // A vanilla reset regenerates through loadForNewGame off a freshly re-seeded
+            // uniqueIDForThisGame, so there is no seed to pin the way the engine path pins
+            // BundleSeedLoop. Snapshot the live board HERE, before loadForNewGame wipes it, and
+            // write it back afterwards: that reproduces the held board exactly, including any
+            // difficulty adjustments already baked into it.
+            //
+            // Read the flag before BundleHold.ConsumeChoiceAtReset clears it further down. No new
+            // saved field is needed: the board is in the save until this reset replaces it, so a
+            // quit between the Fail-night choice and the reset still snapshots the right board.
+            Dictionary<string, string> heldVanillaBoard = null;
+            if (vanillaBoard && _meta.HoldChoiceMadeForReset && _meta.ConsecutiveHolds > 0)
+            {
+                var live = Game1.netWorldState.Value.BundleData;
+                if (live != null && live.Count > 0)
+                {
+                    heldVanillaBoard = new Dictionary<string, string>(live);
+                    _monitor.Log(
+                        $"Reset: holding the vanilla board ({heldVanillaBoard.Count} bundles snapshotted; " +
+                        $"consecutive holds {_meta.ConsecutiveHolds}).",
+                        LogLevel.Info);
+                }
+                else
+                {
+                    _monitor.Log(
+                        "Reset: asked to hold the vanilla board but there was no bundle data to snapshot; " +
+                        "it will regenerate instead.",
+                        LogLevel.Warn);
+                }
             }
 
             string oldSavePath = Constants.CurrentSavePath;
@@ -522,8 +562,20 @@ namespace TheLongestYear.Loop
                 // no manifest marker; the post-reset reload classifies it (read-and-classify).
                 _meta.BundlesGeneratedForReset = -1;
                 LastGeneratedRequirements = null;
-                _monitor.Log("Reset: BundleSource=Vanilla — keeping the game's own board (no engine write).", LogLevel.Info);
-                ApplyVanillaBoardDifficulty();
+                if (heldVanillaBoard != null)
+                {
+                    // The held board already carries whatever difficulty adjustments it was built
+                    // with, so the ask-side pass must NOT run over it again and compound them.
+                    Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(heldVanillaBoard));
+                    _monitor.Log(
+                        $"Reset: restored the held vanilla board ({heldVanillaBoard.Count} bundles); no re-roll, no difficulty re-pass.",
+                        LogLevel.Info);
+                }
+                else
+                {
+                    _monitor.Log("Reset: vanilla board — keeping the game's own board (no engine write).", LogLevel.Info);
+                    ApplyVanillaBoardDifficulty();
+                }
             }
             else
             {

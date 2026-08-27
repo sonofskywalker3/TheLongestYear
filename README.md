@@ -49,7 +49,7 @@ Full history in [CHANGELOG.md](CHANGELOG.md).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
 4. **Start a new game on the Standard farm.** The farm-type and skip-intro options are managed for you — the mod's own intro plays in their place.
-5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead — the mod keeps that board and re-rolls it the same way on every reset. (`BundleSource` in the config/GMCM is the default for new games and switches an existing save at its next reset.)
+5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead — the mod keeps that board and re-rolls it the same way on every reset. (You can change this later: `Bundle source` in GMCM switches an existing save between all three, applying at its next loop.)
 
    ![New game → Advanced Options → Community Center Bundles showing TLY Custom](release-notes/advanced-options-tly-custom.png)
 
@@ -118,14 +118,17 @@ Ten independent difficulty dials live in the mod's settings menu (GMCM) under **
 
 ## Switching bundle source later
 
-You are not locked into the board you picked when you started. **Bundle source** in the mod's settings menu (GMCM) switches an existing save between **TLY Custom** (the mod builds its own board every loop) and **Vanilla** (keep the game's own Normal or Remixed board, or another bundle mod's, and re-roll it the same way on each reset).
+You are not locked into the board you picked when you started. **Bundle source** in the mod's settings menu (GMCM) is one setting with three choices, and you can move an existing save between any of them:
 
-Like the difficulty dials, the switch applies at your **next loop**, not straight away. The year you are already playing keeps the board it started with.
+- **TLY Custom** — the mod composes a fresh board every loop from the vanilla and remix pools plus its own authored bundles.
+- **Normal** — the game's own standard bundle layout, re-rolled the same way each loop.
+- **Remixed** — the game's own remixed layout, likewise.
 
-Two things the switch does not change:
+Another bundle mod's board is covered by Normal or Remixed: whatever the game generates is what the mod keeps.
 
-- **Normal or Remixed is fixed when the save is created.** GMCM moves you between TLY Custom and Vanilla; which of the game's two layouts you get was settled by the Advanced Options dropdown when you started that save.
-- **Keeping your board on a Fail night is a TLY Custom feature.** On a vanilla board the reset regenerates the board through the game's own generator, so there is nothing to hold on to and the Junimos do not offer it.
+Like the difficulty dials, a switch applies at your **next loop**, not straight away. The year you are already playing keeps the board it started with.
+
+**Keeping your board on a Fail night works on all three.** If you hold, you get the same board back next loop whichever source it came from.
 
 ## Configuration
 
@@ -140,7 +143,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `BundleQuotas` | per-bundle | How much each percentage-bundle asks for |
 | `StashTileX/Y` | `0,0` (auto) | Where the Junimo Stash chest is placed (`0,0` = auto-pick near the farmhouse). The Bundle Log / Cookbook / Craftbook are placeable furniture you can put anywhere. |
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
-| `BundleSource` | `Engine` | `Engine` = the mod's own board every loop (the new-game **TLY Custom** choice). `Vanilla` = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save |
+| `BundleSource` | `Engine` | One setting, three values: `Engine` (the mod's own board every loop, the new-game **TLY Custom** choice), `Normal` or `Remixed` (the game's own board of that kind, or another bundle mod's, re-rolled the same way each loop). Switchable on an existing save; takes effect at the next loop. See [Switching bundle source later](#switching-bundle-source-later) |
 | `BundleHoldCosts` | `[0, 50, 100, 200, 300]` | JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count |
 | `PityThreshold` / `PityQuotaStep` / `PityQuotaFloor` / `PityTrimPerStep` / `PityCosts` | 5 / 0.10 / 0.50 / 2 / `[0, 50, 100, 200, 300]` | Season pity: fails at one season before the Junimos offer help; quota cut per extra fail on a kept board and its floor; hardest items trimmed per extra fail on a reshuffle; JP price of accepting, by consecutive accepts. `PityEnabled` turns the offer off (fails are still counted) |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
