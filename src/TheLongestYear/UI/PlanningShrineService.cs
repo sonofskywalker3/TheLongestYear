@@ -19,6 +19,11 @@ namespace TheLongestYear.UI
         private readonly IMonitor _monitor;
         private static System.Func<MetaState> _state;
 
+        /// <summary>The run's stamped shrine-price factor, so the read-only preview quotes the
+        /// same number the shrine charges. Same static-hook idiom as <see cref="_state"/>,
+        /// because this menu is opened from a Harmony patch with no instance context.</summary>
+        private static System.Func<double> _priceFactor;
+
         public PlanningShrineService(IMonitor monitor, IModHelper helper)
         {
             _monitor = monitor;
@@ -26,6 +31,8 @@ namespace TheLongestYear.UI
         }
 
         public void AttachState(System.Func<MetaState> state) => _state = state;
+
+        public void AttachPriceFactor(System.Func<double> priceFactor) => _priceFactor = priceFactor;
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
@@ -110,7 +117,7 @@ namespace TheLongestYear.UI
                     }
                 }
 
-                Game1.activeClickableMenu = new ShrinePreviewMenu(state);
+                Game1.activeClickableMenu = new ShrinePreviewMenu(state, _priceFactor?.Invoke() ?? 1.0);
                 __result = true;
                 return false;
             }
