@@ -1,5 +1,33 @@
 # The Longest Year - Status
 
+**Last updated:** 2026-08-27 evening (Keep power books built, 0.16.12 local, smoke pending)
+**Branch:** `master`, 0.16.8 through 0.16.12 committed locally, **NOT pushed, NOT released**
+**Tests:** 1138 passing, 0 failing
+**Build:** clean
+**Last public release:** 0.16.7
+
+## Keep power books (0.16.9 to 0.16.12): built and unit-tested, live smoke PENDING
+
+Jeff's brainstorm ruling (2026-08-27): per book, bought at the shrine. Nineteen `keep_book_*`
+Carryover rows, reach-gated on having read the book this loop, 150 / 350 / 500 to 750 JP.
+`StatResetRules` unchanged (wipe-by-default); `FarmerReset` re-grants bought flags from
+`RunBaseline.KeptBookStats`. Spec + plan in `docs/superpowers/{specs,plans}/2026-08-27-keep-power-books*`.
+
+**Smoke to run** (Rodger throwaway save, from the SMAPI console, tools/send-smapi-command.ps1):
+`tly_readbook Book_Speed` -> `tly_addjp 1000` -> `tly_buyupgrade keep_book_speed` -> `tly_reset`,
+then the `FarmerReset:` log line must show `books=[Book_Speed]` and `tly_readbook` must print
+`Book_Speed=1` with every other book at 0. Optional eyeball: the shrine row reads
+"Keep Way Of The Wind pt. 1" (item name from ItemRegistry).
+
+**Docs:** CHANGELOG `## Unreleased` covers 0.16.8 (first-meeting dialogue) and the books; README and
+Nexus Shrine feature line updated identically. "What's New" still says 0.16.7 until the release
+number is chosen.
+
+**Next:** Part 2 of the same brief, Deja-vu villager dialogue (TODO.md `[1.0.0]` entry, credit
+u/Gribbleby), brainstorm first.
+
+## Previous state (2026-08-27 afternoon)
+
 **Last updated:** 2026-08-27 (derived item availability model, Phase 1, built and smoked)
 **Branch:** `feat/difficulty-modifiers`, 52 commits ahead of `master`, **LOCAL ONLY (not pushed, not merged)**
 **Tests:** 1113 passing, 0 failing

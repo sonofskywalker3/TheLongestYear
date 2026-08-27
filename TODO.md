@@ -6,7 +6,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BRAINSTORM NEEDED (Jeff, 2026-08-27): keep granted powers across a reset
+### BUILT 2026-08-27 (0.16.9 to 0.16.12, not released): keep power books across a reset
+
+Brainstormed with Jeff the same day. Ruling: **per power, bought at the shrine**, not one big
+switch. Nineteen `keep_book_<slug>` Carryover rows reach-gated on `book:<Book_Id>` (the row only
+shows once that book was read this loop), three price bands (150 / 350 / 500 to 750 JP, 6,850
+total), `keep_book_speed2` chained on pt. 1. `StatResetRules` stays wipe-by-default; `FarmerReset`
+re-sets the bought flags from `RunBaseline.KeptBookStats`. Row names come from the game
+(`item:` token + `Strings.InitItemNames`). Mastery, trinket slot, prize ladder: unchanged (tickets
+are items and can already be stashed; Jeff: "you wipe them, but they can stash them"). Wallet
+items and Stardrops flagged as the same class, out of scope. Spec
+`docs/superpowers/specs/2026-08-27-keep-power-books-design.md`, plan
+`docs/superpowers/plans/2026-08-27-keep-power-books.md`. Debug: `tly_readbook`.
+**Live smoke: pending** (see STATUS.md).
+
+<details><summary>Original brainstorm brief</summary>
 
 Jeff wants permanent powers granted by an in-world source to SURVIVE the loop reset, starting with
 the books. Today they do not: `StatResetRules` is wipe-by-default and its own header comment names
@@ -34,7 +48,7 @@ Things the brainstorm needs to look at, because they are already in the code:
 - What counts as "another source" beyond books: mastery, trinket slots, perfection perks, the
   Special Order prize ticket ladder, and whatever a mod adds.
 
-Not scoped, not planned. Brainstorm first.
+</details>
 
 
 ### ▶ NEXT SESSION: smoke the netWorldState audit fixes in game

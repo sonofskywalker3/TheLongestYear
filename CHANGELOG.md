@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+1138 tests.
+
+### Added
+
+- **Keep your power books.** Nineteen new Carryover keeps at the Junimo Shrine, one per vanilla power book (Way of the Wind, Friendship 101, The Diamond Hunter and the rest). A row appears on a Fail night once you have read that book this loop; once bought, the book's power survives every rewind. Priced 150 to 750 JP by how much the power is worth over a year. Nothing stacks and nothing is free: the reset still wipes every book you did not buy. Spec: `docs/superpowers/specs/2026-08-27-keep-power-books-design.md`.
+- Debug console command `tly_readbook [Book_Id]` to mark a book as read, or list every book's flag.
+
+### Fixed
+
+- **Villagers use their first-meeting dialogue again after a rewind.** The game keys that line on a six-day "Introduction" window created only when a farmer is born, so from loop 2 on every villager greeted a stranger with an ordinary daily line. The rewind now re-seeds that window. (Emmalution's stream, 2026-08-27.)
+
 ## 0.16.7 - 2026-08-27
 
 1123 tests. Live-smoked on the throwaway save (STATUS.md).
