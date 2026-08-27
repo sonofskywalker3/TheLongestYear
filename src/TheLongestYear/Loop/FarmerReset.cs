@@ -125,6 +125,13 @@ namespace TheLongestYear.Loop
                 Game1.stats.Set("MasteryExp", needed);
             }
 
+            // Power books: Keep <book> rows (spec 2026-08-27). The wipe above removed every
+            // Book_* flag (StatResetRules stays wipe-by-default); re-grant only the kept ones, the
+            // same shape as the MasteryExp re-seed. Set, not Increment: the flag is binary and
+            // Object.readBook treats any non-zero as "already read".
+            foreach (string statKey in baseline.KeptBookStats)
+                p.stats.Set(statKey, 1);
+
             // Every run starts with the 5 basic tools. The inventory wipe above removed them
             // and loadForNewGame does NOT re-grant them (it keeps the existing player), so we
             // re-add any that are missing here. Without this the player ends a reset toolless
@@ -259,6 +266,7 @@ namespace TheLongestYear.Loop
                 $"skills=[{string.Join(",", baseline.SkillLevels)}], " +
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
+                $"books=[{string.Join(",", baseline.KeptBookStats)}], " +
                 $"goldenScythe={baseline.GrantGoldenScythe}, " +
                 $"dialogueEvents=[{string.Join(",", p.activeDialogueEvents.Keys.Select(k => k + ":" + p.activeDialogueEvents[k]))}], " +
                 $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count()}), " +

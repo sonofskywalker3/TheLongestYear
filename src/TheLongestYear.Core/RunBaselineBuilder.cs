@@ -134,6 +134,12 @@ public static class RunBaselineBuilder
                 startingAnimals.Add(new StartingAnimal(mapping.VanillaType, mapping.HousingType));
         }
 
+        // Kept power books: every owned keep_book_* row contributes its Book_* stat key.
+        var keptBooks = new List<string>();
+        foreach (BookKeep book in BookKeepTable.Entries)
+            if (meta.HasUpgrade(book.UpgradeId))
+                keptBooks.Add(book.StatKey);
+
         return new RunBaseline
         {
             StartingGold = gold,
@@ -150,6 +156,7 @@ public static class RunBaselineBuilder
             KeptBuildings = keptBuildings,
             StartingAnimals = startingAnimals,
             MasteryLevel = MasteryFloor(meta),
+            KeptBookStats = keptBooks,
             GrantGoldenScythe = meta.HasUpgrade("keep_golden_scythe"),
         };
     }
