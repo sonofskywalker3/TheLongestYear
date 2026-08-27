@@ -10,7 +10,7 @@ not coded.
 Tier 1
 - I swear we've met before. Do you have a twin?
 - Have we met? You seem so familiar.
-- Sorry, I almost called you by name... and I don't think you ever told me it.
+- Hey... you... Sorry, I swear I knew your name for a second.
 
 Tier 2
 - I don't know why, but I feel very comfortable with you.
