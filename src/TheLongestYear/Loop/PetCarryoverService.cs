@@ -160,6 +160,26 @@ namespace TheLongestYear.Loop
             }
         }
 
+        /// <summary>Vanilla's GameLocation.isBuildable, evaluated against the FARM. The vanilla
+        /// method reads the Buildable/Diggable tile properties off <c>Game1.currentLocation</c>
+        /// (GameLocation.cs:16930-16945), which during a reset or a morning pass is the farmhouse
+        /// the player woke up in, so it rejected every farm tile (2026-08-27 smoke: "no buildable
+        /// tile within 6 tiles west of (51,7)"). Same rules, right map.</summary>
+        private static bool IsBowlTile(Farm farm, Vector2 tile)
+        {
+            int x = (int)tile.X, y = (int)tile.Y;
+            Rectangle rect = farm.GetBuildableRectangle();
+            if (rect != Rectangle.Empty && !rect.Contains(x, y)) return false;
+            if (farm.getBuildingAt(tile) != null) return false;
+            if (!farm.CanItemBePlacedHere(tile, itemIsPassable: false, CollisionMask.All, ~CollisionMask.Objects, useFarmerTile: true))
+                return false;
+            string buildable = farm.doesTileHavePropertyNoNull(x, y, "Buildable", "Back");
+            if (buildable.Equals("t", System.StringComparison.OrdinalIgnoreCase) || buildable.Equals("true", System.StringComparison.OrdinalIgnoreCase))
+                return true;
+            return farm.doesTileHaveProperty(x, y, "Diggable", "Back") != null
+                && !buildable.Equals("f", System.StringComparison.OrdinalIgnoreCase);
+        }
+
         private static PetBowl PlaceBowl(Farm farm, int petIndex, IMonitor monitor)
         {
             (int startX, int y) = PetCarryover.BowlTile(petIndex);
@@ -170,7 +190,7 @@ namespace TheLongestYear.Loop
                 // The fresh farm regenerates weeds/stones/twigs anywhere, including here; clear
                 // them first (same ruling as kept buildings) so only real map obstacles say no.
                 WorldResetService.ClearFootprint(farm, x, y, 1, 1);
-                if (!farm.isBuildable(tile)) continue;
+                if (!IsBowlTile(farm, tile)) continue;
 
                 if (Building.CreateInstanceFromId(PetBowlBuildingId, tile) is not PetBowl bowl)
                 {
