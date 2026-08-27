@@ -451,3 +451,48 @@ public class MetaStateDifficultyStampTests
         Assert.Equal(DifficultyStep.Extreme, restored.Difficulty.Steps.SeasonPity);
     }
 }
+
+public class BoardDifficultyTests
+{
+    /// <summary>Regression, found in game 2026-08-27: re-deriving a stampless save's board against
+    /// LIVE config made the manifest check fail and demoted a healthy engine save to the legacy
+    /// read path. A save with no stamp predates difficulty modifiers, so its board is all-Normal.</summary>
+    [Fact]
+    public void A_Stampless_Save_Re_Derives_As_All_Normal_Even_When_Config_Has_Changed()
+    {
+        var cfg = new GameplayConfig();
+        cfg.Difficulty.StackSize = DifficultyStep.Hard;
+        cfg.Difficulty.RequiredSlots = DifficultyStep.Hard;
+        var meta = new MetaState();
+
+        DifficultyProfile board = meta.BoardDifficulty(cfg);
+
+        Assert.Equal(1.0, board.StackFactor);
+        Assert.Equal(0, board.RequiredSlotsDelta);
+        Assert.True(board.Steps.AsksAllNormal());
+    }
+
+    /// <summary>Economy reads still honour a config change on a stampless save, so a player who has
+    /// never reset gets the setting he just chose.</summary>
+    [Fact]
+    public void Economy_Reads_Still_Follow_Live_Config_On_A_Stampless_Save()
+    {
+        var cfg = new GameplayConfig();
+        cfg.Difficulty.StartingGold = DifficultyStep.Extreme;
+
+        Assert.Equal(0, new MetaState().EffectiveDifficulty(cfg).StartingGold);
+    }
+
+    [Fact]
+    public void A_Stamped_Save_Re_Derives_From_Its_Stamp()
+    {
+        var cfg = new GameplayConfig();
+        var meta = new MetaState
+        {
+            Difficulty = DifficultyResolver.Resolve(
+                new DifficultySettings { StackSize = DifficultyStep.Hard }, cfg),
+        };
+
+        Assert.Equal(1.5, meta.BoardDifficulty(cfg).StackFactor);
+    }
+}
