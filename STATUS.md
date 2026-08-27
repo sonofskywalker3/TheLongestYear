@@ -36,6 +36,15 @@ Medicine still wait for Winter, because their ingredients come from domains Phas
 (crops, forage, monster drops, artisan goods, cooking, artifacts, books, saplings, geode minerals,
 tapper goods). Each later phase needs its own plan.
 
+**Live smoke PASSED 2026-08-27 (0.16.1-0.16.7, Rodger throwaway save, driven from the SMAPI console):**
+`tly_addpet Cat Mochi 1` + `tly_addpet Dog Rex 0` + `tly_fixbridge` + `tly_stashrod`, then `tly_reset`.
+After the reset: both pets restored, Mochi owns the default bowl (53,7), a second bowl placed at (51,7)
+and assigned to Rex (screenshot: two bowls on the fence pads); Beach tile (58,13) back to 284 with the
+Action property present and bridgeFixed=false; the stashed Iridium Rod still has 20 bait, a spinner
+and Auto-Hook. Loading the rotated save also placed the missing bowl on DayStarted (the 0.16.4
+self-heal). One fix came out of it: vanilla isBuildable reads tile properties off
+Game1.currentLocation (the farmhouse during a reset), so 0.16.7 checks the Farm map directly.
+
 ## NEXT SESSION: difficulty modifiers need an in-game smoke, then a merge decision
 
 Jeff brainstormed this the night of 2026-08-26 and said "write the spec, plan, and build" before
