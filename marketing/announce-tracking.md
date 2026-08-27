@@ -1,5 +1,39 @@
 # The Longest Year (beta 0.9.2) — community announcement tracking
 
+## 0.16.0 release announcement (2026-08-27) — PARTIALLY POSTED
+
+The "last big engine update" announcement: ten difficulty dials plus the derived season gates.
+Framing agreed with Jeff: harder now, but heavily customisable, so play with it and report what
+feels terrible or broken. Bug reports to the Nexus page with SMAPI logs. Body text is the same
+across venues; only the title prefix differs.
+
+| Venue | Status | URL |
+|---|---|---|
+| r/StardewValleyMods | **POSTED** (no flair) | https://www.reddit.com/r/StardewValleyMods/comments/1w018co/the_longest_year_0160_is_out_harder_but_now_you/ |
+| r/SMAPI | **NOT POSTED** — blocked, see below | — |
+| r/StardewValley | **NOT POSTED** — blocked, see below | — |
+| forums.stardewvalley.net (thread 52534) | not attempted this round | — |
+| playstarbound | still unposted (account activation, from 2026-06-05) | — |
+
+**Blocker (2026-08-27):** after the first successful post, Reddit's composer stopped accepting
+typed input on both r/SMAPI and r/StardewValley. The title field clicks fine and `find` resolves
+it, but typed text never lands, and on r/SMAPI the title element reports a zero-size bounding box
+(likely a shadow-root field the automation cannot focus). Tried: `?type=TEXT` re-navigation,
+element-ref clicks, coordinate clicks, and re-typing after clearing. Five-plus attempts across two
+subs. Not a login or rules problem: the account is signed in and both venues allow the post.
+Next attempt should try a fresh browser session first, since a rate-limit or composer state left
+over from the successful post is the most likely cause.
+
+**Rules re-confirmed, and a correction:** r/StardewValley Rule 8 explicitly lists **"Mod pages"**
+as fine to post directly, and Rule 11 asks for the **Mods** flair. The pinned "Self-Promo Tuesday"
+megathread does NOT gate mod releases, and the 2026-06-05 `[Mods]` post is still live with 124
+upvotes and 63 comments. Do not talk yourself out of posting there.
+
+**Note on format:** past updates (e.g. 0.11.44) were posted as *comments on the existing threads*
+rather than as new posts. This round Jeff asked for new posts. Both remain valid; comments on the
+old threads reach the people already subscribed to them.
+
+
 ## 0.11.44 release update (2026-07-13) — POSTED
 Update comment (`2026-07-13-01144-update-comment.md`) posted + verified on all three Reddit
 threads (r/StardewValley 1txuhfb, r/StardewValleyMods 1txu610, r/SMAPI 1txtkb4) and as a reply
