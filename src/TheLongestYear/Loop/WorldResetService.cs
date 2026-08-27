@@ -307,10 +307,16 @@ namespace TheLongestYear.Loop
             Game1.season = StardewValley.Season.Spring;
             Game1.dayOfMonth = 1;
             Game1.timeOfDay = 600;
-            Game1.netWorldState.Value.Date.Year = 1;
-            Game1.netWorldState.Value.Date.Season = StardewValley.Season.Spring;
-            Game1.netWorldState.Value.Date.DayOfMonth = 1;
             Game1.stats.DaysPlayed = 1;
+
+            // NOTE: the three `netWorldState.Value.Date.X = ...` lines that used to sit here were
+            // NO-OPS and were removed (audit 2026-08-26). NetWorldState.Date is a computed property
+            // (`public WorldDate Date => WorldDate.Now();`, NetWorldState.cs:229) that builds a NEW
+            // WorldDate from the Game1 statics on every call, so assigning to it wrote to a throwaway
+            // object and never reached netWorldState's own year/season/dayOfMonth/timeOfDay fields.
+            // Those are synced from Game1 by vanilla's UpdateFromGame1 — called explicitly after the
+            // weather rebuild in step 2c below, so nothing can read (or WriteToGame1 back) the
+            // pre-reset date in the window before the post-reset save.
 
             // The load-menu date label is read from the Farmer's *ForSaveGame display fields
             // (LoadGameMenu uses dayOfMonthForSaveGame/seasonForSaveGame/yearForSaveGame), which
