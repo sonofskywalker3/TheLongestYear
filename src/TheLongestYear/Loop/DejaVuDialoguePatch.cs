@@ -43,7 +43,13 @@ namespace TheLongestYear.Loop
             {
                 if (!Enabled || _meta == null || !RunActivation.IsActive) return;
                 if (!(noPreface || __result)) return;                 // wait for checkAction's last call
-                if (__instance.CurrentDialogue.Count == 0) return;     // nothing is about to play
+                string npc = __instance.Name;
+                bool force = ForceNext != null && ForceNext == npc;
+                if (__instance.CurrentDialogue.Count == 0)             // nothing is about to play
+                {
+                    if (force) _monitor.Log($"Deja-vu: {npc} has no line to prepend to (empty dialogue stack, vanilla result={__result}).", LogLevel.Trace);
+                    return;
+                }
                 if (Game1.isFestival()) return;
                 if (__instance.getSpouse() == Game1.player) return;
 
@@ -51,10 +57,13 @@ namespace TheLongestYear.Loop
                 string tk = top?.TranslationKey ?? "";
                 if (tk == TranslationKey) return;                      // already injected this talk
                 foreach (string key in Game1.player.activeDialogueEvents.Keys)
-                    if (key.Length > 0 && tk.EndsWith(":" + key, StringComparison.Ordinal)) return;
-
-                string npc = __instance.Name;
-                bool force = ForceNext != null && ForceNext == npc;
+                {
+                    if (key.Length > 0 && tk.EndsWith(":" + key, StringComparison.Ordinal))
+                    {
+                        if (force) _monitor.Log($"Deja-vu: {npc} is playing the '{key}' event line; not touching it.", LogLevel.Trace);
+                        return;
+                    }
+                }
                 RunState run = _run();
                 int daysPlayed = (int)Game1.stats.DaysPlayed;
                 int tier = DejaVuRules.TryPick(_meta, run, npc, daysPlayed, _config,

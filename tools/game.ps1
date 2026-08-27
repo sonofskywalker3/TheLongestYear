@@ -32,6 +32,7 @@
 param(
     [switch]$Focus,
     [string]$Click = "",
+    [string]$RightClick = "",
     [string]$Move = "",
     [string]$Key = "",
     [string]$Walk = "",
@@ -165,11 +166,14 @@ if ($Walk -ne "") {
 
 if ($Text -ne "") { foreach ($c in $Text.ToCharArray()) { [Game]::TypeChar($c); Start-Sleep -Milliseconds 30 }; "typed: $Text" }
 
-if ($Click -ne "" -or $Move -ne "") {
+if ($Click -ne "" -or $RightClick -ne "" -or $Move -ne "") {
     # pwsh -File passes every argument as a STRING, so "-Click 707,530" arrives as one string and
     # an [int[]] cast silently produces 707530 - a click at nonsense coordinates that still reports
     # success. Parse it here instead.
-    $raw = if ($Click -ne "") { $Click } else { $Move }
+    # -RightClick is the vanilla ACTION button: right-clicking an adjacent villager talks to them
+    # regardless of the selected hotbar slot (a left click uses the tool, or talks only when the
+    # slot is empty and the farmer faces them).
+    $raw = if ($Click -ne "") { $Click } elseif ($RightClick -ne "") { $RightClick } else { $Move }
     $parts = $raw -split '[,x ]+' | Where-Object { $_ -ne "" }
     if ($parts.Count -ne 2) { Write-Error "coordinates must be 'x,y' (got '$raw')"; exit 1 }
     $xy = @([int]$parts[0], [int]$parts[1])
@@ -181,6 +185,10 @@ if ($Click -ne "" -or $Move -ne "") {
         [Game]::mouse_event(2, 0, 0, 0, [UIntPtr]::Zero); Start-Sleep -Milliseconds 60
         [Game]::mouse_event(4, 0, 0, 0, [UIntPtr]::Zero)
         "click: client ($($xy[0]),$($xy[1])) screen ($($p.X),$($p.Y))"
+    } elseif ($RightClick -ne "") {
+        [Game]::mouse_event(8, 0, 0, 0, [UIntPtr]::Zero); Start-Sleep -Milliseconds 60
+        [Game]::mouse_event(16, 0, 0, 0, [UIntPtr]::Zero)
+        "right-click: client ($($xy[0]),$($xy[1])) screen ($($p.X),$($p.Y))"
     } else { "move: client ($($xy[0]),$($xy[1]))" }
 }
 
@@ -194,4 +202,4 @@ if ($Shot -ne "") {
     "shot: $full"
 }
 
-if (-not ($Key -or $Walk -or $Text -or ($Click -ne "") -or ($Move -ne "") -or $Shot)) { "focused: ok" }
+if (-not ($Key -or $Walk -or $Text -or ($Click -ne "") -or ($RightClick -ne "") -or ($Move -ne "") -or $Shot)) { "focused: ok" }
