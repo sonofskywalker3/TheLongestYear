@@ -6,6 +6,23 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### RULED (Jeff, 2026-08-27), NOT BUILT: keep wallet items and Stardrops with a JP purchase
+
+Flagged during the keep-power-books brainstorm as the same class of "power granted by an in-world
+source" and left out of that pass. Jeff's ruling 2026-08-27: **yes, keepable, bought with JP at the
+shrine, per item** (same shape as the book keeps: a reach-gated Carryover row each, re-granted from
+the baseline after the wipe). Not to be built until Jeff schedules it.
+
+What is in the class (all in `Farmer.mailReceived`, all wiped by `FarmerReset` today):
+- Wallet items: Rusty Key, Skull Key, Club Card, Special Charm, Dark Talisman, Magic Ink, Dwarvish
+  Translation Guide, Bear's Knowledge, Spring Onion Mastery (and the 1.6 ones: Mastery of the Five
+  Ways is a stat, not a wallet item; check `Farmer` flags for the rest).
+- Stardrops: the seven `CF_*` mails, each +34 max stamina (`maxStamina` is reset to 270 in
+  `FarmerReset` so a kept one has to add its +34 back).
+Open design points for the brainstorm: pricing bands (a Skull Key or a Stardrop is worth more than
+Bear's Knowledge), whether Stardrops are one row each or a tiered chain, and whether the Skull Key
+keep should also unlock the Skull Cavern door tile state.
+
 ### SVE board audit (found 2026-08-27 during the 0.16.17 release smoke)
 
 Smoked once with Stardew Valley Expanded enabled on the throwaway save (`tly_reset` + `tly_genbundles`):
@@ -183,7 +200,15 @@ the console, then hand the keyboard over; do not try to drive the farmer. Worth 
 (SendInput to an unfocused SDL window) before the next session that needs a walked repro.
 
 
-### OPEN QUESTION (Jeff, 2026-08-26, from emmalution's stream): repeating the Egg Hunt every loop
+### RULED (Jeff, 2026-08-27), NOT BUILT: the Egg Hunt runs once per loop
+
+Jeff's ruling 2026-08-27: "yes, once per loop." So a festival minigame the player has already done
+this loop (the Egg Hunt is the case in point) does not repeat within the loop; a rewind makes it
+fresh again. Build option (a) below unless Jeff says otherwise: a skip prompt on a repeat entry that
+hands over the participation reward and keeps the stalls and the Strawberry Seeds. Needs a short
+brainstorm + spec first (which festivals, what "done" means, the prompt wording), then a plan.
+
+Original question (2026-08-26, from emmalution's stream):
 
 Jeff watching the video: "she did go do the egg hunt twice, that shouldn't happen, can we avoid that?"
 

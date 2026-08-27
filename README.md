@@ -98,6 +98,8 @@ Ten independent difficulty dials live in the mod's settings menu (GMCM) under **
 
 **Changes take effect on your next loop, not straight away.** The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
 
+![The Difficulty section of the settings menu, ten dials all on Normal](release-notes/settings-difficulty.png)
+
 **What the bundles ask for**
 
 - **Stack size.** How many of an item a slot asks for, up to 99. Money bundles are never affected.
@@ -133,6 +135,10 @@ Like the difficulty dials, a switch applies at your **next loop**, not straight 
 **Keeping your board on a Fail night works on all three.** If you hold, you get the same board back next loop whichever source it came from.
 
 ## Configuration
+
+The **Features** section of the settings menu turns individual parts of the mod off or tunes them, and changes there apply straight away:
+
+![The Features section of the settings menu](release-notes/settings-features.png)
 
 All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The values most worth tuning during the beta:
 
