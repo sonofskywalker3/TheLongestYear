@@ -48,6 +48,14 @@ namespace TheLongestYear.Loop
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
+        /// <summary>Derived item model, forwarded to the classifier when the reset regenerates a
+        /// board so its PerItem bundles gate on computed deadlines instead of the curated pin
+        /// table. Settable rather than a constructor argument because ModEntry builds this service
+        /// before the engine pools the model is derived from exist; ModEntry sets it in the same
+        /// pass, right after the pools are built. Null until then (and on any host that never sets
+        /// it), which keeps the legacy pin-table path.</summary>
+        public TheLongestYear.Core.ItemAvailabilityModel AvailabilityModel { get; set; }
+
         /// <summary>The bundle-requirement manifest the most recent <see cref="PerformReset"/> call
         /// generated for the new loop (owned-bundle engine wiring) -- RunController.FinalizeReset
         /// re-injects this into the run via RunController.ReplaceRequirements right after PerformReset
@@ -599,7 +607,8 @@ namespace TheLongestYear.Loop
                     $"pity trim {(trim == null ? "none" : $"{trim.Season} x{trim.Units}")}, pity ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps")}).",
                     LogLevel.Info);
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
-                LastGeneratedRequirements = engine.BuildRequirements(generatedSet, _itemSeasonPins, _bundleQuotas, ease);
+                LastGeneratedRequirements = engine.BuildRequirements(
+                    generatedSet, _itemSeasonPins, _bundleQuotas, ease, AvailabilityModel);
             }
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.

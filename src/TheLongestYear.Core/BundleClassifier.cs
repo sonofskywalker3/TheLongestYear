@@ -72,10 +72,15 @@ public static class BundleClassifier
     /// defaults + user). Keyed by qualified item id.</param>
     /// <param name="bundleQuotas">Per-bundle cumulative quotas for KIND 3 bundles (merged
     /// defaults + user). Keyed by bundle name.</param>
+    /// <param name="availability">Derived item model. When supplied, the PerItem branch computes
+    /// deadlines with <see cref="BundleDeadlines"/> instead of looking ingredients up in
+    /// <paramref name="itemSeasonPins"/>. Null keeps the legacy pin-table behaviour, which exists
+    /// only until every caller passes a model (Phase 4 of the availability spec).</param>
     public static BundleRequirement? Classify(
         ParsedBundle parsed, Theme theme,
         IReadOnlyDictionary<string, Season> itemSeasonPins,
-        IReadOnlyDictionary<string, int[]> bundleQuotas)
+        IReadOnlyDictionary<string, int[]> bundleQuotas,
+        ItemAvailabilityModel? availability = null)
     {
         if (parsed == null) throw new ArgumentNullException(nameof(parsed));
         if (itemSeasonPins == null) throw new ArgumentNullException(nameof(itemSeasonPins));
@@ -144,12 +149,24 @@ public static class BundleClassifier
         // duplicate slot implicitly when wood is donated once.
         if (parsed.NumberOfSlots >= ingredients.Count)
         {
-            // Pull pins for THIS bundle's ingredients only. Unpinned items don't gate any
-            // season but still count toward IsFullyComplete.
             Dictionary<string, Season> pins = new();
-            foreach (string id in ingredients)
-                if (itemSeasonPins.TryGetValue(id, out Season s))
-                    pins[id] = s;
+            if (availability != null)
+            {
+                // Derived model: every ingredient gets a deadline, spread by effort and clamped
+                // up to the season it can first exist in. No ingredient can fall through
+                // ungated, which is the whole point of the change.
+                foreach (KeyValuePair<string, Season> deadline
+                         in BundleDeadlines.For(ingredients, availability))
+                    pins[deadline.Key] = deadline.Value;
+            }
+            else
+            {
+                // Legacy path: only ingredients named in the hand written table gate anything.
+                // Unpinned items don't gate any season but still count toward IsFullyComplete.
+                foreach (string id in ingredients)
+                    if (itemSeasonPins.TryGetValue(id, out Season s))
+                        pins[id] = s;
+            }
             return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
                 ingredientStacks, ingredientQualities);
         }

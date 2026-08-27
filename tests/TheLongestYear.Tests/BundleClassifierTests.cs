@@ -334,3 +334,87 @@ public class BundleClassifierQuotaClampTests
         Assert.Equal(0, req!.CumulativeRequiredBySeason![0]);
     }
 }
+
+/// <summary>Covers the derived-availability path on the PerItem branch: when a model is supplied
+/// every ingredient gets a computed deadline instead of only the ones the hand written pin table
+/// happens to name.</summary>
+public class BundleClassifierAvailabilityTests
+{
+    private static ParsedBundle Bundle(string name, params string[] ingredientIds)
+        => new ParsedBundle(
+            "CraftsRoom", 0, name,
+            ingredientIds.Select(id => new BundleIngredient(id, 1, 0)).ToList(),
+            ingredientIds.Length);
+
+    private static ItemAvailabilityModel Model(params (string Id, Season Floor, int Effort)[] items)
+        => new ItemAvailabilityModel(
+            items.ToDictionary(
+                i => i.Id,
+                i => new ItemAvailability(i.Floor, i.Effort, "test"),
+                System.StringComparer.Ordinal));
+
+    /// <summary>The bug this whole change exists to fix: a PerItem bundle whose ingredients are
+    /// absent from the pin table gates on nothing until the Winter win check.</summary>
+    [Fact]
+    public void Without_A_Model_An_Unpinned_PerItem_Bundle_Is_Still_Ungated()
+    {
+        BundleRequirement? req = BundleClassifier.Classify(
+            Bundle("Helper's", "(O)9999", "(O)9998"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>());
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Empty(req.ItemSeasonPins);
+    }
+
+    [Fact]
+    public void With_A_Model_Every_Ingredient_Gets_A_Deadline()
+    {
+        var model = Model(
+            ("(O)9999", Season.Spring, 2),
+            ("(O)9998", Season.Spring, 4));
+
+        BundleRequirement? req = BundleClassifier.Classify(
+            Bundle("Helper's", "(O)9999", "(O)9998"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model);
+
+        Assert.NotNull(req);
+        Assert.Equal(BundleKind.PerItem, req!.Kind);
+        Assert.Equal(2, req.ItemSeasonPins.Count);
+        Assert.Equal(Season.Fall, req.ItemSeasonPins["(O)9999"]);
+        Assert.Equal(Season.Winter, req.ItemSeasonPins["(O)9998"]);
+    }
+
+    [Fact]
+    public void With_A_Model_The_Bundle_Demands_Something_Before_Winter()
+    {
+        var model = Model(
+            ("(O)9999", Season.Spring, 2),
+            ("(O)9998", Season.Spring, 4));
+
+        BundleRequirement req = BundleClassifier.Classify(
+            Bundle("Helper's", "(O)9999", "(O)9998"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model)!;
+
+        // Real pressure: with nothing donated, the Fall day-28 gate must already fail.
+        // BundleRequirement has no DemandAtSeason member (the brief named one); the season
+        // gate itself is the honest expression of "this bundle demands something by Fall".
+        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Fall, new HashSet<string>()),
+            "an all-of-them bundle must apply pressure before the Winter win check");
+    }
+
+    [Fact]
+    public void A_Model_Does_Not_Change_A_Seasonal_Bundle()
+    {
+        var model = Model(("(O)16", Season.Spring, 1));
+
+        BundleRequirement req = BundleClassifier.Classify(
+            Bundle("Spring Foraging", "(O)16"), Theme.Foraging,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model)!;
+
+        Assert.Equal(BundleKind.Seasonal, req.Kind);
+    }
+}
