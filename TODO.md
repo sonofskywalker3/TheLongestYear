@@ -6,6 +6,37 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BRAINSTORM NEEDED (Jeff, 2026-08-27): keep granted powers across a reset
+
+Jeff wants permanent powers granted by an in-world source to SURVIVE the loop reset, starting with
+the books. Today they do not: `StatResetRules` is wipe-by-default and its own header comment names
+`Book_*` and `mastery_*` as the class it was written to stop leaking (user ruling 2026-07-10,
+reversing the earlier allow-list). So this is a deliberate reversal of a past decision, not a bug,
+and it needs a design pass before any code.
+
+The brainstorm has to settle, in Jeff's words, "either per power or one big one":
+
+- **One switch** for the whole class of granted powers. Simple, one config entry, but it lumps a
+  +1 combat book in with mastery levels and trinket slots.
+- **Per power.** Each grantable power is its own keep, which is finer grained and fits the JP
+  shop model, but it needs a catalogue of every power and a UI to manage it.
+
+Things the brainstorm needs to look at, because they are already in the code:
+
+- `StatResetRules.KeptKeys` and its three documented classes. Anything kept has to be argued
+  against that header comment, which is currently the reason these are wiped.
+- The books specifically: the `Book_*` stat keys, and `_bookFurniture` / `BookKit` in `ModEntry`,
+  which already handle book objects across a reset.
+- Whether a kept power should be free or bought with JP, since the upgrade catalogue
+  (`UpgradeCatalog`) is the existing home for permanent cross-loop power and already has pricing.
+- Balance: a power kept across loops compounds every reset, which is exactly the thing the loop is
+  supposed to take away. Anything kept probably needs to be either bought or capped.
+- What counts as "another source" beyond books: mastery, trinket slots, perfection perks, the
+  Special Order prize ticket ladder, and whatever a mod adds.
+
+Not scoped, not planned. Brainstorm first.
+
+
 ### ▶ NEXT SESSION: smoke the netWorldState audit fixes in game
 
 The audit itself is DONE (2026-08-26, code + full ruling table, see the SYSTEMATIC entry below).
