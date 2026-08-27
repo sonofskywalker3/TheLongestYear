@@ -449,9 +449,16 @@ namespace TheLongestYear
                 enginePools, seasonOverrides: itemSeasonPins);
             _reset.AvailabilityModel = _availability;
             this.Monitor.Log(
-                $"Item availability model built from live pools; "
-                + $"{_availability.UnrecognisedIds.Count} id(s) unrecognised so far.",
+                $"Item availability model built from live pools: "
+                + $"{_availability.DerivedCount} id(s) derived, "
+                + $"{_availability.RejectedSeasonOverrides.Count} curated season pin(s) rejected for "
+                + "demanding an item earlier than it can exist.",
                 LogLevel.Trace);
+            if (_availability.RejectedSeasonOverrides.Count > 0)
+                this.Monitor.Log(
+                    "Rejected season pins (derived floor kept instead): "
+                    + string.Join(", ", _availability.RejectedSeasonOverrides),
+                    LogLevel.Warn);
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 themeOverrides, itemSeasonPins, bundleQuotas, _availability);
@@ -1672,7 +1679,11 @@ namespace TheLongestYear
             }
 
             string target = string.Join(" ", args);
-            BundleRequirement req = _requirements?
+            // Read the live requirements the way tly_gatecheck does. The _requirements field is
+            // not refreshed when a reset regenerates the board, so sourcing from it would report
+            // due dates from the previous board and disagree with tly_gatecheck on the same save.
+            var requirements = _runController?.Requirements ?? _requirements;
+            BundleRequirement req = requirements?
                 .FirstOrDefault(r => string.Equals(r.Name, target, StringComparison.OrdinalIgnoreCase));
 
             if (req != null)
