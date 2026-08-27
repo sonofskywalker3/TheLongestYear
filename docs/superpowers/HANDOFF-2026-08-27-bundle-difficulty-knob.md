@@ -38,11 +38,11 @@ rules on design; do not pick the shape yourself. Concrete things he has not deci
 
 Read these first, in order:
 
-1. `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md` — the design the ten existing
+1. `docs/superpowers/specs/2026-08-26-difficulty-modifiers-design.md` - the design the ten existing
    modifiers were built to, including Jeff's rulings and the reasoning behind them.
-2. `docs/superpowers/plans/2026-08-26-difficulty-modifiers.md` — the implementation plan.
-3. `STATUS.md` — current state, what is verified in game and what is not.
-4. `docs/engine-bundle-catalogue.md` — **the most useful file for this task.** Every bundle the
+2. `docs/superpowers/plans/2026-08-26-difficulty-modifiers.md` - the implementation plan.
+3. `STATUS.md` - current state, what is verified in game and what is not.
+4. `docs/engine-bundle-catalogue.md` - **the most useful file for this task.** Every bundle the
    engine can produce, what each can ask for, and how quantities are decided. Regenerate it any
    time with the `tly_dumpbundles` console command.
 
@@ -50,15 +50,15 @@ Read these first, in order:
 
 Copy this pattern exactly; do not invent a parallel one.
 
-- `DifficultyStep` — the enum `{ Easy, Normal, Hard, Extreme }`. There is no Off.
-- `DifficultySettings` — the ten configured steps, serialized into `GameplayConfig.Difficulty`.
+- `DifficultyStep` - the enum `{ Easy, Normal, Hard, Extreme }`. There is no Off.
+- `DifficultySettings` - the ten configured steps, serialized into `GameplayConfig.Difficulty`.
   Every one defaults to `Normal`, and **Normal must always resolve to today's shipping balance.**
-- `DifficultyProfile` — the resolved concrete values.
-- `DifficultyResolver.Resolve(settings, config)` — a pure function holding the ENTIRE balance
+- `DifficultyProfile` - the resolved concrete values.
+- `DifficultyResolver.Resolve(settings, config)` - a pure function holding the ENTIRE balance
   table. This is the one place any number lives. Your new knob's numbers go here too.
-- `MetaState.Difficulty` — the profile **stamped onto the save** when a loop begins. Consumers read
+- `MetaState.Difficulty` - the profile **stamped onto the save** when a loop begins. Consumers read
   the stamp, never live config, which is what makes a GMCM change apply at the NEXT loop.
-- `MetaState.BoardDifficulty(config)` — the profile that produced the board **already on disk**.
+- `MetaState.BoardDifficulty(config)` - the profile that produced the board **already on disk**.
   Board re-derivation must use this, not `EffectiveDifficulty`. Getting this wrong demotes healthy
   saves to a legacy path; it was a real bug, found in game and fixed.
 
@@ -111,7 +111,7 @@ bundles. So this modifier, like **Item rarity**, cannot do anything there.
 
 Precedent to copy exactly: the item-rarity GMCM row says "(TLY Custom bundles only)" **in its
 option name**, not just the tooltip, because a setting that silently does nothing is a bug report
-waiting to happen. Do the same. Also check `DifficultySettings.AsksAllNormal()` — it deliberately
+waiting to happen. Do the same. Also check `DifficultySettings.AsksAllNormal()` - it deliberately
 excludes `ItemRarity` so a modifier that cannot apply to a vanilla board does not drag the vanilla
 post-pass into running. Your knob needs the same treatment.
 
