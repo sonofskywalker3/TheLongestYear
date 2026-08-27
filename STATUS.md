@@ -1,10 +1,40 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-27 night (Keep power books + deja-vu dialogue built and live-smoked, 0.16.17 local)
-**Branch:** `master`; 0.16.17 released 2026-08-27 (Jeff: "smoke it, push it, release it")
+**Last updated:** 2026-08-27 late (netWorldState audit fixes live-smoked, all PASS; 0.16.18 local only)
+**Branch:** `master`; 0.16.18 committed locally, NOT pushed, NOT released
 **Tests:** 1153 passing, 0 failing
 **Build:** clean
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+## netWorldState keep/wipe audit (0.14.8): LIVE SMOKE PASSED 2026-08-27 19:09 to 19:20
+
+Save None_447546774 (renamed to None_447549305 by the reset), driven from the SMAPI console and
+`game.ps1`. Baseline taken on Spring 1, then slept to Spring 5 so the leak preconditions existed
+(board quest "Delivery: Robin" 300g, dish Parsnip Soup x1, Y1 cart guarantee armed at 5 via the new
+`tly_netstate army1 5`, ticking to 4 by day 5), then `tly_reset` (reset #56, run 57). Screenshots
+in `test-output/smoke-*.png`.
+
+| # | Check | Before reset (Spring 5) | After reset (Spring 1) | Result |
+|---|---|---|---|---|
+| 1 | Help Wanted board empty on Spring 1 | Board opened "Help Wanted: Amethyst for Robin, 300g" | Board opened "Nothing is posted today."; probe `QuestOfTheDay = null` | PASS |
+| 2 | No Dish of the Day on Spring 1 | Probe `DishOfTheDay = Parsnip Soup x1` | Gus's full stock: Beer, Salad, Bread, Spaghetti, Pizza, Coffee, 4 recipes; no dish row; probe null. Spring 2 probe: `Glazed Yams x2` (first dish arrives day 2) | PASS |
+| 3 | JP, upgrades, stash, pet, horse, buildings survive `UpdateFromGame1()` | `tly_meta`: JP=2288, 4 stash items, 35 upgrades | `tly_meta` line byte-identical; log: Rex + Mochi restored with two bowls, stable + horse restored, Coop/Barn/Silo placed; farm screenshot shows all of it | PASS |
+| 4 | Spring 1 weather matches the new run's schedule | schedule tomorrow=Rain (Spring 6) | HUD sun icon; probe live/netWorldState/schedule all Sun, tomorrow Sun; log `Weather: scheduled Sun for Spring 2`; hub forecast 2..7 = Sun Rain Rain Sun Petals Sun; Spring 2 probe tomorrow=Rain, log `scheduled Rain for Spring 3` | PASS |
+| 5 | Traveling Cart Y1 guarantee re-rolls per loop | `VisitsUntilY1Guarantee = 4` (armed at 5, decremented once) | `= 8` off the new uniqueID 447549305 (vanilla range 2..30); an unarmed save (-1) is left alone | PASS |
+
+Nothing failed, so no code fix. The one code change is 0.16.18: `tly_netstate` now prints a
+`[weather]` line (live Game1 flags, netWorldState Default weather, scheduler pick for today and
+tomorrow) and accepts `army1 <n>` to arm the Y1 guarantee in memory, because the throwaway save
+has it at -1 and the reset deliberately leaves -1 alone.
+
+**Driving notes from this smoke (added to the gotchas):** quest board = stand at Town (42,56),
+`debug fd farmer 0`, `game.ps1 -RightClick 960,470` (from (42,57) the click misses). Escape does
+NOT close the board menu; click its X at (1642,168). The planning hub opens on top of everything
+after a reset; pick a theme (Mixed at (1210,530)) before anything else. Gus is not at the bar on
+Spring 1 at 1pm: `debug wct Gus Saloon 14 17`, stand at (14,20) facing up, `-RightClick 928,709`
+opens his stock; the dish of the day is the FIRST row when present (ItemQueryResolver
+DISH_OF_THE_DAY, no counter sprite). His "Can you smell that? It's the Coffee" greeting names a
+random stock item, not the dish. Shop scroll arrows: down (1640,835), up (1640,235).
 
 ## Deja-vu villager dialogue (0.16.13 to 0.16.17): built, unit-tested, LIVE SMOKE PASSED
 

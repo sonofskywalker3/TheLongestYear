@@ -1,5 +1,7 @@
 # Handoff: smoke the netWorldState audit fixes in game
 
+**DONE 2026-08-27 late: all five checks PASS in game. Evidence table in STATUS.md (top). Kept as the recipe for a re-smoke.**
+
 Copy this whole file as the prompt for a fresh agent.
 
 ---

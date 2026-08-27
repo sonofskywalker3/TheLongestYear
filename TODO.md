@@ -93,10 +93,17 @@ Things the brainstorm needs to look at, because they are already in the code:
 </details>
 
 
-### ▶ NEXT SESSION: smoke the netWorldState audit fixes in game
+### ✅ SMOKED 2026-08-27 (all five PASS, 0.16.18 local) - netWorldState audit fixes in game
+
+Live-smoked on the throwaway save, reset #56: board "Nothing is posted today" (was Robin 300g on
+Spring 5), Gus's stock has no dish row (first dish Glazed Yams on Spring 2), `tly_meta` identical
+before/after with pets/horse/buildings back, weather Sun/Sun across HUD, probe, log and hub
+forecast, Y1 cart guarantee re-rolled 4 -> 8 off the new seed. PASS/FAIL table with the evidence
+in STATUS.md (top). Nothing failed; the only code change is the `tly_netstate` weather line and
+`army1 <n>` arg (0.16.18). Original checklist kept below for the record.
 
 The audit itself is DONE (2026-08-26, code + full ruling table, see the SYSTEMATIC entry below).
-What is left is the one thing an agent could not do: **nobody has seen the five fixes work.** Load
+What was left was the one thing an agent could not do: **nobody had seen the five fixes work.** Load
 the throwaway save, `tly_reset`, and check:
 
 1. The quest board on Spring 1 is EMPTY. This is the one that was handing out gold, so it is the
@@ -1006,7 +1013,7 @@ need intact — disproportionate; leave unless a US user reports it.
 > is now synced from Game1 with vanilla's `UpdateFromGame1()` instead, which also closes a window
 > where `WriteToGame1` could copy the pre-reset `uniqueIDForThisGame` back over the re-seeded one.
 >
-> **NOT smoked in game** - see the NEXT SESSION entry at the top of this file. Left open on purpose:
+> **Smoked in game 2026-08-27, all five checks PASS** (STATUS.md top table). Left open on purpose:
 > `farmhandData` stays KEEP because TLY is single-player; it holds whole `Farmer` objects and would
 > become a progression leak if multiplayer support were ever added (own item below).
 
