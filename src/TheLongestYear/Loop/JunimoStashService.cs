@@ -310,8 +310,7 @@ namespace TheLongestYear.Loop
             int restored = 0;
             foreach (StashItemRecord record in _meta.StashItems)
             {
-                Item item = ItemRegistry.Create(record.ItemId, record.Quantity, record.Quality,
-                    allowNull: true);
+                Item item = CreateFromRecord(record);
                 if (item == null)
                 {
                     _monitor.Log(
@@ -320,18 +319,23 @@ namespace TheLongestYear.Loop
                     continue;
                 }
 
-                // Re-apply a flavored good's source identity + baked price (see BankToMeta). Mirrors
-                // the game's own Object.GetOneCopyFrom, which copies exactly these three fields. Only
-                // set when captured (null for plain items), so non-preserved items keep their
-                // data-driven price untouched.
-                if (item is StardewValley.Object obj)
+                // A stashed tool's slots (rod bait/tackle) are instance state the registry cannot
+                // rebuild, same class as the kept-tier rod transplant in FarmerReset. Clamped to the
+                // recreated tool's slot count so a stale record can never overflow.
+                if (item is Tool tool && record.Attachments != null)
                 {
-                    if (record.PreservedParentSheetIndex != null)
-                        obj.preservedParentSheetIndex.Value = record.PreservedParentSheetIndex;
-                    if (record.Preserve.HasValue)
-                        obj.preserve.Value = (StardewValley.Object.PreserveType)record.Preserve.Value;
-                    if (record.Price.HasValue)
-                        obj.Price = record.Price.Value;
+                    int slots = System.Math.Min(record.Attachments.Count, tool.attachments.Count);
+                    for (int i = 0; i < slots; i++)
+                    {
+                        StashItemRecord slotRecord = record.Attachments[i];
+                        if (slotRecord == null) continue;
+                        if (CreateFromRecord(slotRecord) is StardewValley.Object attachment)
+                            tool.attachments[i] = attachment;
+                        else
+                            _monitor.Log(
+                                $"JunimoStashService: could not recreate attachment '{slotRecord.ItemId}' on '{record.ItemId}' — slot left empty.",
+                                LogLevel.Warn);
+                    }
                 }
 
                 chest.Items.Add(item);
@@ -341,6 +345,65 @@ namespace TheLongestYear.Loop
             _monitor.Log(
                 $"JunimoStashService: restored {restored}/{_meta.StashItems.Count} items into stash chest.",
                 LogLevel.Trace);
+        }
+
+        /// <summary>Recreate one banked item (top-level or a tool attachment) from its record:
+        /// registry lookup by id/stack/quality, then the flavored-good identity re-applied. Null
+        /// when the id is unknown to this game (mod item from a removed mod, typo).</summary>
+        private static Item CreateFromRecord(StashItemRecord record)
+        {
+            Item item = ItemRegistry.Create(record.ItemId, record.Quantity, record.Quality,
+                allowNull: true);
+            if (item == null)
+                return null;
+
+            // Re-apply a flavored good's source identity + baked price (see BankToMeta). Mirrors
+            // the game's own Object.GetOneCopyFrom, which copies exactly these three fields. Only
+            // set when captured (null for plain items), so non-preserved items keep their
+            // data-driven price untouched.
+            if (item is StardewValley.Object obj)
+            {
+                if (record.PreservedParentSheetIndex != null)
+                    obj.preservedParentSheetIndex.Value = record.PreservedParentSheetIndex;
+                if (record.Preserve.HasValue)
+                    obj.preserve.Value = (StardewValley.Object.PreserveType)record.Preserve.Value;
+                if (record.Price.HasValue)
+                    obj.Price = record.Price.Value;
+            }
+            return item;
+        }
+
+        /// <summary>Snapshot one item (top-level or a tool attachment) into a record. Flavored/
+        /// preserved goods (Smoked Fish, Wine, Jelly, Aged Roe, Honey, Bait, …) bake their source
+        /// identity + sale price into preservedParentSheetIndex / preserve / price.Value. Recreating
+        /// by base id alone loses ALL of it (a Smoked Legend comes back as a blank 57g smoked fish),
+        /// so capture those fields when present. Plain items have no preserve identity → leave the
+        /// fields null so restore doesn't touch them. A tool with slots records each slot in order
+        /// (null for an empty one) so rod bait/tackle survive the loop.</summary>
+        private static StashItemRecord ToRecord(Item item)
+        {
+            var obj = item as StardewValley.Object;
+            int quality = obj?.quality.Value ?? 0;
+
+            bool hasPreserveIdentity = obj != null &&
+                (!string.IsNullOrEmpty(obj.preservedParentSheetIndex.Value) || obj.preserve.Value.HasValue);
+
+            List<StashItemRecord> attachments = null;
+            if (item is Tool tool && tool.attachments.Count > 0)
+            {
+                attachments = new List<StashItemRecord>(tool.attachments.Count);
+                foreach (StardewValley.Object slot in tool.attachments)
+                    attachments.Add(slot == null ? null : ToRecord(slot));
+            }
+
+            return new StashItemRecord(
+                item.QualifiedItemId,
+                item.Stack,
+                quality,
+                hasPreserveIdentity ? obj.preservedParentSheetIndex.Value : null,
+                hasPreserveIdentity && obj.preserve.Value.HasValue ? (int)obj.preserve.Value.Value : null,
+                hasPreserveIdentity ? obj.Price : null,
+                attachments);
         }
 
         /// <summary>
@@ -362,25 +425,7 @@ namespace TheLongestYear.Loop
             foreach (Item item in chest.Items)
             {
                 if (item == null) continue;
-
-                var obj = item as StardewValley.Object;
-                int quality = obj?.quality.Value ?? 0;
-
-                // Flavored/preserved goods (Smoked Fish, Wine, Jelly, Aged Roe, Honey, Bait, …)
-                // bake their source identity + sale price into preservedParentSheetIndex / preserve
-                // / price.Value. Recreating by base id alone loses ALL of it (a Smoked Legend comes
-                // back as a blank 57g smoked fish), so capture those fields when present. Plain items
-                // have no preserve identity → leave the fields null so restore doesn't touch them.
-                bool hasPreserveIdentity = obj != null &&
-                    (!string.IsNullOrEmpty(obj.preservedParentSheetIndex.Value) || obj.preserve.Value.HasValue);
-
-                _meta.StashItems.Add(new StashItemRecord(
-                    item.QualifiedItemId,
-                    item.Stack,
-                    quality,
-                    hasPreserveIdentity ? obj.preservedParentSheetIndex.Value : null,
-                    hasPreserveIdentity && obj.preserve.Value.HasValue ? (int)obj.preserve.Value.Value : null,
-                    hasPreserveIdentity ? obj.Price : null));
+                _meta.StashItems.Add(ToRecord(item));
             }
 
             _monitor.Log(
