@@ -3,6 +3,30 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.0 - 2026-08-27
+
+1113 tests.
+
+### Added
+
+- **Ten independent difficulty dials**, in the mod's settings menu (GMCM) under **Difficulty**. There is no overall difficulty setting: turn up only what you want turned up. Each dial has four steps (Easy / Normal / Hard / Extreme) and every one starts on Normal, which is the balance the mod already shipped with. Changing nothing changes nothing. A change applies at your next loop, not straight away. Full list and what each one does: see the README or the mod page.
+- **`tly_itemmodel <item or bundle>` console command.** Prints what the mod believes about an item: the earliest season it can exist, how much work it scores as, and the reasoning behind both. Pass a bundle name to see every ingredient and its due season. Read-only.
+- **`tly_gatecheck` now explains itself.** When it names an ingredient blocking a season gate, it prints why that ingredient is dated the way it is.
+
+### Changed
+
+- **Every bundle now applies pressure at the season checkpoints.** Bundles that require *all* of the items they show used to take their per-item due dates from a hand-written table of 40 items. An ingredient outside that table had no due date at all, so a bundle whose ingredients were all absent could be ignored until the Winter check. Because the mod re-rolls the six fish bundles from a 52-item pool and the two metals bundles from an 11-item pool, most re-rolled boards had at least one bundle applying no pressure for three seasons, and roughly a quarter of fish boards and a third of metals boards were entirely free.
+
+  The mod now derives this itself from the game's own data. For every fish and metal it works out the earliest season the item can exist and an effort score (fishing level, weather, time window, mine depth, smelting), then spreads a bundle's items across the four checkpoints easiest first, weighting harder items later. Because it is read from live game data rather than a list, it covers remixed boards and re-rolls.
+
+- **This makes the year harder, at every difficulty including Normal.** It is a deliberate balance change, not a bug fix, and it is the reason to give this release a fresh look even if the previous one felt right. Measured across three boards and two difficulty configurations before release: no season gate is unsatisfiable, and no bundle is free all year.
+
+- **A due date can never precede the season an item can first exist in.** The deadline is clamped to the item's earliest possible season, so an impossible gate cannot be expressed at all rather than being caught by review. A season pin that would demand an item earlier than it can exist is now rejected and logged instead of honoured.
+
+### Known limits
+
+- Bundles whose ingredients come from crops, forage, monster drops, artisan goods, cooking, artifacts, books, saplings, geode minerals or tapper goods still only come due in Winter. Those domains are not modelled yet, and the safe default is a late date rather than a guessed one. They are next.
+
 ## 0.15.0 - 2026-08-26
 
 865 tests.

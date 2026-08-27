@@ -1,20 +1,26 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.15.0).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.16.0).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+
+[color=yellow][b]This is the last big engine update.[/b] From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.15.0[/b][/size]
+[size=5][b]What's New in 0.16.0[/b][/size]
 
-[b]A rewind now clears out the day you lost, too. The quest board and the Saloon's dish no longer follow you into Spring 1.[/b]
+[b]You can now tune the difficulty yourself, and every bundle finally asks something of you before Winter.[/b]
 [list]
-[*][b]The Help Wanted board starts empty again.[/b] Spring 1 was inheriting the quest from the day your run ended, gold reward included. Worse, it was rolled against your OLD progress, so it could ask for a fish or a monster the fresh farmer had no way to reach yet. A new year now opens with a clean board, exactly as a new save does.
-[*][b]The Saloon's Dish of the Day resets with the year.[/b] Gus kept serving whatever he had cooked on the day the loop ended. A real first day has no dish yet, so neither does a rewound one; the new run's first dish arrives on day 2.
-[*][b]The Traveling Cart's year-one guarantee survives a rewind.[/b] On saves created with the "year one completable" option, the first rewind used to switch that guarantee off permanently. It is re-rolled for the new run instead.
+[*][b]Ten independent difficulty dials.[/b] In the mod's settings menu (GMCM) under [b]Difficulty[/b]. There is no overall difficulty setting: turn up only what you want turned up. Each dial has four steps, Easy / Normal / Hard / Extreme, and every one starts on [b]Normal[/b], which is the balance the mod already shipped with, so changing nothing changes nothing. Stack sizes, quality asks, required slots, item rarity, JP earned, shrine prices, starting gold, starting cart slots, hold and pity prices, and how readily the Junimos take pity on you. Changes apply at your next loop. Full details in the Difficulty section below.
+[*][b]Every bundle now pulls its weight at the season checkpoints.[/b] Bundles that require [i]all[/i] of the items they show used to take their due dates from a hand-written list of 40 items. An ingredient outside that list had no due date at all, so a bundle could sit there asking nothing of you until the Winter check. Since the mod re-rolls the six fish bundles from a pool of 52 and the two metals bundles from a pool of 11, most boards had at least one bundle you could safely ignore for three seasons.
+[*][b]The mod now works this out for itself, from the game's own data.[/b] For every fish and metal it derives the earliest season the item can exist and how much work it is (fishing level, weather, time of day, mine depth, smelting), then spreads a bundle's items across the four checkpoints, easiest first. It reads live game data rather than a list, so remixed boards and re-rolls are covered too.
+[*][b]It can never ask for something before that thing exists.[/b] A due date is clamped to the item's earliest possible season, so an unsatisfiable gate cannot be expressed at all. Verified across three boards and two difficulty settings before release: no impossible gates, and no bundle free all year.
+[*][b]New: [font=Courier New]tly_itemmodel[/font].[/b] Type it in the SMAPI console with an item or a bundle name and it tells you what the mod believes and why. [font=Courier New]tly_gatecheck[/font] now explains its reasoning too.
 [/list]
 
-These three came out of a one-time audit of every piece of world state the rewind was leaving behind, rather than being found one player report at a time. That whole class of leak is closed now.
+[b]Fair warning: this makes the year harder, on every difficulty including Normal.[/b] That is deliberate. Bundles that quietly asked nothing of you now ask something, and the Difficulty dials are there if you want to push back the other way.
+
+[b]Still to come:[/b] bundles built from crops, forage, cooking, saplings, artisan goods and tapper goods still only come due in Winter. Those item types are not modelled yet, and a late date is the safe default rather than a guessed one. They are next.
 
 Full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
 

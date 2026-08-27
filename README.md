@@ -8,19 +8,25 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.15.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.16.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+
+**This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
 ---
 
-## What's New in 0.15.0
+## What's New in 0.16.0
 
-**A rewind now clears out the day you lost, too. The quest board and the Saloon's dish no longer follow you into Spring 1.**
+**You can now tune the difficulty yourself, and every bundle finally asks something of you before Winter.**
 
-- **The Help Wanted board starts empty again.** Spring 1 was inheriting the quest from the day your run ended, gold reward included. Worse, it was rolled against your OLD progress, so it could ask for a fish or a monster the fresh farmer had no way to reach yet. A new year now opens with a clean board, exactly as a new save does.
-- **The Saloon's Dish of the Day resets with the year.** Gus kept serving whatever he had cooked on the day the loop ended. A real first day has no dish yet, so neither does a rewound one; the new run's first dish arrives on day 2.
-- **The Traveling Cart's year-one guarantee survives a rewind.** On saves created with the "year one completable" option, the first rewind used to switch that guarantee off permanently. It is re-rolled for the new run instead.
+- **Ten independent difficulty dials.** In the mod's settings menu (GMCM) under **Difficulty**. There is no overall difficulty setting: turn up only what you want turned up. Each dial has four steps, Easy / Normal / Hard / Extreme, and every one starts on **Normal**, which is the balance the mod already shipped with, so changing nothing changes nothing. Stack sizes, quality asks, required slots, item rarity, JP earned, shrine prices, starting gold, starting cart slots, hold and pity prices, and how readily the Junimos take pity on you. Changes apply at your next loop. Full details in [Difficulty](#difficulty).
+- **Every bundle now pulls its weight at the season checkpoints.** Bundles that require *all* of the items they show used to take their due dates from a hand-written list of 40 items. An ingredient outside that list had no due date at all, so a bundle could sit there asking nothing of you until the Winter check. Since the mod re-rolls the six fish bundles from a pool of 52 and the two metals bundles from a pool of 11, most boards had at least one bundle you could safely ignore for three seasons.
+- **The mod now works this out for itself, from the game's own data.** For every fish and metal it derives the earliest season the item can exist and how much work it is (fishing level, weather, time of day, mine depth, smelting), then spreads a bundle's items across the four checkpoints, easiest first. It reads live game data rather than a list, so remixed boards and re-rolls are covered too.
+- **It can never ask for something before that thing exists.** A due date is clamped to the item's earliest possible season, so an unsatisfiable gate cannot be expressed at all. Verified across three boards and two difficulty settings before release: no impossible gates, and no bundle free all year.
+- **New: `tly_itemmodel`.** Type it in the SMAPI console with an item or a bundle name and it tells you what the mod believes and why. `tly_gatecheck` now explains its reasoning too.
 
-These three came out of a one-time audit of every piece of world state the rewind was leaving behind, rather than being found one player report at a time. That whole class of leak is closed now.
+**Fair warning: this makes the year harder, on every difficulty including Normal.** That is deliberate. Bundles that quietly asked nothing of you now ask something, and the Difficulty dials are there if you want to push back the other way.
+
+**Still to come:** bundles built from crops, forage, cooking, saplings, artisan goods and tapper goods still only come due in Winter. Those item types are not modelled yet, and a late date is the safe default rather than a guessed one. They are next.
 
 Full history in [CHANGELOG.md](CHANGELOG.md).
 
