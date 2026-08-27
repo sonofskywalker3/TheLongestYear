@@ -1872,3 +1872,32 @@ Two things the executor should expect to hit:
 
 1. `ItemPoolBuilder.Build` has many callers in `ItemPoolBuilderTests`. Adding the `fishRows` parameter with a null default keeps them compiling. If any caller uses positional arguments past that point, add the parameter last.
 2. `GeneratedBundleSet.BuildRequirements` is called from four places. Task 8 names all four. Missing one is silent: that path keeps the legacy behaviour and the bundles it produces stay ungated.
+
+---
+
+## Results (measured 2026-08-27, live boards)
+
+Deployed build `78f704d`, throwaway save `None_447520066` (renamed to `None_447527462` by a reset, as expected).
+
+**Model build, from live pools:** 66 ids derived, which is exactly 52 fish plus 3 crab pot plus 11 metals. **0 curated season pins rejected**, so none of the 40 hand pins demands an item earlier than the derived floor says it can exist. That was the open risk behind the override-validation fix and it is clean.
+
+**Three boards, three configurations, no impossible gates on any of them.**
+
+| Board | Config | Result |
+|---|---|---|
+| 1 | required slots Hard, rest Normal | no impossible gates, 28 tight, **0 never gated** |
+| 2 (after reset) | same | no impossible gates, 27 tight, **0 never gated** |
+| 3 (after reset) | stack x1.5, quality x2, required slots +1, rarity bias 1.6 | no impossible gates, 33 tight, **0 never gated** |
+
+**The leak is closed for the Phase 1 domains.** Every fish bundle and both metals bundles now carry a real per-season demand. Board 2's Blacksmith's reads `Spring 0/2, Summer 1/3, Fall 2/3, Winter 3/3` where before the change an unpinned re-roll demanded nothing until Winter. Board 3's River Fish reads `Spring 0/0`, which is the obtainability clamp doing its job: it demands nothing in a season where nothing it asks for exists.
+
+**Still ungated before Winter, as this phase intended:** Orchard, Tapper's, Forest, Spirit's Eve, Home Cook's and Wild Medicine all read `0/0/0/N`. Their ingredients come from domains Phase 1 does not model (saplings, tapper goods, forage, cooking), so they floor at Winter. Phases 2 and 3 close them.
+
+**Spot checks of the derived model:**
+
+- `(O)128` Pufferfish: earliest Summer, effort 10. Basis names difficulty 80, sunny only, a 4 hour window. The curated Summer pin agrees with the derived floor.
+- `(O)384` Gold Ore: earliest Summer, effort 5, from mine area 80.
+- `(O)CaveJelly`: earliest Summer, gated by location `UndergroundMine`, with no `Data/Fish` row. This is the fish the final review caught: before the depth fix its floor was Spring and it could draw a Spring deadline from mine floor 100.
+- `(O)158` Stonefish: falls through to Winter with "no derivation rule matched". It is a mine fish the engine's pools exclude, so it is outside Phase 1's 66 and takes the safe default.
+
+**Caveat carried from the tool's own output:** `tly_gatecheck` checks CALENDAR feasibility only. An item that exists in Spring but needs a fishing level, a keg or a tool upgrade counts as obtainable. The 27 to 33 "tight" bundles per board demand everything the calendar allows by that checkpoint, so real-play difficulty is harsher than these numbers alone show. Playtesting is still the arbiter.
