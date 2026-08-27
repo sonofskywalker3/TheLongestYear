@@ -28,9 +28,6 @@ public static class VanillaBoardDifficultyPass
     private const string MoneySlotId = "-1";
     private const string VaultRoom = "Vault";
 
-    private const int MinStack = 1;
-    private const int MaxStack = 99;
-
     private const int QualityNone = 0;
     private const int QualitySilver = 1;
     private const int QualityGold = 2;
@@ -104,7 +101,7 @@ public static class VanillaBoardDifficultyPass
 
         fields[IngredientsField] = string.Join(" ", ingredients.Select(ing =>
         {
-            int stack = ScaleStack(ing.Stack, profile.StackFactor);
+            int stack = StackScaling.ScaleStack(ing.Stack, profile.StackFactor);
             int quality = RollQuality(ing, profile, tuning, rng, qualityEligibleIds);
             return $"{ing.ItemRef} {stack} {quality}";
         }));
@@ -114,15 +111,6 @@ public static class VanillaBoardDifficultyPass
                 AdjustRequired(required, ingredients.Count, profile).ToString();
 
         return string.Join("/", fields);
-    }
-
-    private static int ScaleStack(int stack, double factor)
-    {
-        if (factor == 1.0)
-            return stack;
-        int baseStack = stack > 0 ? stack : MinStack;
-        return Math.Clamp(
-            (int)Math.Round(baseStack * factor, MidpointRounding.AwayFromZero), MinStack, MaxStack);
     }
 
     /// <summary>Relative to what vanilla authored, so Normal is a genuine no-op: Hard and Extreme
