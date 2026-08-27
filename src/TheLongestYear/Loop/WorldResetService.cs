@@ -5,6 +5,7 @@ using System.Linq;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Characters;
@@ -40,6 +41,7 @@ namespace TheLongestYear.Loop
         private readonly TheLongestYear.UI.PlanningShrineService _planningShrine;
         private readonly IReadOnlyDictionary<string, CoreSeason> _itemSeasonPins;
         private readonly IReadOnlyDictionary<string, int[]> _bundleQuotas;
+        private readonly IGameContentHelper _gameContent;
 
         /// <summary>The pre-reset save folder recorded in <see cref="PerformReset"/>, deleted by
         /// <see cref="CleanupAbandonedSaveFolder"/> only after the post-reset full save confirms the
@@ -76,7 +78,8 @@ namespace TheLongestYear.Loop
             TheLongestYear.Integration.BookFurniture bookFurniture,
             TheLongestYear.UI.PlanningShrineService planningShrine,
             IReadOnlyDictionary<string, CoreSeason> itemSeasonPins,
-            IReadOnlyDictionary<string, int[]> bundleQuotas)
+            IReadOnlyDictionary<string, int[]> bundleQuotas,
+            IGameContentHelper gameContent = null)
         {
             _monitor = monitor;
             _meta = meta;
@@ -92,6 +95,7 @@ namespace TheLongestYear.Loop
             _planningShrine = planningShrine;
             _itemSeasonPins = itemSeasonPins;
             _bundleQuotas = bundleQuotas;
+            _gameContent = gameContent;
         }
 
         public void PerformReset()
@@ -635,6 +639,19 @@ namespace TheLongestYear.Loop
             //      laid down at the correct positions for the current HouseUpgradeLevel.
             RestoreFarmHouseFurniture(home);
 
+            // Undo vanilla's one-way map edits. Fixing the beach bridge (Beach.fixBridge) and
+            // Robin's community shortcuts (showCommunityUpgradeShortcuts / ApplyMapOverride) edit
+            // the loaded xTile Map in place, and that Map is the content manager's CACHED asset.
+            // loadForNewGame builds a fresh Beach with bridgeFixed = false, but its loadMap pulls
+            // the same cached, already-edited Map: the bridge tiles are intact and walkable while
+            // the flag says broken, so the "?" marker floats over a bridge you can't interact with
+            // and can't re-break (Nexus bug 1124076, Bumblewyn: it "unfixed itself" after a full
+            // restart, which is exactly when the content cache is dropped). Shortcut maps leak the
+            // same way for a player who unlocked them last loop and doesn't keep them. Drop the
+            // cached maps and reload each location from clean data, AFTER the mail flags for this
+            // loop are settled (step 7b) so MakeMapModifications re-applies only what is kept.
+            RefreshMutatedVanillaMaps();
+
             // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
             _ccUnlock.Apply();
 
@@ -649,6 +666,36 @@ namespace TheLongestYear.Loop
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
                 LogLevel.Info);
+        }
+
+        /// <summary>Locations whose vanilla progression code edits the loaded map in place instead
+        /// of layering a flag-guarded override: the beach bridge repair (Beach + its night-market
+        /// variant) and the community-upgrade shortcuts (Beach, Forest, Mountain, Town).</summary>
+        private static readonly string[] MutatedVanillaMapLocations =
+            { "Beach", "BeachNightMarket", "Forest", "Mountain", "Town" };
+
+        private void RefreshMutatedVanillaMaps()
+        {
+            foreach (string name in MutatedVanillaMapLocations)
+            {
+                GameLocation loc = Game1.getLocationFromName(name);
+                if (loc?.mapPath?.Value == null) continue;
+                try
+                {
+                    // Invalidate first so the reload below misses the cache and re-reads the asset
+                    // (still through SMAPI, so Content Patcher edits apply). Without a content
+                    // helper (tests) the reload alone still hits the cache, so skip in that case.
+                    if (_gameContent == null) return;
+                    _gameContent.InvalidateCache(PathUtilities.NormalizeAssetName(loc.mapPath.Value));
+                    loc.reloadMap();
+                    loc.updateLayout();
+                    _monitor.Log($"Reset: reloaded '{name}' map from clean data.", LogLevel.Trace);
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Reset: could not reload '{name}' map: {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
+                }
+            }
         }
 
         // Vanilla's private FarmHouse.AddStarterFurniture(Farm) — lays down the full level-aware
