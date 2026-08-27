@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Availability;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -99,5 +100,70 @@ public class ItemAvailabilityTests
         });
 
         Assert.Equal(Season.Winter, model.For("(o)sunfish").EarliestSeason);
+    }
+}
+
+public class ItemAvailabilityBuilderTests
+{
+    private static PoolItem Item(string id, IReadOnlyList<Season>? seasons = null)
+        => new PoolItem(id, 100, 1, seasons ?? new List<Season>(), new List<string> { "Mountain" });
+
+    private static ItemPools Pools()
+        => new ItemPools
+        {
+            Fish = new List<PoolItem> { Item("(O)128", new List<Season> { Season.Summer }) },
+            Metals = new List<PoolItem> { Item("(O)384") },
+            FishRows = new Dictionary<string, RawFishEntry>
+            {
+                ["128"] = new RawFishEntry("128", false, 80, "1200 1600", "sunny", 5, 0),
+            },
+        };
+
+    /// <summary>The pools carry QUALIFIED ids while Data/Fish is keyed UNQUALIFIED, so the
+    /// builder has to strip the prefix to join them. Getting this wrong silently produces a
+    /// model where every fish looks like it has no data row.</summary>
+    [Fact]
+    public void A_Fish_Is_Joined_To_Its_Unqualified_Data_Row()
+    {
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(Pools());
+
+        ItemAvailability result = model.For("(O)128");
+
+        Assert.Equal(Season.Summer, result.EarliestSeason);
+        Assert.DoesNotContain("no Data/Fish row", result.Basis);
+    }
+
+    [Fact]
+    public void A_Metal_Is_Derived_By_Its_Own_Rules()
+    {
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(Pools());
+
+        Assert.Equal(Season.Summer, model.For("(O)384").EarliestSeason);
+    }
+
+    [Fact]
+    public void An_Item_From_A_Pool_Phase_1_Does_Not_Cover_Falls_Through_Safely()
+    {
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(Pools());
+
+        Assert.Equal(Season.Winter, model.For("(O)24").EarliestSeason);
+    }
+
+    [Fact]
+    public void Overrides_Reach_The_Built_Model()
+    {
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(
+            Pools(),
+            seasonOverrides: new Dictionary<string, Season> { ["(O)128"] = Season.Fall });
+
+        Assert.Equal(Season.Fall, model.For("(O)128").EarliestSeason);
+    }
+
+    [Fact]
+    public void An_Empty_Pool_Set_Builds_Without_Throwing()
+    {
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(new ItemPools());
+
+        Assert.Equal(Season.Winter, model.For("(O)1").EarliestSeason);
     }
 }
