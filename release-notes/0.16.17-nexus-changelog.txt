@@ -1,0 +1,5 @@
+The town half-remembers you, and the books you read can stay read.
+Keep your power books. Nineteen new keeps at the Junimo Shrine, one per power book (Way of the Wind, Friendship 101, The Diamond Hunter and the rest). A row appears on a Fail night once you have read that book this loop; buy it and the book's power survives every rewind. 150 to 750 JP depending on how much the power is worth over a year. Nothing stacks and nothing is free: books you did not buy are still wiped.
+Deja-vu dialogue. Villagers you have spent a lot of time with across loops (talks, gifts and heart events add up quietly; hearts themselves still reset) occasionally open with an uncanny line in their own voice. About one a week at most, never in your first loop, never on a villager's first-meeting day, and it never explains itself. Toggle "Deja-vu dialogue" in Features. Idea by u/Gribbleby.
+Villagers introduce themselves again after a rewind. From loop 2 on, every villager greeted you with an ordinary line instead of their first-meeting one; the rewind now restores the game's six-day introduction window.
+0.16.8 to 0.16.16 were internal builds; this is the first release since 0.16.7.
