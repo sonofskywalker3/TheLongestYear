@@ -13,7 +13,7 @@ public class LocationGatingTests
     [InlineData("WitchSwamp", Season.Winter)]
     [InlineData("Mountain", Season.Spring)]
     [InlineData("Beach", Season.Spring)]
-    [InlineData("UndergroundMine", Season.Spring)]
+    [InlineData("UndergroundMine", Season.Summer)]
     public void A_Gated_Location_Carries_Its_Own_Season_Floor(string key, Season expected)
         => Assert.Equal(expected, LocationGating.FloorFor(key));
 
@@ -127,6 +127,19 @@ public class FishAvailabilityDeriveTests
 
         Assert.Equal(Season.Fall, result.EarliestSeason);
         Assert.Contains("Desert", result.Basis);
+    }
+
+    /// <summary>Cave Jelly is a mine fish from floor 100. Its spawn data reads as year round, so
+    /// without the mine's depth gate it would floor at Spring and could draw a Spring deadline no
+    /// 500g first year run can meet.</summary>
+    [Fact]
+    public void A_Mine_Fish_Inherits_The_Mines_Depth_Floor()
+    {
+        ItemAvailability result = FishAvailability.Derive(
+            Fish("(O)CaveJelly", locations: new List<string> { "UndergroundMine" }), Row());
+
+        Assert.Equal(Season.Summer, result.EarliestSeason);
+        Assert.Contains("UndergroundMine", result.Basis);
     }
 
     [Fact]

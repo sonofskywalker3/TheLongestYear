@@ -22,6 +22,10 @@ public static class LocationGating
         // 500g start with the board also demanding donations.
         ("Desert",     Season.Fall),
         ("SkullCave",  Season.Fall),
+        // Mine fish live deep: Cave Jelly is floor 100. Reaching that on a 500g start while the
+        // board is also demanding donations is not a Spring 28 job, and the spawn seasons say
+        // nothing about depth. Summer leans late on purpose, per the note above.
+        ("UndergroundMine", Season.Summer),
         // Rusty Key: 60 museum donations. Reachable mid-run by a player who digs, not before.
         ("Sewer",      Season.Summer),
         ("BugLand",    Season.Summer),
