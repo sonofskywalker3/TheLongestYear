@@ -223,6 +223,10 @@ namespace TheLongestYear.Loop
                     // composition so it sees the FINAL shown-slot count (SlotTrimmer and the
                     // filler can both shrink it), and never to the Vault, which RequiredSlots
                     // skips on its own.
+                    // Stack-size modifier: applied to the FINISHED slots so it reaches bundles the
+                    // engine kept verbatim from vanilla, not just the ones it re-rolled. Before
+                    // this it only scaled re-rolled bundles and missed most of the board.
+                    composed = Core.StackScaling.Apply(composed, _difficulty);
                     composed = Core.RequiredSlots.Apply(composed, _difficulty);
                     allPicks.Add(Uniquify(composed, usedNameCounts));
                 }

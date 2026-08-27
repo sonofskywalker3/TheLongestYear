@@ -2,40 +2,37 @@ using System;
 
 namespace TheLongestYear.Core;
 
-/// <summary>Applies the stack-size and quality-asks modifiers by producing a SCALED CLONE of the
-/// generation tuning block, rather than by changing how generation works.
+/// <summary>Applies the quality-asks modifier by producing a SCALED CLONE of the generation
+/// tuning block, rather than by changing how generation works.
 ///
 /// This is deliberate: <see cref="BundleSlotFiller"/> and <see cref="AuthoredBundleComposer"/>
 /// already read every stack number and quality chance off a <see cref="BundleGenerationTuning"/>,
-/// so handing them a scaled one applies two of the four ask-side modifiers with zero edits to the
-/// generator and zero risk to the existing generation tests.
+/// so handing them a scaled one applies the quality modifier with zero edits to the generator.
 ///
-/// Spec 2026-08-26 difficulty-modifiers, sections 3.1 and 3.2.</summary>
+/// STACK SIZE DELIBERATELY DOES NOT LIVE HERE ANY MORE. Scaling the tuning only moves bundles the
+/// engine actually re-rolls, and the engine keeps every unthemed bundle exactly as vanilla wrote
+/// it, so the dial reached barely half the board (measured: three bundles scaled, six did not).
+/// It now runs over every finished slot through <see cref="StackScaling"/>, on both board
+/// sources. Jeff's ruling 2026-08-27.
+///
+/// Spec 2026-08-26 difficulty-modifiers, section 3.2 (and 3.1 as amended).</summary>
 public static class DifficultyTuning
 {
-    /// <summary>A bundle slot asking for more than one inventory stack of a 99-cap item reads as
-    /// a bug rather than as difficulty.</summary>
-    private const int MaxStack = 99;
-
-    private const int MinStack = 1;
-
     /// <summary>Silver and gold chances together may never exceed this, so a plain ask stays
     /// possible at every step. Without it, Extreme over a hand-tuned config could make every
     /// single slot carry a star.</summary>
     private const double MaxCombinedQualityChance = 0.90;
 
-    /// <summary>Returns a clone with stack numbers scaled by <c>profile.StackFactor</c> and
-    /// quality chances by <c>profile.QualityFactor</c>. Returns the SAME reference when both are
-    /// 1.0, so the default path allocates nothing and cannot drift.</summary>
+    /// <summary>Returns a clone with the quality chances scaled by <c>profile.QualityFactor</c>.
+    /// Returns the SAME reference at 1.0, so the default path allocates nothing.</summary>
     public static BundleGenerationTuning Scale(BundleGenerationTuning tuning, DifficultyProfile profile)
     {
         if (tuning == null) throw new ArgumentNullException(nameof(tuning));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
 
-        if (profile.StackFactor == 1.0 && profile.QualityFactor == 1.0)
+        if (profile.QualityFactor == 1.0)
             return tuning;
 
-        double stack = profile.StackFactor;
         (double silver, double gold) = ClampQuality(
             tuning.SilverQualityChance * profile.QualityFactor,
             tuning.GoldQualityChance * profile.QualityFactor);
@@ -56,33 +53,26 @@ public static class DifficultyTuning
             TrophyShownCount = tuning.TrophyShownCount,
             TrophyRequiredCount = tuning.TrophyRequiredCount,
 
-            // Price BANDS decide which stack range a monster drop falls into. They are prices,
-            // not stacks, so scaling them would silently reclassify items instead of changing
-            // how many are asked for.
+            // Stack numbers pass through untouched: StackScaling now owns the stack modifier and
+            // applies it to the finished slots, so scaling them here as well would double-count.
             CheapPriceCeiling = tuning.CheapPriceCeiling,
             MidPriceCeiling = tuning.MidPriceCeiling,
-
-            // ---- Stack size ----
-            QualityCropStack = ScaleStack(tuning.QualityCropStack, stack),
-            CheapMinStack = ScaleStack(tuning.CheapMinStack, stack),
-            CheapMaxStack = ScaleStack(tuning.CheapMaxStack, stack),
-            MidMinStack = ScaleStack(tuning.MidMinStack, stack),
-            MidMaxStack = ScaleStack(tuning.MidMaxStack, stack),
-            DearMinStack = ScaleStack(tuning.DearMinStack, stack),
-            DearMaxStack = ScaleStack(tuning.DearMaxStack, stack),
-            LargeQuantityMinStack = ScaleStack(tuning.LargeQuantityMinStack, stack),
-            LargeQuantityMaxStack = ScaleStack(tuning.LargeQuantityMaxStack, stack),
-            LargeQuantityForageChance =
-                Math.Clamp(tuning.LargeQuantityForageChance * stack, 0.0, 1.0),
+            QualityCropStack = tuning.QualityCropStack,
+            CheapMinStack = tuning.CheapMinStack,
+            CheapMaxStack = tuning.CheapMaxStack,
+            MidMinStack = tuning.MidMinStack,
+            MidMaxStack = tuning.MidMaxStack,
+            DearMinStack = tuning.DearMinStack,
+            DearMaxStack = tuning.DearMaxStack,
+            LargeQuantityMinStack = tuning.LargeQuantityMinStack,
+            LargeQuantityMaxStack = tuning.LargeQuantityMaxStack,
+            LargeQuantityForageChance = tuning.LargeQuantityForageChance,
 
             // ---- Quality asks ----
             SilverQualityChance = silver,
             GoldQualityChance = gold,
         };
     }
-
-    private static int ScaleStack(int value, double factor)
-        => Math.Clamp((int)Math.Round(value * factor, MidpointRounding.AwayFromZero), MinStack, MaxStack);
 
     /// <summary>Scales both chances down proportionally when their sum overflows the cap, so the
     /// silver/gold RATIO the config author chose survives the clamp.</summary>

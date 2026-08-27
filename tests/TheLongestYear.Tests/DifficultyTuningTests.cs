@@ -15,62 +15,37 @@ public class DifficultyTuningTests
         Assert.Same(t, DifficultyTuning.Scale(t, Profile(new DifficultySettings())));
     }
 
+    /// <summary>Stack size moved out of the tuning block entirely (Jeff's ruling 2026-08-27): it
+    /// only reached re-rolled bundles there. StackScaling owns it now, so the tuning must not
+    /// react to the stack dial at all or the two would double-count.</summary>
     [Fact]
-    public void Hard_Scales_Stacks_And_Leaves_Price_Bands_Alone()
+    public void The_Stack_Dial_No_Longer_Touches_The_Tuning_Block()
+    {
+        var t = new BundleGenerationTuning();
+
+        Assert.Same(t, DifficultyTuning.Scale(t, Profile(
+            new DifficultySettings { StackSize = DifficultyStep.Extreme })));
+    }
+
+    [Fact]
+    public void Scaling_Quality_Leaves_Every_Stack_Number_Alone()
     {
         var t = new BundleGenerationTuning();
         var s = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Hard }));
+            new DifficultySettings { QualityAsks = DifficultyStep.Extreme }));
 
-        Assert.Equal(8, s.QualityCropStack);   // 5 * 1.5 = 7.5, away from zero
-        Assert.Equal(30, s.CheapMinStack);     // 20 * 1.5
-        Assert.Equal(99, s.CheapMaxStack);     // 99 * 1.5, capped
-        Assert.Equal(8, s.MidMinStack);        // 5 * 1.5 = 7.5
-        Assert.Equal(30, s.MidMaxStack);       // 20 * 1.5
-
-        Assert.Equal(t.CheapPriceCeiling, s.CheapPriceCeiling);
-        Assert.Equal(t.MidPriceCeiling, s.MidPriceCeiling);
+        Assert.Equal(t.QualityCropStack, s.QualityCropStack);
+        Assert.Equal(t.CheapMinStack, s.CheapMinStack);
+        Assert.Equal(t.CheapMaxStack, s.CheapMaxStack);
+        Assert.Equal(t.LargeQuantityMinStack, s.LargeQuantityMinStack);
+        Assert.Equal(t.LargeQuantityMaxStack, s.LargeQuantityMaxStack);
+        Assert.Equal(t.LargeQuantityForageChance, s.LargeQuantityForageChance, 6);
     }
 
-    [Fact]
-    public void Stacks_Never_Fall_Below_One()
-    {
-        var t = new BundleGenerationTuning { DearMinStack = 1 };
-        var s = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Easy }));
 
-        Assert.Equal(1, s.DearMinStack);
-    }
 
-    [Fact]
-    public void Stacks_Are_Capped_At_Ninety_Nine()
-    {
-        var t = new BundleGenerationTuning { LargeQuantityMaxStack = 99 };
-        var s = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Extreme }));
 
-        Assert.Equal(99, s.LargeQuantityMaxStack);
-    }
 
-    [Fact]
-    public void The_Big_Forage_Ask_Gets_More_Likely_On_Hard()
-    {
-        var t = new BundleGenerationTuning();
-        var s = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Hard }));
-
-        Assert.Equal(0.30, s.LargeQuantityForageChance, 6);   // 0.20 * 1.5
-    }
-
-    [Fact]
-    public void The_Big_Forage_Chance_Can_Never_Exceed_Certainty()
-    {
-        var t = new BundleGenerationTuning { LargeQuantityForageChance = 0.8 };
-        var s = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Extreme }));
-
-        Assert.Equal(1.0, s.LargeQuantityForageChance, 6);
-    }
 
     [Fact]
     public void Hard_Quality_Doubles_The_Default_Chances()
@@ -116,16 +91,11 @@ public class DifficultyTuningTests
         Assert.Equal(2.0, s.SilverQualityChance / s.GoldQualityChance, 6);
     }
 
-    /// <summary>Scaling stacks alone must not disturb the quality chances, and vice versa.</summary>
+    /// <summary>Scaling quality must not disturb the stack numbers.</summary>
     [Fact]
     public void The_Two_Modifiers_Do_Not_Bleed_Into_Each_Other()
     {
         var t = new BundleGenerationTuning();
-
-        var stacksOnly = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Extreme }));
-        Assert.Equal(t.SilverQualityChance, stacksOnly.SilverQualityChance, 6);
-        Assert.Equal(t.GoldQualityChance, stacksOnly.GoldQualityChance, 6);
 
         var qualityOnly = DifficultyTuning.Scale(t, Profile(
             new DifficultySettings { QualityAsks = DifficultyStep.Extreme }));
@@ -140,7 +110,7 @@ public class DifficultyTuningTests
     {
         var t = new BundleGenerationTuning();
         var s = DifficultyTuning.Scale(t, Profile(
-            new DifficultySettings { StackSize = DifficultyStep.Hard }));
+            new DifficultySettings { QualityAsks = DifficultyStep.Hard }));
 
         Assert.Same(t.ExcludedItemIds, s.ExcludedItemIds);
         Assert.Same(t.ExcludedLocationMarkers, s.ExcludedLocationMarkers);
