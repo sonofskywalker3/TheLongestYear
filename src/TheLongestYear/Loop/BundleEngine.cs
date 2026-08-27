@@ -243,12 +243,13 @@ namespace TheLongestYear.Loop
             GeneratedBundleSet set,
             IReadOnlyDictionary<string, Core.Season> basePins,
             IReadOnlyDictionary<string, int[]> bundleQuotas,
-            SeasonEase ease = null)
+            SeasonEase ease = null,
+            Core.ItemAvailabilityModel availability = null)
         {
             var merged = new Dictionary<string, Core.Season>(LastDerivedSeasonPins, StringComparer.Ordinal);
             foreach (KeyValuePair<string, Core.Season> pin in basePins)
                 merged[pin.Key] = pin.Value;
-            return set.BuildRequirements(merged, bundleQuotas, ease);
+            return set.BuildRequirements(merged, bundleQuotas, ease, availability);
         }
 
         /// <summary>Writes the generated set into <c>Game1.netWorldState</c> and re-syncs the CC

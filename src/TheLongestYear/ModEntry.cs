@@ -35,6 +35,11 @@ namespace TheLongestYear
         // values on DayStarted; when the fingerprint moves we re-classify from the live data.
         private string _boardFingerprint;
         private BundleCatalogBuilder _boardBuilder;
+        /// <summary>Derived per-item availability (earliest season + effort), built from the live
+        /// engine pools once a save is loaded and handed to every path that classifies bundles so
+        /// PerItem due dates come from the model instead of the 40-entry curated pin table.
+        /// Null before a save is loaded, so every reader must tolerate null.</summary>
+        private TheLongestYear.Core.ItemAvailabilityModel _availability;
         private DonationObserver _donationObserver;
         private CartStallIntro _cartStallIntro;
         private CaveChoicePrompt _caveChoicePrompt;
@@ -434,9 +439,21 @@ namespace TheLongestYear
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
             _seasonResolver = new SeasonResolver(
                 TheLongestYear.Core.SpawnSeasonMap.FromPools(enginePools));
+            // Derived item model: earliest-possible season and effort per item, from the same
+            // live pools the engine generates from. Curated pins ride along as season overrides.
+            // Built here because it needs enginePools, and consumed by everything below that
+            // classifies bundles. _reset is constructed above (it does not need the pools), so it
+            // takes the model through its settable AvailabilityModel property instead.
+            _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
+                enginePools, seasonOverrides: itemSeasonPins);
+            _reset.AvailabilityModel = _availability;
+            this.Monitor.Log(
+                $"Item availability model built from live pools; "
+                + $"{_availability.UnrecognisedIds.Count} id(s) unrecognised so far.",
+                LogLevel.Trace);
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
-                themeOverrides, itemSeasonPins, bundleQuotas);
+                themeOverrides, itemSeasonPins, bundleQuotas, _availability);
             // Obtainability clamp for the read-and-classify path: curated pins + the engine's
             // derived (earliest-obtainable) pins, so a Remixed/modded board can't demand an
             // unobtainable minimum. Due-date (PerItem) pins stay the curated set.
@@ -2096,7 +2113,8 @@ namespace TheLongestYear
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 ParseThemeOverrides(),
                 ParseItemSeasonPins(),
-                ParseBundleQuotas());
+                ParseBundleQuotas(),
+                _availability);
             IReadOnlyList<CcItem> catalog = builder.Build();
             IReadOnlyList<BundleRequirement> requirements = builder.BuildRequirements();
             this.Monitor.Log($"tly_classify: {catalog.Count} catalog items, {requirements.Count} requirements (diagnostics only — active run unchanged).", LogLevel.Info);
@@ -2207,7 +2225,8 @@ namespace TheLongestYear
             }
             this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
 
-            IReadOnlyList<BundleRequirement> requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas);
+            IReadOnlyList<BundleRequirement> requirements = engine.BuildRequirements(
+                set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
             int generated = set.Bundles.Count;
             int classified = requirements.Count;
             int skipped = generated - classified;
@@ -2706,7 +2725,9 @@ namespace TheLongestYear
                     if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
                         continue;
 
-                    var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, SeasonPity.CurrentQuotaEase(state, _config));
+                    var requirements = engine.BuildRequirements(
+                        set, itemSeasonPins, bundleQuotas,
+                        SeasonPity.CurrentQuotaEase(state, _config), _availability);
                     string flagNote = nonObject == _config.EnableNonObjectDonations
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
@@ -2734,7 +2755,8 @@ namespace TheLongestYear
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
-                var requirements = engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, ease: null);
+                var requirements = engine.BuildRequirements(
+                    set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
                 this.Monitor.Log(
                     $"Requirements source: engine generation (fresh run, {requirements.Count} bundles written).",
                     LogLevel.Info);

@@ -20,10 +20,16 @@ public sealed class GeneratedBundleSet
     public IReadOnlyDictionary<string, string> ToBundleData() =>
         Bundles.ToDictionary(BundleDataWriter.Key, BundleDataWriter.Value);
 
+    /// <summary>Classify every generated bundle into a requirement manifest.</summary>
+    /// <param name="availability">Derived item model, forwarded to the classifier so PerItem
+    /// bundles get a computed deadline per ingredient. Null keeps the legacy pin-table path;
+    /// see <see cref="BundleClassifier.Classify"/>. The obtainability clamp below still uses
+    /// <paramref name="itemSeasonPins"/>, which is a separate question from the due dates.</param>
     public IReadOnlyList<BundleRequirement> BuildRequirements(
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int[]> bundleQuotas,
-        SeasonEase? ease = null)
+        SeasonEase? ease = null,
+        ItemAvailabilityModel? availability = null)
     {
         var result = new List<BundleRequirement>();
         foreach (var spec in Bundles)
@@ -32,7 +38,8 @@ public sealed class GeneratedBundleSet
                 continue; // Vault / non-themed rooms, exactly as the legacy path
 
             var parsed = BundleParsing.Parse(BundleDataWriter.Key(spec), BundleDataWriter.Value(spec));
-            BundleRequirement? req = BundleClassifier.Classify(parsed, theme, itemSeasonPins, bundleQuotas);
+            BundleRequirement? req = BundleClassifier.Classify(
+                parsed, theme, itemSeasonPins, bundleQuotas, availability);
             if (req == null)
                 continue; // category-only bundles (none generated in Plan 1, defensive)
 
