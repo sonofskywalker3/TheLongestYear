@@ -461,7 +461,7 @@ namespace TheLongestYear
             _stashService.PlaceChest();
             _stashService.PopulateFromMeta();
             _planningShrine.Place(_stashService.LastPlacedTile);
-            _purchases = new UpgradePurchaseService(this.Monitor, _meta);
+            _purchases = new UpgradePurchaseService(this.Monitor, _meta, _config);
             _purchases.Purchased = id =>
             {
                 if (id == TheLongestYear.Loop.PierreYear2SeedsService.UpgradeId)
@@ -471,6 +471,7 @@ namespace TheLongestYear
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
+            _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
@@ -1998,7 +1999,7 @@ namespace TheLongestYear
                 {
                     string owned = _meta != null && _meta.State.HasUpgrade(u.Id) ? " [OWNED]" : "";
                     string prereq = u.PrerequisiteId != null ? $" (req {u.PrerequisiteId})" : "";
-                    this.Monitor.Log($"    - {u.Id}: {u.DisplayName} — {u.Cost} JP{prereq}{owned}", LogLevel.Info);
+                    this.Monitor.Log($"    - {u.Id}: {u.DisplayName} — {TheLongestYear.Core.UpgradePricing.EffectiveCost(u, _meta.State.EffectiveDifficulty(_config))} JP{prereq}{owned}", LogLevel.Info);
                 }
             }
         }
