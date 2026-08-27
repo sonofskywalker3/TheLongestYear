@@ -14,12 +14,15 @@ public class WinCap {
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+    [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);
+    [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr p);
     [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
     [DllImport("user32.dll")] public static extern int GetClassName(IntPtr h, System.Text.StringBuilder s, int n);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
     public delegate bool EnumProc(IntPtr h, IntPtr p);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
     public static IntPtr Find() {
         IntPtr found = IntPtr.Zero;
         EnumWindows((h, p) => {
@@ -56,6 +59,21 @@ $g.ReleaseHdc($hdc); $g.Dispose()
 $path = if ([System.IO.Path]::IsPathRooted($Out)) { $Out } else { Join-Path (Get-Location) $Out }
 $dir = Split-Path -Parent $path
 if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+# Crop to the CLIENT area. PrintWindow renders the whole window, so an uncropped capture is
+# offset from the client coordinates tools/game.ps1 clicks in - about (11, 45) here - and every
+# coordinate read off a screenshot lands wrong. Cropping makes screenshot pixels == click coords.
+$cr = New-Object WinCap+RECT
+[void][WinCap]::GetClientRect($h, [ref]$cr)
+$origin = New-Object WinCap+POINT
+[void][WinCap]::ClientToScreen($h, [ref]$origin)
+$offX = $origin.X - $r.Left; $offY = $origin.Y - $r.Top
+$cw = $cr.Right - $cr.Left; $chh = $cr.Bottom - $cr.Top
+if ($cw -gt 0 -and $chh -gt 0 -and ($offX + $cw) -le $w -and ($offY + $chh) -le $ht) {
+    $client = New-Object System.Drawing.Bitmap $cw, $chh
+    $cg = [System.Drawing.Graphics]::FromImage($client)
+    $cg.DrawImage($bmp, (New-Object System.Drawing.Rectangle 0, 0, $cw, $chh), $offX, $offY, $cw, $chh, [System.Drawing.GraphicsUnit]::Pixel)
+    $cg.Dispose(); $bmp.Dispose(); $bmp = $client; $w = $cw; $ht = $chh
+}
 $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
 Write-Host "Saved $path ($w x $ht)"

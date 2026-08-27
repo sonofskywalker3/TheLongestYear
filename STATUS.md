@@ -1,10 +1,34 @@
 # The Longest Year — Status
 
-**Last updated:** 2026-08-25 afternoon (v0.13.0 RELEASED and fully closed)
-**Branch:** `master`
-**Tests:** 830 passing, 0 failing
-**Build:** clean; 0.13.0 deployed to PC Mods for the smokes, game closed
-**Last public release:** 0.13.0 (2026-08-25 ~13:40: GitHub v0.13.0, Nexus file via workflow, Nexus version/description/changelog synced via Claude-in-Chrome, replies posted on bugs 1122358 and 1122901 and lexihope's post)
+**Last updated:** 2026-08-26 evening (0.14.0, 0.14.1 and 0.14.2 all released today)
+**Branch:** `master`, pushed
+**Tests:** 865 passing, 0 failing
+**Build:** clean; 0.14.2 deployed to PC Mods
+**Last public release:** 0.14.2 (2026-08-26: GitHub v0.14.2, Nexus file via workflow, page version
++ description + changelog synced, FAQ live)
+
+Today, driven by finding that **emmalution (82.7K subs) has been streaming the mod since 16 July**:
+
+- **0.14.0** — the Junimo Shrine never opened on a Fail night (Nexus 1123181, a 0.12.17 regression
+  that killed meta-progression); weekly goals could tick without a donation; no way to get another
+  pet after declining Keep Pet.
+- **0.14.1** — festival main events run once per day (the Egg Hunt and the Luau soup could be
+  repeated by leaving and re-entering); weekly goals capped to what a bundle can still accept.
+- **0.14.2** — Shop Discount discounts the price rather than the payment (tool upgrades exempt);
+  **fixed a bug shipped in 0.14.1** where the once-per-day festival stamp survived a rewind and
+  blocked festivals in every later loop; new GMCM "Features" section; mod-page FAQ.
+
+Playtest tooling was rebuilt: `tools/game.ps1` + `tools/screenshot.ps1` (the old pair lived in
+gitignored `test-output/`). An unfocused game is a PAUSED game, and SetForegroundWindow fails
+silently, which is why keyboard input never reached the farmer. Both handled; screenshots are
+cropped to the client area so image pixels are click coordinates.
+
+## NEXT SESSION: run the netWorldState audit
+
+Jeff wants a fresh agent on this tonight. The brief is self-contained in
+`docs/superpowers/HANDOFF-2026-08-26-networldstate-audit.md` - enumerate every NetWorldState
+field, rule each keep or wipe against the reset philosophy, implement the wipes, smoke it.
+Difficulty setting is also queued but Jeff is brainstorming it tomorrow; do not design it alone.
 
 ## Current state (2026-08-25 afternoon): 0.13.0 released, fully closed
 

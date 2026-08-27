@@ -1600,7 +1600,11 @@ namespace TheLongestYear
                         $"      {spec.Room}/{spec.Index} '{spec.Name}' [{spec.Slots.Count} slots, need {spec.NumberOfSlots}] — {source}",
                         LogLevel.Info);
 
-                    var qualityAsks = spec.Slots.Where(s => s.Quality > 0)
+                    // Vault money slots carry the GOLD amount in Quality with item id -1, so they
+                    // showed up here as "-1 q25000" and read like an impossible quality ask. They are
+                    // not asks at all: skip them (Jeff, 0.13.0 smoke).
+                    var qualityAsks = spec.Slots
+                        .Where(s => s.Quality > 0 && s.ItemId != "-1" && !string.IsNullOrEmpty(s.ItemId))
                         .Select(s => $"{s.ItemId} q{s.Quality}").ToList();
                     if (qualityAsks.Count > 0)
                         this.Monitor.Log($"        quality asks: {string.Join(", ", qualityAsks)}", LogLevel.Info);

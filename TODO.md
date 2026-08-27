@@ -6,6 +6,18 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### ▶ NEXT SESSION: run the netWorldState audit
+
+Jeff, 2026-08-26 evening: a fresh agent should run the audit tonight. Everything that agent needs is
+in **`docs/superpowers/HANDOFF-2026-08-26-networldstate-audit.md`** - it is self-contained, so start
+there rather than reading this file top to bottom. Background and rationale are in the SYSTEMATIC
+entry further down.
+
+Also queued, needing Jeff first: **the difficulty setting** (top ask from emmalution's stream). Jeff
+is brainstorming it tomorrow - do not design it unilaterally. The GMCM "Features" section added in
+0.14.2 is where it would live.
+
+
 ### 0.14.2 (built, NOT released) - Shop Discount discounts the price, not the payment
 
 Jeff: "why doesn't the price reduction jp buy change the posted item prices?" Because it patched
@@ -871,6 +883,10 @@ sourceItem FIELD, which vanilla's window-resize rebuild and our color-picker dra
 need intact — disproportionate; leave unless a US user reports it.
 
 ### 🧾 SYSTEMATIC — one-time complete netWorldState keep/wipe audit (user request 2026-07-10)
+
+> **NEXT UP (2026-08-26): Jeff wants a fresh agent to run this. Full brief, including the reset
+> philosophy, where everything lives, how to drive the game, and the definition of done:
+> `docs/superpowers/HANDOFF-2026-08-26-networldstate-audit.md`. Say "run the audit" and start there.**
 Bundles, museum pieces, and lost books were all caught ONE REPORT AT A TIME from the same
 survival class: fields on `NetWorldState` that the reset's loadForNewGame path never rebuilds.
 `NetWorldState` is a finite class — enumerate every field once (decompile
