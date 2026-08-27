@@ -261,7 +261,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
-            helper.ConsoleCommands.Add("tly_readbook", "Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
+            helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
+            helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters and the Fail-night offer. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails> | tly_pity accept|decline (after tly_hold keep|reshuffle, before tly_reset).", this.CmdPity);
@@ -435,6 +436,9 @@ namespace TheLongestYear
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
             XpMultiplierPatch.Connect(_meta.State);
+            TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = _config.EnableDejaVuDialogue;
+            TheLongestYear.Loop.DejaVuDialoguePatch.Connect(_meta.State, () => _meta.Run, _config, this.Monitor,
+                () => this.Helper.Translation.GetTranslations().Select(t => t.Key).ToList());
             PatchLog.Connect(this.Monitor);
             // Computed once and shared by both the reset service (owned-bundle engine seed-time
             // manifest generation, see WorldResetService.PerformReset) and the catalog builder
@@ -1421,6 +1425,12 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.festival-once.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableDejaVuDialogue,
+                setValue: v => { _config.EnableDejaVuDialogue = v; TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = v; },
+                name: () => Strings.Get("gmcm.dejavu.name"),
+                tooltip: () => Strings.Get("gmcm.dejavu.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.EnableThemeReroll,
                 setValue: v => _config.EnableThemeReroll = v,
                 name: () => Strings.Get("gmcm.theme-reroll.name"),
@@ -1685,6 +1695,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
+                case "tly_dejavu": this.CmdDejaVu(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
@@ -2714,6 +2725,40 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_buyupgrade <id>", LogLevel.Warn); return; }
             _purchases?.TryPurchase(args[0]);
+        }
+
+        private void CmdDejaVu(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            MetaState s = _meta.State;
+            RunState run = _meta.Run;
+            string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            switch (mode)
+            {
+                case "set" when args.Length >= 3 && int.TryParse(args[2], out int n):
+                    s.VillagerFamiliarity[args[1]] = n;
+                    this.Monitor.Log($"tly_dejavu: {args[1]} familiarity = {n}.", LogLevel.Info);
+                    break;
+                case "force" when args.Length >= 2:
+                    TheLongestYear.Loop.DejaVuDialoguePatch.ForceNext = args[1];
+                    this.Monitor.Log($"tly_dejavu: next talk with {args[1]} will inject a line (Introduction day excepted).", LogLevel.Info);
+                    break;
+                case "reset":
+                    run.DejaVuShownTo.Clear();
+                    run.DejaVuLastDay = -1;
+                    this.Monitor.Log("tly_dejavu: loop caps cleared.", LogLevel.Info);
+                    break;
+                default:
+                    int day = (int)Game1.stats.DaysPlayed;
+                    var sb = new System.Text.StringBuilder(
+                        $"tly_dejavu status: enabled={_config.EnableDejaVuDialogue} resets={s.CompletedResets} threshold={_config.DejaVuThreshold} " +
+                        $"chance={_config.DejaVuChancePercent}% day={day} lastDay={run.DejaVuLastDay} " +
+                        $"shownThisLoop=[{string.Join(",", run.DejaVuShownTo)}] force={TheLongestYear.Loop.DejaVuDialoguePatch.ForceNext ?? "-"}");
+                    foreach (var kv in s.VillagerFamiliarity.OrderByDescending(k => k.Value))
+                        sb.Append($"\n  {kv.Key}={kv.Value} tier={DejaVuRules.Tier(kv.Value, _config.DejaVuThreshold)} eligible={DejaVuRules.IsEligible(s, run, kv.Key, day, _config.DejaVuThreshold)}");
+                    this.Monitor.Log(sb.ToString(), LogLevel.Info);
+                    break;
+            }
         }
 
         private void CmdReadBook(string command, string[] args)

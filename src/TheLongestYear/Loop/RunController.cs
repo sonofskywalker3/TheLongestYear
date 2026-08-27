@@ -839,6 +839,8 @@ namespace TheLongestYear.Loop
 
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
+            // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
+            TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
             // Backstop the live DonationObserver: union any bundle slot vanilla shows as deposited
             // into the ledger before the gate reads it, so a deposit the observer missed can't

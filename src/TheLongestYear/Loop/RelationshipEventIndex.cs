@@ -28,15 +28,26 @@ namespace TheLongestYear.Loop
         };
 
         private static HashSet<string> _ids;
+        private static Dictionary<string, string> _npcByEvent;
 
         /// <summary>Friendship-gated event ids, built lazily from Data/Events and cached.</summary>
         public static HashSet<string> Ids => _ids ??= Build();
 
         public static bool Contains(string eventId) => Ids.Contains(eventId);
 
+        /// <summary>The villager named by the event's "f &lt;npc&gt; &lt;points&gt;" precondition, or null
+        /// when the id is not a relationship event (deja-vu familiarity rollup).</summary>
+        public static string NpcFor(string eventId)
+        {
+            _ = Ids;
+            return _npcByEvent != null && _npcByEvent.TryGetValue(eventId, out string npc) ? npc : null;
+        }
+
         private static HashSet<string> Build()
         {
             var set = new HashSet<string>(StringComparer.Ordinal);
+            var byEvent = new Dictionary<string, string>(StringComparer.Ordinal);
+            _npcByEvent = byEvent;
             foreach (string loc in Locations)
             {
                 Dictionary<string, string> data;
@@ -60,6 +71,9 @@ namespace TheLongestYear.Loop
                         if (segs[i].StartsWith("f ", StringComparison.Ordinal))
                         {
                             set.Add(segs[0]);
+                            string[] parts = segs[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 2 && !byEvent.ContainsKey(segs[0]))
+                                byEvent[segs[0]] = parts[1];
                             break;
                         }
                     }
