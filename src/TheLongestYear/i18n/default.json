@@ -379,7 +379,7 @@
     "gmcm.jp-hud.tooltip": "Always-on corner counter showing banked JP and the current week's theme.",
     "gmcm.auto-detect.name": "Auto-detect mod unlock cutscenes",
     "gmcm.bundle-source.name": "Bundle source",
-    "gmcm.bundle-source.tooltip": "Engine: The Longest Year builds its own board every loop (the new-game 'TLY Custom' choice). Vanilla: keep the game's own Standard/Remixed board (or another bundle mod's) and re-roll it the same way on every reset. Takes effect at the next reset; the new-game Advanced Options dropdown sets it per save.",
+    "gmcm.bundle-source.tooltip": "Engine: The Longest Year builds its own board every loop (the new-game 'TLY Custom' choice). Vanilla: keep the game's own Normal/Remixed board (or another bundle mod's) and re-roll it the same way on every reset. You can switch an existing save at any time; it applies at your NEXT loop, not straight away. Which of the two vanilla layouts you get (Normal or Remixed) is fixed when the save is created. Keeping your board on a Fail night only works on an Engine board.",
     "gmcm.bundle-source.engine": "Engine (TLY Custom)",
     "gmcm.bundle-source.vanilla": "Vanilla (Normal / Remixed)",
     "gmcm.cart-limit.name": "Limit Traveling Cart stock",

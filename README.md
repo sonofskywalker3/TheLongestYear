@@ -116,6 +116,17 @@ Ten independent difficulty dials live in the mod's settings menu (GMCM) under **
 
 `tly_difficulty` in the SMAPI console prints what your save is actually running under, including anything you have changed since your last loop. Please attach it to any balance report.
 
+## Switching bundle source later
+
+You are not locked into the board you picked when you started. **Bundle source** in the mod's settings menu (GMCM) switches an existing save between **TLY Custom** (the mod builds its own board every loop) and **Vanilla** (keep the game's own Normal or Remixed board, or another bundle mod's, and re-roll it the same way on each reset).
+
+Like the difficulty dials, the switch applies at your **next loop**, not straight away. The year you are already playing keeps the board it started with.
+
+Two things the switch does not change:
+
+- **Normal or Remixed is fixed when the save is created.** GMCM moves you between TLY Custom and Vanilla; which of the game's two layouts you get was settled by the Advanced Options dropdown when you started that save.
+- **Keeping your board on a Fail night is a TLY Custom feature.** On a vanilla board the reset regenerates the board through the game's own generator, so there is nothing to hold on to and the Junimos do not offer it.
+
 ## Configuration
 
 All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The values most worth tuning during the beta:
