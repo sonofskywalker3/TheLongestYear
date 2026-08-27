@@ -90,32 +90,6 @@ Fixed in 0.14.0. Finishing a bundle that only needs some of its listed items use
 
 Anything not on this list, please do report - the bugs tab on Nexus is read.
 
-## Difficulty
-
-Ten independent difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**. There is no overall difficulty setting: turn up only what you want turned up. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
-
-**Changes take effect on your next loop, not straight away.** The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
-
-**What the bundles ask for**
-
-- **Stack size.** How many of an item a slot asks for, up to 99. Money bundles are never affected.
-- **Quality asks.** How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
-- **Required slots.** How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
-- **Item rarity.** Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. **TLY Custom bundles only** (see below).
-
-**What you carry between loops**
-
-- **Junimo Points earned.** Scales every JP award, so progress across loops is faster or slower. The season ramp keeps its shape, so late-season donating is still worth the most.
-- **Shrine prices.** Scales what upgrades cost at the Junimo Shrine.
-- **Starting gold.** Scales the `StartingMoney` value rather than replacing it. Extreme starts you with nothing.
-- **Starting cart slots.** How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is empty until you buy Cart Stall I.
-- **Hold and pity prices.** Scales the JP price of keeping your board on a Fail night, and of accepting the Junimos' offer to ease a season. The first of each stays free at every step.
-- **Season pity.** How readily the Junimos ease a season you keep failing. Easy helps sooner and more, Hard waits longer and helps less, Extreme never helps. Your failed-season counting keeps running either way, so turning it back up picks up where it left off.
-
-**One dial does not work on vanilla boards.** Item rarity applies to **TLY Custom** bundles only, because changing which item a vanilla bundle asks for would be changing the bundle. Stack size, quality asks and required slots all work on vanilla Standard and Remixed boards too.
-
-`tly_difficulty` in the SMAPI console prints what your save is actually running under, including anything you have changed since your last loop. Please attach it to any balance report.
-
 ## Configuration
 
 All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The values most worth tuning during the beta:

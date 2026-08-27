@@ -83,35 +83,6 @@ Anything not on this list, please do report - the bugs tab is read.
 
 [line]
 
-[size=5][b]Difficulty[/b][/size]
-Ten independent difficulty dials live in the mod's settings menu (GMCM) under [b]Difficulty[/b]. There is no overall difficulty setting: turn up only what you want turned up. Every dial has four steps, [b]Easy / Normal / Hard / Extreme[/b], and every one starts on [b]Normal[/b], which is the balance the mod ships with. Changing nothing changes nothing.
-
-[b]Changes take effect on your next loop, not straight away.[/b] The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
-
-[b]What the bundles ask for[/b]
-[list]
-[*][b]Stack size.[/b] How many of an item a slot asks for, up to 99. Money bundles are never affected.
-[*][b]Quality asks.[/b] How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
-[*][b]Required slots.[/b] How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
-[*][b]Item rarity.[/b] Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. [b]TLY Custom bundles only[/b] (see below).
-[/list]
-
-[b]What you carry between loops[/b]
-[list]
-[*][b]Junimo Points earned.[/b] Scales every JP award, so progress across loops is faster or slower. The season ramp keeps its shape, so late-season donating is still worth the most.
-[*][b]Shrine prices.[/b] Scales what upgrades cost at the Junimo Shrine.
-[*][b]Starting gold.[/b] Scales the [font=Courier New]StartingMoney[/font] value rather than replacing it. Extreme starts you with nothing.
-[*][b]Starting cart slots.[/b] How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is empty until you buy Cart Stall I.
-[*][b]Hold and pity prices.[/b] Scales the JP price of keeping your board on a Fail night, and of accepting the Junimos' offer to ease a season. The first of each stays free at every step.
-[*][b]Season pity.[/b] How readily the Junimos ease a season you keep failing. Easy helps sooner and more, Hard waits longer and helps less, Extreme never helps. Your failed-season counting keeps running either way, so turning it back up picks up where it left off.
-[/list]
-
-[b]One dial does not work on vanilla boards.[/b] Item rarity applies to [b]TLY Custom[/b] bundles only, because changing which item a vanilla bundle asks for would be changing the bundle. Stack size, quality asks and required slots all work on vanilla Standard and Remixed boards too.
-
-[font=Courier New]tly_difficulty[/font] in the SMAPI console prints what your save is actually running under, including anything you have changed since your last loop. Please attach it to any balance report.
-
-[line]
-
 [size=5][b]Tuning[/b][/size]
 Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save. [font=Courier New]BundleHoldCosts[/font] sets the JP price of keeping the same bundle board on a Fail night by consecutive holds (default 0, 50, 100, 200, 300; reshuffling resets the count). Season pity ([font=Courier New]PityThreshold[/font] 5, [font=Courier New]PityQuotaStep[/font] 0.10, [font=Courier New]PityQuotaFloor[/font] 0.50, [font=Courier New]PityTrimPerStep[/font] 2, [font=Courier New]PityCosts[/font] 0/50/100/200/300, [font=Courier New]PityEnabled[/font]) tunes when and how much the Junimos offer to ease a season you keep failing.
 
