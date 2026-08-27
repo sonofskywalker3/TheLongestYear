@@ -1683,8 +1683,15 @@ namespace TheLongestYear
         {
             sb.AppendLine("## Bundles by room");
             sb.AppendLine();
-            var pool = new TheLongestYear.Loop.VanillaBundlePool(this.Monitor);
-            var rooms = pool.BuildRoomPools();
+            // The engine's FULL candidate set, authored bundles included. Reading the vanilla pool
+            // alone understates every room: the mod's own bundles are widened into every position
+            // of their room, which is exactly what gives several positions their alternates.
+            var engine = new TheLongestYear.Loop.BundleEngine(
+                this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
+                TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), _meta.State.BoardDifficulty(_config));
+            int candidateSeed = BundleEngineSeed.For(
+                unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop);
+            var rooms = engine.BuildCandidatePools(pools, candidateSeed);
 
             foreach (var room in rooms.OrderBy(r => r.Key, System.StringComparer.Ordinal))
             {
