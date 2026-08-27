@@ -138,6 +138,21 @@ internal static class UpgradeCatalogGenerators
         }
     }
 
+    /// <summary>Yield the 19 Carryover Keep-&lt;book&gt; rows from <see cref="BookKeepTable"/>.
+    /// Names come from the game via the item: token (vanilla display name, localized).</summary>
+    public static IEnumerable<UpgradeDefinition> CarryoverBookKeeps()
+    {
+        foreach (BookKeep book in BookKeepTable.Entries)
+        {
+            var tokens = new Dictionary<string, string> { ["book"] = $"item:(O){book.StatKey}" };
+            yield return new UpgradeDefinition(
+                book.UpgradeId, UpgradeCategory.Carryover,
+                "upgrade-tpl.keep-book.name", "upgrade-tpl.keep-book.desc", tokens,
+                book.Cost, book.PrerequisiteId,
+                metaRequirement: null, runReachRequirement: BookKeepTable.ReachFor(book.StatKey));
+        }
+    }
+
     // XP multiplier costs, indexed [1..4] (tier N = x(N+1) on one skill). Deliberately
     // cheaper than the keep-level chain: keeps set your starting floor, multipliers set
     // your re-leveling slope (spec 2026-07-14 economy Change 3). Full family = 5x1200

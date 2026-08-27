@@ -24,4 +24,18 @@ public static class Strings
 
     public static string Get(string key, IReadOnlyDictionary<string, string> tokens)
         => _provider == null ? key : _provider(key, tokens);
+
+    private static Func<string, string>? _itemNames;
+
+    /// <summary>Item display-name provider for the "item:" catalog token (glue wires
+    /// ItemRegistry). Uninitialised, <see cref="ItemName"/> echoes the qualified id, loud and
+    /// never a crash, the same contract as <see cref="Get(string)"/>.</summary>
+    public static void InitItemNames(Func<string, string> provider)
+        => _itemNames = provider ?? throw new ArgumentNullException(nameof(provider));
+
+    /// <summary>Test hook, clears the item-name provider.</summary>
+    public static void ResetItemNames() => _itemNames = null;
+
+    public static string ItemName(string qualifiedId)
+        => _itemNames == null ? qualifiedId : _itemNames(qualifiedId);
 }

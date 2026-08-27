@@ -238,6 +238,8 @@
     "upgrade-tpl.keep-elevator.desc": "Start each loop with the mine elevator accessible to floor {{floor}}.",
     "upgrade-tpl.keep-mastery.name": "Keep Mastery {{level}}",
     "upgrade-tpl.keep-mastery.desc": "Start each loop at Mastery Level {{level}}. Persists across loops once kept.",
+    "upgrade-tpl.keep-book.name": "Keep {{book}}",
+    "upgrade-tpl.keep-book.desc": "Start each loop with {{book}} already read. Its power stays with you.",
     "upgrade-tpl.keep-rod.desc": "Start each loop with your Fishing Rod at this tier.",
     "upgrade.keep_fishing_rod_0.name": "Keep Bamboo Pole",
     "upgrade.keep_fishing_rod_1.name": "Keep Fiberglass Rod",
