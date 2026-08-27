@@ -107,6 +107,9 @@ public class I18nGuardTests
                 _ = def.DisplayName;
                 _ = def.Description;
             }
+            // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
+            foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
+                _ = Strings.Get(key);
         }
         finally
         {
