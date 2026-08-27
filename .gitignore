@@ -24,3 +24,5 @@ tools/preview/
 # Local test/dev artifacts (logs, scrapes, recon screenshots, evidence saves) — not part of the repo
 test-output/
 
+
+engine-bundle-catalogue.md
