@@ -306,4 +306,16 @@ public sealed class GameplayConfig
     /// what makes the festival map re-enterable in the first place. A new loop always starts
     /// clean - the rewind means the festival has not happened yet.</summary>
     public bool FestivalMainEventOncePerDay { get; set; } = true;
+
+    /// <summary>Deja-vu dialogue (spec 2026-08-27): villagers you have dealt with a lot across loops
+    /// occasionally half-remember you. No mechanical effect. GMCM "Features".</summary>
+    public bool EnableDejaVuDialogue { get; set; } = true;
+
+    /// <summary>Familiarity points (talk 1, gift 3, heart event 10, summed over every loop) a
+    /// villager needs before a deja-vu line can play. Tier 2 lines start at three times this.</summary>
+    public int DejaVuThreshold { get; set; } = 60;
+
+    /// <summary>Percent chance per eligible conversation. Capped to one line per villager per loop
+    /// and one line per week across the whole town regardless of this value.</summary>
+    public int DejaVuChancePercent { get; set; } = 6;
 }
