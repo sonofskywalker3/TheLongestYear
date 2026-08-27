@@ -108,11 +108,20 @@ A hard fact derived from data plus a small set of rules about world gating. Per 
 | Cooked items | the kitchen (a 10,000g house upgrade), plus the recipe's unlock condition from `Data/CookingRecipes`, plus every ingredient's floor |
 | Books | the bookseller's visit schedule and the cart, both of which are late and unreliable |
 | Tapper goods | the tapper recipe (Foraging 3), the tree type, and the tapping duration |
-| Anything unrecognised | Spring, with `Basis` recording that nothing was known |
+| Anything unrecognised | Winter, with `Basis` recording that nothing was known, and a loud log line |
 
-The unrecognised fallback is deliberately permissive. A floor that is too early can only make a
-deadline earlier than ideal; a floor that is too late is invisible, because the deadline logic
-only ever clamps upward.
+The unrecognised fallback is deliberately **late**, and the direction matters more than it looks.
+Deadlines are clamped upward to the floor, so a floor set too early permits an impossible
+deadline, which is the run-bricking failure. A floor set too late only makes a gate lenient. An
+item the model cannot place is therefore floored at Winter, which means it applies no checkpoint
+pressure at all.
+
+That is the same leak this whole design exists to close, so it is worth being precise about who
+it applies to. The derivation rules cover every vanilla item the pools can produce, so in a
+vanilla or remixed game nothing lands here. It applies only to unrecognised mod content, where
+guessing a deadline could brick a run and the honest answer is that the engine does not know.
+The difference from today is that the gap is logged and appears in the generated model doc,
+rather than being silent.
 
 ### 3.2 Effort, the judgement
 
@@ -248,6 +257,9 @@ Each phase builds, tests and is verifiable on a live board on its own.
   carry real analysis. Phasing exists so that value lands before the whole is done.
 - **Normal gets harder and nobody has played it.** The difficulty feature is unreleased and
   largely unplayed already. Verification is `tly_gatecheck` plus Jeff playing it, not a test.
-- **A wrong floor is invisible.** A floor that is too early silently produces a tight deadline
-  rather than an error. The `Basis` string and the generated model doc exist so that a wrong
-  floor can be found by reading rather than by losing a run.
+- **A floor set too early is the dangerous direction.** It produces a tight deadline rather than
+  an error, and a deadline the world cannot meet bricks the run. Defaults therefore lean late,
+  the `Basis` string records why every floor is what it is, and the generated model doc exists so
+  a wrong floor can be found by reading rather than by losing a run.
+- **Unrecognised mod content stays ungated.** Accepted deliberately, per section 3.1: guessing is
+  the only alternative and guessing can brick a run.
