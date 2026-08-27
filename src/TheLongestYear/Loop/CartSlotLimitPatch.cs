@@ -31,6 +31,11 @@ namespace TheLongestYear.Loop
         /// that remembers today's cart selection.</summary>
         internal static Func<RunState> RunProvider;
 
+        /// <summary>Set by ModEntry.OnSaveLoaded: how many items the cart shows before any Cart
+        /// Stall upgrade, from the run's stamped difficulty profile (spec 2026-08-26). Null on a
+        /// non-TLY save, which falls back to the shipping value of one.</summary>
+        internal static Func<int> StartingSlotsProvider;
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(string shopId, ref Dictionary<ISalable, ItemStockInformation> __result)
@@ -40,7 +45,7 @@ namespace TheLongestYear.Loop
             if (shopId != TravelerShopId) return;
             if (__result == null || __result.Count == 0) return;
             int tier = UpgradeChecker.GetTier("cart_slot", CartSlotRules.MaxSlots);
-            int allowed = CartSlotRules.VisibleSlots(tier);
+            int allowed = CartSlotRules.VisibleSlots(tier, StartingSlotsProvider?.Invoke() ?? CartSlotRules.MinSlots);
 
             RunState run = RunProvider?.Invoke();
             if (run == null)

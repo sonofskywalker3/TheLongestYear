@@ -364,6 +364,7 @@ namespace TheLongestYear
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
+            CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
             // not end the day, so the map stays re-entrant and vanilla would offer the hunt again.
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = () => _meta.Run;
@@ -515,6 +516,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
+            TheLongestYear.Loop.CartSlotLimitPatch.StartingSlotsProvider = null;
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;
             BundleOptionPatch.ResetChoice();
             _boardBuilder = null;
