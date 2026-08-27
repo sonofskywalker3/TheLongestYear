@@ -718,6 +718,26 @@ namespace TheLongestYear
                 return;
             }
 
+            // SaveGame.Load on a folder that does not exist fails SILENTLY: the game drops to the
+            // title screen and simply never finishes loading, which reads exactly like a hang.
+            // That is easy to hit because a TLY reset RENAMES the save folder (it re-seeds
+            // uniqueIDForThisGame, and the folder name embeds it), so yesterday's folder name is
+            // stale after any loop. Check first and list what is actually there.
+            string savesDir = System.IO.Path.Combine(
+                StardewModdingAPI.Constants.DataPath ?? "", "Saves");
+            string target = System.IO.Path.Combine(savesDir, args[0]);
+            if (System.IO.Directory.Exists(savesDir) && !System.IO.Directory.Exists(target))
+            {
+                string[] available = System.IO.Directory.GetDirectories(savesDir)
+                    .Select(System.IO.Path.GetFileName).OrderBy(n => n, System.StringComparer.Ordinal).ToArray();
+                this.Monitor.Log(
+                    $"tly_loadsave: no save folder named '{args[0]}'. A TLY reset renames the folder " +
+                    $"(the name embeds uniqueIDForThisGame), so an older name goes stale. Available: " +
+                    $"{(available.Length > 0 ? string.Join(", ", available) : "(none)")}",
+                    LogLevel.Warn);
+                return;
+            }
+
             this.Monitor.Log($"tly_loadsave: loading '{args[0]}'.", LogLevel.Info);
             StardewValley.SaveGame.Load(args[0]);
             Game1.exitActiveMenu();
