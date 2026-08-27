@@ -3,15 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased (0.16.1 - 0.16.5)
+## 0.16.7 - 2026-08-27
 
-1123 tests.
+1123 tests. Live-smoked on the throwaway save (STATUS.md).
 
 ### Fixed
 
 - **Tools in the Junimo Stash keep their bait, tackle and enchantments.** A rod banked in the stash was rebuilt from its item id on the next loop, so it came back empty and un-enchanted. The 0.12.0 fix only covered a kept rod that stayed in your inventory. (Nexus posts, CausticOptimist and Bumblewyn.)
 - **Keep Pet gives every pet its own bowl.** The rebuilt farm has one bowl and the game binds one pet per bowl; any pet without one is moved into the farmhouse each morning and loses friendship. With two pets, the second one looked like it had not come back. Extra bowls are now placed beside the first, and a save already in that state gets the missing bowl on the next morning. (Nexus bug 1122901.)
 - **The beach bridge is broken again after a rewind.** Repairing the bridge edits the game's cached map in place, so the next loop drew a repaired bridge under a "?" marker you could not interact with. The rewind now reloads the Beach, Forest, Mountain and Town maps from clean data, which also stops Robin's shortcuts leaking into a loop where you did not keep them. (Nexus bug 1124076.)
+
+### Added
+
+- Debug console commands `tly_addpet`, `tly_fixbridge` and `tly_stashrod` (each with a `check` verb) so the three fixes above can be driven and verified from the SMAPI console.
 
 ## 0.16.0 - 2026-08-27
 
