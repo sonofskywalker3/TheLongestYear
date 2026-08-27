@@ -24,10 +24,13 @@ public static class BundleHold
     public static bool IsOfferable(string? bundleSource) => !BundleSourceNames.IsVanilla(bundleSource);
 
     /// <summary>Price the player would pay to hold right now.</summary>
-    public static long NextCost(MetaState state, IReadOnlyList<long>? curve)
-        => BundleHoldPricing.CostFor(state.ConsecutiveHolds, curve);
+    public static long NextCost(MetaState state, IReadOnlyList<long>? curve, double priceFactor = 1.0)
+        => BundleHoldPricing.CostFor(state.ConsecutiveHolds, curve, priceFactor);
 
-    public static HoldResult Apply(MetaState state, bool keep, IReadOnlyList<long>? curve)
+    /// <param name="priceFactor">The run's difficulty hold-price factor. MUST match what
+    /// <see cref="NextCost"/> quoted the player, or the prompt and the deduction disagree.</param>
+    public static HoldResult Apply(
+        MetaState state, bool keep, IReadOnlyList<long>? curve, double priceFactor = 1.0)
     {
         if (!keep)
         {
@@ -37,7 +40,7 @@ public static class BundleHold
             return HoldResult.Reshuffled;
         }
 
-        long cost = NextCost(state, curve);
+        long cost = NextCost(state, curve, priceFactor);
         if (state.JunimoPoints < cost)
             return HoldResult.NotEnoughJp;
 

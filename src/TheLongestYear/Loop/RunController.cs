@@ -314,7 +314,7 @@ namespace TheLongestYear.Loop
         private void ShowHoldChoice()
         {
             MetaState meta = _store.State;
-            long cost = BundleHold.NextCost(meta, _config.BundleHoldCosts);
+            long cost = BundleHold.NextCost(meta, _config.BundleHoldCosts, meta.EffectiveDifficulty(_config).HoldPriceFactor);
             string keepLabel = cost == 0
                 ? Strings.Get("dialog.hold.keep-free")
                 : Strings.Get("dialog.hold.keep", new Dictionary<string, string> { ["cost"] = cost.ToString() });
@@ -337,7 +337,7 @@ namespace TheLongestYear.Loop
                 _menuWatch = null;
                 if (key == "keep")
                 {
-                    BundleHold.HoldResult result = BundleHold.Apply(meta, keep: true, _config.BundleHoldCosts);
+                    BundleHold.HoldResult result = BundleHold.Apply(meta, keep: true, _config.BundleHoldCosts, meta.EffectiveDifficulty(_config).HoldPriceFactor);
                     if (result == BundleHold.HoldResult.NotEnoughJp)
                     {
                         Game1.playSound("cancel");
@@ -361,7 +361,7 @@ namespace TheLongestYear.Loop
 
         private void ApplyHoldChoice(bool keep)
         {
-            BundleHold.HoldResult result = BundleHold.Apply(_store.State, keep, _config.BundleHoldCosts);
+            BundleHold.HoldResult result = BundleHold.Apply(_store.State, keep, _config.BundleHoldCosts, _store.State.EffectiveDifficulty(_config).HoldPriceFactor);
             _monitor.Log($"Hold choice: {result} (seed loop {_store.State.BundleSeedLoop}).", LogLevel.Info);
             AfterHoldChoice(held: keep);
         }
