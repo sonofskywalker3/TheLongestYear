@@ -17,8 +17,11 @@ public static class BundleSlotFiller
     private const int QualitySilver = 1;
 
     /// <summary>Items that fish out at base quality only, whatever the roll says —
-    /// see <see cref="RollQuality"/>.</summary>
-    private static readonly IReadOnlySet<string> BuiltInQualityIneligibleItemIds =
+    /// see <see cref="RollQuality"/>. Public because <see cref="VanillaBoardDifficultyPass"/>
+    /// must honour exactly the same set when the quality-asks modifier adds a star to a
+    /// vanilla-authored board (Nexus 1122358: a quality ask on an item the game never stars is
+    /// an impossible slot).</summary>
+    public static readonly IReadOnlySet<string> BuiltInQualityIneligibleItemIds =
         new HashSet<string>(StringComparer.Ordinal)
         {
             "(O)152", // Seaweed
