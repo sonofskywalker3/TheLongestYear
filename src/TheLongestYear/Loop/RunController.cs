@@ -633,7 +633,10 @@ namespace TheLongestYear.Loop
         {
             Run.DayOfMonth = day;
             Game1.dayOfMonth = day;
-            Game1.netWorldState.Value.Date.DayOfMonth = day;
+            // No netWorldState.Date write here: Date is a computed `=> WorldDate.Now()` that builds
+            // a fresh WorldDate from the Game1 statics, so assigning to it hits a throwaway object
+            // (audit 2026-08-26). The line above is what actually moves the date; netWorldState's
+            // own copy is synced by vanilla's UpdateFromGame1 on the next save.
             if (Game1.player != null)
                 Game1.player.dayOfMonthForSaveGame = day;
             _monitor.Log(
