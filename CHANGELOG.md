@@ -11,6 +11,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - **Keep your power books.** Nineteen new Carryover keeps at the Junimo Shrine, one per vanilla power book (Way of the Wind, Friendship 101, The Diamond Hunter and the rest). A row appears on a Fail night once you have read that book this loop; once bought, the book's power survives every rewind. Priced 150 to 750 JP by how much the power is worth over a year. Nothing stacks and nothing is free: the reset still wipes every book you did not buy. Spec: `docs/superpowers/specs/2026-08-27-keep-power-books-design.md`.
 - Debug console command `tly_readbook [Book_Id]` to mark a book as read, or list every book's flag.
+- **The town half-remembers.** Villagers you have spent a lot of time with across loops (talks, gifts and heart events add up in the background; hearts themselves still reset) occasionally open with an uncanny line in their own voice before their normal dialogue. About one a week at most, one per villager per loop, never in loop 1, never on a villager's first-meeting day. No gameplay effect. Toggle "Deja-vu dialogue" in Features. Idea: u/Gribbleby on the beta announcement thread. Debug: `tly_dejavu`.
 
 ### Fixed
 
