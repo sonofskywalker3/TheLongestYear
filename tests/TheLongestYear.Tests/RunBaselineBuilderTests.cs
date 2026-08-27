@@ -1,3 +1,4 @@
+using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -330,5 +331,23 @@ public class RunBaselineBuilderTests
         var meta = new MetaState { OwnedUpgrades = { "keep_mastery_1", "keep_mastery_2", "keep_mastery_3" } };
         var baseline = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 0);
         Assert.Equal(3, baseline.MasteryLevel);
+    }
+
+    [Fact]
+    public void No_book_keeps_means_no_kept_book_stats()
+    {
+        var b = RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Empty(b.KeptBookStats);
+    }
+
+    [Fact]
+    public void Owned_book_keeps_map_to_their_stat_keys()
+    {
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("keep_book_speed");
+        meta.OwnedUpgrades.Add("keep_book_pricecatalogue");
+        meta.OwnedUpgrades.Add("keep_mastery_1");   // unrelated keep, must not leak in
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Equal(new[] { "Book_PriceCatalogue", "Book_Speed" }, b.KeptBookStats.OrderBy(k => k).ToArray());
     }
 }

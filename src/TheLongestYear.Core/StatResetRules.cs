@@ -35,6 +35,11 @@ namespace TheLongestYear.Core
         // BillboardQuestsDone + GoldenTagsTurnedIn (prize/derby reward ladders),
         // blessingOfWaters (day-scoped statue blessing), individualMoneyEarned (money is
         // run-scoped), SquidFestScore_<day>_<year> — and every unknown future key.
+        //
+        // KEPT-THEN-REGRANTED (spec 2026-08-27 keep-power-books): Book_* flags are still wiped
+        // here; FarmerReset then re-sets the ones the player BOUGHT at the shrine from
+        // RunBaseline.KeptBookStats, the same shape as the MasteryExp re-seed. The wipe-by-default
+        // rule is unchanged; a kept book is a baseline re-grant, never a leak.
         private static readonly HashSet<string> KeptKeys = new(StringComparer.OrdinalIgnoreCase)
         {
             // Engine.

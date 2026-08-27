@@ -71,6 +71,10 @@ public sealed class RunBaseline
     /// keep_mastery_N tiers always restores level N, not capped at in-run reach.</summary>
     public int MasteryLevel { get; init; }
 
+    /// <summary>Vanilla <c>Book_*</c> stat keys to set to 1 after the stat wipe (Keep &lt;book&gt;
+    /// rows, spec 2026-08-27). Empty when no book keep is owned.</summary>
+    public IReadOnlyList<string> KeptBookStats { get; init; } = new List<string>();
+
     /// <summary>Grant the Golden Scythe instead of the basic scythe each run (Keep Golden Scythe).</summary>
     public bool GrantGoldenScythe { get; init; }
 }
