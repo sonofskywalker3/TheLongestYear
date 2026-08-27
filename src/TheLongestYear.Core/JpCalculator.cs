@@ -14,8 +14,18 @@ public readonly record struct DonationLine(Rarity Rarity, int Count);
 public sealed class JpCalculator
 {
     private readonly JpSettings _s;
+    private readonly double _earned;
 
-    public JpCalculator(JpSettings settings) => _s = settings;
+    /// <param name="settings">Base JP values and the season ramp.</param>
+    /// <param name="earnedMultiplier">The difficulty profile's JP-earned factor (spec 2026-08-26).
+    /// Applied to EVERY award: per-item, completion bonuses, and vault payments. 1.0 is the
+    /// default and changes nothing. Callers pass the run's STAMPED profile value, so a GMCM
+    /// change does not alter the season the player is already in.</param>
+    public JpCalculator(JpSettings settings, double earnedMultiplier = 1.0)
+    {
+        _s = settings;
+        _earned = earnedMultiplier;
+    }
 
     /// <summary>Season multiplier for a 1-based week-of-year (1..16).</summary>
     public double Multiplier(int weekOfYear)
@@ -45,8 +55,9 @@ public sealed class JpCalculator
     public long VaultPayment(int gold)
     {
         if (_s.VaultGoldPerJp <= 0) return 1;
-        long jp = (long)Math.Round((double)gold / _s.VaultGoldPerJp, MidpointRounding.AwayFromZero);
-        return jp < 1 ? 1 : jp;
+        long jp = (long)Math.Round(
+            (double)gold / _s.VaultGoldPerJp * _earned, MidpointRounding.AwayFromZero);
+        return jp < 1 ? 1 : jp;   // paying the vault always pays SOMETHING, at every difficulty
     }
 
     public long ForDonationBatch(
@@ -63,6 +74,10 @@ public sealed class JpCalculator
         return total;
     }
 
+    /// <summary>The difficulty factor multiplies the season-scaled value rather than the base, so
+    /// the season ramp's SHAPE (1x / 1.5x / 2.5x / 4x) is identical at every step and only its
+    /// height moves.</summary>
     private long Scale(int baseValue, int weekOfYear)
-        => (long)Math.Round(baseValue * Multiplier(weekOfYear), MidpointRounding.AwayFromZero);
+        => (long)Math.Round(
+            baseValue * Multiplier(weekOfYear) * _earned, MidpointRounding.AwayFromZero);
 }

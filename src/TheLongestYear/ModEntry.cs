@@ -1925,7 +1925,8 @@ namespace TheLongestYear
             }
 
             JpBudgetReport report = JpBudgetCalculator.Compute(
-                bundles, _config.Jp, _config.SelectionBonusMultiplier, BonusItemSampler.DefaultMaxCountBySeason);
+                bundles, _config.Jp, _config.SelectionBonusMultiplier, BonusItemSampler.DefaultMaxCountBySeason,
+                _meta.State.EffectiveDifficulty(_config).JpEarnedFactor);
 
             this.Monitor.Log(
                 $"tly_jpbudget: loop {_meta.State.CompletedResets} (run {_meta.Run.RunNumber}), {bundles.Count} bundles, " +
