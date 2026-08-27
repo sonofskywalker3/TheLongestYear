@@ -109,6 +109,26 @@ public sealed class MetaState
     [System.Text.Json.Serialization.JsonIgnore]
     public int EffectiveBundleSeedLoop => BundleSeedLoop >= 0 ? BundleSeedLoop : CompletedResets;
 
+    /// <summary>The difficulty profile this loop runs under, stamped from the live config when
+    /// the loop begins. Every consumer reads THIS, never <c>config.Difficulty</c>, which is what
+    /// makes a GMCM change apply at the next reset rather than mid-season.
+    ///
+    /// RESOLVED VALUES are stamped rather than the ten steps, matching the
+    /// <see cref="BoardEaseSeason"/> idiom: a reload has to reproduce the reset exactly, and
+    /// stamping steps would let a future release that retunes what "Hard" means silently change
+    /// an in-flight run's economy.
+    ///
+    /// Null on a save from before difficulty modifiers existed. See
+    /// <see cref="EffectiveDifficulty"/> for the fallback, which is all-Normal and therefore
+    /// identical to that save's previous behaviour. Spec 2026-08-26.</summary>
+    public DifficultyProfile? Difficulty { get; set; }
+
+    /// <summary>The profile in force: the stamp when present, otherwise resolved live from
+    /// config. A legacy save resolves to all-Normal, so nothing about it changes until its next
+    /// reset writes a real stamp. No migration code, no save-format break.</summary>
+    public DifficultyProfile EffectiveDifficulty(GameplayConfig config)
+        => Difficulty ?? DifficultyResolver.Resolve(config.Difficulty, config);
+
     /// <summary>Which board this save runs under — <see cref="BundleSourceNames.Engine"/> (TLY
     /// writes its own board every loop) or <see cref="BundleSourceNames.Vanilla"/> (keep the
     /// game's Standard/Remixed or another bundle mod's board, regenerated the same way on every
