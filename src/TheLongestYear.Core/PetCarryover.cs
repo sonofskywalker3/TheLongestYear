@@ -33,5 +33,14 @@ public static class PetCarryover
     public static (int X, int Y) RestoreTile(int index)
         => (RestoreTileX - ColumnsPerPet * Math.Max(0, index), RestoreTileY);
 
+    /// <summary>Where a pet bowl for pet number <paramref name="index"/> goes when the farm has
+    /// no free bowl left for it: one tile up-left of that pet's restore tile, so the bowl's pet
+    /// spot (bowl tile + 1 row, vanilla PetBowl.GetPetSpot) is the row the pets stand on. Index 0
+    /// lands on vanilla's own default bowl tile (53,7) and later indexes stagger west with the pets.
+    /// The farm ships ONE bowl and vanilla lets one pet own a bowl; every extra pet was warped
+    /// indoors each morning and docked friendship (Nexus bug 1122901, second report).</summary>
+    public static (int X, int Y) BowlTile(int index)
+        => (RestoreTileX - 1 - ColumnsPerPet * Math.Max(0, index), RestoreTileY - 1);
+
     public static int ClampFriendship(int value) => Math.Clamp(value, 0, MaxFriendship);
 }

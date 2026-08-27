@@ -39,6 +39,17 @@ public class PetCarryoverTests
     public void RestoreTile_staggers_west_by_two_columns(int index, int x, int y)
         => Assert.Equal((x, y), PetCarryover.RestoreTile(index));
 
+    [Theory]
+    [InlineData(0, 53, 7)]
+    [InlineData(1, 51, 7)]
+    [InlineData(3, 47, 7)]
+    public void BowlTile_sits_up_left_of_each_restore_tile(int index, int x, int y)
+        => Assert.Equal((x, y), PetCarryover.BowlTile(index));
+
+    [Fact]
+    public void BowlTile_zero_is_vanillas_default_bowl_tile()
+        => Assert.Equal((53, 7), PetCarryover.BowlTile(0));
+
     [Fact]
     public void ClampFriendship_bounds_0_to_1000()
     {
