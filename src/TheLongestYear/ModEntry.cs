@@ -1805,6 +1805,15 @@ namespace TheLongestYear
                         .Select(s => $"{s.ItemId} q{s.Quality}").ToList();
                     if (qualityAsks.Count > 0)
                         this.Monitor.Log($"        quality asks: {string.Join(", ", qualityAsks)}", LogLevel.Info);
+
+                    // Stack asks above 1, so a balance report can show what the stack-size
+                    // difficulty modifier actually did. Money slots are excluded for the same
+                    // reason as above: a Vault "stack" is a gold amount, not an ask.
+                    var stackAsks = spec.Slots
+                        .Where(s => s.Stack > 1 && s.ItemId != "-1" && !string.IsNullOrEmpty(s.ItemId))
+                        .Select(s => $"{s.ItemId} x{s.Stack}").ToList();
+                    if (stackAsks.Count > 0)
+                        this.Monitor.Log($"        stack asks: {string.Join(", ", stackAsks)}", LogLevel.Info);
                 }
             }
             this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
