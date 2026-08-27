@@ -73,3 +73,43 @@ public class StashItemRecordTests
         Assert.Null(restored.Price);
     }
 }
+
+public class StashItemRecordAttachmentTests
+{
+    [Fact]
+    public void Attachments_default_to_null_for_slotless_items()
+    {
+        var r = new StashItemRecord("(O)378", 5, 0);
+        Assert.Null(r.Attachments);
+    }
+
+    [Fact]
+    public void Rod_with_bait_and_empty_tackle_slot_round_trips_through_json()
+    {
+        // An iridium rod: slot 0 holds 37 Targeted Bait (flavored, so it carries preserve
+        // fields), slot 1 (tackle) is empty and must stay empty, not vanish.
+        var bait = new StashItemRecord("(O)SpecificBait", 37, 0,
+            PreservedParentSheetIndex: "128", Preserve: 12, Price: 30);
+        var original = new StashItemRecord("(T)IridiumRod", 1, 0,
+            Attachments: new System.Collections.Generic.List<StashItemRecord?> { bait, null });
+
+        string json = JsonSerializer.Serialize(original);
+        StashItemRecord restored = JsonSerializer.Deserialize<StashItemRecord>(json)!;
+
+        Assert.NotNull(restored.Attachments);
+        Assert.Equal(2, restored.Attachments!.Count);
+        Assert.Equal("(O)SpecificBait", restored.Attachments[0]!.ItemId);
+        Assert.Equal(37, restored.Attachments[0]!.Quantity);
+        Assert.Equal("128", restored.Attachments[0]!.PreservedParentSheetIndex);
+        Assert.Null(restored.Attachments[1]);
+    }
+
+    [Fact]
+    public void Legacy_json_without_attachments_still_loads()
+    {
+        const string legacyJson = "{\"ItemId\":\"(T)FiberglassRod\",\"Quantity\":1,\"Quality\":0}";
+        StashItemRecord restored = JsonSerializer.Deserialize<StashItemRecord>(legacyJson)!;
+        Assert.Equal("(T)FiberglassRod", restored.ItemId);
+        Assert.Null(restored.Attachments);
+    }
+}
