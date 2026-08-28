@@ -45,6 +45,19 @@ public class ShopAvailabilityTests
     }
 
     [Fact]
+    public void Late_floor_table_beats_a_rule_that_answers_too_early()
+    {
+        var data = new EffortData
+        {
+            Crops = new List<RawCropGrowth> { new("(O)90", 12, true, false, new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter }) },
+            ArtifactSpots = new List<RawArtifactSpot> { new("Default", "(O)412", 0.5) },
+        };
+        var composer = new EffortComposer(data, new Dictionary<string, ItemAvailability>(), hasKitchen: false);
+        Assert.Equal(11, composer.Derive("(O)90")!.EarliestWeek);    // Cactus Fruit
+        Assert.Equal(13, composer.Derive("(O)412")!.EarliestWeek);   // Winter Root
+    }
+
+    [Fact]
     public void Pool_book_is_week_2()
     {
         var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,
