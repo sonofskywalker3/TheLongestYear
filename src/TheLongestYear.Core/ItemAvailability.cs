@@ -77,6 +77,11 @@ public sealed class ItemAvailabilityModel
     /// unlike the unrecognised count it is not zero until lookups start happening.</summary>
     public int DerivedCount => _derived.Count;
 
+    /// <summary>True when a derivation rule placed this id (fish, crab-pot, metals), so its
+    /// floor is a fact about the world rather than the unrecognised default.</summary>
+    public bool IsDerived(string qualifiedItemId)
+        => qualifiedItemId != null && _derived.ContainsKey(qualifiedItemId);
+
     public ItemAvailability For(string qualifiedItemId)
     {
         if (qualifiedItemId == null) throw new ArgumentNullException(nameof(qualifiedItemId));

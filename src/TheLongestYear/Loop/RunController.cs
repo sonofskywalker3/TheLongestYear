@@ -1138,11 +1138,20 @@ namespace TheLongestYear.Loop
         /// hub when previewing NEXT season's bonus pool.</summary>
         public bool IsObtainableInSeason(string itemId, CoreSeason season)
         {
+            System.Collections.Generic.IReadOnlySet<CoreSeason> catalogSeasons = null;
             foreach (var item in _catalog)
                 if (item.Id == itemId)
-                    return item.ObtainableSeasons.Contains(season);
-            return true;
+                {
+                    catalogSeasons = item.ObtainableSeasons;
+                    break;
+                }
+            return GoalObtainability.IsObtainable(catalogSeasons, Availability, itemId, season);
         }
+
+        /// <summary>Derived item model (fish, crab-pot, metals floors incl. location gating), so a
+        /// weekly goal never names a desert or deep-mine fish before the season the gates allow
+        /// it (Scorpion Carp as a Summer goal, bundle-loop audit 2026-08-29). Null = seasons only.</summary>
+        public ItemAvailabilityModel Availability { get; set; }
 
         /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.</summary>
         public void PreSelectForNextMonth(Theme theme)
