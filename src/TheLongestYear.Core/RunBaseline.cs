@@ -75,6 +75,18 @@ public sealed class RunBaseline
     /// rows, spec 2026-08-27). Empty when no book keep is owned.</summary>
     public IReadOnlyList<string> KeptBookStats { get; init; } = new List<string>();
 
+    /// <summary>mailReceived flags to re-add after the mail wipe: wallet items (HasSkullKey, ...)
+    /// and Stardrop source markers (CF_Fair, museumComplete, ...) for owned keep_wallet_* /
+    /// keep_stardrop_* rows (spec 2026-08-27 keep-wallet-stardrops).</summary>
+    public IReadOnlyList<string> KeptMailFlags { get; init; } = new List<string>();
+
+    /// <summary>Event ids to re-mark seen after the re-seed: Bear's Knowledge (2120303) and
+    /// Spring Onion Mastery (3910979) when their keep is owned. Data/Powers grants those on SEEN_EVENT.</summary>
+    public IReadOnlyList<string> KeptEventIds { get; init; } = new List<string>();
+
+    /// <summary>Owned keep_stardrop_* rows; max stamina starts at 270 + 34 per kept Stardrop.</summary>
+    public int KeptStardropCount { get; init; }
+
     /// <summary>Grant the Golden Scythe instead of the basic scythe each run (Keep Golden Scythe).</summary>
     public bool GrantGoldenScythe { get; init; }
 }

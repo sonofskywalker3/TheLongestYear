@@ -91,4 +91,33 @@ public class WalletKeepTests
         Assert.Null(r.Key);
         Assert.Equal(1, r.Threshold);
     }
+
+    [Fact]
+    public void Builder_maps_owned_rows_to_flags_events_and_stardrop_count()
+    {
+        var meta = new MetaState { OwnedUpgrades =
+            { "keep_wallet_skullkey", "keep_wallet_bearsknowledge", "keep_stardrop_fair", "keep_stardrop_mines" } };
+        RunBaseline b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Equal(new[] { "HasSkullKey", "HasUnlockedSkullDoor", "CF_Fair", "CF_Mines" }, b.KeptMailFlags);
+        Assert.Equal(new[] { "2120303" }, b.KeptEventIds);
+        Assert.Equal(2, b.KeptStardropCount);
+    }
+
+    [Fact]
+    public void Builder_leaves_everything_empty_when_nothing_is_owned()
+    {
+        RunBaseline b = RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Empty(b.KeptMailFlags);
+        Assert.Empty(b.KeptEventIds);
+        Assert.Equal(0, b.KeptStardropCount);
+    }
+
+    [Fact]
+    public void Power_granting_events_are_replayable_so_an_unbought_power_is_earned_again()
+    {
+        Assert.True(EventGatingTables.Default.IsReplayable(WalletKeepTable.BearEventId));
+        Assert.True(EventGatingTables.Default.IsReplayable(WalletKeepTable.SpringOnionEventId));
+        Assert.False(EventGatingTables.Default.IsHeldUntilSpring5(WalletKeepTable.BearEventId));
+        Assert.False(EventGatingTables.Default.IsFurnaceTeach(WalletKeepTable.BearEventId));
+    }
 }
