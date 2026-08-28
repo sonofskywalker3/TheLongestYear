@@ -55,13 +55,24 @@ public class ItemAvailabilityModelWeekTests
     }
 
     [Fact]
-    public void Week_override_earlier_than_a_placed_floor_is_rejected()
+    public void Week_override_earlier_than_a_phase_1_floor_is_rejected()
     {
+        var model = new ItemAvailabilityModel(
+            new Dictionary<string, ItemAvailability> { ["(O)384"] = new(Season.Spring, 5, "gold", EffortSource.Derived, 3, Season.Summer) },
+            weekOverrides: new Dictionary<string, int> { ["(O)384"] = 1 });
+        Assert.Equal(3, model.For("(O)384").Week);
+        Assert.Contains("(O)384", model.RejectedSeasonOverrides);
+    }
+
+    [Fact]
+    public void A_pin_may_move_a_rule_week_earlier_because_rule_weeks_are_judgements()
+    {
+        // Wood: the Recycling Machine rule says week 5; the pin says Spring. The pin wins.
         var model = new ItemAvailabilityModel(NoDerived,
-            effortDerived: new Dictionary<string, ItemEffort> { ["(O)64"] = new(5, "ruby", EarliestWeek: 3) },
-            weekOverrides: new Dictionary<string, int> { ["(O)64"] = 1 });
-        Assert.Equal(3, model.For("(O)64").Week);
-        Assert.Contains("(O)64", model.RejectedSeasonOverrides);
+            effortDerived: new Dictionary<string, ItemEffort> { ["(O)388"] = new(4, "recycler", EarliestWeek: 5) },
+            seasonOverrides: new Dictionary<string, Season> { ["(O)388"] = Season.Spring });
+        Assert.Equal(1, model.For("(O)388").Week);
+        Assert.DoesNotContain("(O)388", model.RejectedSeasonOverrides);
     }
 
     [Fact]

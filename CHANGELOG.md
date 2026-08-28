@@ -39,6 +39,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Availability rules: the earliest week wins across rules** (Wood read as week 5 from the Recycling Machine, Red Mushroom week 9 from the Mushroom Box, Sea Urchin week 5 from a fish pond); a season pin may move a rule's week earlier (only fish, crab-pot and metal floors are facts); deluxe animal produce keeps its building's week; every trap fish in Data/Fish is placed (week 2); Pierre's staples, the Saloon's menu, Adventurer's Guild rewards and Help Wanted rewards have weeks; the Spring foothold no longer touches season-named bundles (it had swapped a Spring item into Fall Crops).
 - **Stale bridge queue at launch** (debug). `tools/deploy.ps1` now deletes a `tly_commands.txt` left over from a session that closed before the mod drained it, so old `tly_*` lines no longer run at the title screen on the next launch.
 - **`tly_reset` with the planning hub open** (debug). The hub survived the in-place reset and the new run's week-1 offer was blocked for good ("Cannot open menu: another menu is already open"). The debug reset now closes an open hub first.
 - **Weekly goals no longer name a fish out of its season.** A bundle whose items each carry their own deadline put an item into the week's goal list by its deadline season alone, so Lake Fish could offer Sturgeon (Summer and Winter only) as a Fall goal and Rainbow Trout (Summer only) as a Winter goal. Goals now also pass the same in-season check the other bundle kinds use (bundle-loop audit, 2026-08-29).

@@ -81,16 +81,18 @@ public sealed class ItemAvailabilityModel
         // Validated once here rather than per lookup, so the count is meaningful the moment the
         // model exists and a caller can log it at build time without waiting for traffic. Compared
         // in weeks (spec 2026-08-28-even-year): an override may only move a placed floor later.
+        // Only a Phase 1 floor (fish, crab-pot, metals: read from game data) can reject an
+        // override. A Phase 2 rule's week is a judgement, and the pin table is how Jeff moves one.
         foreach (KeyValuePair<string, Season> pin in _seasonOverrides)
         {
-            int? floor = PlacedWeek(pin.Key);
-            if (floor != null && AvailabilityWeeks.FirstWeekOf(pin.Value) < floor.Value)
+            if (_derived.TryGetValue(pin.Key, out ItemAvailability? fact)
+                && pin.Value < fact.Gate)
                 _rejectedSeasonOverrides.Add(pin.Key);
         }
         foreach (KeyValuePair<string, int> pin in _weekOverrides)
         {
-            int? floor = PlacedWeek(pin.Key);
-            if (floor != null && pin.Value < floor.Value)
+            if (_derived.TryGetValue(pin.Key, out ItemAvailability? fact)
+                && pin.Value < fact.Week)
                 _rejectedSeasonOverrides.Add(pin.Key);
         }
     }

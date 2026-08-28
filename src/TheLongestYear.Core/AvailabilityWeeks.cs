@@ -56,6 +56,49 @@ public static class AvailabilityWeeks
             ["(O)CaveJelly"] = (4, Season.Summer),  // Cave Jelly
         };
 
+    /// <summary>Things a shop sells from day 1 (Pierre's staples, the Saloon's menu): week 1.</summary>
+    public static readonly IReadOnlyDictionary<string, string> ShopStaples =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["(O)245"] = "Sugar, Pierre's daily",
+            ["(O)246"] = "Wheat Flour, Pierre's daily",
+            ["(O)247"] = "Oil, Pierre's daily",
+            ["(O)423"] = "Rice, Pierre's daily",
+            ["(O)419"] = "Vinegar, Pierre's daily",
+            ["(O)196"] = "Salad, the Saloon's menu",
+            ["(O)216"] = "Bread, the Saloon's menu",
+            ["(O)224"] = "Spaghetti, the Saloon's menu",
+            ["(O)206"] = "Pizza, the Saloon's menu",
+            ["(O)395"] = "Coffee, the Saloon's menu",
+        };
+
+    /// <summary>Adventurer's Guild rewards for slaying a count of a monster: the monster's mine
+    /// area sets the week (30 floors a week), the count pushes it later.</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, Season Gate, string Note)> GuildRewardWeeks =
+        new Dictionary<string, (int, Season, string)>(StringComparer.Ordinal)
+        {
+            ["(H)27"] = (2, Season.Spring, "Hard Hat, 30 Duggies, floors 1 to 39"),
+            ["(O)810"] = (2, Season.Spring, "Crabshell Ring, 60 Rock Crabs, floors 1 to 39"),
+            ["(W)13"] = (3, Season.Spring, "Insect Head, 125 cave insects, floors 1 to 39"),
+            ["(H)8"] = (3, Season.Spring, "Skeleton Mask, 50 Skeletons, floors 41 to 79"),
+            ["(O)522"] = (4, Season.Spring, "Vampire Ring, 200 Bats"),
+            ["(O)523"] = (5, Season.Summer, "Savage Ring, 150 Void Spirits, floors 81 to 119"),
+            ["(O)526"] = (6, Season.Summer, "Burglar's Ring, 500 Dust Sprites"),
+            ["(O)520"] = (8, Season.Summer, "Slime Charmer Ring, 1000 Slimes"),
+            ["(O)811"] = (12, Season.Fall, "Napalm Ring, 250 Serpents, Skull Cavern"),
+        };
+
+    /// <summary>Rewards from the Help Wanted board and the like.</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, string Note)> QuestRewardWeeks =
+        new Dictionary<string, (int, string)>(StringComparer.Ordinal)
+        {
+            ["(O)PrizeTicket"] = (1, "Prize Ticket, Help Wanted board"),
+            ["(O)MysteryBox"] = (2, "Mystery Box, from rocks, fishing and the board once the meteor lands"),
+        };
+
+    /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
+    public const int TrapFishWeek = 2;
+
     public static Season SeasonOf(int week)
     {
         int clamped = Math.Clamp(week, 1, Calendar.WeeksPerYear);

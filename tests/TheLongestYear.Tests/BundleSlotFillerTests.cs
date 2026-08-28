@@ -35,6 +35,18 @@ public class BundleSlotFillerTests
     }
 
     [Fact]
+    public void Fill_leaves_a_season_named_bundle_alone()
+    {
+        var pools = new ItemPools { Forage = new[] { Item("(O)406", seasons: new[] { Season.Fall }), Item("(O)408", seasons: new[] { Season.Fall }), Item("(O)410", seasons: new[] { Season.Fall }), Item("(O)16", seasons: new[] { Season.Fall, Season.Spring }, weight: 1) } };
+        var spec = Spec("Fall Foraging", 3);
+        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.SeasonalForage, Season.Fall), pools, Tuning, new Random(3),
+            springReady: id => id == "(O)16");
+        Assert.Equal(3, filled.Slots.Count);
+        // No forced swap toward the one Spring-capable item.
+        Assert.True(filled.Slots.Count(s => s.ItemId == "(O)16") <= 1);
+    }
+
+    [Fact]
     public void Fill_without_a_spring_candidate_still_fills()
     {
         var pools = new ItemPools { Metals = new[] { Item("(O)386"), Item("(O)384"), Item("(O)337") } };

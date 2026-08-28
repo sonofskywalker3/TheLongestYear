@@ -67,18 +67,37 @@ public sealed class EffortComposer
         }
     }
 
+    /// <summary>Every rule that claims the id is asked, and the EARLIEST week wins (then the lower
+    /// effort). First-claim-wins put Wood at week 5 (Recycling Machine) and Red Mushroom at week 9
+    /// (Mushroom Box) because the machine rules ran before the natural ones (sim G, 2026-08-28).
+    /// The rule order is kept only as the tiebreak.</summary>
     public ItemEffort? Derive(string qualifiedId)
-        => MineralNodeAvailability.Derive(qualifiedId)
-           ?? GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops)
-           ?? MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops)
-           ?? ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots)
-           ?? AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings)
-           ?? ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf)
-           ?? FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf)
-           ?? CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf)
-           ?? CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops)
-           ?? CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns)
-           ?? CropForageAvailability.DeriveSapling(qualifiedId, _saplings);
+    {
+        ItemEffort? best = null;
+        foreach (ItemEffort? candidate in new[]
+        {
+            ShopAvailability.Derive(qualifiedId),
+            MineralNodeAvailability.Derive(qualifiedId),
+            GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops),
+            MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops),
+            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots),
+            AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings),
+            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops),
+            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns),
+            CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
+            ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
+            FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
+            CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf),
+        })
+        {
+            if (candidate == null) continue;
+            bool better = best == null
+                || (candidate.EarliestWeek ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
+                || (candidate.EarliestWeek == best.EarliestWeek && candidate.Effort < best.Effort);
+            if (better) best = candidate;
+        }
+        return best;
+    }
 
     /// <summary>Every Data/Objects id a rule claims and Phase 1 did not, in ordinal order.</summary>
     public IReadOnlyDictionary<string, ItemEffort> DeriveAll()
