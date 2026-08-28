@@ -24,6 +24,27 @@ public class BundleSlotFillerTests
     private static readonly BundleGenerationTuning Tuning = new();
 
     [Fact]
+    public void Fill_keeps_at_least_one_spring_item_when_the_pool_has_one()
+    {
+        var pools = new ItemPools { Metals = new[] { Item("(O)386", weight: 100), Item("(O)384", weight: 100), Item("(O)337", weight: 100), Item("(O)378", weight: 1) } };
+        var spec = Spec("Blacksmith's", 3);
+        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null), pools, Tuning, new Random(7),
+            springReady: id => id == "(O)378");
+        Assert.Contains(filled.Slots, s => s.ItemId == "(O)378");
+        Assert.Equal(3, filled.Slots.Select(s => s.ItemId).Distinct().Count());
+    }
+
+    [Fact]
+    public void Fill_without_a_spring_candidate_still_fills()
+    {
+        var pools = new ItemPools { Metals = new[] { Item("(O)386"), Item("(O)384"), Item("(O)337") } };
+        var spec = Spec("Blacksmith's", 3);
+        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null), pools, Tuning, new Random(7),
+            springReady: _ => false);
+        Assert.Equal(3, filled.Slots.Count);
+    }
+
+    [Fact]
     public void DomainNone_ReturnsSameInstance()
     {
         var spec = Spec("X", 3);

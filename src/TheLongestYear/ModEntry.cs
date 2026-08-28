@@ -2239,7 +2239,7 @@ namespace TheLongestYear
             IReadOnlyDictionary<string, TheLongestYear.Core.Season> pins,
             string label)
         {
-            int impossible = 0, free = 0, tight = 0;
+            int impossible = 0, free = 0, tight = 0, noFoothold = 0;
             var lines = new List<string>();
             var blocked = new List<string>();
 
@@ -2283,8 +2283,12 @@ namespace TheLongestYear
                     cells.Add($"{(TheLongestYear.Core.Season)season}: {demanded[season]}/{obtainable[season]}{flag}");
                 }
                 if (demanded[Calendar.MonthsPerYear - 1] == 0) { free++; worst = "FREE ALL YEAR"; }
+                // Spec 2026-08-28-even-year: a bundle with nothing a Spring gate may demand is
+                // invisible to Spring; the engine tries to avoid it, the audit names the rest.
+                bool foothold = req.Ingredients.Any(id => TheLongestYear.Core.SpringFoothold.IsSpring(_availability, id));
+                if (!foothold) noFoothold++;
 
-                lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}");
+                lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}{(foothold ? "" : "  [no spring foothold]")}");
             }
 
             this.Monitor.Log($"=== {label}: season gate audit (demanded / obtainable, by day 28 of each season) ===", LogLevel.Info);
@@ -2306,7 +2310,7 @@ namespace TheLongestYear
             this.Monitor.Log(
                 impossible > 0
                     ? $"  {label} RESULT: {impossible} IMPOSSIBLE season gate(s) -- these brick the run and must be fixed."
-                    : $"  {label} RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated.",
+                    : $"  {label} RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated, {noFoothold} without a Spring foothold.",
                 impossible > 0 ? LogLevel.Error : LogLevel.Info);
             this.Monitor.Log(
                 "  NOTE: this checks CALENDAR feasibility only. An item that exists in Spring but needs a keg, "
@@ -2409,6 +2413,7 @@ namespace TheLongestYear
             var engine = new TheLongestYear.Loop.BundleEngine(
                 this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
                 TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), _meta.State.BoardDifficulty(_config));
+            engine.SpringReady = TheLongestYear.Core.SpringFoothold.Predicate(_availability);
             int candidateSeed = BundleEngineSeed.For(
                 unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop);
             var rooms = engine.BuildCandidatePools(pools, candidateSeed);
@@ -2769,13 +2774,16 @@ namespace TheLongestYear
             BundleGenerationTuning genTuning =
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
+            firstEngine.SpringReady = TheLongestYear.Core.SpringFoothold.Predicate(_availability);
             GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            GeneratedBundleSet second = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty).Generate(seed, trim);
+            var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
+            secondEngine.SpringReady = TheLongestYear.Core.SpringFoothold.Predicate(_availability);
+            GeneratedBundleSet second = secondEngine.Generate(seed, trim);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -3422,6 +3430,7 @@ namespace TheLongestYear
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade), difficulty);
+                    engine.SpringReady = TheLongestYear.Core.SpringFoothold.Predicate(_availability);
                     GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
                     if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
                         continue;
@@ -3453,6 +3462,7 @@ namespace TheLongestYear
                 BundleGenerationTuning freshTuning =
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), state.Difficulty);
+                engine.SpringReady = TheLongestYear.Core.SpringFoothold.Predicate(_availability);
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;

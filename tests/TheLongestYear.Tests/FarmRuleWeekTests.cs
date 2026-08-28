@@ -64,7 +64,7 @@ public class FarmRuleWeekTests
             Objects = new Dictionary<string, RawObjectEntry>(),
         };
         Assert.Equal(5, CookedDishAvailability.Derive("(O)194", data, NoEffort, hasKitchen: false, weekOf: _ => 2)!.EarliestWeek);
-        Assert.Equal(2, CookedDishAvailability.Derive("(O)194", data, NoEffort, hasKitchen: true, weekOf: _ => 2)!.EarliestWeek);
+        Assert.Equal(5, CookedDishAvailability.Derive("(O)194", data, NoEffort, hasKitchen: true, weekOf: _ => 2)!.EarliestWeek);  // keep_kitchen never moves the week
         Assert.Null(CookedDishAvailability.Derive("(O)194", data, NoEffort, hasKitchen: false, weekOf: _ => null)!.EarliestWeek);
     }
 
