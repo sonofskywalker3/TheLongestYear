@@ -275,6 +275,8 @@ public static class UpgradeCatalog
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMineElevatorKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMasteryKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverBookKeeps());
+        entries.AddRange(UpgradeCatalogGenerators.CarryoverWalletKeeps());
+        entries.AddRange(UpgradeCatalogGenerators.CarryoverStardropKeeps());
         entries.AddRange(UpgradeCatalogGenerators.EfficiencyXpMultipliers());
         return entries;
     }

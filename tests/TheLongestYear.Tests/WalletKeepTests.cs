@@ -55,4 +55,18 @@ public class WalletKeepTests
         Assert.Empty(bear.MailFlags);
         Assert.Equal("2120303", bear.EventId);
     }
+
+    [Fact]
+    public void Catalog_carries_every_row_as_a_reach_gated_carryover_row()
+    {
+        foreach (WalletKeep e in WalletKeepTable.Entries)
+        {
+            UpgradeDefinition? def = UpgradeCatalog.TryGet(e.UpgradeId);
+            Assert.NotNull(def);
+            Assert.Equal(UpgradeCategory.Carryover, def!.Category);
+            Assert.Equal(e.Cost, def.Cost);
+            Assert.Equal(e.PrerequisiteId, def.PrerequisiteId);
+            Assert.Equal(e.Reach, def.RunReachRequirement);
+        }
+    }
 }

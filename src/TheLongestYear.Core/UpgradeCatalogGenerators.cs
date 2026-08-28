@@ -153,6 +153,31 @@ internal static class UpgradeCatalogGenerators
         }
     }
 
+    /// <summary>Eleven Keep &lt;wallet item / power&gt; rows (spec 2026-08-27 keep-wallet-stardrops).
+    /// Names and descriptions are hand-authored per id in default.json (upgrade.{id}.name/.desc).</summary>
+    public static IEnumerable<UpgradeDefinition> CarryoverWalletKeeps()
+    {
+        foreach (WalletKeep keep in WalletKeepTable.Entries)
+        {
+            if (keep.Kind == WalletKeepKind.Stardrop) continue;
+            yield return new UpgradeDefinition(
+                keep.UpgradeId, UpgradeCategory.Carryover, keep.Cost, keep.PrerequisiteId,
+                metaRequirement: null, runReachRequirement: keep.Reach);
+        }
+    }
+
+    /// <summary>Seven Keep Stardrop (source) rows, one per vanilla Stardrop source.</summary>
+    public static IEnumerable<UpgradeDefinition> CarryoverStardropKeeps()
+    {
+        foreach (WalletKeep keep in WalletKeepTable.Entries)
+        {
+            if (keep.Kind != WalletKeepKind.Stardrop) continue;
+            yield return new UpgradeDefinition(
+                keep.UpgradeId, UpgradeCategory.Carryover, keep.Cost, keep.PrerequisiteId,
+                metaRequirement: null, runReachRequirement: keep.Reach);
+        }
+    }
+
     // XP multiplier costs, indexed [1..4] (tier N = x(N+1) on one skill). Deliberately
     // cheaper than the keep-level chain: keeps set your starting floor, multipliers set
     // your re-leveling slope (spec 2026-07-14 economy Change 3). Full family = 5x1200
