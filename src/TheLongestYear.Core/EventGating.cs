@@ -120,9 +120,13 @@ public sealed class EventGatingTables
     /// (excluded from the seen re-seed) but suppressed while the recipe is already known this run.
     /// The Demetrius cave scene plays ONCE (held to Spring 5); from loop 2 on it stays seen
     /// (event-hygiene pass 2026-06-10) and the per-loop mushrooms-vs-bats re-choice is offered by
-    /// the lightweight <c>CaveChoicePrompt</c> on cave entry instead of replaying the cutscene.</summary>
+    /// the lightweight <c>CaveChoicePrompt</c> on cave entry instead of replaying the cutscene.
+    /// Bear's Knowledge (Woods 2120303) and Spring Onion Mastery (Forest 3910979) are Data/Powers
+    /// SEEN_EVENT grants with no mail/recipe in their scripts, so the scan never flags them; they
+    /// are replayable here so the power is wiped with the loop unless its keep_wallet_* row is
+    /// owned (FarmerReset re-marks a kept one seen; spec 2026-08-27 keep-wallet-stardrops).</summary>
     public static EventGatingTables Default { get; } = new EventGatingTables(
-        replayable: new[] { FurnaceTeachEventId },
+        replayable: new[] { FurnaceTeachEventId, WalletKeepTable.BearEventId, WalletKeepTable.SpringOnionEventId },
         holdUntilSpring5: new[] { DemetriusCaveEventId },
         furnace: new[] { FurnaceTeachEventId });
 }
