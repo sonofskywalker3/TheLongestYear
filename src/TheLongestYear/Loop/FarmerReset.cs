@@ -149,6 +149,12 @@ namespace TheLongestYear.Loop
             // Relationships, mail, events, quests.
             p.friendshipData.Clear();
             p.mailReceived.Clear();
+
+            // Kept wallet items / Stardrop source markers (spec 2026-08-27 keep-wallet-stardrops):
+            // the wipe above took every flag; put back only the bought ones. A CF_* marker put back
+            // here is what stops that Stardrop source paying out again next loop.
+            foreach (string flag in baseline.KeptMailFlags)
+                p.mailReceived.Add(flag);
             p.eventsSeen.Clear();
             p.questLog.Clear();
 
@@ -202,6 +208,12 @@ namespace TheLongestYear.Loop
             // Suppress the vanilla intro cutscene from replaying every loop (matches TitleMenu's new-game path).
             p.eventsSeen.Add("60367");
 
+            // Kept power events (Bear's Knowledge 2120303, Spring Onion Mastery 3910979): both are
+            // replayable, so the re-seed above skipped them; a bought keep re-marks the scene seen,
+            // which is exactly how Data/Powers grants the power.
+            foreach (string id in baseline.KeptEventIds)
+                p.eventsSeen.Add(id);
+
             // Max health/stamina — rewind to the vanilla formula before refilling. NEVER reset
             // before (found live 2026-07-10: 500 max HP after 27 loops): maxHealth is a plain
             // field, so each loop's Fighter/Defender re-picks (+15/+25 via vanilla
@@ -220,8 +232,11 @@ namespace TheLongestYear.Loop
             p.maxHealth = expectedMaxHealth;
 
             // Stardrops are tracked by CF_* mail (wiped above), making them re-collectable
-            // each loop — without this their +34s would stack in maxStamina the same way.
-            p.maxStamina.Value = 270;
+            // each loop; without this their +34s would stack in maxStamina the same way. Kept
+            // Stardrops (keep_stardrop_* rows) add their +34 back here, and their CF_* marker was
+            // re-added with the kept mail so the source stays shut.
+            p.maxStamina.Value = WalletKeepTable.BaseStamina
+                + WalletKeepTable.StardropStamina * baseline.KeptStardropCount;
 
             // Vitals to full.
             p.stamina = p.maxStamina.Value;
@@ -267,6 +282,9 @@ namespace TheLongestYear.Loop
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +
                 $"books=[{string.Join(",", baseline.KeptBookStats)}], " +
+                $"wallet=[{string.Join(",", baseline.KeptMailFlags)}], " +
+                $"events=[{string.Join(",", baseline.KeptEventIds)}], " +
+                $"stardrops={baseline.KeptStardropCount}, " +
                 $"goldenScythe={baseline.GrantGoldenScythe}, " +
                 $"dialogueEvents=[{string.Join(",", p.activeDialogueEvents.Keys.Select(k => k + ":" + p.activeDialogueEvents[k]))}], " +
                 $"cookRecipes={cookbookRecipes.Count} banked (total {p.cookingRecipes.Count()}), " +
