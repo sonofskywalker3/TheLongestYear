@@ -80,6 +80,13 @@ if ($NoLaunch) {
 }
 Write-Host '=== [4/4] Relaunching SMAPI ===' -ForegroundColor Cyan
 if (-not (Test-Path -LiteralPath $SmapiExe)) { throw "SMAPI exe not found: $SmapiExe" }
+# Drop any tly_* batch a previous session never drained (the game was closed before the bridge
+# read it). Otherwise the mod runs those stale lines at the title screen on this launch.
+$staleBridge = Join-Path (Split-Path -Parent $SmapiExe) 'Mods' 'TheLongestYear' 'tly_commands.txt'
+if (Test-Path -LiteralPath $staleBridge) {
+    Remove-Item -LiteralPath $staleBridge -Force
+    Write-Host 'Removed a stale tly_commands.txt bridge queue left by a previous session.'
+}
 if ($Minimized) {
     Start-Process -FilePath $SmapiExe -WindowStyle Minimized
     Write-Host 'Launched minimized (unattended mode). New SMAPI-latest.txt will start fresh; the prior log is archived.'
