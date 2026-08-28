@@ -165,6 +165,23 @@ public class BundleRequirementTests
         Assert.Empty(b.InPlayItemsFor(Season.Fall, _ => true));
     }
 
+    /// <summary>Bundle-loop audit 2026-08-29: Lake Fish pinned Sturgeon (Summer/Winter) to Fall
+    /// and Rainbow Trout (Summer) to Winter, and the Fishing theme offered both as goals in
+    /// seasons they cannot be caught. A PerItem deadline says when the item is DUE, not when it
+    /// exists, so the goal pool must apply the same obtainability predicate Percentage does.</summary>
+    [Fact]
+    public void PerItem_in_play_items_also_pass_the_obtainability_predicate()
+    {
+        var b = BundleRequirement.CreatePerItem("Lake Fish", Theme.Fishing,
+            new Dictionary<string, Season>
+            {
+                ["Sturgeon"] = Season.Fall,
+                ["Walleye"] = Season.Fall,
+            });
+        var inPlay = System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Fall, id => id == "Walleye"));
+        Assert.Equal(new[] { "Walleye" }, inPlay);
+    }
+
     [Fact]
     public void Percentage_in_play_items_filtered_by_predicate()
     {
