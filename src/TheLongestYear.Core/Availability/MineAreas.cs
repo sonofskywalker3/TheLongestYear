@@ -24,6 +24,12 @@ public static class MineAreas
         _ => SkullEffort,
     };
 
+    /// <summary>Theme-goal week for the area (AvailabilityWeeks.MineAreaWeek).</summary>
+    public static int Week(int area) => AvailabilityWeeks.MineAreaWeek(area);
+
+    /// <summary>Season a day-28 gate may first demand an item from the area.</summary>
+    public static Season GateSeason(int area) => AvailabilityWeeks.MineAreaGateSeason(area);
+
     public static string Label(int area) => area switch
     {
         Area0 or Area10 => "mine floors 1 to 39",

@@ -19,12 +19,13 @@ public class MetalsAvailabilityTests
     [InlineData("(O)335", Season.Spring)]   // Iron Bar
     [InlineData("(O)336", Season.Summer)]   // Gold Bar
     [InlineData("(O)337", Season.Fall)]     // Iridium Bar
-    public void Each_Metal_Floors_At_Its_Mine_Depth(string id, Season expected)
+    public void Each_Metal_Gates_At_Its_Mine_Depth(string id, Season expected)
     {
         ItemAvailability? result = MetalsAvailability.Derive(Metal(id));
 
         Assert.NotNull(result);
-        Assert.Equal(expected, result!.EarliestSeason);
+        // The gate season (even-year spec 2026-08-28): gold's goal week is Spring week 3, its gate Summer.
+        Assert.Equal(expected, result!.Gate);
     }
 
     [Fact]

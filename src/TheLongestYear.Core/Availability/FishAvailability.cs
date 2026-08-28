@@ -33,18 +33,25 @@ public static class FishAvailability
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
 
-        Season spawnFloor = item.Seasons.Count == 0 ? Season.Spring : item.Seasons.Min();
-        Season locationFloor = LocationGating.FloorForAny(item.Locations);
-        Season floor = spawnFloor > locationFloor ? spawnFloor : locationFloor;
+        int spawnWeek = item.Seasons.Count == 0 ? 1 : AvailabilityWeeks.FirstWeekOf(item.Seasons.Min());
+        int locationWeek = LocationGating.WeekForAny(item.Locations);
+        int week = Math.Max(spawnWeek, locationWeek);
+        Season floor = AvailabilityWeeks.SeasonOf(week);
+        if (AvailabilityWeeks.MineFishWeeks.TryGetValue(item.ItemId, out (int Week, Season Gate) mineFish))
+        {
+            week = Math.Max(week, mineFish.Week);
+            floor = mineFish.Gate > AvailabilityWeeks.SeasonOf(week) ? mineFish.Gate : AvailabilityWeeks.SeasonOf(week);
+        }
 
-        string locationNote = locationFloor > Season.Spring
+        string locationNote = locationWeek > 1
             ? $", gated by location ({string.Join(", ", item.Locations)})"
             : "";
 
         if (row == null)
         {
             return new ItemAvailability(floor, ItemAvailabilityModel.UnrecognisedEffort,
-                $"fish, no Data/Fish row, spawns {SeasonList(item.Seasons)}{locationNote}");
+                $"fish, no Data/Fish row, week {week}, spawns {SeasonList(item.Seasons)}{locationNote}",
+                EffortSource.Derived, week, floor);
         }
 
         int effort =
@@ -56,9 +63,9 @@ public static class FishAvailability
             + (item.Seasons.Count > 0 && item.Seasons.Count < FewSeasonsThreshold ? FewSeasonsCost : 0);
 
         return new ItemAvailability(floor, effort,
-            $"fish, earliest {floor}, spawns {SeasonList(item.Seasons)}{locationNote}, "
+            $"fish, week {week}, spawns {SeasonList(item.Seasons)}{locationNote}, "
             + $"difficulty {row.Difficulty}, level {row.MinFishingLevel}, weather {WeatherLabel(row.Weather)}, "
-            + $"window {OpenHours(row.RawTimeSpans)}h, effort {effort}");
+            + $"window {OpenHours(row.RawTimeSpans)}h, effort {effort}", EffortSource.Derived, week, floor);
     }
 
     private static string SeasonList(IReadOnlyList<Season> seasons)

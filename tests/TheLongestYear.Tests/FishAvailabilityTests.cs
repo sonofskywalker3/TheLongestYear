@@ -13,7 +13,7 @@ public class LocationGatingTests
     [InlineData("WitchSwamp", Season.Winter)]
     [InlineData("Mountain", Season.Spring)]
     [InlineData("Beach", Season.Spring)]
-    [InlineData("UndergroundMine", Season.Summer)]
+    [InlineData("UndergroundMine", Season.Spring)]
     public void A_Gated_Location_Carries_Its_Own_Season_Floor(string key, Season expected)
         => Assert.Equal(expected, LocationGating.FloorFor(key));
 
@@ -138,8 +138,9 @@ public class FishAvailabilityDeriveTests
         ItemAvailability result = FishAvailability.Derive(
             Fish("(O)CaveJelly", locations: new List<string> { "UndergroundMine" }), Row());
 
-        Assert.Equal(Season.Summer, result.EarliestSeason);
-        Assert.Contains("UndergroundMine", result.Basis);
+        // Floor 100 fish: goal week 4 (30 floors a week), gate Summer like the rest of area 80.
+        Assert.Equal(4, result.Week);
+        Assert.Equal(Season.Summer, result.Gate);
     }
 
     [Fact]
