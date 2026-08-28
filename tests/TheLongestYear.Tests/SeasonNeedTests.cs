@@ -4,8 +4,8 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>Spec 2026-08-28-even-year, sim H: the weekly goals follow the gate exactly for a
-/// pick-X-of-Y bundle, so its Winter share cannot be pulled forward.</summary>
+/// <summary>Jeff's rule (2026-08-28): the goals may run half a season ahead of the gate, never
+/// further, never quiet while the board still needs lines.</summary>
 public class SeasonNeedTests
 {
     private static BundleRequirement Percentage()
@@ -14,20 +14,23 @@ public class SeasonNeedTests
             cumulativeRequiredBySeason: new[] { 1, 2, 3, 4 });
 
     [Theory]
-    [InlineData(Season.Spring, 0, 1)]
-    [InlineData(Season.Spring, 1, 0)]
-    [InlineData(Season.Summer, 1, 1)]
-    [InlineData(Season.Fall, 1, 2)]
+    [InlineData(Season.Spring, 0, 2)]   // 1 due + half of the 1 Summer adds
+    [InlineData(Season.Spring, 2, 0)]
+    [InlineData(Season.Summer, 1, 2)]   // 2 + half of 1 = 3, minus 1 in
+    [InlineData(Season.Fall, 1, 3)]     // 3 + half of 1 = 4, minus 1
     [InlineData(Season.Winter, 1, 3)]
     [InlineData(Season.Winter, 4, 0)]
-    public void Percentage_bundle_need_follows_the_ramp(Season season, int completed, int expected)
+    public void Percentage_bundle_runs_half_a_season_ahead(Season season, int completed, int expected)
         => Assert.Equal(expected, SeasonNeed.For(Percentage(), season, completed));
 
     [Fact]
-    public void Per_item_bundle_need_is_required_minus_completed()
+    public void Per_item_bundle_counts_pins_by_season()
     {
-        var req = BundleRequirement.CreatePerItem("Blacksmith's", Theme.Mining, new[] { "a", "b", "c" },
-            new Dictionary<string, Season> { ["a"] = Season.Spring, ["b"] = Season.Summer, ["c"] = Season.Fall });
-        Assert.Equal(2, SeasonNeed.For(req, Season.Spring, 1));
+        var req = BundleRequirement.CreatePerItem("Blacksmith's", Theme.Mining, new[] { "a", "b", "c", "d" },
+            new Dictionary<string, Season> { ["a"] = Season.Spring, ["b"] = Season.Summer, ["c"] = Season.Summer, ["d"] = Season.Winter });
+        Assert.Equal(2, SeasonNeed.For(req, Season.Spring, 0));   // a, plus half of (b, c)
+        Assert.Equal(2, SeasonNeed.For(req, Season.Summer, 1));   // a, b, c minus one in
+        Assert.Equal(3, SeasonNeed.For(req, Season.Fall, 1));     // a, b, c + half of d
+        Assert.Equal(3, SeasonNeed.For(req, Season.Winter, 1));
     }
 }

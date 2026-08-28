@@ -237,9 +237,10 @@ public sealed class GameplayConfig
 
     /// <summary>Rule B (activity-themes spec 2026-08-28): how many weekly goals may be FILLER
     /// (open lines the day-28 gate does not demand this season) per season, indexed
-    /// Spring..Winter. Spring 0 keeps a theme week pure gate work; any-season stock is held for
-    /// Winter, where it pays 4x. 99 = as many as the season cap allows.</summary>
-    public List<int> ThemeFillerBySeason { get; set; } = new() { 0, 0, 1, GoalSamplingRules.UnlimitedFiller };
+    /// Spring..Winter. Since the even-year build (Jeff, 2026-08-28: the floor only stops an item
+    /// showing too early, nothing holds one back) the default is unlimited everywhere; how far
+    /// the goals may run ahead of the gate is bounded per bundle by SeasonNeed instead.</summary>
+    public List<int> ThemeFillerBySeason { get; set; } = new() { GoalSamplingRules.UnlimitedFiller, GoalSamplingRules.UnlimitedFiller, GoalSamplingRules.UnlimitedFiller, GoalSamplingRules.UnlimitedFiller };
 
     /// <summary>Spec 2026-08-28-even-year: move one item's first week (1 to 16), by qualified id.
     /// Later only; an override earlier than the derived floor is rejected and listed by

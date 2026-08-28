@@ -75,7 +75,8 @@ public class EffortComposerTests
             MonsterDrops = new List<RawMonsterDrop> { new("Bat", "(O)767", 0.9) },
         };
         ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(pools, effortData: data);
-        Assert.Equal(1, model.DerivedEffortCount);
+        // Bat Wing plus the guild reward hats and weapons the composer always places.
+        Assert.Equal(1 + AvailabilityWeeks.GuildRewardWeeks.Count, model.DerivedEffortCount);
         Assert.Equal(EffortSource.Derived, model.For("(O)767").Source);
         Assert.Equal(EffortSource.Price, model.For("(O)999").Source);
         Assert.Contains("(O)999", model.UnrecognisedIds);
