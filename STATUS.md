@@ -1,8 +1,8 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-27 late (netWorldState audit fixes live-smoked, all PASS; 0.16.18 local only)
-**Branch:** `master`; 0.16.18 committed locally, NOT pushed, NOT released
-**Tests:** 1153 passing, 0 failing
+**Last updated:** 2026-08-27 late (keep wallet items + Stardrops built, 0.16.19 to 0.16.25; live smoke pending)
+**Branch:** `master`; 0.16.25 committed locally, NOT pushed, NOT released
+**Tests:** 1171 passing, 0 failing
 **Build:** clean
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
@@ -12,6 +12,20 @@ per-item JP keeps at the shrine** (same shape as the book keeps). Brainstorm, th
 0.14.0 / 0.14.2 / 0.16.0 / 0.16.17 releases (1123181, rose1729, difficulty, books, deja-vu all shipped).
 The settings screenshots (Features, Difficulty) are confirmed live on Nexus (gallery + description) and
 GitHub. The Egg Hunt per-loop guard is still open: 0.14.1 only guards once per DAY.
+
+## Keep wallet items + Stardrops (0.16.19 to 0.16.25): built, unit-tested, LIVE SMOKE PENDING
+
+Spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`, plan
+`docs/superpowers/plans/2026-08-27-keep-wallet-stardrops.md`. Eighteen Carryover rows
+(`keep_wallet_*` x11, `keep_stardrop_*` x7, 6,950 JP) reach-gated on `mail:<flag>`,
+`event:<id>` or `stardrop_mines`; `RunBaseline.KeptMailFlags` / `KeptEventIds` /
+`KeptStardropCount`; `FarmerReset` re-adds the flags after the mail wipe, re-marks kept power
+events after the re-seed, and sets max stamina to 270 + 34 per kept Stardrop. Bear's Knowledge
+(2120303) and Spring Onion Mastery (3910979) joined `EventGatingTables.Default.ReplayableEventIds`,
+so they no longer survive a rewind unless bought (they used to, for free). Debug: `tly_wallet`.
+CHANGELOG `## Unreleased` written; README and Nexus description got the Shrine feature line (What's
+New waits for the release). Deployed to PC Mods by the Release build; nobody has seen it run yet.
+Smoke recipe: plan Task 8.
 
 ## netWorldState keep/wipe audit (0.14.8): LIVE SMOKE PASSED 2026-08-27 19:09 to 19:20
 
