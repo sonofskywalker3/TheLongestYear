@@ -9,6 +9,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - **Keep your wallet items and Stardrops.** Eighteen new keeps at the Junimo Shrine: one per wallet item (Rusty Key, Skull Key, Club Card, Special Charm, Dark Talisman, Magic Ink, Dwarvish Translation Guide, Town Key, Magnifying Glass), one each for Bear's Knowledge and Spring Onion Mastery, and one per Stardrop source (Fair, fishing, mines, Krobus, spouse, Secret Woods, museum). A row appears on a Fail night once you have earned that item this loop; buy it and it survives every rewind. 150 to 750 JP. A kept Stardrop also keeps its source marked as claimed, so the same Stardrop cannot be collected again next loop. Keeping the Skull Key keeps the Skull Cavern door open too.
 - **`tly_wallet` console command** to set or list wallet, power and Stardrop markers (debug).
+- **`tly_playseason [goals]` console command** simulates a minimal compliant player for the current season (donates exactly what every gate demands by day 28 through real CC slot flips, pays the vault; `goals` also deposits the week's goal slots), for real-play audits (debug).
 - **`tly_goals [season] [week]` console command** logs the weekly goals every theme would offer on the live board for a season, through the hub's own sampler (debug, read-only). `tly_genbundles` now lists every slot of every bundle by name, the gates each bundle would run under, and runs the same season-gate audit as `tly_gatecheck` on the diagnostic board.
 
 ### Changed
