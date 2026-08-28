@@ -8,6 +8,8 @@ public static class ShopAvailability
     private const int StapleEffort = 1;
     private const int GuildEffort = 5;
     private const int QuestEffort = 3;
+    private const int OtherEffort = 3;
+    private const int FruitEffort = 5;
 
     public static ItemEffort? Derive(string qualifiedId)
     {
@@ -19,6 +21,12 @@ public static class ShopAvailability
         if (AvailabilityWeeks.QuestRewardWeeks.TryGetValue(qualifiedId, out (int Week, string Note) quest))
             return new ItemEffort(QuestEffort, $"reward, {quest.Note}, week {quest.Week}, effort {QuestEffort}",
                 quest.Week, AvailabilityWeeks.SeasonOf(quest.Week));
+        if (AvailabilityWeeks.OtherPlacements.TryGetValue(qualifiedId, out (int Week, string Note) other))
+            return new ItemEffort(OtherEffort, $"table, {other.Note}, week {other.Week}, effort {OtherEffort}",
+                other.Week, AvailabilityWeeks.SeasonOf(other.Week));
+        if (AvailabilityWeeks.FruitTreeFruitWeeks.TryGetValue(qualifiedId, out (int Week, string Note) fruit))
+            return new ItemEffort(FruitEffort, $"fruit tree, {fruit.Note}, week {fruit.Week}, effort {FruitEffort}",
+                fruit.Week, AvailabilityWeeks.SeasonOf(fruit.Week));
         return null;
     }
 }

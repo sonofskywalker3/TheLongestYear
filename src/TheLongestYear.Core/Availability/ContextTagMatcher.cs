@@ -22,6 +22,13 @@ public static class ContextTagMatcher
             ["category_monster_loot"] = -28, ["category_seeds"] = -74,
             ["category_vegetable"] = -75, ["category_fruit"] = -79,
             ["category_flower"] = -80, ["category_greens"] = -81,
+            // Plural forms the game's Data/Machines rules actually use (a Preserves Jar asks for
+            // category_fruits, not category_fruit); the singular ones stay for older data.
+            ["category_gems"] = -2, ["category_fishes"] = -4, ["category_eggs"] = -5,
+            ["category_minerals_"] = -12, ["category_animal_products"] = -18,
+            ["category_artisan_good"] = -26, ["category_syrups"] = -27,
+            ["category_seed"] = -74, ["category_vegetables"] = -75, ["category_fruits"] = -79,
+            ["category_flowers"] = -80, ["category_green"] = -81, ["category_monster_loots"] = -28,
         };
 
     public static bool Matches(string bareId, RawObjectEntry obj, string tag)

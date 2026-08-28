@@ -96,6 +96,36 @@ public static class AvailabilityWeeks
             ["(O)MysteryBox"] = (2, "Mystery Box, from rocks, fishing and the board once the meteor lands"),
         };
 
+    /// <summary>Items no data table places, with the week I believe is right. Every row is shown
+    /// to Jeff in tly_dumpavailability's Placed column as "rule" with this note, and he rules on
+    /// them like the unknowns.</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, string Note)> OtherPlacements =
+        new Dictionary<string, (int, string)>(StringComparer.Ordinal)
+        {
+            ["(O)78"] = (1, "Cave Carrot, mine dirt from floor 1 (for Jeff to confirm)"),
+            ["(O)Moss"] = (1, "Moss, from trees in any season (for Jeff to confirm)"),
+            ["(O)815"] = (4, "Tea Leaves, Caroline's tea sapling recipe plus 20 days (for Jeff to confirm)"),
+            ["(O)746"] = (11, "Jack-O-Lantern, crafted from a Fall pumpkin (for Jeff to confirm)"),
+            ["(O)772"] = (7, "Oil of Garlic, Combat 6 crafting recipe, garlic plus oil (for Jeff to confirm)"),
+        };
+
+    /// <summary>Fruit tree fruit: a sapling planted in week 1 matures in 28 days, so a tree
+    /// fruits in its own season only when that season starts after week 4. Spring fruit (Cherry,
+    /// Apricot) is a second-year item or a Traveling Cart buy: week 13 here, for Jeff to rule
+    /// on. Island fruit waits for the island.</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, string Note)> FruitTreeFruitWeeks =
+        new Dictionary<string, (int, string)>(StringComparer.Ordinal)
+        {
+            ["(O)634"] = (13, "Apricot, Spring tree: second year or the cart (for Jeff to confirm)"),
+            ["(O)638"] = (13, "Cherry, Spring tree: second year or the cart (for Jeff to confirm)"),
+            ["(O)635"] = (5, "Orange, Summer tree from a week-1 sapling"),
+            ["(O)636"] = (5, "Peach, Summer tree from a week-1 sapling"),
+            ["(O)613"] = (9, "Apple, Fall tree"),
+            ["(O)637"] = (9, "Pomegranate, Fall tree"),
+            ["(O)91"] = (13, "Banana, Ginger Island"),
+            ["(O)834"] = (13, "Mango, Ginger Island"),
+        };
+
     /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
     public const int TrapFishWeek = 2;
 
