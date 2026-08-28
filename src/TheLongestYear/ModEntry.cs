@@ -263,6 +263,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
+            helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters and the Fail-night offer. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails> | tly_pity accept|decline (after tly_hold keep|reshuffle, before tly_reset).", this.CmdPity);
@@ -1695,6 +1697,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
+                case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
                 case "tly_dejavu": this.CmdDejaVu(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_hold": this.CmdHold(command, args); break;
