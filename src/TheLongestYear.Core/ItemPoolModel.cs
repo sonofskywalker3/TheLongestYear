@@ -81,7 +81,7 @@ public sealed record DomainMatch(PoolDomain Domain, Season? Season);
 /// UNQUALIFIED object id).</summary>
 public sealed record RawObjectEntry(
     string Type, int Category, int Price, bool ExcludeFromRandomSale,
-    IReadOnlyList<string> ContextTags);
+    IReadOnlyList<string> ContextTags, string Name = "");
 
 /// <summary>Data/Crops entry: what harvesting yields + which seasons it grows in
 /// (empty = any season, mirroring CropData.Seasons' empty default). HarvestMaxQuality
