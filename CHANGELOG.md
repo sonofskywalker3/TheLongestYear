@@ -32,6 +32,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Stale bridge queue at launch** (debug). `tools/deploy.ps1` now deletes a `tly_commands.txt` left over from a session that closed before the mod drained it, so old `tly_*` lines no longer run at the title screen on the next launch.
 - **`tly_reset` with the planning hub open** (debug). The hub survived the in-place reset and the new run's week-1 offer was blocked for good ("Cannot open menu: another menu is already open"). The debug reset now closes an open hub first.
 - **Weekly goals no longer name a fish out of its season.** A bundle whose items each carry their own deadline put an item into the week's goal list by its deadline season alone, so Lake Fish could offer Sturgeon (Summer and Winter only) as a Fall goal and Rainbow Trout (Summer only) as a Winter goal. Goals now also pass the same in-season check the other bundle kinds use (bundle-loop audit, 2026-08-29).
 - **Red Mushroom counts as a Spring item.** Its curated season pin said Summer while the Spring forage pool already offered it, so a Spring Foraging bundle that drew it audited as impossible at its own gate. The pin is now Spring (the mines grow it on mushroom floors from level 41 in any season).
