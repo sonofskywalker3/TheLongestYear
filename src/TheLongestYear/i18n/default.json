@@ -292,6 +292,7 @@
     // -- themes / categories / modifiers ------------------------------------------
     "theme.foraging": "Foraging", "theme.farming": "Farming", "theme.fishing": "Fishing",
     "theme.mining": "Mining", "theme.mixed": "Mixed",
+    "theme.spelunking": "Spelunking", "theme.artisan": "Artisan", "theme.kitchen": "Kitchen",
     "upgrade-category.loadout": "Loadout", "upgrade-category.carryover": "Carryover",
     "upgrade-category.efficiency": "Efficiency", "upgrade-category.obtainability": "Obtainability",
     "upgrade-category.foresight": "Foresight", "upgrade-category.stash": "Stash",
@@ -309,6 +310,12 @@
     "modifier.mines_closed": "Mine entrance closed all week",
     "modifier.all_drops_up": "10% chance for any drop to be +1",
     "modifier.all_sell_prices_down": "All sell prices cut in half",
+    "modifier.monster_drops_double": "10% chance a slain monster drops everything twice",
+    "modifier.machines_slow": "Machines run 25% slower",
+    "modifier.machines_fast": "Machines finish 25% sooner",
+    "modifier.cooked_food_weak": "Cooked food restores half its energy and health and gives no buffs",
+    "modifier.animal_double_product": "20% chance an animal gives a second product each day",
+    "modifier.monster_damage_up": "Monsters deal 25% more damage",
 
     // -- shrine menus -------------------------------------------------------------
     "menu.shrine.title": "Junimo Shrine",

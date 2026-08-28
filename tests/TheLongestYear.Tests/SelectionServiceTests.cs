@@ -50,7 +50,5 @@ public class SelectionServiceTests
         }
 
         Assert.Equal(4, selected.Distinct().Count());
-        // Sanity: 5 themes exist; exactly 1 stays un-selected over a 4-week month.
-        Assert.Single(System.Enum.GetValues(typeof(Theme)).Cast<Theme>().Except(selected));
     }
 }

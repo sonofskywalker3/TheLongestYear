@@ -26,6 +26,10 @@ public static class ThemeEffortPools
             Theme.Farming => Ids(pools.Crops),
             Theme.Fishing => Ids(pools.Fish).Concat(Ids(pools.CrabPot)),
             Theme.Mining => Ids(pools.Metals).Concat(Ids(pools.GeodeMinerals)),
+            Theme.Spelunking => Ids(pools.GeodeMinerals).Concat(Ids(pools.MonsterDrops)).Concat(Ids(pools.Artifacts))
+                .Concat(ByCategory(objects, GemCategory, MineralCategory)),
+            Theme.Artisan => Ids(pools.ArtisanGoods),
+            Theme.Kitchen => Ids(pools.Cooking).Concat(ByCategory(objects, EggCategory, MilkCategory, AnimalProductCategory)),
             _ => Ids(pools.Forage).Concat(Ids(pools.Crops)).Concat(Ids(pools.Fish)).Concat(Ids(pools.CrabPot))
                 .Concat(Ids(pools.Metals)).Concat(Ids(pools.GeodeMinerals)).Concat(Ids(pools.MonsterDrops))
                 .Concat(Ids(pools.Artifacts)).Concat(Ids(pools.ArtisanGoods)).Concat(Ids(pools.Cooking))

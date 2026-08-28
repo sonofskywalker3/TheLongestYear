@@ -18,6 +18,11 @@ public static class ThemeModifiers
         // Mixed: "+10% all drops, -50% all sell prices" — a generalist boost paired with a sharp
         // economic squeeze. (Replaces the prior shop-discount/stamina-drain pairing per playtest.)
         Theme.Mixed    => ("all_drops_up", "all_sell_prices_down"),
+        // Activity themes (spec 2026-08-28): one plain effect each; every liability lands on a
+        // DIFFERENT activity and each new activity is bitten exactly once.
+        Theme.Spelunking => ("monster_drops_double", "machines_slow"),
+        Theme.Artisan    => ("machines_fast", "cooked_food_weak"),
+        Theme.Kitchen    => ("animal_double_product", "monster_damage_up"),
         _ => throw new ArgumentOutOfRangeException(nameof(theme), theme, null)
     };
 
