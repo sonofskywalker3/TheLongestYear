@@ -10,6 +10,22 @@ namespace TheLongestYear.Tests;
 /// Weekly goals now consult that floor as well as the catalog's season set.</summary>
 public class GoalObtainabilityTests
 {
+    [Fact]
+    public void A_week_3_item_is_not_a_week_1_goal_but_is_a_week_3_goal()
+    {
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(),
+            effortDerived: new Dictionary<string, ItemEffort> { ["(O)64"] = new(5, "ruby", EarliestWeek: 3, GateSeason: Season.Summer) });
+        Assert.False(GoalObtainability.IsObtainable(null, model, "(O)64", 1));
+        Assert.True(GoalObtainability.IsObtainable(null, model, "(O)64", 3));
+    }
+
+    [Fact]
+    public void An_unknown_item_is_still_a_goal_when_the_catalog_allows_it()
+    {
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>());
+        Assert.True(GoalObtainability.IsObtainable(null, model, "(O)24", 1));
+    }
+
     private static readonly IReadOnlySet<Season> AllSeasons =
         new HashSet<Season> { Season.Spring, Season.Summer, Season.Fall, Season.Winter };
 
