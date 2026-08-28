@@ -447,6 +447,7 @@ namespace TheLongestYear
             JunimoStashCapacityPatch.Connect(_meta.State);
             XpMultiplierPatch.Connect(_meta.State);
             TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = _config.EnableDejaVuDialogue;
+            TheLongestYear.Loop.AnimalDoubleProductPatch.Connect(() => _meta.Run);
             TheLongestYear.Loop.DejaVuDialoguePatch.Connect(_meta.State, () => _meta.Run, _config, this.Monitor,
                 () => this.Helper.Translation.GetTranslations().Select(t => t.Key).ToList());
             PatchLog.Connect(this.Monitor);

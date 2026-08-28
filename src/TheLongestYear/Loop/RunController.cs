@@ -849,6 +849,8 @@ namespace TheLongestYear.Loop
 
         public void OnDayEnding(object sender, DayEndingEventArgs e)
         {
+            // Kitchen bonus: tonight's FarmAnimal.dayUpdate writes new records; yesterday's are done.
+            (Run.DoubleProduceToday ??= new System.Collections.Generic.List<DoubleProduceRecord>()).Clear();
             // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
             TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
