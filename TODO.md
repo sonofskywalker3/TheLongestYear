@@ -219,7 +219,13 @@ the console, then hand the keyboard over; do not try to drive the farmer. Worth 
 (SendInput to an unfocused SDL window) before the next session that needs a walked repro.
 
 
-### RULED (Jeff, 2026-08-27), NOT BUILT: the Egg Hunt runs once per loop
+### ✅ CLOSED 2026-08-27 late: the Egg Hunt runs once per loop (already true since 0.14.1)
+
+Closed on the TODO walk with Jeff: a loop is one year and Spring 13 comes once a year, so "once per
+loop" and the 0.14.1 once-per-DAY guard are the same rule. The only repeat inside a loop is a same-day
+re-entry, which `FestivalMainEventOncePatch` blocks; a rewind clears the stamp so the next loop's hunt
+is fresh (Jeff's ruling). Year 2 of a continue-after-win save repeats festivals as vanilla does.
+Nothing to build. Original notes kept below.
 
 Jeff's ruling 2026-08-27: "yes, once per loop." So a festival minigame the player has already done
 this loop (the Egg Hunt is the case in point) does not repeat within the loop; a rewind makes it
