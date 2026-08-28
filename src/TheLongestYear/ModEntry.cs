@@ -1251,6 +1251,15 @@ namespace TheLongestYear
                 this.Monitor.Log("Reset unavailable: no run controller (load a save first).", LogLevel.Warn);
                 return;
             }
+            // A planning hub still up when tly_reset fires survives the in-place reset and then
+            // blocks the new run's week-1 offer for good: the hub only opens over a clear
+            // activeClickableMenu, and a stale hub never closes itself (readyToClose waits for a
+            // pick). Drop it here; the reset re-presents week 1 from the real day-start flow.
+            if (Game1.activeClickableMenu is TheLongestYear.UI.WeeklyHubMenu)
+            {
+                this.Monitor.Log("tly_reset: closing the open planning hub so the new run's week-1 offer can open.", LogLevel.Info);
+                Game1.exitActiveMenu();
+            }
             _runController.FinalizeReset("debug tly_reset");
         }
 
