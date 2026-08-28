@@ -245,6 +245,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
+            helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
@@ -1704,6 +1705,7 @@ namespace TheLongestYear
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
+                case "tly_goals": this.CmdGoals(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
@@ -1861,6 +1863,53 @@ namespace TheLongestYear
             foreach (var kv in ParseItemSeasonPins())
                 pins[kv.Key] = kv.Value;
 
+            LogGateAudit(requirements, pins, "tly_gatecheck");
+        }
+
+        /// <summary><c>tly_goals [season] [weekOfYear]</c>: the weekly goals each theme would offer on the
+        /// live board, through the same sampler the planning hub uses, so a season's goals can be
+        /// audited from the log without sleeping to that season and opening the hub. Defaults to
+        /// the run's own season and week; another season defaults to its week 1.</summary>
+        private void CmdGoals(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (_runController == null) { this.Monitor.Log("No run controller yet.", LogLevel.Warn); return; }
+
+            RunState run = _meta.Run;
+            TheLongestYear.Core.Season season = run.Season;
+            if (args.Length > 0 && !Enum.TryParse(args[0], ignoreCase: true, out season))
+            {
+                this.Monitor.Log("Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", LogLevel.Info);
+                return;
+            }
+            int week = season == run.Season ? run.WeekOfYear : Calendar.WeekOfYear((int)season, 1);
+            if (args.Length > 1 && int.TryParse(args[1], out int explicitWeek))
+                week = explicitWeek;
+
+            this.Monitor.Log($"tly_goals: {season} week {week} (run season {run.Season} day {run.DayOfMonth}, loop seed {run.Seed}).", LogLevel.Info);
+            foreach (TheLongestYear.Core.Theme theme in Enum.GetValues(typeof(TheLongestYear.Core.Theme)))
+            {
+                IReadOnlyList<BonusSlot> slots = _runController.SampleSlotsForTheme(theme, season, week);
+                this.Monitor.Log($"  {theme}: {slots.Count} goal(s)", LogLevel.Info);
+                foreach (BonusSlot slot in slots)
+                {
+                    string quality = slot.Quality > 0 ? $" q{slot.Quality}" : "";
+                    this.Monitor.Log(
+                        $"    - {DisplayName(slot.ItemId)} ({slot.ItemId}) x{slot.Stack}{quality}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]",
+                        LogLevel.Info);
+                }
+            }
+        }
+
+        /// <summary>The season-gate audit shared by <c>tly_gatecheck</c> (live board) and
+        /// <c>tly_genbundles</c> (diagnostic board): demanded vs obtainable per season, IMPOSSIBLE
+        /// and FREE flags, and the blockers named per gate. <paramref name="pins"/> is the merged
+        /// earliest-season table (derived under curated); anything unpinned counts as Spring.</summary>
+        private void LogGateAudit(
+            IReadOnlyList<BundleRequirement> requirements,
+            IReadOnlyDictionary<string, TheLongestYear.Core.Season> pins,
+            string label)
+        {
             int impossible = 0, free = 0, tight = 0;
             var lines = new List<string>();
             var blocked = new List<string>();
@@ -1909,7 +1958,7 @@ namespace TheLongestYear
                 lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}");
             }
 
-            this.Monitor.Log("=== Season gate audit (demanded / obtainable, by day 28 of each season) ===", LogLevel.Info);
+            this.Monitor.Log($"=== {label}: season gate audit (demanded / obtainable, by day 28 of each season) ===", LogLevel.Info);
             foreach (string line in lines)
                 this.Monitor.Log(line, LogLevel.Info);
 
@@ -1927,8 +1976,8 @@ namespace TheLongestYear
 
             this.Monitor.Log(
                 impossible > 0
-                    ? $"  RESULT: {impossible} IMPOSSIBLE season gate(s) -- these brick the run and must be fixed."
-                    : $"  RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated.",
+                    ? $"  {label} RESULT: {impossible} IMPOSSIBLE season gate(s) -- these brick the run and must be fixed."
+                    : $"  {label} RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated.",
                 impossible > 0 ? LogLevel.Error : LogLevel.Info);
             this.Monitor.Log(
                 "  NOTE: this checks CALENDAR feasibility only. An item that exists in Spring but needs a keg, "
@@ -2431,6 +2480,15 @@ namespace TheLongestYear
                         .Select(s => $"{s.ItemId} x{s.Stack}").ToList();
                     if (stackAsks.Count > 0)
                         this.Monitor.Log($"        stack asks: {string.Join(", ", stackAsks)}", LogLevel.Info);
+
+                    // Every slot by name, so a log alone is enough to audit what the board asks
+                    // for (bundle-loop audit, 2026-08-29). Money slots are gold amounts, not asks.
+                    var slotNames = spec.Slots
+                        .Where(s => s.ItemId != "-1" && !string.IsNullOrEmpty(s.ItemId))
+                        .Select(s => $"{DisplayName(s.ItemId)} ({s.ItemId}) x{s.Stack}{(s.Quality > 0 ? $" q{s.Quality}" : "")}")
+                        .ToList();
+                    if (slotNames.Count > 0)
+                        this.Monitor.Log($"        slots: {string.Join(", ", slotNames)}", LogLevel.Info);
                 }
             }
             this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
@@ -2440,6 +2498,26 @@ namespace TheLongestYear
             int generated = set.Bundles.Count;
             int classified = requirements.Count;
             int skipped = generated - classified;
+
+            // The gates this board would run under, then the same audit tly_gatecheck runs on the
+            // live board, so a diagnostic loop can be checked for IMPOSSIBLE gates without a reset.
+            foreach (BundleRequirement req in requirements.OrderBy(r => r.Theme).ThenBy(r => r.Name, StringComparer.Ordinal))
+            {
+                string gates = req.Kind switch
+                {
+                    BundleKind.Seasonal => $"all by {req.SeasonalSeason}",
+                    BundleKind.PerItem => string.Join(", ", req.ItemSeasonPins
+                        .OrderBy(kv => (int)kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                        .Select(kv => $"{DisplayName(kv.Key)} by {kv.Value}")),
+                    BundleKind.Percentage => $"ramp [{string.Join(",", req.CumulativeRequiredBySeason)}] of X={req.NumberOfSlots}",
+                    _ => "",
+                };
+                this.Monitor.Log($"      gates {req.Name} ({req.Kind}): {gates}", LogLevel.Info);
+            }
+            var auditPins = new Dictionary<string, TheLongestYear.Core.Season>(engine.LastDerivedSeasonPins, StringComparer.Ordinal);
+            foreach (var kv in itemSeasonPins)
+                auditPins[kv.Key] = kv.Value;
+            LogGateAudit(requirements, auditPins, "tly_genbundles");
 
             var themedSkipsByRoom = new System.Collections.Generic.Dictionary<string, int>(StringComparer.Ordinal);
             foreach (BundleSpec spec in set.Bundles)
