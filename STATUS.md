@@ -1,10 +1,30 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-27 late (keep wallet items + Stardrops built 0.16.19 to 0.16.25 and live-smoked, all PASS)
-**Branch:** `master`; 0.16.25 committed and PUSHED (2026-08-27), NOT released (Jeff: "no release yet")
-**Tests:** 1171 passing, 0 failing
-**Build:** clean
+**Last updated:** 2026-08-28 (bundle pool fixes from player reports, 0.16.26 to 0.16.31)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.31 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1194 passing, 0 failing
+**Build:** clean (mod assembly builds Release)
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+**2026-08-28 bundle pool fixes (two player reports: Flounder on three bundles incl. a lake bundle,
+Mussel on four foraging bundles; then Salmon as a Spring weekly goal and Sea Cucumber due before
+Summer 1).** Root cause traced against the game's own Data/Locations (dumped via a scratch .NET
+loader): the pools treated three non-fishing keys (`Temp` = Festival of Ice map, `fishingGame` =
+Fair minigame, `Default` = trash table) as habitats, and Night Market / SquidFest rows carry no
+season. Landed, one behavior per commit:
+- 0.16.26 ignore non-habitat location keys (fixes ocean fish in Lake Fish, river fish in Ocean Fish,
+  Salmon reading as all-year, Trash in the fish pool).
+- 0.16.27 season-named bundles ask only season-specific items; Winter Root + Snow Yam join Winter.
+- 0.16.28 Night Fishing = fish not catchable before 6pm, plus at most one Night Market fish (Jeff's rule).
+- 0.16.29 passive-festival spawns take the festival's season from Data/PassiveFestivals (Sea Cucumber
+  Fall/Winter, Squid Winter); season tokens must be season names (Enum.TryParse accepted "0600").
+- 0.16.30 no item asked twice across the board (fills run tightest pool first, each avoids what
+  earlier bundles ask; repeats only when a pool would run dry).
+- 0.16.31 `tly_dumpbundles` catalogue wording describes the fish rules.
+**Not yet verified in-game.** Next: fresh reset on a throwaway clone, `tly_genbundles`, `tly_gatecheck`,
+regenerate `docs/engine-bundle-catalogue.md` via `tly_dumpbundles`. Known consequence: a save mid-loop
+on an older board fails the SaveLoaded manifest re-derivation and falls back to the legacy read path
+(WARN in log), same as every earlier pool change; the board on disk stays valid until the next reset.
 
 **Decision 2026-08-27 late (TODO walk with Jeff):** next build is **keep wallet items + Stardrops via
 per-item JP keeps at the shrine** (same shape as the book keeps). Brainstorm, then spec, then plan; see
