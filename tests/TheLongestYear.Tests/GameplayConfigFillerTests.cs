@@ -6,6 +6,14 @@ namespace TheLongestYear.Tests;
 public class GameplayConfigFillerTests
 {
     [Fact]
+    public void Week_overrides_default_empty_and_caps_are_flat()
+    {
+        var config = new GameplayConfig();
+        Assert.Empty(config.AvailabilityWeekOverrides);
+        Assert.Equal(new[] { 5, 5, 5, 6 }, BonusItemSampler.DefaultMaxCountBySeason);
+    }
+
+    [Fact]
     public void Filler_allowance_defaults_to_the_spec_ramp()
     {
         var config = new GameplayConfig();

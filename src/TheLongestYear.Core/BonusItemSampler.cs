@@ -16,7 +16,7 @@ public static class BonusItemSampler
     /// enum (Spring=0..Winter=3). Spec round 6 lived in <c>GameplayConfig.BonusListSizeBySeason</c>;
     /// moved here in spec round 7 so the sampler owns its own default cap.
     /// </summary>
-    public static readonly IReadOnlyList<int> DefaultMaxCountBySeason = new[] { 3, 4, 5, 7 };
+    public static readonly IReadOnlyList<int> DefaultMaxCountBySeason = new[] { 5, 5, 5, 6 };
 
     /// <summary>
     /// Inverse-rarity weight: Common shows up most often, VeryRare least. Tuned per the 2026-05-26

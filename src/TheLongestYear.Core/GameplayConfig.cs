@@ -241,6 +241,11 @@ public sealed class GameplayConfig
     /// Winter, where it pays 4x. 99 = as many as the season cap allows.</summary>
     public List<int> ThemeFillerBySeason { get; set; } = new() { 0, 0, 1, GoalSamplingRules.UnlimitedFiller };
 
+    /// <summary>Spec 2026-08-28-even-year: move one item's first week (1 to 16), by qualified id.
+    /// Later only; an override earlier than the derived floor is rejected and listed by
+    /// tly_itemmodel and tly_dumpavailability.</summary>
+    public Dictionary<string, int> AvailabilityWeekOverrides { get; set; } = new();
+
     public int FillerAllowanceFor(Season season)
     {
         int index = (int)season;
