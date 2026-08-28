@@ -116,12 +116,36 @@ public class BonusSlotSamplerTests
         for (int seed = 0; seed < 30; seed++)
         {
             var sample = BonusSlotSampler.SampleSlots(seed, 6, Theme.Farming, pool, CommonRarity, 5,
-                limitedGroup: fruit);
+                caps: new[] { new GoalGroupCap(fruit, 1) });
             Assert.True(sample.Count(s => fruit.Contains(s.ItemId)) <= 1, $"seed {seed} drew more than one fruit");
             Assert.Equal(3, sample.Count);   // two crops plus exactly one fruit
         }
         // No group: the old behaviour, all five.
         Assert.Equal(5, BonusSlotSampler.SampleSlots(1, 6, Theme.Farming, pool, CommonRarity, 5).Count);
+    }
+
+    /// <summary>Jeff, 2026-08-28: "why is the fishing goal all crab pot stuff and NO FISH!
+    /// maybe limit it to 1 or 2 crab pot picks max per week". Crab-pot catches (Data/Fish trap
+    /// rows) are a second capped group next to the tree fruit; both caps hold in one sample.</summary>
+    [Fact]
+    public void Each_capped_group_holds_independently_in_one_sample()
+    {
+        var fruit = new HashSet<string>(StringComparer.Ordinal) { "(O)613", "(O)634" };
+        var trap = new HashSet<string>(StringComparer.Ordinal) { "(O)715", "(O)716", "(O)717", "(O)720" };
+        var pool = new List<BonusSlot>
+        {
+            Slot("(O)715", 11, 0), Slot("(O)716", 11, 1), Slot("(O)717", 11, 2), Slot("(O)720", 11, 5),
+            Slot("(O)613", 5, 6), Slot("(O)634", 5, 7),
+            Slot("(O)145", 7, 0), Slot("(O)143", 7, 1),
+        };
+        var caps = new[] { new GoalGroupCap(fruit, 1), new GoalGroupCap(trap, 1) };
+        for (int seed = 0; seed < 30; seed++)
+        {
+            var sample = BonusSlotSampler.SampleSlots(seed, 6, Theme.Fishing, pool, CommonRarity, 6, caps: caps);   // week 6: past the early-game filter
+            Assert.True(sample.Count(s => trap.Contains(s.ItemId)) <= 1, $"seed {seed}: more than one crab-pot goal");
+            Assert.True(sample.Count(s => fruit.Contains(s.ItemId)) <= 1, $"seed {seed}: more than one fruit goal");
+            Assert.Equal(4, sample.Count);   // two fish, one fruit, one crab-pot catch
+        }
     }
 
     [Fact]

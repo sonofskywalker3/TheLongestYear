@@ -85,9 +85,10 @@ namespace TheLongestYear.Loop
 
         private RunState Run => _store.Run;
 
-        /// <summary>Item ids of which a theme's weekly goal list may name at most one (the
-        /// fruit-tree fruits from Data/FruitTrees; Jeff, 2026-08-29). Null = no cap.</summary>
-        public System.Collections.Generic.IReadOnlySet<string> LimitedGoalGroup { get; set; }
+        /// <summary>Per-group caps on a theme's weekly goal list: at most one fruit-tree fruit
+        /// (Data/FruitTrees) and at most one crab-pot catch (Data/Fish trap rows); Jeff,
+        /// 2026-08-28. Null = no caps.</summary>
+        public System.Collections.Generic.IReadOnlyList<GoalGroupCap> GoalCaps { get; set; }
 
         /// <summary>The current attempt count (loop the player is on / won), surfaced so the
         /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can pass it into the
@@ -1064,7 +1065,7 @@ namespace TheLongestYear.Loop
             return BonusSlotSampler.SampleSlots(
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, BonusListSizeFor(season),
                 remainingNeedForBundle: RemainingNeedForBundle,
-                limitedGroup: LimitedGoalGroup);
+                caps: GoalCaps);
         }
 
         /// <summary>How many more ingredient lines a bundle can still take: its required count

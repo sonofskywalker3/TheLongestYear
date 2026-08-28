@@ -47,6 +47,10 @@ public sealed class ItemPools
     /// Jelly, silver Tea Leaves), 2026-08-25.</summary>
     public IReadOnlySet<string>? QualityEligibleIds { get; init; }
 
+    /// <summary>Qualified ids of every Data/Fish "trap" row (crab-pot catches). The weekly-goal
+    /// sampler allows at most one of these per theme list (Jeff, 2026-08-28).</summary>
+    public IReadOnlySet<string> TrapFishIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Qualified ids of every fruit a Data/FruitTrees tree grows. The weekly-goal
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-29).</summary>
     public IReadOnlySet<string> FruitTreeFruitIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
