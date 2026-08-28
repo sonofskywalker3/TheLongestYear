@@ -1,6 +1,6 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-27 late (keep wallet items + Stardrops built, 0.16.19 to 0.16.25; live smoke pending)
+**Last updated:** 2026-08-27 late (keep wallet items + Stardrops built 0.16.19 to 0.16.25 and live-smoked, all PASS)
 **Branch:** `master`; 0.16.25 committed locally, NOT pushed, NOT released
 **Tests:** 1171 passing, 0 failing
 **Build:** clean
@@ -13,7 +13,7 @@ per-item JP keeps at the shrine** (same shape as the book keeps). Brainstorm, th
 The settings screenshots (Features, Difficulty) are confirmed live on Nexus (gallery + description) and
 GitHub. The Egg Hunt per-loop guard is still open: 0.14.1 only guards once per DAY.
 
-## Keep wallet items + Stardrops (0.16.19 to 0.16.25): built, unit-tested, LIVE SMOKE PENDING
+## Keep wallet items + Stardrops (0.16.19 to 0.16.25): built, unit-tested, LIVE SMOKE PASSED 2026-08-27 20:43 to 20:50
 
 Spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`, plan
 `docs/superpowers/plans/2026-08-27-keep-wallet-stardrops.md`. Eighteen Carryover rows
@@ -24,8 +24,23 @@ events after the re-seed, and sets max stamina to 270 + 34 per kept Stardrop. Be
 (2120303) and Spring Onion Mastery (3910979) joined `EventGatingTables.Default.ReplayableEventIds`,
 so they no longer survive a rewind unless bought (they used to, for free). Debug: `tly_wallet`.
 CHANGELOG `## Unreleased` written; README and Nexus description got the Shrine feature line (What's
-New waits for the release). Deployed to PC Mods by the Release build; nobody has seen it run yet.
-Smoke recipe: plan Task 8.
+New waits for the release).
+
+**Live smoke (throwaway save None_447549305, loaded Spring 2 via `tly_loadsave`, driven with
+`send-smapi-command.ps1` + `game.ps1`; screenshots `test-output/wallet-0*.png`):**
+
+| Step | Result |
+|---|---|
+| `tly_wallet HasSkullKey`, `stardrop:fair`, `event:2120303`, `event:3910979`; `tly_wallet` | `HasSkullKey+HasUnlockedSkullDoor-`, `CF_Fair+`, bear `seen`, spring onion `seen`, `maxStamina=304` | PASS |
+| `tly_addjp 2000`; buy `keep_wallet_skullkey` (750), `keep_stardrop_fair` (500), `keep_wallet_bearsknowledge` (150) | all three "Purchased", JP 2888 left | PASS |
+| `tly_openshop`, Carryover tab | buyable rows first: "Keep Spring Onion Mastery, Cost: 150 JP" (earned, unbought); owned Bear / Skull Key / Stardrop (Fair) at the end; the other fourteen wallet/Stardrop rows hidden (`wallet-02`, `-03`) | PASS |
+| `tly_reset` (Spring 2 -> Spring 1, reset log) | `FarmerReset: ... wallet=[HasSkullKey,HasUnlockedSkullDoor,CF_Fair], events=[2120303], stardrops=1 ... eventsReseeded=5 (of 8 seen-ever)` | PASS |
+| `tly_wallet` after the reset | `HasSkullKey+HasUnlockedSkullDoor+` (door now open too), `CF_Fair+`, bear `seen`, spring onion `unseen`, `maxStamina=304` | PASS |
+| Shrine after the reset | Spring Onion row gone (scene unseen again), Bear / Skull Key / Stardrop (Fair) still Owned (`wallet-06`, `-07`) | PASS |
+
+Not exercised live: the Fair stall refusing a second Stardrop (needs Fall 16; the CF_Fair gate is
+vanilla's own check, `Utility.cs:5848`), and the wallet tab of the inventory menu (the E / Escape
+key presses were not received by the game, a known driving gotcha; the probe covers the flags).
 
 ## netWorldState keep/wipe audit (0.14.8): LIVE SMOKE PASSED 2026-08-27 19:09 to 19:20
 

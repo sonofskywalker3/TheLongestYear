@@ -6,16 +6,16 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BUILT 2026-08-27 (0.16.19 to 0.16.25, not released, live smoke pending): keep wallet items and Stardrops with a JP purchase
+### BUILT 2026-08-27 (0.16.19 to 0.16.25, not released), LIVE SMOKE PASSED: keep wallet items and Stardrops with a JP purchase
 
 Built the same night from the approved spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`
 and plan `docs/superpowers/plans/2026-08-27-keep-wallet-stardrops.md`: `WalletKeepTable` (18 rows,
 6,950 JP), `mail:` / `event:` / `stardrop_mines` reach metrics, `RunBaseline.KeptMailFlags` /
 `KeptEventIds` / `KeptStardropCount`, `FarmerReset` re-grants, Bear's Knowledge (2120303) and Spring
 Onion Mastery (3910979) made replayable so they stop surviving for free, `tly_wallet` debug command.
-1171 tests pass. **Live smoke still owed** (plan Task 8): flag Skull Key + Fair Stardrop + both power
-events, buy three of the four keeps, `tly_reset`, check the FarmerReset log line, `tly_wallet`, max
-energy 304, and that the shrine hides the fourteen unearned rows.
+1171 tests pass. **Live smoke PASSED 2026-08-27 20:43 to 20:50** (table in STATUS.md): Skull Key +
+door, Fair Stardrop and Bear's Knowledge survive `tly_reset`, max energy 304, Spring Onion Mastery
+(earned, unbought) is wiped and its row disappears, the fourteen unearned rows never show.
 
 Picked over the Egg Hunt per-loop guard, the weekly-themes brainstorm and the SVE audit because the
 book-keep machinery (reach-gated Carryover rows, price bands, re-grant from `RunBaseline`) is a day old
