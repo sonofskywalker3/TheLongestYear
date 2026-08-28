@@ -107,6 +107,7 @@ public static class ItemPoolBuilder
             TapperGoods = tapperGoodsPool,
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
             QualityEligibleIds = qualityEligible,
+            TrapFishIds = new HashSet<string>(trapFishIds.Select(id => Qualify(Unqualify(id))), StringComparer.Ordinal),
             FruitTreeFruitIds = new HashSet<string>(
                 fruitTrees.SelectMany(t => t.FruitItemIds ?? Array.Empty<string>())
                     .Where(id => !string.IsNullOrEmpty(id))

@@ -12,8 +12,9 @@ namespace TheLongestYear.Core;
 /// id's open slots — so the checklist entry names an exact (bundle, line, stack, quality).
 /// Deterministic: same (seed, week, theme, pool) -> same slots.
 ///
-/// At most <c>limitedGroupMax</c> goals come from <c>limitedGroup</c> (the fruit-tree fruits,
-/// read from Data/FruitTrees): a Spring week 2 Farming list once named three tree fruits.
+/// Each <see cref="GoalGroupCap"/> limits how many goals may come from one item group: the
+/// fruit-tree fruits (Data/FruitTrees; a Spring week 2 Farming list once named three) and the
+/// crab-pot catches (Data/Fish trap rows; a week 1 Fishing list was all crab pot, no fish).
 ///
 /// A bundle never contributes more goals than it can still accept. Bundles that require only SOME
 /// of their listed items put every open line in the pool, so without a cap a week could ask for
@@ -34,8 +35,7 @@ public static class BonusSlotSampler
         Func<string, Rarity> rarityOf,
         int maxCount,
         Func<int, int>? remainingNeedForBundle = null,
-        IReadOnlySet<string>? limitedGroup = null,
-        int limitedGroupMax = 1)
+        IReadOnlyList<GoalGroupCap>? caps = null)
     {
         if (openSlots is null) throw new ArgumentNullException(nameof(openSlots));
         if (rarityOf is null) throw new ArgumentNullException(nameof(rarityOf));
@@ -112,12 +112,15 @@ public static class BonusSlotSampler
                     result.Add(chosen);
                     takenPerBundle[chosen.BundleIndex] =
                         takenPerBundle.TryGetValue(chosen.BundleIndex, out int prior) ? prior + 1 : 1;
-                    // Limited group (Jeff, 2026-08-29: "limit fruit tree stuff to 1 per theme"):
-                    // once the group has its quota, the rest of it leaves the draw. No rng is
-                    // consumed here, so the picks that follow stay reproducible.
-                    if (limitedGroup != null && limitedGroup.Contains(chosen.ItemId)
-                        && result.Count(s => limitedGroup.Contains(s.ItemId)) >= limitedGroupMax)
-                        remaining.RemoveAll(r => limitedGroup.Contains(r.Id));
+                    // Capped groups (Jeff, 2026-08-28: "limit fruit tree stuff to 1 per theme";
+                    // same day: "why is the fishing goal all crab pot stuff"): once a group has
+                    // its quota, the rest of it leaves the draw. No rng is consumed here, so the
+                    // picks that follow stay reproducible.
+                    if (caps != null)
+                        foreach (GoalGroupCap cap in caps)
+                            if (cap.Ids.Contains(chosen.ItemId)
+                                && result.Count(s => cap.Ids.Contains(s.ItemId)) >= cap.Max)
+                                remaining.RemoveAll(r => cap.Ids.Contains(r.Id));
                     break;
                 }
             }

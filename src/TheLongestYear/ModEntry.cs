@@ -519,7 +519,11 @@ namespace TheLongestYear
             DonationService.Active.AfterDonation = _questService.OnItemDonated;
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
-            _runController.LimitedGoalGroup = enginePools.FruitTreeFruitIds;
+            _runController.GoalCaps = new[]
+            {
+                new GoalGroupCap(enginePools.FruitTreeFruitIds, 1),
+                new GoalGroupCap(enginePools.TrapFishIds, 1),
+            };
             _runController.Availability = _availability;
             _runController.AttachQuestService(_questService);
             _runController.OnRunLoaded();
