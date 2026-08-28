@@ -7,6 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`tly_dumpeffort` console command** writes `item-effort-model.md`: every pool item with its derived effort, tier and the game-data basis (gems and minerals, geodes, monster drops, artifacts, artisan goods, fish ponds, animal products, cooked dishes, crops, forage). `tly_itemmodel` now prints the effort source and tier (debug).
 - **Keep your wallet items and Stardrops.** Eighteen new keeps at the Junimo Shrine: one per wallet item (Rusty Key, Skull Key, Club Card, Special Charm, Dark Talisman, Magic Ink, Dwarvish Translation Guide, Town Key, Magnifying Glass), one each for Bear's Knowledge and Spring Onion Mastery, and one per Stardrop source (Fair, fishing, mines, Krobus, spouse, Secret Woods, museum). A row appears on a Fail night once you have earned that item this loop; buy it and it survives every rewind. 150 to 750 JP. A kept Stardrop also keeps its source marked as claimed, so the same Stardrop cannot be collected again next loop. Keeping the Skull Key keeps the Skull Cavern door open too.
 - **`tly_wallet` console command** to set or list wallet, power and Stardrop markers (debug).
 - **`tly_playseason [goals]` console command** simulates a minimal compliant player for the current season (donates exactly what every gate demands by day 28 through real CC slot flips, pays the vault; `goals` also deposits the week's goal slots), for real-play audits (debug).

@@ -40,6 +40,10 @@ namespace TheLongestYear
         /// PerItem due dates come from the model instead of the 40-entry curated pin table.
         /// Null before a save is loaded, so every reader must tolerate null.</summary>
         private TheLongestYear.Core.ItemAvailabilityModel _availability;
+        /// <summary>The effort tables (Phase 2 of the model) and the pools they were built with,
+        /// kept for tly_dumpeffort and tly_itemmodel. Null before a save is loaded.</summary>
+        private TheLongestYear.Core.Availability.EffortData _effortData;
+        private TheLongestYear.Core.ItemPools _enginePools;
         private DonationObserver _donationObserver;
         private CartStallIntro _cartStallIntro;
         private CaveChoicePrompt _caveChoicePrompt;
@@ -249,6 +253,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
+            helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
@@ -469,12 +474,17 @@ namespace TheLongestYear
             // Built here because it needs enginePools, and consumed by everything below that
             // classifies bundles. _reset is constructed above (it does not need the pools), so it
             // takes the model through its settable AvailabilityModel property instead.
+            _effortData = new TheLongestYear.Loop.GameEffortData(this.Monitor)
+                .Build(_config.PoolTuning.ExcludedLocationMarkers);
+            _enginePools = enginePools;
             _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
-                enginePools, seasonOverrides: itemSeasonPins);
+                enginePools, seasonOverrides: itemSeasonPins, effortData: _effortData,
+                hasKitchen: _meta.State.HasUpgrade("keep_kitchen"));
             _reset.AvailabilityModel = _availability;
             this.Monitor.Log(
                 $"Item availability model built from live pools: "
                 + $"{_availability.DerivedCount} id(s) derived, "
+                + $"{_availability.DerivedEffortCount} effort-only id(s) derived, "
                 + $"{_availability.RejectedSeasonOverrides.Count} curated season pin(s) rejected for "
                 + "demanding an item earlier than it can exist.",
                 LogLevel.Trace);
@@ -1715,6 +1725,7 @@ namespace TheLongestYear
                 case "tly_goals": this.CmdGoals(command, args); break;
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
+                case "tly_dumpeffort": this.CmdDumpEffort(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
@@ -1826,7 +1837,7 @@ namespace TheLongestYear
                         ? d.ToString()
                         : "never";
                     this.Monitor.Log(
-                        $"  {id}: due {due}; earliest {a.EarliestSeason}, effort {a.Effort} [{a.Basis}]",
+                        $"  {id}: due {due}; earliest {a.EarliestSeason}, effort {a.Effort} ({a.Source}), tier {TierLabel(id, a)} [{a.Basis}]",
                         LogLevel.Info);
                 }
                 return;
@@ -1835,8 +1846,40 @@ namespace TheLongestYear
             string itemId = target.StartsWith("(", StringComparison.Ordinal) ? target : $"(O){target}";
             TheLongestYear.Core.ItemAvailability single = _availability.For(itemId);
             this.Monitor.Log(
-                $"{itemId}: earliest {single.EarliestSeason}, effort {single.Effort} [{single.Basis}]",
+                $"{itemId}: earliest {single.EarliestSeason}, effort {single.Effort} ({single.Source}), tier {TierLabel(itemId, single)} [{single.Basis}]",
                 LogLevel.Info);
+        }
+
+        /// <summary>The item's effort tier within the first theme pool that contains it, or
+        /// "n/a" when no engine pool lists it (tiers are relative to a pool).</summary>
+        private string TierLabel(string itemId, TheLongestYear.Core.ItemAvailability availability)
+        {
+            if (_enginePools == null || _effortData == null) return "n/a";
+            foreach (TheLongestYear.Core.Theme theme in Enum.GetValues(typeof(TheLongestYear.Core.Theme)))
+            {
+                IReadOnlyList<string> ids = ThemeEffortPools.IdsFor(theme, _enginePools, _effortData.Objects);
+                if (!ids.Contains(itemId)) continue;
+                TierCutoffs cutoffs = EffortTiers.Cutoffs(ids.Select(id => _availability.For(id).Effort).ToList());
+                return $"{EffortTiers.Tier(availability.Effort, cutoffs)} in {theme}";
+            }
+            return "n/a";
+        }
+
+        /// <summary><c>tly_dumpeffort [fileName]</c>: the item effort review document, written to the
+        /// mod folder like tly_dumpbundles (copy to docs/item-effort-model.md; gitignored).</summary>
+        private void CmdDumpEffort(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _availability == null || _enginePools == null || _effortData == null)
+            {
+                this.Monitor.Log("Load a save first (the effort model is derived from live game data).", LogLevel.Warn);
+                return;
+            }
+            string text = TheLongestYear.Debug.EffortDocWriter.Render(
+                _enginePools, _effortData.Objects, _availability, this.ModManifest.Version.ToString());
+            string fileName = args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]) ? args[0] : "item-effort-model.md";
+            string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
+            System.IO.File.WriteAllText(path, text);
+            this.Monitor.Log($"tly_dumpeffort: wrote {path} ({text.Length:N0} chars).", LogLevel.Info);
         }
 
         private void CmdGateCheck(string command, string[] args)
