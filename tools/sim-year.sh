@@ -22,7 +22,7 @@ pick_and_goals() {  # hub is open: dump goals + pool, pick the left card
   local n; n=$(count)
   local hub; hub=$(tail -n +"$n" "$LOG" | grep -E "Opened planning hub" | tail -1)
   [ -z "$hub" ] && hub=$(grep -E "Opened planning hub" "$LOG" | tail -1)
-  local left; left=$(echo "$hub" | sed -E 's/.*offer: ([A-Za-z]+),.*/\1/')
+  local left; left=$(echo "$hub" | sed -E 's/.*offer: ([A-Za-z]+)[,)].*/\1/')
   drv -Action send -Lines "tly_goals|tly_themepool" >/dev/null
   drv -Action wait -Pattern "executing 'tly_themepool'" -TimeoutSec 60 -FromLine "$n" >/dev/null
   sleep 3
