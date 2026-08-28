@@ -63,27 +63,56 @@ public sealed class ItemAvailabilityModel
     private readonly IReadOnlyDictionary<string, ItemEffort> _effortDerived;
     private readonly HashSet<string> _unrecognised = new(StringComparer.Ordinal);
     private readonly HashSet<string> _rejectedSeasonOverrides = new(StringComparer.Ordinal);
+    private readonly IReadOnlyDictionary<string, int> _weekOverrides;
+    private readonly HashSet<string> _unknown = new(StringComparer.Ordinal);
 
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
         IReadOnlyDictionary<string, int>? effortOverrides = null,
-        IReadOnlyDictionary<string, ItemEffort>? effortDerived = null)
+        IReadOnlyDictionary<string, ItemEffort>? effortDerived = null,
+        IReadOnlyDictionary<string, int>? weekOverrides = null)
     {
         _derived = derived ?? throw new ArgumentNullException(nameof(derived));
         _seasonOverrides = seasonOverrides ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _effortOverrides = effortOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
         _effortDerived = effortDerived ?? new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
-
+        _weekOverrides = weekOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
         // Validated once here rather than per lookup, so the count is meaningful the moment the
-        // model exists and a caller can log it at build time without waiting for traffic.
+        // model exists and a caller can log it at build time without waiting for traffic. Compared
+        // in weeks (spec 2026-08-28-even-year): an override may only move a placed floor later.
         foreach (KeyValuePair<string, Season> pin in _seasonOverrides)
         {
-            if (_derived.TryGetValue(pin.Key, out ItemAvailability? entry)
-                && pin.Value < entry.EarliestSeason)
+            int? floor = PlacedWeek(pin.Key);
+            if (floor != null && AvailabilityWeeks.FirstWeekOf(pin.Value) < floor.Value)
+                _rejectedSeasonOverrides.Add(pin.Key);
+        }
+        foreach (KeyValuePair<string, int> pin in _weekOverrides)
+        {
+            int? floor = PlacedWeek(pin.Key);
+            if (floor != null && pin.Value < floor.Value)
                 _rejectedSeasonOverrides.Add(pin.Key);
         }
     }
+
+    /// <summary>The week a rule placed the id at, or null when no rule did.</summary>
+    private int? PlacedWeek(string id)
+    {
+        if (_derived.TryGetValue(id, out ItemAvailability? d)) return d.Week;
+        if (_effortDerived.TryGetValue(id, out ItemEffort? e) && e.EarliestWeek != null) return e.EarliestWeek;
+        return null;
+    }
+
+    /// <summary>True when a rule or an accepted override says when the item first exists.</summary>
+    public bool IsPlaced(string qualifiedItemId)
+        => qualifiedItemId != null
+           && (PlacedWeek(qualifiedItemId) != null
+               || (_seasonOverrides.ContainsKey(qualifiedItemId) && !_rejectedSeasonOverrides.Contains(qualifiedItemId))
+               || (_weekOverrides.ContainsKey(qualifiedItemId) && !_rejectedSeasonOverrides.Contains(qualifiedItemId)));
+
+    /// <summary>Every id For() has been asked about that nothing placed. The list Jeff reads
+    /// after every sim (memory tly-sim-list-unknowns-each-run).</summary>
+    public IReadOnlyCollection<string> UnknownIds => _unknown;
 
     /// <summary>Ids that fell through to the unrecognised default during this session's lookups.
     /// Surfaced by tly_itemmodel so a modded item the engine cannot place is visible rather than
@@ -122,29 +151,51 @@ public sealed class ItemAvailabilityModel
         bool hasSeasonOverride = _seasonOverrides.TryGetValue(qualifiedItemId, out Season overrideSeason);
         bool hasEffortOverride = _effortOverrides.TryGetValue(qualifiedItemId, out int overrideEffort);
 
-        if (!known && !effortKnown && !hasSeasonOverride && !hasEffortOverride)
+        if (!known && !effortKnown && !hasSeasonOverride && !hasEffortOverride && !_weekOverrides.ContainsKey(qualifiedItemId))
         {
             _unrecognised.Add(qualifiedItemId);
-            return new ItemAvailability(Season.Winter, UnrecognisedEffort, UnrecognisedBasis, EffortSource.Price);
+            _unknown.Add(qualifiedItemId);
+            return new ItemAvailability(Season.Winter, UnrecognisedEffort, UnrecognisedBasis, EffortSource.Price,
+                AvailabilityWeeks.UnknownWeek, Season.Winter);
         }
 
-        Season season = derived?.EarliestSeason ?? Season.Winter;
+        int week = derived?.Week ?? effortOnly?.EarliestWeek ?? AvailabilityWeeks.UnknownWeek;
+        Season gate = derived?.Gate ?? effortOnly?.GateSeason ?? AvailabilityWeeks.SeasonOf(week);
+        bool placed = PlacedWeek(qualifiedItemId) != null;
         int effort = derived?.Effort ?? effortOnly?.Effort ?? UnrecognisedEffort;
         string basis = derived?.Basis
-            ?? (effortOnly != null ? $"{effortOnly.Basis}; {EffortOnlyFloorNote}" : UnrecognisedBasis);
+            ?? (effortOnly != null ? effortOnly.Basis + (placed ? "" : "; " + EffortOnlyFloorNote) : UnrecognisedBasis);
         EffortSource source = known || effortKnown ? EffortSource.Derived : EffortSource.Price;
+        bool rejected = _rejectedSeasonOverrides.Contains(qualifiedItemId);
 
         if (hasSeasonOverride)
         {
-            if (_rejectedSeasonOverrides.Contains(qualifiedItemId))
+            if (rejected)
             {
                 basis = $"season override to {overrideSeason} REJECTED, earlier than derived floor "
-                    + $"{season} (derived: {basis})";
+                    + $"week {week} (derived: {basis})";
             }
             else
             {
                 basis = $"season override to {overrideSeason} (derived: {basis})";
-                season = overrideSeason;
+                week = AvailabilityWeeks.FirstWeekOf(overrideSeason);
+                gate = overrideSeason;
+                placed = true;
+            }
+        }
+        if (_weekOverrides.TryGetValue(qualifiedItemId, out int overrideWeek))
+        {
+            if (rejected)
+            {
+                basis = $"week override to {overrideWeek} REJECTED, earlier than derived floor "
+                    + $"week {week} (derived: {basis})";
+            }
+            else
+            {
+                basis = $"week override to {overrideWeek} (derived: {basis})";
+                week = overrideWeek;
+                gate = AvailabilityWeeks.SeasonOf(week);
+                placed = true;
             }
         }
         if (hasEffortOverride)
@@ -153,7 +204,7 @@ public sealed class ItemAvailabilityModel
             effort = overrideEffort;
             source = EffortSource.Override;
         }
-
-        return new ItemAvailability(season, effort, basis, source);
+        if (!placed) _unknown.Add(qualifiedItemId);
+        return new ItemAvailability(AvailabilityWeeks.SeasonOf(week), effort, basis, source, week, gate);
     }
 }
