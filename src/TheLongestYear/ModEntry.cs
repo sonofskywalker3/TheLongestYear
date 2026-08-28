@@ -245,6 +245,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
+            helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
@@ -1708,6 +1709,7 @@ namespace TheLongestYear
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_goals": this.CmdGoals(command, args); break;
+                case "tly_playseason": this.CmdPlaySeason(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
@@ -1866,6 +1868,123 @@ namespace TheLongestYear
                 pins[kv.Key] = kv.Value;
 
             LogGateAudit(requirements, pins, "tly_gatecheck");
+        }
+
+
+        /// <summary><c>tly_playseason [goals]</c>: simulate a minimal compliant player for the CURRENT
+        /// season (real-play audit, Jeff 2026-08-28: "I need REAL PLAY SIMULATION DATA"). Donates,
+        /// through real CC slot flips plus the run ledger, exactly what every bundle's gate demands
+        /// by this season's day 28 (nothing more), pays the vault bundles the season ordinal needs,
+        /// and with <c>goals</c> also deposits the current week's goal slots. Then reports whether
+        /// the season gate would pass. Follow with <c>tly_setday 28</c> and a sleep so the real gate
+        /// runs and the next season's hub samples goals from what is actually left open.</summary>
+        private void CmdPlaySeason(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var requirements = _runController?.Requirements;
+            if (requirements == null || requirements.Count == 0) { this.Monitor.Log("No requirements on this save.", LogLevel.Warn); return; }
+            bool chaseGoals = args.Length > 0 && string.Equals(args[0], "goals", StringComparison.OrdinalIgnoreCase);
+
+            RunState run = _meta.Run;
+            TheLongestYear.Core.Season season = run.Season;
+            var worldState = Game1.netWorldState?.Value;
+            if (worldState?.BundleData == null || worldState.Bundles?.FieldDict == null) { this.Monitor.Log("No bundle data.", LogLevel.Warn); return; }
+
+            // Bundle name -> (index, ingredient id -> ingredient line index) from the live board.
+            var lines = new Dictionary<string, (int Index, Dictionary<string, int> Slots)>(StringComparer.Ordinal);
+            foreach (var kvp in worldState.BundleData)
+            {
+                ParsedBundle parsed = BundleParsing.Parse(kvp.Key, kvp.Value);
+                var slots = new Dictionary<string, int>(StringComparer.Ordinal);
+                for (int i = 0; i < parsed.Ingredients.Count; i++)
+                {
+                    string refId = parsed.Ingredients[i].ItemRef;
+                    if (BundleParsing.IsCategoryRef(refId)) continue;
+                    string id = BundleParsing.NormalizeItemId(refId);
+                    if (!slots.ContainsKey(id)) slots[id] = i;
+                }
+                if (!lines.ContainsKey(parsed.Name)) lines[parsed.Name] = (parsed.Index, slots);
+            }
+
+            bool Flip(int bundleIndex, int ingredientIndex)
+            {
+                if (!worldState.Bundles.FieldDict.ContainsKey(bundleIndex)) return false;
+                bool[] arr = (bool[])worldState.Bundles[bundleIndex].Clone();
+                if (ingredientIndex < 0 || ingredientIndex >= arr.Length) return false;
+                if (arr[ingredientIndex]) return true;
+                arr[ingredientIndex] = true;
+                worldState.Bundles[bundleIndex] = arr;
+                return true;
+            }
+
+            TheLongestYear.Integration.ItemDonationSync.Reconcile(run);
+            ISet<string> donated = run.DonatedSet();
+            int flipped = 0;
+            var log = new List<string>();
+
+            foreach (BundleRequirement req in requirements)
+            {
+                if (!lines.TryGetValue(req.Name, out var bundle)) { log.Add($"  {req.Name}: not on the live board, skipped"); continue; }
+                // Donate until this bundle's gate is satisfied for the season: due-now items first
+                // (PerItem), obtainable-by-now items first (Percentage), anything undonated (Seasonal).
+                int guard = 0;
+                while (!req.IsSatisfiedAtSeasonEnd(season, donated) && guard++ < 32)
+                {
+                    IEnumerable<string> candidates = req.Kind switch
+                    {
+                        BundleKind.PerItem => req.ItemSeasonPins
+                            .Where(kv => (int)kv.Value <= (int)season).OrderBy(kv => (int)kv.Value).Select(kv => kv.Key),
+                        _ => req.Ingredients
+                            .OrderBy(id => Enumerable.Range(0, (int)season + 1).Any(s => _runController.IsObtainableInSeason(id, (TheLongestYear.Core.Season)s)) ? 0 : 1),
+                    };
+                    string pick = candidates.FirstOrDefault(id => !donated.Contains(id) && bundle.Slots.ContainsKey(id));
+                    if (pick == null) { log.Add($"  {req.Name}: nothing left to donate but the gate is still open"); break; }
+                    if (!Flip(bundle.Index, bundle.Slots[pick])) { log.Add($"  {req.Name}: could not flip slot for {DisplayName(pick)}"); break; }
+                    run.RecordDonation(pick);
+                    donated = run.DonatedSet();
+                    flipped++;
+                    log.Add($"  {req.Name} ({req.Kind}): donated {DisplayName(pick)} ({pick})");
+                }
+            }
+
+            if (chaseGoals)
+            {
+                foreach (BonusSlot slot in run.CurrentWeekBonusSlots)
+                {
+                    if (Flip(slot.BundleIndex, slot.IngredientIndex))
+                    {
+                        run.RecordDonation(slot.ItemId);
+                        WeeklyGoalCredit.RecordDeposit(run.CurrentWeekBonusSlots, slot.BundleIndex, slot.IngredientIndex);
+                        flipped++;
+                        log.Add($"  goal: deposited {DisplayName(slot.ItemId)} into {slot.BundleName}");
+                    }
+                }
+                _questService?.OnItemDonated();
+            }
+
+            // Vault: the season ordinal (1 by Spring, 2 by Summer ...), cheapest first.
+            int needVault = VaultRules.SeasonOrdinal(season);
+            foreach (int idx in TheLongestYear.Integration.VaultBundleMap.Indices())
+            {
+                if (run.VaultBundlesPaid.Count >= needVault) break;
+                if (run.VaultBundlesPaid.Contains(idx)) continue;
+                if (Flip(idx, 0))
+                {
+                    DonationService.Active?.OnVaultBundlePaid(idx);
+                    log.Add($"  vault: paid bundle {idx} ({TheLongestYear.Integration.VaultBundleMap.GoldForIndex(idx):N0}g)");
+                }
+            }
+
+            donated = run.DonatedSet();
+            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
+            bool gateOk = BundleGate.IsSatisfied(season, donated, requirements, vaultOk);
+            this.Monitor.Log($"tly_playseason: {season} day {run.DayOfMonth}, {flipped} slot(s) flipped{(chaseGoals ? " (goals chased)" : "")}, vault {run.VaultBundlesPaid.Count}/{needVault}.", LogLevel.Info);
+            foreach (string l in log) this.Monitor.Log(l, LogLevel.Info);
+            var open = requirements.Where(r => !r.IsSatisfiedAtSeasonEnd(season, donated)).Select(r => r.Name).ToList();
+            this.Monitor.Log(
+                gateOk ? $"tly_playseason: {season} gate WOULD PASS. Ledger {donated.Count} items."
+                       : $"tly_playseason: {season} gate WOULD FAIL: vault {vaultOk}, open bundles: {string.Join(", ", open)}",
+                gateOk ? LogLevel.Info : LogLevel.Error);
         }
 
         /// <summary><c>tly_goals [season] [weekOfYear]</c>: the weekly goals each theme would offer on the
