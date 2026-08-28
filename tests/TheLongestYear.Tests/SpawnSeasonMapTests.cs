@@ -45,6 +45,23 @@ public class SpawnSeasonMapTests
         Assert.Equal(new HashSet<Season> { Season.Summer, Season.Winter }, map["(O)144"]);
     }
 
+    /// <summary>Bundle-loop audit 2026-08-29: the weekly goals offered Chanterelle in Summer and
+    /// Purple Mushroom in Summer because the goal side read forage seasons straight from
+    /// Data/Locations, where Ginger Island's cave lists both with no season. The engine's forage
+    /// pool already applies the location exclusions and the condition seasons, so the goal side
+    /// takes its forage seasons from the same map the fish use.</summary>
+    [Fact]
+    public void FromPools_ForagePool_IncludedWithItsSeasons()
+    {
+        var pools = new ItemPools
+        {
+            Forage = new[] { Item("(O)281", Season.Fall), Item("(O)88") }, // Chanterelle; Coconut any season
+        };
+        var map = SpawnSeasonMap.FromPools(pools);
+        Assert.Equal(new HashSet<Season> { Season.Fall }, map["(O)281"]);
+        Assert.Equal(4, map["(O)88"].Count);
+    }
+
     [Fact]
     public void FromPools_EmptyPools_EmptyMap()
     {
