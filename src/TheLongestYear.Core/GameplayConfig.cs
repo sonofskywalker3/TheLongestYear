@@ -167,41 +167,11 @@ public sealed class GameplayConfig
     /// Each value must be ≤ that bundle's X (numberOfSlots). User <see cref="BundleQuotas"/>
     /// entries win on conflict.
     /// </summary>
+    /// <summary>Empty since the even-year spec (2026-08-28): a pick-X-of-Y bundle's ramp now follows
+    /// its own items (BundleClassifier.RampFromItems). The user's <see cref="BundleQuotas"/> is the
+    /// only hand override left. The 2026-08-21 curated table is in git history.</summary>
     public static IReadOnlyDictionary<string, int[]> DefaultBundleQuotas { get; } =
-        new Dictionary<string, int[]>
-        {
-            // Crafts Room
-            ["Exotic Foraging"] = new[] { 1, 2, 4, 5 },   // X=5 of Y=9
-            // Pantry
-            ["Quality Crops"]   = new[] { 1, 2, 3, 3 },   // X=3 of Y=4
-            ["Animal"]          = new[] { 1, 2, 4, 5 },   // X=5 of Y=6
-            ["Artisan"]         = new[] { 1, 2, 3, 6 },   // X=6 of Y=12
-            // Fish Tank
-            ["Crab Pot"]        = new[] { 1, 2, 4, 5 },   // X=5 of Y=10
-            // Boiler Room
-            ["Adventurer's"]    = new[] { 0, 1, 1, 2 },   // X=2 of Y=5
-            // Bulletin Board
-            ["Chef's"]          = new[] { 0, 1, 2, 3 },   // X=3 of Y=6  — lean-late ramp (user)
-
-            // Curated 2026-08-21 (user ruling: "do it for all") — remix-pool + authored pick-X-of-Y
-            // bundles whose derived floor(X*[.25,.5,.75,1]) ramp demanded a donation before any of
-            // the bundle's items can exist (run-bricking) or was plainly harsh/lax. Obtainability
-            // reasoning per bundle: docs/superpowers/specs/2026-08-21-curated-quota-ramps-design.md.
-            // Run-bricking set:
-            ["Winter Star"]          = new[] { 0, 0, 0, 2 },   // X=2 of 4 — Holly/Plum Pudding/Stuffing/Powdermelon are all Fall-Winter
-            ["Forager's"]            = new[] { 0, 0, 2, 2 },   // X=2 of 3 — Salmonberry (Sp 15-18), Blackberry + Wild Plum (Fall)
-            ["Gil's Trophies"]       = new[] { 0, 0, 1, 2 },   // X=2 of 4 — Spring/Summer trophies are a coin flip; rest are Fall+
-            ["Brewer's"]             = new[] { 0, 1, 2, 4 },   // X=4 of 5 — random artisan goods; keg/press are not a Spring thing
-            ["Preserver's"]          = new[] { 0, 1, 2, 4 },   // X=4 of 6 — same pool as Brewer's
-            ["Mineral"]              = new[] { 0, 1, 2, 4 },   // X=4 of 6 — ~9%/loop no Spring-obtainable geode mineral among 6
-            // Harsh/lax set:
-            ["Home Cook's Feast"]    = new[] { 0, 1, 2, 4 },   // X=4 of 6 — no kitchen by Spring 28 on 500g; matches Chef's shape
-            ["Fish Farmer's"]        = new[] { 0, 0, 1, 2 },   // X=2 of 3 — Roe needs a 5,000g Fish Pond; first ask in Fall
-            ["Artifact"]             = new[] { 0, 1, 2, 4 },   // X=4 of 6 — 1 specific artifact by Spring 28 is a coin flip
-            ["Four Seasons Sampler"] = new[] { 1, 3, 4, 5 },   // X=5 of 6 — forage expires with its season; front-load instead
-            ["Rare Crops"]           = new[] { 0, 0, 1, 1 },   // X=1 of 2 — force the one donation by Fall 28, not Winter 28
-            ["Garden"]               = new[] { 1, 2, 4, 4 },   // X=4 of 5 — complete by Fall 28 while crops still grow
-        };
+        new Dictionary<string, int[]>();
 
     /// <summary>The ten difficulty modifiers (spec 2026-08-26). Each is an independent
     /// Easy/Normal/Hard/Extreme step; there is no overall tier. Every one defaults to Normal,
