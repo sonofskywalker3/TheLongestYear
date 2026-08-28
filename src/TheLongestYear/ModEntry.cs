@@ -245,6 +245,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
+            helper.ConsoleCommands.Add("tly_skipscene", "Finish the open day-28 Junimo scene as if clicked through (debug/automation).", this.CmdSkipScene);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
@@ -1736,6 +1737,7 @@ namespace TheLongestYear
                 case "tly_resetif": this.ResetIfNameMatches(command, args); break;
                 case "tly_leaktest": this.LeakTest(command, args); break;
                 case "tly_select": this.CmdSelect(command, args); break;
+                case "tly_skipscene": this.CmdSkipScene(command, args); break;
                 case "tly_offer": this.CmdOffer(command, args); break;
                 case "tly_donate": this.CmdDonate(command, args); break;
                 case "tly_runstate": this.CmdRunState(command, args); break;
@@ -1800,6 +1802,18 @@ namespace TheLongestYear
             // skipOfferCheck: this is a debug/playtest command; let it force any theme, not just
             // the seeded pair. The SelectedThemesThisMonth dedupe inside Select still applies.
             _runController.SelectByName(args[0], skipOfferCheck: true);
+        }
+
+        private void CmdSkipScene(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.activeClickableMenu is TheLongestYear.UI.Day28CutsceneMenu scene)
+            {
+                scene.SkipToEnd();
+                this.Monitor.Log("tly_skipscene: finished the day-28 scene.", LogLevel.Info);
+                return;
+            }
+            this.Monitor.Log($"tly_skipscene: no day-28 scene is open (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}).", LogLevel.Info);
         }
 
         private void CmdOffer(string command, string[] args)

@@ -59,6 +59,11 @@ namespace TheLongestYear.UI
             Game1.playSound("junimoMeep1");
         }
 
+        /// <summary>Debug/automation: end the scene as if every page had been clicked through, so
+        /// an unattended run (tly_skipscene over the file bridge) can pass day 28 without the
+        /// mouse. Runs the same completion callback a real click-through would.</summary>
+        public void SkipToEnd() => Finish();
+
         private void Finish()
         {
             if (_done) return;
