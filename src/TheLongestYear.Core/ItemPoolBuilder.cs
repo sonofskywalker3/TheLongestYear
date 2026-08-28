@@ -474,6 +474,16 @@ public static class ItemPoolBuilder
     /// ruling assumed the swamp was reachable in year 1, which it is not).</summary>
     public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers = new[] { "BugLand", "WitchSwamp" };
 
+    /// <summary>Data/Locations keys that are not places anyone fishes or forages, matched
+    /// EXACTLY (case-insensitive) rather than by substring so a modded "Temple" or
+    /// "DefaultFarm" map stays in. "Temp" is the Festival of Ice contest map: its rows mix
+    /// river and ocean fish (Red Mullet next to Bream) and carry no season, so treating it
+    /// as a habitat leaked ocean fish into Lake Fish, river fish into Ocean Fish, and marked
+    /// river fish catchable year-round (player report, 2026-08-28). "fishingGame" is the
+    /// Fair minigame; "Default" is the trash / Joja Cola table every water shares.</summary>
+    public static readonly IReadOnlySet<string> BuiltInNonHabitatLocationKeys =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Default", "Temp", "fishingGame" };
+
     /// <summary>Structural + configured vetting. False = never offer this item.</summary>
     private static bool Vets(
         string bareId, string qualifiedId,
@@ -594,11 +604,14 @@ public static class ItemPoolBuilder
     private static IReadOnlyList<PoolItem> Finish(IEnumerable<PoolItem> items)
         => items.OrderBy(p => p.ItemId, StringComparer.Ordinal).ToList();
 
-    /// <summary>True when a Data/Locations key matches any excluded-location marker —
-    /// built-in (<see cref="BuiltInExcludedLocationMarkers"/>) or configured —
-    /// (case-insensitive substring): such locations never feed the pools.</summary>
+    /// <summary>True when a Data/Locations key is a built-in non-habitat key
+    /// (<see cref="BuiltInNonHabitatLocationKeys"/>, exact match) or matches any
+    /// excluded-location marker — built-in (<see cref="BuiltInExcludedLocationMarkers"/>)
+    /// or configured — (case-insensitive substring): such locations never feed the pools.</summary>
     public static bool IsExcludedLocation(string locationKey, IReadOnlyList<string> markers)
     {
+        if (BuiltInNonHabitatLocationKeys.Contains(locationKey))
+            return true;
         foreach (string marker in BuiltInExcludedLocationMarkers.Concat(markers))
         {
             if (!string.IsNullOrEmpty(marker)

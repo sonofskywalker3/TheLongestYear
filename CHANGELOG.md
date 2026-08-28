@@ -14,6 +14,10 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - **Bear's Knowledge and Spring Onion Mastery no longer survive a rewind for free.** The game grants them by "you have seen this scene", and the rewind used to re-mark those scenes as seen, so both powers came back every loop unpaid. They are now wiped with the loop like every other power; the bear and the river lesson can be found again, or the keep can be bought.
 
+### Fixed
+
+- **Ocean fish in lake bundles, river fish in ocean bundles.** The engine treated every Data/Locations key a fish spawns in as a habitat, including three that are not fishing spots: the Festival of Ice contest map (`Temp`, whose rows mix Red Mullet with Bream and carry no season), the Fair minigame (`fishingGame`) and the shared trash table (`Default`). That let Red Mullet into Lake Fish, Bream/Pike/Sunfish into Ocean Fish, marked river fish as catchable all year, and put Trash and Joja Cola in the fish pool Weatherman's draws from. Those keys are now ignored when the pools are built (player report, 2026-08-28).
+
 ## 0.16.17 - 2026-08-27
 
 1153 tests. Both features live-smoked on the throwaway save (STATUS.md). 0.16.8 to 0.16.16 were
