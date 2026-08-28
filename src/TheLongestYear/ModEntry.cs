@@ -519,6 +519,7 @@ namespace TheLongestYear
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
             _runController.LimitedGoalGroup = enginePools.FruitTreeFruitIds;
+            _runController.Availability = _availability;
             _runController.AttachQuestService(_questService);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
