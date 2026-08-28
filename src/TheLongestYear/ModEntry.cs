@@ -2054,8 +2054,13 @@ namespace TheLongestYear
                         string body;
                         if (match.Domain != PoolDomain.None)
                         {
-                            string season = match.Season != null ? $", {match.Season} only" : "";
-                            body = $"  - Re-rolls from the **{match.Domain}** pool{season}. Any item in that pool can appear; see the pool tables below.";
+                            string season = match.Season != null ? $", {match.Season} only (items specific to that season)" : "";
+                            string rule = match.Domain == PoolDomain.Fish
+                                ? (TheLongestYear.Core.FishBundleCandidates.IsNightFishingBundle(c)
+                                    ? " Only fish that cannot be caught before 6pm, plus at most one Night Market fish."
+                                    : " Only fish sharing a spawn location with the bundle's vanilla fish.")
+                                : " Any item in that pool can appear.";
+                            body = $"  - Re-rolls from the **{match.Domain}** pool{season}.{rule} No item is asked for twice across the board; see the pool tables below.";
                         }
                         else
                         {
