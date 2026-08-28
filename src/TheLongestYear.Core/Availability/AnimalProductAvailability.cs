@@ -4,12 +4,13 @@ using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
-/// <summary>Effort for an animal product (Data/FarmAnimals + Data/Buildings): the housing chain
-/// (Coop or Barn 1, Big 2, Deluxe 3, counted through BuildingToUpgrade) plus a price step from
-/// the animal's purchase price, plus one for a deluxe produce (needs friendship) and one when the
-/// animal takes more than a day per product. An animal Marnie does not sell (incubator hatch,
-/// Ginger Island) takes a fixed step instead of a price step. Minimum over every animal that
-/// makes the item.</summary>
+/// <summary>Effort and first week for an animal product (Data/FarmAnimals + Data/Buildings): the
+/// housing chain (Coop or Barn 1, Big 2, Deluxe 3, counted through BuildingToUpgrade) plus a
+/// price step from the animal's purchase price, plus one for a deluxe produce (needs friendship)
+/// and one when the animal takes more than a day per product. An animal Marnie does not sell
+/// (incubator hatch, Ginger Island) takes a fixed step instead of a price step. Minimum over
+/// every animal that makes the item. The week follows the building tier
+/// (AvailabilityWeeks.HousingTierWeek); a deluxe produce counts one tier later.</summary>
 public static class AnimalProductAvailability
 {
     private const int BaseHousingEffort = 1;
@@ -23,7 +24,8 @@ public static class AnimalProductAvailability
     public static int PriceStep(int purchasePrice)
         => purchasePrice < CheapPrice ? 0 : purchasePrice < MidPrice ? 1 : 2;
 
-    public static int HousingEffort(string building, IReadOnlyList<RawBuilding> buildings)
+    /// <summary>Upgrades above the base building (Coop 0, Big Coop 1, Deluxe Coop 2).</summary>
+    public static int HousingLinks(string building, IReadOnlyList<RawBuilding> buildings)
     {
         int links = 0;
         string? current = building;
@@ -34,8 +36,11 @@ public static class AnimalProductAvailability
             links++;
             current = entry.BuildingToUpgrade;
         }
-        return BaseHousingEffort + links;
+        return links;
     }
+
+    public static int HousingEffort(string building, IReadOnlyList<RawBuilding> buildings)
+        => BaseHousingEffort + HousingLinks(building, buildings);
 
     public static ItemEffort? Derive(
         string qualifiedId, IReadOnlyList<RawFarmAnimal> animals, IReadOnlyList<RawBuilding> buildings)
@@ -48,20 +53,23 @@ public static class AnimalProductAvailability
             bool regular = animal.ProduceIds.Contains(qualifiedId);
             bool deluxe = animal.DeluxeProduceIds.Contains(qualifiedId);
             if (!regular && !deluxe) continue;
-
-            int housing = HousingEffort(animal.Building, buildings);
+            int links = HousingLinks(animal.Building, buildings);
+            int housing = BaseHousingEffort + links;
             bool forSale = animal.PurchasePrice >= 0;
             int price = forSale ? PriceStep(animal.PurchasePrice) : NotForSaleStep;
             int deluxeStep = regular ? 0 : DeluxeStep;
             int slow = animal.DaysToProduce > 1 ? SlowProduceStep : 0;
             int effort = housing + price + deluxeStep + slow;
-            if (best == null || effort < best.Effort)
+            int week = AvailabilityWeeks.HousingTierWeek(links + (regular ? 0 : 1));
+            bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
+            if (better)
                 best = new ItemEffort(effort,
                     $"animal product, {animal.Name} in {animal.Building} (housing {housing}), "
                     + (forSale ? $"price {animal.PurchasePrice}g (+{price})" : $"not for sale (+{price})")
                     + (deluxeStep > 0 ? ", deluxe produce (+1)" : "")
                     + (slow > 0 ? $", {animal.DaysToProduce} days per product (+1)" : "")
-                    + $", effort {effort}");
+                    + $", week {week}, effort {effort}",
+                    week, AvailabilityWeeks.SeasonOf(week));
         }
         return best;
     }

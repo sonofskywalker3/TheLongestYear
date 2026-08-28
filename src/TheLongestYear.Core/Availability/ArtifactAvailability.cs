@@ -3,10 +3,12 @@ using System.Collections.Generic;
 
 namespace TheLongestYear.Core.Availability;
 
-/// <summary>Effort for an artifact: the reach effort of the location whose dig spots can yield
-/// it (Data/Locations ArtifactSpots, decompile GameLocation.cs:14062) plus a rarity step from the
-/// spot chance, minimum over every location. This is what makes a Dinosaur Egg (Mountain spots
-/// at 0.005) harder than a Diamond whatever the two sell for.</summary>
+/// <summary>Effort and first week for an artifact: the reach effort of the location whose dig
+/// spots can yield it (Data/Locations ArtifactSpots, decompile GameLocation.cs:14062) plus a
+/// rarity step from the spot chance, minimum over every location. This is what makes a Dinosaur
+/// Egg (Mountain spots at 0.005) harder than a Diamond whatever the two sell for. The week is
+/// week 1 (artifact spots and the museum exist on day 1) unless every spot is behind a gated
+/// location (Desert week 9).</summary>
 public static class ArtifactAvailability
 {
     private const int TownReach = 1;
@@ -42,9 +44,12 @@ public static class ArtifactAvailability
             if (spot.ItemId != qualifiedId) continue;
             int step = ChanceStep(spot.Chance);
             int effort = ReachEffort(spot.Location) + step;
-            if (best == null || effort < best.Effort)
+            int week = Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.WeekFor(spot.Location));
+            bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
+            if (better)
                 best = new ItemEffort(effort,
-                    $"artifact spot, {spot.Location} at {spot.Chance:0.####} (+{step}), effort {effort}");
+                    $"artifact spot, {spot.Location} at {spot.Chance:0.####} (+{step}), week {week}, effort {effort}",
+                    week, AvailabilityWeeks.SeasonOf(week));
         }
         return best;
     }

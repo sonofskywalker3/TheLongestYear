@@ -4,10 +4,12 @@ using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
-/// <summary>Effort for a cooked dish (Data/CookingRecipes): its hardest ingredient (a category
-/// ref such as "any milk" uses the cheapest member), plus the recipe unlock, plus the kitchen
-/// (house upgrade 1, dropped when keep_kitchen is owned). A dish with an ingredient no rule can
-/// place is Extreme.</summary>
+/// <summary>Effort and first week for a cooked dish (Data/CookingRecipes): its hardest
+/// ingredient (a category ref such as "any milk" uses the cheapest member), plus the recipe
+/// unlock, plus the kitchen (house upgrade 1, dropped when keep_kitchen is owned). A dish with an
+/// ingredient no rule can place is Extreme and, for the week, unplaced. The week is the later of
+/// the kitchen week (AvailabilityWeeks.KitchenWeek, or week 1 with keep_kitchen) and the latest
+/// ingredient's week.</summary>
 public static class CookedDishAvailability
 {
     public const int ExtremeEffort = 12;
@@ -34,10 +36,12 @@ public static class CookedDishAvailability
         return SpecialUnlockEffort;
     }
 
-    public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf, bool hasKitchen)
+    public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf, bool hasKitchen,
+        Func<string, int?>? weekOf = null)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
+        weekOf ??= _ => null;
         ItemEffort? best = null;
         foreach (RawCookingRecipe recipe in data.CookingRecipes)
         {
@@ -45,22 +49,33 @@ public static class CookedDishAvailability
             int hardest = 0;
             string hardestId = "";
             string? missing = null;
+            int? latestWeek = hasKitchen ? 1 : AvailabilityWeeks.KitchenWeek;
             foreach (string ingredient in recipe.IngredientIds)
             {
                 int? e = IngredientEffort(ingredient, data, effortOf);
                 if (e == null) { missing = ingredient; break; }
                 if (e >= hardest) { hardest = e.Value; hardestId = ingredient; }
+                int? w = IngredientWeek(ingredient, data, weekOf);
+                if (w == null) latestWeek = null;
+                else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
             ItemEffort candidate = missing != null
                 ? new ItemEffort(ExtremeEffort, $"dish {recipe.Name}: ingredient {missing} unrecognised, extreme")
                 : new ItemEffort(
                     hardest + UnlockEffort(recipe.UnlockCondition) + (hasKitchen ? 0 : KitchenCost),
                     $"dish {recipe.Name}: hardest ingredient {hardestId} ({hardest}) + unlock '{recipe.UnlockCondition}' "
-                    + $"({UnlockEffort(recipe.UnlockCondition)}) + kitchen {(hasKitchen ? 0 : KitchenCost)}");
-            if (best == null || candidate.Effort < best.Effort)
+                    + $"({UnlockEffort(recipe.UnlockCondition)}) + kitchen {(hasKitchen ? 0 : KitchenCost)}",
+                    latestWeek, latestWeek == null ? null : AvailabilityWeeks.SeasonOf(latestWeek.Value));
+            bool better = best == null
+                || (candidate.EarliestWeek ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
+                || (candidate.EarliestWeek == best.EarliestWeek && candidate.Effort < best.Effort);
+            if (better)
                 best = candidate;
         }
-        return best == null ? null : new ItemEffort(best.Effort, $"{best.Basis}, effort {best.Effort}");
+        return best == null
+            ? null
+            : new ItemEffort(best.Effort, $"{best.Basis}, week {(best.EarliestWeek?.ToString() ?? "unknown")}, effort {best.Effort}",
+                best.EarliestWeek, best.GateSeason);
     }
 
     private static int? IngredientEffort(string ingredient, EffortData data, Func<string, int?> effortOf)
@@ -77,5 +92,23 @@ public static class CookedDishAvailability
             return cheapest;
         }
         return effortOf(BundleParsing.NormalizeItemId(ingredient));
+    }
+
+    /// <summary>A category ref takes the earliest member with a week; a member without one is
+    /// skipped, so "any fish" is as early as the earliest placed fish.</summary>
+    private static int? IngredientWeek(string ingredient, EffortData data, Func<string, int?> weekOf)
+    {
+        if (int.TryParse(ingredient, out int category) && category < 0)
+        {
+            int? earliest = null;
+            foreach (KeyValuePair<string, RawObjectEntry> kv in data.Objects.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+            {
+                if (kv.Value.Category != category) continue;
+                int? w = weekOf(BundleParsing.NormalizeItemId(kv.Key));
+                if (w != null && (earliest == null || w < earliest)) earliest = w;
+            }
+            return earliest;
+        }
+        return weekOf(BundleParsing.NormalizeItemId(ingredient));
     }
 }

@@ -170,9 +170,12 @@ namespace TheLongestYear.Loop
                 {
                     CropData c = kv.Value;
                     if (c?.HarvestItemId == null) continue;
+                    // StardewValley.Season and Core.Season share Spring=0..Winter=3.
+                    var seasons = (c.Seasons ?? new List<StardewValley.Season>())
+                        .Select(season => (TheLongestYear.Core.Season)(int)season).Distinct().ToList();
                     crops.Add(new RawCropGrowth(
                         BundleParsing.NormalizeItemId(c.HarvestItemId),
-                        (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised));
+                        (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised, seasons));
                 }
             }
             catch (Exception ex)
