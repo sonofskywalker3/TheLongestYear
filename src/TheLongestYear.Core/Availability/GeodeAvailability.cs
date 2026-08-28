@@ -15,15 +15,15 @@ public static class GeodeAvailability
     private const double UncommonChance = 1.0 / 20;
     private const double DefaultTableShare = 0.5;
 
-    private sealed record GeodeRule(int Effort, string Label);
+    private sealed record GeodeRule(int Area, int Effort, string Label);
 
     private static readonly IReadOnlyDictionary<string, GeodeRule> Geodes =
         new Dictionary<string, GeodeRule>(StringComparer.Ordinal)
         {
-            ["(O)535"] = new(1, "Geode, floors 1 to 39"),
-            ["(O)536"] = new(3, "Frozen Geode, floors 41 to 79"),
-            ["(O)537"] = new(5, "Magma Geode, floors 81 to 119"),
-            ["(O)749"] = new(4, "Omni Geode, any floor at low odds, Skull Cavern reliably"),
+            ["(O)535"] = new(MineAreas.Area0, 1, "Geode, floors 1 to 39"),
+            ["(O)536"] = new(MineAreas.Area40, 3, "Frozen Geode, floors 41 to 79"),
+            ["(O)537"] = new(MineAreas.Area80, 5, "Magma Geode, floors 81 to 119"),
+            ["(O)749"] = new(MineAreas.Area40, 4, "Omni Geode, any floor at low odds, Skull Cavern reliably"),
         };
 
     private static readonly IReadOnlyDictionary<string, string[]> DefaultTable =
@@ -53,9 +53,12 @@ public static class GeodeAvailability
                 continue;
             int step = ChanceStep(drop.Chance);
             int effort = geode.Effort + step;
-            if (best == null || effort < best.Effort)
+            int week = MineAreas.Week(geode.Area);
+            bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
+            if (better)
                 best = new ItemEffort(effort,
-                    $"geode, {geode.Label}, chance {drop.Chance:0.###} (+{step}), effort {effort}");
+                    $"geode, {geode.Label}, chance {drop.Chance:0.###} (+{step}), week {week}, effort {effort}",
+                    week, MineAreas.GateSeason(geode.Area));
         }
         return best;
     }

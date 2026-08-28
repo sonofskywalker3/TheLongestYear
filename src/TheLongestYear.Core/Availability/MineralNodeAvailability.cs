@@ -39,6 +39,9 @@ public static class MineralNodeAvailability
         if (qualifiedId == null || !Rules.TryGetValue(qualifiedId, out NodeRule? rule))
             return null;
         int effort = MineAreas.Effort(rule.Area);
-        return new ItemEffort(effort, $"node, {rule.Note}, {MineAreas.Label(rule.Area)}, effort {effort}");
+        int week = MineAreas.Week(rule.Area);
+        return new ItemEffort(effort,
+            $"node, {rule.Note}, {MineAreas.Label(rule.Area)}, week {week}, effort {effort}",
+            week, MineAreas.GateSeason(rule.Area));
     }
 }
