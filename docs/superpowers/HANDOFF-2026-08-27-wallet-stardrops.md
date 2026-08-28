@@ -17,10 +17,11 @@ Jeff chose this on 2026-08-27 late as the next build. Ruling already given: **wa
 Stardrops are keepable, bought with JP at the Junimo Shrine, per item**, the same shape as the
 keep-power-books feature that shipped in 0.16.17. Order of work:
 
-1. **Brainstorm** (superpowers:brainstorming) the open design points below with Jeff.
-2. **Spec** `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`, modelled on
-   `docs/superpowers/specs/2026-08-27-keep-power-books-design.md`. Stop for approval.
-3. **Plan** (superpowers:writing-plans), then build only if Jeff says to keep going.
+1. ~~Brainstorm~~ DONE 2026-08-27 late with Jeff.
+2. ~~Spec~~ WRITTEN and approved in brainstorm:
+   `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`. Read it first; it
+   supersedes the design notes below (which are kept for the reasoning).
+3. **Plan** (superpowers:writing-plans) from the spec, then build only if Jeff says to keep going.
 
 ## What already exists (reuse it)
 
