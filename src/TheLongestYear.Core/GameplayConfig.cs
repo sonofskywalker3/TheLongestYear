@@ -171,15 +171,15 @@ public sealed class GameplayConfig
         new Dictionary<string, int[]>
         {
             // Crafts Room
-            ["Exotic Foraging"] = new[] { 1, 3, 5, 5 },   // X=5 of Y=9
+            ["Exotic Foraging"] = new[] { 1, 2, 4, 5 },   // X=5 of Y=9
             // Pantry
             ["Quality Crops"]   = new[] { 1, 2, 3, 3 },   // X=3 of Y=4
-            ["Animal"]          = new[] { 1, 3, 5, 5 },   // X=5 of Y=6
-            ["Artisan"]         = new[] { 1, 2, 4, 6 },   // X=6 of Y=12
+            ["Animal"]          = new[] { 1, 2, 4, 5 },   // X=5 of Y=6
+            ["Artisan"]         = new[] { 1, 2, 3, 6 },   // X=6 of Y=12
             // Fish Tank
-            ["Crab Pot"]        = new[] { 1, 3, 5, 5 },   // X=5 of Y=10
+            ["Crab Pot"]        = new[] { 1, 2, 4, 5 },   // X=5 of Y=10
             // Boiler Room
-            ["Adventurer's"]    = new[] { 0, 1, 2, 2 },   // X=2 of Y=5
+            ["Adventurer's"]    = new[] { 0, 1, 1, 2 },   // X=2 of Y=5
             // Bulletin Board
             ["Chef's"]          = new[] { 0, 1, 2, 3 },   // X=3 of Y=6  — lean-late ramp (user)
 
@@ -193,7 +193,7 @@ public sealed class GameplayConfig
             ["Gil's Trophies"]       = new[] { 0, 0, 1, 2 },   // X=2 of 4 — Spring/Summer trophies are a coin flip; rest are Fall+
             ["Brewer's"]             = new[] { 0, 1, 2, 4 },   // X=4 of 5 — random artisan goods; keg/press are not a Spring thing
             ["Preserver's"]          = new[] { 0, 1, 2, 4 },   // X=4 of 6 — same pool as Brewer's
-            ["Mineral"]              = new[] { 0, 1, 3, 4 },   // X=4 of 6 — ~9%/loop no Spring-obtainable geode mineral among 6
+            ["Mineral"]              = new[] { 0, 1, 2, 4 },   // X=4 of 6 — ~9%/loop no Spring-obtainable geode mineral among 6
             // Harsh/lax set:
             ["Home Cook's Feast"]    = new[] { 0, 1, 2, 4 },   // X=4 of 6 — no kitchen by Spring 28 on 500g; matches Chef's shape
             ["Fish Farmer's"]        = new[] { 0, 0, 1, 2 },   // X=2 of 3 — Roe needs a 5,000g Fish Pond; first ask in Fall
@@ -269,7 +269,7 @@ public sealed class GameplayConfig
     /// (open lines the day-28 gate does not demand this season) per season, indexed
     /// Spring..Winter. Spring 0 keeps a theme week pure gate work; any-season stock is held for
     /// Winter, where it pays 4x. 99 = as many as the season cap allows.</summary>
-    public List<int> ThemeFillerBySeason { get; set; } = new() { 0, 1, 2, GoalSamplingRules.UnlimitedFiller };
+    public List<int> ThemeFillerBySeason { get; set; } = new() { 0, 0, 1, GoalSamplingRules.UnlimitedFiller };
 
     public int FillerAllowanceFor(Season season)
     {

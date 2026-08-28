@@ -1069,8 +1069,15 @@ namespace TheLongestYear.Loop
             var pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
                 theme, season, id => IsObtainableInSeason(id, season), ItemKindOf);
+            // Spec 2026-08-28-theme-week-budget: the season cap is a ceiling; the week asks for
+            // its share of what the pool still holds so week 4 looks like week 1.
+            int dueLines = 0;
+            foreach (BonusSlot s in pool) if (s.Due) dueLines++;
+            int budget = GoalBudget.For(
+                BonusListSizeFor(season), dueLines, pool.Count - dueLines,
+                _config.FillerAllowanceFor(season), GoalBudget.WeeksLeftInSeason(weekOfYear));
             return BonusSlotSampler.SampleSlots(
-                Run.Seed, weekOfYear, theme, pool, RarityForItem, BonusListSizeFor(season),
+                Run.Seed, weekOfYear, theme, pool, RarityForItem, budget,
                 remainingNeedForBundle: RemainingNeedForBundle,
                 caps: GoalCaps,
                 rules: RulesFor(season));

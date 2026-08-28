@@ -16,7 +16,7 @@ public class CuratedQuotaRampTests
         new object[] { "Gil's Trophies",       2, new[] { 0, 0, 1, 2 } },
         new object[] { "Brewer's",             4, new[] { 0, 1, 2, 4 } },
         new object[] { "Preserver's",          4, new[] { 0, 1, 2, 4 } },
-        new object[] { "Mineral",              4, new[] { 0, 1, 3, 4 } },
+        new object[] { "Mineral",              4, new[] { 0, 1, 2, 4 } },
         new object[] { "Home Cook's Feast",    4, new[] { 0, 1, 2, 4 } },
         new object[] { "Fish Farmer's",        2, new[] { 0, 0, 1, 2 } },
         new object[] { "Artifact",             4, new[] { 0, 1, 2, 4 } },
@@ -63,7 +63,9 @@ public class CuratedQuotaRampTests
             new Dictionary<string, Season>(), GameplayConfig.DefaultBundleQuotas);
 
         Assert.Equal(new[] { 0, 0, 1, 2 }, req!.CumulativeRequiredBySeason);
-        Assert.NotEqual(BundleClassifier.DerivedDefaultQuota(2), req.CumulativeRequiredBySeason);
+        // The late-leaning derived ramp (2026-08-28) happens to coincide at X=2; the curated
+        // entry is still the one in force (DefaultBundleQuotas carries it).
+        Assert.True(GameplayConfig.DefaultBundleQuotas.ContainsKey("Gil's Trophies"));
     }
 }
 
