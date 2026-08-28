@@ -237,7 +237,7 @@ public class BundleClassifierTests
         Assert.Equal(BundleKind.Percentage, req!.Kind);
         Assert.Equal(3, req.NumberOfSlots);
         Assert.Equal(5, req.Ingredients.Count);
-        // Derived ramp = floor(X * [0.15, 0.35, 0.60, 1.0]) (theme-week budget spec, 2026-08-28).
+        // Derived ramp = floor(X * [0.25, 0.35, 0.60, 1.0]) (theme-week budget spec, 2026-08-28).
         Assert.Equal(new[] { 0, 1, 1, 3 }, req.CumulativeRequiredBySeason);
     }
 
@@ -245,9 +245,10 @@ public class BundleClassifierTests
     [InlineData(1, new[] { 0, 0, 0, 1 })]
     [InlineData(2, new[] { 0, 0, 1, 2 })]
     [InlineData(3, new[] { 0, 1, 1, 3 })]
-    [InlineData(5, new[] { 0, 1, 3, 5 })]
-    [InlineData(6, new[] { 0, 2, 3, 6 })]
-    [InlineData(10, new[] { 1, 3, 6, 10 })]
+    [InlineData(4, new[] { 1, 1, 2, 4 })]
+    [InlineData(5, new[] { 1, 1, 3, 5 })]
+    [InlineData(6, new[] { 1, 2, 3, 6 })]
+    [InlineData(10, new[] { 2, 3, 6, 10 })]
     public void Derived_quota_ramp_leans_late(int x, int[] expected)
     {
         Assert.Equal(expected, BundleClassifier.DerivedDefaultQuota(x));

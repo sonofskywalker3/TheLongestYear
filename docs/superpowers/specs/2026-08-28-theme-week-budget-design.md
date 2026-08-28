@@ -74,7 +74,9 @@ forward; Fall may take one filler a week (four lines) so a thin Fall domain stil
 
 ### 4. Percentage ramps lean later
 
-Derived default `floor(X * [0.25, 0.50, 0.75, 1.0])` becomes `floor(X * [0.15, 0.35, 0.60, 1.0])`.
+Derived default `floor(X * [0.25, 0.50, 0.75, 1.0])` becomes `floor(X * [0.25, 0.35, 0.60, 1.0])`
+(Spring unchanged: Jeff, 2026-08-28, a 9-line Spring gate on the first 0.16.74 sim board was too light;
+Spring gates have run 11 to 12 lines on the sim boards and stay there).
 Curated entries whose Fall value already equalled Winter move one step later: Exotic Foraging,
 Animal, Crab Pot 1/3/5/5 become 1/2/4/5; Artisan 1/2/4/6 becomes 1/2/3/6; Adventurer's 0/1/2/2
 becomes 0/1/1/2; Mineral 0/1/3/4 becomes 0/1/2/4. Crop, forage-expiry and already-late entries
