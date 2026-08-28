@@ -212,12 +212,13 @@ public sealed class BundleRequirement
                     : Enumerable.Empty<string>();
 
             case BundleKind.PerItem:
-                // A deadline says when the item is DUE, not when it exists: Lake Fish pinned
-                // Sturgeon (Summer/Winter) to Fall and the Fishing theme offered it as a Fall goal
-                // (bundle-loop audit, 2026-08-29). Same predicate as Percentage below.
-                return ItemSeasonPins!
-                    .Where(kv => kv.Value == season && obtainablePredicate(kv.Key))
-                    .Select(kv => kv.Key);
+                // Every ingredient obtainable this season, whatever season it is DUE (real-play
+                // simulation, 2026-08-28): with only due-this-season items in play, a Bulletin
+                // Board of four PerItem bundles offered a single Mixed goal all Spring and none
+                // at all in weeks 3 and 4. A deadline says when the gate wants the item, not when
+                // the player may bank it; donating early is always allowed. The obtainability
+                // predicate stays (Sturgeon was offered in Fall, Rainbow Trout in Winter).
+                return Ingredients.Where(obtainablePredicate);
 
             case BundleKind.Percentage:
                 if (CumulativeRequiredBySeason![(int)season] == 0)

@@ -151,8 +151,11 @@ public class BundleRequirementTests
         Assert.Empty(b.InPlayItemsFor(Season.Summer, _ => true));
     }
 
+    /// <summary>Real-play simulation 2026-08-28: PerItem goals used to be only the items DUE this
+    /// season, which left the Mixed theme with one goal all Spring and none in weeks 3 and 4.
+    /// Every obtainable ingredient is a candidate now; the deadline only drives the gate.</summary>
     [Fact]
-    public void PerItem_in_play_items_are_the_ones_pinned_to_that_season()
+    public void PerItem_in_play_items_are_every_obtainable_ingredient_whatever_their_deadline()
     {
         var b = BundleRequirement.CreatePerItem("Blacksmiths", Theme.Mining,
             new Dictionary<string, Season>
@@ -160,9 +163,9 @@ public class BundleRequirementTests
                 ["Copper"] = Season.Spring,
                 ["Iron"] = Season.Summer
             });
-        Assert.Equal(new[] { "Copper" }, System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Spring, _ => true)));
-        Assert.Equal(new[] { "Iron" }, System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Summer, _ => true)));
-        Assert.Empty(b.InPlayItemsFor(Season.Fall, _ => true));
+        Assert.Equal(new[] { "Copper", "Iron" }, System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Spring, _ => true)));
+        Assert.Equal(new[] { "Copper", "Iron" }, System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Fall, _ => true)));
+        Assert.Equal(new[] { "Iron" }, System.Linq.Enumerable.ToArray(b.InPlayItemsFor(Season.Fall, id => id == "Iron")));
     }
 
     /// <summary>Bundle-loop audit 2026-08-29: Lake Fish pinned Sturgeon (Summer/Winter) to Fall
