@@ -39,7 +39,8 @@ public sealed class RunState
     /// </summary>
     public List<BonusSlot> CurrentWeekBonusSlots { get; set; } = new();
 
-    /// <summary>Themes already selected this month (cleared each month). The 5th is never selected.</summary>
+    /// <summary>Themes already selected this month (cleared each month): four picks from the
+    /// eight themes, so at least four are never selected in a given month.</summary>
     public List<Theme> SelectedThemesThisMonth { get; set; } = new();
 
     /// <summary>The theme selected this week, whose bonus/liability are active. Null between weeks.</summary>
