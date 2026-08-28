@@ -6,6 +6,13 @@
 **Build:** clean
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
+**Decision 2026-08-27 late (TODO walk with Jeff):** next build is **keep wallet items + Stardrops via
+per-item JP keeps at the shrine** (same shape as the book keeps). Brainstorm, then spec, then plan; see
+`docs/superpowers/HANDOFF-2026-08-27-wallet-stardrops.md`. TODO headings were caught up with the
+0.14.0 / 0.14.2 / 0.16.0 / 0.16.17 releases (1123181, rose1729, difficulty, books, deja-vu all shipped).
+The settings screenshots (Features, Difficulty) are confirmed live on Nexus (gallery + description) and
+GitHub. The Egg Hunt per-loop guard is still open: 0.14.1 only guards once per DAY.
+
 ## netWorldState keep/wipe audit (0.14.8): LIVE SMOKE PASSED 2026-08-27 19:09 to 19:20
 
 Save None_447546774 (renamed to None_447549305 by the reset), driven from the SMAPI console and

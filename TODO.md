@@ -6,7 +6,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### RULED (Jeff, 2026-08-27), NOT BUILT: keep wallet items and Stardrops with a JP purchase
+### ▶ NEXT SESSION (chosen by Jeff 2026-08-27 late): keep wallet items and Stardrops with a JP purchase
+
+Picked over the Egg Hunt per-loop guard, the weekly-themes brainstorm and the SVE audit because the
+book-keep machinery (reach-gated Carryover rows, price bands, re-grant from `RunBaseline`) is a day old
+and this is the same shape. Brainstorm first (pricing bands, Stardrop rows vs chain, Skull Cavern door
+state), then spec, then plan. Handoff: `docs/superpowers/HANDOFF-2026-08-27-wallet-stardrops.md`.
 
 Flagged during the keep-power-books brainstorm as the same class of "power granted by an in-world
 source" and left out of that pass. Jeff's ruling 2026-08-27: **yes, keepable, bought with JP at the
@@ -955,7 +960,7 @@ No new DMs since Jun 10 (VeggieGirl43 BC retest still unanswered).*
   broken save was abandoned and re-rolled, and xsansara can't reproduce. Keep an eye out for any
   other money-on-load report; nothing actionable now.
 
-### 📄 Mod page: surface the remixed-bundles recommendation (promised to khauser13 2026-06-10)
+### ✅ DONE - Mod page: surface the remixed-bundles recommendation (promised to khauser13 2026-06-10; Advanced Options screenshot is on the README and live on Nexus, checked 2026-08-27)
 khauser13: "Noticed in the change logs that it is recommended to use remixed bundles. You may want
 to include a picture of recommended settings or note that in the mod description." Replied on Nexus
 (2026-06-10) promising to add it. **Repo-side DONE (266d259):** Install step added to README +
