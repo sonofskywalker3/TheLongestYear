@@ -14,7 +14,16 @@ namespace TheLongestYear.Core;
 /// <param name="EarliestSeason">Hard floor: before this season the item cannot exist at all.</param>
 /// <param name="Effort">Derived judgement of how much work the item is. Higher is harder.</param>
 /// <param name="Basis">Human readable derivation, for tly_itemmodel and the generated model doc.</param>
-public sealed record ItemAvailability(Season EarliestSeason, int Effort, string Basis, EffortSource Source = EffortSource.Derived);
+public sealed record ItemAvailability(
+    Season EarliestSeason, int Effort, string Basis, EffortSource Source = EffortSource.Derived,
+    int EarliestWeek = 0, Season? GateSeason = null)
+{
+    /// <summary>First week of the year the item can exist; a record built from a season alone
+    /// reads as that season's first week.</summary>
+    public int Week => EarliestWeek > 0 ? EarliestWeek : AvailabilityWeeks.FirstWeekOf(EarliestSeason);
+    /// <summary>Season a day-28 gate may first demand the item.</summary>
+    public Season Gate => GateSeason ?? EarliestSeason;
+}
 
 /// <summary>Where an item's effort number came from: a derivation rule, the price bucket
 /// fallback (no rule claimed the id), or the curated effort override table.</summary>
@@ -23,7 +32,7 @@ public enum EffortSource { Derived, Price, Override }
 /// <summary>Effort without a season floor. Phase 2 rules (gems, geodes, monster drops,
 /// artifacts, artisan goods, animal products, dishes, crops, forage) produce these: they say how
 /// much work an item is, never when it first exists, so a gate is never moved by them.</summary>
-public sealed record ItemEffort(int Effort, string Basis);
+public sealed record ItemEffort(int Effort, string Basis, int? EarliestWeek = null, Season? GateSeason = null);
 
 /// <summary>Every item's <see cref="ItemAvailability"/>, plus the override layers.
 ///
