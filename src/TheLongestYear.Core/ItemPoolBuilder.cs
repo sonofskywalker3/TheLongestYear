@@ -67,7 +67,8 @@ public static class ItemPoolBuilder
         IReadOnlyList<RawGeodeDropEntry> geodeDrops,
         BundleGenerationTuning tuning,
         IReadOnlySet<string>? extraExcludedIds = null,
-        IReadOnlyDictionary<string, RawFishEntry>? fishRows = null)
+        IReadOnlyDictionary<string, RawFishEntry>? fishRows = null,
+        IReadOnlyDictionary<string, Season>? festivalSeasons = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
         // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
@@ -75,8 +76,8 @@ public static class ItemPoolBuilder
             excluded.UnionWith(extraExcludedIds);
 
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
-        var (fishPool, crabPotPool) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning);
-        var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning);
+        var (fishPool, crabPotPool) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons);
+        var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning, festivalSeasons);
         var qualityEligible = BuildQualityEligibleIds(crops, objects, forageSpawns, fishSpawns, trapFishIds, excluded);
         var monsterPool = BuildMonsterPool(monsterDrops, objects, excluded, tuning);
         var metalsPool = BuildCategoryPool(objects, MetalCategory, excluded, tuning);
@@ -110,26 +111,82 @@ public static class ItemPoolBuilder
         };
     }
 
+    /// <summary>Maps that only exist while a passive festival runs, keyed to that festival's
+    /// Data/PassiveFestivals id. The Night Market replaces the Beach with BeachNightMarket (that
+    /// pair is in the festival data) and adds the Submarine, which the data does not mention:
+    /// the game gates the market by date in code, so its spawn rows carry no season and read as
+    /// all-year (player report 2026-08-28: a Sea Cucumber demanded before Summer 1).</summary>
+    private static readonly IReadOnlyDictionary<string, string> BuiltInFestivalLocations =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Submarine"] = "NightMarket",
+            ["BeachNightMarket"] = "NightMarket",
+        };
+
+    /// <summary>Vanilla passive-festival seasons, used only when the caller supplies no
+    /// Data/PassiveFestivals table (hand-built pools) or the table lacks the id.</summary>
+    private static readonly IReadOnlyDictionary<string, Season> BuiltInFestivalSeasons =
+        new Dictionary<string, Season>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["NightMarket"] = Season.Winter,
+            ["SquidFest"] = Season.Winter,
+            ["TroutDerby"] = Season.Summer,
+            ["DesertFestival"] = Season.Spring,
+        };
+
+    private const string PassiveFestivalOpenQuery = "IS_PASSIVE_FESTIVAL_OPEN";
+    private static readonly char[] ConditionSeparators = { ' ', ',' };
+
     /// <summary>Season list for one spawn entry: an explicit Season wins; otherwise any
     /// season names found in the Condition string (best-effort GameStateQuery token scan);
     /// otherwise empty = any season. Note: negated GSQ season clauses (containing '!')
     /// cannot be token-scanned safely, so any negation means "no season signal".</summary>
     public static IReadOnlyList<Season> SeasonsFromSpawn(Season? season, string? condition)
+        => SeasonsFromSpawn(season, condition, null, null);
+
+    /// <summary>As above, plus the passive-festival rule: a row on a festival-only map
+    /// (<see cref="BuiltInFestivalLocations"/>) or conditioned on
+    /// <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c> is only reachable in that festival's season,
+    /// looked up in <paramref name="festivalSeasons"/> (Data/PassiveFestivals, so modded
+    /// festivals count) with <see cref="BuiltInFestivalSeasons"/> as the fallback. Explicit
+    /// seasons and season tokens still win; an unknown festival is no signal.</summary>
+    public static IReadOnlyList<Season> SeasonsFromSpawn(
+        Season? season, string? condition, string? location,
+        IReadOnlyDictionary<string, Season>? festivalSeasons = null)
     {
         if (season != null)
             return new[] { season.Value };
-        if (string.IsNullOrEmpty(condition))
-            return Array.Empty<Season>();
-        if (condition.Contains('!'))
-            return Array.Empty<Season>();
 
-        var found = new List<Season>();
-        foreach (string token in condition.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries))
+        string[] tokens = (condition ?? "").Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries);
+        bool negated = condition != null && condition.Contains('!');
+        if (!negated)
         {
-            if (Enum.TryParse(token, ignoreCase: true, out Season s) && !found.Contains(s))
-                found.Add(s);
+            var found = new List<Season>();
+            foreach (string token in tokens)
+            {
+                if (Enum.TryParse(token, ignoreCase: true, out Season s) && !found.Contains(s))
+                    found.Add(s);
+            }
+            if (found.Count > 0)
+                return found;
         }
-        return found;
+
+        string? festival = null;
+        if (!string.IsNullOrEmpty(location) && BuiltInFestivalLocations.TryGetValue(location, out string? byLocation))
+            festival = byLocation;
+        for (int i = 0; festival == null && i + 1 < tokens.Length; i++)
+        {
+            if (string.Equals(tokens[i], PassiveFestivalOpenQuery, StringComparison.OrdinalIgnoreCase))
+                festival = tokens[i + 1];
+        }
+        if (festival != null)
+        {
+            if (festivalSeasons != null && festivalSeasons.TryGetValue(festival, out Season fromData))
+                return new[] { fromData };
+            if (BuiltInFestivalSeasons.TryGetValue(festival, out Season builtIn))
+                return new[] { builtIn };
+        }
+        return Array.Empty<Season>();
     }
 
     private static IReadOnlyList<PoolItem> BuildCropPool(
@@ -181,7 +238,8 @@ public static class ItemPoolBuilder
     private static (IReadOnlyList<PoolItem> fish, IReadOnlyList<PoolItem> crabPot) BuildFishPools(
         IReadOnlyList<RawSpawnEntry> fishSpawns, IReadOnlySet<string> trapFishIds,
         IReadOnlyDictionary<string, RawObjectEntry> objects,
-        HashSet<string> excluded, BundleGenerationTuning tuning)
+        HashSet<string> excluded, BundleGenerationTuning tuning,
+        IReadOnlyDictionary<string, Season>? festivalSeasons)
     {
         var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
         var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
@@ -199,7 +257,7 @@ public static class ItemPoolBuilder
                 || !string.Equals(spawnObj.Type, FishType, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition);
+            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
             if (seasons.Count == 0)
                 anySeasonById.Add(id); // one any-season spawn makes the item any-season
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
@@ -235,7 +293,8 @@ public static class ItemPoolBuilder
     private static IReadOnlyList<PoolItem> BuildForagePool(
         IReadOnlyList<RawSpawnEntry> forageSpawns,
         IReadOnlyDictionary<string, RawObjectEntry> objects,
-        HashSet<string> excluded, BundleGenerationTuning tuning)
+        HashSet<string> excluded, BundleGenerationTuning tuning,
+        IReadOnlyDictionary<string, Season>? festivalSeasons)
     {
         var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
         var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
@@ -264,7 +323,7 @@ public static class ItemPoolBuilder
             string id = Qualify(bare);
             if (!Vets(bare, id, objects, excluded))
                 continue;
-            AddSeasons(id, SeasonsFromSpawn(spawn.Season, spawn.Condition));
+            AddSeasons(id, SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons));
         }
 
         foreach ((Season season, string rawId) in BuiltInSeasonalForageAdditions)
