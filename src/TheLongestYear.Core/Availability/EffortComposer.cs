@@ -79,7 +79,7 @@ public sealed class EffortComposer
     public ItemEffort? Derive(string qualifiedId)
     {
         ItemEffort? best = null;
-        foreach (ItemEffort? candidate in new[]
+        foreach (ItemEffort? raw in new[]
         {
             ShopAvailability.Derive(qualifiedId),
             MineralNodeAvailability.Derive(qualifiedId),
@@ -97,6 +97,7 @@ public sealed class EffortComposer
             CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf),
         })
         {
+            ItemEffort? candidate = raw;
             if (candidate == null) continue;
             if (AvailabilityWeeks.LateFloors.TryGetValue(qualifiedId, out (int Week, string Note) late)
                 && (candidate.EarliestWeek ?? 0) < late.Week)
