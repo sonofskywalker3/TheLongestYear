@@ -51,7 +51,14 @@ decide whether the manifest check should tolerate it, and check which SVE areas 
 and Crimson Badlands should join `ExcludedLocationMarkers`. Do not tell anyone SVE is "supported"
 until this has a ruling.
 
-### BRAINSTORM NEEDED (Jeff, 2026-08-27): additional weekly themes
+### BRAINSTORMED 2026-08-27 late, SPEC APPROVED, NOT PLANNED: activity themes (Spelunking, Artisan, Kitchen)
+
+Spec `docs/superpowers/specs/2026-08-27-activity-themes-design.md`. Three activity themes whose goals
+match by item kind anywhere on the board (not by room), cross-over liabilities among the three, one
+plain effect each; plus three rules for every theme: goals follow the day-28 gate first (filler at most
+one per bundle per week), a theme is only offered when it has 2+ open lines (weighted by pool size),
+Mixed means anything. Board simulation (100k boards) and the JP-ramp arithmetic that drove the merge
+from six themes to three are in the spec. Next: writing-plans, then build. Original brief below.
 
 Jeff: "I want to brainstorm additional themes since we've widened the bundles so much." The
 engine now re-rolls bundles from wide item pools (fish 52, metals 11, the authored bundles, the
