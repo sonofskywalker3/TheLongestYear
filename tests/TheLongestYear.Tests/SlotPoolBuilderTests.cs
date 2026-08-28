@@ -23,6 +23,46 @@ public class SlotPoolBuilderTests
         => BundleRequirement.CreateSeasonal(name, Theme.Farming, ids, Season.Spring,
             new Dictionary<string, int>(), new Dictionary<string, int>());
 
+    private static Dictionary<string, string> TwoRoomBoard() => new()
+    {
+        ["Boiler Room/20"] = "Blacksmith's/O 334 1/80 1 0 334 1 0/3/2/20/Blacksmith's",
+        ["Pantry/0"] = "Animal/O 176 1/176 1 0 24 1 0/2/2/0/Animal",
+    };
+
+    private static IReadOnlyList<BundleRequirement> TwoRoomReqs() => Reqs(
+        BundleRequirement.CreatePerItem("Blacksmith's", Theme.Mining,
+            new Dictionary<string, Season> { ["(O)80"] = Season.Spring, ["(O)334"] = Season.Summer }),
+        BundleRequirement.CreatePerItem("Animal", Theme.Farming,
+            new Dictionary<string, Season> { ["(O)176"] = Season.Spring, ["(O)24"] = Season.Spring }));
+
+    private static ItemKind Kind(string id) => id switch
+    {
+        "(O)80" => ItemKind.Gem, "(O)176" => ItemKind.Egg, _ => ItemKind.Other,
+    };
+
+    [Fact]
+    public void Activity_themes_match_lines_by_kind_across_every_room()
+    {
+        var spelunking = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Spelunking, Season.Spring, _ => true, Kind);
+        Assert.Equal(new[] { "(O)80" }, spelunking.Select(s => s.ItemId));
+        Assert.True(spelunking[0].Due);
+
+        var kitchen = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Kitchen, Season.Summer, _ => true, Kind);
+        Assert.Equal(new[] { "(O)176" }, kitchen.Select(s => s.ItemId));
+        Assert.False(kitchen[0].Due);   // pinned Spring, now Summer: filler
+
+        var mixed = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mixed, Season.Spring, _ => true, Kind);
+        Assert.Equal(4, mixed.Count);   // Mixed means anything on the board
+
+        var mining = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mining, Season.Spring, _ => true, Kind);
+        Assert.Equal(2, mining.Count);  // room themes stay bundle-level
+        Assert.Equal(new[] { true, false }, mining.Select(s => s.Due));
+    }
+
+    [Fact]
+    public void Without_a_classifier_mixed_stays_the_bulletin_board_room()
+        => Assert.Empty(SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mixed, Season.Spring, _ => true));
+
     [Fact]
     public void Open_slots_of_an_in_play_bundle_are_pooled_with_stack_and_quality()
     {
