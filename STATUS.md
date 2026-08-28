@@ -1,5 +1,40 @@
 # The Longest Year - Status
 
+**Last updated:** 2026-08-28 (activity themes build, 0.16.42 to 0.16.67)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.67 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1394 passing, 0 failing
+**Build:** clean (mod assembly builds Release); 0.16.67 built into the Mods folder, live check pending (Task 28 of the plan)
+**Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+**2026-08-28: activity themes (Spelunking, Artisan, Kitchen) and the theme-week economy, 0.16.42 to
+0.16.67.** Spec `docs/superpowers/specs/2026-08-27-activity-themes-design.md`, plan
+`docs/superpowers/plans/2026-08-28-activity-themes.md`, 28 tasks, one behaviour per commit.
+- Phase 1 (0.16.42 to 0.16.55): effort rules derived from game data for gems and minerals (mine
+  node floors), geodes, monster drops, artifacts, animal products, artisan goods, fish ponds,
+  cooked dishes, crops and forage (`Core/Availability/*Availability.cs`, composed by
+  `EffortComposer`); `tly_dumpeffort` writes `item-effort-model.md` (gitignored, copy to `docs/`
+  for review); `tly_itemmodel` prints source and tier. **Decision: these rules produce effort
+  only.** No season floor moves, so no day-28 gate changes; an effort-only id still floors at
+  Winter for gates exactly as before.
+- Phase 2 (0.16.56 to 0.16.62): the eight-member `Theme` enum, `ItemKind` classifier and
+  `ThemeDomains`; rule A (`BundleRequirement.DueItemsFor`, the 0.16.41 stopgap folded into the
+  filler tier); rule B (`ThemeFillerBySeason` config, default 0/1/2/99, one filler per bundle);
+  rule E (effort quartile tiers x season weights, `GoalWeighting`); rule C (`SelectionService`
+  offers only themes with 2+ askable goals, weighted by count, room themes as the floor; the hub,
+  console pick and re-roll all go through `RunController.OfferFor`); rule D (weekly bonus paid
+  per goal, `BonusSlot.Paid` guard, `hud.goal-paid`); `tly_themepool [theme]`.
+- Phase 3 (0.16.63 to 0.16.67): the five effects. `MonsterThemePatches` (monster drops doubled
+  10%, monster damage +25%), `MachineSpeedPatch` (0.75x / 1.25x on `Object.OutputMachine`, rounded
+  to 10 min), `CookedFoodWeakPatch` (three postfixes on the consumption methods, category -7),
+  `AnimalDoubleProductPatch` (records in `RunState.DoubleProduceToday`, cleared on DayEnding).
+- Not done here: the real-play simulation (Jeff's call; `tools/sim-season.sh` and
+  `tly_playseason` untouched) and the in-game effect confirmations from the spec's live list.
+  The spec's Dinosaur Egg vs Diamond tiering claim does not hold under its own formula (Dino Egg
+  min 3 from Mountain spots, Diamond 5): the review document shows the real numbers.
+- `TODO.md` carries an uncommitted "2026-08-28 brainstorm batch" block that is not from this
+  build and was left alone; its "SPEC APPROVED, NOT PLANNED: activity themes" heading is now out
+  of date (built, not real-play tested).
+
 **Last updated:** 2026-08-28 late (20-loop bundle and season-gate audit, 0.16.32 to 0.16.36)
 **Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.36 committed LOCALLY ONLY, not pushed, not released**
 **Tests:** 1200 passing, 0 failing

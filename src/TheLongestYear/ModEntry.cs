@@ -2262,6 +2262,7 @@ namespace TheLongestYear
             AppendCandidates(sb, pools);
             AppendAuthored(sb);
             AppendPools(sb, pools);
+            AppendThemePools(sb);
 
             string fileName = args.Length > 0 && !string.IsNullOrWhiteSpace(args[0])
                 ? args[0] : "engine-bundle-catalogue.md";
@@ -2370,6 +2371,33 @@ namespace TheLongestYear
                 return data != null ? data.DisplayName : itemId;
             }
             catch { return itemId; }
+        }
+
+        /// <summary>Activity-themes spec (2026-08-28): the simulated line counts that drove the
+        /// merge from six narrow themes to three, and the effort override table (ships empty).</summary>
+        private void AppendThemePools(System.Text.StringBuilder sb)
+        {
+            sb.AppendLine("## Theme pools");
+            sb.AppendLine();
+            sb.AppendLine("Spelunking, Artisan and Kitchen take goals by item kind from anywhere on the board. Open lines per board from the spec's 100,000-board simulation (uniform per slot, no repeats in a room):");
+            sb.AppendLine();
+            sb.AppendLine("| Domain | Lines per board (avg) | Boards with none |");
+            sb.AppendLine("|---|---|---|");
+            sb.AppendLine("| Monster drops | 2.4 | 27% |");
+            sb.AppendLine("| Artifacts | 3.4 | 23% |");
+            sb.AppendLine("| Animal products | 3.5 | 5% |");
+            sb.AppendLine("| Minerals + gems | 7.4 | (57% under 8) |");
+            sb.AppendLine("| Cooked dishes | 7.4 | |");
+            sb.AppendLine("| Artisan goods | 13.5 | |");
+            sb.AppendLine("| Spelunking (minerals + gems + monster drops + artifacts) | 13.1 | 1.6% under 4 |");
+            sb.AppendLine("| Kitchen (animal products + cooked dishes) | 24.5 | |");
+            sb.AppendLine();
+            sb.AppendLine("A Spring week asks for 4 goals, Winter for 7. A theme is only offered when it can ask for 2 or more this week (rule C); the per-item effort tiers that weight the draw are in `item-effort-model.md` (`tly_dumpeffort`).");
+            sb.AppendLine();
+            sb.AppendLine("### Effort overrides");
+            sb.AppendLine();
+            sb.AppendLine("None. The curated effort override table ships empty; a tier that looks wrong is fixed by fixing its derivation rule.");
+            sb.AppendLine();
         }
 
         private void AppendPools(System.Text.StringBuilder sb, ItemPools pools)
