@@ -7,6 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`tly_skipscene` console command** finishes the open day-28 Junimo scene as if clicked through, so an unattended run can cross a season gate over the file bridge (debug).
 - **Unattended playtesting without the mouse (debug).** With `EnableDebugCommandBridge` on, the game no longer pauses when its window is not in front, so queued `tly_*` commands keep running while you work; `tly_select <theme>` on an open planning hub is the card click (hub closes). `tools/deploy.ps1 -Minimized` relaunches the game minimized. Runbook: `docs/HEADLESS_DRIVING.md`.
 - **Three new weekly themes: Spelunking, Artisan and Kitchen.** Their goals match by item kind anywhere on the board (gems, minerals, monster loot and artifacts; artisan goods; cooked dishes and animal products). Spelunking: 10% chance a slain monster drops everything twice, but machines run 25% slower. Artisan: machines finish 25% sooner, but cooked food restores half its energy and health and gives no buffs. Kitchen: 20% chance an animal gives a second product each day, but monsters deal 25% more damage. Eight themes, still two cards a week.
 - **`tly_themepool [theme]` console command** prints each theme's askable goal count for the current week and, with a theme, every candidate line with its due/filler status, tier and weight (debug).
