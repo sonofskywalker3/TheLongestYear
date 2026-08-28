@@ -250,7 +250,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
-            helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals]", this.CmdPlaySeason);
+            helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
@@ -1992,7 +1992,10 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             var requirements = _runController?.Requirements;
             if (requirements == null || requirements.Count == 0) { this.Monitor.Log("No requirements on this save.", LogLevel.Warn); return; }
-            bool chaseGoals = args.Length > 0 && string.Equals(args[0], "goals", StringComparison.OrdinalIgnoreCase);
+            // "goalsonly": deposit this week's goal slots and nothing else (no gate work, no vault),
+            // so a sim can play a goal-completing week without finishing the season's gate on day 1.
+            bool goalsOnly = args.Length > 0 && string.Equals(args[0], "goalsonly", StringComparison.OrdinalIgnoreCase);
+            bool chaseGoals = goalsOnly || (args.Length > 0 && string.Equals(args[0], "goals", StringComparison.OrdinalIgnoreCase));
 
             RunState run = _meta.Run;
             TheLongestYear.Core.Season season = run.Season;
@@ -2033,6 +2036,7 @@ namespace TheLongestYear
 
             foreach (BundleRequirement req in requirements)
             {
+                if (goalsOnly) break;
                 if (!lines.TryGetValue(req.Name, out var bundle)) { log.Add($"  {req.Name}: not on the live board, skipped"); continue; }
                 // Donate until this bundle's gate is satisfied for the season: due-now items first
                 // (PerItem), obtainable-by-now items first (Percentage), anything undonated (Seasonal).
@@ -2075,6 +2079,7 @@ namespace TheLongestYear
             int needVault = VaultRules.SeasonOrdinal(season);
             foreach (int idx in TheLongestYear.Integration.VaultBundleMap.Indices())
             {
+                if (goalsOnly) break;
                 if (run.VaultBundlesPaid.Count >= needVault) break;
                 if (run.VaultBundlesPaid.Contains(idx)) continue;
                 if (Flip(idx, 0))

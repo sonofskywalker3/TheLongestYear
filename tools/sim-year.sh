@@ -3,7 +3,8 @@
 # keyboard, no foreground: every step goes through the file bridge, SMAPI's console input and
 # the log. Usage: sim-year.sh <mode> [label]   mode = minimal | goals
 #   minimal = donate only what each season gate demands (tly_playseason in week 3)
-#   goals   = also deposit every selected week's goal slots (tly_playseason goals)
+#   goals   = also deposit every selected week's goal slots (tly_playseason goalsonly); the gate
+#             is still met in week 3 like the minimal player, never on day 1
 # Starts with tly_reset (fresh Spring 1 board), plays Spring..Winter, stops after the Winter
 # week-4 pick (the Winter day-28 win path is not exercised). Prints the offer, askable counts,
 # goal counts and the pick for every week; the full detail is in SMAPI-latest.txt.
@@ -34,7 +35,7 @@ pick_and_goals() {  # hub is open: dump goals + pool, pick the left card
 deposit_goals() {
   if [ "$MODE" = "goals" ]; then
     local n; n=$(count)
-    drv -Action send -Lines "tly_playseason goals" >/dev/null
+    drv -Action send -Lines "tly_playseason goalsonly" >/dev/null
     drv -Action wait -Pattern "tly_playseason: .* gate WOULD|tly_playseason:" -TimeoutSec 90 -FromLine "$n" >/dev/null
     sleep 2
     show "$n" "tly_playseason|WARN|ERROR"
