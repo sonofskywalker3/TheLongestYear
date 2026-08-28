@@ -94,6 +94,27 @@ public class GatedItemVettingTests
         Assert.Contains("(O)795", ItemPoolBuilder.BuiltInExcludedItemIds);
     }
 
+    /// <summary>Non-habitat location keys (player report, 2026-08-28: an ocean fish in the Lake
+    /// Fish bundle). Data/Locations carries three keys that are not places anyone fishes:
+    /// "Temp" (the Festival of Ice contest map, whose season-less rows mix river and ocean
+    /// fish), "fishingGame" (the Fair minigame) and "Default" (the trash / Joja Cola table).
+    /// Treating them as habitats leaked Red Mullet into Lake Fish and Bream/Pike into Ocean
+    /// Fish, marked river fish catchable year-round, and put Trash in the Fish pool. Exact
+    /// match only: a modded "Temple" or "DefaultFarm" map is a real place.</summary>
+    [Theory]
+    [InlineData("Temp", true)]
+    [InlineData("fishingGame", true)]
+    [InlineData("FishingGame", true)]
+    [InlineData("Default", true)]
+    [InlineData("Custom_Temple", false)]
+    [InlineData("DefaultFarm", false)]
+    [InlineData("Beach", false)]
+    public void NonHabitatLocationKeys_AreExcluded_ExactMatchOnly(string key, bool excluded)
+    {
+        var emptied = new List<string>(); // must hold even when a saved config wiped the marker list
+        Assert.Equal(excluded, ItemPoolBuilder.IsExcludedLocation(key, emptied));
+    }
+
     /// <summary>Regression for the config-override trap found on the live install
     /// (2026-08-24): SMAPI's ReadConfig replaces serialized LIST defaults wholesale, and
     /// the machine's config.json carried `ExcludedItemIds: []` — so exclusions that lived
