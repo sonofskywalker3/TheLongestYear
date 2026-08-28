@@ -557,6 +557,20 @@ namespace TheLongestYear.UI
                 LogLevel.Info);
         }
 
+        /// <summary>The card click, by theme name, for the tly_select console command: the same
+        /// commit path as the mouse (current-week pick or day-28 pre-pick), then the menu closes.
+        /// Any theme is accepted, on or off the cards (it is a debug command).</summary>
+        public bool ConfirmByName(string themeName)
+        {
+            if (!System.Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
+                return false;
+            _forcedPick = !_offer.Contains(theme);
+            ConfirmSelection(theme);
+            return true;
+        }
+
+        private bool _forcedPick;
+
         private void ConfirmSelection(Theme theme)
         {
             _themePicked = true;
@@ -566,8 +580,8 @@ namespace TheLongestYear.UI
                 // skipOfferCheck whenever the menu has rerolled so picks off the rerolled
                 // offer aren't rejected by RunController's canonical OfferForWeek validation.
                 // The reroll path already excludes already-selected-this-month themes, so the
-                // gameplay rule that matters is preserved.
-                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0);
+                // gameplay rule that matters is preserved. A console pick off the cards is forced.
+                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0 || _forcedPick);
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }

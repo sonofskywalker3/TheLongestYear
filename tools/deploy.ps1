@@ -23,6 +23,12 @@
 .PARAMETER NoBuild
     Skip the build (just archive + close, or archive + relaunch the existing DLL).
 
+.PARAMETER Minimized
+    Relaunch SMAPI with its window minimized, for unattended runs while the user works: the game
+    window does not take the foreground. Needs EnableDebugCommandBridge=true in config.json, which
+    also switches the game's "pause when window is inactive" option off so queued tly_* commands
+    keep running (see docs/HEADLESS_DRIVING.md).
+
 .EXAMPLE
     pwsh -NoProfile -File tools/deploy.ps1
 .EXAMPLE
@@ -31,6 +37,7 @@
 param(
     [switch]$NoLaunch,
     [switch]$NoBuild,
+    [switch]$Minimized,
     [string]$SmapiExe = 'C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\StardewModdingAPI.exe'
 )
 
@@ -73,5 +80,10 @@ if ($NoLaunch) {
 }
 Write-Host '=== [4/4] Relaunching SMAPI ===' -ForegroundColor Cyan
 if (-not (Test-Path -LiteralPath $SmapiExe)) { throw "SMAPI exe not found: $SmapiExe" }
-Start-Process -FilePath $SmapiExe
-Write-Host 'Launched. New SMAPI-latest.txt will start fresh; the prior log is archived.'
+if ($Minimized) {
+    Start-Process -FilePath $SmapiExe -WindowStyle Minimized
+    Write-Host 'Launched minimized (unattended mode). New SMAPI-latest.txt will start fresh; the prior log is archived.'
+} else {
+    Start-Process -FilePath $SmapiExe
+    Write-Host 'Launched. New SMAPI-latest.txt will start fresh; the prior log is archived.'
+}

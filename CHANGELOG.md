@@ -7,6 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Unattended playtesting without the mouse (debug).** With `EnableDebugCommandBridge` on, the game no longer pauses when its window is not in front, so queued `tly_*` commands keep running while you work; `tly_select <theme>` on an open planning hub is the card click (hub closes). `tools/deploy.ps1 -Minimized` relaunches the game minimized. Runbook: `docs/HEADLESS_DRIVING.md`.
 - **Three new weekly themes: Spelunking, Artisan and Kitchen.** Their goals match by item kind anywhere on the board (gems, minerals, monster loot and artifacts; artisan goods; cooked dishes and animal products). Spelunking: 10% chance a slain monster drops everything twice, but machines run 25% slower. Artisan: machines finish 25% sooner, but cooked food restores half its energy and health and gives no buffs. Kitchen: 20% chance an animal gives a second product each day, but monsters deal 25% more damage. Eight themes, still two cards a week.
 - **`tly_themepool [theme]` console command** prints each theme's askable goal count for the current week and, with a theme, every candidate line with its due/filler status, tier and weight (debug).
 - **`tly_dumpeffort` console command** writes `item-effort-model.md`: every pool item with its derived effort, tier and the game-data basis (gems and minerals, geodes, monster drops, artifacts, artisan goods, fish ponds, animal products, cooked dishes, crops, forage). `tly_itemmodel` now prints the effort source and tier (debug).
