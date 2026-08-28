@@ -126,7 +126,11 @@ public sealed class GameplayConfig
             ["(O)734"] = "Summer",   // Woodskip
 
             // --- Dye (Bulletin, X=Y) ---
-            ["(O)420"] = "Summer",   // Red Mushroom
+            // Red Mushroom is a Spring item on this mod (Jeff, 2026-08-28: "red mushroom in
+            // spring is perfectly fine"): the Spring forage pool adds it (SeasonalForageAdditions)
+            // and the mines grow it on mushroom floors from level 41 in any season (MineShaft
+            // line 1434). The old Summer pin made loop 16's Spring Foraging audit IMPOSSIBLE.
+            ["(O)420"] = "Spring",   // Red Mushroom
             ["(O)397"] = "Spring",   // Sea Urchin
             ["(O)421"] = "Summer",   // Sunflower
             ["(O)444"] = "Summer",   // Duck Feather
