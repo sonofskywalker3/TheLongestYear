@@ -19,6 +19,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Night Market and festival fish are no longer treated as catchable all year.** The Submarine's spawn rows carry no season (the game gates the Night Market by date in code), so Sea Cucumber, Super Cucumber and Octopus read as year-round and one player was asked for a Sea Cucumber before Summer 1; Squid's SquidFest rows did the same. Spawns on a passive festival's own maps, or behind `IS_PASSIVE_FESTIVAL_OPEN`, now take that festival's season from Data/PassiveFestivals (Winter for the Night Market and SquidFest, Summer for the Trout Derby), which flows into the season gate and the weekly goals. Modded passive festivals are read the same way.
 - **Ocean fish in lake bundles, river fish in ocean bundles.** The engine treated every Data/Locations key a fish spawns in as a habitat, including three that are not fishing spots: the Festival of Ice contest map (`Temp`, whose rows mix Red Mullet with Bream and carry no season), the Fair minigame (`fishingGame`) and the shared trash table (`Default`). That let Red Mullet into Lake Fish, Bream/Pike/Sunfish into Ocean Fish, marked river fish as catchable all year, and put Trash and Joja Cola in the fish pool Weatherman's draws from. Those keys are now ignored when the pools are built (player report, 2026-08-28).
 
 ## 0.16.17 - 2026-08-27

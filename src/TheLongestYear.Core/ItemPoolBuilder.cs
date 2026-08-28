@@ -164,7 +164,10 @@ public static class ItemPoolBuilder
             var found = new List<Season>();
             foreach (string token in tokens)
             {
-                if (Enum.TryParse(token, ignoreCase: true, out Season s) && !found.Contains(s))
+                // IsDefined: Enum.TryParse accepts any integer ("TIME 0600 1800" would read as
+                // two nonsense seasons); only a season NAME is a signal.
+                if (Enum.TryParse(token, ignoreCase: true, out Season s)
+                    && Enum.IsDefined(typeof(Season), s) && !found.Contains(s))
                     found.Add(s);
             }
             if (found.Count > 0)
