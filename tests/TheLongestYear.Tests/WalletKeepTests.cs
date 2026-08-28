@@ -69,4 +69,26 @@ public class WalletKeepTests
             Assert.Equal(e.Reach, def.RunReachRequirement);
         }
     }
+
+    [Theory]
+    [InlineData("mail:HasSkullKey", "mail", "HasSkullKey")]
+    [InlineData("event:2120303", "event", "2120303")]
+    public void Keyed_reach_forms_parse_with_threshold_one(string raw, string metric, string key)
+    {
+        RunReachRequirement? r = RunReachRequirement.Parse(raw);
+        Assert.NotNull(r);
+        Assert.Equal(metric, r!.Metric);
+        Assert.Equal(key, r.Key);
+        Assert.Equal(1, r.Threshold);
+    }
+
+    [Fact]
+    public void Bare_stardrop_mines_reach_parses_with_threshold_one()
+    {
+        RunReachRequirement? r = RunReachRequirement.Parse("stardrop_mines");
+        Assert.NotNull(r);
+        Assert.Equal("stardrop_mines", r!.Metric);
+        Assert.Null(r.Key);
+        Assert.Equal(1, r.Threshold);
+    }
 }

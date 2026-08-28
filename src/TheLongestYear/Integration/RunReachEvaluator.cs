@@ -66,6 +66,10 @@ namespace TheLongestYear.Integration
                 "mine"     => p.deepestMineLevel,
                 "mastery"  => MasteryTrackerMenu.getCurrentMasteryLevel(),
                 "book"     => p.stats.Get(r.Key) != 0 ? 1 : 0,   // vanilla Book_* flag, set by Object.readBook
+                "mail"     => HasMail(p, r.Key) ? 1 : 0,            // wallet items / Stardrop source markers
+                "event"    => r.Key != null && p.eventsSeen.Contains(r.Key) ? 1 : 0, // Data/Powers SEEN_EVENT grants
+                "stardrop_mines" => (HasMail(p, "CF_Mines")
+                                     || p.chestConsumedMineLevels.GetValueOrDefault(100, false)) ? 1 : 0,
                 "scythe"   => p.mailReceived.Contains("gotGoldenScythe") ? 1 : 0,
                 "building" => HasBuildingAtLeast(r.Key) ? 1 : 0,
                 "house"    => p.HouseUpgradeLevel,
@@ -76,6 +80,12 @@ namespace TheLongestYear.Integration
             };
             return actual >= 0 && r.IsMet(actual);
         }
+
+        /// <summary>Some wallet getters read Game1.MasterPlayer (HasRustyKey, HasSkullKey, the Dwarvish
+        /// guide); single-player that is the same Farmer, so check both sides to be safe.</summary>
+        private static bool HasMail(Farmer p, string? flag) =>
+            flag != null && (p.mailReceived.Contains(flag)
+                || (Game1.MasterPlayer != null && Game1.MasterPlayer.mailReceived.Contains(flag)));
 
         private static int ToolLevel(Farmer p, string kind)
         {
