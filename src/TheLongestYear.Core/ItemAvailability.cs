@@ -14,7 +14,16 @@ namespace TheLongestYear.Core;
 /// <param name="EarliestSeason">Hard floor: before this season the item cannot exist at all.</param>
 /// <param name="Effort">Derived judgement of how much work the item is. Higher is harder.</param>
 /// <param name="Basis">Human readable derivation, for tly_itemmodel and the generated model doc.</param>
-public sealed record ItemAvailability(Season EarliestSeason, int Effort, string Basis);
+public sealed record ItemAvailability(Season EarliestSeason, int Effort, string Basis, EffortSource Source = EffortSource.Derived);
+
+/// <summary>Where an item's effort number came from: a derivation rule, the price bucket
+/// fallback (no rule claimed the id), or the curated effort override table.</summary>
+public enum EffortSource { Derived, Price, Override }
+
+/// <summary>Effort without a season floor. Phase 2 rules (gems, geodes, monster drops,
+/// artifacts, artisan goods, animal products, dishes, crops, forage) produce these: they say how
+/// much work an item is, never when it first exists, so a gate is never moved by them.</summary>
+public sealed record ItemEffort(int Effort, string Basis);
 
 /// <summary>Every item's <see cref="ItemAvailability"/>, plus the override layers.
 ///
@@ -37,21 +46,25 @@ public sealed class ItemAvailabilityModel
     public const int UnrecognisedEffort = 6;
 
     private const string UnrecognisedBasis = "no derivation rule matched this item";
+    private const string EffortOnlyFloorNote = "floor not derived (Winter)";
 
     private readonly IReadOnlyDictionary<string, ItemAvailability> _derived;
     private readonly IReadOnlyDictionary<string, Season> _seasonOverrides;
     private readonly IReadOnlyDictionary<string, int> _effortOverrides;
+    private readonly IReadOnlyDictionary<string, ItemEffort> _effortDerived;
     private readonly HashSet<string> _unrecognised = new(StringComparer.Ordinal);
     private readonly HashSet<string> _rejectedSeasonOverrides = new(StringComparer.Ordinal);
 
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
-        IReadOnlyDictionary<string, int>? effortOverrides = null)
+        IReadOnlyDictionary<string, int>? effortOverrides = null,
+        IReadOnlyDictionary<string, ItemEffort>? effortDerived = null)
     {
         _derived = derived ?? throw new ArgumentNullException(nameof(derived));
         _seasonOverrides = seasonOverrides ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _effortOverrides = effortOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
+        _effortDerived = effortDerived ?? new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
 
         // Validated once here rather than per lookup, so the count is meaningful the moment the
         // model exists and a caller can log it at build time without waiting for traffic.
@@ -82,23 +95,35 @@ public sealed class ItemAvailabilityModel
     public bool IsDerived(string qualifiedItemId)
         => qualifiedItemId != null && _derived.ContainsKey(qualifiedItemId);
 
+    /// <summary>True when either a season rule (fish, crab-pot, metals) or an effort-only rule
+    /// placed this id. The goal sampler tiers such ids by effort; the rest use the price bucket.</summary>
+    public bool HasDerivedEffort(string qualifiedItemId)
+        => qualifiedItemId != null
+           && (_derived.ContainsKey(qualifiedItemId) || _effortDerived.ContainsKey(qualifiedItemId));
+
+    /// <summary>How many ids the effort-only rules placed (Phase 2 of the model).</summary>
+    public int DerivedEffortCount => _effortDerived.Count;
+
     public ItemAvailability For(string qualifiedItemId)
     {
         if (qualifiedItemId == null) throw new ArgumentNullException(nameof(qualifiedItemId));
 
         bool known = _derived.TryGetValue(qualifiedItemId, out ItemAvailability? derived);
+        bool effortKnown = _effortDerived.TryGetValue(qualifiedItemId, out ItemEffort? effortOnly);
         bool hasSeasonOverride = _seasonOverrides.TryGetValue(qualifiedItemId, out Season overrideSeason);
         bool hasEffortOverride = _effortOverrides.TryGetValue(qualifiedItemId, out int overrideEffort);
 
-        if (!known && !hasSeasonOverride && !hasEffortOverride)
+        if (!known && !effortKnown && !hasSeasonOverride && !hasEffortOverride)
         {
             _unrecognised.Add(qualifiedItemId);
-            return new ItemAvailability(Season.Winter, UnrecognisedEffort, UnrecognisedBasis);
+            return new ItemAvailability(Season.Winter, UnrecognisedEffort, UnrecognisedBasis, EffortSource.Price);
         }
 
         Season season = derived?.EarliestSeason ?? Season.Winter;
-        int effort = derived?.Effort ?? UnrecognisedEffort;
-        string basis = derived?.Basis ?? UnrecognisedBasis;
+        int effort = derived?.Effort ?? effortOnly?.Effort ?? UnrecognisedEffort;
+        string basis = derived?.Basis
+            ?? (effortOnly != null ? $"{effortOnly.Basis}; {EffortOnlyFloorNote}" : UnrecognisedBasis);
+        EffortSource source = known || effortKnown ? EffortSource.Derived : EffortSource.Price;
 
         if (hasSeasonOverride)
         {
@@ -117,8 +142,9 @@ public sealed class ItemAvailabilityModel
         {
             basis = $"{basis}; effort override to {overrideEffort}";
             effort = overrideEffort;
+            source = EffortSource.Override;
         }
 
-        return new ItemAvailability(season, effort, basis);
+        return new ItemAvailability(season, effort, basis, source);
     }
 }

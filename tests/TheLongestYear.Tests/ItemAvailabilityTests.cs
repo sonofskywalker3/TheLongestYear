@@ -242,4 +242,41 @@ public class ItemAvailabilityBuilderTests
 
         Assert.Equal(Season.Winter, model.For("(O)1").EarliestSeason);
     }
+    [Fact]
+    public void An_Effort_Only_Derivation_Keeps_The_Winter_Floor_But_Carries_Its_Effort()
+    {
+        var model = new ItemAvailabilityModel(
+            new Dictionary<string, ItemAvailability>(),
+            effortDerived: new Dictionary<string, ItemEffort>
+            {
+                ["(O)348"] = new ItemEffort(6, "artisan, keg from grapes"),
+            });
+
+        ItemAvailability result = model.For("(O)348");
+
+        Assert.Equal(Season.Winter, result.EarliestSeason);
+        Assert.Equal(6, result.Effort);
+        Assert.Equal(EffortSource.Derived, result.Source);
+        Assert.Contains("keg from grapes", result.Basis);
+        Assert.False(model.IsDerived("(O)348"));
+        Assert.True(model.HasDerivedEffort("(O)348"));
+        Assert.Empty(model.UnrecognisedIds);
+    }
+
+    [Fact]
+    public void An_Unknown_Item_Reports_The_Price_Source()
+    {
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>());
+        Assert.Equal(EffortSource.Price, model.For("(O)999").Source);
+        Assert.False(model.HasDerivedEffort("(O)999"));
+    }
+
+    [Fact]
+    public void An_Effort_Override_Reports_The_Override_Source()
+    {
+        var model = new ItemAvailabilityModel(
+            new Dictionary<string, ItemAvailability>(),
+            effortOverrides: new Dictionary<string, int> { ["(O)5"] = 2 });
+        Assert.Equal(EffortSource.Override, model.For("(O)5").Source);
+    }
 }
