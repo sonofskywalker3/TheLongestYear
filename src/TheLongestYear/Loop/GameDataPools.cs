@@ -64,7 +64,13 @@ namespace TheLongestYear.Loop
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
-                    fruitTrees.Add(new RawFruitTreeEntry(kv.Key));
+                {
+                    var fruitIds = (kv.Value?.Fruit ?? new List<FruitTreeFruitData>())
+                        .Where(f => f != null && !string.IsNullOrEmpty(f.ItemId))
+                        .Select(f => f.ItemId)
+                        .ToList();
+                    fruitTrees.Add(new RawFruitTreeEntry(kv.Key, fruitIds));
+                }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, CropData>>("Data/Crops"))
                 {
