@@ -1,16 +1,19 @@
+using System;
 using System.Collections.Generic;
 
 namespace TheLongestYear.Core;
 
 /// <summary>One candidate item of a generation pool. Seasons empty = obtainable in every
 /// season; Locations populated only for fish (spawn locations, used to keep a fish
-/// bundle's habitat identity when re-rolling). Ids are QUALIFIED ("(O)24").</summary>
+/// bundle's habitat identity when re-rolling). Category is the Data/Objects category
+/// (-4 = a real fish; 0 when unknown or hand-built). Ids are QUALIFIED ("(O)24").</summary>
 public sealed record PoolItem(
     string ItemId,
     int Price,
     int Weight,
     IReadOnlyList<Season> Seasons,
-    IReadOnlyList<string> Locations);
+    IReadOnlyList<string> Locations,
+    int Category = 0);
 
 /// <summary>The per-domain candidate pools for one generation, derived from the game's
 /// own data tables at generation time (SVE-proof by construction — spec). Lists are
@@ -115,6 +118,26 @@ public sealed record RawFishEntry(
     private const int MaxDepthIndex = 9;
     private const int MinFishingLevelIndex = 12;
     private const string TrapMarker = "trap";
+    /// <summary>Game clock for 6pm: the earliest a "night" biting window may open.</summary>
+    public const int NightStart = 1800;
+
+    /// <summary>True when every biting window opens at or after <paramref name="nightStart"/>,
+    /// i.e. the fish cannot be caught earlier in the day. A row with no parseable window is
+    /// open all day, so false; a trap fish has no window, so false.</summary>
+    public bool IsNightOnly(int nightStart = NightStart)
+    {
+        string[] parts = (RawTimeSpans ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        bool anyWindow = false;
+        for (int i = 0; i + 1 < parts.Length; i += 2)
+        {
+            if (!int.TryParse(parts[i], out int start))
+                return false;
+            anyWindow = true;
+            if (start < nightStart)
+                return false;
+        }
+        return anyWindow;
+    }
 
     public static RawFishEntry Parse(string itemId, string? row)
     {
