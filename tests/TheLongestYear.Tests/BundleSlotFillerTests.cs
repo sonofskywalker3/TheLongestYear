@@ -162,6 +162,49 @@ public class BundleSlotFillerTests
         Assert.Equal(3, filled.Slots.Count);
     }
 
+    /// <summary>Player report 2026-08-28 ("4 of my foraging bundles need mussels"): beach
+    /// shellfish and desert fruit spawn in every season, so they sat in all four seasonal
+    /// forage pools with the same weight as a real seasonal plant. A season-named bundle now
+    /// asks only for items that are specific to a season, like vanilla; any-season items keep
+    /// feeding the season-less bundles (generic crop re-rolls, Four Seasons Sampler).</summary>
+    [Fact]
+    public void SeasonalDomains_SkipAnySeasonItems_SeasonlessBundleKeepsThem()
+    {
+        Season[] spring = { Season.Spring };
+        var pools = new ItemPools
+        {
+            Forage = new[]
+            {
+                Item("(O)16", seasons: spring), Item("(O)18", seasons: spring),
+                Item("(O)20", seasons: spring), Item("(O)22", seasons: spring),
+                Item("(O)719"), Item("(O)372"), // Mussel, Clam: every season
+            },
+            Crops = new[]
+            {
+                Item("(O)24", seasons: spring), Item("(O)188", seasons: spring),
+                Item("(O)190", seasons: spring), Item("(O)192", seasons: spring),
+                Item("(O)999"), // a modded any-season crop
+            },
+        };
+        bool anySeasonCropSeenInGenericBundle = false;
+        for (int seed = 0; seed < 40; seed++)
+        {
+            var forage = BundleSlotFiller.Fill(Spec("Spring Foraging", 4, 4),
+                new DomainMatch(PoolDomain.SeasonalForage, Season.Spring), pools, Tuning, new Random(seed));
+            Assert.DoesNotContain(forage.Slots, s => s.ItemId is "(O)719" or "(O)372");
+            Assert.Equal(4, forage.Slots.Count);
+
+            var crops = BundleSlotFiller.Fill(Spec("Spring Crops", 4, 4),
+                new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring), pools, Tuning, new Random(seed));
+            Assert.DoesNotContain(crops.Slots, s => s.ItemId == "(O)999");
+
+            var generic = BundleSlotFiller.Fill(Spec("Garden", 4, 4),
+                new DomainMatch(PoolDomain.SeasonalCrops, null), pools, Tuning, new Random(seed));
+            anySeasonCropSeenInGenericBundle |= generic.Slots.Any(s => s.ItemId == "(O)999");
+        }
+        Assert.True(anySeasonCropSeenInGenericBundle);
+    }
+
     [Fact]
     public void PickCount_LimitsTargetSlotCount()
     {

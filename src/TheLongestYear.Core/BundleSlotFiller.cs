@@ -125,10 +125,15 @@ public static class BundleSlotFiller
         }
     }
 
+    /// <summary>A season-named bundle asks only for items specific to that season, like
+    /// vanilla's own Spring/Summer/Fall/Winter bundles. Any-season items (beach shellfish,
+    /// desert fruit, an all-year modded crop) would otherwise sit in all four pools at full
+    /// weight and crowd out the season's real forage (player report 2026-08-28, Mussel in four
+    /// foraging bundles). A season-less bundle (null) still draws from the whole pool.</summary>
     private static IReadOnlyList<PoolItem> FilterSeason(IReadOnlyList<PoolItem> pool, Season? season)
         => season == null
             ? pool
-            : pool.Where(p => p.Seasons.Count == 0 || p.Seasons.Contains(season.Value)).ToList();
+            : pool.Where(p => p.Seasons.Count > 0 && p.Seasons.Contains(season.Value)).ToList();
 
     /// <summary>A fish bundle keeps its habitat identity: candidates are fish sharing at
     /// least one spawn location with the bundle's ORIGINAL fish (union empty — e.g. all
