@@ -1,7 +1,7 @@
 # Activity themes: Spelunking, Artisan, Kitchen, and the theme-week economy
 
 **Date:** 2026-08-27 (economics revision 2026-08-28 early)
-**Status:** approved in brainstorm (Jeff), effort lists awaiting his review, not yet planned
+**Status:** approved in brainstorm (Jeff); effort derived from game data (Phase 2 of the availability model); not yet planned
 **Supersedes:** the TODO entry "BRAINSTORM NEEDED: additional weekly themes"
 
 ## Problem
@@ -53,8 +53,10 @@ artisan + cooked 24.5. A Spring week asks for 4 goals, Winter for 7.
 5. **Fix the inverted economy** (rules A to D below): goals follow the gate, filler follows the
    ramp, the offer counts what a week can actually ask, the weekly bonus is per goal.
 6. **Weight cheaper/easier items earlier in the year**, and effort must NOT be read from sell
-   price: a Dinosaur Egg sells for less than a Diamond and is far harder to get. Effort tiers are
-   hand-checked (section "Effort tiers", awaiting Jeff's review).
+   price: a Dinosaur Egg sells for less than a Diamond and is far harder to get. A hand-written
+   tier list is insufficient (Jeff, 2026-08-28): effort is derived from the actual drop tables,
+   geode tables, artifact-spot tables, machine and animal data and cooking recipes, as Phase 2 of
+   the 0.16.0 availability model, and reviewed through a generated document.
 
 ## The themes
 
@@ -180,51 +182,92 @@ A zero weight means "not this season" (an Extreme item is never a Spring goal). 
 leave an empty pool the season cap is simply not reached; the offer floor (rule C) already
 accounts for it because it asks the sampler.
 
-### Effort tiers (NOT sell price; awaiting Jeff's review)
+### Effort, derived from the game's own tables (availability model, Phase 2)
 
-Source of truth, lowest to highest precedence: (1) the 0.16.0 `ItemAvailability.Effort` where
-the domain is modelled (fish, metals), mapped to tiers by quartile; (2) the price rarity bucket as
-a fallback for unmodelled domains; (3) a **curated override table** in `GameplayConfig`
-(`ItemEffortOverrides`, id -> tier), shipped with the entries below and user-editable. The
-override table is the part Jeff asked to be checked by hand; the proposed entries are the
-ones where price and effort disagree. Everything not listed keeps its fallback tier.
+Jeff, 2026-08-28: a hand-written tier list is insufficient; effort has to come from the actual
+drop tables, recipes and animal data, the way the 0.16.0 model derives fish and metals. So this
+feature carries **Phase 2 of `ItemAvailabilityBuilder`**: every item kind the three themes ask
+for gets a `Derive` rule that reads live game data at SaveLoaded (through the same
+`GameDataPools` shell that already loads Data/Fish), records a human-readable `Basis`, and
+produces an integer `Effort` on the scale fish and metals already use (copper ore 1, iron 3, gold
+5, iridium 7). Tiers for rule E are then quartiles of effort **within each theme's pool**, so
+Easy/Medium/Hard/Extreme are relative to what that theme can ask.
 
-**Gems and minerals (Spelunking).** Quartz, Earth Crystal, Amethyst, Topaz: Easy. Frozen Tear,
-Aquamarine, Jade, minerals from Frozen Geodes (floors 40+): Medium. Emerald, Ruby, Fire Quartz,
-Diamond, minerals from Magma Geodes (floors 80+): Hard. Prismatic Shard, Omni Geode-only minerals
-(e.g. Star Shards, Helvite, Kyanite, Soapstone), Iridium-tier minerals: Extreme.
+Nothing in the tier table is typed by hand. The curated `effortOverrides` layer stays as the
+user-editable escape hatch and ships **empty**. `tly_itemmodel` (existing) prints effort, tier and
+basis for any id; a new `tly_dumpeffort` writes `docs/item-effort-model.md` (every pool item,
+sorted by theme and effort, with its basis) so Jeff reviews derived values, not guesses. A tier
+that looks wrong in that document is fixed by fixing the rule, not by an override.
 
-**Monster drops (Spelunking).** Slime, Bug Meat, Bat Wing: Easy. Solar Essence (floors 80+, or
-Skull Cavern): Hard. Void Essence (100+ / Shadow Brutes), Squid Ink (Fish Pond or Skull Cavern):
-Extreme.
+The rules, per domain (data source, then the formula). Reachability facts that live in code, not
+data, are recorded as rules with the decompile reference, exactly as `MetalsAvailability` does
+for mine areas.
 
-**Artifacts (Spelunking).** Chipped Amphora, Arrowhead, Ancient Doll, Rusty Spoon/Spur/Cog, Chewing
-Stick, Ornamental Fan, Glass Shards: Easy (common artifact spots and the mines). Ancient Sword,
-Ancient Drum, Bone Flute, Prehistoric Tool, Dried Starfish, Anchor, Elvish Jewelry: Medium.
-Dwarvish Helm, Dwarf Gadget, Rare Disc, Golden Mask, Golden Relic, Strange Doll, the prehistoric
-bones (Scapula, Tibia, Skull, Rib, Vertebra, Skeletal Hand/Tail, Nautilus/Amphibian/Palm Fossil,
-Trilobite): Hard (Skull Cavern, desert, bone nodes). **Dinosaur Egg** and **Ancient Seed**
-(the artifact): Extreme regardless of price.
+**Gems and mine minerals** (Data/Objects category -2 / -12; node floors are code facts,
+`MineShaft.chooseStoneType`, decompile MineShaft.cs ~3885 onward and the gem-node branches):
+effort = area effort of the shallowest area the node spawns in (area 0: 1, area 40: 3, area 80:
+5, Skull Cavern 121: 7) + 1 if the node only appears in the dark/deep variant of that area. A
+gem that only comes from geodes uses the geode rule.
 
-**Artisan goods (Artisan).** Honey, Mayonnaise, Jelly, Pickles, Juice: Easy (one cheap machine).
-Wine, Beer, Pale Ale, Mead, Cheese, Oil, Coffee, Green Tea, Duck Mayonnaise: Medium. Cloth
-(Loom + sheep/rabbit), Goat Cheese (Big Barn + goat), Aged Roe (Cask + cellar): Hard. Truffle
-Oil (pig + Oil Maker), Caviar (Fish Pond + Sturgeon), Dinosaur Mayonnaise, Void Mayonnaise:
-Extreme.
+**Geode contents** (Data/Objects `GeodeDrops` per geode item, with `Chance`, `Condition`,
+`Precedence`; `GeodeDropsDefaultItems` pulls in the hard-coded list in
+`Utility.getTreasureFromGeode`, decompile Utility.cs:6368): effort = effort of the easiest geode
+that can yield the item + a rarity step from the per-geode chance (chance >= 1/8: +0, >= 1/20:
++1, else +2). Geode effort: Geode 1 (floors 1 to 39), Frozen Geode 3 (41 to 79), Magma Geode 5
+(81 to 119), Omni Geode 4 (any area at low odds, Skull Cavern reliably; reachable by Fall via the
+Vault), Trove/Golden Coconut not counted. Cracking costs 25g at Clint, which is ignored (the
+availability floor already needs the mine).
 
-**Animal products (Kitchen).** Egg, Milk: Easy. Large Egg, Large Milk, Brown Egg, Wool, Duck Egg,
-Duck Feather: Medium. Goat Milk, Large Goat Milk, Rabbit's Foot, Void Egg: Hard. Truffle, Ostrich
-Egg, Golden Egg: Extreme.
+**Monster drops** (Data/Monsters: field 6 is the drop list as `id chance` pairs; spawn floors are
+code facts in `MineShaft.getMonsterForThisLevel`, decompile MineShaft.cs:4033, plus Skull Cavern
+and the Quarry/Sewers spawns): effort = area effort of the shallowest area the dropping monster
+spawns in + a rarity step from its drop chance (>= 0.5: +0, >= 0.1: +1, else +2), taking the
+minimum over every monster that drops the item. The Slime Hutch is not counted (it needs the
+Wizard). Items sold by Krobus or the Adventurer's Guild are still derived from monsters (shop
+availability is a different fact and stays out of effort).
 
-**Cooked dishes (Kitchen).** Tier by the hardest ingredient plus one step for needing the kitchen:
-dishes whose ingredients are all Easy and whose recipe is starter or TV-week-1 (Fried Egg,
-Omelet, Salad, Bread, Fried Mushroom, Pancakes): Medium; the rest: Hard; dishes needing an Extreme
-ingredient or a 10-heart / Ginger Island recipe (Lucky Lunch, Seafoam Pudding, Tropical Curry,
-Magic Rock Candy is not craftable): Extreme.
+**Artifacts** (Data/Locations `ArtifactSpots` per location plus the `Default` list, each with
+`Chance`, `Condition` and `Precedence`, decompile GameLocation.cs:14062; fossil bone nodes and
+Ginger Island digs count as their own locations): effort = the location's reach effort (Farm /
+Town / Forest / Beach / Mountain / Bus Stop 1, Mines 2, Desert 4, Skull Cavern and Ginger Island 7,
+via the existing `LocationGating`) + a rarity step from the spot chance (>= 0.1: +0, >= 0.02: +1,
+>= 0.005: +2, else +3), minimum over every location that can drop it. This is what makes a
+Dinosaur Egg (Mountain spots at 0.005, and 0.02 in the Skull Cavern) Extreme while a Diamond (a
+floor-80 node) is Hard, whatever they sell for.
 
-The room domains (crops, forage, fish, metals) keep their existing rarity/effort behaviour except
-that the week table above applies to their goal sampling too, using the fish/metals effort model
-and price fallback for crops and forage.
+**Artisan goods** (Data/Machines: `OutputRules` with `Triggers.RequiredItemId` /
+`RequiredTags` and `OutputItem`, plus `MinutesUntilReady`; the machine's own recipe in
+Data/CraftingRecipes with its unlock condition): effort = effort of the cheapest qualifying input
+(recursively derived; a crop input uses the crop rule below, an animal product the animal rule) +
+machine effort (1 for a machine unlocked by default or skill level <= 3, 2 for level 4 to 7, 3
+for level 8+ or a friendship/quest unlock) + a time step (0 for under a day, 1 for up to 7 days,
+2 beyond, which is what puts Casks and Aged Roe up a tier). Fish Pond outputs (Roe, Caviar, Squid
+Ink) read Data/FishPondData: effort of the fish + 2 for the pond + 1 per required population
+step above the first.
+
+**Animal products** (Data/FarmAnimals: `House`, `PurchasePrice`, `DaysToMature`,
+`DaysToProduce`, `ProduceItemIds`, `DeluxeProduceItemIds`,
+`DeluxeProduceMinimumFriendship`; Data/Buildings for the housing chain: `BuildCost`,
+`BuildMaterials`, `BuildingToUpgrade`): effort = housing effort (Coop / Barn 1, Big 2, Deluxe 3,
+counting the upgrade chain) + a price step from the animal's purchase price (< 1,000g: 0, <
+4,000g: 1, else 2) + 1 if the product is a deluxe produce (needs friendship) + 1 if
+`DaysToProduce` > 1. Truffle = Deluxe Barn 3 + pig price 2 = 5, Egg = 1, Ostrich Egg = 3 + 2 +
+1 (incubator, Ginger Island) = 6+.
+
+**Cooked dishes** (Data/CookingRecipes: `ingredients / _ / output / unlock`): effort = max
+ingredient effort (each ingredient derived by its own domain rule; category refs such as "any
+milk" use the cheapest member) + unlock effort (`default` 0, TV or skill level <= 5: 1,
+friendship or skill 6+: 2, Ginger Island / Qi: 3) + 1 for the kitchen (house upgrade 1, 10,000g;
+dropped when `keep_kitchen` is owned). Dishes with an unobtainable ingredient are Extreme.
+
+**Crops and forage** (already in the pools with seasons): effort = 1 + growth-days step
+(Data/Crops: <= 6 days 0, <= 12 days 1, else 2) + 1 for a trellis or regrowing crop that needs
+a season to pay; forage = 1 + 1 if only in one location + 1 if Secret Woods / Desert / Island.
+Used only for rule E weighting of the room themes; their season floors are unchanged.
+
+Every rule yields `null` for an id it does not recognise, and the composer tries the next domain;
+an id no rule claims keeps the price bucket (existing behaviour) and is logged once at Trace so
+the gap shows in `tly_dumpeffort`.
 
 ### Hub and HUD
 
@@ -241,6 +284,8 @@ appended; older saves load unchanged, mid-week saves keep their sampled goals.
 `tly_themepool [theme]` prints each theme's askable count for the current week (rule C's number)
 and, with a theme, the tier-1 / tier-2 lines with their effort tier and weight.
 `tly_itemmodel` gains the effort tier and its source (derived / price / override).
+`tly_dumpeffort` writes `docs/item-effort-model.md`: every pool item by theme, effort, tier and
+basis, for review; regenerated on every release like the engine catalogue.
 
 ## Testing
 
@@ -257,8 +302,13 @@ Core (xunit):
 - Rule D: a 3-goal Summer week pays 45 total in three 15s; completing the same slot twice pays once.
 - Rule E: Spring never samples an Extreme id; Winter with one Easy and one Extreme id samples the
   Extreme first at seed 1 (weight 8 vs 1).
-- Effort overrides: Dinosaur Egg resolves Extreme although its price bucket is Rare; an id absent
-  from every layer falls back to its price bucket.
+- Effort derivation, one test per domain with a hand-built data snapshot: a gem node at area 80
+  scores 5; a geode drop at 1/32 from a Frozen Geode scores 3 + 2; Bat Wing from a floor-30 bat at
+  0.9 scores 1; Dinosaur Egg from a Mountain spot at 0.005 scores 1 + 2 and from Skull Cavern at
+  0.02 scores 7 + 1, minimum 3, and lands in the top quartile of the Spelunking pool while Diamond
+  does not; Wine = grape effort + 1 + 2 (7 days); Truffle = 3 + 2; a dish whose ingredient is
+  unrecognised is Extreme; an id no rule claims keeps its price bucket and is reported.
+- Quartile tiering: a pool of 8 efforts {1,1,2,2,3,3,5,7} tiers as E,E,M,M,H,H,X,X.
 - i18n guard for the new keys.
 
 Live (throwaway save): `tly_themepool` on a fresh Spring board shows only room themes askable;
@@ -274,6 +324,18 @@ in one sentence that goals follow the season gate and weekly bonuses are paid pe
 New" at release; CHANGELOG `## Unreleased` (call out the bonus-per-goal change, players will
 notice). Engine catalogue doc gains a "theme pools" table with the simulated line counts and the
 effort override table.
+
+## Phasing
+
+1. **Availability model Phase 2** (effort rules for gems/minerals, geodes, monster drops,
+   artifacts, artisan goods, fish pond, animal products, cooked dishes, crops/forage) with
+   `tly_dumpeffort`. Ships alone first; Jeff reviews `docs/item-effort-model.md`.
+2. **Theme economy** (rules A to E) on the existing five themes, with the classifier and the
+   per-goal bonus. Smoked on the throwaway save.
+3. **The three activity themes** and their five effects.
+
+Each phase is its own plan and its own set of commits; 2 and 3 do not start until the document
+from 1 has been looked at.
 
 ## Out of scope
 
