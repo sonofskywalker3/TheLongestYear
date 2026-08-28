@@ -143,6 +143,19 @@ public static class BundleClassifier
                 ingredientQualities: ingredientQualities);
         }
 
+        // Spec 2026-08-28-even-year: with a model, a pick-X-of-Y bundle's ramp follows its own
+        // items (an even quarter split bounded by what is reachable by each gate). A named user
+        // quota (checked above) still wins.
+        if (availability != null && parsed.NumberOfSlots < ingredients.Count)
+        {
+            return BundleRequirement.CreatePercentage(
+                name, theme, ingredients,
+                numberOfSlots: parsed.NumberOfSlots,
+                cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability),
+                ingredientStacks: ingredientStacks,
+                ingredientQualities: ingredientQualities);
+        }
+
         // KIND 2: PerItem — every distinct ingredient must be donated. The structural rule is
         // X >= Y (the slot list covers each ingredient at least once). Vanilla Construction
         // lists Wood twice (X=4, Y=3 deduped); the set-based donation ledger satisfies the
@@ -203,6 +216,27 @@ public static class BundleClassifier
             numberOfSlots * 3 / 5,
             numberOfSlots
         };
+    }
+
+    /// <summary>Spec 2026-08-28-even-year: the ramp follows the items. An even quarter split of X,
+    /// never above what the bundle's ingredients can supply by each season's gate, monotone, and
+    /// X in Winter so the bundle must be completed to win. Unknown items gate at Winter.</summary>
+    public static int[] RampFromItems(int numberOfSlots, IReadOnlyList<string> ingredients, ItemAvailabilityModel model)
+    {
+        if (numberOfSlots < 1) throw new ArgumentOutOfRangeException(nameof(numberOfSlots));
+        if (ingredients == null) throw new ArgumentNullException(nameof(ingredients));
+        if (model == null) throw new ArgumentNullException(nameof(model));
+        var ramp = new int[Calendar.MonthsPerYear];
+        for (int s = 0; s < ramp.Length; s++)
+        {
+            var season = (Season)s;
+            int even = (int)Math.Round(numberOfSlots * (s + 1) / (double)Calendar.MonthsPerYear, MidpointRounding.AwayFromZero);
+            int reachable = ingredients.Count(id => model.For(id).Gate <= season);
+            ramp[s] = Math.Clamp(Math.Min(even, reachable), 0, numberOfSlots);
+        }
+        ramp[^1] = numberOfSlots;
+        for (int s = 1; s < ramp.Length; s++) ramp[s] = Math.Max(ramp[s], ramp[s - 1]);
+        return ramp;
     }
 
     /// <summary>Distinct, qualified-id ingredient list (drops category refs).</summary>
