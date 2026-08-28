@@ -36,6 +36,32 @@ public class ItemPoolBuilderTests
             geodeDrops ?? new List<RawGeodeDropEntry>(),
             Tuning);
 
+    /// <summary>Jeff, 2026-08-28: Midnight Squid, Spook Fish and Blobfish "should be valid
+    /// options" for Night Fishing. They carry ExcludeFromRandomSale in Data/Objects (the game keeps
+    /// them out of random shop stock), and the vet dropped them with everything else so flagged.
+    /// A fish with a Night Market (Submarine) spawn row is a market fish: it stays in the pool,
+    /// and only its festival rows count, because its Beach rows are gated in code, not data, and
+    /// would otherwise read as an all-year beach catch.</summary>
+    [Fact]
+    public void Fish_NightMarketFish_KeptDespiteExcludeFromRandomSale_SeasonWinter_SubmarineOnly()
+    {
+        var pools = Build(
+            fish: new[]
+            {
+                new RawSpawnEntry("(O)800", null, null, "Beach"),
+                new RawSpawnEntry("(O)800", null, null, "Submarine"),
+                new RawSpawnEntry("(O)898", null, "PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", "Beach"),
+            },
+            objects: Objects(
+                ("800", Obj(category: -4, type: "Fish", excludeFromRandomSale: true)),   // Blobfish
+                ("898", Obj(category: -4, type: "Fish", excludeFromRandomSale: true))));  // Son of Crimsonfish: no market row, stays out
+        var blob = Assert.Single(pools.Fish);
+        Assert.Equal("(O)800", blob.ItemId);
+        Assert.Equal(new[] { Season.Winter }, blob.Seasons);
+        Assert.Equal(new[] { "Submarine" }, blob.Locations);
+        Assert.Equal(Season.Winter, pools.DerivedSeasonPins["(O)800"]);
+    }
+
     [Fact]
     public void Crops_QualifiedIds_SeasonsKept_OrderedByItemId()
     {

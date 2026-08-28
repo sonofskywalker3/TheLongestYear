@@ -253,13 +253,34 @@ public static class ItemPoolBuilder
         var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
         var locationsById = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
+        // Night Market fish (Jeff, 2026-08-28: Midnight Squid, Spook Fish and Blobfish "should
+        // be valid options"). Data/Objects flags them ExcludeFromRandomSale, which the vet reads
+        // as "never offer", so none of the three ever reached the pool and the "one market fish"
+        // rule fell back to Octopus and Sea Cucumber. A fish with a spawn row on a passive
+        // festival map is a market fish: it passes the vet, and only its festival rows count,
+        // because its Beach rows are gated in code (the market's dates), not in data, and would
+        // otherwise read as an all-year beach catch.
+        var marketFish = new HashSet<string>(StringComparer.Ordinal);
+        foreach (RawSpawnEntry spawn in fishSpawns)
+        {
+            if (string.IsNullOrEmpty(spawn.ItemId) || !BuiltInFestivalLocations.ContainsKey(spawn.Location ?? ""))
+                continue;
+            string bare = Unqualify(spawn.ItemId);
+            if (objects.TryGetValue(bare, out RawObjectEntry? marketObj) && marketObj.ExcludeFromRandomSale
+                && string.Equals(marketObj.Type, FishType, StringComparison.OrdinalIgnoreCase))
+                marketFish.Add(Qualify(bare));
+        }
+
         foreach (RawSpawnEntry spawn in fishSpawns)
         {
             if (string.IsNullOrEmpty(spawn.ItemId))
                 continue;
             string bare = Unqualify(spawn.ItemId);
             string id = Qualify(bare);
-            if (!Vets(bare, id, objects, excluded))
+            bool isMarketFish = marketFish.Contains(id);
+            if (isMarketFish && !BuiltInFestivalLocations.ContainsKey(spawn.Location ?? ""))
+                continue;
+            if (!(isMarketFish ? VetsIgnoringRandomSale(bare, id, objects, excluded) : Vets(bare, id, objects, excluded)))
                 continue;
             if (!objects.TryGetValue(bare, out RawObjectEntry? spawnObj)
                 || !string.Equals(spawnObj.Type, FishType, StringComparison.OrdinalIgnoreCase))
@@ -571,6 +592,24 @@ public static class ItemPoolBuilder
     /// Fair minigame; "Default" is the trash / Joja Cola table every water shares.</summary>
     public static readonly IReadOnlySet<string> BuiltInNonHabitatLocationKeys =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Default", "Temp", "fishingGame" };
+
+    /// <summary>The vet minus the ExcludeFromRandomSale rule, for Night Market fish (see
+    /// BuildFishPools): the flag keeps them out of random shop stock, it does not mean they
+    /// cannot be caught.</summary>
+    private static bool VetsIgnoringRandomSale(
+        string bareId, string qualifiedId,
+        IReadOnlyDictionary<string, RawObjectEntry> objects, HashSet<string> excluded)
+    {
+        if (BuiltInExcludedItemIds.Contains(qualifiedId) || excluded.Contains(qualifiedId))
+            return false;
+        if (!objects.TryGetValue(bareId, out RawObjectEntry? obj))
+            return false;
+        if (string.Equals(obj.Type, QuestType, StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (obj.ContextTags != null && obj.ContextTags.Contains(LegendaryFishTag))
+            return false;
+        return true;
+    }
 
     /// <summary>Structural + configured vetting. False = never offer this item.</summary>
     private static bool Vets(
