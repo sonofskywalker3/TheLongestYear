@@ -140,6 +140,19 @@ public static class RunBaselineBuilder
             if (meta.HasUpgrade(book.UpgradeId))
                 keptBooks.Add(book.StatKey);
 
+        // Kept wallet items / powers / Stardrops: owned rows contribute their mail markers, the
+        // two power events their id, and each Stardrop row +1 to the stamina count.
+        var keptMail = new List<string>();
+        var keptEvents = new List<string>();
+        int keptStardrops = 0;
+        foreach (WalletKeep keep in WalletKeepTable.Entries)
+        {
+            if (!meta.HasUpgrade(keep.UpgradeId)) continue;
+            keptMail.AddRange(keep.MailFlags);
+            if (keep.EventId != null) keptEvents.Add(keep.EventId);
+            if (keep.Kind == WalletKeepKind.Stardrop) keptStardrops++;
+        }
+
         return new RunBaseline
         {
             StartingGold = gold,
@@ -157,6 +170,9 @@ public static class RunBaselineBuilder
             StartingAnimals = startingAnimals,
             MasteryLevel = MasteryFloor(meta),
             KeptBookStats = keptBooks,
+            KeptMailFlags = keptMail,
+            KeptEventIds = keptEvents,
+            KeptStardropCount = keptStardrops,
             GrantGoldenScythe = meta.HasUpgrade("keep_golden_scythe"),
         };
     }
