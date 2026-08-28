@@ -85,4 +85,11 @@ for season in Spring Summer Fall Winter; do
   [ "$season" = "Winter" ] && break
   say "=== $LABEL: $season day 28"; cross_day28
 done
+n=$(count)
+drv -Action send -Lines "tly_dumpavailability|tly_gatecheck" >/dev/null
+drv -Action wait -Pattern "tly_gatecheck RESULT" -TimeoutSec 90 -FromLine "$n" >/dev/null
+cp "/c/Program Files (x86)/Steam/steamapps/common/Stardew Valley/Mods/TheLongestYear/board-availability.md" "$REPO/docs/board-availability.md"
+say "=== $LABEL: gate audit"; show "$n" "tly_gatecheck|^\s+\[|RESULT|tly_dumpavailability"
+say "=== $LABEL: unknown items (Jeff must confirm each one)"
+sed -n '/^## Unknown items/,/^## Rejected/p' "$REPO/docs/board-availability.md"
 say "=== $LABEL: done"

@@ -18,7 +18,8 @@ public static class ItemAvailabilityBuilder
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
         IReadOnlyDictionary<string, int>? effortOverrides = null,
         EffortData? effortData = null,
-        bool hasKitchen = false)
+        bool hasKitchen = false,
+        IReadOnlyDictionary<string, int>? weekOverrides = null)
     {
         if (pools == null) throw new ArgumentNullException(nameof(pools));
 
@@ -41,7 +42,7 @@ public static class ItemAvailabilityBuilder
             ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings).DeriveAll()
             : null;
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived);
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides);
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").
