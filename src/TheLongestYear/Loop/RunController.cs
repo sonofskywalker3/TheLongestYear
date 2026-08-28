@@ -1068,7 +1068,7 @@ namespace TheLongestYear.Loop
             if (bundleData == null) return System.Array.Empty<BonusSlot>();
             var pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
-                theme, season, id => IsObtainableInSeason(id, season), ItemKindOf);
+                theme, season, id => IsObtainableInWeek(id, weekOfYear), ItemKindOf);
             // Spec 2026-08-28-theme-week-budget: the season cap is a ceiling; the week asks for
             // its share of what the pool still holds so week 4 looks like week 1.
             int dueLines = 0;
@@ -1111,7 +1111,7 @@ namespace TheLongestYear.Loop
 
         /// <summary>tly_themepool: every open line for a theme with its tier and weight.</summary>
         public System.Collections.Generic.IReadOnlyList<GoalWeight> DescribeGoalPool(
-            Theme theme, CoreSeason season, out System.Collections.Generic.IReadOnlyList<BonusSlot> pool)
+            Theme theme, CoreSeason season, int weekOfYear, out System.Collections.Generic.IReadOnlyList<BonusSlot> pool)
         {
             var bundleData = Game1.netWorldState?.Value?.BundleData;
             if (bundleData == null)
@@ -1121,7 +1121,7 @@ namespace TheLongestYear.Loop
             }
             pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
-                theme, season, id => IsObtainableInSeason(id, season), ItemKindOf);
+                theme, season, id => IsObtainableInWeek(id, weekOfYear), ItemKindOf);
             return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season), RarityForItem);
         }
 
@@ -1195,6 +1195,11 @@ namespace TheLongestYear.Loop
         /// <summary>Same predicate but for an arbitrary season — used by the Sunday-night day-28
         /// hub when previewing NEXT season's bonus pool.</summary>
         public bool IsObtainableInSeason(string itemId, CoreSeason season)
+            => IsObtainableInWeek(itemId, AvailabilityWeeks.LastWeekOf(season));
+
+        /// <summary>Spec 2026-08-28-even-year: a weekly goal may name an item only from the week
+        /// the availability model says it first exists (mines 30 floors a week, and so on).</summary>
+        public bool IsObtainableInWeek(string itemId, int weekOfYear)
         {
             System.Collections.Generic.IReadOnlySet<CoreSeason> catalogSeasons = null;
             foreach (var item in _catalog)
@@ -1203,7 +1208,7 @@ namespace TheLongestYear.Loop
                     catalogSeasons = item.ObtainableSeasons;
                     break;
                 }
-            return GoalObtainability.IsObtainable(catalogSeasons, Availability, itemId, season);
+            return GoalObtainability.IsObtainable(catalogSeasons, Availability, itemId, weekOfYear);
         }
 
         /// <summary>Derived item model (fish, crab-pot, metals floors incl. location gating), so a

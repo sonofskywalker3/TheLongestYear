@@ -7,6 +7,22 @@ namespace TheLongestYear.Tests;
 
 public class BundleDeadlinesTests
 {
+    [Fact]
+    public void Deadline_clamps_to_the_gate_season_not_the_goal_week()
+    {
+        // Ruby: goal week 3 (Spring), gate Summer. Easiest of four, so the spread puts it on
+        // Spring; the clamp lifts it to its gate season, not to its goal week's season.
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)64"] = new ItemAvailability(Season.Spring, 1, "ruby", EffortSource.Derived, 3, Season.Summer),
+            ["(O)b"] = new ItemAvailability(Season.Spring, 2, "test"),
+            ["(O)c"] = new ItemAvailability(Season.Spring, 3, "test"),
+            ["(O)d"] = new ItemAvailability(Season.Spring, 4, "test"),
+        });
+        var result = BundleDeadlines.For(new List<string> { "(O)64", "(O)b", "(O)c", "(O)d" }, model);
+        Assert.Equal(Season.Summer, result["(O)64"]);
+    }
+
     private static ItemAvailabilityModel Model(params (string Id, Season Floor, int Effort)[] items)
         => new ItemAvailabilityModel(
             items.ToDictionary(

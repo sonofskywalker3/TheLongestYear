@@ -2182,7 +2182,7 @@ namespace TheLongestYear
                 this.Monitor.Log("Usage: tly_themepool [theme]", LogLevel.Info);
                 return;
             }
-            IReadOnlyList<GoalWeight> weights = _runController.DescribeGoalPool(picked, season, out IReadOnlyList<BonusSlot> pool);
+            IReadOnlyList<GoalWeight> weights = _runController.DescribeGoalPool(picked, season, _meta.Run.WeekOfYear, out IReadOnlyList<BonusSlot> pool);
             var weightById = weights.ToDictionary(w => w.ItemId, w => w, StringComparer.Ordinal);
             this.Monitor.Log($"  {picked}: {pool.Count} open line(s), askable {_runController.AskableCount(picked, season, week)}", LogLevel.Info);
             foreach (BonusSlot slot in pool.OrderByDescending(s => s.Due).ThenBy(s => s.ItemId, StringComparer.Ordinal))

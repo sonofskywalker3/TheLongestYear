@@ -53,8 +53,8 @@ public static class BundleDeadlines
             var deadline = (Season)index;
             // The safety step. A deadline earlier than the season the item can first exist in is
             // unsatisfiable, and an unsatisfiable gate loses the year every loop.
-            if (availability.EarliestSeason > deadline)
-                deadline = availability.EarliestSeason;
+            if (availability.Gate > deadline)
+                deadline = availability.Gate;
 
             result[id] = deadline;
         }
