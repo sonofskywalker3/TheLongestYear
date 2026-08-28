@@ -25,6 +25,7 @@ public class ShopAvailabilityTests
 
     [Theory]
     [InlineData("(O)78", 1)]     // Cave Carrot
+    [InlineData("(O)342", 4)]    // Pickles
     [InlineData("(O)635", 5)]    // Orange
     [InlineData("(O)638", 13)]   // Cherry, second year
     public void Other_and_fruit_tables(string id, int week) => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
