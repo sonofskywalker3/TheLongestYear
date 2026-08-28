@@ -1,10 +1,29 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-28 (bundle pool fixes from player reports, 0.16.26 to 0.16.31)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.31 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1194 passing, 0 failing
-**Build:** clean (mod assembly builds Release)
+**Last updated:** 2026-08-28 late (20-loop bundle and season-gate audit, 0.16.32 to 0.16.36)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.36 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1200 passing, 0 failing
+**Build:** clean (mod assembly builds Release); 0.16.36 deployed to the game
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+**2026-08-28 late: 20-loop audit of the 0.16.26 to 0.16.31 pool fixes, report in
+`docs/superpowers/AUDIT-2026-08-29-bundle-loops.md`.** 20 diagnostic boards (`tly_genbundles 0..19`),
+6 real `tly_reset` cycles (Runs 59 to 63), weekly goals for all four seasons on every live board
+plus a real season advance on Run 62. All five of last night's fixes observed working (no wrong-water
+fish, no any-season item in a season-named bundle, Night Fishing night-only, festival fish gated to
+their season, Trash gone from the fish pool); `tly_gatecheck` found no impossible gate on any live
+board. Found and fixed, one commit each, verified in-game after redeploy:
+- 0.16.32 diagnostics: `tly_genbundles` lists every slot, logs gates, runs the gate audit; `tly_goals`.
+- 0.16.33 PerItem weekly goals pass the obtainability predicate (Sturgeon offered in Fall, Rainbow Trout in Winter).
+- 0.16.34 weekly-goal forage seasons from the engine forage pool (Chanterelle and Purple Mushroom offered in Summer; Ginger Island rows).
+- 0.16.35 Jeff's request: at most one fruit-tree fruit per theme's weekly goal list.
+- 0.16.36 weekly goals honour location floors (Scorpion Carp offered in Summer).
+Open, need Jeff's ruling (details in the report): Red Mushroom sits in the Spring forage pool but is
+pinned Summer, so loop 16's Spring Foraging audits IMPOSSIBLE; Night Fishing's "one market fish" is
+Sea Cucumber or Octopus because the real trio is `ExcludeFromRandomSale`; seasonal forage bundles
+repeat items on 14 of 20 boards because their pools are 6 or 7 items and the fixed lists take them
+first. `docs/engine-bundle-catalogue.md` regenerated (it is gitignored, so it lives locally only).
+Throwaway save is now `None_447607703` (left in place).
 
 **2026-08-28 bundle pool fixes (two player reports: Flounder on three bundles incl. a lake bundle,
 Mussel on four foraging bundles; then Salmon as a Spring weekly goal and Sea Cucumber due before
