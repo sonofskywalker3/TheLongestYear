@@ -34,6 +34,19 @@ public static class ItemPoolBuilder
         "(O)709", "(O)92", "(O)Moss", "(O)310", "(O)309", "(O)311",
     };
 
+    /// <summary>Built-in seasonal forage additions, merged with the tuning's
+    /// SeasonalForageAdditions (same config-override rationale as
+    /// <see cref="BuiltInExcludedItemIds"/>: a saved config.json replaces that dictionary
+    /// wholesale). Winter Root and Snow Yam are dug from tilled snow and artifact spots, so
+    /// they have no Data/Locations forage row and never reached the Winter pool, which left
+    /// Winter with five candidates once any-season shellfish stopped counting; vanilla's own
+    /// Winter Foraging bundle asks for both.</summary>
+    private static readonly (Season Season, string ItemId)[] BuiltInSeasonalForageAdditions =
+    {
+        (Season.Winter, "(O)412"), // Winter Root
+        (Season.Winter, "(O)416"), // Snow Yam
+    };
+
     /// <summary>Curated vanilla default-geode mineral table (code, not data, in the base
     /// game): Copper/Iron Ore, Coal, Stone, Earth Crystal, Frozen Tear, Fire Quartz,
     /// Quartz. Merged with drop-derived ids; gem-category (-2) items are filtered out
@@ -252,6 +265,14 @@ public static class ItemPoolBuilder
             if (!Vets(bare, id, objects, excluded))
                 continue;
             AddSeasons(id, SeasonsFromSpawn(spawn.Season, spawn.Condition));
+        }
+
+        foreach ((Season season, string rawId) in BuiltInSeasonalForageAdditions)
+        {
+            string bare = Unqualify(rawId);
+            string id = Qualify(bare);
+            if (Vets(bare, id, objects, excluded))
+                AddSeasons(id, new[] { season });
         }
 
         // Curated harder additions (spec seasonal-forage ruling): join the season's pool.

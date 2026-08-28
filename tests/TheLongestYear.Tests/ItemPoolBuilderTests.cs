@@ -160,6 +160,25 @@ public class ItemPoolBuilderTests
         Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!LOCATION_SEASON Here winter"));
     }
 
+    /// <summary>Winter Root and Snow Yam are dug up, not picked, so they have no Data/Locations
+    /// forage row and never reached the Winter pool; vanilla's own Winter Foraging bundle asks
+    /// for both. Built-in (not a tuning default) because a saved config.json replaces the
+    /// SeasonalForageAdditions dictionary wholesale.</summary>
+    [Fact]
+    public void BuiltInWinterAdditions_WinterRootAndSnowYam_JoinWinterPool_EvenWithEmptiedTuning()
+    {
+        var emptied = new BundleGenerationTuning { SeasonalForageAdditions = new() };
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("412", Obj(category: -81, price: 70)), ("416", Obj(category: -81, price: 100))),
+            new List<RawSpawnEntry>(), new List<RawSpawnEntry>(), new HashSet<string>(),
+            new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(),
+            emptied);
+        Assert.Equal(new[] { Season.Winter }, pools.Forage.Single(p => p.ItemId == "(O)412").Seasons);
+        Assert.Equal(new[] { Season.Winter }, pools.Forage.Single(p => p.ItemId == "(O)416").Seasons);
+        Assert.Equal(Season.Winter, pools.DerivedSeasonPins["(O)412"]);
+    }
+
     [Fact]
     public void ForageAdditions_FromTuning_JoinTheSeasonPool()
     {
