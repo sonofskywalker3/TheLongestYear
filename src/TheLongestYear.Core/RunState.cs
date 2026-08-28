@@ -105,13 +105,12 @@ public sealed class RunState
     public int FestivalMainEventDay { get; set; } = -1;
 
     /// <summary>True when this week's theme quest has been completed (every sampled goal slot
-    /// donated — the goal count varies by season, see BonusItemSampler.DefaultMaxCountBySeason)
+    /// donated; the goal count varies by season, see BonusItemSampler.DefaultMaxCountBySeason)
     /// and the liability is lifted for the rest of the week. Also set by the empty-pool
     /// auto-lift when no goal slots could be sampled this week (see
-    /// RunController.ApplyEmptyPoolLiftIfNeeded), and doubles as the idempotency guard against
-    /// double-paying the weekly JP bonus on a save+reload. Reset on theme select, month
-    /// transition, and run reset. Persisted via MetaStore so a save+reload mid-week keeps the
-    /// lifted state.</summary>
+    /// RunController.ApplyEmptyPoolLiftIfNeeded). The weekly JP is paid per goal and guarded by
+    /// BonusSlot.Paid (rule D), not by this flag. Reset on theme select, month transition, and
+    /// run reset. Persisted via MetaStore so a save+reload mid-week keeps the lifted state.</summary>
     public bool LiabilitySuppressedThisWeek { get; set; }
 
     /// <summary>Record having reached the given floor this run. Idempotent for shallower

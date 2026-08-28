@@ -37,8 +37,9 @@ namespace TheLongestYear.Loop
     ///     liability is auto-lifted instead (see <c>RunController.ApplyEmptyPoolLiftIfNeeded</c>).
     ///   - <see cref="OnItemDonated"/> from <c>DonationService.OnItemDonated</c>. Cheap — one
     ///     questLog scan + one live-CC-state re-check + one text update.
-    ///   - Completing all goals pays the weekly JP bonus and lifts the drawback for the rest of
-    ///     the week (see <see cref="AwardCompletionRewards"/>).
+    ///   - Each completed goal pays its share of the weekly JP bonus (rule D, see
+    ///     <see cref="PayGoalShares"/>); completing all goals lifts the drawback for the rest of
+    ///     the week (see <see cref="LiftLiability"/>).
     ///   - The reset wipes <c>player.questLog</c> via <c>loadForNewGame</c>, so no explicit
     ///     cleanup is needed across runs.
     /// </summary>
@@ -154,7 +155,7 @@ namespace TheLongestYear.Loop
 
         private void RefreshObjective(Quest q)
         {
-            IList<BonusSlot> slots = Run.CurrentWeekBonusSlots;
+            List<BonusSlot> slots = Run.CurrentWeekBonusSlots;
             int doneCount = 0;
             var lines = new List<string>();
 
@@ -181,17 +182,41 @@ namespace TheLongestYear.Loop
                 progress + "\n" + string.Join("\n", lines) +
                 "\n\n" + Strings.Get("quest.weekly.tip");
 
-            // Auto-complete when every goal slot has been donated this week. Two rewards land:
-            //   1) A flat JP bonus (season-scaled like the bundle/room completion bonuses).
-            //   2) The week's liability is lifted for the remaining days (bonus stays active).
-            //      RunState.LiabilitySuppressedThisWeek persists the lifted state so a reload
-            //      doesn't snap the liability back on; ActiveEffectsProvider.SuppressLiability
-            //      drives the live patches (ForageOffPatch et al.) to short-circuit to false.
+            // Rule D (activity-themes spec): each goal that lands pays its share of the weekly
+            // bonus right away; BonusSlot.Paid guards against paying twice across a reload.
+            int newlyPaid = WeeklyGoalPayout.MarkPaid(slots, IsSlotComplete);
+            if (newlyPaid > 0)
+                PayGoalShares(newlyPaid, doneCount, slots.Count);
+
+            // Auto-complete when every goal slot has been donated this week: the week's liability
+            // is lifted for the remaining days (bonus stays active). RunState.LiabilitySuppressedThisWeek
+            // persists the lifted state so a reload doesn't snap the liability back on;
+            // ActiveEffectsProvider.SuppressLiability drives the live patches (ForageOffPatch et al.).
             if (slots.Count > 0 && doneCount == slots.Count && !q.completed.Value)
             {
                 q.questComplete();
-                AwardCompletionRewards();
+                LiftLiability();
             }
+        }
+
+        /// <summary>Rule D: the weekly bonus (30 x season multiplier) split evenly across the
+        /// week's goals and paid as each lands. A one-goal Winter week pays 120 / 7, not 120.</summary>
+        private void PayGoalShares(int newlyPaid, int doneCount, int total)
+        {
+            long perGoal = WeeklyGoalPayout.PerGoal(Jp.WeeklyQuestBonus(Run.WeekOfYear), total);
+            long paid = JpBoostHelper.Apply(_store.State, perGoal * newlyPaid);
+            _store.State.JunimoPoints += paid;
+            Game1.addHUDMessage(new HUDMessage(
+                Strings.Get("hud.goal-paid", new Dictionary<string, string>
+                {
+                    ["jp"] = paid.ToString(),
+                    ["done"] = doneCount.ToString(),
+                    ["total"] = total.ToString(),
+                }),
+                HUDMessage.achievement_type));
+            _monitor.Log(
+                $"WeeklyThemeQuest: {newlyPaid} goal(s) done, +{paid} JP ({doneCount}/{total}, now {_store.State.JunimoPoints}).",
+                LogLevel.Info);
         }
 
         /// <summary>Vanilla's own flag for the slot. NOT sufficient on its own to credit a goal,
@@ -211,15 +236,13 @@ namespace TheLongestYear.Loop
         private bool IsSlotComplete(BonusSlot slot) =>
             WeeklyGoalCredit.IsSatisfied(slot, IsSlotFlaggedInCc(slot));
 
-        private void AwardCompletionRewards()
+        /// <summary>Every goal done: lift the drawback for the rest of the week. The JP was already
+        /// paid goal by goal (rule D); the persisted flag keeps a reload from re-announcing it.</summary>
+        private void LiftLiability()
         {
-            // Idempotency guard: if the persisted flag is already set, the rewards already
-            // landed in a prior session — don't double-pay JP on a save+reload.
             if (Run.LiabilitySuppressedThisWeek)
                 return;
 
-            long bonus = JpBoostHelper.Apply(_store.State, Jp.WeeklyQuestBonus(Run.WeekOfYear));
-            _store.State.JunimoPoints += bonus;
             Run.LiabilitySuppressedThisWeek = true;
             ActiveEffectsProvider.SuppressLiability();
 
@@ -228,12 +251,11 @@ namespace TheLongestYear.Loop
                 : "drawback";
 
             Game1.addHUDMessage(new HUDMessage(
-                Strings.Get("hud.theme-complete", new Dictionary<string, string> { ["jp"] = bonus.ToString() }),
+                Strings.Get("hud.theme-complete"),
                 HUDMessage.achievement_type));
 
             _monitor.Log(
-                $"WeeklyThemeQuest complete: +{bonus} JP (now {_store.State.JunimoPoints}), " +
-                $"liability '{liabilityName}' suppressed for the rest of the week.",
+                $"WeeklyThemeQuest complete: liability '{liabilityName}' suppressed for the rest of the week.",
                 LogLevel.Info);
         }
 

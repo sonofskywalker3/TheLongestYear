@@ -10,7 +10,8 @@
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
     "dialog.festival.already-done": "You have already taken part in this today.",
-    "hud.theme-complete": "Weekly theme complete! +{{jp}} JP, drawback lifted.",
+    "hud.theme-complete": "Weekly theme complete! Drawback lifted.",
+    "hud.goal-paid": "Goal done! +{{jp}} JP ({{done}}/{{total}})",
     "hud.nothing-to-donate": "Themed donations completed - drawback lifted.",
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
@@ -376,7 +377,7 @@
     "quest.weekly.progress": "Donated {{done}}/{{total}}:",
     "quest.weekly.slot": "{{item}}{{color}}{{qty}}{{quality}} - {{bundle}}",
     "quest.weekly.qty": " x{{count}}",
-    "quest.weekly.tip": "Tip: hold matching donations for their theme week - completing a goal slot pays 1.5x JP, and finishing every goal lifts the drawback.",
+    "quest.weekly.tip": "Tip: hold matching donations for their theme week - each goal pays 1.5x JP plus its share of the weekly bonus, and finishing every goal lifts the drawback.",
     "quest.stash.title": "A gift from the Junimos",
     "quest.stash.desc": "The Junimos placed a special chest on your farm. It will survive the seasons. Find it and use it wisely; it has very limited space.",
     "quest.shrine.title": "The Junimo Shrine",
