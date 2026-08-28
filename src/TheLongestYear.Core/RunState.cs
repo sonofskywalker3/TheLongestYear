@@ -113,6 +113,33 @@ public sealed class RunState
     /// run reset. Persisted via MetaStore so a save+reload mid-week keeps the lifted state.</summary>
     public bool LiabilitySuppressedThisWeek { get; set; }
 
+    /// <summary>Animals owed a second product today (Kitchen bonus animal_double_product).
+    /// Written by the night's FarmAnimal.dayUpdate, consumed when the product is collected,
+    /// cleared on DayEnding (before the next night's update) and on a run reset.</summary>
+    public List<DoubleProduceRecord> DoubleProduceToday { get; set; } = new();
+
+    /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
+    public void RecordDoubleProduce(long animalId, string produceId)
+    {
+        DoubleProduceToday ??= new List<DoubleProduceRecord>();
+        if (DoubleProduceToday.Exists(r => r.AnimalId == animalId)) return;
+        DoubleProduceToday.Add(new DoubleProduceRecord { AnimalId = animalId, ProduceId = produceId ?? "" });
+    }
+
+    /// <summary>Take (and remove) the animal's owed product, if any.</summary>
+    public bool TryTakeDoubleProduce(long animalId, out string produceId)
+    {
+        DoubleProduceRecord? record = DoubleProduceToday?.Find(r => r.AnimalId == animalId);
+        if (record == null)
+        {
+            produceId = "";
+            return false;
+        }
+        DoubleProduceToday!.Remove(record);
+        produceId = record.ProduceId;
+        return true;
+    }
+
     /// <summary>Record having reached the given floor this run. Idempotent for shallower
     /// floors — only deeper reaches update the peak.</summary>
     public void RecordMineFloor(int floor)
@@ -238,6 +265,7 @@ public sealed class RunState
         FestivalMainEventId = "";
         FestivalMainEventDay = -1;
         (CartStockIds ??= new()).Clear();
+        (DoubleProduceToday ??= new()).Clear();
         LiabilitySuppressedThisWeek = false;
     }
 }
