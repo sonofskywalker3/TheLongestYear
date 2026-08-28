@@ -8,10 +8,12 @@ namespace TheLongestYear.Core;
 /// theme's bundles. Pure — live game data comes in as plain inputs (bundle data dict + a
 /// per-bundle slot-state accessor), so it unit-tests without Game1.
 ///
-/// Rules (spec 2026-07-09):
-///   - Bundle must classify to a BundleRequirement (matched by bundle name) with the requested
-///     theme, and have in-play items this season (same gating as BundleRequirement.InPlayItemsFor:
-///     Seasonal in its season / PerItem pins / Percentage non-zero quota + obtainability).
+/// Rules (spec 2026-07-09, activity themes 2026-08-28):
+///   - A room theme takes bundles whose BundleRequirement (matched by bundle name) carries that
+///     theme. An activity theme (and Mixed, which means anything) takes single LINES from any
+///     bundle on the board whose item kind matches (ThemeDomains) when a classifier is supplied.
+///   - The bundle must have in-play items this season (BundleRequirement.InPlayItemsFor); each
+///     emitted slot is flagged Due when the day-28 gate demands it this season (DueItemsFor).
 ///   - A bundle that already has NumberOfSlots completed ingredient lines is complete — its
 ///     remaining lines can no longer be donated and are excluded.
 ///   - Category refs and completed slots are excluded. Null slot state ⇒ all lines open.
@@ -23,7 +25,8 @@ public static class SlotPoolBuilder
         Func<int, bool[]?> slotStateForBundle,
         IReadOnlyList<BundleRequirement> requirements,
         Theme theme, Season season,
-        Func<string, bool> isObtainableInSeason)
+        Func<string, bool> isObtainableInSeason,
+        Func<string, ItemKind>? kindOf = null)
     {
         if (bundleData == null) throw new ArgumentNullException(nameof(bundleData));
         if (slotStateForBundle == null) throw new ArgumentNullException(nameof(slotStateForBundle));
@@ -36,16 +39,20 @@ public static class SlotPoolBuilder
             if (!reqByName.ContainsKey(r.Name))
                 reqByName[r.Name] = r;
 
+        bool perLine = kindOf != null && ThemeDomains.MatchesPerLine(theme);
+
         var pool = new List<BonusSlot>();
         foreach (KeyValuePair<string, string> kvp in bundleData)
         {
             ParsedBundle bundle = BundleParsing.Parse(kvp.Key, kvp.Value);
             if (!reqByName.TryGetValue(bundle.Name, out BundleRequirement? req)) continue;
-            if (req.Theme != theme) continue;
+            if (!perLine && req.Theme != theme) continue;
 
             var inPlay = new HashSet<string>(
                 req.InPlayItemsFor(season, isObtainableInSeason), StringComparer.Ordinal);
             if (inPlay.Count == 0) continue;
+            var due = new HashSet<string>(
+                req.DueItemsFor(season, isObtainableInSeason), StringComparer.Ordinal);
 
             bool[]? state = slotStateForBundle(bundle.Index);
 
@@ -65,6 +72,7 @@ public static class SlotPoolBuilder
                 if (BundleParsing.IsCategoryRef(ing.ItemRef)) continue;
                 string id = BundleParsing.NormalizeItemId(ing.ItemRef);
                 if (!inPlay.Contains(id)) continue;
+                if (perLine && !ThemeDomains.Matches(theme, kindOf!(id))) continue;
                 if (state != null && i < state.Length && state[i]) continue;   // already donated
 
                 pool.Add(new BonusSlot
@@ -75,6 +83,7 @@ public static class SlotPoolBuilder
                     Stack = ing.Stack > 0 ? ing.Stack : 1,
                     Quality = ing.Quality,
                     BundleName = bundle.Name,
+                    Due = due.Contains(id),
                 });
             }
         }

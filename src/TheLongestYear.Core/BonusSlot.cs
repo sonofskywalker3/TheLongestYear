@@ -21,4 +21,12 @@ public sealed class BonusSlot
     /// so in an n-of-m bundle the flag alone credits slots nobody filled (@ggrace67, 2026-08-26).
     /// Recorded by DonationService.OnItemDonated, which only ever sees real deposits.</summary>
     public bool Deposited { get; set; }
+
+    /// <summary>True when the day-28 gate demands this line this season (rule A, tier 1). Set by
+    /// SlotPoolBuilder; the sampler draws due lines before filler.</summary>
+    public bool Due { get; set; }
+
+    /// <summary>True once this goal's share of the weekly bonus has been paid (rule D). The
+    /// idempotency guard against paying a goal twice across a save and reload.</summary>
+    public bool Paid { get; set; }
 }
