@@ -12,6 +12,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Night Fishing asks only for night fish.** Its vanilla ingredients span every water, so the re-roll could hand it a daytime ocean fish like Flounder. It now draws only fish that cannot be caught before 6pm anywhere (Bream, Squid, Super Cucumber, Midnight Carp in vanilla; Eel and Walleye bite in the afternoon, so they are out), plus the Night Market's fish, at most one per bundle. Modded fish follow the same rule from their own Data/Fish hours.
 - **Seasonal foraging and crop bundles ask only for that season's own items.** Beach shellfish (Mussel, Clam, Cockle, Oyster) and desert fruit spawn all year, so they sat in all four seasonal forage pools at full weight and Mussel turned up in bundle after bundle (player report). Like vanilla, Spring/Summer/Fall/Winter Foraging now draw only season-specific forage; the year-round items still feed Crab Pot, Exotic Foraging and Four Seasons Sampler. Winter Root and Snow Yam join the Winter pool (vanilla's own Winter Foraging items, previously missing). Applies to modded forage and crops the same way: anything that spawns in every season is left out of season-named bundles.
 
 - **Bear's Knowledge and Spring Onion Mastery no longer survive a rewind for free.** The game grants them by "you have seen this scene", and the rewind used to re-mark those scenes as seen, so both powers came back every loop unpaid. They are now wiped with the loop like every other power; the bear and the river lesson can be found again, or the keep can be bought.
