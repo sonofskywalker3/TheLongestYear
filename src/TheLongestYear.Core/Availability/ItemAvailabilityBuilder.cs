@@ -6,16 +6,19 @@ namespace TheLongestYear.Core.Availability;
 /// <summary>Composes the per-domain rules into one <see cref="ItemAvailabilityModel"/>.
 ///
 /// Phase 1 covers Fish, CrabPot and Metals, which are the pools the re-rolled PerItem bundles
-/// draw from and therefore the largest part of the season-gate leak. Items from pools not yet
-/// covered are absent from the derived table and fall through to the model's unrecognised
-/// default, which floors them at Winter. That is the safe direction while the remaining domains
-/// land in later phases.</summary>
+/// draw from and therefore the largest part of the season-gate leak; those rules set a season
+/// floor. Phase 2 (the <see cref="EffortComposer"/> rules, activity-themes spec 2026-08-28)
+/// adds EFFORT ONLY for gems, geodes, monster drops, artifacts, animal products, artisan goods,
+/// fish ponds, dishes, crops and forage: their floor stays the unrecognised Winter default, so no
+/// gate moves, and the number feeds goal weighting and the review document.</summary>
 public static class ItemAvailabilityBuilder
 {
     public static ItemAvailabilityModel Build(
         ItemPools pools,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
-        IReadOnlyDictionary<string, int>? effortOverrides = null)
+        IReadOnlyDictionary<string, int>? effortOverrides = null,
+        EffortData? effortData = null,
+        bool hasKitchen = false)
     {
         if (pools == null) throw new ArgumentNullException(nameof(pools));
 
@@ -34,7 +37,11 @@ public static class ItemAvailabilityBuilder
                 derived[item.ItemId] = metal;
         }
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides);
+        IReadOnlyDictionary<string, ItemEffort>? effortDerived = effortData != null
+            ? new EffortComposer(effortData, derived, hasKitchen).DeriveAll()
+            : null;
+
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived);
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").
