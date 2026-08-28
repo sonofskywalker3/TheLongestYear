@@ -68,3 +68,18 @@ copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate
 - Ask Jeff before the first launch of a session (memory `ask-before-driving-desktop`); one yes
   covers the session. Do not use any mouse or keyboard tool even after a yes.
 - Report from the log, quote the lines, say what is committed, what is deployed, what is pushed.
+
+## Year sims (`tools/sim-year.sh`)
+
+- `bash tools/sim-year.sh minimal <label>` plays a loop year meeting only the gates;
+  `bash tools/sim-year.sh goals <label>` also deposits every week's goal slots (`tly_playseason
+  goalsonly`). Both end with `tly_dumpavailability` and `tly_gatecheck` and copy the board listing
+  to `docs/board-availability.md`; the Unknown items section goes to Jeff after every run.
+- **Never stop a running sim with the harness's task stop.** It kills the wrapper shell only; the
+  inner script keeps sending bridge commands and poisons the next run (2026-08-28, sims I, J and
+  K). Kill the script's own process (`Get-CimInstance Win32_Process` filtered on the script
+  name, then `Stop-Process`), then redeploy so the bridge queue is cleared, then start again.
+- Two sims never overlap: one game, one bridge queue, one log.
+- The hub can show a single card (`offer: Foraging`) when only one theme can ask for two goals;
+  the script handles it since 2026-08-28.
+
