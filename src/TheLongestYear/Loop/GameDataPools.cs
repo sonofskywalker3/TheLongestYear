@@ -40,6 +40,7 @@ namespace TheLongestYear.Loop
             var drops = new List<RawMonsterDropEntry>();
             var fruitTrees = new List<RawFruitTreeEntry>();
             var geodeDrops = new List<RawGeodeDropEntry>();
+            var festivalSeasons = new Dictionary<string, Core.Season>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
@@ -94,6 +95,15 @@ namespace TheLongestYear.Loop
                         trapIds.Add(kv.Key);
                 }
 
+                // Passive festivals (Night Market, SquidFest, Trout Derby...): a spawn row on a
+                // festival-only map or behind IS_PASSIVE_FESTIVAL_OPEN is only reachable in that
+                // festival's season. See ItemPoolBuilder.SeasonsFromSpawn.
+                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.PassiveFestivalData>>("Data/PassiveFestivals"))
+                {
+                    if (kv.Value == null) continue;
+                    festivalSeasons[kv.Key] = MapSeasonValue(kv.Value.Season);
+                }
+
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Monsters"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
@@ -117,7 +127,8 @@ namespace TheLongestYear.Loop
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
-                fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal));
+                fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
+                festivalSeasons);
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +

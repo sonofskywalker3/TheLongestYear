@@ -154,6 +154,54 @@ public class ItemPoolBuilderTests
         Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "PLAYER_HAS_MAIL x")); // no season signal
     }
 
+    /// <summary>Player report 2026-08-28: a Sea Cucumber (Fall/Winter at the beach) was demanded
+    /// before Summer 1. Its Submarine row carries no season because the game gates the Night
+    /// Market by date in code, so the pool read it as all-year. Rows for a passive festival's
+    /// own maps (Submarine, BeachNightMarket) and rows conditioned on
+    /// IS_PASSIVE_FESTIVAL_OPEN take that festival's season from Data/PassiveFestivals.</summary>
+    [Fact]
+    public void SeasonsFromSpawn_PassiveFestivalRows_TakeTheFestivalSeason()
+    {
+        var festivals = new Dictionary<string, Season> { ["NightMarket"] = Season.Winter, ["SquidFest"] = Season.Winter, ["TroutDerby"] = Season.Summer };
+        Assert.Equal(new[] { Season.Winter },
+            ItemPoolBuilder.SeasonsFromSpawn(null, null, "Submarine", festivals));
+        Assert.Equal(new[] { Season.Winter },
+            ItemPoolBuilder.SeasonsFromSpawn(null, null, "BeachNightMarket", festivals));
+        Assert.Equal(new[] { Season.Winter },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "IS_PASSIVE_FESTIVAL_OPEN SquidFest, TIME 0600 1800", "Beach", festivals));
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "IS_PASSIVE_FESTIVAL_OPEN TroutDerby", "Forest", festivals));
+        // An explicit season or season tokens still win; an unknown festival is no signal.
+        Assert.Equal(new[] { Season.Fall },
+            ItemPoolBuilder.SeasonsFromSpawn(Season.Fall, "IS_PASSIVE_FESTIVAL_OPEN SquidFest", "Beach", festivals));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "IS_PASSIVE_FESTIVAL_OPEN ModFest", "Beach", festivals));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, null, "Beach", festivals));
+        // Without festival data the Night Market maps still read as Winter (built-in fallback).
+        Assert.Equal(new[] { Season.Winter }, ItemPoolBuilder.SeasonsFromSpawn(null, null, "Submarine"));
+    }
+
+    [Fact]
+    public void FishPool_NightMarketFish_IsWinterNotAnySeason_AndPinnedFall()
+    {
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("154", Obj(category: -4, price: 75, type: "Fish")), ("800", Obj(category: -4, price: 500, type: "Fish"))),
+            new List<RawSpawnEntry>(),
+            new[]
+            {
+                new RawSpawnEntry("154", null, "LOCATION_SEASON Here fall winter", "Beach"),
+                new RawSpawnEntry("154", null, null, "Submarine"),
+                new RawSpawnEntry("800", null, null, "Submarine"),
+            },
+            new HashSet<string>(), new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(),
+            new List<RawGeodeDropEntry>(), Tuning,
+            festivalSeasons: new Dictionary<string, Season> { ["NightMarket"] = Season.Winter });
+        Assert.Equal(new[] { Season.Fall, Season.Winter }, pools.Fish.Single(p => p.ItemId == "(O)154").Seasons); // Sea Cucumber
+        Assert.Equal(new[] { Season.Winter }, pools.Fish.Single(p => p.ItemId == "(O)800").Seasons);              // Blobfish
+        Assert.Equal(Season.Fall, pools.DerivedSeasonPins["(O)154"]);
+        Assert.Equal(Season.Winter, pools.DerivedSeasonPins["(O)800"]);
+    }
+
     [Fact]
     public void SeasonsFromSpawn_NegatedCondition_TreatedAsNoSignal()
     {
