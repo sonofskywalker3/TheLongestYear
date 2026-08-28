@@ -1,7 +1,7 @@
 # The Longest Year - Status
 
 **Last updated:** 2026-08-27 late (keep wallet items + Stardrops built 0.16.19 to 0.16.25 and live-smoked, all PASS)
-**Branch:** `master`; 0.16.25 committed locally, NOT pushed, NOT released
+**Branch:** `master`; 0.16.25 committed and PUSHED (2026-08-27), NOT released (Jeff: "no release yet")
 **Tests:** 1171 passing, 0 failing
 **Build:** clean
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")

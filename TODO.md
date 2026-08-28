@@ -6,7 +6,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BUILT 2026-08-27 (0.16.19 to 0.16.25, not released), LIVE SMOKE PASSED: keep wallet items and Stardrops with a JP purchase
+### BUILT 2026-08-27 (0.16.19 to 0.16.25, pushed, NOT released), LIVE SMOKE PASSED: keep wallet items and Stardrops with a JP purchase
 
 Built the same night from the approved spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`
 and plan `docs/superpowers/plans/2026-08-27-keep-wallet-stardrops.md`: `WalletKeepTable` (18 rows,
