@@ -39,7 +39,11 @@ public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation);
 public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOnlyList<RawFishPondProduct> Products);
 
 /// <summary>One Data/Crops entry reduced to growth facts.</summary>
-public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis);
+public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons)
+{
+    public RawCropGrowth(string harvestItemId, int growthDays, bool regrows, bool trellis)
+        : this(harvestItemId, growthDays, regrows, trellis, System.Array.Empty<Season>()) { }
+}
 
 /// <summary>Everything the effort rules read, snapshotted from the game's own data tables by the
 /// mod at SaveLoaded (Loop/GameEffortData). Core never touches Game1; tests hand-build these.</summary>

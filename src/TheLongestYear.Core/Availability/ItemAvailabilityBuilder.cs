@@ -38,7 +38,7 @@ public static class ItemAvailabilityBuilder
         }
 
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen).DeriveAll()
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings).DeriveAll()
             : null;
 
         return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived);
