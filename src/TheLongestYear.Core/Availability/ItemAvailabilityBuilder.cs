@@ -13,6 +13,8 @@ namespace TheLongestYear.Core.Availability;
 /// gate moves, and the number feeds goal weighting and the review document.</summary>
 public static class ItemAvailabilityBuilder
 {
+    private const int TrapFishEffort = 2;
+
     public static ItemAvailabilityModel Build(
         ItemPools pools,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
@@ -38,6 +40,15 @@ public static class ItemAvailabilityBuilder
                 derived[item.ItemId] = metal;
         }
 
+        // Trap fish the crab-pot pool left out (the pool keeps a few per board) are still a fact
+        // from Data/Fish: any of them from the week the crab pot recipe arrives.
+        foreach (string trapId in pools.TrapFishIds ?? new HashSet<string>(StringComparer.Ordinal))
+        {
+            if (derived.ContainsKey(trapId)) continue;
+            derived[trapId] = new ItemAvailability(Season.Spring, TrapFishEffort,
+                $"crab pot catch (Data/Fish trap row), week {AvailabilityWeeks.TrapFishWeek}, effort {TrapFishEffort}",
+                EffortSource.Derived, AvailabilityWeeks.TrapFishWeek, Season.Spring);
+        }
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = effortData != null
             ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings).DeriveAll()
             : null;

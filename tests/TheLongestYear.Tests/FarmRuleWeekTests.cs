@@ -28,7 +28,7 @@ public class FarmRuleWeekTests
             new("Rabbit", "Deluxe Coop", 8000, 4, new[] { "(O)440" }, new[] { "(O)446" }),
         };
         Assert.Equal(2, AnimalProductAvailability.Derive("(O)176", animals, buildings)!.EarliestWeek); // Egg
-        Assert.Equal(5, AnimalProductAvailability.Derive("(O)174", animals, buildings)!.EarliestWeek); // Large Egg, deluxe produce, one tier later
+        Assert.Equal(2, AnimalProductAvailability.Derive("(O)174", animals, buildings)!.EarliestWeek); // Large Egg, same building week
         Assert.Equal(5, AnimalProductAvailability.Derive("(O)442", animals, buildings)!.EarliestWeek); // Duck Egg
         Assert.Equal(9, AnimalProductAvailability.Derive("(O)446", animals, buildings)!.EarliestWeek); // Rabbit's Foot
     }

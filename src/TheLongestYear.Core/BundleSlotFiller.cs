@@ -88,7 +88,9 @@ public static class BundleSlotFiller
         List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng, capped, cap);
         // Spring foothold (spec 2026-08-28-even-year): a quarter of the picks, at least one, must
         // be something a Spring gate may demand, while the pool has such an item to give.
-        if (springReady != null)
+        // A season-named bundle (Fall Crops, Winter Foraging) gates in its own season by nature;
+        // the foothold applies to the season-less domains only.
+        if (springReady != null && match.Season == null)
         {
             int need = SpringFoothold.Needed(targetCount);
             int have = chosen.Count(c => springReady(c.ItemId));

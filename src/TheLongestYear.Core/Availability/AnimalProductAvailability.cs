@@ -10,7 +10,8 @@ namespace TheLongestYear.Core.Availability;
 /// and one when the animal takes more than a day per product. An animal Marnie does not sell
 /// (incubator hatch, Ginger Island) takes a fixed step instead of a price step. Minimum over
 /// every animal that makes the item. The week follows the building tier
-/// (AvailabilityWeeks.HousingTierWeek); a deluxe produce counts one tier later.</summary>
+/// (AvailabilityWeeks.HousingTierWeek); a deluxe produce keeps its building's week (Jeff: Duck
+/// Feather is a big-coop item, not a deluxe one).</summary>
 public static class AnimalProductAvailability
 {
     private const int BaseHousingEffort = 1;
@@ -60,7 +61,7 @@ public static class AnimalProductAvailability
             int deluxeStep = regular ? 0 : DeluxeStep;
             int slow = animal.DaysToProduce > 1 ? SlowProduceStep : 0;
             int effort = housing + price + deluxeStep + slow;
-            int week = AvailabilityWeeks.HousingTierWeek(links + (regular ? 0 : 1));
+            int week = AvailabilityWeeks.HousingTierWeek(links);
             bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
             if (better)
                 best = new ItemEffort(effort,
