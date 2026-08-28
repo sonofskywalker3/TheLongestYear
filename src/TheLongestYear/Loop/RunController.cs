@@ -1078,7 +1078,7 @@ namespace TheLongestYear.Loop
                 _config.FillerAllowanceFor(season), GoalBudget.WeeksLeftInSeason(weekOfYear));
             return BonusSlotSampler.SampleSlots(
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, budget,
-                remainingNeedForBundle: RemainingNeedForBundle,
+                remainingNeedForBundle: idx => SeasonNeedForBundle(idx, season),
                 caps: GoalCaps,
                 rules: RulesFor(season));
         }
@@ -1131,6 +1131,35 @@ namespace TheLongestYear.Loop
         /// a bundle that needs two (Jeff, 2026-08-26, from emmalution's stream) - and since a goal
         /// needs a real deposit, the extra ask can never be met. Returns int.MaxValue when the
         /// bundle cannot be resolved, so an unknown bundle is never over-restricted.</summary>
+        /// <summary>Spec 2026-08-28-even-year (sim H): the weekly goals follow the gate exactly. A
+        /// pick-X-of-Y bundle may be asked for at most what its ramp demands by the end of this
+        /// season minus what is already in, so a goal-completing player cannot donate Winter's share
+        /// in Summer. Other kinds keep the plain required-minus-completed cap.</summary>
+        private int SeasonNeedForBundle(int bundleIndex, CoreSeason season)
+        {
+            var bundleData = Game1.netWorldState?.Value?.BundleData;
+            if (bundleData == null) return int.MaxValue;
+            foreach (var kvp in bundleData)
+            {
+                ParsedBundle parsed = BundleParsing.Parse(kvp.Key, kvp.Value);
+                if (parsed.Index != bundleIndex) continue;
+                BundleRequirement req = null;
+                foreach (BundleRequirement r in _requirements)
+                    if (string.Equals(r.Name, parsed.Name, StringComparison.Ordinal)) { req = r; break; }
+                if (req == null) return RemainingNeedForBundle(bundleIndex);
+                bool[] state = SlotStateForBundle(bundleIndex);
+                int completed = 0;
+                if (state != null)
+                {
+                    int lines = System.Math.Min(parsed.Ingredients.Count, state.Length);
+                    for (int i = 0; i < lines; i++)
+                        if (state[i]) completed++;
+                }
+                return SeasonNeed.For(req, season, completed);
+            }
+            return int.MaxValue;
+        }
+
         private int RemainingNeedForBundle(int bundleIndex)
         {
             var bundleData = Game1.netWorldState?.Value?.BundleData;
