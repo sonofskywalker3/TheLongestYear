@@ -37,6 +37,21 @@ public class ShopAvailabilityTests
     }
 
     [Fact]
+    public void Hats_and_weapons_from_the_guild_table_are_placed_by_the_composer()
+    {
+        var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false);
+        Assert.True(composer.DeriveAll().ContainsKey("(H)27"));
+    }
+
+    [Fact]
+    public void Pool_book_is_week_2()
+    {
+        var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,
+            books: new List<PoolItem> { new("(O)Book_Diamonds", 5000, 1, new List<Season>(), new List<string>()) });
+        Assert.Equal(AvailabilityWeeks.BookWeek, composer.Derive("(O)Book_Diamonds")!.EarliestWeek);
+    }
+
+    [Fact]
     public void Pool_artifact_without_a_spot_row_is_week_1()
     {
         var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,

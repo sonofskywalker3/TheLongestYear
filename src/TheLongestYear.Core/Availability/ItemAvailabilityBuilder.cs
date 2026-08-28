@@ -50,7 +50,7 @@ public static class ItemAvailabilityBuilder
                 EffortSource.Derived, AvailabilityWeeks.TrapFishWeek, Season.Spring);
         }
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts).DeriveAll()
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books).DeriveAll()
             : null;
 
         return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides);

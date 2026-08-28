@@ -126,6 +126,10 @@ public static class AvailabilityWeeks
             ["(O)834"] = (13, "Mango, Ginger Island"),
         };
 
+    /// <summary>Books: the Bookseller's first visit is Spring, and the mines, fishing and dig
+    /// spots drop them from day 1 at low odds (for Jeff to confirm).</summary>
+    public const int BookWeek = 2;
+
     /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
     public const int TrapFishWeek = 2;
 

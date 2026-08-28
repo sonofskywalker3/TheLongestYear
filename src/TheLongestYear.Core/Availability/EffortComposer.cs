@@ -18,13 +18,16 @@ public sealed class EffortComposer
     private readonly bool _hasKitchen;
     private readonly IReadOnlyList<PoolItem> _saplings;
     private readonly IReadOnlyList<PoolItem> _artifacts;
+    private readonly IReadOnlyList<PoolItem> _books;
     private readonly Dictionary<string, ItemEffort?> _memo = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visiting = new(StringComparer.Ordinal);
 
     public EffortComposer(EffortData data, IReadOnlyDictionary<string, ItemAvailability> seasonDerived, bool hasKitchen,
-        IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null)
+        IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null,
+        IReadOnlyList<PoolItem>? books = null)
     {
         _artifacts = artifacts ?? Array.Empty<PoolItem>();
+        _books = books ?? Array.Empty<PoolItem>();
         _data = data ?? throw new ArgumentNullException(nameof(data));
         _seasonDerived = seasonDerived ?? throw new ArgumentNullException(nameof(seasonDerived));
         _hasKitchen = hasKitchen;
@@ -88,6 +91,7 @@ public sealed class EffortComposer
             CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns),
             CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
             PoolArtifact(qualifiedId),
+            PoolBook(qualifiedId),
             ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
             FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
             CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf),
@@ -113,7 +117,16 @@ public sealed class EffortComposer
                 AvailabilityWeeks.ArtifactWeek, Season.Spring)
             : null;
 
-    /// <summary>Every Data/Objects id a rule claims and Phase 1 did not, in ordinal order.</summary>
+    private const int PoolBookEffort = 5;
+
+    private ItemEffort? PoolBook(string qualifiedId)
+        => _books.Any(b => b.ItemId == qualifiedId)
+            ? new ItemEffort(PoolBookEffort, $"book (catalog pool), bookseller and random drops, week {AvailabilityWeeks.BookWeek} (for Jeff to confirm), effort {PoolBookEffort}",
+                AvailabilityWeeks.BookWeek, AvailabilityWeeks.SeasonOf(AvailabilityWeeks.BookWeek))
+            : null;
+
+    /// <summary>Every Data/Objects id a rule claims and Phase 1 did not, plus the table ids that
+    /// are not objects (hats, weapons: Adventurer's Guild rewards), in ordinal order.</summary>
     public IReadOnlyDictionary<string, ItemEffort> DeriveAll()
     {
         var result = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
@@ -124,6 +137,12 @@ public sealed class EffortComposer
             EffortOf(id);
             if (_memo.TryGetValue(id, out ItemEffort? effort) && effort != null)
                 result[id] = effort;
+        }
+        foreach (string id in AvailabilityWeeks.GuildRewardWeeks.Keys.OrderBy(k => k, StringComparer.Ordinal))
+        {
+            if (result.ContainsKey(id) || _seasonDerived.ContainsKey(id)) continue;
+            ItemEffort? effort = ShopAvailability.Derive(id);
+            if (effort != null) result[id] = effort;
         }
         return result;
     }
