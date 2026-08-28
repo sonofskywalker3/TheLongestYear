@@ -243,7 +243,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
-            helper.ConsoleCommands.Add("tly_select", "Select one of this week's offered themes. Usage: tly_select <theme>", this.CmdSelect);
+            helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
@@ -324,6 +324,8 @@ namespace TheLongestYear
         /// <summary>Load this playthrough's banked progress when a save opens.</summary>
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
+            // The save carries its own options, so the unfocused-pause setting is re-applied here.
+            this.KeepRunningUnfocused("save load");
             // Bundle-relevance set is per-save (bundle data can differ) — rebuild on the next use.
             TheLongestYear.Loop.BundleRelevanceIndex.Invalidate();
 
@@ -1376,6 +1378,21 @@ namespace TheLongestYear
             }
         }
 
+        /// <summary>Developer bridge only: the game pauses its update loop whenever its window is not
+        /// the foreground window (Game1.cs:4693, unless options.pauseWhenOutOfFocus is off), which is
+        /// why every earlier unattended run had to steal focus to make a queued command execute. With
+        /// the bridge on, the vanilla "pause when inactive" option is switched off so tly_* commands
+        /// keep flowing while Jeff works in another window. A shipped build never touches it.</summary>
+        private void KeepRunningUnfocused(string when)
+        {
+            if (!_config.EnableDebugCommandBridge || Game1.options == null) return;
+            if (!Game1.options.pauseWhenOutOfFocus) return;
+            Game1.options.pauseWhenOutOfFocus = false;
+            this.Monitor.Log(
+                $"Debug bridge: 'pause when window is inactive' switched off at {when} so queued commands run without focus.",
+                LogLevel.Info);
+        }
+
         private void OnGameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
             // Cart Whisperer extends to every day when the standalone Cart Catalog mod is installed.
@@ -1383,6 +1400,7 @@ namespace TheLongestYear
                 this.Helper.ModRegistry.IsLoaded(TheLongestYear.Loop.CartCatalogIntegration.ModId);
 
             this.ApplyWindowSize();
+            this.KeepRunningUnfocused("launch");
 
             var gmcm = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (gmcm == null)
@@ -1759,7 +1777,18 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme>", LogLevel.Warn); return; }
-            // skipOfferCheck: this is a debug/playtest command — let it force any theme, not just
+            // With the planning hub open this is the same as clicking the card, so an unattended
+            // run never needs the mouse: the hub commits the pick (current week or the day-28
+            // next-month pre-pick) and closes itself.
+            if (Game1.activeClickableMenu is TheLongestYear.UI.WeeklyHubMenu hub)
+            {
+                if (hub.ConfirmByName(args[0]))
+                    this.Monitor.Log($"tly_select: picked {args[0]} on the open planning hub.", LogLevel.Info);
+                else
+                    this.Monitor.Log($"tly_select: unknown theme '{args[0]}'. Options: {string.Join(", ", Enum.GetNames(typeof(TheLongestYear.Core.Theme)))}.", LogLevel.Warn);
+                return;
+            }
+            // skipOfferCheck: this is a debug/playtest command; let it force any theme, not just
             // the seeded pair. The SelectedThemesThisMonth dedupe inside Select still applies.
             _runController.SelectByName(args[0], skipOfferCheck: true);
         }
