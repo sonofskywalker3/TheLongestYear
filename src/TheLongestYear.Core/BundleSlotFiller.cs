@@ -8,7 +8,10 @@ namespace TheLongestYear.Core;
 /// pool (spec "expanded-pool remix"): weighted sample without replacement (no duplicate
 /// items per bundle), season filtering for seasonal domains, habitat / night filtering for
 /// fish (<see cref="FishBundleCandidates"/>), stack/quality rolls from the
-/// BundleGenerationTuning block, and the large-quantity forage ask. Returns the input spec UNCHANGED (reference-equal) when the domain is
+/// BundleGenerationTuning block, and the large-quantity forage ask. An optional
+/// <c>avoid</c> set (every item other bundles on this board already ask for) is left out
+/// while the pool can still fill every slot without it. Returns the input spec
+/// UNCHANGED (reference-equal) when the domain is
 /// None or the filtered pool cannot fill every slot with distinct items — the safe
 /// fallback the caller logs.</summary>
 public static class BundleSlotFiller
@@ -32,7 +35,8 @@ public static class BundleSlotFiller
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
-        PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null)
+        PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null,
+        IReadOnlySet<string>? avoid = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -65,11 +69,18 @@ public static class BundleSlotFiller
             }
         }
 
-        // Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).
-        Func<PoolItem, bool>? capped = match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
-            ? p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows)
-            : null;
-        int cap = FishBundleCandidates.NightMarketFishPerBundle;
+        (Func<PoolItem, bool>? capped, int cap) = CapFor(spec, match, pools);
+
+        // No item asked twice across the board (2026-08-28): drop what other bundles already
+        // ask for, unless that would leave this bundle unable to fill.
+        if (avoid != null && avoid.Count > 0)
+        {
+            IReadOnlyList<PoolItem> fresh = candidates.Where(p => !avoid.Contains(p.ItemId)).ToList();
+            if (WeightedSampler.Capacity(fresh, capped, cap) >= targetCount)
+                candidates = fresh;
+            else
+                log?.Invoke($"'{spec.Name}': only {fresh.Count} candidates no other bundle asks for (need {targetCount}); allowing repeats.");
+        }
 
         if (WeightedSampler.Capacity(candidates, capped, cap) < targetCount)
             return spec;
@@ -94,6 +105,23 @@ public static class BundleSlotFiller
             NumberOfSlots = Math.Min(spec.NumberOfSlots, slots.Count),
         };
     }
+
+    /// <summary>How many distinct items <see cref="Fill"/> could pick for this bundle before any
+    /// pity trim or avoid set (0 for a domain it does not re-roll). The engine fills the
+    /// tightest bundles first so a small pool is not the one left holding the repeat fallback.</summary>
+    public static int CandidateCount(BundleSpec spec, DomainMatch match, ItemPools pools)
+    {
+        if (match.Domain == PoolDomain.None)
+            return 0;
+        (Func<PoolItem, bool>? capped, int cap) = CapFor(spec, match, pools);
+        return WeightedSampler.Capacity(Candidates(spec, match, pools), capped, cap);
+    }
+
+    /// <summary>Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).</summary>
+    private static (Func<PoolItem, bool>? Capped, int Cap) CapFor(BundleSpec spec, DomainMatch match, ItemPools pools)
+        => match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
+            ? (p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows), FishBundleCandidates.NightMarketFishPerBundle)
+            : (null, int.MaxValue);
 
     /// <summary>A trim applies to bundles feeding the trimmed season's gate: season-agnostic
     /// pools (Metals, ArtisanGoods, Fish, CrabPot, MonsterDrops, generic crops) feed every

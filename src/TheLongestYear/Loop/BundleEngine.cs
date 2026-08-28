@@ -12,7 +12,9 @@ namespace TheLongestYear.Loop
     /// <summary>
     /// Orchestrates a full owned-bundle generation + write. <see cref="Generate"/> draws one
     /// candidate per room-position from <see cref="VanillaBundlePool.BuildRoomPools"/> via
-    /// <see cref="RemixSelector"/>; <see cref="WriteToWorld"/> commits the result into
+    /// <see cref="RemixSelector"/>, re-rolls each pick's slots (no item asked twice across the
+    /// board: fills run tightest pool first and each leaves out what earlier ones asked);
+    /// <see cref="WriteToWorld"/> commits the result into
     /// <c>Game1.netWorldState</c> and re-syncs the Community Center location.
     ///
     /// RunActivation gating is NOT done here — this class only builds/writes bundle data given a
@@ -67,6 +69,7 @@ namespace TheLongestYear.Loop
     internal sealed class BundleEngine
     {
         private const string VaultRoomName = "Vault";
+        private const string MoneySlotId = "-1";
 
         // Per-bundle RNG salt for slot composition (trim + Plan-2 slot filling). spec.Index is
         // vanilla's own absolute bundle index — unique per generation — so each bundle gets an
@@ -171,10 +174,14 @@ namespace TheLongestYear.Loop
                 }
             }
 
-            // Deterministic room order (ordinal by name) rather than the dictionary's own
-            // enumeration order -- Dictionary<TKey,TValue> enumeration order is an implementation
-            // detail, not a contract, so relying on it would make the fixed-key-space guarantee
-            // below fragile across process launches/.NET versions even though the seed is the same.
+            // Pass 1: pick and classify. Deterministic room order (ordinal by name) rather than
+            // the dictionary's own enumeration order -- Dictionary<TKey,TValue> enumeration order
+            // is an implementation detail, not a contract, so relying on it would make the
+            // fixed-key-space guarantee below fragile across process launches/.NET versions even
+            // though the seed is the same. Picks whose items are already final (authored, or a
+            // domain the engine does not re-roll) seed the board-wide "asked" set here.
+            var picked = new List<PickRecord>();
+            var asked = new HashSet<string>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry
                      in pools.OrderBy(kv => kv.Key, StringComparer.Ordinal))
             {
@@ -187,7 +194,6 @@ namespace TheLongestYear.Loop
                     if (!TryClaimIndex(pick, claimedIndices))
                         continue;
 
-                    BundleSpec composed;
                     if (AuthoredBundleNames.Contains(pick.Name))
                     {
                         // Authored slots (Plan-3) are composed ONCE per def by
@@ -196,43 +202,102 @@ namespace TheLongestYear.Loop
                         // every slot (e.g. Weatherman's = all-fish, Preserver's = all-artisan).
                         // Those authored picks clear PoolDomainClassifier's 2/3 majority just as
                         // easily as a coincidentally-themed vanilla pick, so running them through
-                        // the classify/fill/trim chain below would silently RE-ROLL an authored
+                        // the classify/fill/trim chain would silently RE-ROLL an authored
                         // bundle's already-final slots and make them position-dependent (final-
                         // review finding). Skip the chain entirely for authored picks.
-                        composed = pick;
-                        _lastDomains[pick.Index] = new DomainMatch(PoolDomain.None, null);
+                        picked.Add(new PickRecord(pick, new DomainMatch(PoolDomain.None, null), pick));
+                        AddAskedItems(asked, pick);
+                        continue;
                     }
-                    else
+
+                    DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
+                    if (match.Domain == PoolDomain.None)
                     {
-                        var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
-                        DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
-                        composed = BundleSlotFiller.Fill(pick, match, itemPools, _tuning, slotRng, trim, _thresholds,
-                            msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info));
-                        if (ReferenceEquals(composed, pick))
-                        {
-                            if (match.Domain != PoolDomain.None)
-                                _monitor?.Log(
-                                    $"BundleEngine: '{pick.Room}/{pick.Name}' matched domain {match.Domain} but its " +
-                                    "filtered pool couldn't fill every slot — keeping vanilla slots.",
-                                    LogLevel.Trace);
-                            composed = SlotTrimmer.Trim(pick, slotRng);
-                        }
-                        _lastDomains[pick.Index] = match; // for diagnostics (see below)
+                        // Kept vanilla slots: the same per-pick rng stream the filler would have
+                        // received, of which a None-domain fill consumes nothing.
+                        BundleSpec trimmed = SlotTrimmer.Trim(pick, new Random(seed ^ (pick.Index * SlotSaltPrime)));
+                        picked.Add(new PickRecord(pick, match, trimmed));
+                        AddAskedItems(asked, trimmed);
+                        continue;
                     }
-                    // Required-slots modifier: adjust the pick-X count only. Applied after
-                    // composition so it sees the FINAL shown-slot count (SlotTrimmer and the
-                    // filler can both shrink it), and never to the Vault, which RequiredSlots
-                    // skips on its own.
-                    // Stack-size modifier: applied to the FINISHED slots so it reaches bundles the
-                    // engine kept verbatim from vanilla, not just the ones it re-rolled. Before
-                    // this it only scaled re-rolled bundles and missed most of the board.
-                    composed = Core.StackScaling.Apply(composed, _difficulty);
-                    composed = Core.RequiredSlots.Apply(composed, _difficulty);
-                    allPicks.Add(Uniquify(composed, usedNameCounts));
+                    picked.Add(new PickRecord(pick, match, null));
                 }
             }
 
+            // Pass 2: re-roll, tightest pool first (2026-08-28, no item asked twice across the
+            // board). Each fill leaves out everything already asked and adds its own picks, so a
+            // bundle with few candidates (Night Fishing) is not the one left holding the repeat
+            // fallback because a roomy bundle drew its fish first. Per-pick rng streams are
+            // salted on the absolute index, so the fill order does not change them.
+            foreach (PickRecord record in picked
+                         .Where(r => r.Composed == null)
+                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools))
+                         .ThenBy(r => r.Pick.Index))
+            {
+                BundleSpec pick = record.Pick;
+                var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
+                BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
+                    msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info), asked);
+                if (ReferenceEquals(composed, pick))
+                {
+                    _monitor?.Log(
+                        $"BundleEngine: '{pick.Room}/{pick.Name}' matched domain {record.Match.Domain} but its " +
+                        "filtered pool couldn't fill every slot — keeping vanilla slots.",
+                        LogLevel.Trace);
+                    composed = SlotTrimmer.Trim(pick, slotRng);
+                }
+                AddAskedItems(asked, composed);
+                record.Composed = composed;
+            }
+
+            // Pass 3: emit in the original room/position order (name uniquification and the
+            // fixed write-key space depend on it).
+            foreach (PickRecord record in picked)
+            {
+                _lastDomains[record.Pick.Index] = record.Match; // for diagnostics (see below)
+                // Required-slots modifier: adjust the pick-X count only. Applied after
+                // composition so it sees the FINAL shown-slot count (SlotTrimmer and the
+                // filler can both shrink it), and never to the Vault, which RequiredSlots
+                // skips on its own.
+                // Stack-size modifier: applied to the FINISHED slots so it reaches bundles the
+                // engine kept verbatim from vanilla, not just the ones it re-rolled. Before
+                // this it only scaled re-rolled bundles and missed most of the board.
+                BundleSpec composed = Core.StackScaling.Apply(record.Composed!, _difficulty);
+                composed = Core.RequiredSlots.Apply(composed, _difficulty);
+                allPicks.Add(Uniquify(composed, usedNameCounts));
+            }
+
             return new GeneratedBundleSet(allPicks);
+        }
+
+        /// <summary>One non-Vault pick between the passes of <see cref="Generate"/>: Composed is
+        /// null until pass 2 fills it (authored and kept-vanilla picks arrive composed).</summary>
+        private sealed class PickRecord
+        {
+            public PickRecord(BundleSpec pick, DomainMatch match, BundleSpec composed)
+            {
+                Pick = pick;
+                Match = match;
+                Composed = composed;
+            }
+
+            public BundleSpec Pick { get; }
+            public DomainMatch Match { get; }
+            public BundleSpec Composed { get; set; }
+        }
+
+        /// <summary>Records every concrete item a bundle asks for (money and category slots are
+        /// not items) in the qualified form the pools use, so later fills can leave them out.</summary>
+        private static void AddAskedItems(HashSet<string> asked, BundleSpec spec)
+        {
+            foreach (BundleSlotSpec slot in spec.Slots)
+            {
+                if (slot.ItemId == MoneySlotId || BundleParsing.IsCategoryRef(slot.ItemId))
+                    continue;
+                string id = BundleParsing.NormalizeItemId(slot.ItemId);
+                if (!string.IsNullOrEmpty(id))
+                    asked.Add(id);
+            }
         }
 
         /// <summary>Requirements manifest with data-derived season pins merged UNDER the

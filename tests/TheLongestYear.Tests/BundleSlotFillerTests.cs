@@ -205,6 +205,62 @@ public class BundleSlotFillerTests
         Assert.True(anySeasonCropSeenInGenericBundle);
     }
 
+    /// <summary>No item asked twice across the board (Jeff, 2026-08-28: "Flounder on 3 bundles",
+    /// "Mussel on 4"). The engine hands each fill the ids every earlier bundle already asks for;
+    /// the fill leaves them out while the pool can still fill every slot without them, and only
+    /// falls back to the whole pool when it would otherwise run dry.</summary>
+    [Fact]
+    public void Avoid_LeavesOutItemsOtherBundlesAsk_WhilePoolCanStillFill()
+    {
+        var pools = new ItemPools
+        {
+            Crops = Enumerable.Range(0, 12).Select(i => Item($"(O){100 + i}",
+                seasons: new[] { Season.Spring })).ToList(),
+        };
+        var avoid = new HashSet<string> { "(O)100", "(O)101", "(O)102" };
+        for (int seed = 0; seed < 40; seed++)
+        {
+            var filled = BundleSlotFiller.Fill(Spec("Spring Crops", 4, 4),
+                new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring), pools, Tuning, new Random(seed),
+                avoid: avoid);
+            Assert.Equal(4, filled.Slots.Count);
+            Assert.DoesNotContain(filled.Slots, s => avoid.Contains(s.ItemId));
+        }
+    }
+
+    [Fact]
+    public void Avoid_FallsBackToWholePool_WhenItWouldRunDry()
+    {
+        var pools = new ItemPools
+        {
+            Crops = Enumerable.Range(0, 5).Select(i => Item($"(O){100 + i}",
+                seasons: new[] { Season.Spring })).ToList(),
+        };
+        var avoid = new HashSet<string> { "(O)100", "(O)101" }; // only 3 left, 4 needed
+        var filled = BundleSlotFiller.Fill(Spec("Spring Crops", 4, 4),
+            new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring), pools, Tuning, new Random(1),
+            avoid: avoid);
+        Assert.Equal(4, filled.Slots.Count);
+        Assert.Equal(4, filled.Slots.Select(s => s.ItemId).Distinct().Count());
+    }
+
+    [Fact]
+    public void CandidateCount_ReflectsTheDomainFilters()
+    {
+        var pools = new ItemPools
+        {
+            Crops = Enumerable.Range(0, 12).Select(i => Item($"(O){100 + i}", seasons: new[] { Season.Spring }))
+                .Concat(new[] { Item("(O)900"), Item("(O)901") }) // any-season: not for a season-named bundle
+                .ToList(),
+        };
+        Assert.Equal(12, BundleSlotFiller.CandidateCount(Spec("Spring Crops", 4, 4),
+            new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring), pools));
+        Assert.Equal(14, BundleSlotFiller.CandidateCount(Spec("Garden", 4, 4),
+            new DomainMatch(PoolDomain.SeasonalCrops, null), pools));
+        Assert.Equal(0, BundleSlotFiller.CandidateCount(Spec("Vault", 1, 1),
+            new DomainMatch(PoolDomain.None, null), pools));
+    }
+
     [Fact]
     public void PickCount_LimitsTargetSlotCount()
     {
