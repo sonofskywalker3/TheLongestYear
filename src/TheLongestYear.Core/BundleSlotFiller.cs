@@ -6,9 +6,9 @@ namespace TheLongestYear.Core;
 
 /// <summary>Seeded re-roll of a picked bundle's slot contents from its domain's item
 /// pool (spec "expanded-pool remix"): weighted sample without replacement (no duplicate
-/// items per bundle), season filtering for seasonal domains, habitat filtering for fish,
-/// stack/quality rolls from the BundleGenerationTuning block, and the large-quantity
-/// forage ask. Returns the input spec UNCHANGED (reference-equal) when the domain is
+/// items per bundle), season filtering for seasonal domains, habitat / night filtering for
+/// fish (<see cref="FishBundleCandidates"/>), stack/quality rolls from the
+/// BundleGenerationTuning block, and the large-quantity forage ask. Returns the input spec UNCHANGED (reference-equal) when the domain is
 /// None or the filtered pool cannot fill every slot with distinct items — the safe
 /// fallback the caller logs.</summary>
 public static class BundleSlotFiller
@@ -65,10 +65,16 @@ public static class BundleSlotFiller
             }
         }
 
-        if (candidates.Count < targetCount)
+        // Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).
+        Func<PoolItem, bool>? capped = match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
+            ? p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows)
+            : null;
+        int cap = FishBundleCandidates.NightMarketFishPerBundle;
+
+        if (WeightedSampler.Capacity(candidates, capped, cap) < targetCount)
             return spec;
 
-        List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng);
+        List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng, capped, cap);
         var slots = chosen.Select(item => new BundleSlotSpec(
             item.ItemId,
             RollStack(match.Domain, item, tuning, rng),
@@ -111,7 +117,9 @@ public static class BundleSlotFiller
             case PoolDomain.SeasonalForage:
                 return FilterSeason(pools.Forage, match.Season);
             case PoolDomain.Fish:
-                return FilterFishByHabitat(spec, pools.Fish);
+                return FishBundleCandidates.IsNightFishingBundle(spec)
+                    ? FishBundleCandidates.ForNightFishing(pools.Fish, pools.FishRows)
+                    : FishBundleCandidates.ByHabitat(spec, pools.Fish);
             case PoolDomain.CrabPot:
                 return pools.CrabPot;
             case PoolDomain.MonsterDrops:
@@ -134,26 +142,6 @@ public static class BundleSlotFiller
         => season == null
             ? pool
             : pool.Where(p => p.Seasons.Count > 0 && p.Seasons.Contains(season.Value)).ToList();
-
-    /// <summary>A fish bundle keeps its habitat identity: candidates are fish sharing at
-    /// least one spawn location with the bundle's ORIGINAL fish (union empty — e.g. all
-    /// originals unknown to the pool — falls back to the whole fish pool).</summary>
-    private static IReadOnlyList<PoolItem> FilterFishByHabitat(
-        BundleSpec spec, IReadOnlyList<PoolItem> fishPool)
-    {
-        var byId = fishPool.ToDictionary(p => p.ItemId, StringComparer.Ordinal);
-        var habitat = new HashSet<string>(StringComparer.Ordinal);
-        foreach (BundleSlotSpec slot in spec.Slots)
-        {
-            string normalizedId = BundleParsing.NormalizeItemId(slot.ItemId);
-            if (!string.IsNullOrEmpty(normalizedId) && byId.TryGetValue(normalizedId, out var original))
-                foreach (string location in original.Locations)
-                    habitat.Add(location);
-        }
-        if (habitat.Count == 0)
-            return fishPool;
-        return fishPool.Where(p => p.Locations.Any(habitat.Contains)).ToList();
-    }
 
     private static int RollStack(
         PoolDomain domain, PoolItem item, BundleGenerationTuning tuning, Random rng)

@@ -528,11 +528,13 @@ public static class ItemPoolBuilder
         BundleGenerationTuning tuning, IReadOnlyList<Season> seasons, IReadOnlyList<string> locations)
     {
         string bare = Unqualify(qualifiedId);
-        int price = objects.TryGetValue(bare, out RawObjectEntry? obj) ? obj.Price : 0;
+        bool known = objects.TryGetValue(bare, out RawObjectEntry? obj);
+        int price = known ? obj!.Price : 0;
+        int category = known ? obj!.Category : 0;
         int weight = tuning.RareRollWeights.TryGetValue(qualifiedId, out int over) ? over
             : bare.All(char.IsDigit) ? tuning.VanillaItemWeight
             : tuning.ModdedItemWeight;
-        return new PoolItem(qualifiedId, price, Math.Max(1, weight), seasons, locations);
+        return new PoolItem(qualifiedId, price, Math.Max(1, weight), seasons, locations, category);
     }
 
     private const string ForageItemTag = "forage_item";
