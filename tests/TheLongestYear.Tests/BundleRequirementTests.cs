@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using Xunit;
@@ -149,6 +150,25 @@ public class BundleRequirementTests
             new[] { "Horseradish", "Daffodil" }, Season.Spring);
         Assert.Equal(2, System.Linq.Enumerable.Count(b.InPlayItemsFor(Season.Spring, _ => true)));
         Assert.Empty(b.InPlayItemsFor(Season.Summer, _ => true));
+    }
+
+    [Fact]
+    public void Due_items_follow_the_gate_per_kind()
+    {
+        var perItem = BundleRequirement.CreatePerItem("Blacksmiths", Theme.Mining,
+            new Dictionary<string, Season> { ["Copper"] = Season.Spring, ["Iron"] = Season.Summer });
+        Assert.Equal(new[] { "Copper" }, perItem.DueItemsFor(Season.Spring, _ => true).ToArray());
+        Assert.Equal(new[] { "Iron" }, perItem.DueItemsFor(Season.Summer, _ => true).ToArray());
+        Assert.Empty(perItem.DueItemsFor(Season.Fall, _ => true));
+
+        var seasonal = BundleRequirement.CreateSeasonal("Spring Crops", Theme.Farming, new[] { "A", "B" }, Season.Spring);
+        Assert.Equal(new[] { "A", "B" }, seasonal.DueItemsFor(Season.Spring, _ => true).ToArray());
+        Assert.Empty(seasonal.DueItemsFor(Season.Summer, _ => true));
+
+        var pct = BundleRequirement.CreatePercentage("Crab Pot", Theme.Fishing, new[] { "X", "Y", "Z" }, 3, new[] { 1, 1, 2, 3 });
+        Assert.Equal(new[] { "X", "Y", "Z" }, pct.DueItemsFor(Season.Spring, _ => true).ToArray());
+        Assert.Empty(pct.DueItemsFor(Season.Summer, _ => true));
+        Assert.Equal(new[] { "Y" }, pct.DueItemsFor(Season.Fall, id => id == "Y").ToArray());
     }
 
     /// <summary>Real-play simulation 2026-08-28: PerItem goals used to be only the items DUE this

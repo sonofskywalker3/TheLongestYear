@@ -186,6 +186,38 @@ public sealed class BundleRequirement
     public bool IsFullyComplete(ISet<string> donated)
         => Ingredients.Count(donated.Contains) >= NumberOfSlots;
 
+    /// <summary>Rule A, tier 1: the in-play ingredients the day-28 gate DEMANDS this season.
+    /// Seasonal: every ingredient in its own season. PerItem: the ones pinned to this season.
+    /// Percentage: every obtainable ingredient when the cumulative quota rises this season (the
+    /// gate wants more of the bundle), none when it does not. Everything else in
+    /// <see cref="InPlayItemsFor"/> is rule A's filler tier.</summary>
+    public IEnumerable<string> DueItemsFor(Season season, Func<string, bool> obtainablePredicate)
+    {
+        switch (Kind)
+        {
+            case BundleKind.Seasonal:
+                return SeasonalSeason!.Value == season ? Ingredients : Enumerable.Empty<string>();
+
+            case BundleKind.PerItem:
+                return ItemSeasonPins!
+                    .Where(kv => kv.Value == season && obtainablePredicate(kv.Key))
+                    .Select(kv => kv.Key);
+
+            case BundleKind.Percentage:
+                return QuotaRisesIn(season) ? Ingredients.Where(obtainablePredicate) : Enumerable.Empty<string>();
+
+            default:
+                return Enumerable.Empty<string>();
+        }
+    }
+
+    private bool QuotaRisesIn(Season season)
+    {
+        int index = (int)season;
+        int previous = index == 0 ? 0 : CumulativeRequiredBySeason![index - 1];
+        return CumulativeRequiredBySeason![index] > previous;
+    }
+
     /// <summary>Ingredients that are "in play" for the given season — these become the candidate
     /// pool for the planning-hub bonus list.
     /// <list type="bullet">
@@ -212,12 +244,11 @@ public sealed class BundleRequirement
                     : Enumerable.Empty<string>();
 
             case BundleKind.PerItem:
-                // Every ingredient obtainable this season, whatever season it is DUE (real-play
-                // simulation, 2026-08-28): with only due-this-season items in play, a Bulletin
-                // Board of four PerItem bundles offered a single Mixed goal all Spring and none
-                // at all in weeks 3 and 4. A deadline says when the gate wants the item, not when
-                // the player may bank it; donating early is always allowed. The obtainability
-                // predicate stays (Sturgeon was offered in Fall, Rainbow Trout in Winter).
+                // Rule A (activity-themes spec, 2026-08-28): in-play is every obtainable undonated
+                // ingredient, whatever season it is DUE; DueItemsFor picks out the ones the day-28
+                // gate demands this season and the sampler draws those first. The earlier
+                // due-only rule left the Mixed theme with one goal all Spring (0.16.41 stopgap,
+                // now folded into this two-tier rule). Obtainability stays (Sturgeon in Fall).
                 return Ingredients.Where(obtainablePredicate);
 
             case BundleKind.Percentage:
