@@ -87,6 +87,34 @@ per-item JP keeps at the shrine** (same shape as the book keeps). Brainstorm, th
 The settings screenshots (Features, Difficulty) are confirmed live on Nexus (gallery + description) and
 GitHub. The Egg Hunt per-loop guard is still open: 0.14.1 only guards once per DAY.
 
+## 2026-08-28 (evening): the even year, 0.16.73 to 0.16.83
+
+Spec `docs/superpowers/specs/2026-08-28-even-year-availability-design.md`, plan
+`docs/superpowers/plans/2026-08-28-even-year-availability.md`. Every item on a board now has a
+first week it can exist (mines 30 floors a week, Skull Cavern from Fall, machines by skill level,
+animals by building tier, crops by first harvest, forage by first spawn plus location); goals may
+name an item only from that week; per-item deadlines clamp to the gate season; pick-X-of-Y ramps
+derive from their own items (curated table retired); every re-rolled season-less bundle keeps a
+Spring foothold; goal ceilings 5/5/5/6 budgeted over the weeks left; the goals may run half a
+season ahead of the gate and no further; `tly_dumpavailability` lists every item with Week, Gate,
+Placed and ends with the Unknown items Jeff rules on (memory `tly-sim-list-unknowns-each-run`).
+Jeff's rule (2026-08-28): the floor only stops an item showing up too early; nothing may force
+one to show up. Headless sims (`tools/sim-year.sh`), gates as cumulative required slots:
+
+| Sim | Build | Player | Gates Sp/Su/Fa/Wi | Winter weeks 1 and 2 (Fo/Fa/Fi/Mi/Mx/Sp/Ar/Ki) | Unknown |
+|---|---|---|---|---|---|
+| G | 0.16.78 | gate-only | 19/40/67/98 (19/41/68/100%) | 3/2/3/3/6/1/1/3 then 4/3/4/3/6/1/1/3 | 20 |
+| H | 0.16.78 | goal-completing | 19/50/82/103 | 2/1/2/1/4/0/1/0 (board nearly done: 84 of 96 by Fall 28) | 17 |
+| L | 0.16.81 | goal-completing | 23/45/73/102 | 3/4/3/1/6/0/2/2 then 4/0/4/1/6/0/0/1 | 6 |
+| M | 0.16.81 | gate-only | 24/46/79/98 | 3/4/3/2/6/2/2/2 then 4/5/4/2/6/2/2/2 | 0 |
+| N | 0.16.82 | goal-completing | 21/49/74/96 | 1/1/3/1/6/0/0/0 then the same (22 lines left, all Winter-only) | 1 (Pickles) |
+
+Weeks 3 and 4 of every season carry goals for both players since 0.16.82. Open question for
+Jeff: a goal-completing player's Winter is two themes wide (Mixed and Fishing) because 80 goals a
+year on a 96-line board leaves 22 Winter-only lines; a 4/4/4/5 ceiling would leave more, at the
+cost of thinner weeks earlier. Sims I, J and K were invalid (a task-stopped sim kept running and
+poisoned the next two; see HEADLESS_DRIVING). Not pushed.
+
 ## Keep wallet items + Stardrops (0.16.19 to 0.16.25): built, unit-tested, LIVE SMOKE PASSED 2026-08-27 20:43 to 20:50
 
 Spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`, plan

@@ -107,6 +107,7 @@ public static class AvailabilityWeeks
             ["(O)815"] = (4, "Tea Leaves, Caroline's tea sapling recipe plus 20 days (for Jeff to confirm)"),
             ["(O)746"] = (11, "Jack-O-Lantern, crafted from a Fall pumpkin (for Jeff to confirm)"),
             ["(O)772"] = (7, "Oil of Garlic, Combat 6 crafting recipe, garlic plus oil (for Jeff to confirm)"),
+            ["(O)342"] = (4, "Pickles, Preserves Jar (Farming 4) plus a Spring vegetable; the jar rule names no pickle id (for Jeff to confirm)"),
         };
 
     /// <summary>Fruit tree fruit: a sapling planted in week 1 matures in 28 days, so a tree
