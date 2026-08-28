@@ -47,6 +47,10 @@ public sealed class ItemPools
     /// Jelly, silver Tea Leaves), 2026-08-25.</summary>
     public IReadOnlySet<string>? QualityEligibleIds { get; init; }
 
+    /// <summary>Qualified ids of every fruit a Data/FruitTrees tree grows. The weekly-goal
+    /// sampler allows at most one of these per theme list (Jeff, 2026-08-29).</summary>
+    public IReadOnlySet<string> FruitTreeFruitIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Raw Data/Fish rows keyed by UNQUALIFIED item id, for the availability model.
     /// The pools themselves carry qualified ids; this table mirrors the game's own keying.</summary>
     public IReadOnlyDictionary<string, RawFishEntry> FishRows { get; init; }
@@ -91,9 +95,9 @@ public sealed record RawSpawnEntry(string ItemId, Season? Season, string? Condit
 public sealed record RawMonsterDropEntry(string ItemId);
 
 /// <summary>One Data/FruitTrees entry's sapling item id (unqualified) — feeds the
-/// Saplings pool. Fruit tree saplings are shop items, not seasonal spawns, so no
+/// Saplings pool — plus the fruit item ids the tree grows (weekly-goal fruit cap). Fruit tree saplings are shop items, not seasonal spawns, so no
 /// season data travels with this record (empty/any season).</summary>
-public sealed record RawFruitTreeEntry(string SaplingItemId);
+public sealed record RawFruitTreeEntry(string SaplingItemId, IReadOnlyList<string>? FruitItemIds = null);
 
 /// <summary>One geode drop-table item id (unqualified) — feeds the GeodeMinerals pool,
 /// merged with a curated default-mineral list (the vanilla default geode table is code,

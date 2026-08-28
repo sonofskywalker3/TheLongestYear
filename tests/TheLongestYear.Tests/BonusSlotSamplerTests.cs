@@ -101,6 +101,29 @@ public class BonusSlotSamplerTests
         Assert.Equal(2, late.Count);
     }
 
+    /// <summary>Jeff, 2026-08-29: "farming week 2 this loop was 3 fruits! way too many for a
+    /// second week of spring goal. limit fruit tree stuff to 1 per theme" (per theme list, not
+    /// per gate). The fruit-tree group is passed in from Data/FruitTrees so modded trees count.</summary>
+    [Fact]
+    public void At_most_one_goal_from_the_limited_group_per_sample()
+    {
+        var fruit = new HashSet<string>(StringComparer.Ordinal) { "(O)613", "(O)634", "(O)635" };
+        var pool = new List<BonusSlot>
+        {
+            Slot("(O)613", 5, 6), Slot("(O)634", 5, 7), Slot("(O)635", 5, 8),   // Artisan's fruit lines
+            Slot("(O)24", 0, 0), Slot("(O)190", 0, 1),                          // Spring Crops
+        };
+        for (int seed = 0; seed < 30; seed++)
+        {
+            var sample = BonusSlotSampler.SampleSlots(seed, 6, Theme.Farming, pool, CommonRarity, 5,
+                limitedGroup: fruit);
+            Assert.True(sample.Count(s => fruit.Contains(s.ItemId)) <= 1, $"seed {seed} drew more than one fruit");
+            Assert.Equal(3, sample.Count);   // two crops plus exactly one fruit
+        }
+        // No group: the old behaviour, all five.
+        Assert.Equal(5, BonusSlotSampler.SampleSlots(1, 6, Theme.Farming, pool, CommonRarity, 5).Count);
+    }
+
     [Fact]
     public void Sample_is_invariant_to_pool_input_order()
     {

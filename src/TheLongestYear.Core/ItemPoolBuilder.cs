@@ -107,6 +107,11 @@ public static class ItemPoolBuilder
             TapperGoods = tapperGoodsPool,
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
             QualityEligibleIds = qualityEligible,
+            FruitTreeFruitIds = new HashSet<string>(
+                fruitTrees.SelectMany(t => t.FruitItemIds ?? Array.Empty<string>())
+                    .Where(id => !string.IsNullOrEmpty(id))
+                    .Select(id => Qualify(Unqualify(id))),
+                StringComparer.Ordinal),
             FishRows = fishRows ?? new Dictionary<string, RawFishEntry>(),
         };
     }
