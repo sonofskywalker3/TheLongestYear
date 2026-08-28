@@ -212,7 +212,12 @@ public sealed class BundleRequirement
                     : Enumerable.Empty<string>();
 
             case BundleKind.PerItem:
-                return ItemSeasonPins!.Where(kv => kv.Value == season).Select(kv => kv.Key);
+                // A deadline says when the item is DUE, not when it exists: Lake Fish pinned
+                // Sturgeon (Summer/Winter) to Fall and the Fishing theme offered it as a Fall goal
+                // (bundle-loop audit, 2026-08-29). Same predicate as Percentage below.
+                return ItemSeasonPins!
+                    .Where(kv => kv.Value == season && obtainablePredicate(kv.Key))
+                    .Select(kv => kv.Key);
 
             case BundleKind.Percentage:
                 if (CumulativeRequiredBySeason![(int)season] == 0)
