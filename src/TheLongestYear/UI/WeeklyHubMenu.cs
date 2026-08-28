@@ -537,14 +537,11 @@ namespace TheLongestYear.UI
         private void RerollOffer()
         {
             _rerollCounter++;
-            var selectedSet = new HashSet<Theme>(_run.SelectedThemesThisMonth);
-            List<Theme> candidates = System.Enum.GetValues(typeof(Theme))
-                .Cast<Theme>()
-                .Where(t => !selectedSet.Contains(t))
-                .OrderBy(t => (int)t)
-                .ToList();
-
             int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+            // Rule C: shuffle among the themes that can actually ask for goals this week.
+            List<Theme> candidates = _runController
+                .OfferCandidates(week, _offerSeason, _run.SelectedThemesThisMonth)
+                .ToList();
             var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
             for (int i = candidates.Count - 1; i > 0; i--)
             {

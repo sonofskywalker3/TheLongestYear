@@ -90,6 +90,11 @@ namespace TheLongestYear.Loop
         /// 2026-08-28. Null = no caps.</summary>
         public System.Collections.Generic.IReadOnlyList<GoalGroupCap> GoalCaps { get; set; }
 
+        /// <summary>Item kind classifier for the activity themes (Data/Objects Category and Type
+        /// through ItemKindClassifier). Wired by ModEntry; the default matches nothing, which
+        /// keeps Mixed at its Bulletin Board room until the game data is available.</summary>
+        public Func<string, ItemKind> ItemKindOf { get; set; } = _ => ItemKind.Other;
+
         /// <summary>The current attempt count (loop the player is on / won), surfaced so the
         /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can pass it into the
         /// <see cref="TheLongestYear.UI.VictoryMenu"/> loop-count line.</summary>
@@ -953,7 +958,7 @@ namespace TheLongestYear.Loop
             // lose by skipping is "the theme was in this week's official offer" — by design.
             if (!skipOfferCheck)
             {
-                var offer = SelectionService.OfferForWeek(Run);
+                var offer = OfferFor(Run.WeekOfYear, Run.Season, Run.SelectedThemesThisMonth);
                 if (!offer.Contains(theme))
                 {
                     _monitor.Log($"{theme} is not offered this week. Offer: {string.Join(", ", offer)}.", LogLevel.Warn);
@@ -1061,11 +1066,54 @@ namespace TheLongestYear.Loop
             if (bundleData == null) return System.Array.Empty<BonusSlot>();
             var pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
-                theme, season, id => IsObtainableInSeason(id, season));
+                theme, season, id => IsObtainableInSeason(id, season), ItemKindOf);
             return BonusSlotSampler.SampleSlots(
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, BonusListSizeFor(season),
                 remainingNeedForBundle: RemainingNeedForBundle,
-                caps: GoalCaps);
+                caps: GoalCaps,
+                rules: RulesFor(season));
+        }
+
+        /// <summary>Rules A, B and E for a season: filler allowance from config, effort from the
+        /// derived model (null for an id no rule placed, which then takes the price bucket).</summary>
+        private GoalSamplingRules RulesFor(CoreSeason season)
+            => new GoalSamplingRules(season, _config.FillerAllowanceFor(season), EffortOf);
+
+        private int? EffortOf(string itemId)
+            => Availability != null && Availability.HasDerivedEffort(itemId)
+                ? Availability.For(itemId).Effort
+                : (int?)null;
+
+        /// <summary>Rule C's number: how many goals the sampler would actually produce for the
+        /// theme this week (tier 1 plus allowed filler, after every cap).</summary>
+        public int AskableCount(Theme theme, CoreSeason season, int weekOfYear)
+            => SampleSlotsForTheme(theme, season, weekOfYear).Count;
+
+        /// <summary>The week's two cards under rule C. Every offer the mod shows or validates
+        /// comes through here so the hub, the console pick and the Sunday-night preview agree.</summary>
+        public System.Collections.Generic.IReadOnlyList<Theme> OfferFor(
+            int weekOfYear, CoreSeason season, System.Collections.Generic.IReadOnlyCollection<Theme> selections)
+            => SelectionService.OfferForWeek(Run.Seed, weekOfYear, selections, t => AskableCount(t, season, weekOfYear));
+
+        /// <summary>The themes the hub's playtest re-roll may shuffle among (rule C's candidate list).</summary>
+        public System.Collections.Generic.IReadOnlyList<Theme> OfferCandidates(
+            int weekOfYear, CoreSeason season, System.Collections.Generic.IReadOnlyCollection<Theme> selections)
+            => SelectionService.Candidates(selections, t => AskableCount(t, season, weekOfYear));
+
+        /// <summary>tly_themepool: every open line for a theme with its tier and weight.</summary>
+        public System.Collections.Generic.IReadOnlyList<GoalWeight> DescribeGoalPool(
+            Theme theme, CoreSeason season, out System.Collections.Generic.IReadOnlyList<BonusSlot> pool)
+        {
+            var bundleData = Game1.netWorldState?.Value?.BundleData;
+            if (bundleData == null)
+            {
+                pool = System.Array.Empty<BonusSlot>();
+                return System.Array.Empty<GoalWeight>();
+            }
+            pool = SlotPoolBuilder.OpenSlotsForTheme(
+                bundleData, SlotStateForBundle, _requirements,
+                theme, season, id => IsObtainableInSeason(id, season), ItemKindOf);
+            return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season), RarityForItem);
         }
 
         /// <summary>How many more ingredient lines a bundle can still take: its required count
@@ -1204,7 +1252,7 @@ namespace TheLongestYear.Loop
             var selectionsForOffer = seasonOverride.HasValue
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
                 : Run.SelectedThemesThisMonth;
-            var offer = SelectionService.OfferForWeek(Run.Seed, week, selectionsForOffer);
+            var offer = OfferFor(week, seasonOverride ?? Run.Season, selectionsForOffer);
 
             // Backstop (khauser13 soft lock): the hub has no close button by design — a forced
             // 1-of-N choice — so an EMPTY offer would hard-lock the player. The month rollover

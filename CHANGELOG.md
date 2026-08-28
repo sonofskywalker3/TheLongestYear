@@ -7,6 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`tly_themepool [theme]` console command** prints each theme's askable goal count for the current week and, with a theme, every candidate line with its due/filler status, tier and weight (debug).
 - **`tly_dumpeffort` console command** writes `item-effort-model.md`: every pool item with its derived effort, tier and the game-data basis (gems and minerals, geodes, monster drops, artifacts, artisan goods, fish ponds, animal products, cooked dishes, crops, forage). `tly_itemmodel` now prints the effort source and tier (debug).
 - **Keep your wallet items and Stardrops.** Eighteen new keeps at the Junimo Shrine: one per wallet item (Rusty Key, Skull Key, Club Card, Special Charm, Dark Talisman, Magic Ink, Dwarvish Translation Guide, Town Key, Magnifying Glass), one each for Bear's Knowledge and Spring Onion Mastery, and one per Stardrop source (Fair, fishing, mines, Krobus, spouse, Secret Woods, museum). A row appears on a Fail night once you have earned that item this loop; buy it and it survives every rewind. 150 to 750 JP. A kept Stardrop also keeps its source marked as claimed, so the same Stardrop cannot be collected again next loop. Keeping the Skull Key keeps the Skull Cavern door open too.
 - **`tly_wallet` console command** to set or list wallet, power and Stardrop markers (debug).
@@ -15,6 +16,8 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Weekly goals follow the season gate first.** Goals are drawn from the lines the day-28 gate demands this season; other open lines are filler, at most one per bundle per week and capped per season (Spring 0, Summer 1, Fall 2, Winter unlimited; `ThemeFillerBySeason` in config.json). Easier items are weighted earlier in the year and harder ones later, using effort derived from the game's own data.
+- **The weekly offer only shows themes that can ask for two or more goals**, weighted by how much they can ask, so a theme with nothing to donate never hands out a free drawback lift; the Bulletin Board's Mixed theme now draws from anything on the board.
 - **The weekly theme bonus is paid per goal.** The 30 JP (times the season multiplier) that used to land only when every goal was done is now split evenly across the week's goals and paid as each one lands. The drawback still lifts only when every goal is done. A one-goal Winter week pays its share, not the full 120.
 - **Weekly goals draw from every item you could bank this season, not only the ones due this season.** A bundle whose items each carry their own deadline only offered the items due right now, so the Mixed theme had one goal all Spring and nothing in weeks 3 and 4 once it was donated (real-play simulation, 2026-08-28). Any undonated ingredient that is obtainable in the current season is a goal candidate; the deadlines still drive the season gates as before.
 - **At most one fruit-tree fruit and one crab-pot catch per weekly goal list.** A Spring week 2 Farming list named three tree fruits, and a week 1 Fishing list was all crab-pot catches and no fish (Jeff, 2026-08-28). Each theme's goals now hold at most one fruit from Data/FruitTrees and at most one Data/Fish trap catch; the caps are per theme list, not per season gate, and modded content counts.

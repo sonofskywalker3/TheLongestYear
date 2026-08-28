@@ -45,9 +45,9 @@ namespace TheLongestYear.UI
             var selectionsForOffer = seasonOverride.HasValue
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
                 : _store.Run.SelectedThemesThisMonth;
-            var offer = SelectionService.OfferForWeek(
-                _store.Run.Seed,
+            var offer = _runController.OfferFor(
                 seasonOverride.HasValue ? _store.Run.WeekOfYear + 1 : _store.Run.WeekOfYear,
+                offerSeason,
                 selectionsForOffer);
 
             Game1.activeClickableMenu = new WeeklyHubMenu(
