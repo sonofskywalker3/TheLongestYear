@@ -23,6 +23,27 @@ public class ShopAvailabilityTests
     [Fact]
     public void Unclaimed_item_is_null() => Assert.Null(ShopAvailability.Derive("(O)24"));
 
+    [Theory]
+    [InlineData("(O)78", 1)]     // Cave Carrot
+    [InlineData("(O)635", 5)]    // Orange
+    [InlineData("(O)638", 13)]   // Cherry, second year
+    public void Other_and_fruit_tables(string id, int week) => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
+
+    [Fact]
+    public void Plural_category_tags_match_the_games_machine_rules()
+    {
+        var objects = new Dictionary<string, RawObjectEntry> { ["400"] = new RawObjectEntry("Basic", -79, 120, false, new string[0], "Strawberry") };
+        Assert.Equal(new[] { "(O)400" }, ContextTagMatcher.IdsMatchingAll(objects, new[] { "category_fruits" }));
+    }
+
+    [Fact]
+    public void Pool_artifact_without_a_spot_row_is_week_1()
+    {
+        var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,
+            artifacts: new List<PoolItem> { new("(O)103", 300, 1, new List<Season>(), new List<string>()) });
+        Assert.Equal(1, composer.Derive("(O)103")!.EarliestWeek);
+    }
+
     [Fact]
     public void Composer_takes_the_earliest_week_across_rules()
     {
