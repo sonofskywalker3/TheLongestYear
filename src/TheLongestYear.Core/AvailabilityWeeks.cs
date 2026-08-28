@@ -35,6 +35,20 @@ public static class AvailabilityWeeks
             ["(O)417"] = 13,   // Sweet Gem Berry, Rare Seed from the cart, 24 days
         };
 
+    /// <summary>Crops whose seeds only the Oasis sells (Desert, week 9 at the earliest), and
+    /// Winter dig-spot forage whose artifact-spot row carries a Winter condition the glue does
+    /// not read. Later floors that beat the rules' own answer (for Jeff to confirm).</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, string Note)> LateFloors =
+        new Dictionary<string, (int, string)>(StringComparer.Ordinal)
+        {
+            ["(O)90"] = (11, "Cactus Fruit, Oasis seeds from week 9 plus 12 days"),
+            ["(O)284"] = (11, "Beet, Oasis seeds from week 9 plus 6 days"),
+            ["(O)252"] = (13, "Rhubarb, Oasis seeds, Spring crop: second year"),
+            ["(O)268"] = (13, "Starfruit, Oasis seeds, Summer crop: second year"),
+            ["(O)412"] = (13, "Winter Root, Winter dig spots"),
+            ["(O)416"] = (13, "Snow Yam, Winter dig spots"),
+        };
+
     /// <summary>Bush berries have no spawn rows; their weeks are calendar facts.</summary>
     public static readonly IReadOnlyDictionary<string, int> BushBerryWeeks =
         new Dictionary<string, int>(StringComparer.Ordinal)

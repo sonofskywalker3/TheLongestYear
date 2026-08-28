@@ -98,6 +98,10 @@ public sealed class EffortComposer
         })
         {
             if (candidate == null) continue;
+            if (AvailabilityWeeks.LateFloors.TryGetValue(qualifiedId, out (int Week, string Note) late)
+                && (candidate.EarliestWeek ?? 0) < late.Week)
+                candidate = new ItemEffort(candidate.Effort, $"{candidate.Basis}; late floor: {late.Note}, week {late.Week} (for Jeff to confirm)",
+                    late.Week, AvailabilityWeeks.SeasonOf(late.Week));
             bool better = best == null
                 || (candidate.EarliestWeek ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
                 || (candidate.EarliestWeek == best.EarliestWeek && candidate.Effort < best.Effort);
