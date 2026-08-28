@@ -265,6 +265,20 @@ public sealed class GameplayConfig
     /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
     public bool EnableThemeReroll { get; set; } = false;
 
+    /// <summary>Rule B (activity-themes spec 2026-08-28): how many weekly goals may be FILLER
+    /// (open lines the day-28 gate does not demand this season) per season, indexed
+    /// Spring..Winter. Spring 0 keeps a theme week pure gate work; any-season stock is held for
+    /// Winter, where it pays 4x. 99 = as many as the season cap allows.</summary>
+    public List<int> ThemeFillerBySeason { get; set; } = new() { 0, 1, 2, GoalSamplingRules.UnlimitedFiller };
+
+    public int FillerAllowanceFor(Season season)
+    {
+        int index = (int)season;
+        return ThemeFillerBySeason != null && index >= 0 && index < ThemeFillerBySeason.Count
+            ? ThemeFillerBySeason[index]
+            : GoalSamplingRules.UnlimitedFiller;
+    }
+
     /// <summary>Developer-only: poll the <c>tly_commands.txt</c> file in the mod folder and execute
     /// the queued tly_ debug commands (including destructive ones like reset / wipe). Off by default
     /// so a shipped build never watches the filesystem or runs commands the player didn't initiate;

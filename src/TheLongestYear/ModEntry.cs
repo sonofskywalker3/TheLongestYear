@@ -251,6 +251,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
+            helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
@@ -535,6 +536,13 @@ namespace TheLongestYear
                 new GoalGroupCap(enginePools.TrapFishIds, 1),
             };
             _runController.Availability = _availability;
+            _runController.ItemKindOf = id =>
+            {
+                string bare = BundleParsing.StripQualifier(id);
+                return Game1.objectData != null && Game1.objectData.TryGetValue(bare, out var objectData)
+                    ? ItemKindClassifier.From(objectData.Category, objectData.Type)
+                    : ItemKind.Other;
+            };
             _runController.AttachQuestService(_questService);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
@@ -1723,6 +1731,7 @@ namespace TheLongestYear
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_goals": this.CmdGoals(command, args); break;
+                case "tly_themepool": this.CmdThemePool(command, args); break;
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_dumpeffort": this.CmdDumpEffort(command, args); break;
@@ -2032,6 +2041,50 @@ namespace TheLongestYear
                 gateOk ? $"tly_playseason: {season} gate WOULD PASS. Ledger {donated.Count} items."
                        : $"tly_playseason: {season} gate WOULD FAIL: vault {vaultOk}, open bundles: {string.Join(", ", open)}",
                 gateOk ? LogLevel.Info : LogLevel.Error);
+        }
+
+        /// <summary><c>tly_themepool [theme]</c>: rule C's askable count per theme for the current
+        /// week, or the full candidate list for one theme with due/filler, effort, tier and weight.</summary>
+        private void CmdThemePool(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (_runController == null) { this.Monitor.Log("No run controller yet.", LogLevel.Warn); return; }
+
+            RunState run = _meta.Run;
+            TheLongestYear.Core.Season season = run.Season;
+            int week = run.WeekOfYear;
+            this.Monitor.Log(
+                $"tly_themepool: {season} week {week}, filler allowance {_config.FillerAllowanceFor(season)}, "
+                + $"selected this month [{string.Join(",", run.SelectedThemesThisMonth)}].",
+                LogLevel.Info);
+
+            if (args.Length == 0)
+            {
+                foreach (TheLongestYear.Core.Theme theme in Enum.GetValues(typeof(TheLongestYear.Core.Theme)))
+                {
+                    int askable = _runController.AskableCount(theme, season, week);
+                    string mark = askable >= SelectionService.MinAskableToOffer ? "offerable" : "not offered";
+                    this.Monitor.Log($"  {theme}: askable {askable} ({mark})", LogLevel.Info);
+                }
+                return;
+            }
+
+            if (!Enum.TryParse(args[0], ignoreCase: true, out TheLongestYear.Core.Theme picked))
+            {
+                this.Monitor.Log("Usage: tly_themepool [theme]", LogLevel.Info);
+                return;
+            }
+            IReadOnlyList<GoalWeight> weights = _runController.DescribeGoalPool(picked, season, out IReadOnlyList<BonusSlot> pool);
+            var weightById = weights.ToDictionary(w => w.ItemId, w => w, StringComparer.Ordinal);
+            this.Monitor.Log($"  {picked}: {pool.Count} open line(s), askable {_runController.AskableCount(picked, season, week)}", LogLevel.Info);
+            foreach (BonusSlot slot in pool.OrderByDescending(s => s.Due).ThenBy(s => s.ItemId, StringComparer.Ordinal))
+            {
+                GoalWeight w = weightById[slot.ItemId];
+                string effort = w.Effort.HasValue ? w.Effort.Value.ToString() : "price";
+                this.Monitor.Log(
+                    $"    {(slot.Due ? "DUE   " : "filler")} {DisplayName(slot.ItemId)} ({slot.ItemId}) effort {effort} tier {w.Tier} weight {w.Weight}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]",
+                    LogLevel.Info);
+            }
         }
 
         /// <summary><c>tly_goals [season] [weekOfYear]</c>: the weekly goals each theme would offer on the
