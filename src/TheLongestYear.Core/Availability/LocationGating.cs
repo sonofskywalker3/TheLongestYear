@@ -16,50 +16,49 @@ public static class LocationGating
 {
     /// <summary>Matched as case-sensitive substrings of the location key, so "Desert",
     /// "SkullCave" and "IslandSouth" all catch their family of map keys.</summary>
-    private static readonly (string Marker, Season Floor)[] GatedMarkers =
+    private static readonly (string Marker, int Week)[] GatedMarkers =
     {
-        // Bus repair costs 40,000g through the Vault bundle. Not a Spring or Summer thing on a
-        // 500g start with the board also demanding donations.
-        ("Desert",     Season.Fall),
-        ("SkullCave",  Season.Fall),
-        // Mine fish live deep: Cave Jelly is floor 100. Reaching that on a 500g start while the
-        // board is also demanding donations is not a Spring 28 job, and the spawn seasons say
-        // nothing about depth. Summer leans late on purpose, per the note above.
-        ("UndergroundMine", Season.Summer),
+        // Bus repair costs 40,000g through the Vault bundle. Fall (Jeff, 2026-08-28: Skull
+        // Cavern in the Fall gate and beyond).
+        ("Desert",    AvailabilityWeeks.SkullCavernWeek),
+        ("SkullCave", AvailabilityWeeks.SkullCavernWeek),
+        // MountainUnlock clears the landslide on day 1; depth is handled per mine area
+        // (AvailabilityWeeks.MineAreaWeek: 30 floors a week).
+        ("UndergroundMine", 1),
         // Rusty Key: 60 museum donations. Reachable mid-run by a player who digs, not before.
-        ("Sewer",      Season.Summer),
-        ("BugLand",    Season.Summer),
+        ("Sewer",     AvailabilityWeeks.SewerWeek),
+        ("BugLand",   AvailabilityWeeks.SewerWeek),
         // Witch's Swamp needs the Dark Talisman, which needs the Sewer first, then the Mutant
         // Bug Lair quest. Last stop of a long chain.
-        ("WitchSwamp", Season.Winter),
-        ("WitchHut",   Season.Winter),
+        ("WitchSwamp", AvailabilityWeeks.SwampWeek),
+        ("WitchHut",   AvailabilityWeeks.SwampWeek),
     };
 
-    public static Season FloorFor(string locationKey)
+    /// <summary>First week of the year the player can stand in this location.</summary>
+    public static int WeekFor(string locationKey)
     {
         if (string.IsNullOrEmpty(locationKey))
-            return Season.Spring;
-
-        foreach ((string marker, Season floor) in GatedMarkers)
+            return 1;
+        foreach ((string marker, int week) in GatedMarkers)
             if (locationKey.Contains(marker, StringComparison.Ordinal))
-                return floor;
-
-        return Season.Spring;
+                return week;
+        return 1;
     }
 
-    /// <summary>The EASIEST floor among the given locations, because reaching any one of them is
+    /// <summary>The EASIEST week among the given locations, because reaching any one of them is
     /// enough to get the item. An empty list means no location signal, which reads as ungated.</summary>
-    public static Season FloorForAny(IReadOnlyList<string> locationKeys)
+    public static int WeekForAny(IReadOnlyList<string> locationKeys)
     {
         if (locationKeys == null || locationKeys.Count == 0)
-            return Season.Spring;
-
-        Season best = Season.Winter;
+            return 1;
+        int best = Calendar.WeeksPerYear;
         foreach (string key in locationKeys)
-        {
-            Season floor = FloorFor(key);
-            if (floor < best) best = floor;
-        }
+            best = Math.Min(best, WeekFor(key));
         return best;
     }
+
+    public static Season FloorFor(string locationKey) => AvailabilityWeeks.SeasonOf(WeekFor(locationKey));
+
+    public static Season FloorForAny(IReadOnlyList<string> locationKeys)
+        => AvailabilityWeeks.SeasonOf(WeekForAny(locationKeys));
 }

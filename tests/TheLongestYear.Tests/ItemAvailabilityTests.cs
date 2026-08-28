@@ -214,7 +214,7 @@ public class ItemAvailabilityBuilderTests
     {
         ItemAvailabilityModel model = ItemAvailabilityBuilder.Build(Pools());
 
-        Assert.Equal(Season.Summer, model.For("(O)384").EarliestSeason);
+        Assert.Equal(Season.Summer, model.For("(O)384").Gate);
     }
 
     [Fact]

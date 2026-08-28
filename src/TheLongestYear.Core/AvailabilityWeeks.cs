@@ -43,6 +43,19 @@ public static class AvailabilityWeeks
             ["(O)410"] = BlackberryWeek,
         };
 
+    /// <summary>Mine fish spawn by floor, which the location key cannot see now that the mines
+    /// open in Spring: Stonefish and Ghostfish floor 20 (week 1), Ice Pip floor 60 (week 2),
+    /// Lava Eel and Cave Jelly floor 100 (week 4, but a Summer gate like the rest of area 80).</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, Season Gate)> MineFishWeeks =
+        new Dictionary<string, (int, Season)>(StringComparer.Ordinal)
+        {
+            ["(O)158"] = (1, Season.Spring),        // Stonefish
+            ["(O)156"] = (1, Season.Spring),        // Ghostfish
+            ["(O)161"] = (2, Season.Spring),        // Ice Pip
+            ["(O)162"] = (4, Season.Summer),        // Lava Eel
+            ["(O)CaveJelly"] = (4, Season.Summer),  // Cave Jelly
+        };
+
     public static Season SeasonOf(int week)
     {
         int clamped = Math.Clamp(week, 1, Calendar.WeeksPerYear);
