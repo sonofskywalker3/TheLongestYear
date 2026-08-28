@@ -8,8 +8,8 @@ namespace TheLongestYear.Core.Availability;
 /// ingredient (a category ref such as "any milk" uses the cheapest member), plus the recipe
 /// unlock, plus the kitchen (house upgrade 1, dropped when keep_kitchen is owned). A dish with an
 /// ingredient no rule can place is Extreme and, for the week, unplaced. The week is the later of
-/// the kitchen week (AvailabilityWeeks.KitchenWeek, or week 1 with keep_kitchen) and the latest
-/// ingredient's week.</summary>
+/// the kitchen week (AvailabilityWeeks.KitchenWeek, whatever keep_kitchen says, so boards stay
+/// deterministic across that upgrade) and the latest ingredient's week.</summary>
 public static class CookedDishAvailability
 {
     public const int ExtremeEffort = 12;
@@ -49,7 +49,10 @@ public static class CookedDishAvailability
             int hardest = 0;
             string hardestId = "";
             string? missing = null;
-            int? latestWeek = hasKitchen ? 1 : AvailabilityWeeks.KitchenWeek;
+            // The week ignores keep_kitchen on purpose: the engine's Spring foothold reads the
+            // gate season, and the board must regenerate identically before and after that
+            // upgrade (it is compared byte for byte at save load). keep_kitchen still drops effort.
+            int? latestWeek = AvailabilityWeeks.KitchenWeek;
             foreach (string ingredient in recipe.IngredientIds)
             {
                 int? e = IngredientEffort(ingredient, data, effortOf);

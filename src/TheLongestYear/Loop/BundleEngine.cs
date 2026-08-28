@@ -109,6 +109,10 @@ namespace TheLongestYear.Loop
         /// <summary>Save-specific pool exclusions (YearTwoCrops.ExcludedFor). Part of the
         /// generation inputs: reset and reload must pass the same set.</summary>
         private readonly IReadOnlySet<string> _extraExcludedIds;
+
+        /// <summary>Spring foothold predicate (Core.SpringFoothold.Predicate). Must be set the same
+        /// way at every construction site: the board is re-generated and compared at save load.</summary>
+        public Func<string, bool> SpringReady { get; set; }
         private int _lastSeed;
 
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
@@ -237,7 +241,7 @@ namespace TheLongestYear.Loop
                 BundleSpec pick = record.Pick;
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
-                    msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info), asked);
+                    msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info), asked, SpringReady);
                 if (ReferenceEquals(composed, pick))
                 {
                     _monitor?.Log(

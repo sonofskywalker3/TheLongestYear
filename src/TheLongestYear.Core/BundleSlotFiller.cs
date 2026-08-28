@@ -36,7 +36,7 @@ public static class BundleSlotFiller
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
         PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null,
-        IReadOnlySet<string>? avoid = null)
+        IReadOnlySet<string>? avoid = null, Func<string, bool>? springReady = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -86,6 +86,28 @@ public static class BundleSlotFiller
             return spec;
 
         List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng, capped, cap);
+        // Spring foothold (spec 2026-08-28-even-year): a quarter of the picks, at least one, must
+        // be something a Spring gate may demand, while the pool has such an item to give.
+        if (springReady != null)
+        {
+            int need = SpringFoothold.Needed(targetCount);
+            int have = chosen.Count(c => springReady(c.ItemId));
+            var chosenIds = new HashSet<string>(chosen.Select(c => c.ItemId), StringComparer.Ordinal);
+            List<PoolItem> springPool = candidates.Where(c => springReady(c.ItemId) && !chosenIds.Contains(c.ItemId)).ToList();
+            int swaps = 0;
+            while (have < need && springPool.Count > 0)
+            {
+                int victim = chosen.FindLastIndex(c => !springReady(c.ItemId));
+                if (victim < 0) break;
+                PoolItem pick = WeightedSampler.Sample(springPool, 1, rng)[0];
+                springPool.Remove(pick);
+                chosen[victim] = pick;
+                have++;
+                swaps++;
+            }
+            if (swaps > 0) log?.Invoke($"'{spec.Name}': swapped {swaps} slot(s) for a Spring foothold.");
+            else if (have < need) log?.Invoke($"'{spec.Name}': no Spring foothold in its pool.");
+        }
         var slots = chosen.Select(item => new BundleSlotSpec(
             item.ItemId,
             RollStack(match.Domain, item, tuning, rng),
