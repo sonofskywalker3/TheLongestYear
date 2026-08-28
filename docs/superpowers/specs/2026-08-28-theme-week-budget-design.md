@@ -45,8 +45,12 @@ Four changes. The first is the mechanism; the other three are numbers the mechan
 fillerBudget = allowance unlimited ? fillerLines : min(fillerLines, allowance * weeksLeft)
 askable      = dueLines + fillerBudget
 perWeek      = ceil(askable / weeksLeft)
-result       = askable == 0 ? 0 : clamp(perWeek, 1, seasonCap)
+floor        = min(askable, 2)          # rule C offers a theme only at 2 or more
+result       = askable == 0 ? 0 : clamp(max(perWeek, floor), 1, seasonCap)
 ```
+
+The floor keeps a small domain on the cards: a theme with three lines at week 1 asks 2 now
+(then 1 the week after) instead of 1 a week for three weeks and never being offered.
 
 `weeksLeftInSeason = 4 - ((weekOfYear - 1) mod 4)`. `RunController.SampleSlotsForTheme` counts
 the theme's open pool (Due vs not) and passes the budget as the sampler's `maxCount` instead of

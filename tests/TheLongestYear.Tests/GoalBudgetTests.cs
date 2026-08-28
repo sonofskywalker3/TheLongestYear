@@ -44,6 +44,15 @@ public class GoalBudgetTests
         Assert.Equal(6, GoalBudget.For(7, 3, 20, 99, 4));      // ceil(23 / 4) = 6
     }
 
+    [Theory]
+    [InlineData(2, 2)]
+    [InlineData(3, 2)]
+    [InlineData(4, 2)]
+    [InlineData(8, 2)]
+    [InlineData(9, 3)]
+    public void Small_domains_stay_offerable_by_asking_at_least_two(int lines, int expected)
+        => Assert.Equal(expected, GoalBudget.For(7, lines, 0, 99, 4));
+
     [Fact]
     public void One_askable_line_still_makes_a_one_goal_week()
         => Assert.Equal(1, GoalBudget.For(7, 1, 0, 99, 4));

@@ -18,7 +18,7 @@
   Winter for gates exactly as before.
 - Phase 2 (0.16.56 to 0.16.62): the eight-member `Theme` enum, `ItemKind` classifier and
   `ThemeDomains`; rule A (`BundleRequirement.DueItemsFor`, the 0.16.41 stopgap folded into the
-  filler tier); rule B (`ThemeFillerBySeason` config, default 0/1/2/99, one filler per bundle);
+  filler tier); rule B (`ThemeFillerBySeason` config, default 0/0/1/99 since 0.16.73, one filler per bundle);
   rule E (effort quartile tiers x season weights, `GoalWeighting`); rule C (`SelectionService`
   offers only themes with 2+ askable goals, weighted by count, room themes as the floor; the hub,
   console pick and re-roll all go through `RunController.OfferFor`); rule D (weekly bonus paid

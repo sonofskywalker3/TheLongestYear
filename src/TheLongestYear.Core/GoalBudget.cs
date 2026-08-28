@@ -23,8 +23,10 @@ public static class GoalBudget
     /// Goals to ask for this week. <paramref name="dueLines"/> are the open lines the day-28 gate
     /// demands this season, <paramref name="fillerLines"/> the other open lines in the theme's
     /// pool; filler counts only as far as the season's allowance lets it be asked over the weeks
-    /// left. The result is the pool spread evenly over the remaining weeks, at least 1 when
-    /// anything is askable and never above <paramref name="seasonCap"/>.
+    /// left. The result is the pool spread evenly over the remaining weeks, never above
+    /// <paramref name="seasonCap"/>, and never below <see cref="SelectionService.MinAskableToOffer"/>
+    /// while the pool still holds that many (a theme with three lines at week 1 must still be
+    /// offerable; it asks 2 now rather than 1 a week for three weeks).
     /// </summary>
     public static int For(int seasonCap, int dueLines, int fillerLines, int fillerAllowance, int weeksLeft)
     {
@@ -38,6 +40,7 @@ public static class GoalBudget
         long askable = dueLines + fillerBudget;
         if (askable <= 0) return 0;
         long perWeek = (askable + weeksLeft - 1) / weeksLeft;
-        return (int)Math.Clamp(perWeek, 1, seasonCap);
+        long floor = Math.Min(askable, SelectionService.MinAskableToOffer);
+        return (int)Math.Clamp(Math.Max(perWeek, floor), 1, seasonCap);
     }
 }
