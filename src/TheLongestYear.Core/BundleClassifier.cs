@@ -185,8 +185,9 @@ public static class BundleClassifier
 
     /// <summary>
     /// Default cumulative [Spring, Summer, Fall, Winter] quota for a pick-X-of-Y bundle with
-    /// no curated entry: floor(X * [0.15, 0.35, 0.60, 1.0]) (spec 2026-08-28-theme-week-budget:
-    /// the year's work leans late so Winter keeps lines to ask for). Monotone, each value in
+    /// no curated entry: floor(X * [0.25, 0.35, 0.60, 1.0]) (spec 2026-08-28-theme-week-budget:
+    /// Summer and Fall lean late so Winter keeps lines to ask for; Spring stays where it was,
+    /// Jeff 2026-08-28: a 9-line Spring gate is too light). Monotone, each value in
     /// [0..X], Winter always demands the full X so the bundle must be completed to win. Curated
     /// entries stay authoritative where present.
     /// </summary>
@@ -197,7 +198,7 @@ public static class BundleClassifier
                 $"numberOfSlots must be >= 1; got {numberOfSlots}.");
         return new[]
         {
-            numberOfSlots * 15 / 100,
+            numberOfSlots / 4,
             numberOfSlots * 35 / 100,
             numberOfSlots * 3 / 5,
             numberOfSlots
