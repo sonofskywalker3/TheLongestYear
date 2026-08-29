@@ -290,6 +290,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost today (debug, the same purchase the shrine's Buy button makes), or list the roster with each row's state. Usage: tly_boost list | tly_boost <id> [farming|fishing|foraging|mining|combat]", this.CmdBoost);
             helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
+            helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
@@ -1258,6 +1259,24 @@ namespace TheLongestYear
             _introInjector?.ClearIntroState();
         }
 
+        /// <summary>Debug: close whatever menu is up without the mouse. A LevelUpMenu needs its OK
+        /// button (exitThisMenu would skip the profession pick and leave vanilla's end-of-night
+        /// chain hanging); everything else takes exitThisMenu.</summary>
+        private void CmdDismiss(string command, string[] args)
+        {
+            var menu = Game1.activeClickableMenu;
+            if (menu == null) { this.Monitor.Log("tly_dismiss: no menu open.", LogLevel.Info); return; }
+            string name = menu.GetType().Name;
+            if (menu is StardewValley.Menus.LevelUpMenu levelUp)
+            {
+                var ok = typeof(StardewValley.Menus.LevelUpMenu).GetMethod("okButtonClicked",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (ok != null) { ok.Invoke(levelUp, null); this.Monitor.Log($"tly_dismiss: {name} OK clicked.", LogLevel.Info); return; }
+            }
+            menu.exitThisMenu(playSound: false);
+            this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
+        }
+
         /// <summary>Today as a 1..112 day of year from the run's own calendar.</summary>
         private int TodayDayOfYear() => TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
 
@@ -1783,10 +1802,12 @@ namespace TheLongestYear
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
-            _boostEffects?.OnDayStarted();
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);
+            // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
+            // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
+            _boostEffects?.OnDayStarted();
         }
 
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
@@ -1908,6 +1929,7 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_boost": this.CmdBoost(command, args); break;
                 case "tly_boostexpire": _boostEffects?.OnDayStarted(); break;
+                case "tly_dismiss": this.CmdDismiss(command, args); break;
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
