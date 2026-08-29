@@ -63,6 +63,18 @@ public sealed class MetaState
     /// <see cref="EffectiveBundleSeedLoop"/> resolves to CompletedResets.</summary>
     public int BundleSeedLoop { get; set; } = -1;
 
+    /// <summary>The exact bundle data the engine last wrote to the board (<c>"Room/Index" -> value</c>),
+    /// plus the derived season pins it generated under. On every later load the live board is
+    /// checked against THIS and requirements are rebuilt from it (<see cref="BoardRequirements"/>),
+    /// instead of re-deriving from the seed: a data mod whose Content Patcher edits shift the item
+    /// pools after the reset (SVE audit, 2026-08-29) made the re-derivation disagree with a healthy
+    /// board and demoted the save to the legacy read path. Null on saves written before 0.16.158
+    /// (the seed re-derivation stays as their fallback) and in Vanilla board mode.</summary>
+    public Dictionary<string, string>? WrittenBoard { get; set; }
+
+    /// <summary>See <see cref="WrittenBoard"/>: item id -> <see cref="Season"/> as int.</summary>
+    public Dictionary<string, int>? WrittenBoardSeasonPins { get; set; }
+
     /// <summary>How many times in a row the player has held the board at a Fail night. Drives
     /// the hold price (first hold free). Reset to 0 whenever they let the board reshuffle.</summary>
     public int ConsecutiveHolds { get; set; }

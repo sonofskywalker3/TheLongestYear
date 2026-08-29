@@ -9,6 +9,33 @@ namespace TheLongestYear.Core;
 /// truth by construction.</summary>
 public static class EngineManifestCheck
 {
+    /// <summary>Index of the display-name field in a Data/Bundles value
+    /// (<c>name/reward/ingredients/color/count/unused/displayName</c>). Content Patcher packs
+    /// rename bundles through it (SVE: "Night Fishing" -> "Night Fish") and that edit lands on the
+    /// live board after the engine's write; nothing in classification reads it.</summary>
+    public const int DisplayNameField = 6;
+
+    /// <summary>The fields the mod owns: everything before <see cref="DisplayNameField"/>.</summary>
+    public static string Essential(string value)
+    {
+        string[] fields = value.Split('/');
+        if (fields.Length <= DisplayNameField) return value;
+        return string.Join("/", fields, 0, DisplayNameField);
+    }
+
+    /// <summary>Like <see cref="Matches"/> but ignores the display-name field on both sides.</summary>
+    public static bool MatchesIgnoringDisplayName(
+        System.Collections.Generic.IReadOnlyDictionary<string, string> generated,
+        System.Collections.Generic.IReadOnlyDictionary<string, string> live)
+    {
+        foreach (var pair in generated)
+        {
+            if (!live.TryGetValue(pair.Key, out string? liveValue)) return false;
+            if (!string.Equals(Essential(liveValue), Essential(pair.Value), System.StringComparison.Ordinal)) return false;
+        }
+        return true;
+    }
+
     /// <summary>True when every generated entry exists in <paramref name="live"/> with a
     /// byte-identical value.</summary>
     public static bool Matches(

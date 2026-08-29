@@ -31,38 +31,10 @@ public sealed class GeneratedBundleSet
         SeasonEase? ease = null,
         ItemAvailabilityModel? availability = null)
     {
-        var result = new List<BundleRequirement>();
-        foreach (var spec in Bundles)
-        {
-            if (!RoomThemeMap.TryGetTheme(spec.Room, out Theme theme))
-                continue; // Vault / non-themed rooms, exactly as the legacy path
-
-            var parsed = BundleParsing.Parse(BundleDataWriter.Key(spec), BundleDataWriter.Value(spec));
-            BundleRequirement? req = BundleClassifier.Classify(
-                parsed, theme, itemSeasonPins, bundleQuotas, availability);
-            if (req == null)
-                continue; // category-only bundles (none generated in Plan 1, defensive)
-
-            // CumulativeRequiredBySeason is non-null ONLY for Kind == Percentage: the private
-            // BundleRequirement constructor is only reachable through its three factories, and
-            // CreateSeasonal/CreatePerItem always pass null for this field — only
-            // CreatePercentage populates it. So this guard is a structurally exact Percentage
-            // filter, not a convention; Seasonal/PerItem requirements pass through untouched.
-            if (req.CumulativeRequiredBySeason != null)
-            {
-                int[] clamped = ClampRampForObtainability(
-                    req.CumulativeRequiredBySeason.ToArray(), req.Ingredients,
-                    req.NumberOfSlots, itemSeasonPins, req.StretchLines);
-                req = BundleRequirement.CreatePercentage(
-                    req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
-                    req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines,
-                    bundleIndex: req.BundleIndex, slots: req.Slots);
-            }
-            if (ease != null)
-                req = SeasonEase.Apply(req, ease);   // season pity, keep path (spec 2026-08-25)
-            result.Add(req);
-        }
-        return result;
+        // One classification loop for the generator and the stored-board path: the set is
+        // reduced to the exact bundle strings the game will see (writer -> parser), so what is
+        // classified can never drift from what was written.
+        return BoardRequirements.Build(ToBundleData(), itemSeasonPins, bundleQuotas, ease, availability);
     }
 
     /// <summary>ramp[s] may never exceed the number of ingredient slots obtainable by the

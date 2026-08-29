@@ -588,6 +588,8 @@ namespace TheLongestYear.Loop
                 // Vanilla mode: the board loadForNewGame just wrote IS the board. No engine write,
                 // no manifest marker; the post-reset reload classifies it (read-and-classify).
                 _meta.BundlesGeneratedForReset = -1;
+                _meta.WrittenBoard = null;
+                _meta.WrittenBoardSeasonPins = null;
                 LastGeneratedRequirements = null;
                 if (heldVanillaBoard != null)
                 {
@@ -621,6 +623,11 @@ namespace TheLongestYear.Loop
                 PityTrim trim = BundleEngine.TrimFor(_meta);
                 GeneratedBundleSet generatedSet = engine.Generate(seed, trim);
                 engine.WriteToWorld(generatedSet, _monitor);
+                // Persist exactly what was written (and the derived pins it was classified under)
+                // so later loads verify the live board against this instead of re-deriving from
+                // the seed; see MetaState.WrittenBoard.
+                _meta.WrittenBoard = new Dictionary<string, string>(generatedSet.ToBundleData());
+                _meta.WrittenBoardSeasonPins = TheLongestYear.Core.BoardRequirements.PinsToStored(engine.LastDerivedSeasonPins);
                 SeasonEase ease = SeasonPity.CurrentQuotaEase(_meta, _config);
                 _monitor.Log(
                     $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}, " +

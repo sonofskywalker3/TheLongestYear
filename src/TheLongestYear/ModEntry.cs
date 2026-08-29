@@ -4001,6 +4001,33 @@ namespace TheLongestYear
                 BundleGenerationTuning difficultyTuning =
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
 
+                // Preferred path (0.16.158): the board the mod itself wrote, persisted at write time.
+                // Verify the live board still IS that board, then rebuild requirements from it.
+                // No re-derivation from the seed, so item pools that moved since the write (a
+                // data mod's Content Patcher edits keyed on state the reset wiped: SVE audit) cannot
+                // demote a healthy board. Saves written before this field existed fall through to
+                // the seed re-derivation below.
+                if (state.WrittenBoard != null && state.WrittenBoard.Count > 0)
+                {
+                    if (EngineManifestCheck.MatchesIgnoringDisplayName(state.WrittenBoard, liveData))
+                    {
+                        var pins = TheLongestYear.Core.BoardRequirements.PinsFromStored(state.WrittenBoardSeasonPins);
+                        foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in itemSeasonPins)
+                            pins[pin.Key] = pin.Value;   // base pins win over derived, as BundleEngine.BuildRequirements does
+                        var stored = TheLongestYear.Core.BoardRequirements.Build(
+                            state.WrittenBoard, pins, bundleQuotas,
+                            SeasonPity.CurrentQuotaEase(state, _config), _availability);
+                        this.Monitor.Log(
+                            $"Requirements source: stored engine board (loop {state.CompletedResets}, seed loop {state.EffectiveBundleSeedLoop}, {stored.Count} bundles).",
+                            LogLevel.Info);
+                        return stored;
+                    }
+                    this.Monitor.Log(
+                        $"ResolveRequirements: live board differs from the stored engine board at " +
+                        $"{EngineManifestCheck.FirstDifference(state.WrittenBoard, liveData)}; trying seed re-derivation.",
+                        LogLevel.Warn);
+                }
+
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
@@ -4051,6 +4078,8 @@ namespace TheLongestYear
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
+                state.WrittenBoard = new Dictionary<string, string>(set.ToBundleData());
+                state.WrittenBoardSeasonPins = TheLongestYear.Core.BoardRequirements.PinsToStored(engine.LastDerivedSeasonPins);
                 var requirements = engine.BuildRequirements(
                     set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
                 this.Monitor.Log(
