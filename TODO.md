@@ -186,7 +186,9 @@ toggle "Re-send Better Start gift each loop" (default on) since 1,500g per loop 
 `starter_gold_1`. Scratch dump tool: net6 console app referencing the game DLLs, loading
 `List<TriggerActionData>` from `Data/TriggerActions` (fields, so `IncludeFields=true`).
 
-**APPROVED FOR SPEC 2026-08-28 (not scheduled): shrine tabs + JP Boosts (temporary "this loop
+**BUILT 2026-08-29 (0.16.159 to 0.16.162, local, not released): shrine tabs + JP Boosts.** Spec `docs/superpowers/specs/2026-08-29-shrine-tabs-jp-boosts-design.md`, plan `docs/superpowers/plans/2026-08-29-shrine-tabs-jp-boosts.md`. Fifteen rows live; Night Owl and Backpack Organizer deferred by the spike in the spec (Jeff to rule). Live-checked over the bridge (purchases, stacks, expiry at the week boundary, Second Wind, lucky day, level-up); the three tabs open and draw headlessly (`tly_openshrine`), the visual pass is still Jeff's. Original brainstorm below.
+
+**Original: APPROVED FOR SPEC 2026-08-28: shrine tabs + JP Boosts (temporary "this loop
 only" buys).** Architectural; brainstorm rulings below are binding for the spec. Boost roster and
 prices are a separate pass (in progress 2026-08-28).
 
