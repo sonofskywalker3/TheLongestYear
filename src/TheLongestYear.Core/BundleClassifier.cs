@@ -110,6 +110,12 @@ public static class BundleClassifier
                 ingredientQualities[id] = ing.Quality;
         }
 
+        // Stretch lines (spec 2026-08-28-obtainable-board-2-stretch): computed once per bundle
+        // when a model is present, then threaded into both the item-based ramp and the PerItem
+        // deadlines, and stored on the requirement for the UI to read back.
+        IReadOnlyDictionary<string, Season>? stretch =
+            availability != null ? StretchRule.Lines(ingredients, availability) : null;
+
         // KIND 1: Seasonal — bundle name like "Spring Foraging" / "Fall Crops".
         Match seasonalMatch = SeasonalNamePattern.Match(name);
         if (seasonalMatch.Success)
@@ -140,7 +146,8 @@ public static class BundleClassifier
                 numberOfSlots: parsed.NumberOfSlots,
                 cumulativeRequiredBySeason: clampedQuota,
                 ingredientStacks: ingredientStacks,
-                ingredientQualities: ingredientQualities);
+                ingredientQualities: ingredientQualities,
+                stretchLines: stretch);
         }
 
         // Spec 2026-08-28-even-year: with a model, a pick-X-of-Y bundle's ramp follows its own
@@ -151,9 +158,10 @@ public static class BundleClassifier
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
-                cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability),
+                cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability, stretch),
                 ingredientStacks: ingredientStacks,
-                ingredientQualities: ingredientQualities);
+                ingredientQualities: ingredientQualities,
+                stretchLines: stretch);
         }
 
         // KIND 2: PerItem — every distinct ingredient must be donated. The structural rule is
@@ -169,7 +177,7 @@ public static class BundleClassifier
                 // up to the season it can first exist in. No ingredient can fall through
                 // ungated, which is the whole point of the change.
                 foreach (KeyValuePair<string, Season> deadline
-                         in BundleDeadlines.For(ingredients, availability))
+                         in BundleDeadlines.For(ingredients, availability, stretch))
                     pins[deadline.Key] = deadline.Value;
             }
             else
@@ -181,7 +189,7 @@ public static class BundleClassifier
                         pins[id] = s;
             }
             return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
-                ingredientStacks, ingredientQualities);
+                ingredientStacks, ingredientQualities, stretch);
         }
 
         // X < Y with no named quota — an unknown pick-X-of-Y bundle (remixed / SVE / custom
@@ -193,7 +201,8 @@ public static class BundleClassifier
             numberOfSlots: parsed.NumberOfSlots,
             cumulativeRequiredBySeason: DerivedDefaultQuota(parsed.NumberOfSlots),
             ingredientStacks: ingredientStacks,
-            ingredientQualities: ingredientQualities);
+            ingredientQualities: ingredientQualities,
+            stretchLines: stretch);
     }
 
     /// <summary>
@@ -221,7 +230,9 @@ public static class BundleClassifier
     /// <summary>Spec 2026-08-28-even-year: the ramp follows the items. An even quarter split of X,
     /// never above what the bundle's ingredients can supply by each season's gate, monotone, and
     /// X in Winter so the bundle must be completed to win. Unknown items gate at Winter.</summary>
-    public static int[] RampFromItems(int numberOfSlots, IReadOnlyList<string> ingredients, ItemAvailabilityModel model)
+    public static int[] RampFromItems(
+        int numberOfSlots, IReadOnlyList<string> ingredients, ItemAvailabilityModel model,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         if (numberOfSlots < 1) throw new ArgumentOutOfRangeException(nameof(numberOfSlots));
         if (ingredients == null) throw new ArgumentNullException(nameof(ingredients));
@@ -231,7 +242,9 @@ public static class BundleClassifier
         {
             var season = (Season)s;
             int even = (int)Math.Round(numberOfSlots * (s + 1) / (double)Calendar.MonthsPerYear, MidpointRounding.AwayFromZero);
-            int reachable = ingredients.Count(id => model.For(id).Gate <= season);
+            int reachable = ingredients.Count(id =>
+                model.For(id).Gate <= season
+                || (stretchLines != null && stretchLines.TryGetValue(id, out Season st) && st <= season));
             ramp[s] = Math.Clamp(Math.Min(even, reachable), 0, numberOfSlots);
         }
         ramp[^1] = numberOfSlots;

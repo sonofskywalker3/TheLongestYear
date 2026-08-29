@@ -195,3 +195,26 @@ public class BundleDeadlinesTests
     public void An_Empty_Ingredient_List_Returns_An_Empty_Map()
         => Assert.Empty(BundleDeadlines.For(new List<string>(), Model()));
 }
+
+/// <summary>Spec 2026-08-28-obtainable-board-2-stretch: a stretch line pins an ingredient to its
+/// own season instead of clamping it up to the gate.</summary>
+public class BundleDeadlinesStretchTests
+{
+    private static ItemAvailabilityModel ModelWith(params (string Id, int Week, int Hard)[] items)
+        => new(items.ToDictionary(
+            i => i.Id,
+            i => new ItemAvailability(
+                AvailabilityWeeks.SeasonOf(i.Week), 3, "test", EffortSource.Derived,
+                i.Week, AvailabilityWeeks.SeasonOf(i.Week), i.Hard),
+            System.StringComparer.Ordinal));
+
+    [Fact]
+    public void A_stretch_line_pins_a_per_item_ingredient_to_its_stretch_season()
+    {
+        var model = ModelWith(("(O)a", 6, 1), ("(O)b", 6, 5), ("(O)c", 13, 13));
+        var lines = new Dictionary<string, Season> { ["(O)a"] = Season.Spring };
+        IReadOnlyDictionary<string, Season> pins = BundleDeadlines.For(new[] { "(O)a", "(O)b", "(O)c" }, model, lines);
+        Assert.Equal(Season.Spring, pins["(O)a"]);
+        Assert.True(pins["(O)b"] >= Season.Summer);
+    }
+}
