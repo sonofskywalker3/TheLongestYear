@@ -84,13 +84,18 @@ public sealed class ItemAvailabilityModel
     /// difficulty.</summary>
     public WeekMode Mode { get; }
 
+    /// <summary>The run's difficulty step, as passed at construction (spec
+    /// 2026-08-28-obtainable-board-2-stretch). Drives <see cref="StretchRule.Applies"/>.</summary>
+    public DifficultyStep Step { get; }
+
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
         IReadOnlyDictionary<string, int>? effortOverrides = null,
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = null,
         IReadOnlyDictionary<string, int>? weekOverrides = null,
-        WeekMode mode = WeekMode.Pacing)
+        WeekMode mode = WeekMode.Pacing,
+        DifficultyStep step = DifficultyStep.Normal)
     {
         _derived = derived ?? throw new ArgumentNullException(nameof(derived));
         _seasonOverrides = seasonOverrides ?? new Dictionary<string, Season>(StringComparer.Ordinal);
@@ -98,6 +103,7 @@ public sealed class ItemAvailabilityModel
         _effortDerived = effortDerived ?? new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         _weekOverrides = weekOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
         Mode = mode;
+        Step = step;
         // Validated once here rather than per lookup, so the count is meaningful the moment the
         // model exists and a caller can log it at build time without waiting for traffic. Compared
         // in weeks (spec 2026-08-28-obtainable-board, section 6): an override may only move a
