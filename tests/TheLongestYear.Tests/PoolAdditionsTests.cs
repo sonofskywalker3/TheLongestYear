@@ -38,6 +38,35 @@ public class PoolAdditionsTests
     }
 
     [Fact]
+    public void Legendary_with_a_real_spawn_row_still_gets_weight_1()
+    {
+        // Vanilla actually gives the legendaries a Data/Locations row (that's how the game
+        // itself spawns them), and Vets bypasses their ExcludeFromRandomSale flag via
+        // PoolAdditions.VetExceptions -- so the main spawn-row loop reaches them BEFORE the
+        // additions loop does. The addition must still force the weight down to 1 instead of
+        // leaving the item at the ordinary VanillaItemWeight, while keeping the data row's own
+        // seasons/locations (which can differ from the curated PoolAdditions.Fish fallback).
+        var objects = new Dictionary<string, RawObjectEntry>
+        {
+            ["163"] = new RawObjectEntry("Fish", -4, 1000, true, new string[0]),
+        };
+        var fishSpawns = new List<RawSpawnEntry>
+        {
+            new RawSpawnEntry("(O)163", Season.Spring, null, "Mountain"),
+        };
+        ItemPools pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(), objects,
+            new List<RawSpawnEntry>(), fishSpawns,
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(),
+            new BundleGenerationTuning());
+        PoolItem legend = pools.Fish.Single(p => p.ItemId == "(O)163");
+        Assert.Equal(1, legend.Weight);
+        Assert.Equal(new[] { Season.Spring }, legend.Seasons);
+        Assert.Equal(new[] { "Mountain" }, legend.Locations);
+    }
+
+    [Fact]
     public void Missing_addition_ids_never_reach_the_pool()
     {
         // "128" (Pufferfish) is not a PoolAddition id and carries no spawn row, so it must not
