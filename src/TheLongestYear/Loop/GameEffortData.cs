@@ -12,6 +12,7 @@ using StardewValley.GameData.Locations;
 using StardewValley.GameData.Machines;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.Shops;
+using StardewValley.GameData.WildTrees;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
 
@@ -32,6 +33,7 @@ namespace TheLongestYear.Loop
         private const int CraftingUnlockField = 4;
         private const int CookingUnlockField = 3;
         private const string BigCraftableQualifier = "(BC)";
+        private const string PreviousOutputTapId = "PREVIOUS_OUTPUT_ID";
 
         private readonly IMonitor _monitor;
 
@@ -52,6 +54,7 @@ namespace TheLongestYear.Loop
             var cooking = new List<RawCookingRecipe>();
             var ponds = new List<RawFishPondRule>();
             var crops = new List<RawCropGrowth>();
+            var tapItems = new List<RawTapItem>();
 
             try
             {
@@ -190,6 +193,16 @@ namespace TheLongestYear.Loop
                         BundleParsing.NormalizeItemId(c.HarvestItemId),
                         (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised, seasons));
                 }
+
+                foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
+                {
+                    foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
+                    {
+                        if (tap == null || string.IsNullOrEmpty(tap.ItemId)) continue;
+                        if (tap.ItemId == PreviousOutputTapId || tap.ItemId.Contains(' ')) continue;
+                        tapItems.Add(new RawTapItem(kv.Key, BundleParsing.NormalizeItemId(tap.ItemId), tap.DaysUntilReady));
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -202,7 +215,8 @@ namespace TheLongestYear.Loop
                 $"GameEffortData: objects {objects.Count}, geode drops {geodeDrops.Count}, monster drops {monsterDrops.Count}, "
                 + $"artifact spots {artifactSpots.Count}, forage {forage.Count}, machine rules {machineRules.Count}, "
                 + $"machine recipes {machineUnlocks.Count}, recipe prices {recipePrices.Count}, animals {animals.Count}, "
-                + $"buildings {buildings.Count}, cooking recipes {cooking.Count}, ponds {ponds.Count}, crops {crops.Count}.",
+                + $"buildings {buildings.Count}, cooking recipes {cooking.Count}, ponds {ponds.Count}, crops {crops.Count}, "
+                + $"tap items {tapItems.Count}.",
                 LogLevel.Trace);
 
             return new EffortData
@@ -210,7 +224,7 @@ namespace TheLongestYear.Loop
                 Objects = objects, GeodeDrops = geodeDrops, MonsterDrops = monsterDrops,
                 ArtifactSpots = artifactSpots, ForageSpawns = forage, MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
-                CookingRecipes = cooking, FishPonds = ponds, Crops = crops,
+                CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
             };
         }
 

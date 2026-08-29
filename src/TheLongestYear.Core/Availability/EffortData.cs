@@ -38,6 +38,9 @@ public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation);
 /// <summary>One Data/FishPondData entry: which fish (by tags) and what they produce.</summary>
 public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOnlyList<RawFishPondProduct> Products);
 
+/// <summary>One Data/WildTrees TapItems row: which tree, what item, how many nights.</summary>
+public sealed record RawTapItem(string TreeId, string ItemId, int Days);
+
 /// <summary>One Data/Crops entry reduced to growth facts.</summary>
 public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons)
 {
@@ -62,4 +65,5 @@ public sealed class EffortData
     public IReadOnlyList<RawFishPondRule> FishPonds { get; init; } = new List<RawFishPondRule>();
     public IReadOnlyList<RawCropGrowth> Crops { get; init; } = new List<RawCropGrowth>();
     public IReadOnlyList<RawSpawnEntry> ForageSpawns { get; init; } = new List<RawSpawnEntry>();
+    public IReadOnlyList<RawTapItem> TapItems { get; init; } = new List<RawTapItem>();
 }
