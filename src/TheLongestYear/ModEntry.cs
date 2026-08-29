@@ -3484,7 +3484,11 @@ namespace TheLongestYear
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_testdonate <qualifiedId> [count]", LogLevel.Warn); return; }
 
             int count = args.Length > 1 && int.TryParse(args[1], out int c) ? c : 1;
-            DonationService.Active?.OnItemDonated(args[0], count);
+            // The ledger mirrors the board, so fill the board slot first and pay with slot identity.
+            var slot = TheLongestYear.Integration.CcSlotWriter.FirstOpenSlotFor(args[0]);
+            if (slot == null) { this.Monitor.Log($"tly_testdonate: no open slot wants '{args[0]}'.", LogLevel.Warn); return; }
+            TheLongestYear.Integration.CcSlotWriter.TryFill(slot.Value.BundleIndex, slot.Value.IngredientIndex);
+            DonationService.Active?.OnItemDonated(args[0], count, slot.Value.BundleIndex, slot.Value.IngredientIndex);
         }
 
         private void CmdOpenHub(string command, string[] args)

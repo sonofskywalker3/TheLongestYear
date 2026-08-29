@@ -68,7 +68,10 @@ namespace TheLongestYear.Donations
             awarded = JpBoostHelper.Apply(_store.State, awarded);
 
             _store.State.JunimoPoints += awarded;
-            Run.RecordDonation(qualifiedItemId);
+            if (bundleIndex >= 0 && ingredientIndex >= 0)
+                Run.RecordDonation(bundleIndex, ingredientIndex, qualifiedItemId);
+            else
+                _monitor.Log($"OnItemDonated('{qualifiedItemId}') without a slot identity: JP paid, ledger untouched (the board mirror settles it).", LogLevel.Trace);
 
             string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier})" : "";
             int jpBoostTier = JpBoostHelper.HighestTier(_store.State);
