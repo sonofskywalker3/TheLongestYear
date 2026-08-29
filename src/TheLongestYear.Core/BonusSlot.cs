@@ -35,4 +35,11 @@ public sealed class BonusSlot
     /// Set by SlotPoolBuilder; the quest text tags stretch goals so the player knows why an
     /// item that "isn't obtainable yet" is being asked for.</summary>
     public bool Stretch { get; set; }
+
+    /// <summary>Set by SlotPoolBuilder when this slot's item routes through a Boost (spec
+    /// 2026-08-28-obtainable-board-4-boosts): "Boost: Year-Two Seeds" for a year-2 crop,
+    /// "Boost: Sneak Peek" for a dish whose availability basis names that route. Null otherwise.
+    /// The quest text tags such a goal so the player knows a Boost (or the permanent buy/watch) is
+    /// the item's route, not vanilla pacing.</summary>
+    public string? RouteTag { get; set; }
 }

@@ -303,7 +303,12 @@ namespace TheLongestYear.Loop
             });
             // Spec 2026-08-28-obtainable-board-2-stretch: a stretch goal asks for an item the
             // model wouldn't otherwise call obtainable yet - tag it so the player isn't confused.
-            return slot.Stretch ? described + Strings.Get("goal.stretch-tag") : described;
+            string tagged = slot.Stretch ? described + Strings.Get("goal.stretch-tag") : described;
+            // Spec 2026-08-28-obtainable-board-4-boosts: tag a goal that routes through a Boost
+            // (Year-Two Seeds, Sneak Peek) so the player knows why it's askable at all.
+            return slot.RouteTag == null
+                ? tagged
+                : tagged + Strings.Get("goal.route-tag", new Dictionary<string, string> { ["tag"] = slot.RouteTag });
         }
 
         /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used

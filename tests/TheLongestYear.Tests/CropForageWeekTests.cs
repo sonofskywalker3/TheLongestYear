@@ -82,6 +82,20 @@ public class CropForageWeekTests
     }
 
     [Fact]
+    public void Year_two_crops_wait_for_the_boost_pacing_row()
+    {
+        var crops = new List<RawCropGrowth>
+        {
+            new(YearTwoCrops.Garlic, 10, false, false, new[] { Season.Spring }),
+            new(YearTwoCrops.RedCabbage, 13, false, false, new[] { Season.Summer }),
+            new(YearTwoCrops.Artichoke, 8, false, false, new[] { Season.Fall }),
+        };
+        Assert.Equal(3, CropForageAvailability.DeriveCrop(YearTwoCrops.Garlic, crops)!.EarliestWeek);
+        Assert.Equal(7, CropForageAvailability.DeriveCrop(YearTwoCrops.RedCabbage, crops)!.EarliestWeek);
+        Assert.Equal(11, CropForageAvailability.DeriveCrop(YearTwoCrops.Artichoke, crops)!.EarliestWeek);
+    }
+
+    [Fact]
     public void Sapling_is_week_1()
     {
         var saplings = new List<PoolItem> { new("(O)628", 3400, 1, new List<Season>(), new List<string>()) };

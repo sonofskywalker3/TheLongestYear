@@ -26,6 +26,10 @@ namespace TheLongestYear.Core;
 /// </summary>
 public static class SlotPoolBuilder
 {
+    private const string YearTwoSeedsRouteTag = "Boost: Year-Two Seeds";
+    private const string SneakPeekRouteTag = "Boost: Sneak Peek";
+    private const string SneakPeekBasisMarker = "Sneak Peek";
+
     public static IReadOnlyList<BonusSlot> OpenSlotsForTheme(
         IReadOnlyDictionary<string, string> bundleData,
         Func<int, bool[]?> slotStateForBundle,
@@ -33,7 +37,8 @@ public static class SlotPoolBuilder
         Theme theme, Season season,
         Func<string, bool> isObtainableInSeason,
         int weekOfYear,
-        Func<string, ItemKind>? kindOf = null)
+        Func<string, ItemKind>? kindOf = null,
+        Func<string, string?>? routeTagOf = null)
     {
         if (bundleData == null) throw new ArgumentNullException(nameof(bundleData));
         if (slotStateForBundle == null) throw new ArgumentNullException(nameof(slotStateForBundle));
@@ -106,9 +111,23 @@ public static class SlotPoolBuilder
                     BundleName = bundle.Name,
                     Due = due.Contains(id),
                     Stretch = stretchDue.Contains(id),
+                    RouteTag = RouteTagFor(id, routeTagOf),
                 });
             }
         }
         return pool;
+    }
+
+    /// <summary>A goal's Boost route (spec 2026-08-28-obtainable-board-4-boosts), or null when
+    /// the item follows vanilla pacing. A year-2 crop always routes through Year-Two Seeds (or the
+    /// permanent buy); a dish routes through Sneak Peek when its availability basis (routeTagOf)
+    /// names that route.</summary>
+    private static string? RouteTagFor(string id, Func<string, string?>? routeTagOf)
+    {
+        if (PoolAdditions.YearTwoCropIds.Contains(id)) return YearTwoSeedsRouteTag;
+        string? basis = routeTagOf?.Invoke(id);
+        return basis != null && basis.Contains(SneakPeekBasisMarker, StringComparison.Ordinal)
+            ? SneakPeekRouteTag
+            : null;
     }
 }

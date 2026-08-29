@@ -17,6 +17,9 @@ public static class AvailabilityWeeks
     public const int CookiesWeek = 5;
     /// <summary>Queen of Sauce episodes air weekly; year 1 covers episodes 1 to 16.</summary>
     public const int YearOneEpisodes = 16;
+    /// <summary>Year 2 covers episodes 17 to 32 (the Sneak Peek Boost route: spec
+    /// 2026-08-28-obtainable-board-4-boosts).</summary>
+    public const int YearTwoEpisodesLast = 32;
     /// <summary>A dish the Saloon or a Cookout Kit can supply without a kitchen.</summary>
     public const int ShopDishWeek = 3;
     public const int PondDelayWeeks = 4;
@@ -45,6 +48,9 @@ public static class AvailabilityWeeks
             ["(O)284"] = 10,   // Beet, Oasis week 9 plus 6 days
             ["(O)252"] = 11,   // Rhubarb, Oasis seeds in a garden pot, Garden Pot recipe keep
             ["(O)268"] = 11,   // Starfruit, Oasis seeds in a garden pot, Garden Pot recipe keep (Summer crop kept through Fall)
+            [YearTwoCrops.Garlic] = 3,       // year-two crop, Year-Two Seeds Boost or the permanent buy
+            [YearTwoCrops.RedCabbage] = 7,   // year-two crop, Year-Two Seeds Boost or the permanent buy
+            [YearTwoCrops.Artichoke] = 11,   // year-two crop, Year-Two Seeds Boost or the permanent buy
         };
 
     /// <summary>Winter dig-spot forage whose artifact-spot row carries a Winter condition the

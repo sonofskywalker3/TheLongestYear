@@ -19,12 +19,13 @@ public sealed class EffortComposer
     private readonly IReadOnlyList<PoolItem> _saplings;
     private readonly IReadOnlyList<PoolItem> _artifacts;
     private readonly IReadOnlyList<PoolItem> _books;
+    private readonly DifficultyStep _step;
     private readonly Dictionary<string, ItemEffort?> _memo = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visiting = new(StringComparer.Ordinal);
 
     public EffortComposer(EffortData data, IReadOnlyDictionary<string, ItemAvailability> seasonDerived, bool hasKitchen,
         IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null,
-        IReadOnlyList<PoolItem>? books = null)
+        IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal)
     {
         _artifacts = artifacts ?? Array.Empty<PoolItem>();
         _books = books ?? Array.Empty<PoolItem>();
@@ -32,6 +33,7 @@ public sealed class EffortComposer
         _seasonDerived = seasonDerived ?? throw new ArgumentNullException(nameof(seasonDerived));
         _hasKitchen = hasKitchen;
         _saplings = saplings ?? Array.Empty<PoolItem>();
+        _step = step;
     }
 
     /// <summary>Effort for any id the model can place, or null. This is the resolver the
@@ -96,7 +98,7 @@ public sealed class EffortComposer
             PoolBook(qualifiedId),
             ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
             FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
-            CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf),
+            CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf, _step),
         })
         {
             ItemEffort? candidate = raw;
