@@ -6,6 +6,224 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### #1 PRIORITY (Jeff 2026-08-28): season goals and the gate credit an item to EVERY bundle that lists it (found live on emmalution's stream, v0.16.17, still true at 0.16.71)
+
+Symptom: remixed Children's Bundle showed 3/3 on the Season Goals page after two real donations,
+then 4/3 after the third. She had donated Salmonberry to the Spring Foraging bundle; Children's also
+lists Salmonberry, and it was credited there too. The CC board is correct (vanilla tracks per slot).
+
+Root cause: the run ledger is a flat set of item ids, not per-slot deposits. `RunState.DonatedItemIds`
+(`RunState.cs:24`) records `(O)296` once for the whole run; `SeasonGoalsMenu.cs:147` counts a bundle's
+progress as `br.Ingredients.Count(donated.Contains)`; `BundleRequirement.IsSatisfiedAtSeasonEnd` and
+`IsFullyComplete` evaluate the same set, so the phantom counts for the day-28 gate and the
+end-of-Winter full-CC check as well. Same shape as the @ggrace67 weekly-theme report that
+`WeeklyGoalCredit` fixed with per-slot deposit tracking; that fix covered weekly goals only.
+
+Effect: the gate is lenient, never stricter. Any ingredient that appears in two bundles only has to
+be donated once to count for both. Cannot cause a false fail. The Season Goals "needs N before
+<Season> 1" badge is computed the same way, so what the page says is exactly what the gate checks.
+
+**Second case, same root, worse outcome (Jeff, same stream): a bundle with a repeated id inside
+it.** Default Construction Bundle is Wood x99, Wood x99, Stone x99, Hardwood x10. The by-id ledger
+cannot represent the second Wood slot, so the requirement is modelled as 3 distinct ingredients and
+the page shows 3/3 against a 4-slot bundle. Donate Wood once, Stone, Hardwood: vanilla board says
+Construction 3/4 and the Crafts Room is unfinished; TLY says complete. `RunManager.EvaluateDayEnd`
+(`RunManager.cs:47-56`) computes both the season gate and `fullCcDone =
+BundleGate.IsFullyDone(donated, bundles)` from that set and never consults vanilla's CC state, so
+at Winter 28 **the mod declares a Win with the Community Center not restored.** Applies to every
+bundle with a repeated id on the default or remixed boards. The per-slot ledger fix above covers
+it; also make the Winter win require vanilla's own "all bundles complete" as a second check so the
+ledger can never out-vote the board.
+
+Fix shape: make the ledger per slot (bundle index + ingredient index), the way `WeeklyGoalCredit`
+already does, and evaluate `BundleRequirement` against per-slot fills. `CcDonationReconciler`
+already walks slots positionally so the day-end backstop is most of the way there. Migrate existing
+saves at load by seeding from vanilla's per-slot completion state (same grandfather pattern as
+`WeeklyGoalCredit.GrandfatherCompleted`). Watch the remixed boards: two bundles listing the same id
+must each need their own deposit after the fix, and a Percentage bundle's count must come from its
+own slots. Add tests that put one id in two bundles and assert one deposit credits one bundle.
+
+Also add a console command (`tly_gateneeds` or fold into `tly_runstate`) that prints, per bundle,
+the same `MissingForSeason` the Season Goals page uses: count still needed before the next season
+and the ingredient ids. As of v0.16.17 nothing prints gate progress: `tly_runstate` shows only
+`donated=<count>`, `tly_gatecheck` is an obtainability audit.
+
+### 2026-08-28 brainstorm batch (Jeff, approved for TODO, not scheduled)
+
+**Vocabulary correction, repo-wide (docs, code comments, i18n, TODO/STATUS, specs).** The
+**shrine** is the Junimo statue outside the farmhouse; walking up to it opens the planning board
+(`ShrinePreviewMenu`, `PlanningShrineService`). The screen that pops up when a loop fails and lets
+you spend JP is the **JP perk screen** (`JunimoShrineMenu`, opened from `RunController` at the loop
+boundary; Nexus users already call it "the JP perk screen", bug 1123181). Everything that calls the
+fail-loop buy menu "the shrine" or "shrine shop" is superseded. Sweep and rename (class names too,
+`JunimoShrineMenu` -> something like `JpPerkMenu`, `OpenShrineShop` -> `OpenPerkScreen`) so the two
+stop being confused in specs. Ruling 2026-08-28.
+
+**Keep Horse shows without a horse (bug, bounded).** `early_horse` (`UpgradeCatalog.cs:95`) is the
+only "keep a thing" row with no `RunReachRequirement`, so it is visible from loop 1 and costs 450 JP
+for nothing if the player never built a stable (it became pure carry-over in the 2026-06-03 spec and
+was never re-gated; `KeepShopFilterTests.cs:57` even asserts it must not hide). Fix: give it
+`runReachRequirement: "building:Stable"` (`RunReachEvaluator.HasBuildingAtLeast` already matches
+non-chain types by exact name) and flip that test. The other ungated rows (`starter_gold`,
+`shop_discount`, `jp_boost`, the four Obtainability chains, `weather_sage`, `cart_slot`, `stash`,
+`xp_mult_*`) are "buy a power" rows and stay ungated on purpose.
+
+**Locked upgrades section on the planning board (bounded UI).** On `ShrinePreviewMenu` only (NOT the
+JP perk screen, Jeff 2026-08-28: "there's no need for it on the buy menu, only for planning"). Under
+each category header, after the owned and buyable rows, a collapsed `Locked (N)` header row; click
+or A to expand, state kept while the menu is open. Shows the **next rung only** per chain: the first
+unowned rung that fails a gate (if the next rung is already buyable it is in the normal list, not
+here). So Mining shows "Keep Mining Level 1" until you reach Mining 1 this loop, or "Keep Mining
+Level 4" if you own 1 to 3. Tooltip is **how to unlock**, generated from the gate, not the effect
+text: reach `skill:mining:4` -> "Reach Mining level 4 this loop"; `building:Deluxe Coop` -> "Build a
+Deluxe Coop this loop"; prereq -> "Requires Keep Coop"; meta `upgrades:xp_mult_*_4` -> "Own tier 4
+of every XP multiplier". One i18n template per reach metric (~12) plus prereq and meta templates.
+Rows drawn dimmed with the cost, never purchasable.
+
+**Better Start compat + the trigger-action reset gap (audit done 2026-08-28, path NOT decided).**
+Better Start (Nexus 32131, `nebulouscharlotte.betterstart`, installed locally in `Mods\Better
+Start`) is one Content Patcher trigger action on `DayStarted` that mails a Robin letter (2 chests,
+100 wood, 100 stone, 20 coal, 50 fiber, 24 mixed seeds, 10 clay, 1,500g). Vanilla records a fired
+action in `Farmer.triggerActionsRun` (`MarkActionApplied` defaults true) and never re-fires it.
+`FarmerReset` wipes `mailReceived`, `friendshipData`, `eventsSeen`, `questLog` but never touches
+`triggerActionsRun` (zero hits in `src/`), so loop 1 gets the gift and loop 2+ never does.
+
+Audit of vanilla `Data/TriggerActions` (31 rows, all `AddMail`, all `MarkActionApplied=true`) for
+the general fix "clear `triggerActionsRun` at reset":
+- 12 heart-gated mails (`abbySpiritBoard`, `pennySpa`, `elliottReading`, `elliottBoat`,
+  `EmilyClothingTherapy`, `EmilyCamping`, `harveyBalloon`, `samMessage`, `joshMessage`, the six
+  Elliott tour letters, `pierreHours`). These gate 8 and 10 heart events. **Today in TLY those
+  events are unreachable in loop 2+**: hearts and mail reset, the trigger record does not, so the
+  invite never re-sends. The general fix repairs this; it is an existing bug in its own right.
+- `fertilizers` (day 15), `WoodChipper` (Winter), `willyBackRoomInvitation` (CC complete),
+  `spring_2_1` resend: all re-fire correctly once cleared, conditions are per-loop state.
+- `MarniePetRejectedAdoption` and `fertilizers2` are `YEAR 2` gated; the reset pins year 1
+  (`WorldResetService.cs:375`) so they never fire either way. No change.
+- **The one hazard: 9 `PLAYER_MONEY_EARNED` mails** (`mom1..4`, `dad1..4`, `newsstory`).
+  `totalMoneyEarned` is lifetime and TLY never resets it, so clearing the record would re-send every
+  earned tier on day 1 of each loop (all four mom/dad letters at once past 120K lifetime). Fix
+  alongside: either reset `totalMoneyEarned` in `FarmerReset` (check nothing in TLY displays
+  lifetime earnings first) or exclude `Mail_Mom_*`/`Mail_Dad_*`/`Mail_Tribune_*` from the clear.
+Paths: (a) targeted compat list keyed by mod id (Better Start only today) or (b) general clear of
+`triggerActionsRun` at reset with the money-earned handling above. Recommendation: **(b)**, because
+it fixes the vanilla heart-mail gap for free and is what "fresh save" means. Either way add a GMCM
+toggle "Re-send Better Start gift each loop" (default on) since 1,500g per loop dwarfs
+`starter_gold_1`. Scratch dump tool: net6 console app referencing the game DLLs, loading
+`List<TriggerActionData>` from `Data/TriggerActions` (fields, so `IncludeFields=true`).
+
+**APPROVED FOR SPEC 2026-08-28 (not scheduled): shrine tabs + JP Boosts (temporary "this loop
+only" buys).** Architectural; brainstorm rulings below are binding for the spec. Boost roster and
+prices are a separate pass (in progress 2026-08-28).
+
+Layout. The shrine (statue on the farm, in-loop, any day) gets three tabs: **Active** (every owned
+permanent upgrade, the week's theme bonus/liability, every running boost with its expiry; read-only;
+default tab), **Boosts** (the new JP buys, purchasable here, grouped by duration class), **Plan**
+(unowned-and-buyable permanents only, then the collapsed Locked section per category, plus the
+foresight weather/cart panel). Owned rows leave Plan and live on Active. The JP perk screen (fail-loop
+popup) is unchanged: permanents are still bought there at the loop boundary.
+
+Skill-level boost rules.
+- Buyable any time, any skill, applied the vanilla way: grant XP, the game queues the level-up and
+  shows it at sleep. Never spends earned XP: grants the FULL XP width of the target level on top of
+  current XP (at 80/100, buying level 1 lands at 180).
+- Cost = 0.2 x keepCost(targetLevel) x 3^(n-1), n = levels bought so far this loop across ALL
+  skills, resets each loop. Real table (keep 50/100/175/275/500/650/800/1000/1250/2000): first buy of
+  level 1 = 10; a second buy at level 2 = 60; a third buy of level 1 in another skill = 90.
+- Cap 2 per skill per loop, and a bought level can never take a skill to 10 (10 must be earned;
+  protects Mastery Cave access and the `keep_mastery` chain).
+- Bought levels are NEVER keepable. Every `skill:` reach check (perk-screen filter, Plan/Locked rows,
+  `RunBaselineBuilder` in-run peak cap) uses earned level = current level minus levels bought in that
+  skill this loop. At 6, buy two to reach 8, earn nothing: keep rows stop at Keep Level 6.
+- Verify at build time that the profession requeue at reset strips professions whose level is not
+  kept (bought 5/10 professions must not survive). Recipes learned from bought levels leaking into
+  the cookbook/craftbook keeps: accepted, do nothing.
+
+Other rulings.
+- No JP-earning boosts of any kind. No "cart visit" boost.
+- Boosts stack additively with themes and each other (double forage boost + double forage theme =
+  two independent +1 rolls, no cap). Same effect id cannot be re-bought until it expires.
+- Shop discount boost is additive with the permanent chain (25% max permanent + boost, no cap; the
+  price patch floors at 1g). Same exclusions (buildings, animals, tool upgrades).
+- Weather boosts: set tomorrow's weather. Refuse the sale on festival days and in Winter for rain
+  and storm.
+- Lucky Day boost sets tomorrow's `dailyLuck` to +0.1 (the vanilla ceiling; Special Charm still adds
+  on top). A guaranteed lucky day.
+- No warnings about buying a long boost near the end of a season/loop; that is on the player.
+- Boost state and expiries live in `RunState`; effects go through a generalized
+  `ActiveEffectsProvider` (set of active effect ids with expiries instead of one theme pair). Reload
+  rolls back JP and boost together, matching the existing anti-save-scum design.
+- Multiplayer: decide in the spec whether the Boosts tab is host-only (JP is one pool per save).
+
+Boost roster (Jeff 2026-08-28, prices are opening bids). Naming rules: no time words in names, one
+scope per effect, no collisions with existing perk names. Rows marked "reuse" use an existing theme
+modifier id or perk patch.
+
+Instant (bought that day, applies that night / tomorrow):
+- Rain Dance, 25: tomorrow is rain. Refuse on festival days and in Winter. New (weather scheduler).
+- Storm Call, 40: tomorrow is a storm. Same refusals. New.
+- Fortune's Favor, 30: tomorrow's `dailyLuck` = +0.1 (vanilla ceiling; Special Charm still adds). New.
+- Second Wind, 20: bought the day BEFORE; that night's late sleep carries no stamina penalty and no
+  Exhausted status in the morning. Never a refill after the fact. New.
+- Night Owl, 30: that night the 2am collapse moves to 6am. Every vanilla consequence stays (gold
+  loss, the note) and morning stamina keeps dropping the later you sleep; Second Wind cancels that.
+  Night Owl + Second Wind = 50 JP for four extra hours with no downside, and that is the intent.
+  NEEDS A SPIKE before spec: vanilla treats 2600 as the end of day (clock update, NPC schedules,
+  lighting, music); the clock has to run 2600 to 3000 safely. Prior art exists in day-extending
+  mods. Android: verify on device.
+
+Week (expires with the weekly theme):
+- Overgrowth, 50: +1 forage roll per spawn. Reuse `forage_yield_up`.
+- Feeding Frenzy, 45: fish bite faster. Reuse `fish_bite_up`.
+- Growth Spurt, 60: crops grow a day faster. Reuse `crop_growth_up`.
+- Rich Veins, 55: extra mine drops. Reuse `mine_drops_up`.
+- Windfall, 90: all drops up. Reuse `all_drops_up`.
+- Quick Feet, 40: +1 movement speed. New (vanilla speed buff).
+
+Season:
+- Haggler, 120: +10% shop discount, additive with the permanent chain, same exclusions. Reuse
+  `ShopDiscountPatch`.
+- Fast Friends, 150: friendship gains x1.5. New. Strongest row on the list (hearts reset each loop);
+  Jeff: keep.
+- Iron Lungs, 90: +50 max stamina. New (same mechanism as the Stardrop keep).
+
+Loop:
+- Crash Course: +1 skill level per the rules above. New.
+- Backpack Organizer, 60: +12 slots on top of whatever you have, up to 48 (4 rows). Vanilla stops at
+  36, so the inventory page must draw and hit-test a 4th row (Bigger Backpack mod proves the
+  approach on PC). The permanent `backpack_1/_2` chain tops out at 36; decide whether a `backpack_3`
+  perm joins it. Android: verify on device.
+- Elevator Pass: RELATIVE, not a fixed floor (Jeff 2026-08-28: a fixed "unlock floor 30" is useless
+  once the player has already dug to 35). Extends the elevator to the next multiple of 10 past the
+  player's current deepest elevator stop (35 -> 40, then 40 -> 50), priced at 20% of the
+  `keep_mine_elevator_N` row for the landing floor. Reads live `MineShaft.lowestLevelReached` /
+  the elevator floor at purchase time. Repeatable within the loop, one step per buy.
+
+Dropped during the brainstorm: Clear Skies (cancel rain), a second forage boost and a second
+discount boost (one scope per effect), the original Long Days (no-penalty pass-out; Jeff: the
+penalties exist for an in-game reason).
+
+RULED (Jeff 2026-08-28): the "20% twin" rule is general and catalog-generated for EARNABLE
+PROGRESS only (skill levels, elevator floors, backpack). Never for BUILT THINGS (tool tiers,
+buildings, animals), which keep Clint's and Robin's gold sink. Crash Course, Elevator Pass and
+Backpack Organizer are the three instances today; any future keep row of the earnable kind gets a
+twin automatically.
+
+**STUB: daily luck and the weekly themes/bonuses.** Investigate whether daily luck should (or
+already does) touch theme selection, bonus magnitude, or the goal rolls. Nothing designed yet; open
+questions are which side of the theme (bonus, liability, goal sampling) luck would move, and how
+that interacts with a bought "lucky day" boost once the shrine Boosts tab exists.
+
+**STUB: chosen drawbacks for a reward ("deal with the devil").** Extends the existing Joja
+interference todo. Instead of Joja interference only being inflicted, let the player CHOOSE to accept
+a drawback in exchange for JP or another benefit. Blocking problem is the in-universe framing, since
+JP is Junimo favour and Joja handing out Junimo favour makes no sense. Candidates from the 2026-08-28
+brainstorm: (1) **Junimo trials**: the forest spirits offer a hardship ("no foraging this season",
+"the mines stay dark this week") and reward endurance with JP; Joja stays a pure antagonist.
+(2) **Joja contracts**: Morris offers gold, items or a building in exchange for a clause that is a
+liability for a duration; no JP involved. (3) **Mr. Qi** challenges, which are canonically
+"take a handicap for a reward", but he is late-game and Ginger Island gated. Recommendation to
+discuss: (1) for JP, (2) for gold, keeping the currencies tied to their factions.
+
 ### BUILT 2026-08-27 (0.16.19 to 0.16.25, pushed, NOT released), LIVE SMOKE PASSED: keep wallet items and Stardrops with a JP purchase
 
 Built the same night from the approved spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`
