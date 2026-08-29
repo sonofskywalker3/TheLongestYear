@@ -1,10 +1,40 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 (per-slot ledger, 0.16.135 to 0.16.146)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.146 committed LOCALLY ONLY, not pushed, not released**
+**Last updated:** 2026-08-29 (Standard-board year sim, 0.16.147)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); 0.16.146 PUSHED (2026-08-29); **0.16.147 committed LOCALLY ONLY, not pushed, not released**
 **Tests:** 1754 passing, 0 failing
 **Build:** clean (mod assembly builds Release); 0.16.145 deployed to the game and desktop-driven (Jeff out, desktop authorised); 0.16.146 is docs only
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+## 2026-08-29 (afternoon): first played year on the vanilla STANDARD board (sim standardP3)
+
+`bash tools/sim-year.sh minimal standardP3` on build 0.16.145, save `None_447695014` lineage with
+`BundleSource=Vanilla, Default` (set with `tly_bundlesource Vanilla Default`; the deployed
+`config.json` still says `Engine`, the reset reads the save's own setting). Minimal player: donates
+only the gate demand, a quarter per week. Transcript: `docs/superpowers/notes/2026-08-29-sim-standardP3.txt`.
+No WARN or ERROR lines in the whole run. Earlier today the same board was also driven to the Winter
+28 win by hand (`tly_playseason` at Winter 8, 106 slots).
+
+**Every gate passed.** Ledger at each season end 26 / 48 / 71 / 97 slots (quarter 4 flipped 6 / 5 /
+5 / 6; per-season plan 26 / 22 / 23 / 26). Compare custom P2 last night: 22 / 50 / 79 / 100.
+Standard front-loads Spring (26 vs 22) and ends lighter (97 vs 100). Audit: `no impossible gates. 30
+tight, 0 never gated. 2 stretch lines, 4 without a hard item, 5 Spring tight.` Stretch: Engineer's
+`[stretch: Iridium Ore Summer]` (the one the seed audit kept finding) and Field Research `[stretch:
+Coconut Summer]`. No hard item: Exotic Foraging, Mineral, Four Seasons Sampler, Orchard. Spring
+tight: Four Seasons Sampler, Quality Fish, River Fish, Spring Crops, Spring Foraging.
+
+Askable goals by week (Fo/Fa/Fi/Mi/Mx/Sp/Ar/Ki): Spring 3/3/3/2/5/3/0/0, 3/4/4/0/5/0/0/1,
+3/5/2/0/5/0/0/1, 2/4/0/0/5/0/0/0; Summer 4/3/3/3/5/4/1/2, 5/4/3/2/5/1/1/2, 2/5/2/2/5/1/1/2,
+2/1/1/1/5/1/0/1; Fall 3/4/2/2/5/3/1/1, 4/5/2/0/5/0/1/1, 0/5/3/0/5/0/1/1, 0/4/0/0/4/0/1/0; Winter
+4/2/2/2/5/2/1/1, 4/2/3/0/5/0/1/1, 2/3/3/0/5/0/1/1, 3/0/3/0/5/0/0/0. Same shape as custom: Mixed
+always 5, Mining and Spelunking thin outside week 1 of a season (Summer is the exception, 3/2/2/1),
+Artisan and Kitchen 0 to 2 all year. Fishing dies in Spring week 4 and Fall week 12; Foraging in
+Fall weeks 11 and 12.
+
+Judgement rows (7): Apple week 9 (Fodder), Prize Ticket week 2 and Mystery Box week 3 (Helper's),
+Winter Root week 13 (Four Seasons Sampler), Snow Yam week 13 (Winter Foraging), Cave Carrot week 1
+(Exotic Foraging), Tea Leaves week 4 (Spring Crops). **Unknown items (2), gate treats as Winter,
+Jeff to rule:** Hay `(O)178` in Fodder; Treasure Appraisal Guide `(O)Book_Artifact` in Field Research.
 
 ## 2026-08-29: per-slot ledger mirrored from the CC board, 0.16.135 to 0.16.146
 
