@@ -36,6 +36,15 @@ public static class BundleSlotFiller
     /// applies to a bundle rolling at least this many slots.</summary>
     public const int MinSlotsForHardItem = 4;
 
+    /// <summary>Whether the hard-item rule is on for this model: never on Easy, every other step.
+    ///
+    /// Deliberately NOT <see cref="StretchRule.Applies"/>. The two rules used to share that one
+    /// gate, and once the stretch rule became pacing-mode-only the shared gate would have switched
+    /// the hard-item rule off on Hard and Extreme as well, leaving those boards easier than
+    /// Normal. The hard-item rule has nothing to do with which week a gate reads.</summary>
+    public static bool HardItemRuleApplies(ItemAvailabilityModel model)
+        => model != null && model.Step != DifficultyStep.Easy;
+
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
@@ -93,28 +102,42 @@ public static class BundleSlotFiller
         // Stretch swap and hard-item swap (spec 2026-08-28-obtainable-board-2-stretch, sections 2
         // and 3), replacing the Spring foothold: never on Easy, never on a season-named bundle
         // (it gates its own season by nature).
-        if (availability != null && match.Season == null && StretchRule.Applies(availability.Step))
+        if (availability != null && match.Season == null && HardItemRuleApplies(availability))
         {
+            // Never on Easy, and never on a season-named bundle (it gates its own season by
+            // nature). The stretch pass has the extra condition of a pacing-mode model; the
+            // hard-item rule below runs on every step above Easy.
+            bool stretches = StretchRule.Applies(availability);
+            var chosenIds = new HashSet<string>(chosen.Select(c => c.ItemId), StringComparer.Ordinal);
+
             // Stretch swap (spec section 2): for each season the chosen list gains nothing in, hold a
             // stretch item; swap the last non-reachable slot for one from the pool when it holds none.
-            var chosenIds = new HashSet<string>(chosen.Select(c => c.ItemId), StringComparer.Ordinal);
-            foreach (Season season in new[] { Season.Spring, Season.Summer, Season.Fall })
+            // <paramref name="keep"/> is the index the hard-item swap just filled: the re-run below
+            // must not take the hard item straight back out again.
+            void StretchPass(int keep)
             {
-                bool gains = chosen.Any(c => Gains(availability.For(c.ItemId), season));
-                bool holdsStretch = chosen.Any(c => StretchRule.IsStretchFor(availability.For(c.ItemId), season));
-                if (gains || holdsStretch) continue;
-                List<PoolItem> stretchPool = candidates
-                    .Where(c => !chosenIds.Contains(c.ItemId) && StretchRule.IsStretchFor(availability.For(c.ItemId), season))
-                    .ToList();
-                if (stretchPool.Count == 0) { log?.Invoke($"'{spec.Name}': no stretch item for {season} in its pool."); continue; }
-                int victim = chosen.FindLastIndex(c => !StretchRule.IsReachable(availability.For(c.ItemId), season));
-                if (victim < 0) continue;
-                PoolItem pick = WeightedSampler.Sample(stretchPool, 1, rng)[0];
-                chosenIds.Remove(chosen[victim].ItemId);
-                chosen[victim] = pick;
-                chosenIds.Add(pick.ItemId);
-                log?.Invoke($"'{spec.Name}': swapped in {pick.ItemId} as a {season} stretch.");
+                foreach (Season season in StretchRule.StretchSeasons)
+                {
+                    bool gains = chosen.Any(c => Gains(availability.For(c.ItemId), season));
+                    bool holdsStretch = chosen.Any(c => StretchRule.IsStretchFor(availability.For(c.ItemId), season));
+                    if (gains || holdsStretch) continue;
+                    List<PoolItem> stretchPool = candidates
+                        .Where(c => !chosenIds.Contains(c.ItemId) && StretchRule.IsStretchFor(availability.For(c.ItemId), season))
+                        .ToList();
+                    if (stretchPool.Count == 0) { log?.Invoke($"'{spec.Name}': no stretch item for {season} in its pool."); continue; }
+                    int victim = -1;
+                    for (int i = chosen.Count - 1; i >= 0; i--)
+                        if (i != keep && !StretchRule.IsReachable(availability.For(chosen[i].ItemId), season)) { victim = i; break; }
+                    if (victim < 0) continue;
+                    PoolItem pick = WeightedSampler.Sample(stretchPool, 1, rng)[0];
+                    chosenIds.Remove(chosen[victim].ItemId);
+                    chosen[victim] = pick;
+                    chosenIds.Add(pick.ItemId);
+                    log?.Invoke($"'{spec.Name}': swapped in {pick.ItemId} as a {season} stretch.");
+                }
             }
+
+            if (stretches) StretchPass(-1);
             // Hard-item rule (spec section 3): one effort-6-or-more item per bundle of 4 or more slots.
             if (targetCount >= MinSlotsForHardItem && !chosen.Any(c => EffortTiers.IsHard(availability.For(c.ItemId).Effort)))
             {
@@ -124,13 +147,20 @@ public static class BundleSlotFiller
                 {
                     // Swap the easiest slot that is not a stretch line, so the stretch swap above survives.
                     int victim = chosen.Select((c, i) => (c, i))
-                        .Where(p => !Enumerable.Range(0, 3).Any(s => StretchRule.IsStretchFor(availability.For(p.c.ItemId), (Season)s)))
+                        .Where(p => !StretchRule.StretchSeasons.Any(s => StretchRule.IsStretchFor(availability.For(p.c.ItemId), s)))
                         .OrderBy(p => availability.For(p.c.ItemId).Effort).Select(p => p.i).DefaultIfEmpty(-1).First();
                     if (victim >= 0)
                     {
                         PoolItem pick = WeightedSampler.Sample(hardPool, 1, rng)[0];
+                        chosenIds.Remove(chosen[victim].ItemId);
                         chosen[victim] = pick;
+                        chosenIds.Add(pick.ItemId);
                         log?.Invoke($"'{spec.Name}': swapped in {pick.ItemId} as the hard item (effort {availability.For(pick.ItemId).Effort}).");
+                        // The hard swap can be the very thing that empties a season: it takes out the
+                        // easiest slot, which is often the only item reachable early. Re-run the
+                        // stretch pass over the post-swap list so no season is left with nothing
+                        // reachable AND no stretch line.
+                        if (stretches) StretchPass(victim);
                     }
                 }
             }

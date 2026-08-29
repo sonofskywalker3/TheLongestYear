@@ -76,6 +76,18 @@ namespace TheLongestYear.Loop
         // independent deterministic stream from the loop seed.
         private const int SlotSaltPrime = 6151;
 
+        // The filler's "no stretch item for X" / "no hard item" lines are diagnostics about the
+        // shape of a POOL, not events: on a board of 30-odd bundles they fire dozens of times per
+        // generation and drown the swaps a reader actually wants to see. Keep them (they explain a
+        // bundle the audit flags later) but at Trace; the swaps themselves stay at Info.
+        private const string NoStretchLog = "no stretch item";
+        private const string NoHardLog = "no hard item";
+
+        private static LogLevel FillerLogLevel(string message)
+            => message.Contains(NoStretchLog) || message.Contains(NoHardLog)
+                ? LogLevel.Trace
+                : LogLevel.Info;
+
         // Per-def RNG salt for authored bundle composition (Plan-3 "authored bundles"). Mirrors
         // RemixSelector's own RoomSaltPrime/StableRoomSalt idiom, but salted on the AUTHORED
         // DEF NAME rather than room -- see the doc comment on the composition block in Generate
@@ -242,7 +254,7 @@ namespace TheLongestYear.Loop
                 BundleSpec pick = record.Pick;
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
-                    msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info), asked, Availability);
+                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability);
                 if (ReferenceEquals(composed, pick))
                 {
                     _monitor?.Log(
