@@ -720,6 +720,13 @@ namespace TheLongestYear.Loop
                     LogLevel.Warn);
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
+            // Kept bus: BeginNewRun just cleared VaultBundlesPaid, but PerformReset completed the
+            // vault slots on the board (WorldResetService.RestoreKeptBus). Refill the counter now
+            // so the next VaultPaymentSync.Reconcile sees nothing new and awards no JP for them.
+            int prepaidVault = VaultRules.PrepayKeptBus(
+                _store.State, Run, TheLongestYear.Integration.VaultBundleMap.Indices());
+            if (prepaidVault > 0)
+                _monitor.Log($"Kept bus: {prepaidVault} vault bundle(s) pre-marked paid for run {Run.RunNumber}.", LogLevel.Info);
             ActiveEffectsProvider.Clear();
             // Persist the post-reset meta (JP spent at the shrine, new OwnedUpgrades, the bumped
             // run/reset counters) IMMEDIATELY. A deferred SaveLoaded fires after the in-place reset

@@ -30,6 +30,24 @@ public class VaultRulesTests
         => Assert.Equal(expected, VaultRules.IsVaultIndex(index));
 
     [Fact]
+    public void PrepayKeptBus_fills_the_counter_with_the_live_indices_only_when_the_bus_is_kept()
+    {
+        var run = new RunState();
+        int[] remixedIndices = { 23, 24, 25, 26 };
+
+        Assert.Equal(0, VaultRules.PrepayKeptBus(new MetaState(), run, remixedIndices));
+        Assert.Empty(run.VaultBundlesPaid);
+
+        var meta = new MetaState { OwnedUpgrades = { VaultRules.KeepBusUnlockedId } };
+        Assert.Equal(4, VaultRules.PrepayKeptBus(meta, run, remixedIndices));
+        Assert.Equal(remixedIndices, run.VaultBundlesPaid);
+
+        // Idempotent: a second call (another reconcile) marks nothing new, so no JP can be awarded.
+        Assert.Equal(0, VaultRules.PrepayKeptBus(meta, run, remixedIndices));
+        Assert.Equal(4, run.VaultBundlesPaid.Count);
+    }
+
+    [Fact]
     public void Gate_needs_count_at_least_season_ordinal()
     {
         var run = new RunState();

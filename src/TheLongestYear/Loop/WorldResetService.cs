@@ -500,19 +500,8 @@ namespace TheLongestYear.Loop
             Game1.netWorldState.Value.LowestMineLevelForOrder = keptFloor > 0 ? keptFloor : -1;
             Game1.player.deepestMineLevel = keptFloor;
 
-            // 7. Vault gate pre-pay if bus is kept unlocked. Mark this save's actual vault indices
-            //    (remix-aware) paid so the count-based gate reads full; fall back to the canonical
-            //    vanilla set if live bundle data is somehow unavailable.
-            if (baseline.BusUnlocked)
-            {
-                _run.VaultBundlesPaid.Clear();
-                System.Collections.Generic.IReadOnlyList<int> vaultIndices =
-                    TheLongestYear.Integration.VaultBundleMap.Indices();
-                if (vaultIndices.Count == 0)
-                    vaultIndices = VaultRules.VaultIndices;
-                foreach (int idx in vaultIndices)
-                    _run.VaultBundlesPaid.Add(idx);
-            }
+            // 7. (Kept bus: see step 11b, RestoreKeptBus. It has to run AFTER the board write in
+            //    step 11, which re-zeroes every bundle slot and areasComplete.)
 
             // 7b. Robin's community-upgrade map shortcuts — single mail flag controls all five
             //     (Town fence, bus tunnel, forest stump bridge, Mountain quarry path, Mountain
@@ -642,6 +631,11 @@ namespace TheLongestYear.Loop
                     generatedSet, _itemSeasonPins, _bundleQuotas, ease, AvailabilityModel);
             }
 
+            // 11b. Kept bus (keep_bus_unlocked). Must follow the board write above: both the
+            //      engine write and step 1a zero every bundle slot and areasComplete.
+            if (baseline.BusUnlocked)
+                RestoreKeptBus();
+
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();
 
@@ -692,6 +686,62 @@ namespace TheLongestYear.Loop
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
+                LogLevel.Info);
+        }
+
+        /// <summary>
+        /// Restores the bus for a player who owns <see cref="VaultRules.KeepBusUnlockedId"/>
+        /// (Nexus bug, gazumbrado, 2026-08-29: 1,500 JP bought only the mod's gate counter; the
+        /// desert stayed locked and the four vault bundles were back on the board every loop).
+        /// Three things make the bus work in vanilla and all three are wiped by the reset:
+        /// the <c>ccVault</c> mail (BusStop.cs:78, Game1.isLocationAccessible "Desert", Pam's bus
+        /// schedule NPC.cs:1191), the Vault area's <c>areasComplete</c> flag (the refurbished room
+        /// and no Junimo note), and the vault bundles' per-slot completion (so the board stops
+        /// asking for them). Set all three and leave <c>BundleRewards</c> false: the kept bus IS
+        /// the reward, the vault's item rewards are not re-handed out each loop. The mod's own
+        /// <see cref="RunState.VaultBundlesPaid"/> counter is NOT filled here: RunController's
+        /// FinalizeReset calls <see cref="RunState.BeginNewRun"/> after this and clears it, then
+        /// refills it via <see cref="VaultRules.PrepayKeptBus"/> so the day-end reconcile does not
+        /// award JP for these pre-completed slots.
+        /// Must run after the board write (engine or vanilla) since that re-zeroes the slots.
+        /// </summary>
+        private void RestoreKeptBus()
+        {
+            System.Collections.Generic.IReadOnlyList<int> vaultIndices =
+                TheLongestYear.Integration.VaultBundleMap.Indices();
+            if (vaultIndices.Count == 0)
+                vaultIndices = VaultRules.VaultIndices;
+
+            int slotsFlipped = 0;
+            var bundleDict = Game1.netWorldState.Value?.Bundles?.FieldDict;
+            if (bundleDict != null)
+            {
+                foreach (int idx in vaultIndices)
+                {
+                    if (!bundleDict.TryGetValue(idx, out var arr))
+                        continue;
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        arr[i] = true;
+                        slotsFlipped++;
+                    }
+                }
+            }
+
+            if (!Game1.MasterPlayer.mailReceived.Contains("ccVault"))
+                Game1.MasterPlayer.mailReceived.Add("ccVault");
+
+            CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
+            if (cc != null && CommunityCenter.AREA_Vault < cc.areasComplete.Count)
+            {
+                cc.areasComplete[CommunityCenter.AREA_Vault] = true;
+                if (cc.Map != null)
+                    cc.MakeMapModifications(force: true);
+            }
+
+            _monitor.Log(
+                $"Kept bus: ccVault mail restored, Vault area complete, {slotsFlipped} vault slot(s) " +
+                $"marked complete on bundles [{string.Join(", ", vaultIndices)}].",
                 LogLevel.Info);
         }
 

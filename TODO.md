@@ -13,7 +13,7 @@ Per change: patch bump, one commit, tests green, live check on the throwaway sav
 (`docs/HEADLESS_DRIVING.md`; `tools/game.ps1` for anything needing the mouse, Jeff has authorised
 the desktop). Commit locally; pushing and releasing stay Jeff's call.
 
-1. **`keep_bus_unlocked` does not restore the bus** (Nexus, gazumbrado, 29 Aug). 1,500 JP for a
+1. **FIXED 0.16.152 (live-checked over the bridge, awaiting Jeff). `keep_bus_unlocked` did not restore the bus** (Nexus, gazumbrado, 29 Aug). 1,500 JP for a
    counter. Fix in `WorldResetService.cs` around line 506: complete the vault bundles on the board
    and re-add `ccVault` when the upgrade is owned. Details: "10th sweep" below.
 2. **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
