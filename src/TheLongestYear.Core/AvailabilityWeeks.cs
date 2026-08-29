@@ -159,6 +159,7 @@ public static class AvailabilityWeeks
             ["(O)233"] = (5, "Ice Cream, the Summer ice cream stand"),
             ["(O)178"] = (1, "Hay, Marnie's shop from the first Wednesday (closed Mon and Tue), Jeff 2026-08-29"),
             ["(O)Book_Artifact"] = (6, "Treasure Appraisal Guide, artifact spots and fishing treasure, Jeff 2026-08-29"),
+            ["(O)399"] = (1, "Spring Onion, the forest south of Leah's from Spring 1, Jeff 2026-08-29"),
         };
 
     /// <summary>Hard weeks for <see cref="OtherPlacements"/> rows whose earliest possible week is
