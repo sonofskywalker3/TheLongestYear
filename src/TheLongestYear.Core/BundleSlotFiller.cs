@@ -102,6 +102,8 @@ public static class BundleSlotFiller
                     IReadOnlyList<PoolItem> trimmed = parts[i].Where(p => kept.Contains(p.ItemId)).ToList();
                     if (trimmed.Count > 0)
                         parts[i] = trimmed;
+                    else
+                        log?.Invoke($"'{spec.Name}': the trim took every candidate of part {recipe.Parts[i].Label}; that part rolls untrimmed.");
                 }
             }
         }
@@ -317,7 +319,8 @@ public static class BundleSlotFiller
     }
 
     /// <summary>The pool domain a recipe part's label names, for the stack/quality roll only.
-    /// Anything else is None: a plain single item.</summary>
+    /// Anything else is None: a plain single item. The Crop arm is unreached today (no recipe part
+    /// carries that label); it stands so a crop part added later rolls crop quality by default.</summary>
     private static PoolDomain DomainForLabel(string label)
         => label switch
         {
@@ -360,13 +363,18 @@ public static class BundleSlotFiller
 
     /// <summary>How many distinct items <see cref="Fill"/> could pick for this bundle before any
     /// pity trim or avoid set (0 for a domain it does not re-roll). The engine fills the
-    /// tightest bundles first so a small pool is not the one left holding the repeat fallback.</summary>
-    public static int CandidateCount(BundleSpec spec, DomainMatch match, ItemPools pools)
+    /// tightest bundles first so a small pool is not the one left holding the repeat fallback.
+    ///
+    /// Pass the same <paramref name="availability"/> the fill will get: a recipe part can read the
+    /// model (The Missing's extreme band, Rare Crops' effort floor), so counting without it counts
+    /// a different pool than the one that rolls, and mis-orders the fill passes.</summary>
+    public static int CandidateCount(
+        BundleSpec spec, DomainMatch match, ItemPools pools, ItemAvailabilityModel? availability = null)
     {
         if (match.Domain == PoolDomain.None)
             return 0;
         (Func<PoolItem, bool>? capped, int cap) = CapFor(spec, match, pools);
-        return WeightedSampler.Capacity(Candidates(spec, match, pools), capped, cap);
+        return WeightedSampler.Capacity(Candidates(spec, match, pools, availability), capped, cap);
     }
 
     /// <summary>Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).</summary>

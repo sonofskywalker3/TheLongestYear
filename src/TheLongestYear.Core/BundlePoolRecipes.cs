@@ -12,12 +12,20 @@ public sealed record PoolPart(
     string Label);
 
 /// <summary>An ordered list of parts describing how one bundle re-rolls. Part order is fixed,
-/// so the filler's rng draws in a fixed order and a seed always composes the same board.</summary>
-public sealed record PoolRecipe(string Name, IReadOnlyList<PoolPart> Parts);
+/// so the filler's rng draws in a fixed order and a seed always composes the same board.
+/// <paramref name="IsVanillaOnly"/> = this bundle has no pool to roll: its single part offers the
+/// bundle's own items and nothing else, so it re-rolls to (a subset of) what vanilla asked for.
+/// Diagnostics tag those, because a board full of them is a board that is not rolling.</summary>
+public sealed record PoolRecipe(string Name, IReadOnlyList<PoolPart> Parts, bool IsVanillaOnly = false);
 
 /// <summary>The recipe for every non-money bundle: a named recipe where the spec rules one
 /// (Dye asks for one item per colour, Field Research for one of each of four things), else the
-/// pool of the majority <see cref="ItemKind"/> of the bundle's own vanilla items, else Other.
+/// pool of the majority <see cref="ItemKind"/> of the bundle's own vanilla items, else the
+/// bundle's own items and nothing more.
+///
+/// The Other kind is NEVER a roll source (Jeff, 2026-08-29: 47 of 195 recipe rolls landed in it,
+/// and it holds rings, fences, paths, Gravel Path, Tent Kit and Artifact Spot). A bundle whose
+/// items name no kind rolls from its own vanilla list instead: a smaller ask, never a junk one.
 ///
 /// Every part also keeps the bundle's own vanilla items as candidates, so a part whose pool is
 /// empty on this save (a mod removed the items, a hand-built pool has no ByKind data) still has
@@ -34,7 +42,9 @@ public static class BundlePoolRecipes
     /// <summary>The Missing asks for the extreme band only: effort at or above this.</summary>
     public const int MissingMinimumEffort = 9;
 
-    private const string OtherLabel = "Other";
+    /// <summary>Rare Crops asks for crops that take real work: effort at or above this.</summary>
+    public const int RareCropMinimumEffort = 3;
+
     private const int SynthesizedWeight = 1;
 
     private const string Hay = "(O)178";
@@ -91,8 +101,22 @@ public static class BundlePoolRecipes
         "color_red", "color_purple", "color_yellow", "color_white", "color_blue", "color_green",
     };
 
+    /// <summary>Bundles with no pool of their own: they re-roll from their own vanilla items, so
+    /// the trim can shorten them but nothing new is ever asked for. Helper's and Home Cook's are
+    /// hand-picked vanilla lists with no kind in common (Jeff, 2026-08-29).</summary>
+    private static readonly IReadOnlySet<string> VanillaOnlyBundles =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Helper's", "Home Cook's" };
+
+    /// <summary>The label of the vanilla-only part, shown in the bundle guide and the audit.</summary>
+    public const string VanillaOnlyLabel = "the bundle's own items";
+
     /// <summary>Named recipes, keyed by the bundle's stable name. The value takes the bundle's
-    /// vanilla ids because Chef's sizes its cooked half against the bundle's slot count.</summary>
+    /// vanilla ids because Chef's sizes its cooked half against the bundle's slot count.
+    ///
+    /// Book, Gil's Trophies and Recycler's are authored bundles: BundleEngine short-circuits an
+    /// authored pick to PoolDomain.None before it ever reaches the classifier, so those three rows
+    /// are unreachable today. They stay for the spec's table and in case an authored def is ever
+    /// dropped back into the rolled pool.</summary>
     private static readonly IReadOnlyDictionary<string, Func<IReadOnlyList<string>, IReadOnlyList<PoolPart>>> Named =
         new Dictionary<string, Func<IReadOnlyList<string>, IReadOnlyList<PoolPart>>>(StringComparer.OrdinalIgnoreCase)
         {
@@ -126,7 +150,16 @@ public static class BundlePoolRecipes
             ["Forager's"] = _ => One((p, _) => p.Forage, "Forage"),
             ["Gil's Trophies"] = _ => One(Kind(ItemKind.Trophy), "Trophy"),
             ["Recycler's"] = _ => One((p, _) => Fixed(p, Trash), "Trash"),
-            ["Book"] = _ => One((p, _) => Union(p.Books, Bucket(p, ItemKind.Book)), "Book"),
+            // Books only from the Books pool: it is already filtered to the books a player can
+            // reach in year 1 (AvailabilityWeeks.BookWeeks). ByKind[Book] is not.
+            ["Book"] = _ => One((p, _) => p.Books, "Book"),
+
+            // Rows added after the 20-board run (Jeff, 2026-08-29): these four were falling
+            // through to a kind pool that did not match what the bundle is about.
+            ["Crab Pot"] = _ => One(CrabPotSource, "Crab pot"),
+            ["Exotic Foraging"] = _ => One((p, _) => Union(p.Forage, p.TapperGoods), "Forage or tapper"),
+            ["Rare Crops"] = _ => One(RareCropSource, "Rare crop"),
+            ["Sticky"] = _ => One((p, _) => Union(Bucket(p, ItemKind.Resource), p.TapperGoods), "Sap or resource"),
         };
 
     /// <summary>The recipe this bundle re-rolls from. Named recipe first, else the majority
@@ -139,9 +172,17 @@ public static class BundlePoolRecipes
         IReadOnlyList<string> ids = vanillaIds ?? Array.Empty<string>();
         string name = (bundleName ?? "").Trim();
 
-        IReadOnlyList<PoolPart> parts = Named.TryGetValue(name, out Func<IReadOnlyList<string>, IReadOnlyList<PoolPart>>? build)
-            ? build(ids)
-            : MajorityKindParts(ids, pools);
+        bool vanillaOnly = VanillaOnlyBundles.Contains(name);
+        IReadOnlyList<PoolPart> parts;
+        if (vanillaOnly)
+            parts = VanillaOnlyParts();
+        else if (Named.TryGetValue(name, out Func<IReadOnlyList<string>, IReadOnlyList<PoolPart>>? build))
+            parts = build(ids);
+        else
+        {
+            parts = MajorityKindParts(ids, pools, out bool noKind);
+            vanillaOnly = noKind;
+        }
 
         IReadOnlyList<PoolItem> vanilla = VanillaItems(pools, ids);
         var widened = new List<PoolPart>(parts.Count);
@@ -150,15 +191,17 @@ public static class BundlePoolRecipes
             Func<ItemPools, ItemAvailabilityModel?, IReadOnlyList<PoolItem>> inner = part.Source;
             widened.Add(part with { Source = (p, m) => Union(inner(p, m), vanilla) });
         }
-        return new PoolRecipe(name, widened);
+        return new PoolRecipe(name, widened, vanillaOnly);
     }
 
     /// <summary>The pool of the commonest ItemKind among the bundle's own items, ties broken by
-    /// enum order so the choice is deterministic. Other never wins on its own: a bundle whose
-    /// items are all uncategorized (or unknown to the pools) gets the Other pool by fallback,
-    /// widened with its vanilla items like every other part.</summary>
-    private static IReadOnlyList<PoolPart> MajorityKindParts(IReadOnlyList<string> ids, ItemPools pools)
+    /// enum order so the choice is deterministic. The Other kind is not a candidate and is not a
+    /// fallback: a bundle whose items name no kind (or that no pool knows) comes back
+    /// <paramref name="noKind"/> and rolls from its own vanilla items only.</summary>
+    private static IReadOnlyList<PoolPart> MajorityKindParts(
+        IReadOnlyList<string> ids, ItemPools pools, out bool noKind)
     {
+        noKind = false;
         var counts = new Dictionary<ItemKind, int>();
         var byId = new Dictionary<string, ItemKind>(StringComparer.Ordinal);
         foreach (KeyValuePair<ItemKind, IReadOnlyList<PoolItem>> bucket in pools.ByKind)
@@ -174,11 +217,19 @@ public static class BundlePoolRecipes
             counts[kind] = counts.TryGetValue(kind, out int n) ? n + 1 : 1;
         }
         if (counts.Count == 0)
-            return One(Kind(ItemKind.Other), OtherLabel);
+        {
+            noKind = true;
+            return VanillaOnlyParts();
+        }
 
         ItemKind winner = counts.OrderByDescending(kv => kv.Value).ThenBy(kv => (int)kv.Key).First().Key;
         return One(Kind(winner), winner.ToString());
     }
+
+    /// <summary>The one part of a vanilla-only recipe: it offers nothing of its own, and
+    /// <see cref="For"/> widens it with the bundle's own items, which is the whole point.</summary>
+    private static IReadOnlyList<PoolPart> VanillaOnlyParts()
+        => One((_, _) => Array.Empty<PoolItem>(), VanillaOnlyLabel);
 
     private static IReadOnlyList<PoolPart> One(
         Func<ItemPools, ItemAvailabilityModel?, IReadOnlyList<PoolItem>> source, string label)
@@ -198,6 +249,41 @@ public static class BundlePoolRecipes
         => Union(
             Fixed(pools, FodderGrains.Concat(new[] { Hay })),
             pools.Crops.Where(p => p.Category == FruitCategory).ToList());
+
+    /// <summary>Crab Pot: the crab-pot pool plus every trap fish the data names. A trap id the
+    /// crab-pot pool missed is taken from the Fish pool, or synthesized at the lowest weight: the
+    /// game catches it in a pot whatever the spawn tables filed it under.</summary>
+    private static IReadOnlyList<PoolItem> CrabPotSource(ItemPools pools, ItemAvailabilityModel? model)
+    {
+        var byId = new Dictionary<string, PoolItem>(StringComparer.Ordinal);
+        foreach (PoolItem item in pools.Fish)
+            byId[item.ItemId] = item;
+        var traps = new List<PoolItem>();
+        foreach (string id in pools.TrapFishIds)
+            traps.Add(byId.TryGetValue(id, out PoolItem? known)
+                ? known
+                : new PoolItem(id, 0, SynthesizedWeight, Array.Empty<Season>(), Array.Empty<string>()));
+        return Union(pools.CrabPot, traps);
+    }
+
+    /// <summary>Rare Crops: crops that take real work (effort 3 or more) plus every fruit a tree
+    /// grows. With no availability model there is no effort to read, so the crop half is empty and
+    /// the bundle's own items carry it.</summary>
+    private static IReadOnlyList<PoolItem> RareCropSource(ItemPools pools, ItemAvailabilityModel? model)
+    {
+        IReadOnlyList<PoolItem> rare = model == null
+            ? Array.Empty<PoolItem>()
+            : pools.Crops.Where(p => model.For(p.ItemId).Effort >= RareCropMinimumEffort).ToList();
+        var byId = new Dictionary<string, PoolItem>(StringComparer.Ordinal);
+        foreach (PoolItem item in AllVetted(pools))
+            if (!byId.ContainsKey(item.ItemId))
+                byId[item.ItemId] = item;
+        var fruit = new List<PoolItem>();
+        foreach (string id in pools.FruitTreeFruitIds)
+            if (byId.TryGetValue(id, out PoolItem? known))
+                fruit.Add(known);
+        return Union(rare, fruit);
+    }
 
     private static IReadOnlyList<PoolItem> MedicineSource(ItemPools pools, ItemAvailabilityModel? model)
         => Union(

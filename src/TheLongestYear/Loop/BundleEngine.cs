@@ -111,6 +111,7 @@ namespace TheLongestYear.Loop
         private readonly bool _nonObjectDonationsEnabled;
         private readonly Dictionary<int, DomainMatch> _lastDomains = new();
         private readonly Dictionary<int, string> _lastRecipes = new();
+        private readonly HashSet<string> _lastVanillaOnlyRecipes = new(StringComparer.Ordinal);
         private readonly RarityThresholds _thresholds;
         /// <summary>The difficulty profile this generation runs under. Supplies the item-rarity
         /// pool bias and the required-slots adjustment; the stack and quality modifiers arrive
@@ -141,6 +142,11 @@ namespace TheLongestYear.Loop
         /// tly_genbundles' "re-rolled from recipe" line).</summary>
         public IReadOnlyDictionary<int, string> LastRecipes => _lastRecipes;
 
+        /// <summary>The names of the picks whose recipe had no pool to roll and offered the
+        /// bundle's own items only (<see cref="Core.PoolRecipe.IsVanillaOnly"/>). The gate audit
+        /// tags them, so a board that quietly stopped rolling is visible in the log.</summary>
+        public IReadOnlySet<string> LastVanillaOnlyRecipes => _lastVanillaOnlyRecipes;
+
         public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null, Core.DifficultyProfile difficulty = null)
         {
             _extraExcludedIds = extraExcludedIds;
@@ -166,6 +172,7 @@ namespace TheLongestYear.Loop
             _lastSeed = seed;
             _lastDomains.Clear();
             _lastRecipes.Clear();
+            _lastVanillaOnlyRecipes.Clear();
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds);
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
@@ -243,7 +250,7 @@ namespace TheLongestYear.Loop
                         // classifier, so say so rather than letting it pass quietly.
                         if (!IsMoneyBundle(pick))
                             _monitor?.Log(
-                                $"BundleEngine: '{pick.Room}/{pick.Name}' classified None but is not a money bundle — " +
+                                $"BundleEngine: '{pick.Room}/{pick.Name}' classified None but is not a money bundle, " +
                                 "keeping vanilla slots (unexpected: every non-money bundle should roll from a recipe).",
                                 LogLevel.Warn);
                         // Kept vanilla slots: the same per-pick rng stream the filler would have
@@ -264,7 +271,7 @@ namespace TheLongestYear.Loop
             // salted on the absolute index, so the fill order does not change them.
             foreach (PickRecord record in picked
                          .Where(r => r.Composed == null)
-                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools))
+                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability))
                          .ThenBy(r => r.Pick.Index))
             {
                 BundleSpec pick = record.Pick;
@@ -273,6 +280,8 @@ namespace TheLongestYear.Loop
                     Core.PoolRecipe recipe = BundleSlotFiller.RecipeFor(pick, itemPools, Availability);
                     _lastRecipes[pick.Index] =
                         $"{recipe.Name} ({string.Join(" + ", recipe.Parts.Select(p => p.Label))})";
+                    if (recipe.IsVanillaOnly)
+                        _lastVanillaOnlyRecipes.Add(pick.Name);
                 }
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,

@@ -56,11 +56,131 @@ public class BundlePoolRecipesTests
     }
 
     [Fact]
-    public void An_unknown_kind_falls_back_to_Other()
+    public void An_unknown_kind_falls_back_to_the_bundles_own_items()
     {
-        PoolRecipe r = BundlePoolRecipes.For("Odds And Ends", new[] { "(O)9001", "(O)9002" }, Pools(), null);
+        ItemPools pools = Pools();
+        PoolRecipe r = BundlePoolRecipes.For("Odds And Ends", new[] { "(O)9001", "(O)9002" }, pools, null);
         Assert.Single(r.Parts);
-        Assert.Equal("Other", r.Parts[0].Label);
+        Assert.True(r.IsVanillaOnly);
+        Assert.Equal(
+            new[] { "(O)9001", "(O)9002" },
+            r.Parts[0].Source(pools, null).Select(p => p.ItemId).ToArray());
+    }
+
+    [Fact]
+    public void The_Other_kind_is_never_a_roll_source()
+    {
+        // A pool whose only Other-kind items are rings: an unnamed bundle must never see them.
+        ItemPools pools = new()
+        {
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Other] = new[] { Item("(O)517"), Item("(O)518"), Item("(O)519") },
+            },
+        };
+        PoolRecipe r = BundlePoolRecipes.For("Odds And Ends", new[] { "(O)9001" }, pools, null);
+        List<string> ids = r.Parts.SelectMany(p => p.Source(pools, null)).Select(p => p.ItemId).ToList();
+        Assert.True(r.IsVanillaOnly);
+        Assert.Equal(new[] { "(O)9001" }, ids);
+    }
+
+    [Fact]
+    public void Helpers_and_Home_Cooks_roll_their_own_items_only()
+    {
+        ItemPools pools = Pools();
+        foreach (string name in new[] { "Helper's", "Home Cook's" })
+        {
+            PoolRecipe r = BundlePoolRecipes.For(name, new[] { "(O)9001" }, pools, null);
+            Assert.True(r.IsVanillaOnly);
+            Assert.Equal(new[] { "(O)9001" }, r.Parts[0].Source(pools, null).Select(p => p.ItemId).ToArray());
+        }
+    }
+
+    [Fact]
+    public void A_named_recipe_is_never_vanilla_only()
+        => Assert.False(BundlePoolRecipes.For("Treasure Hunter's", new[] { "(O)9001" }, Pools(), null).IsVanillaOnly);
+
+    [Fact]
+    public void Crab_Pot_takes_the_crab_pot_pool_and_the_trap_fish()
+    {
+        ItemPools pools = new()
+        {
+            CrabPot = new[] { Item("(O)372") },
+            Fish = new[] { Item("(O)715") },
+            TrapFishIds = new HashSet<string>(StringComparer.Ordinal) { "(O)715", "(O)716" },
+        };
+        List<string> ids = BundlePoolRecipes.For("Crab Pot", Array.Empty<string>(), pools, null)
+            .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Equal(new[] { "(O)372", "(O)715", "(O)716" }, ids);
+    }
+
+    [Fact]
+    public void Exotic_Foraging_takes_forage_and_tapper_goods()
+    {
+        ItemPools pools = new()
+        {
+            Forage = new[] { Item("(O)404") },
+            TapperGoods = new[] { Item("(O)724") },
+        };
+        List<string> ids = BundlePoolRecipes.For("Exotic Foraging", Array.Empty<string>(), pools, null)
+            .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Equal(new[] { "(O)404", "(O)724" }, ids);
+    }
+
+    [Fact]
+    public void Rare_Crops_takes_the_harder_crops_and_the_fruit_tree_fruit()
+    {
+        ItemPools pools = new()
+        {
+            Crops = new[] { Item("(O)24"), Item("(O)276") },
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Other] = new[] { Item("(O)613") },
+            },
+            FruitTreeFruitIds = new HashSet<string>(StringComparer.Ordinal) { "(O)613" },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)24"] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1),
+            ["(O)276"] = new(Season.Spring, 5, "test", EarliestWeek: 1, HardWeek: 1),
+        });
+        List<string> ids = BundlePoolRecipes.For("Rare Crops", Array.Empty<string>(), pools, model)
+            .Parts[0].Source(pools, model).Select(p => p.ItemId).ToList();
+        Assert.Contains("(O)276", ids);    // effort 5
+        Assert.DoesNotContain("(O)24", ids);   // effort 1
+        Assert.Contains("(O)613", ids);    // fruit-tree fruit
+    }
+
+    [Fact]
+    public void Sticky_takes_resources_and_tapper_goods()
+    {
+        ItemPools pools = new()
+        {
+            TapperGoods = new[] { Item("(O)92") },
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Resource] = new[] { Item("(O)388") },
+            },
+        };
+        List<string> ids = BundlePoolRecipes.For("Sticky", Array.Empty<string>(), pools, null)
+            .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Equal(new[] { "(O)388", "(O)92" }, ids);
+    }
+
+    [Fact]
+    public void Book_takes_only_the_BookWeeks_filtered_pool()
+    {
+        ItemPools pools = new()
+        {
+            Books = new[] { Item("(O)Book_Trash") },
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Book] = new[] { Item("(O)Book_Trash"), Item("(O)Book_PurpleBook") },
+            },
+        };
+        List<string> ids = BundlePoolRecipes.For("Book", Array.Empty<string>(), pools, null)
+            .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Equal(new[] { "(O)Book_Trash" }, ids);
     }
 
     [Fact]
