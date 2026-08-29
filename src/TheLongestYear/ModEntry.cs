@@ -1166,9 +1166,30 @@ namespace TheLongestYear
                     if (item is not Tool tool) continue;
                     string slots = string.Join(", ", tool.attachments.Select((a, i) => $"[{i}]={(a == null ? "empty" : $"{a.QualifiedItemId} x{a.Stack}")}"));
                     string ench = string.Join(", ", tool.enchantments.Select(e => $"{e.GetType().Name} L{e.GetLevel()}"));
-                    this.Monitor.Log($"tly_stashrod: {tool.QualifiedItemId} slots {slots}; enchantments [{ench}].", LogLevel.Info);
+                    string stats = tool is StardewValley.Tools.MeleeWeapon w
+                        ? $"; damage {w.minDamage.Value}-{w.maxDamage.Value}, defense {w.addedDefense.Value}, speed {w.speed.Value}"
+                        : "";
+                    this.Monitor.Log($"tly_stashrod: {tool.QualifiedItemId} slots {slots}; enchantments [{ench}]{stats}.", LogLevel.Info);
                 }
                 this.Monitor.Log($"tly_stashrod: {chest.Items.Count(i => i != null)} item(s) in the stash chest.", LogLevel.Info);
+                return;
+            }
+            if (args.Length > 0 && args[0] == "weapon")
+            {
+                // Nexus bug (Bumblewyn, 2026-08-28): a weapon's innate enchantment + forged gem
+                // vanish across the loop. Stash a Galaxy Sword with Attack II (innate, secondary)
+                // and a Ruby forge (IsForge) the way vanilla adds them, then compare `check`
+                // before and after tly_reset.
+                var weapon = ItemRegistry.Create("(W)4") as StardewValley.Tools.MeleeWeapon;
+                if (weapon == null) { this.Monitor.Log("tly_stashrod: could not create (W)4.", LogLevel.Warn); return; }
+                weapon.AddEnchantment(new StardewValley.Enchantments.AttackEnchantment());
+                weapon.AddEnchantment(new StardewValley.Enchantments.AttackEnchantment());
+                weapon.AddEnchantment(new StardewValley.Enchantments.RubyEnchantment());
+                chest.Items.Add(weapon);
+                string wench = string.Join(", ", weapon.enchantments.Select(e => $"{e.GetType().Name} L{e.GetLevel()}"));
+                this.Monitor.Log(
+                    $"tly_stashrod: stashed a Galaxy Sword with [{wench}]; damage {weapon.minDamage.Value}-{weapon.maxDamage.Value}.",
+                    LogLevel.Info);
                 return;
             }
             var rod = ItemRegistry.Create("(T)IridiumRod") as Tool;
