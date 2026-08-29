@@ -377,6 +377,7 @@
     "quest.weekly.progress": "Donated {{done}}/{{total}}:",
     "quest.weekly.slot": "{{item}}{{color}}{{qty}}{{quality}} - {{bundle}}",
     "quest.weekly.qty": " x{{count}}",
+    "goal.stretch-tag": " (stretch)",
     "quest.weekly.tip": "Tip: hold matching donations for their theme week - each goal pays 1.5x JP plus its share of the weekly bonus, and finishing every goal lifts the drawback.",
     "quest.stash.title": "A gift from the Junimos",
     "quest.stash.desc": "The Junimos placed a special chest on your farm. It will survive the seasons. Find it and use it wisely; it has very limited space.",

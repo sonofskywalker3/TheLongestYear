@@ -29,4 +29,10 @@ public sealed class BonusSlot
     /// <summary>True once this goal's share of the weekly bonus has been paid (rule D). The
     /// idempotency guard against paying a goal twice across a save and reload.</summary>
     public bool Paid { get; set; }
+
+    /// <summary>True when this slot's ingredient is a stretch line (spec
+    /// 2026-08-28-obtainable-board-2-stretch) that has reached its stretch season's last week.
+    /// Set by SlotPoolBuilder; the quest text tags stretch goals so the player knows why an
+    /// item that "isn't obtainable yet" is being asked for.</summary>
+    public bool Stretch { get; set; }
 }

@@ -17,6 +17,9 @@ namespace TheLongestYear.Core;
 ///   - A bundle that already has NumberOfSlots completed ingredient lines is complete — its
 ///     remaining lines can no longer be donated and are excluded.
 ///   - Category refs and completed slots are excluded. Null slot state ⇒ all lines open.
+///   - A stretch line (BundleRequirement.StretchLines) is forced in play and Due once
+///     weekOfYear reaches AvailabilityWeeks.LastWeekOf(its stretch season), regardless of the
+///     obtainability predicate; its emitted slot carries Stretch = true.
 /// </summary>
 public static class SlotPoolBuilder
 {
@@ -26,7 +29,8 @@ public static class SlotPoolBuilder
         IReadOnlyList<BundleRequirement> requirements,
         Theme theme, Season season,
         Func<string, bool> isObtainableInSeason,
-        Func<string, ItemKind>? kindOf = null)
+        Func<string, ItemKind>? kindOf = null,
+        int weekOfYear = 0)
     {
         if (bundleData == null) throw new ArgumentNullException(nameof(bundleData));
         if (slotStateForBundle == null) throw new ArgumentNullException(nameof(slotStateForBundle));
@@ -50,9 +54,23 @@ public static class SlotPoolBuilder
 
             var inPlay = new HashSet<string>(
                 req.InPlayItemsFor(season, isObtainableInSeason), StringComparer.Ordinal);
-            if (inPlay.Count == 0) continue;
             var due = new HashSet<string>(
                 req.DueItemsFor(season, isObtainableInSeason), StringComparer.Ordinal);
+
+            // Stretch lines (spec 2026-08-28-obtainable-board-2-stretch): once weekOfYear reaches
+            // the stretch season's last week, the line is in play and due regardless of what the
+            // obtainability predicate says (it would say no until the item's real pacing week).
+            var stretchDue = new HashSet<string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, Season> kv in req.StretchLines)
+                if (weekOfYear >= AvailabilityWeeks.LastWeekOf(kv.Value))
+                    stretchDue.Add(kv.Key);
+            if (stretchDue.Count > 0)
+            {
+                inPlay.UnionWith(stretchDue);
+                due.UnionWith(stretchDue);
+            }
+
+            if (inPlay.Count == 0) continue;
 
             bool[]? state = slotStateForBundle(bundle.Index);
 
@@ -84,6 +102,7 @@ public static class SlotPoolBuilder
                     Quality = ing.Quality,
                     BundleName = bundle.Name,
                     Due = due.Contains(id),
+                    Stretch = stretchDue.Contains(id),
                 });
             }
         }
