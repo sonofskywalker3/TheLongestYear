@@ -1,11 +1,11 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 evening (bug pass: 0.16.152 to 0.16.156, four of five TOP PRIORITY items closed)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.156 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1762 passing, 0 failing
-**Build:** clean; 0.16.156 deployed to the game (SVE re-disabled after the audit run)
+**Last updated:** 2026-08-29 evening (bug pass done: 0.16.152 to 0.16.158, all five TOP PRIORITY items closed)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.158 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1765 passing, 0 failing
+**Build:** clean; 0.16.158 deployed to the game (SVE re-disabled after the audit runs)
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
-**NEXT SESSION (2026-08-29 evening):** TOP PRIORITY bugs: #1 bus FIXED 0.16.152, #2 stash enchantments NOT REPRODUCIBLE (fixed since 0.16.2), #3 heart invites FIXED 0.16.154, #4 Keep Horse FIXED 0.16.155, #5 SVE INVESTIGATED (needs Jeff ruling, TODO). Jeff to eyeball #1 and #3 in game if he wants, then release notes + release (his call). Nothing pushed.
+**NEXT SESSION (2026-08-29 evening):** all five TOP PRIORITY bugs closed: #1 bus FIXED 0.16.157 (bus only, vault bundles stay), #2 stash enchantments FIXED in 0.16.2 (confirmed), #3 heart invites FIXED 0.16.154, #4 Keep Horse FIXED 0.16.155, #5 SVE demotion FIXED 0.16.158 (stored board). Next: release notes (README What's New + Nexus description + changelog) then release, Jeff's call. Nothing pushed.
 
 ## 2026-08-29 (late afternoon): played years on the real STANDARD and REMIXED boards, three-way comparison
 
@@ -426,10 +426,10 @@ Collected from the five plan ledgers' `Ruling:` lines:
   build and was left alone; its "SPEC APPROVED, NOT PLANNED: activity themes" heading is now out
   of date (built, not real-play tested).
 
-**Last updated:** 2026-08-29 evening (bug pass: 0.16.152 to 0.16.156, four of five TOP PRIORITY items closed)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.156 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1762 passing, 0 failing
-**Build:** clean; 0.16.156 deployed to the game (SVE re-disabled after the audit run)
+**Last updated:** 2026-08-29 evening (bug pass done: 0.16.152 to 0.16.158, all five TOP PRIORITY items closed)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.158 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1765 passing, 0 failing
+**Build:** clean; 0.16.158 deployed to the game (SVE re-disabled after the audit runs)
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
 **2026-08-28 late: 20-loop audit of the 0.16.26 to 0.16.31 pool fixes, report in
@@ -623,10 +623,10 @@ u/Gribbleby), brainstorm first.
 
 ## Previous state (2026-08-27 afternoon)
 
-**Last updated:** 2026-08-29 evening (bug pass: 0.16.152 to 0.16.156, four of five TOP PRIORITY items closed)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.156 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1762 passing, 0 failing
-**Build:** clean; 0.16.156 deployed to the game (SVE re-disabled after the audit run)
+**Last updated:** 2026-08-29 evening (bug pass done: 0.16.152 to 0.16.158, all five TOP PRIORITY items closed)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.158 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1765 passing, 0 failing
+**Build:** clean; 0.16.158 deployed to the game (SVE re-disabled after the audit runs)
 **Last public release:** 0.15.0
 
 ## THE PERITEM GATE BASELINE HAS SHIFTED. The next release notes must say so.
@@ -726,10 +726,10 @@ modifiers are applied by scaling the tuning block. Same effect, and it meant `Bu
 
 ## Previous state
 
-**Last updated:** 2026-08-29 evening (bug pass: 0.16.152 to 0.16.156, four of five TOP PRIORITY items closed)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.156 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1762 passing, 0 failing
-**Build:** clean; 0.16.156 deployed to the game (SVE re-disabled after the audit run)
+**Last updated:** 2026-08-29 evening (bug pass done: 0.16.152 to 0.16.158, all five TOP PRIORITY items closed)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.158 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1765 passing, 0 failing
+**Build:** clean; 0.16.158 deployed to the game (SVE re-disabled after the audit runs)
 **Last public release:** 0.14.2 (2026-08-26: GitHub v0.14.2, Nexus file via workflow, page version
 + description + changelog synced, FAQ live)
 
