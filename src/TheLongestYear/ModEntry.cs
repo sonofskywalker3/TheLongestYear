@@ -1959,12 +1959,13 @@ namespace TheLongestYear
                 foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations"))
                 {
                     StardewValley.GameData.Locations.LocationData loc = kv.Value;
-                    foreach (StardewValley.GameData.Locations.SpawnFishData f in loc?.Fish ?? new List<StardewValley.GameData.Locations.SpawnFishData>())
+                    foreach (StardewValley.GameData.Locations.SpawnFishData f in
+                             loc?.Fish ?? (IList<StardewValley.GameData.Locations.SpawnFishData>)Array.Empty<StardewValley.GameData.Locations.SpawnFishData>())
                     {
                         if (f == null || f.CatchLimit <= 0) continue;
                         if (!string.IsNullOrEmpty(f.ItemId))
                             ids.Add(ItemRegistry.QualifyItemId(f.ItemId));
-                        foreach (string randomId in f.RandomItemId ?? new List<string>())
+                        foreach (string randomId in f.RandomItemId ?? (IList<string>)Array.Empty<string>())
                             if (!string.IsNullOrEmpty(randomId))
                                 ids.Add(ItemRegistry.QualifyItemId(randomId));
                     }

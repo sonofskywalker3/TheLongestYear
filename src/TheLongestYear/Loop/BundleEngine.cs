@@ -260,7 +260,13 @@ namespace TheLongestYear.Loop
                         AddAskedItems(asked, trimmed);
                         continue;
                     }
-                    picked.Add(new PickRecord(pick, match, null));
+                    // The recipe is built ONCE per bundle here and carried on the record: the fill
+                    // order below, the diagnostics line and the fill itself all read this one
+                    // instance, instead of each rebuilding it (final review, 2026-08-29).
+                    Core.PoolRecipe? recipe = match.Domain == PoolDomain.Recipe
+                        ? BundleSlotFiller.RecipeFor(pick, itemPools, Availability)
+                        : null;
+                    picked.Add(new PickRecord(pick, match, null) { Recipe = recipe });
                 }
             }
 
@@ -271,13 +277,13 @@ namespace TheLongestYear.Loop
             // salted on the absolute index, so the fill order does not change them.
             foreach (PickRecord record in picked
                          .Where(r => r.Composed == null)
-                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability))
+                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability, r.Recipe))
                          .ThenBy(r => r.Pick.Index))
             {
                 BundleSpec pick = record.Pick;
-                if (record.Match.Domain == PoolDomain.Recipe)
+                if (record.Recipe != null)
                 {
-                    Core.PoolRecipe recipe = BundleSlotFiller.RecipeFor(pick, itemPools, Availability);
+                    Core.PoolRecipe recipe = record.Recipe;
                     _lastRecipes[pick.Index] =
                         $"{recipe.Name} ({string.Join(" + ", recipe.Parts.Select(p => p.Label))})";
                     if (recipe.IsVanillaOnly)
@@ -285,7 +291,7 @@ namespace TheLongestYear.Loop
                 }
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
-                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability);
+                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe);
                 if (ReferenceEquals(composed, pick))
                 {
                     _monitor?.Log(
@@ -332,6 +338,10 @@ namespace TheLongestYear.Loop
             public BundleSpec Pick { get; }
             public DomainMatch Match { get; }
             public BundleSpec Composed { get; set; }
+
+            /// <summary>This pick's pool recipe, built once in pass 1 (null for every domain but
+            /// Recipe). Shared by the fill-order count, the diagnostics line and the fill.</summary>
+            public Core.PoolRecipe? Recipe { get; init; }
         }
 
         /// <summary>A gold ask (a money slot), or a bundle with nothing to re-roll at all. These
