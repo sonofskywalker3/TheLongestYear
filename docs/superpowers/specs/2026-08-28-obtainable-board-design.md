@@ -1,8 +1,7 @@
 # The obtainable board: hard weeks, pacing weeks, stretch gates, full pools
 
-Date: 2026-08-28. Status: DRAFT from Jeff's rulings in the even-year review session (Claude, with
-a Codex second opinion). Open questions are marked **OPEN** and listed at the end; nothing here is
-built. Supersedes the foothold and rule E sections of `2026-08-28-even-year-availability-design.md`
+Date: 2026-08-28. Status: APPROVED by Jeff in chat ("get moving"), from his rulings in the
+even-year review session (Claude, with a Codex second opinion). Nothing here is built yet. Supersedes the foothold and rule E sections of `2026-08-28-even-year-availability-design.md`
 and the pin layer in `GameplayConfig.DefaultItemSeasonPins`. Follows the review
 `docs/superpowers/handoffs/2026-08-28-even-year-review.md` and its findings.
 
@@ -158,8 +157,8 @@ Crops: `start + growthDays / 7` (a 7-day crop planted day 1 harvests day 8). See
 source in the season: Coffee Bean 5 (Dust Sprite seed then 10 days), Strawberry 3, Sweet Gem Berry
 12, Beet 10, Cactus Fruit 9 (Desert forage). Rhubarb and Starfruit: Oasis seeds, grow only in
 their own season outdoors; the year-1 route is greenhouse (Pantry reward) or garden pots
-(recipe arrives after the greenhouse) plus 13 days: 13 for pacing, hard 11; 12 if the Garden
-Pot buy in section 8 is added (**OPEN**). Fruit trees: Orange and
+(recipe arrives after the greenhouse) plus 13 days: **11** with the Garden Pot recipe keep in
+section 8 (Jeff), hard 11. Fruit trees: Orange and
 Peach 5, Apple and Pomegranate 9, Apricot and Cherry 13, Banana and Mango excluded (island).
 
 Forage: first spawn week plus location; Secret Woods marker week 4 (Morel, Fiddlehead, Woodskip,
@@ -212,11 +211,13 @@ year-2 or later books are excluded.
 - **Year-Two Seeds**, about 75 JP, the current week: Mixed Seeds planted this week roll the
   season's year-2 crop at **5 percent** (Garlic Spring, Red Cabbage Summer, Artichoke Fall).
   Pairs with the Farming theme's growth bonus to make the gate.
-- **Garden Pots** (**OPEN**): the Garden Pot recipe is granted only by Evelyn's event after the
-  greenhouse is restored (`Event.cs`, event 900553), so pots are never a route before the
-  greenhouse. A JP buy that grants the recipe (10 Stone, 1 Clay, 1 Refined Quartz per pot) opens
-  an indoor route for Rhubarb and Starfruit from the Oasis week: week 9 seeds plus 13 days is
-  week 11.
+- **Garden Pot recipe keep** (permanent, Obtainability category, priced with the other keeps,
+  about 750 JP): the Garden Pot recipe is granted only by Evelyn's event after the greenhouse is
+  restored (`Event.cs`, event 900553), so pots are never a vanilla route before the greenhouse.
+  The keep puts the recipe in the crafting book from loop 1 and re-adds it after every rewind
+  (`FarmerReset` clears `craftingRecipes`). A pot is 10 Stone, 1 Clay, 1 Refined Quartz; any
+  non-trellis crop grows in one indoors in any season. Rhubarb and Starfruit: Oasis seeds at week
+  9 plus 13 days in a pot is week 11.
 - **Sneak Peek**, 100 JP, the current season: the Sunday
   episode is the year-2 episode for that week (`TV.getWeeklyRecipe`, `DaysPlayed % 224 / 7`),
   so every year-2 dish has a year-1 route at its natural week.
@@ -242,10 +243,16 @@ Adventurer's, Forager's: their kind's pool. Legendaries drawn into a 4-of-4 fish
 mandatory for it (Jeff: a hard roll is a challenge, not a shaft). The hearts and cost tables in
 section 6 are adopted as written. Remaining orphans (bombs, bait, fertilizer) stay out.
 
+## Easy
+
+Easy gets none of the new pressure: no stretch rule, no old Spring foothold either (a light
+Spring is accepted), no hard-item requirement, year-2 crops stay excluded, sub-5-percent drops
+stay effort-only. Everything else (full pools, absolute bands, no look-ahead, pins deleted)
+applies to every difficulty.
+
 ## Open questions for Jeff
 
-1. Garden Pot route (section 8): add it, and if so as a permanent keep or a Boost, and its price;
-   Rhubarb and Starfruit then sit at 12 instead of 13.
+None. Status: APPROVED by Jeff in chat, 2026-08-28 ("get moving").
 
 ## Out of scope
 
