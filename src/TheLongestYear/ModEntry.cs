@@ -1999,7 +1999,8 @@ namespace TheLongestYear
                         : TheLongestYear.Core.AvailabilityWeeks.IsJudgementBasis(a.Basis) ? "judgement" : "rule";
                     if (placed == "UNKNOWN") unknown.Add($"- {DisplayName(id)} ({id}), in {req.Name}");
                     if (placed == "judgement") judgement.Add($"- {DisplayName(id)} ({id}), week {a.PacingWeek}, in {req.Name}");
-                    string due = req.Kind == BundleKind.Seasonal && req.SeasonalSeason.HasValue ? req.SeasonalSeason.Value.ToString()
+                    string due = req.StretchLines.TryGetValue(id, out TheLongestYear.Core.Season stretchSeason) ? $"stretch ({stretchSeason})"
+                        : req.Kind == BundleKind.Seasonal && req.SeasonalSeason.HasValue ? req.SeasonalSeason.Value.ToString()
                         : req.ItemSeasonPins != null && req.ItemSeasonPins.TryGetValue(id, out TheLongestYear.Core.Season d) ? d.ToString()
                         : req.Kind == BundleKind.Percentage ? "ramp" : "never";
                     string catalogSeasons = "any";
@@ -2292,7 +2293,7 @@ namespace TheLongestYear
             IReadOnlyDictionary<string, TheLongestYear.Core.Season> pins,
             string label)
         {
-            int impossible = 0, free = 0, tight = 0;
+            int impossible = 0, free = 0, tight = 0, stretchLineCount = 0, noHardItemCount = 0, springTightCount = 0;
             var lines = new List<string>();
             var blocked = new List<string>();
 
@@ -2337,7 +2338,32 @@ namespace TheLongestYear
                 }
                 if (demanded[Calendar.MonthsPerYear - 1] == 0) { free++; worst = "FREE ALL YEAR"; }
 
-                lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}");
+                var tags = new List<string>();
+                foreach (KeyValuePair<string, TheLongestYear.Core.Season> stretch in req.StretchLines.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                {
+                    tags.Add($"[stretch: {DisplayName(stretch.Key)} {stretch.Value}]");
+                    stretchLineCount++;
+                }
+
+                bool rolled = req.Kind != BundleKind.Seasonal;
+                if (_availability != null && StretchRule.Applies(_availability.Step)
+                    && req.NumberOfSlots >= BundleSlotFiller.MinSlotsForHardItem && rolled
+                    && !req.Ingredients.Any(id => EffortTiers.IsHard(_availability.For(id).Effort)))
+                {
+                    tags.Add("[no hard item]");
+                    noHardItemCount++;
+                }
+
+                int springDemanded = demanded[(int)TheLongestYear.Core.Season.Spring];
+                int springObtainable = obtainable[(int)TheLongestYear.Core.Season.Spring];
+                if (springDemanded == springObtainable && springDemanded > 0)
+                {
+                    tags.Add("[spring tight]");
+                    springTightCount++;
+                }
+
+                string tagText = tags.Count > 0 ? "  " + string.Join(" ", tags) : "";
+                lines.Add($"  [{worst,-13}] {req.Name,-26} {req.Kind,-10} X={req.NumberOfSlots} Y={req.Ingredients.Count}  {string.Join("  |  ", cells)}{tagText}");
             }
 
             this.Monitor.Log($"=== {label}: season gate audit (demanded / obtainable, by day 28 of each season) ===", LogLevel.Info);
@@ -2361,6 +2387,9 @@ namespace TheLongestYear
                     ? $"  {label} RESULT: {impossible} IMPOSSIBLE season gate(s) -- these brick the run and must be fixed."
                     : $"  {label} RESULT: no impossible gates. {tight} tight (demands everything obtainable by then), {free} bundle(s) never gated.",
                 impossible > 0 ? LogLevel.Error : LogLevel.Info);
+            this.Monitor.Log(
+                $"  {label} RESULT: {stretchLineCount} stretch line(s), {noHardItemCount} without a hard item, {springTightCount} Spring tight.",
+                LogLevel.Info);
             this.Monitor.Log(
                 "  NOTE: this checks CALENDAR feasibility only. An item that exists in Spring but needs a keg, "
                 + "a fish pond or a tool upgrade counts as obtainable here.",
