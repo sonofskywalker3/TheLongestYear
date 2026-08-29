@@ -8,8 +8,9 @@ namespace TheLongestYear.Core;
 /// ItemPools out. Vetting (spec modded-content rules): the config-extensible
 /// exclude-list, plus structural signals from the item's OWN data — Type "Quest",
 /// ExcludeFromRandomSale, the fish_legendary context tag, and items with no
-/// Data/Objects entry at all. Weights: numeric id = vanilla weight, non-numeric =
-/// conservative modded weight, RareRollWeights override both. All output lists are
+/// Data/Objects entry at all. Weights: any id without a mod prefix (SMAPI mod items are
+/// Author.Mod_Item) = vanilla weight, prefixed = conservative modded weight,
+/// RareRollWeights override both. All output lists are
 /// ordinal-ordered by ItemId — seeded sampling must be deterministic, and dictionary
 /// enumeration order is not a contract.</summary>
 public static class ItemPoolBuilder
@@ -639,10 +640,19 @@ public static class ItemPoolBuilder
         bool known = objects.TryGetValue(bare, out RawObjectEntry? obj);
         int price = known ? obj!.Price : 0;
         int category = known ? obj!.Category : 0;
-        int weight = tuning.RareRollWeights.TryGetValue(qualifiedId, out int over) ? over
-            : bare.All(char.IsDigit) ? tuning.VanillaItemWeight
-            : tuning.ModdedItemWeight;
+        int weight = WeightFor(qualifiedId, tuning);
         return new PoolItem(qualifiedId, price, Math.Max(1, weight), seasons, locations, category);
+    }
+
+    private const char ModIdSeparator = '.';
+
+    /// <summary>Draw weight: a named override, else vanilla for any id without a mod prefix
+    /// (SMAPI mod items are Author.Mod_Item), else modded. 1.6's own string ids (Goby, the jellies,
+    /// Broccoli, Moss, Mystery Box, the books) are vanilla (Jeff, 2026-08-28).</summary>
+    public static int WeightFor(string qualifiedId, BundleGenerationTuning tuning)
+    {
+        if (tuning.RareRollWeights.TryGetValue(qualifiedId, out int over)) return over;
+        return Unqualify(qualifiedId).Contains(ModIdSeparator) ? tuning.ModdedItemWeight : tuning.VanillaItemWeight;
     }
 
     private const string ForageItemTag = "forage_item";
