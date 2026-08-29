@@ -108,7 +108,7 @@ public class I18nGuardTests
                 _ = def.Description;
             }
             // Boost name/desc keys live on the catalog entries, not as literals in source
-            // (the shrine menu renders them through BoostDefinition) — walk them the same way.
+            // (the shrine menu renders them through BoostDefinition), walk them the same way.
             foreach (BoostDefinition boost in BoostCatalog.All)
             {
                 _ = Strings.Get(boost.NameKey);

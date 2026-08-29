@@ -329,7 +329,7 @@
     "menu.shrine.hover": "{{name}}\n{{description}}\n{{footer}}",
     "menu.shrine-preview.title": "Junimo Shrine - Planning",
     "menu.shrine-preview.banked": "Junimo Points banked: {{jp}}",
-    "menu.shrine-preview.planning-note": "Planning view: you spend JP when a loop resets or you win, not here.",
+    "menu.shrine-preview.planning-note": "Planning view: permanent upgrades are bought at the JP perk screen between loops, while Boosts are bought here.",
     "menu.shrine-preview.nothing-new": "Nothing new to plan for yet. Reach further this run!",
     "menu.shrine-preview.weather-header": "Weather",
     "menu.shrine-preview.weather-day-hover": "Day {{day}} - {{weather}}",
