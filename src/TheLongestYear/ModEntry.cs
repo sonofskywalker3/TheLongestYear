@@ -55,10 +55,6 @@ namespace TheLongestYear
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
-
-        /// <summary>Season-start ledger snapshot that <c>tly_playseason quarter &lt;k&gt;</c> plans against, so
-        /// the four quarter calls share one plan and land cumulatively where a plain call would.</summary>
-        private (TheLongestYear.Core.Season Season, HashSet<string> Donated)? _playSeasonBaseline;
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
@@ -72,6 +68,10 @@ namespace TheLongestYear
         private const string DebugCommandFileName = "tly_commands.txt";
         private const int DebugPollTicks = 30;
         private string _commandFilePath;
+
+        /// <summary>Season-start ledger snapshot that <c>tly_playseason quarter &lt;k&gt;</c> plans against, so
+        /// the four quarter calls share one plan and land cumulatively where a plain call would.</summary>
+        private (TheLongestYear.Core.Season Season, HashSet<string> Donated)? _playSeasonBaseline;
 
         // True only once OnSaveLoaded has actually called _meta.Load() for the current save. Guards
         // OnSaving: when a save opens with TLY disabled or on a non-Standard farm we skip Load (the
@@ -2219,11 +2219,13 @@ namespace TheLongestYear
                     .OrderBy(id => Enumerable.Range(0, (int)season + 1).Any(s => _runController.IsObtainableInSeason(id, (TheLongestYear.Core.Season)s)) ? 0 : 1),
             };
 
-            // The bundle's whole season share, planned off a fixed baseline so every quarter call
-            // produces the same ordered list and quarter k is a prefix of quarter k+1.
-            List<string> PlanShare(BundleRequirement req, Dictionary<string, int> slots, ISet<string> baseline)
+            // The bundle's whole season share. The caller passes ONE simulated ledger that every
+            // bundle's plan reads and grows, exactly mirroring the plain mode's sequential loop: the
+            // ledger is shared across bundles there too, so an item that satisfies two bundles is
+            // planned once and the second bundle plans a substitute instead of a duplicate that
+            // would be silently skipped at flip time.
+            List<string> PlanShare(BundleRequirement req, Dictionary<string, int> slots, HashSet<string> sim)
             {
-                var sim = new HashSet<string>(baseline, StringComparer.Ordinal);
                 var picks = new List<string>();
                 int guard = 0;
                 while (!req.IsSatisfiedAtSeasonEnd(season, sim) && guard++ < 32)
@@ -2243,16 +2245,16 @@ namespace TheLongestYear
                 // quarters reuse that baseline so their shares match.
                 if (quarter == 1 || _playSeasonBaseline?.Season != season || _playSeasonBaseline?.Donated == null)
                     _playSeasonBaseline = (season, new HashSet<string>(donated, StringComparer.Ordinal));
-                HashSet<string> baseline = _playSeasonBaseline.Value.Donated;
-
                 // One flat list of every slot the season demands, bundle by bundle in the same order
-                // the plain mode flips them. The quarter is a share of that whole list, not of each
-                // bundle, so the season's work really does spread across the four calls.
+                // the plain mode flips them, planned against ONE simulated ledger that starts at the
+                // season baseline and grows as each bundle is planned. The quarter is a share of that
+                // whole list, not of each bundle, so the season's work spreads across the four calls.
+                var sim = new HashSet<string>(_playSeasonBaseline.Value.Donated, StringComparer.Ordinal);
                 var seasonPlan = new List<(BundleRequirement Req, int BundleIndex, int SlotIndex, string ItemId)>();
                 foreach (BundleRequirement req in requirements)
                 {
                     if (!lines.TryGetValue(req.Name, out var bundle)) { log.Add($"  {req.Name}: not on the live board, skipped"); continue; }
-                    foreach (string pick in PlanShare(req, bundle.Slots, baseline))
+                    foreach (string pick in PlanShare(req, bundle.Slots, sim))
                         seasonPlan.Add((req, bundle.Index, bundle.Slots[pick], pick));
                 }
 
