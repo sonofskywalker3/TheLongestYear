@@ -16,7 +16,7 @@ the desktop). Commit locally; pushing and releasing stay Jeff's call.
 1. **FIXED 0.16.152 (live-checked over the bridge, awaiting Jeff). `keep_bus_unlocked` did not restore the bus** (Nexus, gazumbrado, 29 Aug). 1,500 JP for a
    counter. Fix in `WorldResetService.cs` around line 506: complete the vault bundles on the board
    and re-add `ccVault` when the upgrade is owned. Details: "10th sweep" below.
-2. **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
+2. **NOT REPRODUCIBLE on 0.16.153 (2026-08-29): already fixed by 0.16.2 (27 Aug, shipped in 0.16.7 and 0.16.17).** Bumblewyn wrote that the reset happened "a few days (and updates) ago", i.e. before the round-trip landed. Live repro: `tly_stashrod weapon` stashes a Galaxy Sword with Attack II (innate) + Ruby forge; after `tly_reset`, `tly_stashrod check` showed both intact, damage 66-88 unchanged. Reply after release asking the reporter to confirm on the new build. Original: **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
    Being looked at). Round-trip them through the stash record like `TransplantToolState` does for
    kept tools. Details: "10th sweep" below and the 5th-sweep table row "Kept rod loses bait".
 3. **Vanilla heart-event invites never re-send after a rewind** (found in the Better Start audit).
