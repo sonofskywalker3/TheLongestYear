@@ -51,7 +51,10 @@ public static class FishAvailability
 
         if (row == null)
         {
-            return new ItemAvailability(floor, ItemAvailabilityModel.UnrecognisedEffort,
+            int rowEffort = AvailabilityWeeks.FishEffortRows.TryGetValue(item.ItemId, out int effortRow)
+                ? effortRow
+                : ItemAvailabilityModel.UnrecognisedEffort;
+            return new ItemAvailability(floor, rowEffort,
                 $"fish, no Data/Fish row, week {week}, spawns {SeasonList(item.Seasons)}{locationNote}",
                 EffortSource.Derived, week, floor, HardWeek: hardWeek);
         }

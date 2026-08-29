@@ -96,4 +96,24 @@ public class AvailabilityWeeksTests
         Assert.Equal(3, explicitWeek.Week);
         Assert.Equal(Season.Summer, explicitWeek.Gate);
     }
+
+    [Fact]
+    public void Sewer_is_week_7() => Assert.Equal(7, AvailabilityWeeks.SewerWeek);
+
+    [Theory]
+    [InlineData("(O)PrizeTicket", 2, 1)] [InlineData("(O)MysteryBox", 3, 2)]
+    public void Quest_rewards_have_pacing_and_hard_weeks(string id, int week, int hard)
+    {
+        ItemEffort e = ShopAvailability.Derive(id)!;
+        Assert.Equal(week, e.EarliestWeek);
+        Assert.Equal(hard, e.HardWeek);
+    }
+
+    [Theory]
+    [InlineData("(O)CaveJelly", 3)] [InlineData("(O)SeaJelly", 1)] [InlineData("(O)RiverJelly", 1)]
+    public void Jellies_have_an_effort_row(string id, int effort)
+    {
+        var item = new PoolItem(id, 150, 3, new List<Season>(), new List<string> { "Forest" });
+        Assert.Equal(effort, FishAvailability.Derive(item, null).Effort);
+    }
 }

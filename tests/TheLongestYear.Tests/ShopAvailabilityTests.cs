@@ -12,7 +12,7 @@ public class ShopAvailabilityTests
     [InlineData("(O)216", 1)]   // Bread, Saloon
     [InlineData("(H)27", 2)]    // Hard Hat
     [InlineData("(O)523", 5)]   // Savage Ring
-    [InlineData("(O)PrizeTicket", 1)]
+    [InlineData("(O)PrizeTicket", 2)]
     public void Shop_and_reward_items_have_weeks(string id, int week)
         => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
 
@@ -29,6 +29,10 @@ public class ShopAvailabilityTests
     [InlineData("(O)635", 5)]    // Orange
     [InlineData("(O)638", 13)]   // Cherry, second year
     public void Other_and_fruit_tables(string id, int week) => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
+
+    [Fact]
+    public void Ice_cream_places_at_the_stand_not_at_jodis_seven_hearts()
+        => Assert.Equal(5, ShopAvailability.Derive("(O)233")!.EarliestWeek);
 
     [Fact]
     public void Plural_category_tags_match_the_games_machine_rules()
