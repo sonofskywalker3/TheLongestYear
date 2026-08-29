@@ -1,27 +1,32 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
+using TheLongestYear.Donations;
 using TheLongestYear.Integration;
 using TheLongestYear.Loop;
 
 namespace TheLongestYear.UI
 {
-    /// <summary>The "what could I buy next reset" planning board. A pinned, calendar-style
-    /// foresight panel sits on top (Weather Sage forecast + Traveling Cart stock, both rolling off
-    /// the live date), then the Boosts section, then the upgrade list. Fully scrollable.
-    ///
-    /// The UPGRADE list is read-only: purchasing a keep stays on the loop-boundary shrine popup,
-    /// and each row only shows its cost and, on hover, its effect (for every category, only the
-    /// next purchasable tier of each chain, reach-gated, owned tiers hidden).
-    ///
-    /// BOOSTS, added by spec 2026-08-28-obtainable-board-4-boosts, ARE bought here, mid-run: each
-    /// catalog boost draws a Buy button, an Active label or a "Not now" label straight from
-    /// <see cref="BoostPurchase.StateOf"/>, and a click spends banked JP through the purchase
-    /// callback. So this board is no longer purely read-only.</summary>
+    /// <summary>The planning shrine (the Junimo statue on the farm), three tabs
+    /// (spec docs/superpowers/specs/2026-08-29-shrine-tabs-jp-boosts-design.md, section 3):
+    /// <list type="bullet">
+    /// <item><b>Active</b> (default, read-only): running boosts with their expiry, this week's
+    /// theme bonus and liability, and every owned permanent leaf by category.</item>
+    /// <item><b>Boosts</b>: the JP Boost roster grouped by duration class, each row with a Buy
+    /// button, an Active label or a "Not now" label straight from <see cref="BoostPurchase.StateOf"/>.
+    /// Host-only in multiplayer (JP is one pool per save).</item>
+    /// <item><b>Plan</b>: the foresight calendar (Weather Sage forecast + Traveling Cart stock),
+    /// then per category the next purchasable keep of each chain with its cost, then a collapsed
+    /// Locked section naming what each reach-gated keep still needs this loop. Keeps are bought
+    /// only on the loop-boundary JP perk screen; this tab shows the price and the effect.</item>
+    /// </list></summary>
     internal sealed class ShrinePreviewMenu : IClickableMenu
     {
         private const int RowHeight = 56;
@@ -29,57 +34,72 @@ namespace TheLongestYear.UI
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
 
-        // ---- Foresight calendar panel (drawn above the scrolling upgrade list) ----
-        private const int ForesightTop = 112;          // below title + JP line
+        // ---- Tab strip (below the title + JP line) ----
+        private const int TabIdBase = 6200;
+        private const int TabWidth = 220;
+        private const int TabHeight = 52;
+        private const int TabGap = 8;
+        private const int TabsTop = 112;
+        private const int TabStripH = TabHeight + 12;
+
+        // ---- Foresight calendar panel (Plan tab, drawn above the scrolling list) ----
         private const int ForesightBlockGap = 14;       // vertical gap after weather / cart blocks
-        // Weather: a "Weather" header, a row of day-of-month numbers, then a row of HUD weather icons.
         private const int WeatherCellWidth = 64;
-        private const float WeatherIconScale = 3f;       // 13px source → 39px
+        private const float WeatherIconScale = 3f;       // 13px source -> 39px
         private const int WeatherIconPx = 39;
         private const int WeatherHeaderH = 40;
         private const int WeatherNumberRowH = 30;
         private const int WeatherIconRowH = 52;
-        // Cart: a "Traveling Cart - <Weekday>" header, then a row of hoverable item icons.
         private const int CartHeaderH = 40;
         private const int CartIconCell = 72;
-        private const float CartIconScale = 1f;          // drawInMenu 1f → 64px
+        private const float CartIconScale = 1f;          // drawInMenu 1f -> 64px
         private const int CartIconPx = 64;
         private const int CartIconRowH = 72;
 
-        // ---- Boosts section (the one part of this board that DOES spend JP) ----
+        // ---- Boost rows (the one part of this board that DOES spend JP) ----
         private const int BoostButtonWidth = 132;
         private const int BoostButtonHeight = 44;
+        private const int SubRowIndent = 48;
+        private const int SkillCount = 5;
+
+        private static readonly Color OwnedGreen = new(30, 130, 30);
+        private static readonly Color LockedGray = new(110, 100, 90);
+        private static readonly Color NoteBrown = new(120, 90, 40);
+
+        public enum ShrineTab { Active, Boosts, Plan }
+
+        private enum RowKind { Header, Note, Running, Boost, Upgrade, LockedToggle, Locked }
 
         private sealed class Row
         {
-            public bool IsHeader;
-            public string Text;                  // header label (when IsHeader)
-            public UpgradeDefinition Def;        // the upgrade (when !IsHeader && Boost == null)
-            public BoostDefinition Boost;        // the boost (boost rows only)
-            public string Tooltip;               // precomputed hover text (when !IsHeader)
-            public bool IsOwned;                 // owned leaf → green, no cost (vs buyable → cost)
+            public RowKind Kind;
+            public string Text;                  // header / note / running-boost name / locked-toggle label
+            public string Note;                  // right-hand text (running boosts: expiry)
+            public UpgradeDefinition Def;        // Upgrade + Locked rows
+            public BoostDefinition Boost;        // Boost rows
+            public int Skill = -1;               // Crash Course sub-rows: the skill; -1 = the parent row
+            public string Tooltip;               // hover text (null = none)
+            public bool IsOwned;                 // Upgrade rows: owned leaf (green) vs buyable (cost)
+            public string Requirement;           // Locked rows: ReachText
+            public UpgradeCategory Category;     // LockedToggle rows
         }
 
         private readonly MetaState _state;
         private readonly List<Row> _rows = new();
-
-        /// <summary>The active run, when the caller supplied one. Only the boost rows need it (to
-        /// ask <see cref="BoostState"/> what is active for the current week/season); a null run
-        /// simply hides the Boosts section, which keeps every existing read-only caller working.</summary>
         private readonly RunState _run;
+        private readonly Func<BoostId, int, BoostPurchase.Result> _buyBoost;
+        private readonly double _priceFactor;
 
-        /// <summary>Mod-side purchase callback (JP spend, sound, HUD, logging). Null → no Boosts
-        /// section, so the menu stays the pure preview it was.</summary>
-        private readonly System.Func<BoostId, int, BoostPurchase.Result> _buyBoost;
+        private ShrineTab _tab = ShrineTab.Active;
+        private readonly List<ClickableTextureComponent> _tabs = new();
+        private readonly HashSet<UpgradeCategory> _expandedLocked = new();
 
-        // Foresight data, fetched once at open (rolling — reads live Game1 date so re-opening on a
-        // later day shows a later window). Bounds for hover/draw are computed in the layout pass.
-        private ForecastDay[] _weatherDays = System.Array.Empty<ForecastDay>();
+        // Foresight data, fetched once at open (rolling: reads the live Game1 date).
+        private ForecastDay[] _weatherDays = Array.Empty<ForecastDay>();
         private readonly List<(ISalable Item, int Price, string Name)> _cartItems = new();
         private string _cartHeader;
-        private bool _showCartBlock;   // owns Cart Whisperer → show the cart bundle-sense block
-        private string _cartEmptyNote; // shown in the icon-row area when no relevant items today
-
+        private bool _showCartBlock;
+        private string _cartEmptyNote;
         private readonly List<(Rectangle Bounds, ForecastDay Day)> _weatherCells = new();
         private readonly List<(Rectangle Bounds, ISalable Item, int Price, string Name)> _cartCells = new();
         private int _weatherHeaderY = -1;
@@ -93,26 +113,25 @@ namespace TheLongestYear.UI
         private ClickableTextureComponent _scrollDown;
         private string _hoverText = "";
 
-        /// <summary>The run's stamped shrine-price factor. Passed in rather than read off the
-        /// state, so this read-only preview shows exactly the number the shrine will charge.</summary>
-        private readonly double _priceFactor;
-
         public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0, RunState run = null,
-            System.Func<BoostId, int, BoostPurchase.Result> buyBoost = null)
+            Func<BoostId, int, BoostPurchase.Result> buyBoost = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
             _priceFactor = priceFactor;
             _run = run;
             _buyBoost = buyBoost;
-            BuildRows();
             BuildForesight();
+            BuildRows();
             RecomputeBoundsAndLayout();
         }
 
-        /// <summary>Fetch the foresight data (Weather Sage forecast + Cart Whisperer stock) from the
-        /// owned tiers and the live game date. Slot 0 is always tomorrow, so the panel rolls forward
-        /// each day. Empty blocks when the relevant tier isn't owned.</summary>
+        private bool BoostsWired => _run != null && _buyBoost != null;
+        private bool ShowForesight => _tab == ShrineTab.Plan;
+        private int Today => _run == null ? 1 : Calendar.DayOfYear((int)_run.Season, _run.DayOfMonth);
+
+        // ------------------------------------------------------------------ foresight data
+
         private void BuildForesight()
         {
             int weatherTier = _state.HighestKeptTier("weather_sage_", 6);
@@ -120,71 +139,60 @@ namespace TheLongestYear.UI
                 ? WeatherForecast.Build(
                     (int)Game1.uniqueIDForThisGame, (int)Game1.stats.DaysPlayed,
                     Game1.dayOfMonth, (int)Game1.season, weatherTier,
-                    Loop.GreenRainDay.VanillaSummerDay())
-                : System.Array.Empty<ForecastDay>();
+                    GreenRainDay.VanillaSummerDay())
+                : Array.Empty<ForecastDay>();
             // Rain Dance / Storm Call: slot 0 is tomorrow; show the bought weather, not the schedule.
             if (_run != null && _weatherDays.Length > 0 && _run.WeatherOverride != null
-                && _run.WeatherOverrideDay == Calendar.DayOfYear((int)_run.Season, _run.DayOfMonth) + 1)
+                && _run.WeatherOverrideDay == Today + 1)
                 _weatherDays[0] = _weatherDays[0] with { Weather = _run.WeatherOverride };
 
-            // Cart Whisperer (single upgrade): on a cart day — or any day if the Cart Catalog mod lets
-            // you mail-order — flag which of the cart's REAL current stock can feed any CC bundle.
-            // Requires BOTH the upgrade AND the Cart Catalog mod installed+enabled (user decision
-            // 2026-06-08): without Cart Catalog the preview block is hidden entirely.
             _cartItems.Clear();
             _cartHeader = null;
             _cartEmptyNote = null;
             _showCartBlock = _state.HasUpgrade("cart_whisper_1")
                 && CartCatalogIntegration.Available(Game1.player);
-            if (_showCartBlock)
+            if (!_showCartBlock)
+                return;
+
+            bool catalogAnyDay = CartCatalogIntegration.Available(Game1.player);
+            bool cartInTown = TravelingCartVisitsToday(Game1.dayOfMonth);
+            if (!cartInTown && !catalogAnyDay)
             {
-                bool catalogAnyDay = CartCatalogIntegration.Available(Game1.player);
-                bool cartInTown = TravelingCartVisitsToday(Game1.dayOfMonth);
-
-                if (!cartInTown && !catalogAnyDay)
+                _cartHeader = Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
                 {
-                    _cartHeader = Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
-                    {
-                        ["day"] = ShortDayName(NextCartVisitDay(Game1.dayOfMonth)),
-                    });
-                    _cartEmptyNote = "";
-                    return;
-                }
-
-                try
-                {
-                    var stock = StardewValley.Internal.ShopBuilder.GetShopStock("Traveler");
-                    foreach (var pair in stock)
-                    {
-                        if (pair.Key is not Item item) continue;
-                        if (!BundleRelevanceIndex.IsRelevant(item)) continue;
-                        _cartItems.Add((pair.Key, pair.Value.Price, pair.Key.DisplayName));
-                    }
-                }
-                catch (System.Exception)
-                {
-                    _cartItems.Clear();
-                }
-
-                _cartHeader = (catalogAnyDay && !cartInTown)
-                    ? Strings.Get("menu.shrine-preview.cart-catalog-header")
-                    : Strings.Get("menu.shrine-preview.cart-traveling-header");
-                if (_cartItems.Count == 0)
-                    _cartEmptyNote = Strings.Get("menu.shrine-preview.cart-nothing");
+                    ["day"] = ShortDayName(NextCartVisitDay(Game1.dayOfMonth)),
+                });
+                _cartEmptyNote = "";
+                return;
             }
+
+            try
+            {
+                var stock = StardewValley.Internal.ShopBuilder.GetShopStock("Traveler");
+                foreach (var pair in stock)
+                {
+                    if (pair.Key is not Item item) continue;
+                    if (!BundleRelevanceIndex.IsRelevant(item)) continue;
+                    _cartItems.Add((pair.Key, pair.Value.Price, pair.Key.DisplayName));
+                }
+            }
+            catch (Exception)
+            {
+                _cartItems.Clear();
+            }
+
+            _cartHeader = (catalogAnyDay && !cartInTown)
+                ? Strings.Get("menu.shrine-preview.cart-catalog-header")
+                : Strings.Get("menu.shrine-preview.cart-traveling-header");
+            if (_cartItems.Count == 0)
+                _cartEmptyNote = Strings.Get("menu.shrine-preview.cart-nothing");
         }
 
-        /// <summary>The Traveling Cart is in town on days where <c>dayOfMonth % 7 % 5 == 0</c>
-        /// (Fri 5/12/19/26, Sun 7/14/21/28).</summary>
+        /// <summary>The Traveling Cart is in town on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
         private static bool TravelingCartVisitsToday(int dayOfMonth) => dayOfMonth % 7 % 5 == 0;
 
-        // Day-of-month IS day-of-season in vanilla's terms, so the vanilla helper (loaded from
-        // the game's own localized Strings\StringsFromCSFiles asset) produces the identical
-        // abbreviated weekday names ("Sun".."Sat") this menu previously hardcoded in English.
         private static string ShortDayName(int dayOfMonth) => Game1.shortDayDisplayNameFromDayOfSeason(dayOfMonth);
 
-        /// <summary>Day-of-month of the next Traveling Cart visit strictly after <paramref name="today"/>,
-        /// wrapping across the 28-day month. The cart visits on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
         private static int NextCartVisitDay(int today)
         {
             for (int off = 1; off <= WeatherScheduler.DaysPerMonth; off++)
@@ -193,13 +201,12 @@ namespace TheLongestYear.UI
                 if (dom % 7 % 5 == 0)
                     return dom;
             }
-            return today; // unreachable — a visit day always exists within 28 days.
+            return today;
         }
-
-        // Icon + label lookups live in the shared WeatherIcons helper (one copy for both menus).
 
         private int ForesightPanelHeight()
         {
+            if (!ShowForesight) return 0;
             int h = 0;
             if (_weatherDays.Length > 0)
                 h += WeatherHeaderH + WeatherNumberRowH + WeatherIconRowH + ForesightBlockGap;
@@ -208,95 +215,211 @@ namespace TheLongestYear.UI
             return h;
         }
 
-        /// <summary>Snapshot the buyable list (reach read live, at open time): for each category,
-        /// a header followed by its next-purchasable tiers. Owned lower tiers are never listed.</summary>
+        // ------------------------------------------------------------------ rows per tab
+
+        private static Row Header(string text) => new() { Kind = RowKind.Header, Text = text };
+        private static Row Note(string text) => new() { Kind = RowKind.Note, Text = text };
+
         private void BuildRows()
         {
             _rows.Clear();
-            BuildBoostRows();
-            foreach (UpgradeCategory cat in System.Enum.GetValues(typeof(UpgradeCategory)))
+            switch (_tab)
+            {
+                case ShrineTab.Active: BuildActiveRows(); break;
+                case ShrineTab.Boosts: BuildBoostRows(); break;
+                default: BuildPlanRows(); break;
+            }
+        }
+
+        private void BuildActiveRows()
+        {
+            _rows.Add(Header(Strings.Get("shrine.active.running")));
+            int today = Today;
+            List<ActiveBoost> running = _run == null
+                ? new List<ActiveBoost>()
+                : BoostPurchase.ActiveEntries(_run, today).ToList();
+            if (running.Count == 0)
+                _rows.Add(Note(Strings.Get("shrine.active.none")));
+            foreach (ActiveBoost b in running)
+            {
+                if (!Enum.TryParse(b.Id, out BoostId id)) continue;
+                BoostDefinition def = BoostCatalog.Get(id);
+                string name = Strings.Get(def.NameKey);
+                if (id == BoostId.CrashCourse && b.Skill >= 0)
+                    name += " (" + SkillName(b.Skill) + ")";
+                _rows.Add(new Row
+                {
+                    Kind = RowKind.Running, Text = name, Note = ExpiryLabel(b, def, today),
+                    Tooltip = Strings.Get(def.DescKey),
+                });
+            }
+
+            _rows.Add(Header(Strings.Get("shrine.active.this-week")));
+            string bonus = ActiveEffectsProvider.BonusId;
+            string liability = ActiveEffectsProvider.LiabilityId;
+            if (bonus == null)
+                _rows.Add(Note(Strings.Get("shrine.active.no-theme")));
+            else
+                _rows.Add(Note(Strings.Get("shrine.active.theme", new Dictionary<string, string>
+                {
+                    ["bonus"] = ThemeModifiers.DisplayNameFor(bonus),
+                    ["liability"] = ThemeModifiers.DisplayNameFor(liability)
+                        + (ActiveEffectsProvider.LiabilitySuppressed ? " " + Strings.Get("shrine.active.lifted") : ""),
+                })));
+
+            foreach (UpgradeCategory cat in Enum.GetValues(typeof(UpgradeCategory)))
             {
                 IReadOnlyList<UpgradeDefinition> owned =
                     KeepShopFilter.OwnedLeavesInCategory(cat, _state, RunReachEvaluator.Meets);
-                IReadOnlyList<UpgradeDefinition> buyable =
-                    KeepShopFilter.BuyableInCategory(cat, _state, RunReachEvaluator.Meets);
-                if (owned.Count == 0 && buyable.Count == 0)
-                    continue;
-
-                _rows.Add(new Row { IsHeader = true, Text = ThemeDisplay.CategoryName(cat) });
-
-                // Owned leaves first (green, no cost) — "you already have this, nothing more to buy".
+                if (owned.Count == 0) continue;
+                _rows.Add(Header(ThemeDisplay.CategoryName(cat)));
                 foreach (UpgradeDefinition def in owned)
                     _rows.Add(new Row
                     {
-                        Def = def,
-                        IsOwned = true,
+                        Kind = RowKind.Upgrade, Def = def, IsOwned = true,
                         Tooltip = Strings.Get("menu.shrine-preview.tooltip-owned",
                             new Dictionary<string, string> { ["description"] = def.Description }),
                     });
+            }
+        }
 
-                // Then the next-purchasable tiers (with cost).
+        private string ExpiryLabel(ActiveBoost b, BoostDefinition def, int today)
+        {
+            if (b.ExpiresAfterDay >= Calendar.DaysPerYear)
+                return Strings.Get("shrine.active.this-loop");
+            if (b.ExpiresAfterDay == today)
+                return Strings.Get("shrine.active.tonight");
+            if (def.Duration == BoostDuration.Instant)
+                return Strings.Get("shrine.active.tomorrow");
+            return Strings.Get("shrine.active.through", new Dictionary<string, string>
+            {
+                ["season"] = Utility.getSeasonNameFromNumber((int)Calendar.SeasonOfDay(b.ExpiresAfterDay)),
+                ["day"] = ((b.ExpiresAfterDay - 1) % Calendar.DaysPerMonth + 1).ToString(),
+            });
+        }
+
+        /// <summary>Vanilla skill index order (Farming 0, Fishing 1, Foraging 2, Mining 3, Combat 4).</summary>
+        private static string SkillName(int skill) => skill switch
+        {
+            0 => Strings.Get("skill.farming"),
+            1 => Strings.Get("skill.fishing"),
+            2 => Strings.Get("skill.foraging"),
+            3 => Strings.Get("skill.mining"),
+            4 => Strings.Get("skill.combat"),
+            _ => "",
+        };
+
+        private static string GroupHeader(BoostDuration d) => d switch
+        {
+            BoostDuration.Instant => Strings.Get("shrine.boosts.group.instant"),
+            BoostDuration.Week => Strings.Get("shrine.boosts.group.week"),
+            BoostDuration.Season => Strings.Get("shrine.boosts.group.season"),
+            _ => Strings.Get("shrine.boosts.group.loop"),
+        };
+
+        private void BuildBoostRows()
+        {
+            if (!BoostsWired)
+            {
+                _rows.Add(Note(Strings.Get("shrine.active.none")));
+                return;
+            }
+            if (!Context.IsMainPlayer)
+            {
+                _rows.Add(Note(Strings.Get("shrine.boosts.host-only")));
+                return;
+            }
+            foreach (BoostDuration d in new[] { BoostDuration.Instant, BoostDuration.Week, BoostDuration.Season, BoostDuration.Loop })
+            {
+                _rows.Add(Header(GroupHeader(d)));
+                foreach (BoostDefinition boost in BoostCatalog.All.Where(b => b.Duration == d))
+                {
+                    _rows.Add(new Row { Kind = RowKind.Boost, Boost = boost, Tooltip = Strings.Get(boost.DescKey) });
+                    if (boost.Id == BoostId.CrashCourse)
+                        for (int skill = 0; skill < SkillCount; skill++)
+                            _rows.Add(new Row { Kind = RowKind.Boost, Boost = boost, Skill = skill, Tooltip = Strings.Get(boost.DescKey) });
+                }
+            }
+        }
+
+        private void BuildPlanRows()
+        {
+            foreach (UpgradeCategory cat in Enum.GetValues(typeof(UpgradeCategory)))
+            {
+                IReadOnlyList<UpgradeDefinition> buyable =
+                    KeepShopFilter.BuyableInCategory(cat, _state, RunReachEvaluator.Meets);
+                List<UpgradeDefinition> locked = UpgradeCatalog.ByCategory(cat)
+                    .Where(d => !_state.HasUpgrade(d.Id)
+                                && (d.PrerequisiteId == null || _state.HasUpgrade(d.PrerequisiteId))
+                                && _state.MeetsMetaRequirement(d.MetaRequirement)
+                                && d.RunReachRequirement != null
+                                && !RunReachEvaluator.Meets(d.RunReachRequirement))
+                    .ToList();
+                if (buyable.Count == 0 && locked.Count == 0)
+                    continue;
+
+                _rows.Add(Header(ThemeDisplay.CategoryName(cat)));
                 foreach (UpgradeDefinition def in buyable)
                     _rows.Add(new Row
                     {
-                        Def = def,
+                        Kind = RowKind.Upgrade, Def = def,
                         Tooltip = Strings.Get("menu.shrine-preview.tooltip-buyable", new Dictionary<string, string>
                         {
                             ["description"] = def.Description,
                             ["owned"] = OwnedLabel(def),
                         }),
                     });
-            }
-        }
-
-        /// <summary>The Boosts section, above the read-only upgrade list: one row per catalog boost
-        /// with its name, cost and either a Buy button, an Active label (already bought for this
-        /// week/season) or a "Not now" label (Year-Two Seeds in Winter). Skipped entirely when no
-        /// run or no purchase callback was supplied.</summary>
-        private void BuildBoostRows()
-        {
-            if (_run == null || _buyBoost == null)
-                return;
-
-            _rows.Add(new Row { IsHeader = true, Text = Strings.Get("shrine.boosts.header") });
-            foreach (BoostDefinition boost in BoostCatalog.All)
+                if (locked.Count == 0) continue;
                 _rows.Add(new Row
                 {
-                    Boost = boost,
-                    Tooltip = Strings.Get(boost.DescKey),
+                    Kind = RowKind.LockedToggle, Category = cat,
+                    Text = Strings.Get("shrine.plan.locked", new Dictionary<string, string> { ["count"] = locked.Count.ToString() }),
                 });
+                if (!_expandedLocked.Contains(cat)) continue;
+                foreach (UpgradeDefinition def in locked)
+                    _rows.Add(new Row
+                    {
+                        Kind = RowKind.Locked, Def = def,
+                        Requirement = ReachText.Describe(def.RunReachRequirement),
+                        Tooltip = def.Description,
+                    });
+            }
+            if (_rows.Count == 0)
+                _rows.Add(Note(Strings.Get("menu.shrine-preview.nothing-new")));
         }
 
-        /// <summary>What a boost row's right-hand control should be right now.</summary>
-        private enum BoostRowState { Buy, Active, NotAvailable }
-
-        /// <summary>Rendered straight from <see cref="BoostPurchase.StateOf"/> - the same check
-        /// TryBuy runs - so the control a player sees can never disagree with what a click does
-        /// (fix round 2, 2026-08-29). NotEnoughJp still draws a Buy button: the shrine reports the
-        /// shortfall, and greying it out here would hide the price.</summary>
-        private BoostRowState StateOf(BoostDefinition boost)
-            => BoostPurchase.StateOf(_state, _run, boost.Id, TheLongestYear.Donations.BoostContextBuilder.Build(_run)) switch
-            {
-                BoostPurchase.Result.NotAvailable => BoostRowState.NotAvailable,
-                BoostPurchase.Result.AlreadyActive => BoostRowState.Active,
-                _ => BoostRowState.Buy,
-            };
-
-        /// <summary>The Buy button's rectangle for a row drawn at <paramref name="rowY"/>. Shared by
-        /// the draw pass and the click hit-test so they can never drift apart.</summary>
-        private Rectangle BoostButtonBounds(int rowY)
-            => new Rectangle(_listX + _listWidth - 64 - BoostButtonWidth, rowY + 4,
-                BoostButtonWidth, BoostButtonHeight);
-
-        /// <summary>What the player already owns in this chain — the buyable tier's prerequisite is,
-        /// by definition, the highest owned tier (KeepShopFilter only offers a tier whose prereq is
-        /// owned). "none" when the buyable tier is the chain root.</summary>
         private static string OwnedLabel(UpgradeDefinition def)
         {
             if (def.PrerequisiteId == null)
                 return Strings.Get("menu.shrine-preview.owned-none");
             return UpgradeCatalog.TryGet(def.PrerequisiteId)?.DisplayName ?? def.PrerequisiteId;
         }
+
+        // ------------------------------------------------------------------ boost row state
+
+        private enum BoostRowState { Buy, Active, NotAvailable }
+
+        private BoostContext ContextFor(Row row) => BoostContextBuilder.Build(_run, row.Skill);
+
+        /// <summary>Rendered straight from <see cref="BoostPurchase.StateOf"/>, the same check
+        /// TryBuy runs, so the control a player sees can never disagree with what a click does.
+        /// NotEnoughJp still draws a Buy button: the shrine reports the shortfall on click.</summary>
+        private BoostRowState StateOf(Row row)
+            => BoostPurchase.StateOf(_state, _run, row.Boost.Id, ContextFor(row)) switch
+            {
+                BoostPurchase.Result.NotAvailable => BoostRowState.NotAvailable,
+                BoostPurchase.Result.AlreadyActive => BoostRowState.Active,
+                _ => BoostRowState.Buy,
+            };
+
+        /// <summary>The Crash Course parent row is a label; its five sub-rows carry the buttons.</summary>
+        private static bool HasButton(Row row) => row.Kind == RowKind.Boost
+            && (row.Boost.Id != BoostId.CrashCourse || row.Skill >= 0);
+
+        private Rectangle BoostButtonBounds(int rowY)
+            => new(_listX + _listWidth - 64 - BoostButtonWidth, rowY + 4, BoostButtonWidth, BoostButtonHeight);
+
+        // ------------------------------------------------------------------ layout
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
@@ -306,27 +429,43 @@ namespace TheLongestYear.UI
 
         private void RecomputeBoundsAndLayout()
         {
-            // 50% larger than the original 840x680 board (capped to the viewport).
-            width = System.Math.Min(1260, Game1.uiViewport.Width - 64);
-            height = System.Math.Min(1020, Game1.uiViewport.Height - 64);
+            width = Math.Min(1260, Game1.uiViewport.Width - 64);
+            height = Math.Min(1020, Game1.uiViewport.Height - 64);
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             _listX = xPositionOnScreen + 40;
             _listWidth = width - 80;
 
+            _tabs.Clear();
+            ShrineTab[] tabs = { ShrineTab.Active, ShrineTab.Boosts, ShrineTab.Plan };
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                string label = TabLabel(tabs[i]);
+                _tabs.Add(new ClickableTextureComponent(
+                    name: label,
+                    bounds: new Rectangle(_listX + i * (TabWidth + TabGap), yPositionOnScreen + TabsTop, TabWidth, TabHeight),
+                    label: null, hoverText: label,
+                    texture: Game1.mouseCursors, sourceRect: new Rectangle(16, 368, 16, 16), scale: 1f)
+                {
+                    myID = TabIdBase + i,
+                    leftNeighborID = i == 0 ? -1 : TabIdBase + i - 1,
+                    rightNeighborID = i == tabs.Length - 1 ? -1 : TabIdBase + i + 1,
+                    downNeighborID = RowIdBase,
+                });
+            }
+
             LayoutForesight();
 
-            // List sits below the foresight panel (or just below the JP line when no tier is owned).
-            _listY = yPositionOnScreen + ForesightTop + ForesightPanelHeight();
+            _listY = yPositionOnScreen + TabsTop + TabStripH + ForesightPanelHeight();
             int listHeight = height - (_listY - yPositionOnScreen) - 40;
-            _rowsPerPage = System.Math.Max(1, listHeight / RowHeight);
+            _rowsPerPage = Math.Max(1, listHeight / RowHeight);
 
             _rowSlots.Clear();
             for (int i = 0; i < _rowsPerPage; i++)
                 _rowSlots.Add(new ClickableComponent(
                     new Rectangle(_listX, _listY + i * RowHeight, _listWidth - 56, RowHeight),
-                    "row-" + i) { myID = RowIdBase + i });
+                    "row-" + i) { myID = RowIdBase + i, upNeighborID = i == 0 ? TabIdBase : RowIdBase + i - 1 });
 
             int arrowX = _listX + _listWidth - 48;
             _scrollUp = new ClickableTextureComponent("scroll-up",
@@ -338,7 +477,7 @@ namespace TheLongestYear.UI
 
             this.initializeUpperRightCloseButton();
 
-            allClickableComponents = new List<ClickableComponent> { _scrollUp, _scrollDown };
+            allClickableComponents = new List<ClickableComponent>(_tabs) { _scrollUp, _scrollDown };
             allClickableComponents.AddRange(_rowSlots);
             if (upperRightCloseButton != null)
                 allClickableComponents.Add(upperRightCloseButton);
@@ -346,16 +485,22 @@ namespace TheLongestYear.UI
             ClampScroll();
         }
 
-        /// <summary>Position the weather + cart cells for the current window. Header Y values and the
-        /// per-cell hover/draw bounds are stored for both <see cref="draw"/> and hover hit-testing.</summary>
+        private static string TabLabel(ShrineTab tab) => tab switch
+        {
+            ShrineTab.Active => Strings.Get("shrine.tab.active"),
+            ShrineTab.Boosts => Strings.Get("shrine.tab.boosts"),
+            _ => Strings.Get("shrine.tab.plan"),
+        };
+
         private void LayoutForesight()
         {
             _weatherCells.Clear();
             _cartCells.Clear();
             _weatherHeaderY = -1;
             _cartHeaderY = -1;
+            if (!ShowForesight) return;
 
-            int fy = yPositionOnScreen + ForesightTop;
+            int fy = yPositionOnScreen + TabsTop + TabStripH;
 
             if (_weatherDays.Length > 0)
             {
@@ -364,7 +509,6 @@ namespace TheLongestYear.UI
                 for (int i = 0; i < _weatherDays.Length; i++)
                 {
                     int cellX = _listX + i * WeatherCellWidth;
-                    // Hover region spans the number + icon rows of the column.
                     var bounds = new Rectangle(cellX, numY, WeatherCellWidth, WeatherNumberRowH + WeatherIconRowH);
                     _weatherCells.Add((bounds, _weatherDays[i]));
                 }
@@ -384,7 +528,7 @@ namespace TheLongestYear.UI
             }
         }
 
-        private int MaxScroll() => System.Math.Max(0, _rows.Count - _rowsPerPage);
+        private int MaxScroll() => Math.Max(0, _rows.Count - _rowsPerPage);
 
         private void ClampScroll()
         {
@@ -401,6 +545,43 @@ namespace TheLongestYear.UI
                 Game1.playSound("shwip");
         }
 
+        private void SetTab(ShrineTab tab)
+        {
+            if (_tab == tab) return;
+            _tab = tab;
+            _scrollIndex = 0;
+            _hoverText = "";
+            BuildRows();
+            RecomputeBoundsAndLayout();
+            Game1.playSound("smallSelect");
+        }
+
+        // ------------------------------------------------------------------ input
+
+        public override void snapToDefaultClickableComponent()
+        {
+            currentlySnappedComponent = _tabs.Count > 0 ? _tabs[(int)_tab] : getComponentWithID(RowIdBase);
+            snapCursorToCurrentSnappedComponent();
+        }
+
+        public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
+        {
+            if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
+            {
+                int id = currentlySnappedComponent.myID;
+                if (id >= TabIdBase && id < TabIdBase + _tabs.Count) { SetTab((ShrineTab)(id - TabIdBase)); return; }
+                if (id == ScrollUpId) { Scroll(-1); return; }
+                if (id == ScrollDownId) { Scroll(+1); return; }
+                if (id >= RowIdBase && id < RowIdBase + _rowsPerPage)
+                {
+                    int idx = _scrollIndex + (id - RowIdBase);
+                    if (idx < _rows.Count) ActivateRow(_rows[idx]);
+                    return;
+                }
+            }
+            base.receiveGamePadButton(b);
+        }
+
         public override void receiveScrollWheelAction(int direction)
         {
             base.receiveScrollWheelAction(direction);
@@ -410,6 +591,10 @@ namespace TheLongestYear.UI
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             base.receiveLeftClick(x, y, playSound);   // handles the close button
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                if (_tabs[i].containsPoint(x, y)) { SetTab((ShrineTab)i); return; }
+            }
             if (_scrollUp.containsPoint(x, y)) { Scroll(-1); return; }
             if (_scrollDown.containsPoint(x, y)) { Scroll(+1); return; }
 
@@ -418,15 +603,35 @@ namespace TheLongestYear.UI
                 int idx = _scrollIndex + i;
                 if (idx >= _rows.Count) break;
                 Row row = _rows[idx];
-                if (row.Boost == null) continue;
-                if (StateOf(row.Boost) != BoostRowState.Buy) continue;
-                if (!BoostButtonBounds(_listY + i * RowHeight).Contains(x, y)) continue;
+                int rowY = _listY + i * RowHeight;
+                if (row.Kind == RowKind.LockedToggle && _rowSlots[i].containsPoint(x, y))
+                {
+                    ActivateRow(row);
+                    return;
+                }
+                if (HasButton(row) && BoostButtonBounds(rowY).Contains(x, y))
+                {
+                    ActivateRow(row);
+                    return;
+                }
+            }
+        }
 
-                _buyBoost(row.Boost.Id, -1);   // sound, HUD and logging all live in the callback
-                BuildRows();               // the row's control flips to Active on success
+        /// <summary>Gamepad A / click on a row: toggle a Locked section, or buy a boost.</summary>
+        private void ActivateRow(Row row)
+        {
+            if (row.Kind == RowKind.LockedToggle)
+            {
+                if (!_expandedLocked.Remove(row.Category)) _expandedLocked.Add(row.Category);
+                Game1.playSound("shwip");
+                BuildRows();
                 ClampScroll();
                 return;
             }
+            if (!HasButton(row) || StateOf(row) != BoostRowState.Buy) return;
+            _buyBoost(row.Boost.Id, row.Skill);   // sound, HUD and logging all live in the callback
+            BuildRows();                          // the row's control flips to Active on success
+            ClampScroll();
         }
 
         public override void performHoverAction(int x, int y)
@@ -463,13 +668,15 @@ namespace TheLongestYear.UI
             {
                 int idx = _scrollIndex + i;
                 if (idx >= _rows.Count) break;
-                if (!_rows[idx].IsHeader && _rowSlots[i].containsPoint(x, y))
+                if (_rows[idx].Tooltip != null && _rowSlots[i].containsPoint(x, y))
                 {
                     _hoverText = _rows[idx].Tooltip;
                     return;
                 }
             }
         }
+
+        // ------------------------------------------------------------------ draw
 
         public override void draw(SpriteBatch b)
         {
@@ -484,63 +691,34 @@ namespace TheLongestYear.UI
                 Game1.smallFont,
                 new Vector2(xPositionOnScreen + 40, yPositionOnScreen + 80), Game1.textColor);
 
-            // Multiple testers tried to buy UPGRADES from this board and were confused when nothing
-            // happened (a keep is bought only at a loop boundary). Spell that out, right-aligned on
-            // the JP line, so the "planning, not a keep shop" intent is obvious. Boosts are the one
-            // thing this board does sell, and their rows carry their own Buy buttons.
+            // Keeps are bought at the loop boundary; this board sells boosts only. Say so on the
+            // JP line so nobody tries to buy a keep from the Plan tab (several testers did).
             string planningNote = Strings.Get("menu.shrine-preview.planning-note");
             Vector2 noteSize = Game1.smallFont.MeasureString(planningNote);
             Utility.drawTextWithShadow(b, planningNote, Game1.smallFont,
-                new Vector2(xPositionOnScreen + width - 40 - noteSize.X, yPositionOnScreen + 80),
-                new Color(120, 90, 40));
+                new Vector2(xPositionOnScreen + width - 40 - noteSize.X, yPositionOnScreen + 80), NoteBrown);
+
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                ClickableTextureComponent tab = _tabs[i];
+                Color tint = (int)_tab == i ? Color.White : Color.White * 0.7f;
+                IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
+                    tab.bounds.X, tab.bounds.Y, tab.bounds.Width, tab.bounds.Height, tint, 1f, false);
+                string label = TabLabel((ShrineTab)i);
+                Vector2 labelSize = Game1.smallFont.MeasureString(label);
+                Utility.drawTextWithShadow(b, label, Game1.smallFont,
+                    new Vector2(tab.bounds.X + (tab.bounds.Width - labelSize.X) / 2f,
+                        tab.bounds.Y + (tab.bounds.Height - labelSize.Y) / 2f),
+                    Game1.textColor);
+            }
 
             DrawForesight(b);
-
-            if (_rows.Count == 0)
-            {
-                Utility.drawTextWithShadow(b, Strings.Get("menu.shrine-preview.nothing-new"),
-                    Game1.smallFont, new Vector2(_listX, _listY), Game1.textColor);
-            }
 
             for (int i = 0; i < _rowsPerPage; i++)
             {
                 int idx = _scrollIndex + i;
                 if (idx >= _rows.Count) break;
-                Row row = _rows[idx];
-                int rowY = _listY + i * RowHeight;
-                if (row.IsHeader)
-                {
-                    Utility.drawTextWithShadow(b, row.Text, Game1.dialogueFont,
-                        new Vector2(_listX, rowY + 6), Game1.textColor);
-                }
-                else if (row.Boost != null)
-                {
-                    DrawBoostRow(b, row.Boost, rowY);
-                }
-                else if (row.IsOwned)
-                {
-                    // Owned leaf: name + "Owned" on the right, both green, no cost.
-                    Color green = new Color(30, 130, 30);
-                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
-                        new Vector2(_listX + 24, rowY + 6), green);
-                    string ownedLabel = Strings.Get("menu.shrine.owned");
-                    Vector2 ownedSize = Game1.smallFont.MeasureString(ownedLabel);
-                    Utility.drawTextWithShadow(b, ownedLabel, Game1.smallFont,
-                        new Vector2(_listX + _listWidth - 64 - ownedSize.X, rowY + 6), green);
-                }
-                else
-                {
-                    long costJp = UpgradePricing.EffectiveCost(row.Def, _priceFactor);
-                    bool affordable = _state.JunimoPoints >= costJp;
-                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
-                        new Vector2(_listX + 24, rowY + 6), Game1.textColor);
-                    string cost = Strings.Get("menu.shrine-preview.cost",
-                        new Dictionary<string, string> { ["cost"] = costJp.ToString() });
-                    Vector2 costSize = Game1.smallFont.MeasureString(cost);
-                    Utility.drawTextWithShadow(b, cost, Game1.smallFont,
-                        new Vector2(_listX + _listWidth - 64 - costSize.X, rowY + 6),
-                        affordable ? Game1.textColor : Color.Brown);
-                }
+                DrawRow(b, _rows[idx], _listY + i * RowHeight);
             }
 
             if (MaxScroll() > 0)
@@ -556,24 +734,128 @@ namespace TheLongestYear.UI
             this.drawMouse(b);
         }
 
+        private void DrawRow(SpriteBatch b, Row row, int rowY)
+        {
+            switch (row.Kind)
+            {
+                case RowKind.Header:
+                    Utility.drawTextWithShadow(b, row.Text, Game1.dialogueFont,
+                        new Vector2(_listX, rowY + 6), Game1.textColor);
+                    break;
+                case RowKind.Note:
+                    Utility.drawTextWithShadow(b, row.Text, Game1.smallFont,
+                        new Vector2(_listX + 24, rowY + 6), Game1.textColor * 0.85f);
+                    break;
+                case RowKind.Running:
+                {
+                    Utility.drawTextWithShadow(b, row.Text, Game1.smallFont,
+                        new Vector2(_listX + 24, rowY + 6), OwnedGreen);
+                    Vector2 noteSize = Game1.smallFont.MeasureString(row.Note);
+                    Utility.drawTextWithShadow(b, row.Note, Game1.smallFont,
+                        new Vector2(_listX + _listWidth - 64 - noteSize.X, rowY + 6), OwnedGreen);
+                    break;
+                }
+                case RowKind.Boost:
+                    DrawBoostRow(b, row, rowY);
+                    break;
+                case RowKind.Upgrade when row.IsOwned:
+                {
+                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
+                        new Vector2(_listX + 24, rowY + 6), OwnedGreen);
+                    string ownedLabel = Strings.Get("menu.shrine.owned");
+                    Vector2 ownedSize = Game1.smallFont.MeasureString(ownedLabel);
+                    Utility.drawTextWithShadow(b, ownedLabel, Game1.smallFont,
+                        new Vector2(_listX + _listWidth - 64 - ownedSize.X, rowY + 6), OwnedGreen);
+                    break;
+                }
+                case RowKind.Upgrade:
+                {
+                    long costJp = UpgradePricing.EffectiveCost(row.Def, _priceFactor);
+                    bool affordable = _state.JunimoPoints >= costJp;
+                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
+                        new Vector2(_listX + 24, rowY + 6), Game1.textColor);
+                    string cost = Strings.Get("menu.shrine-preview.cost",
+                        new Dictionary<string, string> { ["cost"] = costJp.ToString() });
+                    Vector2 costSize = Game1.smallFont.MeasureString(cost);
+                    Utility.drawTextWithShadow(b, cost, Game1.smallFont,
+                        new Vector2(_listX + _listWidth - 64 - costSize.X, rowY + 6),
+                        affordable ? Game1.textColor : Color.Brown);
+                    break;
+                }
+                case RowKind.LockedToggle:
+                {
+                    string arrow = _expandedLocked.Contains(row.Category) ? "v " : "> ";
+                    Utility.drawTextWithShadow(b, arrow + row.Text, Game1.smallFont,
+                        new Vector2(_listX + 24, rowY + 6), LockedGray);
+                    break;
+                }
+                case RowKind.Locked:
+                {
+                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
+                        new Vector2(_listX + SubRowIndent, rowY + 6), LockedGray);
+                    Vector2 reqSize = Game1.smallFont.MeasureString(row.Requirement);
+                    Utility.drawTextWithShadow(b, row.Requirement, Game1.smallFont,
+                        new Vector2(_listX + _listWidth - 64 - reqSize.X, rowY + 6), Color.Brown);
+                    break;
+                }
+            }
+        }
+
         /// <summary>One Boosts row: name and cost on the left, and on the right either a Buy button
         /// (greyed when the JP is not there, but still clickable so the HUD can say why), an Active
-        /// label, or a "Not now" label.</summary>
-        private void DrawBoostRow(SpriteBatch b, BoostDefinition boost, int rowY)
+        /// label, or a "Not now" label. Crash Course draws a label row plus five skill sub-rows;
+        /// Elevator Pass shows the floors.</summary>
+        private void DrawBoostRow(SpriteBatch b, Row row, int rowY)
         {
-            BoostRowState rowState = StateOf(boost);
-            bool affordable = _state.JunimoPoints >= boost.Cost;
+            BoostDefinition boost = row.Boost;
+            if (boost.Id == BoostId.CrashCourse && row.Skill < 0)
+            {
+                Utility.drawTextWithShadow(b, Strings.Get(boost.NameKey), Game1.smallFont,
+                    new Vector2(_listX + 24, rowY + 6), Game1.textColor);
+                return;
+            }
 
-            Utility.drawTextWithShadow(b, Strings.Get(boost.NameKey), Game1.smallFont,
-                new Vector2(_listX + 24, rowY + 6), Game1.textColor);
+            BoostContext ctx = ContextFor(row);
+            string name;
+            int x = _listX + 24;
+            if (boost.Id == BoostId.CrashCourse)
+            {
+                int from = ctx.SkillLevels[row.Skill];
+                name = Strings.Get("shrine.boosts.crash-course-row", new Dictionary<string, string>
+                {
+                    ["skill"] = SkillName(row.Skill), ["from"] = from.ToString(), ["to"] = (from + 1).ToString(),
+                });
+                x = _listX + SubRowIndent;
+            }
+            else if (boost.Id == BoostId.ElevatorPass)
+            {
+                name = Strings.Get(boost.NameKey) + ": " + Strings.Get("shrine.boosts.elevator-row", new Dictionary<string, string>
+                {
+                    ["from"] = ctx.MineFloor.ToString(),
+                    ["to"] = BoostPricing.ElevatorLanding(ctx.MineFloor).ToString(),
+                });
+            }
+            else
+            {
+                name = Strings.Get(boost.NameKey);
+            }
 
-            string cost = Strings.Get("menu.shrine-preview.cost",
-                new Dictionary<string, string> { ["cost"] = boost.Cost.ToString() });
-            Vector2 costSize = Game1.smallFont.MeasureString(cost);
+            BoostRowState rowState = StateOf(row);
+            long costJp = BoostPricing.CostOf(boost, _run, ctx);
+            bool affordable = _state.JunimoPoints >= costJp;
+
+            Utility.drawTextWithShadow(b, name, Game1.smallFont, new Vector2(x, rowY + 6), Game1.textColor);
+
             Rectangle button = BoostButtonBounds(rowY);
-            Utility.drawTextWithShadow(b, cost, Game1.smallFont,
-                new Vector2(button.X - 16 - costSize.X, rowY + 6),
-                affordable ? Game1.textColor : Color.Brown);
+            if (rowState != BoostRowState.NotAvailable)
+            {
+                string cost = Strings.Get("menu.shrine-preview.cost",
+                    new Dictionary<string, string> { ["cost"] = costJp.ToString() });
+                Vector2 costSize = Game1.smallFont.MeasureString(cost);
+                Utility.drawTextWithShadow(b, cost, Game1.smallFont,
+                    new Vector2(button.X - 16 - costSize.X, rowY + 6),
+                    affordable ? Game1.textColor : Color.Brown);
+            }
 
             if (rowState == BoostRowState.Buy)
             {
@@ -592,14 +874,12 @@ namespace TheLongestYear.UI
             string label = rowState == BoostRowState.Active
                 ? Strings.Get("shrine.boosts.active")
                 : Strings.Get("shrine.boosts.not-available");
-            Color labelColor = rowState == BoostRowState.Active ? new Color(30, 130, 30) : Color.Brown;
+            Color labelColor = rowState == BoostRowState.Active ? OwnedGreen : Color.Brown;
             Vector2 labelSize = Game1.smallFont.MeasureString(label);
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
                 new Vector2(button.X + (button.Width - labelSize.X) / 2f, rowY + 6), labelColor);
         }
 
-        /// <summary>Draw the calendar-style foresight panel: weather number+icon rows and the cart's
-        /// hoverable item-icon row.</summary>
         private void DrawForesight(SpriteBatch b)
         {
             if (_weatherCells.Count > 0)
@@ -610,7 +890,6 @@ namespace TheLongestYear.UI
                 int iconY = numY + WeatherNumberRowH;
                 foreach (var (bounds, day) in _weatherCells)
                 {
-                    // Faint calendar cell behind the number + icon (2px inset for gaps between days).
                     DrawCell(b, new Rectangle(bounds.X + 2, bounds.Y, bounds.Width - 4, bounds.Height));
 
                     string num = day.DayOfMonth.ToString();
@@ -625,7 +904,7 @@ namespace TheLongestYear.UI
                 }
             }
 
-            if (_showCartBlock)
+            if (ShowForesight && _showCartBlock)
             {
                 Utility.drawTextWithShadow(b, _cartHeader, Game1.dialogueFont,
                     new Vector2(_listX, _cartHeaderY), Game1.textColor);
@@ -643,17 +922,17 @@ namespace TheLongestYear.UI
             }
         }
 
-        /// <summary>A faint filled cell with a thin border, drawn from the 1×1 white pixel
-        /// (<c>Game1.staminaRect</c>) — the calendar-grid backing for a weather column.</summary>
+        /// <summary>A faint filled cell with a thin border, drawn from the 1x1 white pixel
+        /// (<c>Game1.staminaRect</c>): the calendar-grid backing for a weather column.</summary>
         private static void DrawCell(SpriteBatch b, Rectangle r)
         {
             Color fill = Color.SaddleBrown * 0.10f;
             Color border = Color.SaddleBrown * 0.40f;
             b.Draw(Game1.staminaRect, r, fill);
-            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, r.Width, 2), border);            // top
-            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Bottom - 2, r.Width, 2), border);   // bottom
-            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, 2, r.Height), border);           // left
-            b.Draw(Game1.staminaRect, new Rectangle(r.Right - 2, r.Y, 2, r.Height), border);   // right
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, r.Width, 2), border);
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Bottom - 2, r.Width, 2), border);
+            b.Draw(Game1.staminaRect, new Rectangle(r.X, r.Y, 2, r.Height), border);
+            b.Draw(Game1.staminaRect, new Rectangle(r.Right - 2, r.Y, 2, r.Height), border);
         }
     }
 }
