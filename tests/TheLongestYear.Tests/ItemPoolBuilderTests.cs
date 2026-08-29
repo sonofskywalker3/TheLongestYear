@@ -129,6 +129,12 @@ public class ItemPoolBuilderTests
         Assert.Equal(1, metals["(O)337"].Weight); // RareRollWeights override
     }
 
+    [Theory]
+    [InlineData("(O)Goby", 3)] [InlineData("(O)SeaJelly", 3)] [InlineData("(O)24", 3)]
+    [InlineData("(O)sonofskywalker3.CartCatalog_Book", 1)] [InlineData("(O)Author.Mod_Fish", 1)]
+    public void Vanilla_is_any_id_without_a_dot(string id, int weight)
+        => Assert.Equal(weight, ItemPoolBuilder.WeightFor(id, new BundleGenerationTuning()));
+
     [Fact]
     public void FishPool_RequiresObjectTypeFish_JunkSpawnsExcluded()
     {
