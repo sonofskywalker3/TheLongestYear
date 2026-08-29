@@ -87,6 +87,10 @@ public sealed class RunBaseline
     /// <summary>Owned keep_stardrop_* rows; max stamina starts at 270 + 34 per kept Stardrop.</summary>
     public int KeptStardropCount { get; init; }
 
+    /// <summary>Crafting recipe names granted directly (in addition to the craftbook-banked
+    /// recipes), for keeps like Garden Pot that give a single fixed recipe every loop.</summary>
+    public IReadOnlyList<string> KeptCraftingRecipes { get; init; } = new List<string>();
+
     /// <summary>Grant the Golden Scythe instead of the basic scythe each run (Keep Golden Scythe).</summary>
     public bool GrantGoldenScythe { get; init; }
 }

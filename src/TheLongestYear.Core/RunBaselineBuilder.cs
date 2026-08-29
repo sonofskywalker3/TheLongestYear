@@ -140,6 +140,12 @@ public static class RunBaselineBuilder
             if (meta.HasUpgrade(book.UpgradeId))
                 keptBooks.Add(book.StatKey);
 
+        // Kept crafting recipes granted directly (outside the craftbook banking system):
+        // Garden Pot recipe is available from day 1 of every loop once bought.
+        var keptCraftingRecipes = new List<string>();
+        if (meta.HasUpgrade("keep_garden_pot"))
+            keptCraftingRecipes.Add("Garden Pot");
+
         // Kept wallet items / powers / Stardrops: owned rows contribute their mail markers, the
         // two power events their id, and each Stardrop row +1 to the stamina count.
         var keptMail = new List<string>();
@@ -170,6 +176,7 @@ public static class RunBaselineBuilder
             StartingAnimals = startingAnimals,
             MasteryLevel = MasteryFloor(meta),
             KeptBookStats = keptBooks,
+            KeptCraftingRecipes = keptCraftingRecipes,
             KeptMailFlags = keptMail,
             KeptEventIds = keptEvents,
             KeptStardropCount = keptStardrops,

@@ -96,6 +96,8 @@
     "upgrade.cult_red_cabbage.desc": "Red Cabbage can appear from Mixed Seeds in Summer (10% per seed).",
     "upgrade.pierre_year2_seeds.name": "Pierre's Special Order",
     "upgrade.pierre_year2_seeds.desc": "Pierre stocks his year-2 seeds from year 1: Garlic in Spring, Red Cabbage in Summer, Artichoke in Fall.",
+    "upgrade.keep_garden_pot.name": "Keep: Garden Pot recipe",
+    "upgrade.keep_garden_pot.desc": "The Garden Pot recipe is in your crafting book from day 1 of every loop (10 Stone, 1 Clay, 1 Refined Quartz). Any crop grows in a pot indoors in any season.",
     "upgrade.fortune_rare_fish.name": "Fortune: Rare Fish",
     "upgrade.fortune_rare_fish.desc": "Rare fish catch chance increased by 25%.",
     "upgrade.green_thumb_1.name": "Green Thumb I",
