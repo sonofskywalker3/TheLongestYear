@@ -42,16 +42,39 @@ public static class ItemAvailabilityBuilder
 
         // Trap fish the crab-pot pool left out (the pool keeps a few per board) are still a fact
         // from Data/Fish: any of them from the week the crab pot recipe arrives.
+        var trapDerivedIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (string trapId in pools.TrapFishIds ?? new HashSet<string>(StringComparer.Ordinal))
         {
             if (derived.ContainsKey(trapId)) continue;
             derived[trapId] = new ItemAvailability(Season.Spring, TrapFishEffort,
                 $"crab pot catch (Data/Fish trap row), week {AvailabilityWeeks.TrapFishWeek}, effort {TrapFishEffort}",
                 EffortSource.Derived, AvailabilityWeeks.TrapFishWeek, Season.Spring);
+            trapDerivedIds.Add(trapId);
         }
-        IReadOnlyDictionary<string, ItemEffort>? effortDerived = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books).DeriveAll()
+
+        EffortComposer? composer = effortData != null
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books)
             : null;
+        IReadOnlyDictionary<string, ItemEffort>? effortDerived = composer?.DeriveAll();
+
+        // A trap row is a lower bound, not the only route: Clam ((O)372) is also a Beach forage
+        // spawn from day 1, which the trap-only entry above (week 2) can't see. Ask the composer
+        // for every id that came solely from the trap loop and take the earlier week.
+        if (composer != null)
+        {
+            foreach (string trapId in trapDerivedIds)
+            {
+                ItemAvailability current = derived[trapId];
+                ItemEffort? composed = composer.Derive(trapId);
+                if (composed?.EarliestWeek == null || composed.EarliestWeek >= current.EarliestWeek) continue;
+                derived[trapId] = current with
+                {
+                    EarliestWeek = composed.EarliestWeek.Value,
+                    HardWeek = composed.HardWeek ?? composed.EarliestWeek.Value,
+                    Basis = $"{current.Basis}; forage route week {composed.EarliestWeek.Value}",
+                };
+            }
+        }
 
         return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides);
     }
