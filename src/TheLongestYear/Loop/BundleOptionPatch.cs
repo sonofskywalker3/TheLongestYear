@@ -46,6 +46,32 @@ namespace TheLongestYear.Loop
 
         internal static void ResetChoice() => _lastChoice = Choice.TlyCustom;
 
+        /// <summary>Maps a console token ("custom" / "standard" / "remixed", plus the dropdown's
+        /// own vanilla wording) onto a <see cref="Choice"/>, so a diagnostic command can generate
+        /// a board under a chosen option WITHOUT touching the save's stamped choice. Returns
+        /// false for anything else, leaving the caller to report the bad argument.</summary>
+        internal static bool TryParseChoice(string token, out Choice choice)
+        {
+            switch (token?.ToLowerInvariant())
+            {
+                case "custom":
+                case "tlycustom":
+                    choice = Choice.TlyCustom;
+                    return true;
+                case "standard":
+                case "normal":
+                case "default":
+                    choice = Choice.VanillaStandard;
+                    return true;
+                case "remixed":
+                    choice = Choice.VanillaRemixed;
+                    return true;
+                default:
+                    choice = Choice.TlyCustom;
+                    return false;
+            }
+        }
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(AdvancedGameOptions __instance)

@@ -143,6 +143,41 @@ namespace TheLongestYear.Loop
             return result;
         }
 
+        /// <summary>Vanilla's own remix seeding formula (<c>Game1.GenerateBundles</c>:
+        /// <c>Utility.CreateRandom((double)uniqueIDForThisGame * 9.0)</c>).</summary>
+        private const double RemixSeedMultiplier = 9.0;
+
+        /// <summary>The game's STANDARD board: <c>Data/Bundles</c> exactly as the game would
+        /// hand it to <c>SetBundleData</c> for <see cref="Game1.BundleType.Default"/>
+        /// (<c>Game1.GenerateBundles</c>'s else branch). Read-only: the caller must not mutate
+        /// the returned asset dictionary.</summary>
+        internal static IReadOnlyDictionary<string, string> LoadStandardBundleData()
+            => Game1.content.Load<Dictionary<string, string>>(DataBundlesAssetName);
+
+        /// <summary>The game's REMIXED board for a given seed, produced by the game's OWN
+        /// generator (<c>BundleGenerator.Generate</c>) over <c>Data/RandomBundles</c>, seeded the
+        /// way <c>Game1.GenerateBundles</c> seeds it (<c>CreateRandom(seed * 9.0)</c>).
+        /// <c>Generate</c> copies <c>Data/Bundles</c> and returns the merged dictionary; it never
+        /// touches <c>Game1.netWorldState</c>, so this is safe as a diagnostic.</summary>
+        internal static IReadOnlyDictionary<string, string> GenerateRemixedBundleData(int seed)
+        {
+            List<RandomBundleData> random = Game1.content.Load<List<RandomBundleData>>(DataRandomBundlesAssetName);
+            return new BundleGenerator().Generate(random, Utility.CreateRandom(seed * RemixSeedMultiplier));
+        }
+
+        /// <summary>Turns a raw <c>Data/Bundles</c>-shaped dictionary (standard or remixed) into a
+        /// <see cref="GeneratedBundleSet"/> so a vanilla board runs through exactly the same
+        /// classification, gate audit and listing the engine's own boards do.</summary>
+        internal static GeneratedBundleSet SetFromBundleData(IReadOnlyDictionary<string, string> data)
+        {
+            List<BundleSpec> specs = data
+                .Select(entry => SpecFromStandardEntry(entry.Key, entry.Value))
+                .OrderBy(spec => spec.Room, StringComparer.Ordinal)
+                .ThenBy(spec => spec.Index)
+                .ToList();
+            return new GeneratedBundleSet(specs);
+        }
+
         /// <summary>Resolves position j -&gt; absolute <c>Data/Bundles</c> index, per vanilla's own
         /// mechanism (decompile: <c>BundleGenerator.Generate</c>, StardewValley/BundleGenerator.cs) --
         /// <c>RandomBundleData.Keys</c> is a space-delimited list of absolute indices parsed via

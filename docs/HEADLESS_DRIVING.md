@@ -44,7 +44,7 @@ deploy.ps1 -Minimized                      # wait for "SMAPI" banner / mod list 
 bridge.ps1 -Action wait -Pattern "Debug bridge: 'pause when window is inactive'" -FromLine n -TimeoutSec 180
 n = count; bridge.ps1 -Action send -Lines "tly_loadsave <SaveFolder>"
 bridge.ps1 -Action wait -Pattern "Run \d+ ready" -FromLine n -TimeoutSec 120   # then wait ~45 s more before mutating commands
-n = count; bridge.ps1 -Action send -Lines "tly_reset"
+n = count; bridge.ps1 -Action send -Lines "tly_reset"      # tly_reset 5 pins seed loop 5 (same board twice)
 bridge.ps1 -Action wait -Pattern "Opened planning hub" -FromLine n -TimeoutSec 150
 n = count; bridge.ps1 -Action send -Lines "tly_select Farming"      # the card click
 bridge.ps1 -Action wait -Pattern "Selected Farming" -FromLine n
@@ -56,7 +56,9 @@ hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).
 
 ## Read-only diagnostics (no world change)
 
-`tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_genbundles [loop]`,
+`tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`,
+`tly_genbundles [loop] [custom|standard|remixed]` (custom = the TLY engine board; standard and
+remixed audit the board vanilla would build for that Advanced Options choice),
 `tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
 copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate`.
 
