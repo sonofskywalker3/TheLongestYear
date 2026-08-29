@@ -134,16 +134,29 @@ namespace TheLongestYear.Loop
                     machineUnlocks[machineId] = fields[CraftingUnlockField].Trim();
                 }
 
+                // Recipe shop rows. A row with a Condition is stocked only when that game-state
+                // query passes (a heart level, a quest, a year), so its price is not a price the
+                // player can count on and it must not become an item's shop-price week. The rest
+                // dedupe by the CHEAPEST price across shops, not the first row seen: the same
+                // recipe sells at different prices in different shops and the cheapest is the one
+                // that decides when a player can afford it.
+                int skippedConditionRecipeRows = 0;
                 foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
                 {
                     foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
                     {
                         if (item == null || !item.IsRecipe || item.Price <= 0 || string.IsNullOrEmpty(item.ItemId)) continue;
+                        if (!string.IsNullOrWhiteSpace(item.Condition)) { skippedConditionRecipeRows++; continue; }
                         string key = BundleParsing.NormalizeItemId(item.ItemId);
-                        if (!recipePrices.ContainsKey(key))
-                            recipePrices[key] = item.Price;
+                        recipePrices[key] = recipePrices.TryGetValue(key, out int existing)
+                            ? Math.Min(existing, item.Price)
+                            : item.Price;
                     }
                 }
+                if (skippedConditionRecipeRows > 0)
+                    _monitor?.Log(
+                        $"Recipe shop rows skipped for having a Condition (not reliably stocked): {skippedConditionRecipeRows}.",
+                        LogLevel.Trace);
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CookingRecipes"))
                 {

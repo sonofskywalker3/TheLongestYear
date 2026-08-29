@@ -16,25 +16,29 @@ public static class LocationGating
 {
     /// <summary>Matched as case-sensitive substrings of the location key, so "Desert",
     /// "SkullCave" and "IslandSouth" all catch their family of map keys. Hard is the first week
-    /// the location can exist at all (facts); Week is the pacing week (a judgement call).</summary>
-    private static readonly (string Marker, int Week, int Hard)[] GatedMarkers =
+    /// the location can exist at all (facts); Week is the pacing week (a judgement call).
+    ///
+    /// Exact = the marker must equal the whole location key. "Woods" (the Secret Woods) needs it:
+    /// as a substring it also swallows "Backwoods", the free day-1 map north of the farm, and
+    /// would gate everything foraged there behind the Steel Axe.</summary>
+    private static readonly (string Marker, int Week, int Hard, bool Exact)[] GatedMarkers =
     {
         // Bus repair costs 40,000g through the Vault bundle. Fall pacing, Summer hard (Jeff,
         // 2026-08-28: a Spring bus is possible but not fun; Hard may ask from Summer week 2).
-        ("Desert",    AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek),
-        ("SkullCave", AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek),
+        ("Desert",    AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek, false),
+        ("SkullCave", AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek, false),
         // MountainUnlock clears the landslide on day 1; depth is handled per mine area
         // (AvailabilityWeeks.MineAreaWeek: 30 floors a week).
-        ("UndergroundMine", 1, 1),
+        ("UndergroundMine", 1, 1, false),
         // Rusty Key: 60 museum donations. Reachable mid-run by a player who digs, not before.
-        ("Sewer",     AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek),
-        ("BugLand",   AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek),
+        ("Sewer",     AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, false),
+        ("BugLand",   AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, false),
         // Witch's Swamp needs the Dark Talisman, which needs the Sewer first, then the Mutant
         // Bug Lair quest. Last stop of a long chain.
-        ("WitchSwamp", AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek),
-        ("WitchHut",   AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek),
+        ("WitchSwamp", AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, false),
+        ("WitchHut",   AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, false),
         // Secret Woods needs the Steel Axe (Morel, Fiddlehead, Woodskip, hardwood stumps).
-        ("Woods", 4, 4),
+        ("Woods", 4, 4, Exact: true),
     };
 
     /// <summary>First week of the year the player can stand in this location.</summary>
@@ -42,8 +46,8 @@ public static class LocationGating
     {
         if (string.IsNullOrEmpty(locationKey))
             return 1;
-        foreach ((string marker, int week, int _) in GatedMarkers)
-            if (locationKey.Contains(marker, StringComparison.Ordinal))
+        foreach ((string marker, int week, int _, bool exact) in GatedMarkers)
+            if (Matches(locationKey, marker, exact))
                 return week;
         return 1;
     }
@@ -65,8 +69,8 @@ public static class LocationGating
     public static int HardWeekFor(string locationKey)
     {
         if (string.IsNullOrEmpty(locationKey)) return 1;
-        foreach ((string marker, int _, int hard) in GatedMarkers)
-            if (locationKey.Contains(marker, StringComparison.Ordinal)) return hard;
+        foreach ((string marker, int _, int hard, bool exact) in GatedMarkers)
+            if (Matches(locationKey, marker, exact)) return hard;
         return 1;
     }
 
@@ -79,6 +83,11 @@ public static class LocationGating
         foreach (string key in locationKeys) best = Math.Min(best, HardWeekFor(key));
         return best;
     }
+
+    private static bool Matches(string locationKey, string marker, bool exact)
+        => exact
+            ? string.Equals(locationKey, marker, StringComparison.Ordinal)
+            : locationKey.Contains(marker, StringComparison.Ordinal);
 
     public static Season FloorFor(string locationKey) => AvailabilityWeeks.SeasonOf(WeekFor(locationKey));
 

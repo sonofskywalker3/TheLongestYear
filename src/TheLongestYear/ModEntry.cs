@@ -492,7 +492,7 @@ namespace TheLongestYear
                 .Build(_config.PoolTuning.ExcludedLocationMarkers);
             _enginePools = enginePools;
             _itemSeasonPins = itemSeasonPins;
-            _availability = BuildAvailabilityModelFor(_meta.State.EffectiveDifficulty(_config).Steps.ItemRarity);
+            _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
             this.Monitor.Log(
@@ -1936,17 +1936,16 @@ namespace TheLongestYear
             return "n/a";
         }
 
-        /// <summary><c>tly_dumpeffort [fileName]</c>: the item effort review document, written to the
-        /// mod folder like tly_dumpbundles (copy to docs/item-effort-model.md; gitignored).</summary>
-        /// <summary>Jeff, 2026-08-28: "define can't exist; list all of the items in all of the bundles
-        /// and when the first possible time you can get them is." One row per ingredient of every
-        /// bundle on the live board: the model's earliest season (a hard floor only when the model
-        /// derived it), the catalog's spawn seasons, the season the gate demands it, and the basis.</summary>
         /// <summary>Builds the derived item availability model from the live engine pools for one
         /// difficulty step, in the mode that step maps to (<see cref="TheLongestYear.Core.WeekModes"/>).
         /// Used both at SaveLoaded (the first build) and by <c>WorldResetService.RebuildAvailabilityModel</c>
-        /// (a reset that changed the step). Updates <see cref="_availability"/> as a side effect so
-        /// every reader of that field sees the rebuilt model without its own wiring.</summary>
+        /// (a reset that changed the step).
+        ///
+        /// Updates <see cref="_availability"/> as a side effect AND pushes the new instance into the
+        /// two holders that cached the old reference: <see cref="RunController.Availability"/> (set
+        /// once at SaveLoaded) and the board builder's catalog Availability. Both hold the model by
+        /// reference, so a reset that rebuilds it would otherwise leave them answering from the
+        /// pre-reset model for the rest of the session.</summary>
         private TheLongestYear.Core.ItemAvailabilityModel BuildAvailabilityModelFor(TheLongestYear.Core.DifficultyStep step)
         {
             TheLongestYear.Core.WeekMode mode = TheLongestYear.Core.WeekModes.For(step);
@@ -1954,9 +1953,15 @@ namespace TheLongestYear
                 _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
                 hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
                 weekOverrides: _config.AvailabilityWeekOverrides, mode: mode, step: step);
+            if (_runController != null) _runController.Availability = _availability;
+            if (_boardBuilder != null) _boardBuilder.Availability = _availability;
             return _availability;
         }
 
+        /// <summary>Jeff, 2026-08-28: "define can't exist; list all of the items in all of the bundles
+        /// and when the first possible time you can get them is." One row per ingredient of every
+        /// bundle on the live board: the model's earliest season (a hard floor only when the model
+        /// derived it), the catalog's spawn seasons, the season the gate demands it, and the basis.</summary>
         private void CmdDumpAvailability(string command, string[] args)
         {
             if (!Context.IsWorldReady || _availability == null)
@@ -2025,6 +2030,8 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_dumpavailability: wrote {path} ({sb.Length:N0} chars, {requirements.Count} bundles, {judgement.Count} judgement row(s), {unknown.Count} unknown item(s)).", LogLevel.Info);
         }
 
+        /// <summary><c>tly_dumpeffort [fileName]</c>: the item effort review document, written to the
+        /// mod folder like tly_dumpbundles (copy to docs/item-effort-model.md; gitignored).</summary>
         private void CmdDumpEffort(string command, string[] args)
         {
             if (!Context.IsWorldReady || _availability == null || _enginePools == null || _effortData == null)

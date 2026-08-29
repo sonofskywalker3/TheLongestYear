@@ -44,4 +44,16 @@ public class LocationGatingWeekTests
         var item = new PoolItem("(O)145", 75, 1, new List<Season> { Season.Summer }, new List<string> { "Forest" });
         Assert.Equal(5, FishAvailability.Derive(item, null).Week);
     }
+
+    /// <summary>F3 (2026-08-29): the Secret Woods marker is "Woods", and as a substring it also
+    /// caught "Backwoods", the free day-1 map north of the farm, gating its forage behind the
+    /// Steel Axe. Woods is matched exactly now.</summary>
+    [Theory]
+    [InlineData("Backwoods", 1)]
+    [InlineData("Woods", 4)]
+    public void Backwoods_is_not_the_secret_woods(string key, int week)
+    {
+        Assert.Equal(week, LocationGating.WeekFor(key));
+        Assert.Equal(week, LocationGating.HardWeekFor(key));
+    }
 }
