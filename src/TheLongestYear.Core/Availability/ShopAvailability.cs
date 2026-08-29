@@ -23,7 +23,8 @@ public static class ShopAvailability
                 quest.Week, AvailabilityWeeks.SeasonOf(quest.Week), HardWeek: quest.Hard);
         if (AvailabilityWeeks.OtherPlacements.TryGetValue(qualifiedId, out (int Week, string Note) other))
             return new ItemEffort(OtherEffort, $"table, {other.Note}, week {other.Week}, effort {OtherEffort}",
-                other.Week, AvailabilityWeeks.SeasonOf(other.Week));
+                other.Week, AvailabilityWeeks.SeasonOf(other.Week),
+                HardWeek: AvailabilityWeeks.OtherHardWeeks.TryGetValue(qualifiedId, out int otherHard) ? otherHard : null);
         if (AvailabilityWeeks.FruitTreeFruitWeeks.TryGetValue(qualifiedId, out (int Week, string Note) fruit))
             return new ItemEffort(FruitEffort, $"fruit tree, {fruit.Note}, week {fruit.Week}, effort {FruitEffort}",
                 fruit.Week, AvailabilityWeeks.SeasonOf(fruit.Week));

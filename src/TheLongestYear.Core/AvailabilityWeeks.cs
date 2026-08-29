@@ -157,6 +157,16 @@ public static class AvailabilityWeeks
             ["(O)772"] = (7, "Oil of Garlic, Combat 6 crafting recipe, garlic plus oil"),
             ["(O)342"] = (4, "Pickles, Preserves Jar (Farming 4) plus a Spring vegetable; the jar rule names no pickle id"),
             ["(O)233"] = (5, "Ice Cream, the Summer ice cream stand"),
+            ["(O)178"] = (1, "Hay, Marnie's shop from the first Wednesday (closed Mon and Tue), Jeff 2026-08-29"),
+            ["(O)Book_Artifact"] = (6, "Treasure Appraisal Guide, artifact spots and fishing treasure, Jeff 2026-08-29"),
+        };
+
+    /// <summary>Hard weeks for <see cref="OtherPlacements"/> rows whose earliest possible week is
+    /// earlier than the pacing week. Rows absent here use the pacing week as the hard week.</summary>
+    public static readonly IReadOnlyDictionary<string, int> OtherHardWeeks =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["(O)Book_Artifact"] = 2,   // an artifact spot can drop it from week 2, Jeff 2026-08-29
         };
 
     /// <summary>Fish with no Data/Fish row the parser reads (the 1.6 jellies): effort by hand so the
