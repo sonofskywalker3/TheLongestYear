@@ -126,7 +126,7 @@ namespace TheLongestYear.UI
 
         private void BuildEntries()
         {
-            ISet<string> donated = _run.DonatedSet();
+            SlotLedger donated = _run.DonatedLedger();
             _entries.Clear();
 
             // Collect first, then sort. Completed bundles (Have >= Need) sink to the bottom
@@ -144,10 +144,10 @@ namespace TheLongestYear.UI
                 // the "what do I owe THIS season" tracker, not a year-wide overview.
                 if (!IsRelevantForCurrentSeason(br)) continue;
 
-                int have = br.Ingredients.Count(donated.Contains);
+                int have = donated.FilledCount(br.BundleIndex);
                 int need = br.NumberOfSlots;
 
-                var (missingCount, missingThisSeason) = MissingForSeason(br, donated, _season);
+                var (missingCount, missingThisSeason) = br.MissingForSeason(_season, donated);
 
                 candidates.Add(new BundleEntry(br, have, need, missingCount, missingThisSeason));
             }
@@ -187,49 +187,6 @@ namespace TheLongestYear.UI
                     return br.CumulativeRequiredBySeason![(int)_season] > 0;
                 default:
                     return false;
-            }
-        }
-
-        /// <summary>For the <paramref name="season"/> checkpoint, returns (count of donations
-        /// still needed, list of items that could satisfy them). The two are NOT the same for
-        /// Percentage bundles — Quality Crops needs 1 of 4 in Spring, so count=1 but the list
-        /// has up to 4 options the player can pick from. For Seasonal/PerItem the count equals
-        /// the list length (each missing ingredient is required).</summary>
-        private static (int Count, IReadOnlyList<string> Items) MissingForSeason(
-            BundleRequirement br, ISet<string> donated, CoreSeason season)
-        {
-            switch (br.Kind)
-            {
-                case BundleKind.Seasonal:
-                    if (br.SeasonalSeason!.Value != season)
-                        return (0, Array.Empty<string>());
-                    var sItems = br.Ingredients.Where(i => !donated.Contains(i))
-                        .OrderBy(s => s, StringComparer.Ordinal).ToList();
-                    return (sItems.Count, sItems);
-
-                case BundleKind.PerItem:
-                    var pItems = br.ItemSeasonPins!
-                        .Where(kv => (int)kv.Value <= (int)season && !donated.Contains(kv.Key))
-                        .Select(kv => kv.Key)
-                        .OrderBy(s => s, StringComparer.Ordinal)
-                        .ToList();
-                    return (pItems.Count, pItems);
-
-                case BundleKind.Percentage:
-                    int required = br.CumulativeRequiredBySeason![(int)season];
-                    int have = br.Ingredients.Count(donated.Contains);
-                    int countNeeded = Math.Max(0, required - have);
-                    if (countNeeded == 0) return (0, Array.Empty<string>());
-                    // Count is "how many donations needed" (required - have). Items list is
-                    // "what could you donate" (not-yet-donated ingredients) — typically more
-                    // than countNeeded for Percentage bundles. e.g. Quality Crops Spring needs
-                    // 1 donation but the player can pick from any of the 4 ingredients.
-                    var qItems = br.Ingredients.Where(i => !donated.Contains(i))
-                        .OrderBy(s => s, StringComparer.Ordinal).ToList();
-                    return (countNeeded, qItems);
-
-                default:
-                    return (0, Array.Empty<string>());
             }
         }
 

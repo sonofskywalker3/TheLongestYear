@@ -106,6 +106,12 @@ namespace TheLongestYear.Loop
             if (Run.Seed == 0)
                 Run.Seed = NewSeed();
 
+            // The ledger is a mirror of the CC board (spec 2026-08-29-per-slot-ledger). Re-read it
+            // now: this is also the migration for saves whose ledger was the old id-only list.
+            int mirrored = TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
+            if (mirrored >= 0)
+                _monitor.Log($"Ledger mirrored from the CC board: {mirrored} slot(s) filled.", LogLevel.Info);
+
             // Month-rollover-on-load (khauser13 soft lock, 2026-06-10): when the player slept
             // into a new month and quit BEFORE completing its first day, the on-disk run-state
             // predates the rollover (vanilla saves before OnDayStarted runs BeginNewMonth). The
@@ -854,9 +860,9 @@ namespace TheLongestYear.Loop
             // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
             TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
-            // Backstop the live DonationObserver: union any bundle slot vanilla shows as deposited
-            // into the ledger before the gate reads it, so a deposit the observer missed can't
-            // fail an otherwise-complete season (beta report, khauser13).
+            // Mirror the ledger from the board before the gate reads it, so the gate judges exactly
+            // what the player sees on the board (a deposit the observer missed cannot fail an
+            // otherwise-complete season, beta report khauser13; a phantom credit cannot pass one).
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
@@ -1273,7 +1279,7 @@ namespace TheLongestYear.Loop
                 $"Run {Run.RunNumber}: {Run.Season} day {Run.DayOfMonth} (week {Run.WeekOfYear}). " +
                 $"Selection={Run.CurrentSelection?.ToString() ?? "none"}, " +
                 $"selectedThisMonth=[{string.Join(",", Run.SelectedThemesThisMonth)}], " +
-                $"donated={Run.DonatedItemIds.Count}, JP banked={_store.State.JunimoPoints}, " +
+                $"slots filled={Run.DonatedSlots.Count}, JP banked={_store.State.JunimoPoints}, " +
                 $"yearTwoSeedsWeek={Run.YearTwoSeedsWeek}, sneakPeekSeason={Run.SneakPeekSeason}.",
                 LogLevel.Info);
         }
