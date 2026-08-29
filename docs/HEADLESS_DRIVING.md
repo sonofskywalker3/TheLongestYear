@@ -73,10 +73,26 @@ copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate
 
 ## Year sims (`tools/sim-year.sh`)
 
-- `bash tools/sim-year.sh minimal <label>` plays a loop year meeting only the gates;
-  `bash tools/sim-year.sh goals <label>` also deposits every week's goal slots (`tly_playseason
-  goalsonly`). Both end with `tly_dumpavailability` and `tly_gatecheck` and copy the board listing
-  to `docs/board-availability.md`; the Unknown items section goes to Jeff after every run.
+- Usage: `bash tools/sim-year.sh <mode> <label> [seedLoop]`. `minimal` plays a loop year meeting
+  only the gates; `goals` also deposits every selected week's goal slots (`tly_playseason
+  goalsonly`) after the pick.
+- **Donations land a quarter a week, not all at once.** Week k of every season calls
+  `tly_playseason quarter k` *before* the pick, so the hub sees the board a real player would
+  have by then. The share is global and cumulative (quarter 3 means three quarters of the
+  season's plan donated in total), and quarter 4 also pays the vault and prints the
+  `gate WOULD PASS/FAIL` ledger line. Only quarter 4 prints that line, so do not wait on it for
+  the earlier weeks.
+- **`[seedLoop]` pins the board**: it is passed to `tly_reset <seedLoop>` so two sims (say a
+  `minimal` and a `goals` run) compare like for like. Omit it for a random board.
+- Related: `tly_genbundles <seedLoop> [custom|standard|remixed]` rolls a board through the same
+  audit without playing; `custom` is the mod's own board, `standard` and `remixed` the vanilla
+  Community Center sets.
+- Every run ends with `tly_dumpavailability` and `tly_gatecheck`, copies the board listing to
+  `docs/board-availability.md` (gitignored), and prints, in order: `=== <label>: askable by week`
+  as 16 rows `Season week N: Fo/Fa/Fi/Mi/Mx/Sp/Ar/Ki` (Foraging, Farming, Fishing, Mining, Mixed,
+  Spelunking, Artisan, Kitchen, the order `tly_themepool` prints them), the gate audit, the
+  Judgement rows and the Unknown items. The Judgement and Unknown lists go to Jeff after every
+  run (memory `tly-sim-list-unknowns-each-run`).
 - **Never stop a running sim with the harness's task stop.** It kills the wrapper shell only; the
   inner script keeps sending bridge commands and poisons the next run (2026-08-28, sims I, J and
   K). Kill the script's own process (`Get-CimInstance Win32_Process` filtered on the script
