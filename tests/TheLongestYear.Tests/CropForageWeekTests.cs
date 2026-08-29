@@ -39,6 +39,20 @@ public class CropForageWeekTests
     }
 
     [Fact]
+    public void A_seven_day_crop_planted_day_1_is_harvested_in_week_2()
+    {
+        var crops = new List<RawCropGrowth>
+        {
+            new("(O)597", 7, false, false, new[] { Season.Spring }),   // Blue Jazz
+            new("(O)270", 14, true, false, new[] { Season.Summer }),   // Corn
+            new("(O)24", 4, false, false, new[] { Season.Spring }),    // Parsnip
+        };
+        Assert.Equal(2, CropForageAvailability.DeriveCrop("(O)597", crops)!.EarliestWeek);
+        Assert.Equal(7, CropForageAvailability.DeriveCrop("(O)270", crops)!.EarliestWeek);
+        Assert.Equal(1, CropForageAvailability.DeriveCrop("(O)24", crops)!.EarliestWeek);
+    }
+
+    [Fact]
     public void Crop_with_no_seasons_is_unknown()
     {
         var crops = new List<RawCropGrowth> { new("(O)454", 28, false, false) };
@@ -53,11 +67,11 @@ public class CropForageWeekTests
             new("(O)88", Season.Spring, null, "Desert"),      // Coconut, week 9 by location
             new("(O)78", null, null, "UndergroundMine20"),     // Cave Carrot, week 1
             new("(O)404", Season.Fall, null, "Forest"),        // Common Mushroom
-            new("(O)404", Season.Spring, null, "Woods"),
+            new("(O)404", Season.Spring, null, "Woods"),        // Woods gates at week 4 (Steel Axe)
         };
         Assert.Equal(9, CropForageAvailability.DeriveForage("(O)88", spawns)!.EarliestWeek);
         Assert.Equal(1, CropForageAvailability.DeriveForage("(O)78", spawns)!.EarliestWeek);
-        Assert.Equal(1, CropForageAvailability.DeriveForage("(O)404", spawns)!.EarliestWeek);
+        Assert.Equal(4, CropForageAvailability.DeriveForage("(O)404", spawns)!.EarliestWeek);
     }
 
     [Fact]
