@@ -27,9 +27,9 @@ public class CuratedQuotaRampTests
         Assert.NotNull(req);
         Assert.Equal(BundleKind.Percentage, req!.Kind);
         Assert.Equal(new[] { 0, 0, 0, 2 }, req.CumulativeRequiredBySeason);
-        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Summer, new HashSet<string>()));
-        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Fall, new HashSet<string>()));
-        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Winter, new HashSet<string>()));
+        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Summer, TestLedger.Empty()));
+        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Fall, TestLedger.Empty()));
+        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Winter, TestLedger.Empty()));
     }
 }
 

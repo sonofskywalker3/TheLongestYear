@@ -167,10 +167,8 @@ public class BundleClassifierTests
 
         var req = BundleClassifier.Classify(parsed, Theme.Mixed, pins, NoQuotas);
 
-        var donated2 = new HashSet<string> { "(O)1", "(O)2" };
-        Assert.False(req!.IsFullyComplete(donated2));
-        donated2.Add("(O)3");
-        Assert.True(req.IsFullyComplete(donated2));
+        Assert.False(req!.IsFullyComplete(TestLedger.Fill(req, "(O)1", "(O)2")));
+        Assert.True(req.IsFullyComplete(TestLedger.Fill(req, "(O)1", "(O)2", "(O)3")));
     }
 
     [Fact]
@@ -426,7 +424,7 @@ public class BundleClassifierAvailabilityTests
         // Real pressure: with nothing donated, the Fall day-28 gate must already fail.
         // BundleRequirement has no DemandAtSeason member (the brief named one); the season
         // gate itself is the honest expression of "this bundle demands something by Fall".
-        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Fall, new HashSet<string>()),
+        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Fall, TestLedger.Empty()),
             "an all-of-them bundle must apply pressure before the Winter win check");
     }
 

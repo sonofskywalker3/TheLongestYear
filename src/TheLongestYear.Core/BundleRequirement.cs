@@ -18,8 +18,19 @@ public sealed class BundleRequirement
     /// <summary>The Y ingredient ids (qualified id form, e.g. "(O)24"). Player donates from these.</summary>
     public IReadOnlyList<string> Ingredients { get; }
 
-    /// <summary>The X slots — number of distinct ingredients required for full completion.</summary>
+    /// <summary>The X slots the board needs filled for full completion. For Seasonal and PerItem
+    /// this is the slot count (a doubled id counts twice) when slots are supplied, else the
+    /// distinct ingredient count; for Percentage it is the bundle's pick count.</summary>
     public int NumberOfSlots { get; }
+
+    /// <summary>The vanilla bundle index (the number after the slash in the Data/Bundles key),
+    /// the key the per-slot ledger uses. -1 when the requirement was built without a board
+    /// (tests, legacy fixtures).</summary>
+    public int BundleIndex { get; }
+
+    /// <summary>Every concrete slot in board order, duplicates kept. Progress is counted here;
+    /// <see cref="Ingredients"/> stays the distinct id list for pools, pins and goals.</summary>
+    public IReadOnlyList<BundleSlot> Slots { get; }
 
     // ---------- KIND 1 (Seasonal) ----------
     public Season? SeasonalSeason { get; }
@@ -59,7 +70,9 @@ public sealed class BundleRequirement
         IReadOnlyList<int>? cumulativeRequiredBySeason,
         IReadOnlyDictionary<string, int>? ingredientStacks,
         IReadOnlyDictionary<string, int>? ingredientQualities,
-        IReadOnlyDictionary<string, Season>? stretchLines)
+        IReadOnlyDictionary<string, Season>? stretchLines,
+        int bundleIndex,
+        IReadOnlyList<BundleSlot>? slots)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Theme = theme;
@@ -72,25 +85,31 @@ public sealed class BundleRequirement
         IngredientStacks = ingredientStacks ?? new Dictionary<string, int>();
         IngredientQualities = ingredientQualities ?? new Dictionary<string, int>();
         StretchLines = stretchLines ?? new Dictionary<string, Season>();
+        BundleIndex = bundleIndex;
+        Slots = slots ?? ingredients.Select((id, i) => new BundleSlot(i, id)).ToList();
     }
 
     public static BundleRequirement CreateSeasonal(
         string name, Theme theme, IReadOnlyList<string> ingredients, Season season,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
         IReadOnlyDictionary<string, int>? ingredientQualities = null,
-        IReadOnlyDictionary<string, Season>? stretchLines = null)
+        IReadOnlyDictionary<string, Season>? stretchLines = null,
+        int bundleIndex = -1,
+        IReadOnlyList<BundleSlot>? slots = null)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("Seasonal bundle needs at least one ingredient.", nameof(ingredients));
         return new BundleRequirement(
             name, theme, BundleKind.Seasonal,
-            ingredients, ingredients.Count,
+            ingredients, slots?.Count ?? ingredients.Count,
             seasonalSeason: season,
             itemSeasonPins: null,
             cumulativeRequiredBySeason: null,
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
-            stretchLines: stretchLines);
+            stretchLines: stretchLines,
+            bundleIndex: bundleIndex,
+            slots: slots);
     }
 
     /// <summary>Convenience: pins become the ingredient list. Use when every ingredient is pinned.</summary>
@@ -98,12 +117,14 @@ public sealed class BundleRequirement
         string name, Theme theme, IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
         IReadOnlyDictionary<string, int>? ingredientQualities = null,
-        IReadOnlyDictionary<string, Season>? stretchLines = null)
+        IReadOnlyDictionary<string, Season>? stretchLines = null,
+        int bundleIndex = -1,
+        IReadOnlyList<BundleSlot>? slots = null)
     {
         if (itemSeasonPins == null || itemSeasonPins.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one pinned ingredient.", nameof(itemSeasonPins));
         return CreatePerItem(name, theme, itemSeasonPins.Keys.ToList(), itemSeasonPins,
-            ingredientStacks, ingredientQualities, stretchLines);
+            ingredientStacks, ingredientQualities, stretchLines, bundleIndex, slots);
     }
 
     /// <summary>Full form: ingredients listed explicitly; pins are an optional subset. Unpinned
@@ -114,7 +135,9 @@ public sealed class BundleRequirement
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
         IReadOnlyDictionary<string, int>? ingredientQualities = null,
-        IReadOnlyDictionary<string, Season>? stretchLines = null)
+        IReadOnlyDictionary<string, Season>? stretchLines = null,
+        int bundleIndex = -1,
+        IReadOnlyList<BundleSlot>? slots = null)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one ingredient.", nameof(ingredients));
@@ -122,13 +145,15 @@ public sealed class BundleRequirement
             throw new ArgumentNullException(nameof(itemSeasonPins));
         return new BundleRequirement(
             name, theme, BundleKind.PerItem,
-            ingredients, ingredients.Count,
+            ingredients, slots?.Count ?? ingredients.Count,
             seasonalSeason: null,
             itemSeasonPins: itemSeasonPins,
             cumulativeRequiredBySeason: null,
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
-            stretchLines: stretchLines);
+            stretchLines: stretchLines,
+            bundleIndex: bundleIndex,
+            slots: slots);
     }
 
     public static BundleRequirement CreatePercentage(
@@ -137,7 +162,9 @@ public sealed class BundleRequirement
         IReadOnlyList<int> cumulativeRequiredBySeason,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
         IReadOnlyDictionary<string, int>? ingredientQualities = null,
-        IReadOnlyDictionary<string, Season>? stretchLines = null)
+        IReadOnlyDictionary<string, Season>? stretchLines = null,
+        int bundleIndex = -1,
+        IReadOnlyList<BundleSlot>? slots = null)
     {
         // Y >= X, not Y > X. A bundle that must be donated in FULL still has a meaningful season
         // ramp ("this much of it by then"), and refusing X == Y here is what used to shunt such a
@@ -162,44 +189,65 @@ public sealed class BundleRequirement
             cumulativeRequiredBySeason: cumulativeRequiredBySeason,
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
-            stretchLines: stretchLines);
+            stretchLines: stretchLines,
+            bundleIndex: bundleIndex,
+            slots: slots);
     }
 
     /// <summary>True if this bundle's contribution to <paramref name="currentSeason"/>'s
-    /// day-28 gate is satisfied by the run's donation ledger.</summary>
-    public bool IsSatisfiedAtSeasonEnd(Season currentSeason, ISet<string> donated)
+    /// day-28 gate is satisfied by the per-slot ledger.</summary>
+    public bool IsSatisfiedAtSeasonEnd(Season currentSeason, SlotLedger ledger)
+        => MissingForSeason(currentSeason, ledger).Count == 0;
+
+    /// <summary>True if the bundle is complete on the board: at least X of its slots filled.</summary>
+    public bool IsFullyComplete(SlotLedger ledger)
     {
+        if (ledger is null) throw new ArgumentNullException(nameof(ledger));
+        return ledger.FilledCount(BundleIndex) >= NumberOfSlots;
+    }
+
+    /// <summary>For the <paramref name="season"/> checkpoint: how many more slots the gate needs and
+    /// which ids could fill them. Seasonal: every unfilled slot once its season is due. PerItem:
+    /// every unfilled slot whose id is pinned at or before the season (a doubled id demands every
+    /// slot with that id). Percentage: required minus filled, with every unfilled slot's id as a
+    /// candidate (the count and the list differ there: Quality Crops needs 1 of 4 in Spring). The
+    /// Season Goals page, the gate and tly_gateneeds all read this one method.</summary>
+    public (int Count, IReadOnlyList<string> ItemIds) MissingForSeason(Season season, SlotLedger ledger)
+    {
+        if (ledger is null) throw new ArgumentNullException(nameof(ledger));
         switch (Kind)
         {
             case BundleKind.Seasonal:
-                // Not yet due if its named season is later than current.
-                if ((int)SeasonalSeason!.Value > (int)currentSeason) return true;
-                return Ingredients.All(donated.Contains);
+                if ((int)SeasonalSeason!.Value > (int)season) return (0, Array.Empty<string>());
+                var sItems = UnfilledIds(ledger, _ => true);
+                return (sItems.Count, sItems);
 
             case BundleKind.PerItem:
-                foreach (KeyValuePair<string, Season> kv in ItemSeasonPins!)
-                {
-                    if ((int)kv.Value <= (int)currentSeason && !donated.Contains(kv.Key))
-                        return false;
-                }
-                return true;
+                var pItems = UnfilledIds(ledger, id => ItemSeasonPins!.TryGetValue(id, out Season due) && (int)due <= (int)season);
+                return (pItems.Count, pItems);
 
             case BundleKind.Percentage:
-                int required = CumulativeRequiredBySeason![(int)currentSeason];
-                int count = 0;
-                foreach (string id in Ingredients)
-                    if (donated.Contains(id) && ++count >= required)
-                        return true;
-                return required == 0;   // an explicit-zero quota is trivially met
+                int required = CumulativeRequiredBySeason![(int)season];
+                int countNeeded = Math.Max(0, required - ledger.FilledCount(BundleIndex));
+                if (countNeeded == 0) return (0, Array.Empty<string>());
+                return (countNeeded, UnfilledIds(ledger, _ => true));
 
             default:
                 throw new InvalidOperationException($"Unknown bundle kind: {Kind}");
         }
     }
 
-    /// <summary>True if this bundle is fully complete (≥ X ingredients donated).</summary>
-    public bool IsFullyComplete(ISet<string> donated)
-        => Ingredients.Count(donated.Contains) >= NumberOfSlots;
+    /// <summary>Ids of the unfilled slots whose id passes <paramref name="wanted"/>, ordinal order,
+    /// one entry per slot (a doubled id unfilled twice appears twice).</summary>
+    private List<string> UnfilledIds(SlotLedger ledger, Func<string, bool> wanted)
+    {
+        var result = new List<string>();
+        foreach (BundleSlot slot in Slots)
+            if (!ledger.IsFilled(BundleIndex, slot.IngredientIndex) && wanted(slot.ItemId))
+                result.Add(slot.ItemId);
+        result.Sort(StringComparer.Ordinal);
+        return result;
+    }
 
     /// <summary>Rule A, tier 1: the in-play ingredients the day-28 gate DEMANDS this season.
     /// Seasonal: every ingredient in its own season. PerItem: the ones pinned to this season.
