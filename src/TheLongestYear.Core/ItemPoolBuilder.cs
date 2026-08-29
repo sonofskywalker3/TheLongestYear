@@ -26,6 +26,8 @@ public static class ItemPoolBuilder
     private const int TapperCategory = -27;
     private const int GemCategory = -2;
     private static readonly HashSet<int> BookCategories = new() { -102, -103 };
+    private const string ColourTagPrefix = "color_";
+    private const int TrophyWeight = 3;
 
     /// <summary>Fixed additions to the TapperGoods pool beyond the -27 (syrup) category:
     /// Hardwood, Sap, Moss (1.6), Maple Seed, Acorn, Pine Cone — tapper-adjacent items a
@@ -92,6 +94,9 @@ public static class ItemPoolBuilder
         var tapperGoodsPool = BuildCategoryPoolWithAdditions(
             objects, TapperCategory, TapperGoodsAdditions, excluded, tuning);
 
+        var seasonsById = BuildKnownSeasonsById(cropPool, fishPool, crabPotPool, foragePool);
+        var (byKind, colourTags, winterOnly) = BuildByKindAndSpecialSets(objects, excluded, tuning, seasonsById);
+
         return new ItemPools
         {
             Crops = cropPool,
@@ -116,7 +121,81 @@ public static class ItemPoolBuilder
                     .Select(id => Qualify(Unqualify(id))),
                 StringComparer.Ordinal),
             FishRows = fishRows ?? new Dictionary<string, RawFishEntry>(),
+            ByKind = byKind,
+            ColourTags = colourTags,
+            WinterOnly = winterOnly,
         };
+    }
+
+    /// <summary>Item -> known catalog seasons, gathered from the pools that already carry
+    /// season data (crops, fish, crab pot, forage). Feeds the ByKind/WinterOnly walk over ALL
+    /// Data/Objects, most of which have no season data of their own (empty = unknown/any).</summary>
+    private static IReadOnlyDictionary<string, IReadOnlyList<Season>> BuildKnownSeasonsById(
+        params IReadOnlyList<PoolItem>[] pools)
+    {
+        var map = new Dictionary<string, IReadOnlyList<Season>>(StringComparer.Ordinal);
+        foreach (IReadOnlyList<PoolItem> pool in pools)
+            foreach (PoolItem item in pool)
+                if (item.Seasons.Count > 0)
+                    map[item.ItemId] = item.Seasons;
+        return map;
+    }
+
+    /// <summary>Walks every Data/Objects entry that passes <see cref="Vets"/> once, building the
+    /// per-kind pools, the colour-tag index, and the Winter-only set together. Trophy is
+    /// afterwards REPLACED by a fixed weight-3 list built directly from
+    /// <see cref="AuthoredBundleCatalog.GilTrophies"/> (hats and weapons are not Data/Objects
+    /// rows, so the walk can never find most of them).</summary>
+    private static (
+        IReadOnlyDictionary<ItemKind, IReadOnlyList<PoolItem>> byKind,
+        IReadOnlyDictionary<string, IReadOnlyList<PoolItem>> colourTags,
+        IReadOnlyList<PoolItem> winterOnly) BuildByKindAndSpecialSets(
+        IReadOnlyDictionary<string, RawObjectEntry> objects, HashSet<string> excluded,
+        BundleGenerationTuning tuning, IReadOnlyDictionary<string, IReadOnlyList<Season>> seasonsById)
+    {
+        var byKind = new Dictionary<ItemKind, List<PoolItem>>();
+        foreach (ItemKind kind in Enum.GetValues(typeof(ItemKind)))
+            byKind[kind] = new List<PoolItem>();
+        var colourTags = new Dictionary<string, List<PoolItem>>(StringComparer.Ordinal);
+        var winterOnly = new List<PoolItem>();
+
+        foreach (KeyValuePair<string, RawObjectEntry> entry in objects)
+        {
+            string bare = entry.Key;
+            RawObjectEntry obj = entry.Value;
+            string id = Qualify(bare);
+            if (!Vets(bare, id, objects, excluded))
+                continue;
+
+            IReadOnlyList<Season> seasons = seasonsById.TryGetValue(id, out IReadOnlyList<Season>? known)
+                ? known : Array.Empty<Season>();
+            PoolItem item = MakeItem(id, objects, tuning, seasons, Array.Empty<string>());
+            byKind[ItemKindClassifier.From(bare, obj)].Add(item);
+
+            if (obj.ContextTags != null)
+            {
+                foreach (string tag in obj.ContextTags)
+                {
+                    if (!tag.StartsWith(ColourTagPrefix, StringComparison.Ordinal))
+                        continue;
+                    if (!colourTags.TryGetValue(tag, out List<PoolItem>? list))
+                        colourTags[tag] = list = new List<PoolItem>();
+                    list.Add(item);
+                }
+            }
+
+            if (seasons.Count == 1 && seasons[0] == Season.Winter)
+                winterOnly.Add(item);
+        }
+
+        byKind[ItemKind.Trophy] = AuthoredBundleCatalog.GilTrophies
+            .Select(id => new PoolItem(id, 0, TrophyWeight, Array.Empty<Season>(), Array.Empty<string>()))
+            .ToList();
+
+        return (
+            byKind.ToDictionary(kv => kv.Key, kv => (IReadOnlyList<PoolItem>)Finish(kv.Value)),
+            colourTags.ToDictionary(kv => kv.Key, kv => (IReadOnlyList<PoolItem>)Finish(kv.Value), StringComparer.Ordinal),
+            Finish(winterOnly));
     }
 
     /// <summary>Maps that only exist while a passive festival runs, keyed to that festival's

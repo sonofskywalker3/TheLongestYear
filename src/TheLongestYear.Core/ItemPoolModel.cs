@@ -59,6 +59,20 @@ public sealed class ItemPools
     /// The pools themselves carry qualified ids; this table mirrors the game's own keying.</summary>
     public IReadOnlyDictionary<string, RawFishEntry> FishRows { get; init; }
         = new Dictionary<string, RawFishEntry>();
+
+    /// <summary>Every vetted Data/Objects item, bucketed by <see cref="ItemKind"/> (Other
+    /// included). Trophy is built from <see cref="AuthoredBundleCatalog.GilTrophies"/> directly
+    /// (hats and weapons have no Data/Objects row).</summary>
+    public IReadOnlyDictionary<ItemKind, IReadOnlyList<PoolItem>> ByKind { get; init; }
+        = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>();
+
+    /// <summary>Vetted items indexed by each Data/Objects context tag starting with
+    /// "color_" (e.g. "color_red").</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<PoolItem>> ColourTags { get; init; }
+        = new Dictionary<string, IReadOnlyList<PoolItem>>();
+
+    /// <summary>Vetted items whose known catalog seasons are exactly Winter.</summary>
+    public IReadOnlyList<PoolItem> WinterOnly { get; init; } = new List<PoolItem>();
 }
 
 /// <summary>Which item pool a picked bundle's slots re-roll from. None = keep the
