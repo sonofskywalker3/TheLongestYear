@@ -6,7 +6,8 @@ namespace TheLongestYear.Loop
 {
     /// <summary>
     /// Obtainability upgrade: inject Red Cabbage Seeds into the Summer Mixed Seeds roll when the
-    /// player owns cult_red_cabbage. 10% substitution chance, applied only in Summer. (The
+    /// player owns cult_red_cabbage. 10% substitution chance, applied only in Summer; the
+    /// Year-Two Seeds boost handled by the same patch is not Summer-limited (see below). (The
     /// Starfruit twin was removed 2026-08-21 — the desert is reachable without RNG.) See
     /// <see cref="MixedSeedsPatch"/>.
     ///
@@ -69,10 +70,11 @@ namespace TheLongestYear.Loop
         {
             if (UpgradeChecker.HasUpgrade == null) return;
             if (itemId != MixedSeedsId) return;
-            if (location == null || location.GetSeason() != StardewValley.Season.Summer) return;
+            if (location == null) return;
             if (location is StardewValley.Locations.IslandLocation) return; // vanilla overrides island picks
 
-            if (UpgradeChecker.HasUpgrade("cult_red_cabbage")
+            if (location.GetSeason() == StardewValley.Season.Summer
+                && UpgradeChecker.HasUpgrade("cult_red_cabbage")
                 && Game1.random.NextDouble() < SubstitutionChance)
             {
                 __result = RedCabbageSeeds;
