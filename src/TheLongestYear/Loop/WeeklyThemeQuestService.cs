@@ -293,7 +293,7 @@ namespace TheLongestYear.Loop
                 ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = slot.Stack.ToString() })
                 : "";
             string quality = QualityTags.For(slot.Quality);
-            return Strings.Get("quest.weekly.slot", new Dictionary<string, string>
+            string described = Strings.Get("quest.weekly.slot", new Dictionary<string, string>
             {
                 ["item"] = name,
                 ["color"] = colorTag,
@@ -301,6 +301,9 @@ namespace TheLongestYear.Loop
                 ["quality"] = quality,
                 ["bundle"] = slot.BundleName,
             });
+            // Spec 2026-08-28-obtainable-board-2-stretch: a stretch goal asks for an item the
+            // model wouldn't otherwise call obtainable yet - tag it so the player isn't confused.
+            return slot.Stretch ? described + Strings.Get("goal.stretch-tag") : described;
         }
 
         /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used

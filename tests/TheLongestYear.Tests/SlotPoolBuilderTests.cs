@@ -141,4 +141,32 @@ public class SlotPoolBuilderTests
             data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true);
         Assert.Single(pool);
     }
+
+    [Fact]
+    public void A_spring_stretch_line_is_a_goal_from_spring_week_4()
+    {
+        // "(O)s" is pinned Winter normally (not due in Spring) but stretched to Spring: it must
+        // become an in-play, due, Stretch goal once weekOfYear reaches Spring's last week (4),
+        // regardless of the obtainability predicate (here: not truly obtainable until week 6).
+        var data = BundleData((3, "Stretchy", "s 1 0", 1));
+        var reqs = Reqs(BundleRequirement.CreatePerItem(
+            "Stretchy", Theme.Mixed,
+            new Dictionary<string, Season> { ["(O)s"] = Season.Winter },
+            stretchLines: new Dictionary<string, Season> { ["(O)s"] = Season.Spring }));
+
+        static bool Obtainable(string id, int week) => id != "(O)s" || week >= 6;
+        static ItemKind KindOf(string id) => ItemKind.Other;
+
+        var week3 = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Mixed, Season.Spring,
+            id => Obtainable(id, 3), KindOf, weekOfYear: 3);
+        var week4 = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Mixed, Season.Spring,
+            id => Obtainable(id, 4), KindOf, weekOfYear: 4);
+
+        Assert.DoesNotContain(week3, s => s.ItemId == "(O)s");
+        BonusSlot slot = Assert.Single(week4, s => s.ItemId == "(O)s");
+        Assert.True(slot.Stretch);
+        Assert.True(slot.Due);
+    }
 }
