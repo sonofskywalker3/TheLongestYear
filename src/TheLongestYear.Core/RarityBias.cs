@@ -35,7 +35,10 @@ public static class RarityBias
         if (bias == 1.0)
             return pools;
 
-        return new ItemPools
+        // `with`, never a fresh ItemPools: every property this pass does NOT name carries over by
+        // construction. Listing them by hand is how a property added later gets silently dropped
+        // whenever the rarity modifier is on (final review, 2026-08-29).
+        return pools with
         {
             Crops = Reweight(pools.Crops, bias, PoolDomain.SeasonalCrops, thresholds),
             Fish = Reweight(pools.Fish, bias, PoolDomain.Fish, thresholds),
@@ -62,15 +65,9 @@ public static class RarityBias
                 kv => kv.Key, kv => Reweight(kv.Value, bias, PoolDomain.None, thresholds), StringComparer.Ordinal),
             WinterOnly = Reweight(pools.WinterOnly, bias, PoolDomain.None, thresholds),
 
-            // Obtainability and quality-eligibility data are correctness, not difficulty. Dropping
-            // either here would let a bundle be demanded before its items exist, or put a gold
-            // star on an item the game never stars (Nexus 1122358). The fish rows and the trap /
-            // fruit-tree id sets are the same kind of data: rules, not weights.
-            DerivedSeasonPins = pools.DerivedSeasonPins,
-            QualityEligibleIds = pools.QualityEligibleIds,
-            FishRows = pools.FishRows,
-            TrapFishIds = pools.TrapFishIds,
-            FruitTreeFruitIds = pools.FruitTreeFruitIds,
+            // Obtainability and quality-eligibility data (DerivedSeasonPins, QualityEligibleIds,
+            // FishRows, TrapFishIds, FruitTreeFruitIds, ExcludedIds) are correctness, not
+            // difficulty: they are rules, not weights, and the `with` above carries them unchanged.
         };
     }
 

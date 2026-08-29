@@ -124,6 +124,11 @@ public static class ItemPoolBuilder
             ByKind = byKind,
             ColourTags = colourTags,
             WinterOnly = winterOnly,
+            // Every id kept out on purpose, so a consumer reading ids from outside the pools
+            // (a bundle's own vanilla ids) cannot re-admit one. Vets checks the built-in list
+            // separately from `excluded`, so both halves are joined here.
+            ExcludedIds = new HashSet<string>(
+                BuiltInExcludedItemIds.Concat(excluded), StringComparer.Ordinal),
         };
     }
 
@@ -154,7 +159,7 @@ public static class ItemPoolBuilder
         BundleGenerationTuning tuning, IReadOnlyDictionary<string, IReadOnlyList<Season>> seasonsById)
     {
         var byKind = new Dictionary<ItemKind, List<PoolItem>>();
-        foreach (ItemKind kind in Enum.GetValues(typeof(ItemKind)))
+        foreach (ItemKind kind in Enum.GetValues<ItemKind>())
             byKind[kind] = new List<PoolItem>();
         var colourTags = new Dictionary<string, List<PoolItem>>(StringComparer.Ordinal);
         var winterOnly = new List<PoolItem>();

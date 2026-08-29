@@ -45,6 +45,14 @@ public static class BundlePoolRecipes
     /// <summary>Rare Crops asks for crops that take real work: effort at or above this.</summary>
     public const int RareCropMinimumEffort = 3;
 
+    /// <summary>The weight a synthesized candidate carries: the lowest there is, so a bundle's own
+    /// vanilla id never outdraws a real pool item.
+    ///
+    /// A synthesized PoolItem also carries price 0 and no seasons, because the pools are the only
+    /// place that data lives and by definition no pool knows this id. <see cref="ItemHardness"/>
+    /// therefore ranks it Common (price 0 is below every rarity threshold) and gives it no
+    /// out-of-season bonus, so the pity trim drops it LAST. That is the intended direction: the
+    /// item is what vanilla itself asked for, so it is the safest thing in the list.</summary>
     private const int SynthesizedWeight = 1;
 
     private const string Hay = "(O)178";
@@ -76,6 +84,12 @@ public static class BundlePoolRecipes
         "(O)220", "(O)221", "(O)222", "(O)223", "(O)233", "(O)234",
         "(O)604", "(O)608", "(O)611", "(O)612", "(O)731",
     };
+
+    /// <summary>Chef's pantry staples: Sugar, Wheat Flour, Oil, Vinegar, Rice. A kitchen asks for
+    /// these as readily as for a crop, and none of them lands in a crop, forage or animal-product
+    /// pool, so without this list the ingredient half could never offer one (final review,
+    /// 2026-08-29).</summary>
+    private static readonly string[] ChefStaples = { "(O)245", "(O)246", "(O)247", "(O)419", "(O)423" };
 
     private static readonly string[] Berries = { "(O)296", "(O)410" };
     private static readonly string[] Dolls = { "(O)103", "(O)126", "(O)127" };
@@ -136,7 +150,7 @@ public static class BundlePoolRecipes
             {
                 new PoolPart((p, _) => p.Cooking, Math.Max(1, ids.Count / 2), "Cooking"),
                 new PoolPart((p, _) => Union(p.Crops, p.Forage, Bucket(p, ItemKind.Egg), Bucket(p, ItemKind.Milk),
-                    Bucket(p, ItemKind.AnimalProduct)), RestOfTheSlots, "Ingredient"),
+                    Bucket(p, ItemKind.AnimalProduct), Fixed(p, ChefStaples)), RestOfTheSlots, "Ingredient"),
             },
             ["Winter Star"] = _ => One((p, _) => p.WinterOnly, "Winter"),
             ["The Missing"] = _ => One(MissingSource, "Extreme"),
@@ -245,24 +259,33 @@ public static class BundlePoolRecipes
     private static Func<ItemPools, ItemAvailabilityModel?, IReadOnlyList<PoolItem>> Kind(ItemKind kind)
         => (p, _) => Bucket(p, kind);
 
+    /// <summary>Fodder: the grains and Hay, plus every fruit. The fruit half is the fruit category
+    /// as it appears in the crop pool, joined with the fruit a Data/FruitTrees tree grows: tree
+    /// fruit has no crop row, so the category walk alone would never offer an Apple (final review,
+    /// 2026-08-29). Both halves resolve THROUGH the pools, so nothing unvetted can enter.</summary>
     private static IReadOnlyList<PoolItem> FodderSource(ItemPools pools, ItemAvailabilityModel? model)
         => Union(
             Fixed(pools, FodderGrains.Concat(new[] { Hay })),
-            pools.Crops.Where(p => p.Category == FruitCategory).ToList());
+            pools.Crops.Where(p => p.Category == FruitCategory).ToList(),
+            Fixed(pools, pools.FruitTreeFruitIds));
 
-    /// <summary>Crab Pot: the crab-pot pool plus every trap fish the data names. A trap id the
-    /// crab-pot pool missed is taken from the Fish pool, or synthesized at the lowest weight: the
-    /// game catches it in a pot whatever the spawn tables filed it under.</summary>
+    /// <summary>Crab Pot: the crab-pot pool plus every trap fish the data names, taken from the
+    /// Fish or CrabPot pool. A trap id NEITHER pool knows is left out rather than synthesized
+    /// (mirroring <see cref="RareCropSource"/>): an id no pool carries is one that failed vetting
+    /// or was excluded on purpose, and Data/Fish naming it "trap" is no reason to put it back
+    /// (final review, 2026-08-29). Only the bundle's own vanilla ids are ever synthesized.</summary>
     private static IReadOnlyList<PoolItem> CrabPotSource(ItemPools pools, ItemAvailabilityModel? model)
     {
         var byId = new Dictionary<string, PoolItem>(StringComparer.Ordinal);
         foreach (PoolItem item in pools.Fish)
             byId[item.ItemId] = item;
+        foreach (PoolItem item in pools.CrabPot)
+            if (!byId.ContainsKey(item.ItemId))
+                byId[item.ItemId] = item;
         var traps = new List<PoolItem>();
         foreach (string id in pools.TrapFishIds)
-            traps.Add(byId.TryGetValue(id, out PoolItem? known)
-                ? known
-                : new PoolItem(id, 0, SynthesizedWeight, Array.Empty<Season>(), Array.Empty<string>()));
+            if (byId.TryGetValue(id, out PoolItem? known))
+                traps.Add(known);
         return Union(pools.CrabPot, traps);
     }
 
@@ -316,7 +339,13 @@ public static class BundlePoolRecipes
 
     /// <summary>The bundle's own items, so every part can fall back to the vanilla identity.
     /// An id the pools do not know is synthesized at the lowest weight: it is what the bundle
-    /// asked for in vanilla, so it is obtainable even when no pool carries it.</summary>
+    /// asked for in vanilla, so it is obtainable even when no pool carries it.
+    ///
+    /// An id in <see cref="ItemPools.ExcludedIds"/> is NOT synthesized, and not offered at all: the
+    /// pools left it out on purpose (Easy's year-2 crops, the built-in exclude list, the config
+    /// exclude list), and widening every part with the bundle's own vanilla ids would otherwise
+    /// re-admit exactly the ids the exclusions exist to keep off the board (final review,
+    /// 2026-08-29). Only ids that are merely unknown to the pools are synthesized.</summary>
     private static IReadOnlyList<PoolItem> VanillaItems(ItemPools pools, IReadOnlyList<string> ids)
     {
         var known = new Dictionary<string, PoolItem>(StringComparer.Ordinal);
@@ -331,6 +360,7 @@ public static class BundlePoolRecipes
             if (string.IsNullOrEmpty(raw) || BundleParsing.IsCategoryRef(raw)) continue;
             string id = BundleParsing.NormalizeItemId(raw);
             if (!seen.Add(id)) continue;
+            if (pools.ExcludedIds.Contains(id)) continue;
             result.Add(known.TryGetValue(id, out PoolItem? item)
                 ? item
                 : new PoolItem(id, 0, SynthesizedWeight, Array.Empty<Season>(), Array.Empty<string>()));

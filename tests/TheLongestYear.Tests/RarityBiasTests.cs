@@ -118,4 +118,53 @@ public class RarityBiasTests
         Assert.Empty(biased.Crops);
         Assert.Empty(biased.Fish);
     }
+
+    /// <summary>Nothing the input carried may go missing, whatever gets added to ItemPools later.
+    /// Apply is written as `pools with { ... }` precisely so an unlisted property carries by
+    /// construction; this walks EVERY public property by reflection so a new one added without a
+    /// line in Apply can never silently come back empty when the rarity modifier is on.</summary>
+    [Fact]
+    public void Every_Populated_Property_Survives_Apply()
+    {
+        var item = Item("(O)24", 35, Season.Spring);
+        var one = new List<PoolItem> { item };
+        var pools = new ItemPools
+        {
+            Crops = one, Fish = one, CrabPot = one, Forage = one, MonsterDrops = one,
+            Metals = one, ArtisanGoods = one, Artifacts = one, Books = one, Saplings = one,
+            GeodeMinerals = one, Cooking = one, TapperGoods = one, WinterOnly = one,
+            DerivedSeasonPins = new Dictionary<string, Season> { ["(O)24"] = Season.Fall },
+            QualityEligibleIds = new HashSet<string> { "(O)24" },
+            TrapFishIds = new HashSet<string> { "(O)715" },
+            FruitTreeFruitIds = new HashSet<string> { "(O)634" },
+            ExcludedIds = new HashSet<string> { "(O)266" },
+            FishRows = new Dictionary<string, RawFishEntry>
+            {
+                ["128"] = RawFishEntry.Parse("128", "Pufferfish/80/mixed/1/36/1200 1600/summer/sunny/690/1/3"),
+            },
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>> { [ItemKind.Gem] = one },
+            ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>> { ["color_red"] = one },
+        };
+
+        ItemPools biased = RarityBias.Apply(pools, 2.4, new RarityThresholds());
+
+        foreach (System.Reflection.PropertyInfo property in typeof(ItemPools).GetProperties(
+                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            object? before = property.GetValue(pools);
+            object? after = property.GetValue(biased);
+            Assert.True(before != null, $"{property.Name} was not populated by this test");
+            Assert.True(after != null, $"{property.Name} came back null");
+            Assert.True(Count(before) > 0, $"{property.Name} was not populated by this test");
+            Assert.Equal(Count(before), Count(after));
+        }
+    }
+
+    private static int Count(object? value)
+    {
+        int n = 0;
+        foreach (object? _ in (System.Collections.IEnumerable)value!)
+            n++;
+        return n;
+    }
 }

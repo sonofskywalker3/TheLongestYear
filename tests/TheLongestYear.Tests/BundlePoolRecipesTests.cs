@@ -100,8 +100,11 @@ public class BundlePoolRecipesTests
     public void A_named_recipe_is_never_vanilla_only()
         => Assert.False(BundlePoolRecipes.For("Treasure Hunter's", new[] { "(O)9001" }, Pools(), null).IsVanillaOnly);
 
+    /// <summary>Crab Pot takes the crab-pot pool and every trap fish the pools know. A trap id
+    /// NEITHER pool carries ("(O)716" here) is not a candidate: no pool knows it, so it failed
+    /// vetting or was excluded, and Data/Fish calling it a trap row does not put it back.</summary>
     [Fact]
-    public void Crab_Pot_takes_the_crab_pot_pool_and_the_trap_fish()
+    public void Crab_Pot_takes_the_known_trap_fish_and_never_synthesizes_an_unknown_one()
     {
         ItemPools pools = new()
         {
@@ -111,7 +114,80 @@ public class BundlePoolRecipesTests
         };
         List<string> ids = BundlePoolRecipes.For("Crab Pot", Array.Empty<string>(), pools, null)
             .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
-        Assert.Equal(new[] { "(O)372", "(O)715", "(O)716" }, ids);
+        Assert.Equal(new[] { "(O)372", "(O)715" }, ids);
+        Assert.DoesNotContain("(O)716", ids);
+    }
+
+    /// <summary>A trap id the CrabPot pool alone carries still counts: the lookup reads both pools,
+    /// not just Fish.</summary>
+    [Fact]
+    public void Crab_Pot_finds_a_trap_id_the_crab_pot_pool_carries()
+    {
+        ItemPools pools = new()
+        {
+            CrabPot = new[] { Item("(O)372") },
+            TrapFishIds = new HashSet<string>(StringComparer.Ordinal) { "(O)372" },
+        };
+        List<string> ids = BundlePoolRecipes.For("Crab Pot", Array.Empty<string>(), pools, null)
+            .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Equal(new[] { "(O)372" }, ids);
+    }
+
+    /// <summary>Chef's ingredient half offers the pantry staples (Sugar, Wheat Flour, Oil, Vinegar,
+    /// Rice) as well as crops, forage and animal products: a kitchen asks for them, and no other
+    /// pool carries them.</summary>
+    [Fact]
+    public void Chefs_ingredient_part_offers_the_pantry_staples()
+    {
+        string[] staples = { "(O)245", "(O)246", "(O)247", "(O)419", "(O)423" };
+        ItemPools pools = new()
+        {
+            Cooking = new[] { Item("(O)194"), Item("(O)195") },
+            Crops = new[] { Item("(O)24") },
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                // The staples are not a crop, forage or animal product, so in the real pools they
+                // land in a kind no recipe rolls: only the Fixed list can reach them.
+                [ItemKind.Other] = staples.Select(id => Item(id)).ToList(),
+            },
+        };
+        PoolRecipe r = BundlePoolRecipes.For("Chef's", new[] { "(O)9001", "(O)9002" }, pools, null);
+        List<string> ids = r.Parts[1].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Equal("Ingredient", r.Parts[1].Label);
+        foreach (string staple in staples)
+            Assert.Contains(staple, ids);
+    }
+
+    /// <summary>An id the pools left out ON PURPOSE is never re-admitted through the bundle's own
+    /// vanilla ids. Easy keeps Red Cabbage out until the player owns the upgrade, so the Dye
+    /// recipe of a bundle that asked for it in vanilla must not offer it back.</summary>
+    [Fact]
+    public void An_excluded_vanilla_id_is_not_offered_back_by_a_recipe()
+    {
+        IReadOnlySet<string> easyExclusions =
+            YearTwoCrops.ExcludedFor(_ => false, DifficultyStep.Easy);
+        Assert.Contains(YearTwoCrops.RedCabbage, easyExclusions);
+
+        ItemPools pools = ItemPoolBuilder.Build(
+            crops: new[] { new RawCropEntry("266", new[] { Season.Fall }) },
+            objects: new Dictionary<string, RawObjectEntry>
+            {
+                ["266"] = new("Basic", -75, 260, false, new[] { "color_red" }),
+            },
+            forageSpawns: Array.Empty<RawSpawnEntry>(),
+            fishSpawns: Array.Empty<RawSpawnEntry>(),
+            trapFishIds: new HashSet<string>(StringComparer.Ordinal),
+            monsterDrops: Array.Empty<RawMonsterDropEntry>(),
+            fruitTrees: Array.Empty<RawFruitTreeEntry>(),
+            geodeDrops: Array.Empty<RawGeodeDropEntry>(),
+            tuning: new BundleGenerationTuning(),
+            extraExcludedIds: easyExclusions);
+
+        Assert.Contains(YearTwoCrops.RedCabbage, pools.ExcludedIds);
+        List<string> ids = BundlePoolRecipes
+            .For("Dye", new[] { YearTwoCrops.RedCabbage }, pools, null)
+            .Parts.SelectMany(p => p.Source(pools, null)).Select(p => p.ItemId).ToList();
+        Assert.DoesNotContain(YearTwoCrops.RedCabbage, ids);
     }
 
     [Fact]

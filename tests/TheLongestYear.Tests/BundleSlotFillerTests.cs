@@ -196,7 +196,7 @@ public class BundleSlotFillerTests
     }
 
     /// <summary>The hard swap takes out the EASIEST slot, which is usually the only thing the
-    /// bundle could reach early — so the swap itself can be what empties a season. Here the roll
+    /// bundle could reach early, so the swap itself can be what empties a season. Here the roll
     /// holds exactly one Spring-reachable item ("(O)p", the lowest effort and therefore the hard
     /// swap's victim) and no hard item; a Spring stretch ("(O)s") waits in the pool. After the
     /// hard swap the filler must re-run the stretch pass, so every fill still ends up holding
@@ -797,6 +797,57 @@ public class BundleSlotFillerTests
                               filled.Slots.Single(s => s.ItemId == "(O)9001").Quality));
         Assert.Equal((3, 1), (filled.Slots.Single(s => s.ItemId == "(O)9002").Stack,
                               filled.Slots.Single(s => s.ItemId == "(O)9002").Quality));
+    }
+
+    /// <summary>The same rule on a LEGACY domain, not just Recipe: a Metals bundle whose roll can
+    /// only land on the two items it already asked for must give them vanilla's own stack and
+    /// quality back, exactly as the recipe path does. Before the fix the vanilla-slot map was
+    /// built for recipes only, so these two came back x1 plain.</summary>
+    [Fact]
+    public void A_re_drawn_vanilla_id_keeps_its_vanilla_stack_on_a_legacy_domain_too()
+    {
+        var spec = new BundleSpec("Pantry", 0, "Blacksmith's", "Blacksmith's", "O 495 30", 0, 2,
+            new[] { new BundleSlotSpec("(O)380", 5, 2), new BundleSlotSpec("(O)384", 3, 1) });
+        var pools = new ItemPools { Metals = new[] { Item("(O)380"), Item("(O)384") } };
+        var tuning = new BundleGenerationTuning { GoldQualityChance = 0.0, SilverQualityChance = 0.0 };
+
+        BundleSpec filled = BundleSlotFiller.Fill(
+            spec, new DomainMatch(PoolDomain.Metals, null), pools, tuning, new Random(9));
+
+        Assert.Equal(2, filled.Slots.Count);
+        Assert.Equal((5, 2), (filled.Slots.Single(s => s.ItemId == "(O)380").Stack,
+                              filled.Slots.Single(s => s.ItemId == "(O)380").Quality));
+        Assert.Equal((3, 1), (filled.Slots.Single(s => s.ItemId == "(O)384").Stack,
+                              filled.Slots.Single(s => s.ItemId == "(O)384").Quality));
+    }
+
+    /// <summary>The pity trim's quality-off unit has to know the domain the bundle will actually
+    /// ROLL with. A Forager's bundle is a Recipe pick whose dominant part is forage, so the trim
+    /// must spend a unit switching quality off and the filled slots must carry no star, even with
+    /// the gold chance at 1.0. Before the fix the trim asked PoolDomain.Recipe, which rolls no
+    /// quality by that test, so it never bought the quality-off and every slot came back gold.</summary>
+    [Fact]
+    public void A_recipe_bundle_under_a_pity_trim_rolls_no_quality_when_its_roll_domain_does()
+    {
+        var pools = new ItemPools
+        {
+            Forage = new[]
+            {
+                Item("(O)f1", weight: 1000), Item("(O)f2", weight: 1000),
+                Item("(O)f3", weight: 1000), Item("(O)f4", weight: 1000),
+            },
+        };
+        var tuning = new BundleGenerationTuning
+        {
+            GoldQualityChance = 1.0,
+            LargeQuantityForageChance = 0.0,
+        };
+        var trim = new PityTrim(Season.Spring, 2);
+
+        BundleSpec filled = BundleSlotFiller.Fill(
+            Spec("Forager's", 2, 2, "(O)9001", "(O)9002"), RecipeMatch, pools, tuning, new Random(4), trim);
+
+        Assert.All(filled.Slots, s => Assert.Equal(0, s.Quality));
     }
 
     [Fact]

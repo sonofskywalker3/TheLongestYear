@@ -17,8 +17,13 @@ public sealed record PoolItem(
 
 /// <summary>The per-domain candidate pools for one generation, derived from the game's
 /// own data tables at generation time (SVE-proof by construction — spec). Lists are
-/// ordinal-ordered by ItemId so seeded sampling is deterministic across runs.</summary>
-public sealed class ItemPools
+/// ordinal-ordered by ItemId so seeded sampling is deterministic across runs.
+///
+/// A record, so a pass that rewrites some of the pools (<see cref="RarityBias"/>) can say
+/// <c>pools with { Crops = ... }</c> and carry every property it does not name by
+/// construction. Building a fresh instance property by property is how the rarity pass used to
+/// silently drop whatever was added later (final review, 2026-08-29).</summary>
+public sealed record ItemPools
 {
     public IReadOnlyList<PoolItem> Crops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Fish { get; init; } = new List<PoolItem>();
@@ -73,6 +78,14 @@ public sealed class ItemPools
 
     /// <summary>Vetted items whose known catalog seasons are exactly Winter.</summary>
     public IReadOnlyList<PoolItem> WinterOnly { get; init; } = new List<PoolItem>();
+
+    /// <summary>Qualified ids this generation must never ask for: the built-in exclude list, the
+    /// config exclude list and the save-specific exclusions (Easy's year-2 crops) together. The
+    /// pools already leave them out; this set is what lets a consumer that reads ids from OUTSIDE
+    /// the pools (a bundle's own vanilla ids, in <see cref="BundlePoolRecipes"/>) tell "excluded on
+    /// purpose" from "merely unknown to the pools" and refuse to re-admit the first
+    /// (final review, 2026-08-29). Empty = no exclusion data (hand-built pools in tests).</summary>
+    public IReadOnlySet<string> ExcludedIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
 }
 
 /// <summary>Which item pool a picked bundle's slots re-roll from. None = keep the
