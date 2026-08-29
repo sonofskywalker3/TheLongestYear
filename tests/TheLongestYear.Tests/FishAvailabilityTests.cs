@@ -203,4 +203,16 @@ public class FishAvailabilityDeriveTests
 
         Assert.Contains("Summer", result.Basis);
     }
+
+    /// <summary>Task 5 check: Woodskip only lives in the Secret Woods, so its location list is
+    /// ["Woods"], which LocationGating marks week 4. If this holds, the hand written Woodskip pin
+    /// in GameplayConfig.DefaultItemSeasonPins is redundant with what the rule already derives.</summary>
+    [Fact]
+    public void Woodskip_Derives_Week_4_From_The_Woods_Location_Marker()
+    {
+        ItemAvailability result = FishAvailability.Derive(
+            Fish("(O)734", locations: new List<string> { "Woods" }), Row());
+
+        Assert.Equal(4, result.Week);
+    }
 }
