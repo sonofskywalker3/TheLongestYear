@@ -264,6 +264,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
+            helper.ConsoleCommands.Add("tly_gateneeds", "Print, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) plus the vault. Read-only.", this.CmdGateNeeds);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
@@ -1849,6 +1850,7 @@ namespace TheLongestYear
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
+                case "tly_gateneeds": this.CmdGateNeeds(command, args); break;
                 case "tly_goals": this.CmdGoals(command, args); break;
                 case "tly_themepool": this.CmdThemePool(command, args); break;
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
@@ -2143,6 +2145,31 @@ namespace TheLongestYear
             string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
             System.IO.File.WriteAllText(path, sb.ToString());
             this.Monitor.Log($"tly_dumpavailability: wrote {path} ({sb.Length:N0} chars, {requirements.Count} bundles, {judgement.Count} judgement row(s), {unknown.Count} unknown item(s)).", LogLevel.Info);
+        }
+
+        /// <summary><c>tly_gateneeds</c>: the season gate's remaining demand per bundle, from the
+        /// same MissingForSeason the Season Goals page draws, after mirroring the ledger from the
+        /// board. Read-only.</summary>
+        private void CmdGateNeeds(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _runController == null) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            RunState run = _meta.Run;
+            TheLongestYear.Core.Season season = run.Season;
+            TheLongestYear.Integration.ItemDonationSync.Reconcile(run);
+            SlotLedger ledger = run.DonatedLedger();
+            string nextSeason = season == TheLongestYear.Core.Season.Winter ? "the win" : $"{(TheLongestYear.Core.Season)((int)season + 1)} 1";
+            int open = 0;
+            foreach (BundleRequirement req in _runController.Requirements)
+            {
+                var (count, ids) = req.MissingForSeason(season, ledger);
+                if (count == 0) continue;
+                open++;
+                string names = string.Join(", ", ids.Distinct().Select(id => $"{DisplayName(id)} ({id})"));
+                this.Monitor.Log($"  {req.Name} ({req.Kind}, {ledger.FilledCount(req.BundleIndex)}/{req.NumberOfSlots} filled): needs {count} before {nextSeason}: {names}", LogLevel.Info);
+            }
+            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
+            this.Monitor.Log($"  vault: paid {VaultRules.PaidCount(run)} of {VaultRules.SeasonOrdinal(season)} needed{(vaultOk ? " (satisfied)" : "")}", vaultOk ? LogLevel.Info : LogLevel.Warn);
+            this.Monitor.Log($"tly_gateneeds: {season} day {run.DayOfMonth}: {open} bundle(s) still owed before {nextSeason}, {ledger.Count} slot(s) filled on the board.", LogLevel.Info);
         }
 
         /// <summary><c>tly_dumpeffort [fileName]</c>: the item effort review document, written to the

@@ -56,7 +56,7 @@ hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).
 
 ## Read-only diagnostics (no world change)
 
-`tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`,
+`tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),
 `tly_genbundles [loop] [custom|standard|remixed]` (custom = the TLY engine board; standard and
 remixed audit the board vanilla would build for that Advanced Options choice),
 `tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
