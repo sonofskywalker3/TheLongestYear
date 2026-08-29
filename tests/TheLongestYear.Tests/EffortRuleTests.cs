@@ -246,24 +246,24 @@ public class CookedDishAvailabilityTests
 
     [Fact]
     public void Default_recipe_is_its_hardest_ingredient_plus_the_kitchen()
-        => Assert.Equal(1 + 0 + 1, CookedDishAvailability.Derive("(O)194", Data(), Effort, hasKitchen: false)!.Effort);
+        => Assert.Equal(1 + 0 + 1, CookedDishAvailability.Derive("(O)194", Data(), Effort, hasKitchen: false, weekOf: null, DifficultyStep.Normal)!.Effort);
 
     [Fact]
     public void A_kept_kitchen_drops_the_kitchen_cost()
-        => Assert.Equal(1, CookedDishAvailability.Derive("(O)194", Data(), Effort, hasKitchen: true)!.Effort);
+        => Assert.Equal(1, CookedDishAvailability.Derive("(O)194", Data(), Effort, hasKitchen: true, weekOf: null, DifficultyStep.Normal)!.Effort);
 
     [Fact]
     public void Category_ingredients_use_the_cheapest_member_and_tv_recipes_add_one()
-        => Assert.Equal(1 + 1 + 1, CookedDishAvailability.Derive("(O)195", Data(), Effort, false)!.Effort);
+        => Assert.Equal(1 + 1 + 1, CookedDishAvailability.Derive("(O)195", Data(), Effort, false, null, DifficultyStep.Normal)!.Effort);
 
     [Fact]
     public void Friendship_recipes_add_two()
-        => Assert.Equal(2 + 2 + 1, CookedDishAvailability.Derive("(O)199", Data(), Effort, false)!.Effort);
+        => Assert.Equal(2 + 2 + 1, CookedDishAvailability.Derive("(O)199", Data(), Effort, false, null, DifficultyStep.Normal)!.Effort);
 
     [Fact]
     public void An_unrecognised_ingredient_makes_the_dish_extreme()
     {
-        ItemEffort? r = CookedDishAvailability.Derive("(O)200", Data(), Effort, false);
+        ItemEffort? r = CookedDishAvailability.Derive("(O)200", Data(), Effort, false, null, DifficultyStep.Normal);
         Assert.Equal(CookedDishAvailability.ExtremeEffort, r!.Effort);
         Assert.Contains("(O)9999", r.Basis);
     }

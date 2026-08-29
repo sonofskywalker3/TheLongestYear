@@ -38,19 +38,25 @@ public static class AvailabilityWeeks
 
     /// <summary>Crops whose seeds come from a festival, the cart, the Oasis or another source
     /// with its own week, rather than Pierre's day-1 shelf: the harvest cannot come before the
-    /// source week plus the crop's own growth time.</summary>
-    public static readonly IReadOnlyDictionary<string, int> SeedSourceWeeks =
-        new Dictionary<string, int>(StringComparer.Ordinal)
+    /// source week plus the crop's own growth time.
+    ///
+    /// Week is the pacing answer. Hard is the earliest a player who goes looking can have it, and
+    /// for the three year-two crops that is the Year-Two Seeds Boost route (spec
+    /// 2026-08-28-obtainable-board-4-boosts): a Mixed Seeds roll in the crop's own season, which
+    /// lands before the permanent buy the pacing week assumes. For every other row the two are the
+    /// same number, because a festival or Oasis date is a calendar fact, not a pacing judgement.</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, int Hard)> SeedSourceWeeks =
+        new Dictionary<string, (int, int)>(StringComparer.Ordinal)
         {
-            ["(O)400"] = 3,    // Strawberry, Egg Festival Spring 13
-            ["(O)417"] = 12,   // Sweet Gem Berry, Rare Seed from the cart, 24 days
-            ["(O)433"] = 5,    // Coffee Bean, Dust Sprite seed plus 10 days
-            ["(O)284"] = 10,   // Beet, Oasis week 9 plus 6 days
-            ["(O)252"] = 11,   // Rhubarb, Oasis seeds in a garden pot, Garden Pot recipe keep
-            ["(O)268"] = 11,   // Starfruit, Oasis seeds in a garden pot, Garden Pot recipe keep (Summer crop kept through Fall)
-            [YearTwoCrops.Garlic] = 3,       // year-two crop, Year-Two Seeds Boost or the permanent buy
-            [YearTwoCrops.RedCabbage] = 7,   // year-two crop, Year-Two Seeds Boost or the permanent buy
-            [YearTwoCrops.Artichoke] = 11,   // year-two crop, Year-Two Seeds Boost or the permanent buy
+            ["(O)400"] = (3, 3),      // Strawberry, Egg Festival Spring 13
+            ["(O)417"] = (12, 12),    // Sweet Gem Berry, Rare Seed from the cart, 24 days
+            ["(O)433"] = (5, 5),      // Coffee Bean, Dust Sprite seed plus 10 days
+            ["(O)284"] = (10, 10),    // Beet, Oasis week 9 plus 6 days
+            ["(O)252"] = (11, 11),    // Rhubarb, Oasis seeds in a garden pot, Garden Pot recipe keep
+            ["(O)268"] = (11, 11),    // Starfruit, Oasis seeds in a garden pot, Garden Pot recipe keep (Summer crop kept through Fall)
+            [YearTwoCrops.Garlic] = (4, 2),        // year-two crop: permanent buy, or the Boost from Spring week 2
+            [YearTwoCrops.RedCabbage] = (7, 6),    // year-two crop: permanent buy, or the Boost from Summer week 6
+            [YearTwoCrops.Artichoke] = (11, 10),   // year-two crop: permanent buy, or the Boost from Fall week 10
         };
 
     /// <summary>Winter dig-spot forage whose artifact-spot row carries a Winter condition the

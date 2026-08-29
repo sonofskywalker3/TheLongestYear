@@ -8,7 +8,8 @@ namespace TheLongestYear.Core.Availability;
 /// forage (how many places it spawns, whether only remote ones, first spawn week plus location
 /// gating) and saplings (sold daily, week 1). Crop week = the season's first week plus the growth
 /// weeks, never past the season's last week; seeds from a festival, the cart or the Oasis wait
-/// for that source (AvailabilityWeeks.SeedSourceWeeks). A crop with no seasons is unplaced.</summary>
+/// for that source (AvailabilityWeeks.SeedSourceWeeks, whose rows carry a pacing Week and an
+/// earlier Hard week). A crop with no seasons is unplaced.</summary>
 public static class CropForageAvailability
 {
     private const int BaseEffort = 1;
@@ -31,13 +32,23 @@ public static class CropForageAvailability
             int regrow = crop.Regrows || crop.Trellis ? RegrowStep : 0;
             int effort = BaseEffort + growth + regrow;
             int? week = null;
+            int hardWeek = 0;
             if (crop.Seasons.Count > 0)
             {
                 Season first = crop.Seasons.Min();
                 int growWeeks = crop.GrowthDays / Calendar.DaysPerWeek;   // planted day 1, harvest day 1 + days
-                week = Math.Min(AvailabilityWeeks.FirstWeekOf(first) + growWeeks, AvailabilityWeeks.LastWeekOf(first));
-                if (AvailabilityWeeks.SeedSourceWeeks.TryGetValue(qualifiedId, out int seedWeek))
-                    week = Math.Max(week.Value, seedWeek);
+                // The crop's own arithmetic is the base for BOTH weeks; a seed source can only
+                // push them later, and it pushes the pacing week and the hard week by different
+                // amounts (spec 2026-08-28-obtainable-board-4-boosts: a year-two crop's Boost
+                // route lands earlier than the permanent buy the pacing week assumes).
+                int grown = Math.Min(AvailabilityWeeks.FirstWeekOf(first) + growWeeks, AvailabilityWeeks.LastWeekOf(first));
+                week = grown;
+                hardWeek = grown;
+                if (AvailabilityWeeks.SeedSourceWeeks.TryGetValue(qualifiedId, out (int Week, int Hard) seed))
+                {
+                    week = Math.Max(grown, seed.Week);
+                    hardWeek = Math.Max(grown, seed.Hard);
+                }
             }
             bool better = best == null
                 || (week ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
@@ -45,8 +56,10 @@ public static class CropForageAvailability
             if (better)
                 best = new ItemEffort(effort,
                     $"crop, {crop.GrowthDays} days (+{growth}){(regrow > 0 ? ", regrows or trellis (+1)" : "")}, "
-                    + $"week {(week?.ToString() ?? "unknown")}, effort {effort}",
-                    week, week == null ? null : AvailabilityWeeks.SeasonOf(week.Value));
+                    + $"week {(week?.ToString() ?? "unknown")}, effort {effort}"
+                    + (week != null && hardWeek < week.Value ? $", hard week {hardWeek}" : ""),
+                    week, week == null ? null : AvailabilityWeeks.SeasonOf(week.Value),
+                    HardWeek: week == null ? null : hardWeek);
         }
         return best;
     }

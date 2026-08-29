@@ -71,13 +71,20 @@ public class AvailabilityWeeksTests
     public void Housing_tier_week(int links, int week) => Assert.Equal(week, AvailabilityWeeks.HousingTierWeek(links));
 
     [Theory]
-    [InlineData("(O)433", 5)]   // Coffee Bean, Dust Sprite seed then 10 days
-    [InlineData("(O)400", 3)]   // Strawberry, Egg Festival
-    [InlineData("(O)417", 12)]  // Sweet Gem Berry
-    [InlineData("(O)284", 10)]  // Beet, Oasis week 9 plus 6 days
-    [InlineData("(O)252", 11)]  // Rhubarb, Oasis seeds in a garden pot
-    [InlineData("(O)268", 11)]  // Starfruit
-    public void Seed_source_weeks(string id, int week) => Assert.Equal(week, AvailabilityWeeks.SeedSourceWeeks[id]);
+    [InlineData("(O)433", 5, 5)]    // Coffee Bean, Dust Sprite seed then 10 days
+    [InlineData("(O)400", 3, 3)]    // Strawberry, Egg Festival
+    [InlineData("(O)417", 12, 12)]  // Sweet Gem Berry
+    [InlineData("(O)284", 10, 10)]  // Beet, Oasis week 9 plus 6 days
+    [InlineData("(O)252", 11, 11)]  // Rhubarb, Oasis seeds in a garden pot
+    [InlineData("(O)268", 11, 11)]  // Starfruit
+    [InlineData("(O)248", 4, 2)]    // Garlic, year-two crop: buy at 4, Boost route at 2
+    [InlineData("(O)266", 7, 6)]    // Red Cabbage, year-two crop
+    [InlineData("(O)274", 11, 10)]  // Artichoke, year-two crop
+    public void Seed_source_weeks(string id, int week, int hard)
+    {
+        Assert.Equal(week, AvailabilityWeeks.SeedSourceWeeks[id].Week);
+        Assert.Equal(hard, AvailabilityWeeks.SeedSourceWeeks[id].Hard);
+    }
 
     [Fact]
     public void Cactus_fruit_is_desert_forage_not_an_oasis_crop()

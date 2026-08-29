@@ -35,7 +35,10 @@ public class CropForageWeekTests
     public void Strawberry_waits_for_the_egg_festival()
     {
         var crops = new List<RawCropGrowth> { new("(O)400", 8, true, false, new[] { Season.Spring }) };
-        Assert.Equal(3, CropForageAvailability.DeriveCrop("(O)400", crops)!.EarliestWeek);
+        ItemEffort strawberry = CropForageAvailability.DeriveCrop("(O)400", crops)!;
+        Assert.Equal(3, strawberry.EarliestWeek);
+        // The festival is a calendar fact, so hard mode gets no earlier route than pacing does.
+        Assert.Equal(3, strawberry.HardWeek);
     }
 
     [Fact]
@@ -90,9 +93,19 @@ public class CropForageWeekTests
             new(YearTwoCrops.RedCabbage, 13, false, false, new[] { Season.Summer }),
             new(YearTwoCrops.Artichoke, 8, false, false, new[] { Season.Fall }),
         };
-        Assert.Equal(3, CropForageAvailability.DeriveCrop(YearTwoCrops.Garlic, crops)!.EarliestWeek);
-        Assert.Equal(7, CropForageAvailability.DeriveCrop(YearTwoCrops.RedCabbage, crops)!.EarliestWeek);
-        Assert.Equal(11, CropForageAvailability.DeriveCrop(YearTwoCrops.Artichoke, crops)!.EarliestWeek);
+        // Pacing week = the permanent buy; hard week = the Year-Two Seeds Boost route, which lands
+        // earlier (spec 2026-08-28-obtainable-board-4-boosts).
+        ItemEffort garlic = CropForageAvailability.DeriveCrop(YearTwoCrops.Garlic, crops)!;
+        Assert.Equal(4, garlic.EarliestWeek);
+        Assert.Equal(2, garlic.HardWeek);
+
+        ItemEffort redCabbage = CropForageAvailability.DeriveCrop(YearTwoCrops.RedCabbage, crops)!;
+        Assert.Equal(7, redCabbage.EarliestWeek);
+        Assert.Equal(6, redCabbage.HardWeek);
+
+        ItemEffort artichoke = CropForageAvailability.DeriveCrop(YearTwoCrops.Artichoke, crops)!;
+        Assert.Equal(11, artichoke.EarliestWeek);
+        Assert.Equal(10, artichoke.HardWeek);
     }
 
     [Fact]

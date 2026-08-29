@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Availability;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -179,7 +180,9 @@ public class SlotPoolBuilderTests
         var data = BundleData((3, "Boosted", "248 1 0 611 1 0 24 1 0", 3));
         var reqs = Reqs(SeasonalReq("Boosted", "(O)248", "(O)611", "(O)24"));
 
-        static string? BasisOf(string id) => id == "(O)611" ? "dish Blackberry Cobbler: recipe week 10, year-2 episode, Sneak Peek Boost" : null;
+        static string? BasisOf(string id) => id == "(O)611"
+            ? "dish Blackberry Cobbler: recipe week 10, " + CookedDishAvailability.SneakPeekBasisMarker
+            : null;
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true, weekOfYear: 1,

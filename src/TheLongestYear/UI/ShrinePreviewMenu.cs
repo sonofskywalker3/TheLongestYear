@@ -10,12 +10,18 @@ using TheLongestYear.Loop;
 
 namespace TheLongestYear.UI
 {
-    /// <summary>Read-only "what could I buy next reset" planning board. No purchasing — that stays
-    /// on the loop-boundary shrine popup. A pinned, calendar-style foresight panel sits on top
-    /// (Weather Sage forecast + Traveling Cart stock, both rolling off the live date), and below it
-    /// the buyable-upgrade list: for every category, only the next purchasable tier of each chain
-    /// (reach-gated, owned tiers hidden). Each upgrade row shows its cost; hovering shows the effect.
-    /// Fully scrollable.</summary>
+    /// <summary>The "what could I buy next reset" planning board. A pinned, calendar-style
+    /// foresight panel sits on top (Weather Sage forecast + Traveling Cart stock, both rolling off
+    /// the live date), then the Boosts section, then the upgrade list. Fully scrollable.
+    ///
+    /// The UPGRADE list is read-only: purchasing a keep stays on the loop-boundary shrine popup,
+    /// and each row only shows its cost and, on hover, its effect (for every category, only the
+    /// next purchasable tier of each chain, reach-gated, owned tiers hidden).
+    ///
+    /// BOOSTS, added by spec 2026-08-28-obtainable-board-4-boosts, ARE bought here, mid-run: each
+    /// catalog boost draws a Buy button, an Active label or a "Not now" label straight from
+    /// <see cref="BoostPurchase.StateOf"/>, and a click spends banked JP through the purchase
+    /// callback. So this board is no longer purely read-only.</summary>
     internal sealed class ShrinePreviewMenu : IClickableMenu
     {
         private const int RowHeight = 56;
@@ -260,20 +266,17 @@ namespace TheLongestYear.UI
         /// <summary>What a boost row's right-hand control should be right now.</summary>
         private enum BoostRowState { Buy, Active, NotAvailable }
 
+        /// <summary>Rendered straight from <see cref="BoostPurchase.StateOf"/> - the same check
+        /// TryBuy runs - so the control a player sees can never disagree with what a click does
+        /// (fix round 2, 2026-08-29). NotEnoughJp still draws a Buy button: the shrine reports the
+        /// shortfall, and greying it out here would hide the price.</summary>
         private BoostRowState StateOf(BoostDefinition boost)
-        {
-            int week = _run.WeekOfYear;
-            TheLongestYear.Core.Season season = AvailabilityWeeks.SeasonOf(week);
-            if (boost.Id == BoostId.YearTwoSeeds && season == TheLongestYear.Core.Season.Winter)
-                return BoostRowState.NotAvailable;
-            bool active = boost.Id switch
+            => BoostPurchase.StateOf(_state, _run, boost.Id, _run.WeekOfYear) switch
             {
-                BoostId.YearTwoSeeds => BoostState.YearTwoSeedsActive(_run, week),
-                BoostId.SneakPeek => BoostState.SneakPeekActive(_run, season),
-                _ => false,
+                BoostPurchase.Result.NotAvailable => BoostRowState.NotAvailable,
+                BoostPurchase.Result.AlreadyActive => BoostRowState.Active,
+                _ => BoostRowState.Buy,
             };
-            return active ? BoostRowState.Active : BoostRowState.Buy;
-        }
 
         /// <summary>The Buy button's rectangle for a row drawn at <paramref name="rowY"/>. Shared by
         /// the draw pass and the click hit-test so they can never drift apart.</summary>
@@ -477,9 +480,10 @@ namespace TheLongestYear.UI
                 Game1.smallFont,
                 new Vector2(xPositionOnScreen + 40, yPositionOnScreen + 80), Game1.textColor);
 
-            // Multiple testers tried to buy from this board and were confused when nothing happened
-            // (it's a read-only preview — JP is spent only at a loop boundary). Spell that out,
-            // right-aligned on the JP line, so the "planning, not a shop" intent is obvious.
+            // Multiple testers tried to buy UPGRADES from this board and were confused when nothing
+            // happened (a keep is bought only at a loop boundary). Spell that out, right-aligned on
+            // the JP line, so the "planning, not a keep shop" intent is obvious. Boosts are the one
+            // thing this board does sell, and their rows carry their own Buy buttons.
             string planningNote = Strings.Get("menu.shrine-preview.planning-note");
             Vector2 noteSize = Game1.smallFont.MeasureString(planningNote);
             Utility.drawTextWithShadow(b, planningNote, Game1.smallFont,
