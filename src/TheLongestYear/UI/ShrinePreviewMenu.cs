@@ -545,6 +545,10 @@ namespace TheLongestYear.UI
                 Game1.playSound("shwip");
         }
 
+        /// <summary>Debug entry (tly_openshrine): open on a given tab so the bridge can exercise
+        /// every tab's row builder and draw path without a mouse.</summary>
+        public void ShowTab(ShrineTab tab) => SetTab(tab);
+
         private void SetTab(ShrineTab tab)
         {
             if (_tab == tab) return;

@@ -291,6 +291,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost today (debug, the same purchase the shrine's Buy button makes), or list the roster with each row's state. Usage: tly_boost list | tly_boost <id> [farming|fishing|foraging|mining|combat]", this.CmdBoost);
             helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
             helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
+            helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan) exactly as the statue does, so every tab's rows build and draw headlessly. Usage: tly_openshrine [active|boosts|plan]", this.CmdOpenShrine);
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
@@ -1259,6 +1260,25 @@ namespace TheLongestYear
             _introInjector?.ClearIntroState();
         }
 
+        /// <summary>Debug: open the planning shrine on a tab, the same construction the statue's
+        /// checkForAction patch does, so the bridge can exercise every tab's row builder.</summary>
+        private void CmdOpenShrine(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
+            if (args.Length > 0 && !System.Enum.TryParse(args[0], ignoreCase: true, out tab))
+            {
+                this.Monitor.Log("Usage: tly_openshrine [active|boosts|plan]", LogLevel.Warn);
+                return;
+            }
+            var menu = new TheLongestYear.UI.ShrinePreviewMenu(
+                _meta.State, _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor, _meta.Run,
+                (id, skill) => _boostPurchases.TryBuy(id, skill));
+            menu.ShowTab(tab);
+            Game1.activeClickableMenu = menu;
+            this.Monitor.Log($"tly_openshrine: shrine opened on the {tab} tab.", LogLevel.Info);
+        }
+
         /// <summary>Debug: close whatever menu is up without the mouse. A LevelUpMenu needs its OK
         /// button (exitThisMenu would skip the profession pick and leave vanilla's end-of-night
         /// chain hanging); everything else takes exitThisMenu.</summary>
@@ -1930,6 +1950,7 @@ namespace TheLongestYear
                 case "tly_boost": this.CmdBoost(command, args); break;
                 case "tly_boostexpire": _boostEffects?.OnDayStarted(); break;
                 case "tly_dismiss": this.CmdDismiss(command, args); break;
+                case "tly_openshrine": this.CmdOpenShrine(command, args); break;
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
