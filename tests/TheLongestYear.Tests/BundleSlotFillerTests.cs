@@ -800,6 +800,29 @@ public class BundleSlotFillerTests
     }
 
     [Fact]
+    public void CandidateCount_counts_the_pool_the_model_selects()
+    {
+        var pools = new ItemPools
+        {
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Gem] = new[] { Item("(O)60"), Item("(O)62"), Item("(O)64") },
+            },
+        };
+        var model = Model(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)60"] = Avail(1, 1, effort: 10),
+            ["(O)62"] = Avail(1, 1, effort: 10),
+            ["(O)64"] = Avail(1, 1, effort: 2),
+        });
+        BundleSpec spec = Spec("The Missing", 2, 2, "(O)9001", "(O)9002");
+        // Without the model The Missing has no extreme band to read and counts its own two items;
+        // with it, the two effort-10 gems join them.
+        Assert.Equal(2, BundleSlotFiller.CandidateCount(spec, RecipeMatch, pools));
+        Assert.Equal(4, BundleSlotFiller.CandidateCount(spec, RecipeMatch, pools, model));
+    }
+
+    [Fact]
     public void The_same_seed_composes_the_same_recipe_bundle_twice()
     {
         BundleSpec spec = Spec("Dye", 6, 6);

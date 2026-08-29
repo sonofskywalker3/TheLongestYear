@@ -2330,10 +2330,14 @@ namespace TheLongestYear
         /// <c>tly_genbundles</c> (diagnostic board): demanded vs obtainable per season, IMPOSSIBLE
         /// and FREE flags, and the blockers named per gate. <paramref name="pins"/> is the merged
         /// earliest-season table (derived under curated); anything unpinned counts as Spring.</summary>
+        /// <param name="vanillaOnlyRecipes">Names of the bundles whose recipe had no pool of its
+        /// own and offered their vanilla items only; tagged [no recipe]. Null when the caller has
+        /// no recipe data (the live-board audit).</param>
         private void LogGateAudit(
             IReadOnlyList<BundleRequirement> requirements,
             IReadOnlyDictionary<string, TheLongestYear.Core.Season> pins,
-            string label)
+            string label,
+            IReadOnlySet<string> vanillaOnlyRecipes = null)
         {
             int impossible = 0, free = 0, tight = 0, stretchLineCount = 0, noHardItemCount = 0, springTightCount = 0;
             var lines = new List<string>();
@@ -2381,6 +2385,8 @@ namespace TheLongestYear
                 if (demanded[Calendar.MonthsPerYear - 1] == 0) { free++; worst = "FREE ALL YEAR"; }
 
                 var tags = new List<string>();
+                if (vanillaOnlyRecipes != null && vanillaOnlyRecipes.Contains(req.Name))
+                    tags.Add("[no recipe]");
                 foreach (KeyValuePair<string, TheLongestYear.Core.Season> stretch in req.StretchLines.OrderBy(kv => kv.Key, StringComparer.Ordinal))
                 {
                     tags.Add($"[stretch: {DisplayName(stretch.Key)} {stretch.Value}]");
@@ -2558,7 +2564,17 @@ namespace TheLongestYear
                         DomainMatch match = PoolDomainClassifier.Classify(c, pools);
                         int shown = c.PickCount > 0 ? System.Math.Min(c.PickCount, c.Slots.Count) : c.Slots.Count;
                         string body;
-                        if (match.Domain != PoolDomain.None)
+                        if (match.Domain == PoolDomain.Recipe)
+                        {
+                            // "the Recipe pool" is not a pool anyone can look up: name the parts
+                            // the bundle actually draws from (Jeff, 2026-08-29).
+                            TheLongestYear.Core.PoolRecipe recipe = BundleSlotFiller.RecipeFor(c, pools, _availability);
+                            body = recipe.IsVanillaOnly
+                                ? $"  - Re-rolls from: {TheLongestYear.Core.BundlePoolRecipes.VanillaOnlyLabel} (no pool of its own): {DescribeSlots(c)}"
+                                : $"  - Re-rolls from: {string.Join(", ", recipe.Parts.Select(p => p.Label))}."
+                                    + " No item is asked for twice across the board; see the pool tables below.";
+                        }
+                        else if (match.Domain != PoolDomain.None)
                         {
                             string season = match.Season != null ? $", {match.Season} only (items specific to that season)" : "";
                             string rule = match.Domain == PoolDomain.Fish
@@ -3016,7 +3032,7 @@ namespace TheLongestYear
             var auditPins = new Dictionary<string, TheLongestYear.Core.Season>(engine.LastDerivedSeasonPins, StringComparer.Ordinal);
             foreach (var kv in itemSeasonPins)
                 auditPins[kv.Key] = kv.Value;
-            LogGateAudit(requirements, auditPins, "tly_genbundles");
+            LogGateAudit(requirements, auditPins, "tly_genbundles", engine.LastVanillaOnlyRecipes);
 
             var themedSkipsByRoom = new System.Collections.Generic.Dictionary<string, int>(StringComparer.Ordinal);
             foreach (BundleSpec spec in set.Bundles)
