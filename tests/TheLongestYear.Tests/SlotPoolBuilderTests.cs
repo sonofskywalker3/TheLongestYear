@@ -169,4 +169,24 @@ public class SlotPoolBuilderTests
         Assert.True(slot.Stretch);
         Assert.True(slot.Due);
     }
+
+    [Fact]
+    public void Slots_carry_the_boost_route_tag()
+    {
+        // Garlic ((O)248) is a year-2 crop: always "Boost: Year-Two Seeds", regardless of
+        // routeTagOf. A dish whose availability basis names Sneak Peek gets that tag instead. An
+        // item with neither gets no tag at all.
+        var data = BundleData((3, "Boosted", "248 1 0 611 1 0 24 1 0", 3));
+        var reqs = Reqs(SeasonalReq("Boosted", "(O)248", "(O)611", "(O)24"));
+
+        static string? BasisOf(string id) => id == "(O)611" ? "dish Blackberry Cobbler: recipe week 10, year-2 episode, Sneak Peek Boost" : null;
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true, weekOfYear: 1,
+            routeTagOf: BasisOf);
+
+        Assert.Equal("Boost: Year-Two Seeds", pool.Single(s => s.ItemId == "(O)248").RouteTag);
+        Assert.Equal("Boost: Sneak Peek", pool.Single(s => s.ItemId == "(O)611").RouteTag);
+        Assert.Null(pool.Single(s => s.ItemId == "(O)24").RouteTag);
+    }
 }

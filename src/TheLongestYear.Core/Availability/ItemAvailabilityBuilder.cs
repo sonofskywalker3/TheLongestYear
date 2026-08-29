@@ -55,7 +55,7 @@ public static class ItemAvailabilityBuilder
         }
 
         EffortComposer? composer = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books)
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step)
             : null;
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = composer?.DeriveAll();
 

@@ -1068,7 +1068,7 @@ namespace TheLongestYear.Loop
             if (bundleData == null) return System.Array.Empty<BonusSlot>();
             var pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
-                theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf);
+                theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf, RouteBasisOf);
             // Spec 2026-08-28-theme-week-budget: the season cap is a ceiling; the week asks for
             // its share of what the pool still holds so week 4 looks like week 1.
             int dueLines = 0;
@@ -1092,6 +1092,12 @@ namespace TheLongestYear.Loop
             => Availability != null && Availability.HasDerivedEffort(itemId)
                 ? Availability.For(itemId).Effort
                 : (int?)null;
+
+        /// <summary>An item's availability basis text, for SlotPoolBuilder's routeTagOf (spec
+        /// 2026-08-28-obtainable-board-4-boosts): it checks the basis for "Sneak Peek" to tag a
+        /// dish goal that only exists because of that Boost.</summary>
+        private string? RouteBasisOf(string itemId)
+            => Availability?.For(itemId).Basis;
 
         /// <summary>Rule C's number: how many goals the sampler would actually produce for the
         /// theme this week (tier 1 plus allowed filler, after every cap).</summary>
@@ -1121,7 +1127,7 @@ namespace TheLongestYear.Loop
             }
             pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
-                theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf);
+                theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf, RouteBasisOf);
             return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season), RarityForItem);
         }
 
