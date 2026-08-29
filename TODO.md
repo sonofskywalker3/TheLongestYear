@@ -6,6 +6,36 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### 10th sweep (2026-08-29 afternoon, Nexus bugs + posts + Reddit): two real new bugs, one retracted
+
+- **NEW, unfixed: "Bus Unlock not working" (Nexus bug, gazumbrado, 29 Aug 01:26, 0.16.17).** Spent
+  1,500 JP on `keep_bus_unlocked`; the only effect was the vault gate reading satisfied. The desert
+  stays locked and the four vault bundles are still on the board next loop. Root cause
+  (`WorldResetService.cs:506`): with `baseline.BusUnlocked` the reset only fills
+  `RunState.VaultBundlesPaid` (the mod's gate counter). It never marks the vanilla vault bundles
+  complete on the board and never re-adds the `ccVault` mail that repairs the bus (the reset's
+  `mailToClear` list strips `ccVault` unconditionally, line 330). The 1,500 JP row promises "bus
+  stays restored across runs" (`UpgradeCatalog.cs:253`). Fix: when `BusUnlocked`, after the CC wipe
+  flip every vault bundle's slots complete in `netWorldState.Bundles`, mark the Vault area complete
+  (`CommunityCenter.areasComplete` for the Vault, plus `ccVault` in `mailReceived` so the bus and the
+  desert warp work), and keep `VaultBundlesPaid` as it is. Keep `ccVault` out of `mailToClear` in
+  that case, or add it back right after. Test on the throwaway save: own the upgrade, `tly_reset`,
+  walk to the bus stop, ride to the desert; Season Goals shows Bus Repair as met with no vault rows.
+- **NEW report of a KNOWN gap: "Sword enchantments don't carry over in Junimo chest?" (Nexus bug,
+  Bumblewyn, 28 Aug 15:20, 0.16.17, status Being looked at).** Innate enchantments on a weapon put
+  in the Junimo Stash were gone after the reset. The stash record was widened for flavored goods
+  (0.11.x) but weapon enchantments and forged gems were left as a documented gap ("log if reported",
+  see the 5th-sweep table). Now reported. Fix: round-trip `MeleeWeapon.enchantments` (and forged
+  gem counts) through the stash record the way `TransplantToolState` does for kept tools.
+- Retracted by the reporter: "Fall Festival Map Boundaries" (ChaoticMindset, 29 Aug): edited to
+  "Ignore, I missed the patch note about time running normally inside events". Can be closed.
+- Everything else on the bugs tab is already tracked (impossible bundle items 1122358, beach bridge
+  fixed 0.15.0, keep pet fixed, JP perk screen fixed 0.14.0, muting private report, maxed upgrades,
+  remix option on new character).
+- Posts tab: newest is nyxnyx2234 (28 Aug, flounder on three bundles and mussels on four foraging
+  bundles), already answered; fixed on master in 0.16.26 to 0.16.30, unreleased. Nothing else new
+  since the 9th sweep. Reddit thread: no comments from anyone but Jeff since July.
+
 ### BUILT 2026-08-29 (0.16.135 to 0.16.144, local, not released): per-slot ledger mirrored from the CC board
 
 Spec `docs/superpowers/specs/2026-08-29-per-slot-ledger-design.md`, plan `docs/superpowers/plans/2026-08-29-per-slot-ledger.md`. The ledger is per slot and re-read from the board on load, before the Season Goals page and before the gate; `tly_gateneeds` prints what the gate still wants. Live-checked over the bridge (fresh board, Hardwood credited to one bundle, gate passed at Spring 28); the shared-item case is unit-tested only because the custom board never asks an item twice. Jeff still owes the Season Goals page a look. Original report kept below.
