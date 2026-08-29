@@ -22,4 +22,20 @@ public static class EngineManifestCheck
         }
         return true;
     }
+
+    /// <summary>The first generated key whose live value is missing or different, rendered as
+    /// <c>key: generated=... live=...</c> for a log line; null when <see cref="Matches"/> holds.</summary>
+    public static string? FirstDifference(
+        System.Collections.Generic.IReadOnlyDictionary<string, string> generated,
+        System.Collections.Generic.IReadOnlyDictionary<string, string> live)
+    {
+        foreach (var pair in generated)
+        {
+            if (!live.TryGetValue(pair.Key, out string? liveValue))
+                return $"{pair.Key}: generated='{pair.Value}' live=(missing)";
+            if (!string.Equals(liveValue, pair.Value, System.StringComparison.Ordinal))
+                return $"{pair.Key}: generated='{pair.Value}' live='{liveValue}'";
+        }
+        return null;
+    }
 }
