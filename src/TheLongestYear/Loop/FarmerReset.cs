@@ -276,6 +276,12 @@ namespace TheLongestYear.Loop
             GrantBankedRecipes(p.cookingRecipes, cookbookRecipes);
             GrantBankedRecipes(p.craftingRecipes, craftbookRecipes);
 
+            // Kept crafting recipes granted directly, outside the craftbook banking system
+            // (e.g. Garden Pot keep): always present from day 1 once bought.
+            foreach (string r in baseline.KeptCraftingRecipes)
+                if (!p.craftingRecipes.ContainsKey(r))
+                    p.craftingRecipes[r] = 0;
+
             // Legendary fish must be catchable again each loop. The game blocks a repeat catch
             // through SpawnFishData.CatchLimit checked against p.fishCaught (GameLocation.cs:13831),
             // and nothing else in this reset ever touches that record; without this, a legendary

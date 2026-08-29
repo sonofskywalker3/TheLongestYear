@@ -125,6 +125,7 @@ public static class UpgradeCatalog
         //   cult_starfruit REMOVED — anyone can reach the desert, there's no RNG to buy off.
         new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 5000),
         new UpgradeDefinition("pierre_year2_seeds", UpgradeCategory.Obtainability, 10000),
+        new UpgradeDefinition("keep_garden_pot", UpgradeCategory.Obtainability, 750),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, 525),
 
         // Obtainability — Passive Accelerators (added 2026-05-29, cost-tuned 2026-05-29)

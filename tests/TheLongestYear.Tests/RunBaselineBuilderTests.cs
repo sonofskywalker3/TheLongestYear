@@ -350,4 +350,14 @@ public class RunBaselineBuilderTests
         var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
         Assert.Equal(new[] { "Book_PriceCatalogue", "Book_Speed" }, b.KeptBookStats.OrderBy(k => k).ToArray());
     }
+
+    [Fact]
+    public void The_garden_pot_keep_puts_the_recipe_in_the_baseline()
+    {
+        var state = new MetaState();
+        state.OwnedUpgrades.Add("keep_garden_pot");
+        var baseline = RunBaselineBuilder.Build(state, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Contains("Garden Pot", baseline.KeptCraftingRecipes);
+        Assert.Empty(RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500).KeptCraftingRecipes);
+    }
 }
