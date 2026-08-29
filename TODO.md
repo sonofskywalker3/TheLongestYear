@@ -6,6 +6,44 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### TOP PRIORITY (Jeff, 2026-08-29): fix EVERY open bug below before the next release. Nothing else first.
+
+Ordered by player cost. Each one has its root cause and fix shape written up in the section named.
+Per change: patch bump, one commit, tests green, live check on the throwaway save over the bridge
+(`docs/HEADLESS_DRIVING.md`; `tools/game.ps1` for anything needing the mouse, Jeff has authorised
+the desktop). Commit locally; pushing and releasing stay Jeff's call.
+
+1. **`keep_bus_unlocked` does not restore the bus** (Nexus, gazumbrado, 29 Aug). 1,500 JP for a
+   counter. Fix in `WorldResetService.cs` around line 506: complete the vault bundles on the board
+   and re-add `ccVault` when the upgrade is owned. Details: "10th sweep" below.
+2. **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
+   Being looked at). Round-trip them through the stash record like `TransplantToolState` does for
+   kept tools. Details: "10th sweep" below and the 5th-sweep table row "Kept rod loses bait".
+3. **Vanilla heart-event invites never re-send after a rewind** (found in the Better Start audit).
+   `FarmerReset` never clears `Farmer.triggerActionsRun`, so the twelve heart-gated invite mails
+   fire once per save; 8 and 10 heart events are unreachable in loop 2+. Recommended path (b): clear
+   `triggerActionsRun` at reset, excluding the nine `PLAYER_MONEY_EARNED` mails (or reset
+   `totalMoneyEarned`), plus a GMCM toggle for the Better Start gift. Details: "2026-08-28 brainstorm
+   batch", "Better Start compat + the trigger-action reset gap". Jeff has not picked (a) or (b); take
+   (b) unless he says otherwise.
+4. **Keep Horse is buyable with no horse** (`early_horse`, 450 JP, no reach requirement). Add
+   `runReachRequirement: "building:Stable"` and flip `KeepShopFilterTests.cs:57`. Details: "2026-08-28
+   brainstorm batch", "Keep Horse shows without a horse".
+5. **SVE saves fall back to the legacy read path** ("engine manifest mismatch" right after the engine
+   writes the board), so season pity on a held board is not applied there. Find what SVE re-applies
+   over the written `Data/Bundles`, decide whether the manifest check tolerates it, rule which SVE
+   areas join `ExcludedLocationMarkers`. Details: "SVE board audit". SVE is staged disabled in Vortex;
+   the 2026-07-20 P2 Task 9 notes say how it was enabled for a pass.
+
+Also on the Nexus bugs tab, no code needed: mark "Fall Festival Map Boundaries" (ChaoticMindset,
+29 Aug) Not a bug (the reporter retracted it) once Jeff says so; reply to Bumblewyn and gazumbrado
+after their fixes land (drafts in chat first, memory `show-reply-drafts-before-posting`).
+
+Unreleased fixes already on master that the release notes must carry: the per-slot ledger
+(0.16.135 to 0.16.146), the bundle pool fixes (0.16.26 to 0.16.36), the obtainable board (0.16.85
+to 0.16.134), activity themes (0.16.42 to 0.16.67), wallet items and Stardrops (0.16.19 to 0.16.25).
+Last public release is 0.16.17. `STATUS.md` has the state line by line.
+
 ### 10th sweep (2026-08-29 afternoon, Nexus bugs + posts + Reddit): two real new bugs, one retracted
 
 - **NEW, unfixed: "Bus Unlock not working" (Nexus bug, gazumbrado, 29 Aug 01:26, 0.16.17).** Spent

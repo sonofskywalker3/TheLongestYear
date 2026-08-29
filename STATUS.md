@@ -1,10 +1,11 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 (three-board year sims, 0.16.149)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.149 committed LOCALLY ONLY, not pushed, not released**
+**Last updated:** 2026-08-29 evening (10th sweep, bug queue set as top priority, 0.16.151)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.151 committed LOCALLY ONLY, not pushed, not released**
 **Tests:** 1754 passing, 0 failing
 **Build:** clean (mod assembly builds Release); 0.16.145 deployed to the game and desktop-driven (Jeff out, desktop authorised); 0.16.146 is docs only
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+**NEXT SESSION (Jeff, 2026-08-29):** fix every open bug in TODO.md "TOP PRIORITY" (five, ordered) before any release. 0.16.147 to 0.16.151 and the sweep are LOCAL ONLY, not pushed.
 
 ## 2026-08-29 (late afternoon): played years on the real STANDARD and REMIXED boards, three-way comparison
 
