@@ -32,11 +32,15 @@ public static class BundleSlotFiller
             "(O)157", // White Algae
         };
 
+    /// <summary>The hard-item rule (spec 2026-08-28-obtainable-board-2-stretch, section 3) only
+    /// applies to a bundle rolling at least this many slots.</summary>
+    public const int MinSlotsForHardItem = 4;
+
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
         PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null,
-        IReadOnlySet<string>? avoid = null, Func<string, bool>? springReady = null)
+        IReadOnlySet<string>? avoid = null, ItemAvailabilityModel? availability = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -86,29 +90,50 @@ public static class BundleSlotFiller
             return spec;
 
         List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng, capped, cap);
-        // Spring foothold (spec 2026-08-28-even-year): a quarter of the picks, at least one, must
-        // be something a Spring gate may demand, while the pool has such an item to give.
-        // A season-named bundle (Fall Crops, Winter Foraging) gates in its own season by nature;
-        // the foothold applies to the season-less domains only.
-        if (springReady != null && match.Season == null)
+        // Stretch swap and hard-item swap (spec 2026-08-28-obtainable-board-2-stretch, sections 2
+        // and 3), replacing the Spring foothold: never on Easy, never on a season-named bundle
+        // (it gates its own season by nature).
+        if (availability != null && match.Season == null && StretchRule.Applies(availability.Step))
         {
-            int need = SpringFoothold.Needed(targetCount);
-            int have = chosen.Count(c => springReady(c.ItemId));
+            // Stretch swap (spec section 2): for each season the chosen list gains nothing in, hold a
+            // stretch item; swap the last non-reachable slot for one from the pool when it holds none.
             var chosenIds = new HashSet<string>(chosen.Select(c => c.ItemId), StringComparer.Ordinal);
-            List<PoolItem> springPool = candidates.Where(c => springReady(c.ItemId) && !chosenIds.Contains(c.ItemId)).ToList();
-            int swaps = 0;
-            while (have < need && springPool.Count > 0)
+            foreach (Season season in new[] { Season.Spring, Season.Summer, Season.Fall })
             {
-                int victim = chosen.FindLastIndex(c => !springReady(c.ItemId));
-                if (victim < 0) break;
-                PoolItem pick = WeightedSampler.Sample(springPool, 1, rng)[0];
-                springPool.Remove(pick);
+                bool gains = chosen.Any(c => Gains(availability.For(c.ItemId), season));
+                bool holdsStretch = chosen.Any(c => StretchRule.IsStretchFor(availability.For(c.ItemId), season));
+                if (gains || holdsStretch) continue;
+                List<PoolItem> stretchPool = candidates
+                    .Where(c => !chosenIds.Contains(c.ItemId) && StretchRule.IsStretchFor(availability.For(c.ItemId), season))
+                    .ToList();
+                if (stretchPool.Count == 0) { log?.Invoke($"'{spec.Name}': no stretch item for {season} in its pool."); continue; }
+                int victim = chosen.FindLastIndex(c => !StretchRule.IsReachable(availability.For(c.ItemId), season));
+                if (victim < 0) continue;
+                PoolItem pick = WeightedSampler.Sample(stretchPool, 1, rng)[0];
+                chosenIds.Remove(chosen[victim].ItemId);
                 chosen[victim] = pick;
-                have++;
-                swaps++;
+                chosenIds.Add(pick.ItemId);
+                log?.Invoke($"'{spec.Name}': swapped in {pick.ItemId} as a {season} stretch.");
             }
-            if (swaps > 0) log?.Invoke($"'{spec.Name}': swapped {swaps} slot(s) for a Spring foothold.");
-            else if (have < need) log?.Invoke($"'{spec.Name}': no Spring foothold in its pool.");
+            // Hard-item rule (spec section 3): one effort-6-or-more item per bundle of 4 or more slots.
+            if (targetCount >= MinSlotsForHardItem && !chosen.Any(c => EffortTiers.IsHard(availability.For(c.ItemId).Effort)))
+            {
+                List<PoolItem> hardPool = candidates.Where(c => !chosenIds.Contains(c.ItemId) && EffortTiers.IsHard(availability.For(c.ItemId).Effort)).ToList();
+                if (hardPool.Count == 0) log?.Invoke($"'{spec.Name}': no hard item in its pool.");
+                else
+                {
+                    // Swap the easiest slot that is not a stretch line, so the stretch swap above survives.
+                    int victim = chosen.Select((c, i) => (c, i))
+                        .Where(p => !Enumerable.Range(0, 3).Any(s => StretchRule.IsStretchFor(availability.For(p.c.ItemId), (Season)s)))
+                        .OrderBy(p => availability.For(p.c.ItemId).Effort).Select(p => p.i).DefaultIfEmpty(-1).First();
+                    if (victim >= 0)
+                    {
+                        PoolItem pick = WeightedSampler.Sample(hardPool, 1, rng)[0];
+                        chosen[victim] = pick;
+                        log?.Invoke($"'{spec.Name}': swapped in {pick.ItemId} as the hard item (effort {availability.For(pick.ItemId).Effort}).");
+                    }
+                }
+            }
         }
         var slots = chosen.Select(item => new BundleSlotSpec(
             item.ItemId,
@@ -242,4 +267,10 @@ public static class BundleSlotFiller
                 return 0;
         }
     }
+
+    /// <summary>True when an item's reach newly extends into <paramref name="s"/>: reachable by
+    /// season's end, and (for anything past Spring) not already reachable a season earlier. Spring
+    /// has no "earlier" season, so any item reachable by Spring's end counts as gaining it.</summary>
+    private static bool Gains(ItemAvailability a, Season s)
+        => StretchRule.IsReachable(a, s) && (s == Season.Spring || !StretchRule.IsReachable(a, s - 1));
 }

@@ -23,37 +23,127 @@ public class BundleSlotFillerTests
 
     private static readonly BundleGenerationTuning Tuning = new();
 
+    /// <summary>Builds a synthetic ItemAvailability with only week/hard-week/effort set, for the
+    /// stretch and hard-item swap tests below (StretchRule and EffortTiers.IsHard care about
+    /// nothing else).</summary>
+    private static ItemAvailability Avail(int week, int hardWeek, int effort = 1) =>
+        new(AvailabilityWeeks.SeasonOf(week), effort, "test", EarliestWeek: week, HardWeek: hardWeek);
+
     [Fact]
-    public void Fill_keeps_at_least_one_spring_item_when_the_pool_has_one()
+    public void A_bundle_with_nothing_for_spring_swaps_in_a_stretch_item_not_a_spring_item()
     {
-        var pools = new ItemPools { Metals = new[] { Item("(O)386", weight: 100), Item("(O)384", weight: 100), Item("(O)337", weight: 100), Item("(O)378", weight: 1) } };
+        // Three Winter items (heavy weight) crowd the raw roll; a Spring-stretch item ("(O)s",
+        // pacing week 6 / hard week 1) and a true Spring item ("(O)p", week 1) sit in the pool at
+        // low weight so the raw roll is expected to miss both.
+        var pools = new ItemPools
+        {
+            Metals = new[]
+            {
+                Item("(O)w1", weight: 100), Item("(O)w2", weight: 100), Item("(O)w3", weight: 100),
+                Item("(O)s", weight: 1), Item("(O)p", weight: 1),
+            },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)w1"] = Avail(13, 13),
+            ["(O)w2"] = Avail(13, 13),
+            ["(O)w3"] = Avail(13, 13),
+            ["(O)s"] = Avail(6, 1),
+            ["(O)p"] = Avail(1, 1),
+        });
         var spec = Spec("Blacksmith's", 3);
-        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null), pools, Tuning, new Random(7),
-            springReady: id => id == "(O)378");
-        Assert.Contains(filled.Slots, s => s.ItemId == "(O)378");
-        Assert.Equal(3, filled.Slots.Select(s => s.ItemId).Distinct().Count());
+        var match = new DomainMatch(PoolDomain.Metals, null);
+
+        BundleSpec raw = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1));
+        Assert.DoesNotContain(raw.Slots, s => s.ItemId == "(O)s"); // RED precondition: no swap logic yet
+
+        BundleSpec filled = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1), availability: model);
+        Assert.Contains(filled.Slots, s => s.ItemId == "(O)s");
+        Assert.DoesNotContain(filled.Slots, s => s.ItemId == "(O)p");
     }
 
     [Fact]
-    public void Fill_leaves_a_season_named_bundle_alone()
+    public void Easy_gets_no_swap_at_all()
     {
-        var pools = new ItemPools { Forage = new[] { Item("(O)406", seasons: new[] { Season.Fall }), Item("(O)408", seasons: new[] { Season.Fall }), Item("(O)410", seasons: new[] { Season.Fall }), Item("(O)16", seasons: new[] { Season.Fall, Season.Spring }, weight: 1) } };
-        var spec = Spec("Fall Foraging", 3);
-        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.SeasonalForage, Season.Fall), pools, Tuning, new Random(3),
-            springReady: id => id == "(O)16");
-        Assert.Equal(3, filled.Slots.Count);
-        // No forced swap toward the one Spring-capable item.
-        Assert.True(filled.Slots.Count(s => s.ItemId == "(O)16") <= 1);
+        var pools = new ItemPools
+        {
+            Metals = new[]
+            {
+                Item("(O)w1", weight: 100), Item("(O)w2", weight: 100), Item("(O)w3", weight: 100),
+                Item("(O)s", weight: 1), Item("(O)p", weight: 1),
+            },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)w1"] = Avail(13, 13),
+            ["(O)w2"] = Avail(13, 13),
+            ["(O)w3"] = Avail(13, 13),
+            ["(O)s"] = Avail(6, 1),
+            ["(O)p"] = Avail(1, 1),
+        }, step: DifficultyStep.Easy);
+        var spec = Spec("Blacksmith's", 3);
+        var match = new DomainMatch(PoolDomain.Metals, null);
+
+        BundleSpec raw = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1));
+        BundleSpec filled = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1), availability: model);
+        Assert.Equal(raw.Slots.Select(s => s.ItemId), filled.Slots.Select(s => s.ItemId));
     }
 
     [Fact]
-    public void Fill_without_a_spring_candidate_still_fills()
+    public void A_four_slot_bundle_without_a_hard_item_swaps_one_in()
     {
-        var pools = new ItemPools { Metals = new[] { Item("(O)386"), Item("(O)384"), Item("(O)337") } };
+        var pools = new ItemPools
+        {
+            Metals = new[]
+            {
+                Item("(O)e1", weight: 100), Item("(O)e2", weight: 100), Item("(O)e3", weight: 100),
+                Item("(O)e4", weight: 100), Item("(O)e5", weight: 100), Item("(O)h", weight: 1),
+            },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)e1"] = Avail(1, 1, effort: 2),
+            ["(O)e2"] = Avail(1, 1, effort: 2),
+            ["(O)e3"] = Avail(1, 1, effort: 2),
+            ["(O)e4"] = Avail(1, 1, effort: 2),
+            ["(O)e5"] = Avail(1, 1, effort: 2),
+            ["(O)h"] = Avail(1, 1, effort: 7),
+        });
+        var spec = Spec("Blacksmith's", 4);
+        var match = new DomainMatch(PoolDomain.Metals, null);
+
+        BundleSpec raw = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1));
+        Assert.DoesNotContain(raw.Slots, s => s.ItemId == "(O)h"); // RED precondition: no swap logic yet
+
+        BundleSpec filled = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1), availability: model);
+        Assert.Contains(filled.Slots, s => model.For(s.ItemId).Effort >= 6);
+    }
+
+    [Fact]
+    public void A_three_slot_bundle_is_exempt_from_the_hard_item_rule()
+    {
+        var pools = new ItemPools
+        {
+            Metals = new[]
+            {
+                Item("(O)e1", weight: 100), Item("(O)e2", weight: 100), Item("(O)e3", weight: 100),
+                Item("(O)e4", weight: 100), Item("(O)e5", weight: 100), Item("(O)h", weight: 1),
+            },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)e1"] = Avail(1, 1, effort: 2),
+            ["(O)e2"] = Avail(1, 1, effort: 2),
+            ["(O)e3"] = Avail(1, 1, effort: 2),
+            ["(O)e4"] = Avail(1, 1, effort: 2),
+            ["(O)e5"] = Avail(1, 1, effort: 2),
+            ["(O)h"] = Avail(1, 1, effort: 7),
+        });
         var spec = Spec("Blacksmith's", 3);
-        var filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null), pools, Tuning, new Random(7),
-            springReady: _ => false);
-        Assert.Equal(3, filled.Slots.Count);
+        var match = new DomainMatch(PoolDomain.Metals, null);
+
+        BundleSpec filled = BundleSlotFiller.Fill(spec, match, pools, Tuning, new Random(1), availability: model);
+        Assert.DoesNotContain(filled.Slots, s => s.ItemId == "(O)h");
     }
 
     [Fact]

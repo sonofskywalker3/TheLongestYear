@@ -28,7 +28,7 @@ public sealed record SeasonEase(Season Season, int Steps, double Factor)
                     return req;
                 return BundleRequirement.CreatePercentage(
                     req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, ramp,
-                    req.IngredientStacks, req.IngredientQualities);
+                    req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines);
             }
 
             case BundleKind.PerItem:
@@ -43,14 +43,15 @@ public sealed record SeasonEase(Season Season, int Steps, double Factor)
                 }
                 if (!changed) return req;
                 return BundleRequirement.CreatePerItem(
-                    req.Name, req.Theme, req.Ingredients, pins, req.IngredientStacks, req.IngredientQualities);
+                    req.Name, req.Theme, req.Ingredients, pins, req.IngredientStacks, req.IngredientQualities,
+                    stretchLines: req.StretchLines);
             }
 
             case BundleKind.Seasonal:
                 if (req.SeasonalSeason != ease.Season) return req;
                 return BundleRequirement.CreateSeasonal(
                     req.Name, req.Theme, req.Ingredients, Slide(req.SeasonalSeason!.Value, ease.Steps),
-                    req.IngredientStacks, req.IngredientQualities);
+                    req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines);
 
             default:
                 return req;

@@ -120,4 +120,30 @@ public class GeneratedBundleSetTests
         Assert.All(reqs, r => Assert.True(r.IsSatisfiedAtSeasonEnd(Season.Spring, springOnly),
             $"{r.Name} demands Fall/Winter-only produce in Spring"));
     }
+
+    /// <summary>Controller gap (2026-08-28-obtainable-board-2-stretch, Task 3): BuildRequirements
+    /// re-wraps a Percentage requirement's clamped ramp through CreatePercentage, which used to
+    /// drop StretchLines on the floor. "(O)a" (Winter, week 13) and "(O)b" (pacing week 6, hard
+    /// week 1) never gain Spring together, so StretchRule.Lines pins "(O)b" as the Spring stretch
+    /// line; it must still be on the requirement that comes out of BuildRequirements.</summary>
+    [Fact]
+    public void BuildRequirements_PreservesStretchLines_ThroughTheObtainabilityClamp()
+    {
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)a"] = new(Season.Winter, 1, "test", EarliestWeek: 13, HardWeek: 13),
+            ["(O)b"] = new(Season.Summer, 1, "test", EarliestWeek: 6, HardWeek: 1),
+        });
+        var set = new GeneratedBundleSet(new[]
+        {
+            Spec("Pantry", 0, "Curiosity Shop", 1, "(O)b", "(O)a"),
+        });
+        var reqs = set.BuildRequirements(
+            itemSeasonPins: new Dictionary<string, Season>(),
+            bundleQuotas: new Dictionary<string, int[]>(),
+            ease: null,
+            availability: model);
+        var req = Assert.Single(reqs);
+        Assert.Equal(Season.Spring, Assert.Contains("(O)b", req.StretchLines));
+    }
 }

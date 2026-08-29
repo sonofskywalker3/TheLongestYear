@@ -55,7 +55,7 @@ public sealed class GeneratedBundleSet
                     req.NumberOfSlots, itemSeasonPins);
                 req = BundleRequirement.CreatePercentage(
                     req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
-                    req.IngredientStacks, req.IngredientQualities);
+                    req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines);
             }
             if (ease != null)
                 req = SeasonEase.Apply(req, ease);   // season pity, keep path (spec 2026-08-25)
