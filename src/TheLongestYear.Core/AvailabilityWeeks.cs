@@ -156,9 +156,21 @@ public static class AvailabilityWeeks
             ["(O)637"] = (9, "Pomegranate, Fall tree"),
         };
 
-    /// <summary>Books: the Bookseller's first visit is Spring, and the mines, fishing and dig
-    /// spots drop them from day 1 at low odds (for Jeff to confirm).</summary>
-    public const int BookWeek = 2;
+    /// <summary>Books with a year-1 route (Data/Shops and code, review 2026-08-28). The Bookseller's
+    /// eleven story books are YEAR 3 in his stock; the ones here have a free gift box, a shop, or a
+    /// prize-machine route. Everything else is drop-only and stays out of the Book pool.</summary>
+    public static readonly IReadOnlyDictionary<string, int> BookWeeks =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["(O)Book_PriceCatalogue"] = 2,   // Bookseller, 3,000g, always
+            ["(O)SkillBook_0"] = 3, ["(O)SkillBook_1"] = 3, ["(O)SkillBook_2"] = 3, ["(O)SkillBook_3"] = 3, ["(O)SkillBook_4"] = 3,  // 5,000g and up
+            ["(O)Book_Speed"] = 5,            // Way of the Wind pt. 1, 15,000g
+            ["(O)PurpleBook"] = 5,            // Book of Stars, 15,000g at 25 percent
+            ["(O)Book_Trash"] = 1,            // gift box in Town
+            ["(O)Book_Marlon"] = 1,           // gift box in the Adventurer's Guild
+            ["(O)Book_Bombs"] = 3,            // the Dwarf, 4,000g
+            ["(O)Book_Friendship"] = 5,       // prize ticket machine
+        };
 
     /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
     public const int TrapFishWeek = 2;

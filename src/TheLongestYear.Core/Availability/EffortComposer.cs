@@ -127,9 +127,9 @@ public sealed class EffortComposer
     private const int PoolBookEffort = 5;
 
     private ItemEffort? PoolBook(string qualifiedId)
-        => _books.Any(b => b.ItemId == qualifiedId)
-            ? new ItemEffort(PoolBookEffort, $"book (catalog pool), bookseller and random drops, week {AvailabilityWeeks.BookWeek} (for Jeff to confirm), effort {PoolBookEffort}",
-                AvailabilityWeeks.BookWeek, AvailabilityWeeks.SeasonOf(AvailabilityWeeks.BookWeek))
+        => _books.Any(b => b.ItemId == qualifiedId) && AvailabilityWeeks.BookWeeks.TryGetValue(qualifiedId, out int week)
+            ? new ItemEffort(PoolBookEffort, $"book (catalog pool), year-1 route, week {week}, effort {PoolBookEffort}",
+                week, AvailabilityWeeks.SeasonOf(week))
             : null;
 
     /// <summary>Every Data/Objects id a rule claims and Phase 1 did not, plus the table ids that
