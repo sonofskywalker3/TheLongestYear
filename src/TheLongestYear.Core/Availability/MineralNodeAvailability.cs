@@ -42,6 +42,6 @@ public static class MineralNodeAvailability
         int week = MineAreas.Week(rule.Area);
         return new ItemEffort(effort,
             $"node, {rule.Note}, {MineAreas.Label(rule.Area)}, week {week}, effort {effort}",
-            week, MineAreas.GateSeason(rule.Area));
+            week, MineAreas.GateSeason(rule.Area), HardWeek: MineAreas.HardWeek(rule.Area));
     }
 }

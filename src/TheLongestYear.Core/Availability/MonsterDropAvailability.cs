@@ -60,7 +60,7 @@ public static class MonsterDropAvailability
             if (better)
                 best = new ItemEffort(effort,
                     $"monster drop, {drop.MonsterName} ({MineAreas.Label(area.Value)}) at {drop.Chance:0.##} (+{step}), week {week}, effort {effort}",
-                    week, MineAreas.GateSeason(area.Value));
+                    week, MineAreas.GateSeason(area.Value), HardWeek: MineAreas.HardWeek(area.Value));
         }
         return best;
     }

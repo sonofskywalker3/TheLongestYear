@@ -15,23 +15,24 @@ namespace TheLongestYear.Core.Availability;
 public static class LocationGating
 {
     /// <summary>Matched as case-sensitive substrings of the location key, so "Desert",
-    /// "SkullCave" and "IslandSouth" all catch their family of map keys.</summary>
-    private static readonly (string Marker, int Week)[] GatedMarkers =
+    /// "SkullCave" and "IslandSouth" all catch their family of map keys. Hard is the first week
+    /// the location can exist at all (facts); Week is the pacing week (a judgement call).</summary>
+    private static readonly (string Marker, int Week, int Hard)[] GatedMarkers =
     {
-        // Bus repair costs 40,000g through the Vault bundle. Fall (Jeff, 2026-08-28: Skull
-        // Cavern in the Fall gate and beyond).
-        ("Desert",    AvailabilityWeeks.SkullCavernWeek),
-        ("SkullCave", AvailabilityWeeks.SkullCavernWeek),
+        // Bus repair costs 40,000g through the Vault bundle. Fall pacing, Summer hard (Jeff,
+        // 2026-08-28: a Spring bus is possible but not fun; Hard may ask from Summer week 2).
+        ("Desert",    AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek),
+        ("SkullCave", AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek),
         // MountainUnlock clears the landslide on day 1; depth is handled per mine area
         // (AvailabilityWeeks.MineAreaWeek: 30 floors a week).
-        ("UndergroundMine", 1),
+        ("UndergroundMine", 1, 1),
         // Rusty Key: 60 museum donations. Reachable mid-run by a player who digs, not before.
-        ("Sewer",     AvailabilityWeeks.SewerWeek),
-        ("BugLand",   AvailabilityWeeks.SewerWeek),
+        ("Sewer",     AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek),
+        ("BugLand",   AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek),
         // Witch's Swamp needs the Dark Talisman, which needs the Sewer first, then the Mutant
         // Bug Lair quest. Last stop of a long chain.
-        ("WitchSwamp", AvailabilityWeeks.SwampWeek),
-        ("WitchHut",   AvailabilityWeeks.SwampWeek),
+        ("WitchSwamp", AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek),
+        ("WitchHut",   AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek),
     };
 
     /// <summary>First week of the year the player can stand in this location.</summary>
@@ -39,7 +40,7 @@ public static class LocationGating
     {
         if (string.IsNullOrEmpty(locationKey))
             return 1;
-        foreach ((string marker, int week) in GatedMarkers)
+        foreach ((string marker, int week, int _) in GatedMarkers)
             if (locationKey.Contains(marker, StringComparison.Ordinal))
                 return week;
         return 1;
@@ -54,6 +55,26 @@ public static class LocationGating
         int best = Calendar.WeeksPerYear;
         foreach (string key in locationKeys)
             best = Math.Min(best, WeekFor(key));
+        return best;
+    }
+
+    /// <summary>First week the location can exist at all (facts, not pacing): a Hard-mode ask
+    /// may demand it this early.</summary>
+    public static int HardWeekFor(string locationKey)
+    {
+        if (string.IsNullOrEmpty(locationKey)) return 1;
+        foreach ((string marker, int _, int hard) in GatedMarkers)
+            if (locationKey.Contains(marker, StringComparison.Ordinal)) return hard;
+        return 1;
+    }
+
+    /// <summary>The EASIEST hard week among the given locations, because reaching any one of
+    /// them is enough to get the item.</summary>
+    public static int HardWeekForAny(IReadOnlyList<string> locationKeys)
+    {
+        if (locationKeys == null || locationKeys.Count == 0) return 1;
+        int best = Calendar.WeeksPerYear;
+        foreach (string key in locationKeys) best = Math.Min(best, HardWeekFor(key));
         return best;
     }
 

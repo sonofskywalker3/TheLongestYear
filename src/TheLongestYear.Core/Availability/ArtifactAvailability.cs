@@ -49,7 +49,8 @@ public static class ArtifactAvailability
             if (better)
                 best = new ItemEffort(effort,
                     $"artifact spot, {spot.Location} at {spot.Chance:0.####} (+{step}), week {week}, effort {effort}",
-                    week, AvailabilityWeeks.SeasonOf(week));
+                    week, AvailabilityWeeks.SeasonOf(week),
+                    HardWeek: Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.HardWeekFor(spot.Location)));
         }
         return best;
     }

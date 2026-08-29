@@ -138,9 +138,9 @@ public class FishAvailabilityDeriveTests
         ItemAvailability result = FishAvailability.Derive(
             Fish("(O)CaveJelly", locations: new List<string> { "UndergroundMine" }), Row());
 
-        // Floor 100 fish: goal week 4 (30 floors a week), gate Summer like the rest of area 80.
+        // Floor 100 fish: goal week 4 (30 floors a week), gate Spring like the rest of area 80.
         Assert.Equal(4, result.Week);
-        Assert.Equal(Season.Summer, result.Gate);
+        Assert.Equal(Season.Spring, result.Gate);
     }
 
     [Fact]

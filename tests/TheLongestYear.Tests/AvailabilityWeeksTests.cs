@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
 using Xunit;
@@ -22,12 +23,42 @@ public class AvailabilityWeeksTests
 
     [Theory]
     [InlineData(MineAreas.Area0, 1, Season.Spring)] [InlineData(MineAreas.Area10, 1, Season.Spring)]
-    [InlineData(MineAreas.Area40, 2, Season.Spring)] [InlineData(MineAreas.Area80, 3, Season.Summer)]
+    [InlineData(MineAreas.Area40, 2, Season.Spring)] [InlineData(MineAreas.Area80, 3, Season.Spring)]
     [InlineData(MineAreas.SkullCavern, 9, Season.Fall)]
     public void Mine_area_week_and_gate(int area, int week, Season gate)
     {
         Assert.Equal(week, AvailabilityWeeks.MineAreaWeek(area));
         Assert.Equal(gate, AvailabilityWeeks.MineAreaGateSeason(area));
+    }
+
+    [Theory]
+    [InlineData(1, 1)] [InlineData(30, 1)] [InlineData(31, 2)] [InlineData(60, 2)]
+    [InlineData(61, 3)] [InlineData(90, 3)] [InlineData(91, 4)] [InlineData(120, 4)]
+    public void Thirty_floors_a_week(int floor, int week) => Assert.Equal(week, AvailabilityWeeks.MineFloorWeek(floor));
+
+    [Fact]
+    public void Every_mine_area_gates_in_spring_and_skull_cavern_in_fall()
+    {
+        Assert.Equal(Season.Spring, MineAreas.GateSeason(MineAreas.Area80));
+        Assert.Equal(3, MineAreas.Week(MineAreas.Area80));
+        Assert.Equal(Season.Fall, MineAreas.GateSeason(MineAreas.SkullCavern));
+    }
+
+    [Fact]
+    public void Desert_has_a_fall_pacing_week_and_a_summer_hard_week()
+    {
+        Assert.Equal(9, LocationGating.WeekFor("Desert"));
+        Assert.Equal(6, LocationGating.HardWeekFor("Desert"));
+        Assert.Equal(6, LocationGating.HardWeekFor("SkullCave"));
+        Assert.Equal(1, LocationGating.HardWeekFor("Town"));
+    }
+
+    [Fact]
+    public void Gold_ore_is_a_spring_gate_at_week_3()
+    {
+        var gold = MetalsAvailability.Derive(new PoolItem("(O)384", 25, 3, new List<Season>(), new List<string>()))!;
+        Assert.Equal(3, gold.Week);
+        Assert.Equal(Season.Spring, gold.Gate);
     }
 
     [Theory]

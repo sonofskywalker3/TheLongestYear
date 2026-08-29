@@ -13,18 +13,19 @@ public class MetalsAvailabilityTests
     [Theory]
     [InlineData("(O)378", Season.Spring)]   // Copper Ore, mine area 0
     [InlineData("(O)380", Season.Spring)]   // Iron Ore, mine area 40
-    [InlineData("(O)384", Season.Summer)]   // Gold Ore, mine area 80
+    [InlineData("(O)384", Season.Spring)]   // Gold Ore, mine area 80
     [InlineData("(O)386", Season.Fall)]     // Iridium Ore, Skull Cavern behind the bus
     [InlineData("(O)334", Season.Spring)]   // Copper Bar
     [InlineData("(O)335", Season.Spring)]   // Iron Bar
-    [InlineData("(O)336", Season.Summer)]   // Gold Bar
+    [InlineData("(O)336", Season.Spring)]   // Gold Bar
     [InlineData("(O)337", Season.Fall)]     // Iridium Bar
     public void Each_Metal_Gates_At_Its_Mine_Depth(string id, Season expected)
     {
         ItemAvailability? result = MetalsAvailability.Derive(Metal(id));
 
         Assert.NotNull(result);
-        // The gate season (even-year spec 2026-08-28): gold's goal week is Spring week 3, its gate Summer.
+        // The gate season (2026-08-28 mine pacing spec): every mine area gates in Spring now,
+        // gold's goal week is Spring week 3 and its gate is Spring too.
         Assert.Equal(expected, result!.Gate);
     }
 

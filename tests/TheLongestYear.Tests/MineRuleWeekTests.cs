@@ -10,7 +10,7 @@ public class MineRuleWeekTests
     [Theory]
     [InlineData("(O)80", 1, Season.Spring)]  // Quartz
     [InlineData("(O)84", 2, Season.Spring)]  // Frozen Tear
-    [InlineData("(O)64", 3, Season.Summer)]  // Ruby
+    [InlineData("(O)64", 3, Season.Spring)]  // Ruby
     [InlineData("(O)74", 9, Season.Fall)]    // Prismatic Shard
     public void Node_week_and_gate(string id, int week, Season gate)
     {

@@ -50,6 +50,7 @@ public static class MetalsAvailability
         int week = MineAreas.Week(rule.Area);
         Season gate = MineAreas.GateSeason(rule.Area);
         return new ItemAvailability(AvailabilityWeeks.SeasonOf(week), rule.Effort,
-            $"{rule.Basis}, week {week}, gate {gate}, effort {rule.Effort}", EffortSource.Derived, week, gate);
+            $"{rule.Basis}, week {week}, gate {gate}, effort {rule.Effort}", EffortSource.Derived, week, gate,
+            HardWeek: MineAreas.HardWeek(rule.Area));
     }
 }

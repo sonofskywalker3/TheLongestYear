@@ -37,10 +37,12 @@ public static class FishAvailability
         int locationWeek = LocationGating.WeekForAny(item.Locations);
         int week = Math.Max(spawnWeek, locationWeek);
         Season floor = AvailabilityWeeks.SeasonOf(week);
+        int hardWeek = Math.Max(spawnWeek, LocationGating.HardWeekForAny(item.Locations));
         if (AvailabilityWeeks.MineFishWeeks.TryGetValue(item.ItemId, out (int Week, Season Gate) mineFish))
         {
             week = Math.Max(week, mineFish.Week);
             floor = mineFish.Gate > AvailabilityWeeks.SeasonOf(week) ? mineFish.Gate : AvailabilityWeeks.SeasonOf(week);
+            hardWeek = Math.Max(hardWeek, mineFish.Week);
         }
 
         string locationNote = locationWeek > 1
@@ -51,7 +53,7 @@ public static class FishAvailability
         {
             return new ItemAvailability(floor, ItemAvailabilityModel.UnrecognisedEffort,
                 $"fish, no Data/Fish row, week {week}, spawns {SeasonList(item.Seasons)}{locationNote}",
-                EffortSource.Derived, week, floor);
+                EffortSource.Derived, week, floor, HardWeek: hardWeek);
         }
 
         int effort =
@@ -65,7 +67,8 @@ public static class FishAvailability
         return new ItemAvailability(floor, effort,
             $"fish, week {week}, spawns {SeasonList(item.Seasons)}{locationNote}, "
             + $"difficulty {row.Difficulty}, level {row.MinFishingLevel}, weather {WeatherLabel(row.Weather)}, "
-            + $"window {OpenHours(row.RawTimeSpans)}h, effort {effort}", EffortSource.Derived, week, floor);
+            + $"window {OpenHours(row.RawTimeSpans)}h, effort {effort}", EffortSource.Derived, week, floor,
+            HardWeek: hardWeek);
     }
 
     private static string SeasonList(IReadOnlyList<Season> seasons)
