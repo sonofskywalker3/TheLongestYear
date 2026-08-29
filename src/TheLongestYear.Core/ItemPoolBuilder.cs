@@ -402,12 +402,22 @@ public static class ItemPoolBuilder
         // Curated additions: the three mine fish and five legendaries the game data never rows
         // into a spawn table (MineShaft.getFish hard-codes area/floor; legendaries are
         // CatchLimit-1 rod events). Only join when Data/Objects actually knows the id (a mod could
-        // remove it) and it is not already present from a spawn row.
+        // remove it) and it is not already present from a spawn row. Vanilla DOES give the
+        // legendaries a real Data/Locations row (Vets bypasses their ExcludeFromRandomSale via
+        // PoolAdditions.VetExceptions, so the main spawn loop above already adds them), so a
+        // "seen" addition still needs its Weight forced to the addition's weight — otherwise it
+        // rolls at the ordinary VanillaItemWeight instead of the intended 1. Its seasons/locations
+        // stay whatever the data row said, which can be richer than the curated fallback.
         var seenIds = new HashSet<string>(seasonsById.Keys, StringComparer.Ordinal);
         foreach (PoolAddition addition in PoolAdditions.Fish)
         {
             if (!seenIds.Add(addition.ItemId))
+            {
+                int existingIndex = fish.FindIndex(p => p.ItemId == addition.ItemId);
+                if (existingIndex >= 0)
+                    fish[existingIndex] = fish[existingIndex] with { Weight = addition.Weight };
                 continue;
+            }
             if (!objects.ContainsKey(Unqualify(addition.ItemId)))
                 continue;
             PoolItem item = MakeItem(addition.ItemId, objects, tuning, addition.Seasons, addition.Locations)
