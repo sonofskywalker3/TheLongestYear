@@ -192,4 +192,26 @@ public class SlotPoolBuilderTests
         Assert.Equal("Boost: Sneak Peek", pool.Single(s => s.ItemId == "(O)611").RouteTag);
         Assert.Null(pool.Single(s => s.ItemId == "(O)24").RouteTag);
     }
+    [Fact]
+    public void A_doubled_id_offers_its_second_slot_once_the_first_is_filled()
+    {
+        // Construction shape: Wood, Wood, Stone, Hardwood. Slot 0 (Wood) already filled on the board.
+        // One slot, one goal (spec 2026-08-29-per-slot-ledger): the second Wood slot is its own goal.
+        var board = new Dictionary<string, string>
+        {
+            ["Crafts Room/13"] = "Construction/O 388 1/388 99 0 388 99 0 390 99 0 709 10 0/4/4/13/Construction",
+        };
+        var req = BundleRequirement.CreatePerItem("Construction", Theme.Foraging,
+            new[] { "(O)388", "(O)390", "(O)709" },
+            new Dictionary<string, Season> { ["(O)388"] = Season.Spring, ["(O)390"] = Season.Spring, ["(O)709"] = Season.Spring },
+            bundleIndex: 13,
+            slots: new[] { new BundleSlot(0, "(O)388"), new BundleSlot(1, "(O)388"), new BundleSlot(2, "(O)390"), new BundleSlot(3, "(O)709") });
+        bool[] state = { true, false, false, false };
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(board, _ => state, Reqs(req), Theme.Foraging, Season.Spring, _ => true, weekOfYear: 1);
+
+        Assert.Contains(pool, s => s.BundleIndex == 13 && s.IngredientIndex == 1 && s.ItemId == "(O)388");
+        Assert.DoesNotContain(pool, s => s.IngredientIndex == 0);
+        Assert.Equal(3, pool.Count);   // Wood slot 1, Stone, Hardwood
+    }
 }
