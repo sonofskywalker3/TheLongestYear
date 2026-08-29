@@ -191,10 +191,31 @@ public static class BundleSlotFiller
                 }
             }
         }
-        var slots = chosen.Select(item => new BundleSlotSpec(
-            item.ItemId,
-            RollStack(match.Domain, item, tuning, rng),
-            qualityOff ? 0 : RollQuality(match.Domain, item, pools, tuning, rng))).ToList();
+        // Stack and quality for a recipe bundle (ruling, spec 2026-08-28-obtainable-board-3-pools):
+        // it has no domain of its own, so it rolls with the domain its dominant part maps to when
+        // that is Fish / SeasonalCrops / SeasonalForage, and asks for a plain single item
+        // otherwise. A vanilla id the recipe drew again keeps the stack and quality the vanilla
+        // slot carried, so a re-roll that lands on the bundle's own item reproduces vanilla's ask.
+        PoolDomain rollDomain = recipe == null
+            ? match.Domain
+            : RecipeRollDomain(recipe, targetCount);
+        IReadOnlyDictionary<string, BundleSlotSpec>? vanillaSlots = recipe == null
+            ? null
+            : VanillaSlots(spec);
+
+        var slots = new List<BundleSlotSpec>(chosen.Count);
+        foreach (PoolItem item in chosen)
+        {
+            if (vanillaSlots != null && vanillaSlots.TryGetValue(item.ItemId, out BundleSlotSpec? kept))
+            {
+                slots.Add(new BundleSlotSpec(item.ItemId, kept.Stack, kept.Quality));
+                continue;
+            }
+            slots.Add(new BundleSlotSpec(
+                item.ItemId,
+                RollStack(rollDomain, item, tuning, rng),
+                qualityOff ? 0 : RollQuality(rollDomain, item, pools, tuning, rng)));
+        }
 
         if (match.Domain == PoolDomain.SeasonalForage
             && rng.NextDouble() < tuning.LargeQuantityForageChance)
@@ -266,6 +287,68 @@ public static class BundleSlotFiller
         }
         return chosen;
     }
+
+    /// <summary>The domain a Recipe bundle rolls stack and quality with: the one its dominant
+    /// part maps to, when that part is fish, crops or forage. Everything else (gems, artifacts,
+    /// cooking, books, trash...) asks for one plain item, which is exactly what
+    /// <see cref="PoolDomain.None"/> gives <see cref="RollStack"/> and <see cref="RollQuality"/>.
+    ///
+    /// The dominant part is the one filling the most slots; a "rest of the slots" part takes
+    /// whatever the fixed-count parts leave. Ties keep the earlier part, so the choice is
+    /// deterministic in the recipe's own fixed order.</summary>
+    public static PoolDomain RecipeRollDomain(PoolRecipe recipe, int targetCount)
+    {
+        if (recipe == null || recipe.Parts.Count == 0)
+            return PoolDomain.None;
+
+        int fixedSlots = recipe.Parts
+            .Where(p => p.Count > BundlePoolRecipes.RestOfTheSlots)
+            .Sum(p => p.Count);
+        int rest = Math.Max(0, targetCount - Math.Min(fixedSlots, targetCount));
+
+        PoolPart? dominant = null;
+        int best = -1;
+        foreach (PoolPart part in recipe.Parts)
+        {
+            int size = part.Count <= BundlePoolRecipes.RestOfTheSlots ? rest : part.Count;
+            if (size > best) { best = size; dominant = part; }
+        }
+        return dominant == null ? PoolDomain.None : DomainForLabel(dominant.Label);
+    }
+
+    /// <summary>The pool domain a recipe part's label names, for the stack/quality roll only.
+    /// Anything else is None: a plain single item.</summary>
+    private static PoolDomain DomainForLabel(string label)
+        => label switch
+        {
+            "Fish" => PoolDomain.Fish,
+            "Forage" => PoolDomain.SeasonalForage,
+            "Crop" or "Crops" => PoolDomain.SeasonalCrops,
+            _ => PoolDomain.None,
+        };
+
+    /// <summary>The bundle's own slots keyed by normalized item id (first wins), so a re-drawn
+    /// vanilla id keeps the stack and quality vanilla asked for.</summary>
+    private static IReadOnlyDictionary<string, BundleSlotSpec> VanillaSlots(BundleSpec spec)
+    {
+        var byId = new Dictionary<string, BundleSlotSpec>(StringComparer.Ordinal);
+        foreach (BundleSlotSpec slot in spec.Slots)
+        {
+            if (string.IsNullOrEmpty(slot.ItemId) || slot.ItemId == MoneySlotId
+                || BundleParsing.IsCategoryRef(slot.ItemId))
+                continue;
+            string id = BundleParsing.NormalizeItemId(slot.ItemId);
+            if (!byId.ContainsKey(id))
+                byId[id] = slot;
+        }
+        return byId;
+    }
+
+    /// <summary>The recipe a bundle re-rolls from, for the engine's diagnostics
+    /// (<c>tly_genbundles</c> prints its name and parts). Same call <see cref="Fill"/> makes, so
+    /// the report cannot drift from what actually rolled.</summary>
+    public static PoolRecipe RecipeFor(BundleSpec spec, ItemPools pools, ItemAvailabilityModel? availability)
+        => BundlePoolRecipes.For(spec.Name, VanillaIds(spec), pools, availability);
 
     /// <summary>The bundle's own item ids, money and category refs left out.</summary>
     private static IReadOnlyList<string> VanillaIds(BundleSpec spec)

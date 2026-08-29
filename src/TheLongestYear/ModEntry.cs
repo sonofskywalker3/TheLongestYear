@@ -2942,10 +2942,22 @@ namespace TheLongestYear
                         $"    [{spec.Index}] {spec.DisplayName} (pick {spec.NumberOfSlots} of {spec.Slots.Count}){authoredTag}",
                         LogLevel.Info);
 
-                    // engine.LastDomains keyed by absolute index; missing key/None = vanilla slots.
-                    string source = engine.LastDomains.TryGetValue(spec.Index, out TheLongestYear.Core.DomainMatch m) && m.Domain != TheLongestYear.Core.PoolDomain.None
-                        ? $"re-rolled from {m.Domain}{(m.Season != null ? $"({m.Season})" : "")}"
-                        : "vanilla slots";
+                    // engine.LastDomains keyed by absolute index; missing key/None = vanilla slots
+                    // (money bundles only since spec 2026-08-28-obtainable-board-3-pools). A Recipe
+                    // pick names its recipe and its parts, so the log shows WHICH pool it drew from.
+                    // An authored bundle is composed by AuthoredBundleComposer and is FINAL, so the
+                    // engine files it under None as well; it does NOT keep vanilla slots, and
+                    // saying so made the "no non-money bundle keeps vanilla slots" audit unreadable.
+                    string source;
+                    if (authoredTag.Length > 0)
+                        source = "authored slots";
+                    else if (!engine.LastDomains.TryGetValue(spec.Index, out TheLongestYear.Core.DomainMatch m)
+                        || m.Domain == TheLongestYear.Core.PoolDomain.None)
+                        source = "vanilla slots";
+                    else if (m.Domain == TheLongestYear.Core.PoolDomain.Recipe)
+                        source = $"re-rolled from recipe {(engine.LastRecipes.TryGetValue(spec.Index, out string recipe) ? recipe : spec.Name)}";
+                    else
+                        source = $"re-rolled from {m.Domain}{(m.Season != null ? $"({m.Season})" : "")}";
                     this.Monitor.Log(
                         $"      {spec.Room}/{spec.Index} '{spec.Name}' [{spec.Slots.Count} slots, need {spec.NumberOfSlots}] — {source}",
                         LogLevel.Info);

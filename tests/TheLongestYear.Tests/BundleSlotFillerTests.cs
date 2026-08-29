@@ -752,6 +752,53 @@ public class BundleSlotFillerTests
         Assert.Equal("(O)9001", filled.Slots[0].ItemId);
     }
 
+    // ---- Recipe stack and quality (Plan 3 Task 6 ruling) ----
+
+    [Fact]
+    public void A_recipe_whose_dominant_part_is_not_fish_crops_or_forage_asks_for_one_plain_item()
+    {
+        // Treasure Hunter's rolls gems: no stack, no quality star, whatever the quality dice say.
+        var tuning = new BundleGenerationTuning { GoldQualityChance = 1.0, SilverQualityChance = 1.0 };
+        var filled = BundleSlotFiller.Fill(Spec("Treasure Hunter's", 3, 3, "(O)9001", "(O)9002", "(O)9003"),
+            RecipeMatch, RecipePools(), tuning, new Random(11));
+        Assert.All(filled.Slots, s => Assert.Equal(1, s.Stack));
+        Assert.All(filled.Slots, s => Assert.Equal(0, s.Quality));
+    }
+
+    [Fact]
+    public void A_forage_recipe_rolls_quality_with_the_forage_domain()
+    {
+        var pools = new ItemPools
+        {
+            Forage = new[] { Item("(O)f1", weight: 1000), Item("(O)f2", weight: 1000), Item("(O)f3", weight: 1000) },
+        };
+        var tuning = new BundleGenerationTuning
+        {
+            GoldQualityChance = 1.0,
+            LargeQuantityForageChance = 0.0, // the large-stack ask is a SeasonalForage-domain rule
+        };
+        var filled = BundleSlotFiller.Fill(Spec("Forager's", 3, 3, "(O)9001", "(O)9002", "(O)9003"),
+            RecipeMatch, pools, tuning, new Random(4));
+        Assert.All(filled.Slots, s => Assert.StartsWith("(O)f", s.ItemId, StringComparison.Ordinal));
+        Assert.All(filled.Slots, s => Assert.Equal(2, s.Quality));
+    }
+
+    [Fact]
+    public void A_re_drawn_vanilla_id_keeps_the_stack_and_quality_the_vanilla_slot_had()
+    {
+        // Nothing in the pools, so every part falls back to the bundle's own items: they must come
+        // back with vanilla's own ask (x5 gold), not a fresh roll.
+        var spec = new BundleSpec("Pantry", 0, "Forager's", "Forager's", "O 495 30", 0, 2,
+            new[] { new BundleSlotSpec("(O)9001", 5, 2), new BundleSlotSpec("(O)9002", 3, 1) });
+        var tuning = new BundleGenerationTuning { GoldQualityChance = 0.0, SilverQualityChance = 0.0 };
+        var filled = BundleSlotFiller.Fill(spec, RecipeMatch, new ItemPools(), tuning, new Random(9));
+        Assert.Equal(2, filled.Slots.Count);
+        Assert.Equal((5, 2), (filled.Slots.Single(s => s.ItemId == "(O)9001").Stack,
+                              filled.Slots.Single(s => s.ItemId == "(O)9001").Quality));
+        Assert.Equal((3, 1), (filled.Slots.Single(s => s.ItemId == "(O)9002").Stack,
+                              filled.Slots.Single(s => s.ItemId == "(O)9002").Quality));
+    }
+
     [Fact]
     public void The_same_seed_composes_the_same_recipe_bundle_twice()
     {
