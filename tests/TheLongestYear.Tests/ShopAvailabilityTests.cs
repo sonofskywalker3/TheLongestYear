@@ -66,11 +66,19 @@ public class ShopAvailabilityTests
     public void Table_rows(string id, int week) => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
 
     [Fact]
-    public void Pool_book_is_week_2()
+    public void Pool_book_takes_its_week_from_the_book_weeks_table()
+    {
+        var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,
+            books: new List<PoolItem> { new("(O)Book_PriceCatalogue", 3000, 1, new List<Season>(), new List<string>()) });
+        Assert.Equal(AvailabilityWeeks.BookWeeks["(O)Book_PriceCatalogue"], composer.Derive("(O)Book_PriceCatalogue")!.EarliestWeek);
+    }
+
+    [Fact]
+    public void Pool_book_not_in_the_table_is_not_placed()
     {
         var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,
             books: new List<PoolItem> { new("(O)Book_Diamonds", 5000, 1, new List<Season>(), new List<string>()) });
-        Assert.Equal(AvailabilityWeeks.BookWeek, composer.Derive("(O)Book_Diamonds")!.EarliestWeek);
+        Assert.Null(composer.Derive("(O)Book_Diamonds"));
     }
 
     [Fact]

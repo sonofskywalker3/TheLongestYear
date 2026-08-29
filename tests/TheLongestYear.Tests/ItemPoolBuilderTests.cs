@@ -336,15 +336,24 @@ public class ItemPoolBuilderTests
     {
         var pools = Build(objects: Objects(
             ("100", Obj(type: "Arch", category: 0)),
-            ("102", Obj(category: -102)),
-            ("SkillBook", Obj(category: -103)),
+            ("Book_PriceCatalogue", Obj(category: -102)),
+            ("SkillBook_0", Obj(category: -103)),
             ("194", Obj(category: -7)),
             ("724", Obj(category: -27)),
             ("24", Obj(category: -75))));
         Assert.Equal(new[] { "(O)100" }, pools.Artifacts.Select(p => p.ItemId));
-        Assert.Equal(new[] { "(O)102", "(O)SkillBook" }, pools.Books.Select(p => p.ItemId));
+        Assert.Equal(new[] { "(O)Book_PriceCatalogue", "(O)SkillBook_0" }, pools.Books.Select(p => p.ItemId));
         Assert.Equal(new[] { "(O)194" }, pools.Cooking.Select(p => p.ItemId));
         Assert.Contains("(O)724", pools.TapperGoods.Select(p => p.ItemId));
+    }
+
+    [Fact]
+    public void Books_KeptOnlyWhenInTheBookWeeksTable()
+    {
+        var pools = Build(objects: Objects(
+            ("Book_Void", Obj(category: -102, tags: new[] { "book_item" })),
+            ("Book_PriceCatalogue", Obj(category: -102, tags: new[] { "book_item" }))));
+        Assert.Equal(new[] { "(O)Book_PriceCatalogue" }, pools.Books.Select(p => p.ItemId));
     }
 
     [Fact]

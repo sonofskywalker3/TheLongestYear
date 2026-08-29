@@ -83,7 +83,8 @@ public static class ItemPoolBuilder
         var metalsPool = BuildCategoryPool(objects, MetalCategory, excluded, tuning);
         var artisanPool = BuildCategoryPool(objects, ArtisanCategory, excluded, tuning);
         var artifactsPool = BuildTypePool(objects, ArchType, excluded, tuning);
-        var booksPool = BuildMultiCategoryPool(objects, BookCategories, excluded, tuning);
+        var booksPool = BuildMultiCategoryPool(objects, BookCategories, excluded, tuning)
+            .Where(item => AvailabilityWeeks.BookWeeks.ContainsKey(item.ItemId)).ToList();
         var saplingsPool = BuildSaplingPool(fruitTrees, objects, excluded, tuning);
         var geodeMineralsPool = BuildGeodeMineralPool(geodeDrops, objects, excluded, tuning);
         var cookingPool = BuildCategoryPool(objects, CookingCategory, excluded, tuning);
