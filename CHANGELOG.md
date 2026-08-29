@@ -7,6 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`tly_gateneeds` console command** prints, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) and the vault (debug).
 - **Keep the Garden Pot recipe.** A new permanent keep at the Junimo Shrine, 750 JP, under Obtainability. Once bought, the Garden Pot recipe is back in your crafting list after every rewind, so an Oasis seed can be grown indoors out of season.
 - **Two Boosts, bought at the farm's planning shrine.** Boosts are spent Junimo Points that last a week or a season instead of forever. **Year-Two Seeds** (75 JP, this week) gives Mixed Seeds a 5 percent chance to roll the season's year-two crop: Garlic in Spring, Red Cabbage in Summer, Artichoke in Fall (not sold in Winter). **Sneak Peek** (100 JP, this season) has the Queen of Sauce air the year-two episode on Sunday, and teaches you both that week's year-one recipe and the year-two one, so nothing is lost. The shrine now has a Boosts section with a Buy button; the full shrine redesign is still a later spec.
 - **`tly_boost <yeartwoseeds|sneakpeek>` console command** makes the same purchase the shrine's Buy button makes, and **`tly_tv`** runs the Queen of Sauce weekly-recipe lookup the TV uses and logs the dialogue and whether the recipe landed (debug).
@@ -56,6 +57,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Donations are tracked per Community Center slot and mirrored from the board.** One deposit credits one bundle (Children's no longer shows 3/3 after two donations when another bundle shared an item), a bundle with a repeated item (Construction's two Wood slots) needs every slot filled, and the mod can no longer declare a Winter win while the board still has an open slot. Existing saves migrate on load from the board's own state; nothing is lost.
 - **Fishing trash is a week 1 item.** Trash, Driftwood, Broken Glasses, Broken CD, Soggy Newspaper and Joja Cola came off the line on day 1 in any water, but the board dated them by whatever machine or pond route it found first, so a Recycling bundle could sit undated until Winter.
 - **Crop weeks are counted properly.** A crop's first harvest is its planting week plus its growth days over seven, not a rounded season guess, so a 12-day crop planted in week 5 lands in week 6 and a 13-day one planted in week 9 lands in week 10.
 - **Tapper goods are placed from the game's own tree data.** Maple Syrup, Oak Resin, Pine Tar, Sap and the mushroom-tree goods now come from Data/WildTrees TapItems: the Tapper is a Foraging 4 recipe, and the good is ready the row's own number of nights later. They used to have no date at all outside the artisan rule.
