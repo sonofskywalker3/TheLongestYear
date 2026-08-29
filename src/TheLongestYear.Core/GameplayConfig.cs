@@ -72,93 +72,26 @@ public sealed class GameplayConfig
     public List<long> PityCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
 
     /// <summary>
-    /// Design-default per-item season pins for KIND 2 PerItem bundles. Sourced from the
-    /// bundle-gate handoff doc (2026-05-26) — each pin reflects a realistic obtainability
-    /// expectation that an early-run player can hit without late-game investment.
+    /// The override layer for rulings the derivation rules cannot see. Everything that USED to
+    /// live here (fish, ores, bars, crops, forage) is now placed by its own rule in
+    /// ItemAvailabilityBuilder / FishAvailability / MetalsAvailability / etc, which reads real
+    /// game data instead of a hand curated guess; a pin surviving here would only be able to move
+    /// a rule's week LATER (see ItemAvailabilityModel), never earlier, so an entry that agreed
+    /// with its rule did nothing and one that disagreed was silently ignored. What is left are
+    /// the two ids no rule places at all:
     /// User <see cref="ItemSeasonPins"/> entries win on conflict.
     /// </summary>
     public static IReadOnlyDictionary<string, string> DefaultItemSeasonPins { get; } =
         new Dictionary<string, string>
         {
-            // --- Construction (Crafts Room, X=Y) ---
-            ["(O)388"] = "Spring",   // Wood
-            ["(O)390"] = "Spring",   // Stone
-            ["(O)709"] = "Summer",   // Hardwood — need an axe upgrade or secret-woods access
-
-            // --- Blacksmith's (Boiler Room, X=Y) ---
-            ["(O)334"] = "Spring",   // Copper Bar
-            ["(O)335"] = "Summer",   // Iron Bar
-            ["(O)336"] = "Fall",     // Gold Bar  — aligns with smelter progression
-
-            // --- Geologist's (Boiler Room, X=Y) ---
-            ["(O)80"]  = "Spring",   // Quartz
-            ["(O)86"]  = "Spring",   // Earth Crystal
-            ["(O)84"]  = "Summer",   // Frozen Tear
-            ["(O)82"]  = "Fall",     // Fire Quartz
-
-            // --- River Fish (Fish Tank, X=Y) ---
-            ["(O)145"] = "Spring",   // Sunfish
-            ["(O)706"] = "Summer",   // Shad
-            ["(O)699"] = "Fall",     // Tiger Trout
-            ["(O)143"] = "Spring",   // Catfish
-
-            // --- Lake Fish (Fish Tank, X=Y) ---
-            ["(O)136"] = "Spring",   // Largemouth Bass
-            ["(O)142"] = "Summer",   // Carp
-            ["(O)700"] = "Fall",     // Bullhead
-            ["(O)698"] = "Summer",   // Sturgeon
-
-            // --- Ocean Fish (Fish Tank, X=Y) ---
-            ["(O)131"] = "Spring",   // Sardine
-            ["(O)130"] = "Summer",   // Tuna
-            ["(O)150"] = "Summer",   // Red Snapper
-            ["(O)701"] = "Fall",     // Tilapia
-
-            // --- Night Fishing (Fish Tank, X=Y) ---
-            ["(O)132"] = "Summer",   // Bream
-            ["(O)140"] = "Fall",     // Walleye
-            ["(O)148"] = "Fall",     // Eel
-
-            // --- Specialty Fish (Fish Tank, X=Y) ---
-            ["(O)128"] = "Summer",   // Pufferfish
-            ["(O)156"] = "Summer",   // Ghostfish — caught in Mines L20+; Spring is tight w/o JP
-            ["(O)164"] = "Fall",     // Sandfish
-            ["(O)734"] = "Summer",   // Woodskip
-
-            // --- Dye (Bulletin, X=Y) ---
             // Red Mushroom is a Spring item on this mod (Jeff, 2026-08-28: "red mushroom in
             // spring is perfectly fine"): the Spring forage pool adds it (SeasonalForageAdditions)
             // and the mines grow it on mushroom floors from level 41 in any season (MineShaft
-            // line 1434). The old Summer pin made loop 16's Spring Foraging audit IMPOSSIBLE.
+            // line 1434), but neither of those is a rule this model reads, so nothing derives it.
             ["(O)420"] = "Spring",   // Red Mushroom
+            // Sea Urchin: bridge repair, Jeff's ruling. No derivation rule reads bridge repair
+            // state, so this floor exists only here.
             ["(O)397"] = "Spring",   // Sea Urchin
-            ["(O)421"] = "Summer",   // Sunflower
-            ["(O)444"] = "Summer",   // Duck Feather
-            ["(O)62"]  = "Summer",   // Aquamarine
-            ["(O)266"] = "Summer",   // Red Cabbage
-
-            // --- Field Research (Bulletin, X=Y) ---
-            // Purple Mushroom is NOT winter-gated (Jeff, 2026-08-27): the Mushroom Cave farm
-            // choice produces it, the mines drop it from floor 80, and a mushroom log grows it.
-            // The old Winter pin also contradicted this mod's own Fall forage pool, which adds
-            // it, and that disagreement made a Fall Foraging bundle that drew it unsatisfiable
-            // at its own Fall gate (found by tly_gatecheck). Fall keeps the two tables agreeing
-            // and is comfortably reachable by any of the three routes.
-            ["(O)422"] = "Fall",     // Purple Mushroom
-            ["(O)392"] = "Winter",   // Nautilus Shell
-            ["(O)702"] = "Spring",   // Chub
-            ["(O)536"] = "Summer",   // Frozen Geode
-
-            // --- Fodder (Bulletin, X=Y) ---
-            ["(O)262"] = "Summer",   // Wheat
-            ["(O)178"] = "Spring",   // Hay
-            ["(O)613"] = "Fall",     // Apple
-
-            // --- Enchanter's (Bulletin, X=Y) ---
-            ["(O)725"] = "Summer",   // Oak Resin
-            ["(O)348"] = "Fall",     // Wine
-            ["(O)446"] = "Fall",     // Rabbit's Foot
-            ["(O)637"] = "Fall",     // Pomegranate
         };
 
     /// <summary>

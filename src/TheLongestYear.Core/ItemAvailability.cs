@@ -50,11 +50,17 @@ public sealed record ItemEffort(int Effort, string Basis, int? EarliestWeek = nu
 /// early permits a gate the world cannot satisfy and bricks the run, while a floor guessed too
 /// late only makes the gate lenient.
 ///
-/// A season override may only move a floor LATER. An override that demands an item EARLIER than
-/// the derived floor is claiming the item exists before the game can produce it, which is the
-/// Purple Mushroom failure: the deadline is unsatisfiable, the year is lost on every loop, and
-/// the loop is permanently unwinnable. Such an override is rejected at construction, the derived
-/// floor stands, and the id is listed in <see cref="RejectedSeasonOverrides"/>.</summary>
+/// An override may only move a placed week LATER, whether that week came from a Phase 1 fact
+/// (fish, crab-pot, metals: read from game data) or a Phase 2 judgement (crops, forage, artisan
+/// goods, etc: <see cref="ItemEffort.EarliestWeek"/>). An override that demands an item EARLIER
+/// than the week a rule already placed it at is claiming the item exists before the game can
+/// produce it, which is the Purple Mushroom failure: the deadline is unsatisfiable, the year is
+/// lost on every loop, and the loop is permanently unwinnable. The 0.16.79 behaviour, where a pin
+/// could move a Phase 2 rule's week earlier because that week was "only a judgement", is
+/// withdrawn (spec 2026-08-28-obtainable-board, section 6): a rule's week is the floor either
+/// way, and the pin table now exists only for ids no rule can see at all. Such an override is
+/// rejected at construction, the ruled floor stands, and the id is listed in
+/// <see cref="RejectedSeasonOverrides"/>.</summary>
 public sealed class ItemAvailabilityModel
 {
     /// <summary>Effort assigned to an item no rule recognised. Mid scale, so an unrecognised item
@@ -94,19 +100,24 @@ public sealed class ItemAvailabilityModel
         Mode = mode;
         // Validated once here rather than per lookup, so the count is meaningful the moment the
         // model exists and a caller can log it at build time without waiting for traffic. Compared
-        // in weeks (spec 2026-08-28-even-year): an override may only move a placed floor later.
-        // Only a Phase 1 floor (fish, crab-pot, metals: read from game data) can reject an
-        // override. A Phase 2 rule's week is a judgement, and the pin table is how Jeff moves one.
+        // in weeks (spec 2026-08-28-obtainable-board, section 6): an override may only move a
+        // placed week later, whether that week came from a Phase 1 fact or a Phase 2 judgement.
+        int? RuleWeek(string id)
+        {
+            if (_derived.TryGetValue(id, out ItemAvailability? d)) return d.PacingWeek;
+            if (_effortDerived.TryGetValue(id, out ItemEffort? e)) return e.EarliestWeek;
+            return null;
+        }
         foreach (KeyValuePair<string, Season> pin in _seasonOverrides)
         {
-            if (_derived.TryGetValue(pin.Key, out ItemAvailability? fact)
-                && pin.Value < fact.Gate)
+            int? rule = RuleWeek(pin.Key);
+            if (rule != null && AvailabilityWeeks.FirstWeekOf(pin.Value) < rule.Value)
                 _rejectedSeasonOverrides.Add(pin.Key);
         }
         foreach (KeyValuePair<string, int> pin in _weekOverrides)
         {
-            if (_derived.TryGetValue(pin.Key, out ItemAvailability? fact)
-                && pin.Value < fact.Week)
+            int? rule = RuleWeek(pin.Key);
+            if (rule != null && pin.Value < rule.Value)
                 _rejectedSeasonOverrides.Add(pin.Key);
         }
     }
