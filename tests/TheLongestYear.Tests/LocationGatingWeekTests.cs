@@ -19,9 +19,9 @@ public class LocationGatingWeekTests
     [Theory]
     [InlineData("(O)378", 1, Season.Spring)]  // copper
     [InlineData("(O)380", 2, Season.Spring)]  // iron
-    [InlineData("(O)384", 3, Season.Summer)]  // gold
+    [InlineData("(O)384", 3, Season.Spring)]  // gold
     [InlineData("(O)386", 9, Season.Fall)]    // iridium
-    [InlineData("(O)336", 3, Season.Summer)]  // gold bar
+    [InlineData("(O)336", 3, Season.Spring)]  // gold bar
     public void Metals_carry_week_and_gate(string id, int week, Season gate)
     {
         ItemAvailability a = MetalsAvailability.Derive(new PoolItem(id, 100, 1, new List<Season>(), new List<string>()))!;

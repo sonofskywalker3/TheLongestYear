@@ -25,6 +25,9 @@ public static class AvailabilityWeeks
     public const int SwampWeek = 13;
     /// <summary>Jeff, 2026-08-28: 30 floors a week for the theme goals.</summary>
     public const int MineFloorsPerWeek = 30;
+    /// <summary>Desert hard week (Jeff): a Spring bus is possible but not fun; Hard may ask from
+    /// Summer week 2.</summary>
+    public const int DesertHardWeek = 6;
 
     /// <summary>Crops whose seeds only a festival or the cart sells: the harvest cannot come
     /// before that week.</summary>
@@ -59,15 +62,15 @@ public static class AvailabilityWeeks
 
     /// <summary>Mine fish spawn by floor, which the location key cannot see now that the mines
     /// open in Spring: Stonefish and Ghostfish floor 20 (week 1), Ice Pip floor 60 (week 2),
-    /// Lava Eel and Cave Jelly floor 100 (week 4, but a Summer gate like the rest of area 80).</summary>
+    /// Lava Eel and Cave Jelly floor 100 (week 4, a Spring gate like the rest of area 80).</summary>
     public static readonly IReadOnlyDictionary<string, (int Week, Season Gate)> MineFishWeeks =
         new Dictionary<string, (int, Season)>(StringComparer.Ordinal)
         {
             ["(O)158"] = (1, Season.Spring),        // Stonefish
             ["(O)156"] = (1, Season.Spring),        // Ghostfish
             ["(O)161"] = (2, Season.Spring),        // Ice Pip
-            ["(O)162"] = (4, Season.Summer),        // Lava Eel
-            ["(O)CaveJelly"] = (4, Season.Summer),  // Cave Jelly
+            ["(O)162"] = (4, Season.Spring),        // Lava Eel
+            ["(O)CaveJelly"] = (4, Season.Spring),  // Cave Jelly
         };
 
     /// <summary>Things a shop sells from day 1 (Pierre's staples, the Saloon's menu): week 1.</summary>
@@ -96,7 +99,7 @@ public static class AvailabilityWeeks
             ["(W)13"] = (3, Season.Spring, "Insect Head, 125 cave insects, floors 1 to 39"),
             ["(H)8"] = (3, Season.Spring, "Skeleton Mask, 50 Skeletons, floors 41 to 79"),
             ["(O)522"] = (4, Season.Spring, "Vampire Ring, 200 Bats"),
-            ["(O)523"] = (5, Season.Summer, "Savage Ring, 150 Void Spirits, floors 81 to 119"),
+            ["(O)523"] = (5, Season.Spring, "Savage Ring, 150 Void Spirits, floors 81 to 119"),
             ["(O)526"] = (6, Season.Summer, "Burglar's Ring, 500 Dust Sprites"),
             ["(O)520"] = (8, Season.Summer, "Slime Charmer Ring, 1000 Slimes"),
             ["(O)811"] = (12, Season.Fall, "Napalm Ring, 250 Serpents, Skull Cavern"),
@@ -157,24 +160,26 @@ public static class AvailabilityWeeks
     public static int FirstWeekOf(Season season) => (int)season * Calendar.WeeksPerMonth + 1;
     public static int LastWeekOf(Season season) => ((int)season + 1) * Calendar.WeeksPerMonth;
 
+    /// <summary>30 floors a week (Jeff): floor 1 to 30 week 1, 31 to 60 week 2, and so on.</summary>
+    public static int MineFloorWeek(int floor) => Math.Max(1, (Math.Max(1, floor) - 1) / MineFloorsPerWeek + 1);
+
     /// <summary>Theme-goal week for a mine area: floors 1 to 39 week 1, 41 to 79 week 2,
     /// 81 to 119 week 3, Skull Cavern Fall week 9.</summary>
     public static int MineAreaWeek(int area) => area switch
     {
-        MineAreas.Area0 or MineAreas.Area10 => 1,
-        MineAreas.Area40 => 2,
-        MineAreas.Area80 => 3,
+        MineAreas.Area0 or MineAreas.Area10 => MineFloorWeek(1),
+        MineAreas.Area40 => MineFloorWeek(41),
+        MineAreas.Area80 => MineFloorWeek(81),
         _ => SkullCavernWeek,
     };
 
-    /// <summary>The gate is softer than the goal for the deep mine: below floor 80 a Spring
-    /// gate may demand it, 80 and deeper waits for Summer (Jeff accepted this, 2026-08-28).</summary>
-    public static Season MineAreaGateSeason(int area) => area switch
-    {
-        MineAreas.Area0 or MineAreas.Area10 or MineAreas.Area40 => Season.Spring,
-        MineAreas.Area80 => Season.Summer,
-        _ => Season.Fall,
-    };
+    /// <summary>Every mine area gates in Spring now (Jeff, 2026-08-28: 30 floors a week means
+    /// area 80 is reachable well inside Spring); only the Skull Cavern, behind the bus repair,
+    /// waits for Fall.</summary>
+    public static Season MineAreaGateSeason(int area) => area == MineAreas.SkullCavern ? Season.Fall : Season.Spring;
+
+    /// <summary>Hard week for a mine area: the same floors, Skull Cavern at the Desert hard week.</summary>
+    public static int MineAreaHardWeek(int area) => area == MineAreas.SkullCavern ? DesertHardWeek : MineAreaWeek(area);
 
     /// <summary>Week a machine unlocked at a skill level is realistically running.</summary>
     public static int MachineLevelWeek(int level) => level switch

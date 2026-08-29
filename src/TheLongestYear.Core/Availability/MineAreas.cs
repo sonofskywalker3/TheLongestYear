@@ -30,6 +30,9 @@ public static class MineAreas
     /// <summary>Season a day-28 gate may first demand an item from the area.</summary>
     public static Season GateSeason(int area) => AvailabilityWeeks.MineAreaGateSeason(area);
 
+    /// <summary>Hard week for the area (AvailabilityWeeks.MineAreaHardWeek).</summary>
+    public static int HardWeek(int area) => AvailabilityWeeks.MineAreaHardWeek(area);
+
     public static string Label(int area) => area switch
     {
         Area0 or Area10 => "mine floors 1 to 39",

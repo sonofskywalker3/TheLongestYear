@@ -17,8 +17,8 @@ public class ShopAvailabilityTests
         => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
 
     [Fact]
-    public void Savage_ring_gates_in_summer_like_the_deep_mine()
-        => Assert.Equal(Season.Summer, ShopAvailability.Derive("(O)523")!.GateSeason);
+    public void Savage_ring_gates_in_spring_like_the_deep_mine()
+        => Assert.Equal(Season.Spring, ShopAvailability.Derive("(O)523")!.GateSeason);
 
     [Fact]
     public void Unclaimed_item_is_null() => Assert.Null(ShopAvailability.Derive("(O)24"));

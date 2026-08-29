@@ -58,7 +58,7 @@ public static class GeodeAvailability
             if (better)
                 best = new ItemEffort(effort,
                     $"geode, {geode.Label}, chance {drop.Chance:0.###} (+{step}), week {week}, effort {effort}",
-                    week, MineAreas.GateSeason(geode.Area));
+                    week, MineAreas.GateSeason(geode.Area), HardWeek: MineAreas.HardWeek(geode.Area));
         }
         return best;
     }

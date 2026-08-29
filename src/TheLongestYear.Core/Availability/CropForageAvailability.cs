@@ -72,9 +72,12 @@ public static class CropForageAvailability
         int week = rows
             .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.WeekFor(s.Location ?? "")))
             .Min();
+        int hardWeek = rows
+            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.HardWeekFor(s.Location ?? "")))
+            .Min();
         return new ItemEffort(effort,
             $"forage, {locations.Count} location(s) (+{single}){(remote > 0 ? ", remote only (+1)" : "")}, week {week}, effort {effort}",
-            week, AvailabilityWeeks.SeasonOf(week));
+            week, AvailabilityWeeks.SeasonOf(week), HardWeek: hardWeek);
     }
 
     public static ItemEffort? DeriveSapling(string qualifiedId, IReadOnlyList<PoolItem> saplings)
