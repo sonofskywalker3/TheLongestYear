@@ -32,6 +32,22 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>
+    /// Per-run purchasable Boost ownership, read via static Funcs wired by ModEntry.OnSaveLoaded
+    /// (and cleared on return to title), mirroring <see cref="UpgradeChecker"/> so patches never
+    /// import MetaStore/RunState directly.
+    /// </summary>
+    internal static class BoostChecker
+    {
+        /// <summary>Set by ModEntry.OnSaveLoaded: true if the Year-Two Seeds boost is active for
+        /// the run's current week-of-year.</summary>
+        public static System.Func<bool> YearTwoSeedsActive;
+
+        /// <summary>Set by ModEntry.OnSaveLoaded: true if the Sneak Peek boost is active for the
+        /// run's current season.</summary>
+        public static System.Func<bool> SneakPeekActive;
+    }
+
+    /// <summary>
     /// Postfix on <c>Crop.ResolveSeedId(string, GameLocation)</c> — the ONLY path Mixed Seeds (770)
     /// take when planted (Crop ctor → ResolveSeedId → getRandomLowGradeCropForThisSeason). Returns
     /// UNQUALIFIED seed ids, matching what vanilla returns on that path ("485" Red Cabbage Seeds,
@@ -60,6 +76,15 @@ namespace TheLongestYear.Loop
                 && Game1.random.NextDouble() < SubstitutionChance)
             {
                 __result = RedCabbageSeeds;
+            }
+
+            if (BoostChecker.YearTwoSeedsActive?.Invoke() == true)
+            {
+                string seed = TheLongestYear.Core.YearTwoSeeds.SeedIdFor((TheLongestYear.Core.Season)(int)location.GetSeason());
+                if (seed != null && Game1.random.NextDouble() < TheLongestYear.Core.YearTwoSeeds.Chance)
+                {
+                    __result = seed;
+                }
             }
         }
     }

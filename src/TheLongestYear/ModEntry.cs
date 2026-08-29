@@ -276,7 +276,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
-            helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost for the current week (debug — the same purchase the shrine's Buy button makes). Usage: tly_boost <yeartwoseeds|sneakpeek>", this.CmdBoost);
+            helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost for the current week (debug, the same purchase the shrine's Buy button makes). Usage: tly_boost <yeartwoseeds|sneakpeek>", this.CmdBoost);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
@@ -425,6 +425,8 @@ namespace TheLongestYear
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
+            BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, _meta.Run.WeekOfYear);
+            BoostChecker.SneakPeekActive = () => TheLongestYear.Core.BoostState.SneakPeekActive(_meta.Run, _meta.Run.Season);
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
             CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
@@ -630,6 +632,8 @@ namespace TheLongestYear
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
+            TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
+            TheLongestYear.Loop.BoostChecker.SneakPeekActive = null;
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
             TheLongestYear.Loop.CartSlotLimitPatch.StartingSlotsProvider = null;
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;
