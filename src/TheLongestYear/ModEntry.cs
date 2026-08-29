@@ -277,6 +277,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost for the current week (debug, the same purchase the shrine's Buy button makes). Usage: tly_boost <yeartwoseeds|sneakpeek>", this.CmdBoost);
+            helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
@@ -1777,6 +1778,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_boost": this.CmdBoost(command, args); break;
+                case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
                 case "tly_dejavu": this.CmdDejaVu(command, args); break;
@@ -3386,6 +3388,46 @@ namespace TheLongestYear
 
             if (_boostPurchases == null) { this.Monitor.Log("tly_boost: boost service not wired yet.", LogLevel.Warn); return; }
             _boostPurchases.TryBuy(id);
+        }
+
+        /// <summary>Debug: invoke the TV's protected <c>getWeeklyRecipe()</c> directly so the
+        /// headless bridge can exercise the Queen of Sauce path (and the Sneak Peek boost patch)
+        /// without walking to a TV and clicking it. Logs the two dialogue lines the TV would show
+        /// and reports whether the episode's recipe is now in the player's cookingRecipes.</summary>
+        private void CmdTv(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            int week = (int)(Game1.stats.DaysPlayed % 224 / 7);
+            this.Monitor.Log($"tly_tv: DaysPlayed={Game1.stats.DaysPlayed} day={Game1.dayOfMonth} ({Game1.shortDayNameFromDayOfSeason(Game1.dayOfMonth)}) vanilla week={week}", LogLevel.Info);
+
+            var before = new System.Collections.Generic.HashSet<string>(Game1.player.cookingRecipes.Keys);
+            var tv = new StardewValley.Objects.TV();
+            var method = HarmonyLib.AccessTools.Method(typeof(StardewValley.Objects.TV), "getWeeklyRecipe", new System.Type[0]);
+            if (method == null) { this.Monitor.Log("tly_tv: getWeeklyRecipe() not found.", LogLevel.Warn); return; }
+
+            string[] result;
+            try
+            {
+                result = method.Invoke(tv, new object[0]) as string[];
+            }
+            catch (System.Reflection.TargetInvocationException ex)
+            {
+                this.Monitor.Log($"tly_tv: getWeeklyRecipe threw {ex.InnerException?.GetType().Name}: {ex.InnerException?.Message}", LogLevel.Warn);
+                return;
+            }
+
+            if (result == null) { this.Monitor.Log("tly_tv: getWeeklyRecipe returned null.", LogLevel.Warn); return; }
+            for (int i = 0; i < result.Length; i++)
+                this.Monitor.Log($"tly_tv: line[{i}] = {result[i]}", LogLevel.Info);
+
+            var after = new System.Collections.Generic.HashSet<string>(Game1.player.cookingRecipes.Keys);
+            foreach (string key in after)
+            {
+                if (!before.Contains(key))
+                    this.Monitor.Log($"tly_tv: cookingRecipes gained '{key}'", LogLevel.Info);
+            }
+            this.Monitor.Log($"tly_tv: cookingRecipes count {before.Count} -> {after.Count}; Pizza present={after.Contains("Pizza")}", LogLevel.Info);
         }
 
         private void CmdDejaVu(string command, string[] args)
