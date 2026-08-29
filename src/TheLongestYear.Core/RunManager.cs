@@ -21,7 +21,7 @@ public enum RunAction
 /// per (season, theme) contract. At day 28, every <see cref="BundleRequirement"/>'s
 /// <see cref="BundleRequirement.IsSatisfiedAtSeasonEnd"/> must pass for the current season AND
 /// the vault gate (paid bundle or keep_bus_unlocked upgrade) must be satisfied. End-of-Winter
-/// additionally demands every bundle be fully complete (X distinct ingredients donated).
+/// additionally demands every bundle be fully complete (at least X slots filled).
 /// </summary>
 public sealed class RunManager
 {
@@ -32,7 +32,7 @@ public sealed class RunManager
     /// <summary>
     /// Evaluate the end-of-day gate. Returns the action the controller should take.
     /// </summary>
-    /// <param name="run">Live run state — only Season, DayOfMonth, and DonatedItemIds are read.</param>
+    /// <param name="run">Live run state — only Season, DayOfMonth and DonatedSlots are read.</param>
     /// <param name="bundles">Classified bundle requirements (from <c>BundleCatalogBuilder.BuildRequirements</c>).</param>
     /// <param name="vaultGateSatisfied">True if this season's vault bundle is paid, or
     /// the player owns the keep_bus_unlocked meta upgrade — see <see cref="VaultRules"/>.</param>
@@ -44,7 +44,7 @@ public sealed class RunManager
         if (run is null) throw new ArgumentNullException(nameof(run));
         if (bundles is null) throw new ArgumentNullException(nameof(bundles));
 
-        ISet<string> donated = run.DonatedSet();
+        SlotLedger donated = run.DonatedLedger();
 
         // Bundle gate (AND with vault) only matters at month-end; off-month days short-circuit true.
         bool monthlyGatePasses = !Calendar.IsMonthEnd(run.DayOfMonth)
