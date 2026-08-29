@@ -6,18 +6,23 @@
 **Build:** clean (mod assembly builds Release); 0.16.145 deployed to the game and desktop-driven (Jeff out, desktop authorised); 0.16.146 is docs only
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
-## 2026-08-29 (afternoon): first played year on the vanilla STANDARD board (sim standardP3)
+## 2026-08-29 (afternoon): sim standardP3 was NOT the Standard board (custom, seed loop 100); corrected
 
-`bash tools/sim-year.sh minimal standardP3` on build 0.16.145, save `None_447695014` lineage with
-`BundleSource=Vanilla, Default` (set with `tly_bundlesource Vanilla Default`; the deployed
-`config.json` still says `Engine`, the reset reads the save's own setting). Minimal player: donates
-only the gate demand, a quarter per week. Transcript: `docs/superpowers/notes/2026-08-29-sim-standardP3.txt`.
+**CORRECTION (same day):** the run was labelled standardP3 but the sim's `tly_reset` built an
+`engine manifest (loop 100, seed loop 100)` board. `tly_bundlesource Vanilla Default` only sets the
+config in memory; the relaunch before the sim reloaded `config.json` (`BundleSource: Engine`) and a
+reset re-stamps the source from config (`RunController.cs:584`). So this is a second CUSTOM-board
+year (seed loop 100), not Standard. The numbers below are still valid for what they are. The real
+Standard run is the next section; the deployed `config.json` now says `"BundleSource": "Normal"`
+(backup `config.json.bak-before-Normal` in the scratchpad).
+`bash tools/sim-year.sh minimal standardP3` on build 0.16.145, minimal player: donates only the gate
+demand, a quarter per week. Transcript: `docs/superpowers/notes/2026-08-29-sim-standardP3.txt`.
 No WARN or ERROR lines in the whole run. Earlier today the same board was also driven to the Winter
 28 win by hand (`tly_playseason` at Winter 8, 106 slots).
 
 **Every gate passed.** Ledger at each season end 26 / 48 / 71 / 97 slots (quarter 4 flipped 6 / 5 /
-5 / 6; per-season plan 26 / 22 / 23 / 26). Compare custom P2 last night: 22 / 50 / 79 / 100.
-Standard front-loads Spring (26 vs 22) and ends lighter (97 vs 100). Audit: `no impossible gates. 30
+5 / 6; per-season plan 26 / 22 / 23 / 26). Compare custom P2 last night on seed loop 3: 22 / 50 / 79 / 100;
+this board (seed loop 100) front-loads Spring and ends lighter. Audit: `no impossible gates. 30
 tight, 0 never gated. 2 stretch lines, 4 without a hard item, 5 Spring tight.` Stretch: Engineer's
 `[stretch: Iridium Ore Summer]` (the one the seed audit kept finding) and Field Research `[stretch:
 Coconut Summer]`. No hard item: Exotic Foraging, Mineral, Four Seasons Sampler, Orchard. Spring
