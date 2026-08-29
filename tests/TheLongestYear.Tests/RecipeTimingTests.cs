@@ -40,4 +40,35 @@ public class RecipeTimingTests
     [Fact]
     public void A_kent_recipe_is_not_in_year_1()
         => Assert.Null(CookedDishAvailability.RecipeWeek(new RawCookingRecipe("Crispy Bass", new string[0], "(O)214", "f Kent 3"), Data()));
+
+    // Fix round 1 (spec 2026-08-28-obtainable-board-4-boosts): the Sneak Peek note must only
+    // appear when the year-2 episode route is what actually won the week - a recipe that is also
+    // cheaper to buy in a shop is not a Boost goal, since the player can simply buy it.
+    private static EffortData DishData(RawCookingRecipe recipe) => new()
+    {
+        CookingChannel = new Dictionary<string, int> { ["Blackberry Cobbler"] = 26, ["Pizza"] = 17 },
+        RecipePrices = new Dictionary<string, int> { ["(O)206"] = 150 },   // Pizza at the Saloon, week 1
+        CookingRecipes = new List<RawCookingRecipe> { recipe },
+    };
+
+    [Fact]
+    public void A_year_2_episode_with_no_price_route_carries_the_sneak_peek_note()
+    {
+        var recipe = new RawCookingRecipe("Blackberry Cobbler", new string[0], "(O)611", "l 100");
+        ItemEffort? result = CookedDishAvailability.Derive("(O)611", DishData(recipe), _ => null, hasKitchen: true);
+        Assert.Equal(10, result!.EarliestWeek);
+        Assert.Contains("Sneak Peek Boost", result.Basis);
+    }
+
+    [Fact]
+    public void A_year_2_episode_beaten_by_a_cheaper_price_carries_no_sneak_peek_note()
+    {
+        var recipe = new RawCookingRecipe("Pizza", new string[0], "(O)206", "l 20");
+        ItemEffort? result = CookedDishAvailability.Derive("(O)206", DishData(recipe), _ => null, hasKitchen: true);
+        // The recipe itself is week 1 (its price beats the year-2 episode route); Derive's
+        // EarliestWeek is still the later of that and the kitchen week (AvailabilityWeeks
+        // .KitchenWeek = 6), which RecipeWeek alone does not see.
+        Assert.Equal(AvailabilityWeeks.KitchenWeek, result!.EarliestWeek);
+        Assert.DoesNotContain("Sneak Peek", result.Basis);
+    }
 }
