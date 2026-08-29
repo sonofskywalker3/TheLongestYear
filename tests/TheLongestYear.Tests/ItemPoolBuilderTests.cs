@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
@@ -476,4 +477,63 @@ public class ItemPoolBuilderTests
     [Fact]
     public void HandBuiltPools_HaveNullEligibility()
         => Assert.Null(new ItemPools().QualityEligibleIds);
+
+    private static ItemPools BuildPoolsWithObjects(params (string id, string name, int cat)[] items)
+        => BuildPoolsWithObjects(
+            items.Select(i => (i.id, i.name, i.cat, tags: (string[]?)null)).ToArray());
+
+    private static ItemPools BuildPoolsWithObjects(params (string id, string name, int cat, string[]? tags)[] items)
+    {
+        var objects = items.ToDictionary(
+            i => i.id,
+            i => new RawObjectEntry("Basic", i.cat, 50, false, i.tags ?? Array.Empty<string>(), i.name));
+        return ItemPoolBuilder.Build(
+            new List<RawCropEntry>(), objects, new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
+            new HashSet<string>(), new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(),
+            new List<RawGeodeDropEntry>(), Tuning);
+    }
+
+    [Fact]
+    public void Every_vetted_object_lands_in_its_kind_pool()
+    {
+        ItemPools pools = BuildPoolsWithObjects(
+            ("388", "Wood", cat: -16), ("176", "Egg", cat: -5), ("184", "Milk", cat: -6),
+            ("72", "Diamond", cat: -2), ("681", "Rain Totem", cat: 0), ("768", "Solar Essence", cat: -28));
+        Assert.Contains(pools.ByKind[ItemKind.Resource], p => p.ItemId == "(O)388");
+        Assert.Contains(pools.ByKind[ItemKind.Egg], p => p.ItemId == "(O)176");
+        Assert.Contains(pools.ByKind[ItemKind.Gem], p => p.ItemId == "(O)72");
+        Assert.Contains(pools.ByKind[ItemKind.Totem], p => p.ItemId == "(O)681");
+        Assert.Contains(pools.ByKind[ItemKind.MonsterLoot], p => p.ItemId == "(O)768");
+    }
+
+    [Fact]
+    public void Colour_tags_index_items_by_colour()
+    {
+        ItemPools pools = BuildPoolsWithObjects(("420", "Red Mushroom", cat: -81, tags: new[] { "color_red" }));
+        Assert.Contains(pools.ColourTags["color_red"], p => p.ItemId == "(O)420");
+    }
+
+    [Fact]
+    public void ByKind_Trophy_ComesFromGilTrophiesFixedList_NotDataObjects()
+    {
+        ItemPools pools = BuildPoolsWithObjects(("522", "Some Ring", cat: 0));
+        var trophies = pools.ByKind[ItemKind.Trophy].Select(p => p.ItemId).ToList();
+        foreach (string id in AuthoredBundleCatalog.GilTrophies)
+            Assert.Contains(id, trophies);
+        Assert.All(pools.ByKind[ItemKind.Trophy], p => Assert.Equal(3, p.Weight));
+    }
+
+    [Fact]
+    public void WinterOnly_HoldsItemsWhoseCatalogSeasonsAreExactlyWinter()
+    {
+        var pools = Build(
+            objects: Objects(("412", Obj(category: -81, price: 70)), ("420", Obj(category: -81))),
+            forage: new[]
+            {
+                new RawSpawnEntry("(O)412", Season.Winter, null, "Forest"),
+                new RawSpawnEntry("(O)420", Season.Spring, null, "Forest"),
+            });
+        Assert.Contains(pools.WinterOnly, p => p.ItemId == "(O)412");
+        Assert.DoesNotContain(pools.WinterOnly, p => p.ItemId == "(O)420");
+    }
 }
