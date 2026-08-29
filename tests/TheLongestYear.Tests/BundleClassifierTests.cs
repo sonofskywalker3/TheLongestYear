@@ -174,8 +174,8 @@ public class BundleClassifierTests
     [Fact]
     public void Duplicate_ingredients_dedupe_to_distinct_set()
     {
-        // Construction-style: vanilla has Wood twice in the ingredient string. After dedup
-        // we treat it as 1 entry for Wood.
+        // Construction-style: vanilla has Wood twice in the ingredient string. Ingredients (the
+        // distinct id list for pools and pins) holds Wood once; Slots holds both Wood slots.
         var parsed = Make("Construction", 3, "(O)388", "(O)388", "(O)390", "(O)709");
         var pins = new Dictionary<string, Season>
         {
@@ -214,9 +214,32 @@ public class BundleClassifierTests
 
         Assert.NotNull(req);
         Assert.Equal(BundleKind.PerItem, req!.Kind);
-        // numberOfSlots is the deduped ingredient count (set-based donation ledger).
-        Assert.Equal(3, req.NumberOfSlots);
-        Assert.Equal(3, req.Ingredients.Count);
+        Assert.Equal(new[] { "(O)388", "(O)390", "(O)709" }, req.Ingredients);   // distinct ids stay
+        // Four real slots (spec 2026-08-29-per-slot-ledger): the second Wood slot is its own slot.
+        Assert.Equal(4, req.NumberOfSlots);
+        Assert.Equal(4, req.Slots.Count);
+        Assert.Equal(new BundleSlot(0, "(O)388"), req.Slots[0]);
+        Assert.Equal(new BundleSlot(1, "(O)388"), req.Slots[1]);
+        Assert.Equal(0, req.BundleIndex);   // Make() builds index 0
+
+        var ledger = new SlotLedger();
+        ledger.Add(req.BundleIndex, 0, "(O)388");
+        ledger.Add(req.BundleIndex, 2, "(O)390");
+        ledger.Add(req.BundleIndex, 3, "(O)709");
+        Assert.False(req.IsFullyComplete(ledger));   // 3 of 4: the board says Construction is open
+        ledger.Add(req.BundleIndex, 1, "(O)388");
+        Assert.True(req.IsFullyComplete(ledger));
+    }
+
+    [Fact]
+    public void Slots_skip_category_refs_without_shifting_indexes()
+    {
+        // slot 0 category (-5), slot 1 Parsnip, slot 2 Milk: concrete slots keep indexes 1 and 2.
+        var parsed = BundleParsing.Parse("Pantry/2", "Animal/O 176 1/-5 1 0 24 1 0 184 1 0/0/3/0/Animal");
+        var req = BundleClassifier.Classify(parsed, Theme.Farming, NoPins, NoQuotas);
+        Assert.NotNull(req);
+        Assert.Equal(2, req!.BundleIndex);
+        Assert.Equal(new[] { new BundleSlot(1, "(O)24"), new BundleSlot(2, "(O)184") }, req.Slots);
     }
 
     // ----- Derived-quota fallback (5th-sweep fix: remixed/mod bundles must never drop) -----

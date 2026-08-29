@@ -90,6 +90,7 @@ public static class BundleClassifier
 
         // Skip category-only bundles — no concrete ids to track.
         List<string> ingredients = CollectQualifiedIngredients(parsed);
+        List<BundleSlot> slots = CollectSlots(parsed);
         if (ingredients.Count == 0)
             return null;
 
@@ -122,7 +123,7 @@ public static class BundleClassifier
         {
             Season season = ParseSeason(seasonalMatch.Groups["season"].Value);
             return BundleRequirement.CreateSeasonal(name, theme, ingredients, season,
-                ingredientStacks, ingredientQualities);
+                ingredientStacks, ingredientQualities, bundleIndex: parsed.Index, slots: slots);
         }
 
         // KIND 3: Percentage — has a named quota override, BUT only when X < Y after dedup.
@@ -147,7 +148,7 @@ public static class BundleClassifier
                 cumulativeRequiredBySeason: clampedQuota,
                 ingredientStacks: ingredientStacks,
                 ingredientQualities: ingredientQualities,
-                stretchLines: stretch);
+                stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);
         }
 
         // Spec 2026-08-28-even-year: with a model, a pick-X-of-Y bundle's ramp follows its own
@@ -161,13 +162,13 @@ public static class BundleClassifier
                 cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability, stretch),
                 ingredientStacks: ingredientStacks,
                 ingredientQualities: ingredientQualities,
-                stretchLines: stretch);
+                stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);
         }
 
         // KIND 2: PerItem — every distinct ingredient must be donated. The structural rule is
         // X >= Y (the slot list covers each ingredient at least once). Vanilla Construction
-        // lists Wood twice (X=4, Y=3 deduped); the set-based donation ledger satisfies the
-        // duplicate slot implicitly when wood is donated once.
+        // lists Wood twice (X=4, Y=3 deduped): both Wood slots are in Slots and the per-slot
+        // ledger needs both filled.
         if (parsed.NumberOfSlots >= ingredients.Count)
         {
             Dictionary<string, Season> pins = new();
@@ -189,7 +190,7 @@ public static class BundleClassifier
                         pins[id] = s;
             }
             return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
-                ingredientStacks, ingredientQualities, stretch);
+                ingredientStacks, ingredientQualities, stretch, bundleIndex: parsed.Index, slots: slots);
         }
 
         // X < Y with no named quota — an unknown pick-X-of-Y bundle (remixed / SVE / custom
@@ -202,7 +203,7 @@ public static class BundleClassifier
             cumulativeRequiredBySeason: DerivedDefaultQuota(parsed.NumberOfSlots),
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
-            stretchLines: stretch);
+            stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);
     }
 
     /// <summary>
@@ -250,6 +251,20 @@ public static class BundleClassifier
         ramp[^1] = numberOfSlots;
         for (int s = 1; s < ramp.Length; s++) ramp[s] = Math.Max(ramp[s], ramp[s - 1]);
         return ramp;
+    }
+
+    /// <summary>Every concrete slot in board order, duplicates kept, category refs skipped WITHOUT
+    /// renumbering (the index must line up with the board's per-slot bool[]).</summary>
+    private static List<BundleSlot> CollectSlots(ParsedBundle parsed)
+    {
+        var result = new List<BundleSlot>();
+        for (int i = 0; i < parsed.Ingredients.Count; i++)
+        {
+            string itemRef = parsed.Ingredients[i].ItemRef;
+            if (BundleParsing.IsCategoryRef(itemRef)) continue;
+            result.Add(new BundleSlot(i, BundleParsing.NormalizeItemId(itemRef)));
+        }
+        return result;
     }
 
     /// <summary>Distinct, qualified-id ingredient list (drops category refs).</summary>
