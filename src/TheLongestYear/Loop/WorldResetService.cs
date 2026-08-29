@@ -617,7 +617,7 @@ namespace TheLongestYear.Loop
                 var difficultyTuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, _meta.Difficulty);
                 var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade), _meta.Difficulty);
-                engine.SpringReady = TheLongestYear.Core.SpringFoothold.Predicate(AvailabilityModel);
+                engine.Availability = AvailabilityModel;
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.

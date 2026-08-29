@@ -16,6 +16,10 @@ public static class EffortTiers
     public static EffortTier Tier(int effort)
         => effort <= EasyMax ? EffortTier.Easy : effort <= MediumMax ? EffortTier.Medium : effort <= HardMax ? EffortTier.Hard : EffortTier.Extreme;
 
+    /// <summary>Effort 6 or more (spec 2026-08-28-obtainable-board-2-stretch, section 3): the
+    /// hard-item swap's threshold for "counts as this bundle's hard item".</summary>
+    public static bool IsHard(int effort) => Tier(effort) >= EffortTier.Hard;
+
     /// <summary>The price-bucket fallback for an id no effort rule claims.</summary>
     public static EffortTier FromRarity(Rarity rarity) => rarity switch
     {

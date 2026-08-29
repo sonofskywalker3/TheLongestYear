@@ -77,7 +77,8 @@ public sealed class BundleRequirement
     public static BundleRequirement CreateSeasonal(
         string name, Theme theme, IReadOnlyList<string> ingredients, Season season,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
-        IReadOnlyDictionary<string, int>? ingredientQualities = null)
+        IReadOnlyDictionary<string, int>? ingredientQualities = null,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("Seasonal bundle needs at least one ingredient.", nameof(ingredients));
@@ -89,7 +90,7 @@ public sealed class BundleRequirement
             cumulativeRequiredBySeason: null,
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
-            stretchLines: null);
+            stretchLines: stretchLines);
     }
 
     /// <summary>Convenience: pins become the ingredient list. Use when every ingredient is pinned.</summary>

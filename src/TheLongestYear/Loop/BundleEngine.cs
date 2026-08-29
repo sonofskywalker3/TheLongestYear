@@ -110,9 +110,10 @@ namespace TheLongestYear.Loop
         /// generation inputs: reset and reload must pass the same set.</summary>
         private readonly IReadOnlySet<string> _extraExcludedIds;
 
-        /// <summary>Spring foothold predicate (Core.SpringFoothold.Predicate). Must be set the same
-        /// way at every construction site: the board is re-generated and compared at save load.</summary>
-        public Func<string, bool> SpringReady { get; set; }
+        /// <summary>Derived item model, forwarded to <see cref="BundleSlotFiller.Fill"/> for the
+        /// stretch and hard-item swaps (spec 2026-08-28-obtainable-board-2-stretch). Must be set the
+        /// same way at every construction site: the board is re-generated and compared at save load.</summary>
+        public Core.ItemAvailabilityModel Availability { get; set; }
         private int _lastSeed;
 
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
@@ -241,7 +242,7 @@ namespace TheLongestYear.Loop
                 BundleSpec pick = record.Pick;
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
-                    msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info), asked, SpringReady);
+                    msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info), asked, Availability);
                 if (ReferenceEquals(composed, pick))
                 {
                     _monitor?.Log(
