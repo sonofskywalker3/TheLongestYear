@@ -113,6 +113,14 @@ public sealed class RunState
     /// run reset. Persisted via MetaStore so a save+reload mid-week keeps the lifted state.</summary>
     public bool LiabilitySuppressedThisWeek { get; set; }
 
+    /// <summary>The week-of-year the Year-Two Seeds boost was bought for (-1 = not bought this
+    /// run). Active only that single week; see BoostState.YearTwoSeedsActive.</summary>
+    public int YearTwoSeedsWeek { get; set; } = -1;
+
+    /// <summary>The season (as int) the Sneak Peek boost was bought for (-1 = not bought this
+    /// run). Active for the remainder of that season; see BoostState.SneakPeekActive.</summary>
+    public int SneakPeekSeason { get; set; } = -1;
+
     /// <summary>Animals owed a second product today (Kitchen bonus animal_double_product).
     /// Written by the night's FarmAnimal.dayUpdate, consumed when the product is collected,
     /// cleared on DayEnding (before the next night's update) and on a run reset.</summary>
@@ -267,5 +275,7 @@ public sealed class RunState
         (CartStockIds ??= new()).Clear();
         (DoubleProduceToday ??= new()).Clear();
         LiabilitySuppressedThisWeek = false;
+        YearTwoSeedsWeek = -1;
+        SneakPeekSeason = -1;
     }
 }
