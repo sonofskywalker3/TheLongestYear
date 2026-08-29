@@ -7,8 +7,8 @@ namespace TheLongestYear.Core.Availability;
 /// <summary>Effort and first week for crops (Data/Crops growth days, regrowth, trellis, seasons),
 /// forage (how many places it spawns, whether only remote ones, first spawn week plus location
 /// gating) and saplings (sold daily, week 1). Crop week = the season's first week plus the growth
-/// weeks, never past the season's last week; festival-only seeds wait for their festival
-/// (AvailabilityWeeks.FestivalCropWeeks). A crop with no seasons is unplaced.</summary>
+/// weeks, never past the season's last week; seeds from a festival, the cart or the Oasis wait
+/// for that source (AvailabilityWeeks.SeedSourceWeeks). A crop with no seasons is unplaced.</summary>
 public static class CropForageAvailability
 {
     private const int BaseEffort = 1;
@@ -34,10 +34,10 @@ public static class CropForageAvailability
             if (crop.Seasons.Count > 0)
             {
                 Season first = crop.Seasons.Min();
-                int growWeeks = Math.Max(1, (crop.GrowthDays + Calendar.DaysPerWeek - 1) / Calendar.DaysPerWeek);
-                week = Math.Min(AvailabilityWeeks.FirstWeekOf(first) + growWeeks - 1, AvailabilityWeeks.LastWeekOf(first));
-                if (AvailabilityWeeks.FestivalCropWeeks.TryGetValue(qualifiedId, out int festival))
-                    week = Math.Max(week.Value, festival);
+                int growWeeks = crop.GrowthDays / Calendar.DaysPerWeek;   // planted day 1, harvest day 1 + days
+                week = Math.Min(AvailabilityWeeks.FirstWeekOf(first) + growWeeks, AvailabilityWeeks.LastWeekOf(first));
+                if (AvailabilityWeeks.SeedSourceWeeks.TryGetValue(qualifiedId, out int seedWeek))
+                    week = Math.Max(week.Value, seedWeek);
             }
             bool better = best == null
                 || (week ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)

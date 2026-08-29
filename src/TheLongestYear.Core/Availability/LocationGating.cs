@@ -33,6 +33,8 @@ public static class LocationGating
         // Bug Lair quest. Last stop of a long chain.
         ("WitchSwamp", AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek),
         ("WitchHut",   AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek),
+        // Secret Woods needs the Steel Axe (Morel, Fiddlehead, Woodskip, hardwood stumps).
+        ("Woods", 4, 4),
     };
 
     /// <summary>First week of the year the player can stand in this location.</summary>

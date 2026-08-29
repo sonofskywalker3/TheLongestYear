@@ -70,6 +70,22 @@ public class AvailabilityWeeksTests
     [InlineData(0, 2)] [InlineData(1, 5)] [InlineData(2, 9)] [InlineData(3, 9)]
     public void Housing_tier_week(int links, int week) => Assert.Equal(week, AvailabilityWeeks.HousingTierWeek(links));
 
+    [Theory]
+    [InlineData("(O)433", 5)]   // Coffee Bean, Dust Sprite seed then 10 days
+    [InlineData("(O)400", 3)]   // Strawberry, Egg Festival
+    [InlineData("(O)417", 12)]  // Sweet Gem Berry
+    [InlineData("(O)284", 10)]  // Beet, Oasis week 9 plus 6 days
+    [InlineData("(O)252", 11)]  // Rhubarb, Oasis seeds in a garden pot
+    [InlineData("(O)268", 11)]  // Starfruit
+    public void Seed_source_weeks(string id, int week) => Assert.Equal(week, AvailabilityWeeks.SeedSourceWeeks[id]);
+
+    [Fact]
+    public void Cactus_fruit_is_desert_forage_not_an_oasis_crop()
+        => Assert.False(AvailabilityWeeks.LateFloors.ContainsKey("(O)90"));
+
+    [Fact]
+    public void Secret_woods_is_week_4() => Assert.Equal(4, LocationGating.WeekFor("Woods"));
+
     [Fact]
     public void Record_week_falls_back_to_the_first_week_of_its_season()
     {

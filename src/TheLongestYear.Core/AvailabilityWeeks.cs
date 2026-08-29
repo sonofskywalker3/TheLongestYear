@@ -29,25 +29,25 @@ public static class AvailabilityWeeks
     /// Summer week 2.</summary>
     public const int DesertHardWeek = 6;
 
-    /// <summary>Crops whose seeds only a festival or the cart sells: the harvest cannot come
-    /// before that week.</summary>
-    public static readonly IReadOnlyDictionary<string, int> FestivalCropWeeks =
+    /// <summary>Crops whose seeds come from a festival, the cart, the Oasis or another source
+    /// with its own week, rather than Pierre's day-1 shelf: the harvest cannot come before the
+    /// source week plus the crop's own growth time.</summary>
+    public static readonly IReadOnlyDictionary<string, int> SeedSourceWeeks =
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
             ["(O)400"] = 3,    // Strawberry, Egg Festival Spring 13
-            ["(O)417"] = 13,   // Sweet Gem Berry, Rare Seed from the cart, 24 days
+            ["(O)417"] = 12,   // Sweet Gem Berry, Rare Seed from the cart, 24 days
+            ["(O)433"] = 5,    // Coffee Bean, Dust Sprite seed plus 10 days
+            ["(O)284"] = 10,   // Beet, Oasis week 9 plus 6 days
+            ["(O)252"] = 11,   // Rhubarb, Oasis seeds in a garden pot, Garden Pot recipe keep
+            ["(O)268"] = 11,   // Starfruit, Oasis seeds in a garden pot, Garden Pot recipe keep (Summer crop kept through Fall)
         };
 
-    /// <summary>Crops whose seeds only the Oasis sells (Desert, week 9 at the earliest), and
-    /// Winter dig-spot forage whose artifact-spot row carries a Winter condition the glue does
-    /// not read. Later floors that beat the rules' own answer (for Jeff to confirm).</summary>
+    /// <summary>Winter dig-spot forage whose artifact-spot row carries a Winter condition the
+    /// glue does not read. Later floors that beat the rules' own answer.</summary>
     public static readonly IReadOnlyDictionary<string, (int Week, string Note)> LateFloors =
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
-            ["(O)90"] = (11, "Cactus Fruit, Oasis seeds from week 9 plus 12 days"),
-            ["(O)284"] = (11, "Beet, Oasis seeds from week 9 plus 6 days"),
-            ["(O)252"] = (13, "Rhubarb, Oasis seeds, Spring crop: second year"),
-            ["(O)268"] = (13, "Starfruit, Oasis seeds, Summer crop: second year"),
             ["(O)412"] = (13, "Winter Root, Winter dig spots"),
             ["(O)416"] = (13, "Snow Yam, Winter dig spots"),
         };
@@ -119,29 +119,28 @@ public static class AvailabilityWeeks
     public static readonly IReadOnlyDictionary<string, (int Week, string Note)> OtherPlacements =
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
-            ["(O)78"] = (1, "Cave Carrot, mine dirt from floor 1 (for Jeff to confirm)"),
-            ["(O)Moss"] = (1, "Moss, from trees in any season (for Jeff to confirm)"),
-            ["(O)815"] = (4, "Tea Leaves, Caroline's tea sapling recipe plus 20 days (for Jeff to confirm)"),
-            ["(O)746"] = (11, "Jack-O-Lantern, crafted from a Fall pumpkin (for Jeff to confirm)"),
-            ["(O)772"] = (7, "Oil of Garlic, Combat 6 crafting recipe, garlic plus oil (for Jeff to confirm)"),
-            ["(O)342"] = (4, "Pickles, Preserves Jar (Farming 4) plus a Spring vegetable; the jar rule names no pickle id (for Jeff to confirm)"),
+            ["(O)78"] = (1, "Cave Carrot, mine dirt from floor 1"),
+            ["(O)Moss"] = (1, "Moss, from trees in any season"),
+            ["(O)815"] = (4, "Tea Leaves, Caroline's tea sapling recipe plus 20 days"),
+            ["(O)746"] = (12, "Jack-O-Lantern, Spirit's Eve Fall 27"),
+            ["(O)373"] = (12, "Golden Pumpkin, Spirit's Eve maze"),
+            ["(O)772"] = (7, "Oil of Garlic, Combat 6 crafting recipe, garlic plus oil"),
+            ["(O)342"] = (4, "Pickles, Preserves Jar (Farming 4) plus a Spring vegetable; the jar rule names no pickle id"),
         };
 
     /// <summary>Fruit tree fruit: a sapling planted in week 1 matures in 28 days, so a tree
     /// fruits in its own season only when that season starts after week 4. Spring fruit (Cherry,
-    /// Apricot) is a second-year item or a Traveling Cart buy: week 13 here, for Jeff to rule
-    /// on. Island fruit waits for the island.</summary>
+    /// Apricot) is a second-year item or a Traveling Cart buy: week 13, Jeff confirmed. Island
+    /// fruit (Banana, Mango) waits for the island; excluded from this table (Task 12).</summary>
     public static readonly IReadOnlyDictionary<string, (int Week, string Note)> FruitTreeFruitWeeks =
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
-            ["(O)634"] = (13, "Apricot, Spring tree: second year or the cart (for Jeff to confirm)"),
-            ["(O)638"] = (13, "Cherry, Spring tree: second year or the cart (for Jeff to confirm)"),
+            ["(O)634"] = (13, "Apricot, Spring tree: second year or the cart"),
+            ["(O)638"] = (13, "Cherry, Spring tree: second year or the cart"),
             ["(O)635"] = (5, "Orange, Summer tree from a week-1 sapling"),
             ["(O)636"] = (5, "Peach, Summer tree from a week-1 sapling"),
             ["(O)613"] = (9, "Apple, Fall tree"),
             ["(O)637"] = (9, "Pomegranate, Fall tree"),
-            ["(O)91"] = (13, "Banana, Ginger Island"),
-            ["(O)834"] = (13, "Mango, Ginger Island"),
         };
 
     /// <summary>Books: the Bookseller's first visit is Spring, and the mines, fishing and dig

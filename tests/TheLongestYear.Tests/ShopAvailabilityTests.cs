@@ -49,13 +49,17 @@ public class ShopAvailabilityTests
     {
         var data = new EffortData
         {
-            Crops = new List<RawCropGrowth> { new("(O)90", 12, true, false, new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter }) },
             ArtifactSpots = new List<RawArtifactSpot> { new("Default", "(O)412", 0.5) },
         };
         var composer = new EffortComposer(data, new Dictionary<string, ItemAvailability>(), hasKitchen: false);
-        Assert.Equal(11, composer.Derive("(O)90")!.EarliestWeek);    // Cactus Fruit
         Assert.Equal(13, composer.Derive("(O)412")!.EarliestWeek);   // Winter Root
     }
+
+    [Theory]
+    [InlineData("(O)746", 12)]   // Jack-O-Lantern, Spirit's Eve Fall 27
+    [InlineData("(O)373", 12)]   // Golden Pumpkin, the maze
+    [InlineData("(O)634", 13)]   // Apricot
+    public void Table_rows(string id, int week) => Assert.Equal(week, ShopAvailability.Derive(id)!.EarliestWeek);
 
     [Fact]
     public void Pool_book_is_week_2()
