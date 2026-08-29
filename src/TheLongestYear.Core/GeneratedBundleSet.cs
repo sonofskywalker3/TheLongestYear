@@ -52,7 +52,7 @@ public sealed class GeneratedBundleSet
             {
                 int[] clamped = ClampRampForObtainability(
                     req.CumulativeRequiredBySeason.ToArray(), req.Ingredients,
-                    req.NumberOfSlots, itemSeasonPins);
+                    req.NumberOfSlots, itemSeasonPins, req.StretchLines);
                 req = BundleRequirement.CreatePercentage(
                     req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
                     req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines);
@@ -68,15 +68,21 @@ public sealed class GeneratedBundleSet
     /// end of season s (un-pinned ingredients count as Spring-obtainable). The Winter value
     /// keeps demanding min(numberOfSlots, obtainable-ever) so completion is still required.
     /// Result stays monotonic non-decreasing.</summary>
+    /// <param name="stretchLines">Stretch lines (spec 2026-08-28-obtainable-board-2-stretch): an id
+    /// with a stretch line counts as obtainable from its stretch season, exactly as
+    /// <see cref="BundleClassifier.RampFromItems"/> reads them. Without this the clamp reads the
+    /// pin table alone and flattens the very bump the stretch line was placed to create.</param>
     public static int[] ClampRampForObtainability(
         int[] cumulativeRamp, IReadOnlyList<string> ingredients, int numberOfSlots,
-        IReadOnlyDictionary<string, Season> pins)
+        IReadOnlyDictionary<string, Season> pins,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         var clamped = new int[cumulativeRamp.Length];
         for (int s = 0; s < cumulativeRamp.Length; s++)
         {
             int obtainable = ingredients.Count(id =>
-                !pins.TryGetValue(id, out Season pinned) || (int)pinned <= s);
+                !pins.TryGetValue(id, out Season pinned) || (int)pinned <= s
+                || (stretchLines != null && stretchLines.TryGetValue(id, out Season stretch) && (int)stretch <= s));
             clamped[s] = Math.Min(cumulativeRamp[s], obtainable);
         }
         int last = clamped.Length - 1;

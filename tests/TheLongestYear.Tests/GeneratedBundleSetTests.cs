@@ -55,6 +55,25 @@ public class GeneratedBundleSetTests
         Assert.Equal(new[] { 1, 2, 2, 3 }, ramp);
     }
 
+    /// <summary>A stretch line is the whole reason a season's ramp has a bump there: the item is
+    /// pinned later than the season, and the line says the gate may reach it anyway. The clamp
+    /// reads the pin table, so without the stretch lines it flattens exactly the bump the stretch
+    /// pass placed. Here "(O)s" is pinned Summer and stretched to Spring: Spring keeps its 1.</summary>
+    [Fact]
+    public void ClampRamp_KeepsASpringBumpAStretchLineEarned()
+    {
+        var pins = new Dictionary<string, Season> { ["(O)s"] = Season.Summer, ["(O)w"] = Season.Winter };
+        var ingredients = new[] { "(O)s", "(O)w" };
+        var stretch = new Dictionary<string, Season> { ["(O)s"] = Season.Spring };
+
+        Assert.Equal(
+            new[] { 0, 1, 1, 2 },
+            GeneratedBundleSet.ClampRampForObtainability(new[] { 1, 1, 1, 2 }, ingredients, 2, pins));
+        Assert.Equal(
+            new[] { 1, 1, 1, 2 },
+            GeneratedBundleSet.ClampRampForObtainability(new[] { 1, 1, 1, 2 }, ingredients, 2, pins, stretch));
+    }
+
     [Fact]
     public void ClampRamp_StaysMonotonic()
     {

@@ -20,6 +20,9 @@ namespace TheLongestYear.Core;
 ///   - A stretch line (BundleRequirement.StretchLines) is forced in play and Due once
 ///     weekOfYear reaches AvailabilityWeeks.LastWeekOf(its stretch season), regardless of the
 ///     obtainability predicate; its emitted slot carries Stretch = true.
+///
+/// weekOfYear has no default on purpose: it used to default to 0, and a caller that forgot it got
+/// a pool with every stretch line silently switched off (0 is never >= a season's last week).
 /// </summary>
 public static class SlotPoolBuilder
 {
@@ -29,8 +32,8 @@ public static class SlotPoolBuilder
         IReadOnlyList<BundleRequirement> requirements,
         Theme theme, Season season,
         Func<string, bool> isObtainableInSeason,
-        Func<string, ItemKind>? kindOf = null,
-        int weekOfYear = 0)
+        int weekOfYear,
+        Func<string, ItemKind>? kindOf = null)
     {
         if (bundleData == null) throw new ArgumentNullException(nameof(bundleData));
         if (slotStateForBundle == null) throw new ArgumentNullException(nameof(slotStateForBundle));

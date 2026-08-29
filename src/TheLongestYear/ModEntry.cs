@@ -2388,7 +2388,7 @@ namespace TheLongestYear
                 }
 
                 bool rolled = req.Kind != BundleKind.Seasonal;
-                if (_availability != null && StretchRule.Applies(_availability.Step)
+                if (_availability != null && BundleSlotFiller.HardItemRuleApplies(_availability)
                     && req.NumberOfSlots >= BundleSlotFiller.MinSlotsForHardItem && rolled
                     && !req.Ingredients.Any(id => EffortTiers.IsHard(_availability.For(id).Effort)))
                 {

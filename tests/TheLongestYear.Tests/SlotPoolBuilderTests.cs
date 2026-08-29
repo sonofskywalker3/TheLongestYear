@@ -43,25 +43,25 @@ public class SlotPoolBuilderTests
     [Fact]
     public void Activity_themes_match_lines_by_kind_across_every_room()
     {
-        var spelunking = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Spelunking, Season.Spring, _ => true, Kind);
+        var spelunking = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Spelunking, Season.Spring, _ => true, weekOfYear: 1, Kind);
         Assert.Equal(new[] { "(O)80" }, spelunking.Select(s => s.ItemId));
         Assert.True(spelunking[0].Due);
 
-        var kitchen = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Kitchen, Season.Summer, _ => true, Kind);
+        var kitchen = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Kitchen, Season.Summer, _ => true, weekOfYear: 5, Kind);
         Assert.Equal(new[] { "(O)176" }, kitchen.Select(s => s.ItemId));
         Assert.False(kitchen[0].Due);   // pinned Spring, now Summer: filler
 
-        var mixed = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mixed, Season.Spring, _ => true, Kind);
+        var mixed = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mixed, Season.Spring, _ => true, weekOfYear: 1, Kind);
         Assert.Equal(4, mixed.Count);   // Mixed means anything on the board
 
-        var mining = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mining, Season.Spring, _ => true, Kind);
+        var mining = SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mining, Season.Spring, _ => true, weekOfYear: 1, Kind);
         Assert.Equal(2, mining.Count);  // room themes stay bundle-level
         Assert.Equal(new[] { true, false }, mining.Select(s => s.Due));
     }
 
     [Fact]
     public void Without_a_classifier_mixed_stays_the_bulletin_board_room()
-        => Assert.Empty(SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mixed, Season.Spring, _ => true));
+        => Assert.Empty(SlotPoolBuilder.OpenSlotsForTheme(TwoRoomBoard(), _ => null, TwoRoomReqs(), Theme.Mixed, Season.Spring, _ => true, weekOfYear: 1));
 
     [Fact]
     public void Open_slots_of_an_in_play_bundle_are_pooled_with_stack_and_quality()
@@ -71,7 +71,7 @@ public class SlotPoolBuilderTests
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => new[] { false, false }, reqs,
-            Theme.Farming, Season.Spring, _ => true);
+            Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
 
         Assert.Equal(2, pool.Count);
         var green = pool.Single(s => s.ItemId == "(O)188");
@@ -90,7 +90,7 @@ public class SlotPoolBuilderTests
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => new[] { true, false }, reqs,
-            Theme.Farming, Season.Spring, _ => true);
+            Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
 
         Assert.Single(pool);
         Assert.Equal("(O)188", pool[0].ItemId);
@@ -107,7 +107,7 @@ public class SlotPoolBuilderTests
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => new[] { true, false }, reqs,
-            Theme.Farming, Season.Spring, _ => true);
+            Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
 
         Assert.Empty(pool);
     }
@@ -125,7 +125,7 @@ public class SlotPoolBuilderTests
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => null, reqs,
-            Theme.Farming, Season.Spring, _ => true);
+            Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
 
         // Summer Crops not in play in Spring; category ref skipped; only (O)24 remains.
         Assert.Single(pool);
@@ -138,7 +138,7 @@ public class SlotPoolBuilderTests
         var data = BundleData((3, "Spring Crops", "24 1 0", 1));
         var reqs = Reqs(SeasonalReq("Spring Crops", "(O)24"));
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
-            data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true);
+            data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
         Assert.Single(pool);
     }
 
@@ -159,10 +159,10 @@ public class SlotPoolBuilderTests
 
         var week3 = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => null, reqs, Theme.Mixed, Season.Spring,
-            id => Obtainable(id, 3), KindOf, weekOfYear: 3);
+            id => Obtainable(id, 3), weekOfYear: 3, KindOf);
         var week4 = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => null, reqs, Theme.Mixed, Season.Spring,
-            id => Obtainable(id, 4), KindOf, weekOfYear: 4);
+            id => Obtainable(id, 4), weekOfYear: 4, KindOf);
 
         Assert.DoesNotContain(week3, s => s.ItemId == "(O)s");
         BonusSlot slot = Assert.Single(week4, s => s.ItemId == "(O)s");

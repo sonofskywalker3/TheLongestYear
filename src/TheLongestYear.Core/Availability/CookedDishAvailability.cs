@@ -53,6 +53,13 @@ public static class CookedDishAvailability
             // The week ignores keep_kitchen on purpose: the engine's Spring foothold reads the
             // gate season, and the board must regenerate identically before and after that
             // upgrade (it is compared byte for byte at save load). keep_kitchen still drops effort.
+            //
+            // Latent coupling to keep in mind (2026-08-28-obtainable-board-2-stretch): effort is
+            // now a BOARD input too, not just a goal-weighting one. The hard-item rule picks a
+            // bundle's hard slot by effort, so keep_kitchen must not move effort for any item a
+            // ROLLED pool can draw, or the same seed would compose a different board before and
+            // after the upgrade and fail the byte-for-byte check. It is safe today only because
+            // cooked dishes sit in no rolled domain; adding a Dishes pool would break it.
             int? latestWeek = AvailabilityWeeks.KitchenWeek;
             foreach (string ingredient in recipe.IngredientIds)
             {
