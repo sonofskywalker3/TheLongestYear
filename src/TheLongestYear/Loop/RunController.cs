@@ -1266,11 +1266,23 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>Simulate a CC donation (the real donation surface is via DonationService).</summary>
+        /// <summary>Simulate a CC donation: fill the first open slot on the board that wants the id,
+        /// then record it. The board is written first because the ledger mirrors the board.</summary>
         public void Donate(string itemId)
         {
-            Run.RecordDonation(itemId);
-            _monitor.Log($"Donated '{itemId}'. Ledger size {Run.DonatedItemIds.Count}.", LogLevel.Info);
+            var slot = TheLongestYear.Integration.CcSlotWriter.FirstOpenSlotFor(itemId);
+            if (slot == null)
+            {
+                _monitor.Log($"No open slot wants '{itemId}'. Nothing donated.", LogLevel.Warn);
+                return;
+            }
+            if (!TheLongestYear.Integration.CcSlotWriter.TryFill(slot.Value.BundleIndex, slot.Value.IngredientIndex))
+            {
+                _monitor.Log($"Could not fill bundle {slot.Value.BundleIndex} slot {slot.Value.IngredientIndex} for '{itemId}'.", LogLevel.Warn);
+                return;
+            }
+            Run.RecordDonation(slot.Value.BundleIndex, slot.Value.IngredientIndex, BundleParsing.NormalizeItemId(itemId));
+            _monitor.Log($"Donated '{itemId}' into bundle {slot.Value.BundleIndex} slot {slot.Value.IngredientIndex}. Ledger {Run.DonatedSlots.Count} slot(s).", LogLevel.Info);
         }
 
         public void PrintRunState()
