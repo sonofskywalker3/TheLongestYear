@@ -285,6 +285,45 @@ public class BundlePoolRecipesTests
     }
 
     [Fact]
+    public void Chefs_cooking_part_drops_dishes_the_model_cannot_place()
+    {
+        // (O)214 Crispy Bass needs Kent at 3 hearts, and Kent is not in the valley in year 1, so
+        // nothing places it: it must not reach the board, where the gate would treat it as Winter.
+        ItemPools pools = new() { Cooking = new[] { Item("(O)220"), Item("(O)214") } };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)220"] = new(Season.Spring, 3, "test", EarliestWeek: 1, HardWeek: 1),
+        });
+        PoolRecipe r = BundlePoolRecipes.For("Chef's", Array.Empty<string>(), pools, model);
+        List<string> ids = r.Parts[0].Source(pools, model).Select(p => p.ItemId).ToList();
+        Assert.Contains("(O)220", ids);
+        Assert.DoesNotContain("(O)214", ids);
+    }
+
+    [Fact]
+    public void Childrens_sweets_drop_dishes_the_model_cannot_place()
+    {
+        ItemPools pools = new() { Cooking = new[] { Item("(O)220"), Item("(O)221") } };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)220"] = new(Season.Spring, 3, "test", EarliestWeek: 1, HardWeek: 1),
+        });
+        PoolRecipe r = BundlePoolRecipes.For("Children's", Array.Empty<string>(), pools, model);
+        List<string> ids = r.Parts[0].Source(pools, model).Select(p => p.ItemId).ToList();
+        Assert.Equal(new[] { "(O)220" }, ids);
+    }
+
+    [Fact]
+    public void Cooking_parts_pass_everything_through_when_there_is_no_model()
+    {
+        ItemPools pools = new() { Cooking = new[] { Item("(O)220"), Item("(O)214") } };
+        PoolRecipe r = BundlePoolRecipes.For("Chef's", Array.Empty<string>(), pools, null);
+        List<string> ids = r.Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
+        Assert.Contains("(O)220", ids);
+        Assert.Contains("(O)214", ids);
+    }
+
+    [Fact]
     public void Named_recipes_are_deterministic_in_part_order()
     {
         ItemPools pools = Pools();
