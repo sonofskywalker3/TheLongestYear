@@ -70,10 +70,11 @@ public static class CookedDishAvailability
                 if (w == null) latestWeek = null;
                 else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
-            int? recipeWeek = RecipeWeek(recipe, data, step);
+            RecipeWeekResult recipeResult = ComputeRecipeWeek(recipe, data, step);
+            int? recipeWeek = recipeResult.Week;
             if (recipeWeek == null) latestWeek = null;
             else if (latestWeek != null) latestWeek = Math.Max(latestWeek.Value, recipeWeek.Value);
-            string? yearTwoNote = YearTwoEpisodeNote(recipe, data, step);
+            string? yearTwoNote = recipeResult.Note;
             ItemEffort candidate = missing != null
                 ? new ItemEffort(ExtremeEffort, $"dish {recipe.Name}: ingredient {missing} unrecognised, extreme")
                 : new ItemEffort(
@@ -110,40 +111,48 @@ public static class CookedDishAvailability
     /// above it is placed at week `episode - 16` (the same week its year-1 counterpart would air);
     /// on Easy, without the Boost route, it stays unplaced.</summary>
     public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step = DifficultyStep.Normal)
+        => ComputeRecipeWeek(recipe, data, step).Week;
+
+    /// <summary>A recipe's placed week, plus the Sneak Peek Boost basis note when (and only when)
+    /// the year-2 episode route is the one that actually won the week (spec
+    /// 2026-08-28-obtainable-board-4-boosts fix round 1: a recipe whose episode is year-2 but
+    /// which is also cheaper to buy in a shop is not a Boost goal, since the player can simply buy
+    /// it - the note only applies when there is no price route at all, or the year-2 episode week
+    /// is strictly earlier than it).</summary>
+    private readonly record struct RecipeWeekResult(int? Week, string? Note);
+
+    private const string SneakPeekNote = "year-2 episode, Sneak Peek Boost";
+
+    private static RecipeWeekResult ComputeRecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
     {
         string text = (recipe.UnlockCondition ?? "").Trim();
-        if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return 1;
-        if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase)) return AvailabilityWeeks.CookiesWeek;
+        if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return new RecipeWeekResult(1, null);
+        if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase))
+            return new RecipeWeekResult(AvailabilityWeeks.CookiesWeek, null);
         string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         int? priceWeek = data.RecipePrices.TryGetValue(recipe.OutputItemId, out int price) ? UnlockWeeks.ForCost(price) : null;
         if (tokens[0].Equals(FriendshipPrefix, StringComparison.OrdinalIgnoreCase) && tokens.Length >= 3 && int.TryParse(tokens[^1], out int hearts))
-            return Min(UnlockWeeks.ForFriendship(tokens[1], hearts), priceWeek);
+            return new RecipeWeekResult(Min(UnlockWeeks.ForFriendship(tokens[1], hearts), priceWeek), null);
         if (tokens[0].Equals(SkillPrefix, StringComparison.OrdinalIgnoreCase) && tokens.Length >= 3 && int.TryParse(tokens[^1], out int level))
-            return Min(AvailabilityWeeks.MachineLevelWeek(level), priceWeek);
+            return new RecipeWeekResult(Min(AvailabilityWeeks.MachineLevelWeek(level), priceWeek), null);
         if (tokens[0].Equals(TvUnlock, StringComparison.OrdinalIgnoreCase))
         {
             int? episode = data.CookingChannel.TryGetValue(recipe.Name, out int e) ? e : null;
             int? tvWeek = episode != null && episode.Value <= AvailabilityWeeks.YearOneEpisodes ? episode : null;
+            bool yearTwoRoute = false;
             if (tvWeek == null && step != DifficultyStep.Easy && episode != null
                 && episode.Value > AvailabilityWeeks.YearOneEpisodes && episode.Value <= AvailabilityWeeks.YearTwoEpisodesLast)
+            {
                 tvWeek = episode.Value - AvailabilityWeeks.YearOneEpisodes;
-            return Min(tvWeek, priceWeek);
+                yearTwoRoute = true;
+            }
+            // The note applies only when the year-2 TV week is the winning route: no price week
+            // at all, or a price week no earlier than it. A cheaper shop price means the player
+            // can simply buy the recipe, so it is not a Boost goal.
+            string? note = yearTwoRoute && (priceWeek == null || tvWeek!.Value < priceWeek.Value) ? SneakPeekNote : null;
+            return new RecipeWeekResult(Min(tvWeek, priceWeek), note);
         }
-        return Min(null, priceWeek);
-    }
-
-    /// <summary>The basis note for a dish placed via the Sneak Peek Boost's year-2 episode route,
-    /// or null when the recipe's week did not come from that route. Read by SlotPoolBuilder (via
-    /// the availability basis) to tag such a goal's card "Boost: Sneak Peek".</summary>
-    private static string? YearTwoEpisodeNote(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
-    {
-        if (step == DifficultyStep.Easy) return null;
-        string text = (recipe.UnlockCondition ?? "").Trim();
-        string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length == 0 || !tokens[0].Equals(TvUnlock, StringComparison.OrdinalIgnoreCase)) return null;
-        if (!data.CookingChannel.TryGetValue(recipe.Name, out int episode)) return null;
-        if (episode <= AvailabilityWeeks.YearOneEpisodes || episode > AvailabilityWeeks.YearTwoEpisodesLast) return null;
-        return "year-2 episode, Sneak Peek Boost";
+        return new RecipeWeekResult(Min(null, priceWeek), null);
     }
 
     private static int? Min(int? a, int? b) => a == null ? b : b == null ? a : Math.Min(a.Value, b.Value);
