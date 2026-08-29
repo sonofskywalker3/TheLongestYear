@@ -19,7 +19,7 @@ public static class ItemQueryIds
         {
             ["Wine"] = "(O)348", ["Juice"] = "(O)350", ["Jelly"] = "(O)344", ["Pickles"] = "(O)342",
             ["Roe"] = "(O)812", ["AgedRoe"] = "(O)447", ["Honey"] = "(O)340",
-            ["DriedFruit"] = "(O)DriedFruit", ["DriedMushrooms"] = "(O)DriedMushrooms",
+            ["DriedFruit"] = "(O)DriedFruit", ["DriedMushrooms"] = "(O)DriedMushrooms", ["DriedMushroom"] = "(O)DriedMushrooms",
             ["SmokedFish"] = "(O)SmokedFish", ["Bait"] = "(O)SpecificBait",
         };
 

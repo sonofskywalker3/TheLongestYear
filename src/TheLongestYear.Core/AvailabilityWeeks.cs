@@ -150,6 +150,17 @@ public static class AvailabilityWeeks
     /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
     public const int TrapFishWeek = 2;
 
+    /// <summary>Machines with a route no recipe field shows. Dehydrator: choosing mushrooms for the
+    /// farm cave places one (FarmCave.cs:273), Demetrius comes at 25,000g earned, about week 6.</summary>
+    public static readonly IReadOnlyDictionary<string, (int Week, string Note)> MachineRouteWeeks =
+        new Dictionary<string, (int, string)>(StringComparer.Ordinal)
+        {
+            ["(BC)Dehydrator"] = (6, "Dehydrator, mushroom cave"),
+        };
+
+    /// <summary>A machine with no skill, friendship or price gate found: mail after a special order.</summary>
+    public const int SpecialOrderMachineWeek = 9;
+
     public static Season SeasonOf(int week)
     {
         int clamped = Math.Clamp(week, 1, Calendar.WeeksPerYear);

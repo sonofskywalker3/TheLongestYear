@@ -11,6 +11,7 @@ using StardewValley.GameData.FishPonds;
 using StardewValley.GameData.Locations;
 using StardewValley.GameData.Machines;
 using StardewValley.GameData.Objects;
+using StardewValley.GameData.Shops;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
 
@@ -45,6 +46,7 @@ namespace TheLongestYear.Loop
             var forage = new List<RawSpawnEntry>();
             var machineRules = new List<RawMachineRule>();
             var machineUnlocks = new Dictionary<string, string>(StringComparer.Ordinal);
+            var recipePrices = new Dictionary<string, int>(StringComparer.Ordinal);
             var animals = new List<RawFarmAnimal>();
             var buildings = new List<RawBuilding>();
             var cooking = new List<RawCookingRecipe>();
@@ -128,6 +130,17 @@ namespace TheLongestYear.Loop
                     machineUnlocks[machineId] = fields[CraftingUnlockField].Trim();
                 }
 
+                foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
+                {
+                    foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
+                    {
+                        if (item == null || !item.IsRecipe || item.Price <= 0 || string.IsNullOrEmpty(item.ItemId)) continue;
+                        string key = BundleParsing.NormalizeItemId(item.ItemId);
+                        if (!recipePrices.ContainsKey(key))
+                            recipePrices[key] = item.Price;
+                    }
+                }
+
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CookingRecipes"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
@@ -188,15 +201,15 @@ namespace TheLongestYear.Loop
             _monitor?.Log(
                 $"GameEffortData: objects {objects.Count}, geode drops {geodeDrops.Count}, monster drops {monsterDrops.Count}, "
                 + $"artifact spots {artifactSpots.Count}, forage {forage.Count}, machine rules {machineRules.Count}, "
-                + $"machine recipes {machineUnlocks.Count}, animals {animals.Count}, buildings {buildings.Count}, "
-                + $"cooking recipes {cooking.Count}, ponds {ponds.Count}, crops {crops.Count}.",
+                + $"machine recipes {machineUnlocks.Count}, recipe prices {recipePrices.Count}, animals {animals.Count}, "
+                + $"buildings {buildings.Count}, cooking recipes {cooking.Count}, ponds {ponds.Count}, crops {crops.Count}.",
                 LogLevel.Trace);
 
             return new EffortData
             {
                 Objects = objects, GeodeDrops = geodeDrops, MonsterDrops = monsterDrops,
                 ArtifactSpots = artifactSpots, ForageSpawns = forage, MachineRules = machineRules,
-                MachineUnlocks = machineUnlocks, Animals = animals, Buildings = buildings,
+                MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops,
             };
         }
