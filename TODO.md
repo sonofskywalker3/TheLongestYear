@@ -13,10 +13,10 @@ Per change: patch bump, one commit, tests green, live check on the throwaway sav
 (`docs/HEADLESS_DRIVING.md`; `tools/game.ps1` for anything needing the mouse, Jeff has authorised
 the desktop). Commit locally; pushing and releasing stay Jeff's call.
 
-1. **FIXED 0.16.152 (live-checked over the bridge, awaiting Jeff). `keep_bus_unlocked` did not restore the bus** (Nexus, gazumbrado, 29 Aug). 1,500 JP for a
+1. **FIXED 0.16.157 (Jeff ruling 2026-08-29: the upgrade keeps the BUS running only; the four vault bundles stay on the board and must still be paid, JP for paying them still earned; 0.16.152 had wrongly pre-completed them). Live-checked: ccVault mail restored, vault paid 0/1 (satisfied by the upgrade), JP unchanged over a day end. `keep_bus_unlocked` did not restore the bus** (Nexus, gazumbrado, 29 Aug). 1,500 JP for a
    counter. Fix in `WorldResetService.cs` around line 506: complete the vault bundles on the board
    and re-add `ccVault` when the upgrade is owned. Details: "10th sweep" below.
-2. **NOT REPRODUCIBLE on 0.16.153 (2026-08-29): already fixed by 0.16.2 (27 Aug, shipped in 0.16.7 and 0.16.17).** Bumblewyn wrote that the reset happened "a few days (and updates) ago", i.e. before the round-trip landed. Live repro: `tly_stashrod weapon` stashes a Galaxy Sword with Attack II (innate) + Ruby forge; after `tly_reset`, `tly_stashrod check` showed both intact, damage 66-88 unchanged. Reply after release asking the reporter to confirm on the new build. Original: **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
+2. **FIXED in 0.16.2 (27 Aug, shipped in 0.16.7 and 0.16.17); confirmed on 0.16.153, 2026-08-29.** Bumblewyn wrote that the reset happened "a few days (and updates) ago", i.e. before the round-trip landed. Live repro: `tly_stashrod weapon` stashes a Galaxy Sword with Attack II (innate) + Ruby forge; after `tly_reset`, `tly_stashrod check` showed both intact, damage 66-88 unchanged. Reply after release asking the reporter to confirm on the new build. Original: **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
    Being looked at). Round-trip them through the stash record like `TransplantToolState` does for
    kept tools. Details: "10th sweep" below and the 5th-sweep table row "Kept rod loses bait".
 3. **FIXED 0.16.154 (path b, live-checked: cleared 5, kept the 9 money mails; GMCM toggle "Re-send Better Start gift each loop"). Vanilla heart-event invites never re-sent after a rewind** (found in the Better Start audit).
