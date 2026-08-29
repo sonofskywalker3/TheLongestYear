@@ -1953,7 +1953,7 @@ namespace TheLongestYear
             _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
                 _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
                 hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
-                weekOverrides: _config.AvailabilityWeekOverrides, mode: mode);
+                weekOverrides: _config.AvailabilityWeekOverrides, mode: mode, step: step);
             return _availability;
         }
 

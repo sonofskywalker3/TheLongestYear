@@ -22,7 +22,8 @@ public static class ItemAvailabilityBuilder
         EffortData? effortData = null,
         bool hasKitchen = false,
         IReadOnlyDictionary<string, int>? weekOverrides = null,
-        WeekMode mode = WeekMode.Pacing)
+        WeekMode mode = WeekMode.Pacing,
+        DifficultyStep step = DifficultyStep.Normal)
     {
         if (pools == null) throw new ArgumentNullException(nameof(pools));
 
@@ -77,7 +78,7 @@ public static class ItemAvailabilityBuilder
             }
         }
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode);
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").
