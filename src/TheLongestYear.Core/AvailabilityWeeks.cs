@@ -12,7 +12,11 @@ public static class AvailabilityWeeks
 {
     /// <summary>An item no rule placed. Winter, the safe direction for a deadline.</summary>
     public const int UnknownWeek = 13;
-    public const int KitchenWeek = 5;
+    public const int KitchenWeek = 6;
+    /// <summary>Cookies unlock at Evelyn's Saloon event 19; no unlock condition means Cookies.</summary>
+    public const int CookiesWeek = 5;
+    /// <summary>Queen of Sauce episodes air weekly; year 1 covers episodes 1 to 16.</summary>
+    public const int YearOneEpisodes = 16;
     /// <summary>A dish the Saloon or a Cookout Kit can supply without a kitchen.</summary>
     public const int ShopDishWeek = 3;
     public const int PondDelayWeeks = 4;

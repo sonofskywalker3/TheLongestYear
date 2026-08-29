@@ -55,6 +55,7 @@ namespace TheLongestYear.Loop
             var ponds = new List<RawFishPondRule>();
             var crops = new List<RawCropGrowth>();
             var tapItems = new List<RawTapItem>();
+            var cookingChannel = new Dictionary<string, int>(StringComparer.Ordinal);
 
             try
             {
@@ -203,6 +204,14 @@ namespace TheLongestYear.Loop
                         tapItems.Add(new RawTapItem(kv.Key, BundleParsing.NormalizeItemId(tap.ItemId), tap.DaysUntilReady));
                     }
                 }
+
+                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
+                {
+                    if (!int.TryParse(kv.Key, out int episode)) continue;
+                    string name = (kv.Value ?? "").Split('/', StringSplitOptions.None).FirstOrDefault() ?? "";
+                    if (string.IsNullOrEmpty(name)) continue;
+                    cookingChannel[name] = episode;
+                }
             }
             catch (Exception ex)
             {
@@ -216,7 +225,7 @@ namespace TheLongestYear.Loop
                 + $"artifact spots {artifactSpots.Count}, forage {forage.Count}, machine rules {machineRules.Count}, "
                 + $"machine recipes {machineUnlocks.Count}, recipe prices {recipePrices.Count}, animals {animals.Count}, "
                 + $"buildings {buildings.Count}, cooking recipes {cooking.Count}, ponds {ponds.Count}, crops {crops.Count}, "
-                + $"tap items {tapItems.Count}.",
+                + $"tap items {tapItems.Count}, cooking channel episodes {cookingChannel.Count}.",
                 LogLevel.Trace);
 
             return new EffortData
@@ -225,6 +234,7 @@ namespace TheLongestYear.Loop
                 ArtifactSpots = artifactSpots, ForageSpawns = forage, MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
+                CookingChannel = cookingChannel,
             };
         }
 

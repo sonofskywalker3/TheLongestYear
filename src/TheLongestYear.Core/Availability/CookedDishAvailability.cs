@@ -22,6 +22,8 @@ public static class CookedDishAvailability
     private const int SpecialUnlockEffort = 3;
     private const string SkillPrefix = "s";
     private const string FriendshipPrefix = "f";
+    private const string TvUnlock = "l";
+    private const int QueenOfSauceOnly = 100;
 
     public static int UnlockEffort(string? unlock)
     {
@@ -62,12 +64,16 @@ public static class CookedDishAvailability
                 if (w == null) latestWeek = null;
                 else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
+            int? recipeWeek = RecipeWeek(recipe, data);
+            if (recipeWeek == null) latestWeek = null;
+            else if (latestWeek != null) latestWeek = Math.Max(latestWeek.Value, recipeWeek.Value);
             ItemEffort candidate = missing != null
                 ? new ItemEffort(ExtremeEffort, $"dish {recipe.Name}: ingredient {missing} unrecognised, extreme")
                 : new ItemEffort(
                     hardest + UnlockEffort(recipe.UnlockCondition) + (hasKitchen ? 0 : KitchenCost),
                     $"dish {recipe.Name}: hardest ingredient {hardestId} ({hardest}) + unlock '{recipe.UnlockCondition}' "
-                    + $"({UnlockEffort(recipe.UnlockCondition)}) + kitchen {(hasKitchen ? 0 : KitchenCost)}",
+                    + $"({UnlockEffort(recipe.UnlockCondition)}) + kitchen {(hasKitchen ? 0 : KitchenCost)}"
+                    + (recipeWeek == null ? ", recipe not in year 1" : $", recipe week {recipeWeek}"),
                     latestWeek, latestWeek == null ? null : AvailabilityWeeks.SeasonOf(latestWeek.Value));
             bool better = best == null
                 || (candidate.EarliestWeek ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
@@ -80,6 +86,32 @@ public static class CookedDishAvailability
             : new ItemEffort(best.Effort, $"{best.Basis}, week {(best.EarliestWeek?.ToString() ?? "unknown")}, effort {best.Effort}",
                 best.EarliestWeek, best.GateSeason);
     }
+
+    /// <summary>Week the recipe itself is learned, or null when it is not in year 1 (a year-2
+    /// episode, Kent, Leo). "l 100" is Queen of Sauce only: the episode's week for episodes 1 to
+    /// 16. "l N" under 100 is sold (the Saloon) and takes the price week. "f NPC N" takes the
+    /// hearts table. "s Skill N" the level week. "default" week 1. "null" is Cookies (event 19).</summary>
+    public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data)
+    {
+        string text = (recipe.UnlockCondition ?? "").Trim();
+        if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return 1;
+        if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase)) return AvailabilityWeeks.CookiesWeek;
+        string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int? priceWeek = data.RecipePrices.TryGetValue(recipe.OutputItemId, out int price) ? UnlockWeeks.ForCost(price) : null;
+        if (tokens[0].Equals(FriendshipPrefix, StringComparison.OrdinalIgnoreCase) && tokens.Length >= 3 && int.TryParse(tokens[^1], out int hearts))
+            return Min(UnlockWeeks.ForFriendship(tokens[1], hearts), priceWeek);
+        if (tokens[0].Equals(SkillPrefix, StringComparison.OrdinalIgnoreCase) && tokens.Length >= 3 && int.TryParse(tokens[^1], out int level))
+            return Min(AvailabilityWeeks.MachineLevelWeek(level), priceWeek);
+        if (tokens[0].Equals(TvUnlock, StringComparison.OrdinalIgnoreCase))
+        {
+            int? episode = data.CookingChannel.TryGetValue(recipe.Name, out int e) ? e : null;
+            int? tvWeek = episode != null && episode.Value <= AvailabilityWeeks.YearOneEpisodes ? episode : null;
+            return Min(tvWeek, priceWeek);
+        }
+        return Min(null, priceWeek);
+    }
+
+    private static int? Min(int? a, int? b) => a == null ? b : b == null ? a : Math.Min(a.Value, b.Value);
 
     private static int? IngredientEffort(string ingredient, EffortData data, Func<string, int?> effortOf)
     {
