@@ -38,6 +38,9 @@ the desktop). Commit locally; pushing and releasing stay Jeff's call.
 Also on the Nexus bugs tab, no code needed: mark "Fall Festival Map Boundaries" (ChaoticMindset,
 29 Aug) Not a bug (the reporter retracted it) once Jeff says so; reply to Bumblewyn and gazumbrado
 after their fixes land (drafts in chat first, memory `show-reply-drafts-before-posting`).
+**Reply rule (Jeff, 2026-08-29): every bug reply opens with thanks, an apology and empathy before
+any explanation; technical detail short and in the player's words.** See the workspace
+`.claude/CLAUDE.md` "Replying to bug reports".
 
 Unreleased fixes already on master that the release notes must carry: the per-slot ledger
 (0.16.135 to 0.16.146), the bundle pool fixes (0.16.26 to 0.16.36), the obtainable board (0.16.85
