@@ -33,12 +33,20 @@ public class PoolDomainClassifierTests
     }
 
     [Fact]
-    public void MoneyOrCategorySlot_None()
-    {
-        Assert.Equal(PoolDomain.None,
+    public void MoneyBundlesAreNeverRolled()
+        => Assert.Equal(PoolDomain.None,
             PoolDomainClassifier.Classify(Spec("2,500g", "-1"), Pools()).Domain);
-        Assert.Equal(PoolDomain.None,
+
+    [Fact]
+    public void CategorySlotBundlesRollTheirRecipe()
+        => Assert.Equal(PoolDomain.Recipe,
             PoolDomainClassifier.Classify(Spec("Animal", "-5", "186"), Pools()).Domain);
+
+    [Fact]
+    public void AVanillaListBundleIsClassifiedAsARecipe()
+    {
+        BundleSpec dye = Spec("Dye", "(O)420", "(O)397", "(O)421", "(O)444", "(O)62", "(O)266");
+        Assert.Equal(PoolDomain.Recipe, PoolDomainClassifier.Classify(dye, Pools()).Domain);
     }
 
     [Fact]
@@ -50,9 +58,9 @@ public class PoolDomainClassifierTests
     }
 
     [Fact]
-    public void BelowMajority_None()
+    public void BelowMajority_FallsThroughToTheRecipeDomain()
     {
-        Assert.Equal(PoolDomain.None,
+        Assert.Equal(PoolDomain.Recipe,
             PoolDomainClassifier.Classify(Spec("Odd", "128", "998", "999"), Pools()).Domain);
     }
 

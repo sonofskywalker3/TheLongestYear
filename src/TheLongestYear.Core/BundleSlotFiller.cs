@@ -18,6 +18,7 @@ public static class BundleSlotFiller
 {
     private const int QualityGold = 2;
     private const int QualitySilver = 1;
+    private const string MoneySlotId = "-1";
 
     /// <summary>Items that fish out at base quality only, whatever the roll says —
     /// see <see cref="RollQuality"/>. Public because <see cref="VanillaBoardDifficultyPass"/>
@@ -54,7 +55,18 @@ public static class BundleSlotFiller
         if (match.Domain == PoolDomain.None)
             return spec;
 
-        IReadOnlyList<PoolItem> candidates = Candidates(spec, match, pools);
+        // Recipe bundles roll part by part (Dye: one item per colour; Field Research: one of each
+        // of four things), so the parts are resolved once here, and every later pass runs on their
+        // union: the pity trim, the avoid set, the stretch swap and the hard-item swap.
+        PoolRecipe? recipe = match.Domain == PoolDomain.Recipe
+            ? BundlePoolRecipes.For(spec.Name, VanillaIds(spec), pools, availability)
+            : null;
+        List<IReadOnlyList<PoolItem>> parts = recipe == null
+            ? new List<IReadOnlyList<PoolItem>>()
+            : recipe.Parts.Select(part => part.Source(pools, availability)).ToList();
+        IReadOnlyList<PoolItem> candidates = recipe == null
+            ? Candidates(spec, match, pools)
+            : BundlePoolRecipes.Union(parts.ToArray());
         int targetCount = spec.PickCount > 0
             ? Math.Min(spec.PickCount, spec.Slots.Count)
             : spec.Slots.Count;
@@ -80,6 +92,18 @@ public static class BundleSlotFiller
                 string guardNote = after == targetCount && removed < units ? " (guard stopped early)" : "";
                 log($"pity trim '{spec.Name}': {before} candidates -> {after} (units {trim.Units}, quality off {qualityOff}, need {targetCount}){guardNote}");
             }
+            // Carry the trim into the parts: a part keeps only what survived, unless nothing of
+            // it did, in which case the part stands as it was rather than becoming unfillable.
+            if (recipe != null)
+            {
+                var kept = new HashSet<string>(candidates.Select(p => p.ItemId), StringComparer.Ordinal);
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    IReadOnlyList<PoolItem> trimmed = parts[i].Where(p => kept.Contains(p.ItemId)).ToList();
+                    if (trimmed.Count > 0)
+                        parts[i] = trimmed;
+                }
+            }
         }
 
         (Func<PoolItem, bool>? capped, int cap) = CapFor(spec, match, pools);
@@ -98,7 +122,9 @@ public static class BundleSlotFiller
         if (WeightedSampler.Capacity(candidates, capped, cap) < targetCount)
             return spec;
 
-        List<PoolItem> chosen = WeightedSampler.Sample(candidates, targetCount, rng, capped, cap);
+        List<PoolItem> chosen = recipe == null
+            ? WeightedSampler.Sample(candidates, targetCount, rng, capped, cap)
+            : SampleByParts(spec, recipe, parts, candidates, targetCount, rng, avoid, log);
         // Stretch swap and hard-item swap (spec 2026-08-28-obtainable-board-2-stretch, sections 2
         // and 3), replacing the Spring foothold: never on Easy, never on a season-named bundle
         // (it gates its own season by nature).
@@ -185,6 +211,70 @@ public static class BundleSlotFiller
         };
     }
 
+    /// <summary>Rolls a recipe bundle part by part, in the recipe's own fixed order so the rng
+    /// stream is deterministic: each part draws from its own candidates minus the avoid set and
+    /// minus what earlier parts already took, filling its Count slots (or, at Count 0, the rest).
+    /// A part that cannot fill falls back to the whole recipe's candidates, which already carry
+    /// the bundle's own vanilla items.</summary>
+    private static List<PoolItem> SampleByParts(
+        BundleSpec spec, PoolRecipe recipe, IReadOnlyList<IReadOnlyList<PoolItem>> parts,
+        IReadOnlyList<PoolItem> union, int targetCount, Random rng,
+        IReadOnlySet<string>? avoid, Action<string>? log)
+    {
+        var chosen = new List<PoolItem>(targetCount);
+        var taken = new HashSet<string>(StringComparer.Ordinal);
+
+        void Take(IReadOnlyList<PoolItem> from, int count)
+        {
+            foreach (PoolItem pick in WeightedSampler.Sample(from, count, rng))
+            {
+                chosen.Add(pick);
+                taken.Add(pick.ItemId);
+            }
+        }
+
+        List<PoolItem> Free(IEnumerable<PoolItem> from, bool dropAvoided)
+            => from.Where(p => !taken.Contains(p.ItemId)
+                               && !(dropAvoided && avoid != null && avoid.Contains(p.ItemId))).ToList();
+
+        for (int i = 0; i < parts.Count && chosen.Count < targetCount; i++)
+        {
+            int remaining = targetCount - chosen.Count;
+            int want = recipe.Parts[i].Count <= BundlePoolRecipes.RestOfTheSlots
+                ? remaining
+                : Math.Min(recipe.Parts[i].Count, remaining);
+
+            List<PoolItem> available = Free(parts[i], dropAvoided: true);
+            if (available.Count < want)
+                available = Free(parts[i], dropAvoided: false); // no fresh item left: allow repeats
+            if (available.Count < want)
+            {
+                log?.Invoke($"'{spec.Name}': part {recipe.Parts[i].Label} short by {want - available.Count}; falling back to the vanilla items");
+                available = Free(union, dropAvoided: false);
+            }
+            Take(available, want);
+        }
+
+        // Fewer parts than slots, or a fixed-count part that ran dry: the rest of the bundle comes
+        // from the recipe's whole candidate list.
+        if (chosen.Count < targetCount)
+        {
+            List<PoolItem> rest = Free(union, dropAvoided: true);
+            if (rest.Count < targetCount - chosen.Count)
+                rest = Free(union, dropAvoided: false);
+            Take(rest, targetCount - chosen.Count);
+        }
+        return chosen;
+    }
+
+    /// <summary>The bundle's own item ids, money and category refs left out.</summary>
+    private static IReadOnlyList<string> VanillaIds(BundleSpec spec)
+        => spec.Slots
+            .Where(s => !string.IsNullOrEmpty(s.ItemId) && s.ItemId != MoneySlotId
+                        && !BundleParsing.IsCategoryRef(s.ItemId))
+            .Select(s => BundleParsing.NormalizeItemId(s.ItemId))
+            .ToList();
+
     /// <summary>How many distinct items <see cref="Fill"/> could pick for this bundle before any
     /// pity trim or avoid set (0 for a domain it does not re-roll). The engine fills the
     /// tightest bundles first so a small pool is not the one left holding the repeat fallback.</summary>
@@ -214,10 +304,15 @@ public static class BundleSlotFiller
         => domain is PoolDomain.QualityCrops or PoolDomain.SeasonalCrops or PoolDomain.SeasonalForage or PoolDomain.Fish;
 
     private static IReadOnlyList<PoolItem> Candidates(
-        BundleSpec spec, DomainMatch match, ItemPools pools)
+        BundleSpec spec, DomainMatch match, ItemPools pools,
+        ItemAvailabilityModel? availability = null)
     {
         switch (match.Domain)
         {
+            case PoolDomain.Recipe:
+                return BundlePoolRecipes.Union(
+                    BundlePoolRecipes.For(spec.Name, VanillaIds(spec), pools, availability)
+                        .Parts.Select(part => part.Source(pools, availability)).ToArray());
             case PoolDomain.SeasonalCrops:
             case PoolDomain.QualityCrops:
                 return FilterSeason(pools.Crops, match.Season);
