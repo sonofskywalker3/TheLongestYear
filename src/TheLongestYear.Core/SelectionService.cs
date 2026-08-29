@@ -12,8 +12,9 @@ namespace TheLongestYear.Core;
 /// Rule C (activity-themes spec 2026-08-28): when the caller can say how many goals each theme
 /// could ask for this week, only themes with <see cref="MinAskableToOffer"/> or more qualify, the
 /// two cards are drawn weighted by that count, and a short offer is padded from the not-picked
-/// room themes in seed order (the legacy shuffle), so the offer is never empty and a theme with
-/// nothing to ask never hands out a free drawback lift.
+/// room themes in seed order (the legacy shuffle) that can still ask for at least one goal.
+/// A theme that can ask nothing never pads a card (Jeff, 2026-08-28) -- the offer can come back
+/// short, even a single card, rather than hand out a free drawback lift for nothing.
 /// </summary>
 public static class SelectionService
 {
@@ -85,7 +86,7 @@ public static class SelectionService
         if (offer.Count < OfferSize)
         {
             List<Theme> fallback = ThemeDomains.RoomThemes
-                .Where(t => !selectedSet.Contains(t) && !offer.Contains(t))
+                .Where(t => !selectedSet.Contains(t) && !offer.Contains(t) && askableFor(t) >= 1)
                 .OrderBy(t => (int)t)
                 .ToList();
             Shuffle(fallback, rng);
@@ -107,7 +108,7 @@ public static class SelectionService
             .ToList();
         if (qualified.Count >= OfferSize) return qualified;
         return qualified
-            .Concat(ThemeDomains.RoomThemes.Where(t => !selectedSet.Contains(t) && !qualified.Contains(t)))
+            .Concat(ThemeDomains.RoomThemes.Where(t => !selectedSet.Contains(t) && !qualified.Contains(t) && askableFor(t) >= 1))
             .ToList();
     }
 

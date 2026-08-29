@@ -10,7 +10,7 @@ public class GameplayConfigFillerTests
     {
         var config = new GameplayConfig();
         Assert.Empty(config.AvailabilityWeekOverrides);
-        Assert.Equal(new[] { 5, 5, 5, 6 }, BonusItemSampler.DefaultMaxCountBySeason);
+        Assert.Equal(new[] { 5, 5, 5, 5 }, BonusItemSampler.DefaultMaxCountBySeason);
     }
 
     [Fact]

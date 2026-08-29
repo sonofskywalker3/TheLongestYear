@@ -13,4 +13,7 @@ public class BonusItemSamplerTests
         Assert.Equal(2, BonusItemSampler.WeightFor(Rarity.Rare));
         Assert.Equal(1, BonusItemSampler.WeightFor(Rarity.VeryRare));
     }
+
+    [Fact]
+    public void Ceilings_are_flat_5() => Assert.Equal(new[] { 5, 5, 5, 5 }, BonusItemSampler.DefaultMaxCountBySeason);
 }

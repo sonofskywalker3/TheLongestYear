@@ -1,36 +1,35 @@
 using System.Collections.Generic;
+using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>Jeff's rule (2026-08-28): the goals may run half a season ahead of the gate, never
-/// further, never quiet while the board still needs lines.</summary>
+/// <summary>Jeff's rule (2026-08-28): goals follow the gate exactly, no look-ahead. A bundle may
+/// be asked for only what the current season's gate already demands; a player ahead of the gate
+/// sees quiet cards until the next season opens more of the bundle up, by design.</summary>
 public class SeasonNeedTests
 {
-    private static BundleRequirement Percentage()
-        => BundleRequirement.CreatePercentage("Preserver's", Theme.Farming,
-            new[] { "a", "b", "c", "d", "e", "f" }, numberOfSlots: 4,
+    [Fact]
+    public void A_percentage_bundle_may_be_asked_only_for_this_seasons_share()
+    {
+        BundleRequirement req = BundleRequirement.CreatePercentage("Recycler's", Theme.Mixed,
+            new[] { "(O)168", "(O)169", "(O)170", "(O)171", "(O)172", "(O)338" }, numberOfSlots: 4,
             cumulativeRequiredBySeason: new[] { 1, 2, 3, 4 });
-
-    [Theory]
-    [InlineData(Season.Spring, 0, 2)]   // 1 due + half of the 1 Summer adds
-    [InlineData(Season.Spring, 2, 0)]
-    [InlineData(Season.Summer, 1, 2)]   // 2 + half of 1 = 3, minus 1 in
-    [InlineData(Season.Fall, 1, 3)]     // 3 + half of 1 = 4, minus 1
-    [InlineData(Season.Winter, 1, 3)]
-    [InlineData(Season.Winter, 4, 0)]
-    public void Percentage_bundle_runs_half_a_season_ahead(Season season, int completed, int expected)
-        => Assert.Equal(expected, SeasonNeed.For(Percentage(), season, completed));
+        Assert.Equal(1, SeasonNeed.For(req, Season.Spring, completed: 0));
+        Assert.Equal(0, SeasonNeed.For(req, Season.Spring, completed: 1));
+        Assert.Equal(1, SeasonNeed.For(req, Season.Fall, completed: 2));
+        Assert.Equal(4, SeasonNeed.For(req, Season.Winter, completed: 0));
+    }
 
     [Fact]
-    public void Per_item_bundle_counts_pins_by_season()
+    public void A_per_item_bundle_may_be_asked_only_for_items_due_by_now()
     {
-        var req = BundleRequirement.CreatePerItem("Blacksmith's", Theme.Mining, new[] { "a", "b", "c", "d" },
-            new Dictionary<string, Season> { ["a"] = Season.Spring, ["b"] = Season.Summer, ["c"] = Season.Summer, ["d"] = Season.Winter });
-        Assert.Equal(2, SeasonNeed.For(req, Season.Spring, 0));   // a, plus half of (b, c)
-        Assert.Equal(2, SeasonNeed.For(req, Season.Summer, 1));   // a, b, c minus one in
-        Assert.Equal(3, SeasonNeed.For(req, Season.Fall, 1));     // a, b, c + half of d
-        Assert.Equal(3, SeasonNeed.For(req, Season.Winter, 1));
+        var pins = new Dictionary<string, Season> { ["(O)153"] = Season.Spring, ["(O)700"] = Season.Fall, ["(O)140"] = Season.Winter, ["(O)141"] = Season.Winter };
+        BundleRequirement req = BundleRequirement.CreatePerItem("Lake Fish", Theme.Fishing, pins.Keys.ToList(), pins);
+        Assert.Equal(1, SeasonNeed.For(req, Season.Spring, 0));
+        Assert.Equal(1, SeasonNeed.For(req, Season.Summer, 0));
+        Assert.Equal(2, SeasonNeed.For(req, Season.Fall, 0));
+        Assert.Equal(4, SeasonNeed.For(req, Season.Winter, 0));
     }
 }

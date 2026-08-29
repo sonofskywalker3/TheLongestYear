@@ -11,12 +11,13 @@ namespace TheLongestYear.Core;
 public static class BonusItemSampler
 {
     /// <summary>
-    /// How many bonus items to show per (season, theme) preview card. Scales +1 per season so the
-    /// player sees more bonus options later in the year. Indices match the <see cref="Season"/>
-    /// enum (Spring=0..Winter=3). Spec round 6 lived in <c>GameplayConfig.BonusListSizeBySeason</c>;
+    /// How many bonus items to show per (season, theme) preview card. Flat across the year (Jeff,
+    /// 2026-08-28: goals follow the gate with no look-ahead, so there is no longer a Winter surge
+    /// of extra lines to make room for). Indices match the <see cref="Season"/> enum
+    /// (Spring=0..Winter=3). Spec round 6 lived in <c>GameplayConfig.BonusListSizeBySeason</c>;
     /// moved here in spec round 7 so the sampler owns its own default cap.
     /// </summary>
-    public static readonly IReadOnlyList<int> DefaultMaxCountBySeason = new[] { 5, 5, 5, 6 };
+    public static readonly IReadOnlyList<int> DefaultMaxCountBySeason = new[] { 5, 5, 5, 5 };
 
     /// <summary>
     /// Inverse-rarity weight: Common shows up most often, VeryRare least. Tuned per the 2026-05-26
