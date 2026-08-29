@@ -298,3 +298,27 @@ public class CropForageAvailabilityTests
         Assert.Null(CropForageAvailability.DeriveForage("(O)24", spawns));
     }
 }
+
+public class MonsterDropRareEffortTests
+{
+    [Fact]
+    public void A_rare_drop_sets_effort_only_on_pacing_and_its_week_on_hard()
+    {
+        var drops = new List<RawMonsterDrop> { new("Dust Spirit", "(O)414", 0.02) };   // Crystal Fruit
+        ItemEffort e = MonsterDropAvailability.Derive("(O)414", drops)!;
+        Assert.Equal(AvailabilityWeeks.UnknownWeek, e.EarliestWeek);
+        Assert.Equal(2, e.HardWeek);
+    }
+
+    [Fact]
+    public void Volcano_and_dangerous_mines_monsters_place_nothing()
+    {
+        var drops = new List<RawMonsterDrop> { new("Magma Sprite", "(O)848", 0.5), new("Shadow Sniper", "(O)769", 0.5) };
+        Assert.Null(MonsterDropAvailability.Derive("(O)848", drops));
+        Assert.Null(MonsterDropAvailability.Derive("(O)769", drops));
+    }
+
+    [Fact]
+    public void Bone_fragment_is_area_40()
+        => Assert.Equal(2, MetalsAvailability.Derive(new PoolItem("(O)881", 12, 3, new List<Season>(), new List<string>()))!.Week);
+}

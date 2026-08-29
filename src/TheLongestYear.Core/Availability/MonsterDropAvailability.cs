@@ -13,7 +13,13 @@ public static class MonsterDropAvailability
 {
     private const double FrequentChance = 0.5;
     private const double OccasionalChance = 0.1;
+    private const double RareDropChance = 0.05;
 
+    // Volcano Dungeon and Skull Cavern's Dangerous Mines monsters are post-Community-Center
+    // content (spec 2026-08-28-obtainable-board section 6) and are not in this table: Blue Squid,
+    // Haunted Skull, Tiger Slime, Lava Lurk, Hot Head, Magma Sprite, Magma Sparker, Magma Duggy,
+    // False Magma Cap, Dwarvish Sentry, Putrid Ghost, Shadow Sniper, Skeleton Mage, Spider, Stick
+    // Bug, Fireball, Spiker.
     private static readonly IReadOnlyDictionary<string, int> SpawnArea =
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
@@ -22,20 +28,16 @@ public static class MonsterDropAvailability
             ["Stone Golem"] = MineAreas.Area0, ["Bat"] = MineAreas.Area0, ["Big Slime"] = MineAreas.Area0,
 
             ["Dust Spirit"] = MineAreas.Area40, ["Frost Bat"] = MineAreas.Area40, ["Frost Jelly"] = MineAreas.Area40,
-            ["Ghost"] = MineAreas.Area40, ["Skeleton"] = MineAreas.Area40, ["Blue Squid"] = MineAreas.Area40,
+            ["Ghost"] = MineAreas.Area40, ["Skeleton"] = MineAreas.Area40,
 
             ["Lava Bat"] = MineAreas.Area80, ["Sludge"] = MineAreas.Area80, ["Shadow Brute"] = MineAreas.Area80,
             ["Shadow Shaman"] = MineAreas.Area80, ["Metal Head"] = MineAreas.Area80, ["Lava Crab"] = MineAreas.Area80,
-            ["Squid Kid"] = MineAreas.Area80, ["Haunted Skull"] = MineAreas.Area80,
+            ["Squid Kid"] = MineAreas.Area80,
 
             ["Serpent"] = MineAreas.SkullCavern, ["Royal Serpent"] = MineAreas.SkullCavern, ["Mummy"] = MineAreas.SkullCavern,
-            ["Carbon Ghost"] = MineAreas.SkullCavern, ["Putrid Ghost"] = MineAreas.SkullCavern, ["Iridium Bat"] = MineAreas.SkullCavern,
+            ["Carbon Ghost"] = MineAreas.SkullCavern, ["Iridium Bat"] = MineAreas.SkullCavern,
             ["Iridium Crab"] = MineAreas.SkullCavern, ["Pepper Rex"] = MineAreas.SkullCavern, ["Armored Bug"] = MineAreas.SkullCavern,
-            ["Assassin Bug"] = MineAreas.SkullCavern, ["Stick Bug"] = MineAreas.SkullCavern, ["Skeleton Mage"] = MineAreas.SkullCavern,
-            ["Shadow Sniper"] = MineAreas.SkullCavern, ["Spider"] = MineAreas.SkullCavern, ["Tiger Slime"] = MineAreas.SkullCavern,
-            ["Lava Lurk"] = MineAreas.SkullCavern, ["Hot Head"] = MineAreas.SkullCavern, ["Magma Sprite"] = MineAreas.SkullCavern,
-            ["Magma Sparker"] = MineAreas.SkullCavern, ["Magma Duggy"] = MineAreas.SkullCavern, ["False Magma Cap"] = MineAreas.SkullCavern,
-            ["Dwarvish Sentry"] = MineAreas.SkullCavern, ["Fireball"] = MineAreas.SkullCavern, ["Spiker"] = MineAreas.SkullCavern,
+            ["Assassin Bug"] = MineAreas.SkullCavern,
         };
 
     public static int ChanceStep(double chance)
@@ -55,12 +57,15 @@ public static class MonsterDropAvailability
             if (area == null) continue;
             int step = ChanceStep(drop.Chance);
             int effort = MineAreas.Effort(area.Value) + step;
-            int week = MineAreas.Week(area.Value);
+            int monsterWeek = MineAreas.Week(area.Value);
+            bool rare = drop.Chance < RareDropChance;
+            int week = rare ? AvailabilityWeeks.UnknownWeek : monsterWeek;
             bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
             if (better)
                 best = new ItemEffort(effort,
-                    $"monster drop, {drop.MonsterName} ({MineAreas.Label(area.Value)}) at {drop.Chance:0.##} (+{step}), week {week}, effort {effort}",
-                    week, MineAreas.GateSeason(area.Value), HardWeek: MineAreas.HardWeek(area.Value));
+                    $"monster drop, {drop.MonsterName} ({MineAreas.Label(area.Value)}) at {drop.Chance:0.##} (+{step}), week {week}, effort {effort}"
+                        + (rare ? $", rare drop: pacing Winter, hard week {MineAreas.HardWeek(area.Value)}" : ""),
+                    week, rare ? Season.Winter : MineAreas.GateSeason(area.Value), HardWeek: MineAreas.HardWeek(area.Value));
         }
         return best;
     }
