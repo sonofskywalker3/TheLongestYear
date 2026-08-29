@@ -215,4 +215,15 @@ public class FishAvailabilityDeriveTests
 
         Assert.Equal(4, result.Week);
     }
+
+    /// <summary>Task 5 removed the Ghostfish's hand written Summer pin; with it gone,
+    /// MineFishWeeks alone should floor Ghostfish at week 1 (floor 20, Spring gate).</summary>
+    [Fact]
+    public void Ghostfish_Derives_Week_1_From_The_Mine_Fish_Table()
+    {
+        ItemAvailability result = FishAvailability.Derive(
+            Fish("(O)156", locations: new List<string> { "UndergroundMine" }), Row());
+
+        Assert.Equal(1, result.Week);
+    }
 }

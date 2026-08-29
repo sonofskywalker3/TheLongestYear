@@ -160,7 +160,7 @@ public class ArtisanAvailabilityTests
             RecipePrices = new Dictionary<string, int> { ["(BC)FishSmoker"] = 10000 },
         };
         Assert.Equal(5, ArtisanAvailability.MachineWeek("(BC)FishSmoker", "null", data));   // 10,000g
-        Assert.Equal(5, ArtisanAvailability.MachineWeek("(BC)39", "f Krobus 3", data));     // Krobus from the Sewer week
+        Assert.Equal(7, ArtisanAvailability.MachineWeek("(BC)39", "f Krobus 3", data));     // Krobus from the Sewer week
         Assert.Equal(7, ArtisanAvailability.MachineWeek("(BC)12", "s Farming 8", data));
         Assert.Equal(9, ArtisanAvailability.MachineWeek("(BC)182", "null", data));          // special-order mail, no price
     }

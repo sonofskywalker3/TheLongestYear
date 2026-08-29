@@ -9,7 +9,7 @@ public class LocationGatingWeekTests
 {
     [Theory]
     [InlineData("UndergroundMine20", 1)] [InlineData("Farm", 1)] [InlineData("Desert", 9)]
-    [InlineData("SkullCave", 9)] [InlineData("Sewer", 5)] [InlineData("BugLand", 5)] [InlineData("WitchSwamp", 13)]
+    [InlineData("SkullCave", 9)] [InlineData("Sewer", 7)] [InlineData("BugLand", 7)] [InlineData("WitchSwamp", 13)]
     public void Week_for_location(string key, int week) => Assert.Equal(week, LocationGating.WeekFor(key));
 
     [Fact]

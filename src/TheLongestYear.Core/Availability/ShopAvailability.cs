@@ -18,9 +18,9 @@ public static class ShopAvailability
             return new ItemEffort(StapleEffort, $"shop, {staple}, week 1, effort {StapleEffort}", 1, Season.Spring);
         if (AvailabilityWeeks.GuildRewardWeeks.TryGetValue(qualifiedId, out (int Week, Season Gate, string Note) guild))
             return new ItemEffort(GuildEffort, $"guild reward, {guild.Note}, week {guild.Week}, effort {GuildEffort}", guild.Week, guild.Gate);
-        if (AvailabilityWeeks.QuestRewardWeeks.TryGetValue(qualifiedId, out (int Week, string Note) quest))
+        if (AvailabilityWeeks.QuestRewardWeeks.TryGetValue(qualifiedId, out (int Week, int Hard, string Note) quest))
             return new ItemEffort(QuestEffort, $"reward, {quest.Note}, week {quest.Week}, effort {QuestEffort}",
-                quest.Week, AvailabilityWeeks.SeasonOf(quest.Week));
+                quest.Week, AvailabilityWeeks.SeasonOf(quest.Week), HardWeek: quest.Hard);
         if (AvailabilityWeeks.OtherPlacements.TryGetValue(qualifiedId, out (int Week, string Note) other))
             return new ItemEffort(OtherEffort, $"table, {other.Note}, week {other.Week}, effort {OtherEffort}",
                 other.Week, AvailabilityWeeks.SeasonOf(other.Week));

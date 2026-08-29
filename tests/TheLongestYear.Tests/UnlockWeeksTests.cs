@@ -24,4 +24,11 @@ public class UnlockWeeksTests
         Assert.Null(UnlockWeeks.ForFriendship("Kent", 3));
         Assert.Null(UnlockWeeks.ForFriendship("Leo", 3));
     }
+
+    [Fact]
+    public void Krobus_is_not_met_before_the_sewer()
+    {
+        Assert.Equal(7, UnlockWeeks.ForFriendship("Krobus", 2));
+        Assert.Equal(8, UnlockWeeks.ForFriendship("Krobus", 7));
+    }
 }

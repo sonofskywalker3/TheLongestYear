@@ -25,7 +25,7 @@ public static class AvailabilityWeeks
     public const int SalmonberryWeek = 3;
     public const int BlackberryWeek = 10;
     public const int SkullCavernWeek = 9;
-    public const int SewerWeek = 5;
+    public const int SewerWeek = 7;
     public const int SwampWeek = 13;
     /// <summary>Jeff, 2026-08-28: 30 floors a week for the theme goals.</summary>
     public const int MineFloorsPerWeek = 30;
@@ -110,11 +110,11 @@ public static class AvailabilityWeeks
         };
 
     /// <summary>Rewards from the Help Wanted board and the like.</summary>
-    public static readonly IReadOnlyDictionary<string, (int Week, string Note)> QuestRewardWeeks =
-        new Dictionary<string, (int, string)>(StringComparer.Ordinal)
+    public static readonly IReadOnlyDictionary<string, (int Week, int Hard, string Note)> QuestRewardWeeks =
+        new Dictionary<string, (int, int, string)>(StringComparer.Ordinal)
         {
-            ["(O)PrizeTicket"] = (1, "Prize Ticket, Help Wanted board"),
-            ["(O)MysteryBox"] = (2, "Mystery Box, from rocks, fishing and the board once the meteor lands"),
+            ["(O)PrizeTicket"] = (2, 1, "every 3rd Help Wanted quest, Quest.cs"),
+            ["(O)MysteryBox"] = (3, 2, "Qi plane after the 6th Help Wanted quest or day 50, Utility.cs"),
         };
 
     /// <summary>Items no data table places, with the week I believe is right. Every row is shown
@@ -130,6 +130,15 @@ public static class AvailabilityWeeks
             ["(O)373"] = (12, "Golden Pumpkin, Spirit's Eve maze"),
             ["(O)772"] = (7, "Oil of Garlic, Combat 6 crafting recipe, garlic plus oil"),
             ["(O)342"] = (4, "Pickles, Preserves Jar (Farming 4) plus a Spring vegetable; the jar rule names no pickle id"),
+            ["(O)233"] = (5, "Ice Cream, the Summer ice cream stand"),
+        };
+
+    /// <summary>Fish with no Data/Fish row the parser reads (the 1.6 jellies): effort by hand so the
+    /// absolute bands do not call a trivial catch Extreme.</summary>
+    public static readonly IReadOnlyDictionary<string, int> FishEffortRows =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["(O)CaveJelly"] = 3, ["(O)SeaJelly"] = 1, ["(O)RiverJelly"] = 1,
         };
 
     /// <summary>Fruit tree fruit: a sapling planted in week 1 matures in 28 days, so a tree
