@@ -7,6 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **`tly_seasongoals` console command** opens the Season Goals page, the same one the Bundle Log book opens (debug).
 - **`tly_gateneeds` console command** prints, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) and the vault (debug).
 - **Keep the Garden Pot recipe.** A new permanent keep at the Junimo Shrine, 750 JP, under Obtainability. Once bought, the Garden Pot recipe is back in your crafting list after every rewind, so an Oasis seed can be grown indoors out of season.
 - **Two Boosts, bought at the farm's planning shrine.** Boosts are spent Junimo Points that last a week or a season instead of forever. **Year-Two Seeds** (75 JP, this week) gives Mixed Seeds a 5 percent chance to roll the season's year-two crop: Garlic in Spring, Red Cabbage in Summer, Artichoke in Fall (not sold in Winter). **Sneak Peek** (100 JP, this season) has the Queen of Sauce air the year-two episode on Sunday, and teaches you both that week's year-one recipe and the year-two one, so nothing is lost. The shrine now has a Boosts section with a Buy button; the full shrine redesign is still a later spec.

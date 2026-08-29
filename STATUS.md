@@ -1,12 +1,12 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 (per-slot ledger, 0.16.135 to 0.16.144)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.144 committed LOCALLY ONLY, not pushed, not released**
+**Last updated:** 2026-08-29 (per-slot ledger, 0.16.135 to 0.16.146)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.146 committed LOCALLY ONLY, not pushed, not released**
 **Tests:** 1754 passing, 0 failing
-**Build:** clean (mod assembly builds Release); 0.16.143 deployed to the game and bridge-driven; 0.16.144 is docs only
+**Build:** clean (mod assembly builds Release); 0.16.145 deployed to the game and desktop-driven (Jeff out, desktop authorised); 0.16.146 is docs only
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
-## 2026-08-29: per-slot ledger mirrored from the CC board, 0.16.135 to 0.16.144
+## 2026-08-29: per-slot ledger mirrored from the CC board, 0.16.135 to 0.16.146
 
 Jeff's #1 priority (TODO, 2026-08-28; found live on emmalution's stream). Spec
 `docs/superpowers/specs/2026-08-29-per-slot-ledger-design.md`, plan
@@ -46,10 +46,32 @@ reset), log lines quoted:**
 - `tly_playseason`: `21 slot(s) flipped, vault 1/1`, `Spring gate WOULD PASS. Ledger 22 slot(s).`;
   `tly_gateneeds`: `0 bundle(s) still owed before Summer 1, 22 slot(s) filled on the board.`;
   `tly_setday 28` and `debug sleep`: `Month cleared (Spring). Advancing.`
-- NOT checked live: the Season Goals page itself (needs the hotkey, which is keyboard; it draws
-  from the same `MissingForSeason` the log above came from) and the Construction four-slot case on a
-  Standard board. Both are Jeff's look; the Construction case is covered by
-  `Winter_end_with_a_doubled_slot_open_does_not_win` and the classifier test.
+
+**Second pass, desktop authorised (Jeff out), build 0.16.145 (`tly_seasongoals` opens the page),
+Standard vanilla board via `tly_bundlesource Vanilla Default` + `tly_reset`, save `None_447693385`
+lineage. Everything the first pass could not reach, all from the log and PrintWindow screenshots:**
+
+- Construction (Wood, Wood, Stone, Hardwood): `tly_donate (O)388` -> `bundle 17 slot 0`, `(O)390` ->
+  `slot 2`, `(O)709` -> `slot 3`, `Ledger 3 slot(s)`; the page shows **Construction (Foraging) 3/4**;
+  a second `tly_donate (O)388` -> `bundle 17 slot 1`, `Ledger 4 slot(s)`, page **4/4 checkpoint
+  met**; a third Wood: `No open slot wants '(O)388'`.
+- Shared item, Parsnip `(O)24` (Spring Crops and Quality Crops both list it): first donate ->
+  `bundle 0 slot 0`, `tly_gateneeds` then shows `Spring Crops 1/4 needs 3` AND `Quality Crops 0/3
+  needs 1: Parsnip, ...` (not credited there); second donate -> `bundle 3 slot 0`, Quality Crops
+  satisfied; third refused. Page: **Spring Crops 1/4 needs 3** (Green Bean, Cauliflower, Potato
+  left), **Quality Crops 1/3 checkpoint met**.
+- The whole page, scrolled through (Bus Repair 0/1, Exotic Foraging 0/5, Animal 0/5, Artisan 0/6
+  needs 2, Crab Pot 0/5, the fish bundles, Adventurer's, Geologist's needs 2, Chef's, Dye, Field
+  Research): every row matches the `tly_gateneeds` line for that bundle.
+- The Winter win on the Standard board: `debug season winter`, `tly_playseason` (`101 slot(s)
+  flipped, vault 4/4`, and it logged `Construction (PerItem): donated Wood ((O)388) slot 1`, the
+  doubled slot), `tly_gateneeds: Winter day 8: 0 bundle(s) still owed before the win, 106 slot(s)
+  filled on the board`, `tly_setday 28`, `debug sleep`: `Day-28 cutscene: opening the Win Junimo
+  scene`. The win needs every slot on the board, Construction's second Wood included.
+- Gotcha found on the way (runbook updated): Escape does not close the Season Goals page (click its
+  X); a page left open across `tly_reset` keeps the old run's rows and `tly_seasongoals` is refused
+  with `Cannot open menu: another menu is already open`. The four identical "4/4" screenshots that
+  looked like a counting bug were that stale instance.
 
 ## 2026-08-29: the obtainable board, 0.16.85 to 0.16.134
 
