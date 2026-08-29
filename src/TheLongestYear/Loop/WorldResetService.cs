@@ -58,6 +58,12 @@ namespace TheLongestYear.Loop
         /// it), which keeps the legacy pin-table path.</summary>
         public TheLongestYear.Core.ItemAvailabilityModel AvailabilityModel { get; set; }
 
+        /// <summary>Qualified item ids with a catch limit (the five legendary fish), read once
+        /// from Data/Locations at SaveLoaded by ModEntry and forwarded to <see cref="FarmerReset.Apply"/>
+        /// on every reset so a legendary caught in an earlier loop can be caught again. Null/empty
+        /// on any host that never sets it, which leaves player.fishCaught untouched.</summary>
+        public IReadOnlyList<string> CatchLimitedFishIds { get; set; }
+
         /// <summary>Rebuilds <see cref="AvailabilityModel"/> for one difficulty step, called right
         /// after <see cref="PerformReset"/> re-resolves the new run's difficulty (spec
         /// 2026-08-28-obtainable-board, section 1: the week mode is a function of that step). Set by
@@ -470,7 +476,8 @@ namespace TheLongestYear.Loop
             _farmerReset.Apply(Game1.player, baseline,
                 _meta.CookbookRecipes,
                 _meta.CraftbookRecipes,
-                _meta.SeenEventsEver);
+                _meta.SeenEventsEver,
+                CatchLimitedFishIds);
 
             // 5. Profession picker re-trigger queue. Enqueued here; the actual menus
             //    surface on the next DayStarted (RunController drains after reset).

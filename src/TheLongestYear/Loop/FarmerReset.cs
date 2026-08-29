@@ -30,7 +30,8 @@ namespace TheLongestYear.Loop
         public void Apply(Farmer p, RunBaseline baseline,
             IReadOnlyList<string> cookbookRecipes,
             IReadOnlyList<string> craftbookRecipes,
-            IReadOnlyList<string> seenEventsEver)
+            IReadOnlyList<string> seenEventsEver,
+            IReadOnlyList<string> catchLimitedFishIds = null)
         {
             p.Money = baseline.StartingGold;
 
@@ -274,6 +275,22 @@ namespace TheLongestYear.Loop
             p.LearnDefaultRecipes();
             GrantBankedRecipes(p.cookingRecipes, cookbookRecipes);
             GrantBankedRecipes(p.craftingRecipes, craftbookRecipes);
+
+            // Legendary fish must be catchable again each loop. The game blocks a repeat catch
+            // through SpawnFishData.CatchLimit checked against p.fishCaught (GameLocation.cs:13831),
+            // and nothing else in this reset ever touches that record; without this, a legendary
+            // caught in loop 1 stays permanently uncatchable in every later loop.
+            int fishCleared = 0;
+            if (catchLimitedFishIds != null && catchLimitedFishIds.Count > 0)
+            {
+                foreach (string id in CaughtFishReset.IdsToClear(catchLimitedFishIds, p.fishCaught.Keys.ToList()))
+                {
+                    p.fishCaught.Remove(id);
+                    fishCleared++;
+                }
+            }
+            if (fishCleared > 0)
+                _monitor.Log($"Reset: cleared {fishCleared} catch-limited fish so they can be caught again.", LogLevel.Info);
 
             _monitor.Log(
                 $"FarmerReset: gold={baseline.StartingGold}, slots={baseline.MaxItems}, " +
