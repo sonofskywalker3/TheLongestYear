@@ -84,6 +84,7 @@ namespace TheLongestYear.Loop
                 if (seed != null && Game1.random.NextDouble() < TheLongestYear.Core.YearTwoSeeds.Chance)
                 {
                     __result = seed;
+                    PatchLog.Trace($"Year-Two Seeds: Mixed Seeds rolled {seed}");
                 }
             }
         }
