@@ -37,7 +37,7 @@ public static class MetalsAvailability
             // The rest of the Metals pool.
             ["(O)382"] = new(MineAreas.Area0, 2, "coal, mine rocks and the occasional node, floors 1 to 39"),
             ["(O)338"] = new(MineAreas.Area0, 3, "refined quartz, quartz from floor 1 plus a furnace smelt"),
-            ["(O)881"] = new(MineAreas.Area80, 4, "bone fragment, skeletons from mine area 80 and dig spots"),
+            ["(O)881"] = new(MineAreas.Area40, 4, "bone fragment, skeletons from mine area 40 and dig spots"),
         };
 
     /// <summary>Null means "not a metal this rule set knows", so the composer can try another
