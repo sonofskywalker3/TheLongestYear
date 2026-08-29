@@ -7,17 +7,6 @@ namespace TheLongestYear.Tests;
 public class RunStateTests
 {
     [Fact]
-    public void RecordCumulativeDonation_adds_to_the_cumulative_ledger_idempotently()
-    {
-        var run = new RunState();
-        run.RecordCumulativeDonation("(O)24");
-        run.RecordCumulativeDonation("(O)24"); // idempotent
-
-        Assert.Equal(new[] { "(O)24" }, run.DonatedItemIds);
-        Assert.True(run.DonatedSet().Contains("(O)24"));
-    }
-
-    [Fact]
     public void New_run_state_starts_at_spring_one_week_one()
     {
         var run = new RunState();
@@ -26,6 +15,7 @@ public class RunStateTests
         Assert.Equal(1, run.WeekOfYear);
         Assert.Equal(1, run.RunNumber);
         Assert.Empty(run.DonatedItemIds);
+        Assert.Empty(run.DonatedSlots);
         Assert.Empty(run.SelectedThemesThisMonth);
         Assert.Null(run.CurrentSelection);
     }
@@ -38,13 +28,41 @@ public class RunStateTests
     }
 
     [Fact]
-    public void RecordDonation_is_idempotent_per_item_id()
+    public void RecordDonation_is_idempotent_per_slot_and_keeps_two_slots_with_one_id()
     {
         var run = new RunState();
-        run.RecordDonation("Parsnip");
-        run.RecordDonation("Parsnip");
-        Assert.Single(run.DonatedItemIds);
-        Assert.Contains("Parsnip", run.DonatedSet());
+        Assert.True(run.RecordDonation(7, 0, "(O)388"));
+        Assert.False(run.RecordDonation(7, 0, "(O)388"));   // same slot twice
+        Assert.True(run.RecordDonation(7, 1, "(O)388"));    // Construction's second Wood slot
+        Assert.Equal(2, run.DonatedSlots.Count);
+        SlotLedger ledger = run.DonatedLedger();
+        Assert.True(ledger.IsFilled(7, 0));
+        Assert.True(ledger.IsFilled(7, 1));
+        Assert.False(ledger.IsFilled(7, 2));
+        Assert.Equal(2, ledger.FilledCount(7));
+        Assert.Equal(0, ledger.FilledCount(8));
+        Assert.Contains("(O)388", ledger.ItemIds);
+    }
+
+    [Fact]
+    public void ReplaceDonations_replaces_the_whole_ledger()
+    {
+        var run = new RunState();
+        run.RecordDonation(1, 0, "(O)24");
+        run.ReplaceDonations(new[] { new DonatedSlot { BundleIndex = 2, IngredientIndex = 3, ItemId = "(O)190" } });
+        Assert.Single(run.DonatedSlots);
+        Assert.True(run.DonatedLedger().IsFilled(2, 3));
+        Assert.False(run.DonatedLedger().IsFilled(1, 0));
+    }
+
+    [Fact]
+    public void Legacy_DonatedItemIds_deserializes_but_is_not_the_ledger()
+    {
+        string json = "{\"DonatedItemIds\":[\"(O)24\"],\"Season\":0,\"DayOfMonth\":1}";
+        RunState restored = JsonSerializer.Deserialize<RunState>(json)!;
+        Assert.Equal(new[] { "(O)24" }, restored.DonatedItemIds);
+        Assert.Empty(restored.DonatedSlots);
+        Assert.Equal(0, restored.DonatedLedger().Count);
     }
 
     [Fact]
@@ -62,7 +80,7 @@ public class RunStateTests
     public void BeginNewMonth_advances_season_and_clears_selections_only()
     {
         var run = new RunState();
-        run.RecordDonation("Parsnip");
+        run.RecordDonation(0, 0, "Parsnip");
         run.Select(Theme.Mining);
         run.BeginNewMonth(Season.Summer);
 
@@ -70,14 +88,14 @@ public class RunStateTests
         Assert.Equal(1, run.DayOfMonth);
         Assert.Empty(run.SelectedThemesThisMonth);
         Assert.Null(run.CurrentSelection);
-        Assert.Contains("Parsnip", run.DonatedSet()); // donations are cumulative across months
+        Assert.Single(run.DonatedSlots); // donations are cumulative across months
     }
 
     [Fact]
     public void BeginNewRun_resets_everything_and_bumps_run_number()
     {
         var run = new RunState { RunNumber = 3 };
-        run.RecordDonation("Parsnip");
+        run.RecordDonation(0, 0, "Parsnip");
         run.Select(Theme.Mining);
         run.Season = Season.Winter;
         run.DayOfMonth = 28;
@@ -89,6 +107,7 @@ public class RunStateTests
         Assert.Equal(Season.Spring, run.Season);
         Assert.Equal(1, run.DayOfMonth);
         Assert.Empty(run.DonatedItemIds);
+        Assert.Empty(run.DonatedSlots);
         Assert.Empty(run.SelectedThemesThisMonth);
         Assert.Null(run.CurrentSelection);
     }
@@ -99,7 +118,7 @@ public class RunStateTests
         var run = new RunState
         {
             Seed = 42, RunNumber = 2, Season = Season.Fall, DayOfMonth = 15,
-            DonatedItemIds = { "Parsnip", "CopperBar" },
+            DonatedSlots = { new DonatedSlot { BundleIndex = 3, IngredientIndex = 1, ItemId = "Parsnip" } },
             SelectedThemesThisMonth = { Theme.Mining },
             CurrentSelection = Theme.Mining
         };
@@ -111,7 +130,10 @@ public class RunStateTests
         Assert.Equal(2, restored.RunNumber);
         Assert.Equal(Season.Fall, restored.Season);
         Assert.Equal(15, restored.DayOfMonth);
-        Assert.Equal(new[] { "Parsnip", "CopperBar" }, restored.DonatedItemIds);
+        Assert.Single(restored.DonatedSlots);
+        Assert.Equal(3, restored.DonatedSlots[0].BundleIndex);
+        Assert.Equal(1, restored.DonatedSlots[0].IngredientIndex);
+        Assert.Equal("Parsnip", restored.DonatedSlots[0].ItemId);
         Assert.Equal(new[] { Theme.Mining }, restored.SelectedThemesThisMonth);
         Assert.Equal(Theme.Mining, restored.CurrentSelection);
     }

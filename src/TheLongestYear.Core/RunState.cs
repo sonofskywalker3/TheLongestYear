@@ -20,8 +20,18 @@ public sealed class RunState
 
     public int DayOfMonth { get; set; } = 1;
 
-    /// <summary>Cumulative donated item ids this run (consumed-on-donate; quantities/JP land in Plan 04).</summary>
+    /// <summary>
+    /// LEGACY (pre-slot ledger, 2026-08-29): the old id-only donation ledger. Kept ONLY so saves
+    /// from older versions deserialize. Never read and never written by current code; cleared on
+    /// <see cref="BeginNewRun"/>. The ledger is <see cref="DonatedSlots"/>.
+    /// </summary>
     public List<string> DonatedItemIds { get; set; } = new();
+
+    /// <summary>The run's donation ledger: every Community Center slot the board shows filled, one
+    /// entry per slot (spec 2026-08-29-per-slot-ledger). Mirrored from the board by
+    /// ItemDonationSync on load, before the Season Goals page and before the day-end gate, and kept
+    /// current in between by the live DonationObserver.</summary>
+    public List<DonatedSlot> DonatedSlots { get; set; } = new();
 
     /// <summary>
     /// LEGACY (pre-slot redesign, 2026-07-09): the old id-only weekly bonus sample. Kept ONLY so
@@ -190,26 +200,30 @@ public sealed class RunState
         return true;
     }
 
-    /// <summary>Record a live donation event just observed, in the cumulative ledger; idempotent
-    /// so re-donating the same id is a no-op.</summary>
-    public void RecordDonation(string itemId)
+    /// <summary>Record a filled slot. Idempotent per (bundle, ingredient) pair; returns true when
+    /// the slot was newly added. A repeated id in one bundle is two slots and two entries.</summary>
+    public bool RecordDonation(int bundleIndex, int ingredientIndex, string itemId)
     {
-        if (!DonatedItemIds.Contains(itemId))
-            DonatedItemIds.Add(itemId);
+        DonatedSlots ??= new List<DonatedSlot>();
+        if (DonatedSlots.Exists(s => s.BundleIndex == bundleIndex && s.IngredientIndex == ingredientIndex))
+            return false;
+        DonatedSlots.Add(new DonatedSlot { BundleIndex = bundleIndex, IngredientIndex = ingredientIndex, ItemId = itemId ?? "" });
+        return true;
     }
 
-    /// <summary>Add a donated id to the cumulative ledger, idempotent. Used by the day-end CC
-    /// reconcile (<c>ItemDonationSync</c>), which unions the run's full historical deposits from
-    /// vanilla state — as opposed to <see cref="RecordDonation"/>, which records a live donation
-    /// event just observed.</summary>
-    public void RecordCumulativeDonation(string itemId)
+    /// <summary>The mirror write: the ledger becomes exactly the given slots (the board's state).</summary>
+    public void ReplaceDonations(IEnumerable<DonatedSlot> slots)
     {
-        if (!DonatedItemIds.Contains(itemId))
-            DonatedItemIds.Add(itemId);
+        var next = new List<DonatedSlot>();
+        var seen = new HashSet<(int, int)>();
+        foreach (DonatedSlot s in slots ?? System.Array.Empty<DonatedSlot>())
+            if (seen.Add((s.BundleIndex, s.IngredientIndex)))
+                next.Add(new DonatedSlot { BundleIndex = s.BundleIndex, IngredientIndex = s.IngredientIndex, ItemId = s.ItemId ?? "" });
+        DonatedSlots = next;
     }
 
-    /// <summary>The donation ledger as a set, for the gate evaluator.</summary>
-    public ISet<string> DonatedSet() => new HashSet<string>(DonatedItemIds);
+    /// <summary>The ledger as a read view for the gate, the page and the sims.</summary>
+    public SlotLedger DonatedLedger() => new SlotLedger(DonatedSlots ?? new List<DonatedSlot>());
 
     /// <summary>Select a theme for this week: set current and add to the month's selections set.
     /// Also clears <see cref="LiabilitySuppressedThisWeek"/> — a fresh pick must always start
@@ -256,6 +270,7 @@ public sealed class RunState
         Season = Season.Spring;
         DayOfMonth = 1;
         DonatedItemIds.Clear();
+        (DonatedSlots ??= new()).Clear();
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
         NextMonthSelection = null;
