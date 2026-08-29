@@ -36,8 +36,11 @@ namespace TheLongestYear.Donations
 
         /// <summary>Derived item model, forwarded to the classifier so PerItem bundles gate on a
         /// computed deadline per ingredient rather than the 40-entry curated pin table. Null on a
-        /// builder constructed before a save is loaded, which keeps the legacy path.</summary>
-        private readonly ItemAvailabilityModel _availability;
+        /// builder constructed before a save is loaded, which keeps the legacy path.
+        ///
+        /// Settable because a reset can rebuild the model (ModEntry.BuildAvailabilityModelFor):
+        /// the builder would otherwise keep classifying against the pre-reset instance.</summary>
+        public ItemAvailabilityModel Availability { get; set; }
 
         public BundleCatalogBuilder(
             RarityThresholds thresholds,
@@ -54,7 +57,7 @@ namespace TheLongestYear.Donations
             _themeOverrides = themeOverrides ?? new Dictionary<string, Theme>();
             _itemSeasonPins = itemSeasonPins ?? new Dictionary<string, CoreSeason>();
             _bundleQuotas = bundleQuotas ?? new Dictionary<string, int[]>();
-            _availability = availability;
+            this.Availability = availability;
         }
 
         /// <summary>Pins used ONLY for the obtainability clamp on Percentage ramps (curated +
@@ -146,7 +149,7 @@ namespace TheLongestYear.Donations
                 try
                 {
                     req = BundleClassifier.Classify(
-                        bundle, theme, _itemSeasonPins, _bundleQuotas, _availability);
+                        bundle, theme, _itemSeasonPins, _bundleQuotas, this.Availability);
                 }
                 catch (System.Exception ex)
                 {

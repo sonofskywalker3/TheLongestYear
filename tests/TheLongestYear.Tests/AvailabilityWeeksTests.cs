@@ -138,4 +138,26 @@ public class AvailabilityWeeksTests
     [InlineData(null, false)]
     public void Judgement_basis_is_a_table_row_or_a_for_jeff_note(string basis, bool expected)
         => Assert.Equal(expected, AvailabilityWeeks.IsJudgementBasis(basis));
+
+    /// <summary>F13 (2026-08-29): every rule that reads one of the hand-ruled week tables in
+    /// AvailabilityWeeks emits a judgement row, so tly_dumpavailability's judgement section lists
+    /// all of them, not just the OtherPlacements ("table, ") ones.</summary>
+    [Theory]
+    [InlineData("table, bridge repair, week 1, effort 3")]
+    [InlineData("seed source, Pierre year 1, week 5, effort 3")]
+    [InlineData("book (catalog pool), year-1 route, week 4, effort 5")]
+    [InlineData("fruit tree, planted spring, week 9, effort 6")]
+    [InlineData("guild reward, 10 kills, week 6, effort 5")]
+    [InlineData("reward, Robin quest, week 3, effort 4")]
+    [InlineData("machine route, mail after week 9, week 9, effort 5")]
+    [InlineData("crop, 8 days (+1), week 2, effort 3; earliest floor is a guess (for Jeff to confirm)")]
+    public void Judgement_bases_are_recognised(string basis)
+        => Assert.True(AvailabilityWeeks.IsJudgementBasis(basis));
+
+    [Theory]
+    [InlineData("crop, 8 days (+1), week 2, effort 3")]
+    [InlineData("fish, Data/Locations Spring, week 1, effort 2")]
+    [InlineData(null)]
+    public void Game_data_bases_are_not_judgement(string? basis)
+        => Assert.False(AvailabilityWeeks.IsJudgementBasis(basis!));
 }

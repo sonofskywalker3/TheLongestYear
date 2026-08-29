@@ -192,7 +192,7 @@ public sealed class ItemAvailabilityModel
                 AvailabilityWeeks.UnknownWeek, Season.Winter, Mode: Mode);
         }
 
-        int week = derived?.Week ?? effortOnly?.EarliestWeek ?? AvailabilityWeeks.UnknownWeek;
+        int week = derived?.PacingWeek ?? effortOnly?.EarliestWeek ?? AvailabilityWeeks.UnknownWeek;
         Season gate = derived?.Gate ?? effortOnly?.GateSeason ?? AvailabilityWeeks.SeasonOf(week);
         bool placed = PlacedWeek(qualifiedItemId) != null;
         int effort = derived?.Effort ?? effortOnly?.Effort ?? UnrecognisedEffort;
@@ -200,6 +200,7 @@ public sealed class ItemAvailabilityModel
             ?? (effortOnly != null ? effortOnly.Basis + (placed ? "" : "; " + EffortOnlyFloorNote) : UnrecognisedBasis);
         EffortSource source = known || effortKnown ? EffortSource.Derived : EffortSource.Price;
         bool rejected = _rejectedSeasonOverrides.Contains(qualifiedItemId);
+        bool accepted = false;
 
         if (hasSeasonOverride)
         {
@@ -214,6 +215,7 @@ public sealed class ItemAvailabilityModel
                 week = AvailabilityWeeks.FirstWeekOf(overrideSeason);
                 gate = overrideSeason;
                 placed = true;
+                accepted = true;
             }
         }
         if (_weekOverrides.TryGetValue(qualifiedItemId, out int overrideWeek))
@@ -229,6 +231,7 @@ public sealed class ItemAvailabilityModel
                 week = overrideWeek;
                 gate = AvailabilityWeeks.SeasonOf(week);
                 placed = true;
+                accepted = true;
             }
         }
         if (hasEffortOverride)
@@ -239,6 +242,10 @@ public sealed class ItemAvailabilityModel
         }
         if (!placed) _unknown.Add(qualifiedItemId);
         int hardWeek = derived?.HardWeek ?? effortOnly?.HardWeek ?? 0;
+        // An accepted override moves the pacing week later; the hard week has to follow it, or a
+        // HardGates/HardAll model answers with the pre-override hard week and the override is
+        // silently ignored on every difficulty above Normal.
+        if (accepted) hardWeek = Math.Max(hardWeek, week);
         return new ItemAvailability(AvailabilityWeeks.SeasonOf(week), effort, basis, source, week, gate, hardWeek, Mode);
     }
 }

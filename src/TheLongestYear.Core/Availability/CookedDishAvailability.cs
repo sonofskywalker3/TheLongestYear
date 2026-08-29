@@ -23,7 +23,6 @@ public static class CookedDishAvailability
     private const string SkillPrefix = "s";
     private const string FriendshipPrefix = "f";
     private const string TvUnlock = "l";
-    private const int QueenOfSauceOnly = 100;
 
     public static int UnlockEffort(string? unlock)
     {
@@ -88,9 +87,14 @@ public static class CookedDishAvailability
     }
 
     /// <summary>Week the recipe itself is learned, or null when it is not in year 1 (a year-2
-    /// episode, Kent, Leo). "l 100" is Queen of Sauce only: the episode's week for episodes 1 to
-    /// 16. "l N" under 100 is sold (the Saloon) and takes the price week. "f NPC N" takes the
-    /// hearts table. "s Skill N" the level week. "default" week 1. "null" is Cookies (event 19).</summary>
+    /// episode, Kent, Leo).
+    ///
+    /// Every "l N" row is a Queen of Sauce recipe and is read the same way, whatever N is: the
+    /// EARLIER of its year-1 episode week (episodes 1 to 16; a later episode contributes nothing)
+    /// and the week the player can afford it in a shop, if any shop sells it. The number is not
+    /// branched on. "l 100" simply has no shop row, so the episode week is all that is left. "f
+    /// NPC N" takes the hearts table, again against the price week. "s Skill N" the level week.
+    /// "default" is week 1. "null" is Cookies (event 19).</summary>
     public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data)
     {
         string text = (recipe.UnlockCondition ?? "").Trim();

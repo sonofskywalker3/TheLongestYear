@@ -54,4 +54,21 @@ public class WeekModeTests
     [InlineData(DifficultyStep.Easy, WeekMode.Pacing)] [InlineData(DifficultyStep.Normal, WeekMode.Pacing)]
     [InlineData(DifficultyStep.Hard, WeekMode.HardGates)] [InlineData(DifficultyStep.Extreme, WeekMode.HardAll)]
     public void Difficulty_picks_the_week_mode(DifficultyStep step, WeekMode mode) => Assert.Equal(mode, WeekModes.For(step));
+
+    /// <summary>F4 (2026-08-29): an accepted week override raises the HARD week too. Without it a
+    /// HardGates model answers with the pre-override hard week and the override does nothing on
+    /// every difficulty above Normal.</summary>
+    [Fact]
+    public void An_accepted_week_override_raises_the_hard_week()
+    {
+        var derived = new Dictionary<string, ItemAvailability>
+        {
+            ["(O)90"] = new ItemAvailability(Season.Spring, 3, "cactus", EffortSource.Derived, 1, Season.Spring, HardWeek: 2),
+        };
+        var overrides = new Dictionary<string, int> { ["(O)90"] = 12 };
+        ItemAvailability a = new ItemAvailabilityModel(derived, weekOverrides: overrides, mode: WeekMode.HardGates).For("(O)90");
+
+        Assert.Equal(12, a.Week);
+        Assert.Equal(12, a.HardWeek);
+    }
 }

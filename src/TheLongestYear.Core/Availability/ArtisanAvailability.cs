@@ -129,6 +129,7 @@ public static class ArtisanAvailability
     /// these placed lands at the special-order mail week.</summary>
     public static int MachineWeek(string machineId, string? unlock, EffortData data)
     {
+        if (data == null) throw new ArgumentNullException(nameof(data));
         string text = (unlock ?? "").Trim();
         string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         int? week = null;

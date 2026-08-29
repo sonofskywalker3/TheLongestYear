@@ -77,9 +77,13 @@ public sealed class GameplayConfig
     /// ItemAvailabilityBuilder / FishAvailability / MetalsAvailability / etc, which reads real
     /// game data instead of a hand curated guess; a pin surviving here would only be able to move
     /// a rule's week LATER (see ItemAvailabilityModel), never earlier, so an entry that agreed
-    /// with its rule did nothing and one that disagreed was silently ignored. What is left are
-    /// the two ids no rule places at all:
-    /// User <see cref="ItemSeasonPins"/> entries win on conflict.
+    /// with its rule did nothing and one that disagreed was silently ignored.
+    ///
+    /// What is left are the only two ids no rule places at all: Red Mushroom ((O)420) and Sea
+    /// Urchin ((O)397). Both are commented below with why no rule can see them.
+    ///
+    /// User <see cref="ItemSeasonPins"/> entries win on conflict: the caller merges this table
+    /// first and the user's on top, so a user pin for either id replaces the default outright.
     /// </summary>
     public static IReadOnlyDictionary<string, string> DefaultItemSeasonPins { get; } =
         new Dictionary<string, string>

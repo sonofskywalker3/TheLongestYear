@@ -495,4 +495,20 @@ public class BoardDifficultyTests
 
         Assert.Equal(1.5, meta.BoardDifficulty(cfg).StackFactor);
     }
+
+    /// <summary>F1 (2026-08-29): SaveLoaded builds the availability model from the STAMPED
+    /// profile's ItemRarity step, not the live config's. An unstamped save (its board predates
+    /// difficulty modifiers) must stay in WeekMode.Pacing however the player has since set Hard,
+    /// or the model answers with hard weeks the board on disk was never composed against.</summary>
+    [Fact]
+    public void An_Unstamped_Save_Builds_The_Board_Model_In_Pacing_Mode_Under_A_Hard_Config()
+    {
+        var cfg = new GameplayConfig { Difficulty = new DifficultySettings { ItemRarity = DifficultyStep.Hard } };
+        var meta = new MetaState();   // no stamp: a save from before difficulty modifiers
+
+        Assert.Equal(DifficultyStep.Normal, meta.BoardDifficulty(cfg).Steps.ItemRarity);
+        Assert.Equal(WeekMode.Pacing, WeekModes.For(meta.BoardDifficulty(cfg).Steps.ItemRarity));
+        // The live-config read the fix replaced would have produced HardGates here.
+        Assert.Equal(DifficultyStep.Hard, meta.EffectiveDifficulty(cfg).Steps.ItemRarity);
+    }
 }

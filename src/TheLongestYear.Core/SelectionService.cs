@@ -26,6 +26,11 @@ public static class SelectionService
     /// <summary>Rule C: a theme needs at least this many askable goals to be on a card.</summary>
     public const int MinAskableToOffer = 2;
 
+    /// <summary>Rule C padding: a theme needs at least this many askable goals to pad a short
+    /// offer. Lower than <see cref="MinAskableToOffer"/> on purpose (Jeff, 2026-08-28): a padded
+    /// card may be thin, but a theme that can ask for nothing at all never pads.</summary>
+    private const int MinAskableToPad = 1;
+
     /// <summary>
     /// Up to <see cref="OfferSize"/> distinct themes not yet selected this month,
     /// seeded-deterministic. Convenience overload that reads (seed, week, selections) from the run.
@@ -86,7 +91,7 @@ public static class SelectionService
         if (offer.Count < OfferSize)
         {
             List<Theme> fallback = ThemeDomains.RoomThemes
-                .Where(t => !selectedSet.Contains(t) && !offer.Contains(t) && askableFor(t) >= 1)
+                .Where(t => !selectedSet.Contains(t) && !offer.Contains(t) && askableFor(t) >= MinAskableToPad)
                 .OrderBy(t => (int)t)
                 .ToList();
             Shuffle(fallback, rng);
@@ -108,7 +113,7 @@ public static class SelectionService
             .ToList();
         if (qualified.Count >= OfferSize) return qualified;
         return qualified
-            .Concat(ThemeDomains.RoomThemes.Where(t => !selectedSet.Contains(t) && !qualified.Contains(t) && askableFor(t) >= 1))
+            .Concat(ThemeDomains.RoomThemes.Where(t => !selectedSet.Contains(t) && !qualified.Contains(t) && askableFor(t) >= MinAskableToPad))
             .ToList();
     }
 

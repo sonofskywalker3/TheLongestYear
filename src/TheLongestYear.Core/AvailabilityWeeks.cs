@@ -186,14 +186,36 @@ public static class AvailabilityWeeks
     /// <summary>A machine with no skill, friendship or price gate found: mail after a special order.</summary>
     public const int SpecialOrderMachineWeek = 9;
 
+    /// <summary>Basis prefixes emitted by a rule that reads one of Jeff's hand-ruled week tables
+    /// rather than a game-data fact. Every table in this file is a judgement, so every rule that
+    /// reads one produces a judgement row: OtherPlacements ("table, "), SeedSourceWeeks, BookWeeks
+    /// (EffortComposer.PoolBook), FruitTreeFruitWeeks, GuildRewardWeeks, QuestRewardWeeks
+    /// ("reward, ") and MachineRouteWeeks. Matched with StartsWith, so "guild reward" needs its own
+    /// entry even though "reward" is listed.</summary>
+    private static readonly string[] JudgementBasisPrefixes =
+    {
+        "table,",
+        "seed source",
+        "book",
+        "fruit tree",
+        "guild reward",
+        "reward",
+        "machine route",
+    };
+
     /// <summary>True when a Phase 2 basis string names Jeff's own placement rather than a game-data
-    /// fact: a hand-ruled row from <see cref="OtherPlacements"/> ("table, ..."), or a late-floor
-    /// note still awaiting his sign-off ("(for Jeff to confirm)"). tly_dumpavailability shows these
-    /// rows as `judgement` instead of `rule` so he can find them without reading every basis.</summary>
+    /// fact: any rule that read one of the hand-ruled week tables (see
+    /// <see cref="JudgementBasisPrefixes"/>), or a late-floor note still awaiting his sign-off
+    /// ("(for Jeff to confirm)"). tly_dumpavailability shows these rows as `judgement` instead of
+    /// `rule` so he can find every one without reading every basis.</summary>
     public static bool IsJudgementBasis(string basis)
-        => basis != null
-           && (basis.StartsWith("table,", StringComparison.Ordinal)
-               || basis.Contains("(for Jeff to confirm)", StringComparison.Ordinal));
+    {
+        if (basis == null) return false;
+        if (basis.Contains("(for Jeff to confirm)", StringComparison.Ordinal)) return true;
+        foreach (string prefix in JudgementBasisPrefixes)
+            if (basis.StartsWith(prefix, StringComparison.Ordinal)) return true;
+        return false;
+    }
 
     public static Season SeasonOf(int week)
     {
