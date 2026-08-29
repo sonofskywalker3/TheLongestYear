@@ -19,8 +19,8 @@ public sealed record GoalSamplingRules(Season Season, int FillerAllowance, Func<
 /// <summary>One candidate id's tier and draw weight for the week.</summary>
 public sealed record GoalWeight(string ItemId, int? Effort, EffortTier Tier, int Weight);
 
-/// <summary>Rule E: per-id weights from effort tier and season. Tiers are quartiles over the
-/// recognised efforts of the ids being sampled; an id no rule placed takes the price bucket.</summary>
+/// <summary>Rule E: per-id weights from effort tier and season. Tiers are absolute effort bands;
+/// an id no rule placed takes the price bucket.</summary>
 public static class GoalWeighting
 {
     public static IReadOnlyList<GoalWeight> For(
@@ -31,19 +31,13 @@ public static class GoalWeighting
         if (rarityOf == null) throw new ArgumentNullException(nameof(rarityOf));
 
         List<string> ordered = ids.Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToList();
-        var efforts = new Dictionary<string, int?>(StringComparer.Ordinal);
-        foreach (string id in ordered)
-            efforts[id] = rules.EffortOf(id);
-
-        TierCutoffs cutoffs = EffortTiers.Cutoffs(
-            efforts.Values.Where(e => e.HasValue).Select(e => e!.Value).ToList());
 
         var result = new List<GoalWeight>(ordered.Count);
         foreach (string id in ordered)
         {
-            int? effort = efforts[id];
+            int? effort = rules.EffortOf(id);
             EffortTier tier = effort.HasValue
-                ? EffortTiers.Tier(effort.Value, cutoffs)
+                ? EffortTiers.Tier(effort.Value)
                 : EffortTiers.FromRarity(rarityOf(id));
             result.Add(new GoalWeight(id, effort, tier, EffortWeights.For(rules.Season, tier)));
         }

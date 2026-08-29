@@ -1916,7 +1916,7 @@ namespace TheLongestYear
         }
 
         /// <summary>The item's effort tier within the first theme pool that contains it, or
-        /// "n/a" when no engine pool lists it (tiers are relative to a pool).</summary>
+        /// "n/a" when no engine pool lists it (tiers are absolute effort bands).</summary>
         private string TierLabel(string itemId, TheLongestYear.Core.ItemAvailability availability)
         {
             if (_enginePools == null || _effortData == null) return "n/a";
@@ -1924,8 +1924,7 @@ namespace TheLongestYear
             {
                 IReadOnlyList<string> ids = ThemeEffortPools.IdsFor(theme, _enginePools, _effortData.Objects);
                 if (!ids.Contains(itemId)) continue;
-                TierCutoffs cutoffs = EffortTiers.Cutoffs(ids.Select(id => _availability.For(id).Effort).ToList());
-                return $"{EffortTiers.Tier(availability.Effort, cutoffs)} in {theme}";
+                return $"{EffortTiers.Tier(availability.Effort)} in {theme}";
             }
             return "n/a";
         }

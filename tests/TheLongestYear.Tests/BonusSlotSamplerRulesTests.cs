@@ -27,7 +27,7 @@ public class BonusSlotSamplerRulesTests
 
     private static int? EightEfforts(string id) => id switch
     {
-        "(O)1" => 1, "(O)2" => 1, "(O)3" => 2, "(O)4" => 2, "(O)5" => 3, "(O)6" => 3, "(O)7" => 5, "(O)8" => 8, _ => null,
+        "(O)1" => 0, "(O)2" => 2, "(O)3" => 3, "(O)4" => 5, "(O)5" => 6, "(O)6" => 8, "(O)7" => 9, "(O)8" => 12, _ => null,
     };
 
     [Fact]

@@ -9,23 +9,19 @@ namespace TheLongestYear.Tests;
 
 public class EffortTiersTests
 {
+    [Theory]
+    [InlineData(0, EffortTier.Easy)] [InlineData(2, EffortTier.Easy)] [InlineData(3, EffortTier.Medium)]
+    [InlineData(5, EffortTier.Medium)] [InlineData(6, EffortTier.Hard)] [InlineData(8, EffortTier.Hard)]
+    [InlineData(9, EffortTier.Extreme)] [InlineData(12, EffortTier.Extreme)]
+    public void Tiers_are_absolute(int effort, EffortTier tier) => Assert.Equal(tier, EffortTiers.Tier(effort));
+
     [Fact]
-    public void A_pool_of_eight_tiers_two_per_quartile()
+    public void The_harder_of_two_easy_items_is_still_askable_in_spring()
     {
-        int[] efforts = { 1, 1, 2, 2, 3, 3, 5, 7 };
-        TierCutoffs c = EffortTiers.Cutoffs(efforts);
-        var tiers = efforts.Select(e => EffortTiers.Tier(e, c)).ToArray();
-        Assert.Equal(new[] { EffortTier.Easy, EffortTier.Easy, EffortTier.Medium, EffortTier.Medium,
-            EffortTier.Hard, EffortTier.Hard, EffortTier.Extreme, EffortTier.Extreme }, tiers);
+        var rules = new GoalSamplingRules(Season.Spring, 0, id => id == "(O)80" ? 1 : 3);
+        var weights = GoalWeighting.For(new[] { "(O)80", "(O)334" }, rules, _ => Rarity.Common);
+        Assert.All(weights, w => Assert.True(w.Weight > 0));
     }
-
-    [Fact]
-    public void A_pool_of_one_is_easy()
-        => Assert.Equal(EffortTier.Easy, EffortTiers.Tier(9, EffortTiers.Cutoffs(new[] { 9 })));
-
-    [Fact]
-    public void An_empty_pool_has_no_extreme_ids()
-        => Assert.Equal(EffortTier.Easy, EffortTiers.Tier(3, EffortTiers.Cutoffs(Array.Empty<int>())));
 
     [Theory] [InlineData(Rarity.Common, EffortTier.Easy)] [InlineData(Rarity.Uncommon, EffortTier.Medium)] [InlineData(Rarity.Rare, EffortTier.Hard)] [InlineData(Rarity.VeryRare, EffortTier.Extreme)]
     public void Price_buckets_map_to_tiers(Rarity r, EffortTier t) => Assert.Equal(t, EffortTiers.FromRarity(r));
