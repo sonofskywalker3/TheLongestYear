@@ -55,6 +55,7 @@ public sealed class EffortData
     public IReadOnlyList<RawArtifactSpot> ArtifactSpots { get; init; } = new List<RawArtifactSpot>();
     public IReadOnlyList<RawMachineRule> MachineRules { get; init; } = new List<RawMachineRule>();
     public IReadOnlyDictionary<string, string> MachineUnlocks { get; init; } = new Dictionary<string, string>();
+    public IReadOnlyDictionary<string, int> RecipePrices { get; init; } = new Dictionary<string, int>();
     public IReadOnlyList<RawFarmAnimal> Animals { get; init; } = new List<RawFarmAnimal>();
     public IReadOnlyList<RawBuilding> Buildings { get; init; } = new List<RawBuilding>();
     public IReadOnlyList<RawCookingRecipe> CookingRecipes { get; init; } = new List<RawCookingRecipe>();

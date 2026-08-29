@@ -56,6 +56,10 @@ public class ItemQueryIdsTests
     }
 
     [Fact]
+    public void Dried_mushroom_query_maps_to_the_plural_id()
+        => Assert.Equal(new[] { "(O)DriedMushrooms" }, ItemQueryIds.Expand("FLAVORED_ITEM DriedMushroom DROP_IN_ID"));
+
+    [Fact]
     public void Unknown_queries_and_blanks_expand_to_nothing()
     {
         Assert.Empty(ItemQueryIds.Expand("LOST_BOOK_OR_ITEM (O)770"));
@@ -146,6 +150,51 @@ public class ArtisanAvailabilityTests
     [Theory]
     [InlineData(200, -1, 0)] [InlineData(1750, -1, 1)] [InlineData(10000, -1, 2)] [InlineData(-1, 4, 2)] [InlineData(-1, 1, 1)] [InlineData(-1, 14, 2)]
     public void Time_step(int minutes, int days, int step) => Assert.Equal(step, ArtisanAvailability.TimeStep(minutes, days));
+
+    [Fact]
+    public void A_bought_recipe_takes_its_price_week_and_a_friendship_recipe_its_hearts()
+    {
+        var data = new EffortData
+        {
+            MachineUnlocks = new Dictionary<string, string> { ["(BC)FishSmoker"] = "null", ["(BC)39"] = "f Krobus 3", ["(BC)12"] = "s Farming 8" },
+            RecipePrices = new Dictionary<string, int> { ["(BC)FishSmoker"] = 10000 },
+        };
+        Assert.Equal(5, ArtisanAvailability.MachineWeek("(BC)FishSmoker", "null", data));   // 10,000g
+        Assert.Equal(5, ArtisanAvailability.MachineWeek("(BC)39", "f Krobus 3", data));     // Krobus from the Sewer week
+        Assert.Equal(7, ArtisanAvailability.MachineWeek("(BC)12", "s Farming 8", data));
+        Assert.Equal(9, ArtisanAvailability.MachineWeek("(BC)182", "null", data));          // special-order mail, no price
+    }
+
+    [Fact]
+    public void The_dehydrator_takes_the_earlier_of_pierre_and_the_cave()
+    {
+        var data = new EffortData
+        {
+            MachineUnlocks = new Dictionary<string, string> { ["(BC)Dehydrator"] = "null" },
+            RecipePrices = new Dictionary<string, int> { ["(BC)Dehydrator"] = 5000 },
+        };
+        Assert.Equal(3, ArtisanAvailability.MachineWeek("(BC)Dehydrator", "null", data));
+    }
+
+    [Fact]
+    public void Run_time_adds_whole_weeks()
+    {
+        // Wine: keg, Farming 8 (week 7), 10,000 minutes is under a week: still 7. Cask (14 days): plus 2.
+        var data = new EffortData
+        {
+            Objects = new Dictionary<string, RawObjectEntry> { ["398"] = new RawObjectEntry("Basic", -79, 80, false, new string[0], "Grape") },
+            MachineRules = new List<RawMachineRule>
+            {
+                new("(BC)12", "(O)398", new string[0], new[] { "(O)348" }, 10000, -1),
+                new("(BC)163", "(O)348", new string[0], new[] { "(O)AgedWine" }, -1, 14),
+            },
+            MachineUnlocks = new Dictionary<string, string> { ["(BC)12"] = "s Farming 8", ["(BC)163"] = "null" },
+        };
+        int? weekOf(string id) => id == "(O)398" ? 6 : id == "(O)348" ? 7 : null;
+        int? effortOf(string id) => 1;
+        Assert.Equal(7, ArtisanAvailability.Derive("(O)348", data, effortOf, weekOf)!.EarliestWeek);
+        Assert.Equal(11, ArtisanAvailability.Derive("(O)AgedWine", data, effortOf, weekOf)!.EarliestWeek);   // cask week 9 + 2
+    }
 }
 
 public class FishPondAvailabilityTests

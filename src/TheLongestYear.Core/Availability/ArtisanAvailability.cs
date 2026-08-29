@@ -42,8 +42,11 @@ public static class ArtisanAvailability
             int machine = MachineUnlockEffort(unlock);
             int time = TimeStep(rule.MinutesUntilReady, rule.DaysUntilReady);
             int effort = inputEffort + machine + time;
-            int machineWeek = AvailabilityWeeks.MachineLevelWeek(MachineUnlockLevel(unlock));
-            int? week = hasInput && inputWeek == null ? null : Math.Max(machineWeek, inputWeek ?? 1);
+            int machineWeek = MachineWeek(rule.MachineItemId, unlock, data);
+            int runWeeks = RunDays(rule.MinutesUntilReady, rule.DaysUntilReady) / Calendar.DaysPerWeek;
+            int? week = hasInput && inputWeek == null
+                ? null
+                : Math.Min(Calendar.WeeksPerYear, Math.Max(machineWeek, inputWeek ?? 1) + runWeeks);
             bool better = best == null
                 || (week ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
                 || (week == best.EarliestWeek && effort < best.Effort);
@@ -51,7 +54,7 @@ public static class ArtisanAvailability
                 best = new ItemEffort(effort,
                     $"artisan, {rule.MachineItemId}: input {inputNote} ({inputEffort}) + machine {machine} + time {time}, "
                     + $"week {(week?.ToString() ?? "unknown")}, effort {effort}",
-                    week, week == null ? null : AvailabilityWeeks.SeasonOf(week.Value));
+                    week, week == null ? null : AvailabilityWeeks.SeasonOf(week.Value), week);
         }
         return best;
     }
@@ -114,5 +117,30 @@ public static class ArtisanAvailability
         int minutes = daysUntilReady >= 0 ? daysUntilReady * MinutesPerDay : minutesUntilReady;
         if (minutes < MinutesPerDay) return 0;
         return minutes < LongDays * MinutesPerDay ? 1 : 2;
+    }
+
+    /// <summary>Days a machine run takes, from whichever field the rule set.</summary>
+    private static int RunDays(int minutesUntilReady, int daysUntilReady)
+        => daysUntilReady >= 0 ? daysUntilReady : minutesUntilReady / MinutesPerDay;
+
+    /// <summary>Week a machine's recipe is realistically in hand: the later of a skill/friendship
+    /// unlock and a bought recipe's price week (Data/Shops), then the earlier of that and any
+    /// route with no recipe field (AvailabilityWeeks.MachineRouteWeeks). A machine with none of
+    /// these placed lands at the special-order mail week.</summary>
+    public static int MachineWeek(string machineId, string? unlock, EffortData data)
+    {
+        string text = (unlock ?? "").Trim();
+        string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int? week = null;
+        if (tokens.Length >= 3 && tokens[0].Equals(FriendshipPrefix, StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(tokens[^1], out int hearts))
+            week = UnlockWeeks.ForFriendship(tokens[1], hearts) ?? AvailabilityWeeks.UnknownWeek;
+        else if (MachineUnlockLevel(unlock) != QuestUnlockLevel)
+            week = AvailabilityWeeks.MachineLevelWeek(MachineUnlockLevel(unlock));
+        if (data.RecipePrices.TryGetValue(machineId, out int price))
+            week = Math.Min(week ?? int.MaxValue, UnlockWeeks.ForCost(price));
+        if (AvailabilityWeeks.MachineRouteWeeks.TryGetValue(machineId, out (int Week, string Note) route))
+            week = Math.Min(week ?? int.MaxValue, route.Week);
+        return week ?? AvailabilityWeeks.SpecialOrderMachineWeek;
     }
 }
