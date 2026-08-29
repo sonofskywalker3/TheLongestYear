@@ -1,0 +1,464 @@
+=== standardP4 (minimal): reset to Spring 1
+=== standardP4: Spring week 1
+tly_goals: Spring week 1 (run season Spring day 1, loop seed 1052416920).
+  Foraging: 2 goal(s)
+  Farming: 2 goal(s)
+  Fishing: 4 goal(s)
+  Mining: 2 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 2 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 0 goal(s)
+  Foraging: askable 2 (offerable)
+  Farming: askable 2 (offerable)
+  Fishing: askable 4 (offerable)
+  Mining: askable 2 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 2 (offerable)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 0 (not offered)
+Selected Foraging (bonus forage_yield_up, liability mines_closed). Goal slots this week: [(O)16@Spring Foraging#0, (O)22@Spring Foraging#3].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Foraging' for week 1 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 1'.
+tly_playseason: Spring quarter 1, 7 slot(s) flipped, 7 donated this season, plan position 7 of 25
+=== standardP4: Spring week 2
+tly_goals: Spring week 2 (run season Spring day 8, loop seed 1052416920).
+  Foraging: 2 goal(s)
+  Farming: 2 goal(s)
+  Fishing: 5 goal(s)
+  Mining: 3 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 3 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 0 goal(s)
+  Foraging: askable 2 (offerable)
+  Farming: askable 2 (offerable)
+  Fishing: askable 5 (offerable)
+  Mining: askable 3 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 3 (offerable)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 0 (not offered)
+Selected Fishing (bonus fish_bite_up, liability crop_growth_down). Goal slots this week: [(O)142@Lake Fish#1, (O)721@Crab Pot#6, (O)156@Specialty Fish#1, (O)131@Ocean Fish#0, (O)145@River Fish#0].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Fishing' for week 2 with 5 goal slots.
+Debug bridge: executing 'tly_playseason quarter 2'.
+tly_playseason: Spring quarter 2, 6 slot(s) flipped, 13 donated this season, plan position 13 of 25
+=== standardP4: Spring week 3
+tly_goals: Spring week 3 (run season Spring day 15, loop seed 1052416920).
+  Foraging: 2 goal(s)
+  Farming: 3 goal(s)
+  Fishing: 0 goal(s)
+  Mining: 2 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 3 goal(s)
+  Artisan: 1 goal(s)
+  Kitchen: 0 goal(s)
+  Foraging: askable 2 (offerable)
+  Farming: askable 3 (offerable)
+  Fishing: askable 0 (not offered)
+  Mining: askable 2 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 3 (offerable)
+  Artisan: askable 1 (not offered)
+  Kitchen: askable 0 (not offered)
+Selected Mixed (bonus all_drops_up, liability all_sell_prices_down). Goal slots this week: [(O)86@Geologist's#1, (O)18@Spring Foraging#1, (O)340@Artisan#4, (O)22@Spring Foraging#3, (O)20@Spring Foraging#2].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Mixed' for week 3 with 5 goal slots.
+Debug bridge: executing 'tly_playseason quarter 3'.
+tly_playseason: Spring quarter 3, 6 slot(s) flipped, 19 donated this season, plan position 19 of 25
+=== standardP4: Spring week 4
+tly_goals: Spring week 4 (run season Spring day 22, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 2 goal(s)
+  Fishing: 0 goal(s)
+  Mining: 1 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 0 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 2 (offerable)
+  Fishing: askable 0 (not offered)
+  Mining: askable 1 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 0 (not offered)
+Selected Farming (bonus crop_growth_up, liability fish_bite_down). Goal slots this week: [(O)192@Spring Crops#3, (O)190@Spring Crops#2].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Farming' for week 4 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 4'.
+tly_playseason: Spring quarter 4, 6 slot(s) flipped, 25 donated this season, plan position 25 of 25
+tly_playseason: Spring gate WOULD PASS. Ledger 25 slot(s).
+=== standardP4: Spring day 28
+FOUND: [14:44:43 INFO  The Longest Year] Day-28 cutscene: opening the Continue Junimo scene (eventUp=False, farmEvent=none, newDay=False).
+tly_playseason: Spring gate WOULD PASS. Ledger 25 slot(s).
+tly_setday: date set to Spring 28. Sleep to trigger the day-28 gate.
+Month cleared (Spring). Advancing.
+Season checkpoint passed -> +158 JP (now 27842).
+Meta-state saved with the game. JP banked: 27842.
+Debug bridge: executing 'tly_skipscene'.
+Opened planning hub (week 5, offer: Kitchen,Farming).
+tly_skipscene: finished the day-28 scene.
+=== standardP4: Summer week 1
+tly_goals: Summer week 5 (run season Summer day 1, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 3 goal(s)
+  Fishing: 5 goal(s)
+  Mining: 1 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 1 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 3 (offerable)
+  Fishing: askable 5 (offerable)
+  Mining: askable 1 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 1 (not offered)
+  Kitchen: askable 2 (offerable)
+Selected Kitchen (bonus animal_double_product, liability monster_damage_up). Goal slots this week: [(O)174@Animal#2, (O)438@Animal#3].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Kitchen' for week 5 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 1'.
+tly_playseason: Summer quarter 1, 7 slot(s) flipped, 7 donated this season, plan position 7 of 27
+=== standardP4: Summer week 2
+tly_goals: Summer week 6 (run season Summer day 8, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 4 goal(s)
+  Fishing: 4 goal(s)
+  Mining: 1 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 4 (offerable)
+  Fishing: askable 4 (offerable)
+  Mining: askable 1 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 2 (offerable)
+Selected Mixed (bonus all_drops_up, liability all_sell_prices_down). Goal slots this week: [(O)372@Crab Pot#9, (O)724@Exotic Foraging#5, (O)194@Chef's#5, (O)258@Summer Crops#2, (O)260@Summer Crops#1].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Mixed' for week 6 with 5 goal slots.
+Debug bridge: executing 'tly_playseason quarter 2'.
+tly_playseason: Summer quarter 2, 7 slot(s) flipped, 14 donated this season, plan position 14 of 27
+=== standardP4: Summer week 3
+tly_goals: Summer week 7 (run season Summer day 15, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 4 goal(s)
+  Fishing: 1 goal(s)
+  Mining: 0 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 1 goal(s)
+  Kitchen: 3 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 4 (offerable)
+  Fishing: askable 1 (not offered)
+  Mining: askable 0 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 1 (not offered)
+  Kitchen: askable 3 (offerable)
+Selected Foraging (bonus forage_yield_up, liability mines_closed). Goal slots this week: [(O)398@Summer Foraging#1, (O)725@Exotic Foraging#6, (O)402@Summer Foraging#2].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Foraging' for week 7 with 3 goal slots.
+Debug bridge: executing 'tly_playseason quarter 3'.
+tly_playseason: Summer quarter 3, 7 slot(s) flipped, 21 donated this season, plan position 21 of 27
+=== standardP4: Summer week 4
+tly_goals: Summer week 8 (run season Summer day 22, loop seed 1052416920).
+  Foraging: 1 goal(s)
+  Farming: 2 goal(s)
+  Fishing: 1 goal(s)
+  Mining: 0 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 1 (not offered)
+  Farming: askable 2 (offerable)
+  Fishing: askable 1 (not offered)
+  Mining: askable 0 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 2 (offerable)
+Selected Farming (bonus crop_growth_up, liability fish_bite_down). Goal slots this week: [(O)254@Summer Crops#3, (O)258@Summer Crops#2].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Farming' for week 8 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 4'.
+tly_playseason: Summer quarter 4, 6 slot(s) flipped, 27 donated this season, plan position 27 of 27
+tly_playseason: Summer gate WOULD PASS. Ledger 52 slot(s).
+=== standardP4: Summer day 28
+FOUND: [14:46:25 INFO  The Longest Year] Day-28 cutscene: opening the Continue Junimo scene (eventUp=False, farmEvent=none, newDay=False).
+tly_playseason: Summer gate WOULD PASS. Ledger 52 slot(s).
+tly_setday: date set to Summer 28. Sleep to trigger the day-28 gate.
+Month cleared (Summer). Advancing.
+Season checkpoint passed -> +263 JP (now 28110).
+Meta-state saved with the game. JP banked: 28110.
+Debug bridge: executing 'tly_skipscene'.
+Opened planning hub (week 9, offer: Kitchen,Mixed).
+tly_skipscene: finished the day-28 scene.
+=== standardP4: Fall week 1
+tly_goals: Fall week 9 (run season Fall day 1, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 4 goal(s)
+  Fishing: 4 goal(s)
+  Mining: 2 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 2 goal(s)
+  Artisan: 2 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 4 (offerable)
+  Fishing: askable 4 (offerable)
+  Mining: askable 2 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 2 (offerable)
+  Artisan: askable 2 (offerable)
+  Kitchen: askable 2 (offerable)
+Selected Kitchen (bonus animal_double_product, liability monster_damage_up). Goal slots this week: [(O)438@Animal#3, (O)228@Chef's#4].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Kitchen' for week 9 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 1'.
+tly_playseason: Fall quarter 1, 8 slot(s) flipped, 8 donated this season, plan position 8 of 32
+=== standardP4: Fall week 2
+tly_goals: Fall week 10 (run season Fall day 8, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 4 goal(s)
+  Fishing: 5 goal(s)
+  Mining: 3 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 2 goal(s)
+  Artisan: 2 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 4 (offerable)
+  Fishing: askable 5 (offerable)
+  Mining: askable 3 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 2 (offerable)
+  Artisan: askable 2 (offerable)
+  Kitchen: askable 2 (offerable)
+Selected Mixed (bonus all_drops_up, liability all_sell_prices_down). Goal slots this week: [(O)719@Crab Pot#4, (O)280@Fall Crops#3, (O)769@Adventurer's#3, (O)84@Geologist's#2, (O)397@Dye#1].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Mixed' for week 10 with 5 goal slots.
+Debug bridge: executing 'tly_playseason quarter 2'.
+tly_playseason: Fall quarter 2, 8 slot(s) flipped, 16 donated this season, plan position 16 of 32
+=== standardP4: Fall week 3
+tly_goals: Fall week 11 (run season Fall day 15, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 4 goal(s)
+  Fishing: 1 goal(s)
+  Mining: 0 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 2 goal(s)
+  Kitchen: 3 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 4 (offerable)
+  Fishing: askable 1 (not offered)
+  Mining: askable 0 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 2 (offerable)
+  Kitchen: askable 3 (offerable)
+Selected Foraging (bonus forage_yield_up, liability mines_closed). Goal slots this week: [(O)406@Fall Foraging#1, (O)408@Fall Foraging#2, (O)410@Fall Foraging#3].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Foraging' for week 11 with 3 goal slots.
+Debug bridge: executing 'tly_playseason quarter 3'.
+tly_playseason: Fall quarter 3, 8 slot(s) flipped, 24 donated this season, plan position 24 of 32
+=== standardP4: Fall week 4
+tly_goals: Fall week 12 (run season Fall day 22, loop seed 1052416920).
+  Foraging: 2 goal(s)
+  Farming: 2 goal(s)
+  Fishing: 1 goal(s)
+  Mining: 0 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 0 goal(s)
+  Artisan: 1 goal(s)
+  Kitchen: 3 goal(s)
+  Foraging: askable 2 (offerable)
+  Farming: askable 2 (offerable)
+  Fishing: askable 1 (not offered)
+  Mining: askable 0 (not offered)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 0 (not offered)
+  Artisan: askable 1 (not offered)
+  Kitchen: askable 3 (offerable)
+Selected Farming (bonus crop_growth_up, liability fish_bite_down). Goal slots this week: [(O)280@Fall Crops#3, (O)276@Fall Crops#2].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Farming' for week 12 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 4'.
+tly_playseason: Fall quarter 4, 8 slot(s) flipped, 32 donated this season, plan position 32 of 32
+tly_playseason: Fall gate WOULD PASS. Ledger 84 slot(s).
+=== standardP4: Fall day 28
+FOUND: [14:48:07 INFO  The Longest Year] Day-28 cutscene: opening the Continue Junimo scene (eventUp=False, farmEvent=none, newDay=False).
+tly_playseason: Fall gate WOULD PASS. Ledger 84 slot(s).
+tly_setday: date set to Fall 28. Sleep to trigger the day-28 gate.
+Month cleared (Fall). Advancing.
+Season checkpoint passed -> +420 JP (now 28541).
+Meta-state saved with the game. JP banked: 28541.
+Debug bridge: executing 'tly_skipscene'.
+Opened planning hub (week 13, offer: Mixed,Fishing).
+tly_skipscene: finished the day-28 scene.
+=== standardP4: Winter week 1
+tly_goals: Winter week 13 (run season Winter day 1, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 2 goal(s)
+  Fishing: 3 goal(s)
+  Mining: 2 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 1 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 2 (offerable)
+  Fishing: askable 3 (offerable)
+  Mining: askable 2 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 1 (not offered)
+  Kitchen: askable 2 (offerable)
+Selected Mixed (bonus all_drops_up, liability all_sell_prices_down). Goal slots this week: [(O)143@River Fish#1, (O)722@Crab Pot#7, (O)638@Artisan#11, (O)416@Winter Foraging#2, (O)440@Animal#4].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Mixed' for week 13 with 5 goal slots.
+Debug bridge: executing 'tly_playseason quarter 1'.
+tly_playseason: Winter quarter 1, 6 slot(s) flipped, 6 donated this season, plan position 6 of 22
+=== standardP4: Winter week 2
+tly_goals: Winter week 14 (run season Winter day 8, loop seed 1052416920).
+  Foraging: 2 goal(s)
+  Farming: 0 goal(s)
+  Fishing: 3 goal(s)
+  Mining: 2 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 2 (offerable)
+  Farming: askable 0 (not offered)
+  Fishing: askable 3 (offerable)
+  Mining: askable 2 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 2 (offerable)
+Selected Fishing (bonus fish_bite_up, liability crop_growth_down). Goal slots this week: [(O)150@Ocean Fish#2, (O)722@Crab Pot#7, (O)143@River Fish#1].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Fishing' for week 14 with 3 goal slots.
+Debug bridge: executing 'tly_playseason quarter 2'.
+tly_playseason: Winter quarter 2, 5 slot(s) flipped, 11 donated this season, plan position 11 of 22
+=== standardP4: Winter week 3
+tly_goals: Winter week 15 (run season Winter day 15, loop seed 1052416920).
+  Foraging: 2 goal(s)
+  Farming: 0 goal(s)
+  Fishing: 1 goal(s)
+  Mining: 2 goal(s)
+  Mixed: 5 goal(s)
+  Spelunking: 1 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 2 goal(s)
+  Foraging: askable 2 (offerable)
+  Farming: askable 0 (not offered)
+  Fishing: askable 1 (not offered)
+  Mining: askable 2 (offerable)
+  Mixed: askable 5 (offerable)
+  Spelunking: askable 1 (not offered)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 2 (offerable)
+Selected Kitchen (bonus animal_double_product, liability monster_damage_up). Goal slots this week: [(O)446@Enchanter's#2, (O)444@Dye#3].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Kitchen' for week 15 with 2 goal slots.
+Debug bridge: executing 'tly_playseason quarter 3'.
+tly_playseason: Winter quarter 3, 6 slot(s) flipped, 17 donated this season, plan position 17 of 22
+=== standardP4: Winter week 4
+tly_goals: Winter week 16 (run season Winter day 22, loop seed 1052416920).
+  Foraging: 3 goal(s)
+  Farming: 0 goal(s)
+  Fishing: 0 goal(s)
+  Mining: 0 goal(s)
+  Mixed: 4 goal(s)
+  Spelunking: 0 goal(s)
+  Artisan: 0 goal(s)
+  Kitchen: 1 goal(s)
+  Foraging: askable 3 (offerable)
+  Farming: askable 0 (not offered)
+  Fishing: askable 0 (not offered)
+  Mining: askable 0 (not offered)
+  Mixed: askable 4 (offerable)
+  Spelunking: askable 0 (not offered)
+  Artisan: askable 0 (not offered)
+  Kitchen: askable 1 (not offered)
+Selected Foraging (bonus forage_yield_up, liability mines_closed). Goal slots this week: [(O)414@Winter Foraging#1, (O)416@Winter Foraging#2, (O)418@Winter Foraging#3].
+WeeklyThemeQuestService: added quest 'Weekly Theme: Foraging' for week 16 with 3 goal slots.
+Debug bridge: executing 'tly_playseason quarter 4'.
+tly_playseason: Winter quarter 4, 5 slot(s) flipped, 22 donated this season, plan position 22 of 22
+tly_playseason: Winter gate WOULD PASS. Ledger 106 slot(s).
+=== standardP4: askable by week (Fo/Fa/Fi/Mi/Mx/Sp/Ar/Ki)
+Spring week 1: 2/2/4/2/5/2/0/0
+Spring week 2: 2/2/5/3/5/3/0/0
+Spring week 3: 2/3/0/2/5/3/1/0
+Spring week 4: 3/2/0/1/5/1/0/0
+Summer week 5: 3/3/5/1/5/1/1/2
+Summer week 6: 3/4/4/1/5/1/0/2
+Summer week 7: 3/4/1/0/5/1/1/3
+Summer week 8: 1/2/1/0/5/1/0/2
+Fall week 9: 3/4/4/2/5/2/2/2
+Fall week 10: 3/4/5/3/5/2/2/2
+Fall week 11: 3/4/1/0/5/1/2/3
+Fall week 12: 2/2/1/0/5/0/1/3
+Winter week 13: 3/2/3/2/5/1/1/2
+Winter week 14: 2/0/3/2/5/1/0/2
+Winter week 15: 2/0/1/2/5/1/0/2
+Winter week 16: 3/0/0/0/4/0/0/1
+=== standardP4: gate audit
+Debug bridge: executing 'tly_dumpavailability'.
+tly_dumpavailability: wrote C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods\TheLongestYear\board-availability.md (26,373 chars, 26 bundles, 11 judgement row(s), 1 unknown item(s)).
+Debug bridge: executing 'tly_gatecheck'.
+=== tly_gatecheck: season gate audit (demanded / obtainable, by day 28 of each season) ===
+  [tight        ] Construction               PerItem    X=4 Y=3  Spring: 1/3  |  Summer: 1/3  |  Fall: 2/3  |  Winter: 3/3 tight
+  [ok           ] Exotic Foraging            Percentage X=5 Y=9  Spring: 1/8  |  Summer: 3/8  |  Fall: 4/9  |  Winter: 5/9  [no hard item]
+  [tight        ] Fall Foraging              Seasonal   X=4 Y=4  Spring: 0/1  |  Summer: 0/1  |  Fall: 4/4 tight  |  Winter: 4/4 tight
+  [tight        ] Spring Foraging            Seasonal   X=4 Y=4  Spring: 4/4 tight  |  Summer: 4/4 tight  |  Fall: 4/4 tight  |  Winter: 4/4 tight  [spring tight]
+  [tight        ] Summer Foraging            Seasonal   X=3 Y=3  Spring: 0/0  |  Summer: 3/3 tight  |  Fall: 3/3 tight  |  Winter: 3/3 tight
+  [tight        ] Winter Foraging            Seasonal   X=4 Y=4  Spring: 0/0  |  Summer: 0/0  |  Fall: 0/0  |  Winter: 4/4 tight
+  [ok           ] Animal                     Percentage X=5 Y=6  Spring: 1/6  |  Summer: 3/6  |  Fall: 4/6  |  Winter: 5/6
+  [ok           ] Artisan                    Percentage X=6 Y=12  Spring: 2/12  |  Summer: 3/12  |  Fall: 5/12  |  Winter: 6/12
+  [tight        ] Fall Crops                 Seasonal   X=4 Y=4  Spring: 0/0  |  Summer: 0/1  |  Fall: 4/4 tight  |  Winter: 4/4 tight
+  [tight        ] Quality Crops              Percentage X=3 Y=4  Spring: 1/1 tight  |  Summer: 2/3  |  Fall: 2/4  |  Winter: 3/4  [spring tight]
+  [tight        ] Spring Crops               Seasonal   X=4 Y=4  Spring: 4/4 tight  |  Summer: 4/4 tight  |  Fall: 4/4 tight  |  Winter: 4/4 tight  [spring tight]
+  [tight        ] Summer Crops               Seasonal   X=4 Y=4  Spring: 0/0  |  Summer: 4/4 tight  |  Fall: 4/4 tight  |  Winter: 4/4 tight
+  [ok           ] Crab Pot                   Percentage X=5 Y=10  Spring: 1/10  |  Summer: 3/10  |  Fall: 4/10  |  Winter: 5/10  [no hard item]
+  [tight        ] Lake Fish                  PerItem    X=4 Y=4  Spring: 1/3  |  Summer: 2/4  |  Fall: 3/4  |  Winter: 4/4 tight  [no hard item]
+  [tight        ] Night Fishing              PerItem    X=3 Y=3  Spring: 0/2  |  Summer: 1/2  |  Fall: 2/3  |  Winter: 3/3 tight
+  [tight        ] Ocean Fish                 PerItem    X=4 Y=4  Spring: 1/1 tight  |  Summer: 2/4  |  Fall: 3/4  |  Winter: 4/4 tight  [no hard item] [spring tight]
+  [tight        ] River Fish                 PerItem    X=4 Y=4  Spring: 1/3  |  Summer: 1/3  |  Fall: 3/4  |  Winter: 4/4 tight
+  [tight        ] Specialty Fish             PerItem    X=4 Y=4  Spring: 1/3  |  Summer: 2/4  |  Fall: 3/4  |  Winter: 4/4 tight
+  [ok           ] Adventurer's               Percentage X=2 Y=4  Spring: 1/4  |  Summer: 1/4  |  Fall: 2/4  |  Winter: 2/4
+  [tight        ] Blacksmith's               PerItem    X=3 Y=3  Spring: 0/3  |  Summer: 1/3  |  Fall: 2/3  |  Winter: 3/3 tight
+  [tight        ] Geologist's                PerItem    X=4 Y=4  Spring: 2/4  |  Summer: 2/4  |  Fall: 3/4  |  Winter: 4/4 tight  [no hard item]
+  [tight        ] Chef's                     PerItem    X=6 Y=6  Spring: 1/4  |  Summer: 3/6  |  Fall: 5/6  |  Winter: 6/6 tight  [no hard item]
+  [tight        ] Dye                        PerItem    X=6 Y=6  Spring: 1/4  |  Summer: 3/6  |  Fall: 5/6  |  Winter: 6/6 tight  [no hard item]
+  [tight        ] Enchanter's                PerItem    X=4 Y=4  Spring: 0/4  |  Summer: 1/4  |  Fall: 3/4  |  Winter: 4/4 tight
+  [tight        ] Field Research             PerItem    X=4 Y=4  Spring: 1/2  |  Summer: 2/2 tight  |  Fall: 3/3 tight  |  Winter: 4/4 tight
+  [tight        ] Fodder                     PerItem    X=3 Y=3  Spring: 0/2  |  Summer: 1/3  |  Fall: 2/3  |  Winter: 3/3 tight
+  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter (cheapest first: 2,500g, 5,000g, 10,000g, 25,000g). Owning 'keep_bus_unlocked' satisfies it outright.
+  tly_gatecheck RESULT: no impossible gates. 36 tight (demands everything obtainable by then), 0 bundle(s) never gated.
+  tly_gatecheck RESULT: 0 stretch line(s), 7 without a hard item, 4 Spring tight.
+  NOTE: this checks CALENDAR feasibility only. An item that exists in Spring but needs a keg, a fish pond or a tool upgrade counts as obtainable here.
+=== standardP4: judgement rows (Jeff's own rulings)
+## Judgement rows (11)
+
+Rows placed by Jeff's own ruling rather than a game-data fact: a hand-ruled AvailabilityWeeks table entry ("table, ..." basis) or a late-floor note still awaiting his sign-off ("(for Jeff to confirm)" basis). Not unknown -- they gate and appear on cards like any other rule -- but worth a second look.
+
+- Apple ((O)613), week 9, in Artisan
+- Apricot ((O)634), week 13, in Artisan
+- Orange ((O)635), week 5, in Artisan
+- Peach ((O)636), week 5, in Artisan
+- Pomegranate ((O)637), week 9, in Artisan
+- Cherry ((O)638), week 13, in Artisan
+- Winter Root ((O)412), week 13, in Winter Foraging
+- Snow Yam ((O)416), week 13, in Winter Foraging
+- Cave Carrot ((O)78), week 1, in Exotic Foraging
+- Pomegranate ((O)637), week 9, in Enchanter's
+- Apple ((O)613), week 9, in Fodder
+
+=== standardP4: unknown items (Jeff must confirm each one)
+## Unknown items (1)
+
+Nothing placed these; the gate treats each as Winter. Jeff rules on every one (memory tly-sim-list-unknowns-each-run); a ruling becomes an AvailabilityWeeks row or an AvailabilityWeekOverrides default.
+
+- Hay ((O)178), in Fodder
+
+=== standardP4: done

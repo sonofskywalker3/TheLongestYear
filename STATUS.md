@@ -1,10 +1,60 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 (Standard-board year sim, 0.16.147)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); 0.16.146 PUSHED (2026-08-29); **0.16.147 committed LOCALLY ONLY, not pushed, not released**
+**Last updated:** 2026-08-29 (three-board year sims, 0.16.149)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.149 committed LOCALLY ONLY, not pushed, not released**
 **Tests:** 1754 passing, 0 failing
 **Build:** clean (mod assembly builds Release); 0.16.145 deployed to the game and desktop-driven (Jeff out, desktop authorised); 0.16.146 is docs only
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+## 2026-08-29 (late afternoon): played years on the real STANDARD and REMIXED boards, three-way comparison
+
+`tools/sim-year.sh minimal` twice on build 0.16.145 (so Hay is still "unknown" here; 0.16.148 places
+it), config `BundleSource` set to `Normal` on disk plus `tly_bundlesource Vanilla Default` /
+`Vanilla Remixed` in memory before each reset; the log confirmed `Requirements source: vanilla board
+(BundleSource=Vanilla, Default ...)` at 14:43:08 and `(... Vanilla, Remixed ...)` at 14:49:48.
+Transcripts `docs/superpowers/notes/2026-08-29-sim-standardP4.txt` and `-remixedP5.txt`. No WARN or
+ERROR lines in either. Each year ran in about 6.5 minutes.
+
+**Every gate passed on all three boards.** Ledger at each season end (slots), and the season's own
+plan in brackets:
+
+| Board | Spring | Summer | Fall | Winter | tight | stretch | no hard item | Spring tight |
+|---|---|---|---|---|---|---|---|---|
+| Custom, seed loop 3 (P2, last night) | 22 | 50 | 79 | 100 | 26 | 1 | 5 | 2 |
+| Custom, seed loop 100 (standardP3, mislabelled) | 26 [26] | 48 [22] | 71 [23] | 97 [26] | 30 | 2 | 4 | 5 |
+| Standard (standardP4) | 25 [25] | 52 [27] | 84 [32] | 106 [22] | 36 | 0 | 7 | 4 |
+| Remixed (remixedP5) | 18 [18] | 44 [26] | 70 [26] | 89 [19] | 36 | 1 | 4 | 5 |
+
+Reading: Standard is the heaviest board (106 slots, a 32-slot Fall) and the tightest (36 of 26
+bundles demand everything obtainable by the gate); Remixed is the lightest (89 slots, an 18-slot
+Spring) but just as tight; the custom boards sit between (97 to 100) with the fewest tight gates.
+Standard has no stretch line at all; Remixed keeps the Engineer's `[stretch: Iridium Ore Summer]`
+the seed audit always found. No-hard-item: Standard 7 (Exotic Foraging, Crab Pot, Lake Fish,
+Geologist's, Chef's, Dye and one more), Remixed 4 (Crab Pot, Lake Fish, Treasure Hunter's and one).
+
+Askable goals by week (Fo/Fa/Fi/Mi/Mx/Sp/Ar/Ki):
+
+Standard: Spring 2/2/4/2/5/2/0/0, 2/2/5/3/5/3/0/0, 2/3/0/2/5/3/1/0, 3/2/0/1/5/1/0/0; Summer
+3/3/5/1/5/1/1/2, 3/4/4/1/5/1/0/2, 3/4/1/0/5/1/1/3, 1/2/1/0/5/1/0/2; Fall 3/4/4/2/5/2/2/2,
+3/4/5/3/5/2/2/2, 3/4/1/0/5/1/2/3, 2/2/1/0/5/0/1/3; Winter 3/2/3/2/5/1/1/2, 2/0/3/2/5/1/0/2,
+2/0/1/2/5/1/0/2, 3/0/0/0/4/0/0/1.
+
+Remixed: Spring 2/2/4/1/5/1/0/0, 2/2/3/1/5/1/0/0, 3/3/0/1/5/1/0/0, 2/2/0/0/4/0/0/0; Summer
+2/3/4/3/5/2/0/2, 2/2/4/3/5/2/0/1, 2/5/1/2/5/1/1/1, 1/2/1/2/5/1/0/0; Fall 2/3/4/2/5/1/2/2,
+2/3/5/2/5/1/1/2, 3/3/1/0/5/0/1/2, 2/2/1/0/5/0/1/1; Winter 2/2/3/2/5/1/1/2, 2/0/3/2/5/1/0/2,
+2/0/0/2/5/1/0/2, 3/0/0/0/4/0/0/1.
+
+The vanilla boards are kinder to Mining than the custom ones (Standard has Mining askable in 12 of
+16 weeks, Remixed in 12; custom had it in 4), because the vanilla Boiler Room asks for more distinct
+things. Farming dies in Winter on both vanilla boards (0 askable weeks 14 to 16; the crops are done).
+Fishing has the same Spring week 3 and 4 hole everywhere. Artisan and Kitchen stay 0 to 3 all year
+on every board. Mixed is 5 nearly always.
+
+Judgement rows. Standard (9): the six fruit-tree fruits in Artisan (Apple 9, Apricot 13, Orange 5,
+Peach 5, Pomegranate 9, Cherry 13), Winter Root 13 and Snow Yam 13 (Winter Foraging), Cave Carrot 1
+(Exotic Foraging). Remixed (3): Winter Root 13 (Winter Foraging), Moss 1 (Forest), Pomegranate 9
+(Enchanter's). **Unknown items: Standard Hay (placed by 0.16.148, not yet deployed); Remixed Spring
+Onion `(O)399` in Spring Foraging, Jeff to rule.**
 
 ## 2026-08-29 (afternoon): sim standardP3 was NOT the Standard board (custom, seed loop 100); corrected
 
