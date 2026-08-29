@@ -4006,8 +4006,19 @@ namespace TheLongestYear
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
                     engine.Availability = _availability;
                     GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
-                    if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
+                    IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
+                    if (!EngineManifestCheck.Matches(generatedData, liveData))
+                    {
+                        // Say WHICH bundle drifted: a data mod whose Content Patcher edits change
+                        // with season/day (SVE audit, TODO) re-derives a different board on the
+                        // post-reset reload than the reset wrote, and without this line the
+                        // mismatch is undiagnosable from a player log.
+                        string? drift = EngineManifestCheck.FirstDifference(generatedData, liveData);
+                        this.Monitor.Log(
+                            $"ResolveRequirements: manifest check (EnableNonObjectDonations={nonObject}) differs at {drift ?? "(no difference found)"}.",
+                            LogLevel.Debug);
                         continue;
+                    }
 
                     var requirements = engine.BuildRequirements(
                         set, itemSeasonPins, bundleQuotas,
