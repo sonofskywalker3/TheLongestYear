@@ -45,27 +45,6 @@ public static class VaultRules
         _ => 0
     };
 
-    /// <summary>
-    /// Kept bus: mark every vault bundle paid for the new run when <see cref="KeepBusUnlockedId"/>
-    /// is owned, so the counter matches the board (the reset completes those slots) and the
-    /// day-end reconcile cannot mistake them for fresh payments and award JP. Must run AFTER
-    /// <see cref="RunState.BeginNewRun"/>, which clears the counter. Idempotent. Returns how many
-    /// indices were newly marked.
-    /// </summary>
-    public static int PrepayKeptBus(MetaState meta, RunState run, IReadOnlyList<int> liveVaultIndices)
-    {
-        if (!meta.HasUpgrade(KeepBusUnlockedId))
-            return 0;
-        IReadOnlyList<int> indices = liveVaultIndices.Count > 0 ? liveVaultIndices : VaultIndices;
-        int marked = 0;
-        foreach (int idx in indices)
-        {
-            if (run.TryMarkVaultBundlePaid(idx))
-                marked++;
-        }
-        return marked;
-    }
-
     /// <summary>Number of distinct vault bundles paid this run.</summary>
     public static int PaidCount(RunState run) => run.VaultBundlesPaid.Count;
 

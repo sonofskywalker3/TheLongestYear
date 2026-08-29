@@ -631,8 +631,8 @@ namespace TheLongestYear.Loop
                     generatedSet, _itemSeasonPins, _bundleQuotas, ease, AvailabilityModel);
             }
 
-            // 11b. Kept bus (keep_bus_unlocked). Must follow the board write above: both the
-            //      engine write and step 1a zero every bundle slot and areasComplete.
+            // 11b. Kept bus (keep_bus_unlocked): the bus runs from day 1; the vault bundles stay
+            //      on the board and are paid like any other (Jeff, 2026-08-29).
             if (baseline.BusUnlocked)
                 RestoreKeptBus();
 
@@ -691,58 +691,21 @@ namespace TheLongestYear.Loop
 
         /// <summary>
         /// Restores the bus for a player who owns <see cref="VaultRules.KeepBusUnlockedId"/>
-        /// (Nexus bug, gazumbrado, 2026-08-29: 1,500 JP bought only the mod's gate counter; the
-        /// desert stayed locked and the four vault bundles were back on the board every loop).
-        /// Three things make the bus work in vanilla and all three are wiped by the reset:
-        /// the <c>ccVault</c> mail (BusStop.cs:78, Game1.isLocationAccessible "Desert", Pam's bus
-        /// schedule NPC.cs:1191), the Vault area's <c>areasComplete</c> flag (the refurbished room
-        /// and no Junimo note), and the vault bundles' per-slot completion (so the board stops
-        /// asking for them). Set all three and leave <c>BundleRewards</c> false: the kept bus IS
-        /// the reward, the vault's item rewards are not re-handed out each loop. The mod's own
-        /// <see cref="RunState.VaultBundlesPaid"/> counter is NOT filled here: RunController's
-        /// FinalizeReset calls <see cref="RunState.BeginNewRun"/> after this and clears it, then
-        /// refills it via <see cref="VaultRules.PrepayKeptBus"/> so the day-end reconcile does not
-        /// award JP for these pre-completed slots.
-        /// Must run after the board write (engine or vanilla) since that re-zeroes the slots.
+        /// (Nexus bug, gazumbrado, 2026-08-29: 1,500 JP bought only the mod's gate counter and the
+        /// desert stayed locked). Vanilla keys the bus on the <c>ccVault</c> mail alone (BusStop.cs:78,
+        /// Game1.isLocationAccessible "Desert", Pam's bus schedule NPC.cs:1191), and step 1a strips
+        /// it with the other completion flags; put it back. NOTHING else: the four vault bundles stay
+        /// on the board and must be paid like any other bundle (Jeff, 2026-08-29: completing the
+        /// bundles is the point of the game), so the Vault area stays incomplete, the slots stay
+        /// empty and the JP for paying them is still earned. Vanilla adds the completion mail only
+        /// when it is not already received (CommunityCenter.cs:757), so paying the vault later does
+        /// not replay the bus-repair scene.
         /// </summary>
         private void RestoreKeptBus()
         {
-            System.Collections.Generic.IReadOnlyList<int> vaultIndices =
-                TheLongestYear.Integration.VaultBundleMap.Indices();
-            if (vaultIndices.Count == 0)
-                vaultIndices = VaultRules.VaultIndices;
-
-            int slotsFlipped = 0;
-            var bundleDict = Game1.netWorldState.Value?.Bundles?.FieldDict;
-            if (bundleDict != null)
-            {
-                foreach (int idx in vaultIndices)
-                {
-                    if (!bundleDict.TryGetValue(idx, out var arr))
-                        continue;
-                    for (int i = 0; i < arr.Length; i++)
-                    {
-                        arr[i] = true;
-                        slotsFlipped++;
-                    }
-                }
-            }
-
             if (!Game1.MasterPlayer.mailReceived.Contains("ccVault"))
                 Game1.MasterPlayer.mailReceived.Add("ccVault");
-
-            CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
-            if (cc != null && CommunityCenter.AREA_Vault < cc.areasComplete.Count)
-            {
-                cc.areasComplete[CommunityCenter.AREA_Vault] = true;
-                if (cc.Map != null)
-                    cc.MakeMapModifications(force: true);
-            }
-
-            _monitor.Log(
-                $"Kept bus: ccVault mail restored, Vault area complete, {slotsFlipped} vault slot(s) " +
-                $"marked complete on bundles [{string.Join(", ", vaultIndices)}].",
-                LogLevel.Info);
+            _monitor.Log("Kept bus: ccVault mail restored (bus and desert open; vault bundles still on the board).", LogLevel.Info);
         }
 
         /// <summary>Locations whose vanilla progression code edits the loaded map in place instead
