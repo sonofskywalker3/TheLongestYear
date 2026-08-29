@@ -246,7 +246,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
             helper.ConsoleCommands.Add("tly_removehorse", "Remove the stable + horse, clear the carryover snapshot, and drop the Keep Horse upgrade so it's re-buyable (debug — clean slate for a Keep-Horse carryover test).", this.CmdRemoveHorse);
-            helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug).", this.ForceReset);
+            helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug). An optional seed loop pins the board the new run generates (same number tly_genbundles takes), so two runs can be played on the same board. Usage: tly_reset [seedLoop]", this.ForceReset);
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
@@ -269,7 +269,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
-            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] (default: the current board's seed loop)", this.CmdGenBundles);
+            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
@@ -1229,7 +1229,44 @@ namespace TheLongestYear
                 return;
             }
 
+            if (args.Length > 0)
+            {
+                if (!int.TryParse(args[0], out int seedLoop) || seedLoop < 0)
+                {
+                    this.Monitor.Log($"tly_reset: '{args[0]}' is not a seed loop. Usage: tly_reset [seedLoop]", LogLevel.Warn);
+                    return;
+                }
+                PinSeedLoopForNextReset(seedLoop);
+            }
+
             FullResetAndPresentOffer();
+        }
+
+        /// <summary>Debug: force the NEXT reset onto a chosen bundle seed loop, so two runs can
+        /// be played on the same board (same number <c>tly_genbundles</c> takes).
+        ///
+        /// The pin has to survive <see cref="BundleHold.ConsumeChoiceAtReset"/>, which otherwise
+        /// snaps BundleSeedLoop back to the post-bump CompletedResets for any reset that skipped
+        /// the Fail-night hold question, which is exactly the console path.  Stamping
+        /// HoldChoiceMadeForReset makes that call a no-op, so the pin stands; the pity trim/ease
+        /// that the same call would normally clear is cleared here instead, since a board that
+        /// carried a leftover trim would not match the same seed loop generated elsewhere.
+        /// ConsecutiveHolds is zeroed too: this is a debug pin, not a paid hold.</summary>
+        private void PinSeedLoopForNextReset(int seedLoop)
+        {
+            TheLongestYear.Core.MetaState state = _meta.State;
+            state.BundleSeedLoop = seedLoop;
+            state.ConsecutiveHolds = 0;
+            TheLongestYear.Core.SeasonPity.ClearBoardTrim(state);
+            TheLongestYear.Core.SeasonPity.ClearBoardEase(state);
+            state.HoldChoiceMadeForReset = true;
+            this.Monitor.Log(
+                $"tly_reset: pinned bundle seed loop {seedLoop} for this reset (pity trim/ease cleared, consecutive holds zeroed).",
+                LogLevel.Info);
+            if (TheLongestYear.Core.BundleSourceNames.IsVanilla(state.BundleSource))
+                this.Monitor.Log(
+                    "tly_reset: this save runs a vanilla board, which regenerates through loadForNewGame and never reads the seed loop, so the pin will not change the board.",
+                    LogLevel.Warn);
         }
 
         /// <summary>Debug: simulate a day-28 gate-miss reset (shrine-spend → reset → persist),
@@ -2973,14 +3010,32 @@ namespace TheLongestYear
         /// and diffs the two sets byte-for-byte). Mirrors <see cref="CmdClassify"/>'s design —
         /// locals only. Guarded exactly like tly_classify (requires a loaded save) because the
         /// seed basis is Game1.player.UniqueMultiplayerID, which doesn't exist at the title
-        /// screen.</summary>
+        /// screen.
+        ///
+        /// The optional mode argument (<c>custom</c> default, <c>standard</c>, <c>remixed</c>)
+        /// picks WHICH board is audited: the engine's own set, or the board vanilla would build
+        /// for the matching Advanced Options dropdown choice
+        /// (<see cref="TheLongestYear.Loop.BundleOptionPatch.Choice"/>). Both vanilla modes run
+        /// the exact same listing, classification, gate audit and determinism self-check, and
+        /// write nothing either.</summary>
         private void CmdGenBundles(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
 
-            int seedLoop = args.Length > 0 && int.TryParse(args[0], out int resets)
-                ? resets
-                : _meta.State.EffectiveBundleSeedLoop;
+            int seedLoop = _meta.State.EffectiveBundleSeedLoop;
+            var mode = TheLongestYear.Loop.BundleOptionPatch.Choice.TlyCustom;
+            foreach (string arg in args)
+            {
+                if (int.TryParse(arg, out int parsedLoop))
+                    seedLoop = parsedLoop;
+                else if (TheLongestYear.Loop.BundleOptionPatch.TryParseChoice(arg, out var parsedMode))
+                    mode = parsedMode;
+                else
+                {
+                    this.Monitor.Log($"tly_genbundles: unknown argument '{arg}'. Usage: tly_genbundles [seedLoop] [custom|standard|remixed]", LogLevel.Warn);
+                    return;
+                }
+            }
 
             // Same seed basis as ResolveRequirements/WorldResetService.PerformReset — see
             // ResolveRequirements' comment for why (Game1.uniqueIDForThisGame is time-based and
@@ -2990,6 +3045,12 @@ namespace TheLongestYear
 
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins = ParseItemSeasonPins();
             System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas = ParseBundleQuotas();
+
+            if (mode != TheLongestYear.Loop.BundleOptionPatch.Choice.TlyCustom)
+            {
+                GenBundlesVanilla(mode, seedLoop, seed, itemSeasonPins, bundleQuotas);
+                return;
+            }
 
             PityTrim trim = TheLongestYear.Loop.BundleEngine.TrimFor(_meta.State);
             // Diagnostics have to show what the loop actually runs under, so this uses the STAMPED
@@ -3002,13 +3063,66 @@ namespace TheLongestYear
             firstEngine.Availability = _availability;
             GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
-                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}), diagnostics only — nothing written.",
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only — nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
             var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             secondEngine.Availability = _availability;
             GeneratedBundleSet second = secondEngine.Generate(seed, trim);
+            string difference = FirstBundleSetDifference(first, second);
+            if (difference == null)
+                this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
+            else
+                this.Monitor.Log($"tly_genbundles: determinism ERROR — {difference}", LogLevel.Error);
+        }
+
+        /// <summary>The vanilla half of <see cref="CmdGenBundles"/>: build the board the GAME
+        /// would build for the given Advanced Options dropdown choice, then run it through the
+        /// same listing, classification, gate audit and determinism self-check the engine board
+        /// gets. Nothing is written: neither path touches BundleData or MetaState.
+        ///
+        /// Standard is just <c>Data/Bundles</c> (what <c>Game1.GenerateBundles(Default)</c>
+        /// hands to SetBundleData). Remixed runs the game's own <c>BundleGenerator</c> over
+        /// <c>Data/RandomBundles</c>, seeded with vanilla's own formula
+        /// (<c>CreateRandom(seed * 9.0)</c>) but off OUR per-loop seed rather than
+        /// <c>Game1.uniqueIDForThisGame</c>: a TLY reset re-seeds uniqueIDForThisGame from the
+        /// clock, so the game's own per-loop remix is not reproducible, while this is (and it
+        /// varies per seed loop, which is the point of the diagnostic).</summary>
+        private void GenBundlesVanilla(
+            TheLongestYear.Loop.BundleOptionPatch.Choice mode,
+            int seedLoop,
+            int seed,
+            System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins,
+            System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas)
+        {
+            bool remixed = mode == TheLongestYear.Loop.BundleOptionPatch.Choice.VanillaRemixed;
+            string label = remixed ? "remixed" : "standard";
+
+            System.Collections.Generic.IReadOnlyDictionary<string, string> firstData;
+            System.Collections.Generic.IReadOnlyDictionary<string, string> secondData;
+            try
+            {
+                firstData = remixed
+                    ? TheLongestYear.Loop.VanillaBundlePool.GenerateRemixedBundleData(seed)
+                    : TheLongestYear.Loop.VanillaBundlePool.LoadStandardBundleData();
+                secondData = remixed
+                    ? TheLongestYear.Loop.VanillaBundlePool.GenerateRemixedBundleData(seed)
+                    : TheLongestYear.Loop.VanillaBundlePool.LoadStandardBundleData();
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"tly_genbundles: could not build the vanilla {label} board ({ex.GetType().Name}: {ex.Message}).", LogLevel.Error);
+                return;
+            }
+
+            GeneratedBundleSet first = TheLongestYear.Loop.VanillaBundlePool.SetFromBundleData(firstData);
+            this.Monitor.Log(
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode {label}), diagnostics only — nothing written.",
+                LogLevel.Info);
+            LogGeneratedBundleSet(null, first, itemSeasonPins, bundleQuotas, $"vanilla slots ({label})");
+
+            GeneratedBundleSet second = TheLongestYear.Loop.VanillaBundlePool.SetFromBundleData(secondData);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -3023,12 +3137,22 @@ namespace TheLongestYear
         /// logged as a problem); any drop INSIDE a themed room is unexpected (the engine
         /// authored every bundle, so nothing themed should ever fail classification) and is
         /// called out at WARN with a per-room breakdown.</summary>
+        /// <param name="engine">The engine that produced the set, for its per-slot provenance.
+        /// Null for a vanilla board (no engine ran); then <paramref name="slotSourceOverride"/>
+        /// labels every slot line instead.</param>
+        /// <param name="slotSourceOverride">Fixed slot-source label, e.g.
+        /// "vanilla slots (remixed)". Null keeps the engine's per-bundle provenance.</param>
         private void LogGeneratedBundleSet(
             TheLongestYear.Loop.BundleEngine engine,
             GeneratedBundleSet set,
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins,
-            System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas)
+            System.Collections.Generic.IReadOnlyDictionary<string, int[]> bundleQuotas,
+            string slotSourceOverride = null)
         {
+            var derivedSeasonPins = engine?.LastDerivedSeasonPins
+                ?? (System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season>)
+                   new Dictionary<string, TheLongestYear.Core.Season>(StringComparer.Ordinal);
+
             foreach (var roomGroup in set.Bundles.GroupBy(b => b.Room).OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 this.Monitor.Log($"  {roomGroup.Key}:", LogLevel.Info);
@@ -3038,7 +3162,7 @@ namespace TheLongestYear
                     // exact Name match is sufficient here -- unlike Uniquify's " II"/" III"
                     // collision suffixes (which only ever apply to vanilla RandomBundles name
                     // collisions), an authored def's Name never gets suffixed.
-                    string authoredTag = TheLongestYear.Core.AuthoredBundleCatalog.All.Any(d => d.Name == spec.Name)
+                    string authoredTag = engine != null && TheLongestYear.Core.AuthoredBundleCatalog.All.Any(d => d.Name == spec.Name)
                         ? " [authored]"
                         : "";
                     this.Monitor.Log(
@@ -3052,7 +3176,9 @@ namespace TheLongestYear
                     // engine files it under None as well; it does NOT keep vanilla slots, and
                     // saying so made the "no non-money bundle keeps vanilla slots" audit unreadable.
                     string source;
-                    if (authoredTag.Length > 0)
+                    if (slotSourceOverride != null)
+                        source = slotSourceOverride;
+                    else if (authoredTag.Length > 0)
                         source = "authored slots";
                     else if (!engine.LastDomains.TryGetValue(spec.Index, out TheLongestYear.Core.DomainMatch m)
                         || m.Domain == TheLongestYear.Core.PoolDomain.None)
@@ -3093,10 +3219,11 @@ namespace TheLongestYear
                         this.Monitor.Log($"        slots: {string.Join(", ", slotNames)}", LogLevel.Info);
                 }
             }
-            this.Monitor.Log($"  derived season pins in effect: {engine.LastDerivedSeasonPins.Count}", LogLevel.Info);
+            this.Monitor.Log($"  derived season pins in effect: {derivedSeasonPins.Count}", LogLevel.Info);
 
-            IReadOnlyList<BundleRequirement> requirements = engine.BuildRequirements(
-                set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
+            IReadOnlyList<BundleRequirement> requirements = engine != null
+                ? engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability)
+                : set.BuildRequirements(itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
             int generated = set.Bundles.Count;
             int classified = requirements.Count;
             int skipped = generated - classified;
@@ -3116,10 +3243,10 @@ namespace TheLongestYear
                 };
                 this.Monitor.Log($"      gates {req.Name} ({req.Kind}): {gates}", LogLevel.Info);
             }
-            var auditPins = new Dictionary<string, TheLongestYear.Core.Season>(engine.LastDerivedSeasonPins, StringComparer.Ordinal);
+            var auditPins = new Dictionary<string, TheLongestYear.Core.Season>(derivedSeasonPins, StringComparer.Ordinal);
             foreach (var kv in itemSeasonPins)
                 auditPins[kv.Key] = kv.Value;
-            LogGateAudit(requirements, auditPins, "tly_genbundles", engine.LastVanillaOnlyRecipes);
+            LogGateAudit(requirements, auditPins, "tly_genbundles", engine?.LastVanillaOnlyRecipes);
 
             var themedSkipsByRoom = new System.Collections.Generic.Dictionary<string, int>(StringComparer.Ordinal);
             foreach (BundleSpec spec in set.Bundles)
@@ -3139,9 +3266,14 @@ namespace TheLongestYear
             if (themedSkipped > 0)
             {
                 string breakdown = string.Join(", ", themedSkipsByRoom.Select(kv => $"{kv.Key}: {kv.Value}"));
+                // A vanilla board can legitimately drop a themed bundle (category-only asks such
+                // as "any fish"), so that is reported, not flagged as a defect; only the engine's
+                // own board is expected to classify every themed bundle it authored.
                 this.Monitor.Log(
-                    $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms (unexpected — {breakdown}).",
-                    LogLevel.Warn);
+                    engine != null
+                        ? $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms (unexpected — {breakdown})."
+                        : $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms ({breakdown}).",
+                    engine != null ? LogLevel.Warn : LogLevel.Info);
             }
         }
 
