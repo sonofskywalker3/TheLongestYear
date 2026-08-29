@@ -172,6 +172,12 @@ public sealed class GameplayConfig
     /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
     public bool EnableThemeReroll { get; set; } = false;
 
+    /// <summary>Better Start (Nexus 32131) mails Robin's starter gift (chests, wood, stone, coal,
+    /// seeds, 1,500g) through a one-shot trigger action. The reset now clears the "already fired"
+    /// record so the gift returns every loop, like a fresh save would get it. Off keeps that record,
+    /// so the gift arrives once per save. See <see cref="TriggerActionResetRules"/>.</summary>
+    public bool ResendBetterStartGift { get; set; } = true;
+
     /// <summary>Rule B (activity-themes spec 2026-08-28): how many weekly goals may be FILLER
     /// (open lines the day-28 gate does not demand this season) per season, indexed
     /// Spring..Winter. Since the even-year build (Jeff, 2026-08-28: the floor only stops an item

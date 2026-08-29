@@ -461,7 +461,10 @@ namespace TheLongestYear
             _ccUnlock.Apply();
             _mountainUnlock = new MountainUnlock(this.Monitor);
             _mountainUnlock.Apply();
-            var farmerReset = new FarmerReset(this.Monitor);
+            var farmerReset = new FarmerReset(this.Monitor)
+            {
+                ResendBetterStartGift = () => _config.ResendBetterStartGift,
+            };
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
             JunimoStashService.SetTextureLoader(
@@ -1551,6 +1554,12 @@ namespace TheLongestYear
                 setValue: v => { _config.LimitTravelingCartStock = v; CartSlotLimitPatch.Enabled = v; },
                 name: () => Strings.Get("gmcm.cart-limit.name"),
                 tooltip: () => Strings.Get("gmcm.cart-limit.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.ResendBetterStartGift,
+                setValue: v => _config.ResendBetterStartGift = v,
+                name: () => Strings.Get("gmcm.resend-better-start.name"),
+                tooltip: () => Strings.Get("gmcm.resend-better-start.tooltip"));
 
             gmcm.AddTextOption(this.ModManifest,
                 // One setting, three choices. A config written before this change says the legacy
