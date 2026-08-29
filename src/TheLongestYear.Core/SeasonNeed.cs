@@ -5,13 +5,12 @@ namespace TheLongestYear.Core;
 
 /// <summary>How many more lines a bundle may be asked for by the weekly goals in a season.
 ///
-/// Jeff's rule (2026-08-28): the floor only stops an item showing up too early; nothing forces
-/// one to show up. So a reachable item may be a goal whenever the board still needs it, but the
-/// goals may not empty the board ahead of the gates either (sim H: a goal-completing player
-/// reached Winter with a dozen lines left), nor go quiet once a season's share is in (sim L:
-/// weeks 3 and 4 asked for nothing). The bound is half a season ahead: by the end of season s a
-/// bundle may be asked for what its gate demands by s plus half of what it demands in s + 1.
-/// Winter's demand is the whole bundle, so Winter may ask for everything left.</summary>
+/// Jeff's rule (2026-08-28): goals follow the gate exactly, no look-ahead. A bundle may be
+/// asked for only what the current season's gate already demands (Percentage: the cumulative
+/// ramp entry for this season; PerItem: the pins due by now, plus every unpinned ingredient once
+/// Winter arrives, since Winter's gate is the whole bundle). A player who is ahead of the gate
+/// sees quiet cards until the next season opens more of the bundle up; that is by design, not a
+/// bug (the earlier half-season look-ahead is retired).</summary>
 public static class SeasonNeed
 {
     public static int For(BundleRequirement requirement, Season season, int completed)
@@ -22,20 +21,14 @@ public static class SeasonNeed
         int allowed = required;
         if (requirement.Kind == BundleKind.Percentage && requirement.CumulativeRequiredBySeason != null)
         {
-            var ramp = requirement.CumulativeRequiredBySeason;
-            int now = ramp[s];
-            int next = s + 1 < ramp.Count ? ramp[s + 1] : required;
-            allowed = Math.Min(required, now + HalfUp(next - now));
+            allowed = Math.Min(required, requirement.CumulativeRequiredBySeason[s]);
         }
         else if (requirement.Kind == BundleKind.PerItem && requirement.ItemSeasonPins != null)
         {
-            int now = requirement.ItemSeasonPins.Count(p => (int)p.Value <= s);
-            int next = requirement.ItemSeasonPins.Count(p => (int)p.Value == s + 1);
+            int due = requirement.ItemSeasonPins.Count(p => (int)p.Value <= s);
             int unpinned = requirement.Ingredients.Count(id => !requirement.ItemSeasonPins.ContainsKey(id));
-            allowed = Math.Min(required, now + HalfUp(next) + (s == (int)Season.Winter ? unpinned : 0));
+            allowed = Math.Min(required, due + (s == (int)Season.Winter ? unpinned : 0));
         }
         return Math.Max(0, allowed - Math.Max(0, completed));
     }
-
-    private static int HalfUp(int n) => (Math.Max(0, n) + 1) / 2;
 }

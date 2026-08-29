@@ -27,15 +27,30 @@ public class SelectionServiceTests
     }
 
     [Fact]
-    public void Zero_askable_everywhere_reproduces_the_room_theme_offer()
+    public void Zero_askable_everywhere_offers_nothing()
     {
-        var activity = new HashSet<Theme>(ThemeDomains.ActivityThemes);
         for (int seed = 1; seed <= 30; seed++)
         {
-            var withRules = SelectionService.OfferForWeek(seed, 3, System.Array.Empty<Theme>(), _ => 0);
-            var legacyRooms = SelectionService.OfferForWeek(seed, 3, activity);   // legacy path, activity themes excluded
-            Assert.Equal(legacyRooms, withRules);
+            var offer = SelectionService.OfferForWeek(seed, 3, System.Array.Empty<Theme>(), _ => 0);
+            Assert.Empty(offer);
         }
+    }
+
+    [Fact]
+    public void The_offer_never_pads_with_a_theme_that_can_ask_nothing()
+    {
+        int Askable(Theme t) => t == Theme.Fishing ? 3 : 0;
+        var offer = SelectionService.OfferForWeek(1, 1, System.Array.Empty<Theme>(), Askable);
+        Assert.Equal(new[] { Theme.Fishing }, offer);
+    }
+
+    [Fact]
+    public void A_theme_with_one_goal_may_pad_the_second_card()
+    {
+        int Askable(Theme t) => t == Theme.Fishing ? 3 : t == Theme.Foraging ? 1 : 0;
+        var offer = SelectionService.OfferForWeek(1, 1, System.Array.Empty<Theme>(), Askable);
+        Assert.Equal(2, offer.Count);
+        Assert.Contains(Theme.Foraging, offer);
     }
 
     [Fact]
@@ -49,9 +64,10 @@ public class SelectionServiceTests
     }
 
     [Fact]
-    public void A_single_qualified_theme_is_padded_from_room_themes()
+    public void A_single_qualified_theme_is_padded_from_room_themes_that_can_ask_something()
     {
-        var offer = SelectionService.OfferForWeek(3, 6, new[] { Theme.Farming }, t => t == Theme.Artisan ? 4 : 0);
+        int Askable(Theme t) => t == Theme.Artisan ? 4 : t == Theme.Fishing ? 1 : 0;
+        var offer = SelectionService.OfferForWeek(3, 6, new[] { Theme.Farming }, Askable);
         Assert.Equal(2, offer.Count);
         Assert.Contains(Theme.Artisan, offer);
         Assert.DoesNotContain(Theme.Farming, offer);
@@ -59,12 +75,27 @@ public class SelectionServiceTests
     }
 
     [Fact]
+    public void A_single_qualified_theme_with_nothing_to_pad_offers_one_card()
+    {
+        var offer = SelectionService.OfferForWeek(3, 6, new[] { Theme.Farming }, t => t == Theme.Artisan ? 4 : 0);
+        Assert.Equal(new[] { Theme.Artisan }, offer);
+    }
+
+    [Fact]
     public void Candidates_are_the_qualified_themes_or_the_room_themes_when_short()
     {
         Assert.Equal(new[] { Theme.Farming, Theme.Artisan }, SelectionService.Candidates(System.Array.Empty<Theme>(), Askable));
         var padded = SelectionService.Candidates(new[] { Theme.Farming }, Askable);
+        Assert.Equal(new[] { Theme.Artisan }, padded);
+    }
+
+    [Fact]
+    public void Candidates_pad_with_room_themes_that_can_ask_at_least_one()
+    {
+        int Askable(Theme t) => t == Theme.Artisan ? 5 : t == Theme.Mining ? 1 : 0;
+        var padded = SelectionService.Candidates(new[] { Theme.Farming }, Askable);
         Assert.Contains(Theme.Artisan, padded);
-        Assert.Contains(Theme.Fishing, padded);
+        Assert.Contains(Theme.Mining, padded);
         Assert.DoesNotContain(Theme.Farming, padded);
     }
     [Fact]
