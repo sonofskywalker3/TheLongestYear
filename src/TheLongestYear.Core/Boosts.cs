@@ -31,7 +31,7 @@ public static class BoostCatalog
 }
 
 /// <summary>Validates and applies a boost purchase against banked JP and the per-run flags on
-/// <see cref="RunState"/>. Core never reads live game state — callers supply the current
+/// <see cref="RunState"/>. Core never reads live game state; callers supply the current
 /// week-of-year explicitly.</summary>
 public static class BoostPurchase
 {
