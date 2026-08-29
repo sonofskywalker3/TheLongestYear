@@ -24,6 +24,12 @@ namespace TheLongestYear.UI
         /// because this menu is opened from a Harmony patch with no instance context.</summary>
         private static System.Func<double> _priceFactor;
 
+        /// <summary>The active run and the boost-purchase callback behind the board's Boosts
+        /// section. Same static-hook idiom as <see cref="_state"/>. Unattached, the menu simply
+        /// shows no Boosts section.</summary>
+        private static System.Func<RunState> _run;
+        private static System.Func<BoostId, BoostPurchase.Result> _buyBoost;
+
         public PlanningShrineService(IMonitor monitor, IModHelper helper)
         {
             _monitor = monitor;
@@ -33,6 +39,14 @@ namespace TheLongestYear.UI
         public void AttachState(System.Func<MetaState> state) => _state = state;
 
         public void AttachPriceFactor(System.Func<double> priceFactor) => _priceFactor = priceFactor;
+
+        /// <summary>Wire the Boosts section: the live run (for what is already active) and the
+        /// mod-side purchase callback (JP spend, sound, HUD, logging).</summary>
+        public void AttachBoosts(System.Func<RunState> run, System.Func<BoostId, BoostPurchase.Result> buyBoost)
+        {
+            _run = run;
+            _buyBoost = buyBoost;
+        }
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
@@ -117,7 +131,8 @@ namespace TheLongestYear.UI
                     }
                 }
 
-                Game1.activeClickableMenu = new ShrinePreviewMenu(state, _priceFactor?.Invoke() ?? 1.0);
+                Game1.activeClickableMenu = new ShrinePreviewMenu(
+                    state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
                 __result = true;
                 return false;
             }

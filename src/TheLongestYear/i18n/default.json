@@ -343,6 +343,17 @@
     "menu.shrine-preview.owned-none": "none",
     "menu.shrine-preview.cost": "{{cost}} JP",
 
+    // -- shrine boosts (bought on the planning board, spent this loop) ---------------
+    "shrine.boosts.header": "Boosts (this loop)",
+    "shrine.boosts.buy": "Buy",
+    "shrine.boosts.active": "Active",
+    "shrine.boosts.not-available": "Not now",
+    "boost.not-enough-jp": "That boost needs {{cost}} JP. You have {{have}}.",
+    "boost.year_two_seeds.name": "Year-Two Seeds",
+    "boost.year_two_seeds.desc": "This week, Mixed Seeds you plant have a 5% chance to grow the season's year-two crop: Garlic in Spring, Red Cabbage in Summer, Artichoke in Fall.",
+    "boost.sneak_peek.name": "Sneak Peek",
+    "boost.sneak_peek.desc": "This season, the Queen of Sauce airs next year's episode each Sunday, so its recipes are yours a year early.",
+
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",

@@ -27,6 +27,7 @@ namespace TheLongestYear
         private WorldResetService _reset;
         private RunController _runController;
         private UpgradePurchaseService _purchases;
+        private BoostPurchaseService _boostPurchases;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -275,6 +276,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
+            helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost for the current week (debug — the same purchase the shrine's Buy button makes). Usage: tly_boost <yeartwoseeds|sneakpeek>", this.CmdBoost);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
@@ -584,6 +586,8 @@ namespace TheLongestYear
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
+            _boostPurchases = new BoostPurchaseService(this.Monitor, _meta);
+            _planningShrine.AttachBoosts(() => _meta.Run, id => _boostPurchases.TryBuy(id));
             TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
@@ -1768,6 +1772,7 @@ namespace TheLongestYear
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
+                case "tly_boost": this.CmdBoost(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
                 case "tly_dejavu": this.CmdDejaVu(command, args); break;
@@ -3354,6 +3359,28 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_buyupgrade <id>", LogLevel.Warn); return; }
             _purchases?.TryPurchase(args[0]);
+        }
+
+        /// <summary>Debug: run the shrine board's boost purchase without clicking it, so the
+        /// headless bridge can exercise the same callback the Buy button uses.
+        /// Usage: tly_boost &lt;yeartwoseeds|sneakpeek&gt;</summary>
+        private void CmdBoost(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_boost <yeartwoseeds|sneakpeek>", LogLevel.Warn); return; }
+
+            BoostId id;
+            switch (args[0].ToLowerInvariant())
+            {
+                case "yeartwoseeds": id = BoostId.YearTwoSeeds; break;
+                case "sneakpeek": id = BoostId.SneakPeek; break;
+                default:
+                    this.Monitor.Log($"tly_boost: unknown boost '{args[0]}'. Use yeartwoseeds or sneakpeek.", LogLevel.Warn);
+                    return;
+            }
+
+            if (_boostPurchases == null) { this.Monitor.Log("tly_boost: boost service not wired yet.", LogLevel.Warn); return; }
+            _boostPurchases.TryBuy(id);
         }
 
         private void CmdDejaVu(string command, string[] args)

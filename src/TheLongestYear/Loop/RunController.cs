@@ -1267,7 +1267,8 @@ namespace TheLongestYear.Loop
                 $"Run {Run.RunNumber}: {Run.Season} day {Run.DayOfMonth} (week {Run.WeekOfYear}). " +
                 $"Selection={Run.CurrentSelection?.ToString() ?? "none"}, " +
                 $"selectedThisMonth=[{string.Join(",", Run.SelectedThemesThisMonth)}], " +
-                $"donated={Run.DonatedItemIds.Count}, JP banked={_store.State.JunimoPoints}.",
+                $"donated={Run.DonatedItemIds.Count}, JP banked={_store.State.JunimoPoints}, " +
+                $"yearTwoSeedsWeek={Run.YearTwoSeedsWeek}, sneakPeekSeason={Run.SneakPeekSeason}.",
                 LogLevel.Info);
         }
 
