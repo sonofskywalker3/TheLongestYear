@@ -76,7 +76,11 @@ cross_day28() {
   sleep 4
   show "$n" "Month cleared|Season checkpoint|gate|FailReset|Loop reset complete|tly_skipscene|Opened planning hub|JP|WARN|ERROR"
 }
-askable_table() {  # 16 rows: Foraging/Farming/Fishing/Mining/Mixed/Spelunking/Artisan/Kitchen
+# One row per week: the eight per-theme askable counts, in tly_themepool's order.
+# The 8 below is the number of themes in src/TheLongestYear.Core/Theme.cs (Foraging/Farming/Fishing/Mining/Mixed/
+# Spelunking/Artisan/Kitchen). If a theme is ever added or removed there, change it here too or
+# this parser silently stops emitting rows.
+askable_table() {
   tail -n +"$START" "$LOG" | sed -E 's/^\[[^]]*\] //' | awk '
     /^tly_themepool: / { season=$2; wk=$4; gsub(/,/, "", wk); n=0; vals=""; next }
     /askable [0-9]+/ && season != "" {
