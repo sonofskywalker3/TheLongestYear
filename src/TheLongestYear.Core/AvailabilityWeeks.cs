@@ -77,6 +77,20 @@ public static class AvailabilityWeeks
             ["(O)CaveJelly"] = (4, Season.Spring),  // Cave Jelly
         };
 
+    /// <summary>Legendary fish pacing weeks (Jeff, spec 2026-08-28-obtainable-board section 3):
+    /// Legend rains in Spring, Crimsonfish Summer, Angler Fall, Glacierfish Winter, Mutant Carp
+    /// waits on the sewer's Fishing 3 gate. Applied as a floor over the season/location week so
+    /// the hard week is unchanged.</summary>
+    public static readonly IReadOnlyDictionary<string, int> LegendaryPacingWeeks =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["(O)163"] = 4,   // Legend
+            ["(O)159"] = 5,   // Crimsonfish
+            ["(O)160"] = 9,   // Angler
+            ["(O)775"] = 13,  // Glacierfish
+            ["(O)682"] = 7,   // Mutant Carp
+        };
+
     /// <summary>Things a shop sells from day 1 (Pierre's staples, the Saloon's menu): week 1.</summary>
     public static readonly IReadOnlyDictionary<string, string> ShopStaples =
         new Dictionary<string, string>(StringComparer.Ordinal)

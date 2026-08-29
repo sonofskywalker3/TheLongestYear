@@ -44,6 +44,8 @@ public static class FishAvailability
             floor = mineFish.Gate > AvailabilityWeeks.SeasonOf(week) ? mineFish.Gate : AvailabilityWeeks.SeasonOf(week);
             hardWeek = Math.Max(hardWeek, mineFish.Week);
         }
+        if (AvailabilityWeeks.LegendaryPacingWeeks.TryGetValue(item.ItemId, out int legendary))
+            week = Math.Max(week, legendary);
 
         string locationNote = locationWeek > 1
             ? $", gated by location ({string.Join(", ", item.Locations)})"

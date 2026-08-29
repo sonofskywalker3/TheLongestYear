@@ -7,8 +7,9 @@ namespace TheLongestYear.Core;
 /// <summary>Pure pool derivation: neutral Raw* records in, vetted/weighted/ordered
 /// ItemPools out. Vetting (spec modded-content rules): the config-extensible
 /// exclude-list, plus structural signals from the item's OWN data — Type "Quest",
-/// ExcludeFromRandomSale, the fish_legendary context tag, and items with no
-/// Data/Objects entry at all. Weights: any id without a mod prefix (SMAPI mod items are
+/// ExcludeFromRandomSale, and items with no Data/Objects entry at all (a curated
+/// PoolAdditions.VetExceptions id skips the ExcludeFromRandomSale check). Weights: any id
+/// without a mod prefix (SMAPI mod items are
 /// Author.Mod_Item) = vanilla weight, prefixed = conservative modded weight,
 /// RareRollWeights override both. All output lists are
 /// ordinal-ordered by ItemId — seeded sampling must be deterministic, and dictionary
@@ -18,7 +19,6 @@ public static class ItemPoolBuilder
     private const string QuestType = "Quest";
     private const string FishType = "Fish";
     private const string ArchType = "Arch";
-    private const string LegendaryFishTag = "fish_legendary";
     private const int MetalCategory = -15;
     private const int ArtisanCategory = -26;
     private const int MonsterLootCategory = -28;
@@ -319,6 +319,23 @@ public static class ItemPoolBuilder
             else
                 fish.Add(item);
         }
+
+        // Curated additions: the three mine fish and five legendaries the game data never rows
+        // into a spawn table (MineShaft.getFish hard-codes area/floor; legendaries are
+        // CatchLimit-1 rod events). Only join when Data/Objects actually knows the id (a mod could
+        // remove it) and it is not already present from a spawn row.
+        var seenIds = new HashSet<string>(seasonsById.Keys, StringComparer.Ordinal);
+        foreach (PoolAddition addition in PoolAdditions.Fish)
+        {
+            if (!seenIds.Add(addition.ItemId))
+                continue;
+            if (!objects.ContainsKey(Unqualify(addition.ItemId)))
+                continue;
+            PoolItem item = MakeItem(addition.ItemId, objects, tuning, addition.Seasons, addition.Locations)
+                with { Weight = addition.Weight };
+            fish.Add(item);
+        }
+
         return (Finish(fish), Finish(crabPot));
     }
 
@@ -609,12 +626,13 @@ public static class ItemPoolBuilder
             return false;
         if (string.Equals(obj.Type, QuestType, StringComparison.OrdinalIgnoreCase))
             return false;
-        if (obj.ContextTags != null && obj.ContextTags.Contains(LegendaryFishTag))
-            return false;
         return true;
     }
 
-    /// <summary>Structural + configured vetting. False = never offer this item.</summary>
+    /// <summary>Structural + configured vetting. False = never offer this item. A
+    /// PoolAdditions.VetExceptions id skips the ExcludeFromRandomSale check: those are the
+    /// curated mine fish and legendaries, wanted despite the flag (spec 2026-08-28-obtainable-board,
+    /// section 3).</summary>
     private static bool Vets(
         string bareId, string qualifiedId,
         IReadOnlyDictionary<string, RawObjectEntry> objects, HashSet<string> excluded)
@@ -625,9 +643,7 @@ public static class ItemPoolBuilder
             return false; // unknown to Data/Objects — can't price/vet it, drop it
         if (string.Equals(obj.Type, QuestType, StringComparison.OrdinalIgnoreCase))
             return false;
-        if (obj.ExcludeFromRandomSale)
-            return false;
-        if (obj.ContextTags != null && obj.ContextTags.Contains(LegendaryFishTag))
+        if (obj.ExcludeFromRandomSale && !PoolAdditions.VetExceptions.Contains(qualifiedId))
             return false;
         return true;
     }
