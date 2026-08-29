@@ -18,9 +18,9 @@ namespace TheLongestYear.Core;
 /// </para>
 ///
 /// <para>
-/// Id derivation matches <c>BundleCatalogBuilder</c> exactly so the produced ids line up with the
-/// gate's <c>BundleRequirement.Ingredients</c>: non-item rooms (Vault / Abandoned Joja) are skipped,
-/// category ingredients are skipped (the gate skips them too), and ids are normalized via
+/// Id derivation matches <c>BundleClassifier</c> exactly so the produced slots line up with the
+/// gate's <c>BundleRequirement.Slots</c>: non-item rooms (Vault / Abandoned Joja) are skipped,
+/// category ingredients are skipped (the gate skips them too) without renumbering, and ids are normalized via
 /// <see cref="BundleParsing.NormalizeItemId"/>. Crucially, slots are walked positionally against the
 /// completion array, so skipping a category slot does NOT shift the concrete slots' ids.
 /// </para>
@@ -28,11 +28,11 @@ namespace TheLongestYear.Core;
 public static class CcDonationReconciler
 {
     /// <summary>
-    /// Yield the normalized concrete ingredient id of every completed slot across all themed
-    /// (item-room) bundles. <paramref name="slotCompletionForIndex"/> maps a bundle's global index
+    /// Yield the (bundle index, ingredient index, normalized id) of every completed concrete slot
+    /// across all themed (item-room) bundles, ready for the per-slot ledger. <paramref name="slotCompletionForIndex"/> maps a bundle's global index
     /// to its per-slot completion array (1:1 with the bundle's ingredient list), or null if absent.
     /// </summary>
-    public static IEnumerable<string> DonatedConcreteIds(
+    public static IEnumerable<DonatedSlot> DonatedSlots(
         IReadOnlyDictionary<string, string>? bundleData,
         Func<int, bool[]?>? slotCompletionForIndex)
     {
@@ -57,7 +57,12 @@ public static class CcDonationReconciler
                 string itemRef = ingredients[i].ItemRef;
                 if (BundleParsing.IsCategoryRef(itemRef))
                     continue; // category slot — not represented in the gate's ingredient ids.
-                yield return BundleParsing.NormalizeItemId(itemRef);
+                yield return new DonatedSlot
+                {
+                    BundleIndex = bundle.Index,
+                    IngredientIndex = i,
+                    ItemId = BundleParsing.NormalizeItemId(itemRef),
+                };
             }
         }
     }
