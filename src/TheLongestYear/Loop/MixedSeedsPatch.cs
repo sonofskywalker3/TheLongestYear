@@ -82,7 +82,12 @@ namespace TheLongestYear.Loop
 
             if (BoostChecker.YearTwoSeedsActive?.Invoke() == true)
             {
-                string seed = TheLongestYear.Core.YearTwoSeeds.SeedIdFor((TheLongestYear.Core.Season)(int)location.GetSeason());
+                // SeasonExtensions.FromMonthIndex, not a raw cast: it range-checks the month index,
+                // so a season value the Core enum does not cover fails loudly instead of rolling
+                // into Spring's seed.
+                TheLongestYear.Core.Season season =
+                    TheLongestYear.Core.SeasonExtensions.FromMonthIndex((int)location.GetSeason());
+                string seed = TheLongestYear.Core.YearTwoSeeds.SeedIdFor(season);
                 if (seed != null && Game1.random.NextDouble() < TheLongestYear.Core.YearTwoSeeds.Chance)
                 {
                     __result = seed;

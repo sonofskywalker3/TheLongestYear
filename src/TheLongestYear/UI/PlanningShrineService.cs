@@ -7,10 +7,11 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.UI
 {
-    /// <summary>The in-world, view-only planning shrine. Registered as custom furniture (so it has
-    /// the shrine sprite) and auto-placed on the Farm ~5 tiles left of the stash each load, so it's
-    /// present from loop 1 and home-anchored (re-placed even if moved). Interacting opens the
-    /// read-only <see cref="ShrinePreviewMenu"/> — no JP is spent here.</summary>
+    /// <summary>The in-world planning shrine. Registered as custom furniture (so it has the shrine
+    /// sprite) and auto-placed on the Farm ~5 tiles left of the stash each load, so it's present
+    /// from loop 1 and home-anchored (re-placed even if moved). Interacting opens
+    /// <see cref="ShrinePreviewMenu"/>: the upgrade list there is a preview only (keeps are bought
+    /// at a loop boundary), but its Boosts section does spend banked JP mid-run.</summary>
     internal sealed class PlanningShrineService
     {
         internal const string ShrineId = "sonofskywalker3.TheLongestYear_PlanningShrine";

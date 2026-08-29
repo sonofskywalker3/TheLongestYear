@@ -28,7 +28,6 @@ public static class SlotPoolBuilder
 {
     private const string YearTwoSeedsRouteTag = "Boost: Year-Two Seeds";
     private const string SneakPeekRouteTag = "Boost: Sneak Peek";
-    private const string SneakPeekBasisMarker = "Sneak Peek";
 
     public static IReadOnlyList<BonusSlot> OpenSlotsForTheme(
         IReadOnlyDictionary<string, string> bundleData,
@@ -121,12 +120,14 @@ public static class SlotPoolBuilder
     /// <summary>A goal's Boost route (spec 2026-08-28-obtainable-board-4-boosts), or null when
     /// the item follows vanilla pacing. A year-2 crop always routes through Year-Two Seeds (or the
     /// permanent buy); a dish routes through Sneak Peek when its availability basis (routeTagOf)
-    /// names that route.</summary>
+    /// carries <see cref="Availability.CookedDishAvailability.SneakPeekBasisMarker"/>, the one
+    /// place that note's text is defined.</summary>
     private static string? RouteTagFor(string id, Func<string, string?>? routeTagOf)
     {
         if (PoolAdditions.YearTwoCropIds.Contains(id)) return YearTwoSeedsRouteTag;
         string? basis = routeTagOf?.Invoke(id);
-        return basis != null && basis.Contains(SneakPeekBasisMarker, StringComparison.Ordinal)
+        return basis != null
+               && basis.Contains(Availability.CookedDishAvailability.SneakPeekBasisMarker, StringComparison.Ordinal)
             ? SneakPeekRouteTag
             : null;
     }

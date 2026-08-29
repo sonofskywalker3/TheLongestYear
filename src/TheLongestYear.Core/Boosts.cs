@@ -6,12 +6,16 @@ namespace TheLongestYear.Core;
 /// current run rather than a permanent meta-upgrade. Plan 04 spec 2026-08-28-obtainable-board-4-boosts.</summary>
 public enum BoostId
 {
-    /// <summary>Guarantees a bonus item roll can substitute the following-year seed for the
-    /// current season, for the week it's bought (see <see cref="YearTwoSeeds"/>).</summary>
+    /// <summary>For the single week it is bought in, every Mixed Seeds roll has a
+    /// <see cref="YearTwoSeeds.Chance"/> chance of yielding the season's following-year seed
+    /// instead (Garlic, Red Cabbage, Artichoke). Cannot be bought in Winter: there is no
+    /// following-year seed for it (see <see cref="YearTwoSeeds.SeedIdFor"/>).</summary>
     YearTwoSeeds,
 
-    /// <summary>Reveals the upcoming week's bonus items/theme early, for the rest of the
-    /// current season.</summary>
+    /// <summary>For the rest of the season it is bought in, a non-Wednesday Queen of Sauce watch
+    /// airs the YEAR-2 episode for the week as well as the year-1 one, so both recipes are
+    /// learned and every year-2 dish has a year-1 route (QueenOfSaucePatch). It reveals nothing
+    /// about future boards.</summary>
     SneakPeek
 }
 
@@ -43,11 +47,12 @@ public static class BoostPurchase
         NotAvailable
     }
 
-    /// <summary>Attempt to buy <paramref name="id"/> for the given week-of-year (1-16). Checks
-    /// availability (Year-Two Seeds cannot be bought in Winter), then whether the boost is
-    /// already active for this week/season, then whether banked JP covers the cost; only on
-    /// success does it spend JP and set the run-state flag.</summary>
-    public static Result TryBuy(MetaState meta, RunState run, BoostId id, int weekOfYear)
+    /// <summary>What <see cref="TryBuy"/> would return right now, WITHOUT mutating anything.
+    /// Checks availability (Year-Two Seeds cannot be bought in Winter), then whether the boost is
+    /// already active for this week/season, then whether banked JP covers the cost. TryBuy calls
+    /// this first and the shrine preview renders each boost row from it, so the button a player
+    /// sees and the outcome they get can never disagree (fix round 2, 2026-08-29).</summary>
+    public static Result StateOf(MetaState meta, RunState run, BoostId id, int weekOfYear)
     {
         BoostDefinition definition = Find(id);
         Season season = AvailabilityWeeks.SeasonOf(weekOfYear);
@@ -64,9 +69,20 @@ public static class BoostPurchase
         if (alreadyActive)
             return Result.AlreadyActive;
 
-        if (meta.JunimoPoints < definition.Cost)
-            return Result.NotEnoughJp;
+        return meta.JunimoPoints < definition.Cost ? Result.NotEnoughJp : Result.Success;
+    }
 
+    /// <summary>Attempt to buy <paramref name="id"/> for the given week-of-year (1-16). Asks
+    /// <see cref="StateOf"/> whether the purchase is legal; only when it answers Success does it
+    /// spend JP and set the run-state flag.</summary>
+    public static Result TryBuy(MetaState meta, RunState run, BoostId id, int weekOfYear)
+    {
+        Result state = StateOf(meta, run, id, weekOfYear);
+        if (state != Result.Success)
+            return state;
+
+        BoostDefinition definition = Find(id);
+        Season season = AvailabilityWeeks.SeasonOf(weekOfYear);
         meta.JunimoPoints -= definition.Cost;
         switch (id)
         {
@@ -98,8 +114,11 @@ public static class BoostState
     /// <summary>True only for the exact week-of-year the boost was bought for.</summary>
     public static bool YearTwoSeedsActive(RunState run, int weekOfYear) => run.YearTwoSeedsWeek == weekOfYear;
 
-    /// <summary>True for the rest of the season the boost was bought in.</summary>
-    public static bool SneakPeekActive(RunState run, Season season) => run.SneakPeekSeason == (int)season;
+    /// <summary>True for the rest of the season the boost was bought in. The >= 0 guard is not
+    /// redundant: it pins "not bought this run" (-1) to false whatever a future Season value or a
+    /// hand-edited save holds.</summary>
+    public static bool SneakPeekActive(RunState run, Season season)
+        => run.SneakPeekSeason >= 0 && run.SneakPeekSeason == (int)season;
 }
 
 /// <summary>The Year-Two Seeds boost's own rules: which seed id it can grant per season and the

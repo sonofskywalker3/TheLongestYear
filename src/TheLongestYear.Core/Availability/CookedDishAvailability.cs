@@ -37,8 +37,11 @@ public static class CookedDishAvailability
         return SpecialUnlockEffort;
     }
 
+    /// <param name="step">Required, no default: the difficulty step decides whether the year-2
+    /// Queen of Sauce episodes are a route at all (Easy has no Sneak Peek Boost), so a caller that
+    /// silently fell back to Normal would place dishes the board cannot deliver.</param>
     public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf, bool hasKitchen,
-        Func<string, int?>? weekOf = null, DifficultyStep step = DifficultyStep.Normal)
+        Func<string, int?>? weekOf, DifficultyStep step)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
@@ -110,7 +113,7 @@ public static class CookedDishAvailability
     /// (spec 2026-08-28-obtainable-board-4-boosts) lets a player watch it early: on Normal and
     /// above it is placed at week `episode - 16` (the same week its year-1 counterpart would air);
     /// on Easy, without the Boost route, it stays unplaced.</summary>
-    public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step = DifficultyStep.Normal)
+    public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
         => ComputeRecipeWeek(recipe, data, step).Week;
 
     /// <summary>A recipe's placed week, plus the Sneak Peek Boost basis note when (and only when)
@@ -121,7 +124,11 @@ public static class CookedDishAvailability
     /// is strictly earlier than it).</summary>
     private readonly record struct RecipeWeekResult(int? Week, string? Note);
 
-    private const string SneakPeekNote = "year-2 episode, Sneak Peek Boost";
+    /// <summary>The exact basis note a dish carries when the Sneak Peek Boost's year-2 episode is
+    /// the route that won its week. The one source of truth: SlotPoolBuilder matches a goal's
+    /// Boost route tag on this const, and the tests assert on it, so the note text and the route
+    /// detection can never drift apart (fix round 2, 2026-08-29).</summary>
+    public const string SneakPeekBasisMarker = "year-2 episode, Sneak Peek Boost";
 
     private static RecipeWeekResult ComputeRecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
     {
@@ -149,7 +156,7 @@ public static class CookedDishAvailability
             // The note applies only when the year-2 TV week is the winning route: no price week
             // at all, or a price week no earlier than it. A cheaper shop price means the player
             // can simply buy the recipe, so it is not a Boost goal.
-            string? note = yearTwoRoute && (priceWeek == null || tvWeek!.Value < priceWeek.Value) ? SneakPeekNote : null;
+            string? note = yearTwoRoute && (priceWeek == null || tvWeek!.Value < priceWeek.Value) ? SneakPeekBasisMarker : null;
             return new RecipeWeekResult(Min(tvWeek, priceWeek), note);
         }
         return new RecipeWeekResult(Min(null, priceWeek), null);
