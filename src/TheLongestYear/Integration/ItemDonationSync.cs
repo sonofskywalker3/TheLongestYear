@@ -1,47 +1,42 @@
+using System.Linq;
 using StardewValley;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Integration
 {
     /// <summary>
-    /// Reconciles the run's item-donation ledger from the vanilla CC's own per-slot bundle state —
-    /// the source of truth for what the player has actually deposited. Additive + idempotent: it
-    /// unions every completed concrete ingredient into <see cref="RunState.DonatedItemIds"/> via
-    /// <see cref="RunState.RecordDonation"/> (a set-add); it never removes and never awards JP.
+    /// Mirrors the run's per-slot donation ledger from the vanilla CC's own bundle state, the
+    /// source of truth for what the player has deposited (spec 2026-08-29-per-slot-ledger). Whole
+    /// replace, never a union: the ledger can lag the board (the live DonationObserver only sees
+    /// deposits while the JunimoNoteMenu is open) but can never be ahead of it. Runs on save load
+    /// (which is also the migration from the old id-only ledger), before the Season Goals page and
+    /// before the day-end gate, so the page and the gate always judge the same board.
     ///
-    /// The item analogue of <see cref="VaultPaymentSync"/>. Backstops the live
-    /// <c>DonationObserver</c>, which only sees deposits while the JunimoNoteMenu is open and can
-    /// miss one — leaving the season gate to read "failed" though vanilla shows the bundle complete
-    /// (beta report, khauser13). Called before the day-end gate eval so the gate trusts the game's
-    /// authoritative state, not the lossy observer. Single-player + master + TLY-active only.
-    ///
-    /// JP is deliberately NOT awarded here (unlike a fresh observer-caught donation): this is a
-    /// ledger backstop for the gate, and the live observer already paid JP for what it caught. The
-    /// pure id derivation lives in <see cref="CcDonationReconciler"/>.
+    /// JP is deliberately NOT awarded here: the live observer already paid for what it caught.
+    /// Single-player + master + TLY-active only. Returns the number of filled slots mirrored, or
+    /// -1 when the board was unavailable and the ledger was left untouched. The pure slot
+    /// derivation lives in <see cref="CcDonationReconciler"/>.
     /// </summary>
     internal static class ItemDonationSync
     {
-        public static void Reconcile(RunState run)
+        public static int Reconcile(RunState run)
         {
-            if (run == null) return;
-            if (!RunActivation.IsActive) return;
-            if (!Game1.IsMasterGame || Game1.IsMultiplayer) return;
+            if (run == null) return -1;
+            if (!RunActivation.IsActive) return -1;
+            if (!Game1.IsMasterGame || Game1.IsMultiplayer) return -1;
 
             var worldState = Game1.netWorldState?.Value;
             var bundleData = worldState?.BundleData;
             var bundles = worldState?.Bundles;
-            if (bundleData == null || bundles?.FieldDict == null) return;
+            if (bundleData == null || bundles?.FieldDict == null) return -1;
 
             // NetBundles' indexer returns the bool[] slot array directly; FieldDict.ContainsKey is
-            // the safe presence check (indexing a missing key would throw — see VaultPaymentSync).
-            foreach (string id in CcDonationReconciler.DonatedConcreteIds(
+            // the safe presence check (indexing a missing key would throw, see VaultPaymentSync).
+            var slots = CcDonationReconciler.DonatedSlots(
                 bundleData,
-                idx => bundles.FieldDict.ContainsKey(idx) ? bundles[idx] : null))
-            {
-                // Cumulative-ledger only: this unions historical deposits, so it must not touch the
-                // weekly bonus-suppression list (RecordDonation would).
-                run.RecordCumulativeDonation(id);
-            }
+                idx => bundles.FieldDict.ContainsKey(idx) ? bundles[idx] : null).ToList();
+            run.ReplaceDonations(slots);
+            return slots.Count;
         }
     }
 }
