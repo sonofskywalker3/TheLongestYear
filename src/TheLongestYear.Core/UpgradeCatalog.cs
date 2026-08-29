@@ -91,8 +91,11 @@ public static class UpgradeCatalog
         new UpgradeDefinition("craftbook_2", UpgradeCategory.Carryover, 350, "craftbook_1"),
         new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, 700, "craftbook_2"),
 
-        // Efficiency
-        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, 450),
+        // Efficiency. Keep Horse is pure carry-over (HorseCarryoverService), so it is only worth
+        // offering once this run has a stable to carry (TODO 2026-08-28: 450 JP for nothing
+        // otherwise; it was the one "keep a thing" row with no reach requirement).
+        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, 450,
+            metaRequirement: null, runReachRequirement: "building:Stable"),
 
         // Shop Discount — 5-tier chain (2026-05-29 rebalance: was single-tier 5%, now
         // 5/10/15/20/25%. Renamed from shop_discount_5 → shop_discount_1..5; the prior

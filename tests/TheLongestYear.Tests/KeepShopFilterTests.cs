@@ -48,13 +48,19 @@ public class KeepShopFilterTests
     }
 
     [Fact]
-    public void Non_reach_upgrades_are_unaffected_by_reach()
+    public void Keep_horse_needs_a_stable_this_run()
     {
         var meta = new MetaState();
-        var buyable = KeepShopFilter
+        var withoutStable = KeepShopFilter
             .BuyableInCategory(UpgradeCategory.Efficiency, meta, _ => false)   // reach always false
             .Select(d => d.Id).ToList();
-        Assert.Contains("early_horse", buyable);
+        Assert.DoesNotContain("early_horse", withoutStable);
+
+        var withStable = KeepShopFilter
+            .BuyableInCategory(UpgradeCategory.Efficiency, meta,
+                r => r == "building:Stable")
+            .Select(d => d.Id).ToList();
+        Assert.Contains("early_horse", withStable);
     }
 
     // --- OwnedLeavesInCategory: the green "what you already own" rows ----------------

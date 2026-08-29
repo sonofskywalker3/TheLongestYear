@@ -26,7 +26,7 @@ the desktop). Commit locally; pushing and releasing stay Jeff's call.
    `totalMoneyEarned`), plus a GMCM toggle for the Better Start gift. Details: "2026-08-28 brainstorm
    batch", "Better Start compat + the trigger-action reset gap". Jeff has not picked (a) or (b); take
    (b) unless he says otherwise.
-4. **Keep Horse is buyable with no horse** (`early_horse`, 450 JP, no reach requirement). Add
+4. **FIXED 0.16.155 (unit-tested; reach `building:Stable`). Keep Horse was buyable with no horse** (`early_horse`, 450 JP, no reach requirement). Add
    `runReachRequirement: "building:Stable"` and flip `KeepShopFilterTests.cs:57`. Details: "2026-08-28
    brainstorm batch", "Keep Horse shows without a horse".
 5. **SVE saves fall back to the legacy read path** ("engine manifest mismatch" right after the engine
