@@ -25,7 +25,8 @@ public static class BundleDeadlines
     public const int TrivialEffortThreshold = 1;
 
     public static IReadOnlyDictionary<string, Season> For(
-        IReadOnlyList<string> ingredients, ItemAvailabilityModel model)
+        IReadOnlyList<string> ingredients, ItemAvailabilityModel model,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         if (ingredients == null) throw new ArgumentNullException(nameof(ingredients));
         if (model == null) throw new ArgumentNullException(nameof(model));
@@ -51,9 +52,14 @@ public static class BundleDeadlines
             index = Math.Clamp(index, 0, CheckpointCount - 1);
 
             var deadline = (Season)index;
+            // A stretch line (spec 2026-08-28-obtainable-board-2-stretch) pins the item to its
+            // stretch season instead of clamping up to the gate: the whole point of a stretch
+            // line is to demand an item slightly before its own gate would otherwise allow.
+            if (stretchLines != null && stretchLines.TryGetValue(id, out Season stretch))
+                deadline = stretch;
             // The safety step. A deadline earlier than the season the item can first exist in is
             // unsatisfiable, and an unsatisfiable gate loses the year every loop.
-            if (availability.Gate > deadline)
+            else if (availability.Gate > deadline)
                 deadline = availability.Gate;
 
             result[id] = deadline;

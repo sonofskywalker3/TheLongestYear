@@ -45,6 +45,12 @@ public sealed class BundleRequirement
     /// Pantry's Fall Crops needs basic, both are "(O)24 Parsnip" but with different qualities.</summary>
     public IReadOnlyDictionary<string, int> IngredientQualities { get; }
 
+    /// <summary>Stretch lines this bundle picked up from <see cref="StretchRule"/> (spec
+    /// 2026-08-28-obtainable-board-2-stretch): a season with nothing newly reachable may pin one
+    /// ingredient to that season anyway, so the ramp and the deadlines both see it. Never null;
+    /// empty when no model was supplied or the rule found nothing to pin.</summary>
+    public IReadOnlyDictionary<string, Season> StretchLines { get; }
+
     private BundleRequirement(
         string name, Theme theme, BundleKind kind,
         IReadOnlyList<string> ingredients, int numberOfSlots,
@@ -52,7 +58,8 @@ public sealed class BundleRequirement
         IReadOnlyDictionary<string, Season>? itemSeasonPins,
         IReadOnlyList<int>? cumulativeRequiredBySeason,
         IReadOnlyDictionary<string, int>? ingredientStacks,
-        IReadOnlyDictionary<string, int>? ingredientQualities)
+        IReadOnlyDictionary<string, int>? ingredientQualities,
+        IReadOnlyDictionary<string, Season>? stretchLines)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Theme = theme;
@@ -64,6 +71,7 @@ public sealed class BundleRequirement
         CumulativeRequiredBySeason = cumulativeRequiredBySeason;
         IngredientStacks = ingredientStacks ?? new Dictionary<string, int>();
         IngredientQualities = ingredientQualities ?? new Dictionary<string, int>();
+        StretchLines = stretchLines ?? new Dictionary<string, Season>();
     }
 
     public static BundleRequirement CreateSeasonal(
@@ -80,19 +88,21 @@ public sealed class BundleRequirement
             itemSeasonPins: null,
             cumulativeRequiredBySeason: null,
             ingredientStacks: ingredientStacks,
-            ingredientQualities: ingredientQualities);
+            ingredientQualities: ingredientQualities,
+            stretchLines: null);
     }
 
     /// <summary>Convenience: pins become the ingredient list. Use when every ingredient is pinned.</summary>
     public static BundleRequirement CreatePerItem(
         string name, Theme theme, IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
-        IReadOnlyDictionary<string, int>? ingredientQualities = null)
+        IReadOnlyDictionary<string, int>? ingredientQualities = null,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         if (itemSeasonPins == null || itemSeasonPins.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one pinned ingredient.", nameof(itemSeasonPins));
         return CreatePerItem(name, theme, itemSeasonPins.Keys.ToList(), itemSeasonPins,
-            ingredientStacks, ingredientQualities);
+            ingredientStacks, ingredientQualities, stretchLines);
     }
 
     /// <summary>Full form: ingredients listed explicitly; pins are an optional subset. Unpinned
@@ -102,7 +112,8 @@ public sealed class BundleRequirement
         IReadOnlyList<string> ingredients,
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
-        IReadOnlyDictionary<string, int>? ingredientQualities = null)
+        IReadOnlyDictionary<string, int>? ingredientQualities = null,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("PerItem bundle needs at least one ingredient.", nameof(ingredients));
@@ -115,7 +126,8 @@ public sealed class BundleRequirement
             itemSeasonPins: itemSeasonPins,
             cumulativeRequiredBySeason: null,
             ingredientStacks: ingredientStacks,
-            ingredientQualities: ingredientQualities);
+            ingredientQualities: ingredientQualities,
+            stretchLines: stretchLines);
     }
 
     public static BundleRequirement CreatePercentage(
@@ -123,7 +135,8 @@ public sealed class BundleRequirement
         IReadOnlyList<string> ingredients, int numberOfSlots,
         IReadOnlyList<int> cumulativeRequiredBySeason,
         IReadOnlyDictionary<string, int>? ingredientStacks = null,
-        IReadOnlyDictionary<string, int>? ingredientQualities = null)
+        IReadOnlyDictionary<string, int>? ingredientQualities = null,
+        IReadOnlyDictionary<string, Season>? stretchLines = null)
     {
         // Y >= X, not Y > X. A bundle that must be donated in FULL still has a meaningful season
         // ramp ("this much of it by then"), and refusing X == Y here is what used to shunt such a
@@ -147,7 +160,8 @@ public sealed class BundleRequirement
             itemSeasonPins: null,
             cumulativeRequiredBySeason: cumulativeRequiredBySeason,
             ingredientStacks: ingredientStacks,
-            ingredientQualities: ingredientQualities);
+            ingredientQualities: ingredientQualities,
+            stretchLines: stretchLines);
     }
 
     /// <summary>True if this bundle's contribution to <paramref name="currentSeason"/>'s

@@ -287,6 +287,30 @@ public class BundleClassifierTests
     }
 }
 
+/// <summary>Spec 2026-08-28-obtainable-board-2-stretch: a stretch line pulled from
+/// <see cref="StretchRule"/> counts as reachable for the item-based ramp.</summary>
+public class BundleClassifierStretchTests
+{
+    private static ItemAvailabilityModel ModelWith(params (string Id, int Week, int Hard)[] items)
+        => new(items.ToDictionary(
+            i => i.Id,
+            i => new ItemAvailability(
+                AvailabilityWeeks.SeasonOf(i.Week), 3, "test", EffortSource.Derived,
+                i.Week, AvailabilityWeeks.SeasonOf(i.Week), i.Hard),
+            System.StringComparer.Ordinal));
+
+    [Fact]
+    public void The_spring_ramp_counts_a_spring_stretch_line_as_reachable()
+    {
+        // 4 of 6, nothing reachable in Spring, one Summer week 6 item with a Spring hard week.
+        var model = ModelWith(("(O)a", 6, 1), ("(O)b", 6, 5), ("(O)c", 9, 9), ("(O)d", 9, 9), ("(O)e", 13, 13), ("(O)f", 13, 13));
+        string[] ids = { "(O)a", "(O)b", "(O)c", "(O)d", "(O)e", "(O)f" };
+        Assert.Equal(new[] { 0, 2, 3, 4 }, BundleClassifier.RampFromItems(4, ids, model));
+        var lines = new Dictionary<string, Season> { ["(O)a"] = Season.Spring };
+        Assert.Equal(new[] { 1, 2, 3, 4 }, BundleClassifier.RampFromItems(4, ids, model, lines));
+    }
+}
+
 public class BundleClassifierQuotaClampTests
 {
     // X=2, Y=4. A quota asking for 3 by Winter cannot be met and CreatePercentage rejects it
