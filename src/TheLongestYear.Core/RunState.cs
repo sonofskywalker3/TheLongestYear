@@ -123,12 +123,25 @@ public sealed class RunState
     /// run reset. Persisted via MetaStore so a save+reload mid-week keeps the lifted state.</summary>
     public bool LiabilitySuppressedThisWeek { get; set; }
 
-    /// <summary>The week-of-year the Year-Two Seeds boost was bought for (-1 = not bought this
-    /// run). Active only that single week; see BoostState.YearTwoSeedsActive.</summary>
-    public int YearTwoSeedsWeek { get; set; } = -1;
+    /// <summary>Every boost bought this run, active or expired-but-not-yet-pruned (the Active tab
+    /// shows "expires tonight" from the entry). Pruned on DayStarted, cleared by BeginNewRun.
+    /// Spec 2026-08-29 shrine tabs + JP Boosts, section 1.2.</summary>
+    public List<ActiveBoost> ActiveBoosts { get; set; } = new();
 
-    /// <summary>The season (as int) the Sneak Peek boost was bought for (-1 = not bought this
-    /// run). Active for the remainder of that season; see BoostState.SneakPeekActive.</summary>
+    /// <summary>Crash Course: levels bought this loop per skill index (cap 2). Earned level =
+    /// current level minus this; a bought level is never keepable.</summary>
+    public Dictionary<int, int> SkillLevelsBoughtThisLoop { get; set; } = new();
+
+    /// <summary>Crash Course: levels bought this loop across all skills (the n in 3^(n-1)).</summary>
+    public int SkillLevelsBoughtTotal { get; set; }
+
+    /// <summary>Rain Dance / Storm Call: the day of year the override applies to, and the weather.</summary>
+    public int WeatherOverrideDay { get; set; } = -1;
+    public string? WeatherOverride { get; set; }
+
+    /// <summary>Legacy (0.16.117 to 0.16.158, never released): migrated into ActiveBoosts by
+    /// BoostState.MigrateLegacy on load.</summary>
+    public int YearTwoSeedsWeek { get; set; } = -1;
     public int SneakPeekSeason { get; set; } = -1;
 
     /// <summary>Animals owed a second product today (Kitchen bonus animal_double_product).
@@ -290,6 +303,11 @@ public sealed class RunState
         (CartStockIds ??= new()).Clear();
         (DoubleProduceToday ??= new()).Clear();
         LiabilitySuppressedThisWeek = false;
+        ActiveBoosts.Clear();
+        SkillLevelsBoughtThisLoop.Clear();
+        SkillLevelsBoughtTotal = 0;
+        WeatherOverrideDay = -1;
+        WeatherOverride = null;
         YearTwoSeedsWeek = -1;
         SneakPeekSeason = -1;
     }

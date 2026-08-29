@@ -211,8 +211,13 @@ namespace TheLongestYear.Loop
         {
             if (fromFishPond) return;
             if (string.IsNullOrEmpty(fishId)) return;
-            if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return;
-            if (Game1.random.NextDouble() >= BonusDropResolver.MixedAllDropsChance) return;
+            int stacks = ActiveEffectsProvider.BonusStacks("all_drops_up");
+            if (stacks == 0) return;
+            // One independent roll per stack (theme bonus + Windfall), ruling 3.
+            bool hit = false;
+            for (int s = 0; s < stacks && !hit; s++)
+                hit = Game1.random.NextDouble() < BonusDropResolver.MixedAllDropsChance;
+            if (!hit) return;
 
             var player = Game1.player;
             if (player == null) return;

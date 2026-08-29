@@ -98,6 +98,12 @@ internal static class UpgradeCatalogGenerators
             }
     }
 
+    /// <summary>Keep price for reaching <paramref name="level"/> (1..10); the boost twins read it.</summary>
+    public static long SkillKeepCost(int level) => level is >= 1 and <= 10 ? SkillLevelCosts[level] : 0;
+
+    /// <summary>Keep price for an elevator floor (10..120 step 10): 75 JP for floor 10, +100 per 10 floors.</summary>
+    public static long ElevatorKeepCost(int floor) => 75 + ((floor - 10) / 10) * 100;
+
     /// <summary>Yield all 12 Carryover keep-mine-elevator-floor entries (10–120 step 10).</summary>
     public static IEnumerable<UpgradeDefinition> CarryoverMineElevatorKeeps()
     {

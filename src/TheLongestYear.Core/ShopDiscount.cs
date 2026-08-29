@@ -17,19 +17,24 @@ public static class ShopDiscount
     /// <summary>Highest tier in the shop_discount chain.</summary>
     public const int MaxTier = 5;
 
-    /// <summary>Fraction taken off per owned tier.</summary>
-    private const double PerTier = 0.05;
+    /// <summary>Percent taken off per owned tier.</summary>
+    private const int PercentPerTier = 5;
+
+    /// <summary>The Haggler boost's extra percent, additive with the chain (spec 2026-08-29, 2.7).</summary>
+    public const int HagglerPercent = 10;
+
+    public static int PercentForTier(int tier) => Math.Clamp(tier, 0, MaxTier) * PercentPerTier;
 
     /// <summary>The discounted price for an owned tier. Prices at or below zero are returned
     /// untouched (barter entries price at 0 and pay with a trade item instead), and a positive
     /// price never rounds down to free.</summary>
-    public static int Apply(int price, int tier)
-    {
-        if (price <= 0) return price;
-        if (tier <= 0) return price;
-        if (tier > MaxTier) tier = MaxTier;
+    public static int Apply(int price, int tier) => ApplyPercent(price, PercentForTier(tier));
 
-        int discounted = (int)Math.Round(price * (1.0 - tier * PerTier), MidpointRounding.AwayFromZero);
+    /// <summary>Take <paramref name="percent"/> off; non-positive prices untouched; never below 1g.</summary>
+    public static int ApplyPercent(int price, int percent)
+    {
+        if (price <= 0 || percent <= 0) return price;
+        int discounted = (int)Math.Round(price * (1.0 - percent / 100.0), MidpointRounding.AwayFromZero);
         return discounted < 1 ? 1 : discounted;
     }
 }

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace TheLongestYear.Core;
 
 /// <summary>
@@ -51,7 +54,30 @@ public static class ActiveEffectsProvider
     /// never suppressed — it stays active for the whole week regardless of quest state. Always
     /// false while TLY is dormant (see <see cref="RunActivation"/>), so theme-effect patches
     /// no-op on a non-TLY save even if stale selection state lingers from a prior save.</summary>
-    public static bool ActiveBonus(string id) => RunActivation.IsActive && _bonusId != null && _bonusId == id;
+    private static Func<IEnumerable<string>>? _boosts;
+
+    /// <summary>Boost source: the modifier ids of every active boost, one per entry
+    /// (spec 2026-08-29 shrine tabs + JP Boosts, section 1.4).</summary>
+    public static void AttachBoosts(Func<IEnumerable<string>> activeModifierIds) => _boosts = activeModifierIds;
+
+    public static void DetachBoosts() => _boosts = null;
+
+    /// <summary>Independent rolls a patch should make for <paramref name="id"/>: 1 for the week's
+    /// theme bonus plus 1 per active boost bound to it. 0 when the run is inactive. Ruling 3: two
+    /// independent rolls, no cap.</summary>
+    public static int BonusStacks(string id)
+    {
+        if (!RunActivation.IsActive) return 0;
+        int n = _bonusId != null && _bonusId == id ? 1 : 0;
+        if (_boosts != null)
+        {
+            foreach (string m in _boosts())
+                if (m == id) n++;
+        }
+        return n;
+    }
+
+    public static bool ActiveBonus(string id) => BonusStacks(id) > 0;
 
     /// <summary>Returns true when the active liability matches <paramref name="id"/> AND the
     /// quest hasn't been completed yet. Once <see cref="SuppressLiability"/> is called, all

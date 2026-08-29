@@ -29,4 +29,17 @@ public static class Calendar
     /// <summary>Week index across the whole year (1-16). monthIndex: Spring=0..Winter=3.</summary>
     public static int WeekOfYear(int monthIndex, int dayOfMonth)
         => monthIndex * WeeksPerMonth + WeekInMonth(dayOfMonth);
+
+    public const int DaysPerYear = DaysPerMonth * MonthsPerYear; // 112
+
+    /// <summary>1-based day of the loop year: Spring 1 = 1, Winter 28 = 112.</summary>
+    public static int DayOfYear(int monthIndex, int dayOfMonth) => monthIndex * DaysPerMonth + dayOfMonth;
+
+    public static Season SeasonOfDay(int dayOfYear) => (Season)((dayOfYear - 1) / DaysPerMonth);
+
+    /// <summary>Last day of the 7-day block containing <paramref name="dayOfYear"/>.</summary>
+    public static int LastDayOfWeek(int dayOfYear) => ((dayOfYear - 1) / DaysPerWeek + 1) * DaysPerWeek;
+
+    /// <summary>Day 28 of the season containing <paramref name="dayOfYear"/>.</summary>
+    public static int LastDayOfSeason(int dayOfYear) => ((dayOfYear - 1) / DaysPerMonth + 1) * DaysPerMonth;
 }

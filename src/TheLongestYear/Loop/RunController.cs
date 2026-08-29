@@ -159,6 +159,13 @@ namespace TheLongestYear.Loop
                 _questService?.OnThemeSelected();
             }
 
+            // One-time migration of the plan-4 boost fields (0.16.117 to 0.16.158, never released)
+            // into the ActiveBoosts list (spec 2026-08-29 shrine tabs + JP Boosts, 1.2).
+            int boostsBefore = Run.ActiveBoosts.Count;
+            BoostState.MigrateLegacy(Run, Calendar.DayOfYear((int)Run.Season, Run.DayOfMonth));
+            if (Run.ActiveBoosts.Count > boostsBefore)
+                _monitor.Log($"Migrated {Run.ActiveBoosts.Count - boostsBefore} legacy boost flag(s) into ActiveBoosts.", LogLevel.Info);
+
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
 
             // Diagnostic: surface this save's resolved Vault (bus-repair) bundle indices + gold so a

@@ -49,6 +49,16 @@ public class ShopDiscountTests
     }
 
     [Fact]
+    public void Percent_form_adds_haggler_on_top_of_the_chain_and_floors_at_one()
+    {
+        Assert.Equal(25, ShopDiscount.PercentForTier(5));
+        Assert.Equal(65, ShopDiscount.ApplyPercent(100, 25 + ShopDiscount.HagglerPercent));
+        Assert.Equal(1, ShopDiscount.ApplyPercent(1, 35));
+        Assert.Equal(100, ShopDiscount.ApplyPercent(100, 0));
+        Assert.Equal(ShopDiscount.Apply(200, 3), ShopDiscount.ApplyPercent(200, 15));
+    }
+
+    [Fact]
     public void Tiers_outside_the_chain_are_clamped()
     {
         Assert.Equal(100, ShopDiscount.Apply(100, -1));

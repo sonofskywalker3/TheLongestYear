@@ -1,140 +1,211 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>Purchasable one-off boosts, banked-JP funded, that grant a temporary edge inside the
-/// current run rather than a permanent meta-upgrade. Plan 04 spec 2026-08-28-obtainable-board-4-boosts.</summary>
+/// <summary>How long a boost runs. Spec 2026-08-29 (shrine tabs + JP Boosts) section 1.2.</summary>
+public enum BoostDuration { Instant, Week, Season, Loop }
+
+/// <summary>Every purchasable in-loop boost, in catalog (display) order.</summary>
 public enum BoostId
 {
-    /// <summary>For the single week it is bought in, every Mixed Seeds roll has a
-    /// <see cref="YearTwoSeeds.Chance"/> chance of yielding the season's following-year seed
-    /// instead (Garlic, Red Cabbage, Artichoke). Cannot be bought in Winter: there is no
-    /// following-year seed for it (see <see cref="YearTwoSeeds.SeedIdFor"/>).</summary>
-    YearTwoSeeds,
-
-    /// <summary>For the rest of the season it is bought in, a non-Wednesday Queen of Sauce watch
-    /// airs the YEAR-2 episode for the week as well as the year-1 one, so both recipes are
-    /// learned and every year-2 dish has a year-1 route (QueenOfSaucePatch). It reveals nothing
-    /// about future boards.</summary>
-    SneakPeek
+    RainDance, StormCall, FortunesFavor, SecondWind,
+    Overgrowth, FeedingFrenzy, GrowthSpurt, RichVeins, Windfall, QuickFeet, YearTwoSeeds,
+    Haggler, FastFriends, IronLungs, SneakPeek,
+    CrashCourse, ElevatorPass,
 }
 
-/// <summary>Static catalog entry for one boost: cost in banked Junimo Points plus i18n keys for
-/// its shop name/description (rendered mod-side; Core never touches display strings directly).</summary>
-public sealed record BoostDefinition(BoostId Id, long Cost, string NameKey, string DescKey);
+/// <summary>Static catalog entry for one boost. Display strings are i18n keys rendered mod-side.</summary>
+/// <param name="Cost">Opening bid in JP; 0 for the computed rows (see BoostPricing).</param>
+/// <param name="ModifierId">Theme-modifier id this boost stacks onto (reuse rows); null for new effects.</param>
+public sealed record BoostDefinition(
+    BoostId Id, long Cost, BoostDuration Duration, string NameKey, string DescKey, string? ModifierId = null);
 
-/// <summary>The full, fixed set of purchasable boosts. Costs and keys are Jeff's exact values
-/// from the task brief; no other source of truth.</summary>
+/// <summary>The full, fixed roster (spec 1.1). Prices are Jeff's opening bids.</summary>
 public static class BoostCatalog
 {
+    private static BoostDefinition Row(BoostId id, long cost, BoostDuration d, string snake, string? modifier = null)
+        => new(id, cost, d, $"boost.{snake}.name", $"boost.{snake}.desc", modifier);
+
     public static readonly IReadOnlyList<BoostDefinition> All = new List<BoostDefinition>
     {
-        new(BoostId.YearTwoSeeds, 75, "boost.year_two_seeds.name", "boost.year_two_seeds.desc"),
-        new(BoostId.SneakPeek, 100, "boost.sneak_peek.name", "boost.sneak_peek.desc")
+        Row(BoostId.RainDance,     25,  BoostDuration.Instant, "rain_dance"),
+        Row(BoostId.StormCall,     40,  BoostDuration.Instant, "storm_call"),
+        Row(BoostId.FortunesFavor, 30,  BoostDuration.Instant, "fortunes_favor"),
+        Row(BoostId.SecondWind,    20,  BoostDuration.Instant, "second_wind"),
+        Row(BoostId.Overgrowth,    50,  BoostDuration.Week,    "overgrowth",     "forage_yield_up"),
+        Row(BoostId.FeedingFrenzy, 45,  BoostDuration.Week,    "feeding_frenzy", "fish_bite_up"),
+        Row(BoostId.GrowthSpurt,   60,  BoostDuration.Week,    "growth_spurt",   "crop_growth_up"),
+        Row(BoostId.RichVeins,     55,  BoostDuration.Week,    "rich_veins",     "mine_drops_up"),
+        Row(BoostId.Windfall,      90,  BoostDuration.Week,    "windfall",       "all_drops_up"),
+        Row(BoostId.QuickFeet,     40,  BoostDuration.Week,    "quick_feet"),
+        Row(BoostId.YearTwoSeeds,  75,  BoostDuration.Week,    "year_two_seeds"),
+        Row(BoostId.Haggler,       120, BoostDuration.Season,  "haggler"),
+        Row(BoostId.FastFriends,   150, BoostDuration.Season,  "fast_friends"),
+        Row(BoostId.IronLungs,     90,  BoostDuration.Season,  "iron_lungs"),
+        Row(BoostId.SneakPeek,     100, BoostDuration.Season,  "sneak_peek"),
+        Row(BoostId.CrashCourse,   0,   BoostDuration.Loop,    "crash_course"),
+        Row(BoostId.ElevatorPass,  0,   BoostDuration.Loop,    "elevator_pass"),
+    };
+
+    public static BoostDefinition Get(BoostId id)
+        => All.FirstOrDefault(b => b.Id == id) ?? throw new KeyNotFoundException($"Unknown boost '{id}'.");
+}
+
+public static class BoostExpiry
+{
+    /// <summary>Last active day (inclusive) for a boost bought on <paramref name="dayOfYear"/>.
+    /// Instant lands tomorrow; Second Wind is the exception (tonight) and is handled by the caller.</summary>
+    public static int LastDayFor(BoostDuration duration, int dayOfYear) => duration switch
+    {
+        BoostDuration.Instant => Math.Min(dayOfYear + 1, Calendar.DaysPerYear),
+        BoostDuration.Week    => Calendar.LastDayOfWeek(dayOfYear),
+        BoostDuration.Season  => Calendar.LastDayOfSeason(dayOfYear),
+        _                     => Calendar.DaysPerYear,
     };
 }
 
-/// <summary>Validates and applies a boost purchase against banked JP and the per-run flags on
-/// <see cref="RunState"/>. Core never reads live game state; callers supply the current
-/// week-of-year explicitly.</summary>
+/// <summary>Purchase rules (spec 1.3). Pure: JP and the run record only; the mod applies the
+/// immediate part (weather write, XP grant, floor write) after a Success.</summary>
 public static class BoostPurchase
 {
-    public enum Result
+    public enum Result { Success, NotEnoughJp, AlreadyActive, NotAvailable }
+
+    public const string Rain = "Rain";
+    public const string Storm = "Storm";
+
+    /// <summary>Entries active on <paramref name="dayOfYear"/>.</summary>
+    public static IEnumerable<ActiveBoost> ActiveEntries(RunState run, int dayOfYear)
+        => run.ActiveBoosts.Where(b => b.IsActiveOn(dayOfYear));
+
+    /// <summary>The purchase's outcome without buying: availability, then collision, then JP.</summary>
+    public static Result StateOf(MetaState meta, RunState run, BoostId id, BoostContext ctx)
     {
-        Success,
-        NotEnoughJp,
-        AlreadyActive,
-        NotAvailable
-    }
-
-    /// <summary>What <see cref="TryBuy"/> would return right now, WITHOUT mutating anything.
-    /// Checks availability (Year-Two Seeds cannot be bought in Winter), then whether the boost is
-    /// already active for this week/season, then whether banked JP covers the cost. TryBuy calls
-    /// this first and the shrine preview renders each boost row from it, so the button a player
-    /// sees and the outcome they get can never disagree (fix round 2, 2026-08-29).</summary>
-    public static Result StateOf(MetaState meta, RunState run, BoostId id, int weekOfYear)
-    {
-        BoostDefinition definition = Find(id);
-        Season season = AvailabilityWeeks.SeasonOf(weekOfYear);
-
-        if (id == BoostId.YearTwoSeeds && season == Season.Winter)
-            return Result.NotAvailable;
-
-        bool alreadyActive = id switch
-        {
-            BoostId.YearTwoSeeds => BoostState.YearTwoSeedsActive(run, weekOfYear),
-            BoostId.SneakPeek => BoostState.SneakPeekActive(run, season),
-            _ => false
-        };
-        if (alreadyActive)
-            return Result.AlreadyActive;
-
-        return meta.JunimoPoints < definition.Cost ? Result.NotEnoughJp : Result.Success;
-    }
-
-    /// <summary>Attempt to buy <paramref name="id"/> for the given week-of-year (1-16). Asks
-    /// <see cref="StateOf"/> whether the purchase is legal; only when it answers Success does it
-    /// spend JP and set the run-state flag.</summary>
-    public static Result TryBuy(MetaState meta, RunState run, BoostId id, int weekOfYear)
-    {
-        Result state = StateOf(meta, run, id, weekOfYear);
-        if (state != Result.Success)
-            return state;
-
-        BoostDefinition definition = Find(id);
-        Season season = AvailabilityWeeks.SeasonOf(weekOfYear);
-        meta.JunimoPoints -= definition.Cost;
-        switch (id)
-        {
-            case BoostId.YearTwoSeeds:
-                run.YearTwoSeedsWeek = weekOfYear;
-                break;
-            case BoostId.SneakPeek:
-                run.SneakPeekSeason = (int)season;
-                break;
-        }
+        BoostDefinition def = BoostCatalog.Get(id);
+        if (!Available(run, id, ctx)) return Result.NotAvailable;
+        if (Collides(run, def, ctx.DayOfYear)) return Result.AlreadyActive;
+        if (meta.JunimoPoints < BoostPricing.CostOf(def, run, ctx)) return Result.NotEnoughJp;
         return Result.Success;
     }
 
-    private static BoostDefinition Find(BoostId id)
+    public static Result TryBuy(MetaState meta, RunState run, BoostId id, BoostContext ctx)
     {
-        foreach (BoostDefinition definition in BoostCatalog.All)
+        Result state = StateOf(meta, run, id, ctx);
+        if (state != Result.Success) return state;
+
+        BoostDefinition def = BoostCatalog.Get(id);
+        meta.JunimoPoints -= BoostPricing.CostOf(def, run, ctx);
+
+        int expires = id == BoostId.SecondWind ? ctx.DayOfYear : BoostExpiry.LastDayFor(def.Duration, ctx.DayOfYear);
+        var entry = new ActiveBoost { Id = id.ToString(), BoughtDay = ctx.DayOfYear, ExpiresAfterDay = expires };
+
+        switch (id)
         {
-            if (definition.Id == id)
-                return definition;
+            case BoostId.RainDance:
+            case BoostId.StormCall:
+                // The second weather buy of a day replaces the first: expire the other entry now.
+                foreach (ActiveBoost other in run.ActiveBoosts.Where(b => IsWeather(b.Id) && b.IsActiveOn(ctx.DayOfYear + 1)))
+                    other.ExpiresAfterDay = ctx.DayOfYear - 1;
+                run.WeatherOverrideDay = ctx.DayOfYear + 1;
+                run.WeatherOverride = id == BoostId.RainDance ? Rain : Storm;
+                break;
+            case BoostId.CrashCourse:
+                entry.Skill = ctx.Skill;
+                run.SkillLevelsBoughtThisLoop[ctx.Skill] = run.SkillLevelsBoughtThisLoop.GetValueOrDefault(ctx.Skill) + 1;
+                run.SkillLevelsBoughtTotal += 1;
+                break;
         }
-        throw new KeyNotFoundException($"No boost definition for {id}.");
+        run.ActiveBoosts.Add(entry);
+        return Result.Success;
+    }
+
+    public static bool IsWeather(string id) => id == nameof(BoostId.RainDance) || id == nameof(BoostId.StormCall);
+
+    private static bool Available(RunState run, BoostId id, BoostContext ctx) => id switch
+    {
+        BoostId.RainDance or BoostId.StormCall
+            => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival && ctx.DayOfYear < Calendar.DaysPerYear,
+        BoostId.YearTwoSeeds => ctx.Season != Season.Winter,
+        BoostId.CrashCourse => BoostPricing.CrashCourseAvailable(run, ctx),
+        BoostId.ElevatorPass => BoostPricing.ElevatorPassAvailable(ctx.MineFloor),
+        _ => true,
+    };
+
+    /// <summary>Same id active, or (reuse rows) another active boost on the same modifier. The two
+    /// weather rows never collide with each other (the second replaces the first). Crash Course and
+    /// Elevator Pass are repeatable.</summary>
+    private static bool Collides(RunState run, BoostDefinition def, int day)
+    {
+        if (def.Id is BoostId.CrashCourse or BoostId.ElevatorPass) return false;
+        string idName = def.Id.ToString();
+        if (IsWeather(idName)) return run.ActiveBoosts.Any(b => b.Id == idName && b.IsActiveOn(day + 1));
+        foreach (ActiveBoost b in ActiveEntries(run, day))
+        {
+            if (b.Id == idName) return true;
+            if (def.ModifierId != null && Enum.TryParse(b.Id, out BoostId otherId)
+                && BoostCatalog.Get(otherId).ModifierId == def.ModifierId) return true;
+        }
+        return false;
     }
 }
 
-/// <summary>Reads whether a purchased boost is currently in effect, from the flags
-/// <see cref="BoostPurchase"/> set on <see cref="RunState"/>.</summary>
+/// <summary>Reads of the run record: what is active today, the modifier ids to stack, pruning,
+/// and the one-time migration of the plan-4 fields.</summary>
 public static class BoostState
 {
-    /// <summary>True only for the exact week-of-year the boost was bought for.</summary>
-    public static bool YearTwoSeedsActive(RunState run, int weekOfYear) => run.YearTwoSeedsWeek == weekOfYear;
+    public static bool IsActive(RunState run, BoostId id, int dayOfYear)
+        => run.ActiveBoosts.Any(b => b.Id == id.ToString() && b.IsActiveOn(dayOfYear));
 
-    /// <summary>True for the rest of the season the boost was bought in. The >= 0 guard is not
-    /// redundant: it pins "not bought this run" (-1) to false whatever a future Season value or a
-    /// hand-edited save holds.</summary>
-    public static bool SneakPeekActive(RunState run, Season season)
-        => run.SneakPeekSeason >= 0 && run.SneakPeekSeason == (int)season;
+    public static bool YearTwoSeedsActive(RunState run, int dayOfYear) => IsActive(run, BoostId.YearTwoSeeds, dayOfYear);
+    public static bool SneakPeekActive(RunState run, int dayOfYear) => IsActive(run, BoostId.SneakPeek, dayOfYear);
+
+    /// <summary>Modifier ids with an active boost bound to them, one entry per active boost.</summary>
+    public static IEnumerable<string> ActiveModifierIds(RunState run, int dayOfYear)
+    {
+        foreach (ActiveBoost b in BoostPurchase.ActiveEntries(run, dayOfYear))
+            if (Enum.TryParse(b.Id, out BoostId id) && BoostCatalog.Get(id).ModifierId is string m)
+                yield return m;
+    }
+
+    /// <summary>Drop entries whose last day is before today.</summary>
+    public static int Prune(RunState run, int dayOfYear) => run.ActiveBoosts.RemoveAll(b => b.ExpiresAfterDay < dayOfYear);
+
+    /// <summary>One-time migration of the 0.16.117 to 0.16.158 fields into the list.</summary>
+    public static void MigrateLegacy(RunState run, int dayOfYear)
+    {
+        if (run.YearTwoSeedsWeek >= 0)
+        {
+            int weekStart = (run.YearTwoSeedsWeek - 1) * Calendar.DaysPerWeek + 1;
+            run.ActiveBoosts.Add(new ActiveBoost
+            {
+                Id = nameof(BoostId.YearTwoSeeds), BoughtDay = weekStart, ExpiresAfterDay = weekStart + Calendar.DaysPerWeek - 1,
+            });
+            run.YearTwoSeedsWeek = -1;
+        }
+        if (run.SneakPeekSeason >= 0)
+        {
+            int seasonStart = run.SneakPeekSeason * Calendar.DaysPerMonth + 1;
+            run.ActiveBoosts.Add(new ActiveBoost
+            {
+                Id = nameof(BoostId.SneakPeek), BoughtDay = seasonStart, ExpiresAfterDay = seasonStart + Calendar.DaysPerMonth - 1,
+            });
+            run.SneakPeekSeason = -1;
+        }
+    }
 }
 
-/// <summary>The Year-Two Seeds boost's own rules: which seed id it can grant per season and the
-/// roll chance a caller (mod-side bonus sampler) checks before granting it.</summary>
+/// <summary>Year-Two Seeds facts (unchanged from plan 4): for the week it is bought in, every
+/// Mixed Seeds roll has this chance of yielding the season's following-year seed instead.</summary>
 public static class YearTwoSeeds
 {
-    /// <summary>Chance, per eligible roll, that a bonus item is substituted with the
-    /// following-year seed instead. Jeff's exact value from the task brief.</summary>
     public const double Chance = 0.05;
 
-    /// <summary>The following-year seed item id for a season, or null in Winter (no seed).</summary>
     public static string? SeedIdFor(Season season) => season switch
     {
         Season.Spring => "476",
         Season.Summer => "485",
         Season.Fall => "489",
-        _ => null
+        _ => null,
     };
 }

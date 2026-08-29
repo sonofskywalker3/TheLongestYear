@@ -117,6 +117,11 @@ public class I18nGuardTests
             // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
+            // reach.* keys are built from the reach metric (ReachText.Describe); walk every catalog requirement.
+            foreach (var def in UpgradeCatalog.All)
+                _ = ReachText.Describe(def.RunReachRequirement);
+            foreach (string metric in new[] { "rod", "backpack", "mastery", "book", "mail", "event", "stardrop_mines", "scythe", "house", "pet", "shortcuts", "bus" })
+                _ = Strings.Get("reach." + metric);
         }
         finally
         {
@@ -207,7 +212,7 @@ public class I18nGuardTests
     /// already asserts no "{{" survives in resolved catalog output, which is strictly stronger proof
     /// for that family than a per-key token match here would be.</summary>
     private static readonly string[] ExcludedTokenFamilies =
-        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill." };
+        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach." };   // reach.*: ReachText builds the key from the metric (ReachTextTests covers it)
 
     /// <summary>
     /// For every default.json value containing a <c>{{token}}</c> placeholder (outside the
