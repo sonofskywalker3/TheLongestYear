@@ -107,6 +107,13 @@ public class I18nGuardTests
                 _ = def.DisplayName;
                 _ = def.Description;
             }
+            // Boost name/desc keys live on the catalog entries, not as literals in source
+            // (the shrine menu renders them through BoostDefinition) — walk them the same way.
+            foreach (BoostDefinition boost in BoostCatalog.All)
+            {
+                _ = Strings.Get(boost.NameKey);
+                _ = Strings.Get(boost.DescKey);
+            }
             // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
@@ -145,6 +152,11 @@ public class I18nGuardTests
         {
             Assert.False(def.DisplayName.StartsWith("upgrade"), $"unresolved name for {def.Id}: {def.DisplayName}");
             Assert.False(def.Description.StartsWith("upgrade"), $"unresolved desc for {def.Id}: {def.Description}");
+        }
+        foreach (BoostDefinition boost in BoostCatalog.All)
+        {
+            Assert.NotEqual(boost.NameKey, Strings.Get(boost.NameKey));
+            Assert.NotEqual(boost.DescKey, Strings.Get(boost.DescKey));
         }
         foreach (Theme t in Enum.GetValues<Theme>())
         {
