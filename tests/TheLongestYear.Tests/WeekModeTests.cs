@@ -49,4 +49,9 @@ public class WeekModeTests
         var a = new ItemAvailability(Season.Spring, 1, "quartz", EffortSource.Derived, 1, Season.Spring);
         Assert.Equal(1, a.HardWeekOrPacing);
     }
+
+    [Theory]
+    [InlineData(DifficultyStep.Easy, WeekMode.Pacing)] [InlineData(DifficultyStep.Normal, WeekMode.Pacing)]
+    [InlineData(DifficultyStep.Hard, WeekMode.HardGates)] [InlineData(DifficultyStep.Extreme, WeekMode.HardAll)]
+    public void Difficulty_picks_the_week_mode(DifficultyStep step, WeekMode mode) => Assert.Equal(mode, WeekModes.For(step));
 }

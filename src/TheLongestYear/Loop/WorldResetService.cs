@@ -58,6 +58,14 @@ namespace TheLongestYear.Loop
         /// it), which keeps the legacy pin-table path.</summary>
         public TheLongestYear.Core.ItemAvailabilityModel AvailabilityModel { get; set; }
 
+        /// <summary>Rebuilds <see cref="AvailabilityModel"/> for one difficulty step, called right
+        /// after <see cref="PerformReset"/> re-resolves the new run's difficulty (spec
+        /// 2026-08-28-obtainable-board, section 1: the week mode is a function of that step). Set by
+        /// ModEntry to <c>BuildAvailabilityModelFor</c>, the same method that builds the model at
+        /// SaveLoaded, so the two builds can never drift apart. Null on any host that never sets it,
+        /// which keeps <see cref="AvailabilityModel"/> at whatever SaveLoaded built.</summary>
+        public Func<TheLongestYear.Core.DifficultyStep, TheLongestYear.Core.ItemAvailabilityModel> RebuildAvailabilityModel { get; set; }
+
         /// <summary>The bundle-requirement manifest the most recent <see cref="PerformReset"/> call
         /// generated for the new loop (owned-bundle engine wiring) -- RunController.FinalizeReset
         /// re-injects this into the run via RunController.ReplaceRequirements right after PerformReset
@@ -147,6 +155,17 @@ namespace TheLongestYear.Loop
                     $"cart {_meta.Difficulty.Steps.CartSlots} ({_meta.Difficulty.StartingCartSlots} slots), " +
                     $"holds {_meta.Difficulty.Steps.HoldPrices}, pity {_meta.Difficulty.Steps.SeasonPity}.",
                     LogLevel.Info);
+
+            // The availability model's week mode is a function of the same step (item rarity is
+            // the difficulty dial that governs how hard the board's items are), so a step change
+            // at this reset must rebuild it before the board below is generated from it.
+            if (RebuildAvailabilityModel != null)
+            {
+                TheLongestYear.Core.DifficultyStep step = _meta.Difficulty.Steps.ItemRarity;
+                AvailabilityModel = RebuildAvailabilityModel(step);
+                TheLongestYear.Core.WeekMode mode = TheLongestYear.Core.WeekModes.For(step);
+                _monitor.Log($"Availability model rebuilt for {step} ({mode}).", LogLevel.Info);
+            }
 
             bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
             _meta.BundleSource = vanillaBoard

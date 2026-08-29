@@ -186,6 +186,15 @@ public static class AvailabilityWeeks
     /// <summary>A machine with no skill, friendship or price gate found: mail after a special order.</summary>
     public const int SpecialOrderMachineWeek = 9;
 
+    /// <summary>True when a Phase 2 basis string names Jeff's own placement rather than a game-data
+    /// fact: a hand-ruled row from <see cref="OtherPlacements"/> ("table, ..."), or a late-floor
+    /// note still awaiting his sign-off ("(for Jeff to confirm)"). tly_dumpavailability shows these
+    /// rows as `judgement` instead of `rule` so he can find them without reading every basis.</summary>
+    public static bool IsJudgementBasis(string basis)
+        => basis != null
+           && (basis.StartsWith("table,", StringComparison.Ordinal)
+               || basis.Contains("(for Jeff to confirm)", StringComparison.Ordinal));
+
     public static Season SeasonOf(int week)
     {
         int clamped = Math.Clamp(week, 1, Calendar.WeeksPerYear);

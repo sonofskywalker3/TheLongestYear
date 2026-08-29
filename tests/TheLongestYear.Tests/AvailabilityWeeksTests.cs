@@ -130,4 +130,12 @@ public class AvailabilityWeeksTests
         Assert.False(AvailabilityWeeks.BookWeeks.ContainsKey("(O)Book_AnimalCatalogue"));
         Assert.False(AvailabilityWeeks.BookWeeks.ContainsKey("(O)Book_Diamonds"));
     }
+
+    [Theory]
+    [InlineData("table, Cave Carrot, mine dirt from floor 1, week 1, effort 3", true)]
+    [InlineData("fruit tree, Apricot, Spring tree: second year or the cart, week 13, effort 5 (for Jeff to confirm)", true)]
+    [InlineData("shop, Sugar, Pierre's daily, week 1, effort 1", false)]
+    [InlineData(null, false)]
+    public void Judgement_basis_is_a_table_row_or_a_for_jeff_note(string basis, bool expected)
+        => Assert.Equal(expected, AvailabilityWeeks.IsJudgementBasis(basis));
 }
