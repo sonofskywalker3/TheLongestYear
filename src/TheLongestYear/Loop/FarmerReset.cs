@@ -20,6 +20,10 @@ namespace TheLongestYear.Loop
 
         public FarmerReset(IMonitor monitor) => _monitor = monitor;
 
+        /// <summary>Config read-through for <see cref="TriggerActionResetRules"/>; defaults to
+        /// re-sending so a test or an unwired caller behaves like a fresh save.</summary>
+        public System.Func<bool> ResendBetterStartGift { get; set; } = () => true;
+
         /// <summary>Farmer.activeDialogueEvents key that makes every villager use their
         /// "Introduction" dialogue on first contact (vanilla Farmer ctor, Farmer.cs:2029).</summary>
         private const string IntroductionDialogueKey = "Introduction";
@@ -158,6 +162,7 @@ namespace TheLongestYear.Loop
                 p.mailReceived.Add(flag);
             p.eventsSeen.Clear();
             p.questLog.Clear();
+            ClearTriggerActionRecord(p);
 
             // First-meeting dialogue. Vanilla does NOT key an NPC's "Introduction" line on
             // friendshipData: NPC.checkForNewCurrentDialogue (NPC.cs:4009) walks
@@ -433,6 +438,46 @@ namespace TheLongestYear.Loop
                 if (slug != null && it is Tool t && !tools.ContainsKey(slug)) tools[slug] = t;
             }
             return tools;
+        }
+
+        /// <summary>
+        /// Rewind the one-shot trigger-action record. Vanilla stores every fired
+        /// Data/TriggerActions row in <c>Farmer.triggerActionsRun</c> (TriggerActionManager.cs:499)
+        /// and never fires it again; hearts and mail are wiped above, so without this the twelve
+        /// heart-gated invite mails (Abigail 8, Penny 10, Elliott's letters, ...) fired once per
+        /// save and the 8 and 10 heart events could not be reached in loop 2+. Rules and the two
+        /// exceptions (lifetime money mails, the Better Start toggle) in
+        /// <see cref="TriggerActionResetRules"/>.
+        /// </summary>
+        private void ClearTriggerActionRecord(Farmer p)
+        {
+            if (p.triggerActionsRun.Count == 0)
+                return;
+
+            var conditionById = new Dictionary<string, string>();
+            try
+            {
+                foreach (StardewValley.GameData.TriggerActionData row in DataLoader.TriggerActions(Game1.content))
+                {
+                    if (!string.IsNullOrEmpty(row.Id))
+                        conditionById[row.Id] = row.Condition;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _monitor.Log($"FarmerReset: could not read Data/TriggerActions ({ex.Message}); clearing by id prefix only.", LogLevel.Warn);
+            }
+
+            List<string> clear = TriggerActionResetRules.IdsToClear(
+                p.triggerActionsRun.ToList(), conditionById, ResendBetterStartGift());
+            foreach (string id in clear)
+                p.triggerActionsRun.Remove(id);
+
+            _monitor.Log(
+                $"FarmerReset: cleared {clear.Count} fired trigger action(s) so they can fire again this loop " +
+                $"([{string.Join(", ", clear)}]); kept {p.triggerActionsRun.Count} " +
+                $"([{string.Join(", ", p.triggerActionsRun)}]).",
+                LogLevel.Info);
         }
 
         /// <summary>Copy instance state (rod attachments, enchantments, water) from the outgoing tool

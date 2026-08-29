@@ -19,7 +19,7 @@ the desktop). Commit locally; pushing and releasing stay Jeff's call.
 2. **NOT REPRODUCIBLE on 0.16.153 (2026-08-29): already fixed by 0.16.2 (27 Aug, shipped in 0.16.7 and 0.16.17).** Bumblewyn wrote that the reset happened "a few days (and updates) ago", i.e. before the round-trip landed. Live repro: `tly_stashrod weapon` stashes a Galaxy Sword with Attack II (innate) + Ruby forge; after `tly_reset`, `tly_stashrod check` showed both intact, damage 66-88 unchanged. Reply after release asking the reporter to confirm on the new build. Original: **Junimo Stash drops weapon enchantments and forged gems** (Nexus, Bumblewyn, 28 Aug, status
    Being looked at). Round-trip them through the stash record like `TransplantToolState` does for
    kept tools. Details: "10th sweep" below and the 5th-sweep table row "Kept rod loses bait".
-3. **Vanilla heart-event invites never re-send after a rewind** (found in the Better Start audit).
+3. **FIXED 0.16.154 (path b, live-checked: cleared 5, kept the 9 money mails; GMCM toggle "Re-send Better Start gift each loop"). Vanilla heart-event invites never re-sent after a rewind** (found in the Better Start audit).
    `FarmerReset` never clears `Farmer.triggerActionsRun`, so the twelve heart-gated invite mails
    fire once per save; 8 and 10 heart events are unreachable in loop 2+. Recommended path (b): clear
    `triggerActionsRun` at reset, excluding the nine `PLAYER_MONEY_EARNED` mails (or reset

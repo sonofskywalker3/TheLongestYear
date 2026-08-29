@@ -446,6 +446,8 @@
     "gmcm.bundle-source.remixed": "Remixed (the game's own)",
     "gmcm.cart-limit.name": "Limit Traveling Cart stock",
     "gmcm.cart-limit.tooltip": "Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). Off = full vanilla cart; the Cart Stall upgrades do nothing.",
+    "gmcm.resend-better-start.name": "Re-send Better Start gift each loop",
+    "gmcm.resend-better-start.tooltip": "Only matters with the Better Start mod installed. On: Robin's starter letter (chests, materials, 1,500g) arrives at the start of every loop, as on a fresh save. Off: once per save.",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
     "gmcm.features.section": "Features",
     "gmcm.features.blurb": "Turn individual parts of the mod off, or tune them. Changes apply straight away; nothing here needs a restart.",
