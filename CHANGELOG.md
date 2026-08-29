@@ -7,6 +7,9 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **JP Boosts (0.16.159 to 0.16.162).** The planning shrine (the Junimo statue on the farm) now has three tabs. **Boosts** sells fifteen this-loop buys for JP, grouped by how long they last: Rain Dance and Storm Call (tomorrow's weather), Fortune's Favor (a guaranteed lucky day), Second Wind (a free late night), Overgrowth / Feeding Frenzy / Growth Spurt / Rich Veins / Windfall (a week of extra rolls that stack with the weekly theme), Quick Feet, Year-Two Seeds, Haggler (another 10% off shops for the season), Fast Friends, Iron Lungs, Sneak Peek, Crash Course (a skill level on the spot, capped at two per skill per loop, never to 10, never keepable, price triples per level bought) and Elevator Pass (the elevator reaches the next floor ending in 0). **Active** lists what is running and when it ends, plus the week's theme. **Plan** keeps the price preview and the weather/cart foresight, and adds a collapsed Locked section that says what each keep still needs this loop. Keeps are still bought only on the Fail-night perk screen.
+- **GMCM toggle "Re-send Better Start gift each loop"** (default on), with the trigger-action rewind below.
+
 - **`tly_seasongoals` console command** opens the Season Goals page, the same one the Bundle Log book opens (debug).
 - **`tly_gateneeds` console command** prints, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) and the vault (debug).
 - **Keep the Garden Pot recipe.** A new permanent keep at the Junimo Shrine, 750 JP, under Obtainability. Once bought, the Garden Pot recipe is back in your crafting list after every rewind, so an Oasis seed can be grown indoors out of season.
@@ -57,6 +60,12 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **Bear's Knowledge and Spring Onion Mastery no longer survive a rewind for free.** The game grants them by "you have seen this scene", and the rewind used to re-mark those scenes as seen, so both powers came back every loop unpaid. They are now wiped with the loop like every other power; the bear and the river lesson can be found again, or the keep can be bought.
 
 ### Fixed
+
+- **Keep Bus Unlocked did not restore the bus** (Nexus, gazumbrado). The upgrade now keeps the bus and the desert open from day 1 of every loop; the four vault bundles stay on the board and still have to be paid, and still earn their JP. (0.16.157)
+- **Heart-event invites never re-sent after a rewind.** The 8 and 10 heart invite letters (and any other one-shot letter the game marks as sent) fire again each loop; the money-milestone letters from Mom and Dad stay once per save. (0.16.154)
+- **Keep Horse was offered with no stable.** The row now waits until this loop has built one. (0.16.155)
+- **Stardew Valley Expanded saves lost season pity.** Every load re-derived the board from the seed and compared a display-name field that SVE renames, so SVE saves fell back to the plain read path; the mod now keeps the exact board it wrote and checks the live board against that. (0.16.158)
+- **Stash enchantments and forges** were already round-tripping since 0.16.2; confirmed on request (Nexus, Bumblewyn).
 
 - **Donations are tracked per Community Center slot and mirrored from the board.** One deposit credits one bundle (Children's no longer shows 3/3 after two donations when another bundle shared an item), a bundle with a repeated item (Construction's two Wood slots) needs every slot filled, and the mod can no longer declare a Winter win while the board still has an open slot. Existing saves migrate on load from the board's own state; nothing is lost.
 - **Fishing trash is a week 1 item.** Trash, Driftwood, Broken Glasses, Broken CD, Soggy Newspaper and Joja Cola came off the line on day 1 in any water, but the board dated them by whatever machine or pond route it found first, so a Recycling bundle could sit undated until Winter.
