@@ -1,10 +1,219 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-28 (activity themes build, 0.16.42 to 0.16.67)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.67 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1394 passing, 0 failing
-**Build:** clean (mod assembly builds Release); 0.16.67 built into the Mods folder, live check pending (Task 28 of the plan)
+**Last updated:** 2026-08-29 (the obtainable board, 0.16.85 to 0.16.133)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.133 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1741 passing, 0 failing
+**Build:** clean (mod assembly builds Release); 0.16.132 deployed to the game and sim-driven; 0.16.133 is notes plus a doc comment
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+## 2026-08-29: the obtainable board, 0.16.85 to 0.16.132
+
+Spec `docs/superpowers/specs/2026-08-28-obtainable-board-design.md`, five plans
+`docs/superpowers/plans/2026-08-28-obtainable-board-1-model.md` through `-5-sims.md`, commits
+83c192b (0.16.85) to 9a1de06 (0.16.132), every plan reviewed, 1741 tests green at 9a1de06.
+Per-plan ledgers with every ruling: `.superpowers/sdd/2026-08-28-obtainable-board-*/progress.md`.
+Committed LOCALLY ONLY, not pushed, not released.
+
+**Plan 1, the two-week model (0.16.85 to 0.16.96).** Every item now carries two weeks: a pacing week
+(the week a normal player realistically reaches it) and a hard week (the earliest week it is possible
+at all). `ItemAvailabilityModel` is built with a `WeekMode` (Pacing, HardGates, HardAll) taken from
+the difficulty step, and answers `Week` for gates and `GoalWeek` for goals from that mode, so a Hard
+board gates on the hard week while Normal paces. Rule E's tiers became absolute effort bands instead
+of per-board quartiles; `SeasonNeed` and `BonusItemSampler` arithmetic follow; goals no longer look
+half a season ahead of the gate (they follow the gate exactly); goal ceilings are flat 5 in every
+season. The hand-written `DefaultItemSeasonPins` table is retired down to three rows (Red Mushroom,
+Sea Urchin, Woodskip). New rules: tapper goods from Data/WildTrees TapItems at Foraging 4 plus the
+row's nights, fishing trash (167 to 172) at week 1, machine weeks from recipe price and friendship
+(`UnlockWeeks`), book weeks from a table with the year-2 and drop-only books out of the pool.
+
+**Plan 2, stretch gates and the hard-item rule (0.16.97 to 0.16.107).** The Spring foothold is gone.
+In its place, `StretchRule`: a bundle that gains nothing new in a season reaches two weeks past that
+season, swapping a stretch item in if it holds none, and the gate then demands that line. Stretch is
+a pacing mechanism only, so `StretchRule.Applies` returns false on HardGates and HardAll (on Hard the
+gates already demand by hard week). Separately, every rolled bundle of 4 or more slots must hold at
+least one genuinely hard item (effort 6 and up); that rule keeps applying on Hard and Extreme and is
+exempt only on Easy. Both surface in `tly_gatecheck` (`[stretch: item season]`, `[no hard item]`) and
+on the weekly cards. `BundleRequirement` carries `StretchLines`, recomputed from the model whenever
+requirements are rebuilt.
+
+**Plan 3, full pools with no fixed lists (0.16.108 to 0.16.120).** Every TLY Custom bundle keeps its
+name, room and pick count but rolls its slots from the full pool of its kind; the mixed-kind bundles
+roll from a named recipe in the new `BundlePoolRecipes` table (ordered parts, each a source and a
+count). `PoolDomainClassifier` returns `Recipe` for any non-money bundle it cannot place in a legacy
+domain, and an Other-majority bundle rolls from its own vanilla ids only and audits `[no recipe]`
+until Jeff names one. String-id vanilla items (Goby, the jellies, Broccoli, Moss, Mystery Box,
+Book_*) weigh like vanilla, 3, since vanilla is now "any id without a dot". Pool additions at weight
+1: Stonefish, Ice Pip, Lava Eel, the five legendaries, and the year-2 crops Garlic, Red Cabbage and
+Artichoke (Easy still excludes the year-2 crops). A legendary drawn into a 4-of-4 fish bundle is
+mandatory for that bundle, and the rewind now clears legendary catches so it can be caught again.
+
+**Plan 4, the Garden Pot keep and two Boosts (0.16.121 to 0.16.129).** A permanent Garden Pot recipe
+keep at the Junimo Shrine, 750 JP, `Obtainability` category, granted back after the rewind like the
+book keeps. Two in-loop Boosts, bought at the farm's planning shrine (`ShrinePreviewMenu` gains a
+Boosts section): Year-Two Seeds, 75 JP, makes Mixed Seeds roll the season's year-2 crop at 5 percent
+for the current week; Sneak Peek, 100 JP, makes the Queen of Sauce air the year-2 episode for the
+season (it grants both the year-1 and the year-2 recipe, so no year-1 recipe is lost). Year-2 crops
+carry hard weeks 2 / 6 / 10 and pacing weeks Garlic 4, Red Cabbage 7, Artichoke 11.
+
+**Plan 5, diagnostics and sims (0.16.130 to 0.16.132).** `tly_playseason quarter <k>` donates the
+season's gate share a quarter a week, round-robin across bundles (one open demanded slot per bundle
+per pass) before the prefix cut; `tly_reset <seedLoop>` and `tly_genbundles <seedLoop>
+[custom|standard|remixed]` pin the board seed and roll vanilla boards through the same audit;
+`tools/sim-year.sh <mode> <label> [seedLoop]` prints all 16 weeks, the gate audit, the judgement rows
+and the unknown items. Runbook `docs/HEADLESS_DRIVING.md`.
+
+### Sims P2 (minimal player) and Q2 (goal-completing player), both on seed loop 3, build 0.16.132
+
+Gate ledger per season, cumulative slots flipped at each quarter, then the season verdict:
+
+| Season | P2 quarters | P2 verdict | Q2 quarters | Q2 verdict |
+|---|---|---|---|---|
+| Spring | 6 / 11 / 17 / 22 | WOULD PASS, ledger 22 | 5 / 10 / 15 / 20 | WOULD PASS, ledger 23 |
+| Summer | 7 / 14 / 21 / 28 | WOULD PASS, ledger 50 | 6 / 12 / 18 / 24 | WOULD PASS, ledger 53 |
+| Fall | 8 / 15 / 22 / 29 | WOULD PASS, ledger 79 | 6 / 11 / 16 / 21 | WOULD PASS, ledger 79 |
+| Winter | 6 / 11 / 16 / 21 | WOULD PASS, ledger 100 | 4 / 8 / 12 / 16 | WOULD PASS, ledger 101 |
+
+Askable goals by week, P2 (Foraging / Farming / Fishing / Mining / Mixed / Spelunking / Artisan / Kitchen):
+
+| Week | Fo | Fa | Fi | Mi | Mx | Sp | Ar | Ki |
+|---|---|---|---|---|---|---|---|---|
+| Spring 1 | 2 | 2 | 4 | 0 | 5 | 1 | 0 | 1 |
+| Spring 2 | 3 | 3 | 5 | 0 | 5 | 0 | 1 | 1 |
+| Spring 3 | 1 | 4 | 4 | 0 | 5 | 0 | 1 | 1 |
+| Spring 4 | 1 | 2 | 0 | 0 | 5 | 0 | 1 | 1 |
+| Summer 5 | 4 | 3 | 3 | 2 | 5 | 2 | 2 | 0 |
+| Summer 6 | 4 | 5 | 4 | 0 | 5 | 0 | 2 | 2 |
+| Summer 7 | 3 | 5 | 0 | 0 | 5 | 0 | 3 | 1 |
+| Summer 8 | 2 | 5 | 0 | 0 | 5 | 0 | 1 | 1 |
+| Fall 9 | 3 | 3 | 3 | 2 | 5 | 2 | 2 | 2 |
+| Fall 10 | 4 | 5 | 3 | 0 | 5 | 0 | 3 | 2 |
+| Fall 11 | 3 | 5 | 2 | 0 | 5 | 0 | 3 | 2 |
+| Fall 12 | 3 | 0 | 0 | 0 | 5 | 0 | 1 | 2 |
+| Winter 13 | 3 | 3 | 2 | 2 | 5 | 1 | 2 | 2 |
+| Winter 14 | 3 | 3 | 2 | 0 | 5 | 0 | 2 | 1 |
+| Winter 15 | 1 | 4 | 2 | 0 | 5 | 0 | 2 | 1 |
+| Winter 16 | 1 | 2 | 1 | 0 | 4 | 0 | 1 | 0 |
+
+Askable goals by week, Q2 (same columns):
+
+| Week | Fo | Fa | Fi | Mi | Mx | Sp | Ar | Ki |
+|---|---|---|---|---|---|---|---|---|
+| Spring 1 | 2 | 2 | 4 | 0 | 5 | 1 | 0 | 1 |
+| Spring 2 | 3 | 1 | 5 | 0 | 5 | 0 | 1 | 1 |
+| Spring 3 | 0 | 2 | 3 | 0 | 5 | 0 | 1 | 1 |
+| Spring 4 | 0 | 2 | 0 | 0 | 4 | 0 | 1 | 1 |
+| Summer 5 | 4 | 3 | 3 | 2 | 5 | 2 | 2 | 0 |
+| Summer 6 | 4 | 5 | 2 | 0 | 5 | 0 | 2 | 2 |
+| Summer 7 | 0 | 5 | 0 | 0 | 5 | 0 | 3 | 1 |
+| Summer 8 | 0 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
+| Fall 9 | 3 | 3 | 3 | 2 | 5 | 2 | 2 | 2 |
+| Fall 10 | 3 | 2 | 3 | 0 | 5 | 0 | 1 | 2 |
+| Fall 11 | 3 | 0 | 1 | 0 | 5 | 0 | 1 | 2 |
+| Fall 12 | 0 | 0 | 0 | 0 | 2 | 0 | 1 | 1 |
+| Winter 13 | 3 | 3 | 2 | 2 | 5 | 1 | 2 | 2 |
+| Winter 14 | 3 | 2 | 2 | 0 | 5 | 0 | 1 | 0 |
+| Winter 15 | 1 | 0 | 2 | 0 | 3 | 0 | 0 | 0 |
+| Winter 16 | 1 | 0 | 1 | 0 | 2 | 0 | 0 | 0 |
+
+Week 4 of a season is alive again in both runs (it was 0 across the board before the round-robin
+fix). Mining is still thin: 2 askable in week 1 of Summer, Fall and Winter, 0 everywhere else, 0 all
+Spring. Spelunking is 1 or 2 in the first week of a season and 0 otherwise. Both look like a
+pool-size problem, not a donation-order one. Full sim outputs and board dumps are in the scratchpad
+(`simP2.txt`, `simQ2.txt`, `board-P2.md`, `board-Q2.md`); the two dumps are byte-identical except the
+`loop seed` header line, so the seed pin fixes the board but not the loop's own RNG seed.
+
+### Gate audit (identical in both runs)
+
+`tly_gatecheck RESULT: no impossible gates. 26 tight (demands everything obtainable by then), 0
+bundle(s) never gated.` and `tly_gatecheck RESULT: 1 stretch line(s), 5 without a hard item, 2 Spring
+tight.` Unknown items: 0 (was 1, Crispy Bass, fixed by the Placeable filter in 0.16.132). Tag lines:
+`[stretch: Battery Pack Summer]` on Construction; `[no hard item]` on Four Seasons Sampler, Tapper's,
+Garden, Orchard and Weatherman's; `[spring tight]` on Garden and Forager's. No `[no recipe]` line on
+either board. Vault gate unchanged: 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter
+(2,500g / 5,000g / 10,000g / 25,000g), satisfied outright by owning `keep_bus_unlocked`. The audit
+checks calendar feasibility only: an item that exists in Spring but needs a keg, a fish pond or a
+tool upgrade still counts as obtainable there.
+
+### Judgement rows (9, unchanged by the fixes)
+
+Rows placed by Jeff's own ruling rather than a game-data fact. They gate and appear on cards like any
+other rule, but are worth a second look:
+
+- Skeleton Mask `(H)8`, week 3, in Gil's Trophies
+- Vampire Ring `(O)522`, week 4, in Gil's Trophies
+- Burglar's Ring `(O)526`, week 6, in Gil's Trophies
+- Insect Head `(W)13`, week 3, in Gil's Trophies
+- Mystery Box `(O)MysteryBox`, week 3, in Helper's
+- Prize Ticket `(O)PrizeTicket`, week 2, in Helper's
+- Moss `(O)Moss`, week 1, in Tapper's
+- Cave Carrot `(O)78`, week 1, in Exotic Foraging
+- Snow Yam `(O)416`, week 13, in Exotic Foraging
+
+### Vanilla boards through the same audit (`tly_genbundles <seed> standard|remixed`, seeds 0 to 9)
+
+Standard (community-center content is fixed vanilla, so only the board seed differs):
+
+| Seeds | Sp/Su/Fa/Wi demanded | season share % | tight | impossible | stretch | no hard item | spring tight |
+|---|---|---|---|---|---|---|---|
+| 0 to 9, every row identical | 25/52/83/105 | 9/20/31/40 | 32 | 0 | 0 | 7 | 2 |
+
+Remixed (bundle contents randomized per seed):
+
+| Loop | Sp/Su/Fa/Wi demanded | season share % | tight | impossible | stretch | no hard item | spring tight |
+|---|---|---|---|---|---|---|---|
+| 0 | 22/46/74/93 | 9/20/31/40 | 30 | 0 | 0 | 7 | 2 |
+| 1 | 22/46/75/95 | 9/19/32/40 | 31 | 0 | 0 | 9 | 2 |
+| 2 | 20/42/68/89 | 9/19/31/41 | 33 | 0 | 1 | 6 | 2 |
+| 3 | 23/48/75/96 | 10/20/31/40 | 31 | 0 | 0 | 7 | 2 |
+| 4 | 19/44/71/93 | 8/19/31/41 | 33 | 0 | 1 | 7 | 2 |
+| 5 | 21/46/72/92 | 9/20/31/40 | 29 | 0 | 1 | 6 | 2 |
+| 6 | 23/44/71/89 | 10/19/31/39 | 30 | 0 | 1 | 5 | 2 |
+| 7 | 21/45/73/93 | 9/19/31/40 | 28 | 0 | 0 | 6 | 2 |
+| 8 | 25/46/73/91 | 11/20/31/39 | 28 | 0 | 0 | 6 | 2 |
+| 9 | 24/47/72/93 | 10/20/31/39 | 32 | 0 | 1 | 6 | 2 |
+
+Zero IMPOSSIBLE bundles in all 20 runs. Every remixed stretch line is the same one: Engineer's
+PerItem, `[stretch: Iridium Ore Summer]` (seeds 2, 4, 5, 6, 9), which suggests a structural vanilla
+recipe artifact rather than a Custom-only quirk. Vanilla demand is heavier than Custom's 21/50/79/100
+at every season, and vanilla is tighter overall (standard 32 tight, remixed 28 to 33, against Custom's
+26); season shares match Custom's back-loaded curve closely. No-hard-item counts run higher in vanilla
+(6 to 9) than Custom's 5. Summary: scratchpad `vanilla-boards-summary.md`.
+
+### Open for Jeff: rule on these or look at them
+
+Collected from the five plan ledgers' `Ruling:` lines:
+
+- **The difficulty step.** No single overall difficulty setting exists (there are ten dials), so the
+  **ItemRarity** dial was made "the step" everywhere: it drives `WeekModes.For`, the stretch rule and
+  the pools. Renaming the driver dial is a one-line change if Jeff wants a different one.
+- **Dehydrator week 3 by cost.** The cost table Jeff adopted beats the cave route; the spec prose
+  said 6 before the table existed. If wrong, Dehydrator goods are three weeks early on Normal.
+- **BlackberryWeek stays 10** (a bush calendar fact; the ground-forage rule already yields 9 and the
+  earliest wins).
+- **Field Research rolls forage quality.** The `RecipeRollDomain` tie-break left as is, flagged.
+- **Winter Star and Fish Farmer's roll from narrow pools.** Accepted, flagged.
+- **Five recipe rows are approximations** because `PoolItem` carries no name or tags: Fodder (grains
+  by id plus the fruit category, no category -75, so it never asks for a non-grain vegetable), Wild
+  Medicine (mushroom ids plus category -81), Children's (fixed sweet list), Enchanter's (essences by
+  id, the ' Essence' suffix), Chef's ingredient half (Crops, Forage, Egg, Milk, AnimalProduct plus
+  five staples), Field Research shells (fixed list). Jeff sees the rolled boards in the genbundles run.
+- **Mining and Spelunking are thin all year.** The Boiler Room is three bundles and filler is one per
+  bundle per week, so those two themes have almost nothing askable outside the first week of a season.
+- **Year-Two Seeds has no live proof.** There is no plant debug command, so it rests on the Trace hook
+  plus unit tests; Jeff should plant Mixed Seeds once with the trace on to see the 5 percent roll.
+- **The shrine Boosts menu is unexercised over the bridge.** The draw and click path needs one human
+  look at the planning shrine.
+- **Garlic pacing moved 3 to 4** (75 JP is about three weekly bonuses, so run 1 may not have it at 3);
+  Red Cabbage 7 and Artichoke 11 stand. If wrong, Garlic is a week early or late on cards.
+- **The deployed `config.json` was edited for the sims.** `C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods\TheLongestYear\config.json`
+  is Jeff's live file and a deploy does not
+  overwrite it; its `ThemeFillerBySeason` was still the pre-0.16.82 `[0, 1, 2, 99]` and is now the
+  current default `[99, 99, 99, 99]`. It is NOT in any commit; a backup of the old file is in the
+  scratchpad as `config.json.bak`.
+- **Existing engine saves demote once on first launch.** The model now decides board bytes, so a save
+  made on an older board fails the SaveLoaded manifest re-derivation and falls back to the legacy
+  read path (WARN in the log), the same as every earlier pool change. The board on disk stays valid
+  until the next reset.
 
 **2026-08-28: activity themes (Spelunking, Artisan, Kitchen) and the theme-week economy, 0.16.42 to
 0.16.67.** Spec `docs/superpowers/specs/2026-08-27-activity-themes-design.md`, plan
