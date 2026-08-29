@@ -110,6 +110,7 @@ namespace TheLongestYear.Loop
         private readonly BundleGenerationTuning _tuning;
         private readonly bool _nonObjectDonationsEnabled;
         private readonly Dictionary<int, DomainMatch> _lastDomains = new();
+        private readonly Dictionary<int, string> _lastRecipes = new();
         private readonly RarityThresholds _thresholds;
         /// <summary>The difficulty profile this generation runs under. Supplies the item-rarity
         /// pool bias and the required-slots adjustment; the stack and quality modifiers arrive
@@ -135,6 +136,11 @@ namespace TheLongestYear.Loop
         /// cref="Generate"/> call, keyed by absolute index (diagnostics; see tly_genbundles).</summary>
         public IReadOnlyDictionary<int, DomainMatch> LastDomains => _lastDomains;
 
+        /// <summary>For every pick that rolled from a <see cref="PoolDomain.Recipe"/> recipe, the
+        /// recipe's name and its part labels, keyed by absolute index (diagnostics only; see
+        /// tly_genbundles' "re-rolled from recipe" line).</summary>
+        public IReadOnlyDictionary<int, string> LastRecipes => _lastRecipes;
+
         public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null, Core.DifficultyProfile difficulty = null)
         {
             _extraExcludedIds = extraExcludedIds;
@@ -159,6 +165,7 @@ namespace TheLongestYear.Loop
         {
             _lastSeed = seed;
             _lastDomains.Clear();
+            _lastRecipes.Clear();
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds);
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
@@ -230,6 +237,15 @@ namespace TheLongestYear.Loop
                     DomainMatch match = PoolDomainClassifier.Classify(pick, itemPools);
                     if (match.Domain == PoolDomain.None)
                     {
+                        // Since spec 2026-08-28-obtainable-board-3-pools only a money bundle (or an
+                        // empty one) can land here: everything else falls through the classifier to
+                        // its recipe. A non-money bundle keeping its vanilla slots is a bug in the
+                        // classifier, so say so rather than letting it pass quietly.
+                        if (!IsMoneyBundle(pick))
+                            _monitor?.Log(
+                                $"BundleEngine: '{pick.Room}/{pick.Name}' classified None but is not a money bundle — " +
+                                "keeping vanilla slots (unexpected: every non-money bundle should roll from a recipe).",
+                                LogLevel.Warn);
                         // Kept vanilla slots: the same per-pick rng stream the filler would have
                         // received, of which a None-domain fill consumes nothing.
                         BundleSpec trimmed = SlotTrimmer.Trim(pick, new Random(seed ^ (pick.Index * SlotSaltPrime)));
@@ -252,6 +268,12 @@ namespace TheLongestYear.Loop
                          .ThenBy(r => r.Pick.Index))
             {
                 BundleSpec pick = record.Pick;
+                if (record.Match.Domain == PoolDomain.Recipe)
+                {
+                    Core.PoolRecipe recipe = BundleSlotFiller.RecipeFor(pick, itemPools, Availability);
+                    _lastRecipes[pick.Index] =
+                        $"{recipe.Name} ({string.Join(" + ", recipe.Parts.Select(p => p.Label))})";
+                }
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
                     msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability);
@@ -302,6 +324,11 @@ namespace TheLongestYear.Loop
             public DomainMatch Match { get; }
             public BundleSpec Composed { get; set; }
         }
+
+        /// <summary>A gold ask (a money slot), or a bundle with nothing to re-roll at all. These
+        /// are the only picks the classifier may leave at <see cref="PoolDomain.None"/>.</summary>
+        private static bool IsMoneyBundle(BundleSpec spec)
+            => spec.Slots.Count == 0 || spec.Slots.Any(s => s.ItemId == MoneySlotId);
 
         /// <summary>Records every concrete item a bundle asks for (money and category slots are
         /// not items) in the qualified form the pools use, so later fills can leave them out.</summary>
