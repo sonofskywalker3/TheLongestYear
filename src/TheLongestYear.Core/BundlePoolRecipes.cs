@@ -148,13 +148,13 @@ public static class BundlePoolRecipes
             ["Wild Medicine"] = _ => One(MedicineSource, "Mushroom"),
             ["Chef's"] = ids => new[]
             {
-                new PoolPart((p, _) => p.Cooking, Math.Max(1, ids.Count / 2), "Cooking"),
+                new PoolPart((p, m) => Placeable(p.Cooking, m), Math.Max(1, ids.Count / 2), "Cooking"),
                 new PoolPart((p, _) => Union(p.Crops, p.Forage, Bucket(p, ItemKind.Egg), Bucket(p, ItemKind.Milk),
                     Bucket(p, ItemKind.AnimalProduct), Fixed(p, ChefStaples)), RestOfTheSlots, "Ingredient"),
             },
             ["Winter Star"] = _ => One((p, _) => p.WinterOnly, "Winter"),
             ["The Missing"] = _ => One(MissingSource, "Extreme"),
-            ["Children's"] = _ => One((p, _) => Fixed(p, SweetDishes.Concat(Berries).Concat(Dolls)), "Sweets and toys"),
+            ["Children's"] = _ => One((p, m) => Placeable(Fixed(p, SweetDishes.Concat(Berries).Concat(Dolls)), m), "Sweets and toys"),
             ["Enchanter's"] = _ => One(EnchanterSource, "Totem or essence"),
             ["Fish Farmer's"] = _ => One((p, _) => Fixed(p, PondGoods), "Pond goods"),
             ["Animal"] = _ => One((p, _) => Union(
@@ -242,6 +242,14 @@ public static class BundlePoolRecipes
 
     /// <summary>The one part of a vanilla-only recipe: it offers nothing of its own, and
     /// <see cref="For"/> widens it with the bundle's own items, which is the whole point.</summary>
+    /// <summary>Drops ids the availability model cannot place. The cooking pool comes from a walk
+    /// of CookingRecipes, which includes recipes year 1 cannot reach: Crispy Bass needs Kent at 3
+    /// hearts, and Kent is not in the valley in year 1. An unplaced id lands on the board as
+    /// UNKNOWN and the gate then treats it as Winter, so a Cooking-sourced part filters them out
+    /// here. With no model there is nothing to check and the list passes through unchanged.</summary>
+    private static IReadOnlyList<PoolItem> Placeable(IReadOnlyList<PoolItem> items, ItemAvailabilityModel? model)
+        => model == null ? items : items.Where(p => model.IsPlaced(p.ItemId)).ToList();
+
     private static IReadOnlyList<PoolPart> VanillaOnlyParts()
         => One((_, _) => Array.Empty<PoolItem>(), VanillaOnlyLabel);
 

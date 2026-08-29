@@ -269,7 +269,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
-            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop — nothing written/persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
+            helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop: nothing written or persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
@@ -2282,18 +2282,30 @@ namespace TheLongestYear
                 // quarters reuse that baseline so their shares match.
                 if (quarter == 1 || _playSeasonBaseline?.Season != season || _playSeasonBaseline?.Donated == null)
                     _playSeasonBaseline = (season, new HashSet<string>(donated, StringComparer.Ordinal));
-                // One flat list of every slot the season demands, bundle by bundle in the same order
-                // the plain mode flips them, planned against ONE simulated ledger that starts at the
-                // season baseline and grows as each bundle is planned. The quarter is a share of that
-                // whole list, not of each bundle, so the season's work spreads across the four calls.
+                // Every slot the season demands, planned bundle by bundle in the same order the plain
+                // mode flips them, against ONE simulated ledger that starts at the season baseline and
+                // grows as each bundle is planned (so a shared item is planned once, as before).
                 var sim = new HashSet<string>(_playSeasonBaseline.Value.Donated, StringComparer.Ordinal);
-                var seasonPlan = new List<(BundleRequirement Req, int BundleIndex, int SlotIndex, string ItemId)>();
+                var perBundle = new List<List<(BundleRequirement Req, int BundleIndex, int SlotIndex, string ItemId)>>();
                 foreach (BundleRequirement req in requirements)
                 {
                     if (!lines.TryGetValue(req.Name, out var bundle)) { log.Add($"  {req.Name}: not on the live board, skipped"); continue; }
+                    var forBundle = new List<(BundleRequirement, int, int, string)>();
                     foreach (string pick in PlanShare(req, bundle.Slots, sim))
-                        seasonPlan.Add((req, bundle.Index, bundle.Slots[pick], pick));
+                        forBundle.Add((req, bundle.Index, bundle.Slots[pick], pick));
+                    perBundle.Add(forBundle);
                 }
+                // Flatten ROUND-ROBIN, not bundle by bundle: pass 1 takes each bundle's first planned
+                // slot in board order, pass 2 each bundle's second, and so on. A flat bundle-by-bundle
+                // list put the whole Boiler Room share inside quarter 1, which emptied Mining's weekly
+                // goal pool in week 1 of every season; round-robin spreads every room across the four
+                // quarters. The quarter is still a prefix of the whole list, not a share per bundle.
+                var seasonPlan = new List<(BundleRequirement Req, int BundleIndex, int SlotIndex, string ItemId)>();
+                int deepest = 0;
+                foreach (var forBundle in perBundle) deepest = Math.Max(deepest, forBundle.Count);
+                for (int pass = 0; pass < deepest; pass++)
+                    foreach (var forBundle in perBundle)
+                        if (pass < forBundle.Count) seasonPlan.Add(forBundle[pass]);
 
                 cumulative = (int)Math.Ceiling(seasonPlan.Count * quarter / 4.0);
                 foreach (var step in seasonPlan.Take(cumulative))
@@ -3063,7 +3075,7 @@ namespace TheLongestYear
             firstEngine.Availability = _availability;
             GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
-                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only — nothing written.",
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
@@ -3074,7 +3086,7 @@ namespace TheLongestYear
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
             else
-                this.Monitor.Log($"tly_genbundles: determinism ERROR — {difference}", LogLevel.Error);
+                this.Monitor.Log($"tly_genbundles: determinism ERROR: {difference}", LogLevel.Error);
         }
 
         /// <summary>The vanilla half of <see cref="CmdGenBundles"/>: build the board the GAME
@@ -3118,7 +3130,7 @@ namespace TheLongestYear
 
             GeneratedBundleSet first = TheLongestYear.Loop.VanillaBundlePool.SetFromBundleData(firstData);
             this.Monitor.Log(
-                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode {label}), diagnostics only — nothing written.",
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode {label}), diagnostics only, nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(null, first, itemSeasonPins, bundleQuotas, $"vanilla slots ({label})");
 
@@ -3127,7 +3139,7 @@ namespace TheLongestYear
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
             else
-                this.Monitor.Log($"tly_genbundles: determinism ERROR — {difference}", LogLevel.Error);
+                this.Monitor.Log($"tly_genbundles: determinism ERROR: {difference}", LogLevel.Error);
         }
 
         /// <summary>Logs each room's picked bundle names + slot counts, then the manifest
@@ -3271,7 +3283,7 @@ namespace TheLongestYear
                 // own board is expected to classify every themed bundle it authored.
                 this.Monitor.Log(
                     engine != null
-                        ? $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms (unexpected — {breakdown})."
+                        ? $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms (unexpected: {breakdown})."
                         : $"tly_genbundles: {themedSkipped} skipped bundle(s) fell inside themed rooms ({breakdown}).",
                     engine != null ? LogLevel.Warn : LogLevel.Info);
             }

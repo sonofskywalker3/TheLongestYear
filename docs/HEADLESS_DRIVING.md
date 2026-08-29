@@ -76,12 +76,21 @@ copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate
 - Usage: `bash tools/sim-year.sh <mode> <label> [seedLoop]`. `minimal` plays a loop year meeting
   only the gates; `goals` also deposits every selected week's goal slots (`tly_playseason
   goalsonly`) after the pick.
-- **Donations land a quarter a week, not all at once.** Week k of every season calls
-  `tly_playseason quarter k` *before* the pick, so the hub sees the board a real player would
-  have by then. The share is global and cumulative (quarter 3 means three quarters of the
-  season's plan donated in total), and quarter 4 also pays the vault and prints the
-  `gate WOULD PASS/FAIL` ledger line. Only quarter 4 prints that line, so do not wait on it for
-  the earlier weeks.
+- **Donations land a quarter a week, not all at once, and they land AFTER the pick.** Week k of
+  every season picks the card, deposits the week's goals, and only then calls
+  `tly_playseason quarter k`: the player chooses a card and then spends the week donating.
+  Donating before the pick finished the season by the week-4 hub and left every week-4 goal pool
+  empty. The share is global and cumulative (quarter 3 means three quarters of the season's plan
+  donated in total), and quarter 4 also pays the vault and prints the `gate WOULD PASS/FAIL`
+  ledger line. Only quarter 4 prints that line, so do not wait on it for the earlier weeks.
+- The quarter's plan is flattened **round-robin across bundles**, not bundle by bundle: pass 1
+  takes each bundle's first demanded slot in board order, pass 2 each bundle's second. A flat
+  bundle-by-bundle list put the whole Boiler Room share inside quarter 1 and left Mining with no
+  askable weekly goal for the rest of every season.
+- **Check the deployed `config.json` before a sim.** It is Jeff's live file and it does not get
+  overwritten by a deploy, so a stale value silently changes what the sim measures.
+  `ThemeFillerBySeason` must be `[99, 99, 99, 99]` (the current default); the pre-0.16.82
+  `[0, 1, 2, 99]` starves the early seasons.
 - **`[seedLoop]` pins the board**: it is passed to `tly_reset <seedLoop>` so two sims (say a
   `minimal` and a `goals` run) compare like for like. Omit it for a random board.
 - Related: `tly_genbundles <seedLoop> [custom|standard|remixed]` rolls a board through the same

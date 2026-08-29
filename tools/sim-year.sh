@@ -5,9 +5,10 @@
 #   minimal = donate only the season's gate demand, a quarter of it per week
 #   goals   = the same quarter-a-week donations plus every selected week's goal slots
 #             (tly_playseason goalsonly), deposited after the pick
-# Every week k of every season calls "tly_playseason quarter k" BEFORE the pick, so the board the
-# hub sees has the donations a real player would have made by then; quarter 4 also pays the vault
-# and prints the season gate line. seedLoop (optional) is passed to tly_reset so two runs share a
+# Every week k of every season calls "tly_playseason quarter k" AFTER the pick and the goal
+# deposit: the player picks a card, then spends the week donating. Donating before the pick made
+# the season complete by the week-4 hub, so every week-4 goal pool was empty. Quarter 4 also pays
+# the vault and prints the season gate line. seedLoop (optional) goes to tly_reset so two runs share a
 # board. Starts with tly_reset, plays Spring..Winter, stops after the Winter week-4 pick (the
 # Winter day-28 win path is not exercised). Prints the offer, askable counts, goal counts and the
 # pick for every week, then the 16-week askable table, the gate audit, the judgement rows and the
@@ -46,7 +47,7 @@ deposit_goals() {
     show "$n" "tly_playseason|WARN|ERROR"
   fi
 }
-quarter_donations() {  # $1 = 1..4: this week's share of the season's gate demand
+quarter_donations() {  # $1 = 1..4: this week's share of the season's gate demand, after the pick
   local n; n=$(count)
   drv -Action send -Lines "tly_playseason quarter $1" >/dev/null
   drv -Action wait -Pattern "tly_playseason: .* quarter $1|tly_playseason: .* gate WOULD" -TimeoutSec 120 -FromLine "$n" >/dev/null
@@ -94,10 +95,10 @@ drv -Action wait -Pattern "Opened planning hub \(week 1," -TimeoutSec 180 -FromL
 START=$(count)
 for season in Spring Summer Fall Winter; do
   for k in 1 2 3 4; do
-    say "=== $LABEL: $season week $k (quarter $k donations first)"
-    quarter_donations "$k"
+    say "=== $LABEL: $season week $k"
     pick_and_goals
     deposit_goals
+    quarter_donations "$k"
     [ "$k" = 4 ] && break
     advance_to $((k * 7))
   done
