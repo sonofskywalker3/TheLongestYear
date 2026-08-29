@@ -70,7 +70,7 @@ namespace TheLongestYear.UI
 
         /// <summary>Mod-side purchase callback (JP spend, sound, HUD, logging). Null → no Boosts
         /// section, so the menu stays the pure preview it was.</summary>
-        private readonly System.Func<BoostId, BoostPurchase.Result> _buyBoost;
+        private readonly System.Func<BoostId, int, BoostPurchase.Result> _buyBoost;
 
         // Foresight data, fetched once at open (rolling — reads live Game1 date so re-opening on a
         // later day shows a later window). Bounds for hover/draw are computed in the layout pass.
@@ -98,7 +98,7 @@ namespace TheLongestYear.UI
         private readonly double _priceFactor;
 
         public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0, RunState run = null,
-            System.Func<BoostId, BoostPurchase.Result> buyBoost = null)
+            System.Func<BoostId, int, BoostPurchase.Result> buyBoost = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
@@ -122,6 +122,10 @@ namespace TheLongestYear.UI
                     Game1.dayOfMonth, (int)Game1.season, weatherTier,
                     Loop.GreenRainDay.VanillaSummerDay())
                 : System.Array.Empty<ForecastDay>();
+            // Rain Dance / Storm Call: slot 0 is tomorrow; show the bought weather, not the schedule.
+            if (_run != null && _weatherDays.Length > 0 && _run.WeatherOverride != null
+                && _run.WeatherOverrideDay == Calendar.DayOfYear((int)_run.Season, _run.DayOfMonth) + 1)
+                _weatherDays[0] = _weatherDays[0] with { Weather = _run.WeatherOverride };
 
             // Cart Whisperer (single upgrade): on a cart day — or any day if the Cart Catalog mod lets
             // you mail-order — flag which of the cart's REAL current stock can feed any CC bundle.
@@ -271,7 +275,7 @@ namespace TheLongestYear.UI
         /// (fix round 2, 2026-08-29). NotEnoughJp still draws a Buy button: the shrine reports the
         /// shortfall, and greying it out here would hide the price.</summary>
         private BoostRowState StateOf(BoostDefinition boost)
-            => BoostPurchase.StateOf(_state, _run, boost.Id, _run.WeekOfYear) switch
+            => BoostPurchase.StateOf(_state, _run, boost.Id, TheLongestYear.Donations.BoostContextBuilder.Build(_run)) switch
             {
                 BoostPurchase.Result.NotAvailable => BoostRowState.NotAvailable,
                 BoostPurchase.Result.AlreadyActive => BoostRowState.Active,
@@ -418,7 +422,7 @@ namespace TheLongestYear.UI
                 if (StateOf(row.Boost) != BoostRowState.Buy) continue;
                 if (!BoostButtonBounds(_listY + i * RowHeight).Contains(x, y)) continue;
 
-                _buyBoost(row.Boost.Id);   // sound, HUD and logging all live in the callback
+                _buyBoost(row.Boost.Id, -1);   // sound, HUD and logging all live in the callback
                 BuildRows();               // the row's control flips to Active on success
                 ClampScroll();
                 return;

@@ -29,7 +29,7 @@ namespace TheLongestYear.UI
         /// section. Same static-hook idiom as <see cref="_state"/>. Unattached, the menu simply
         /// shows no Boosts section.</summary>
         private static System.Func<RunState> _run;
-        private static System.Func<BoostId, BoostPurchase.Result> _buyBoost;
+        private static System.Func<BoostId, int, BoostPurchase.Result> _buyBoost;
 
         public PlanningShrineService(IMonitor monitor, IModHelper helper)
         {
@@ -43,7 +43,7 @@ namespace TheLongestYear.UI
 
         /// <summary>Wire the Boosts section: the live run (for what is already active) and the
         /// mod-side purchase callback (JP spend, sound, HUD, logging).</summary>
-        public void AttachBoosts(System.Func<RunState> run, System.Func<BoostId, BoostPurchase.Result> buyBoost)
+        public void AttachBoosts(System.Func<RunState> run, System.Func<BoostId, int, BoostPurchase.Result> buyBoost)
         {
             _run = run;
             _buyBoost = buyBoost;

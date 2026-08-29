@@ -38,11 +38,16 @@ namespace TheLongestYear.Loop
         private static void Postfix(Object __instance, bool __result, int __state)
         {
             if (!__result) return;
-            if (!ActiveEffectsProvider.ActiveBonus("all_drops_up")) return;
+            int stacks = ActiveEffectsProvider.BonusStacks("all_drops_up");
+            if (stacks == 0) return;
             if (__instance == null || __state < 0) return;
             GameLocation loc = __instance.Location;
             if (loc?.debris == null) return;
-            if (Game1.random.NextDouble() >= BonusDropResolver.MixedAllDropsChance) return;
+            // One independent roll per stack (theme bonus + Windfall), ruling 3.
+            bool hit = false;
+            for (int s = 0; s < stacks && !hit; s++)
+                hit = Game1.random.NextDouble() < BonusDropResolver.MixedAllDropsChance;
+            if (!hit) return;
 
             // Round-13 spec: +1 from the rolled set, not full set doubled. See
             // MineOreDropBonus for the +1 rationale and the round-12 Debris.itemId.Value

@@ -6,6 +6,27 @@ namespace TheLongestYear.Tests;
 public class ActiveEffectsProviderTests
 {
     [Fact]
+    public void BonusStacks_counts_the_theme_plus_every_bound_boost()
+    {
+        RunActivation.Activate();
+        ActiveEffectsProvider.Set("forage_yield_up", "mines_closed");
+        ActiveEffectsProvider.AttachBoosts(() => new[] { "forage_yield_up", "fish_bite_up" });
+        try
+        {
+            Assert.Equal(2, ActiveEffectsProvider.BonusStacks("forage_yield_up"));
+            Assert.Equal(1, ActiveEffectsProvider.BonusStacks("fish_bite_up"));
+            Assert.Equal(0, ActiveEffectsProvider.BonusStacks("crop_growth_up"));
+            Assert.True(ActiveEffectsProvider.ActiveBonus("fish_bite_up"));
+        }
+        finally
+        {
+            ActiveEffectsProvider.DetachBoosts();
+            ActiveEffectsProvider.Clear();
+            RunActivation.Deactivate();
+        }
+    }
+
+    [Fact]
     public void Initially_no_active_effects()
     {
         ActiveEffectsProvider.Clear();

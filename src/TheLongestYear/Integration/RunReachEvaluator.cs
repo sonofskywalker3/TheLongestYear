@@ -117,15 +117,30 @@ namespace TheLongestYear.Integration
             _     => 0,
         };
 
-        private static int SkillLevel(Farmer p, string name) => name switch
+        /// <summary>EARNED level: the live level minus levels bought with Crash Course this loop
+        /// (spec 2026-08-29, 1.5: a bought level is never keepable, so no keep row may open on it).
+        /// Skill indices follow vanilla: Farming 0, Fishing 1, Foraging 2, Mining 3, Combat 4.</summary>
+        private static int SkillLevel(Farmer p, string name)
         {
-            "farming"  => p.farmingLevel.Value,
-            "mining"   => p.miningLevel.Value,
-            "foraging" => p.foragingLevel.Value,
-            "fishing"  => p.fishingLevel.Value,
-            "combat"   => p.combatLevel.Value,
-            _          => 0,
-        };
+            int index = name switch
+            {
+                "farming" => 0, "fishing" => 1, "foraging" => 2, "mining" => 3, "combat" => 4, _ => -1,
+            };
+            int current = name switch
+            {
+                "farming"  => p.farmingLevel.Value,
+                "mining"   => p.miningLevel.Value,
+                "foraging" => p.foragingLevel.Value,
+                "fishing"  => p.fishingLevel.Value,
+                "combat"   => p.combatLevel.Value,
+                _          => 0,
+            };
+            int bought = 0;
+            var boughtByskill = _runState?.Invoke()?.SkillLevelsBoughtThisLoop;
+            if (index >= 0 && boughtByskill != null)
+                boughtByskill.TryGetValue(index, out bought);
+            return current - bought;
+        }
 
         // Housing chains — a higher tier satisfies the reach for a lower one (a Deluxe Coop
         // counts as having reached "Coop"/"Big Coop"). Upgrading a building changes its

@@ -28,6 +28,7 @@ namespace TheLongestYear
         private RunController _runController;
         private UpgradePurchaseService _purchases;
         private BoostPurchaseService _boostPurchases;
+        private TheLongestYear.Loop.BoostEffectsService _boostEffects;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -287,7 +288,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpevents", "Audit Data/Events for furnace/cave/early-scene ids (debug — logs candidates so the event-gating tables use real ids, not guesses).", this.CmdDumpEvents);
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
-            helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost for the current week (debug, the same purchase the shrine's Buy button makes). Usage: tly_boost <yeartwoseeds|sneakpeek>", this.CmdBoost);
+            helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost today (debug, the same purchase the shrine's Buy button makes), or list the roster with each row's state. Usage: tly_boost list | tly_boost <id> [farming|fishing|foraging|mining|combat]", this.CmdBoost);
+            helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
@@ -437,8 +439,8 @@ namespace TheLongestYear
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
-            BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, _meta.Run.WeekOfYear);
-            BoostChecker.SneakPeekActive = () => TheLongestYear.Core.BoostState.SneakPeekActive(_meta.Run, _meta.Run.Season);
+            BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
+            BoostChecker.SneakPeekActive = () => TheLongestYear.Core.BoostState.SneakPeekActive(_meta.Run, TodayDayOfYear());
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
             CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
@@ -603,8 +605,14 @@ namespace TheLongestYear
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
-            _boostPurchases = new BoostPurchaseService(this.Monitor, _meta);
-            _planningShrine.AttachBoosts(() => _meta.Run, id => _boostPurchases.TryBuy(id));
+            _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);
+            _boostPurchases = new BoostPurchaseService(this.Monitor, _meta, _boostEffects);
+            _planningShrine.AttachBoosts(() => _meta.Run, (id, skill) => _boostPurchases.TryBuy(id, skill));
+            TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
+            TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
+            TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
+            ActiveEffectsProvider.AttachBoosts(() => TheLongestYear.Core.BoostState.ActiveModifierIds(_meta.Run, TodayDayOfYear()));
+            _boostEffects.ApplyDailyBuffs();
             TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
@@ -653,6 +661,10 @@ namespace TheLongestYear
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.BoostChecker.SneakPeekActive = null;
+            TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = null;
+            TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = null;
+            TheLongestYear.Loop.BoostEffectsService.HagglerActive = null;
+            ActiveEffectsProvider.DetachBoosts();
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
             TheLongestYear.Loop.CartSlotLimitPatch.StartingSlotsProvider = null;
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;
@@ -1246,6 +1258,9 @@ namespace TheLongestYear
             _introInjector?.ClearIntroState();
         }
 
+        /// <summary>Today as a 1..112 day of year from the run's own calendar.</summary>
+        private int TodayDayOfYear() => TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
+
         private void CmdActiveEffects(string command, string[] args)
         {
             string bonus = TheLongestYear.Core.ActiveEffectsProvider.BonusId ?? "(none)";
@@ -1253,6 +1268,24 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"Active effects: bonus={bonus}, liability={liability}. " +
                 $"Selection={_meta?.Run.CurrentSelection?.ToString() ?? "none"}.",
+                LogLevel.Info);
+            if (_meta == null) return;
+            int today = TodayDayOfYear();
+            foreach (TheLongestYear.Core.ActiveBoost b in _meta.Run.ActiveBoosts)
+                this.Monitor.Log(
+                    $"  boost {b.Id}: bought day {b.BoughtDay}, through day {b.ExpiresAfterDay}" +
+                    $"{(b.Skill >= 0 ? $", skill {b.Skill}" : "")}{(b.IsActiveOn(today) ? " (active)" : " (expired)")}",
+                    LogLevel.Info);
+            string[] bonusIds = { "forage_yield_up", "fish_bite_up", "crop_growth_up", "mine_drops_up", "all_drops_up",
+                "monster_drops_double", "machines_fast", "animal_double_product" };
+            var stacks = new System.Collections.Generic.List<string>();
+            foreach (string id in bonusIds)
+            {
+                int n = TheLongestYear.Core.ActiveEffectsProvider.BonusStacks(id);
+                if (n > 0) stacks.Add($"{id}={n}");
+            }
+            this.Monitor.Log($"  stacks: {(stacks.Count == 0 ? "(none)" : string.Join(", ", stacks))}; " +
+                $"crash course bought {_meta.Run.SkillLevelsBoughtTotal}; weather override day {_meta.Run.WeatherOverrideDay} = {_meta.Run.WeatherOverride ?? "(none)"}.",
                 LogLevel.Info);
         }
 
@@ -1750,6 +1783,7 @@ namespace TheLongestYear
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
+            _boostEffects?.OnDayStarted();
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);
@@ -1873,6 +1907,7 @@ namespace TheLongestYear
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_boost": this.CmdBoost(command, args); break;
+                case "tly_boostexpire": _boostEffects?.OnDayStarted(); break;
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
@@ -3724,20 +3759,37 @@ namespace TheLongestYear
         private void CmdBoost(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            if (args.Length < 1) { this.Monitor.Log("Usage: tly_boost <yeartwoseeds|sneakpeek>", LogLevel.Warn); return; }
-
-            BoostId id;
-            switch (args[0].ToLowerInvariant())
-            {
-                case "yeartwoseeds": id = BoostId.YearTwoSeeds; break;
-                case "sneakpeek": id = BoostId.SneakPeek; break;
-                default:
-                    this.Monitor.Log($"tly_boost: unknown boost '{args[0]}'. Use yeartwoseeds or sneakpeek.", LogLevel.Warn);
-                    return;
-            }
-
             if (_boostPurchases == null) { this.Monitor.Log("tly_boost: boost service not wired yet.", LogLevel.Warn); return; }
-            _boostPurchases.TryBuy(id);
+            if (args.Length < 1 || args[0].Equals("list", System.StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (TheLongestYear.Core.BoostDefinition def in TheLongestYear.Core.BoostCatalog.All)
+                {
+                    int skill = def.Id == BoostId.CrashCourse ? 0 : -1;
+                    TheLongestYear.Core.BoostContext ctx = _boostPurchases.Context(skill);
+                    this.Monitor.Log(
+                        $"  {def.Id,-14} {def.Duration,-7} {TheLongestYear.Core.BoostPricing.CostOf(def, _meta.Run, ctx),5} JP  " +
+                        $"{TheLongestYear.Core.BoostPurchase.StateOf(_meta.State, _meta.Run, def.Id, ctx)}" +
+                        (def.Id == BoostId.CrashCourse ? " (farming shown; pass a skill name)" : ""),
+                        LogLevel.Info);
+                }
+                this.Monitor.Log("Usage: tly_boost <id> [farming|fishing|foraging|mining|combat]", LogLevel.Info);
+                return;
+            }
+            if (!System.Enum.TryParse(args[0], ignoreCase: true, out BoostId id))
+            {
+                this.Monitor.Log($"tly_boost: unknown boost '{args[0]}'. Run tly_boost list.", LogLevel.Warn);
+                return;
+            }
+            int skillArg = -1;
+            if (args.Length > 1)
+            {
+                skillArg = args[1].ToLowerInvariant() switch
+                {
+                    "farming" => 0, "fishing" => 1, "foraging" => 2, "mining" => 3, "combat" => 4, _ => -1,
+                };
+                if (skillArg < 0) { this.Monitor.Log($"tly_boost: unknown skill '{args[1]}'.", LogLevel.Warn); return; }
+            }
+            _boostPurchases.TryBuy(id, skillArg);
         }
 
         /// <summary>Debug: invoke the TV's protected <c>getWeeklyRecipe()</c> directly so the

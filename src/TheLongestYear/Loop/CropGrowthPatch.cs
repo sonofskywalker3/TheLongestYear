@@ -76,8 +76,14 @@ namespace TheLongestYear.Loop
             if (__instance.dead.Value) return;
             if (__instance.fullyGrown.Value && __instance.dayOfCurrentPhase.Value > 0) return;
             if (state != 1) return;
-            if (!ActiveEffectsProvider.ActiveBonus("crop_growth_up")) return;
-            if (Game1.random.NextDouble() >= RollChance) return;
+            // One independent roll per stack (theme bonus + Growth Spurt); one extra tick at most
+            // per day, since a tick is already a whole growth day (ruling 3).
+            int stacks = ActiveEffectsProvider.BonusStacks("crop_growth_up");
+            if (stacks == 0) return;
+            bool hit = false;
+            for (int s = 0; s < stacks && !hit; s++)
+                hit = Game1.random.NextDouble() < RollChance;
+            if (!hit) return;
             if (__instance.fullyGrown.Value) return;
 
             int maxForPhase = (__instance.phaseDays.Count > 0)

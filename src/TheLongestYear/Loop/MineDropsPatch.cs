@@ -60,9 +60,14 @@ namespace TheLongestYear.Loop
             // 2026-05-29 round 7: mine_drops_up fires on rocks/nodes ANYWHERE — overworld
             // (Farm, Quarry, Backwoods boulder) AND inside MineShaft. User: "only rocks and
             // nodes, whether in the overworld or the mine." Dropping the prior MineShaft gate.
-            bool mineBonus = ActiveEffectsProvider.ActiveBonus("mine_drops_up");
-            bool allBonus  = ActiveEffectsProvider.ActiveBonus("all_drops_up");
+            int mineStacks = ActiveEffectsProvider.BonusStacks("mine_drops_up");
+            int allStacks  = ActiveEffectsProvider.BonusStacks("all_drops_up");
+            bool mineBonus = mineStacks > 0;
+            bool allBonus  = allStacks > 0;
             if (!mineBonus && !allBonus) return;
+            // Stacks (theme bonus + Rich Veins / Windfall): one independent roll each, the best
+            // roll is kept against the single threshold below (ruling 3).
+            int rolls = mineBonus ? mineStacks : allStacks;
 
             // Tier the roll: mine_drops_up takes priority at 20%; falls back to all_drops_up
             // when only Mixed is picked. Single roll covers ALL drops added by this
@@ -78,7 +83,9 @@ namespace TheLongestYear.Loop
             // 2026-05-29 round 12: log the actual rolled value on every event so we can
             // disambiguate "bad luck", "RNG always >= threshold" (broken random), and
             // "rolled in but bonus path threw" (exception swallowed by Harmony).
-            double roll = Game1.random.NextDouble();
+            double roll = 1.0;
+            for (int s = 0; s < rolls; s++)
+                roll = System.Math.Min(roll, Game1.random.NextDouble());
             if (roll >= threshold)
             {
                 PatchLog.Trace($"{firingBonus}: roll={roll:F3} >= {threshold:F2} → no bonus.");

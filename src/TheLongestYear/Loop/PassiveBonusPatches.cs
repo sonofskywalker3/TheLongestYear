@@ -39,14 +39,17 @@ namespace TheLongestYear.Loop
             if (UpgradeChecker.HasUpgrade == null) return;       // dormant on non-TLY saves
 
             int tier = UpgradeChecker.GetTier("shop_discount", ShopDiscount.MaxTier);
-            if (tier == 0) return;
+            // Haggler boost (spec 2026-08-29, 2.7): +10% additive with the chain, same exclusions.
+            int percent = ShopDiscount.PercentForTier(tier)
+                + (BoostEffectsService.HagglerActive?.Invoke() == true ? ShopDiscount.HagglerPercent : 0);
+            if (percent == 0) return;
 
             foreach (var key in new System.Collections.Generic.List<ISalable>(__result.Keys))
             {
                 if (IsToolUpgrade(key)) continue;      // Jeff's ruling: upgrades pay full price
 
                 ItemStockInformation info = __result[key];
-                int discounted = ShopDiscount.Apply(info.Price, tier);
+                int discounted = ShopDiscount.ApplyPercent(info.Price, percent);
                 if (discounted != info.Price)
                 {
                     info.Price = discounted;

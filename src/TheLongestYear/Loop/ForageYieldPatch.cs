@@ -64,16 +64,26 @@ namespace TheLongestYear.Loop
                 if (__instance.objects.ContainsKey(kv.Key)) continue;   // still there — not picked
 
                 Object src = kv.Value;
-                if (!BonusDropResolver.ShouldGrantExtraDrop("forage_yield_up", src.QualifiedItemId, Game1.random))
+                // One independent roll per stack (theme bonus + Overgrowth), +1 per hit (ruling 3).
+                int hits = 0;
+                for (int s = ActiveEffectsProvider.BonusStacks("forage_yield_up"); s > 0; s--)
+                {
+                    if (BonusDropResolver.ShouldGrantExtraDrop("forage_yield_up", src.QualifiedItemId, Game1.random))
+                        hits++;
+                }
+                if (hits == 0)
                     return;
 
-                Object extra = (Object)src.getOne();
-                extra.Quality = src.Quality;   // carry the harvest quality vanilla just assigned
-                who.addItemToInventoryBool(extra);
+                for (int h = 0; h < hits; h++)
+                {
+                    Object extra = (Object)src.getOne();
+                    extra.Quality = src.Quality;   // carry the harvest quality vanilla just assigned
+                    who.addItemToInventoryBool(extra);
+                }
 
                 BonusDropEffects.Play(__instance, (int)kv.Key.X, (int)kv.Key.Y);
                 PatchLog.Info(
-                    $"forage_yield_up: +1 '{src.QualifiedItemId}' (Q{src.Quality}) into inventory on " +
+                    $"forage_yield_up: +{hits} '{src.QualifiedItemId}' (Q{src.Quality}) into inventory on " +
                     $"pickup at ({(int)kv.Key.X}, {(int)kv.Key.Y}) on {__instance.NameOrUniqueName}.");
                 return;   // at most one pickup per action
             }

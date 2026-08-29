@@ -25,8 +25,9 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(ref float __result)
         {
-            if (ActiveEffectsProvider.ActiveBonus("fish_bite_up"))
-                __result *= 0.70f;  // 30% sooner
+            // 30% sooner per stack (theme bonus + Feeding Frenzy stack, ruling 3).
+            for (int s = ActiveEffectsProvider.BonusStacks("fish_bite_up"); s > 0; s--)
+                __result *= 0.70f;
 
             if (ActiveEffectsProvider.ActiveLiability("fish_bite_down"))
                 __result *= 1.30f;  // 30% slower (Farming liability)
