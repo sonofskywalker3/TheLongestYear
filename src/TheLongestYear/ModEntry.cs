@@ -71,7 +71,7 @@ namespace TheLongestYear
 
         /// <summary>Season-start ledger snapshot that <c>tly_playseason quarter &lt;k&gt;</c> plans against, so
         /// the four quarter calls share one plan and land cumulatively where a plain call would.</summary>
-        private (TheLongestYear.Core.Season Season, HashSet<string> Donated)? _playSeasonBaseline;
+        private (TheLongestYear.Core.Season Season, List<DonatedSlot> Donated)? _playSeasonBaseline;
 
         /// <summary>Slots the quarter calls have actually flipped since the baseline was taken, so the
         /// log can report the real running total for the season and each quarter can budget the steps
@@ -2235,35 +2235,26 @@ namespace TheLongestYear
             var worldState = Game1.netWorldState?.Value;
             if (worldState?.BundleData == null || worldState.Bundles?.FieldDict == null) { this.Monitor.Log("No bundle data.", LogLevel.Warn); return; }
 
-            // Bundle name -> (index, ingredient id -> ingredient line index) from the live board.
-            var lines = new Dictionary<string, (int Index, Dictionary<string, int> Slots)>(StringComparer.Ordinal);
+            // Bundle name -> (index, concrete slots in board order, duplicates kept) from the live board.
+            var lines = new Dictionary<string, (int Index, List<BundleSlot> Slots)>(StringComparer.Ordinal);
             foreach (var kvp in worldState.BundleData)
             {
                 ParsedBundle parsed = BundleParsing.Parse(kvp.Key, kvp.Value);
-                var slots = new Dictionary<string, int>(StringComparer.Ordinal);
+                var slots = new List<BundleSlot>();
                 for (int i = 0; i < parsed.Ingredients.Count; i++)
                 {
                     string refId = parsed.Ingredients[i].ItemRef;
                     if (BundleParsing.IsCategoryRef(refId)) continue;
-                    string id = BundleParsing.NormalizeItemId(refId);
-                    if (!slots.ContainsKey(id)) slots[id] = i;
+                    slots.Add(new BundleSlot(i, BundleParsing.NormalizeItemId(refId)));
                 }
                 if (!lines.ContainsKey(parsed.Name)) lines[parsed.Name] = (parsed.Index, slots);
             }
 
-            bool Flip(int bundleIndex, int ingredientIndex)
-            {
-                if (!worldState.Bundles.FieldDict.ContainsKey(bundleIndex)) return false;
-                bool[] arr = (bool[])worldState.Bundles[bundleIndex].Clone();
-                if (ingredientIndex < 0 || ingredientIndex >= arr.Length) return false;
-                if (arr[ingredientIndex]) return true;
-                arr[ingredientIndex] = true;
-                worldState.Bundles[bundleIndex] = arr;
-                return true;
-            }
+            static bool Flip(int bundleIndex, int ingredientIndex)
+                => TheLongestYear.Integration.CcSlotWriter.TryFill(bundleIndex, ingredientIndex);
 
             TheLongestYear.Integration.ItemDonationSync.Reconcile(run);
-            ISet<string> donated = run.DonatedSet();
+            SlotLedger donated = run.DonatedLedger();
             int flipped = 0;
             var log = new List<string>();
 
@@ -2277,21 +2268,29 @@ namespace TheLongestYear
                     .OrderBy(id => Enumerable.Range(0, (int)season + 1).Any(s => _runController.IsObtainableInSeason(id, (TheLongestYear.Core.Season)s)) ? 0 : 1),
             };
 
-            // The bundle's whole season share. The caller passes ONE simulated ledger that every
-            // bundle's plan reads and grows, exactly mirroring the plain mode's sequential loop: the
-            // ledger is shared across bundles there too, so an item that satisfies two bundles is
-            // planned once and the second bundle plans a substitute instead of a duplicate that
-            // would be silently skipped at flip time.
-            List<string> PlanShare(BundleRequirement req, Dictionary<string, int> slots, HashSet<string> sim)
+            // The first open slot of the bundle that wants one of the candidate ids, candidate order.
+            static BundleSlot? FirstOpenSlot(IEnumerable<string> candidates, int bundleIndex, List<BundleSlot> slots, SlotLedger ledger)
             {
-                var picks = new List<string>();
+                foreach (string id in candidates)
+                    foreach (BundleSlot s in slots)
+                        if (s.ItemId == id && !ledger.IsFilled(bundleIndex, s.IngredientIndex)) return s;
+                return null;
+            }
+
+            // The bundle's whole season share as slot picks against ONE simulated ledger shared by
+            // every bundle (mirroring the plain mode's sequential loop). Slots are per bundle now, so
+            // two bundles that both list Salmonberry each plan their own slot, and a doubled id in one
+            // bundle plans both of its slots.
+            List<BundleSlot> PlanShare(BundleRequirement req, int bundleIndex, List<BundleSlot> slots, SlotLedger sim)
+            {
+                var picks = new List<BundleSlot>();
                 int guard = 0;
                 while (!req.IsSatisfiedAtSeasonEnd(season, sim) && guard++ < 32)
                 {
-                    string pick = Candidates(req).FirstOrDefault(id => !sim.Contains(id) && slots.ContainsKey(id));
+                    BundleSlot? pick = FirstOpenSlot(Candidates(req), bundleIndex, slots, sim);
                     if (pick == null) break;
-                    sim.Add(pick);
-                    picks.Add(pick);
+                    sim.Add(bundleIndex, pick.Value.IngredientIndex, pick.Value.ItemId);
+                    picks.Add(pick.Value);
                 }
                 return picks;
             }
@@ -2304,20 +2303,20 @@ namespace TheLongestYear
                 // quarters reuse that baseline so their shares match.
                 if (quarter == 1 || _playSeasonBaseline?.Season != season || _playSeasonBaseline?.Donated == null)
                 {
-                    _playSeasonBaseline = (season, new HashSet<string>(donated, StringComparer.Ordinal));
+                    _playSeasonBaseline = (season, donated.Entries.Select(e => new DonatedSlot { BundleIndex = e.BundleIndex, IngredientIndex = e.IngredientIndex, ItemId = e.ItemId }).ToList());
                     _playSeasonDonatedThisSeason = 0;
                 }
                 // Every slot the season demands, planned bundle by bundle in the same order the plain
                 // mode flips them, against ONE simulated ledger that starts at the season baseline and
                 // grows as each bundle is planned (so a shared item is planned once, as before).
-                var sim = new HashSet<string>(_playSeasonBaseline.Value.Donated, StringComparer.Ordinal);
+                var sim = new SlotLedger(_playSeasonBaseline.Value.Donated);
                 var perBundle = new List<List<(BundleRequirement Req, int BundleIndex, int SlotIndex, string ItemId)>>();
                 foreach (BundleRequirement req in requirements)
                 {
                     if (!lines.TryGetValue(req.Name, out var bundle)) { log.Add($"  {req.Name}: not on the live board, skipped"); continue; }
                     var forBundle = new List<(BundleRequirement, int, int, string)>();
-                    foreach (string pick in PlanShare(req, bundle.Slots, sim))
-                        forBundle.Add((req, bundle.Index, bundle.Slots[pick], pick));
+                    foreach (BundleSlot pick in PlanShare(req, bundle.Index, bundle.Slots, sim))
+                        forBundle.Add((req, bundle.Index, pick.IngredientIndex, pick.ItemId));
                     perBundle.Add(forBundle);
                 }
                 // Flatten ROUND-ROBIN, not bundle by bundle: pass 1 takes each bundle's first planned
@@ -2344,10 +2343,10 @@ namespace TheLongestYear
                 foreach (var step in seasonPlan)
                 {
                     if (budget <= 0) break;
-                    if (donated.Contains(step.ItemId)) continue;
+                    if (donated.IsFilled(step.BundleIndex, step.SlotIndex)) continue;
                     if (!Flip(step.BundleIndex, step.SlotIndex)) { log.Add($"  {step.Req.Name}: could not flip slot for {DisplayName(step.ItemId)}"); continue; }
-                    run.RecordDonation(step.ItemId);
-                    donated = run.DonatedSet();
+                    run.RecordDonation(step.BundleIndex, step.SlotIndex, step.ItemId);
+                    donated = run.DonatedLedger();
                     flipped++;
                     budget--;
                     _playSeasonDonatedThisSeason++;
@@ -2362,13 +2361,13 @@ namespace TheLongestYear
                 int guard = 0;
                 while (!req.IsSatisfiedAtSeasonEnd(season, donated) && guard++ < 32)
                 {
-                    string pick = Candidates(req).FirstOrDefault(id => !donated.Contains(id) && bundle.Slots.ContainsKey(id));
+                    BundleSlot? pick = FirstOpenSlot(Candidates(req), bundle.Index, bundle.Slots, donated);
                     if (pick == null) { log.Add($"  {req.Name}: nothing left to donate but the gate is still open"); break; }
-                    if (!Flip(bundle.Index, bundle.Slots[pick])) { log.Add($"  {req.Name}: could not flip slot for {DisplayName(pick)}"); break; }
-                    run.RecordDonation(pick);
-                    donated = run.DonatedSet();
+                    if (!Flip(bundle.Index, pick.Value.IngredientIndex)) { log.Add($"  {req.Name}: could not flip slot for {DisplayName(pick.Value.ItemId)}"); break; }
+                    run.RecordDonation(bundle.Index, pick.Value.IngredientIndex, pick.Value.ItemId);
+                    donated = run.DonatedLedger();
                     flipped++;
-                    log.Add($"  {req.Name} ({req.Kind}): donated {DisplayName(pick)} ({pick})");
+                    log.Add($"  {req.Name} ({req.Kind}): donated {DisplayName(pick.Value.ItemId)} ({pick.Value.ItemId}) slot {pick.Value.IngredientIndex}");
                 }
             }
 
@@ -2378,7 +2377,7 @@ namespace TheLongestYear
                 {
                     if (Flip(slot.BundleIndex, slot.IngredientIndex))
                     {
-                        run.RecordDonation(slot.ItemId);
+                        run.RecordDonation(slot.BundleIndex, slot.IngredientIndex, slot.ItemId);
                         WeeklyGoalCredit.RecordDeposit(run.CurrentWeekBonusSlots, slot.BundleIndex, slot.IngredientIndex);
                         flipped++;
                         log.Add($"  goal: deposited {DisplayName(slot.ItemId)} into {slot.BundleName}");
@@ -2402,7 +2401,7 @@ namespace TheLongestYear
                 }
             }
 
-            donated = run.DonatedSet();
+            donated = run.DonatedLedger();
             bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
             bool gateOk = BundleGate.IsSatisfied(season, donated, requirements, vaultOk);
             this.Monitor.Log(
@@ -2419,7 +2418,7 @@ namespace TheLongestYear
                 ? (vaultOk ? "(no open bundles)" : "(vault unpaid, no open bundles)")
                 : $"vault {vaultOk}, open bundles: {string.Join(", ", open)}";
             this.Monitor.Log(
-                gateOk ? $"tly_playseason: {season} gate WOULD PASS. Ledger {donated.Count} items."
+                gateOk ? $"tly_playseason: {season} gate WOULD PASS. Ledger {donated.Count} slot(s)."
                        : $"tly_playseason: {season} gate WOULD FAIL: {failDetail}",
                 gateOk ? LogLevel.Info : LogLevel.Error);
         }
