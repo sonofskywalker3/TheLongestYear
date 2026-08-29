@@ -2245,21 +2245,26 @@ namespace TheLongestYear
                     _playSeasonBaseline = (season, new HashSet<string>(donated, StringComparer.Ordinal));
                 HashSet<string> baseline = _playSeasonBaseline.Value.Donated;
 
+                // One flat list of every slot the season demands, bundle by bundle in the same order
+                // the plain mode flips them. The quarter is a share of that whole list, not of each
+                // bundle, so the season's work really does spread across the four calls.
+                var seasonPlan = new List<(BundleRequirement Req, int BundleIndex, int SlotIndex, string ItemId)>();
                 foreach (BundleRequirement req in requirements)
                 {
                     if (!lines.TryGetValue(req.Name, out var bundle)) { log.Add($"  {req.Name}: not on the live board, skipped"); continue; }
-                    List<string> plan = PlanShare(req, bundle.Slots, baseline);
-                    int take = (int)Math.Ceiling(plan.Count * quarter / 4.0);
-                    cumulative += take;
-                    foreach (string pick in plan.Take(take))
-                    {
-                        if (donated.Contains(pick)) continue;
-                        if (!Flip(bundle.Index, bundle.Slots[pick])) { log.Add($"  {req.Name}: could not flip slot for {DisplayName(pick)}"); break; }
-                        run.RecordDonation(pick);
-                        donated = run.DonatedSet();
-                        flipped++;
-                        log.Add($"  {req.Name} ({req.Kind}): donated {DisplayName(pick)} ({pick})");
-                    }
+                    foreach (string pick in PlanShare(req, bundle.Slots, baseline))
+                        seasonPlan.Add((req, bundle.Index, bundle.Slots[pick], pick));
+                }
+
+                cumulative = (int)Math.Ceiling(seasonPlan.Count * quarter / 4.0);
+                foreach (var step in seasonPlan.Take(cumulative))
+                {
+                    if (donated.Contains(step.ItemId)) continue;
+                    if (!Flip(step.BundleIndex, step.SlotIndex)) { log.Add($"  {step.Req.Name}: could not flip slot for {DisplayName(step.ItemId)}"); continue; }
+                    run.RecordDonation(step.ItemId);
+                    donated = run.DonatedSet();
+                    flipped++;
+                    log.Add($"  {step.Req.Name} ({step.Req.Kind}): donated {DisplayName(step.ItemId)} ({step.ItemId})");
                 }
             }
 
