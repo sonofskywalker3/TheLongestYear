@@ -1,10 +1,55 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 (the obtainable board, 0.16.85 to 0.16.134)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.134 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1741 passing, 0 failing
-**Build:** clean (mod assembly builds Release); 0.16.132 deployed to the game and sim-driven; 0.16.133 is notes plus a doc comment, 0.16.134 is the plan 5 review fix wave (not deployed)
+**Last updated:** 2026-08-29 (per-slot ledger, 0.16.135 to 0.16.144)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.144 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1754 passing, 0 failing
+**Build:** clean (mod assembly builds Release); 0.16.143 deployed to the game and bridge-driven; 0.16.144 is docs only
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
+
+## 2026-08-29: per-slot ledger mirrored from the CC board, 0.16.135 to 0.16.144
+
+Jeff's #1 priority (TODO, 2026-08-28; found live on emmalution's stream). Spec
+`docs/superpowers/specs/2026-08-29-per-slot-ledger-design.md`, plan
+`docs/superpowers/plans/2026-08-29-per-slot-ledger.md`, ten tasks, one commit each, 1754 tests green.
+Committed LOCALLY ONLY, not pushed, not released.
+
+**What changed.** `RunState.DonatedSlots` (bundle index, ingredient index, id) replaces the flat
+`DonatedItemIds` list, which stays on the class as a legacy field so old saves deserialize.
+`BundleRequirement` carries `BundleIndex` and a positional `Slots` list (duplicates kept; category
+slots skipped without renumbering), and `MissingForSeason(season, ledger)` is the one method the
+gate, the Season Goals page and `tly_gateneeds` all read. `CreatePerItem` / `CreateSeasonal` take
+`NumberOfSlots` from the slot count, so vanilla Construction (Wood, Wood, Stone, Hardwood) is 4 of
+4, not 3 of 3 (a second defect the TODO write-up did not name). `ItemDonationSync.Reconcile` is a
+whole-replace mirror of the board's per-slot state and runs on save load (the migration), before the
+Season Goals page, before the day-end gate and inside `tly_playseason`. Debug donations
+(`tly_donate`, `tly_testdonate`, `tly_playseason`) fill the vanilla slot first through
+`CcSlotWriter`, because a ledger-only write would be wiped by the next mirror. Rulings: mirror, not a
+second "ledger AND board" check (a page saying complete while the gate fails is the worst outcome);
+one slot one goal (Construction's second Wood slot is its own weekly goal once the first is filled;
+`SlotPoolBuilder` already did this, now pinned by a test).
+
+**Live checks over the bridge, build 0.16.143, throwaway save `None_447665404` (rotated by the
+reset), log lines quoted:**
+
+- Load of last night's fully donated board: `Ledger mirrored from the CC board: 101 slot(s) filled.`
+  (the migration path; the old id list was ignored).
+- `tly_reset` to a fresh board: `Ledger mirrored from the CC board: 0 slot(s) filled.`, then
+  `tly_gateneeds: Spring day 1: 18 bundle(s) still owed before Summer 1, 0 slot(s) filled on the board.`
+  with one line per bundle (`Construction (PerItem, 0/4 filled): needs 2 before Summer 1: Clay, Stone`).
+- `tly_donate (O)709` (Hardwood): `Donated '(O)709' into bundle 13 slot 4. Ledger 1 slot(s).`
+  Tapper's left the owed list, Construction stayed `0/4`, `17 bundle(s) still owed`. A second
+  `tly_donate (O)709`: `No open slot wants '(O)709'. Nothing donated.` The custom board never asks an
+  item twice (0.16.30), so the shared-item case cannot be reproduced on it; it is unit-tested
+  (`One_deposit_credits_one_bundle_not_every_bundle_listing_the_id`) and applies to the vanilla and
+  remixed boards.
+- `tly_runstate`: `slots filled=1`.
+- `tly_playseason`: `21 slot(s) flipped, vault 1/1`, `Spring gate WOULD PASS. Ledger 22 slot(s).`;
+  `tly_gateneeds`: `0 bundle(s) still owed before Summer 1, 22 slot(s) filled on the board.`;
+  `tly_setday 28` and `debug sleep`: `Month cleared (Spring). Advancing.`
+- NOT checked live: the Season Goals page itself (needs the hotkey, which is keyboard; it draws
+  from the same `MissingForSeason` the log above came from) and the Construction four-slot case on a
+  Standard board. Both are Jeff's look; the Construction case is covered by
+  `Winter_end_with_a_doubled_slot_open_does_not_win` and the classifier test.
 
 ## 2026-08-29: the obtainable board, 0.16.85 to 0.16.134
 

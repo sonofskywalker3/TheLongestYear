@@ -6,7 +6,11 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### #1 PRIORITY (Jeff 2026-08-28): season goals and the gate credit an item to EVERY bundle that lists it (found live on emmalution's stream, v0.16.17, still true at 0.16.71)
+### BUILT 2026-08-29 (0.16.135 to 0.16.144, local, not released): per-slot ledger mirrored from the CC board
+
+Spec `docs/superpowers/specs/2026-08-29-per-slot-ledger-design.md`, plan `docs/superpowers/plans/2026-08-29-per-slot-ledger.md`. The ledger is per slot and re-read from the board on load, before the Season Goals page and before the gate; `tly_gateneeds` prints what the gate still wants. Live-checked over the bridge (fresh board, Hardwood credited to one bundle, gate passed at Spring 28); the shared-item case is unit-tested only because the custom board never asks an item twice. Jeff still owes the Season Goals page a look. Original report kept below.
+
+#### Original: #1 PRIORITY (Jeff 2026-08-28): season goals and the gate credit an item to EVERY bundle that lists it (found live on emmalution's stream, v0.16.17, still true at 0.16.71)
 
 Symptom: remixed Children's Bundle showed 3/3 on the Season Goals page after two real donations,
 then 4/3 after the third. She had donated Salmonberry to the Spring Foraging bundle; Children's also
