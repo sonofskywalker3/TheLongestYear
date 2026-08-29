@@ -240,8 +240,6 @@ public static class BundlePoolRecipes
         return One(Kind(winner), winner.ToString());
     }
 
-    /// <summary>The one part of a vanilla-only recipe: it offers nothing of its own, and
-    /// <see cref="For"/> widens it with the bundle's own items, which is the whole point.</summary>
     /// <summary>Drops ids the availability model cannot place. The cooking pool comes from a walk
     /// of CookingRecipes, which includes recipes year 1 cannot reach: Crispy Bass needs Kent at 3
     /// hearts, and Kent is not in the valley in year 1. An unplaced id lands on the board as
@@ -250,6 +248,8 @@ public static class BundlePoolRecipes
     private static IReadOnlyList<PoolItem> Placeable(IReadOnlyList<PoolItem> items, ItemAvailabilityModel? model)
         => model == null ? items : items.Where(p => model.IsPlaced(p.ItemId)).ToList();
 
+    /// <summary>The one part of a vanilla-only recipe: it offers nothing of its own, and
+    /// <see cref="For"/> widens it with the bundle's own items, which is the whole point.</summary>
     private static IReadOnlyList<PoolPart> VanillaOnlyParts()
         => One((_, _) => Array.Empty<PoolItem>(), VanillaOnlyLabel);
 
