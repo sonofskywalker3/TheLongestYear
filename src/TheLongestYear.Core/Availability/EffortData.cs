@@ -66,4 +66,6 @@ public sealed class EffortData
     public IReadOnlyList<RawCropGrowth> Crops { get; init; } = new List<RawCropGrowth>();
     public IReadOnlyList<RawSpawnEntry> ForageSpawns { get; init; } = new List<RawSpawnEntry>();
     public IReadOnlyList<RawTapItem> TapItems { get; init; } = new List<RawTapItem>();
+    /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
+    public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();
 }
