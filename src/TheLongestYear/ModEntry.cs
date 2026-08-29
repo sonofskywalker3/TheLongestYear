@@ -470,6 +470,11 @@ namespace TheLongestYear
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
                 itemSeasonPins, bundleQuotas, this.Helper.GameContent);
+            // The rewind must let a legendary be caught again: the game blocks a repeat catch
+            // through SpawnFishData.CatchLimit against player.fishCaught, and FarmerReset never
+            // touched that record. Read the catch-limited ids once here (same shape as
+            // GameDataPools's own Data/Locations read) and forward them through the reset service.
+            _reset.CatchLimitedFishIds = ReadCatchLimitedFishIds();
 
             // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed
             // the SeasonResolver (so weekly themes can't ask for out-of-season fish, Nexus
@@ -1935,6 +1940,40 @@ namespace TheLongestYear
                 return $"{EffortTiers.Tier(availability.Effort)} in {theme}";
             }
             return "n/a";
+        }
+
+        /// <summary>Reads every Data/Locations Fish row with a positive CatchLimit (the five
+        /// legendaries in vanilla, but SVE-proof by construction like GameDataPools) and returns
+        /// their qualified item ids, so FarmerReset can clear them from player.fishCaught on every
+        /// reset. Degrades to an empty list on any read failure, same pattern as GameDataPools.</summary>
+        private IReadOnlyList<string> ReadCatchLimitedFishIds()
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            try
+            {
+                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations"))
+                {
+                    StardewValley.GameData.Locations.LocationData loc = kv.Value;
+                    foreach (StardewValley.GameData.Locations.SpawnFishData f in loc?.Fish ?? new List<StardewValley.GameData.Locations.SpawnFishData>())
+                    {
+                        if (f == null || f.CatchLimit <= 0) continue;
+                        if (!string.IsNullOrEmpty(f.ItemId))
+                            ids.Add(ItemRegistry.QualifyItemId(f.ItemId));
+                        foreach (string randomId in f.RandomItemId ?? new List<string>())
+                            if (!string.IsNullOrEmpty(randomId))
+                                ids.Add(ItemRegistry.QualifyItemId(randomId));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log(
+                    $"ReadCatchLimitedFishIds: data read failed ({ex.GetType().Name}: {ex.Message}), " +
+                    "legendary fish will not be re-catchable across resets this session.",
+                    LogLevel.Warn);
+                return Array.Empty<string>();
+            }
+            return ids.ToList();
         }
 
         /// <summary>Builds the derived item availability model from the live engine pools for one
