@@ -180,7 +180,8 @@ namespace TheLongestYear.Donations
                         req.NumberOfSlots, ObtainabilityPins ?? _itemSeasonPins, req.StretchLines);
                     req = BundleRequirement.CreatePercentage(
                         req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
-                        req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines);
+                        req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines,
+                        bundleIndex: req.BundleIndex, slots: req.Slots);
                 }
 
                 if (req.Kind == BundleKind.Percentage && !_bundleQuotas.ContainsKey(bundle.Name))

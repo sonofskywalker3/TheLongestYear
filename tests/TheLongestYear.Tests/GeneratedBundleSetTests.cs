@@ -134,8 +134,13 @@ public class GeneratedBundleSetTests
         Assert.True(unknown.CumulativeRequiredBySeason[3] >= 4);
 
         // Donating only the Spring-obtainable items must satisfy every bundle's Spring gate.
-        var springOnly = new HashSet<string>(
+        var springOnlyIds = new HashSet<string>(
             filledSpring.Slots.Select(s => s.ItemId).Concat(new[] { "(O)24" }), StringComparer.Ordinal);
+        var springOnly = new SlotLedger();
+        foreach (var r in reqs)
+            foreach (var slot in r.Slots)
+                if (springOnlyIds.Contains(slot.ItemId))
+                    springOnly.Add(r.BundleIndex, slot.IngredientIndex, slot.ItemId);
         Assert.All(reqs, r => Assert.True(r.IsSatisfiedAtSeasonEnd(Season.Spring, springOnly),
             $"{r.Name} demands Fall/Winter-only produce in Spring"));
     }
