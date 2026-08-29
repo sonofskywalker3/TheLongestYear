@@ -81,6 +81,7 @@ public sealed class EffortComposer
         ItemEffort? best = null;
         foreach (ItemEffort? raw in new[]
         {
+            FishingTrashAvailability.Derive(qualifiedId),
             ShopAvailability.Derive(qualifiedId),
             MineralNodeAvailability.Derive(qualifiedId),
             GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops),
