@@ -93,6 +93,7 @@ namespace TheLongestYear.UI
         {
             if (!CanOpen()) return;
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
+            TheLongestYear.Integration.ItemDonationSync.Reconcile(_store.Run);
 
             int easeSteps = TheLongestYear.Core.SeasonPity.DisplaySteps(_store.State, _config);
             Game1.activeClickableMenu = new SeasonGoalsMenu(_monitor, _store.Run, _store.State, _runController.Requirements, easeSteps);
