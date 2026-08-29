@@ -1,16 +1,17 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 (the obtainable board, 0.16.85 to 0.16.133)
-**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.133 committed LOCALLY ONLY, not pushed, not released**
+**Last updated:** 2026-08-29 (the obtainable board, 0.16.85 to 0.16.134)
+**Branch:** `master`; 0.16.25 PUSHED (2026-08-27); **0.16.26 to 0.16.134 committed LOCALLY ONLY, not pushed, not released**
 **Tests:** 1741 passing, 0 failing
-**Build:** clean (mod assembly builds Release); 0.16.132 deployed to the game and sim-driven; 0.16.133 is notes plus a doc comment
+**Build:** clean (mod assembly builds Release); 0.16.132 deployed to the game and sim-driven; 0.16.133 is notes plus a doc comment, 0.16.134 is the plan 5 review fix wave (not deployed)
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
-## 2026-08-29: the obtainable board, 0.16.85 to 0.16.132
+## 2026-08-29: the obtainable board, 0.16.85 to 0.16.134
 
 Spec `docs/superpowers/specs/2026-08-28-obtainable-board-design.md`, five plans
 `docs/superpowers/plans/2026-08-28-obtainable-board-1-model.md` through `-5-sims.md`, commits
-83c192b (0.16.85) to 9a1de06 (0.16.132), every plan reviewed, 1741 tests green at 9a1de06.
+83c192b (0.16.85) to 1669975 (0.16.133) plus this review fix wave (0.16.134), every plan
+reviewed, 1741 tests green.
 Per-plan ledgers with every ruling: `.superpowers/sdd/2026-08-28-obtainable-board-*/progress.md`.
 Committed LOCALLY ONLY, not pushed, not released.
 
@@ -36,7 +37,7 @@ exempt only on Easy. Both surface in `tly_gatecheck` (`[stretch: item season]`, 
 on the weekly cards. `BundleRequirement` carries `StretchLines`, recomputed from the model whenever
 requirements are rebuilt.
 
-**Plan 3, full pools with no fixed lists (0.16.108 to 0.16.120).** Every TLY Custom bundle keeps its
+**Plan 3, full pools with no fixed lists (0.16.108 to 0.16.119).** Every TLY Custom bundle keeps its
 name, room and pick count but rolls its slots from the full pool of its kind; the mixed-kind bundles
 roll from a named recipe in the new `BundlePoolRecipes` table (ordered parts, each a source and a
 count). `PoolDomainClassifier` returns `Recipe` for any non-money bundle it cannot place in a legacy
@@ -47,7 +48,7 @@ Book_*) weigh like vanilla, 3, since vanilla is now "any id without a dot". Pool
 Artichoke (Easy still excludes the year-2 crops). A legendary drawn into a 4-of-4 fish bundle is
 mandatory for that bundle, and the rewind now clears legendary catches so it can be caught again.
 
-**Plan 4, the Garden Pot keep and two Boosts (0.16.121 to 0.16.129).** A permanent Garden Pot recipe
+**Plan 4, the Garden Pot keep and two Boosts (0.16.120 to 0.16.125, plus the fix wave at 0.16.128).** A permanent Garden Pot recipe
 keep at the Junimo Shrine, 750 JP, `Obtainability` category, granted back after the rewind like the
 book keeps. Two in-loop Boosts, bought at the farm's planning shrine (`ShrinePreviewMenu` gains a
 Boosts section): Year-Two Seeds, 75 JP, makes Mixed Seeds roll the season's year-2 crop at 5 percent
@@ -55,7 +56,7 @@ for the current week; Sneak Peek, 100 JP, makes the Queen of Sauce air the year-
 season (it grants both the year-1 and the year-2 recipe, so no year-1 recipe is lost). Year-2 crops
 carry hard weeks 2 / 6 / 10 and pacing weeks Garlic 4, Red Cabbage 7, Artichoke 11.
 
-**Plan 5, diagnostics and sims (0.16.130 to 0.16.132).** `tly_playseason quarter <k>` donates the
+**Plan 5, diagnostics and sims (0.16.126 to 0.16.133, interleaved with plan 4's fix wave at 0.16.128).** `tly_playseason quarter <k>` donates the
 season's gate share a quarter a week, round-robin across bundles (one open demanded slot per bundle
 per pass) before the prefix cut; `tly_reset <seedLoop>` and `tly_genbundles <seedLoop>
 [custom|standard|remixed]` pin the board seed and roll vanilla boards through the same audit;
@@ -64,7 +65,14 @@ and the unknown items. Runbook `docs/HEADLESS_DRIVING.md`.
 
 ### Sims P2 (minimal player) and Q2 (goal-completing player), both on seed loop 3, build 0.16.132
 
-Gate ledger per season, cumulative slots flipped at each quarter, then the season verdict:
+Gate ledger per season, then the season verdict. Read the four quarter figures as the quarter's
+CUMULATIVE POSITION IN THE SEASON'S DONATION PLAN, not as slots actually flipped: the sim's plan is
+computed once from the season baseline and each quarter donates a prefix of it, so a quarter whose
+prefix was already in the ledger flipped nothing while still reporting its position. Q2 Spring
+quarter 3 is exactly that case: it reported 15 and flipped 0, because the goal deposits had already
+covered those steps. 0.16.134 splits the two numbers in the log line (flipped, donated this season,
+plan position of plan size) and lets a quarter reach past already-donated steps, so a later rerun
+will not repeat this ambiguity.
 
 | Season | P2 quarters | P2 verdict | Q2 quarters | Q2 verdict |
 |---|---|---|---|---|
@@ -122,6 +130,12 @@ pool-size problem, not a donation-order one. Full sim outputs and board dumps ar
 (`simP2.txt`, `simQ2.txt`, `board-P2.md`, `board-Q2.md`); the two dumps are byte-identical except the
 `loop seed` header line, so the seed pin fixes the board but not the loop's own RNG seed.
 
+Because of that, P2 and Q2 share the BOARD but not the theme offers: the weekly theme roll reads the
+run seed, which the pin does not fix. So the askable differences between the two tables are not
+attributable to the goal deposits alone; part of the gap is simply a different offer sequence. Any
+conclusion of the form "goal deposits drain the pool by week 4" needs a run where both sims share the
+run seed as well.
+
 ### Gate audit (identical in both runs)
 
 `tly_gatecheck RESULT: no impossible gates. 26 tight (demands everything obtainable by then), 0
@@ -151,11 +165,13 @@ other rule, but are worth a second look:
 
 ### Vanilla boards through the same audit (`tly_genbundles <seed> standard|remixed`, seeds 0 to 9)
 
-Standard (community-center content is fixed vanilla, so only the board seed differs):
+Standard is ONE board, not ten: it reads `Data/Bundles` verbatim and never touches the seed, so the
+ten "seeds" all audited the same board and the determinism self-check compared it to itself (it was
+vacuous there). 0.16.134 says so in the command output and skips that self-check for standard.
 
 | Seeds | Sp/Su/Fa/Wi demanded | season share % | tight | impossible | stretch | no hard item | spring tight |
 |---|---|---|---|---|---|---|---|
-| 0 to 9, every row identical | 25/52/83/105 | 9/20/31/40 | 32 | 0 | 0 | 7 | 2 |
+| 0 to 9, one board (the seed is ignored) | 25/52/83/105 | 9/20/31/40 | 32 | 0 | 0 | 7 | 2 |
 
 Remixed (bundle contents randomized per seed):
 
@@ -172,12 +188,20 @@ Remixed (bundle contents randomized per seed):
 | 8 | 25/46/73/91 | 11/20/31/39 | 28 | 0 | 0 | 6 | 2 |
 | 9 | 24/47/72/93 | 10/20/31/39 | 32 | 0 | 1 | 6 | 2 |
 
-Zero IMPOSSIBLE bundles in all 20 runs. Every remixed stretch line is the same one: Engineer's
-PerItem, `[stretch: Iridium Ore Summer]` (seeds 2, 4, 5, 6, 9), which suggests a structural vanilla
-recipe artifact rather than a Custom-only quirk. Vanilla demand is heavier than Custom's 21/50/79/100
-at every season, and vanilla is tighter overall (standard 32 tight, remixed 28 to 33, against Custom's
-26); season shares match Custom's back-loaded curve closely. No-hard-item counts run higher in vanilla
-(6 to 9) than Custom's 5. Summary: scratchpad `vanilla-boards-summary.md`.
+Zero IMPOSSIBLE bundles in all 20 runs, which is 11 distinct boards: 1 standard (the same board ten
+times) plus 10 remixed. Every remixed stretch line is the same one: Engineer's PerItem,
+`[stretch: Iridium Ore Summer]` (seeds 2, 4, 5, 6, 9), which looks like a structural artifact of that
+one vanilla recipe rather than anything the stretch rule does wrong. It is NOT the same line Custom
+raises: Custom's single stretch line on this board is `[stretch: Battery Pack Summer]` on
+Construction, a different bundle and a different item, so the two are not one shared cause.
+
+Vanilla demand is heavier than Custom's 21/50/79/100 at every season, but the two numbers are not the
+same measurement: 21/50/79/100 is the CUMULATIVE LEDGER the sim ended each season with (items actually
+donated, including goal deposits and anything donated beyond the gate), while the vanilla rows count
+what the GATE DEMANDS by each season's day 28. The honest comparison is demand against demand; the
+ledger figure runs one or two items above the demand it satisfies. Vanilla is also tighter overall
+(standard 32 tight, remixed 28 to 33, against Custom's 26); season shares match Custom's back-loaded
+curve closely. No-hard-item counts run higher in vanilla (6 to 9) than Custom's 5. Summary: scratchpad `vanilla-boards-summary.md`.
 
 ### Open for Jeff: rule on these or look at them
 
@@ -197,6 +221,11 @@ Collected from the five plan ledgers' `Ruling:` lines:
   Medicine (mushroom ids plus category -81), Children's (fixed sweet list), Enchanter's (essences by
   id, the ' Essence' suffix), Chef's ingredient half (Crops, Forage, Egg, Milk, AnimalProduct plus
   five staples), Field Research shells (fixed list). Jeff sees the rolled boards in the genbundles run.
+- **P2 and Q2 do not share a run seed.** `tly_reset <seedLoop>` pins the BOARD only; the weekly theme
+  offers roll off the run seed, which the pin does not fix. The two sims' askable tables therefore
+  differ for two reasons at once (goal deposits and a different offer sequence), and nothing in the
+  current data separates them. If Jeff wants the goal-deposit effect measured, the sims need a run
+  seed pin too.
 - **Mining and Spelunking are thin all year.** The Boiler Room is three bundles and filler is one per
   bundle per week, so those two themes have almost nothing askable outside the first week of a season.
 - **Year-Two Seeds has no live proof.** There is no plant debug command, so it rests on the Trace hook

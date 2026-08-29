@@ -73,6 +73,11 @@ namespace TheLongestYear
         /// the four quarter calls share one plan and land cumulatively where a plain call would.</summary>
         private (TheLongestYear.Core.Season Season, HashSet<string> Donated)? _playSeasonBaseline;
 
+        /// <summary>Slots the quarter calls have actually flipped since the baseline was taken, so the
+        /// log can report the real running total for the season and each quarter can budget the steps
+        /// it still owes (the plan position alone counts steps, not donations).</summary>
+        private int _playSeasonDonatedThisSeason;
+
         // True only once OnSaveLoaded has actually called _meta.Load() for the current save. Guards
         // OnSaving: when a save opens with TLY disabled or on a non-Standard farm we skip Load (the
         // early returns below), leaving MetaStore.State/Run at empty defaults — persisting those on the
@@ -634,6 +639,10 @@ namespace TheLongestYear
         private void DeactivateTly()
         {
             RunActivation.Deactivate();
+            // The quarter baseline belongs to one save's season; carrying it to the title screen would
+            // let the next save's quarter 2 plan against the previous save's ledger.
+            _playSeasonBaseline = null;
+            _playSeasonDonatedThisSeason = 0;
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
@@ -1229,6 +1238,7 @@ namespace TheLongestYear
                 return;
             }
 
+            int? pin = null;
             if (args.Length > 0)
             {
                 if (!int.TryParse(args[0], out int seedLoop) || seedLoop < 0)
@@ -1236,8 +1246,19 @@ namespace TheLongestYear
                     this.Monitor.Log($"tly_reset: '{args[0]}' is not a seed loop. Usage: tly_reset [seedLoop]", LogLevel.Warn);
                     return;
                 }
-                PinSeedLoopForNextReset(seedLoop);
+                pin = seedLoop;
             }
+
+            // The pin mutates MetaState, so it must not run when the reset itself cannot: a missing
+            // run controller used to leave the save carrying a pinned seed loop for a reset that
+            // never happened.
+            if (_runController == null)
+            {
+                this.Monitor.Log("Reset unavailable: no run controller (load a save first).", LogLevel.Warn);
+                return;
+            }
+
+            if (pin.HasValue) PinSeedLoopForNextReset(pin.Value);
 
             FullResetAndPresentOffer();
         }
@@ -2276,12 +2297,16 @@ namespace TheLongestYear
             }
 
             int cumulative = 0;
+            int planCount = 0;
             if (quarterMode)
             {
                 // Quarter 1 re-baselines (it marks the season start, and survives a tly_reset); later
                 // quarters reuse that baseline so their shares match.
                 if (quarter == 1 || _playSeasonBaseline?.Season != season || _playSeasonBaseline?.Donated == null)
+                {
                     _playSeasonBaseline = (season, new HashSet<string>(donated, StringComparer.Ordinal));
+                    _playSeasonDonatedThisSeason = 0;
+                }
                 // Every slot the season demands, planned bundle by bundle in the same order the plain
                 // mode flips them, against ONE simulated ledger that starts at the season baseline and
                 // grows as each bundle is planned (so a shared item is planned once, as before).
@@ -2307,14 +2332,25 @@ namespace TheLongestYear
                     foreach (var forBundle in perBundle)
                         if (pass < forBundle.Count) seasonPlan.Add(forBundle[pass]);
 
-                cumulative = (int)Math.Ceiling(seasonPlan.Count * quarter / 4.0);
-                foreach (var step in seasonPlan.Take(cumulative))
+                planCount = seasonPlan.Count;
+                cumulative = (int)Math.Ceiling(planCount * quarter / 4.0);
+                // Budget the steps this quarter still owes, and spend that budget only on steps that
+                // are actually undonated. A flat Take(cumulative) donated nothing in goals mode: goal
+                // deposits land after the baseline is taken, so the quarter's whole prefix could
+                // already be in the ledger and the quarter flipped zero slots while reporting a
+                // cumulative position. Skipping a donated step without consuming the budget lets the
+                // quarter reach further down the plan and still do its share of real work.
+                int budget = Math.Max(0, cumulative - _playSeasonDonatedThisSeason);
+                foreach (var step in seasonPlan)
                 {
+                    if (budget <= 0) break;
                     if (donated.Contains(step.ItemId)) continue;
                     if (!Flip(step.BundleIndex, step.SlotIndex)) { log.Add($"  {step.Req.Name}: could not flip slot for {DisplayName(step.ItemId)}"); continue; }
                     run.RecordDonation(step.ItemId);
                     donated = run.DonatedSet();
                     flipped++;
+                    budget--;
+                    _playSeasonDonatedThisSeason++;
                     log.Add($"  {step.Req.Name} ({step.Req.Kind}): donated {DisplayName(step.ItemId)} ({step.ItemId})");
                 }
             }
@@ -2371,15 +2407,20 @@ namespace TheLongestYear
             bool gateOk = BundleGate.IsSatisfied(season, donated, requirements, vaultOk);
             this.Monitor.Log(
                 quarterMode
-                    ? $"tly_playseason: {season} quarter {quarter}, {flipped} slot(s) flipped, cumulative {cumulative}"
+                    ? $"tly_playseason: {season} quarter {quarter}, {flipped} slot(s) flipped, {_playSeasonDonatedThisSeason} donated this season, plan position {cumulative} of {planCount}"
                     : $"tly_playseason: {season} day {run.DayOfMonth}, {flipped} slot(s) flipped{(chaseGoals ? " (goals chased)" : "")}, vault {run.VaultBundlesPaid.Count}/{needVault}.",
                 LogLevel.Info);
             foreach (string l in log) this.Monitor.Log(l, LogLevel.Info);
             if (quarterMode && quarter < 4) return;
             var open = requirements.Where(r => !r.IsSatisfiedAtSeasonEnd(season, donated)).Select(r => r.Name).ToList();
+            // goalsonly never touches the vault or a gate bundle, so its failure is normally "vault
+            // unpaid and nothing else": an empty bundle list after "open bundles:" read like a bug.
+            string failDetail = open.Count == 0
+                ? (vaultOk ? "(no open bundles)" : "(vault unpaid, no open bundles)")
+                : $"vault {vaultOk}, open bundles: {string.Join(", ", open)}";
             this.Monitor.Log(
                 gateOk ? $"tly_playseason: {season} gate WOULD PASS. Ledger {donated.Count} items."
-                       : $"tly_playseason: {season} gate WOULD FAIL: vault {vaultOk}, open bundles: {string.Join(", ", open)}",
+                       : $"tly_playseason: {season} gate WOULD FAIL: {failDetail}",
                 gateOk ? LogLevel.Info : LogLevel.Error);
         }
 
@@ -3039,7 +3080,16 @@ namespace TheLongestYear
             foreach (string arg in args)
             {
                 if (int.TryParse(arg, out int parsedLoop))
+                {
+                    // Same rejection tly_reset makes: a seed loop is a count of completed resets,
+                    // so a negative one is a typo, not a board.
+                    if (parsedLoop < 0)
+                    {
+                        this.Monitor.Log($"tly_genbundles: '{arg}' is not a seed loop. Usage: tly_genbundles [seedLoop] [custom|standard|remixed]", LogLevel.Warn);
+                        return;
+                    }
                     seedLoop = parsedLoop;
+                }
                 else if (TheLongestYear.Loop.BundleOptionPatch.TryParseChoice(arg, out var parsedMode))
                     mode = parsedMode;
                 else
@@ -3110,17 +3160,20 @@ namespace TheLongestYear
         {
             bool remixed = mode == TheLongestYear.Loop.BundleOptionPatch.Choice.VanillaRemixed;
             string label = remixed ? "remixed" : "standard";
+            // Standard reads Data/Bundles verbatim, so the seed never enters the board at all: every
+            // seed loop yields the same board. Say that in the header line rather than printing a
+            // seed the mode ignores.
+            string modeLabel = remixed ? "mode remixed" : "mode standard (seed ignored: Data/Bundles is fixed)";
 
             System.Collections.Generic.IReadOnlyDictionary<string, string> firstData;
-            System.Collections.Generic.IReadOnlyDictionary<string, string> secondData;
+            System.Collections.Generic.IReadOnlyDictionary<string, string> secondData = null;
             try
             {
                 firstData = remixed
                     ? TheLongestYear.Loop.VanillaBundlePool.GenerateRemixedBundleData(seed)
                     : TheLongestYear.Loop.VanillaBundlePool.LoadStandardBundleData();
-                secondData = remixed
-                    ? TheLongestYear.Loop.VanillaBundlePool.GenerateRemixedBundleData(seed)
-                    : TheLongestYear.Loop.VanillaBundlePool.LoadStandardBundleData();
+                if (remixed)
+                    secondData = TheLongestYear.Loop.VanillaBundlePool.GenerateRemixedBundleData(seed);
             }
             catch (Exception ex)
             {
@@ -3130,9 +3183,19 @@ namespace TheLongestYear
 
             GeneratedBundleSet first = TheLongestYear.Loop.VanillaBundlePool.SetFromBundleData(firstData);
             this.Monitor.Log(
-                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode {label}), diagnostics only, nothing written.",
+                $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, {modeLabel}), diagnostics only, nothing written.",
                 LogLevel.Info);
             LogGeneratedBundleSet(null, first, itemSeasonPins, bundleQuotas, $"vanilla slots ({label})");
+
+            // The self-check regenerates off the same seed and diffs. For standard that compares
+            // Data/Bundles to itself, which can never fail and so proves nothing: skip it and say so.
+            if (!remixed)
+            {
+                this.Monitor.Log(
+                    "tly_genbundles: determinism self-check skipped for standard (Data/Bundles is fixed and the seed is ignored, so there is nothing to vary).",
+                    LogLevel.Info);
+                return;
+            }
 
             GeneratedBundleSet second = TheLongestYear.Loop.VanillaBundlePool.SetFromBundleData(secondData);
             string difference = FirstBundleSetDifference(first, second);
