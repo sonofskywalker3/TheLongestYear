@@ -17,10 +17,15 @@ public static class YearTwoCrops
     public const string RedCabbage = "(O)266";
     public const string Artichoke = "(O)274";
 
-    /// <summary>Qualified ids to keep out of every pool for a player with these upgrades.</summary>
-    public static IReadOnlySet<string> ExcludedFor(Func<string, bool> hasUpgrade)
+    /// <summary>Qualified ids to keep out of every pool for a player with these upgrades, on
+    /// this difficulty step. Only Easy still refuses year-2 crops outright once the pools carry
+    /// them at weight 1 (spec 2026-08-28-obtainable-board, section 3); Normal and above ask for
+    /// them like any other addition.</summary>
+    public static IReadOnlySet<string> ExcludedFor(Func<string, bool> hasUpgrade, DifficultyStep step)
     {
         var excluded = new HashSet<string>(StringComparer.Ordinal);
+        if (step != DifficultyStep.Easy)
+            return excluded;
         bool pierre = hasUpgrade(PierreUpgrade);
         if (!pierre)
         {

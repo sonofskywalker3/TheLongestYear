@@ -77,7 +77,7 @@ public class ItemPoolBuilderTests
     }
 
     [Fact]
-    public void Vetting_QuestType_ExcludeFromRandomSale_LegendaryTag_ConfigList_AllExcluded()
+    public void Vetting_QuestType_ExcludeFromRandomSale_ConfigList_AllExcluded()
     {
         var tuning = new BundleGenerationTuning();
         tuning.ExcludedItemIds.Add("(O)3");
@@ -94,12 +94,13 @@ public class ItemPoolBuilderTests
                 ("1", Obj(type: "Quest")),
                 ("2", Obj(excludeFromRandomSale: true)),
                 ("3", Obj()),
+                // fish_legendary is no longer a vet rule (legendaries are wanted on the board now).
                 ("4", Obj(tags: "fish_legendary")),
                 ("5", Obj())),
             new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
             new HashSet<string>(), new List<RawMonsterDropEntry>(),
             new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(), tuning);
-        Assert.Equal(new[] { "(O)5" }, pools.Crops.Select(p => p.ItemId));
+        Assert.Equal(new[] { "(O)4", "(O)5" }, pools.Crops.Select(p => p.ItemId));
     }
 
     [Fact]

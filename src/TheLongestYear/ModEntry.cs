@@ -476,7 +476,8 @@ namespace TheLongestYear
             // 1122423) and DerivedSeasonPins feed the obtainability clamp below.
             TheLongestYear.Core.ItemPools enginePools =
                 new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade));
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(
+                        _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity));
             _seasonResolver = new SeasonResolver(
                 TheLongestYear.Core.SpawnSeasonMap.FromPools(enginePools));
             // Derived item model: earliest-possible season and effort per item, from the same
@@ -2066,10 +2067,12 @@ namespace TheLongestYear
             MetaState state = _meta.State;
             try
             {
+                TheLongestYear.Core.DifficultyProfile gateCheckDifficulty = state.BoardDifficulty(_config);
                 BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(
-                    _config.PoolTuning, state.BoardDifficulty(_config));
+                    _config.PoolTuning, gateCheckDifficulty);
                 foreach (var kv in new TheLongestYear.Loop.GameDataPools(this.Monitor)
-                        .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade))
+                        .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(
+                            state.HasUpgrade, gateCheckDifficulty.Steps.ItemRarity))
                         .DerivedSeasonPins)
                     pins[kv.Key] = kv.Value;
             }
@@ -2436,7 +2439,7 @@ namespace TheLongestYear
             TheLongestYear.Core.DifficultyProfile difficulty = state.BoardDifficulty(_config);
             BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
             ItemPools pools = new TheLongestYear.Loop.GameDataPools(this.Monitor)
-                .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade));
+                .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity));
             pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
 
             var sb = new System.Text.StringBuilder();
@@ -2488,9 +2491,11 @@ namespace TheLongestYear
             // The engine's FULL candidate set, authored bundles included. Reading the vanilla pool
             // alone understates every room: the mod's own bundles are widened into every position
             // of their room, which is exactly what gives several positions their alternates.
+            TheLongestYear.Core.DifficultyProfile candidateDifficulty = _meta.State.BoardDifficulty(_config);
             var engine = new TheLongestYear.Loop.BundleEngine(
                 this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
-                TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), _meta.State.BoardDifficulty(_config));
+                TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, candidateDifficulty.Steps.ItemRarity),
+                candidateDifficulty);
             engine.Availability = _availability;
             int candidateSeed = BundleEngineSeed.For(
                 unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop);
@@ -2851,7 +2856,7 @@ namespace TheLongestYear
             TheLongestYear.Core.DifficultyProfile genDifficulty = _meta.State.BoardDifficulty(_config);
             BundleGenerationTuning genTuning =
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
-            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             firstEngine.Availability = _availability;
             GeneratedBundleSet first = firstEngine.Generate(seed, trim);
             this.Monitor.Log(
@@ -2859,7 +2864,7 @@ namespace TheLongestYear
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), genDifficulty);
+            var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             secondEngine.Availability = _availability;
             GeneratedBundleSet second = secondEngine.Generate(seed, trim);
             string difference = FirstBundleSetDifference(first, second);
@@ -3507,7 +3512,7 @@ namespace TheLongestYear
 
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
-                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade), difficulty);
+                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
                     engine.Availability = _availability;
                     GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
                     if (!EngineManifestCheck.Matches(set.ToBundleData(), liveData))
@@ -3539,7 +3544,7 @@ namespace TheLongestYear
                 state.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
                 BundleGenerationTuning freshTuning =
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade), state.Difficulty);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty);
                 engine.Availability = _availability;
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
                 engine.WriteToWorld(set, this.Monitor);

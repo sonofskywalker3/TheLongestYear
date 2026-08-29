@@ -616,7 +616,7 @@ namespace TheLongestYear.Loop
                 // generation. Scale returns the same instance at Normal.
                 var difficultyTuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, _meta.Difficulty);
                 var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade), _meta.Difficulty);
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty);
                 engine.Availability = AvailabilityModel;
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
@@ -1207,7 +1207,7 @@ namespace TheLongestYear.Loop
                 try
                 {
                     qualityEligibleIds = new GameDataPools(_monitor)
-                        .Build(_config.PoolTuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade))
+                        .Build(_config.PoolTuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, difficulty.Steps.ItemRarity))
                         .QualityEligibleIds;
                 }
                 catch (Exception ex)
