@@ -16,13 +16,20 @@ namespace TheLongestYear.Core;
 /// <param name="Basis">Human readable derivation, for tly_itemmodel and the generated model doc.</param>
 public sealed record ItemAvailability(
     Season EarliestSeason, int Effort, string Basis, EffortSource Source = EffortSource.Derived,
-    int EarliestWeek = 0, Season? GateSeason = null)
+    int EarliestWeek = 0, Season? GateSeason = null, int HardWeek = 0, WeekMode Mode = WeekMode.Pacing)
 {
-    /// <summary>First week of the year the item can exist; a record built from a season alone
-    /// reads as that season's first week.</summary>
-    public int Week => EarliestWeek > 0 ? EarliestWeek : AvailabilityWeeks.FirstWeekOf(EarliestSeason);
-    /// <summary>Season a day-28 gate may first demand the item.</summary>
-    public Season Gate => GateSeason ?? EarliestSeason;
+    /// <summary>Pacing week: the week a normal player reasonably has the item. A record built from
+    /// a season alone reads as that season's first week.</summary>
+    public int PacingWeek => EarliestWeek > 0 ? EarliestWeek : AvailabilityWeeks.FirstWeekOf(EarliestSeason);
+    /// <summary>Hard week: the first week the item can exist at all (facts). Falls back to the
+    /// pacing week when no hard week was placed.</summary>
+    public int HardWeekOrPacing => HardWeek > 0 ? HardWeek : PacingWeek;
+    /// <summary>The week a day-28 gate reads, by <see cref="Mode"/>.</summary>
+    public int Week => Mode == WeekMode.Pacing ? PacingWeek : HardWeekOrPacing;
+    /// <summary>The week a weekly card reads, by <see cref="Mode"/>.</summary>
+    public int GoalWeek => Mode == WeekMode.HardAll ? HardWeekOrPacing : PacingWeek;
+    /// <summary>Season a day-28 gate may first demand the item, by <see cref="Mode"/>.</summary>
+    public Season Gate => Mode == WeekMode.Pacing ? (GateSeason ?? EarliestSeason) : AvailabilityWeeks.SeasonOf(Week);
 }
 
 /// <summary>Where an item's effort number came from: a derivation rule, the price bucket
@@ -32,7 +39,7 @@ public enum EffortSource { Derived, Price, Override }
 /// <summary>Effort without a season floor. Phase 2 rules (gems, geodes, monster drops,
 /// artifacts, artisan goods, animal products, dishes, crops, forage) produce these: they say how
 /// much work an item is, never when it first exists, so a gate is never moved by them.</summary>
-public sealed record ItemEffort(int Effort, string Basis, int? EarliestWeek = null, Season? GateSeason = null);
+public sealed record ItemEffort(int Effort, string Basis, int? EarliestWeek = null, Season? GateSeason = null, int? HardWeek = null);
 
 /// <summary>Every item's <see cref="ItemAvailability"/>, plus the override layers.
 ///
@@ -66,18 +73,25 @@ public sealed class ItemAvailabilityModel
     private readonly IReadOnlyDictionary<string, int> _weekOverrides;
     private readonly HashSet<string> _unknown = new(StringComparer.Ordinal);
 
+    /// <summary>Which week the model answers with for gates and goals (spec
+    /// 2026-08-28-obtainable-board, section 1). Set once at construction from the run's
+    /// difficulty.</summary>
+    public WeekMode Mode { get; }
+
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
         IReadOnlyDictionary<string, int>? effortOverrides = null,
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = null,
-        IReadOnlyDictionary<string, int>? weekOverrides = null)
+        IReadOnlyDictionary<string, int>? weekOverrides = null,
+        WeekMode mode = WeekMode.Pacing)
     {
         _derived = derived ?? throw new ArgumentNullException(nameof(derived));
         _seasonOverrides = seasonOverrides ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _effortOverrides = effortOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
         _effortDerived = effortDerived ?? new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         _weekOverrides = weekOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
+        Mode = mode;
         // Validated once here rather than per lookup, so the count is meaningful the moment the
         // model exists and a caller can log it at build time without waiting for traffic. Compared
         // in weeks (spec 2026-08-28-even-year): an override may only move a placed floor later.
@@ -158,7 +172,7 @@ public sealed class ItemAvailabilityModel
             _unrecognised.Add(qualifiedItemId);
             _unknown.Add(qualifiedItemId);
             return new ItemAvailability(Season.Winter, UnrecognisedEffort, UnrecognisedBasis, EffortSource.Price,
-                AvailabilityWeeks.UnknownWeek, Season.Winter);
+                AvailabilityWeeks.UnknownWeek, Season.Winter, Mode: Mode);
         }
 
         int week = derived?.Week ?? effortOnly?.EarliestWeek ?? AvailabilityWeeks.UnknownWeek;
@@ -207,6 +221,7 @@ public sealed class ItemAvailabilityModel
             source = EffortSource.Override;
         }
         if (!placed) _unknown.Add(qualifiedItemId);
-        return new ItemAvailability(AvailabilityWeeks.SeasonOf(week), effort, basis, source, week, gate);
+        int hardWeek = derived?.HardWeek ?? effortOnly?.HardWeek ?? 0;
+        return new ItemAvailability(AvailabilityWeeks.SeasonOf(week), effort, basis, source, week, gate, hardWeek, Mode);
     }
 }
