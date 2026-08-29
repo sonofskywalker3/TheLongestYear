@@ -675,4 +675,89 @@ public class BundleSlotFillerTests
             new DomainMatch(PoolDomain.QualityCrops, null), pools, Tuning, new Random(3));
         Assert.Equal(0, filled.Slots[0].Quality);
     }
+
+    // ---- Recipe domain (Plan 3 Task 5) ----
+
+    /// <summary>Pool items outweigh the bundle's own vanilla items (which every part also keeps,
+    /// at the synthesized weight 1) by 1000 to 1, so a seeded roll draws the pool, not the
+    /// fallback: these tests are about which pool each part reads.</summary>
+    private static ItemPools RecipePools() => new()
+    {
+        ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+        {
+            [ItemKind.Gem] = new[]
+            {
+                Item("(O)60", weight: 1000), Item("(O)62", weight: 1000), Item("(O)64", weight: 1000),
+                Item("(O)72", weight: 1000), Item("(O)80", weight: 1000),
+            },
+        },
+        ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>>(StringComparer.Ordinal)
+        {
+            ["color_red"] = new[] { Item("(O)r1", weight: 1000), Item("(O)r2", weight: 1000) },
+            ["color_purple"] = new[] { Item("(O)p1", weight: 1000) },
+            ["color_yellow"] = new[] { Item("(O)y1", weight: 1000) },
+            ["color_white"] = new[] { Item("(O)w1", weight: 1000) },
+            ["color_blue"] = new[] { Item("(O)b1", weight: 1000) },
+            ["color_green"] = new[] { Item("(O)g1", weight: 1000) },
+        },
+    };
+
+    private static readonly DomainMatch RecipeMatch = new(PoolDomain.Recipe, null);
+
+    [Fact]
+    public void Dye_takes_one_item_from_each_colour_part()
+    {
+        var filled = BundleSlotFiller.Fill(Spec("Dye", 6, 6), RecipeMatch, RecipePools(), Tuning, new Random(7));
+        var ids = filled.Slots.Select(s => s.ItemId).ToList();
+        Assert.Equal(6, ids.Count);
+        Assert.Contains(ids, id => id is "(O)r1" or "(O)r2");
+        foreach (string only in new[] { "(O)p1", "(O)y1", "(O)w1", "(O)b1", "(O)g1" })
+            Assert.Contains(only, ids);
+    }
+
+    [Fact]
+    public void A_named_recipe_rolls_its_own_pool_not_the_vanilla_items()
+    {
+        var filled = BundleSlotFiller.Fill(Spec("Treasure Hunter's", 3, 3, "(O)9001", "(O)9002", "(O)9003"),
+            RecipeMatch, RecipePools(), Tuning, new Random(11));
+        Assert.Contains(filled.Slots, s => s.ItemId is "(O)60" or "(O)62" or "(O)64" or "(O)72" or "(O)80");
+    }
+
+    [Fact]
+    public void A_part_whose_pool_is_too_small_fills_from_the_bundles_own_items()
+    {
+        var pools = new ItemPools
+        {
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Gem] = new[] { Item("(O)60", weight: 1000) },
+            },
+        };
+        var filled = BundleSlotFiller.Fill(Spec("Treasure Hunter's", 3, 3, "(O)9001", "(O)9002", "(O)9003"),
+            RecipeMatch, pools, Tuning, new Random(5));
+        var ids = filled.Slots.Select(s => s.ItemId).ToList();
+        Assert.Equal(3, ids.Count);
+        Assert.Equal(3, ids.Distinct().Count());
+        Assert.Contains("(O)60", ids);
+        // Two of the three slots can only have come from the bundle's own items.
+        Assert.Equal(2, ids.Count(id => id.StartsWith("(O)900", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void A_recipe_bundle_with_nothing_to_roll_keeps_its_vanilla_slots()
+    {
+        var filled = BundleSlotFiller.Fill(Spec("Some Unknown Bundle", 3, 3, "(O)9001"),
+            RecipeMatch, new ItemPools(), Tuning, new Random(5));
+        Assert.Single(filled.Slots);
+        Assert.Equal("(O)9001", filled.Slots[0].ItemId);
+    }
+
+    [Fact]
+    public void The_same_seed_composes_the_same_recipe_bundle_twice()
+    {
+        BundleSpec spec = Spec("Dye", 6, 6);
+        var a = BundleSlotFiller.Fill(spec, RecipeMatch, RecipePools(), Tuning, new Random(21));
+        var b = BundleSlotFiller.Fill(spec, RecipeMatch, RecipePools(), Tuning, new Random(21));
+        Assert.Equal(a.Slots.Select(s => s.ItemId), b.Slots.Select(s => s.ItemId));
+    }
 }

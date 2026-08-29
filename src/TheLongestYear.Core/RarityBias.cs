@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core;
 
@@ -53,11 +54,23 @@ public static class RarityBias
             Cooking = Reweight(pools.Cooking, bias, PoolDomain.None, thresholds),
             TapperGoods = Reweight(pools.TapperGoods, bias, PoolDomain.None, thresholds),
 
+            // The recipe pools (Plan 3 Task 5). They feed every non-money bundle, so dropping
+            // them here would silently empty every recipe whenever the rarity modifier is on.
+            ByKind = pools.ByKind.ToDictionary(
+                kv => kv.Key, kv => Reweight(kv.Value, bias, PoolDomain.None, thresholds)),
+            ColourTags = pools.ColourTags.ToDictionary(
+                kv => kv.Key, kv => Reweight(kv.Value, bias, PoolDomain.None, thresholds), StringComparer.Ordinal),
+            WinterOnly = Reweight(pools.WinterOnly, bias, PoolDomain.None, thresholds),
+
             // Obtainability and quality-eligibility data are correctness, not difficulty. Dropping
             // either here would let a bundle be demanded before its items exist, or put a gold
-            // star on an item the game never stars (Nexus 1122358).
+            // star on an item the game never stars (Nexus 1122358). The fish rows and the trap /
+            // fruit-tree id sets are the same kind of data: rules, not weights.
             DerivedSeasonPins = pools.DerivedSeasonPins,
             QualityEligibleIds = pools.QualityEligibleIds,
+            FishRows = pools.FishRows,
+            TrapFishIds = pools.TrapFishIds,
+            FruitTreeFruitIds = pools.FruitTreeFruitIds,
         };
     }
 

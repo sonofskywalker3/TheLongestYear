@@ -76,11 +76,13 @@ public sealed class ItemPools
 }
 
 /// <summary>Which item pool a picked bundle's slots re-roll from. None = keep the
-/// bundle's vanilla slots (safe default; SlotTrimmer still applies).</summary>
+/// bundle's vanilla slots (money bundles only, now that Recipe catches the rest).
+/// Recipe = roll from the bundle's own <see cref="PoolRecipe"/> (its named recipe, else the
+/// pool of its majority <see cref="ItemKind"/>).</summary>
 public enum PoolDomain
 {
     None, SeasonalCrops, QualityCrops, Fish, CrabPot, SeasonalForage,
-    MonsterDrops, Metals, ArtisanGoods,
+    MonsterDrops, Metals, ArtisanGoods, Recipe,
 }
 
 /// <summary>A classified bundle: its domain plus the season filter for seasonal domains

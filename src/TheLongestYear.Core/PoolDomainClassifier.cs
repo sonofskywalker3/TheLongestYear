@@ -8,8 +8,9 @@ namespace TheLongestYear.Core;
 /// <summary>Maps a picked bundle to the item pool its slots re-roll from. Name
 /// fast-paths keep the seasonal bundles' identity (spec: seasonal bundles KEEP their
 /// season); everything else is claimed by unambiguous ingredient-majority membership
-/// in exactly one pool. None (composite/money/category/ambiguous bundles) = keep
-/// vanilla slots — the safe default.</summary>
+/// in exactly one pool. Everything left over (composite, category-ref, ambiguous) is
+/// Recipe: it rolls from its named <see cref="PoolRecipe"/>, or from the pool of its majority
+/// kind. None, which keeps the vanilla slots, is now money bundles and empty bundles only.</summary>
 public static class PoolDomainClassifier
 {
     private const string MoneySlotId = "-1";
@@ -35,15 +36,24 @@ public static class PoolDomainClassifier
         if (string.Equals(spec.Name, "Quality Crops", StringComparison.OrdinalIgnoreCase))
             return new DomainMatch(PoolDomain.QualityCrops, null);
 
+        if (spec.Slots.Count == 0)
+            return new DomainMatch(PoolDomain.None, null); // nothing to re-roll
+
         var ids = new List<string>(spec.Slots.Count);
         foreach (BundleSlotSpec slot in spec.Slots)
         {
-            if (slot.ItemId == MoneySlotId || BundleParsing.IsCategoryRef(slot.ItemId))
+            // A money slot is the whole bundle's ask: there is nothing to re-roll, and the
+            // vault's amounts are scaled elsewhere. Never rolled, at any difficulty.
+            if (slot.ItemId == MoneySlotId)
                 return new DomainMatch(PoolDomain.None, null);
+            // A category ref ("any egg") is not an item, so it cannot claim a pool by
+            // membership. The bundle still rolls: it falls through to its recipe below.
+            if (BundleParsing.IsCategoryRef(slot.ItemId))
+                continue;
             ids.Add(BundleParsing.NormalizeItemId(slot.ItemId));
         }
         if (ids.Count == 0)
-            return new DomainMatch(PoolDomain.None, null);
+            return new DomainMatch(PoolDomain.Recipe, null);
 
         var candidates = new (PoolDomain Domain, IReadOnlyList<PoolItem> Pool)[]
         {
@@ -63,10 +73,13 @@ public static class PoolDomainClassifier
             if (hits * MajorityDenominator >= ids.Count * MajorityNumerator)
             {
                 if (claimed != PoolDomain.None)
-                    return new DomainMatch(PoolDomain.None, null); // ambiguous — keep vanilla
+                    return new DomainMatch(PoolDomain.Recipe, null); // ambiguous: let the recipe decide
                 claimed = domain;
             }
         }
-        return new DomainMatch(claimed, null);
+        // No pool claimed it, so it is not a fish/crop/metal bundle by ingredient. It still rolls:
+        // its recipe is its named one, or the pool of its majority kind (spec
+        // 2026-08-28-obtainable-board-3-pools: every non-money bundle rolls from the pool of its kind).
+        return new DomainMatch(claimed == PoolDomain.None ? PoolDomain.Recipe : claimed, null);
     }
 }
