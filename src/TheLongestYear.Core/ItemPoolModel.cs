@@ -120,8 +120,27 @@ public sealed record RawCropEntry(
     string HarvestItemId, IReadOnlyList<Season> Seasons, int? HarvestMaxQuality = null);
 
 /// <summary>One Data/Locations spawn entry (LocationData.Forage or LocationData.Fish):
-/// Season null = any season unless the Condition string names seasons.</summary>
-public sealed record RawSpawnEntry(string ItemId, Season? Season, string? Condition, string Location);
+/// Season null = any season unless the Condition string names seasons.
+///
+/// <paramref name="Chance"/> is SpawnForageData.Chance, the per-spawn probability the game rolls
+/// AFTER picking this entry out of the location's candidate list (decompile
+/// GameLocation.spawnObjects: <c>r.ChooseFrom(possibleForage)</c> then <c>r.NextBool(forage.Chance)</c>).
+/// The pool/effort rules only ask "can this item appear at all", so they ignore it; the yield
+/// simulator needs it, because an entry at Chance 0.15 is worth a sixth of one at 1.0. Defaults to
+/// 1.0, which is both the game's default and the right no-op for every caller that does not set it.</summary>
+public sealed record RawSpawnEntry(
+    string ItemId, Season? Season, string? Condition, string Location, double Chance = 1.0);
+
+/// <summary>The three Data/Locations knobs that decide how much forage a location produces in a
+/// day (decompile GameLocation.spawnObjects + LocationData): the game rolls
+/// <c>Random(MinDaily, MaxDaily + 1)</c> spawn attempts, capped so the map never holds more than
+/// <paramref name="MaxAtOnce"/> spawned forage at a time. Game defaults are 1 / 4 / 6.
+///
+/// The cap only binds when forage is left lying about; a player who clears a map every day keeps
+/// <c>numberOfSpawnedObjectsOnMap</c> near zero, which is exactly the "checked everywhere every
+/// day" assumption the yield simulator is built on.</summary>
+public sealed record RawLocationForageRate(
+    string Location, int MinDaily, int MaxDaily, int MaxAtOnce);
 
 /// <summary>One monster drop-table item (Data/Monsters field 6; chance not needed —
 /// pools care about obtainability, not drop rate).</summary>

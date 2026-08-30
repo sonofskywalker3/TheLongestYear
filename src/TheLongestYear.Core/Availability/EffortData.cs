@@ -65,6 +65,10 @@ public sealed class EffortData
     public IReadOnlyList<RawFishPondRule> FishPonds { get; init; } = new List<RawFishPondRule>();
     public IReadOnlyList<RawCropGrowth> Crops { get; init; } = new List<RawCropGrowth>();
     public IReadOnlyList<RawSpawnEntry> ForageSpawns { get; init; } = new List<RawSpawnEntry>();
+
+    /// <summary>Per-location daily forage spawn rates, for the yield simulator. Empty for callers
+    /// that only need obtainability (the effort rules never read it).</summary>
+    public IReadOnlyList<RawLocationForageRate> ForageRates { get; init; } = new List<RawLocationForageRate>();
     public IReadOnlyList<RawTapItem> TapItems { get; init; } = new List<RawTapItem>();
     /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
     public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();

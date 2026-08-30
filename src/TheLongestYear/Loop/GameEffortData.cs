@@ -46,6 +46,7 @@ namespace TheLongestYear.Loop
             var monsterDrops = new List<RawMonsterDrop>();
             var artifactSpots = new List<RawArtifactSpot>();
             var forage = new List<RawSpawnEntry>();
+            var forageRates = new List<RawLocationForageRate>();
             var machineRules = new List<RawMachineRule>();
             var machineUnlocks = new Dictionary<string, string>(StringComparer.Ordinal);
             var recipePrices = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -99,7 +100,14 @@ namespace TheLongestYear.Loop
                         continue;
                     foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
                         foreach (string id in SpawnIds(f?.ItemId, f?.RandomItemId))
-                            forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
+                            forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key, f.Chance));
+
+                    // How much this map can produce in a day. Only meaningful for maps that grow
+                    // forage at all, so rows with no Forage list are skipped rather than recorded
+                    // as zero-yield entries the simulator would have to filter again.
+                    if ((loc.Forage?.Count ?? 0) > 0)
+                        forageRates.Add(new RawLocationForageRate(
+                            kv.Key, loc.MinDailyForageSpawn, loc.MaxDailyForageSpawn, loc.MaxSpawnedForageAtOnce));
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, MachineData>>("Data/Machines"))
@@ -244,7 +252,8 @@ namespace TheLongestYear.Loop
             return new EffortData
             {
                 Objects = objects, GeodeDrops = geodeDrops, MonsterDrops = monsterDrops,
-                ArtifactSpots = artifactSpots, ForageSpawns = forage, MachineRules = machineRules,
+                ArtifactSpots = artifactSpots, ForageSpawns = forage, ForageRates = forageRates,
+                MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
                 CookingChannel = cookingChannel,
