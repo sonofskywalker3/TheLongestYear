@@ -266,6 +266,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_gateneeds", "Print, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) plus the vault. Read-only.", this.CmdGateNeeds);
+            helper.ConsoleCommands.Add("tly_forageyield", "Simulate how much of each forage item a player could gather by a cutoff day if every reachable map were cleared every day, and print the 20-80% band a requirement should sit in. Forage only. Read-only. Usage: tly_forageyield [spring|summer|fall|winter|<day>] [itemId]", this.CmdForageYield);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
@@ -1964,6 +1965,7 @@ namespace TheLongestYear
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_gateneeds": this.CmdGateNeeds(command, args); break;
+                case "tly_forageyield": this.CmdForageYield(command, args); break;
                 case "tly_goals": this.CmdGoals(command, args); break;
                 case "tly_themepool": this.CmdThemePool(command, args); break;
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
@@ -2286,6 +2288,74 @@ namespace TheLongestYear
             bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
             this.Monitor.Log($"  vault: paid {VaultRules.PaidCount(run)} of {VaultRules.SeasonOrdinal(season)} needed{(vaultOk ? " (satisfied)" : "")}", vaultOk ? LogLevel.Info : LogLevel.Warn);
             this.Monitor.Log($"tly_gateneeds: {season} day {run.DayOfMonth}: {open} bundle(s) still owed before {nextSeason}, {ledger.Count} slot(s) filled on the board.", LogLevel.Info);
+        }
+
+        /// <summary><c>tly_forageyield [season|day] [item]</c>: what "checked everywhere every day"
+        /// is actually worth per forage item, by a cutoff day. Read-only; nothing is clamped by
+        /// this yet. Sorted by yield so the scarcest asks are easy to spot, and the 20-80% band is
+        /// printed next to each so a proposed maximum ask can be read straight off.</summary>
+        private void CmdForageYield(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _effortData == null)
+            {
+                this.Monitor.Log("Load a save first (the simulator reads live game data).", LogLevel.Warn);
+                return;
+            }
+
+            string arg = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+            int cutoff;
+            string label;
+            switch (arg)
+            {
+                case "": case "year": cutoff = Calendar.DaysPerYear; label = "the whole loop"; break;
+                case "spring": cutoff = Calendar.DaysPerMonth; label = "Spring 28"; break;
+                case "summer": cutoff = Calendar.DaysPerMonth * 2; label = "Summer 28"; break;
+                case "fall": cutoff = Calendar.DaysPerMonth * 3; label = "Fall 28"; break;
+                case "winter": cutoff = Calendar.DaysPerYear; label = "Winter 28"; break;
+                default:
+                    if (!int.TryParse(arg, out cutoff) || cutoff < 1 || cutoff > Calendar.DaysPerYear)
+                    {
+                        this.Monitor.Log($"Usage: tly_forageyield [spring|summer|fall|winter|<day 1-{Calendar.DaysPerYear}>] [itemId]", LogLevel.Warn);
+                        return;
+                    }
+                    label = $"day {cutoff}";
+                    break;
+            }
+
+            string filter = args.Length > 1 ? args[1] : null;
+
+            IReadOnlyDictionary<string, TheLongestYear.Core.Availability.ForageYieldResult> yields =
+                TheLongestYear.Core.Availability.ForageYieldSimulator.SimulateTo(cutoff, _effortData.ForageSpawns, _effortData.ForageRates);
+
+            if (_effortData.ForageRates.Count == 0)
+            {
+                this.Monitor.Log("No per-location forage rates were captured - nothing to simulate.", LogLevel.Warn);
+                return;
+            }
+
+            this.Monitor.Log(
+                $"=== tly_forageyield: expected forage by {label}, if every reachable map is cleared every day ===",
+                LogLevel.Info);
+            this.Monitor.Log(
+                "  This is an OPTIMISTIC ceiling (every spawn finds a tile, unknown conditions pass). "
+                + "A requirement should sit in the 20-80% band; 80% is the highest it should ever roll.",
+                LogLevel.Info);
+
+            foreach (TheLongestYear.Core.Availability.ForageYieldResult r in yields.Values
+                .Where(r => filter == null || r.ItemId.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(r => r.ExpectedTotal))
+            {
+                this.Monitor.Log(
+                    $"  {DisplayName(r.ItemId),-28} {r.ItemId,-18} max {r.ExpectedTotal,7:F1}"
+                    + $"  band {r.ExpectedTotal * 0.20,5:F0}-{r.ExpectedTotal * 0.80,-5:F0}"
+                    + $"  {r.SpawningDays,3}d  {string.Join(", ", r.Locations)}",
+                    LogLevel.Info);
+            }
+
+            this.Monitor.Log(
+                $"tly_forageyield: {yields.Count} forage item(s) over {_effortData.ForageRates.Count} map(s). "
+                + "Forage only - fish, bushes and dig spots are not modelled.",
+                LogLevel.Info);
         }
 
         /// <summary><c>tly_dumpeffort [fileName]</c>: the item effort review document, written to the
