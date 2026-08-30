@@ -163,6 +163,11 @@ namespace TheLongestYear.Loop
             p.eventsSeen.Clear();
             p.questLog.Clear();
             ClearTriggerActionRecord(p);
+            // Pending level-up menus (vanilla queues them for the next sleep). After the rewind
+            // the skill is back at its kept level, so a queued menu would show the wrong level and
+            // hand out a profession the player no longer has. Crash Course (a bought level on a
+            // Fail day) makes this reachable in one day (found by the 2026-08-29 sim run).
+            p.newLevels.Clear();
 
             // First-meeting dialogue. Vanilla does NOT key an NPC's "Introduction" line on
             // friendshipData: NPC.checkForNewCurrentDialogue (NPC.cs:4009) walks
