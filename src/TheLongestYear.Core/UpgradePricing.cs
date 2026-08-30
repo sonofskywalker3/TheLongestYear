@@ -26,6 +26,19 @@ public static class UpgradePricing
     }
 
     /// <summary>Convenience overload for callers holding the run's stamped profile.</summary>
+    /// <summary>Price for THIS player: Gifts of the Junimos read the shared ladder
+    /// (<see cref="GiftLadder.CostFor"/>) instead of their catalog cost, then the factor applies.</summary>
+    public static long EffectiveCost(UpgradeDefinition definition, double factor, MetaState state)
+    {
+        if (definition == null) throw new ArgumentNullException(nameof(definition));
+        if (state == null || !GiftLadder.IsGift(definition))
+            return EffectiveCost(definition, factor);
+        long baseCost = GiftLadder.CostFor(state);
+        if (factor == 1.0) return baseCost;
+        long scaled = (long)Math.Round(baseCost * factor, MidpointRounding.AwayFromZero);
+        return scaled < 0 ? 0 : scaled;
+    }
+
     public static long EffectiveCost(UpgradeDefinition definition, DifficultyProfile profile)
     {
         if (profile == null) throw new ArgumentNullException(nameof(profile));

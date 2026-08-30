@@ -209,7 +209,7 @@
     "upgrade.keep_pet.name": "Keep Pet",
     "upgrade.keep_pet.desc": "Your pet returns at the start of every loop with its name and friendship hearts intact.",
     "upgrade.keep_bus_unlocked.name": "Keep Bus Unlocked",
-    "upgrade.keep_bus_unlocked.desc": "The bus runs and the desert is open from day 1 of every loop. The Vault bundles stay on the board and still have to be paid.",
+    "upgrade.keep_bus_unlocked.desc": "The bus to the desert runs from the first day.",
     "upgrade.start_chicken.name": "Start with Chicken",
     "upgrade.start_chicken.desc": "Start each loop with a Chicken in your Coop.",
     "upgrade.start_void_chicken.name": "Start with Void Chicken",
@@ -300,6 +300,15 @@
     "upgrade-category.efficiency": "Efficiency", "upgrade-category.obtainability": "Obtainability",
     "upgrade-category.foresight": "Foresight", "upgrade-category.stash": "Stash",
     "upgrade-category.buildings": "Buildings",
+    "upgrade-category.gifts": "Gifts of the Junimos",
+    "upgrade.keep_greenhouse.name": "Keep Greenhouse",
+    "upgrade.keep_greenhouse.desc": "The greenhouse is repaired from the first day, where you left it.",
+    "upgrade.keep_quarry_bridge.name": "Keep Quarry Bridge",
+    "upgrade.keep_quarry_bridge.desc": "The bridge to the quarry is repaired from the first day.",
+    "upgrade.keep_boulder_cleared.name": "Keep Boulder Cleared",
+    "upgrade.keep_boulder_cleared.desc": "The glittering boulder is gone from the first day.",
+    "upgrade.keep_minecarts.name": "Keep Minecarts",
+    "upgrade.keep_minecarts.desc": "The minecarts run from the first day.",
     // Plain ASCII only in modifier.* values (no U+2212 minus sign): Stardew's smallFont
     // doesn't include the typographic minus and renders it as tofu. Keep entries concise
     // enough to wrap to two lines max on a 460px-wide card (Game1.parseText word-wrapping).
@@ -397,7 +406,7 @@
     "boost.double_yolk.name": "Double Yolk",
     "boost.double_yolk.desc": "This week, an extra 20% chance that an animal gives a second product each day. Stacks with the Kitchen theme.",
     "boost.quick_feet.name": "Quick Feet",
-    "boost.quick_feet.desc": "This week, +1 Speed all day (20% faster walking and running, the same boost a Coffee gives). Stacks with Coffee.",
+    "boost.quick_feet.desc": "Move 20% faster all day.",
     "boost.haggler.name": "Haggler",
     "boost.haggler.desc": "This season, shops take another 10% off, on top of your Shop Discount. Buildings, animals and tool upgrades still cost full price.",
     "boost.fast_friends.name": "Fast Friends",

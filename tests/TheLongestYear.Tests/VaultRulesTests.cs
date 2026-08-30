@@ -77,6 +77,6 @@ public class VaultRulesTests
     {
         UpgradeDefinition? def = UpgradeCatalog.TryGet(VaultRules.KeepBusUnlockedId);
         Assert.NotNull(def);
-        Assert.Equal(UpgradeCategory.Buildings, def!.Category);
+        Assert.Equal(UpgradeCategory.Gifts, def!.Category);
     }
 }

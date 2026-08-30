@@ -253,10 +253,21 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 75,
             metaRequirement: null, runReachRequirement: "pet:1"),
 
-        // Vault — pre-pay all four bus bundles once and keep them paid across resets.
-        // Without this upgrade the player has to pay the season's Vault bundle every run by day 28
-        // to clear the monthly gate (2,500g Spring, 5,000g Summer, 10,000g Fall, 25,000g Winter).
-        new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Buildings, 1500,
+        // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward
+        // across loops, one row per room, never the Bulletin Board. Priced on a shared ladder
+        // (GiftLadder): every Gift owned raises the price of the rest, 1,000 JP up to 5,000. The
+        // reset restores only the room's completion mail (WorldResetService.RestoreKeptGifts), so
+        // the bundles stay on the board, still pay, and vanilla never re-sends the letter that
+        // plays the repair scene. The bus row keeps its id and its vault gate short-circuit.
+        new UpgradeDefinition(GiftLadder.KeepGreenhouseId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
+            metaRequirement: null, runReachRequirement: "mail:ccPantry"),
+        new UpgradeDefinition(GiftLadder.KeepQuarryBridgeId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
+            metaRequirement: null, runReachRequirement: "mail:ccCraftsRoom"),
+        new UpgradeDefinition(GiftLadder.KeepBoulderClearedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
+            metaRequirement: null, runReachRequirement: "mail:ccFishTank"),
+        new UpgradeDefinition(GiftLadder.KeepMinecartsId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
+            metaRequirement: null, runReachRequirement: "mail:ccBoilerRoom"),
+        new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
             metaRequirement: null, runReachRequirement: "bus:4"),
 
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having

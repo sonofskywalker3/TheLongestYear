@@ -80,6 +80,11 @@ public sealed class RunBaseline
     /// keep_stardrop_* rows (spec 2026-08-27 keep-wallet-stardrops).</summary>
     public IReadOnlyList<string> KeptMailFlags { get; init; } = new List<string>();
 
+    /// <summary>Gifts of the Junimos: the CC completion mails (ccPantry, ccCraftsRoom, ccFishTank,
+    /// ccBoilerRoom, ccVault) to put back after the CC wipe so the room's world reward stands from
+    /// day 1. The bundles themselves stay on the board. See <see cref="GiftLadder"/>.</summary>
+    public IReadOnlyList<string> KeptGiftMails { get; init; } = new List<string>();
+
     /// <summary>Event ids to re-mark seen after the re-seed: Bear's Knowledge (2120303) and
     /// Spring Onion Mastery (3910979) when their keep is owned. Data/Powers grants those on SEEN_EVENT.</summary>
     public IReadOnlyList<string> KeptEventIds { get; init; } = new List<string>();
