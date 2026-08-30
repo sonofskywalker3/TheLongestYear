@@ -49,10 +49,7 @@ after their fixes land (drafts in chat first, memory `show-reply-drafts-before-p
 any explanation; technical detail short and in the player's words.** See the workspace
 `.claude/CLAUDE.md` "Replying to bug reports".
 
-Unreleased fixes already on master that the release notes must carry: the per-slot ledger
-(0.16.135 to 0.16.146), the bundle pool fixes (0.16.26 to 0.16.36), the obtainable board (0.16.85
-to 0.16.134), activity themes (0.16.42 to 0.16.67), wallet items and Stardrops (0.16.19 to 0.16.25).
-Last public release is 0.16.17. `STATUS.md` has the state line by line.
+RELEASED 0.16.167 (2026-08-29): everything from 0.16.18 to 0.16.167 is public. Bug replies to gazumbrado, Bumblewyn, ChaoticMindset (Not a bug), nyxnyx2234 and the impossible-items thread drafted for Jeff's yes.
 
 ### 10th sweep (2026-08-29 afternoon, Nexus bugs + posts + Reddit): two real new bugs, one retracted
 
