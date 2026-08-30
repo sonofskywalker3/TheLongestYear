@@ -178,6 +178,7 @@ public static class RunBaselineBuilder
             KeptBookStats = keptBooks,
             KeptCraftingRecipes = keptCraftingRecipes,
             KeptMailFlags = keptMail,
+            KeptGiftMails = GiftLadder.KeptMails(meta),
             KeptEventIds = keptEvents,
             KeptStardropCount = keptStardrops,
             GrantGoldenScythe = meta.HasUpgrade("keep_golden_scythe"),

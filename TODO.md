@@ -6,7 +6,9 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BRAINSTORM CAPTURED 2026-08-29 (Jeff, not yet specced): "Gifts of the Junimos", keep the CC room rewards
+### BUILT 2026-08-29 (0.16.164, local): "Gifts of the Junimos", keep the CC room rewards. Five rows in their own category (greenhouse put back where the player moved it, quarry bridge, boulder, minecarts, bus), reach = that room completed this loop, ladder 1,000 to 5,000 (`GiftLadder`), completion mail restored at reset only. Correction to the original note: the Crafts Room reward is the QUARRY bridge (Mountain), not the beach bridge. Original brief below.
+
+#### Original brief
 
 Jeff, after seeing the shrine tabs: powers to keep the OTHER room-completion rewards across loops, the way `keep_bus_unlocked` (Vault, 1500 JP) already keeps the bus. One row each under a **"Gifts of the Junimos"** header (its own shrine category): Greenhouse (Pantry), the beach bridge (Crafts Room), the quarry boulder (Fish Tank), the minecarts (Boiler Room), the bus (Vault, the existing row moves here). NOT the Bulletin Board (its friendship boost is not a world reward). **Pricing rule: every Gift bought raises the price of the others, from 1,000 JP up to 5,000** (first 1,000, second 2,000, ... fifth 5,000; `keep_bus_unlocked` joins the ladder at whatever step it is bought). Same shape as the bus fix: restore the vanilla completion mail (`ccPantry`, `ccCraftsRoom`, `ccFishTank`, `ccBoilerRoom`, `ccVault`) after the reset and nothing else, so the bundles stay on the board and still pay. Open: whether the existing 1,500 bus price is grandfathered for owners; the Greenhouse also needs the building (`Farm.greenhouseUnlocked` / the greenhouse map override, check `Farm.MakeMapModifications`). Not on the TODO before today.
 

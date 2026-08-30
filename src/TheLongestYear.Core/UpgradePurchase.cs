@@ -38,7 +38,7 @@ public static class UpgradePurchase
             return PurchaseResult.PrerequisiteMissing;
         if (!state.MeetsMetaRequirement(definition.MetaRequirement))
             return PurchaseResult.MetaRequirementMissing;
-        long cost = UpgradePricing.EffectiveCost(definition, priceFactor);
+        long cost = UpgradePricing.EffectiveCost(definition, priceFactor, state);
         if (state.JunimoPoints < cost)
             return PurchaseResult.NotEnoughJp;
 

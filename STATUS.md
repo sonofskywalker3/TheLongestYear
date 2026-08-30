@@ -1,9 +1,9 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 night (bug pass done; JP Boosts + shrine tabs BUILT, 0.16.159 to 0.16.162)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.162 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1815 passing, 0 failing
-**Build:** clean; 0.16.162 deployed to the game
+**Last updated:** 2026-08-29 night (JP Boosts feedback round 1 + Gifts of the Junimos, 0.16.163 to 0.16.164)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.164 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1820 passing, 0 failing
+**Build:** clean; 0.16.164 deployed to the game
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 **NEXT SESSION (2026-08-29 night):** JP Boosts built (spec + plan in docs/superpowers, 15 rows, three shrine tabs; live-checked over the bridge, `tly_openshrine` opens each tab; Jeff still owes the visual pass and rulings on Night Owl / Backpack Organizer, Fast Friends x1.65 with the book, host-only Boosts tab). Then release notes (README What's New + Nexus description + changelog) and release, Jeff's call. Nothing pushed.
 
@@ -426,10 +426,10 @@ Collected from the five plan ledgers' `Ruling:` lines:
   build and was left alone; its "SPEC APPROVED, NOT PLANNED: activity themes" heading is now out
   of date (built, not real-play tested).
 
-**Last updated:** 2026-08-29 night (bug pass done; JP Boosts + shrine tabs BUILT, 0.16.159 to 0.16.162)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.162 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1815 passing, 0 failing
-**Build:** clean; 0.16.162 deployed to the game
+**Last updated:** 2026-08-29 night (JP Boosts feedback round 1 + Gifts of the Junimos, 0.16.163 to 0.16.164)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.164 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1820 passing, 0 failing
+**Build:** clean; 0.16.164 deployed to the game
 **Last public release:** 0.16.17 (SVE smoke finding recorded in TODO.md "SVE board audit")
 
 **2026-08-28 late: 20-loop audit of the 0.16.26 to 0.16.31 pool fixes, report in
@@ -623,10 +623,10 @@ u/Gribbleby), brainstorm first.
 
 ## Previous state (2026-08-27 afternoon)
 
-**Last updated:** 2026-08-29 night (bug pass done; JP Boosts + shrine tabs BUILT, 0.16.159 to 0.16.162)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.162 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1815 passing, 0 failing
-**Build:** clean; 0.16.162 deployed to the game
+**Last updated:** 2026-08-29 night (JP Boosts feedback round 1 + Gifts of the Junimos, 0.16.163 to 0.16.164)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.164 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1820 passing, 0 failing
+**Build:** clean; 0.16.164 deployed to the game
 **Last public release:** 0.15.0
 
 ## THE PERITEM GATE BASELINE HAS SHIFTED. The next release notes must say so.
@@ -726,10 +726,10 @@ modifiers are applied by scaling the tuning block. Same effect, and it meant `Bu
 
 ## Previous state
 
-**Last updated:** 2026-08-29 night (bug pass done; JP Boosts + shrine tabs BUILT, 0.16.159 to 0.16.162)
-**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.162 committed LOCALLY ONLY, not pushed, not released**
-**Tests:** 1815 passing, 0 failing
-**Build:** clean; 0.16.162 deployed to the game
+**Last updated:** 2026-08-29 night (JP Boosts feedback round 1 + Gifts of the Junimos, 0.16.163 to 0.16.164)
+**Branch:** `master`; 0.16.146 PUSHED (2026-08-29); **0.16.147 to 0.16.164 committed LOCALLY ONLY, not pushed, not released**
+**Tests:** 1820 passing, 0 failing
+**Build:** clean; 0.16.164 deployed to the game
 **Last public release:** 0.14.2 (2026-08-26: GitHub v0.14.2, Nexus file via workflow, page version
 + description + changelog synced, FAQ live)
 

@@ -785,7 +785,7 @@ namespace TheLongestYear.UI
                 }
                 case RowKind.Upgrade:
                 {
-                    long costJp = UpgradePricing.EffectiveCost(row.Def, _priceFactor);
+                    long costJp = UpgradePricing.EffectiveCost(row.Def, _priceFactor, _state);
                     bool affordable = _state.JunimoPoints >= costJp;
                     Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
                         new Vector2(_listX + 24, rowY + 6), Game1.textColor);
@@ -811,7 +811,7 @@ namespace TheLongestYear.UI
                         + (string.IsNullOrEmpty(row.Requirement) ? "" : " - " + row.Requirement);
                     Utility.drawTextWithShadow(b, title, Game1.smallFont,
                         new Vector2(_listX + SubRowIndent, rowY + 6), LockedGray);
-                    long lockedCost = UpgradePricing.EffectiveCost(row.Def, _priceFactor);
+                    long lockedCost = UpgradePricing.EffectiveCost(row.Def, _priceFactor, _state);
                     string lockedCostText = Strings.Get("menu.shrine-preview.cost",
                         new Dictionary<string, string> { ["cost"] = lockedCost.ToString() });
                     Vector2 lockedCostSize = Game1.smallFont.MeasureString(lockedCostText);

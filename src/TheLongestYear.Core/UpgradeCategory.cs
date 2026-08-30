@@ -12,5 +12,7 @@ public enum UpgradeCategory
     Obtainability,  // Cultivation (crops in Mixed Seeds), Fortune (rare drop boosts)
     Foresight,      // Weather Sage tiers, Cart Whisperer tiers
     Stash,          // Junimo Stash capacity tiers
-    Buildings       // Keep Coop / Kitchen / Barn, Start with [animal] (added 2026-05-26)
+    Buildings,      // Keep Coop / Kitchen / Barn, Start with [animal] (added 2026-05-26)
+    Gifts           // Gifts of the Junimos: keep a CC room's world reward (greenhouse, quarry bridge,
+                    // boulder, minecarts, bus) across loops; shared price ladder (added 2026-08-29)
 }

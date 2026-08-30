@@ -527,6 +527,8 @@ namespace TheLongestYear.Loop
             // 8. Pre-build kept buildings on the Farm. Coords are deterministic — we always
             //    use the same tiles so subsequent runs land buildings in the same spots.
             ApplyKeptBuildings(baseline.KeptBuildings);
+            // 8a. Keep Greenhouse: back to where the player had moved it (Gifts of the Junimos).
+            RestoreGreenhouseSpot();
 
             // 9. Keep Horse — restore the player's stable + horse at its saved tile (pure carry-over;
             //    no auto-build, so a player who hasn't built a stable yet has no horse this loop).
@@ -638,10 +640,11 @@ namespace TheLongestYear.Loop
                     generatedSet, _itemSeasonPins, _bundleQuotas, ease, AvailabilityModel);
             }
 
-            // 11b. Kept bus (keep_bus_unlocked): the bus runs from day 1; the vault bundles stay
-            //      on the board and are paid like any other (Jeff, 2026-08-29).
-            if (baseline.BusUnlocked)
-                RestoreKeptBus();
+            // 11b. Gifts of the Junimos (kept bus, greenhouse, quarry bridge, boulder, minecarts):
+            //      the room's world reward stands from day 1; the bundles stay on the board and are
+            //      paid like any other (Jeff, 2026-08-29).
+            if (baseline.KeptGiftMails.Count > 0)
+                RestoreKeptGifts(baseline);
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             FireBookQuestIntros();
@@ -708,11 +711,51 @@ namespace TheLongestYear.Loop
         /// when it is not already received (CommunityCenter.cs:757), so paying the vault later does
         /// not replay the bus-repair scene.
         /// </summary>
-        private void RestoreKeptBus()
+        private void RestoreKeptGifts(RunBaseline baseline)
         {
-            if (!Game1.MasterPlayer.mailReceived.Contains("ccVault"))
-                Game1.MasterPlayer.mailReceived.Add("ccVault");
-            _monitor.Log("Kept bus: ccVault mail restored (bus and desert open; vault bundles still on the board).", LogLevel.Info);
+            // Every Gift is a vanilla completion mail: ccPantry (greenhouse, GreenhouseBuilding.cs:47),
+            // ccCraftsRoom (quarry bridge, Mountain.cs:168), ccFishTank (glittering boulder,
+            // Mountain.cs:139), ccBoilerRoom (minecarts, Mountain/Town/BusStop), ccVault (bus, above).
+            // Step 1a stripped them all; put the owned ones back. RefreshMutatedVanillaMaps (later)
+            // re-applies the map overrides. Completing that room again later does NOT replay the
+            // repair scene: vanilla only queues the letter when it is not already received
+            // (CommunityCenter.cs:757), and the letter is what fires the morning event.
+            foreach (string mail in baseline.KeptGiftMails)
+            {
+                if (!Game1.MasterPlayer.mailReceived.Contains(mail))
+                    Game1.MasterPlayer.mailReceived.Add(mail);
+            }
+            _monitor.Log(
+                $"Gifts of the Junimos: restored [{string.Join(", ", baseline.KeptGiftMails)}]; the bundles stay on the board.",
+                LogLevel.Info);
+        }
+
+        private const string GreenhouseType = "Greenhouse";
+
+        /// <summary>Keep Greenhouse: vanilla spawns the (ruined) greenhouse at the map's default
+        /// spot on every loadForNewGame. Put it back where the player had moved it (step-0c
+        /// snapshot), clearing the fresh farm's debris off that footprint first (Jeff, 2026-08-29).</summary>
+        private void RestoreGreenhouseSpot()
+        {
+            if (!_meta.HasUpgrade(GiftLadder.KeepGreenhouseId)) return;
+            if (!_meta.KeptBuildingSpots.TryGetValue(GreenhouseType, out BuildingSpot spot)) return;
+            Farm farm = Game1.getFarm();
+            Building greenhouse = farm.buildings.FirstOrDefault(b => b.buildingType.Value == GreenhouseType);
+            if (greenhouse == null)
+            {
+                _monitor.Log("Keep Greenhouse: no greenhouse building on the fresh farm; nothing moved.", LogLevel.Warn);
+                return;
+            }
+            if (greenhouse.tileX.Value == spot.X && greenhouse.tileY.Value == spot.Y)
+                return;
+
+            ClearFootprint(farm, spot.X, spot.Y, greenhouse.tilesWide.Value, greenhouse.tilesHigh.Value);
+            int fromX = greenhouse.tileX.Value, fromY = greenhouse.tileY.Value;
+            greenhouse.tileX.Value = spot.X;
+            greenhouse.tileY.Value = spot.Y;
+            greenhouse.performActionOnBuildingPlacement();
+            farm.OnBuildingMoved(greenhouse);
+            _monitor.Log($"Keep Greenhouse: moved from ({fromX},{fromY}) to the player's spot ({spot.X},{spot.Y}).", LogLevel.Info);
         }
 
         /// <summary>Locations whose vanilla progression code edits the loaded map in place instead
@@ -991,6 +1034,10 @@ namespace TheLongestYear.Loop
             foreach (Building b in Game1.getFarm().buildings)
             {
                 string family = ChainInfo(b.buildingType.Value).Family;
+                // The greenhouse is not a kept-building chain (vanilla spawns it), but Keep
+                // Greenhouse (Gifts of the Junimos) puts it back where the player moved it.
+                if (family.Length == 0 && b.buildingType.Value == GreenhouseType)
+                    family = GreenhouseType;
                 if (family.Length == 0)
                     continue;
                 _meta.KeptBuildingSpots[family] = new BuildingSpot(b.tileX.Value, b.tileY.Value);
