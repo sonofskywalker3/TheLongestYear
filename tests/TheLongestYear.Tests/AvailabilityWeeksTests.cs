@@ -90,6 +90,29 @@ public class AvailabilityWeeksTests
     public void Cactus_fruit_is_desert_forage_not_an_oasis_crop()
         => Assert.False(AvailabilityWeeks.LateFloors.ContainsKey("(O)90"));
 
+    /// <summary>Mystic Syrup's tapper rule cannot see that its tree has to be planted first, and
+    /// the seed is the Foraging Mastery reward, so it is pinned to the last week of the loop.
+    /// Reported by Nijah 2026-08-30 (Mystic Syrup asked on an early board).</summary>
+    [Fact]
+    public void Mystic_syrup_is_pinned_to_the_last_week()
+        => Assert.Equal(Calendar.WeeksPerYear, AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week);
+
+    /// <summary>The regression that matters: the tapper rule on its own answers early (Foraging 4
+    /// plus the tap wait), so the pin only helps if the composer's late floor actually beats it.</summary>
+    [Fact]
+    public void Mystic_syrup_late_floor_beats_the_tapper_rule()
+    {
+        var data = new EffortData
+        {
+            TapItems = new List<RawTapItem> { new("13", "(O)MysticSyrup", 7) },
+        };
+
+        int rawTapperWeek = TapperAvailability.Derive("(O)MysticSyrup", data)!.EarliestWeek!.Value;
+        Assert.True(rawTapperWeek < Calendar.WeeksPerYear,
+            "the tapper rule is expected to answer early on its own; that is why the pin exists");
+        Assert.True(AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week > rawTapperWeek);
+    }
+
     [Fact]
     public void Secret_woods_is_week_4() => Assert.Equal(4, LocationGating.WeekFor("Woods"));
 
