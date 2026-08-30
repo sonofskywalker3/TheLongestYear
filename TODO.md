@@ -6,6 +6,75 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — simulate real spawn-day counts, clamp requirement rolls to 20-80% of the realistic max
+
+**Trigger:** Nijah (Nexus post, 30 Aug 2026, unanswered) reported requirement quantities that are not
+realistically obtainable within a bundle's due date: Summer Foraging Bundle asked for **95 Rainbow
+Shells** (plus 1 Mussel, 1 Red Mushroom) with no realistic way to gather that many in Summer's 28
+days; a second save needed **58 Morels by Spring 28**; a Night Fishing Bundle asked for a **Gold Star
+Octopus**, which is a morning-only catch. (She also mentioned Mystic Syrup appearing in the Tapper
+Bundle in passing while making her general "categories should stay consistent" point — that one is NOT
+a mismatch, Mystic Syrup is tapper produce same as Maple/Oak/Pine Syrup; no bug there, don't fix it.)
+
+**Gap in existing tooling:** `tly_gatecheck` (`ModEntry.cs` `CmdGateCheck` / `LogGateAudit`, ~line 2655)
+already audits whether an ITEM is available in time — IMPOSSIBLE / tight / FREE per bundle per season —
+but it has no notion of realistic QUANTITY. It only checks that an ingredient id is unlocked by a given
+season, not whether the ROLLED COUNT of that ingredient (95 Rainbow Shells, 58 Morels) is something a
+player could plausibly collect by the due date even though the item itself is in-season. That's the gap
+Nijah hit: the item passes the gate, the count doesn't.
+
+**Jeff's ruling (2026-08-30):** build a day-by-day spawn simulator, run by an agent (not a closed-form
+estimate) — for every item that can appear as a rolled-quantity bundle ingredient, and for every day of
+the calendar, check whether a spawn/harvest opportunity for that item actually happens that day (forage
+spawn tables, fish availability windows/time-of-day gates, tapper yield cadence, mineral node respawns,
+etc.), and accumulate a running total assuming the player checks every eligible spot every day. That
+per-item, per-day-cutoff total is the **realistic max obtainable by that date**. Set the ceiling on any
+rolled requirement quantity to **~80% of that realistic max**, and keep every roll somewhere in the
+**20-80%** band of it — never at or near 100% (impossible in practice once you account for bad RNG days),
+never near-zero (trivial). The realistic-max-by-date figure is the basis; 80% of it is the highest a
+requirement should ever be allowed to roll.
+
+**Scope:** needs its own spec before code (which items need this treatment — anything with a per-unit
+quantity > 1 is a candidate, but forage/fish/minerals/tapper goods are what the wide-pool bundle re-roll
+actually exposed) and a plan after that, per the usual workflow. Diagnostic-first: find where rolled
+bundle quantities are actually generated (grep hit so far: `SlotPoolBuilder.cs` copies `ing.Stack` from
+an authored template rather than rolling it, so the real generator is probably upstream — read before
+assuming which file owns the roll) before writing the clamp. The per-item availability data this needs
+(spawn tables, time-of-day windows) likely already exists in `src/TheLongestYear.Core/Availability/`
+(`CropForageAvailability.cs`, `ShopAvailability.cs`, `ItemAvailabilityBuilder.cs`) — check whether it's
+granular enough (per-day, not just per-season) before building a parallel table.
+
+**Reply owed:** Nijah gets a bug-reply-style response (thanks/apology/empathy first, per house style) —
+draft in chat, not posted without Jeff's yes. She did NOT flag Mystic Syrup as a problem (see below) —
+don't apologize for or reference it in the reply, she only mentioned it in passing.
+
+### NEW (found 2026-08-30 while checking Nijah's report, not something she reported): Mystic Tree tap timing likely wrong — no Ginger Island gate at all
+
+While checking Nijah's mention of Mystic Syrup (she stated it as a fact, not a complaint — no bug
+alleged there), found a real gap one level down. `TapperAvailability.cs`
+(`src/TheLongestYear.Core/Availability/TapperAvailability.cs`) derives every tapped item's earliest
+week purely from `AvailabilityWeeks.MachineLevelWeek(Foraging 4) + tap.Days / 7`, reading every row of
+`Data/WildTrees` `TapItems` uniformly — Oak, Maple, Pine, **and the Mystic Tree** (`Tree.mysticTree`,
+id `"13"`) all get the same treatment. That's correct for Oak/Maple/Pine, which stand on the map from
+day 1. It is very likely wrong for the Mystic Tree, which (unlike the others) needs a **Mystic Tree
+Seed** — a late-game item — planted and grown before there's anything to tap.
+
+Confirmed nothing corrects for this:
+- `LocationGating.cs`'s `GatedMarkers` table (Desert, SkullCave, Sewer, WitchSwamp/WitchHut, Secret
+  Woods) has no Ginger Island / Volcano Dungeon entry, and `TapperAvailability.Derive` never consults
+  `LocationGating` regardless.
+- `AvailabilityWeeks.LateFloors` — the existing manual-override table for exactly this situation
+  (generic derivation is wrong, pin it by hand; used today for Winter Root and Snow Yam,
+  `AvailabilityWeeks.cs` ~line 64) — has no entry for Mystic Syrup or the Mystic Tree Seed.
+
+So today Mystic Syrup's earliest week is whatever the generic Foraging-4-plus-wait-days formula
+produces (early-to-mid run), with nothing standing in for Ginger Island access or seed-to-tree growth
+time. Needs: confirm how a Mystic Tree Seed is actually obtained and how late that realistically is
+in a one-year loop (may not be reachable at all in some loops — same class of problem as the Desert/
+Vault gate), then either add a `LateFloors` pin or extend `TapperAvailability`/`LocationGating` to
+special-case it. Diagnostic-first per usual — confirm the seed source and Ginger Island's reachability
+window before picking a week.
+
 ### BUILT 2026-08-29 (0.16.164, local): "Gifts of the Junimos", keep the CC room rewards. Five rows in their own category (greenhouse put back where the player moved it, quarry bridge, boulder, minecarts, bus), reach = that room completed this loop, ladder 1,000 to 5,000 (`GiftLadder`), completion mail restored at reset only. Correction to the original note: the Crafts Room reward is the QUARRY bridge (Mountain), not the beach bridge. Original brief below.
 
 #### Original brief
