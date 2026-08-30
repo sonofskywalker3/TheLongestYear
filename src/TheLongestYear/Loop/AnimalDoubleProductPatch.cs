@@ -23,6 +23,14 @@ namespace TheLongestYear.Loop
     {
         public const string BonusId = "animal_double_product";
         private const double Chance = 0.20;
+
+        /// <summary>One independent roll per stack (Kitchen theme + Double Yolk boost).</summary>
+        private static bool Hit(int stacks)
+        {
+            for (int s = 0; s < stacks; s++)
+                if (Game1.random.NextDouble() < Chance) return true;
+            return false;
+        }
         private static Func<RunState> _run;
 
         public static void Connect(Func<RunState> run) => _run = run;
@@ -49,7 +57,8 @@ namespace TheLongestYear.Loop
 
         private static void Postfix(FarmAnimal __instance, State __state)
         {
-            if (!ActiveEffectsProvider.ActiveBonus(BonusId) || __instance == null || __state == null) return;
+            int stacks = ActiveEffectsProvider.BonusStacks(BonusId);
+            if (stacks == 0 || __instance == null || __state == null) return;
             RunState run = _run?.Invoke();
             if (run == null) return;
             try
@@ -57,7 +66,7 @@ namespace TheLongestYear.Loop
                 string produce = __instance.currentProduce?.Value;
                 if (produce != null && produce != __state.ProduceBefore)
                 {
-                    if (Game1.random.NextDouble() >= Chance) return;
+                    if (!Hit(stacks)) return;
                     run.RecordDoubleProduce(__instance.myID.Value, produce);
                     PatchLog.Info($"{BonusId}: {__instance.displayName} will give a second {produce} today.");
                     return;
@@ -68,7 +77,7 @@ namespace TheLongestYear.Loop
                     if (__state.Tiles.Contains(tile)) continue;
                     StardewValley.Object dropped = __state.Indoors.objects[tile];
                     if (dropped == null) continue;
-                    if (Game1.random.NextDouble() >= Chance) return;
+                    if (!Hit(stacks)) return;
                     var copy = (StardewValley.Object)dropped.getOne();
                     Utility.spawnObjectAround(__instance.Tile, copy, __state.Indoors);
                     PatchLog.Info($"{BonusId}: {__instance.displayName} left a second {dropped.Name}.");

@@ -336,8 +336,15 @@ namespace TheLongestYear.UI
                 {
                     _rows.Add(new Row { Kind = RowKind.Boost, Boost = boost, Tooltip = Strings.Get(boost.DescKey) });
                     if (boost.Id == BoostId.CrashCourse)
+                    {
+                        // A skill at 9 is never offered (10 must be earned): no row rather than "Not now".
+                        IReadOnlyList<int> levels = BoostContextBuilder.Build(_run).SkillLevels;
                         for (int skill = 0; skill < SkillCount; skill++)
+                        {
+                            if (levels[skill] + 1 >= BoostPricing.MaxSkillLevel) continue;
                             _rows.Add(new Row { Kind = RowKind.Boost, Boost = boost, Skill = skill, Tooltip = Strings.Get(boost.DescKey) });
+                        }
+                    }
                 }
             }
         }
@@ -699,8 +706,12 @@ namespace TheLongestYear.UI
             // JP line so nobody tries to buy a keep from the Plan tab (several testers did).
             string planningNote = Strings.Get("menu.shrine-preview.planning-note");
             Vector2 noteSize = Game1.smallFont.MeasureString(planningNote);
-            Utility.drawTextWithShadow(b, planningNote, Game1.smallFont,
-                new Vector2(xPositionOnScreen + width - 40 - noteSize.X, yPositionOnScreen + 80), NoteBrown);
+            string bankedLine = Strings.Get("menu.shrine-preview.banked", new Dictionary<string, string> { ["jp"] = _state.JunimoPoints.ToString() });
+            float bankedRight = xPositionOnScreen + 40 + Game1.smallFont.MeasureString(bankedLine).X + 32;
+            float noteX = xPositionOnScreen + width - 40 - noteSize.X;
+            if (noteX > bankedRight)   // only when it fits beside the JP line; never overlap it
+                Utility.drawTextWithShadow(b, planningNote, Game1.smallFont,
+                    new Vector2(noteX, yPositionOnScreen + 80), NoteBrown);
 
             for (int i = 0; i < _tabs.Count; i++)
             {
@@ -795,11 +806,17 @@ namespace TheLongestYear.UI
                 }
                 case RowKind.Locked:
                 {
-                    Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
+                    // "Keep Big Coop - unlocked once it's built", cost right-aligned like a buyable row.
+                    string title = row.Def.DisplayName
+                        + (string.IsNullOrEmpty(row.Requirement) ? "" : " - " + row.Requirement);
+                    Utility.drawTextWithShadow(b, title, Game1.smallFont,
                         new Vector2(_listX + SubRowIndent, rowY + 6), LockedGray);
-                    Vector2 reqSize = Game1.smallFont.MeasureString(row.Requirement);
-                    Utility.drawTextWithShadow(b, row.Requirement, Game1.smallFont,
-                        new Vector2(_listX + _listWidth - 64 - reqSize.X, rowY + 6), Color.Brown);
+                    long lockedCost = UpgradePricing.EffectiveCost(row.Def, _priceFactor);
+                    string lockedCostText = Strings.Get("menu.shrine-preview.cost",
+                        new Dictionary<string, string> { ["cost"] = lockedCost.ToString() });
+                    Vector2 lockedCostSize = Game1.smallFont.MeasureString(lockedCostText);
+                    Utility.drawTextWithShadow(b, lockedCostText, Game1.smallFont,
+                        new Vector2(_listX + _listWidth - 64 - lockedCostSize.X, rowY + 6), LockedGray);
                     break;
                 }
             }
@@ -816,6 +833,14 @@ namespace TheLongestYear.UI
             {
                 Utility.drawTextWithShadow(b, Strings.Get(boost.NameKey), Game1.smallFont,
                     new Vector2(_listX + 24, rowY + 6), Game1.textColor);
+                // The price multiplier so far this loop (3^n), right-aligned above the Buy buttons.
+                string multiplier = Strings.Get("shrine.boosts.multiplier", new Dictionary<string, string>
+                {
+                    ["factor"] = ((long)Math.Pow(3, _run.SkillLevelsBoughtTotal)).ToString(),
+                });
+                Vector2 multSize = Game1.smallFont.MeasureString(multiplier);
+                Utility.drawTextWithShadow(b, multiplier, Game1.smallFont,
+                    new Vector2(_listX + _listWidth - 64 - multSize.X, rowY + 6), NoteBrown);
                 return;
             }
 
@@ -877,7 +902,11 @@ namespace TheLongestYear.UI
 
             string label = rowState == BoostRowState.Active
                 ? Strings.Get("shrine.boosts.active")
-                : Strings.Get("shrine.boosts.not-available");
+                : boost.Id == BoostId.ElevatorPass && ctx.MineFloor <= 0
+                    ? Strings.Get("shrine.boosts.enter-mine")
+                    : boost.Id == BoostId.ElevatorPass
+                        ? Strings.Get("shrine.boosts.bottom-reached")
+                        : Strings.Get("shrine.boosts.not-available");
             Color labelColor = rowState == BoostRowState.Active ? OwnedGreen : Color.Brown;
             Vector2 labelSize = Game1.smallFont.MeasureString(label);
             Utility.drawTextWithShadow(b, label, Game1.smallFont,

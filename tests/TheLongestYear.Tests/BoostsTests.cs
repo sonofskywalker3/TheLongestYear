@@ -16,7 +16,7 @@ public class BoostsTests
         Assert.Equal(new[]
         {
             "RainDance", "StormCall", "FortunesFavor", "SecondWind",
-            "Overgrowth", "FeedingFrenzy", "GrowthSpurt", "RichVeins", "Windfall", "QuickFeet", "YearTwoSeeds",
+            "Overgrowth", "FeedingFrenzy", "GrowthSpurt", "RichVeins", "Windfall", "DoubleTrouble", "FullSteam", "DoubleYolk", "QuickFeet", "YearTwoSeeds",
             "Haggler", "FastFriends", "IronLungs", "SneakPeek",
             "CrashCourse", "ElevatorPass",
         }, ids);
