@@ -1,0 +1,39 @@
+0.16.167 - JP Boosts, Gifts of the Junimos, three new themes, a board that counts every slot
+
+First release since 0.16.17 (0.16.18 to 0.16.166 were internal builds).
+
+Added
+- JP Boosts. The Junimo statue on your farm now has Active / Boosts / Plan tabs. Boosts sells
+  eighteen this-loop buys for JP: Rain Dance, Storm Call, Fortune's Favor, Second Wind (instant);
+  Overgrowth, Feeding Frenzy, Growth Spurt, Rich Veins, Windfall, Double Trouble, Full Steam,
+  Double Yolk, Quick Feet, Year-Two Seeds (a week); Haggler, Fast Friends, Iron Lungs, Sneak Peek
+  (a season); Crash Course (a temporary skill level, price climbs with each one, never to 10,
+  never keepable) and Elevator Pass (the next floor ending in 0). Week rows stack with the weekly
+  theme. Active shows what is running and when it ends; Plan shows every keep's price and what
+  the locked ones still need.
+- Gifts of the Junimos. A new shrine category: Keep Greenhouse (put back where you left it),
+  Keep Quarry Bridge, Keep Boulder Cleared, Keep Minecarts, Keep Bus Unlocked. Offered once you
+  have earned that room's reward this loop; 1,000 JP for the first, +1,000 per Gift owned, up
+  to 5,000. The room's bundles stay on the board and still pay.
+- Three new weekly themes: Spelunking, Artisan and Kitchen (goals by item kind anywhere on the
+  board). The weekly JP bonus is paid goal by goal.
+- Keep your wallet items and Stardrops (eighteen keeps), and the Garden Pot recipe.
+- A toggle to re-send the Better Start gift each loop (on by default).
+
+Changed
+- Donations are tracked per Community Center slot: one deposit credits one bundle, repeated
+  items need every slot, and a Winter win needs a truly finished Center.
+- Bundles roll from the full pool of their kind, no item asked twice, seasonal forage only in
+  its season, Night Fishing only night fish, legendary fish and year-two crops at low odds, and
+  every item has a first week it can exist so no gate asks for the unreachable.
+
+Fixed
+- Keep Bus Unlocked now runs the bus and opens the desert from day 1 (the Vault bundles stay on
+  the board and still pay).
+- Heart-event invitations send again every loop, so 8 and 10 heart events are reachable after a
+  rewind.
+- Keep Horse waits until a stable exists this loop.
+- Stardew Valley Expanded saves keep season pity.
+- A pending level-up menu no longer survives the rewind.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

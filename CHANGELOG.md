@@ -3,7 +3,9 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.16.167 - 2026-08-29
+
+1822 tests. Two full simulated years on this build (STATUS.md), the boosts, gifts and every fix live-checked over the bridge. 0.16.18 to 0.16.166 were internal builds; this is the first release since 0.16.17.
 
 ### Added
 

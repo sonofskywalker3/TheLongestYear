@@ -1,23 +1,26 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.16.17).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.16.167).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [color=yellow][b]This is the last big engine update.[/b] From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.[/color]
 
 [line]
 
-[size=5][b]What's New in 0.16.17[/b][/size]
+[size=5][b]What's New in 0.16.167[/b][/size]
 
-[b]The town half-remembers you, and the books you read can stay read.[/b]
+[b]Spend JP mid-loop, keep the Junimos' own gifts, and a board that counts every slot.[/b]
 [list]
-[*][b]Keep your power books.[/b] Nineteen new keeps at the Junimo Shrine, one per power book (Way of the Wind, Friendship 101, The Diamond Hunter and the rest). A row appears on a Fail night once you have read that book this loop; buy it and the book's power survives every rewind. 150 to 750 JP depending on how much the power is worth over a year. Nothing stacks and nothing is free: books you did not buy are still wiped.
-[*][b]Deja-vu dialogue.[/b] Villagers you have spent a lot of time with across loops (talks, gifts and heart events add up quietly; hearts themselves still reset) occasionally open with an uncanny line in their own voice. About one a week at most, never in your first loop, never on a villager's first-meeting day, and it never explains itself. Toggle "Deja-vu dialogue" in Features. Idea by u/Gribbleby.
-[*][b]Villagers introduce themselves again after a rewind.[/b] From loop 2 on, every villager greeted you with an ordinary line instead of their first-meeting one; the rewind now restores the game's six-day introduction window.
-[*]0.16.8 to 0.16.16 were internal builds; this is the first release since 0.16.7.
+[*][b]JP Boosts.[/b] The Junimo statue on your farm now has three tabs. Boosts sells eighteen this-loop buys for JP: tomorrow's rain or storm, a guaranteed lucky day, a free late night, a week of extra forage, fish, crop, mine, monster, machine, animal or all-round rolls that stack with the weekly theme, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot (temporary, price climbs with each one), or an elevator stop you have not earned yet. Active shows what is running and when it ends; Plan shows every keep's price and what the locked ones still need.
+[*][b]Gifts of the Junimos.[/b] A new shrine category: Keep Greenhouse (put back where you left it), Keep Quarry Bridge, Keep Boulder Cleared, Keep Minecarts and Keep Bus Unlocked. Each is offered once you have earned that room's reward this loop; the first costs 1,000 JP and every Gift you own raises the price of the rest by 1,000, up to 5,000. The room's bundles stay on the board and still pay.
+[*][b]Three new weekly themes: Spelunking, Artisan and Kitchen.[/b] Their goals match by item kind anywhere on the board. Spelunking doubles monster drops one time in ten but slows machines; Artisan speeds machines but weakens cooked food; Kitchen gives animals a chance at a second product but monsters hit harder. Eight themes, still two cards a week, and the weekly JP bonus is now paid goal by goal.
+[*][b]Keep your wallet items and Stardrops.[/b] Eighteen new keeps, one per wallet item, one each for Bear's Knowledge and Spring Onion Mastery, and one per Stardrop source. Plus a Garden Pot recipe keep.
+[*][b]The board counts every slot.[/b] A donation credits one bundle, a bundle with a repeated item needs every slot, and a Winter win needs a truly finished Center. Bundles roll from the full pool of their kind with no item asked twice, seasonal forage bundles ask only for their season, Night Fishing asks only for night fish, and legendary fish and year-two crops can appear at low odds. Every item has a first week it can exist, so no gate asks for what you cannot reach.
+[*][b]Fixes.[/b] Keep Bus Unlocked now actually runs the bus from day 1 (the Vault bundles stay on the board and still pay). Heart-event invitations send again every loop, so 8 and 10 heart events are reachable after a rewind. Keep Horse waits for a stable. Stardew Valley Expanded saves keep season pity. A toggle to re-send the Better Start gift each loop (on by default).
+[*]0.16.18 to 0.16.166 were internal builds; this is the first release since 0.16.17.
 [/list]
 
-Coming from 0.15.0 or earlier? 0.16.0 added ten independent [b]Difficulty[/b] dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
+Coming from 0.15.0 or earlier? 0.16.0 added ten independent [b]Difficulty[/b] dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in the changelog on GitHub.
 
 [line]
 
@@ -81,6 +84,18 @@ That was a bug and it is fixed. Quality is only ever asked for on things the gam
 
 [b]A weekly goal ticked off without me donating anything.[/b]
 Fixed in 0.14.0. Finishing a bundle that only needs some of its listed items used to mark the rest as filled, which credited goals you never handed in. A goal now waits for the real donation.
+
+[b]I bought Keep Bus Unlocked and the Vault bundles are still on the board.[/b]
+Intended. The gift keeps the bus and the desert open from day 1; the Vault bundles are still part of restoring the Center, still have to be paid, and still earn JP. Completing them again does not replay the repair scene. Every Gift of the Junimos works this way.
+
+[b]The skill level I bought at the statue was gone after the rewind.[/b]
+Intended. Crash Course levels are temporary: they last the loop, never reach level 10, and cannot be kept. Only levels you earn open the Keep Level rows on a Fail night.
+
+[b]Elevator Pass says "Enter the mine first", or a weather boost says "Not now".[/b]
+Both intended. The pass extends the elevator from wherever it already reaches, so it needs one trip into the mine first. Rain Dance and Storm Call are refused on day 28 and the day before a festival, because the game forces sunshine on those mornings and the JP would be wasted.
+
+[b]My enchanted sword lost its enchantments in the Junimo Stash.[/b]
+Fixed since 0.16.7. Tools and weapons in the stash keep their enchantments, forged gems, bait and tackle across the rewind.
 
 Anything not on this list, please do report - the bugs tab is read.
 
