@@ -26,12 +26,17 @@ namespace TheLongestYear.Loop
 
         private static void Postfix(GameLocation __instance, Monster monster, int x, int y, Farmer who, int __state)
         {
-            if (!ActiveEffectsProvider.ActiveBonus(BonusId)) return;
+            int stacks = ActiveEffectsProvider.BonusStacks(BonusId);
+            if (stacks == 0) return;
             if (__state < 0 || __instance?.debris == null || monster == null || who == null) return;
             int total = __instance.debris.Count;
             if (total <= __state) return;
 
-            double roll = Game1.random.NextDouble();
+            // One independent roll per stack (Spelunking theme + Double Trouble boost); the best
+            // roll is kept against the single threshold.
+            double roll = 1.0;
+            for (int s = 0; s < stacks; s++)
+                roll = Math.Min(roll, Game1.random.NextDouble());
             if (roll >= Chance)
             {
                 PatchLog.Trace($"{BonusId}: roll={roll:F3} >= {Chance:F2}, no double.");

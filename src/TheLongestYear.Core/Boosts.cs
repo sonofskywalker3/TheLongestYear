@@ -11,7 +11,7 @@ public enum BoostDuration { Instant, Week, Season, Loop }
 public enum BoostId
 {
     RainDance, StormCall, FortunesFavor, SecondWind,
-    Overgrowth, FeedingFrenzy, GrowthSpurt, RichVeins, Windfall, QuickFeet, YearTwoSeeds,
+    Overgrowth, FeedingFrenzy, GrowthSpurt, RichVeins, Windfall, DoubleTrouble, FullSteam, DoubleYolk, QuickFeet, YearTwoSeeds,
     Haggler, FastFriends, IronLungs, SneakPeek,
     CrashCourse, ElevatorPass,
 }
@@ -39,6 +39,9 @@ public static class BoostCatalog
         Row(BoostId.GrowthSpurt,   60,  BoostDuration.Week,    "growth_spurt",   "crop_growth_up"),
         Row(BoostId.RichVeins,     55,  BoostDuration.Week,    "rich_veins",     "mine_drops_up"),
         Row(BoostId.Windfall,      90,  BoostDuration.Week,    "windfall",       "all_drops_up"),
+        Row(BoostId.DoubleTrouble, 55,  BoostDuration.Week,    "double_trouble", "monster_drops_double"),
+        Row(BoostId.FullSteam,     60,  BoostDuration.Week,    "full_steam",     "machines_fast"),
+        Row(BoostId.DoubleYolk,    50,  BoostDuration.Week,    "double_yolk",    "animal_double_product"),
         Row(BoostId.QuickFeet,     40,  BoostDuration.Week,    "quick_feet"),
         Row(BoostId.YearTwoSeeds,  75,  BoostDuration.Week,    "year_two_seeds"),
         Row(BoostId.Haggler,       120, BoostDuration.Season,  "haggler"),

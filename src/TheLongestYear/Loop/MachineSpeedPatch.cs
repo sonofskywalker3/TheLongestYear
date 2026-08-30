@@ -21,7 +21,13 @@ namespace TheLongestYear.Loop
 
             double factor;
             string effect;
-            if (ActiveEffectsProvider.ActiveBonus(BonusId)) { factor = MachineReadyTime.FastFactor; effect = BonusId; }
+            int fastStacks = ActiveEffectsProvider.BonusStacks(BonusId);
+            if (fastStacks > 0)
+            {
+                // 25% sooner per stack (Artisan theme + Full Steam boost), compounding.
+                factor = System.Math.Pow(MachineReadyTime.FastFactor, fastStacks);
+                effect = BonusId;
+            }
             else if (ActiveEffectsProvider.ActiveLiability(LiabilityId)) { factor = MachineReadyTime.SlowFactor; effect = LiabilityId; }
             else return;
 
