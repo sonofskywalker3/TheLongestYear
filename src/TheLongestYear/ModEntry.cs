@@ -2017,7 +2017,10 @@ namespace TheLongestYear
                 this.Monitor.Log("tly_skipscene: finished the day-28 scene.", LogLevel.Info);
                 return;
             }
-            this.Monitor.Log($"tly_skipscene: no day-28 scene is open (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}).", LogLevel.Info);
+            string blocking = Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box
+                ? $" text=\"{box.getCurrentString()}\""
+                : "";
+            this.Monitor.Log($"tly_skipscene: no day-28 scene is open (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}{blocking}).", LogLevel.Info);
         }
 
         private void CmdOffer(string command, string[] args)
