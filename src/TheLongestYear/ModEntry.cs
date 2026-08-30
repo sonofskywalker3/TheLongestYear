@@ -266,6 +266,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_gateneeds", "Print, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) plus the vault. Read-only.", this.CmdGateNeeds);
+            helper.ConsoleCommands.Add("tly_sweepforage", "Take every spawned forage item on every map and put it in the sweep chest on the Farm (a real harvest, for measuring what a season actually yields). Run once a day, then 'tly_sweepforage report'. Usage: tly_sweepforage [report]", this.CmdSweepForage);
             helper.ConsoleCommands.Add("tly_forageyield", "Simulate how much of each forage item a player could gather by a cutoff day if every reachable map were cleared every day, and print the 20-80% band a requirement should sit in. Forage only. Read-only. Usage: tly_forageyield [spring|summer|fall|winter|<day>] [itemId]", this.CmdForageYield);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
@@ -1966,6 +1967,7 @@ namespace TheLongestYear
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_gateneeds": this.CmdGateNeeds(command, args); break;
                 case "tly_forageyield": this.CmdForageYield(command, args); break;
+                case "tly_sweepforage": this.CmdSweepForage(command, args); break;
                 case "tly_goals": this.CmdGoals(command, args); break;
                 case "tly_themepool": this.CmdThemePool(command, args); break;
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
@@ -2288,6 +2290,125 @@ namespace TheLongestYear
             bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
             this.Monitor.Log($"  vault: paid {VaultRules.PaidCount(run)} of {VaultRules.SeasonOrdinal(season)} needed{(vaultOk ? " (satisfied)" : "")}", vaultOk ? LogLevel.Info : LogLevel.Warn);
             this.Monitor.Log($"tly_gateneeds: {season} day {run.DayOfMonth}: {open} bundle(s) still owed before {nextSeason}, {ledger.Count} slot(s) filled on the board.", LogLevel.Info);
+        }
+
+        /// <summary>Where <c>tly_sweepforage</c> keeps its haul. A fixed Farm tile so the chest is
+        /// the same one every day of a run and can just be opened and read at the end.</summary>
+        private static readonly Microsoft.Xna.Framework.Vector2 SweepChestTile = new(64f, 16f);
+
+        /// <summary><c>tly_sweepforage [report]</c>: take every piece of spawned forage on every
+        /// map and put it in the sweep chest on the Farm.
+        ///
+        /// A real harvest, not an estimate. It takes the objects the game's own
+        /// <c>spawnObjects</c> laid down this morning (<c>Object.IsSpawnedObject</c>), which is
+        /// exactly what a player who walked every map and picked up everything would end the day
+        /// with. Clearing the maps also drops <c>numberOfSpawnedObjectsOnMap</c> back to 0, so
+        /// tomorrow's spawn is not throttled by yesterday's leftovers - the same reason the
+        /// "checked everywhere every day" assumption is the ceiling.
+        ///
+        /// The chest IS the tally: run it once a day across a season, then open the chest (or
+        /// <c>tly_sweepforage report</c>) and read the stacks. Nothing is kept in memory, so a
+        /// reload mid-run loses nothing.</summary>
+        private void CmdSweepForage(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+
+            StardewValley.Objects.Chest chest = GetOrCreateSweepChest();
+            if (chest == null)
+            {
+                this.Monitor.Log("tly_sweepforage: could not place the sweep chest on the Farm.", LogLevel.Error);
+                return;
+            }
+
+            if (args.Length > 0 && args[0].Equals("report", StringComparison.OrdinalIgnoreCase))
+            {
+                ReportSweepChest(chest);
+                return;
+            }
+
+            var today = new Dictionary<string, int>(StringComparer.Ordinal);
+            int maps = 0, overflow = 0;
+
+            foreach (GameLocation location in Game1.locations.ToList())
+            {
+                if (location == null) continue;
+
+                // Only spawned forage: crops, machines, placed items and litter stay put.
+                var forage = location.objects.Pairs
+                    .Where(p => p.Value != null && p.Value.IsSpawnedObject)
+                    .ToList();
+                if (forage.Count == 0) continue;
+
+                maps++;
+                foreach (var pair in forage)
+                {
+                    StardewValley.Object obj = pair.Value;
+                    string id = obj.QualifiedItemId ?? obj.ItemId ?? "(unknown)";
+                    int stack = Math.Max(1, obj.Stack);
+
+                    location.objects.Remove(pair.Key);
+                    location.numberOfSpawnedObjectsOnMap = Math.Max(0, location.numberOfSpawnedObjectsOnMap - 1);
+
+                    // A spawned forage object carries flags that stop it stacking in a chest.
+                    obj.IsSpawnedObject = false;
+                    obj.CanBeSetDown = true;
+
+                    if (chest.addItem(obj) != null)
+                        overflow += stack;   // chest full: 36 stacks
+                    else
+                        today[id] = today.GetValueOrDefault(id) + stack;
+                }
+            }
+
+            int picked = today.Values.Sum();
+            string breakdown = today.Count == 0
+                ? "nothing"
+                : string.Join(", ", today.OrderByDescending(kv => kv.Value)
+                    .Select(kv => $"{DisplayName(kv.Key)} x{kv.Value}"));
+
+            this.Monitor.Log(
+                $"[Sweep] {Game1.currentSeason} {Game1.dayOfMonth}: picked {picked} from {maps} map(s): {breakdown}"
+                + (overflow > 0 ? $"  WARNING: chest full, {overflow} item(s) lost" : ""),
+                LogLevel.Info);
+        }
+
+        /// <summary>The sweep chest at <see cref="SweepChestTile"/>, placed if it is not there yet.
+        /// Anything else occupying the tile is moved aside rather than destroyed.</summary>
+        private StardewValley.Objects.Chest GetOrCreateSweepChest()
+        {
+            GameLocation farm = Game1.getLocationFromName("Farm");
+            if (farm == null) return null;
+
+            if (farm.objects.TryGetValue(SweepChestTile, out StardewValley.Object existing))
+            {
+                if (existing is StardewValley.Objects.Chest found) return found;
+                farm.objects.Remove(SweepChestTile);
+            }
+
+            var chest = new StardewValley.Objects.Chest(playerChest: true, SweepChestTile);
+            farm.objects[SweepChestTile] = chest;
+            this.Monitor.Log(
+                $"tly_sweepforage: placed the sweep chest on the Farm at {SweepChestTile.X},{SweepChestTile.Y}.",
+                LogLevel.Info);
+            return chest;
+        }
+
+        private void ReportSweepChest(StardewValley.Objects.Chest chest)
+        {
+            var totals = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (Item item in chest.Items.Where(i => i != null))
+                totals[item.QualifiedItemId] = totals.GetValueOrDefault(item.QualifiedItemId) + item.Stack;
+
+            this.Monitor.Log("=== tly_sweepforage: what is in the sweep chest ===", LogLevel.Info);
+            foreach (var kv in totals.OrderByDescending(k => k.Value))
+                this.Monitor.Log($"  {DisplayName(kv.Key),-28} {kv.Key,-18} {kv.Value,5}", LogLevel.Info);
+            this.Monitor.Log(
+                $"[SweepTotal] {totals.Values.Sum()} items, {totals.Count} distinct, {chest.Items.Count(i => i != null)}/36 slots used.",
+                LogLevel.Info);
         }
 
         /// <summary><c>tly_forageyield [season|day] [item]</c>: what "checked everywhere every day"
