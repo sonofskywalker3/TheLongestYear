@@ -259,14 +259,17 @@ public static class UpgradeCatalog
         // reset restores only the room's completion mail (WorldResetService.RestoreKeptGifts), so
         // the bundles stay on the board, still pay, and vanilla never re-sends the letter that
         // plays the repair scene. The bus row keeps its id and its vault gate short-circuit.
+        // Reach is the ROOM's bundles all complete on the live board (room:), not the completion
+        // mail: a room finished on the Fail day has its letter still in mailForTomorrow, which the
+        // fail-night purge strips before the perk screen opens (review 2026-08-29).
         new UpgradeDefinition(GiftLadder.KeepGreenhouseId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
-            metaRequirement: null, runReachRequirement: "mail:ccPantry"),
+            metaRequirement: null, runReachRequirement: "room:Pantry"),
         new UpgradeDefinition(GiftLadder.KeepQuarryBridgeId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
-            metaRequirement: null, runReachRequirement: "mail:ccCraftsRoom"),
+            metaRequirement: null, runReachRequirement: "room:CraftsRoom"),
         new UpgradeDefinition(GiftLadder.KeepBoulderClearedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
-            metaRequirement: null, runReachRequirement: "mail:ccFishTank"),
+            metaRequirement: null, runReachRequirement: "room:FishTank"),
         new UpgradeDefinition(GiftLadder.KeepMinecartsId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
-            metaRequirement: null, runReachRequirement: "mail:ccBoilerRoom"),
+            metaRequirement: null, runReachRequirement: "room:BoilerRoom"),
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
             metaRequirement: null, runReachRequirement: "bus:4"),
 

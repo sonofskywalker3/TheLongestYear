@@ -470,7 +470,11 @@ namespace TheLongestYear.Loop
             }
             catch (System.Exception ex)
             {
-                _monitor.Log($"FarmerReset: could not read Data/TriggerActions ({ex.Message}); clearing by id prefix only.", LogLevel.Warn);
+                // Without the rows we cannot tell a lifetime-money mail from a heart invite, and
+                // clearing blind would re-send every Mom/Dad/Tribune letter on day 1. Keep the
+                // record as it is this loop rather than guess.
+                _monitor.Log($"FarmerReset: could not read Data/TriggerActions ({ex.Message}); leaving the trigger-action record untouched this loop.", LogLevel.Warn);
+                return;
             }
 
             List<string> clear = TriggerActionResetRules.IdsToClear(

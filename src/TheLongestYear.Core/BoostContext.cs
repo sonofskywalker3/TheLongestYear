@@ -17,6 +17,7 @@ public sealed record BoostContext(
     int Skill = -1)
 {
     public Season Season => Calendar.SeasonOfDay(DayOfYear);
+    public int DayOfMonth => (DayOfYear - 1) % Calendar.DaysPerMonth + 1;
 
     public static BoostContext Simple(int dayOfYear) =>
         new(dayOfYear, false, new[] { 0, 0, 0, 0, 0 }, 0);

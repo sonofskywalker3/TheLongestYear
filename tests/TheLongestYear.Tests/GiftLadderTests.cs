@@ -11,7 +11,8 @@ public class GiftLadderTests
     {
         var gifts = UpgradeCatalog.ByCategory(UpgradeCategory.Gifts).Select(d => d.Id).ToList();
         Assert.Equal(new[] { "keep_greenhouse", "keep_quarry_bridge", "keep_boulder_cleared", "keep_minecarts", "keep_bus_unlocked" }, gifts);
-        Assert.Equal("mail:ccPantry", UpgradeCatalog.TryGet("keep_greenhouse")!.RunReachRequirement);
+        Assert.Equal("room:Pantry", UpgradeCatalog.TryGet("keep_greenhouse")!.RunReachRequirement);
+        Assert.Equal("room:CraftsRoom", UpgradeCatalog.TryGet("keep_quarry_bridge")!.RunReachRequirement);
         Assert.Equal("bus:4", UpgradeCatalog.TryGet("keep_bus_unlocked")!.RunReachRequirement);
         Assert.DoesNotContain(UpgradeCatalog.ByCategory(UpgradeCategory.Buildings), d => d.Id == "keep_bus_unlocked");
     }

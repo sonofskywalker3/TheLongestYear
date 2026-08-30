@@ -97,6 +97,23 @@ public class BoostsTests
     }
 
     [Fact]
+    public void Weather_rows_refuse_on_day_28_because_vanilla_forces_sun_on_day_1()
+    {
+        Assert.Equal(BoostPurchase.Result.NotAvailable, BoostPurchase.TryBuy(Meta(), new RunState(), BoostId.RainDance, BoostContext.Simple(28)));
+        Assert.Equal(BoostPurchase.Result.Success, BoostPurchase.TryBuy(Meta(), new RunState(), BoostId.RainDance, BoostContext.Simple(27)));
+    }
+
+    [Fact]
+    public void Fortunes_favor_can_be_rebought_on_its_payout_day_for_the_next_one()
+    {
+        var run = new RunState();
+        Assert.Equal(BoostPurchase.Result.Success, BoostPurchase.TryBuy(Meta(), run, BoostId.FortunesFavor, BoostContext.Simple(10)));
+        Assert.Equal(BoostPurchase.Result.AlreadyActive, BoostPurchase.TryBuy(Meta(), run, BoostId.FortunesFavor, BoostContext.Simple(10)));
+        Assert.Equal(BoostPurchase.Result.Success, BoostPurchase.TryBuy(Meta(), run, BoostId.FortunesFavor, BoostContext.Simple(11)));
+        Assert.True(BoostState.IsActive(run, BoostId.FortunesFavor, 12));
+    }
+
+    [Fact]
     public void Year_two_seeds_cannot_be_bought_in_winter()
         => Assert.Equal(BoostPurchase.Result.NotAvailable,
             BoostPurchase.TryBuy(Meta(), new RunState(), BoostId.YearTwoSeeds, BoostContext.Simple(100)));

@@ -51,16 +51,20 @@ public static class EngineManifestCheck
     }
 
     /// <summary>The first generated key whose live value is missing or different, rendered as
-    /// <c>key: generated=... live=...</c> for a log line; null when <see cref="Matches"/> holds.</summary>
+    /// <c>key: generated=... live=...</c> for a log line; null when the matching check holds.
+    /// <paramref name="ignoreDisplayName"/> mirrors <see cref="MatchesIgnoringDisplayName"/>.</summary>
     public static string? FirstDifference(
         System.Collections.Generic.IReadOnlyDictionary<string, string> generated,
-        System.Collections.Generic.IReadOnlyDictionary<string, string> live)
+        System.Collections.Generic.IReadOnlyDictionary<string, string> live,
+        bool ignoreDisplayName = false)
     {
         foreach (var pair in generated)
         {
             if (!live.TryGetValue(pair.Key, out string? liveValue))
                 return $"{pair.Key}: generated='{pair.Value}' live=(missing)";
-            if (!string.Equals(liveValue, pair.Value, System.StringComparison.Ordinal))
+            string a = ignoreDisplayName ? Essential(pair.Value) : pair.Value;
+            string b = ignoreDisplayName ? Essential(liveValue) : liveValue;
+            if (!string.Equals(a, b, System.StringComparison.Ordinal))
                 return $"{pair.Key}: generated='{pair.Value}' live='{liveValue}'";
         }
         return null;

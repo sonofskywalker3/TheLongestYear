@@ -115,7 +115,7 @@ internal static class UpgradeCatalogGenerators
             // Early floors are cheap (sub-Copper-tool territory); deep floors (90+) match or
             // exceed the Iridium-tool tier, reflecting that skipping most of the mines is a
             // major time save. Buy shallow elevator keeps early, deep ones after tool chains.
-            long cost = 75 + ((floor - 10) / 10) * 100;
+            long cost = ElevatorKeepCost(floor);
             var tokens = new Dictionary<string, string> { ["floor"] = floor.ToString() };
             yield return new UpgradeDefinition(
                 id, UpgradeCategory.Carryover,

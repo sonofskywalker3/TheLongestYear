@@ -285,7 +285,7 @@ namespace TheLongestYear.UI
 
         private string ExpiryLabel(ActiveBoost b, BoostDefinition def, int today)
         {
-            if (b.ExpiresAfterDay >= Calendar.DaysPerYear)
+            if (def.Duration == BoostDuration.Loop)
                 return Strings.Get("shrine.active.this-loop");
             if (b.ExpiresAfterDay == today)
                 return Strings.Get("shrine.active.tonight");
