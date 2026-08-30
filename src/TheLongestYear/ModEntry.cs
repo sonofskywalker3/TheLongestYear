@@ -1297,8 +1297,11 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
         }
 
-        /// <summary>Today as a 1..112 day of year from the run's own calendar.</summary>
-        private int TodayDayOfYear() => TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
+        /// <summary>Today as a 1..112 day of year from the game's own date (the run calendar syncs
+        /// later on cutscene mornings); the run calendar only before a save is loaded.</summary>
+        private int TodayDayOfYear() => Context.IsWorldReady
+            ? TheLongestYear.Core.Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth)
+            : TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
 
         private void CmdActiveEffects(string command, string[] args)
         {
@@ -4119,7 +4122,7 @@ namespace TheLongestYear
                     }
                     this.Monitor.Log(
                         $"ResolveRequirements: live board differs from the stored engine board at " +
-                        $"{EngineManifestCheck.FirstDifference(state.WrittenBoard, liveData)}; trying seed re-derivation.",
+                        $"{EngineManifestCheck.FirstDifference(state.WrittenBoard, liveData, ignoreDisplayName: true)}; trying seed re-derivation.",
                         LogLevel.Warn);
                 }
 

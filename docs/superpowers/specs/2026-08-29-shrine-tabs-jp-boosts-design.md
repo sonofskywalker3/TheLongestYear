@@ -189,12 +189,12 @@ Relative to the player's current deepest elevator stop: `landing = ((current / 1
 where `current = Game1.netWorldState.Value.LowestMineLevel` (35 lands 40, then 50). Price
 `round(0.2 x (75 + ((landing - 10) / 10) x 100))`: 15 JP for floor 10, 35 for 20, ... 235 for 120.
 Not available when `current >= 120` or `current == 0` (no mine progress yet; the mine must be
-opened first). Application: pin `LowestMineLevel`, `LowestMineLevelForOrder` and
-`Farmer.deepestMineLevel` to `landing` (the same three fields `WorldResetService` pins at reset).
+opened first). Application: raise `LowestMineLevel` and `LowestMineLevelForOrder` to `landing` (never lower
+them; `current` is read through `MineShaft.lowestLevelReached`, the getter the elevator uses).
+`Farmer.deepestMineLevel` is NOT touched: the `mine:` reach for the keep rows reads it, and a
+bought floor is not an earned one, the same rule as Crash Course levels (review 2026-08-29).
 Repeatable within the loop, one step per buy; the entry is Loop-class and purely a record (the
-floor is state). The `mine:` reach for keep rows reads `deepestMineLevel`, so a passed floor
-is reachable for a keep row. That is the intended twin: the pass gives the floor this loop, the
-keep row makes it permanent.
+floor is state).
 
 ## 2. Effects, one by one
 

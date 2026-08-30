@@ -127,8 +127,11 @@ public static class BoostPurchase
 
     private static bool Available(RunState run, BoostId id, BoostContext ctx) => id switch
     {
+        // Vanilla forces Sun on day 1 of a month and on festival mornings (getWeatherModificationsForDate),
+        // so a weather buy for those mornings would spend JP for nothing: refuse on day 28 too.
         BoostId.RainDance or BoostId.StormCall
-            => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival && ctx.DayOfYear < Calendar.DaysPerYear,
+            => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival
+               && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
         BoostId.YearTwoSeeds => ctx.Season != Season.Winter,
         BoostId.CrashCourse => BoostPricing.CrashCourseAvailable(run, ctx),
         BoostId.ElevatorPass => BoostPricing.ElevatorPassAvailable(ctx.MineFloor),
@@ -142,7 +145,10 @@ public static class BoostPurchase
     {
         if (def.Id is BoostId.CrashCourse or BoostId.ElevatorPass) return false;
         string idName = def.Id.ToString();
-        if (IsWeather(idName)) return run.ActiveBoosts.Any(b => b.Id == idName && b.IsActiveOn(day + 1));
+        // Instant rows pay out TOMORROW (Second Wind excepted: tonight), so they collide only with
+        // an entry that still covers tomorrow. Buying on the payout day queues the next day.
+        if (def.Duration == BoostDuration.Instant && def.Id != BoostId.SecondWind)
+            return run.ActiveBoosts.Any(b => b.Id == idName && b.IsActiveOn(day + 1));
         foreach (ActiveBoost b in ActiveEntries(run, day))
         {
             if (b.Id == idName) return true;

@@ -71,10 +71,13 @@ namespace TheLongestYear.Donations
                 }
                 case BoostId.ElevatorPass:
                 {
+                    // Only the elevator fields move, and never downward. Farmer.deepestMineLevel
+                    // (the `mine:` reach for the keep rows) is left alone: a bought floor is not an
+                    // earned one, the same rule as Crash Course levels.
                     int landing = BoostPricing.ElevatorLanding(ctx.MineFloor);
-                    Game1.netWorldState.Value.LowestMineLevel = landing;
-                    Game1.netWorldState.Value.LowestMineLevelForOrder = landing;
-                    p.deepestMineLevel = System.Math.Max(p.deepestMineLevel, landing);
+                    var world = Game1.netWorldState.Value;
+                    world.LowestMineLevel = System.Math.Max(world.LowestMineLevel, landing);
+                    world.LowestMineLevelForOrder = System.Math.Max(world.LowestMineLevelForOrder, landing);
                     _monitor.Log($"Elevator Pass: elevator now reaches floor {landing} (was {ctx.MineFloor}).", LogLevel.Info);
                     break;
                 }

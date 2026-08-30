@@ -534,6 +534,7 @@
     "reach.pet": "unlocked once you have a pet",
     "reach.shortcuts": "unlocked with Robin's shortcuts",
     "reach.bus": "unlocked with {{value}} vault bundles paid",
+    "reach.room": "unlocked once that room is complete",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
     "gmcm.features.section": "Features",
     "gmcm.features.blurb": "Turn individual parts of the mod off, or tune them. Changes apply straight away; nothing here needs a restart.",

@@ -67,6 +67,7 @@ namespace TheLongestYear.Integration
                 "mastery"  => MasteryTrackerMenu.getCurrentMasteryLevel(),
                 "book"     => p.stats.Get(r.Key) != 0 ? 1 : 0,   // vanilla Book_* flag, set by Object.readBook
                 "mail"     => HasMail(p, r.Key) ? 1 : 0,            // wallet items / Stardrop source markers
+                "room"     => RoomComplete(r.Key) ? 1 : 0,          // Gifts of the Junimos: the CC room's bundles all done
                 "event"    => r.Key != null && p.eventsSeen.Contains(r.Key) ? 1 : 0, // Data/Powers SEEN_EVENT grants
                 "stardrop_mines" => (HasMail(p, "CF_Mines")
                                      || p.chestConsumedMineLevels.GetValueOrDefault(100, false)) ? 1 : 0,
@@ -79,6 +80,40 @@ namespace TheLongestYear.Integration
                 _          => -1,   // unknown metric fails closed
             };
             return actual >= 0 && r.IsMet(actual);
+        }
+
+        /// <summary>Data/Bundles room name for a `room:` key (keys carry no spaces).</summary>
+        private static string RoomName(string? key) => key switch
+        {
+            "Pantry" => "Pantry",
+            "CraftsRoom" => "Crafts Room",
+            "FishTank" => "Fish Tank",
+            "BoilerRoom" => "Boiler Room",
+            "Vault" => "Vault",
+            "BulletinBoard" => "Bulletin Board",
+            _ => key ?? "",
+        };
+
+        /// <summary>True when every bundle of the room is complete on the live board. Read from
+        /// the board rather than the completion mail so a room finished on the Fail day counts
+        /// (its letter is still in mailForTomorrow when the perk screen opens).</summary>
+        public static bool RoomComplete(string? key)
+        {
+            if (Game1.getLocationFromName("CommunityCenter") is not StardewValley.Locations.CommunityCenter cc) return false;
+            var data = Game1.netWorldState?.Value?.BundleData;
+            var slots = Game1.netWorldState?.Value?.Bundles?.FieldDict;
+            if (data == null || slots == null) return false;
+            string prefix = RoomName(key) + "/";
+            bool any = false;
+            foreach (string bundleKey in data.Keys)
+            {
+                if (!bundleKey.StartsWith(prefix, System.StringComparison.Ordinal)) continue;
+                if (!int.TryParse(bundleKey.Substring(prefix.Length), out int index)) continue;
+                if (!slots.ContainsKey(index)) return false;
+                any = true;
+                if (!cc.isBundleComplete(index)) return false;
+            }
+            return any;
         }
 
         /// <summary>Some wallet getters read Game1.MasterPlayer (HasRustyKey, HasSkullKey, the Dwarvish

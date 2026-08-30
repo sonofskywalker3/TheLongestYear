@@ -65,30 +65,31 @@ namespace TheLongestYear.Loop
             bool mineBonus = mineStacks > 0;
             bool allBonus  = allStacks > 0;
             if (!mineBonus && !allBonus) return;
-            // Stacks (theme bonus + Rich Veins / Windfall): one independent roll each, the best
-            // roll is kept against the single threshold below (ruling 3).
-            int rolls = mineBonus ? mineStacks : allStacks;
-
-            // Tier the roll: mine_drops_up takes priority at 20%; falls back to all_drops_up
-            // when only Mixed is picked. Single roll covers ALL drops added by this
-            // destruction — user spec is "everything doubled" on a successful roll, not
-            // per-item independent rolls.
-            // 2026-05-29 user spec rebalance: mine_drops_up 30% → 20%.
-            // all_drops_up (Mixed) uses BonusDropResolver.MixedAllDropsChance (10% baseline).
-            string firingBonus;
-            double threshold;
-            if (mineBonus) { firingBonus = "mine_drops_up"; threshold = 0.20; }
-            else           { firingBonus = "all_drops_up";  threshold = BonusDropResolver.MixedAllDropsChance; }
-
-            // 2026-05-29 round 12: log the actual rolled value on every event so we can
-            // disambiguate "bad luck", "RNG always >= threshold" (broken random), and
-            // "rolled in but bonus path threw" (exception swallowed by Harmony).
-            double roll = 1.0;
-            for (int s = 0; s < rolls; s++)
-                roll = System.Math.Min(roll, Game1.random.NextDouble());
-            if (roll >= threshold)
+            // Every stack rolls on its own (ruling 3): mine_drops_up stacks (Mining theme, Rich
+            // Veins) at 20%, all_drops_up stacks (Mixed theme, Windfall) at the Mixed chance. Any
+            // hit doubles ALL the drops of this destruction once (the user spec is "everything
+            // doubled" on a success, never per item and never twice).
+            // 2026-05-29 user spec rebalance: mine_drops_up 30% -> 20%.
+            const double MineThreshold = 0.20;
+            string firingBonus = null;
+            double roll = 1.0, threshold = 0;
+            for (int s = 0; s < mineStacks && firingBonus == null; s++)
             {
-                PatchLog.Trace($"{firingBonus}: roll={roll:F3} >= {threshold:F2} → no bonus.");
+                roll = Game1.random.NextDouble();
+                threshold = MineThreshold;
+                if (roll < threshold) firingBonus = "mine_drops_up";
+            }
+            for (int s = 0; s < allStacks && firingBonus == null; s++)
+            {
+                roll = Game1.random.NextDouble();
+                threshold = BonusDropResolver.MixedAllDropsChance;
+                if (roll < threshold) firingBonus = "all_drops_up";
+            }
+            // 2026-05-29 round 12: log the rolled value so "bad luck", "broken random" and
+            // "rolled in but the bonus path threw" stay distinguishable.
+            if (firingBonus == null)
+            {
+                PatchLog.Trace($"mine/all drops: last roll={roll:F3} >= {threshold:F2} across {mineStacks}+{allStacks} stack(s) → no bonus.");
                 return;
             }
             PatchLog.Trace($"{firingBonus}: roll={roll:F3} < {threshold:F2} → bonus rolling in.");

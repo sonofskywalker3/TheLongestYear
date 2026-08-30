@@ -120,7 +120,7 @@ public class I18nGuardTests
             // reach.* keys are built from the reach metric (ReachText.Describe); walk every catalog requirement.
             foreach (var def in UpgradeCatalog.All)
                 _ = ReachText.Describe(def.RunReachRequirement);
-            foreach (string metric in new[] { "rod", "backpack", "mastery", "book", "mail", "event", "stardrop_mines", "scythe", "house", "pet", "shortcuts", "bus" })
+            foreach (string metric in new[] { "rod", "backpack", "mastery", "book", "mail", "event", "stardrop_mines", "scythe", "house", "pet", "shortcuts", "bus", "room" })
                 _ = Strings.Get("reach." + metric);
         }
         finally

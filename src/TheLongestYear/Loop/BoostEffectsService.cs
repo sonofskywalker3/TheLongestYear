@@ -32,7 +32,10 @@ namespace TheLongestYear.Loop
             _store = store;
         }
 
-        private int Today => Calendar.DayOfYear((int)_store.Run.Season, _store.Run.DayOfMonth);
+        /// <summary>The game's own date, not the run calendar: on cutscene mornings the run's
+        /// Season/DayOfMonth are synced later in the DayStarted chain, and an expired week or season
+        /// boost must not be re-applied for that day (review 2026-08-29).</summary>
+        private static int Today => Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
 
         public bool Active(BoostId id) => RunActivation.IsActive && BoostState.IsActive(_store.Run, id, Today);
 
