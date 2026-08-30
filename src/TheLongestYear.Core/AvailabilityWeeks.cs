@@ -59,14 +59,32 @@ public static class AvailabilityWeeks
             [YearTwoCrops.Artichoke] = (11, 10),   // year-two crop: permanent buy, or the Boost from Fall week 10
         };
 
-    /// <summary>Winter dig-spot forage whose artifact-spot row carries a Winter condition the
-    /// glue does not read. Later floors that beat the rules' own answer.</summary>
+    /// <summary>Items whose own rule answers too early, pinned by hand. Later floors that beat
+    /// the rules' own answer:
+    /// - Winter dig-spot forage, whose artifact-spot row carries a Winter condition the glue does
+    ///   not read.
+    /// - Mystic Syrup, whose tapper rule cannot see that its tree has to be planted first (below).
+    /// </summary>
     public static readonly IReadOnlyDictionary<string, (int Week, string Note)> LateFloors =
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
             ["(O)412"] = (13, "Winter Root, Winter dig spots"),
             ["(O)416"] = (13, "Snow Yam, Winter dig spots"),
+            // TapperAvailability reads Data/WildTrees TapItems uniformly, so the Mystic Tree (id
+            // "13") is treated like the Oak/Maple/Pine rows: Foraging 4 plus the tap wait. Those
+            // trees are standing on the map from day 1; a Mystic Tree is not. Its seed is the
+            // FORAGING MASTERY reward (decompile MasteryTrackerMenu.cs:108, case 2), which needs
+            // every skill at 10 and then the mastery itself, and only then does the tree still
+            // have to grow before it can be tapped. Nothing else corrects for this: tapper goods
+            // never consult LocationGating, and the Mastery Cave is not a gated location anyway.
+            // Week 16 is the honest floor in a one-year loop - late Winter, i.e. effectively
+            // "not this loop" - which keeps it off Summer boards. Reported by Nijah 2026-08-30.
+            ["(O)MysticSyrup"] = (WeeksPerYearFloor, "Mystic Syrup, Mystic Tree Seed is the Foraging Mastery reward"),
         };
+
+    /// <summary>The last week of the year, used as a late floor for anything a one-year loop can
+    /// only reach at the very end (see <see cref="LateFloors"/>).</summary>
+    private const int WeeksPerYearFloor = Calendar.WeeksPerYear;
 
     /// <summary>Bush berries have no spawn rows; their weeks are calendar facts.</summary>
     public static readonly IReadOnlyDictionary<string, int> BushBerryWeeks =
