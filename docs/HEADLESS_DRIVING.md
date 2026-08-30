@@ -60,8 +60,17 @@ hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).
 `tly_seasongoals` (opens the Season Goals page; close it with its X button, Escape does not close it, and a page left open across a `tly_reset` keeps showing the OLD run's numbers until reopened),
 `tly_genbundles [loop] [custom|standard|remixed]` (custom = the TLY engine board; standard and
 remixed audit the board vanilla would build for that Advanced Options choice),
-`tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
+`tly_boost list` (the boost roster with each row's state and price), `tly_activeeffects` (running boosts, stacks per modifier), `tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
 copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate`.
+
+## Menus that block a sleep
+
+Vanilla finishes a new day only after its end-of-night menus are dismissed. A `debug sleep` with a
+level-up queued (Crash Course, `debug experience`) sits on the LevelUpMenu forever and every later
+bridge command runs against the stale day. `tly_dismiss` clicks the menu's OK button (profession
+picks take their default); send it after each sleep that could have queued one. `tly_openshrine
+[active|boosts|plan]` opens the planning shrine on a tab without the statue, `tly_boost <id> [skill]`
+buys any boost, `tly_boostexpire` forces the boosts' day-start pass.
 
 ## Rules
 
