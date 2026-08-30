@@ -49,7 +49,7 @@ after their fixes land (drafts in chat first, memory `show-reply-drafts-before-p
 any explanation; technical detail short and in the player's words.** See the workspace
 `.claude/CLAUDE.md` "Replying to bug reports".
 
-RELEASED 0.16.167 (2026-08-29): everything from 0.16.18 to 0.16.167 is public. Bug replies to gazumbrado, Bumblewyn, ChaoticMindset (Not a bug), nyxnyx2234 and the impossible-items thread drafted for Jeff's yes.
+RELEASED 0.16.167 (2026-08-29): everything from 0.16.18 to 0.16.167 is public. Bug replies POSTED 2026-08-30 (Jeff approved each): gazumbrado bus (Fixed), gazumbrado CC-complete 1125215 (Fixed), Bumblewyn stash (Fixed), ChaoticMindset festival (Not a bug), impossible-items 1122358 (Fixed), nyxnyx2234 posts follow-up. Bugs tab is clear.
 
 ### 10th sweep (2026-08-29 afternoon, Nexus bugs + posts + Reddit): two real new bugs, one retracted
 
