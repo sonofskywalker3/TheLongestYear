@@ -6,7 +6,51 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — simulate real spawn-day counts, clamp requirement rolls to 20-80% of the realistic max
+### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — measure real yields in game, clamp requirement rolls off the measured average
+
+#### RULING (Jeff, 2026-08-30) — the numbers and the bands
+
+**Measure, do not model.** An expected-value calculation off the spawn tables was tried first and was
+**wrong by 2.3x** (predicted 11.7 Rainbow Shell over a Summer, the game actually gave 5). Jeff's call:
+play it out in the real game and count what is actually there. `tly_sweepforage` does this - it takes
+every spawned forage object on every map, every day, into a per-season chest. Any future "is this
+really possible?" question gets answered the same way, with the same tool.
+
+**The sample:** three matched FULL-YEAR runs (112 days, all four seasons, one chest per season),
+averaged. An earlier Summer-only run is kept for reference but is **excluded from the average** - its
+day 1 was stale leftover forage rather than a genuine overnight spawn, so it under-measures.
+Results accumulate in `docs/superpowers/notes/forage-sweep-results.csv`, each row tagged with seed,
+loop and season.
+
+**The bands**, per item, off the mean of the three full-year runs:
+
+```
+average  = mean across the three full-year runs (per item, per season)
+easy     = 20%..50% of average, rounded up
+hard     = 50%..80% of average, rounded up
+max ask  = 80% of average, rounded up   <- never roll higher than this
+```
+
+Worked example: Rainbow Shell averaging 8 gives easy 2-4, hard 4-7, and a hard ceiling of 7. The
+bundle that triggered this asked for **95**.
+
+**Bonuses are deliberately NOT modelled.** Every number is measured with no bonus active (the sweep
+bypasses the pickup path `ForageYieldPatch` hooks, so Gatherer and `forage_yield_up` never fire).
+That is the intent: the ask should be **impossible on a lean month played bare, but reachable on a
+lean month played well**. The headroom is real - Overgrowth is 50 JP for a week
+(`Boosts.cs`, `BoostDuration.Week`), so 200 JP holds `forage_yield_up` for a whole season, and it
+stacks as a separate roll from both the weekly Foraging theme and vanilla Gatherer
+(`ForageYieldPatch` loops over `BonusStacks`). So a committed player has well over the ~1.4x I first
+assumed, and the ceiling is set trusting that headroom exists.
+
+**Luck is intentional.** Jeff, 2026-08-30: a gate that is always grindable by pure skill removes the
+reason to loop, which is the thing the mod exists for. Some failures being down to a lean roll is
+accepted and wanted. A player who falls short can stash what they gathered and carry it into the
+next loop.
+
+---
+
+
 
 **Trigger:** Nijah (Nexus post, 30 Aug 2026, unanswered) reported requirement quantities that are not
 realistically obtainable within a bundle's due date: Summer Foraging Bundle asked for **95 Rainbow
