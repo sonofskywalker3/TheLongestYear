@@ -266,7 +266,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_gateneeds", "Print, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) plus the vault. Read-only.", this.CmdGateNeeds);
-            helper.ConsoleCommands.Add("tly_sweepforage", "Take every spawned forage item on every map and put it in the sweep chest on the Farm (a real harvest, for measuring what a season actually yields). Run once a day, then 'tly_sweepforage report'. Usage: tly_sweepforage [report]", this.CmdSweepForage);
+            helper.ConsoleCommands.Add("tly_sweepforage", "Take every spawned forage item on every map and put it in the sweep chest on the Farm (a real harvest, for measuring what a season actually yields). Run 'clear' first, then once a day, then 'report'. Usage: tly_sweepforage [clear|report]", this.CmdSweepForage);
             helper.ConsoleCommands.Add("tly_forageyield", "Simulate how much of each forage item a player could gather by a cutoff day if every reachable map were cleared every day, and print the 20-80% band a requirement should sit in. Forage only. Read-only. Usage: tly_forageyield [spring|summer|fall|winter|<day>] [itemId]", this.CmdForageYield);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
@@ -2296,6 +2296,18 @@ namespace TheLongestYear
         /// the same one every day of a run and can just be opened and read at the end.</summary>
         private static readonly Microsoft.Xna.Framework.Vector2 SweepChestTile = new(64f, 16f);
 
+        /// <summary>One chest per season, side by side on the Farm, so a single 112-day run leaves
+        /// four readable hauls instead of one mixed pile. Indexed Spring, Summer, Fall, Winter -
+        /// the same order as <see cref="TheLongestYear.Core.Season"/>.</summary>
+        private static readonly string[] SweepSeasons = { "spring", "summer", "fall", "winter" };
+
+        private static Microsoft.Xna.Framework.Vector2 SweepTileFor(string season)
+        {
+            int index = Array.IndexOf(SweepSeasons, (season ?? "").ToLowerInvariant());
+            if (index < 0) index = 0;
+            return new Microsoft.Xna.Framework.Vector2(SweepChestTile.X + index, SweepChestTile.Y);
+        }
+
         /// <summary><c>tly_sweepforage [report]</c>: take every piece of spawned forage on every
         /// map and put it in the sweep chest on the Farm.
         ///
@@ -2324,9 +2336,42 @@ namespace TheLongestYear
                 return;
             }
 
+            // Every season's chest, so one 112-day run reports as four seasons.
             if (args.Length > 0 && args[0].Equals("report", StringComparison.OrdinalIgnoreCase))
             {
-                ReportSweepChest(chest);
+                foreach (string season in SweepSeasons)
+                {
+                    StardewValley.Objects.Chest seasonChest = GetOrCreateSweepChest(season);
+                    if (seasonChest != null)
+                        ReportSweepChest(seasonChest, season);
+                }
+                return;
+            }
+
+            // Start a fresh measurement run. Also drops whatever forage is lying about from
+            // before the run began, so day 1 is not credited with someone else's leftovers.
+            if (args.Length > 0 && args[0].Equals("clear", StringComparison.OrdinalIgnoreCase))
+            {
+                int had = 0;
+                foreach (string season in SweepSeasons)
+                {
+                    StardewValley.Objects.Chest seasonChest = GetOrCreateSweepChest(season);
+                    if (seasonChest == null) continue;
+                    had += seasonChest.Items.Count(i => i != null);
+                    seasonChest.Items.Clear();
+                }
+                foreach (GameLocation loc in Game1.locations.ToList())
+                {
+                    if (loc?.objects == null) continue;
+                    foreach (var pair in loc.objects.Pairs.Where(p => p.Value != null && p.Value.IsSpawnedObject).ToList())
+                    {
+                        loc.objects.Remove(pair.Key);
+                        loc.numberOfSpawnedObjectsOnMap = Math.Max(0, loc.numberOfSpawnedObjectsOnMap - 1);
+                    }
+                }
+                this.Monitor.Log(
+                    $"[Sweep] cleared: all four season chests emptied ({had} stack(s)) and stale map forage discarded. Ready for a fresh run.",
+                    LogLevel.Info);
                 return;
             }
 
@@ -2376,39 +2421,98 @@ namespace TheLongestYear
                 LogLevel.Info);
         }
 
-        /// <summary>The sweep chest at <see cref="SweepChestTile"/>, placed if it is not there yet.
-        /// Anything else occupying the tile is moved aside rather than destroyed.</summary>
-        private StardewValley.Objects.Chest GetOrCreateSweepChest()
+        /// <summary>That season's sweep chest, placed if it is not there yet. Anything else on the
+        /// tile is cleared off rather than kept.</summary>
+        private StardewValley.Objects.Chest GetOrCreateSweepChest(string season = null)
         {
             GameLocation farm = Game1.getLocationFromName("Farm");
             if (farm == null) return null;
 
-            if (farm.objects.TryGetValue(SweepChestTile, out StardewValley.Object existing))
+            Microsoft.Xna.Framework.Vector2 tile = SweepTileFor(season ?? Game1.currentSeason);
+
+            if (farm.objects.TryGetValue(tile, out StardewValley.Object existing))
             {
                 if (existing is StardewValley.Objects.Chest found) return found;
-                farm.objects.Remove(SweepChestTile);
+                farm.objects.Remove(tile);
             }
 
-            var chest = new StardewValley.Objects.Chest(playerChest: true, SweepChestTile);
-            farm.objects[SweepChestTile] = chest;
+            var chest = new StardewValley.Objects.Chest(playerChest: true, tile);
+            farm.objects[tile] = chest;
             this.Monitor.Log(
-                $"tly_sweepforage: placed the sweep chest on the Farm at {SweepChestTile.X},{SweepChestTile.Y}.",
+                $"tly_sweepforage: placed the {season ?? Game1.currentSeason} chest on the Farm at {tile.X},{tile.Y}.",
                 LogLevel.Info);
             return chest;
         }
 
-        private void ReportSweepChest(StardewValley.Objects.Chest chest)
+        /// <summary>Where every measured sweep run is kept. One CSV, appended to, so runs across
+        /// seeds and seasons accumulate into something that can be averaged later instead of
+        /// living only in a log that gets archived on the next deploy.</summary>
+        private const string SweepResultsFile = "forage-sweep-results.csv";
+
+        private void ReportSweepChest(StardewValley.Objects.Chest chest, string season)
         {
             var totals = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (Item item in chest.Items.Where(i => i != null))
                 totals[item.QualifiedItemId] = totals.GetValueOrDefault(item.QualifiedItemId) + item.Stack;
 
-            this.Monitor.Log("=== tly_sweepforage: what is in the sweep chest ===", LogLevel.Info);
+            if (totals.Count == 0)
+            {
+                this.Monitor.Log($"=== tly_sweepforage: {season} chest is empty ===", LogLevel.Info);
+                return;
+            }
+            this.Monitor.Log($"=== tly_sweepforage: {season} chest ===", LogLevel.Info);
             foreach (var kv in totals.OrderByDescending(k => k.Value))
                 this.Monitor.Log($"  {DisplayName(kv.Key),-28} {kv.Key,-18} {kv.Value,5}", LogLevel.Info);
             this.Monitor.Log(
-                $"[SweepTotal] {totals.Values.Sum()} items, {totals.Count} distinct, {chest.Items.Count(i => i != null)}/36 slots used.",
+                $"[SweepTotal] {season}: {totals.Values.Sum()} items, {totals.Count} distinct, {chest.Items.Count(i => i != null)}/36 slots used.",
                 LogLevel.Info);
+
+            WriteSweepResults(totals, season);
+        }
+
+        /// <summary>Append this run to the results CSV. Every row carries the run's identity (seed,
+        /// loop, season, the day it was read) so two runs can never be confused for one another.</summary>
+        private void WriteSweepResults(IReadOnlyDictionary<string, int> totals, string season)
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(this.Helper.DirectoryPath, SweepResultsFile);
+                bool isNew = !System.IO.File.Exists(path);
+
+                var sb = new System.Text.StringBuilder();
+                if (isNew)
+                    sb.AppendLine("stamp,seed,loop,season,readOnDay,itemId,itemName,count");
+
+                string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                long seed = Game1.player?.UniqueMultiplayerID ?? 0;
+                int loop = _meta?.Run?.RunNumber ?? 0;
+
+                foreach (var kv in totals.OrderByDescending(k => k.Value))
+                    sb.AppendLine(string.Join(",",
+                        stamp, seed, loop, season, Game1.dayOfMonth,
+                        kv.Key, Csv(DisplayName(kv.Key)), kv.Value));
+
+                System.IO.File.AppendAllText(path, sb.ToString());
+                this.Monitor.Log(
+                    $"[SweepFile] appended {totals.Count} row(s) for loop {loop} to {path}", LogLevel.Info);
+            }
+            catch (System.IO.IOException ex)
+            {
+                this.Monitor.Log($"tly_sweepforage: could not write the results file: {ex.Message}", LogLevel.Error);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                this.Monitor.Log($"tly_sweepforage: could not write the results file: {ex.Message}", LogLevel.Error);
+            }
+        }
+
+        /// <summary>Quote a CSV field only when it needs it (item names can carry commas).</summary>
+        private static string Csv(string value)
+        {
+            value ??= "";
+            return value.Contains(',') || value.Contains('"')
+                ? "\"" + value.Replace("\"", "\"\"") + "\""
+                : value;
         }
 
         /// <summary><c>tly_forageyield [season|day] [item]</c>: what "checked everywhere every day"

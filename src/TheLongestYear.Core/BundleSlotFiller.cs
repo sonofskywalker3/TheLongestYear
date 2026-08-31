@@ -235,6 +235,10 @@ public static class BundleSlotFiller
         {
             int slotIndex = rng.Next(slots.Count);
             int stack = rng.Next(tuning.LargeQuantityMinStack, tuning.LargeQuantityMaxStack + 1);
+            // The big-ask roll is 40-99 and knows nothing about whether the item can actually be
+            // gathered that many times in a season. Measured yields say most forage cannot: this is
+            // the roll that produced the 95 Rainbow Shell ask (a season really yields 11/5/6).
+            stack = ForageAskLimits.ClampAnySeason(slots[slotIndex].ItemId, stack);
             slots[slotIndex] = slots[slotIndex] with { Stack = stack, Quality = 0 };
         }
 
@@ -457,11 +461,15 @@ public static class BundleSlotFiller
             case PoolDomain.QualityCrops:
                 return tuning.QualityCropStack;
             case PoolDomain.MonsterDrops:
-                if (item.Price < tuning.CheapPriceCeiling)
-                    return rng.Next(tuning.CheapMinStack, tuning.CheapMaxStack + 1);
-                if (item.Price < tuning.MidPriceCeiling)
-                    return rng.Next(tuning.MidMinStack, tuning.MidMaxStack + 1);
-                return rng.Next(tuning.DearMinStack, tuning.DearMaxStack + 1);
+                // Price-banded, so a cheap item can roll up to 99. Clamped for the same reason as
+                // the big forage ask: a monster-drop pool can contain forage-sourced items, and no
+                // ask should exceed what a season measurably produces.
+                int rolled = item.Price < tuning.CheapPriceCeiling
+                    ? rng.Next(tuning.CheapMinStack, tuning.CheapMaxStack + 1)
+                    : item.Price < tuning.MidPriceCeiling
+                        ? rng.Next(tuning.MidMinStack, tuning.MidMaxStack + 1)
+                        : rng.Next(tuning.DearMinStack, tuning.DearMaxStack + 1);
+                return ForageAskLimits.ClampAnySeason(item.ItemId, rolled);
             default:
                 return 1;
         }
