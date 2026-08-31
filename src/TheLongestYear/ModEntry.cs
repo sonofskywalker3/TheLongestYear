@@ -266,6 +266,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             helper.ConsoleCommands.Add("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             helper.ConsoleCommands.Add("tly_gateneeds", "Print, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) plus the vault. Read-only.", this.CmdGateNeeds);
+            helper.ConsoleCommands.Add("tly_crabpots", "Measure real crab pot yields: 'place [n]' drops n baited pots per water zone (default 10), bare runs the daily collect-and-rebait into that season's crab chest, 'report' prints them. Usage: tly_crabpots [place|report] [count]", this.CmdCrabPots);
             helper.ConsoleCommands.Add("tly_sweepforage", "Take every spawned forage item on every map and put it in the sweep chest on the Farm (a real harvest, for measuring what a season actually yields). Run 'clear' first, then once a day, then 'report'. Usage: tly_sweepforage [clear|report]", this.CmdSweepForage);
             helper.ConsoleCommands.Add("tly_forageyield", "Simulate how much of each forage item a player could gather by a cutoff day if every reachable map were cleared every day, and print the 20-80% band a requirement should sit in. Forage only. Read-only. Usage: tly_forageyield [spring|summer|fall|winter|<day>] [itemId]", this.CmdForageYield);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
@@ -1968,6 +1969,7 @@ namespace TheLongestYear
                 case "tly_gateneeds": this.CmdGateNeeds(command, args); break;
                 case "tly_forageyield": this.CmdForageYield(command, args); break;
                 case "tly_sweepforage": this.CmdSweepForage(command, args); break;
+                case "tly_crabpots": this.CmdCrabPots(command, args); break;
                 case "tly_goals": this.CmdGoals(command, args); break;
                 case "tly_themepool": this.CmdThemePool(command, args); break;
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
@@ -2448,6 +2450,122 @@ namespace TheLongestYear
         /// seeds and seasons accumulate into something that can be averaged later instead of
         /// living only in a log that gets archived on the next deploy.</summary>
         private const string SweepResultsFile = "forage-sweep-results.csv";
+
+        /// <summary>Water bodies worth potting, one pot cluster each. Crab pot catch tables are
+        /// keyed off whether the water is ocean or fresh (decompile CrabPot.DayUpdate), so the
+        /// Beach is the one that matters most and the rest cover the freshwater table.</summary>
+        private static readonly string[] CrabPotZones = { "Beach", "Forest", "Town", "Mountain" };
+
+        /// <summary>Crab pot hauls go in their own chests, one row below the forage ones. They MUST
+        /// be separate: Cockle, Mussel and Oyster come from both routes, and the whole point of
+        /// measuring pots is to find out how much of those the pots supply that forage does not.</summary>
+        private static Microsoft.Xna.Framework.Vector2 CrabTileFor(string season)
+        {
+            Microsoft.Xna.Framework.Vector2 t = SweepTileFor(season);
+            return new Microsoft.Xna.Framework.Vector2(t.X, t.Y + 2);
+        }
+
+        /// <summary><c>tly_crabpots [place|report] [count]</c>: measure what crab pots really yield.
+        ///
+        /// <c>place</c> drops <paramref name="count"/> (default 10) baited pots in each water zone.
+        /// Bare <c>tly_crabpots</c> is the daily step: take every ready catch into that season's
+        /// crab chest and re-bait every pot, which is exactly what a player working their pots does
+        /// (decompile CrabPot.DayUpdate: no bait or an unclaimed catch means no new catch).
+        ///
+        /// Run it alongside the forage sweep across a season and the two chests together give the
+        /// real supply of the shellfish that <see cref="TheLongestYear.Core.ForageAskLimits"/>
+        /// currently refuses to clamp for want of this number.</summary>
+        private void CmdCrabPots(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+
+            if (mode == "report")
+            {
+                foreach (string season in SweepSeasons)
+                {
+                    GameLocation f = Game1.getLocationFromName("Farm");
+                    if (f != null && f.objects.TryGetValue(CrabTileFor(season), out StardewValley.Object o)
+                        && o is StardewValley.Objects.Chest c)
+                        ReportSweepChest(c, season + "-crabpot");
+                }
+                return;
+            }
+
+            if (mode == "place")
+            {
+                int want = args.Length > 1 && int.TryParse(args[1], out int n) ? n : 10;
+                int placed = 0;
+                foreach (string zoneName in CrabPotZones)
+                {
+                    GameLocation zone = Game1.getLocationFromName(zoneName);
+                    if (zone == null) continue;
+                    int here = 0;
+                    for (int x = 0; x < zone.Map.Layers[0].LayerWidth && here < want; x++)
+                    for (int y = 0; y < zone.Map.Layers[0].LayerHeight && here < want; y++)
+                    {
+                        var tile = new Microsoft.Xna.Framework.Vector2(x, y);
+                        if (!zone.isWaterTile(x, y) || zone.objects.ContainsKey(tile)) continue;
+                        var pot = new StardewValley.Objects.CrabPot { TileLocation = tile };
+                        pot.bait.Value = new StardewValley.Object("685", 1);
+                        zone.objects[tile] = pot;
+                        here++; placed++;
+                    }
+                    this.Monitor.Log($"[CrabPot] {zoneName}: {here} pot(s) placed.", LogLevel.Info);
+                }
+                this.Monitor.Log($"[CrabPot] {placed} pot(s) total, all baited. Run tly_crabpots daily.", LogLevel.Info);
+                return;
+            }
+
+            StardewValley.Objects.Chest chest = GetOrCreateCrabChest();
+            if (chest == null) { this.Monitor.Log("tly_crabpots: no crab chest.", LogLevel.Error); return; }
+
+            var today = new Dictionary<string, int>(StringComparer.Ordinal);
+            int pots = 0, rebaited = 0;
+            foreach (string zoneName in CrabPotZones)
+            {
+                GameLocation zone = Game1.getLocationFromName(zoneName);
+                if (zone == null) continue;
+                foreach (var pair in zone.objects.Pairs.ToList())
+                {
+                    if (pair.Value is not StardewValley.Objects.CrabPot pot) continue;
+                    pots++;
+                    StardewValley.Object caught = pot.heldObject.Value;
+                    if (caught != null)
+                    {
+                        string id = caught.QualifiedItemId ?? caught.ItemId;
+                        today[id] = today.GetValueOrDefault(id) + Math.Max(1, caught.Stack);
+                        chest.addItem(caught);
+                        pot.heldObject.Value = null;
+                        pot.readyForHarvest.Value = false;
+                    }
+                    // Re-bait: an empty, unbaited pot catches nothing tomorrow.
+                    pot.bait.Value = new StardewValley.Object("685", 1);
+                    rebaited++;
+                }
+            }
+
+            string breakdown = today.Count == 0 ? "nothing"
+                : string.Join(", ", today.OrderByDescending(k => k.Value).Select(k => $"{DisplayName(k.Key)} x{k.Value}"));
+            this.Monitor.Log(
+                $"[CrabPot] {Game1.currentSeason} {Game1.dayOfMonth}: {today.Values.Sum()} from {pots} pot(s) "
+                + $"({rebaited} re-baited): {breakdown}", LogLevel.Info);
+        }
+
+        private StardewValley.Objects.Chest GetOrCreateCrabChest()
+        {
+            GameLocation farm = Game1.getLocationFromName("Farm");
+            if (farm == null) return null;
+            Microsoft.Xna.Framework.Vector2 tile = CrabTileFor(Game1.currentSeason);
+            if (farm.objects.TryGetValue(tile, out StardewValley.Object existing))
+            {
+                if (existing is StardewValley.Objects.Chest found) return found;
+                farm.objects.Remove(tile);
+            }
+            var chest = new StardewValley.Objects.Chest(playerChest: true, tile);
+            farm.objects[tile] = chest;
+            return chest;
+        }
 
         private void ReportSweepChest(StardewValley.Objects.Chest chest, string season)
         {
