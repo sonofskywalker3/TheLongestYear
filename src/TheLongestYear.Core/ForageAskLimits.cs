@@ -50,6 +50,36 @@ public static class ForageAskLimits
     /// mistake this class exists to stop. They stay unclamped until their own routes are measured.</summary>
     public const double MinMeasuredAverage = 5.0;
 
+    /// <summary>Forage that only exists in the Calico Desert, which a loop has to UNLOCK - the bus
+    /// costs the Vault bundle, and TLY paces that at LocationGating/AvailabilityWeeks.SkullCavernWeek
+    /// (week 9, i.e. Fall 1; DesertHardWeek 6 is the earliest a player who rushes it can be there).
+    ///
+    /// The measurements were taken on a save that already had the desert open, so the sweep happily
+    /// counted Cactus Fruit and Coconut from Spring 1 - about 38 a season in Spring and Summer, which
+    /// no real loop can reach. Those two rows per item are therefore DROPPED: the ceiling for desert
+    /// forage comes only from Fall and Winter, the seasons a loop can actually be standing there.
+    ///
+    /// This is a caution for anything added later, not just these two: a measured count is only as
+    /// honest as the access the measuring save had. Any location-gated forage (Secret Woods behind
+    /// the Steel Axe, the Sewer, the Island) has the same trap.</summary>
+    private static readonly IReadOnlySet<string> DesertOnly = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)90",   // Cactus Fruit
+        "(O)88",   // Coconut
+    };
+
+    /// <summary>True for forage that needs the desert unlocked, so it cannot be asked for in the
+    /// seasons before the bus is repaired.</summary>
+    public static bool IsDesertOnly(string itemId)
+        => itemId != null && DesertOnly.Contains(itemId);
+
+    /// <summary>First season a desert item can honestly be asked for: week 9 is Fall 1.</summary>
+    public static Season DesertOpensIn => AvailabilityWeeks.SeasonOf(AvailabilityWeeks.SkullCavernWeek);
+
+    /// <summary>True when the season is too early for this item's location to be reachable.</summary>
+    public static bool IsBeforeUnlock(Season season, string itemId)
+        => IsDesertOnly(itemId) && season < DesertOpensIn;
+
     /// <summary>Everything Wild Seeds can grow (decompile Crop.getRandomWildCropForSeason, line
     /// 739). These are NEVER capped below the 99 stack limit, because their supply is not the wild
     /// spawn rate at all: the Wild Seeds recipe turns 4 forage into 10 seeds, each seed grows one of
@@ -82,8 +112,6 @@ public static class ForageAskLimits
         [(Season.Spring, "(O)393")] = 53.3,   // Coral: 50/59/51, max ask 43
         [(Season.Spring, "(O)18")] = 51.3,   // Daffodil: 49/57/48, max ask 42
         [(Season.Spring, "(O)22")] = 39.7,   // Dandelion: 47/46/26, max ask 32
-        [(Season.Spring, "(O)90")] = 38.7,   // Cactus Fruit: 37/44/35, max ask 31
-        [(Season.Spring, "(O)88")] = 35.3,   // Coconut: 40/34/32, max ask 29
         [(Season.Spring, "(O)404")] = 34.0,   // Common Mushroom: 33/35/34, max ask 28
         [(Season.Spring, "(O)281")] = 33.7,   // Chanterelle: 28/36/37, max ask 27
         [(Season.Spring, "(O)20")] = 27.0,   // Leek: 31/19/31, max ask 22
@@ -97,8 +125,6 @@ public static class ForageAskLimits
         [(Season.Summer, "(O)393")] = 56.3,   // Coral: 56/56/57, max ask 46
         [(Season.Summer, "(O)396")] = 48.0,   // Spice Berry: 45/47/52, max ask 39
         [(Season.Summer, "(O)398")] = 39.3,   // Grape: 31/37/50, max ask 32
-        [(Season.Summer, "(O)90")] = 38.3,   // Cactus Fruit: 37/36/42, max ask 31
-        [(Season.Summer, "(O)88")] = 38.3,   // Coconut: 28/42/45, max ask 31
         [(Season.Summer, "(O)420")] = 28.3,   // Red Mushroom: 24/26/35, max ask 23
         [(Season.Summer, "(O)259")] = 24.7,   // Fiddlehead Fern: 21/30/23, max ask 20
         [(Season.Summer, "(O)404")] = 19.3,   // Common Mushroom: 16/23/19, max ask 16
