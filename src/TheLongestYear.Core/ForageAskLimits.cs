@@ -13,7 +13,13 @@ namespace TheLongestYear.Core;
 /// every map, taken every day, for three full 112-day years. Raw data and the runs behind it are in
 /// docs/superpowers/notes/forage-sweep-results.csv.
 ///
-/// The figure stored is the MEAN of the three runs. The bands (Jeff, 2026-08-30) are:
+/// The figure stored is the MEAN of the three runs, EXCEPT where a row is marked island-halved:
+/// the sweep save had Ginger Island created, so the island cave's all-season mushroom spawns were
+/// counted as if a loop could reach them, and those rows were halved by ruling. See
+/// <see cref="AskCeilingRulings"/> for the whole story and for the ceilings that are judgement
+/// rather than data.
+///
+/// The bands (Jeff, 2026-08-30) are:
 ///   easy    20%..50% of the mean
 ///   hard    50%..80% of the mean
 ///   ceiling 80% of the mean, rounded up - no slot may ever ask for more
@@ -103,6 +109,37 @@ public static class ForageAskLimits
     public static bool IsWildSeedGrowable(string itemId)
         => itemId != null && WildSeedGrowable.Contains(itemId);
 
+    /// <summary>Ceilings set by JUDGEMENT, not by measurement, and which beat the measured table.
+    ///
+    /// Every row here exists because the sweep's number for that item was not the item's real
+    /// supply. Keep the reason with the row: a number no one can retrace is a number no one can
+    /// argue with later.
+    ///
+    /// The Ginger Island contamination (found 2026-08-30, the same trap as the desert in
+    /// v0.16.175): tly_sweepforage walks Game1.locations, and the throwaway save has the island
+    /// created, so IslandNorthCave1 was swept every day. That cave is the only island map with
+    /// Data/Locations forage rows, and it spawns Chanterelle, Common Mushroom, Red Mushroom and
+    /// Purple Mushroom at chance 0.9 in EVERY season. The island is content a loop never reaches
+    /// (see ItemPoolBuilder.BuiltInExcludedItemIds), so every mushroom count was inflated by it.
+    /// Purple Mushroom is the proof: it has no mainland Data/Locations forage row anywhere in the
+    /// game, yet the sweep credited it 17-19 a season. The other three mushrooms' measured rows
+    /// were halved in place (Jeff, 2026-08-30: "just cut what you found in half"); Purple Mushroom
+    /// had nothing honest left to halve, so its rows were deleted and this ruling stands instead.
+    ///
+    /// Purple Mushroom = 5 (Jeff, 2026-08-30): its real mainland supply is the mines' mushroom
+    /// floors (CcItemCatalog puts it at floor 80+ / Skull Cavern), which yield about that much,
+    /// and a player who knows what they are doing can farm them. A judgement, not a measurement.</summary>
+    private static readonly IReadOnlyDictionary<string, int> AskCeilingRulings =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+    {
+        ["(O)422"] = 5,   // Purple Mushroom
+    };
+
+    /// <summary>A ruled ceiling for the item, or null when none was ruled. Season-independent:
+    /// a ruling is a statement about the item's supply, not about one season's spawn table.</summary>
+    public static int? RuledMaxAsk(string itemId)
+        => itemId != null && AskCeilingRulings.TryGetValue(itemId, out int max) ? max : null;
+
     /// <summary>Measured mean count per season, from three full-year runs (loops 120/121/122).</summary>
     private static readonly IReadOnlyDictionary<(Season Season, string ItemId), double> Measured =
         new Dictionary<(Season, string), double>
@@ -112,8 +149,8 @@ public static class ForageAskLimits
         [(Season.Spring, "(O)393")] = 53.3,   // Coral: 50/59/51, max ask 43
         [(Season.Spring, "(O)18")] = 51.3,   // Daffodil: 49/57/48, max ask 42
         [(Season.Spring, "(O)22")] = 39.7,   // Dandelion: 47/46/26, max ask 32
-        [(Season.Spring, "(O)404")] = 34.0,   // Common Mushroom: 33/35/34, max ask 28
-        [(Season.Spring, "(O)281")] = 33.7,   // Chanterelle: 28/36/37, max ask 27
+        [(Season.Spring, "(O)404")] = 17.0,   // Common Mushroom: 33/35/34 island-halved, max ask 14 (exempt: wild seed)
+        [(Season.Spring, "(O)281")] = 16.9,   // Chanterelle: 28/36/37 island-halved, max ask 14
         [(Season.Spring, "(O)20")] = 27.0,   // Leek: 31/19/31, max ask 22
         [(Season.Spring, "(O)372")] = 18.3,   // Clam: 18/14/23, max ask 15
         [(Season.Spring, "(O)257")] = 11.0,   // Morel: 10/11/12, max ask 9
@@ -125,25 +162,23 @@ public static class ForageAskLimits
         [(Season.Summer, "(O)393")] = 56.3,   // Coral: 56/56/57, max ask 46
         [(Season.Summer, "(O)396")] = 48.0,   // Spice Berry: 45/47/52, max ask 39
         [(Season.Summer, "(O)398")] = 39.3,   // Grape: 31/37/50, max ask 32
-        [(Season.Summer, "(O)420")] = 28.3,   // Red Mushroom: 24/26/35, max ask 23
+        [(Season.Summer, "(O)420")] = 14.2,   // Red Mushroom: 24/26/35 island-halved, max ask 12
         [(Season.Summer, "(O)259")] = 24.7,   // Fiddlehead Fern: 21/30/23, max ask 20
-        [(Season.Summer, "(O)404")] = 19.3,   // Common Mushroom: 16/23/19, max ask 16
-        [(Season.Summer, "(O)281")] = 18.3,   // Chanterelle: 18/15/22, max ask 15
+        [(Season.Summer, "(O)404")] = 9.7,   // Common Mushroom: 16/23/19 island-halved, max ask 8 (exempt: wild seed)
+        [(Season.Summer, "(O)281")] = 9.2,   // Chanterelle: 18/15/22 island-halved, max ask 8
         [(Season.Summer, "(O)372")] = 17.0,   // Clam: 13/21/17, max ask 14
-        [(Season.Summer, "(O)422")] = 17.0,   // Purple Mushroom: 11/22/18, max ask 14
         [(Season.Summer, "(O)397")] = 13.3,   // Sea Urchin: 14/16/10, max ask 11
         [(Season.Summer, "(O)394")] = 7.3,   // Rainbow Shell: 11/5/6, max ask 6
         [(Season.Summer, "(O)719")] = 6.7,   // Mussel: 2/7/11, max ask 6
         // ---- Fall ----
-        [(Season.Fall, "(O)404")] = 57.7,   // Common Mushroom: 56/62/55, max ask 47
+        [(Season.Fall, "(O)404")] = 28.9,   // Common Mushroom: 56/62/55 island-halved, max ask 24 (exempt: wild seed)
         [(Season.Fall, "(O)410")] = 57.3,   // Blackberry: 59/72/41, max ask 46
         [(Season.Fall, "(O)393")] = 54.7,   // Coral: 55/54/55, max ask 44
         [(Season.Fall, "(O)90")] = 40.7,   // Cactus Fruit: 38/43/41, max ask 33
         [(Season.Fall, "(O)88")] = 32.0,   // Coconut: 32/28/36, max ask 26
-        [(Season.Fall, "(O)281")] = 26.0,   // Chanterelle: 23/27/28, max ask 21
+        [(Season.Fall, "(O)281")] = 13.0,   // Chanterelle: 23/27/28 island-halved, max ask 11
         [(Season.Fall, "(O)408")] = 22.3,   // Hazelnut: 24/20/23, max ask 18
-        [(Season.Fall, "(O)420")] = 22.3,   // Red Mushroom: 22/22/23, max ask 18
-        [(Season.Fall, "(O)422")] = 18.7,   // Purple Mushroom: 13/24/19, max ask 15
+        [(Season.Fall, "(O)420")] = 11.2,   // Red Mushroom: 22/22/23 island-halved, max ask 9
         [(Season.Fall, "(O)372")] = 17.7,   // Clam: 13/20/20, max ask 15
         [(Season.Fall, "(O)406")] = 15.0,   // Wild Plum: 14/12/19, max ask 12
         [(Season.Fall, "(O)397")] = 10.0,   // Sea Urchin: 10/12/8, max ask 8
@@ -156,12 +191,11 @@ public static class ForageAskLimits
         [(Season.Winter, "(O)414")] = 42.3,   // Crystal Fruit: 35/43/49, max ask 34
         [(Season.Winter, "(O)88")] = 36.7,   // Coconut: 34/36/40, max ask 30
         [(Season.Winter, "(O)90")] = 31.3,   // Cactus Fruit: 32/30/32, max ask 26
-        [(Season.Winter, "(O)422")] = 19.0,   // Purple Mushroom: 23/19/15, max ask 16
-        [(Season.Winter, "(O)281")] = 18.0,   // Chanterelle: 15/16/23, max ask 15
-        [(Season.Winter, "(O)420")] = 15.7,   // Red Mushroom: 14/16/17, max ask 13
+        [(Season.Winter, "(O)281")] = 9.0,   // Chanterelle: 15/16/23 island-halved, max ask 8
+        [(Season.Winter, "(O)420")] = 7.9,   // Red Mushroom: 14/16/17 island-halved, max ask 7
         [(Season.Winter, "(O)397")] = 12.0,   // Sea Urchin: 14/11/11, max ask 10
         [(Season.Winter, "(O)392")] = 12.0,   // Nautilus Shell: 12/12/12, max ask 10
-        [(Season.Winter, "(O)404")] = 10.3,   // Common Mushroom: 12/9/10, max ask 9
+        [(Season.Winter, "(O)404")] = 5.2,   // Common Mushroom: 12/9/10 island-halved, max ask 5 (exempt: wild seed)
         [(Season.Winter, "(O)372")] = 10.0,   // Clam: 9/10/11, max ask 8
     };
 
@@ -170,6 +204,8 @@ public static class ForageAskLimits
     public static int? MaxAsk(Season season, string itemId)
     {
         if (IsWildSeedGrowable(itemId)) return null;   // farmable without limit
+        int? ruled = RuledMaxAsk(itemId);
+        if (ruled != null) return ruled;
         double? mean = MeanFor(season, itemId);
         return mean == null ? null : Math.Max(1, (int)Math.Ceiling(mean.Value * CeilingFraction));
     }
@@ -199,6 +235,8 @@ public static class ForageAskLimits
     public static int? MaxAskAnySeason(string itemId)
     {
         if (itemId == null || IsWildSeedGrowable(itemId)) return null;
+        int? ruled = RuledMaxAsk(itemId);
+        if (ruled != null) return ruled;
         double best = 0;
         foreach (KeyValuePair<(Season Season, string ItemId), double> row in Measured)
             if (string.Equals(row.Key.ItemId, itemId, StringComparison.Ordinal) && row.Value > best)

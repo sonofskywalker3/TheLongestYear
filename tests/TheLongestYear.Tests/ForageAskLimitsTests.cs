@@ -137,4 +137,49 @@ public class ForageAskLimitsTests
         Assert.False(ForageAskLimits.IsBeforeUnlock(Season.Fall, "(O)90"));
         Assert.False(ForageAskLimits.IsBeforeUnlock(Season.Spring, "(O)394"));   // not desert
     }
+
+    /// <summary>Jeff's ruling, 2026-08-30. Purple Mushroom has no mainland Data/Locations forage
+    /// row at all: every count the sweep credited it came from IslandNorthCave1, which a loop
+    /// never reaches. Its real supply is the mines' mushroom floors, so the ceiling is 5 by
+    /// judgement, in every season, whatever the (now deleted) measured rows used to say.</summary>
+    [Theory]
+    [InlineData(Season.Spring)]
+    [InlineData(Season.Summer)]
+    [InlineData(Season.Fall)]
+    [InlineData(Season.Winter)]
+    public void PurpleMushroom_RuledCeilingOfFive_EverySeason(Season season)
+    {
+        Assert.Equal(5, ForageAskLimits.MaxAsk(season, "(O)422"));
+        Assert.Equal(5, ForageAskLimits.Clamp(season, "(O)422", 40));
+    }
+
+    /// <summary>A ruling has to beat the season-less path too, or a BundleSpec slot would fall
+    /// back to the measured table it was written to override.</summary>
+    [Fact]
+    public void PurpleMushroom_RuledCeiling_AppliesWithoutASeason()
+    {
+        Assert.Equal(5, ForageAskLimits.MaxAskAnySeason("(O)422"));
+        Assert.Equal(5, ForageAskLimits.ClampAnySeason("(O)422", 99));
+    }
+
+    /// <summary>The island cave spawned Chanterelle and Red Mushroom in seasons the mainland
+    /// cannot (Chanterelle's only mainland row is Woods/Fall; Red Mushroom's are Woods
+    /// Summer and Fall), so every row for them was halved. Spot-check that the ceilings moved
+    /// down and did not merely stay put.</summary>
+    [Theory]
+    [InlineData(Season.Spring, "(O)281", 14)]   // Chanterelle 33.7 -> 16.9
+    [InlineData(Season.Summer, "(O)281", 8)]    // Chanterelle 18.3 -> 9.2
+    [InlineData(Season.Fall, "(O)281", 11)]     // Chanterelle 26.0 -> 13.0
+    [InlineData(Season.Winter, "(O)281", 8)]    // Chanterelle 18.0 -> 9.0
+    [InlineData(Season.Summer, "(O)420", 12)]   // Red Mushroom 28.3 -> 14.2
+    [InlineData(Season.Fall, "(O)420", 9)]      // Red Mushroom 22.3 -> 11.2
+    [InlineData(Season.Winter, "(O)420", 7)]    // Red Mushroom 15.7 -> 7.9
+    public void IslandHalvedMushrooms_CeilingsHalved(Season season, string itemId, int expected)
+        => Assert.Equal(expected, ForageAskLimits.MaxAsk(season, itemId));
+
+    /// <summary>A ruling must not override the wild-seed exemption: Common Mushroom is farmable,
+    /// so it stays uncapped even though its rows were halved with the other mushrooms.</summary>
+    [Fact]
+    public void CommonMushroom_StaysUncapped_DespiteHalvedRows()
+        => Assert.Null(ForageAskLimits.MaxAsk(Season.Fall, "(O)404"));
 }
