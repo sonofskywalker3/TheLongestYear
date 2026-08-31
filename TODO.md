@@ -118,14 +118,23 @@ by where an item is *best* sourced, not merely where it is possible. Build a cur
   than a measurement. Needs an explicit override that beats the measured row, and a comment saying
   it is a ruling and not data.
 
-**C. Secret Woods gating — same class of bug as the desert fix (v0.16.175).** All three sweep runs
-used the throwaway save, which had everything already unlocked, so location-gated forage was counted
-with access a real loop does not have. The desert case is fixed; **Morel (Spring, ceiling 9) and
-Fiddlehead Fern (Summer, ceiling 20) are Secret Woods items behind the Steel Axe**
-(`LocationGating` week 4) and are suspect on identical grounds. Chanterelle and Purple Mushroom may
-be partly Woods too. Either drop the pre-unlock seasons the way the desert rows were dropped, or
-re-run the sweep with per-map attribution (the daily log already names the maps; the chest totals
-throw that away - widening the CSV to a per-map column would settle it permanently).
+**C. PART DONE 0.16.177 (Ginger Island), Secret Woods STILL OPEN.** The bigger half of C turned
+out not to be the Woods at all: `tly_sweepforage` walks `Game1.locations`, and the throwaway save
+has the island created, so `IslandNorthCave1` was swept every day. It is the only island map with
+`Data/Locations` forage rows and it spawns four mushrooms at chance 0.9 in EVERY season. Purple
+Mushroom is the proof - no mainland forage row exists anywhere in the game, yet the sweep credited
+it 17-19 a season. Jeff's ruling: Purple Mushroom capped at 5 (mines' mushroom floors, and it is
+farmable), the other mushrooms halved. Shipped as `AskCeilingRulings` plus island-halved rows.
+Full write-up: `docs/superpowers/notes/forage-sweep-caveats.md`.
+
+**Still open from C:** **Morel `(O)257`** is Woods-only and Spring-only, and `LocationGating` puts
+the Steel Axe at week 4 of a four-week Spring, so its ceiling of 9 assumes four times the access a
+loop gets. Either drop it from Spring asks or cut the ceiling to about a quarter. Fiddlehead Fern
+is NOT at risk on access grounds after all: Summer is weeks 5-8, entirely after the gate.
+
+**Also still open:** a proper re-run needs `tly_sweepforage` taught to record **per-map, per-item**
+counts and to skip maps a loop cannot reach. The daily log names item counts only, not maps, so the
+existing CSV cannot be attributed after the fact (the earlier note in this file said otherwise).
 
 **D. Crab pots — command built (v0.16.173), never run.** `tly_crabpots place 10` then a daily
 `tly_crabpots` for a season, then `report`. Zones Beach/Forest/Town/Mountain; the catch table splits
@@ -146,6 +155,29 @@ unclamped because the forage sweep only sees a fraction of their real supply.
 
 **Also still open from the same sweep:** the Mystic Tree item below, and `tly_forageyield`
 (v0.16.170) is now superseded by measured data for forage - keep or retire it deliberately.
+
+### FIXED 0.16.176: Extended Family fish could be asked for (Nexus bug, spenderg, 30 Aug)
+
+"My river fish bundle requires ms. Angler which can only be caught during a post community center
+Qi quest." All five Extended Family fish (898-902) carry `ExcludeFromRandomSale=false` in
+Data/Objects, unlike the five vanilla legendaries which are flagged true and so were always dropped
+by the vet; and they spawn on ordinary Town/Beach/Mountain/Forest/Sewer maps, so no location marker
+caught them either. The only signal is the spawn row's Condition,
+`PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY`, which ItemPoolBuilder read only to
+guess seasons. It now skips any spawn row gated on a live special order, in the fish pool, the
+forage pool (Qi Beans ride DROP_QI_BEANS) and the quality-eligible set. Clause-aware by necessity:
+vanilla writes the PARENT legendaries as NEGATED rows of the same query, so a substring match would
+have deleted Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp outright.
+
+**Reply to spenderg still owed** once this ships (draft goes to Jeff in chat first).
+
+### Unanswered Nexus posts, both design questions rather than bugs (checked 30 Aug)
+
+- **RayAndRain, 29 Aug:** in four loops the chef bundle never appeared as a checkpoint or a weekly
+  challenge, and asked whether that is by design. Loved the mod otherwise. Worth checking whether
+  the chef bundle can be drawn for either at all.
+- **gazumbrado, 29 Aug:** double XP at 100 JP is too cheap. Bought every one and had Fishing,
+  Foraging and Mining at level 5 by day 4 of a new save. A pricing question for the boost ladder.
 
 ### NEW (found 2026-08-30 while checking Nijah's report, not something she reported): Mystic Tree tap timing likely wrong — no Ginger Island gate at all
 
