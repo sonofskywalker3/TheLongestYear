@@ -8,23 +8,23 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.16.178`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.16.167`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
 ---
 
-## What's New in 0.16.178
+## What's New in 0.16.167
 
-**Bundles now ask for amounts you can actually gather, and the experience upgrades cost what they are worth.**
+**Spend JP mid-loop, keep the Junimos' own gifts, and a board that counts every slot.**
 
-- **Bundle quantities are capped at what a season really produces.** How much of an item a season yields was measured by harvesting every piece of forage on every map, every day, across three full in-game years. No estimates. A Summer bundle can no longer ask for 95 Rainbow Shells when a Summer grows about seven. Anything you can raise from Wild Seeds is exempt, because you can farm those without limit.
-- **Nothing behind a Mr. Qi quest can be asked for any more.** Ms. Angler and the rest of the Extended Family fish only exist while a post-Community-Center quest is running, so they are out, along with anything else gated behind a special order.
-- **Desert forage waits for the bus.** Cactus Fruit and Coconut are only asked for in the seasons where you could realistically have repaired it.
-- **Mushroom amounts corrected.** They had been measured on a save that could reach Ginger Island, which made them look far more common than they are on the mainland.
-- **Mystic Syrup waits for the tree,** not just for a tapper.
-- **Experience upgrades rebalanced.** Each step now adds 25% rather than multiplying, and the four steps cost 150, 350, 650 and 1,000 JP. Doubling a skill's experience is now the end of its chain instead of the first thing you buy, and Junimo Insight adds 50% on top rather than doubling everything again. If you already bought the old ones, that JP comes straight back when you load this version, to spend under the new prices.
-- **Thank you to Nijah, spenderg and gazumbrado** for the reports behind this release.
+- **JP Boosts.** The Junimo statue on your farm now has three tabs. Boosts sells eighteen this-loop buys for JP: tomorrow's rain or storm, a guaranteed lucky day, a free late night, a week of extra forage, fish, crop, mine, monster, machine, animal or all-round rolls that stack with the weekly theme, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot (temporary, price climbs with each one), or an elevator stop you have not earned yet. Active shows what is running and when it ends; Plan shows every keep's price and what the locked ones still need.
+- **Gifts of the Junimos.** A new shrine category: Keep Greenhouse (put back where you left it), Keep Quarry Bridge, Keep Boulder Cleared, Keep Minecarts and Keep Bus Unlocked. Each is offered once you have earned that room's reward this loop; the first costs 1,000 JP and every Gift you own raises the price of the rest by 1,000, up to 5,000. The room's bundles stay on the board and still pay.
+- **Three new weekly themes: Spelunking, Artisan and Kitchen.** Their goals match by item kind anywhere on the board. Spelunking doubles monster drops one time in ten but slows machines; Artisan speeds machines but weakens cooked food; Kitchen gives animals a chance at a second product but monsters hit harder. Eight themes, still two cards a week, and the weekly JP bonus is now paid goal by goal.
+- **Keep your wallet items and Stardrops.** Eighteen new keeps, one per wallet item, one each for Bear's Knowledge and Spring Onion Mastery, and one per Stardrop source. Plus a Garden Pot recipe keep.
+- **The board counts every slot.** A donation credits one bundle, a bundle with a repeated item needs every slot, and a Winter win needs a truly finished Center. Bundles roll from the full pool of their kind with no item asked twice, seasonal forage bundles ask only for their season, Night Fishing asks only for night fish, and legendary fish and year-two crops can appear at low odds. Every item has a first week it can exist, so no gate asks for what you cannot reach.
+- **Fixes.** Keep Bus Unlocked now actually runs the bus from day 1 (the Vault bundles stay on the board and still pay). Heart-event invitations send again every loop, so 8 and 10 heart events are reachable after a rewind. Keep Horse waits for a stable. Stardew Valley Expanded saves keep season pity. A toggle to re-send the Better Start gift each loop (on by default).
+- 0.16.18 to 0.16.166 were internal builds; this is the first release since 0.16.17.
 
 Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in [CHANGELOG.md](CHANGELOG.md).
 

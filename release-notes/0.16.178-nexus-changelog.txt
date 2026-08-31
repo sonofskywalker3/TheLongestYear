@@ -1,0 +1,29 @@
+0.16.178 - Bundles ask for what you can actually gather; experience upgrades rebalanced
+
+A balance and correctness release driven entirely by your reports. Thank you to Nijah, spenderg
+and gazumbrado.
+
+Fixed
+- Bundle quantities are capped at what a season really produces. How much of an item a season
+  yields was measured by harvesting every piece of forage on every map, every day, across three
+  full in-game years, rather than estimated. A Summer bundle can no longer ask for 95 Rainbow
+  Shells when a Summer grows about seven. Anything you can raise from Wild Seeds is exempt,
+  because you can farm those without limit.
+- Nothing behind a Mr. Qi quest can be asked for any more. Ms. Angler and the rest of the
+  Extended Family fish only exist while a post-Community-Center quest is running, so they are
+  out, along with anything else gated behind a special order.
+- Desert forage waits for the bus: Cactus Fruit and Coconut are only asked for in the seasons
+  where you could realistically have repaired it.
+- Mushroom amounts corrected. They had been measured on a save that could reach Ginger Island,
+  which made them look far more common than they are on the mainland.
+- Mystic Syrup waits for the tree to be reachable, not just for a tapper to be ready.
+
+Changed
+- Experience upgrades rebalanced. Each step now adds 25% rather than multiplying, and the four
+  steps cost 150, 350, 650 and 1,000 JP. Doubling a skill's experience is now the end of its
+  chain instead of the first thing you buy, and Junimo Insight adds 50% on top rather than
+  doubling everything again.
+- If you already bought the old experience upgrades, that JP comes straight back when you load
+  this version, so you can spend it under the new prices.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

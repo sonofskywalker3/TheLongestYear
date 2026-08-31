@@ -3,6 +3,59 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.178 - 2026-08-31
+
+1907 tests. A balance and correctness release driven by player reports (Nijah, spenderg,
+gazumbrado). 0.16.168 to 0.16.177 were internal builds.
+
+### Fixed
+
+- **Bundle quantities are clamped to measured yields (0.16.172).** A Summer Foraging bundle had
+  asked for 95 Rainbow Shells; a real Summer grows about seven. Every forage item now carries a
+  ceiling of 80% of what a season actually produces, with the easy and hard bands at 20-50% and
+  50-80% of it. The numbers are MEASURED, not modelled: `tly_sweepforage` harvests every spawned
+  forage object on every map every day, and the table is the mean of three full 112-day runs. An
+  expected-value pass over the spawn tables was tried first and came out 2.3x too high. Bonuses
+  (Gatherer, the Foraging theme, Overgrowth) are deliberately excluded from the measurement, so
+  an ask is out of reach on a lean month played bare and reachable on one played well.
+- **Anything Wild Seeds can grow is never capped (0.16.174).** Its supply is tilled land and time,
+  not the spawn rate, so a measured ceiling means nothing for it. Shells and mushrooms are not in
+  that set and keep their caps: you cannot grow a Rainbow Shell.
+- **Desert forage is only measured once the bus can run (0.16.175).** The measuring save had the
+  desert already open, so Cactus Fruit and Coconut were credited about 38 a season from Spring 1.
+  Their Spring and Summer rows are dropped; the ceiling comes from Fall and Winter.
+- **Extended Family fish can no longer be asked for (0.16.176).** Ms. Angler, Son of Crimsonfish,
+  Legend II, Radioactive Carp and Glacierfish Jr. only spawn while Mr. Qi's Extended Family order
+  is active, which needs the Walnut Room on Ginger Island. Unlike the five vanilla legendaries
+  they are not flagged out of random sale, and they spawn on ordinary maps, so nothing had caught
+  them. Any spawn row gated on a live special order is now skipped, which covers Qi Beans too.
+- **Mushroom ceilings corrected for Ginger Island (0.16.177).** The sweep walks every loaded map,
+  and the measuring save had the island created, so the island cave's all-season mushroom spawns
+  were counted as reachable. Purple Mushroom has no mainland forage row anywhere in the game yet
+  had been credited 17-19 a season; it is now capped at 5 by ruling (the mines' mushroom floors).
+  Chanterelle, Red Mushroom and Common Mushroom were halved.
+- **Mystic Syrup is gated on its tree, not just the tapper (0.16.168).**
+
+### Changed
+
+- **Experience upgrades rebalanced (0.16.178).** The per-skill chain was x2/x3/x4/x5 for
+  100/200/350/550 JP; it is now +25/50/75/100% for 150/350/650/1,000. Junimo Insight adds 50%
+  instead of doubling, price unchanged at 3,000, and still feeds Mastery XP. The percentages add
+  rather than compound, so the ceiling is x2.5 instead of x10. Reported by gazumbrado, who bought
+  every first tier for 100 JP each and had three skills at level 5 by day 4.
+- **Existing owners are refunded, not grandfathered.** On first load of this version the JP spent
+  on the old experience upgrades comes back at the old prices and the tiers are cleared, so the
+  same points are re-spent under the new ladder.
+
+### Added
+
+- **`tly_sweepforage` (0.16.171)** harvests every spawned forage object on every map into a
+  per-season chest, which is how the yield table was measured. **`tly_crabpots` (0.16.173)** does
+  the same for crab pots. **`tly_forageyield` (0.16.170)** reads the read-only yield simulator
+  (0.16.169), now superseded for forage by the measured data.
+- **`docs/superpowers/notes/forage-sweep-caveats.md`** records what the sweep counted that a real
+  loop cannot reach (desert, Ginger Island, Secret Woods) and what a future re-run needs first.
+
 ## 0.16.167 - 2026-08-29
 
 1822 tests. Two full simulated years on this build (STATUS.md), the boosts, gifts and every fix live-checked over the bridge. 0.16.18 to 0.16.166 were internal builds; this is the first release since 0.16.17.
