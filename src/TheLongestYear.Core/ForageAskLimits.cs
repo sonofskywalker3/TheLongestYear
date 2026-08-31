@@ -50,6 +50,29 @@ public static class ForageAskLimits
     /// mistake this class exists to stop. They stay unclamped until their own routes are measured.</summary>
     public const double MinMeasuredAverage = 5.0;
 
+    /// <summary>Everything Wild Seeds can grow (decompile Crop.getRandomWildCropForSeason, line
+    /// 739). These are NEVER capped below the 99 stack limit, because their supply is not the wild
+    /// spawn rate at all: the Wild Seeds recipe turns 4 forage into 10 seeds, each seed grows one of
+    /// these back, and the cycle repeats. Supply is bounded by tilled watered land and time, not by
+    /// what the maps happen to drop, so a measured spawn count is meaningless as a ceiling for them.
+    ///
+    /// Note what is NOT here, which is the whole reason the distinction matters: you cannot grow a
+    /// shell. Rainbow Shell, Coral, Sea Urchin, Clam, Nautilus Shell, Cactus Fruit, Coconut,
+    /// Fiddlehead Fern and the Red/Purple/Chanterelle mushrooms are all absent, so their measured
+    /// ceilings stand - Summer Seeds cannot be farmed into a Rainbow Shell no matter how much land
+    /// is given over to them.</summary>
+    private static readonly IReadOnlySet<string> WildSeedGrowable = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)16", "(O)18", "(O)20", "(O)22",                  // Spring: Wild Horseradish, Daffodil, Leek, Dandelion
+        "(O)396", "(O)398", "(O)402",                        // Summer: Spice Berry, Grape, Sweet Pea
+        "(O)404", "(O)406", "(O)408", "(O)410",              // Fall:   Common Mushroom, Wild Plum, Hazelnut, Blackberry
+        "(O)412", "(O)414", "(O)416", "(O)418",              // Winter: Winter Root, Crystal Fruit, Snow Yam, Crocus
+    };
+
+    /// <summary>True when the item can be farmed from Wild Seeds, so no measured cap applies.</summary>
+    public static bool IsWildSeedGrowable(string itemId)
+        => itemId != null && WildSeedGrowable.Contains(itemId);
+
     /// <summary>Measured mean count per season, from three full-year runs (loops 120/121/122).</summary>
     private static readonly IReadOnlyDictionary<(Season Season, string ItemId), double> Measured =
         new Dictionary<(Season, string), double>
@@ -120,6 +143,7 @@ public static class ForageAskLimits
     /// (or sits under <see cref="MinMeasuredAverage"/>), in which case the caller must not clamp.</summary>
     public static int? MaxAsk(Season season, string itemId)
     {
+        if (IsWildSeedGrowable(itemId)) return null;   // farmable without limit
         double? mean = MeanFor(season, itemId);
         return mean == null ? null : Math.Max(1, (int)Math.Ceiling(mean.Value * CeilingFraction));
     }
@@ -148,7 +172,7 @@ public static class ForageAskLimits
     /// can produce, so this can only ever be too lenient, never impossible.</summary>
     public static int? MaxAskAnySeason(string itemId)
     {
-        if (itemId == null) return null;
+        if (itemId == null || IsWildSeedGrowable(itemId)) return null;
         double best = 0;
         foreach (KeyValuePair<(Season Season, string ItemId), double> row in Measured)
             if (string.Equals(row.Key.ItemId, itemId, StringComparison.Ordinal) && row.Value > best)
