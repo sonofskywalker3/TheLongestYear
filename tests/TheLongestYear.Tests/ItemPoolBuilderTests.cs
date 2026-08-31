@@ -63,6 +63,90 @@ public class ItemPoolBuilderTests
         Assert.Equal(Season.Winter, pools.DerivedSeasonPins["(O)800"]);
     }
 
+    /// <summary>Nexus bug, spenderg, 2026-08-30: a river fish bundle asked for Ms. Angler, which
+    /// can only be caught while Mr. Qi's Extended Family order is running - post-Community-Center
+    /// content a one-year loop never reaches. Data/Objects gives all five Extended Family fish
+    /// ExcludeFromRandomSale=false (unlike the vanilla legendaries), and their spawn maps are the
+    /// ordinary Town/Beach/Mountain/Forest/Sewer, so only the spawn row's Condition betrays them.</summary>
+    [Theory]
+    [InlineData("(O)898")]  // Son of Crimsonfish, Beach
+    [InlineData("(O)899")]  // Ms. Angler, Town
+    [InlineData("(O)900")]  // Legend II, Mountain
+    [InlineData("(O)901")]  // Radioactive Carp, Sewer
+    [InlineData("(O)902")]  // Glacierfish Jr., Forest
+    public void Fish_ExtendedFamily_StaysOutOfPool(string qualifiedId)
+    {
+        string bare = qualifiedId.Substring(3);
+        var pools = Build(
+            fish: new[]
+            {
+                new RawSpawnEntry(qualifiedId, null, "PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", "Town"),
+            },
+            objects: Objects((bare, Obj(category: -4, type: "Fish"))));
+        Assert.Empty(pools.Fish);
+        Assert.DoesNotContain(qualifiedId, pools.QualityEligibleIds);
+    }
+
+    /// <summary>The trap this fix had to avoid: vanilla writes the PARENT legendaries as negated
+    /// rows of the very same query ("!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY"
+    /// is Angler's only row, because the order swaps parent for child). A negated clause means
+    /// reachable WITHOUT the order, which is exactly the state a loop is in, so the row must
+    /// count.</summary>
+    [Fact]
+    public void Fish_NegatedSpecialOrderRow_StaysInPool()
+    {
+        var pools = Build(
+            fish: new[]
+            {
+                new RawSpawnEntry("(O)160", null, "!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", "Town"),
+            },
+            objects: Objects(("160", Obj(category: -4, type: "Fish"))));
+        Assert.Equal("(O)160", Assert.Single(pools.Fish).ItemId);
+    }
+
+    /// <summary>Only the gated ROW is dropped, not the item: a fish that also spawns normally
+    /// keeps that spawn's season and location.</summary>
+    [Fact]
+    public void Fish_GatedRowDropped_UngatedRowKept()
+    {
+        var pools = Build(
+            fish: new[]
+            {
+                new RawSpawnEntry("(O)128", Season.Fall, "PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", "Sewer"),
+                new RawSpawnEntry("(O)128", Season.Spring, null, "Beach"),
+            },
+            objects: Objects(("128", Obj(category: -4, type: "Fish"))));
+        PoolItem pufferfish = Assert.Single(pools.Fish);
+        Assert.Equal(new[] { Season.Spring }, pufferfish.Seasons);
+        Assert.Equal(new[] { "Beach" }, pufferfish.Locations);
+    }
+
+    /// <summary>Forage rows carry the same gate - Qi Beans drop from DROP_QI_BEANS - so the
+    /// forage pool has to read the Condition too.</summary>
+    [Fact]
+    public void Forage_SpecialOrderGated_StaysOutOfPool()
+    {
+        var pools = Build(
+            forage: new[]
+            {
+                new RawSpawnEntry("(O)890", null, "!IS_FESTIVAL_DAY, PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS", "Default"),
+            },
+            objects: Objects(("890", Obj(category: -74, type: "Seeds"))));
+        Assert.Empty(pools.Forage);
+    }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("SEASON spring", false)]
+    [InlineData("PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", true)]
+    [InlineData("PLAYER_SPECIAL_ORDER_ACTIVE Current Gunther", true)]
+    [InlineData("!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", false)]
+    [InlineData("!IS_FESTIVAL_DAY, PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS", true)]
+    [InlineData("!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY, WEATHER Here Rain", false)]
+    public void IsSpecialOrderGated_ReadsClausesAndRespectsNegation(string? condition, bool expected)
+        => Assert.Equal(expected, ItemPoolBuilder.IsSpecialOrderGated(condition));
+
     [Fact]
     public void Crops_QualifiedIds_SeasonsKept_OrderedByItemId()
     {

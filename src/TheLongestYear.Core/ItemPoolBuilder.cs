@@ -228,6 +228,50 @@ public static class ItemPoolBuilder
 
     private const string PassiveFestivalOpenQuery = "IS_PASSIVE_FESTIVAL_OPEN";
     private static readonly char[] ConditionSeparators = { ' ', ',' };
+    private static readonly char[] ClauseSeparator = { ',' };
+
+    /// <summary>Game state queries that gate a Data/Locations row on a special order being
+    /// active. A row carrying one of these is only reachable while that order is running, and
+    /// every order that matters here is Mr. Qi's: the Extended Family fish sit behind
+    /// LEGENDARY_FAMILY and Qi Beans behind DROP_QI_BEANS, both of which need the Walnut Room on
+    /// Ginger Island, i.e. post-Community-Center. A one-year loop can never see them.
+    ///
+    /// Found by Nexus bug 2026-08-30 (spenderg): a river fish bundle asked for Ms. Angler. Unlike
+    /// the five vanilla legendaries, which Data/Objects flags ExcludeFromRandomSale so the vet
+    /// drops them, all five Extended Family fish (898-902) carry ExcludeFromRandomSale=false, and
+    /// their spawn maps are ordinary Town/Beach/Mountain/Forest/Sewer, so no location marker and
+    /// no id list caught them.
+    ///
+    /// THE TRAP, and why this must be clause-aware and not a substring match: the vanilla
+    /// legendaries are themselves written as NEGATED rows of the same query
+    /// ("!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY" is Angler's ONLY row, because
+    /// vanilla swaps parent for child while the order runs). A naive Contains() would delete
+    /// Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp from the pool outright. A negated
+    /// clause means the row is reachable WITHOUT the order, which is exactly what a loop has.</summary>
+    private static readonly string[] SpecialOrderQueries =
+    {
+        "PLAYER_SPECIAL_ORDER_RULE_ACTIVE",
+        "PLAYER_SPECIAL_ORDER_ACTIVE",
+    };
+
+    /// <summary>True when a spawn row can only fire while a special order is active, so a loop
+    /// that never reaches Qi cannot get the item from it. See <see cref="SpecialOrderQueries"/>.
+    /// A Condition is a comma-separated AND of clauses, so one non-negated clause is enough.</summary>
+    public static bool IsSpecialOrderGated(string? condition)
+    {
+        if (string.IsNullOrEmpty(condition)) return false;
+        foreach (string clause in condition.Split(ClauseSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            string trimmed = clause.Trim();
+            if (trimmed.StartsWith('!')) continue;   // reachable without the order - see the trap above
+            int space = trimmed.IndexOf(' ');
+            string query = space < 0 ? trimmed : trimmed.Substring(0, space);
+            foreach (string gated in SpecialOrderQueries)
+                if (string.Equals(query, gated, StringComparison.OrdinalIgnoreCase))
+                    return true;
+        }
+        return false;
+    }
 
     /// <summary>Season list for one spawn entry: an explicit Season wins; otherwise any
     /// season names found in the Condition string (best-effort GameStateQuery token scan);
@@ -360,7 +404,7 @@ public static class ItemPoolBuilder
 
         foreach (RawSpawnEntry spawn in fishSpawns)
         {
-            if (string.IsNullOrEmpty(spawn.ItemId))
+            if (string.IsNullOrEmpty(spawn.ItemId) || IsSpecialOrderGated(spawn.Condition))
                 continue;
             string bare = Unqualify(spawn.ItemId);
             string id = Qualify(bare);
@@ -460,7 +504,7 @@ public static class ItemPoolBuilder
 
         foreach (RawSpawnEntry spawn in forageSpawns)
         {
-            if (string.IsNullOrEmpty(spawn.ItemId))
+            if (string.IsNullOrEmpty(spawn.ItemId) || IsSpecialOrderGated(spawn.Condition))
                 continue;
             string bare = Unqualify(spawn.ItemId);
             string id = Qualify(bare);
@@ -799,7 +843,7 @@ public static class ItemPoolBuilder
         }
         foreach (RawSpawnEntry spawn in fishSpawns)
         {
-            if (string.IsNullOrEmpty(spawn.ItemId)) continue;
+            if (string.IsNullOrEmpty(spawn.ItemId) || IsSpecialOrderGated(spawn.Condition)) continue;
             string bare = Unqualify(spawn.ItemId);
             string id = Qualify(bare);
             if (!Vets(bare, id, objects, excluded)) continue;
@@ -810,7 +854,7 @@ public static class ItemPoolBuilder
         }
         foreach (RawSpawnEntry spawn in forageSpawns)
         {
-            if (string.IsNullOrEmpty(spawn.ItemId)) continue;
+            if (string.IsNullOrEmpty(spawn.ItemId) || IsSpecialOrderGated(spawn.Condition)) continue;
             string bare = Unqualify(spawn.ItemId);
             string id = Qualify(bare);
             if (!Vets(bare, id, objects, excluded)) continue;
