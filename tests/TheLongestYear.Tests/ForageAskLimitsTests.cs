@@ -111,4 +111,30 @@ public class ForageAskLimitsTests
         Assert.False(ForageAskLimits.IsWildSeedGrowable(itemId));
         Assert.NotNull(ForageAskLimits.MaxAskAnySeason(itemId));
     }
+
+    /// <summary>Desert forage needs the bus repaired, which TLY paces at week 9 (Fall 1). The
+    /// measurements were taken on a save that already had the desert open, so the sweep counted
+    /// Cactus Fruit and Coconut from Spring 1 - about 38 a season - which no real loop can reach.
+    /// Those pre-unlock seasons are dropped, so the ceiling comes only from Fall and Winter.</summary>
+    [Theory]
+    [InlineData("(O)90")]   // Cactus Fruit
+    [InlineData("(O)88")]   // Coconut
+    public void Desert_forage_is_not_measured_before_the_bus_is_repaired(string itemId)
+    {
+        Assert.True(ForageAskLimits.IsDesertOnly(itemId));
+        Assert.Null(ForageAskLimits.MaxAsk(Season.Spring, itemId));
+        Assert.Null(ForageAskLimits.MaxAsk(Season.Summer, itemId));
+        Assert.NotNull(ForageAskLimits.MaxAsk(Season.Fall, itemId));
+        Assert.NotNull(ForageAskLimits.MaxAsk(Season.Winter, itemId));
+    }
+
+    [Fact]
+    public void Desert_opens_in_fall_and_earlier_seasons_are_flagged()
+    {
+        Assert.Equal(Season.Fall, ForageAskLimits.DesertOpensIn);
+        Assert.True(ForageAskLimits.IsBeforeUnlock(Season.Spring, "(O)90"));
+        Assert.True(ForageAskLimits.IsBeforeUnlock(Season.Summer, "(O)90"));
+        Assert.False(ForageAskLimits.IsBeforeUnlock(Season.Fall, "(O)90"));
+        Assert.False(ForageAskLimits.IsBeforeUnlock(Season.Spring, "(O)394"));   // not desert
+    }
 }
