@@ -92,6 +92,61 @@ granular enough (per-day, not just per-season) before building a parallel table.
 draft in chat, not posted without Jeff's yes. She did NOT flag Mystic Syrup as a problem (see below) —
 don't apologize for or reference it in the reply, she only mentioned it in passing.
 
+### OPEN follow-ups to the quantity clamp (2026-08-30) — pick ONE, they are independent
+
+Shipped so far: `ForageAskLimits` (v0.16.172), wild-seed exemption (v0.16.174), desert gating
+(v0.16.175). Measured data: `docs/superpowers/notes/forage-sweep-results.csv` (3 full-year runs,
+loops 120/121/122). Tools: `tly_sweepforage`, `tly_crabpots`, `tly_forageyield`.
+Method that must be reused for any "is this really possible?" question: **measure it in the game,
+do not model it.** An expected-value pass was wrong by 2.3x and Jeff rightly rejected it.
+
+**A. Curated season-pin table (Jeff, 2026-08-30).** Season pins today come from `DerivePins`
+(`ItemPoolBuilder.cs:823`), which pins to the EARLIEST season an item is obtainable. Jeff wants pins
+by where an item is *best* sourced, not merely where it is possible. Build a curated override table
+(same shape as `BuiltInSeasonalForageAdditions`, `ItemPoolBuilder.cs:47`) and seed it with:
+- **Moss → Summer.** Green Rain is the real supply.
+- **Fiddlehead Fern → Summer.** It only belongs in the Summer gate and Summer themes; its stray
+  Spring/Fall/Winter sweep counts (0.3-1.3) are noise and must not let it into those pools.
+
+**B. Moss and Fiddlehead ceilings (Jeff, 2026-08-30, do with or after A).**
+- **Moss: NO cap.** One Green Rain yields hundreds. Add to the never-capped path alongside
+  `WildSeedGrowable` (or generalise that into an "unbounded supply" set). Moss never appeared in the
+  forage sweep at all - it comes off trees, not ground spawns - so there is no measured number and
+  none is needed.
+- **Fiddlehead Fern: cap 75**, overriding the measured 20. Green Rain floods the forest with them
+  and they can be tapped, but not without limit inside one Summer, so 75 is Jeff's judgement rather
+  than a measurement. Needs an explicit override that beats the measured row, and a comment saying
+  it is a ruling and not data.
+
+**C. Secret Woods gating — same class of bug as the desert fix (v0.16.175).** All three sweep runs
+used the throwaway save, which had everything already unlocked, so location-gated forage was counted
+with access a real loop does not have. The desert case is fixed; **Morel (Spring, ceiling 9) and
+Fiddlehead Fern (Summer, ceiling 20) are Secret Woods items behind the Steel Axe**
+(`LocationGating` week 4) and are suspect on identical grounds. Chanterelle and Purple Mushroom may
+be partly Woods too. Either drop the pre-unlock seasons the way the desert rows were dropped, or
+re-run the sweep with per-map attribution (the daily log already names the maps; the chest totals
+throw that away - widening the CSV to a per-map column would settle it permanently).
+
+**D. Crab pots — command built (v0.16.173), never run.** `tly_crabpots place 10` then a daily
+`tly_crabpots` for a season, then `report`. Zones Beach/Forest/Town/Mountain; the catch table splits
+ocean vs fresh (`CrabPot.DayUpdate`). Jeff: pots do not change with the season, so one season can be
+extrapolated. This is what unblocks **Cockle, Mussel, Oyster and Clam**, which are currently
+unclamped because the forage sweep only sees a fraction of their real supply.
+
+**E. Fish — not started, two separate questions.**
+1. *Quantity.* There is no documented max catches per day and it is not a data constant; it falls
+   out of real time (bite wait + minigame + recast against a 6am-2am window). Jeff wants a measured
+   maximum, then ~80% of it as the basis, accounting for rain days and catch windows. Needs its own
+   harvester in the spirit of `tly_sweepforage`. **Seaweed** stays unclamped until this lands.
+2. *Quality.* Separate problem from quantity, and the real content of the "Gold Star Octopus"
+   complaint. Quality is influenceable - a perfect catch, fishing level, and the Quality Bobber
+   tackle all raise it; bait/tackle otherwise move bite rate, not quality. So a gold-star fish ask is
+   a skill-and-kit gate, not a supply gate, and probably wants a different rule from the quantity
+   clamp. Decide whether quality asks on fish are allowed at all, and from which week.
+
+**Also still open from the same sweep:** the Mystic Tree item below, and `tly_forageyield`
+(v0.16.170) is now superseded by measured data for forage - keep or retire it deliberately.
+
 ### NEW (found 2026-08-30 while checking Nijah's report, not something she reported): Mystic Tree tap timing likely wrong — no Ginger Island gate at all
 
 While checking Nijah's mention of Mystic Syrup (she stated it as a fact, not a complaint — no bug
