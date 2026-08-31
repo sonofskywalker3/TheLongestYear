@@ -166,6 +166,20 @@ namespace TheLongestYear.Loop
             if (Run.ActiveBoosts.Count > boostsBefore)
                 _monitor.Log($"Migrated {Run.ActiveBoosts.Count - boostsBefore} legacy boost flag(s) into ActiveBoosts.", LogLevel.Info);
 
+            // One-time XP ladder respec (2026-08-30 rebalance, Nexus feedback from gazumbrado).
+            // The x2..x5 tiers no longer exist, so anything bought under them is refunded at the
+            // OLD prices and removed; the player re-buys under the +25%-per-tier ladder with the
+            // same points. See XpLadderRespec for the ruling behind it.
+            if (XpLadderRespec.IsOwed(_store.State))
+            {
+                long refunded = XpLadderRespec.Respec(_store.State, out int cleared);
+                if (cleared > 0)
+                    _monitor.Log(
+                        $"XP upgrades were rebalanced: refunded {refunded} JP and cleared {cleared} " +
+                        "skill experience upgrade(s). Re-buy them at the shrine under the new prices.",
+                        LogLevel.Info);
+            }
+
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
 
             // Diagnostic: surface this save's resolved Vault (bus-repair) bundle indices + gold so a

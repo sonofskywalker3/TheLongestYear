@@ -367,8 +367,11 @@ public class UpgradeCatalogTests
                 Assert.Equal(UpgradeCategory.Efficiency, def!.Category);
                 Assert.Equal(tier == 1 ? null : $"xp_mult_{slug}_{tier - 1}", def.PrerequisiteId);
             }
-            Assert.Equal(100, UpgradeCatalog.TryGet($"xp_mult_{slug}_1")!.Cost);
-            Assert.Equal(550, UpgradeCatalog.TryGet($"xp_mult_{slug}_4")!.Cost);
+            // Rebalanced 2026-08-30: 150/350/650/1000, so one skill doubled costs 2,150 JP.
+            Assert.Equal(150, UpgradeCatalog.TryGet($"xp_mult_{slug}_1")!.Cost);
+            Assert.Equal(350, UpgradeCatalog.TryGet($"xp_mult_{slug}_2")!.Cost);
+            Assert.Equal(650, UpgradeCatalog.TryGet($"xp_mult_{slug}_3")!.Cost);
+            Assert.Equal(1000, UpgradeCatalog.TryGet($"xp_mult_{slug}_4")!.Cost);
         }
 
         var capstone = UpgradeCatalog.TryGet("xp_mult_all");

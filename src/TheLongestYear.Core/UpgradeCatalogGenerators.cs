@@ -184,11 +184,14 @@ internal static class UpgradeCatalogGenerators
         }
     }
 
-    // XP multiplier costs, indexed [1..4] (tier N = x(N+1) on one skill). Deliberately
-    // cheaper than the keep-level chain: keeps set your starting floor, multipliers set
-    // your re-leveling slope (spec 2026-07-14 economy Change 3). Full family = 5x1200
-    // + 3000 capstone = 9000 JP for x10-everything — deep-meta territory.
-    private static readonly long[] XpMultCosts = { 0, 100, 200, 350, 550 };
+    // XP multiplier costs, indexed [1..4] (tier N = +25N% on one skill). Rebalanced
+    // 2026-08-30 after gazumbrado's report: the old ladder started at x2 for 100 JP, which
+    // halved every climb to level 5 for pocket change, and 500 JP bought it across all five
+    // skills. Doubling is now the END of a chain, not its entry price: one skill doubled is
+    // 2150 JP, all five 10,750, and the capstone's +50% on top makes the ceiling x2.5 rather
+    // than the old x10. Keeps still set your starting floor; multipliers set your re-leveling
+    // slope (spec 2026-07-14 economy Change 3).
+    private static readonly long[] XpMultCosts = { 0, 150, 350, 650, 1000 };
 
     private static readonly string[] XpMultSkillSlugs = { "farming", "fishing", "foraging", "mining", "combat" };
 
@@ -203,7 +206,7 @@ internal static class UpgradeCatalogGenerators
                 var tokens = new Dictionary<string, string>
                 {
                     ["skill"] = $"i18n:skill.{slug}",
-                    ["factor"] = (tier + 1).ToString(),
+                    ["percent"] = (XpMultiplierRules.PercentPerTier * tier).ToString(),
                 };
                 yield return new UpgradeDefinition(
                     id, UpgradeCategory.Efficiency,

@@ -33,6 +33,12 @@ public sealed class MetaState
     /// <summary>True once the one-time pre-first-reset save backup has been taken (banked forever).</summary>
     public bool BackupDone { get; set; }
 
+    /// <summary>True once the 2026-08-30 XP ladder respec has run on this save
+    /// (<see cref="XpLadderRespec"/>): the old x2..x5 tiers were refunded at their old prices and
+    /// removed so they can be re-bought under the +25%-per-tier ladder. Banked forever, and the
+    /// only thing stopping the refund paying out twice.</summary>
+    public bool XpLadderRespecDone { get; set; }
+
     /// <summary>
     /// Animal species the player has ever owned across all runs in this playthrough.
     /// Drives "Start with [animal]" upgrade availability via the species: meta-requirement
