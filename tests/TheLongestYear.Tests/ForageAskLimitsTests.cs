@@ -15,10 +15,11 @@ public class ForageAskLimitsTests
         Assert.Equal(6, ForageAskLimits.ClampAnySeason("(O)394", 95));
     }
 
-    /// <summary>The ceiling is 80% of the measured mean, rounded up (Jeff, 2026-08-30).</summary>
+    /// <summary>The ceiling is 80% of the measured mean, rounded up (Jeff, 2026-08-30). Sampled on
+    /// items Wild Seeds cannot grow - a growable has no ceiling at all, see below.</summary>
     [Theory]
-    [InlineData("(O)402", 68)]   // Sweet Pea, mean 84.3
-    [InlineData("(O)396", 39)]   // Spice Berry, mean 48.0
+    [InlineData("(O)393", 46)]   // Coral, mean 56.3
+    [InlineData("(O)259", 20)]   // Fiddlehead Fern, mean 24.7
     [InlineData("(O)394", 6)]    // Rainbow Shell, mean 7.3
     public void Ceiling_is_eighty_percent_of_the_measured_mean(string itemId, int expected)
         => Assert.Equal(expected, ForageAskLimits.MaxAsk(Season.Summer, itemId));
@@ -75,11 +76,39 @@ public class ForageAskLimitsTests
     public void No_ceiling_exceeds_the_ninety_nine_stack_cap()
     {
         foreach (Season season in new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter })
-            foreach (string id in new[] { "(O)402", "(O)16", "(O)404", "(O)283" })
+            foreach (string id in new[] { "(O)393", "(O)394", "(O)259", "(O)283" })
             {
                 int? max = ForageAskLimits.MaxAsk(season, id);
                 if (max != null)
                     Assert.InRange(max.Value, 1, StackScaling.MaxStack);
             }
+    }
+
+    /// <summary>Wild Seeds turn 4 forage into 10 seeds and each seed grows one of these back, so
+    /// their supply is land and time, not the spawn rate. Capping them on a measured spawn count
+    /// would be meaningless (decompile Crop.getRandomWildCropForSeason).</summary>
+    [Theory]
+    [InlineData("(O)402")]   // Sweet Pea, measured 84.3 - was wrongly capped at 68
+    [InlineData("(O)410")]   // Blackberry, measured 57.3 - was wrongly capped at 46
+    [InlineData("(O)16")]    // Wild Horseradish
+    [InlineData("(O)418")]   // Crocus
+    public void Wild_seed_growables_are_never_capped(string itemId)
+    {
+        Assert.True(ForageAskLimits.IsWildSeedGrowable(itemId));
+        Assert.Null(ForageAskLimits.MaxAskAnySeason(itemId));
+        Assert.Equal(99, ForageAskLimits.ClampAnySeason(itemId, 99));
+    }
+
+    /// <summary>The distinction that matters: you cannot grow a shell. Summer Seeds only ever give
+    /// Spice Berry, Grape or Sweet Pea, so no amount of farming produces a Rainbow Shell and its
+    /// measured ceiling stands.</summary>
+    [Theory]
+    [InlineData("(O)394")]   // Rainbow Shell
+    [InlineData("(O)393")]   // Coral
+    [InlineData("(O)259")]   // Fiddlehead Fern
+    public void Shells_and_other_ungrowables_keep_their_measured_cap(string itemId)
+    {
+        Assert.False(ForageAskLimits.IsWildSeedGrowable(itemId));
+        Assert.NotNull(ForageAskLimits.MaxAskAnySeason(itemId));
     }
 }
