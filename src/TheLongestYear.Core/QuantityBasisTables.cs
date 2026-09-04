@@ -36,12 +36,14 @@ public static class QuantityBasisTables
     /// furnace-limited. Books and artifacts stay single asks and have no row.</summary>
     public static readonly IReadOnlyDictionary<string, double> Stations = new Dictionary<string, double>(StringComparer.Ordinal)
     {
-        // Furnace (Mining 2, 20 copper ore + 25 stone): the ore is the limit.
-        ["(O)334"] = 40,   // Copper Bar
-        ["(O)335"] = 30,   // Iron Bar
-        ["(O)336"] = 20,   // Gold Bar
-        ["(O)337"] = 5,    // Iridium Bar (Skull Cavern ore)
-        ["(O)338"] = 40,   // Refined Quartz
+        // Furnace (Mining 2, 20 copper ore + 25 stone): ore and coal are the limit, not furnaces.
+        // From the mine-day model (Mines table): about 400 ore and 86 coal a week in the band, so
+        // 80 bars; gold floors are slower and meaner, Skull Cavern ore is a judgement 70 a week.
+        ["(O)334"] = 80,   // Copper Bar
+        ["(O)335"] = 80,   // Iron Bar
+        ["(O)336"] = 60,   // Gold Bar
+        ["(O)337"] = 14,   // Iridium Bar
+        ["(O)338"] = 40,   // Refined Quartz (Quartz basis 80, one each)
         // Tapper (Foraging 4, 40 wood + 2 copper bars): 10 tappers.
         ["(O)724"] = 8,    // Maple Syrup, 9 days
         ["(O)725"] = 10,   // Oak Resin, 7 days
@@ -93,6 +95,41 @@ public static class QuantityBasisTables
         ["(O)812"] = 10,   // Roe
         ["(O)447"] = 10,   // Aged Roe
         ["(O)445"] = 5,    // Caviar
+    };
+
+    /// <summary>What a week in the mines yields, from one modelled "mine day": 10 floors cleared,
+    /// 300 clear tiles a floor, a stone on 20% of them (populateLevel: 10 to 30%), Mining 5, luck 0.
+    /// Chances read off the decompile (tools/fish-sim/mineday.py has the arithmetic): ore nodes on
+    /// 2.9% of stones dropping 1 to 3 (createLitterObject, breakStone); a 5% x 0.8 ore roll on plain
+    /// stones by floor band (checkStoneForItems, getOreIdForLevel); coal on 8% of the 668/670 stones
+    /// and a quarter of the ore roll; an area geode on 2.2% of stones and an Omni Geode on 0.5%; floor
+    /// items on 0.25% of clear tiles, three quarters Quartz and the rest the area's crystal
+    /// (getRandomItemForThisLevel); gem nodes on 0.15% + level/24000 of tiles, one of six gems by
+    /// band; a Diamond node on 0.025% + level/120000 of stones past floor 50. Quartz adds the Stone
+    /// Golem drop from the same floors. Jeff 2026-09-04: "quartz is much more common".</summary>
+    public static readonly IReadOnlyDictionary<string, double> Mines = new Dictionary<string, double>(StringComparer.Ordinal)
+    {
+        ["(O)378"] = 99,   // Copper Ore, 435 a week on floors 1-39
+        ["(O)380"] = 99,   // Iron Ore, 398 on 40-79
+        ["(O)384"] = 99,   // Gold Ore, 398 on 80-119
+        ["(O)386"] = 70,   // Iridium Ore, Skull Cavern, judgement 10 a day (Iridium Bat gives more)
+        ["(O)382"] = 86,   // Coal, mines only (Dust Sprites give more)
+        ["(O)390"] = 99,   // Stone
+        ["(O)535"] = 92,   // Geode, floors 1-39
+        ["(O)536"] = 92,   // Frozen Geode, 40-79
+        ["(O)537"] = 92,   // Magma Geode, 80-119
+        ["(O)749"] = 21,   // Omni Geode
+        ["(O)80"] = 80,    // Quartz: 39 floor items + 42 from Stone Golems
+        ["(O)86"] = 18,    // Earth Crystal: 13 floor items + 5 from Geodes
+        ["(O)84"] = 18,    // Frozen Tear
+        ["(O)82"] = 18,    // Fire Quartz
+        ["(O)66"] = 14,    // Amethyst, gem nodes
+        ["(O)68"] = 14,    // Topaz
+        ["(O)62"] = 14,    // Aquamarine
+        ["(O)70"] = 14,    // Jade
+        ["(O)60"] = 14,    // Emerald
+        ["(O)64"] = 14,    // Ruby
+        ["(O)72"] = 3,     // Diamond
     };
 
     /// <summary>Crops, Jeff 2026-09-04: 100 tiles and no cost cap (seed makers, the stash and JP upgrades are

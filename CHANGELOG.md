@@ -3,6 +3,21 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.185 - 2026-09-04
+
+1972 tests. Internal build.
+
+### Changed
+
+- **The mines have a modelled basis (Jeff: "quartz is much more common").** Ore, coal, stone,
+  geodes, the four node crystals, the six gems and Diamond now take their weekly basis from one
+  modelled mine day: 10 floors cleared, 300 clear tiles a floor, a stone on a fifth of them, with
+  every chance read off the decompiled mine code (ore nodes, the plain-stone ore roll by floor
+  band, coal, geode and Omni Geode rolls, floor items, gem nodes). Quartz is 80 a week (floor items
+  plus Stone Golems) instead of the 42 placeholder; the crystals 18; a specific gem 14; Diamond 3;
+  ore and stone a full stack. The furnace bars follow the ore and coal: Copper and Iron 80, Gold
+  60, Iridium 14, replacing the 40/30/20/5 guesses. Arithmetic in tools/fish-sim/mineday.py.
+
 ## 0.16.184 - 2026-09-04
 
 1972 tests. Internal build.

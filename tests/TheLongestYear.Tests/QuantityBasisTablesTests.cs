@@ -9,7 +9,8 @@ namespace TheLongestYear.Tests;
 /// with no cost cap (shop seed = a full stack; cart-only and rare seeds limited by supply); crab
 /// pots at 10 a season, added to a shellfish's forage mean; monster drops at 60 kills a day for a
 /// week of the best reachable monster, every drop; stations by unlock and cost with animals as a
-/// stretch; minerals base 4; books, artifacts and cooking stay single.</summary>
+/// stretch; minerals base 4; the mines from a modelled mine day; books, artifacts and cooking stay
+/// single.</summary>
 public class QuantityBasisTablesTests
 {
     private const string Parsnip = "(O)24";
@@ -78,15 +79,19 @@ public class QuantityBasisTablesTests
     }
 
     [Fact]
-    public void Geode_minerals_are_base_four_gems_and_node_crystals_are_not()
+    public void Geode_minerals_are_base_four_and_the_mine_day_model_covers_crystals_gems_and_ore()
     {
         Assert.Equal(4, QuantityBasisTables.Minerals[Esperite]);
         Assert.False(QuantityBasisTables.Minerals.ContainsKey(Diamond));
         Assert.False(QuantityBasisTables.Minerals.ContainsKey(Quartz));
         Assert.InRange(Roll(Esperite, DifficultyStep.Extreme), 3, 4);
         Assert.InRange(Roll(Esperite, DifficultyStep.Easy), 1, 2);
-        // Quartz: 42 a week off Stone Golems (MonsterDrops), and the largest table wins.
-        Assert.InRange(Roll(Quartz, DifficultyStep.Extreme), 28, 34);
+        // Quartz: 80 a week (floor items plus Stone Golems), Jeff: "quartz is much more common".
+        Assert.Equal(80, QuantityBasisTables.Mines[Quartz]);
+        Assert.InRange(Roll(Quartz, DifficultyStep.Extreme), 52, 64);
+        Assert.Equal(3, QuantityBasisTables.Mines[Diamond]);
+        Assert.Equal(99, QuantityBasisTables.Mines["(O)378"]);   // Copper Ore
+        Assert.Equal(80, QuantityBasisTables.Stations["(O)334"]); // Copper Bar, ore- and coal-limited
     }
 
     [Fact]
@@ -110,7 +115,7 @@ public class QuantityBasisTablesTests
     [Fact]
     public void Every_table_row_is_a_qualified_id_the_multiplier_will_skip()
     {
-        foreach (var table in new[] { QuantityBasisTables.CrabPot, QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals })
+        foreach (var table in new[] { QuantityBasisTables.CrabPot, QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines })
             foreach (var row in table)
             {
                 Assert.StartsWith("(O)", row.Key);
