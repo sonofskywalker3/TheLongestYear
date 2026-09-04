@@ -6,6 +6,9 @@ namespace TheLongestYear.Tests;
 
 public class StackScalingTests
 {
+    // Wood (O)388, Clay (O)330 and Hardwood (O)709 stand in for "an ordinary item": nothing in
+    // QuantityAskPass bands them, so the multiplier is the only thing touching their stacks.
+
     private static DifficultyProfile Profile(DifficultyStep step)
         => DifficultyResolver.Resolve(
             new DifficultySettings { StackSize = step }, new GameplayConfig());
@@ -33,7 +36,7 @@ public class StackScalingTests
     [Fact]
     public void Normal_Returns_The_Same_Spec_Instance()
     {
-        var spec = Spec("Pantry", ("(O)24", 1), ("(O)188", 5));
+        var spec = Spec("Pantry", ("(O)388", 1), ("(O)330", 5));
 
         Assert.Same(spec, StackScaling.Apply(spec, Profile(DifficultyStep.Normal)));
     }
@@ -44,7 +47,7 @@ public class StackScalingTests
     public void Every_Slot_Scales_Including_Big_Vanilla_Asks()
     {
         var scaled = StackScaling.Apply(
-            Spec("Crafts Room", ("(O)92", 500), ("(O)24", 1), ("(O)188", 20)),
+            Spec("Crafts Room", ("(O)709", 500), ("(O)388", 1), ("(O)330", 20)),
             Profile(DifficultyStep.Hard));
 
         Assert.Equal(new[] { 99, 2, 30 }, scaled.Slots.Select(s => s.Stack));
@@ -54,11 +57,11 @@ public class StackScalingTests
     public void Item_Ids_And_Quality_Are_Never_Changed()
     {
         var spec = new BundleSpec("Pantry", 1, "Q", "Q", "O 12 1", 0, 1,
-            new List<BundleSlotSpec> { new("(O)24", 5, 2) });
+            new List<BundleSlotSpec> { new("(O)388", 5, 2) });
 
         var scaled = StackScaling.Apply(spec, Profile(DifficultyStep.Hard));
 
-        Assert.Equal("(O)24", scaled.Slots.Single().ItemId);
+        Assert.Equal("(O)388", scaled.Slots.Single().ItemId);
         Assert.Equal(2, scaled.Slots.Single().Quality);
         Assert.Equal(8, scaled.Slots.Single().Stack);
     }
@@ -78,7 +81,7 @@ public class StackScalingTests
     public void A_Money_Slot_In_Any_Room_Is_Untouched()
     {
         var money = new BundleSpec("Pantry", 5, "m", "m", "", 0, 1,
-            new List<BundleSlotSpec> { new("-1", 2500, 0), new("(O)24", 2, 0) });
+            new List<BundleSlotSpec> { new("-1", 2500, 0), new("(O)388", 2, 0) });
 
         Assert.Same(money, StackScaling.Apply(money, Profile(DifficultyStep.Extreme)));
     }
@@ -88,7 +91,7 @@ public class StackScalingTests
     [Fact]
     public void A_Spec_Whose_Slots_All_Land_On_Their_Existing_Value_Is_Unchanged()
     {
-        var spec = Spec("Pantry", ("(O)24", 1), ("(O)188", 1));
+        var spec = Spec("Pantry", ("(O)388", 1), ("(O)330", 1));
 
         Assert.Same(spec, StackScaling.Apply(spec, Profile(DifficultyStep.Easy)));
     }
@@ -114,7 +117,7 @@ public class StackScalingTests
         const int authored = 5;
 
         int engine = StackScaling.Apply(
-            Spec("Pantry", ("(O)24", authored)), profile).Slots.Single().Stack;
+            Spec("Pantry", ("(O)388", authored)), profile).Slots.Single().Stack;
 
         var vanilla = VanillaBoardDifficultyPass.Apply(
             new Dictionary<string, string> { ["Pantry/9"] = $"C/O 12 1/24 {authored} 0/1/1//C" },

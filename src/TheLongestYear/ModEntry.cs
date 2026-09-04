@@ -3248,12 +3248,8 @@ namespace TheLongestYear
             sb.AppendLine();
             sb.AppendLine("| Pool | Quantity asked |");
             sb.AppendLine("|---|---|");
-            sb.AppendLine("| Seasonal Crops, Crab Pot, Metals, Artisan Goods | 1 |");
-            sb.AppendLine($"| Fish and forage (any bundle) | basis x band: {d.AskBandLow:P0} to {d.AskBandHigh:P0} of what a season yields (fish: modelled best-day catches x7; forage: measured sweep mean; farmable Wild Seed crops: 99); gold keeps {AskBands.GoldFactor:P0}; legendaries 1 |");
-            sb.AppendLine($"| Quality Crops | {t.QualityCropStack}, always at gold quality |");
-            sb.AppendLine($"| Monster Drops, item under {t.CheapPriceCeiling}g | {t.CheapMinStack} to {t.CheapMaxStack} |");
-            sb.AppendLine($"| Monster Drops, item under {t.MidPriceCeiling}g | {t.MidMinStack} to {t.MidMaxStack} |");
-            sb.AppendLine($"| Monster Drops, dearer than that | {t.DearMinStack} to {t.DearMaxStack} |");
+            sb.AppendLine($"| Fish, forage, crops, crab pot, monster drops, station goods, animal products, geode minerals | basis x band: {d.AskBandLow:P0} to {d.AskBandHigh:P0} of a week's yield (fish: modelled best-day catches x7; forage: measured sweep mean; shop-seed crops and farmable Wild Seed crops: 99; crab pot: 10 pots; monsters: 60 kills a day; stations by unlock; minerals 4); gold keeps {AskBands.GoldFactor:P0}; legendaries 1 |");
+            sb.AppendLine("| Books, artifacts, cooking, gems, anything else | 1 |");
             sb.AppendLine();
             sb.AppendLine($"Every quantity above except the banded fish and forage, and every quantity kept from vanilla, is then multiplied by the stack-size difficulty dial (currently **x{d.StackFactor}**, step {d.Steps.StackSize}), rounded away from zero, floored at 1 and **capped at 99**. Money bundles are never scaled.");
             sb.AppendLine();

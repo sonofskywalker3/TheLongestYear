@@ -92,6 +92,14 @@ granular enough (per-day, not just per-season) before building a parallel table.
 draft in chat, not posted without Jeff's yes. She did NOT flag Mystic Syrup as a problem (see below) —
 don't apologize for or reference it in the reply, she only mentioned it in passing.
 
+### QUANTITY BANDS SHIPPED 0.16.179 to 0.16.184 (2026-09-04)
+
+Every domain now rolls basis x band by step (`AskBands`, `QuantityAskPass`, bases in
+`FishAskBasis`, `ForageAskBasis`, `QuantityBasisTables`). Still open from the list below: A
+(curated season pins), B (Moss / Fiddlehead rulings), C's Morel access question, D as an in-game
+spot check of the modelled crab pot numbers, E as an in-game spot check of the modelled fish
+numbers. Everything else in this block is superseded.
+
 ### OPEN follow-ups to the quantity clamp (2026-08-30) — pick ONE, they are independent
 
 Shipped so far: `ForageAskLimits` (v0.16.172), wild-seed exemption (v0.16.174), desert gating

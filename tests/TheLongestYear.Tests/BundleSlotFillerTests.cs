@@ -359,7 +359,7 @@ public class BundleSlotFillerTests
     }
 
     [Fact]
-    public void QualityCrops_AllGold_AtTunedStack()
+    public void QualityCrops_AllGold_StackLeftToTheQuantityPass()
     {
         var pools = new ItemPools
         {
@@ -370,35 +370,21 @@ public class BundleSlotFillerTests
         Assert.All(filled.Slots, s =>
         {
             Assert.Equal(2, s.Quality);
-            Assert.Equal(Tuning.QualityCropStack, s.Stack);
+            Assert.Equal(1, s.Stack);   // basis x band comes later, in QuantityAskPass (2026-09-04)
         });
         Assert.Equal(3, filled.NumberOfSlots);
     }
 
     [Fact]
-    public void MonsterDrops_PriceBandedStacks()
+    public void MonsterDrops_RollOne_TheQuantityPassBandsThemLater()
     {
         var pools = new ItemPools
         {
-            MonsterDrops = new[]
-            {
-                Item("(O)766", price: 5),   // cheap
-                Item("(O)768", price: 40),  // mid
-                Item("(O)769", price: 100), // dear
-            },
+            MonsterDrops = new[] { Item("(O)766", price: 5), Item("(O)767", price: 15), Item("(O)768", price: 40), Item("(O)769", price: 40) },
         };
-        var filled = BundleSlotFiller.Fill(Spec("Slime Hunter", 3),
+        var filled = BundleSlotFiller.Fill(Spec("Adventurer's", 3),
             new DomainMatch(PoolDomain.MonsterDrops, null), pools, Tuning, new Random(2));
-        foreach (BundleSlotSpec slot in filled.Slots)
-        {
-            int price = pools.MonsterDrops.First(p => p.ItemId == slot.ItemId).Price;
-            if (price < Tuning.CheapPriceCeiling)
-                Assert.InRange(slot.Stack, Tuning.CheapMinStack, Tuning.CheapMaxStack);
-            else if (price < Tuning.MidPriceCeiling)
-                Assert.InRange(slot.Stack, Tuning.MidMinStack, Tuning.MidMaxStack);
-            else
-                Assert.InRange(slot.Stack, Tuning.DearMinStack, Tuning.DearMaxStack);
-        }
+        Assert.All(filled.Slots, s => Assert.Equal(1, s.Stack));
     }
 
     [Fact]

@@ -474,18 +474,11 @@ public static class BundleSlotFiller
     {
         switch (domain)
         {
-            case PoolDomain.QualityCrops:
-                return tuning.QualityCropStack;
-            case PoolDomain.MonsterDrops:
-                // Price-banded, so a cheap item can roll up to 99. Clamped for the same reason as
-                // the big forage ask: a monster-drop pool can contain forage-sourced items, and no
-                // ask should exceed what a season measurably produces.
-                int rolled = item.Price < tuning.CheapPriceCeiling
-                    ? rng.Next(tuning.CheapMinStack, tuning.CheapMaxStack + 1)
-                    : item.Price < tuning.MidPriceCeiling
-                        ? rng.Next(tuning.MidMinStack, tuning.MidMaxStack + 1)
-                        : rng.Next(tuning.DearMinStack, tuning.DearMaxStack + 1);
-                return ForageAskLimits.ClampAnySeason(item.ItemId, rolled);
+            // Every domain rolls one here. Fish, forage, crops (Quality Crops included), monster
+            // drops, crab pot, station and mineral asks take basis x band later in
+            // QuantityAskPass, on the finished board (2026-09-04); the old price-banded monster
+            // roll and the fixed x5 gold crop went with it. The tuning fields stay for config
+            // compatibility.
             default:
                 return 1;
         }
