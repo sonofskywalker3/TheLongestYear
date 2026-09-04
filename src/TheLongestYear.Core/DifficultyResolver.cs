@@ -49,6 +49,8 @@ public static class DifficultyResolver
         {
             StackFactor = Pick(settings.StackSize, StackEasy, StackNormal, StackHard, StackExtreme),
             QualityFactor = Pick(settings.QualityAsks, QualityEasy, QualityNormal, QualityHard, QualityExtreme),
+            AskBandLow = AskBands.For(settings.StackSize).Low,
+            AskBandHigh = AskBands.For(settings.StackSize).High,
             RequiredSlotsDelta = settings.RequiredSlots switch
             {
                 DifficultyStep.Easy => -1,

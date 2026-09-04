@@ -266,7 +266,7 @@ public static class BundleSlotFiller
     /// no per-item deadline, so null. The required-slots dial can still turn a per-item bundle into
     /// pick-X-of-Y after this, which only loosens the deadline, so the clamp taken here can only be
     /// stricter than the board that ships, never impossible.</summary>
-    private static Season? DeadlineFor(
+    public static Season? DeadlineFor(
         BundleSpec spec, DomainMatch match, IReadOnlyList<BundleSlotSpec> slots, string itemId,
         ItemAvailabilityModel? availability)
     {
