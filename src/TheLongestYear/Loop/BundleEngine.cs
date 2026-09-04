@@ -320,11 +320,12 @@ namespace TheLongestYear.Loop
                 // Stack-size modifier: applied to the FINISHED slots so it reaches bundles the
                 // engine kept verbatim from vanilla, not just the ones it re-rolled. Before
                 // this it only scaled re-rolled bundles and missed most of the board.
-                // Fish asks: basis x band by step (FishAskPass), read against the deadline the
-                // classifier will give each slot. Before StackScaling, which skips banded fish.
+                // Fish and forage asks: basis x band by step (QuantityAskPass), read against the
+                // deadline the classifier will give each slot. Before StackScaling, which skips
+                // banded slots.
                 BundleSpec finished = record.Composed!;
                 var fishRng = new Random(seed ^ (finished.Index * SlotSaltPrime) ^ FishAskSalt);
-                BundleSpec composed = Core.FishAskPass.Apply(finished, _difficulty,
+                BundleSpec composed = Core.QuantityAskPass.Apply(finished, _difficulty,
                     id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability), fishRng);
                 composed = Core.StackScaling.Apply(composed, _difficulty);
                 composed = Core.RequiredSlots.Apply(composed, _difficulty);

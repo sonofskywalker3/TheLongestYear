@@ -7,8 +7,8 @@ namespace TheLongestYear.Core;
 /// <summary>Seeded re-roll of a picked bundle's slot contents from its domain's item
 /// pool (spec "expanded-pool remix"): weighted sample without replacement (no duplicate
 /// items per bundle), season filtering for seasonal domains, habitat / night filtering for
-/// fish (<see cref="FishBundleCandidates"/>), stack/quality rolls from the
-/// BundleGenerationTuning block, and the large-quantity forage ask. An optional
+/// fish (<see cref="FishBundleCandidates"/>), and stack/quality rolls from the
+/// BundleGenerationTuning block (fish and forage quantities are set later by QuantityAskPass). An optional
 /// <c>avoid</c> set (every item other bundles on this board already ask for) is left out
 /// while the pool can still fill every slot without it. Returns the input spec
 /// UNCHANGED (reference-equal) when the domain is
@@ -237,21 +237,8 @@ public static class BundleSlotFiller
                 LegendaryFishRules.ClampQuality(item.ItemId, qualityOff ? 0 : RollQuality(rollDomain, item, pools, tuning, rng))));
         }
 
-        if (match.Domain == PoolDomain.SeasonalForage
-            && rng.NextDouble() < tuning.LargeQuantityForageChance)
-        {
-            int slotIndex = rng.Next(slots.Count);
-            int stack = rng.Next(tuning.LargeQuantityMinStack, tuning.LargeQuantityMaxStack + 1);
-            // The big-ask roll is 40-99 and knows nothing about whether the item can actually be
-            // gathered that many times in a season. Measured yields say most forage cannot: this is
-            // the roll that produced the 95 Rainbow Shell ask (a season really yields 11/5/6). The
-            // Wild Seed exemption from that ceiling only holds once the seeds can grow, so the
-            // clamp reads the season this slot will be due (the 90 Common Mushrooms on a first
-            // Spring: a Fall Wild Seed crop with a Spring deadline).
-            stack = ForageAskLimits.ClampForDeadline(slots[slotIndex].ItemId, stack,
-                DeadlineFor(spec, match, slots, slots[slotIndex].ItemId, availability));
-            slots[slotIndex] = slots[slotIndex] with { Stack = stack, Quality = 0 };
-        }
+        // The old 40-99 "big ask" roll on one forage slot is gone (2026-09-04): every fish and
+        // forage slot now takes basis x band in QuantityAskPass, on the finished board.
 
         return spec with
         {

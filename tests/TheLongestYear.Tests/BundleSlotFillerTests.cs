@@ -402,23 +402,6 @@ public class BundleSlotFillerTests
     }
 
     [Fact]
-    public void LargeQuantityForage_ChanceOne_ExactlyOneBigStackSlot()
-    {
-        var tuning = new BundleGenerationTuning { LargeQuantityForageChance = 1.0 };
-        var pools = new ItemPools
-        {
-            Forage = Enumerable.Range(0, 10).Select(i => Item($"(O){300 + i}",
-                seasons: new[] { Season.Spring })).ToList(),
-        };
-        var filled = BundleSlotFiller.Fill(Spec("Spring Foraging", 4),
-            new DomainMatch(PoolDomain.SeasonalForage, Season.Spring), pools, tuning, new Random(9));
-        var big = filled.Slots.Where(s => s.Stack >= tuning.LargeQuantityMinStack).ToList();
-        Assert.Single(big);
-        Assert.InRange(big[0].Stack, tuning.LargeQuantityMinStack, tuning.LargeQuantityMaxStack);
-        Assert.Equal(0, big[0].Quality);
-    }
-
-    [Fact]
     public void Fish_LocationOverlap_KeepsHabitatIdentity()
     {
         var pools = new ItemPools

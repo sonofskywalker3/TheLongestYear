@@ -3,6 +3,23 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.182 - 2026-09-04
+
+1963 tests. Internal build.
+
+### Changed
+
+- **Forage asks are basis x band too, and the old 40-99 big-ask roll is gone.** Every forage slot
+  on every bundle now rolls inside its step's band of the measured seasonal mean from the
+  2026-08-30 sweeps (the same Easy 10-30% / Normal 20-50% / Hard 50-65% / Extreme 65-80% bands
+  as fish, ceiling 80%), reachable by the slot's deadline. A ruling such as Purple Mushroom's 5
+  stands in as its ceiling. A Wild Seed crop whose seeds grow by the deadline is farmable and
+  rolls its band of a full 99-stack; before its season it is measured like anything else, so a
+  Spring bundle asks at most 14 Common Mushrooms and a Fall one may ask 20-50 on Normal. The
+  one-slot 40-99 roll that produced the 95 Rainbow Shells is removed; the PoolTuning fields for it
+  stay in config for compatibility but nothing reads them. The stack multiplier skips banded
+  forage as it does fish.
+
 ## 0.16.181 - 2026-09-04
 
 1956 tests. Internal build.
