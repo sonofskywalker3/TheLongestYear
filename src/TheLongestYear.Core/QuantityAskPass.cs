@@ -4,8 +4,9 @@ using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>Gives every fish and forage slot on a finished bundle its banded ask
-/// (<see cref="FishAskBasis"/> or <see cref="ForageAskBasis"/> x <see cref="AskBands"/>), on the
+/// <summary>Gives every slot with a known weekly yield on a finished bundle its banded ask
+/// (<see cref="FishAskBasis"/>, <see cref="ForageAskBasis"/> or <see cref="QuantityBasisTables"/>
+/// x <see cref="AskBands"/>), on the
 /// engine path, right before the stack multiplier, which then skips those slots so difficulty is
 /// not applied twice. Runs on every bundle the engine emits,
 /// re-rolled or kept verbatim from vanilla, for the same reason StackScaling does: one dial, one
@@ -50,8 +51,30 @@ public static class QuantityAskPass
     /// <summary>True when the item's ask is banded by this pass, so the stack multiplier must
     /// leave it alone.</summary>
     public static bool Covers(string? itemId)
-        => FishAskBasis.Covers(itemId) || ForageAskBasis.Covers(itemId);
+    {
+        if (itemId == null) return false;
+        string id = BundleParsing.NormalizeItemId(itemId);
+        return FishAskBasis.Covers(id) || ForageAskBasis.Covers(id)
+               || QuantityBasisTables.CrabPot.ContainsKey(id) || QuantityBasisTables.Crops.ContainsKey(id)
+               || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)
+               || QuantityBasisTables.Minerals.ContainsKey(id);
+    }
 
+    /// <summary>Fish first (it knows seasons), then forage plus crab pot (a shellfish is gathered
+    /// AND trapped, so the two add), then the flat weekly tables.</summary>
     private static double? BasisByDeadline(string itemId, Season? deadline)
-        => FishAskBasis.BasisByDeadline(itemId, deadline) ?? ForageAskBasis.BasisByDeadline(itemId, deadline);
+    {
+        string id = BundleParsing.NormalizeItemId(itemId);
+        double? fish = FishAskBasis.BasisByDeadline(id, deadline);
+        if (fish != null) return fish;
+        double? forage = ForageAskBasis.BasisByDeadline(id, deadline);
+        double? pot = QuantityBasisTables.CrabPot.TryGetValue(id, out double p) ? p : null;
+        if (forage != null || pot != null) return (forage ?? 0) + (pot ?? 0);
+        // The flat tables can overlap (Quartz is a Stone Golem drop AND a node crystal; Green Algae
+        // is a Slime drop AND a catch): a player uses every source, so the largest basis stands.
+        double? best = null;
+        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals })
+            if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
+        return best;
+    }
 }

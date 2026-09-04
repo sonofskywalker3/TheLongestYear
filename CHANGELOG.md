@@ -3,6 +3,32 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.184 - 2026-09-04
+
+1972 tests. Internal build.
+
+### Changed
+
+- **Every category is now basis x band.** Crops, crab pot, monster drops, station goods, animal
+  products and geode minerals join fish and forage on the same rule, so Easy, Normal, Hard and
+  Extreme mean the same thing on every slot of the board. Jeff's rulings, 2026-09-04:
+  - Crops: 100 tiles and no cost cap (seed makers, the stash and JP upgrades are what multi-loop
+    play is for). A shop seed is a full stack, so Extreme can ask 80 Parsnips or 80 Starfruit.
+    Cart-only and rare seeds carry their own supply: Sweet Gem Berry 16, Ancient Fruit 5, the
+    Raccoon crops 30. The fixed x5 gold Quality Crops ask is gone; those slots band like the rest.
+  - Crab pots: 10 pots a season, modelled from CrabPot.DayUpdate (Lobster 3, Crab 5, Oyster 7,
+    Cockle 8, Periwinkle 15 a week). A shellfish that is also beach forage adds the pot yield to
+    its measured forage mean.
+  - Monster drops: 60 kills a day for a week of the best monster a loop can reach, every drop in
+    Data/Monsters, volcano, island and Qi dangerous-mines monsters excluded. Replaces the old
+    price band that ignored difficulty.
+  - Stations by what they cost and when they unlock: ore-limited bars, 10 tappers, 10 bee houses,
+    10 preserves jars, 5 kegs, and animal products from a Big Coop or Big Barn of eight.
+  - Geode minerals: base 4. Gems, books, artifacts and cooking stay single asks.
+  Where an item has more than one source (Quartz from Stone Golems, Green Algae from Slimes) the
+  largest basis stands. The Crops, MonsterDrops and Minerals tables are generated from the game's
+  data by tools/fish-sim/gen_tables.py.
+
 ## 0.16.183 - 2026-09-04
 
 1964 tests. Internal build.

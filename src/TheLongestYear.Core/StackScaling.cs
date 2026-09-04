@@ -64,8 +64,8 @@ public static class StackScaling
             BundleSlotSpec slot = spec.Slots[i];
             if (slot.ItemId == MoneySlotId)
                 continue;
-            // A banded fish or forage slot already carries its step's ask (QuantityAskPass);
-            // scaling it again would apply the same dial twice.
+            // A banded slot (fish, forage, crop, monster drop, crab pot, station, mineral) already
+            // carries its step's ask (QuantityAskPass); scaling it again would apply the dial twice.
             if (QuantityAskPass.Covers(slot.ItemId))
                 continue;
 

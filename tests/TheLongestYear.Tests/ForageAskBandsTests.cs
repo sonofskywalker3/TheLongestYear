@@ -15,7 +15,7 @@ public class ForageAskBandsTests
     private const string CommonMushroom = "(O)404";    // measured in Spring, Fall Wild Seeds
     private const string PurpleMushroom = "(O)422";    // ruled ceiling 5
     private const string WildHorseradish = "(O)16";    // Spring Wild Seeds
-    private const string Sap = "(O)92";                // not forage at all
+    private const string Wood = "(O)388";              // nothing bands it
 
     private static DifficultyProfile Profile(DifficultyStep stack)
         => DifficultyResolver.Resolve(new DifficultySettings { StackSize = stack }, new GameplayConfig());
@@ -26,7 +26,7 @@ public class ForageAskBandsTests
         Assert.True(ForageAskBasis.Covers(RainbowShell));
         Assert.True(ForageAskBasis.Covers(PurpleMushroom));
         Assert.True(ForageAskBasis.Covers(WildHorseradish));
-        Assert.False(ForageAskBasis.Covers(Sap));
+        Assert.False(ForageAskBasis.Covers(Wood));
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class ForageAskBandsTests
     [Fact]
     public void The_stack_multiplier_skips_a_banded_forage_slot()
     {
-        BundleSpec scaled = StackScaling.Apply(Spec((RainbowShell, 4, 0), (Sap, 1, 0)), Profile(DifficultyStep.Extreme));
+        BundleSpec scaled = StackScaling.Apply(Spec((RainbowShell, 4, 0), (Wood, 1, 0)), Profile(DifficultyStep.Extreme));
         Assert.Equal(4, scaled.Slots[0].Stack);
         Assert.Equal(2, scaled.Slots[1].Stack);
     }
