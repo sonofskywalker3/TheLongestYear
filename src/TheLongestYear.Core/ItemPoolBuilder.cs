@@ -731,6 +731,11 @@ public static class ItemPoolBuilder
         "(O)907", // Tropical Curry    — island dish
         "(O)873", // Piña Colada       — island resort drink
         "(O)795", // Void Salmon       — Witch's Swamp only, behind the Dark Talisman quest (post-CC)
+        "(O)928", // Golden Egg        — Golden Chickens need Perfection (or Qi's Walnut Room shop), so a
+                  //                     one-year loop can never see one. Category Egg (-5) and, unlike Void
+                  //                     Egg and Ostrich Egg, NOT flagged ExcludeFromRandomSale, so the vet let
+                  //                     it into the Chef's / Animal recipe buckets (Nexus 1127469, gazumbrado:
+                  //                     "2 golden eggs which are perfection locked").
     };
 
     /// <summary>Built-in excluded location markers, merged with the config list by
