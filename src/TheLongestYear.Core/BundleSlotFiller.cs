@@ -208,6 +208,11 @@ public static class BundleSlotFiller
                 }
             }
         }
+        // Legendary cap (LegendaryFishRules): runs after every swap above, because the hard-item
+        // rule is exactly the kind of pass that puts a legendary in, and the cap has to hold on
+        // what actually leaves this method.
+        LegendaryFishRules.Enforce(chosen, candidates, availability?.Step ?? DifficultyStep.Normal, rng, log, spec.Name);
+
         // Stack and quality (rollDomain decided above the trim). A vanilla id the roll drew again
         // keeps the stack and quality the vanilla slot carried, so a re-roll that lands on the
         // bundle's own item reproduces vanilla's ask. That holds on EVERY domain, not only Recipe:
@@ -221,13 +226,15 @@ public static class BundleSlotFiller
         {
             if (vanillaSlots.TryGetValue(item.ItemId, out BundleSlotSpec? kept))
             {
-                slots.Add(new BundleSlotSpec(item.ItemId, kept.Stack, kept.Quality));
+                slots.Add(new BundleSlotSpec(item.ItemId,
+                    LegendaryFishRules.ClampStack(item.ItemId, kept.Stack),
+                    LegendaryFishRules.ClampQuality(item.ItemId, kept.Quality)));
                 continue;
             }
             slots.Add(new BundleSlotSpec(
                 item.ItemId,
-                RollStack(rollDomain, item, tuning, rng),
-                qualityOff ? 0 : RollQuality(rollDomain, item, pools, tuning, rng)));
+                LegendaryFishRules.ClampStack(item.ItemId, RollStack(rollDomain, item, tuning, rng)),
+                LegendaryFishRules.ClampQuality(item.ItemId, qualityOff ? 0 : RollQuality(rollDomain, item, pools, tuning, rng))));
         }
 
         if (match.Domain == PoolDomain.SeasonalForage

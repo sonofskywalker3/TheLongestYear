@@ -3,6 +3,22 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.179 - 2026-09-04
+
+1924 tests. Internal build.
+
+### Fixed
+
+- **A legendary fish is asked for once, plain, and never crowded (Nexus 1127469, gazumbrado).**
+  Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp can each be caught once per loop, so a
+  bundle asking for two of one was impossible, not hard. The Hard and Extreme stack-size dial was
+  rounding their x1 ask up to x2 (the "2 silver Mutant Carps" and "2 glacier fish for Winter Star"
+  reports), and the fish quality roll could star them. Now every legendary ask is x1 at base
+  quality on every step, on TLY's own boards, on authored bundles and on a vanilla board the
+  difficulty pass adjusts. A bundle also holds at most one legendary on Easy and Normal, two from
+  different seasons on Hard, and four (one per season) on Extreme; a surplus roll is swapped for an
+  ordinary fish from the same pool.
+
 ## 0.16.178 - 2026-08-31
 
 1907 tests. A balance and correctness release driven by player reports (Nijah, spenderg,

@@ -30,7 +30,8 @@ public static class AuthoredBundleComposer
         ItemPools pools,
         BundleGenerationTuning tuning,
         bool nonObjectDonationsEnabled,
-        Random rng)
+        Random rng,
+        DifficultyStep step = DifficultyStep.Normal)
     {
         bool isTrophies = def.Name == GilTrophiesBundleName;
 
@@ -52,10 +53,14 @@ public static class AuthoredBundleComposer
         if (chosen == null)
             return null;
 
+        // The fish source carries the five legendaries (PoolAdditions); the same per-bundle cap
+        // and base-quality rule the engine's filler applies hold here (LegendaryFishRules).
+        LegendaryFishRules.Enforce(chosen, candidates, step, rng, bundleName: def.Name);
+
         int quality = isTrophies ? TrophyQuality : def.QualityAsk;
         int stack = isTrophies ? TrophyStack : SlotStack;
         var slots = chosen
-            .Select(item => new BundleSlotSpec(item.ItemId, stack, quality))
+            .Select(item => new BundleSlotSpec(item.ItemId, stack, LegendaryFishRules.ClampQuality(item.ItemId, quality)))
             .ToList();
 
         return new BundleSpec(

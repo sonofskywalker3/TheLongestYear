@@ -475,7 +475,8 @@ namespace TheLongestYear.Loop
                 // absoluteIndex: 0 is a placeholder -- every position clone below overwrites it
                 // with that position's own absolute index (see doc comment above).
                 BundleSpec composed = AuthoredBundleComposer.Compose(
-                    def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng);
+                    def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng,
+                    Availability?.Step ?? Core.DifficultyStep.Normal);
                 if (composed == null)
                 {
                     _monitor?.Log(
