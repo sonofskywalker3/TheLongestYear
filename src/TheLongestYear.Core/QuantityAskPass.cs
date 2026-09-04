@@ -57,7 +57,7 @@ public static class QuantityAskPass
         return FishAskBasis.Covers(id) || ForageAskBasis.Covers(id)
                || QuantityBasisTables.CrabPot.ContainsKey(id) || QuantityBasisTables.Crops.ContainsKey(id)
                || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)
-               || QuantityBasisTables.Minerals.ContainsKey(id);
+               || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id);
     }
 
     /// <summary>Fish first (it knows seasons), then forage plus crab pot (a shellfish is gathered
@@ -73,7 +73,7 @@ public static class QuantityAskPass
         // The flat tables can overlap (Quartz is a Stone Golem drop AND a node crystal; Green Algae
         // is a Slime drop AND a catch): a player uses every source, so the largest basis stands.
         double? best = null;
-        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals })
+        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
         return best;
     }
