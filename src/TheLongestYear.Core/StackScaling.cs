@@ -65,7 +65,9 @@ public static class StackScaling
             if (slot.ItemId == MoneySlotId)
                 continue;
 
-            int next = ScaleStack(slot.Stack, profile.StackFactor);
+            // A legendary is caught once per loop, so its ask is x1 at every step
+            // (LegendaryFishRules): rounding it up to x2 on Hard made it impossible, not harder.
+            int next = LegendaryFishRules.ClampStack(slot.ItemId, ScaleStack(slot.Stack, profile.StackFactor));
             if (next == slot.Stack)
                 continue;
 
