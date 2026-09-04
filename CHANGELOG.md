@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.183 - 2026-09-04
+
+1964 tests. Internal build.
+
+### Fixed
+
+- **Golden Egg can no longer be asked for (Nexus 1127469, gazumbrado).** Golden Chickens need
+  Perfection, so no one-year loop can lay one. The game does not flag it out of random sale the
+  way it flags Void Egg and Ostrich Egg, so the pool vet let it into the Chef's and Animal
+  recipe buckets. It is now on the built-in exclusion list.
+
 ## 0.16.182 - 2026-09-04
 
 1963 tests. Internal build.

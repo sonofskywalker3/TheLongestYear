@@ -94,6 +94,25 @@ public class GatedItemVettingTests
         Assert.Contains("(O)795", ItemPoolBuilder.BuiltInExcludedItemIds);
     }
 
+    /// <summary>Golden Egg (Nexus 1127469, gazumbrado, 2026-09-02): Golden Chickens need
+    /// Perfection, so it is post-CC by definition, yet Data/Objects does not flag it out of
+    /// random sale the way it flags Void Egg and Ostrich Egg. The built-in list has to name it.</summary>
+    [Fact]
+    public void GoldenEgg_IsPerfectionLocked_SoTheBuiltInListExcludesIt()
+    {
+        Assert.Contains("(O)928", ItemPoolBuilder.BuiltInExcludedItemIds);
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("928", Obj(category: -5)), ("176", Obj(category: -5))),
+            new List<RawSpawnEntry>(), new List<RawSpawnEntry>(),
+            new HashSet<string>(), new List<RawMonsterDropEntry>(),
+            new List<RawFruitTreeEntry>(), System.Array.Empty<RawGeodeDropEntry>(),
+            new BundleGenerationTuning());
+        IReadOnlyList<PoolItem> eggs = pools.ByKind[ItemKind.Egg];
+        Assert.DoesNotContain(eggs, p => p.ItemId == "(O)928");
+        Assert.Contains(eggs, p => p.ItemId == "(O)176");
+    }
+
     /// <summary>Non-habitat location keys (player report, 2026-08-28: an ocean fish in the Lake
     /// Fish bundle). Data/Locations carries three keys that are not places anyone fishes:
     /// "Temp" (the Festival of Ice contest map, whose season-less rows mix river and ocean
