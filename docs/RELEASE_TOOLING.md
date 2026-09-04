@@ -69,7 +69,9 @@ with `form_input` rather than `type` - typing a "/" on Nexus opens the site sear
 - The tools redact anything token-shaped in a JS result (`[BLOCKED: JWT token]`). Read the
   live version back with an `innerText` regex, never by returning a raw field value.
 - If the extension goes dead mid-session ("Browser extension is not connected", empty
-  `list_connected_browsers`), kill every `chrome.exe` and relaunch. Do not blame the login.
+  `list_connected_browsers`), the native-host bridge has died (extension or Claude Code
+  auto-update, or Chrome idling the worker). Have Jeff open `https://clau.de/chrome/reconnect`
+  in Chrome, wait 5 s, retry. No need to kill Chrome; do not blame the login.
 - Flood control silently drops form submits within ~30s of a previous one.
 
 ## What runs where
