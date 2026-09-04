@@ -3,6 +3,27 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.181 - 2026-09-04
+
+1956 tests. Internal build.
+
+### Changed
+
+- **Fish asks are basis x band, so Hard and Extreme finally differ from Normal (Nexus post,
+  gazumbrado: "2 smallmouth bass isn't hard or extreme").** Every fish slot used to roll x1 and
+  the stack dial multiplied it, so Hard and Extreme both asked for 2 of everything. Now each fish
+  has a per-season basis: what a level-10 player with bait lands on its best ten-hour day, times
+  seven days, modelled by replaying the game's own fish pick over the real Data/Locations and
+  Data/Fish tables (docs/superpowers/notes/fish-catch-rates-2026-09-04.md, tools/fish-sim). Each
+  step rolls inside its band of the basis: Easy 10-30%, Normal 20-50%, Hard 50-65%, Extreme
+  65-80%, and nothing rolls above 80%. Spring Smallmouth Bass (basis 66) asks 7-20 / 14-33 /
+  33-43 / 43-53; Summer Octopus (basis 8) asks 1-3 / 2-4 / 4-6 / 6-7. A gold ask keeps three
+  quarters of the roll, because fish quality is cast distance and level rather than luck (gold is
+  automatic from level 6 on a full cast). The ask reads the slot's deadline like the forage clamp
+  does, and the stack multiplier no longer touches a banded fish. Legendaries, mine-floor fish
+  and anything landed less than twice a week stay at one. Applies to every bundle the engine
+  emits, kept-vanilla ones included, on the engine path only; the vanilla-board pass is unchanged.
+
 ## 0.16.180 - 2026-09-04
 
 1936 tests. Internal build.

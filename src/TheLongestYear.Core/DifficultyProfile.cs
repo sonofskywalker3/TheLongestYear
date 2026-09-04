@@ -43,6 +43,11 @@ public sealed class DifficultyProfile
     /// <summary>Multiplier on the silver/gold roll chances.</summary>
     public double QualityFactor { get; set; } = 1.0;
 
+    /// <summary>Band of the basis a quantity ask rolls in (fish today; see <see cref="AskBands"/>).
+    /// Resolved from the Stack Size step alongside <see cref="StackFactor"/>.</summary>
+    public double AskBandLow { get; set; } = AskBands.NormalLow;
+    public double AskBandHigh { get; set; } = AskBands.NormalHigh;
+
     /// <summary>Change to a bundle's pick-X count. Ignored when
     /// <see cref="RequireAllSlots"/> is set.</summary>
     public int RequiredSlotsDelta { get; set; }

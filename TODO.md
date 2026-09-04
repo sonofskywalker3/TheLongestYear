@@ -142,7 +142,15 @@ ocean vs fresh (`CrabPot.DayUpdate`). Jeff: pots do not change with the season, 
 extrapolated. This is what unblocks **Cockle, Mussel, Oyster and Clam**, which are currently
 unclamped because the forage sweep only sees a fraction of their real supply.
 
-**E. Fish — not started, two separate questions.**
+**E. Fish — MODELLED FIRST PASS SHIPPED 0.16.181 (2026-09-04).** `FishAskBasis` + `AskBands` +
+`FishAskPass`: basis = best-10h-day catches x 7 from `tools/fish-sim` (replays the game's fish
+pick over the real tables; write-up in `docs/superpowers/notes/fish-catch-rates-2026-09-04.md`),
+bands by step, gold at 75%. Jeff accepted the model as the first pass; the two questions below
+stay open only as "spot-check in game before trusting a ceiling" (a real-rod count of a couple of
+fish on a couple of days) and "mine-floor fish have no data row". Quality answered: it is cast
+distance and level (BobberBar), not a per-fish statistic.
+
+Original notes:
 1. *Quantity.* There is no documented max catches per day and it is not a data constant; it falls
    out of real time (bite wait + minigame + recast against a 6am-2am window). Jeff wants a measured
    maximum, then ~80% of it as the basis, accounting for rain days and catch windows. Needs its own
