@@ -64,9 +64,9 @@ public static class StackScaling
             BundleSlotSpec slot = spec.Slots[i];
             if (slot.ItemId == MoneySlotId)
                 continue;
-            // A banded fish already carries its step's ask (FishAskPass); scaling it again would
-            // apply the same dial twice.
-            if (FishAskBasis.Covers(slot.ItemId))
+            // A banded fish or forage slot already carries its step's ask (QuantityAskPass);
+            // scaling it again would apply the same dial twice.
+            if (QuantityAskPass.Covers(slot.ItemId))
                 continue;
 
             // A legendary is caught once per loop, so its ask is x1 at every step

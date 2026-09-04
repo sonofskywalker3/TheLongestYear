@@ -110,7 +110,7 @@ public class FishAskBandsTests
     {
         BundleSpec spec = Spec((SmallmouthBass, 1, 0), (Octopus, 1, 2), (Legend, 1, 0), ("(O)f0", 1, 0));
 
-        BundleSpec banded = FishAskPass.Apply(spec, Profile(DifficultyStep.Extreme), _ => null, new Random(4));
+        BundleSpec banded = QuantityAskPass.Apply(spec, Profile(DifficultyStep.Extreme), _ => null, new Random(4));
 
         Assert.InRange(banded.Slots[0].Stack, 43, 53);
         Assert.InRange(banded.Slots[1].Stack, 4, 6);      // gold: 75% of 6..7
@@ -123,8 +123,8 @@ public class FishAskBandsTests
     public void The_pass_reads_the_slot_deadline_it_is_given()
     {
         BundleSpec spec = Spec((Walleye, 1, 0));
-        BundleSpec summer = FishAskPass.Apply(spec, Profile(DifficultyStep.Hard), _ => Season.Summer, new Random(1));
-        BundleSpec fall = FishAskPass.Apply(spec, Profile(DifficultyStep.Hard), _ => Season.Fall, new Random(1));
+        BundleSpec summer = QuantityAskPass.Apply(spec, Profile(DifficultyStep.Hard), _ => Season.Summer, new Random(1));
+        BundleSpec fall = QuantityAskPass.Apply(spec, Profile(DifficultyStep.Hard), _ => Season.Fall, new Random(1));
         Assert.Equal(1, summer.Slots[0].Stack);
         Assert.True(fall.Slots[0].Stack > 1);
     }
@@ -134,10 +134,10 @@ public class FishAskBandsTests
     {
         BundleSpec spec = Spec((SmallmouthBass, 1, 0), ("(O)f0", 1, 0));
         Assert.Equal(
-            FishAskPass.Apply(spec, Profile(DifficultyStep.Normal), _ => null, new Random(9)).Slots,
-            FishAskPass.Apply(spec, Profile(DifficultyStep.Normal), _ => null, new Random(9)).Slots);
+            QuantityAskPass.Apply(spec, Profile(DifficultyStep.Normal), _ => null, new Random(9)).Slots,
+            QuantityAskPass.Apply(spec, Profile(DifficultyStep.Normal), _ => null, new Random(9)).Slots);
         BundleSpec plain = Spec(("(O)f0", 1, 0), ("(O)f1", 1, 0));
-        Assert.Same(plain, FishAskPass.Apply(plain, Profile(DifficultyStep.Hard), _ => null, new Random(9)));
+        Assert.Same(plain, QuantityAskPass.Apply(plain, Profile(DifficultyStep.Hard), _ => null, new Random(9)));
     }
 
     [Fact]
