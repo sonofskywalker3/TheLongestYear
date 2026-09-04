@@ -244,8 +244,12 @@ public static class BundleSlotFiller
             int stack = rng.Next(tuning.LargeQuantityMinStack, tuning.LargeQuantityMaxStack + 1);
             // The big-ask roll is 40-99 and knows nothing about whether the item can actually be
             // gathered that many times in a season. Measured yields say most forage cannot: this is
-            // the roll that produced the 95 Rainbow Shell ask (a season really yields 11/5/6).
-            stack = ForageAskLimits.ClampAnySeason(slots[slotIndex].ItemId, stack);
+            // the roll that produced the 95 Rainbow Shell ask (a season really yields 11/5/6). The
+            // Wild Seed exemption from that ceiling only holds once the seeds can grow, so the
+            // clamp reads the season this slot will be due (the 90 Common Mushrooms on a first
+            // Spring: a Fall Wild Seed crop with a Spring deadline).
+            stack = ForageAskLimits.ClampForDeadline(slots[slotIndex].ItemId, stack,
+                DeadlineFor(spec, match, slots, slots[slotIndex].ItemId, availability));
             slots[slotIndex] = slots[slotIndex] with { Stack = stack, Quality = 0 };
         }
 
@@ -254,6 +258,24 @@ public static class BundleSlotFiller
             Slots = slots,
             NumberOfSlots = Math.Min(spec.NumberOfSlots, slots.Count),
         };
+    }
+
+    /// <summary>The season this slot will be due, as BundleClassifier will later decide it: a
+    /// season-named bundle is due in its season; a per-item bundle (every slot required) gets the
+    /// BundleDeadlines spread over the same ids and model; a pick-X-of-Y bundle runs on a ramp with
+    /// no per-item deadline, so null. The required-slots dial can still turn a per-item bundle into
+    /// pick-X-of-Y after this, which only loosens the deadline, so the clamp taken here can only be
+    /// stricter than the board that ships, never impossible.</summary>
+    private static Season? DeadlineFor(
+        BundleSpec spec, DomainMatch match, IReadOnlyList<BundleSlotSpec> slots, string itemId,
+        ItemAvailabilityModel? availability)
+    {
+        if (match.Season != null) return match.Season;
+        if (availability == null) return null;
+        List<string> ids = slots.Select(s => s.ItemId).Distinct(StringComparer.Ordinal).ToList();
+        if (spec.NumberOfSlots < ids.Count) return null;
+        return BundleDeadlines.For(ids, availability, StretchRule.Lines(ids, availability))
+            .TryGetValue(itemId, out Season due) ? due : null;
     }
 
     /// <summary>Rolls a recipe bundle part by part, in the recipe's own fixed order so the rng

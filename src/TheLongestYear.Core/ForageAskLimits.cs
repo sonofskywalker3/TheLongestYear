@@ -109,6 +109,25 @@ public static class ForageAskLimits
     public static bool IsWildSeedGrowable(string itemId)
         => itemId != null && WildSeedGrowable.Contains(itemId);
 
+    /// <summary>The season each Wild Seed crop grows in (Spring Seeds grow the Spring four, and so
+    /// on). The exemption above is only honest once that season has arrived: Common Mushroom is a
+    /// Fall Wild Seed crop, and a bundle due in Spring cannot farm it, so it takes the measured
+    /// Spring ceiling like any other forage. Jeff's ruling 2026-09-04 (nyxnyx2234's 90 Common
+    /// Mushrooms on a first Spring).</summary>
+    private static readonly IReadOnlyDictionary<string, Season> WildSeedSeason =
+        new Dictionary<string, Season>(StringComparer.Ordinal)
+        {
+            ["(O)16"] = Season.Spring, ["(O)18"] = Season.Spring, ["(O)20"] = Season.Spring, ["(O)22"] = Season.Spring,
+            ["(O)396"] = Season.Summer, ["(O)398"] = Season.Summer, ["(O)402"] = Season.Summer,
+            ["(O)404"] = Season.Fall, ["(O)406"] = Season.Fall, ["(O)408"] = Season.Fall, ["(O)410"] = Season.Fall,
+            ["(O)412"] = Season.Winter, ["(O)414"] = Season.Winter, ["(O)416"] = Season.Winter, ["(O)418"] = Season.Winter,
+        };
+
+    /// <summary>True when the item's Wild Seeds can grow by <paramref name="deadline"/>, so the
+    /// farmable exemption applies to a bundle due then.</summary>
+    public static bool IsWildSeedGrowableBy(string itemId, Season deadline)
+        => itemId != null && WildSeedSeason.TryGetValue(itemId, out Season grows) && grows <= deadline;
+
     /// <summary>Ceilings set by JUDGEMENT, not by measurement, and which beat the measured table.
     ///
     /// Every row here exists because the sweep's number for that item was not the item's real
@@ -204,10 +223,35 @@ public static class ForageAskLimits
     public static int? MaxAsk(Season season, string itemId)
     {
         if (IsWildSeedGrowable(itemId)) return null;   // farmable without limit
+        return MeasuredMaxAsk(season, itemId);
+    }
+
+    /// <summary>The ceiling the measurements (or a ruling) give, with NO Wild Seed exemption: what
+    /// a season yields when the item cannot be farmed by then.</summary>
+    public static int? MeasuredMaxAsk(Season season, string itemId)
+    {
         int? ruled = RuledMaxAsk(itemId);
         if (ruled != null) return ruled;
         double? mean = MeanFor(season, itemId);
         return mean == null ? null : Math.Max(1, (int)Math.Ceiling(mean.Value * CeilingFraction));
+    }
+
+    /// <summary>Clamp against the season a bundle is due. A Wild Seed crop is exempt only when its
+    /// seeds grow by then; otherwise the ceiling is the most generous of the seasons the player has
+    /// had up to the deadline (the safe direction, as in <see cref="MaxAskAnySeason"/>). With no
+    /// deadline known this is <see cref="ClampAnySeason"/>.</summary>
+    public static int ClampForDeadline(string itemId, int stack, Season? deadline)
+    {
+        if (deadline == null || itemId == null) return ClampAnySeason(itemId, stack);
+        if (IsWildSeedGrowableBy(itemId, deadline.Value)) return stack;
+        if (!IsWildSeedGrowable(itemId)) return ClampAnySeason(itemId, stack);
+        int? best = null;
+        for (Season s = Season.Spring; s <= deadline.Value; s++)
+        {
+            int? max = MeasuredMaxAsk(s, itemId);
+            if (max != null && (best == null || max > best)) best = max;
+        }
+        return best == null || stack <= best.Value ? stack : best.Value;
     }
 
     /// <summary>The measured mean, or null when the item is not covered.</summary>

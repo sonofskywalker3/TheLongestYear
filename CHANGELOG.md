@@ -3,6 +3,21 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.180 - 2026-09-04
+
+1936 tests. Internal build.
+
+### Fixed
+
+- **The Wild Seed exemption now reads the bundle's deadline (Nexus post, nyxnyx2234).** A bundle
+  asked for 90 Common Mushrooms on a first Spring. Common Mushroom escaped the measured ceiling
+  because Wild Seeds can farm it, but those are Fall Wild Seeds, and a Spring deadline cannot wait
+  for them. The big forage ask now works out the season the slot will be due (the named season of
+  a Spring/Summer/Fall/Winter bundle, or the same effort-spread deadline the classifier gives a
+  per-item bundle) and only lifts the ceiling when that item's seeds can grow by then. Otherwise it
+  takes the most generous measured ceiling of the seasons reached so far: 14 Common Mushrooms for
+  a Spring deadline, not 90.
+
 ## 0.16.179 - 2026-09-04
 
 1924 tests. Internal build.
