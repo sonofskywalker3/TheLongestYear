@@ -3,6 +3,38 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.0 - 2026-09-04
+
+1979 tests. **The Reasonable Quantities Update.** 0.16.179 to 0.16.192 were internal builds;
+their entries below are the detail. Reports: gazumbrado, nyxnyx2234, spenderg, Bumblewyn.
+
+### Changed
+
+- **Every bundle slot asks basis x band.** The basis is one week of going after the item: fish
+  modelled from Data/Locations and Data/Fish at two catches a game hour, forage measured by
+  three full-year map sweeps, crops on 100 tiles with no cost cap, ten crab pots, 60 mine kills a
+  day (Skull Cavern a third), a modelled mine day, stations by unlock cost, animals from a Big
+  Coop or Barn of eight, raw resources, geode minerals at four. The Stack size dial is the band:
+  Easy 10-30%, Normal 20-50%, Hard 50-65%, Extreme 65-80%, ceiling 80%. Gold asks keep three
+  quarters (fish) or half (crops). Where an item has several sources the largest basis stands.
+- **Legendary fish**: once, plain, per-bundle cap 1/1/2/4 by step, never two from one season, and a
+  board allowance of none on Easy, one on a quarter of Normal boards, two on Hard, three on Extreme.
+- **Jeweler's and Rockhound's** authored bundles in the Boiler Room; Mineral, Jeweler's and
+  Rockhound's draw minerals only.
+- The Stack size tooltip, README and Nexus description describe the new meaning.
+
+### Fixed
+
+- Golden Egg and the five Extended Family fish are excluded at the object level.
+- The Wild Seed exemption reads the slot's deadline; a farmable forage is measured mean plus 30.
+- Normal caps a vanilla ask at 99; the multiplier skips only what the pass banded; required
+  slots are applied before the quantity pass.
+- Coffee Bean 20, Cloth 35, Skeleton Warrior out of the drop table, Large animal rows halved.
+
+### Removed
+
+- The one-slot 40-99 forage roll, the price-banded monster roll and the fixed x5 gold crop ask.
+
 ## 0.16.192 - 2026-09-04
 
 1979 tests. The board's legendary allowance now bounds each bundle's cap as well: an Extreme
