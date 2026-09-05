@@ -75,6 +75,9 @@ public class QuantityBasisTablesTests
         Assert.Equal(99, QuantityBasisTables.MonsterDrops[Slime]);            // capped
         Assert.InRange(QuantityBasisTables.MonsterDrops[CopperBarDrop], 16, 18); // Shadow Guy at 4%, 420 kills
         Assert.False(QuantityBasisTables.MonsterDrops.ContainsKey("(O)848"));  // Cinder Shard: volcano only
+        Assert.False(QuantityBasisTables.MonsterDrops.ContainsKey("(O)74"));   // Prismatic Shard: Skeleton Warrior is dangerous-mines only
+        Assert.InRange(QuantityBasisTables.MonsterDrops["(O)428"], 30, 40);    // Cloth: Mummies at a third rate
+        Assert.Equal(20, QuantityBasisTables.Crops["(O)433"]);                 // Coffee Bean: supply-limited
         Assert.InRange(Roll(Slime, DifficultyStep.Hard), 50, 65);
     }
 

@@ -49,6 +49,24 @@ public static class LegendaryFishRules
             _ => OnePerBundle,
         };
 
+    /// <summary>How many legendaries a whole BOARD may hold at this step (Jeff, 2026-09-04: on Normal
+    /// "maybe 1 legendary fish on every 3-5 boards; they're only supposed to be a hard roll item").
+    /// Easy never; Normal one, on a quarter of boards; Hard and Extreme uncapped at board level, the
+    /// per-bundle cap still holds. Seeded off the board seed so a replay rolls the same answer.</summary>
+    public static int BoardAllowance(DifficultyStep step, Random rng)
+    {
+        if (rng == null) throw new ArgumentNullException(nameof(rng));
+        return step switch
+        {
+            DifficultyStep.Easy => 0,
+            DifficultyStep.Normal => rng.NextDouble() < NormalBoardChance ? 1 : 0,
+            _ => int.MaxValue,
+        };
+    }
+
+    /// <summary>Share of Normal boards that may hold a legendary at all.</summary>
+    public const double NormalBoardChance = 0.25;
+
     /// <summary>Every legendary asks for one, whatever the stack roll or the stack-size dial says.</summary>
     public static int ClampStack(string itemId, int stack)
         => IsLegendary(itemId) ? 1 : stack;

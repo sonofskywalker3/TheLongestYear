@@ -731,6 +731,14 @@ public static class ItemPoolBuilder
         "(O)907", // Tropical Curry    — island dish
         "(O)873", // Piña Colada       — island resort drink
         "(O)795", // Void Salmon       — Witch's Swamp only, behind the Dark Talisman quest (post-CC)
+        // The five Extended Family fish hang off Mr. Qi's post-CC order (0.16.176 dropped their spawn
+        // rows), but a recipe bundle that draws by colour or tag from ALL objects (Dye) never sees a
+        // spawn row: board 129 of the 2026-09-04 sweep asked for Son of Crimsonfish. Ban the ids.
+        "(O)898", // Son of Crimsonfish
+        "(O)899", // Ms. Angler
+        "(O)900", // Legend II
+        "(O)901", // Radioactive Carp
+        "(O)902", // Glacierfish Jr.
         "(O)928", // Golden Egg        — Golden Chickens need Perfection (or Qi's Walnut Room shop), so a
                   //                     one-year loop can never see one. Category Egg (-5) and, unlike Void
                   //                     Egg and Ostrich Egg, NOT flagged ExcludeFromRandomSale, so the vet let

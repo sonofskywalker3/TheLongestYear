@@ -51,7 +51,7 @@ public static class BundleSlotFiller
         BundleGenerationTuning tuning, Random rng,
         PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null,
         IReadOnlySet<string>? avoid = null, ItemAvailabilityModel? availability = null,
-        PoolRecipe? knownRecipe = null)
+        PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -71,6 +71,15 @@ public static class BundleSlotFiller
         IReadOnlyList<PoolItem> candidates = recipe == null
             ? Candidates(spec, match, pools)
             : BundlePoolRecipes.Union(parts.ToArray());
+        // A banned id is out of every draw this bundle makes (the raw roll, the stretch swap, the
+        // hard-item swap, a recipe part), unlike <paramref name="avoid"/>, which yields when the
+        // pool is short. The engine bans the legendaries once the board's allowance is used up.
+        if (banned != null && banned.Count > 0)
+        {
+            candidates = candidates.Where(p => !banned.Contains(p.ItemId)).ToList();
+            for (int i = 0; i < parts.Count; i++)
+                parts[i] = parts[i].Where(p => !banned.Contains(p.ItemId)).ToList();
+        }
         int targetCount = spec.PickCount > 0
             ? Math.Min(spec.PickCount, spec.Slots.Count)
             : spec.Slots.Count;
