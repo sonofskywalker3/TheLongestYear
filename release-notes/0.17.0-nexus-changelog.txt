@@ -1,0 +1,12 @@
+0.17.0 - The Reasonable Quantities Update
+
+The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.
+
+- Every bundle asks for a share of what a week of going after it actually yields. Fish, forage, crops, crab pots, monster drops, the mines, animals, machines and raw resources each have a real weekly yield behind them now: fish modelled from the game's own spawn tables at a level-10 fishing pace, forage measured by sweeping every map for three in-game years, crops on 100 tiles, ten crab pots, a full day in the mines. Your Stack size dial then picks a share of it: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, never above 80%. Two Smallmouth Bass is no longer an Extreme ask, and 90 Common Mushrooms is no longer a Spring one.
+- Legendary fish are asked for once, plain, and rarely. Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
+- Hard and Extreme mean it. Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
+- Two new mineral bundles. Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
+- Fixes from your reports. Golden Egg (Perfection only) and Son of Crimsonfish (a Mr. Qi quest) can no longer be asked for. A Spring bundle can no longer want 90 Common Mushrooms because Fall Wild Seeds could theoretically grow them. Coffee Bean, Cloth and a few Skull Cavern drops were asking for more than a first loop can produce. Normal now caps a vanilla ask at a stack, so Hard never asks for fewer than Normal.
+- Thank you to gazumbrado, nyxnyx2234, spenderg and Bumblewyn for the reports and the reroll logs behind this release.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
