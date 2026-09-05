@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.2 - 2026-09-05
+
+### Changed
+
+- **New book art.** The Cookbook, Craftbook and Bundle Log furniture now use cover art drawn by
+  supercam19 (same 48x16 sheet layout, so it is a straight asset swap). Thank you!
+
 ## 0.17.1 - 2026-09-05
 
 1980 tests.
