@@ -22,12 +22,22 @@ public static class QuantityAskPass
     private const int QualityGold = 2;
 
     public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng)
+        => Apply(spec, profile, deadlineFor, rng, out _);
+
+    /// <param name="bandedSlots">The slot indices this pass actually set. The stack multiplier skips
+    /// exactly these; an item that has a basis somewhere but none reachable by its deadline is NOT
+    /// banded, keeps its stack, and still meets the multiplier (Codex review, 2026-09-04).</param>
+    public static BundleSpec Apply(
+        BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng,
+        out IReadOnlySet<int> bandedSlots)
     {
         if (spec == null) throw new ArgumentNullException(nameof(spec));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
         if (deadlineFor == null) throw new ArgumentNullException(nameof(deadlineFor));
         if (rng == null) throw new ArgumentNullException(nameof(rng));
 
+        var touched = new HashSet<int>();
+        bandedSlots = touched;
         List<BundleSlotSpec>? banded = null;
         for (int i = 0; i < spec.Slots.Count; i++)
         {
@@ -37,6 +47,7 @@ public static class QuantityAskPass
             double? basis = BasisByDeadline(slot.ItemId, deadlineFor(slot.ItemId));
             if (basis == null)
                 continue;
+            touched.Add(i);
             int stack = AskBands.Roll(basis.Value, profile, rng);
             if (slot.Quality >= QualityGold)
                 stack = AskBands.ForGold(stack);
@@ -60,19 +71,22 @@ public static class QuantityAskPass
                || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id);
     }
 
-    /// <summary>Fish first (it knows seasons), then forage plus crab pot (a shellfish is gathered
-    /// AND trapped, so the two add), then the flat weekly tables.</summary>
-    private static double? BasisByDeadline(string itemId, Season? deadline)
+    /// <summary>One aggregation rule for every item (Codex review, 2026-09-04: the old fish-first,
+    /// forage-second precedence let Crab take its 5 pot catches over 99 from Lava Crabs and Cactus
+    /// Fruit its measured forage over the shop-seed 99): a player uses every source, so the LARGEST
+    /// basis stands. The one sum is forage plus crab pot, because a shellfish is gathered on the
+    /// beach and trapped in the same week, and that sum is then one candidate like any other.</summary>
+    public static double? BasisByDeadline(string itemId, Season? deadline)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
-        double? fish = FishAskBasis.BasisByDeadline(id, deadline);
-        if (fish != null) return fish;
+        double? best = FishAskBasis.BasisByDeadline(id, deadline);
         double? forage = ForageAskBasis.BasisByDeadline(id, deadline);
         double? pot = QuantityBasisTables.CrabPot.TryGetValue(id, out double p) ? p : null;
-        if (forage != null || pot != null) return (forage ?? 0) + (pot ?? 0);
-        // The flat tables can overlap (Quartz is a Stone Golem drop AND a node crystal; Green Algae
-        // is a Slime drop AND a catch): a player uses every source, so the largest basis stands.
-        double? best = null;
+        if (forage != null || pot != null)
+        {
+            double gathered = (forage ?? 0) + (pot ?? 0);
+            if (best == null || gathered > best) best = gathered;
+        }
         foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
         return best;

@@ -3,6 +3,66 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.190 - 2026-09-04
+
+1977 tests. Internal build: the correctness findings from a Codex review of the design and the
+two sweeps.
+
+### Fixed
+
+- **One aggregation rule for every item.** The quantity pass took fish first, forage plus crab
+  pot second, and only then the largest of the flat tables, so Crab sat at its five pot catches
+  while Lava Crabs drop it at 25%, and Cactus Fruit at its measured forage while the Oasis sells
+  the seed. Now the largest basis stands wherever it comes from; forage plus pot is still one
+  candidate.
+- **The multiplier skips only what the pass actually banded.** An item with a basis in some season
+  but none reachable by its deadline was skipped by both, so it kept its stack and dodged the
+  dial. The pass now reports the slots it set and the multiplier skips exactly those.
+- **Required slots are applied before the quantity pass**, so the deadline the pass reads (whole
+  year for a pick-X-of-Y, per item once every slot is required) is the shape that ships. Extreme
+  turning 3-of-4 into 4-of-4 could otherwise re-create the 90-mushrooms-in-Spring case.
+- **Normal caps a vanilla stack at 99 too.** A factor of 1.0 returned early and let Forest's Fiber
+  x200 through while Hard capped it at 99, which made Hard ask for fewer.
+
+## 0.16.189 - 2026-09-04
+
+1974 tests. Mineral and Rockhound's draw minerals only: the geode pool holds everything a geode
+can drop, so Mineral had asked for a Golden Pumpkin, an Ornamental Fan and a Treasure Chest, and
+Rockhound's for a Dwarf Gadget and a Rusty Spoon.
+
+## 0.16.188 - 2026-09-04
+
+Rockhound's minerals-only source; the engine logs each board's legendary allowance.
+
+## 0.16.187 - 2026-09-04
+
+1974 tests. From the first ten-board sweep read out of the running game.
+
+### Changed
+
+- **Legendary fish are rare on Normal.** They were rolling on eight boards in ten, about two a
+  board. A board now gets a legendary allowance rolled off its seed: none on Easy, one on a
+  quarter of Normal boards, uncapped on Hard and Extreme (the per-bundle cap of two and four still
+  holds). Once the allowance is spent the five legendaries are banned from every draw the board
+  makes, the hard-item swap and authored bundles included.
+- **Two mineral bundles.** Jeweler's (six of the seven fancy gems, four needed, a Diamond for
+  finishing it) and Rockhound's (eight geode minerals, five needed, a Geode Crusher) join Mineral
+  in the Boiler Room.
+
+### Fixed
+
+- **Son of Crimsonfish can no longer be asked for.** The Dye bundle draws by colour from every
+  object rather than from the fish pool, so 0.16.176's spawn-row rule never saw the Extended
+  Family fish there. All five are now banned at the object level.
+- **Skull Cavern drops are modelled at a third of the mine kill rate**, so Cloth from Mummies is
+  35 a week instead of 99. Skeleton Warriors are dangerous-mines only and are out of the table,
+  which stops Prismatic Shard x2 and Diamond x6 asks. Coffee Bean is supply-limited at 20.
+
+## 0.16.186 - 2026-09-04
+
+The Stack size tooltip, README and Nexus source describe the dial as a share of a week's real
+yield, with the four bands spelled out.
+
 ## 0.16.185 - 2026-09-04
 
 1972 tests. Internal build.

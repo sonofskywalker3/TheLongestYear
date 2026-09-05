@@ -335,12 +335,15 @@ namespace TheLongestYear.Loop
                 // Fish and forage asks: basis x band by step (QuantityAskPass), read against the
                 // deadline the classifier will give each slot. Before StackScaling, which skips
                 // banded slots.
-                BundleSpec finished = record.Composed!;
+                // Required slots FIRST (Codex review, 2026-09-04): Extreme turns a pick-3-of-4 into
+                // 4-of-4, which changes the deadline the classifier will give each slot, and the
+                // quantity pass must read that final shape, not the pre-dial one.
+                BundleSpec finished = Core.RequiredSlots.Apply(record.Composed!, _difficulty);
                 var fishRng = new Random(seed ^ (finished.Index * SlotSaltPrime) ^ FishAskSalt);
                 BundleSpec composed = Core.QuantityAskPass.Apply(finished, _difficulty,
-                    id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability), fishRng);
-                composed = Core.StackScaling.Apply(composed, _difficulty);
-                composed = Core.RequiredSlots.Apply(composed, _difficulty);
+                    id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability), fishRng,
+                    out IReadOnlySet<int> bandedSlots);
+                composed = Core.StackScaling.Apply(composed, _difficulty, bandedSlots);
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
 

@@ -143,9 +143,22 @@ public class FishAskBandsTests
     [Fact]
     public void The_stack_multiplier_skips_a_banded_fish_so_difficulty_is_not_applied_twice()
     {
-        BundleSpec spec = Spec((SmallmouthBass, 40, 0), ("(O)f0", 1, 0));
-        BundleSpec scaled = StackScaling.Apply(spec, Profile(DifficultyStep.Extreme));
-        Assert.Equal(40, scaled.Slots[0].Stack);
+        BundleSpec spec = Spec((SmallmouthBass, 1, 0), ("(O)f0", 1, 0));
+        BundleSpec banded = QuantityAskPass.Apply(spec, Profile(DifficultyStep.Extreme), _ => null, new Random(2), out IReadOnlySet<int> bandedSlots);
+        Assert.Equal(new[] { 0 }, bandedSlots.OrderBy(i => i));
+        BundleSpec scaled = StackScaling.Apply(banded, Profile(DifficultyStep.Extreme), bandedSlots);
+        Assert.Equal(banded.Slots[0].Stack, scaled.Slots[0].Stack);
         Assert.Equal(2, scaled.Slots[1].Stack);
+    }
+
+    [Fact]
+    public void A_covered_item_with_no_basis_by_its_deadline_is_not_banded_and_still_meets_the_multiplier()
+    {
+        // Walleye has a Fall basis only; a Summer deadline finds none, so the slot is left alone by
+        // the pass and the multiplier treats it like any other x1 (Codex review, 2026-09-04).
+        BundleSpec spec = Spec((Walleye, 1, 0));
+        BundleSpec banded = QuantityAskPass.Apply(spec, Profile(DifficultyStep.Extreme), _ => Season.Summer, new Random(2), out IReadOnlySet<int> bandedSlots);
+        Assert.Empty(bandedSlots);
+        Assert.Equal(2, StackScaling.Apply(banded, Profile(DifficultyStep.Extreme), bandedSlots).Slots[0].Stack);
     }
 }

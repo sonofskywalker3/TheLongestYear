@@ -32,11 +32,13 @@ public static class StackScaling
     private const string VaultRoom = "Vault";
 
     /// <summary>The scalar rule, shared by the Engine path and the Vanilla post-pass so the two
-    /// can never drift. Rounds away from zero, floors at 1, caps at 99.</summary>
+    /// can never drift. Rounds away from zero, floors at 1, caps at 99. The cap holds at a factor
+    /// of 1.0 too: Normal used to return early and let a vanilla x200 through while Hard capped it
+    /// at 99, a difficulty inversion (Codex review, 2026-09-04; Forest's Fiber x200).</summary>
     public static int ScaleStack(int stack, double factor)
     {
         if (factor == 1.0)
-            return stack;
+            return Math.Clamp(stack > 0 ? stack : MinStack, MinStack, MaxStack);
         int baseStack = stack > 0 ? stack : MinStack;
         return Math.Clamp(
             (int)Math.Round(baseStack * factor, MidpointRounding.AwayFromZero), MinStack, MaxStack);
@@ -49,11 +51,17 @@ public static class StackScaling
     /// Vault ask is a sum of gold, not a quantity of an item, and
     /// <c>PoolTuning.VaultAmountMultiplier</c> owns that number.</summary>
     public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile)
+        => Apply(spec, profile, null);
+
+    /// <param name="bandedSlots">Slot indices QuantityAskPass already set for this bundle. They carry
+    /// their step's ask and are skipped; scaling them again would apply the dial twice. Null means
+    /// no pass ran (the vanilla-board path).</param>
+    public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, IReadOnlySet<int> bandedSlots)
     {
         if (spec == null) throw new ArgumentNullException(nameof(spec));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
 
-        if (profile.StackFactor == 1.0 || spec.Slots == null || spec.Slots.Count == 0)
+        if (spec.Slots == null || spec.Slots.Count == 0)
             return spec;
         if (IsMoneyBundle(spec))
             return spec;
@@ -64,9 +72,7 @@ public static class StackScaling
             BundleSlotSpec slot = spec.Slots[i];
             if (slot.ItemId == MoneySlotId)
                 continue;
-            // A banded slot (fish, forage, crop, monster drop, crab pot, station, mineral) already
-            // carries its step's ask (QuantityAskPass); scaling it again would apply the dial twice.
-            if (QuantityAskPass.Covers(slot.ItemId))
+            if (bandedSlots != null && bandedSlots.Contains(i))
                 continue;
 
             // A legendary is caught once per loop, so its ask is x1 at every step

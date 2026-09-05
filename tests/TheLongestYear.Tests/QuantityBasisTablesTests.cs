@@ -107,6 +107,28 @@ public class QuantityBasisTablesTests
     }
 
     [Fact]
+    public void The_largest_basis_stands_whatever_table_it_comes_from()
+    {
+        // Codex review, 2026-09-04: fish-first / forage-second precedence had Crab at its 5 pot
+        // catches while Lava Crabs drop it at 25%, and Cactus Fruit at its measured forage while the
+        // Oasis sells the seed.
+        Assert.Equal(QuantityBasisTables.MonsterDrops["(O)717"], QuantityAskPass.BasisByDeadline("(O)717", null));   // Crab
+        Assert.Equal(99, QuantityAskPass.BasisByDeadline("(O)90", null));                                            // Cactus Fruit: crop 99 beats forage
+        // Green Algae: caught (fish table) and dropped by Slimes; the bigger of the two.
+        Assert.Equal(Math.Max(FishAskBasis.BasisByDeadline("(O)153", null)!.Value, QuantityBasisTables.MonsterDrops["(O)153"]), QuantityAskPass.BasisByDeadline("(O)153", null));
+    }
+
+    [Fact]
+    public void Normal_still_caps_a_vanilla_two_hundred_at_a_stack()
+    {
+        // Forest's Fiber x200: Normal's factor of 1.0 used to return early and skip the 99 cap
+        // that Hard applied, so Hard asked for FEWER (Codex review, 2026-09-04).
+        Assert.Equal(99, StackScaling.ScaleStack(200, 1.0));
+        Assert.Equal(99, StackScaling.ScaleStack(200, 2.0));
+        Assert.Equal(37, StackScaling.ScaleStack(37, 1.0));
+    }
+
+    [Fact]
     public void Books_artifacts_and_cooking_stay_single_asks()
     {
         Assert.False(QuantityAskPass.Covers(AncientDrum));
