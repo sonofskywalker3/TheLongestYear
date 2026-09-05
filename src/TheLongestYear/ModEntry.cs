@@ -192,6 +192,9 @@ namespace TheLongestYear
             // entry while the mod is enabled (the engine owns the board; the vanilla choice is moot).
             BundleOptionPatch.Enabled = () => _config.Enabled;
             BundleOptionPatch.Monitor = this.Monitor;
+            // "Skip intro" on character creation skips TLY's opening cutscene (vanilla's stays skipped).
+            SkipIntroChoicePatch.Enabled = () => _config.Enabled;
+            SkipIntroChoicePatch.Monitor = this.Monitor;
             BundleOptionPatch.ConfiguredSource = () => _config.BundleSource;
             _standardFarmEnforcer.Attach(helper);
 
@@ -409,6 +412,16 @@ namespace TheLongestYear
             _meta.State.IsLongestYearRun = true;
             if (wasNewGame)
             {
+                // "Skip intro" ticked on character creation: plant the cc-seen flag now, so the
+                // intro driver goes straight to the theme picker on this first morning and
+                // OnSaving promotes it to HasSeenIntro like a watched cutscene would.
+                if (SkipIntroChoicePatch.Choice.Consume() && Game1.player != null
+                    && !Game1.player.mailReceived.Contains(TheLongestYear.Core.Intro.IntroEventKeys.CcSeenMail))
+                {
+                    Game1.player.mailReceived.Add(TheLongestYear.Core.Intro.IntroEventKeys.CcSeenMail);
+                    this.Monitor.Log("Intro: skipped by the character-creation checkbox; opening the theme picker instead.", LogLevel.Info);
+                }
+
                 // Per-save bundle source from the Advanced Options dropdown (BundleOptionPatch):
                 // TLY Custom (default) → Engine; Normal/Remixed → Vanilla + the vanilla type so
                 // every reset regenerates the same kind of board (Nexus bug 1108030 root cause:

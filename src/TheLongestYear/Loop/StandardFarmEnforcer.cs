@@ -8,9 +8,11 @@ using StardewValley.Menus;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Forces every new TLY game onto the Standard farm AND force-skips the vanilla intro
-    /// cutscene (hiding its toggle), by scrubbing the relevant options out of CharacterCustomization
-    /// — TLY's own Lewis->Junimo chain is the intro. TLY's tile defaults, kept-building
+    /// Forces every new TLY game onto the Standard farm by scrubbing the relevant options out of
+    /// CharacterCustomization, and watches its "Skip intro" checkbox: ticking it pops a one-button
+    /// notice recommending first-timers watch the opening. The checkbox now skips TLY's own
+    /// Lewis->Junimo cutscene (see <see cref="SkipIntroChoicePatch"/>); the vanilla bus ride is
+    /// always skipped. TLY's tile defaults, kept-building
     /// placement coords, and stash auto-pick all assume Standard farm geometry — running on
     /// Riverland / Forest / Hilltop / etc. lands buildings in water or leaves the stash chest
     /// invisible. Rather than bailing at save-load (the c4af752 approach, which left the player
@@ -52,6 +54,10 @@ namespace TheLongestYear.Loop
         /// per-instance so a reopened menu (with a fresh button list) gets re-scrubbed.</summary>
         private IClickableMenu _scrubbedInstance;
 
+        /// <summary>Last observed "Skip intro" checkbox value, so the notice fires on the off->on edge.</summary>
+        private bool? _lastSkipIntro;
+        private bool _warnedNoSkipField;
+
         public StandardFarmEnforcer(IMonitor monitor, TheLongestYear.Core.GameplayConfig config)
         {
             _monitor = monitor;
@@ -91,10 +97,7 @@ namespace TheLongestYear.Loop
             if (Game1.whichFarm != 0)
                 Game1.whichFarm = 0;
 
-            // Re-force skip-intro EVERY tick (silently). A one-time set isn't durable: the menu
-            // re-lays-out on window resize (rebuilding the button) and a click toggles the flag.
-            // Re-applying keeps the toggle on and the button unclickable for good.
-            ApplySkipIntro(cc.GetType(), cc, log: false);
+            WatchSkipIntroToggle(cc);
         }
 
         private void OnSaveCreating(object sender, SaveCreatingEventArgs e)
@@ -174,49 +177,44 @@ namespace TheLongestYear.Loop
             // Ensure whichFarm is 0 immediately — a prior CC session may have left it non-zero.
             Game1.whichFarm = 0;
 
-            // Same menu, same lifecycle: force the intro skipped + hide its toggle (logged once).
-            ApplySkipIntro(type, cc, log: true);
+            _lastSkipIntro = ReadSkipIntro(type, cc);
         }
 
-        /// <summary>Force the skip-intro toggle on and neutralise its button so the vanilla
-        /// bus-drive intro never plays — TLY's own Lewis->Junimo chain is the intro. Zeroing the
-        /// button's bounds makes it both invisible and unclickable, which survives the menu's
-        /// resize-rebuild (setting only <c>visible=false</c> did not). PC field names differ from
-        /// the Android decompile (MobileCustomizer.skipIntro / skipIntroButton), so reflect and
-        /// log loudly if a field is absent. Called every tick with <paramref name="log"/> false.</summary>
-        private void ApplySkipIntro(System.Type type, IClickableMenu cc, bool log)
+        /// <summary>Show the notice each time the checkbox goes off -> on in this menu session.
+        /// The checkbox itself is untouched: vanilla toggles the field, the patch reads it on OK.</summary>
+        private void WatchSkipIntroToggle(IClickableMenu cc)
         {
-            FieldInfo skipFlag = type.GetField("skipIntro", FieldFlags);
-            if (skipFlag != null && skipFlag.FieldType == typeof(bool))
-                skipFlag.SetValue(cc, true);
-
-            FieldInfo skipButton = type.GetField("skipIntroButton", FieldFlags);
-            object button = skipButton?.GetValue(cc);
-            if (button != null)
-            {
-                // Zero the hit-rect: containsPoint() returns false (unclickable) and nothing draws.
-                FieldInfo bounds = button.GetType().GetField("bounds", FieldFlags);
-                if (bounds != null && bounds.FieldType == typeof(Microsoft.Xna.Framework.Rectangle))
-                    bounds.SetValue(button, default(Microsoft.Xna.Framework.Rectangle));
-
-                FieldInfo visible = button.GetType().GetField("visible", FieldFlags);
-                visible?.SetValue(button, false);
-            }
-
-            if (!log)
+            bool? now = ReadSkipIntro(cc.GetType(), cc);
+            if (now == null)
                 return;
 
-            if (skipFlag == null && skipButton == null)
+            if (now == true && _lastSkipIntro == false && Game1.activeClickableMenu != null
+                && Game1.activeClickableMenu.GetChildMenu() == null)
             {
-                _monitor.Log(
-                    "StandardFarmEnforcer: skipIntro/skipIntroButton not found on CharacterCustomization — " +
-                    "field names may have changed; vanilla intro will play. Farm-type scrub is unaffected.",
-                    LogLevel.Warn);
+                _monitor.Log("StandardFarmEnforcer: Skip intro ticked; showing the watch-it-first notice.", LogLevel.Info);
+                Game1.activeClickableMenu.SetChildMenu(new TheLongestYear.UI.IntroSkipNoticeMenu());
             }
-            else
+            _lastSkipIntro = now;
+        }
+
+        /// <summary>The CharacterCustomization <c>skipIntro</c> field, or null when the game has
+        /// renamed it (warned once; the notice is then unavailable but nothing else breaks).</summary>
+        private bool? ReadSkipIntro(System.Type type, IClickableMenu cc)
+        {
+            FieldInfo skipFlag = type.GetField("skipIntro", FieldFlags);
+            if (skipFlag == null || skipFlag.FieldType != typeof(bool))
             {
-                _monitor.Log("StandardFarmEnforcer: forced skip-intro on and neutralised the skip-intro button.", LogLevel.Info);
+                if (!_warnedNoSkipField)
+                {
+                    _warnedNoSkipField = true;
+                    _monitor.Log(
+                        "StandardFarmEnforcer: skipIntro not found on CharacterCustomization — field name may " +
+                        "have changed; the skip-intro notice is unavailable. Farm-type scrub is unaffected.",
+                        LogLevel.Warn);
+                }
+                return null;
             }
+            return (bool)skipFlag.GetValue(cc);
         }
 
         /// <summary>Trim a parallel List&lt;T&gt; field down to at most one entry. Returns the

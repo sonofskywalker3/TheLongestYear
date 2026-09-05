@@ -5,6 +5,15 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## 0.17.2 - 2026-09-05
 
+1984 tests.
+
+### Added
+
+- **The Skip intro checkbox on character creation works again** (gazumbrado, Nexus bug 1127469).
+  It skips The Longest Year's own Lewis to Junimo opening and goes straight to the theme picker;
+  the vanilla bus ride stays skipped either way. Ticking it shows a one-button notice recommending
+  first-time players watch the scene, since it is the only in-game explanation of the loop.
+
 ### Changed
 
 - **New book art.** The Cookbook, Craftbook and Bundle Log furniture now use cover art drawn by

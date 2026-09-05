@@ -89,6 +89,8 @@ namespace TheLongestYear.Integration
             // bypasses the end command that sets the cc-seen flag — leaving CcSeen false so the
             // driver re-fires the event, closing+reopening the dialog forever (2026-06-01 playtest).
             // Omitting "skippable" makes the event play through to its addMailReceived/"end".
+            // Players who want to skip use the character-creation Skip intro checkbox instead
+            // (SkipIntroChoicePatch), which plants the cc-seen flag before the driver runs.
 
             // ---- Scene 1: the farm porch (Lewis) ----
             "changeLocation Farm",

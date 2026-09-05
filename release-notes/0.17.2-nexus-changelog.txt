@@ -1,4 +1,8 @@
-0.17.2 - New book art
+0.17.2 - Skip intro is back, new book art
+
+Added
+- The Skip intro checkbox on the character screen works again. It skips the opening scene and
+  goes straight to the theme picker. A note recommends watching it the first time you play.
 
 Changed
 - The Cookbook, Craftbook and Bundle Log have proper covers now, drawn by supercam19. Thank you!
