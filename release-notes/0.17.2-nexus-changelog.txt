@@ -1,0 +1,6 @@
+0.17.2 - New book art
+
+Changed
+- The Cookbook, Craftbook and Bundle Log have proper covers now, drawn by supercam19. Thank you!
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
