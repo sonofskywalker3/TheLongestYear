@@ -557,7 +557,7 @@
     "gmcm.difficulty.step.hard": "Hard",
     "gmcm.difficulty.step.extreme": "Extreme",
     "gmcm.difficulty.stack-size.name": "Stack size",
-    "gmcm.difficulty.stack-size.tooltip": "How many of an item a bundle slot asks for, as a share of what a week of going after it actually yields: Easy 10-30%, Normal 20-50%, Hard 50-65%, Extreme 65-80%, never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield; one-offs like books and artifacts stay at one. Money bundles are never affected. Works on TLY Custom and on vanilla boards.",
+    "gmcm.difficulty.stack-size.tooltip": "How many of an item a bundle slot asks for, as a share of what a week of going after it actually yields: Easy 10-30%, Normal 20-50%, Hard 50-65%, Extreme 65-80%, never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. One-offs like books and artifacts stay at one. Money bundles are never affected. Works on TLY Custom and on vanilla boards.",
     "gmcm.difficulty.quality-asks.name": "Quality asks",
     "gmcm.difficulty.quality-asks.tooltip": "How often a slot wants a silver or gold star, which means fertiliser, skill levels and better fishing. Items the game never gives a star to are still never asked for at quality, at any step. Works on TLY Custom and on vanilla boards.",
     "gmcm.difficulty.required-slots.name": "Required slots",
