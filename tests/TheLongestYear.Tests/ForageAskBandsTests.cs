@@ -94,8 +94,9 @@ public class ForageAskBandsTests
     [Fact]
     public void The_stack_multiplier_skips_a_banded_forage_slot()
     {
-        BundleSpec scaled = StackScaling.Apply(Spec((RainbowShell, 4, 0), (Wood, 1, 0)), Profile(DifficultyStep.Extreme));
-        Assert.Equal(4, scaled.Slots[0].Stack);
+        BundleSpec banded = QuantityAskPass.Apply(Spec((RainbowShell, 1, 0), (Wood, 1, 0)), Profile(DifficultyStep.Extreme), _ => Season.Summer, new Random(1), out IReadOnlySet<int> bandedSlots);
+        BundleSpec scaled = StackScaling.Apply(banded, Profile(DifficultyStep.Extreme), bandedSlots);
+        Assert.Equal(banded.Slots[0].Stack, scaled.Slots[0].Stack);
         Assert.Equal(2, scaled.Slots[1].Stack);
     }
 

@@ -34,7 +34,7 @@ public class StackScalingTests
         => Assert.Equal(37, StackScaling.ScaleStack(37, 1.0));
 
     [Fact]
-    public void Normal_Returns_The_Same_Spec_Instance()
+    public void Normal_Returns_The_Same_Spec_Instance_When_Nothing_Is_Over_The_Cap()
     {
         var spec = Spec("Pantry", ("(O)388", 1), ("(O)330", 5));
 
