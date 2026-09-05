@@ -92,11 +92,9 @@ granular enough (per-day, not just per-season) before building a parallel table.
 draft in chat, not posted without Jeff's yes. She did NOT flag Mystic Syrup as a problem (see below) —
 don't apologize for or reference it in the reply, she only mentioned it in passing.
 
-### RELEASED 0.17.0 "The Reasonable Quantities Update" (2026-09-05, all three Nexus fields set via Chrome)
+### RELEASED 0.17.0 "The Reasonable Quantities Update" and 0.17.1 (Dye never draws a legendary) (2026-09-05, all three Nexus fields set via Chrome)
 
 Open after the release, from the Codex review and the sweeps (test-output/boards-2026-09-04-*.md):
-- Dye bundle can hold legendaries (it draws by colour from all objects); a colour bundle wanting
-  Legend reads oddly. Jeff has not ruled.
 - Vanilla-board path (BundleSource Vanilla) still uses the plain multiplier; only Engine boards are
   banded. Deliberate for now.
 - Spot-check the modelled fish, crab pot and mine bases with a real rod / pots / pickaxe on the
