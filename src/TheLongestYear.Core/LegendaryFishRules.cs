@@ -89,13 +89,16 @@ public static class LegendaryFishRules
     /// than an ask the game cannot satisfy. Deterministic for a given rng stream.</summary>
     public static void Enforce(
         List<PoolItem> chosen, IReadOnlyList<PoolItem> candidates, DifficultyStep step, Random rng,
-        Action<string>? log = null, string? bundleName = null)
+        Action<string>? log = null, string? bundleName = null, int boardBudget = int.MaxValue)
     {
         if (chosen == null) throw new ArgumentNullException(nameof(chosen));
         if (candidates == null) throw new ArgumentNullException(nameof(candidates));
         if (rng == null) throw new ArgumentNullException(nameof(rng));
 
-        int cap = MaxPerBundle(step);
+        // The bundle's cap, and never more than the board has left (BoardAllowance minus what
+        // earlier bundles took): an Extreme board allowed three was landing four because the ban
+        // only tripped between bundles and one bundle may hold two (sweep, 2026-09-04).
+        int cap = Math.Min(MaxPerBundle(step), Math.Max(0, boardBudget));
         var keptSeasons = new HashSet<Season>();
         var taken = new HashSet<string>(chosen.Select(c => c.ItemId), StringComparer.Ordinal);
         int kept = 0;

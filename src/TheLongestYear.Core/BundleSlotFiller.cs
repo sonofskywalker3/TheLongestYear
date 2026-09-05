@@ -51,7 +51,7 @@ public static class BundleSlotFiller
         BundleGenerationTuning tuning, Random rng,
         PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null,
         IReadOnlySet<string>? avoid = null, ItemAvailabilityModel? availability = null,
-        PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null)
+        PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null, int legendaryBudget = int.MaxValue)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -220,7 +220,7 @@ public static class BundleSlotFiller
         // Legendary cap (LegendaryFishRules): runs after every swap above, because the hard-item
         // rule is exactly the kind of pass that puts a legendary in, and the cap has to hold on
         // what actually leaves this method.
-        LegendaryFishRules.Enforce(chosen, candidates, availability?.Step ?? DifficultyStep.Normal, rng, log, spec.Name);
+        LegendaryFishRules.Enforce(chosen, candidates, availability?.Step ?? DifficultyStep.Normal, rng, log, spec.Name, legendaryBudget);
 
         // Stack and quality (rollDomain decided above the trim). A vanilla id the roll drew again
         // keeps the stack and quality the vanilla slot carried, so a re-roll that lands on the
