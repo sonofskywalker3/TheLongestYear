@@ -62,7 +62,7 @@ public static class AuthoredBundleCatalog
             Room: "Boiler Room",
             RewardField: "BO 21 1",
             Color: 1,
-            Source: AuthoredSlotSource.GeodeMinerals,
+            Source: AuthoredSlotSource.Minerals,   // rocks only: the geode pool also holds the artifacts and oddments geodes drop
             SlotCount: 6,
             NumberOfSlots: 4,
             FixedItemIds: new List<string>()),
