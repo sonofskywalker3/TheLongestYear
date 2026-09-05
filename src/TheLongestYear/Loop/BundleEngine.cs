@@ -80,6 +80,9 @@ namespace TheLongestYear.Loop
         /// the slot roll of a board generated before it existed.</summary>
         private const int FishAskSalt = 0x5F15;
 
+        /// <summary>Salt for the board-level legendary allowance roll (LegendaryFishRules.BoardAllowance).</summary>
+        private const int LegendarySalt = 0x1E6D;
+
         // The filler's "no stretch item for X" / "no hard item" lines are diagnostics about the
         // shape of a POOL, not events: on a board of 30-odd bundles they fire dozens of times per
         // generation and drown the swaps a reader actually wants to see. Keep them (they explain a
@@ -184,8 +187,14 @@ namespace TheLongestYear.Loop
             itemPools = Core.RarityBias.Apply(itemPools, _difficulty.RarityBias, _thresholds);
             LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
 
+            // Board-level legendary allowance (LegendaryFishRules.BoardAllowance): how many
+            // legendaries this whole board may hold at this step. Rolled off its own salt so it
+            // cannot move any other stream; decided before the authored bundles compose so a
+            // board that gets none never composes a Weatherman's with a Mutant Carp in it.
+            int legendaryAllowance = Core.LegendaryFishRules.BoardAllowance(
+                Availability?.Step ?? Core.DifficultyStep.Normal, new Random(seed ^ LegendarySalt));
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
-                WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed);
+                WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, legendaryAllowance);
 
             var allPicks = new List<BundleSpec>();
             var usedNameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -294,8 +303,10 @@ namespace TheLongestYear.Loop
                         _lastVanillaOnlyRecipes.Add(pick.Name);
                 }
                 var slotRng = new Random(seed ^ (pick.Index * SlotSaltPrime));
+                int legendariesSoFar = picked.Count(r => r.Composed != null && r.Composed.Slots.Any(sl => Core.LegendaryFishRules.IsLegendary(sl.ItemId)));
+                IReadOnlySet<string> banned = legendariesSoFar >= legendaryAllowance ? Core.LegendaryFishRules.Ids : null;
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
-                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe);
+                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe, banned);
                 if (ReferenceEquals(composed, pick))
                 {
                     _monitor?.Log(
@@ -461,11 +472,11 @@ namespace TheLongestYear.Loop
         /// like they have no alternates when they do.</summary>
         public IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> BuildCandidatePools(
             ItemPools itemPools, int seed)
-            => WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed);
+            => WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, int.MaxValue);
 
         private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> WidenWithAuthoredBundles(
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools,
-            ItemPools itemPools, int seed)
+            ItemPools itemPools, int seed, int legendaryAllowance)
         {
             var widened = new Dictionary<string, List<List<BundleSpec>>>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry in pools)
@@ -487,7 +498,8 @@ namespace TheLongestYear.Loop
                 // with that position's own absolute index (see doc comment above).
                 BundleSpec composed = AuthoredBundleComposer.Compose(
                     def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng,
-                    Availability?.Step ?? Core.DifficultyStep.Normal);
+                    Availability?.Step ?? Core.DifficultyStep.Normal,
+                    banned: legendaryAllowance == 0 ? Core.LegendaryFishRules.Ids : null);
                 if (composed == null)
                 {
                     _monitor?.Log(

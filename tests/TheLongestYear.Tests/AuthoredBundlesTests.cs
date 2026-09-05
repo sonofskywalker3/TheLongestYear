@@ -9,8 +9,8 @@ public class AuthoredBundlesTests
     [Fact]
     public void Catalog_HasElevenDefs_UniqueSlashFreeNames()
     {
-        Assert.Equal(11, AuthoredBundleCatalog.All.Count);
-        Assert.Equal(11, AuthoredBundleCatalog.All.Select(d => d.Name).Distinct().Count());
+        Assert.Equal(13, AuthoredBundleCatalog.All.Count);
+        Assert.Equal(13, AuthoredBundleCatalog.All.Select(d => d.Name).Distinct().Count());
         Assert.All(AuthoredBundleCatalog.All, d => Assert.DoesNotContain('/', d.Name));
     }
 

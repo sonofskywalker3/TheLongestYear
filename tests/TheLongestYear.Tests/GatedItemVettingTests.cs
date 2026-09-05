@@ -101,6 +101,10 @@ public class GatedItemVettingTests
     public void GoldenEgg_IsPerfectionLocked_SoTheBuiltInListExcludesIt()
     {
         Assert.Contains("(O)928", ItemPoolBuilder.BuiltInExcludedItemIds);
+        // The Extended Family fish reach a colour/tag recipe (Dye) without a spawn row, so the object
+        // level bans them too (board 129, 2026-09-04: Son of Crimsonfish in the Dye bundle).
+        foreach (string id in new[] { "(O)898", "(O)899", "(O)900", "(O)901", "(O)902" })
+            Assert.Contains(id, ItemPoolBuilder.BuiltInExcludedItemIds);
         var pools = ItemPoolBuilder.Build(
             new List<RawCropEntry>(),
             Objects(("928", Obj(category: -5)), ("176", Obj(category: -5))),

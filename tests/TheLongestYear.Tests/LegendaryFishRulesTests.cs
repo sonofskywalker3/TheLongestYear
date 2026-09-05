@@ -195,4 +195,38 @@ public class LegendaryFishRulesTests
             Assert.True(LegendariesIn(composed!).Count <= 1, $"seed {seed}");
         }
     }
+
+    [Fact]
+    public void The_board_allowance_is_none_on_easy_a_quarter_of_boards_on_normal_and_open_above()
+    {
+        Assert.Equal(0, LegendaryFishRules.BoardAllowance(DifficultyStep.Easy, new Random(1)));
+        int normalBoards = Enumerable.Range(0, 2000).Count(seed => LegendaryFishRules.BoardAllowance(DifficultyStep.Normal, new Random(seed)) == 1);
+        Assert.InRange(normalBoards, 400, 600);   // about one board in four
+        Assert.All(Enumerable.Range(0, 50), seed => Assert.True(LegendaryFishRules.BoardAllowance(DifficultyStep.Normal, new Random(seed)) <= 1));
+        Assert.Equal(int.MaxValue, LegendaryFishRules.BoardAllowance(DifficultyStep.Hard, new Random(1)));
+        Assert.Equal(int.MaxValue, LegendaryFishRules.BoardAllowance(DifficultyStep.Extreme, new Random(1)));
+    }
+
+    [Fact]
+    public void A_banned_id_never_reaches_a_slot_even_through_the_hard_item_swap()
+    {
+        // Legendaries at crushing weight AND as the only hard-effort items: without the ban both the
+        // raw roll and the hard-item swap would put one in.
+        var pools = new ItemPools { Fish = Legendaries.Concat(Fillers(8)).ToList() };
+        var derived = new Dictionary<string, ItemAvailability>();
+        foreach (PoolItem l in Legendaries) derived[l.ItemId] = new(Season.Spring, 9, "test", EarliestWeek: 4, HardWeek: 4);
+        foreach (PoolItem f in Fillers(8)) derived[f.ItemId] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1);
+        var model = new ItemAvailabilityModel(derived, mode: WeekModes.For(DifficultyStep.Normal), step: DifficultyStep.Normal);
+        for (int seed = 0; seed < 40; seed++)
+        {
+            BundleSpec filled = BundleSlotFiller.Fill(FishSpec(5), new DomainMatch(PoolDomain.Fish, null), pools,
+                new BundleGenerationTuning(), new Random(seed), availability: model, banned: LegendaryFishRules.Ids);
+            Assert.Empty(LegendariesIn(filled));
+            Assert.Equal(5, filled.Slots.Count);
+        }
+        var def = new AuthoredBundleDef("Weatherman's", "Fish Tank", "O 681 2", 6, AuthoredSlotSource.Fish, 5, 4, new List<string>());
+        BundleSpec? composed = AuthoredBundleComposer.Compose(def, 0, pools, new BundleGenerationTuning(), true, new Random(3), banned: LegendaryFishRules.Ids);
+        Assert.NotNull(composed);
+        Assert.Empty(LegendariesIn(composed!));
+    }
 }

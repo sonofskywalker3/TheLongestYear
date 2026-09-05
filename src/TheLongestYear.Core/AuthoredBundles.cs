@@ -65,6 +65,29 @@ public static class AuthoredBundleCatalog
             NumberOfSlots: 4,
             FixedItemIds: new List<string>()),
 
+        // Jeff, 2026-09-04: "I want to see minerals much higher ... a Jeweler's bundle for just stuff
+        // you'd put in fancy jewelry, a Rockhound's bundle." Both sit in the Boiler Room next to
+        // Mineral, so the room's three positions draw from five mineral-minded candidates.
+        new AuthoredBundleDef(
+            Name: "Jeweler's",
+            Room: "Boiler Room",
+            RewardField: "O 72 1",
+            Color: 5,
+            Source: AuthoredSlotSource.FixedList,
+            SlotCount: 6,
+            NumberOfSlots: 4,
+            FixedItemIds: new[] { "(O)72", "(O)64", "(O)60", "(O)70", "(O)62", "(O)66", "(O)68" }),   // Diamond, Ruby, Emerald, Jade, Aquamarine, Amethyst, Topaz
+
+        new AuthoredBundleDef(
+            Name: "Rockhound's",
+            Room: "Boiler Room",
+            RewardField: "BO 182 1",
+            Color: 1,
+            Source: AuthoredSlotSource.GeodeMinerals,
+            SlotCount: 8,
+            NumberOfSlots: 5,
+            FixedItemIds: new List<string>()),
+
         new AuthoredBundleDef(
             Name: "Book",
             Room: "Bulletin Board",

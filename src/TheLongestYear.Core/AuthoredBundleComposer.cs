@@ -31,13 +31,16 @@ public static class AuthoredBundleComposer
         BundleGenerationTuning tuning,
         bool nonObjectDonationsEnabled,
         Random rng,
-        DifficultyStep step = DifficultyStep.Normal)
+        DifficultyStep step = DifficultyStep.Normal,
+        IReadOnlySet<string>? banned = null)
     {
         bool isTrophies = def.Name == GilTrophiesBundleName;
 
         IReadOnlyList<PoolItem> candidates = isTrophies
             ? TrophyCandidates(nonObjectDonationsEnabled)
             : SourceCandidates(def, pools);
+        if (banned != null && banned.Count > 0)
+            candidates = candidates.Where(p => !banned.Contains(p.ItemId)).ToList();
 
         int shown = isTrophies ? tuning.TrophyShownCount : def.SlotCount;
         int required = isTrophies
