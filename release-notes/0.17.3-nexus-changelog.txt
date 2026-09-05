@@ -1,4 +1,4 @@
-0.17.2 - Skip intro is back, new book art
+0.17.3 - Skip intro is back, new book art
 
 Added
 - The Skip intro checkbox on the character screen works again. It skips the opening scene and
