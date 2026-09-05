@@ -52,16 +52,16 @@ public static class QuantityBasisTables
         // Animals: Big Coop / Big Barn of eight (Jeff: the smaller counts were "well too easy").
         ["(O)176"] = 28,   // Egg (white), 8 chickens a day split across colours
         ["(O)180"] = 28,   // Egg (brown)
-        ["(O)174"] = 28,   // Large Egg (white), at friendship
-        ["(O)182"] = 28,   // Large Egg (brown)
+        ["(O)174"] = 14,   // Large Egg (white): the same hens lay either size, so half (Codex review)
+        ["(O)182"] = 14,   // Large Egg (brown)
         ["(O)442"] = 28,   // Duck Egg, every other day
         ["(O)444"] = 7,    // Duck Feather
         ["(O)446"] = 2,    // Rabbit's Foot, rare
         ["(O)440"] = 18,   // Wool, 8 sheep every 3 days
         ["(O)184"] = 56,   // Milk, 8 cows a day
-        ["(O)186"] = 28,   // Large Milk
+        ["(O)186"] = 14,   // Large Milk: the same cows, half
         ["(O)436"] = 28,   // Goat Milk, every other day
-        ["(O)438"] = 14,   // L. Goat Milk
+        ["(O)438"] = 7,    // L. Goat Milk: the same goats, half
         ["(O)430"] = 50,   // Truffle, 8 pigs, not in Winter
         // Mayonnaise Machine (Farming 2): egg-limited.
         ["(O)306"] = 56,   // Mayonnaise
@@ -95,6 +95,16 @@ public static class QuantityBasisTables
         ["(O)812"] = 10,   // Roe
         ["(O)447"] = 10,   // Aged Roe
         ["(O)445"] = 5,    // Caviar
+    };
+
+    /// <summary>Raw resources a week of chopping, tilling and stump-clearing yields, so Extreme does
+    /// not sit Fiber x2 and Clay x2 next to Stone x79 (Codex review, 2026-09-04). Stone is in Mines.</summary>
+    public static readonly IReadOnlyDictionary<string, double> Resources = new Dictionary<string, double>(StringComparer.Ordinal)
+    {
+        ["(O)388"] = 99,   // Wood
+        ["(O)771"] = 99,   // Fiber, weeds and Fiber Seeds
+        ["(O)709"] = 40,   // Hardwood, Secret Woods stumps and the farm's large stumps
+        ["(O)330"] = 20,   // Clay, tilling and Duggies
     };
 
     /// <summary>What a week in the mines yields, from one modelled "mine day": 10 floors cleared,

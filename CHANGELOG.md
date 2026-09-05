@@ -3,6 +3,25 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.191 - 2026-09-04
+
+1978 tests. The balance calls from the Codex review, Jeff's rulings 2026-09-04 (Iridium Ore
+stays at 99: "there are other sources").
+
+### Changed
+
+- **Farmable forage is measured mean plus a seed-loop allowance of 30**, not a flat stack. A Normal
+  Spring Foraging bundle had asked Leek x50 and Daffodil x50, the whole measured wild mean.
+- **Gold crops keep half the roll** (fish keep three quarters): crop gold is fertiliser and Farming
+  level, never automatic. 57 gold Grapes on Extreme becomes about 38.
+- **Large eggs and milk are half the herd**, since the same animals give one size or the other.
+- **Wood, Fiber, Hardwood and Clay are banded** (99, 99, 40, 20 a week), so Extreme no longer sits
+  Fiber x2 next to Stone x79.
+- **Legendaries per board: Hard two, Extreme three.** Open allowances had Glacierfish on every
+  Extreme board and Legend on eight of ten, a fixed route rather than a roll.
+- The Stack size tooltip, README and Nexus text say that a yield is capped at a stack of 99, so an
+  Extreme 80 Slime is a stack, not a share.
+
 ## 0.16.190 - 2026-09-04
 
 1977 tests. Internal build: the correctness findings from a Codex review of the design and the

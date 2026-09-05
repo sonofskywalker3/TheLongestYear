@@ -8,7 +8,7 @@ namespace TheLongestYear.Tests;
 /// <summary>Forage on the same basis x band rule as fish (Jeff, 2026-09-04). The basis is the
 /// measured seasonal mean from ForageAskLimits (a ruling stands in for a measurement where one
 /// exists), reachable by the slot's deadline; a Wild Seed crop whose seeds grow by the deadline is
-/// farmable and takes the full 99-stack as its basis.</summary>
+/// farmable and adds a seed-loop allowance of 30 on top of the measured mean.</summary>
 public class ForageAskBandsTests
 {
     private const string RainbowShell = "(O)394";      // measured, never farmable
@@ -26,7 +26,7 @@ public class ForageAskBandsTests
         Assert.True(ForageAskBasis.Covers(RainbowShell));
         Assert.True(ForageAskBasis.Covers(PurpleMushroom));
         Assert.True(ForageAskBasis.Covers(WildHorseradish));
-        Assert.False(ForageAskBasis.Covers(Wood));
+        Assert.False(ForageAskBasis.Covers(Wood));   // Wood is a Resource, not forage
     }
 
     [Fact]
@@ -45,12 +45,15 @@ public class ForageAskBandsTests
     }
 
     [Fact]
-    public void A_wild_seed_crop_is_farmable_once_its_seeds_grow_and_measured_before_that()
+    public void A_wild_seed_crop_adds_the_seed_loop_allowance_once_its_seeds_grow_and_is_measured_before_that()
     {
-        Assert.Equal(ForageAskBasis.FarmableBasis, ForageAskBasis.BasisByDeadline(CommonMushroom, Season.Fall));
-        Assert.Equal(ForageAskBasis.FarmableBasis, ForageAskBasis.BasisByDeadline(CommonMushroom, null));
+        double fallMean = Enumerable.Range(0, 4).Select(i => ForageAskLimits.MeanFor((Season)i, CommonMushroom) ?? 0).Max();
+        Assert.Equal(fallMean + ForageAskBasis.FarmableAllowance, ForageAskBasis.BasisByDeadline(CommonMushroom, Season.Fall)!.Value, 3);
+        Assert.Equal(fallMean + ForageAskBasis.FarmableAllowance, ForageAskBasis.BasisByDeadline(CommonMushroom, null)!.Value, 3);
         Assert.Equal(ForageAskLimits.MeanFor(Season.Spring, CommonMushroom), ForageAskBasis.BasisByDeadline(CommonMushroom, Season.Spring));
-        Assert.Equal(ForageAskBasis.FarmableBasis, ForageAskBasis.BasisByDeadline(WildHorseradish, Season.Spring));
+        double springHorseradish = ForageAskLimits.MeanFor(Season.Spring, WildHorseradish) ?? 0;
+        Assert.Equal(springHorseradish + ForageAskBasis.FarmableAllowance, ForageAskBasis.BasisByDeadline(WildHorseradish, Season.Spring)!.Value, 3);
+        Assert.True(ForageAskBasis.BasisByDeadline(WildHorseradish, Season.Spring) < 99);
     }
 
     private static BundleSpec Spec(params (string Id, int Stack, int Quality)[] slots)
@@ -69,14 +72,15 @@ public class ForageAskBandsTests
     }
 
     [Theory]
-    [InlineData(DifficultyStep.Normal, 20, 50)]
-    [InlineData(DifficultyStep.Extreme, 65, 80)]
-    public void A_farmable_forage_rolls_its_band_of_a_full_stack(DifficultyStep step, int low, int high)
+    [InlineData(DifficultyStep.Normal, 0.20, 0.50)]
+    [InlineData(DifficultyStep.Extreme, 0.65, 0.80)]
+    public void A_farmable_forage_rolls_its_band_of_mean_plus_allowance(DifficultyStep step, double low, double high)
     {
+        int basis = (int)Math.Round(ForageAskBasis.BasisByDeadline(CommonMushroom, Season.Fall)!.Value);
         for (int seed = 0; seed < 100; seed++)
         {
             BundleSpec banded = QuantityAskPass.Apply(Spec((CommonMushroom, 1, 0)), Profile(step), _ => Season.Fall, new Random(seed));
-            Assert.InRange(banded.Slots[0].Stack, low, high);
+            Assert.InRange(banded.Slots[0].Stack, (int)Math.Ceiling(basis * low), (int)Math.Ceiling(basis * high));
         }
     }
 
@@ -94,7 +98,8 @@ public class ForageAskBandsTests
     [Fact]
     public void The_stack_multiplier_skips_a_banded_forage_slot()
     {
-        BundleSpec banded = QuantityAskPass.Apply(Spec((RainbowShell, 1, 0), (Wood, 1, 0)), Profile(DifficultyStep.Extreme), _ => Season.Summer, new Random(1), out IReadOnlySet<int> bandedSlots);
+        // Wood is banded now too (Resources), so the unbanded control is a cooked dish.
+        BundleSpec banded = QuantityAskPass.Apply(Spec((RainbowShell, 1, 0), ("(O)194", 1, 0)), Profile(DifficultyStep.Extreme), _ => Season.Summer, new Random(1), out IReadOnlySet<int> bandedSlots);
         BundleSpec scaled = StackScaling.Apply(banded, Profile(DifficultyStep.Extreme), bandedSlots);
         Assert.Equal(banded.Slots[0].Stack, scaled.Slots[0].Stack);
         Assert.Equal(2, scaled.Slots[1].Stack);

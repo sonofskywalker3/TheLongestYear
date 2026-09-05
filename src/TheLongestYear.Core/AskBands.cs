@@ -26,6 +26,10 @@ public static class AskBands
     /// <summary>Fraction of the rolled stack a gold-quality ask keeps.</summary>
     public const double GoldFactor = 0.75;
 
+    /// <summary>Crops keep less on gold: fish gold is a full cast at level 6, crop gold is fertiliser
+    /// and Farming level and never automatic (Codex review, 2026-09-04: 57 gold Grapes on Extreme).</summary>
+    public const double CropGoldFactor = 0.50;
+
     public static (double Low, double High) For(DifficultyStep step)
         => step switch
         {
@@ -51,5 +55,8 @@ public static class AskBands
 
     /// <summary>The stack a gold-quality ask keeps: three quarters, rounded, never below one.</summary>
     public static int ForGold(int stack)
-        => Math.Max(1, (int)Math.Round(stack * GoldFactor, MidpointRounding.AwayFromZero));
+        => ForGold(stack, GoldFactor);
+
+    public static int ForGold(int stack, double factor)
+        => Math.Max(1, (int)Math.Round(stack * factor, MidpointRounding.AwayFromZero));
 }

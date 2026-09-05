@@ -197,14 +197,14 @@ public class LegendaryFishRulesTests
     }
 
     [Fact]
-    public void The_board_allowance_is_none_on_easy_a_quarter_of_boards_on_normal_and_open_above()
+    public void The_board_allowance_is_none_on_easy_a_quarter_of_boards_on_normal_two_on_hard_three_on_extreme()
     {
         Assert.Equal(0, LegendaryFishRules.BoardAllowance(DifficultyStep.Easy, new Random(1)));
         int normalBoards = Enumerable.Range(0, 2000).Count(seed => LegendaryFishRules.BoardAllowance(DifficultyStep.Normal, new Random(seed)) == 1);
         Assert.InRange(normalBoards, 400, 600);   // about one board in four
         Assert.All(Enumerable.Range(0, 50), seed => Assert.True(LegendaryFishRules.BoardAllowance(DifficultyStep.Normal, new Random(seed)) <= 1));
-        Assert.Equal(int.MaxValue, LegendaryFishRules.BoardAllowance(DifficultyStep.Hard, new Random(1)));
-        Assert.Equal(int.MaxValue, LegendaryFishRules.BoardAllowance(DifficultyStep.Extreme, new Random(1)));
+        Assert.Equal(2, LegendaryFishRules.BoardAllowance(DifficultyStep.Hard, new Random(1)));
+        Assert.Equal(3, LegendaryFishRules.BoardAllowance(DifficultyStep.Extreme, new Random(1)));
     }
 
     [Fact]

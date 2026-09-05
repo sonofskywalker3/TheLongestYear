@@ -123,7 +123,7 @@ Ten independent difficulty dials live in the mod's settings menu (GMCM) under **
 
 **What the bundles ask for**
 
-- **Stack size.** How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number; one-offs like books and artifacts stay at one. Money bundles are never affected.
+- **Stack size.** How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. One-offs like books and artifacts stay at one. Money bundles are never affected.
 - **Quality asks.** How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
 - **Required slots.** How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
 - **Item rarity.** Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. **TLY Custom bundles only** (see below).

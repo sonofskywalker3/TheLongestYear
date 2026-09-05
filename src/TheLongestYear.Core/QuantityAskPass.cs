@@ -50,7 +50,7 @@ public static class QuantityAskPass
             touched.Add(i);
             int stack = AskBands.Roll(basis.Value, profile, rng);
             if (slot.Quality >= QualityGold)
-                stack = AskBands.ForGold(stack);
+                stack = AskBands.ForGold(stack, QuantityBasisTables.Crops.ContainsKey(BundleParsing.NormalizeItemId(slot.ItemId)) ? AskBands.CropGoldFactor : AskBands.GoldFactor);
             if (stack == slot.Stack)
                 continue;
             banded ??= spec.Slots.ToList();
@@ -68,7 +68,8 @@ public static class QuantityAskPass
         return FishAskBasis.Covers(id) || ForageAskBasis.Covers(id)
                || QuantityBasisTables.CrabPot.ContainsKey(id) || QuantityBasisTables.Crops.ContainsKey(id)
                || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)
-               || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id);
+               || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id)
+               || QuantityBasisTables.Resources.ContainsKey(id);
     }
 
     /// <summary>One aggregation rule for every item (Codex review, 2026-09-04: the old fish-first,
@@ -87,7 +88,7 @@ public static class QuantityAskPass
             double gathered = (forage ?? 0) + (pot ?? 0);
             if (best == null || gathered > best) best = gathered;
         }
-        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines })
+        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
         return best;
     }

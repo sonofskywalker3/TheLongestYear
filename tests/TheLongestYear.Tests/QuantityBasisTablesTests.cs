@@ -129,6 +129,19 @@ public class QuantityBasisTablesTests
     }
 
     [Fact]
+    public void Crops_keep_half_on_gold_fish_three_quarters_and_resources_are_banded()
+    {
+        var gold = QuantityAskPass.Apply(Spec((Parsnip, 1, 2), (SmallmouthBassId, 1, 2), ("(O)771", 1, 0)), Profile(DifficultyStep.Extreme), _ => Season.Spring, new Random(5));
+        Assert.InRange(gold.Slots[0].Stack, 33, 40);   // 65..80 of 99, then half
+        Assert.InRange(gold.Slots[1].Stack, 32, 40);   // 43..53, then three quarters
+        Assert.InRange(gold.Slots[2].Stack, 65, 80);   // Fiber, Resources 99
+        Assert.Equal(14, QuantityBasisTables.Stations["(O)174"]);   // Large Egg: half the hens' 28
+        Assert.Equal(7, QuantityBasisTables.Stations["(O)438"]);    // L. Goat Milk
+    }
+
+    private const string SmallmouthBassId = "(O)137";
+
+    [Fact]
     public void Books_artifacts_and_cooking_stay_single_asks()
     {
         Assert.False(QuantityAskPass.Covers(AncientDrum));
@@ -140,7 +153,7 @@ public class QuantityBasisTablesTests
     [Fact]
     public void Every_table_row_is_a_qualified_id_the_multiplier_will_skip()
     {
-        foreach (var table in new[] { QuantityBasisTables.CrabPot, QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines })
+        foreach (var table in new[] { QuantityBasisTables.CrabPot, QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             foreach (var row in table)
             {
                 Assert.StartsWith("(O)", row.Key);

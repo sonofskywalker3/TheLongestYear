@@ -51,8 +51,10 @@ public static class LegendaryFishRules
 
     /// <summary>How many legendaries a whole BOARD may hold at this step (Jeff, 2026-09-04: on Normal
     /// "maybe 1 legendary fish on every 3-5 boards; they're only supposed to be a hard roll item").
-    /// Easy never; Normal one, on a quarter of boards; Hard and Extreme uncapped at board level, the
-    /// per-bundle cap still holds. Seeded off the board seed so a replay rolls the same answer.</summary>
+    /// Easy never; Normal one, on a quarter of boards; Hard two; Extreme three. The open allowance on
+    /// Extreme put Glacierfish on all ten sweep boards and Legend on eight, a fixed route rather than
+    /// a roll (Codex review). The per-bundle cap still holds. Seeded off the board seed so a replay
+    /// rolls the same answer.</summary>
     public static int BoardAllowance(DifficultyStep step, Random rng)
     {
         if (rng == null) throw new ArgumentNullException(nameof(rng));
@@ -60,9 +62,13 @@ public static class LegendaryFishRules
         {
             DifficultyStep.Easy => 0,
             DifficultyStep.Normal => rng.NextDouble() < NormalBoardChance ? 1 : 0,
-            _ => int.MaxValue,
+            DifficultyStep.Hard => HardBoardAllowance,
+            _ => ExtremeBoardAllowance,
         };
     }
+
+    public const int HardBoardAllowance = 2;
+    public const int ExtremeBoardAllowance = 3;
 
     /// <summary>Share of Normal boards that may hold a legendary at all.</summary>
     public const double NormalBoardChance = 0.25;
