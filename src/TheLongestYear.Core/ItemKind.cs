@@ -14,7 +14,7 @@ public enum ItemKind
 public static class ItemKindClassifier
 {
     private const int GemCategory = -2;
-    private const int MineralCategory = -12;
+    public const int MineralCategory = -12;
     private const int MonsterLootCategory = -28;
     private const int ArtisanCategory = -26;
     private const int CookingCategory = -7;

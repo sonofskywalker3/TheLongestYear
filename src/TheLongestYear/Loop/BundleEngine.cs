@@ -193,6 +193,7 @@ namespace TheLongestYear.Loop
             // board that gets none never composes a Weatherman's with a Mutant Carp in it.
             int legendaryAllowance = Core.LegendaryFishRules.BoardAllowance(
                 Availability?.Step ?? Core.DifficultyStep.Normal, new Random(seed ^ LegendarySalt));
+            _monitor?.Log($"BundleEngine: legendary allowance for this board: {(legendaryAllowance == int.MaxValue ? "open" : legendaryAllowance.ToString())}.", LogLevel.Trace);
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
                 WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, legendaryAllowance);
 
