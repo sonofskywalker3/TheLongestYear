@@ -1,0 +1,9 @@
+0.17.1 - The Dye bundle never asks for a legendary fish
+
+Fixed
+- The Dye bundle picks by colour from every object, so a green Legend or a red Crimsonfish was a
+  legal pick and an Extreme board wanted both. It no longer draws legendaries at all. Its season
+  gates were already right: a bundle can never ask for an item before the season it first exists
+  in, so red Cranberries stay a Fall ask.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

@@ -257,10 +257,12 @@ public static class BundlePoolRecipes
         Func<ItemPools, ItemAvailabilityModel?, IReadOnlyList<PoolItem>> source, string label)
         => new[] { new PoolPart(source, RestOfTheSlots, label) };
 
+    /// <summary>Dye draws by colour from every object, which is how it reached for Legend and
+    /// Crimsonfish on the 2026-09-04 sweep. Jeff: a colour bundle never asks for a legendary.</summary>
     private static IReadOnlyList<PoolPart> DyeParts()
         => DyeColourTags.Select(tag => new PoolPart(
             (p, _) => p.ColourTags.TryGetValue(tag, out IReadOnlyList<PoolItem>? list)
-                ? list
+                ? list.Where(i => !LegendaryFishRules.IsLegendary(i.ItemId)).ToList()
                 : Array.Empty<PoolItem>(),
             1, tag)).ToList();
 

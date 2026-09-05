@@ -240,4 +240,21 @@ public class LegendaryFishRulesTests
         LegendaryFishRules.Enforce(chosen, new List<PoolItem> { legend, crimson, filler }, DifficultyStep.Extreme, new Random(1), boardBudget: 1);
         Assert.Equal(new[] { Legend, "(O)f0" }, chosen.Select(c => c.ItemId));
     }
+
+    [Fact]
+    public void The_dye_bundle_never_draws_a_legendary_whatever_its_colour()
+    {
+        // Legend is tagged color_green in Data/Objects, so it sits in the green colour bucket.
+        var pools = new ItemPools
+        {
+            ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>>(StringComparer.Ordinal)
+            {
+                ["color_green"] = new[] { Item(Legend, 1000, new[] { Season.Spring }), Item("(O)g1"), Item("(O)g2") },
+                ["color_red"] = new[] { Item(Crimsonfish, 1000, new[] { Season.Summer }), Item("(O)r1") },
+            },
+        };
+        PoolRecipe recipe = BundlePoolRecipes.For("Dye", new List<string>(), pools, null);
+        foreach (PoolPart part in recipe.Parts)
+            Assert.DoesNotContain(part.Source(pools, null), i => LegendaryFishRules.IsLegendary(i.ItemId));
+    }
 }

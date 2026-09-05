@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.1 - 2026-09-05
+
+1980 tests.
+
+### Fixed
+
+- **The Dye bundle never asks for a legendary fish.** It draws by colour from every object, so
+  Legend (green) and Crimsonfish (red) were legal picks and an Extreme sweep board wanted both.
+  Its season gates were already right: a per-item deadline can never precede the season the item
+  first exists in, so red Cranberries stay a Fall ask.
+
 ## 0.17.0 - 2026-09-04
 
 1979 tests. **The Reasonable Quantities Update.** 0.16.179 to 0.16.192 were internal builds;
