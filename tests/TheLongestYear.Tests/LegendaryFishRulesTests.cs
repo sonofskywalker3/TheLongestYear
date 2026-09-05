@@ -229,4 +229,15 @@ public class LegendaryFishRulesTests
         Assert.NotNull(composed);
         Assert.Empty(LegendariesIn(composed!));
     }
+
+    [Fact]
+    public void A_bundle_never_takes_more_legendaries_than_the_board_has_left()
+    {
+        PoolItem legend = Item(Legend, 1000, new[] { Season.Spring });
+        PoolItem crimson = Item(Crimsonfish, 1000, new[] { Season.Summer });
+        PoolItem filler = Item("(O)f0");
+        var chosen = new List<PoolItem> { legend, crimson };
+        LegendaryFishRules.Enforce(chosen, new List<PoolItem> { legend, crimson, filler }, DifficultyStep.Extreme, new Random(1), boardBudget: 1);
+        Assert.Equal(new[] { Legend, "(O)f0" }, chosen.Select(c => c.ItemId));
+    }
 }

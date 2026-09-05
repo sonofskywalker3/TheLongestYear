@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.16.192 - 2026-09-04
+
+1979 tests. The board's legendary allowance now bounds each bundle's cap as well: an Extreme
+board allowed three was landing four, because the ban only tripped between bundles and one
+bundle may hold two.
+
 ## 0.16.191 - 2026-09-04
 
 1978 tests. The balance calls from the Codex review, Jeff's rulings 2026-09-04 (Iridium Ore
