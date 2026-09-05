@@ -589,6 +589,7 @@
     "gmcm.pity.trim.tooltip": "On a reshuffle, this many of the hardest items eligible for the failed season are left out of the roll per fail beyond the threshold.",
 
     // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
+    "intro.skip-notice": "Skip intro is on. The Longest Year opens with a short scene that explains the loop and what to do first. I recommend watching it the first time you play the mod. Turn Skip intro off to see it.",
     "event.intro.lewis-1": "Hi there, @. Welcome to the valley.#$b#I'm Lewis, mayor of Pelican Town. I came up to greet you and your new farm.$h",
     "event.intro.lewis-2": "I wanted to be the first to say it... but I'm afraid I have to apologize for the timing.$s",
     "event.intro.lewis-3": "Joja Corporation rolled out a 'revitalization initiative' this spring. They've already filed permits to demolish our old Community Center. They're calling it an 'eyesore.'$a",

@@ -86,8 +86,8 @@ namespace TheLongestYear.Integration
                         {
                             // We already started the intro this morning, yet the decider is asking
                             // to start it again — meaning the event ended WITHOUT setting the cc-seen
-                            // flag (an interrupted/edge-case end; a skip is no longer possible since
-                            // the event isn't skippable). Force the flag so we proceed to the picker
+                            // flag (an interrupted/edge-case end; the event itself isn't skippable, and the
+                            // character-creation Skip intro checkbox plants the flag before we get here). Force the flag so we proceed to the picker
                             // instead of re-firing forever (the 2026-06-01 dialog-loop guard).
                             _monitor.Log("Intro: event ended without the cc-seen flag — forcing it to avoid a re-fire loop.", LogLevel.Warn);
                             p.mailReceived.Add(IntroEventKeys.CcSeenMail);
