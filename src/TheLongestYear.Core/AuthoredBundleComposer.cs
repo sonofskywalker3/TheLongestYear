@@ -104,6 +104,10 @@ public static class AuthoredBundleComposer
                 return pools.Saplings;
             case AuthoredSlotSource.GeodeMinerals:
                 return pools.GeodeMinerals;
+            case AuthoredSlotSource.Minerals:
+                // Rockhound's (Jeff, 2026-09-04): rocks only. The geode pool carries the artifacts
+                // geodes also drop (Dwarf Gadget, Rusty Spoon...), which the first roll served up.
+                return pools.GeodeMinerals.Where(p => p.Category == ItemKindClassifier.MineralCategory).ToList();
             case AuthoredSlotSource.Cooking:
                 return pools.Cooking;
             case AuthoredSlotSource.TapperGoods:

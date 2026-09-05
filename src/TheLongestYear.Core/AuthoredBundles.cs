@@ -6,7 +6,9 @@ namespace TheLongestYear.Core;
 /// consume this enum to match sources to item pools.</summary>
 public enum AuthoredSlotSource
 {
-    FixedList, Artifacts, Books, Saplings, GeodeMinerals, Cooking, TapperGoods, Trash, ArtisanGoods, Forage, Fish
+    FixedList, Artifacts, Books, Saplings, GeodeMinerals, Cooking, TapperGoods, Trash, ArtisanGoods, Forage, Fish,
+    /// <summary>The geode pool with everything that is not a mineral (the artifacts geodes also drop) left out.</summary>
+    Minerals
 }
 
 /// <summary>A Community Center bundle definition authored for the Longest Year engine (Plan 3).
@@ -83,7 +85,7 @@ public static class AuthoredBundleCatalog
             Room: "Boiler Room",
             RewardField: "BO 182 1",
             Color: 1,
-            Source: AuthoredSlotSource.GeodeMinerals,
+            Source: AuthoredSlotSource.Minerals,
             SlotCount: 8,
             NumberOfSlots: 5,
             FixedItemIds: new List<string>()),
