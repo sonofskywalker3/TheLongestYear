@@ -250,6 +250,8 @@ namespace TheLongestYear
 
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             helper.ConsoleCommands.Add("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
+            helper.ConsoleCommands.Add("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
+            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", this.CmdNewGame);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
@@ -897,6 +899,85 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_loadsave: loading '{args[0]}'.", LogLevel.Info);
             StardewValley.SaveGame.Load(args[0]);
             Game1.exitActiveMenu();
+        }
+
+        /// <summary>Farm-type tokens for <c>tly_newgame</c>: vanilla ids 0-6, plus 7 with a
+        /// <c>ModFarmType</c> for the 1.6 Meadowlands (which the game ships as an "additional farm").</summary>
+        private static readonly Dictionary<string, int> NewGameFarmTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["standard"] = 0, ["riverland"] = 1, ["forest"] = 2, ["hilltop"] = 3,
+            ["wilderness"] = 4, ["fourcorners"] = 5, ["beach"] = 6, ["meadowlands"] = 7,
+        };
+        private const string MeadowlandsFarmId = "MeadowlandsFarm";
+
+        /// <summary>Title-screen only. Mirrors what the character screen + TitleMenu.createdNewCharacter
+        /// do for a "Skip intro" new game, so an unattended run can start a farm of any type. Goes
+        /// through the same SaveCreating/SaveLoaded path as a real new game, so TLY activates and
+        /// the Advanced Options bundle choice defaults to TLY Custom.</summary>
+        private void CmdNewGame(string command, string[] args)
+        {
+            if (Context.IsWorldReady)
+            {
+                this.Monitor.Log("A save is already loaded — return to title first (tly_newgame is title-screen-only).", LogLevel.Warn);
+                return;
+            }
+            if (args.Length < 1 || !NewGameFarmTypes.TryGetValue(args[0], out int farmType))
+            {
+                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", LogLevel.Info);
+                return;
+            }
+            bool skipIntro = args.Skip(1).Any(a => a.Equals("skipintro", StringComparison.OrdinalIgnoreCase));
+            string name = args.Skip(1).FirstOrDefault(a => !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)) ?? "Rodger";
+
+            Game1.resetPlayer();
+            Game1.player.Name = name;
+            Game1.player.displayName = name;
+            Game1.player.farmName.Value = args[0];
+            Game1.player.favoriteThing.Value = "loops";
+            Game1.player.isCustomized.Value = true;
+
+            Game1.whichFarm = farmType;
+            Game1.whichModFarm = null;
+            Game1.spawnMonstersAtNight = farmType == 4;
+            if (farmType == 7)
+            {
+                var mod = DataLoader.AdditionalFarms(Game1.content).FirstOrDefault(f => f.Id == MeadowlandsFarmId);
+                if (mod == null)
+                {
+                    this.Monitor.Log($"tly_newgame: '{MeadowlandsFarmId}' not found in Data/AdditionalFarms.", LogLevel.Error);
+                    return;
+                }
+                Game1.whichModFarm = mod;
+                Game1.spawnMonstersAtNight = mod.SpawnMonstersByDefault;
+            }
+
+            // What the character screen's OK does with Skip intro on (TitleMenu.createdNewCharacter),
+            // routed through our own prefix so the checkbox choice is recorded the same way.
+            Loop.SkipIntroChoicePatch.Choice.Record(skipIntro);
+            this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}.", LogLevel.Info);
+            if (Game1.activeClickableMenu is TitleMenu)
+                TitleMenu.subMenu = null;
+            Game1.game1.loadForNewGame();
+            Game1.saveOnNewDay = true;
+            Game1.player.eventsSeen.Add("60367");
+            Game1.player.currentLocation = Utility.getHomeOfFarmer(Game1.player);
+            Game1.player.Position = new Microsoft.Xna.Framework.Vector2(9f, 9f) * 64f;
+            Game1.player.isInBed.Value = true;
+            Game1.NewDay(0f);
+            Game1.exitActiveMenu();
+            Game1.setGameMode(3);
+        }
+
+        private void CmdBuildings(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            Farm farm = Game1.getFarm();
+            var rows = farm.buildings
+                .OrderBy(b => b.tileY.Value).ThenBy(b => b.tileX.Value)
+                .Select(b => $"{b.buildingType.Value}@({b.tileX.Value},{b.tileY.Value})");
+            this.Monitor.Log(
+                $"Buildings farm={Game1.whichFarm}/{Game1.GetFarmTypeID()} n={farm.buildings.Count}: {string.Join(" ", rows)}",
+                LogLevel.Info);
         }
 
         private void PrintMeta(string command, string[] args)
@@ -1917,6 +1998,8 @@ namespace TheLongestYear
             {
                 case "tly_meta": this.PrintMeta(command, args); break;
                 case "tly_loadsave": this.CmdLoadSave(command, args); break;
+                case "tly_newgame": this.CmdNewGame(command, args); break;
+                case "tly_buildings": this.CmdBuildings(command, args); break;
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_additem": this.CmdAddItem(command, args); break;
