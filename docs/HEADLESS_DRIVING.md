@@ -54,6 +54,18 @@ Advance a season without tripping the day-28 gate: `tly_setday 7` (bridge), then
 `send-smapi-command.ps1 "debug season summer"` and `send-smapi-command.ps1 "debug sleep"`; the
 hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).
 
+## Farm-type runs
+
+`tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]`
+starts a farm of that type from the title screen with no character screen (same SaveCreating /
+SaveLoaded path as a real new game, TLY Custom bundles). `tly_totitle` exits to the title without
+saving so the next run can start. `tly_buildings` lists every farm building with its tile.
+`tools/farmtype-cycle.ps1 -FarmType <type> [-SkipIntro]` is the whole keep-and-rewind check (new
+game, `debug clearfarm`, coop + barn + silo via `debug build` on the first legal tiles, the three
+keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmtype-intro.ps1`
+plays the opening on a type, prints the farmer's porch tile and ends the event with `debug ee`.
+Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),

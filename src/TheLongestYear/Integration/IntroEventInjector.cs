@@ -94,6 +94,10 @@ namespace TheLongestYear.Integration
 
             // ---- Scene 1: the farm porch (Lewis) ----
             "changeLocation Farm",
+            // Porch tiles are written for the Standard farm (door at (64,15)). The game shifts
+            // every Farm event by the farmhouse's offset from that door (Farm.ResetForEvent sets
+            // eventPositionTileOffset), so these land in front of the house on every farm type;
+            // deriving them from the door here would apply the shift twice (2026-09-06, Meadowlands).
             "warp farmer 66 18 true",
             "addTemporaryActor Lewis 16 32 68 18 3 true Character",
             "viewport 66 18 true",

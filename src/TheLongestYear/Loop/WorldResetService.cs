@@ -794,6 +794,11 @@ namespace TheLongestYear.Loop
         private static readonly System.Reflection.MethodInfo AddStarterFurnitureMethod =
             AccessTools.Method(typeof(FarmHouse), "AddStarterFurniture");
 
+        /// <summary>Tiles where vanilla's starter set places an OBJECT (not furniture) for a farm
+        /// type; only Riverland (1) does, with its Fish Smoker at (4,4).</summary>
+        private static IEnumerable<Vector2> StarterObjectTiles(int whichFarm)
+            => whichFarm == 1 ? new[] { new Vector2(4f, 4f) } : System.Array.Empty<Vector2>();
+
         /// <summary>Rebuild the FarmHouse's built-in furniture to vanilla's default starter set.
         /// loadForNewGame + the house downgrade leave the cabin's furniture stale/missing (the
         /// fireplace vanished; a bed once blocked the door). Clearing + re-invoking the game's own
@@ -814,6 +819,15 @@ namespace TheLongestYear.Loop
             {
                 int before = fh.furniture.Count;
                 fh.furniture.Clear();
+                // Riverland's starter set also drops a Fish Smoker OBJECT at (4,4) (FarmHouse.
+                // AddStarterFurniture case 1), and loadForNewGame has just laid that down; a second
+                // Add on the same tile throws "same key". Lift the fresh starter object first so the
+                // re-run recreates it in place (2026-09-06, first non-Standard rewind).
+                foreach (Vector2 tile in StarterObjectTiles(Game1.whichFarm))
+                {
+                    if (fh.objects.TryGetValue(tile, out StardewValley.Object starter) && starter.bigCraftable.Value)
+                        fh.objects.Remove(tile);
+                }
                 AddStarterFurnitureMethod.Invoke(fh, new object[] { Game1.getFarm() });
                 _monitor.Log(
                     $"RestoreFarmHouseFurniture: rebuilt starter furniture (house level {fh.upgradeLevel}); " +
@@ -1060,10 +1074,26 @@ namespace TheLongestYear.Loop
                     continue;
                 }
 
-                // Already there? (e.g. previous reset placed it and loadForNewGame somehow
-                // preserved it.) Skip — never duplicate.
-                if (farm.buildings.Any(b => b.buildingType.Value == blueprint))
+                // Already there? Some farm types spawn a starter building on every
+                // loadForNewGame (Meadowlands: a Coop at its default tile). Never duplicate it;
+                // instead walk it to the player's own spot, like Keep Greenhouse does
+                // (2026-09-06, first Meadowlands rewind: the kept coop was skipped and the
+                // player's placement lost).
+                Building existing = farm.buildings.FirstOrDefault(b => b.buildingType.Value == blueprint);
+                if (existing != null)
+                {
+                    if (existing.tileX.Value != (int)tile.X || existing.tileY.Value != (int)tile.Y)
+                    {
+                        int fromX = existing.tileX.Value, fromY = existing.tileY.Value;
+                        ClearFootprint(farm, (int)tile.X, (int)tile.Y, existing.tilesWide.Value, existing.tilesHigh.Value);
+                        existing.tileX.Value = (int)tile.X;
+                        existing.tileY.Value = (int)tile.Y;
+                        existing.performActionOnBuildingPlacement();
+                        farm.OnBuildingMoved(existing);
+                        _monitor.Log($"Reset: kept building '{blueprint}' already on the fresh farm at ({fromX},{fromY}); moved to the player's spot ({tile.X},{tile.Y}).", LogLevel.Info);
+                    }
                     continue;
+                }
 
                 // 1.6 factory: honours BuildingData.BuildingType (typed subclasses) where new Building()
                 // would not — same result for Coop/Barn today, safer for Silo + mod-added buildings.
