@@ -250,6 +250,7 @@ namespace TheLongestYear
 
             helper.ConsoleCommands.Add("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             helper.ConsoleCommands.Add("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
+            helper.ConsoleCommands.Add("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
             helper.ConsoleCommands.Add("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
             helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", this.CmdNewGame);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
@@ -966,6 +967,13 @@ namespace TheLongestYear
             Game1.NewDay(0f);
             Game1.exitActiveMenu();
             Game1.setGameMode(3);
+        }
+
+        private void CmdToTitle(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Already at the title screen.", LogLevel.Info); return; }
+            this.Monitor.Log("tly_totitle: exiting to title (no save).", LogLevel.Info);
+            Game1.ExitToTitle(() => (Game1.activeClickableMenu as TitleMenu)?.skipToTitleButtons());
         }
 
         private void CmdBuildings(string command, string[] args)
@@ -2000,6 +2008,7 @@ namespace TheLongestYear
                 case "tly_loadsave": this.CmdLoadSave(command, args); break;
                 case "tly_newgame": this.CmdNewGame(command, args); break;
                 case "tly_buildings": this.CmdBuildings(command, args); break;
+                case "tly_totitle": this.CmdToTitle(command, args); break;
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_additem": this.CmdAddItem(command, args); break;
