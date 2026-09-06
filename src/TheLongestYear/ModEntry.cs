@@ -23,7 +23,7 @@ namespace TheLongestYear
         private MetaStore _meta;
         private CommunityCenterUnlock _ccUnlock;
         private MountainUnlock _mountainUnlock;
-        private StandardFarmEnforcer _standardFarmEnforcer;
+        private CharacterCreationWatcher _characterCreationWatcher;
         private WorldResetService _reset;
         private RunController _runController;
         private UpgradePurchaseService _purchases;
@@ -80,7 +80,7 @@ namespace TheLongestYear
         private int _playSeasonDonatedThisSeason;
 
         // True only once OnSaveLoaded has actually called _meta.Load() for the current save. Guards
-        // OnSaving: when a save opens with TLY disabled or on a non-Standard farm we skip Load (the
+        // OnSaving: when a save opens with TLY disabled we skip Load (the
         // early returns below), leaving MetaStore.State/Run at empty defaults — persisting those on the
         // next save would overwrite the player's banked progression with nothing. Reset on every load.
         private bool _metaLoaded;
@@ -184,10 +184,9 @@ namespace TheLongestYear
                 this.Helper.GameContent.InvalidateCache("Data/Furniture");
             };
 
-            // Force every new TLY game onto the Standard farm. Wired here (not in OnSaveLoaded)
-            // because the enforcer needs to fire on the title screen / character-creation flow,
-            // which is before any save is loaded.
-            _standardFarmEnforcer = new StandardFarmEnforcer(this.Monitor, _config);
+            // Watch the character-creation screen (Skip intro notice). Wired here (not in
+            // OnSaveLoaded) because it fires on the title screen, before any save is loaded.
+            _characterCreationWatcher = new CharacterCreationWatcher(this.Monitor, _config);
             // Same gate: the new-game "Community Center Bundles" dropdown becomes a single "TLY Custom"
             // entry while the mod is enabled (the engine owns the board; the vanilla choice is moot).
             BundleOptionPatch.Enabled = () => _config.Enabled;
@@ -196,7 +195,7 @@ namespace TheLongestYear
             SkipIntroChoicePatch.Enabled = () => _config.Enabled;
             SkipIntroChoicePatch.Monitor = this.Monitor;
             BundleOptionPatch.ConfiguredSource = () => _config.BundleSource;
-            _standardFarmEnforcer.Attach(helper);
+            _characterCreationWatcher.Attach(helper);
 
             // 2026-05-29 round 11: PatchAll iterates [HarmonyPatch] classes in assembly order,
             // and a SINGLE bad attribute (e.g. ambiguous method match) throws and aborts the
@@ -370,20 +369,10 @@ namespace TheLongestYear
                 return;
             }
 
-            // Standard farm only. Tile defaults + building placement coords assume
-            // the Standard farm layout. Other farm types (Riverland, Forest, Beach, etc.)
-            // would land the stash chest / cookbook / craftbook / pre-built coops + barns
-            // in unpredictable places (or in water). Skip setup with a clear log message.
-            if (Game1.whichFarm != 0)
-            {
-                DeactivateTly();
-                this.Monitor.Log(
-                    $"TLY only supports the Standard farm (Game1.whichFarm == 0). " +
-                    $"Current farm type is {Game1.whichFarm}. Skipping all setup. " +
-                    $"To use TLY, start a new game on the Standard farm.",
-                    LogLevel.Info);
-                return;
-            }
+            // Every farm type is allowed (0.17.3). Kept buildings return to the player's own
+            // spots and the stash chest places relative to the farmhouse door, so nothing here
+            // depends on the Standard layout any more. Log the type for bug reports.
+            this.Monitor.Log($"Farm type: {Game1.whichFarm} ({Game1.GetFarmTypeID()}).", LogLevel.Info);
 
             _meta.Load();
 
@@ -702,7 +691,7 @@ namespace TheLongestYear
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
         private void OnSaving(object sender, SavingEventArgs e)
         {
-            // If this save opened without TLY setup (disabled in config, or a non-Standard farm),
+            // If this save opened without TLY setup (disabled in config),
             // _meta.Load() never ran and State/Run are empty defaults — persisting them would wipe
             // the player's banked progression. Skip the save entirely in that case.
             if (!_metaLoaded)
