@@ -1,6 +1,8 @@
-0.17.3 - Skip intro is back, new book art
+0.17.3 - Every farm type, Skip intro is back, new book art
 
 Added
+- Every farm type is allowed. The mod no longer forces the Standard farm on new games. Kept
+  buildings go back to your own spots and the Junimo stash sits by your door on any map.
 - The Skip intro checkbox on the character screen works again. It skips the opening scene and
   goes straight to the theme picker. A note recommends watching it the first time you play.
 

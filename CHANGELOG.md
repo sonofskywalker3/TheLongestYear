@@ -9,6 +9,10 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Every farm type is allowed.** The new-game screen no longer hides the other farm layouts and
+  the save-load guard that refused them is gone. Kept buildings return to the player's own spots
+  and the stash chest places relative to the farmhouse door, so nothing depended on Standard any
+  more. Balance is not tuned per type; the README notes the trade-offs.
 - **The Skip intro checkbox on character creation works again** (gazumbrado, Nexus bug 1127469).
   It skips The Longest Year's own Lewis to Junimo opening and goes straight to the theme picker;
   the vanilla bus ride stays skipped either way. Ticking it shows a one-button notice recommending

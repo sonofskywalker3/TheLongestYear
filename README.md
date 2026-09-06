@@ -22,6 +22,7 @@ This is a **beta** (`0.17.3`). It is feature-complete for v1 and stable in testi
 - **Legendary fish are asked for once, plain, and rarely.** Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
 - **Hard and Extreme mean it.** Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
 - **Two new mineral bundles.** Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
+- **0.17.3: every farm type.** Riverland, Forest, Hilltop, Wilderness, Four Corners, Beach and Meadowlands are all open now; the mod no longer forces Standard. Kept buildings go back to your own spots and the Junimo stash sits by your door on any map. Balance is shared across types, see Limitations.
 - **0.17.3: the Skip intro checkbox is back.** Rerolling farms? Tick Skip intro on the character screen and the opening scene is skipped, straight to the theme picker. A note pops up recommending you watch it the first time, since it is the only in-game explanation of the loop. Asked for by gazumbrado.
 - **0.17.3: new book art.** The Cookbook, Craftbook and Bundle Log have proper covers now, drawn by **supercam19**. Thank you!
 - **0.17.1: the Dye bundle never asks for a legendary fish.** It picks by colour, and a green Legend or a red Crimsonfish counted. Its season gates were already right.
@@ -49,14 +50,14 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 
 - **Stardew Valley 1.6+** (PC — Windows/Linux/macOS)
 - **SMAPI 4.0.0** or newer
-- A **new save** on the **Standard farm** (see [Limitations](#limitations-beta))
+- A **new save** (any farm type; see the note under Limitations)
 
 ## Install
 
 1. Install [SMAPI](https://smapi.io/) (4.0.0+).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
-4. **Start a new game on the Standard farm.** The farm-type and skip-intro options are managed for you — the mod's own intro plays in their place.
+4. **Start a new game** on any farm type. Leave **Skip intro** off the first time: the mod's own opening plays in place of the vanilla one and explains the loop. Tick it on later farms to go straight to the theme picker.
 5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead — the mod keeps that board and re-rolls it the same way on every reset. (You can change this later: `Bundle source` in GMCM switches an existing save between all three, applying at its next loop.)
 
    ![New game → Advanced Options → Community Center Bundles showing TLY Custom](release-notes/advanced-options-tly-custom.png)
@@ -184,7 +185,7 @@ Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers 
 ## Limitations (beta)
 
 - **PC only.** No Android port yet.
-- **Standard farm only.** Other farm layouts put buildings in water and the stash off-map; the mod forces Standard on new games.
+- **Farm types are balanced as a set, not individually.** The bundle asks are sized from Standard farm yields. Each other type trades one thing for another (Riverland and Beach: more fish, less field; Forest: more forage; Hilltop: more ore; Wilderness: more monsters; Meadowlands: easier animals), so the year is a little easier in some bundles and a little harder in others. Beach farm's no-sprinklers rule makes its crop bundles a real step harder. Custom farm maps that replace a vanilla slot load fine but are untested for balance.
 - **Start on a new save.** A run can only begin from a new game; other saves load normally and are left untouched.
 - Intro cutscene and dialogue are a first pass.
 - Multiplayer is untested.
