@@ -12,7 +12,13 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **Every farm type is allowed.** The new-game screen no longer hides the other farm layouts and
   the save-load guard that refused them is gone. Kept buildings return to the player's own spots
   and the stash chest places relative to the farmhouse door, so nothing depended on Standard any
-  more. Balance is not tuned per type; the README notes the trade-offs.
+  more. Balance is not tuned per type; the README notes the trade-offs. Verified unattended on all
+  eight types (new game, coop + barn + silo kept, rewind, same tiles) with two farm-specific fixes:
+  a Meadowlands rewind respawns the starter coop at its default tile, which used to make the kept
+  coop skip as "already there" (it is now walked onto the player's spot, like Keep Greenhouse), and
+  a Riverland rewind threw on the farmhouse's starter Fish Smoker while rebuilding the cabin furniture.
+- Dev commands `tly_newgame <farmtype> [skipintro]`, `tly_buildings`, `tly_totitle` and the
+  `tools/farmtype-cycle.ps1` / `tools/farmtype-intro.ps1` runbooks behind that verification.
 - **The Skip intro checkbox on character creation works again** (gazumbrado, Nexus bug 1127469).
   It skips The Longest Year's own Lewis to Junimo opening and goes straight to the theme picker;
   the vanilla bus ride stays skipped either way. Ticking it shows a one-button notice recommending
