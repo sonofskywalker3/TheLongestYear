@@ -1,4 +1,4 @@
-0.17.3 - Every farm type, Skip intro is back, new book art
+0.17.5 - Every farm type, Skip intro is back, new book art
 
 Added
 - Every farm type is allowed. The mod no longer forces the Standard farm on new games. Kept
