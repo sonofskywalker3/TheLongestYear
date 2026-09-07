@@ -61,6 +61,7 @@ namespace TheLongestYear.Integration
         public const string PanToName = "tlyPanTo";
         public const string FadeTreesName = "tlyFadeTrees";
         public const string FadeInName = "tlyFadeIn";
+        public const string BlackName = "tlyBlack";
         public const string FadeOutName = "tlyFadeOut";
         public const string SayName = "tlySay";
         // How long the overlay stays black after the event ends before it lifts, so the hand-off
@@ -118,8 +119,16 @@ namespace TheLongestYear.Integration
             Game1.viewport.Y = (int)System.Math.Round(c.Y - Game1.viewport.Height / 2f);
         }
 
+        /// <summary>Events whose overlay, tree fade and speech box this class serves.</summary>
+        internal static bool IsOurEvent(Event ev)
+            => ev != null && (ev.id == EndingEventKeys.EventId || ev.id == SeasonTurnEventKeys.EventId);
+
         public static void Register(IMonitor monitor, IModHelper helper)
         {
+            // tlyBlack: put the overlay to black at once. A scene that starts under the wake-up fade
+            // uses it before its first location change so no frame of the bedroom draws.
+            Event.RegisterCommand(BlackName, (evt, args, context) => { _black = 1f; evt.CurrentCommand++; });
+
             helper.Events.GameLoop.UpdateTicked += (_, _) => HoldTreesTranslucent();
             helper.Events.Display.Rendered += (_, e) => DrawBlack(e.SpriteBatch);
 
@@ -368,7 +377,7 @@ namespace TheLongestYear.Integration
         {
             if (_black <= 0f) return;
             Event ev = Game1.CurrentEvent;
-            if (ev == null || ev.id != EndingEventKeys.EventId)
+            if (!IsOurEvent(ev))
             {
                 _fadingIn = false;
                 _fadingOut = false;
@@ -391,7 +400,7 @@ namespace TheLongestYear.Integration
         {
             if (_fadeTrees == null) return;
             Event ev = Game1.CurrentEvent;
-            if (ev == null || ev.id != EndingEventKeys.EventId)
+            if (!IsOurEvent(ev))
             {
                 _fadeTrees = null;   // the ending is over; trees return to normal on their own
                 return;
