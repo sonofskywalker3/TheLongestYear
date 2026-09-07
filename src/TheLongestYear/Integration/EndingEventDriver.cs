@@ -124,7 +124,7 @@ namespace TheLongestYear.Integration
             GameLocation loc = Game1.currentLocation;
             if (loc == null) return;
             EndingCast cast = BuildCast(forcedSpeaker);
-            _monitor.Log($"Ending: starting (speaker={cast.Speaker ?? "none"}, crowd={cast.Crowd.Count}, shrine={cast.ShrineX},{cast.ShrineY}).", LogLevel.Info);
+            _monitor.Log($"Ending: starting (speaker={cast.Speaker ?? "none"}, crack={(cast.Speaker != null && cast.SpeakerMiddleKey != null)}, crowd={cast.Crowd.Count}, shrine={cast.ShrineX},{cast.ShrineY}, door={cast.DoorX},{cast.DoorY}).", LogLevel.Info);
             loc.startEvent(new Event(EndingEventInjector.Build(cast), null, EndingEventKeys.EventId));
             _started = true;
             Bump();

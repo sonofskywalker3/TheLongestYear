@@ -32,21 +32,31 @@ namespace TheLongestYear.Integration
         {
             (49, 23), (55, 23),
             (48, 24), (56, 24),
-            (47, 25), (50, 25), (54, 25), (57, 25),
+            (47, 25), (50, 25), (54, 25),
             (49, 26), (52, 26), (55, 26),
-            (51, 27), (53, 27),
+            (51, 27), (53, 27), (48, 28),
         };
 
-        // Four Junimos on the hall roof (Town, the ridge above the doors), six on the hall floor.
-        private const int RoofY = HallY - 8;
+        // Four Junimos scattered on the ground around the back and sides of the crowd (Town). The
+        // roof was tried first: anything on the hall's upper rows is hidden under the map's front
+        // layer, so they never showed (2026-09-07). Six on the hall floor, in front of the farmer;
+        // rows 16 to 18 are open floor (vanilla's own ceremony stands villagers on rows 17 to 22).
+        private static readonly (int X, int Y)[] TownJunimos =
+        {
+            (46, 24), (46, 27), (55, 28), (51, 29),
+        };
+        private const int HallFarmerX = 32, HallFarmerY = 19, HallViewY = 17;
         private static readonly (int X, int Y)[] HallSeats =
         {
-            (29, 12), (31, 13), (33, 12), (35, 13), (37, 12), (32, 14),
+            (29, 17), (31, 16), (33, 16), (35, 17), (30, 18), (34, 18),
         };
 
-        // Morris walks the paving row in from the east edge of the screen and back out again. At
+        // Morris comes and goes along row 28, the open plaza south of the crowd (the paving row at
+        // HallY + 2 runs through the bush east of the steps, 2026-09-07), from off screen east; at
         // 1080p the viewport is ~30 tiles wide, so 18 tiles east of the hall centre is off screen.
-        private const int MorrisFarX = HallX + 18, MorrisNearX = HallX + 5, MorrisSpeed = 5;
+        // He stops at the crowd's east edge and steps up two tiles to talk.
+        private const int MorrisRow = HallY + 6, MorrisFarX = HallX + 18, MorrisNearX = HallX + 5;
+        private const int MorrisStepUp = 2, MorrisSpeed = 5;
 
         // Scene 6 timings.
         private const int PanMs = 6000;
@@ -87,15 +97,15 @@ namespace TheLongestYear.Integration
                 "pause 400",
 
                 // ---- Scene 2: the hall steps ----
-                // tlyChangeLocation lands the farmer on the target tile inside the warp itself, so the
-                // first Town frame is already centred on the hall (vanilla changeLocation kept the
-                // Farm tile for a frame: one frame of Town up and to the right, 2026-09-07). No
-                // globalFade around it: the warp runs its own fade, and an extra global fade left
-                // Game1.locationRequest pending forever (2026-09-06).
+                // tlyChangeLocation fades to black with the world intact, warps under black and fades
+                // back in on the hall (see EndingEventCommands). The viewport commands after each
+                // change carry no "true": that flag is vanilla's cut-to-black-then-fade-in, which
+                // read as a second flash on every transition (2026-09-07).
                 $"{EndingEventCommands.ChangeLocationName} Town {FarmerX} {FarmerY}",
                 EndingEventCommands.RefurbishHallName,
+                $"warp farmer {FarmerX} {FarmerY}",
                 "faceDirection farmer 0",
-                $"viewport {HallX} {HallY} true",
+                $"viewport {HallX} {HallY}",
                 $"addTemporaryActor Lewis 16 32 {LewisX} {LewisY} 2 true Character",
             };
             int slot = 0;
@@ -108,8 +118,8 @@ namespace TheLongestYear.Integration
             }
             if (cast.Speaker != null)
                 s.Add($"addTemporaryActor {cast.Speaker} 16 32 {SpeakerX} {SpeakerY} 0 true Character");
-            for (int j = 0; j < 4; j++)
-                s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {HallX - 3 + j * 2} {RoofY} {j}");
+            for (int j = 0; j < TownJunimos.Length; j++)
+                s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {TownJunimos[j].X} {TownJunimos[j].Y} {j}");
             s.AddRange(new[]
             {
                 "pause 600",
@@ -151,16 +161,18 @@ namespace TheLongestYear.Integration
             }
 
             // ---- Scene 4: Morris ----
-            // Morris walks the paving row (HallY + 2) in from off screen east and leaves the same way,
-            // at speed 5 so neither walk drags. The farmer turns to face him while he talks. His
-            // "dark" sheet (MorrisDarkSprite) is the whole figure shadowed with red eyes, held under
-            // a red screen glow until the line is done.
+            // Morris walks row 28 in from off screen east, steps up to the crowd's edge and leaves
+            // the same way, at speed 5 so neither walk drags. The farmer turns to face him while he
+            // talks. His "dark" sheet (MorrisDarkSprite) is the whole figure shadowed with red eyes;
+            // it goes on at the throwaway line under a red screen glow and STAYS on him as he walks
+            // off. His exit does not wait: the cut to the hall fades out over his walk.
             s.AddRange(new[]
             {
                 "stopMusic",
-                $"addTemporaryActor Morris 16 32 {MorrisFarX} {FarmerY} 3 true Character",
+                $"addTemporaryActor Morris 16 32 {MorrisFarX} {MorrisRow} 3 true Character",
                 $"speed Morris {MorrisSpeed}",
                 $"move Morris {MorrisNearX - MorrisFarX} 0 3",
+                $"move Morris 0 {-MorrisStepUp} 3",
                 "faceDirection farmer 1",
                 "pause 500",
                 $"speak Morris \"{EventText("event.ending.morris-1")}\"",
@@ -176,22 +188,19 @@ namespace TheLongestYear.Integration
                 $"speak Morris \"{EventText("event.ending.morris-4")}\"",
                 "pause 700",
                 "stopGlowing",
-                "changeSprite Morris",
                 "pause 300",
                 $"jump {Junimo(0)} 4", $"jump {Junimo(2)} 4",
                 "playSound junimoMeep1",
-                $"move Morris {MorrisFarX - MorrisNearX} 0 1",
+                $"move Morris 0 {MorrisStepUp} 2",
+                $"move Morris {MorrisFarX - MorrisNearX} 0 1 true",
                 "faceDirection farmer 0",
-                "pause 400",
-                "playSound doorClose",
-                "pause 300",
-                "playSound thudStep",
-                "pause 800",
+                "pause 900",
 
                 // ---- Scene 5: inside the hall, six Junimos ----
-                $"{EndingEventCommands.ChangeLocationName} CommunityCenter 32 16",
+                $"{EndingEventCommands.ChangeLocationName} CommunityCenter {HallFarmerX} {HallFarmerY}",
+                $"warp farmer {HallFarmerX} {HallFarmerY}",
                 "faceDirection farmer 0",
-                "viewport 32 14 true",
+                $"viewport {HallFarmerX} {HallViewY}",
             });
             for (int j = 0; j < HallSeats.Length; j++)
                 s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {HallSeats[j].X} {HallSeats[j].Y} {j}");
@@ -225,15 +234,21 @@ namespace TheLongestYear.Integration
                 // shows. Grandpa's line, THEN the candle, then to black. The farmer is put back on
                 // the doorstep under the fade so the continuation finds them somewhere sensible.
                 $"{EndingEventCommands.ChangeLocationName} Farm {cast.DoorX} {cast.DoorY + 2}",
+                $"warp farmer {cast.DoorX} {cast.DoorY + 2}",
                 "faceDirection farmer 0",
-                $"viewport {cast.DoorX} {cast.DoorY} clamp true",
-                "ambientLight 120 100 160",
+                $"viewport {cast.DoorX} {cast.DoorY} clamp",
+                // ambientLight is subtractive (the amount taken from each channel), so a warm dusk
+                // keeps red and takes green and blue; the first try (120 100 160) went green.
+                "ambientLight 50 120 90",
                 "pause 600",
-                "move farmer 0 -2 0",
+                // DoorY is the doorstep (the tile below the door itself); one step up from
+                // DoorY + 2 ends on it. Two steps walked the farmer into the wall (2026-09-07).
+                "move farmer 0 -1 0",
                 "pause 200",
                 "playSound doorClose",
                 "warp farmer -100 -100",
                 "pause 900",
+                $"{EndingEventCommands.FadeTreesName} {cast.ShrineX} {cast.ShrineY}",
                 $"{EndingEventCommands.PanToName} {cast.ShrineX} {cast.ShrineY} {PanMs}",
                 "pause 1200",
                 // "message" does not expand @ the way "speak" does, so the farmer's name goes in here.
