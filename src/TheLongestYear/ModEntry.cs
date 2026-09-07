@@ -135,6 +135,7 @@ namespace TheLongestYear
 
             _meta = new MetaStore(helper.Data);
             GrandpaCandleCommand.Register(this.Monitor);
+            Integration.EndingEventCommands.Register(this.Monitor);
             // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires

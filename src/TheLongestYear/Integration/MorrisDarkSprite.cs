@@ -6,9 +6,11 @@ using StardewValley;
 
 namespace TheLongestYear.Integration
 {
-    /// <summary>Year One Ending (spec 2026-09-06 §4 scene 4): Morris's sheet with the eyes recoloured
-    /// red, built at load from the game's own Characters/Morris so no copyrighted sheet ships in the
-    /// mod. The event command <c>changeSprite Morris Dark</c> loads Characters/Morris_Dark.</summary>
+    /// <summary>Year One Ending (spec 2026-09-06 §4 scene 4): Morris with the shadow on him. Built at
+    /// load from the game's own Characters/Morris so no copyrighted sheet ships in the mod: every
+    /// opaque pixel is darkened to a third of its value and the irises are recoloured red. The event
+    /// command <c>changeSprite Morris Dark</c> loads Characters/Morris_Dark. (Red eyes alone, 40
+    /// pixels on a 16x32 frame, were invisible at play scale: live 2026-09-07.)</summary>
     internal sealed class MorrisDarkSprite
     {
         public const string AssetName = "Characters/Morris_Dark";
@@ -19,7 +21,8 @@ namespace TheLongestYear.Integration
         // offsets across every facing/row, never in the outline, hair or suit, so a global replace
         // does not bleed.
         private static readonly Color EyeColour = new Color(147, 202, 219);
-        private static readonly Color RedEye = new Color(220, 20, 20);
+        private static readonly Color RedEye = new Color(230, 20, 20);
+        private const float Shadow = 0.32f;
         private readonly IMonitor _monitor;
 
         public MorrisDarkSprite(IMonitor monitor) => _monitor = monitor;
@@ -46,7 +49,10 @@ namespace TheLongestYear.Integration
                 int changed = 0;
                 for (int i = 0; i < pixels.Length; i++)
                 {
-                    if (pixels[i] == EyeColour) { pixels[i] = RedEye; changed++; }
+                    Color c = pixels[i];
+                    if (c.A == 0) continue;
+                    if (c == EyeColour) { pixels[i] = RedEye; changed++; continue; }
+                    pixels[i] = new Color((byte)(c.R * Shadow), (byte)(c.G * Shadow), (byte)(c.B * Shadow), c.A);
                 }
                 var result = new Texture2D(Game1.graphics.GraphicsDevice, source.Width, source.Height);
                 result.SetData(pixels);

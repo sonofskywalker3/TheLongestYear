@@ -23,6 +23,8 @@ namespace TheLongestYear.Integration
         private const string Prefix = "Portraits/Junimo";
         private const string SourceAsset = "Characters/Junimo";
         private const int PortraitSheet = 128, Cell = 64, Frame = 16, Scale = 4;
+        // "Portraits/Junimo" (the intro's single Junimo) keeps the classic green; "Portraits/Junimo<i>"
+        // takes the ending's palette entry i, the same colour tlyJunimo paints that actor's sprite.
         private static readonly Color JunimoGreen = new Color(110, 200, 74);
 
         private readonly IMonitor _monitor;
@@ -33,7 +35,15 @@ namespace TheLongestYear.Integration
         public void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
             if (!Matches(e.NameWithoutLocale.Name)) return;
-            e.LoadFrom(Build, AssetLoadPriority.Medium);
+            Color tint = TintFor(e.NameWithoutLocale.Name);
+            e.LoadFrom(() => Build(tint), AssetLoadPriority.Medium);
+        }
+
+        private static Color TintFor(string name)
+        {
+            name = name.Replace('\\', '/');
+            string suffix = name.Substring(Prefix.Length);
+            return suffix.Length == 1 ? JunimoPalette.Get(suffix[0] - '0') : JunimoGreen;
         }
 
         /// <summary>"Portraits/Junimo" and "Portraits/Junimo0".."Portraits/Junimo5" only: exactly the
@@ -49,7 +59,7 @@ namespace TheLongestYear.Integration
                 || (suffix.Length == 1 && suffix[0] >= '0' && suffix[0] <= '5');
         }
 
-        private Texture2D Build()
+        private Texture2D Build(Color tint)
         {
             var pixels = new Color[PortraitSheet * PortraitSheet];
             try
@@ -66,9 +76,9 @@ namespace TheLongestYear.Integration
                         Color c = src[sy * source.Width + sx];
                         if (c.A == 0) continue;
                         pixels[y * PortraitSheet + x] = new Color(
-                            (byte)(c.R * JunimoGreen.R / 255),
-                            (byte)(c.G * JunimoGreen.G / 255),
-                            (byte)(c.B * JunimoGreen.B / 255),
+                            (byte)(c.R * tint.R / 255),
+                            (byte)(c.G * tint.G / 255),
+                            (byte)(c.B * tint.B / 255),
                             c.A);
                     }
                 }
