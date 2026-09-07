@@ -59,6 +59,7 @@ namespace TheLongestYear
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
+        private Integration.SeasonTurnDriver _seasonTurnDriver;
         private EndingEventDriver _endingDriver;
         private BookFurniture _bookFurniture;
         private UI.PlanningShrineService _planningShrine;
@@ -147,8 +148,10 @@ namespace TheLongestYear
             _introDriver.Attach(helper, () => _launcher);
             // Day-28 bedtime Junimo cutscene (FAIL → shop+reset, CONTINUE → next season). Attached
             // once here; _runController is built on save load, so resolve it lazily like the picker.
+            _seasonTurnDriver = new Integration.SeasonTurnDriver(this.Monitor, _meta);
+            _seasonTurnDriver.Attach(helper);
             _day28Driver = new Day28CutsceneDriver(this.Monitor);
-            _day28Driver.Attach(helper, () => _runController);
+            _day28Driver.Attach(helper, () => _runController, () => _seasonTurnDriver);
             // Year One Ending: starts the ending event on the first step outside on an armed
             // morning, waits for the seen mail, then hands off to RunController. _runController
             // isn't built until OnSaveLoaded, so resolve it lazily like the driver above.
@@ -280,6 +283,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_win", "Arm the Year One Ending for tomorrow morning (debug; sleep, then step outside).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
+            helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
@@ -1673,6 +1677,18 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_remember: {name} now qualifies as the ending speaker (tier {tier}); persists on the next save.", LogLevel.Info);
         }
 
+        /// <summary>Debug: replay a season-turn scene now (spec 2026-09-07), no continuation.</summary>
+        private void CmdSeasonTurn(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1 || !TheLongestYear.Core.SeasonTurn.TryParse(args[0], out var kind))
+            {
+                this.Monitor.Log("Usage: tly_seasonturn <summer|fall|winter>", LogLevel.Warn);
+                return;
+            }
+            _seasonTurnDriver?.StartNow(kind);
+        }
+
         /// <summary>Debug: replay the Year One Ending event right now with no continuation, optionally
         /// forcing which villager cracks. See <see cref="Integration.EndingEventDriver.StartNow"/>.</summary>
         private void CmdEnding(string command, string[] args)
@@ -2235,6 +2251,7 @@ namespace TheLongestYear
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceWin(); break;
                 case "tly_ending": this.CmdEnding(command, args); break;
+                case "tly_seasonturn": this.CmdSeasonTurn(command, args); break;
                 case "tly_remember": this.CmdRemember(command, args); break;
                 case "tly_year2wall":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }

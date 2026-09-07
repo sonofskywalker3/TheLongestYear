@@ -16,8 +16,11 @@ namespace TheLongestYear.Integration
     /// door tile so every farm type works. Who says what is SeasonTurn.Lines; the words are i18n.</summary>
     internal static class SeasonTurnEventInjector
     {
-        // Junimo marks around the doorstep: A on the path below, B and C to either side, D further out.
-        private static readonly (int X, int Y)[] Marks = { (0, 2), (-2, 2), (2, 2), (-3, 4) };
+        // The door tile the farm reports is the doorway itself; the farmer stands one below it, on
+        // the step, and the Junimos on the grass under the deck (the deck and the stash chest hid
+        // one on the first try, 2026-09-07): A on the path below, B and C to either side, D out wide.
+        private const int StepDown = 1;
+        private static readonly (int X, int Y)[] Marks = { (0, 3), (-2, 3), (2, 3), (-4, 4) };
         private const int FadeMs = 1400;
 
         private static string Junimo(int i) => $"Junimo{i}";
@@ -32,20 +35,21 @@ namespace TheLongestYear.Integration
         internal static string Build(SeasonTurnKind kind, int doorX, int doorY, bool skippable)
         {
             int count = SeasonTurn.JunimoCount(kind);
+            int stepY = doorY + StepDown;
             var s = new List<string>
             {
                 kind == SeasonTurnKind.Winter ? "none" : "junimoStarSong",
                 "-1000 -1000",
-                $"farmer {doorX} {doorY} 2",
+                $"farmer {doorX} {stepY} 2",
                 EndingEventCommands.BlackName,
             };
             if (skippable) s.Add("skippable");
             s.AddRange(new[]
             {
-                $"{EndingEventCommands.ChangeLocationName} Farm {doorX} {doorY}",
-                $"warp farmer {doorX} {doorY}",
+                $"{EndingEventCommands.ChangeLocationName} Farm {doorX} {stepY}",
+                $"warp farmer {doorX} {stepY}",
                 "faceDirection farmer 2",
-                $"viewport {doorX} {doorY} clamp",
+                $"viewport {doorX} {stepY} clamp",
             });
             for (int j = 0; j < count; j++)
                 s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {doorX + Marks[j].X} {doorY + Marks[j].Y} {j}");
