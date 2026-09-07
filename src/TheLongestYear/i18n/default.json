@@ -651,6 +651,23 @@
     "event.ending.scene.sebastian-4": "looked at the motorcycle",
     "event.ending.scene.shane-2": "shared a drink outside",
 
+    // -- year one ending: the six-scene script (spec 2026-09-06 section 4) -------------
+    "event.ending.lewis-porch-1": "@! There you are. Come quick, you have to see this.$h",
+    "event.ending.lewis-porch-2": "The Community Center... it's lit up. The whole town is out there. I don't understand it, but come on!",
+    "event.ending.lewis-hall-1": "Everyone, everyone... I still can't explain what happened here overnight.#$b#But this building is ours again.",
+    "event.ending.lewis-hall-2": "And we all know whose hands did the work this year. Three cheers for our farmer!$h",
+    "event.ending.lewis-hall-3": "Pelican Town has its heart back. Thank you.",
+    "event.ending.morris-1": "Congratulations. Genuinely. Joja values a competitor who can deliver.",
+    "event.ending.morris-2": "I'm here to let you all know that Joja will be closing its Pelican Town location, effective today.",
+    "event.ending.morris-3": "Our survey crews found an iridium deposit in the Skull Cavern. It will fund a resort on Ginger Island. This lease was never worth the paperwork.",
+    "event.ending.morris-4": "I wish you all the best. Nothing is going to slow this down now.",
+    "event.ending.junimo-1": "You did it, @! The hall is whole, and so are we.$h",
+    "event.ending.junimo-2": "We sang all night. We haven't sung like that in a very long time.",
+    "event.ending.junimo-3": "But... did you see the man from Joja? The thing that has him did not leave. It only moved.",
+    "event.ending.junimo-4": "And the town still forgets. Every one of them. You saw the crack in it today, though. Didn't you?",
+    "event.ending.junimo-5": "You've done well so far, but the work isn't over. Prepare yourself for what's next.#$b#On Spring 1, we get to work freeing the townsfolk.",
+    "event.ending.grandpa": "You've started what I couldn't finish. I'm so proud, but you must keep going.",
+
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
     "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year. Don't worry, we have enough power left over to give you a head-start this time.#$b#Before we do, tell us: should we hold the town's wishes steady, or let time reshuffle them?$h",
     "cutscene.day28.continue": "Great job, @, you're doing well!#$b#Keep this up and we'll save the valley together. We'll gain even more power from the work you do this season.$h",
