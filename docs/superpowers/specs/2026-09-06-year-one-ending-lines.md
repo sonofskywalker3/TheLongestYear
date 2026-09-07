@@ -67,3 +67,65 @@ from a live Data/Events dump against the installed game on 2026-09-06.
 Villagers with no scene entry (their lowest-hearts events were too ambiguous, or reserved for a
 higher tier already) fall through to the gifts or talks tier instead: no scene phrase is
 required for them.
+
+## The ending script (`event.ending.*`, Task 9)
+
+The six-scene event built by `EndingEventInjector.Build`, in scene order.
+
+### Scene 1: the porch (Lewis)
+
+| Key | Text |
+| --- | --- |
+| `event.ending.lewis-porch-1` | @! There you are. Come quick, you have to see this.$h |
+| `event.ending.lewis-porch-2` | The Community Center... it's lit up. The whole town is out there. I don't understand it, but come on! |
+
+### Scene 2: the hall steps (Lewis)
+
+| Key | Text |
+| --- | --- |
+| `event.ending.lewis-hall-1` | Everyone, everyone... I still can't explain what happened here overnight.#$b#But this building is ours again. |
+| `event.ending.lewis-hall-2` | And we all know whose hands did the work this year. Three cheers for our farmer!$h |
+| `event.ending.lewis-hall-3` | Pelican Town has its heart back. Thank you. |
+
+### Scene 3: the crack
+
+Uses the existing `event.ending.crack.*` and `event.ending.scene.*` families above; no new keys.
+
+### Scene 4: Morris
+
+| Key | Text |
+| --- | --- |
+| `event.ending.morris-1` | Congratulations. Genuinely. Joja values a competitor who can deliver. |
+| `event.ending.morris-2` | I'm here to let you all know that Joja will be closing its Pelican Town location, effective today. |
+| `event.ending.morris-3` | Our survey crews found an iridium deposit in the Skull Cavern. It will fund a resort on Ginger Island. This lease was never worth the paperwork. |
+| `event.ending.morris-4` | I wish you all the best. Nothing is going to slow this down now. |
+
+### Scene 5: inside the hall, six Junimos
+
+| Key | Text |
+| --- | --- |
+| `event.ending.junimo-1` | You did it, @! The hall is whole, and so are we.$h |
+| `event.ending.junimo-2` | We sang all night. We haven't sung like that in a very long time. |
+| `event.ending.junimo-3` | But... did you see the man from Joja? The thing that has him did not leave. It only moved. |
+| `event.ending.junimo-4` | And the town still forgets. Every one of them. You saw the crack in it today, though. Didn't you? |
+| `event.ending.junimo-5` | You've done well so far, but the work isn't over. Prepare yourself for what's next.#$b#On Spring 1, we get to work freeing the townsfolk. |
+
+Note: `junimo-5` carries the "keep playing" promise inside the event; Task 11's keep-playing
+dialogue repeats the second half so a player who loops again has still heard it.
+
+### Scene 6: the shrine at dusk
+
+| Key | Text |
+| --- | --- |
+| `event.ending.grandpa` | You've started what I couldn't finish. I'm so proud, but you must keep going. |
+
+### Build-time notes
+
+- Actor naming: `addTemporaryActor Junimo ... character Junimo0` (and `Junimo1`..`Junimo3`/`Junimo5`)
+  names each temporary actor with its numeric suffix, per the vanilla `addTemporaryActor` argument
+  order; `jump`/`speak` address those suffixed names directly. No fallback to a single shared
+  `Junimo` actor was needed.
+- Scene 4's two `move Morris` lines walk the row at `HallY + 2`, columns `HallX + 4` through
+  `HallX + 9` (the paved stretch east of the Community Center steps, toward the saloon). This was
+  not verified against a running game in this task; the Task 13 live runbook should eyeball those
+  tiles and, if the row is blocked, swap both moves for a single warp to `(HallX + 4, HallY + 2)`.
