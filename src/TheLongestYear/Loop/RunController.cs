@@ -7,6 +7,7 @@ using StardewValley;
 using TheLongestYear.Core;
 using CoreSeason = TheLongestYear.Core.Season;
 using TheLongestYear.Core.Day28;
+using TheLongestYear.Core.Ending;
 
 namespace TheLongestYear.Loop
 {
@@ -378,8 +379,10 @@ namespace TheLongestYear.Loop
         {
             _store.State.VictoryAcknowledged = true;
             _store.State.Year2WallArmed = true;
-            if (!Game1.player.eventsSeen.Contains("191393"))
-                Game1.player.eventsSeen.Add("191393");   // vanilla's post-completion world (spec section 3)
+            // Vanilla's post-completion world for THIS year only (spec section 3). PostCompletionEvents
+            // keeps the id out of SeenEventsEver and out of the next loop's re-seed.
+            if (!Game1.player.eventsSeen.Contains(PostCompletionEvents.CeremonyEventId))
+                Game1.player.eventsSeen.Add(PostCompletionEvents.CeremonyEventId);
             _store.Save();   // persist immediately, no save-scum revert
             var lines = new List<string>
             {
