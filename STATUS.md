@@ -1,4 +1,4 @@
-# The Longest Year - Status
+﻿# The Longest Year - Status
 
 **Last updated:** 2026-09-06 (Year One Ending Task 13 docs and runbook on branch year-one-ending; previously 2026-08-29 late night, review fixes 0.16.166, sim diagnostics 0.16.167; two full-year sims on the boost build)
 **Branch:** `master`; 0.16.167 PUSHED and RELEASED; nothing local-only
@@ -16,8 +16,82 @@ on Spring 1 of a keep-playing save.
 Branch `year-one-ending`, 12 tasks' worth of commits ahead of `master` (this session's Task 13 adds
 docs, the runbook and `tly_answer`); nothing pushed.
 2023 tests passing, 0 failing (`dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj -c Release`).
-Live run: pending Jeff's yes.
+Live run: DONE 2026-09-06, PASS on Standard and Meadowlands after five fixes (see the subsection below).
 Manifest still 0.17.5 on the branch; version set at merge.
+
+### Live run (2026-09-06)
+
+Headless per `docs/HEADLESS_DRIVING.md`, throwaway Rodger lineage only, no mouse/keyboard/screenshot.
+Standard flow on `None_448421991` (rotated to `None_448424597` by the loop-again reset); Meadowlands
+on a scratch `tly_newgame meadowlands skipintro` save, deleted afterwards.
+
+| Check | Result | Proof |
+|---|---|---|
+| A. Deploy, mod loads clean, `Morris_Dark` recolour | PASS | `Debug bridge: 'pause when window is inactive' switched off at launch`; `Morris_Dark: recoloured 40 pixel(s).` |
+| B. Standard: whole flow, both choice branches, wall, dark shrine, repeat win | PASS | see quotes below |
+| C. `tly_ending speaker Shane` replay | PASS | `Ending: starting (speaker=Shane, crowd=12, shrine=8,7).` then `Ending: replay finished (no continuation).` |
+| D. Meadowlands: scene 1 porch offset and scene 6 shrine tile | PASS | `Ending: starting (speaker=none, crowd=12, shrine=14,9).` then `Ending: event finished, running the continuation.` |
+
+**B, the quoted line trail (final, post-fix run):**
+
+```
+Win night (tly_win): ending armed for tomorrow morning, weather forced sunny.
+Ending: starting (speaker=George, crowd=12, shrine=8,7).
+Ending: event finished, running the continuation.
+Opened Junimo Shrine (JP: 85229).
+Ending choice: Keep playing.
+Year 2 wall: Loop again.
+FinalizeReset (year 2 wall): applying reset (eventUp=False, farmEvent=none, season was Spring 2).
+Loop reset complete. Run 127 begins (seed -32721836).
+Opened planning hub (week 1, offer: Mining,Spelunking).
+Win night (tly_win): ending already seen, queuing shrine + choice for the morning.
+Ending choice: Loop again.
+```
+
+- **Shrine dark after loop again:** the rotated save reads `<grandpaScore>0</grandpaScore>`,
+  `VictoryAcknowledged:false`, `Year2WallArmed:false`, `EndingSeen:true` (once per save, as specced).
+- **Candle really lights:** the Meadowlands keep-playing save reads `<grandpaScore>1</grandpaScore>`,
+  `VictoryAcknowledged:true`, `Year2WallArmed:true`.
+- **Farm-type offset (scene 1):** Lewis on the porch at `(68, 18)` on Standard and `(85, 22)` on
+  Meadowlands, so the game's own per-farm-type Farm-event offset applies and the script must not
+  offset again.
+- **Crowd:** 12 temporary actors on Town row 22 (Lewis 47, Robin 48, Pierre 49, Caroline 50,
+  Marnie 51, speaker 52, Gus 54 ...), speaker front and centre; the speaker's `move` walked
+  (Shane 52,22 -> 52,23).
+- **No speaker on a fresh save:** Meadowlands ran `speaker=none` and scene 3 was omitted, per spec.
+- Final post-fix session log: zero `ERROR`, zero "couldn't be parsed", zero "can't load portraits".
+
+**Fixes made during the run (branch `year-one-ending`, no manifest bump):**
+
+| Commit | What the log demanded |
+|---|---|
+| `686b2a5` | `tly_answer` clears `DialogueBox.transitioning` and verifies the click landed; `tly_dismiss` must never answer a question box (it calls `exitThisMenu`, which skips `answerDialogue`). Runbook corrected. |
+| `80a0ed0` | `globalFadeIn` is not a vanilla command: `Event 'sonofskywalker3.TLY.Ending' has command 'globalFadeIn' which couldn't be parsed`. Now `globalFadeToClear`. |
+| `c04cc29` | 3,951 `NPC Junimo0 can't load portraits from 'Portraits/Junimo0'` warnings in one run (the dialogue box retries the failed load every frame). A portrait is now generated from `Characters/Junimo`. Adds `tly_eventstep`. |
+| `718e124` | `tly_ending` now names which flag is holding the frame, so "never armed" is distinguishable from "a vanilla farm event is still up". |
+| `4f6873a` | The event hung in Town with `eventUp` + a pending `Game1.locationRequest` after `globalFade` then `changeLocation CommunityCenter`. `changeLocation` warps through `Game1.warpFarmer`, which fades on its own, so every `globalFade`/`globalFadeToClear` wrapped around a `changeLocation` is removed. |
+
+**Findings not fixed:**
+
+1. **An event's `speak` needs a click, so a headless run cannot watch the ending unattended.** The
+   new `tly_eventstep` is the tool: it prints the current command, the actors and their tiles, and
+   clicks an open dialogue box on. Every check above was driven with it. Any future ending or intro
+   verification has to poll it about every 4 s.
+2. **A vanilla farm event can block the armed morning.** On this save Evelyn's Garden Pot event was
+   up on the Farm, and `EndingMorningDecider` correctly treats that as Busy, so the ending waited
+   until it finished. Correct behaviour, but a real player who leaves that event running sees the
+   ending only after it. Worth a note, not a change.
+3. **`tly_answer`'s new "the box did not close" warning fires spuriously** when the answer handler
+   itself opens another menu (the reset re-opens the planning hub in the same tick). The answer
+   still landed both times (`Year 2 wall: Loop again.`, `Ending choice: Loop again.`). Debug-only
+   noise; left alone rather than churn the guard further.
+4. **Not verified:** the visual pass (every crowd member's sprite on screen, Morris's glow, the
+   Junimo colours, the dusk ambient light, pacing). The log proves the script runs and the actors
+   are placed; only Jeff's playtest can judge the look. `tly_win` on a board finished by real
+   donations was not exercised either; the debug arm was used throughout.
+
+Game left running minimized at the title screen, healthy.
+
 
 ## 2026-08-29 (late afternoon): played years on the real STANDARD and REMIXED boards, three-way comparison
 
