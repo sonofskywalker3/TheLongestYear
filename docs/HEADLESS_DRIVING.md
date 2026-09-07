@@ -104,6 +104,15 @@ Checks before a release: whole flow once on Standard; scenes 1 and 6 once on Mea
 with N > 0; every crowd member present on the steps; both branches of the choice; the wall on
 Spring 1 year 2 of a keep-playing save; a loop-again reset leaves the shrine dark.
 
+## Season turns
+
+`tly_seasonturn <summer|fall|winter>` replays the porch scene alone (no continuation) from
+wherever the farmer stands; it starts under black and moves to the doorstep. Step it with
+`tly_eventstep` (it clicks the speech box on); `tly_eventstep` reports "no event" for a tick or
+two during the location change, so wait for two in a row before calling the scene over. The real
+path: `tly_playseason quarter 4` (the gate would pass), `tly_setday 28`, `debug sleep`; the log
+shows `Season turn: starting Summer`, then `scene finished`, then `Opened planning hub`.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),
