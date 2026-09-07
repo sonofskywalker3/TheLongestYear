@@ -1,0 +1,10 @@
+0.17.6 - A crops bundle every season, one jelly a week
+
+Changed
+- The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board. A board could
+  roll other Pantry bundles in their place, which left the Farming theme with nothing to ask for
+  in week 1 but saplings.
+- A weekly theme asks for at most one of Sea Jelly, River Jelly and Cave Jelly. Two of them in
+  the same week meant two slow, separate fishing trips for one theme.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

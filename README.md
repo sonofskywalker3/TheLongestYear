@@ -8,13 +8,24 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.17.5`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.17.6`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
 ---
 
-## What's New in 0.17.5
+## See it played
+
+**Emmalution** is playing the whole loop on YouTube, and her edited episodes are the best introduction to the mod there is. Thank you, Emma, for the videos and for the bug reports that came with them.
+
+- Spring: [I must donate to the Community Centre OR RESET!](https://www.youtube.com/watch?v=fU4EVzlD1K8)
+- Summer: [The Junimos challenged me to complete these bundles...](https://www.youtube.com/watch?v=WaAzDjMWmt8)
+
+Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
+
+---
+
+## What's New in 0.17.6
 
 **The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.**
 
@@ -22,6 +33,8 @@ This is a **beta** (`0.17.5`). It is feature-complete for v1 and stable in testi
 - **Legendary fish are asked for once, plain, and rarely.** Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
 - **Hard and Extreme mean it.** Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
 - **Two new mineral bundles.** Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
+- **0.17.6: a crops bundle every season.** The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board now. A board could roll Orchard, Preserver's and Home Cook's Feast in their place, which left the Farming theme with nothing to ask for in week 1 but saplings.
+- **0.17.6: one jelly a week.** A weekly theme asks for at most one of Sea Jelly, River Jelly and Cave Jelly. Two of them in the same week meant two slow, separate fishing trips for one theme.
 - **0.17.5: every farm type.** Riverland, Forest, Hilltop, Wilderness, Four Corners, Beach and Meadowlands are all open now; the mod no longer forces Standard. Kept buildings go back to your own spots and the Junimo stash sits by your door on any map. Balance is shared across types, see Limitations.
 - **0.17.5: the Skip intro checkbox is back.** Rerolling farms? Tick Skip intro on the character screen and the opening scene is skipped, straight to the theme picker. A note pops up recommending you watch it the first time, since it is the only in-game explanation of the loop. Asked for by gazumbrado.
 - **0.17.5: new book art.** The Cookbook, Craftbook and Bundle Log have proper covers now, drawn by **supercam19**. Thank you!
@@ -239,7 +252,7 @@ Core game logic lives in `TheLongestYear.Core` (pure, unit-tested); SMAPI/Harmon
 
 ## Credits
 
-By **sonofskywalker3**. Banner art by **cwybabiesucks**. Book art by **supercam19**. Deja-vu villager dialogue idea by **u/Gribbleby**. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
+By **sonofskywalker3**. Banner art by **cwybabiesucks**. Book art by **supercam19**. Deja-vu villager dialogue idea by **u/Gribbleby**. Thanks to **Emmalution** for playing it on YouTube and for the feedback that shaped 0.16 and 0.17. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
 
 ## License
 
