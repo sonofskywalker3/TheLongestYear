@@ -274,6 +274,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_win", "Arm the Year One Ending for tomorrow morning (debug; sleep, then step outside).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
+            helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
@@ -2062,6 +2063,9 @@ namespace TheLongestYear
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceWin(); break;
                 case "tly_ending": this.CmdEnding(command, args); break;
+                case "tly_year2wall":
+                    if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
+                    _runController?.DebugShowYear2Wall(); break;
                 case "tly_failreset":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
