@@ -152,3 +152,35 @@ the Year 2 update ships. One response only: Loop again.
 | --- | --- |
 | `dialog.year2wall.prompt` | The loop is broken, and the Junimos are not yet ready to lead the next fight.<br>Year 2 of The Longest Year is coming in a future beta. Stay tuned!<br>For now, the Junimos can send you around one more time. |
 | `dialog.year2wall.loop` | Loop again |
+
+## Season turns (`event.turn.*`, spec 2026-09-07-season-turn-beats)
+
+Placeholders: Jeff owns the wording. The porch scene on the morning of Summer 1 (two Junimos,
+hopeful), Fall 1 (three, uneasy) and Winter 1 (four, alarmed) after a passed gate. Who speaks
+which line is a table in `SeasonTurn.Lines`; the text is here and in i18n only.
+
+### Spring to Summer
+
+| Key | Who | Text |
+| --- | --- | --- |
+| `event.turn.summer-1` | A (green) | You did it, @! Spring is ours. The hall took every gift you gave it. |
+| `event.turn.summer-2` | B (orange) | We grow stronger when you work. Can you feel it? The valley can. |
+| `event.turn.summer-3` | A (green) | Summer is warm and long. Keep going. We'll be watching from the walls. |
+
+### Summer to Fall
+
+| Key | Who | Text |
+| --- | --- | --- |
+| `event.turn.fall-1` | A (green) | Summer is done. You held on, @. We held on with you. |
+| `event.turn.fall-2` | B (orange) | But... did you see it? Something got into the soil this season. Things withered that should not have. |
+| `event.turn.fall-3` | C (turquoise) | It is not the weather. We think it noticed you. |
+| `event.turn.fall-4` | A (green) | Fall is the harvest. Guard what you grow. We will guard what we can. |
+
+### Fall to Winter
+
+| Key | Who | Text |
+| --- | --- | --- |
+| `event.turn.winter-1` | A (green) | Fall is over. You kept the hall standing, @. Barely, but standing. |
+| `event.turn.winter-2` | B (orange) | It is not only the fields now. It has found the hall. Gifts you gave came undone in the night. We put back what we could. |
+| `event.turn.winter-3` | C (turquoise) | Winter is its season. It will not rot your crops. It will change what the hall asks of you. |
+| `event.turn.winter-4` | A (green) | One more season. Whatever the board says on a morning it changes, trust the work. On Winter 28 we will know. |
