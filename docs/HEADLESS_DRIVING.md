@@ -1,4 +1,4 @@
-# Headless driving: verify The Longest Year without touching Jeff's desktop
+﻿# Headless driving: verify The Longest Year without touching Jeff's desktop
 
 Since 0.16.69 an unattended verification run needs no mouse, no keyboard injection and no
 foreground window. Everything goes through SMAPI: the file bridge for `tly_*` commands, the SMAPI
@@ -82,14 +82,22 @@ Wait about 2 seconds after the log shows the choice opened before sending it. Do
 `tly_dismiss` on a question box: it calls `exitThisMenu`, which never runs `answerDialogue`, so it
 closes the box without taking any response.
 
+**An event's `speak` waits for a click, so the ending never advances on its own.** Poll
+`tly_eventstep` about every 4 s for the whole event: it logs the current command index and text,
+every actor's tile and whether it is moving, the open menu, and it clicks an open dialogue box on.
+It is also how you tell a hang from a wait: `tly_eventstep: no event` plus
+`tly_ending: the game is busy (eventUp,locationRequest)` is a stuck location change, not a pause.
+A vanilla farm event (Evelyn's Garden Pot on this save) counts as busy and defers the ending until
+it is stepped out; step it the same way.
+
 Replay the event alone: `tly_ending` (current location, no continuation); force a voice:
 `tly_ending speaker Shane`. Wall: `tly_year2wall` on any keep-playing save.
 
-Eyeball while watching (not yet verified against a running game, per the lines review file's
-Build-time notes): Morris's `move` path along the Town row `HallY + 2`, columns `HallX + 4`
-through `HallX + 9` (the paved stretch toward the saloon) actually walks clear; and the speaker's
-one-tile move at the crack scene lands them somewhere sensible. If Morris's row is blocked, the
-fix is a single warp to `(HallX + 4, HallY + 2)` instead of the two `move` lines.
+Verified live 2026-09-06: Morris's `move` path along the Town row `HallY + 2` walks clear, and the
+speaker's one-tile move at the crack scene lands (Shane went 52,22 -> 52,23). No warp workaround is
+needed. Never wrap a `changeLocation` in `globalFade` / `globalFadeToClear`: `changeLocation` warps
+through `Game1.warpFarmer`, which fades on its own, and the extra global fade leaves
+`Game1.locationRequest` pending forever.
 
 Checks before a release: whole flow once on Standard; scenes 1 and 6 once on Meadowlands
 (`tly_newgame meadowlands skipintro`, then `tly_win`); the log line "Morris_Dark: recoloured N"
