@@ -3,6 +3,21 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.6 - 2026-09-07
+
+1987 tests.
+
+### Changed
+
+- **A seasonal crops bundle every season.** The Pantry roller now always takes Spring Crops, Summer
+  Crops and Fall Crops when a position offers them, the way vanilla's Pantry has all three. A board
+  could roll Orchard, Preserver's and Home Cook's Feast into those positions instead, and then the
+  Farming theme had nothing reachable to ask for in week 1 except saplings. The rng is still
+  consumed at those positions, so every other bundle on a given seed lands where it did.
+- **At most one jelly in a week's goals.** Sea Jelly, River Jelly and Cave Jelly are a capped goal
+  group (one per weekly theme list), beside the fruit-tree and crab-pot caps. A week that asked for
+  Sea Jelly and River Jelly together meant two slow single-spot fishing trips for one theme.
+
 ## 0.17.5 - 2026-09-05
 
 1984 tests.
