@@ -583,6 +583,9 @@ namespace TheLongestYear.Loop
             watch.onContinue();
         }
 
+        /// <summary>Year One Ending continuation. Temporary stub; the real body lands with the choice flow.</summary>
+        public void OnEndingFinished() { }
+
         /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
         /// day-28 bedtime cutscene has finished. Clears the pending branch and runs its
         /// continuation: FAIL → JP shop, then on close PerformReset + forced full save

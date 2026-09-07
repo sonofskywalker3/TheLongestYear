@@ -59,6 +59,7 @@ namespace TheLongestYear
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
+        private EndingEventDriver _endingDriver;
         private BookFurniture _bookFurniture;
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
@@ -146,6 +147,11 @@ namespace TheLongestYear
             // once here; _runController is built on save load, so resolve it lazily like the picker.
             _day28Driver = new Day28CutsceneDriver(this.Monitor);
             _day28Driver.Attach(helper, () => _runController);
+            // Year One Ending: starts the ending event on the first step outside on an armed
+            // morning, waits for the seen mail, then hands off to RunController. _runController
+            // isn't built until OnSaveLoaded, so resolve it lazily like the driver above.
+            _endingDriver = new EndingEventDriver(this.Monitor, _meta, _config);
+            _endingDriver.Attach(helper, () => _runController);
             // Skip the overnight FarmEvent on FAIL nights — its end-of-event warp orphans the Fail
             // scene and drops the reset (see FarmEventSuppressionPatch). _runController is built on
             // save load, so resolve it lazily like the driver does.

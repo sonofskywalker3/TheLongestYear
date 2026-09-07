@@ -13,11 +13,15 @@ namespace TheLongestYear.Loop
     /// <c>if (!string.IsNullOrEmpty(text) &amp;&amp; text != "-1" &amp;&amp; ...)</c>), so the
     /// candidate event is silently skipped without firing.
     ///
-    /// 2026-05-29 round 8 — suppress event 191393 (Demetrius + Lewis "have you seen the
+    /// 2026-05-29 round 8 — suppress event 611439 (Demetrius + Lewis "have you seen the
     /// Community Center?" cutscene, vanilla Spring 5 Y1 in Town). The TLY player has been
     /// donating from day 1 of every loop, so the introduction beat is stale and out of order.
     /// Spec'd to be co-opted as TLY's day-1 narrative intro in a later pass (see TODO.md) —
     /// for now it's just turned off.
+    ///
+    /// Since the Year One Ending (0.17.x), event 191393 (the CC completion ceremony) is also
+    /// suppressed: TLY plays its own ending in that slot, and the keep-playing branch adds
+    /// 191393 to eventsSeen itself so the post-completion world still flips.
     /// </summary>
     // 2026-05-29 round 11 fix: PC's GameLocation has two checkEventPrecondition overloads —
     // (string) and (string, bool check_seen). Patching by name alone threw AmbiguousMatchException
@@ -39,10 +43,14 @@ namespace TheLongestYear.Loop
         {
             // 611439 — Lewis walks you to the derelict CC ("what an eyesore"), grants ccDoorUnlock +
             // quest 26. TLY opens the CC on Spring 1 (CommunityCenterUnlock), so the intro is stale.
-            // NOT 191393: that is the CC COMPLETION ceremony (Morris driven out), and it gates the
-            // Joja shutdown, the Pierre-Wednesday closure and the abandoned-JojaMart lightning.
-            // 0.11.60 suppressed 191393 by mistake -> post-completion world froze (Nexus bug 1113630).
             "611439",
+
+            // 191393 is the CC COMPLETION ceremony. Since the Year One Ending (0.17.x) the mod plays
+            // its own ending in that slot; the keep-playing branch adds 191393 to eventsSeen itself so
+            // the post-completion world (Joja shutdown, Pierre Wednesdays, abandoned-JojaMart
+            // lightning) still flips exactly as vanilla flips it. 0.11.60 once suppressed it WITHOUT
+            // that hand-off and froze the world (Nexus bug 1113630); the hand-off is the fix.
+            "191393",
         };
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
