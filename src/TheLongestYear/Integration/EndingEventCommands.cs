@@ -84,7 +84,7 @@ namespace TheLongestYear.Integration
         // actor unseen; tlyFadeIn lifts it. The game's own fade-in is cancelled at the load.
         private static bool _changing;
         private static float _black;
-        private static bool _fadingIn, _fadingOut;
+        private static bool _fadingIn, _fadingOut, _saying;
         private static float _fadeElapsed, _fadeDuration;
         private static float _afterEnd = -1f;   // ms since the event ended while black, -1 = not tracking
         private const float WarpFadeDone = 1.15f;
@@ -152,8 +152,15 @@ namespace TheLongestYear.Integration
             // (Jeff, 2026-09-07). The game advances the event when the box closes, like "message".
             Event.RegisterCommand(SayName, (evt, args, context) =>
             {
-                // Called every tick while the box is up (like vanilla's Message): open it once.
-                if (Game1.dialogueUp || Game1.activeClickableMenu != null) return;
+                // Called every tick: open the box once, then wait for it to close, then advance.
+                if (_saying)
+                {
+                    if (Game1.activeClickableMenu is EndingSpeechBox) return;
+                    _saying = false;
+                    evt.CurrentCommand++;
+                    return;
+                }
+                if (Game1.activeClickableMenu != null || Game1.dialogueUp) return;
                 if (!ArgUtility.TryGet(args, 1, out string name, out string error) || !ArgUtility.TryGet(args, 2, out string text, out error))
                 {
                     monitor.Log($"{SayName}: {error}; skipping.", LogLevel.Warn);
@@ -167,11 +174,19 @@ namespace TheLongestYear.Integration
                     if (page.Length > 0) pages.Add(page);
                 }
                 if (pages.Count == 0) { evt.CurrentCommand++; return; }
-                string display = evt.getActorByName(name, out _)?.displayName ?? Game1.getCharacterFromName(name)?.displayName ?? name;
-                pages[0] = display + ": " + pages[0];
-                // The single-string box, pages joined with '#', is what vanilla's "message" uses; the
-                // list constructor sized its box so small the opening animation never finished.
-                Game1.drawDialogueNoTyping(string.Join("#", pages));
+                NPC actor = evt.getActorByName(name, out _) ?? Game1.getCharacterFromName(name);
+                Microsoft.Xna.Framework.Graphics.Texture2D portrait = null;
+                try { portrait = actor?.Portrait; }
+                catch (Exception) { portrait = null; }
+                if (portrait == null)
+                {
+                    // A real Junimo actor never loads a portrait itself; the mod serves Portraits/Junimo<i>.
+                    try { portrait = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("Portraits/" + name); }
+                    catch (Exception ex) { monitor.Log($"{SayName}: no portrait for {name} ({ex.GetType().Name}); the box shows the name only.", LogLevel.Trace); }
+                }
+                string display = actor?.displayName ?? name;
+                Game1.activeClickableMenu = new EndingSpeechBox(portrait, display, pages);
+                _saying = true;
             });
 
             // tlyFadeIn [ms]: lift the black overlay tlyChangeLocation left up, eased, then continue.
@@ -357,6 +372,7 @@ namespace TheLongestYear.Integration
             {
                 _fadingIn = false;
                 _fadingOut = false;
+                _saying = false;
                 if (_afterEnd < 0f)
                 {
                     _black = 0f;   // the event went away without our fade-out: never stay black
