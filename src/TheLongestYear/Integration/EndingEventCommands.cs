@@ -4,8 +4,10 @@ using Microsoft.Xna.Framework;
 using Netcode;
 using StardewModdingAPI;
 using StardewValley;
+using StardewModdingAPI.Events;
 using StardewValley.Characters;
 using StardewValley.Locations;
+using StardewValley.TerrainFeatures;
 
 namespace TheLongestYear.Integration
 {
@@ -36,8 +38,10 @@ namespace TheLongestYear.Integration
     /// <c>tlyChangeLocation &lt;location&gt; &lt;x&gt; &lt;y&gt;</c>: vanilla's changeLocation warps the
     /// farmer to the SAME tile coordinates they had in the old map and only then lets the script warp
     /// them again, so the first frame in the new map is centred on the wrong spot (live 2026-09-07: one
-    /// frame of Town up and to the right of the hall). This one lands the farmer on the target tile in
-    /// the same call, through the same private Event.changeLocation the vanilla command uses.
+    /// frame of Town up and to the right of the hall), and its fade starts by dropping the old map's
+    /// objects and actors. This one fades to black first with the world intact, then warps under
+    /// black to the target tile through the same private Event.changeLocation the vanilla command
+    /// uses, and lets the game fade back in.
     ///
     /// <c>tlyRefurbishHall</c>: swaps the Town map's Community Center exterior to the restored art
     /// (Town.refurbishCommunityCenter). Vanilla only does that from resetLocalState when the vanilla
@@ -54,6 +58,7 @@ namespace TheLongestYear.Integration
         public const string RefurbishHallName = "tlyRefurbishHall";
         public const string JunimoName = "tlyJunimo";
         public const string PanToName = "tlyPanTo";
+        public const string FadeTreesName = "tlyFadeTrees";
         private const string JunimoDisplayName = "Junimo";
 
         private static readonly MethodInfo EventChangeLocation = typeof(Event).GetMethod(
@@ -63,6 +68,17 @@ namespace TheLongestYear.Integration
             "refurbishCommunityCenter", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo JunimoColour = typeof(Junimo).GetField(
             "color", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        // tlyChangeLocation state. WarpFadeDone is past the 1.1 the warp fade completes at, so the
+        // game performs the pending warp on its very next fade update.
+        private static bool _changing;
+        private const float WarpFadeDone = 1.15f;
+        private const float FadeSpeed = 0.02f;
+
+        // tlyFadeTrees state: trees inside this tile rectangle are held translucent every tick
+        // while the ending event is up (Tree.alpha climbs back to 1 on its own each frame).
+        private static Rectangle? _fadeTrees;
+        private const float TreeAlpha = 0.3f;
 
         // tlyPanTo state: the command is called every tick until it advances the script.
         private static bool _panning;
@@ -87,8 +103,22 @@ namespace TheLongestYear.Integration
             Game1.viewport.Y = (int)System.Math.Round(c.Y - Game1.viewport.Height / 2f);
         }
 
-        public static void Register(IMonitor monitor)
+        public static void Register(IMonitor monitor, IModHelper helper)
         {
+            helper.Events.GameLoop.UpdateTicked += (_, _) => HoldTreesTranslucent();
+
+            // tlyFadeTrees <x> <y>: from here to the end of the event, every tree whose tile is
+            // within 4 tiles of (x, y) draws translucent, so the shrine is never hidden behind a
+            // canopy (the Standard farm's big tree sat square in front of it, 2026-09-07).
+            Event.RegisterCommand(FadeTreesName, (evt, args, context) =>
+            {
+                if (ArgUtility.TryGetInt(args, 1, out int x, out string error) && ArgUtility.TryGetInt(args, 2, out int y, out error))
+                    _fadeTrees = new Rectangle(x - 4, y - 4, 9, 9);
+                else
+                    monitor.Log($"{FadeTreesName}: {error}; skipping.", LogLevel.Warn);
+                evt.CurrentCommand++;
+            });
+
             Event.RegisterCommand(PanToName, (evt, args, context) =>
             {
                 try
@@ -127,6 +157,7 @@ namespace TheLongestYear.Integration
 
             Event.RegisterCommand(ChangeLocationName, (evt, args, context) =>
             {
+                if (_changing) return;   // waiting on the fade or the load; called every tick meanwhile
                 if (!ArgUtility.TryGet(args, 1, out string location, out string error)
                     || !ArgUtility.TryGetInt(args, 2, out int x, out error)
                     || !ArgUtility.TryGetInt(args, 3, out int y, out error)
@@ -136,20 +167,39 @@ namespace TheLongestYear.Integration
                     evt.CurrentCommand++;
                     return;
                 }
-                try
+                _changing = true;
+                // Fade the whole screen to black first, with the world intact (the warp's own fade
+                // drops the old location's objects and actors the moment it starts: everything but
+                // the farmer and the farmhouse popped out, 2026-09-07). At the black frame, inside
+                // the same update, hand the warp to the game and mark its fade already complete, so
+                // the load happens under black and the only thing the player sees is the fade back
+                // in on the new scene. Actors keep moving during the fade, so an exit can overlap it.
+                Game1.nonWarpFade = false;
+                Game1.globalFadeToBlack(() =>
                 {
-                    Action onComplete = () =>
+                    try
                     {
-                        Game1.currentLocation.ResetForEvent(evt);
+                        Action onComplete = () =>
+                        {
+                            Game1.currentLocation.ResetForEvent(evt);
+                            _changing = false;
+                            evt.CurrentCommand++;
+                        };
+                        // The old scene's actors do not belong in the new one (the Town crowd showed
+                        // up inside the hall for a frame, and Lewis was still standing on the farm,
+                        // 2026-09-07). Under black nobody sees them go.
+                        evt.actors.Clear();
+                        EventChangeLocation.Invoke(evt, new object[] { location, x, y, onComplete });
+                        Game1.fadeToBlackAlpha = WarpFadeDone;
+                    }
+                    catch (Exception ex)
+                    {
+                        monitor.Log($"{ChangeLocationName}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn);
+                        Game1.globalFadeToClear();
+                        _changing = false;
                         evt.CurrentCommand++;
-                    };
-                    EventChangeLocation.Invoke(evt, new object[] { location, x, y, onComplete });
-                }
-                catch (Exception ex)
-                {
-                    monitor.Log($"{ChangeLocationName}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn);
-                    evt.CurrentCommand++;
-                }
+                    }
+                }, FadeSpeed);
             });
 
             Event.RegisterCommand(RefurbishHallName, (evt, args, context) =>
@@ -198,6 +248,25 @@ namespace TheLongestYear.Integration
                 }
                 evt.CurrentCommand++;
             });
+        }
+
+        private static void HoldTreesTranslucent()
+        {
+            if (_fadeTrees == null) return;
+            Event ev = Game1.CurrentEvent;
+            if (ev == null || ev.id != EndingEventKeys.EventId)
+            {
+                _fadeTrees = null;   // the ending is over; trees return to normal on their own
+                return;
+            }
+            GameLocation loc = Game1.currentLocation;
+            if (loc == null) return;
+            Rectangle r = _fadeTrees.Value;
+            foreach (var pair in loc.terrainFeatures.Pairs)
+            {
+                if (pair.Value is Tree tree && r.Contains((int)pair.Key.X, (int)pair.Key.Y))
+                    tree.alpha = TreeAlpha;
+            }
         }
     }
 }

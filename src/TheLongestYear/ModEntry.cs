@@ -135,7 +135,7 @@ namespace TheLongestYear
 
             _meta = new MetaStore(helper.Data);
             GrandpaCandleCommand.Register(this.Monitor);
-            Integration.EndingEventCommands.Register(this.Monitor);
+            Integration.EndingEventCommands.Register(this.Monitor, helper);
             // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires
@@ -279,6 +279,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_win", "Arm the Year One Ending for tomorrow morning (debug; sleep, then step outside).", this.CmdForceWin);
+            helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
@@ -1621,6 +1622,37 @@ namespace TheLongestYear
             _runController?.DebugForceWin();
         }
 
+        /// <summary>Debug: give a villager enough familiarity and memory that EndingSpeaker picks them
+        /// and EndingLine lands on the asked tier (1 birthday gifts twice, 2 a heart scene twice,
+        /// 3 gifts, 4 talks). A tly_newgame farm has no history at all, so without this the crack
+        /// scene never plays in a test (Jeff, 2026-09-07).</summary>
+        private void CmdRemember(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_remember <Name> [tier 1-4]", LogLevel.Warn); return; }
+            string name = args[0];
+            int tier = args.Length > 1 && int.TryParse(args[1], out int t) ? Math.Clamp(t, 1, 4) : 1;
+            var mem = new TheLongestYear.Core.VillagerMemory { Talks = 20, Loops = new List<int> { 1, 2 } };
+            switch (tier)
+            {
+                case 1: mem.BirthdayGifts = 2; mem.BirthdayGiftLoops = new List<int> { 1, 2 }; mem.Gifts = 4; mem.GiftLoops = new List<int> { 1, 2 }; break;
+                case 2:
+                    // Any scene in the table whose key names this villager (e.g. "abigail-2").
+                    string scene = TheLongestYear.Core.Ending.EndingLine.SceneTable
+                        .Where(kv => kv.Value.Contains("." + name.ToLowerInvariant() + "-"))
+                        .Select(kv => kv.Key).FirstOrDefault();
+                    if (scene != null) mem.HeartEventLoops[scene] = new List<int> { 1, 2 };
+                    else this.Monitor.Log($"tly_remember: {name} has no scene phrase; falling through to the gifts tier.", LogLevel.Warn);
+                    mem.HeartEvents = 2;
+                    break;
+                case 3: mem.Gifts = 6; mem.GiftLoops = new List<int> { 1, 2 }; break;
+                default: break;
+            }
+            _meta.State.VillagerMemory[name] = mem;
+            _meta.State.VillagerFamiliarity[name] = Math.Max(_config.DejaVuThreshold, 1) + 5;
+            this.Monitor.Log($"tly_remember: {name} now qualifies as the ending speaker (tier {tier}); persists on the next save.", LogLevel.Info);
+        }
+
         /// <summary>Debug: replay the Year One Ending event right now with no continuation, optionally
         /// forcing which villager cracks. See <see cref="Integration.EndingEventDriver.StartNow"/>.</summary>
         private void CmdEnding(string command, string[] args)
@@ -2183,6 +2215,7 @@ namespace TheLongestYear
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceWin(); break;
                 case "tly_ending": this.CmdEnding(command, args); break;
+                case "tly_remember": this.CmdRemember(command, args); break;
                 case "tly_year2wall":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugShowYear2Wall(); break;
