@@ -42,6 +42,14 @@ public class I18nGuardTests
     /// distinctive prefix instead of whitelisting the family wholesale.</summary>
     private static readonly Regex EggColorKeyLiteral = new(@"""(?<key>egg-color\.[a-z0-9\-]+)""", RegexOptions.Compiled);
 
+    /// <summary>EndingEventInjector routes every script line through its local <c>EventText()</c>
+    /// sanitiser instead of calling <see cref="Strings.Get"/> directly (a translated '"' or '/' would
+    /// break the '/'-joined event script), so <see cref="LiteralKey"/> cannot see those keys at the
+    /// call site. They are still literal arguments, just to a different method; match that call the
+    /// same way. The name is deliberately distinctive so no unrelated <c>Text(...)</c> call is
+    /// mistaken for a key reference.</summary>
+    private static readonly Regex EventTextKey = new(@"EventText\(\s*""(?<key>[a-z0-9.\-]+)""", RegexOptions.Compiled);
+
     private static IEnumerable<string> AllSourceFiles()
         => Directory.EnumerateFiles(SrcRoot, "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
@@ -56,6 +64,7 @@ public class I18nGuardTests
         }
         foreach (Match m in I18nToken.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EggColorKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
+        foreach (Match m in EventTextKey.Matches(text)) into.Add(m.Groups["key"].Value);
     }
 
     /// <summary>
@@ -285,5 +294,25 @@ public class I18nGuardTests
                          $"(closest call site supplied {{{string.Join(",", closest)}}})");
         }
         Assert.True(problems.Count == 0, "Token round-trip guard failures:\n" + string.Join("\n", problems));
+    }
+
+    /// <summary>Event-script safety: an event is one string whose commands are joined with '/', and a
+    /// <c>speak</c> / <c>message</c> payload is wrapped in double quotes. An <c>event.</c> value
+    /// containing either character would split the script into bogus commands or unbalance the quotes
+    /// and break the intro or the ending outright. <c>EndingEventInjector.Text</c> sanitises both at
+    /// runtime for translations we do not control; this guard keeps our own English source clean, and
+    /// covers <c>IntroEventInjector</c>, which still interpolates raw values.</summary>
+    [Fact]
+    public void NoEventKeyValue_ContainsAScriptBreakingCharacter()
+    {
+        var problems = _fixture.Map
+            .Where(kv => kv.Key.StartsWith("event.", StringComparison.Ordinal))
+            .Where(kv => kv.Value.Contains('"') || kv.Value.Contains('/'))
+            .Select(kv => $"{kv.Key}: {kv.Value}")
+            .ToList();
+
+        Assert.True(problems.Count == 0,
+            "event.* values must contain no '\"' (unbalances the speak/message quotes) and no '/' " +
+            "(splits the '/'-joined event script):\n" + string.Join("\n", problems));
     }
 }

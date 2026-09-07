@@ -19,6 +19,20 @@ namespace TheLongestYear.Integration
         // Town: the Community Center doors are the warp at (52,20); the steps run along row 22.
         private const int HallX = 52, HallY = 22;
 
+        /// <summary>Localized text made safe to drop inside an event script. A script is one string
+        /// whose commands are joined with '/', and a <c>speak</c> / <c>message</c> payload is wrapped
+        /// in double quotes, so a translated line containing either character would split the script
+        /// into bogus commands or unbalance the quotes and break the whole ending. English never does
+        /// (I18nGuardTests asserts that), but a community translation is outside our control, so
+        /// sanitise at the point of use: '"' becomes a single quote, '/' becomes a comma. Both
+        /// substitutions read naturally in prose and neither introduces an em dash.</summary>
+        private static string EventText(string key, IReadOnlyDictionary<string, string> tokens = null)
+        {
+            string value = tokens == null ? Strings.Get(key) : Strings.Get(key, tokens);
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Replace('"', '\'').Replace('/', ',');
+        }
+
         internal static string Build(EndingCast cast)
         {
             var s = new List<string>
@@ -33,9 +47,9 @@ namespace TheLongestYear.Integration
                 "viewport 66 18 true",
                 "faceDirection farmer 1",
                 "pause 800",
-                $"speak Lewis \"{Strings.Get("event.ending.lewis-porch-1")}\"",
+                $"speak Lewis \"{EventText("event.ending.lewis-porch-1")}\"",
                 "pause 200",
-                $"speak Lewis \"{Strings.Get("event.ending.lewis-porch-2")}\"",
+                $"speak Lewis \"{EventText("event.ending.lewis-porch-2")}\"",
                 "pause 400",
 
                 // ---- Scene 2: the hall steps ----
@@ -69,11 +83,11 @@ namespace TheLongestYear.Integration
                 "jump Junimo0 8", "jump Junimo1 8", "jump Junimo2 8", "jump Junimo3 8",
                 "playSound junimoMeep1",
                 "pause 800",
-                $"speak Lewis \"{Strings.Get("event.ending.lewis-hall-1")}\"",
+                $"speak Lewis \"{EventText("event.ending.lewis-hall-1")}\"",
                 "pause 200",
-                $"speak Lewis \"{Strings.Get("event.ending.lewis-hall-2")}\"",
+                $"speak Lewis \"{EventText("event.ending.lewis-hall-2")}\"",
                 "pause 200",
-                $"speak Lewis \"{Strings.Get("event.ending.lewis-hall-3")}\"",
+                $"speak Lewis \"{EventText("event.ending.lewis-hall-3")}\"",
                 "pause 600",
             });
 
@@ -88,37 +102,37 @@ namespace TheLongestYear.Integration
                 {
                     $"move {cast.Speaker} 0 1 2",
                     "pause 400",
-                    $"speak {cast.Speaker} \"{Strings.Get(EndingLine.OpenKey)}\"",
+                    $"speak {cast.Speaker} \"{EventText(EndingLine.OpenKey)}\"",
                     $"emote {cast.Speaker} 8",
                     "pause 900",
-                    $"speak {cast.Speaker} \"{Strings.Get(cast.SpeakerMiddleKey, tokens)}\"",
+                    $"speak {cast.Speaker} \"{EventText(cast.SpeakerMiddleKey, tokens)}\"",
                     "pause 400",
-                    $"speak {cast.Speaker} \"{Strings.Get(EndingLine.CloseKey)}\"",
+                    $"speak {cast.Speaker} \"{EventText(EndingLine.CloseKey)}\"",
                     "pause 600",
                 });
             }
 
             // ---- Scene 4: Morris ----
             // The two "move Morris" lines below walk the row at HallY+2, columns HallX+4 through
-            // HallX+9 (the paved stretch east of the hall steps, toward the saloon). Not verified
-            // live yet (Task 13 runbook): if that row is blocked on the real Town map, replace both
-            // moves with a single warp to (HallX + 4, HallY + 2) and drop the second move entirely.
+            // HallX+9 (the paved stretch east of the hall steps, toward the saloon). Verified live
+            // 2026-09-06 on Standard and Meadowlands: both moves executed, the row walks clear and
+            // no warp workaround is needed (see STATUS.md, Year One Ending).
             s.AddRange(new[]
             {
                 "stopMusic",
                 $"addTemporaryActor Morris 16 32 {HallX + 9} {HallY + 2} 3 true Character",
                 $"move Morris -5 0 3",
                 "pause 500",
-                $"speak Morris \"{Strings.Get("event.ending.morris-1")}\"",
+                $"speak Morris \"{EventText("event.ending.morris-1")}\"",
                 "pause 200",
-                $"speak Morris \"{Strings.Get("event.ending.morris-2")}\"",
+                $"speak Morris \"{EventText("event.ending.morris-2")}\"",
                 "pause 200",
-                $"speak Morris \"{Strings.Get("event.ending.morris-3")}\"",
+                $"speak Morris \"{EventText("event.ending.morris-3")}\"",
                 "pause 300",
                 "changeSprite Morris Dark",
                 "glow 90 0 0 false",
                 "playSound shadowDie",
-                $"speak Morris \"{Strings.Get("event.ending.morris-4")}\"",
+                $"speak Morris \"{EventText("event.ending.morris-4")}\"",
                 "pause 700",
                 "stopGlowing",
                 "changeSprite Morris",
@@ -145,15 +159,15 @@ namespace TheLongestYear.Integration
                 "playSound junimoMeep1",
                 "jump Junimo0 8", "jump Junimo1 8", "jump Junimo2 8", "jump Junimo3 8", "jump Junimo4 8", "jump Junimo5 8",
                 "pause 800",
-                $"speak Junimo0 \"{Strings.Get("event.ending.junimo-1")}\"",
+                $"speak Junimo0 \"{EventText("event.ending.junimo-1")}\"",
                 "pause 200",
-                $"speak Junimo0 \"{Strings.Get("event.ending.junimo-2")}\"",
+                $"speak Junimo0 \"{EventText("event.ending.junimo-2")}\"",
                 "pause 400",
-                $"speak Junimo0 \"{Strings.Get("event.ending.junimo-3")}\"",
+                $"speak Junimo0 \"{EventText("event.ending.junimo-3")}\"",
                 "pause 300",
-                $"speak Junimo0 \"{Strings.Get("event.ending.junimo-4")}\"",
+                $"speak Junimo0 \"{EventText("event.ending.junimo-4")}\"",
                 "pause 300",
-                $"speak Junimo0 \"{Strings.Get("event.ending.junimo-5")}\"",
+                $"speak Junimo0 \"{EventText("event.ending.junimo-5")}\"",
                 "pause 600",
 
                 // ---- Scene 6: the shrine at dusk ----
@@ -165,7 +179,7 @@ namespace TheLongestYear.Integration
                 "pause 1200",
                 GrandpaCandleCommand.Name,
                 "pause 1500",
-                $"message \"{Strings.Get("event.ending.grandpa")}\"",
+                $"message \"{EventText("event.ending.grandpa")}\"",
                 "pause 1500",
                 "globalFade",
                 $"addMailReceived {EndingEventKeys.SeenMail}",

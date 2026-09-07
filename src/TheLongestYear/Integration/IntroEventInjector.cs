@@ -103,6 +103,10 @@ namespace TheLongestYear.Integration
             "viewport 66 18 true",
             "faceDirection farmer 1",
             "pause 1000",
+            // Every speak payload below is a raw Strings.Get. English is safe (I18nGuardTests
+            // asserts no event.* value contains '"' or '/', either of which would unbalance the
+            // quotes or split the '/'-joined script), and community translations are covered the
+            // moment this file adopts EndingEventInjector.EventText, which sanitises both characters.
             $"speak Lewis \"{Strings.Get("event.intro.lewis-1")}\"",
             "pause 200",
             $"speak Lewis \"{Strings.Get("event.intro.lewis-2")}\"",
