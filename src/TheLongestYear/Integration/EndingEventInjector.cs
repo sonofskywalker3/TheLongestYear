@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Ending;
 
@@ -37,9 +37,14 @@ namespace TheLongestYear.Integration
                 "pause 200",
                 $"speak Lewis \"{Strings.Get("event.ending.lewis-porch-2")}\"",
                 "pause 400",
-                "globalFade",
 
                 // ---- Scene 2: the hall steps ----
+                // No globalFade/globalFadeToClear around a changeLocation: changeLocation calls
+                // Game1.warpFarmer, which runs its own fade to black and back. Live run 2026-09-06:
+                // a globalFade immediately before changeLocation left Game1.locationRequest pending
+                // forever (the event hung in Town with eventUp + locationRequest and never reached
+                // the Community Center), because the global fade had already consumed the frame the
+                // warp fade needed to complete on.
                 "changeLocation Town",
                 $"warp farmer {HallX} {HallY + 2} true",
                 "faceDirection farmer 0",
@@ -58,7 +63,6 @@ namespace TheLongestYear.Integration
             s.AddRange(new[]
             {
                 $"viewport {HallX} {HallY} true",
-                "globalFadeToClear",
                 "pause 600",
                 "playSound reward",
                 "screenFlash 0.4",
@@ -127,7 +131,6 @@ namespace TheLongestYear.Integration
                 "pause 300",
                 "playSound thudStep",
                 "pause 800",
-                "globalFade",
 
                 // ---- Scene 5: inside the hall, six Junimos ----
                 "changeLocation CommunityCenter",
@@ -139,7 +142,6 @@ namespace TheLongestYear.Integration
             s.AddRange(new[]
             {
                 "viewport 32 14 true",
-                "globalFadeToClear",
                 "playSound junimoMeep1",
                 "jump Junimo0 8", "jump Junimo1 8", "jump Junimo2 8", "jump Junimo3 8", "jump Junimo4 8", "jump Junimo5 8",
                 "pause 800",
@@ -153,7 +155,6 @@ namespace TheLongestYear.Integration
                 "pause 300",
                 $"speak Junimo0 \"{Strings.Get("event.ending.junimo-5")}\"",
                 "pause 600",
-                "globalFade",
 
                 // ---- Scene 6: the shrine at dusk ----
                 "changeLocation Farm",
@@ -161,7 +162,6 @@ namespace TheLongestYear.Integration
                 "faceDirection farmer 0",
                 $"viewport {cast.ShrineX} {cast.ShrineY} true",
                 "ambientLight 120 100 160",
-                "globalFadeToClear",
                 "pause 1200",
                 GrandpaCandleCommand.Name,
                 "pause 1500",
