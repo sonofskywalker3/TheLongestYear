@@ -289,6 +289,15 @@ namespace TheLongestYear.Loop
                 return;
             }
 
+            // Year One Ending (spec 2026-09-06 section 5): Spring 1 of year 2 on a keep-playing
+            // save shows the wall until the Year 2 update sets Year2Started. Checked before the
+            // repeat-win shortcut below since a wall save has no pending choice to consume.
+            if (TheLongestYear.Core.Ending.Year2WallRule.ShouldShow(Game1.year, _store.State.Year2WallArmed, _store.State.Year2Started))
+            {
+                ShowYear2Wall();
+                return;
+            }
+
             // Year One Ending (spec 2026-09-06 section 1): a repeat win on a save that has already
             // seen the event skips straight to the shrine + choice on the wake frame. Armed in
             // ArmEnding the night before; consumed here, before the normal season/hub flow.
@@ -306,6 +315,25 @@ namespace TheLongestYear.Loop
         /// Loop again resets right here; Keep playing marks the win, hands vanilla its post-completion
         /// world, arms the Spring 1 year-2 wall, and lets the Junimos say what comes next.</summary>
         public void OnEndingFinished() => TryOpenShrineThenContinue(ShowEndingChoice);
+
+        /// <summary>The Year 2 wall: one response, Loop again. ESC also selects the last (only)
+        /// response, so there is no way past it on this version; quitting re-shows it next load.</summary>
+        public void ShowYear2Wall()
+        {
+            GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
+            if (loc == null) { _monitor.Log("Year 2 wall: no location yet; will retry next morning.", LogLevel.Warn); return; }
+            var responses = new[] { new StardewValley.Response("loop", Strings.Get("dialog.year2wall.loop")) };
+            loc.createQuestionDialogue(Strings.Get("dialog.year2wall.prompt"), responses, (Farmer who, string key) =>
+            {
+                _monitor.Log("Year 2 wall: Loop again.", LogLevel.Info);
+                _store.State.VictoryAcknowledged = false;
+                _store.State.Year2WallArmed = false;
+                _store.Save();
+                FinalizeReset("year 2 wall");
+            });
+        }
+
+        public void DebugShowYear2Wall() => ShowYear2Wall();
 
         /// <summary>The ending's continuation choice: start a new loop (PerformReset) or keep playing
         /// this year. Uses vanilla's <c>createQuestionDialogue</c> so the prompt renders identically to

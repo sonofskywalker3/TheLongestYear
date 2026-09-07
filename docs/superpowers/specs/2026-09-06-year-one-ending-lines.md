@@ -144,3 +144,13 @@ Shown after the event and the shrine spend (and, on a repeat win, straight off t
 
 `keep-1`/`keep-2` deliberately repeat `event.ending.junimo-5`: the player who chooses Keep playing
 hears the promise again as the last thing before the day starts.
+
+## Year 2 wall (`dialog.year2wall.*`, Task 12)
+
+Shown on Spring 1 of year 2 on a keep-playing save, in place of the normal day-start flow, until
+the Year 2 update ships. One response only: Loop again.
+
+| Key | Text |
+| --- | --- |
+| `dialog.year2wall.prompt` | The loop is broken, and the Junimos are not yet ready to lead the next fight.<br>Year 2 of The Longest Year is coming in a future beta. Stay tuned!<br>For now, the Junimos can send you around one more time. |
+| `dialog.year2wall.loop` | Loop again |

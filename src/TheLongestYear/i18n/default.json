@@ -27,6 +27,8 @@
     "dialog.ending.keep-playing": "Keep playing this year",
     "dialog.ending.keep-1": "You've done well so far, but the work isn't over. Prepare yourself for what's next.",
     "dialog.ending.keep-2": "On Spring 1, we get to work freeing the townsfolk.",
+    "dialog.year2wall.prompt": "The loop is broken, and the Junimos are not yet ready to lead the next fight.\nYear 2 of The Longest Year is coming in a future beta. Stay tuned!\nFor now, the Junimos can send you around one more time.",
+    "dialog.year2wall.loop": "Loop again",
     "dialog.hold.prompt": "Should we hold the town's wishes steady for your next spring?",
     "dialog.pity.prompt-ease": "It looks like {{season}} has been giving you a hard time. Would you like us to use some of our power to make the town's requests easier to fulfil? We would ask a little less of {{season}} next time.",
     "dialog.pity.prompt-trim": "It looks like {{season}} has been giving you a hard time. Would you like us to use some of our power to make the town's requests easier to fulfil? We would leave out the hardest of {{season}}'s asks.",
