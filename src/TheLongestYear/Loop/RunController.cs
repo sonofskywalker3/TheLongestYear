@@ -322,7 +322,15 @@ namespace TheLongestYear.Loop
         public void ShowYear2Wall()
         {
             GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
-            if (loc == null) { _monitor.Log("Year 2 wall: no location yet; will retry next morning.", LogLevel.Warn); return; }
+            if (loc == null)
+            {
+                // No location on this frame means the wall cannot be drawn, but the day still has to
+                // start: returning here left the player on a Spring 1 with no season roll and no
+                // planning hub. Year2WallArmed is untouched, so the wall re-asks next morning.
+                _monitor.Log("Year 2 wall: no location yet; will retry next morning.", LogLevel.Warn);
+                DoDayStartSeasonAndHub();
+                return;
+            }
             var responses = new[] { new StardewValley.Response("loop", Strings.Get("dialog.year2wall.loop")) };
             loc.createQuestionDialogue(Strings.Get("dialog.year2wall.prompt"), responses, (Farmer who, string key) =>
             {

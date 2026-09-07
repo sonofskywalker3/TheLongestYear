@@ -36,15 +36,17 @@ namespace TheLongestYear.Integration
             e.LoadFrom(Build, AssetLoadPriority.Medium);
         }
 
-        /// <summary>"Portraits/Junimo" and "Portraits/Junimo&lt;digits&gt;" only, so a real NPC whose
-        /// name merely starts with "Junimo" text is never hijacked.</summary>
+        /// <summary>"Portraits/Junimo" and "Portraits/Junimo0".."Portraits/Junimo5" only: exactly the
+        /// actor names the intro and ending injectors place (the ending uses Junimo0..Junimo5 for the
+        /// six in the hall, the intro a single "Junimo"). Anything else, including a real NPC whose
+        /// name merely starts with "Junimo", keeps its own portrait asset.</summary>
         private static bool Matches(string name)
         {
             name = name.Replace('\\', '/');
             if (!name.StartsWith(Prefix, System.StringComparison.OrdinalIgnoreCase)) return false;
-            for (int i = Prefix.Length; i < name.Length; i++)
-                if (!char.IsDigit(name[i])) return false;
-            return true;
+            string suffix = name.Substring(Prefix.Length);
+            return suffix.Length == 0
+                || (suffix.Length == 1 && suffix[0] >= '0' && suffix[0] <= '5');
         }
 
         private Texture2D Build()
