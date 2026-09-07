@@ -3,6 +3,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Day28;
 using TheLongestYear.Loop;
 using TheLongestYear.UI;
@@ -21,6 +22,7 @@ namespace TheLongestYear.Integration
     {
         private readonly IMonitor _monitor;
         private Func<RunController> _runController;
+        private Func<SeasonTurnDriver> _turnDriver;
         private bool _opened;
         private IClickableMenu _openedMenu;
         private bool _farmEventDeferLogged;
@@ -32,9 +34,10 @@ namespace TheLongestYear.Integration
 
         /// <summary>Subscribe once (from ModEntry.Entry). The RunController is built later on save
         /// load, so it's resolved through a thunk — same pattern as the intro driver's launcher.</summary>
-        public void Attach(IModHelper helper, Func<RunController> runController)
+        public void Attach(IModHelper helper, Func<RunController> runController, Func<SeasonTurnDriver> turnDriver = null)
         {
             _runController = runController;
+            _turnDriver = turnDriver;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
         }
 
@@ -103,6 +106,21 @@ namespace TheLongestYear.Integration
             if (Game1.activeClickableMenu != null) return;         // don't stack on another menu
 
             Day28Branch branch = rc.PendingCutscene;
+            if (branch == Day28Branch.Continue)
+            {
+                // Season Turn Beats (spec 2026-09-07): the Continue morning plays the porch scene in
+                // place of the card. Its completion runs the same OnCutsceneEnded. An event, not a
+                // menu, so the replaced-menu watchdog above stays off (_openedMenu null).
+                SeasonTurnKind? kind = SeasonTurn.ForSeasonStart((TheLongestYear.Core.Season)(int)Game1.season);
+                SeasonTurnDriver turn = _turnDriver?.Invoke();
+                if (kind != null && turn != null && turn.Start(kind.Value, () => _runController?.Invoke()?.OnCutsceneEnded()))
+                {
+                    _openedMenu = null;
+                    _opened = true;
+                    return;
+                }
+                _monitor.Log("Day-28 cutscene: no season turn scene for this morning; showing the card.", LogLevel.Info);
+            }
             _monitor.Log(
                 $"Day-28 cutscene: opening the {branch} Junimo scene (eventUp={Game1.eventUp}, " +
                 $"farmEvent=none, newDay={Game1.newDay}).", LogLevel.Info);
