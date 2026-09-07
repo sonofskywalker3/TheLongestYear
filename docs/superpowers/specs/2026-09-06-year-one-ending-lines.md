@@ -129,3 +129,18 @@ dialogue repeats the second half so a player who loops again has still heard it.
   `HallX + 9` (the paved stretch east of the Community Center steps, toward the saloon). This was
   not verified against a running game in this task; the Task 13 live runbook should eyeball those
   tiles and, if the row is blocked, swap both moves for a single warp to `(HallX + 4, HallY + 2)`.
+
+## The continuation choice (`dialog.ending.*`, Task 11)
+
+Shown after the event and the shrine spend (and, on a repeat win, straight off the wake frame).
+
+| Key | Text |
+| --- | --- |
+| `dialog.ending.prompt` | {{loopline}}<br>The loop is yours to keep or to break. Begin a new loop now, or keep playing this year? |
+| `dialog.ending.new-loop` | Loop again |
+| `dialog.ending.keep-playing` | Keep playing this year |
+| `dialog.ending.keep-1` | You've done well so far, but the work isn't over. Prepare yourself for what's next. |
+| `dialog.ending.keep-2` | On Spring 1, we get to work freeing the townsfolk. |
+
+`keep-1`/`keep-2` deliberately repeat `event.ending.junimo-5`: the player who chooses Keep playing
+hears the promise again as the last thing before the day starts.

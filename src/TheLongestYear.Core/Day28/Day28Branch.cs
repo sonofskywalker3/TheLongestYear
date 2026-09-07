@@ -6,7 +6,6 @@ namespace TheLongestYear.Core.Day28
     {
         None,
         Fail,     // gate closed → rewind dialogue → JP shop → reset to Spring 1
-        Continue, // gate open → congratulations → roll into the next season
-        Win       // loop completed (CC restored) → win screen → JP shop → keep-playing choice
+        Continue  // gate open → congratulations → roll into the next season
     }
 }

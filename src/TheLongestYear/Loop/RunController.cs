@@ -95,9 +95,9 @@ namespace TheLongestYear.Loop
         /// keeps Mixed at its Bulletin Board room until the game data is available.</summary>
         public Func<string, ItemKind> ItemKindOf { get; set; } = _ => ItemKind.Other;
 
-        /// <summary>The current attempt count (loop the player is on / won), surfaced so the
-        /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can pass it into the
-        /// <see cref="TheLongestYear.UI.VictoryMenu"/> loop-count line.</summary>
+        /// <summary>The current attempt count (loop the player is on / won), surfaced for the
+        /// integration layer and the ending choice's loop-count line
+        /// (<see cref="TheLongestYear.Core.WinSummary.LoopLine"/>).</summary>
         public int CurrentRunNumber => Run.RunNumber;
 
         /// <summary>Called from OnSaveLoaded: ensure the run has a seed.</summary>
@@ -289,58 +289,77 @@ namespace TheLongestYear.Loop
                 return;
             }
 
+            // Year One Ending (spec 2026-09-06 section 1): a repeat win on a save that has already
+            // seen the event skips straight to the shrine + choice on the wake frame. Armed in
+            // ArmEnding the night before; consumed here, before the normal season/hub flow.
+            if (_pendingChoice)
+            {
+                _pendingChoice = false;
+                TryOpenShrineThenContinue(ShowEndingChoice);
+                return;
+            }
+
             DoDayStartSeasonAndHub();
         }
 
-        /// <summary>Post-win choice dialog: after the shrine menu closes, ask the player
-        /// whether to start a new loop (triggers PerformReset) or keep playing this run
-        /// indefinitely (sets VictoryAcknowledged + falls through to the normal day-start
-        /// flow with no reset). Uses vanilla's <c>createQuestionDialogue</c> so the prompt
-        /// renders identically to other in-world Y/N choices the player has seen.</summary>
-        private void ShowKeepPlayingChoice()
+        /// <summary>Year One Ending (spec 2026-09-06 section 5): after the event and the shrine spend.
+        /// Loop again resets right here; Keep playing marks the win, hands vanilla its post-completion
+        /// world, arms the Spring 1 year-2 wall, and lets the Junimos say what comes next.</summary>
+        public void OnEndingFinished() => TryOpenShrineThenContinue(ShowEndingChoice);
+
+        /// <summary>The ending's continuation choice: start a new loop (PerformReset) or keep playing
+        /// this year. Uses vanilla's <c>createQuestionDialogue</c> so the prompt renders identically to
+        /// other in-world Y/N choices the player has seen.</summary>
+        private void ShowEndingChoice()
         {
             var responses = new[]
             {
-                new StardewValley.Response("newLoop",     Strings.Get("dialog.win.new-loop")),
-                new StardewValley.Response("keepPlaying", Strings.Get("dialog.win.keep-playing"))
+                new StardewValley.Response("newLoop",     Strings.Get("dialog.ending.new-loop")),
+                new StardewValley.Response("keepPlaying", Strings.Get("dialog.ending.keep-playing")),
             };
-            string loopLine = WinSummary.LoopLine(Run.RunNumber);
-            string prompt = Strings.Get("dialog.win.prompt",
-                new Dictionary<string, string> { ["loopline"] = loopLine });
-
+            string prompt = Strings.Get("dialog.ending.prompt",
+                new Dictionary<string, string> { ["loopline"] = WinSummary.LoopLine(Run.RunNumber) });
             GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
             if (loc == null)
             {
                 // Defensive: no location to host the dialogue. Default to keep-playing
-                // (the safer choice — never destroys the won run's state silently).
-                _monitor.Log("Post-win choice: no currentLocation available, defaulting to 'Keep playing'.", LogLevel.Warn);
+                // (the safer choice, it never destroys the won run's state silently).
+                _monitor.Log("Ending choice: no currentLocation, defaulting to Keep playing.", LogLevel.Warn);
                 ApplyKeepPlaying();
                 return;
             }
-
             loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
             {
                 if (key == "newLoop")
                 {
-                    _monitor.Log("Post-win choice: 'Start a new loop' — triggering reset.", LogLevel.Info);
+                    _monitor.Log("Ending choice: Loop again.", LogLevel.Info);
                     ContinueAfterResetSpend();
                 }
                 else
                 {
-                    _monitor.Log("Post-win choice: 'Keep playing this run' — VictoryAcknowledged set.", LogLevel.Info);
+                    _monitor.Log("Ending choice: Keep playing.", LogLevel.Info);
                     ApplyKeepPlaying();
                 }
             });
         }
 
-        /// <summary>"Keep playing" branch of the post-win choice. Marks VictoryAcknowledged
-        /// (suppresses the popup on subsequent Winter 28 wins) and runs the normal day-start
-        /// flow so the player lands on Spring 1 Year 2 with the planning hub.</summary>
+        /// <summary>"Keep playing" branch of the ending choice. Marks VictoryAcknowledged (no further
+        /// win nights), arms the Spring 1 year-2 wall, gives vanilla its post-completion world via the
+        /// CC-completed event flag, then runs the normal day-start flow once the Junimo lines close.</summary>
         private void ApplyKeepPlaying()
         {
             _store.State.VictoryAcknowledged = true;
-            _store.Save();   // persist immediately — no save-scum revert
-            DoDayStartSeasonAndHub();
+            _store.State.Year2WallArmed = true;
+            if (!Game1.player.eventsSeen.Contains("191393"))
+                Game1.player.eventsSeen.Add("191393");   // vanilla's post-completion world (spec section 3)
+            _store.Save();   // persist immediately, no save-scum revert
+            var lines = new List<string>
+            {
+                Strings.Get("dialog.ending.keep-1"),
+                Strings.Get("dialog.ending.keep-2"),
+            };
+            Game1.afterDialogues = () => { Game1.afterDialogues = null; DoDayStartSeasonAndHub(); };
+            Game1.activeClickableMenu = new StardewValley.Menus.DialogueBox(lines);
         }
 
         /// <summary>Fail-night "hold the town's wishes" choice (spec 2026-08-24). Asked BEFORE the
@@ -583,9 +602,6 @@ namespace TheLongestYear.Loop
             watch.onContinue();
         }
 
-        /// <summary>Year One Ending continuation. Temporary stub; the real body lands with the choice flow.</summary>
-        public void OnEndingFinished() { }
-
         /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
         /// day-28 bedtime cutscene has finished. Clears the pending branch and runs its
         /// continuation: FAIL → JP shop, then on close PerformReset + forced full save
@@ -621,12 +637,6 @@ namespace TheLongestYear.Loop
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
                     break;
-                case Day28Branch.Win:
-                    // After the win screen closes: open the JP-spend shrine (the player spends the JP
-                    // banked across the run), then ask "start a new loop" vs "keep playing". Same order as the
-                    // old _pendingWinChoice path, with the win screen now in front of it.
-                    TryOpenShrineThenContinue(ShowKeepPlayingChoice);
-                    break;
                 case Day28Branch.None:
                 default:
                     // Defensive: driver fired with nothing queued. Fall back to the normal flow
@@ -661,15 +671,14 @@ namespace TheLongestYear.Loop
             _pendingCutscene = Day28Branch.Continue;
         }
 
-        /// <summary>Debug: queue the WIN screen so a playtest can watch the win → shrine →
-        /// keep-playing flow without grinding to a real Winter-28 win. Sets the pending branch;
-        /// the Day28CutsceneDriver opens VictoryMenu this tick and OnCutsceneEnded opens the JP
-        /// shrine then the keep-playing choice. Bypasses the VictoryAcknowledged "first win only"
-        /// gate (that lives in OnDayEnding), so it is re-runnable from any loaded save.</summary>
+        /// <summary>Debug: arm the Year One Ending for tomorrow morning so a playtest can watch the
+        /// whole event → shrine → choice flow without grinding to a real board completion. Same
+        /// entry point the win night uses (<see cref="ArmEnding"/>), so the morning behaves exactly
+        /// as it would after a real win: sleep, then step outside.</summary>
         public void DebugForceWin()
         {
-            _monitor.Log("tly_win: queuing the WIN screen (Junimos → shrine → keep-playing choice).", LogLevel.Info);
-            _pendingCutscene = Day28Branch.Win;
+            _monitor.Log("tly_win: arming the ending for tomorrow morning (sleep, then step outside).", LogLevel.Info);
+            ArmEnding("tly_win");
         }
 
         /// <summary>Debug: jump the in-game date to <paramref name="day"/> of the current season so a
@@ -928,24 +937,63 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.Win:
-                    SeasonPity.RecordPass(_store.State, CoreSeason.Winter, _config);
-                    // 2026-05-29 continue-after-victory: only award the win-JP + queue the
-                    // post-win choice popup on the FIRST win this playthrough. Subsequent
-                    // Winter 28 wins (after the player chose Keep playing) re-fire RunAction.Win
-                    // but should be silent — we don't want to double-pay JP or re-ask the
-                    // question we already answered.
-                    if (!_store.State.VictoryAcknowledged)
-                    {
-                        // Queue the win screen for the morning. Routes through the same
-                        // Day28CutsceneDriver/OnCutsceneEnded path as Fail/Continue (the driver
-                        // opens VictoryMenu for the Win branch); OnCutsceneEnded then opens the
-                        // JP shrine and the keep-playing choice. Replaces the old _pendingWinChoice.
-                        _pendingCutscene = Day28Branch.Win;
-                    }
+                    // Winter 28 with a complete board: the same win night as any other date (below).
                     break;
+            }
+
+            // Year One Ending (spec 2026-09-06 section 1): the night the board completes is the win
+            // night, whatever the date. RunAction.Win (Winter 28) lands here too.
+            bool boardDone = BundleGate.IsFullyDone(Run.DonatedLedger(), _requirements);
+            if (action != RunAction.FailReset
+                && TheLongestYear.Core.Ending.WinNightRule.ShouldArm(boardDone, _store.State.VictoryAcknowledged, Run.EndingArmed))
+            {
+                ArmEnding("board complete");
+                // The ending supersedes the season-turn beat: a board completed on a day 28 that is
+                // not Winter 28 queued the CONTINUE cutscene above, and playing both would put the
+                // "great job, next season" Junimos in front of the ending. The checkpoint JP was
+                // already paid, so only the scene is dropped. (Fail can't reach here; guarded above.)
+                if (_pendingCutscene == Day28Branch.Continue)
+                    _pendingCutscene = Day28Branch.None;
+            }
+            else if (Run.EndingArmed)
+            {
+                ForceTomorrowSunny();   // a festival deferred us; keep tomorrow clear too
             }
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
             // DayEnding fires while the player can't open menus.
+        }
+
+        /// <summary>Arm the Year One Ending for tomorrow morning: pity pass for the season, the run
+        /// flag, and a sunny forecast for the Town scene. Idempotent.</summary>
+        public void ArmEnding(string reason)
+        {
+            if (Run.EndingArmed) return;
+            if (_store.State.EndingSeen)
+            {
+                // The event already played on this save: a later win goes straight to the shrine
+                // and the choice on the wake frame (spec section 1, "once per save, choice every time").
+                _monitor.Log($"Win night ({reason}): ending already seen, queuing shrine + choice for the morning.", LogLevel.Info);
+                _pendingChoice = true;
+                return;
+            }
+            SeasonPity.RecordPass(_store.State, Run.Season, _config);
+            Run.EndingArmed = true;
+            ForceTomorrowSunny();
+            _monitor.Log($"Win night ({reason}): ending armed for tomorrow morning, weather forced sunny.", LogLevel.Info);
+        }
+
+        /// <summary>A repeat win's shrine + choice, owed to the next OnDayStarted. In-memory only:
+        /// quitting that night loses the prompt, and the next win re-arms it.</summary>
+        private bool _pendingChoice;
+
+        /// <summary>Clear skies for the ending morning's Town scene (and for a morning the event was
+        /// deferred past). Same three-write idiom the boost effects use.</summary>
+        private void ForceTomorrowSunny()
+        {
+            const string sunny = "Sun";
+            Game1.weatherForTomorrow = sunny;
+            Game1.netWorldState.Value.WeatherForTomorrow = sunny;
+            Game1.netWorldState.Value.GetWeatherForLocation("Default").WeatherForTomorrow = sunny;
         }
 
         /// <summary>Remove this-night's CC room-restoration mail so the matching overnight

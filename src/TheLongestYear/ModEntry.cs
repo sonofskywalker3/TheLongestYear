@@ -272,7 +272,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug). An optional seed loop pins the board the new run generates (same number tly_genbundles takes), so two runs can be played on the same board. Usage: tly_reset [seedLoop]", this.ForceReset);
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
-            helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
+            helper.ConsoleCommands.Add("tly_win", "Arm the Year One Ending for tomorrow morning (debug; sleep, then step outside).", this.CmdForceWin);
+            helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
@@ -1532,8 +1533,8 @@ namespace TheLongestYear
             _runController?.DebugForceFailReset();
         }
 
-        /// <summary>Debug: open the basic win screen → JP shrine → keep-playing choice, the real
-        /// win-path flow. See <see cref="RunController.DebugForceWin"/>.</summary>
+        /// <summary>Debug: arm the Year One Ending for tomorrow morning, the real win-night flow.
+        /// See <see cref="RunController.DebugForceWin"/>.</summary>
         private void CmdForceWin(string command, string[] args)
         {
             if (!Context.IsWorldReady)
@@ -1543,6 +1544,15 @@ namespace TheLongestYear
             }
 
             _runController?.DebugForceWin();
+        }
+
+        /// <summary>Debug: replay the Year One Ending event right now with no continuation, optionally
+        /// forcing which villager cracks. See <see cref="Integration.EndingEventDriver.StartNow"/>.</summary>
+        private void CmdEnding(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            string speaker = args.Length >= 2 && args[0] == "speaker" ? args[1] : null;
+            _endingDriver?.StartNow(speaker);
         }
 
         /// <summary>Full reset: rebuild the world (PerformReset), wipe RunState (BeginNewRun),
@@ -2051,6 +2061,7 @@ namespace TheLongestYear
                 case "tly_win":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceWin(); break;
+                case "tly_ending": this.CmdEnding(command, args); break;
                 case "tly_failreset":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
