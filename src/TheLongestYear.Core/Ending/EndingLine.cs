@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -47,7 +48,7 @@ public static class EndingLine
         string? scene = mem.HeartEventLoops
             .Where(kv => kv.Value.Count >= LoopsNeeded && SceneTable.ContainsKey(kv.Key))
             .Select(kv => kv.Key)
-            .OrderBy(id => id, System.StringComparer.Ordinal)
+            .OrderBy(id => long.TryParse(id, out long n) ? n : long.MaxValue)
             .FirstOrDefault();
         if (scene != null) { sceneEventId = scene; return EndingLineTier.HeartEvent; }
         if (mem.GiftLoops.Count >= LoopsNeeded) return EndingLineTier.Gifts;
