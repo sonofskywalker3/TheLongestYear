@@ -1,0 +1,90 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
+using StardewModdingAPI.Events;
+using StardewValley;
+
+namespace TheLongestYear.Integration
+{
+    /// <summary>Serves a portrait for the Junimo speakers the ending and intro events place as
+    /// temporary actors (Junimo, Junimo0..Junimo5).
+    ///
+    /// Live run 2026-09-06: with no Portraits/&lt;Name&gt; asset the game logged
+    /// "NPC Junimo0 can't load portraits from 'Portraits/Junimo0'" on EVERY frame a Junimo speak box
+    /// was open (3,951 lines in one run). DialogueBox.isPortraitBox reads NPC.Portrait each draw, and
+    /// that getter re-runs ChooseAppearance -> TryLoadPortraits while the portrait is null, so the
+    /// failed load is retried forever. Supplying the asset ends the retry loop.
+    ///
+    /// The portrait is generated from the game's own Characters/Junimo sheet, so no art ships in the
+    /// mod: frame 0 scaled 4x into the first 64x64 cell of a 128x128 portrait sheet, tinted the
+    /// classic Junimo green (the vanilla sheet is a white silhouette that takes a tint).</summary>
+    internal sealed class JunimoPortrait
+    {
+        private const string Prefix = "Portraits/Junimo";
+        private const string SourceAsset = "Characters/Junimo";
+        private const int PortraitSheet = 128, Cell = 64, Frame = 16, Scale = 4;
+        private static readonly Color JunimoGreen = new Color(110, 200, 74);
+
+        private readonly IMonitor _monitor;
+        private bool _logged;
+
+        public JunimoPortrait(IMonitor monitor) => _monitor = monitor;
+
+        public void OnAssetRequested(object sender, AssetRequestedEventArgs e)
+        {
+            if (!Matches(e.NameWithoutLocale.Name)) return;
+            e.LoadFrom(Build, AssetLoadPriority.Medium);
+        }
+
+        /// <summary>"Portraits/Junimo" and "Portraits/Junimo&lt;digits&gt;" only, so a real NPC whose
+        /// name merely starts with "Junimo" text is never hijacked.</summary>
+        private static bool Matches(string name)
+        {
+            name = name.Replace('\\', '/');
+            if (!name.StartsWith(Prefix, System.StringComparison.OrdinalIgnoreCase)) return false;
+            for (int i = Prefix.Length; i < name.Length; i++)
+                if (!char.IsDigit(name[i])) return false;
+            return true;
+        }
+
+        private Texture2D Build()
+        {
+            var pixels = new Color[PortraitSheet * PortraitSheet];
+            try
+            {
+                Texture2D source = Game1.content.Load<Texture2D>(SourceAsset);
+                var src = new Color[source.Width * source.Height];
+                source.GetData(src);
+                for (int y = 0; y < Cell; y++)
+                {
+                    for (int x = 0; x < Cell; x++)
+                    {
+                        int sx = x / Scale, sy = y / Scale;
+                        if (sx >= source.Width || sy >= source.Height || sx >= Frame || sy >= Frame) continue;
+                        Color c = src[sy * source.Width + sx];
+                        if (c.A == 0) continue;
+                        pixels[y * PortraitSheet + x] = new Color(
+                            (byte)(c.R * JunimoGreen.R / 255),
+                            (byte)(c.G * JunimoGreen.G / 255),
+                            (byte)(c.B * JunimoGreen.B / 255),
+                            c.A);
+                    }
+                }
+                if (!_logged)
+                {
+                    _monitor.Log("Junimo portrait: generated from Characters/Junimo frame 0.", LogLevel.Trace);
+                    _logged = true;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                // A transparent sheet still ends the per-frame retry loop, which is the point.
+                _monitor.Log($"Junimo portrait: could not build from {SourceAsset} ({ex.Message}); serving a blank portrait.", LogLevel.Warn);
+                pixels = new Color[PortraitSheet * PortraitSheet];
+            }
+            var result = new Texture2D(Game1.graphics.GraphicsDevice, PortraitSheet, PortraitSheet);
+            result.SetData(pixels);
+            return result;
+        }
+    }
+}
