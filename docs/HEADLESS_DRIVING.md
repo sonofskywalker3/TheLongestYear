@@ -66,6 +66,33 @@ keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmty
 plays the opening on a type, prints the farmer's porch tile and ends the event with `debug ee`.
 Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
 
+## The Year One Ending
+
+Arm, sleep, step outside, watch. Use the throwaway save (memory: the Rodger save is disposable).
+Before the first launch: Jeff's yes (see Rules).
+
+    n = count; send "tly_win"                          # arms the ending; log: "Win night (tly_win): ending armed"
+    send "debug sleep"  (or walk to bed)                # log next morning: "Ending: starting (speaker=..."
+    send "debug warp Farm 64 16"                        # step outside if the wake put you indoors
+    wait -Pattern "Ending: event finished" -TimeoutSec 240
+
+The shrine opens, then the choice. `tly_dismiss` takes the last response (Keep playing);
+`tly_answer 0` takes Loop again.
+
+Replay the event alone: `tly_ending` (current location, no continuation); force a voice:
+`tly_ending speaker Shane`. Wall: `tly_year2wall` on any keep-playing save.
+
+Eyeball while watching (not yet verified against a running game, per the lines review file's
+Build-time notes): Morris's `move` path along the Town row `HallY + 2`, columns `HallX + 4`
+through `HallX + 9` (the paved stretch toward the saloon) actually walks clear; and the speaker's
+one-tile move at the crack scene lands them somewhere sensible. If Morris's row is blocked, the
+fix is a single warp to `(HallX + 4, HallY + 2)` instead of the two `move` lines.
+
+Checks before a release: whole flow once on Standard; scenes 1 and 6 once on Meadowlands
+(`tly_newgame meadowlands skipintro`, then `tly_win`); the log line "Morris_Dark: recoloured N"
+with N > 0; every crowd member present on the steps; both branches of the choice; the wall on
+Spring 1 year 2 of a keep-playing save; a loop-again reset leaves the shrine dark.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),

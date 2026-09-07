@@ -275,6 +275,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_win", "Arm the Year One Ending for tomorrow morning (debug; sleep, then step outside).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
+            helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
@@ -1556,6 +1557,45 @@ namespace TheLongestYear
             _endingDriver?.StartNow(speaker);
         }
 
+        /// <summary>Debug: pick a response on the open question dialogue without the mouse, for the
+        /// headless runbook (e.g. the loop-again/keep-playing choice after the Year One Ending, or
+        /// the Year 2 wall). Forces the dialogue's text fully shown and its safety timer clear, then
+        /// drives the same <see cref="StardewValley.Menus.DialogueBox.receiveLeftClick"/> path a
+        /// click on that response takes.</summary>
+        private void CmdAnswer(string command, string[] args)
+        {
+            if (!(Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box) ||
+                !box.isQuestion || box.responses == null || box.responses.Length == 0)
+            {
+                this.Monitor.Log("tly_answer: no question dialogue is open.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length < 1 || !int.TryParse(args[0], out int n))
+            {
+                this.Monitor.Log("Usage: tly_answer <n> (0-based response index)", LogLevel.Warn);
+                return;
+            }
+            if (n < 0 || n >= box.responses.Length)
+            {
+                this.Monitor.Log($"tly_answer: {n} is out of range (0..{box.responses.Length - 1}); clamping.", LogLevel.Warn);
+                n = System.Math.Clamp(n, 0, box.responses.Length - 1);
+            }
+            try
+            {
+                string text = box.responses[n].responseText;
+                string current = box.getCurrentString();
+                if (current != null) box.characterIndexInDialogue = current.Length;
+                box.safetyTimer = 0;
+                box.selectedResponse = n;
+                box.receiveLeftClick(0, 0, false);
+                this.Monitor.Log($"tly_answer: chose response {n} (\"{text}\").", LogLevel.Info);
+            }
+            catch (System.Exception ex)
+            {
+                this.Monitor.Log($"tly_answer failed: {ex.Message}", LogLevel.Error);
+            }
+        }
+
         /// <summary>Full reset: rebuild the world (PerformReset), wipe RunState (BeginNewRun),
         /// and fire the Spring 1 hub. Used by both <see cref="ForceReset"/> and
         /// <see cref="ResetIfNameMatches"/>.
@@ -2066,6 +2106,7 @@ namespace TheLongestYear
                 case "tly_year2wall":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugShowYear2Wall(); break;
+                case "tly_answer": this.CmdAnswer(command, args); break;
                 case "tly_failreset":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
