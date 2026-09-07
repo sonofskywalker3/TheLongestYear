@@ -359,7 +359,9 @@ namespace TheLongestYear.Loop
                 Strings.Get("dialog.ending.keep-2"),
             };
             Game1.afterDialogues = () => { Game1.afterDialogues = null; DoDayStartSeasonAndHub(); };
-            Game1.activeClickableMenu = new StardewValley.Menus.DialogueBox(lines);
+            // drawObjectDialogue, not a raw DialogueBox assignment: vanilla sets dialogueUp, blocks
+            // movement, and emergency-shuts-down whatever menu was up before the box opens.
+            Game1.drawObjectDialogue(lines);
         }
 
         /// <summary>Fail-night "hold the town's wishes" choice (spec 2026-08-24). Asked BEFORE the
@@ -967,7 +969,15 @@ namespace TheLongestYear.Loop
         /// flag, and a sunny forecast for the Town scene. Idempotent.</summary>
         public void ArmEnding(string reason)
         {
-            if (Run.EndingArmed) return;
+            if (Run.EndingArmed)
+            {
+                _monitor.Log($"Win night ({reason}): ending already armed.", LogLevel.Trace);
+                return;
+            }
+            // Above the EndingSeen branch on purpose: EVERY win night is a season pass, including a
+            // repeat win that only owes the shrine + choice. Leaving it below the early return let a
+            // second win skip the clamp and hand the next loop pity easing it had not earned.
+            SeasonPity.RecordPass(_store.State, Run.Season, _config);
             if (_store.State.EndingSeen)
             {
                 // The event already played on this save: a later win goes straight to the shrine
@@ -976,7 +986,6 @@ namespace TheLongestYear.Loop
                 _pendingChoice = true;
                 return;
             }
-            SeasonPity.RecordPass(_store.State, Run.Season, _config);
             Run.EndingArmed = true;
             ForceTomorrowSunny();
             _monitor.Log($"Win night ({reason}): ending armed for tomorrow morning, weather forced sunny.", LogLevel.Info);
@@ -993,8 +1002,12 @@ namespace TheLongestYear.Loop
             const string sunny = "Sun";
             Game1.weatherForTomorrow = sunny;
             Game1.netWorldState.Value.WeatherForTomorrow = sunny;
-            Game1.netWorldState.Value.GetWeatherForLocation("Default").WeatherForTomorrow = sunny;
+            Game1.netWorldState.Value.GetWeatherForLocation(DefaultWeatherContext).WeatherForTomorrow = sunny;
         }
+
+        /// <summary>The net world state's location-weather context every non-island location shares
+        /// (same key WeatherModificationsPatch and BoostEffectsService write).</summary>
+        private const string DefaultWeatherContext = "Default";
 
         /// <summary>Remove this-night's CC room-restoration mail so the matching overnight
         /// WorldChangeEvent doesn't play on a fail loop (the rewind un-restores the room, so the
