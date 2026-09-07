@@ -76,8 +76,11 @@ Before the first launch: Jeff's yes (see Rules).
     send "debug warp Farm 64 16"                        # step outside if the wake put you indoors
     wait -Pattern "Ending: event finished" -TimeoutSec 240
 
-The shrine opens, then the choice. `tly_dismiss` takes the last response (Keep playing);
-`tly_answer 0` takes Loop again.
+The shrine opens, then the choice. Answer a question box only with `tly_answer`: `tly_answer 1`
+takes Keep playing, `tly_answer 0` takes Loop again, and `tly_answer 0` answers the Year 2 wall.
+Wait about 2 seconds after the log shows the choice opened before sending it. Do NOT use
+`tly_dismiss` on a question box: it calls `exitThisMenu`, which never runs `answerDialogue`, so it
+closes the box without taking any response.
 
 Replay the event alone: `tly_ending` (current location, no continuation); force a voice:
 `tly_ending speaker Shane`. Wall: `tly_year2wall` on any keep-playing save.
