@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,6 +65,7 @@ namespace TheLongestYear
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
         private Integration.MorrisDarkSprite _morrisDark;
+        private Integration.JunimoPortrait _junimoPortrait;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -174,6 +175,10 @@ namespace TheLongestYear
             // here at load time with the irises recoloured red (spec 2026-09-06 §4).
             _morrisDark = new Integration.MorrisDarkSprite(this.Monitor);
             helper.Events.Content.AssetRequested += _morrisDark.OnAssetRequested;
+            // Junimo temporary actors speak in the ending and intro; with no Portraits/Junimo* asset the
+            // dialogue box retried the failed portrait load every frame (live run 2026-09-06).
+            _junimoPortrait = new Integration.JunimoPortrait(this.Monitor);
+            helper.Events.Content.AssetRequested += _junimoPortrait.OnAssetRequested;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -324,6 +329,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters and the Fail-night offer. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails> | tly_pity accept|decline (after tly_hold keep|reshuffle, before tly_reset).", this.CmdPity);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
+            helper.ConsoleCommands.Add("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
                 this.CmdOpenCookbook);
@@ -1177,6 +1183,42 @@ namespace TheLongestYear
             int y = (int)Game1.player.Tile.Y;
             string loc = Game1.currentLocation?.Name ?? "?";
             this.Monitor.Log($"Player at tile ({x}, {y}) in '{loc}'.", LogLevel.Info);
+        }
+
+        /// <summary>Debug: say where a running event is stuck and step a speak line on. Headless runs
+        /// have no mouse, so an event's `speak` box never advances on its own; this clicks it. Also
+        /// prints the current command and every actor's tile so a blocked `move` is visible.</summary>
+        private void CmdEventStep(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+            StardewValley.Event evt = Game1.currentLocation?.currentEvent;
+            if (evt == null)
+            {
+                this.Monitor.Log("tly_eventstep: no event.", LogLevel.Info);
+                return;
+            }
+            string cmd;
+            try { cmd = evt.GetCurrentCommand(); }
+            catch (System.Exception ex) { cmd = "<" + ex.GetType().Name + ">"; }
+            this.Monitor.Log(
+                $"tly_eventstep: cmd[{evt.CurrentCommand}]='{cmd}', menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, dialogueUp={Game1.dialogueUp}, loc={Game1.currentLocation?.Name}.",
+                LogLevel.Info);
+            foreach (NPC a in evt.actors)
+                this.Monitor.Log($"tly_eventstep:   actor {a.Name} at ({(int)a.Tile.X}, {(int)a.Tile.Y}) moving={a.isMoving()}.", LogLevel.Info);
+
+            if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
+            {
+                string current = box.getCurrentString();
+                if (current != null) box.characterIndexInDialogue = current.Length;
+                box.safetyTimer = 0;
+                box.transitioning = false;
+                box.receiveLeftClick(0, 0, false);
+                this.Monitor.Log("tly_eventstep: clicked the dialogue box on.", LogLevel.Info);
+            }
         }
 
         private void CmdOpenCookbook(string command, string[] args)
@@ -2168,6 +2210,7 @@ namespace TheLongestYear
                 case "tly_dumpeffort": this.CmdDumpEffort(command, args); break;
                 case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
+                case "tly_eventstep": this.CmdEventStep(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
