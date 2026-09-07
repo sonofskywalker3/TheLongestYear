@@ -670,6 +670,17 @@
     "event.ending.junimo-4-nocrack": "And the town still forgets. Every one of them. Not one of them could hold on to you today. Not yet.",
     "event.ending.junimo-5": "You've done well so far, but the work isn't over. Prepare yourself for what's next.#$b#On Spring 1, we get to work freeing the townsfolk.",
     "event.ending.grandpa": "Good job, @. You've started what I could never finish. I'm so proud of you, but you must keep going. For the sake of the valley... and the world.",
+    "event.turn.summer-1": "You did it, @! Spring is ours. The hall took every gift you gave it.",
+    "event.turn.summer-2": "We grow stronger when you work. Can you feel it? The valley can.",
+    "event.turn.summer-3": "Summer is warm and long. Keep going. We'll be watching from the walls.",
+    "event.turn.fall-1": "Summer is done. You held on, @. We held on with you.",
+    "event.turn.fall-2": "But... did you see it? Something got into the soil this season. Things withered that should not have.",
+    "event.turn.fall-3": "It is not the weather. We think it noticed you.",
+    "event.turn.fall-4": "Fall is the harvest. Guard what you grow. We will guard what we can.",
+    "event.turn.winter-1": "Fall is over. You kept the hall standing, @. Barely, but standing.",
+    "event.turn.winter-2": "It is not only the fields now. It has found the hall. Gifts you gave came undone in the night. We put back what we could.",
+    "event.turn.winter-3": "Winter is its season. It will not rot your crops. It will change what the hall asks of you.",
+    "event.turn.winter-4": "One more season. Whatever the board says on a morning it changes, trust the work. On Winter 28 we will know.",
 
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
     "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year. Don't worry, we have enough power left over to give you a head-start this time.#$b#Before we do, tell us: should we hold the town's wishes steady, or let time reshuffle them?$h",

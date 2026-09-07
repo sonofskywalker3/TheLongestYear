@@ -187,6 +187,10 @@ public sealed class MetaState
     /// skips the event and goes straight to the shrine and the choice.</summary>
     public bool EndingSeen { get; set; }
 
+    /// <summary>Season turns whose Junimo scene has played at least once on this save
+    /// (SeasonTurn.SeenName values). A seen turn is skippable next time.</summary>
+    public HashSet<string> SeasonTurnsSeen { get; set; } = new();
+
     /// <summary>Year One Ending: the player chose Keep playing on this version or later. Spring 1 of
     /// year 2 shows the "Year 2 is coming" wall until <see cref="Year2Started"/> is set by the Year 2
     /// update. Cleared, with VictoryAcknowledged, when the wall's Loop again runs.</summary>
