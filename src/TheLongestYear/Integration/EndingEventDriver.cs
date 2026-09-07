@@ -91,7 +91,7 @@ namespace TheLongestYear.Integration
         {
             if (IsBusy())
             {
-                _monitor.Log("tly_ending: the game is busy, try again outside with no menu open.", LogLevel.Warn);
+                _monitor.Log($"tly_ending: the game is busy ({BusyReason()}), try again outside with no menu open.", LogLevel.Warn);
                 return;
             }
             _replayOnly = true;
@@ -102,6 +102,22 @@ namespace TheLongestYear.Integration
             => Game1.eventUp || Game1.eventOver || Game1.currentLocation?.currentEvent != null
                || Game1.farmEvent != null || Game1.locationRequest != null || Game1.activeClickableMenu != null
                || Game1.newDay;
+
+        /// <summary>Debug only: which of <see cref="IsBusy"/>'s flags are set, so a headless run can
+        /// tell "the ending never armed" from "something in the world is still holding the frame".</summary>
+        private static string BusyReason()
+        {
+            var flags = new List<string>();
+            if (Game1.eventUp) flags.Add("eventUp");
+            if (Game1.eventOver) flags.Add("eventOver");
+            if (Game1.currentLocation?.currentEvent != null) flags.Add("currentEvent");
+            if (Game1.farmEvent != null) flags.Add("farmEvent");
+            if (Game1.locationRequest != null) flags.Add("locationRequest");
+            if (Game1.activeClickableMenu != null) flags.Add("menu:" + Game1.activeClickableMenu.GetType().Name);
+            if (Game1.newDay) flags.Add("newDay");
+            if (Game1.fadeToBlackAlpha > 0f) flags.Add($"fade={Game1.fadeToBlackAlpha:0.00}");
+            return flags.Count == 0 ? "none" : string.Join(",", flags);
+        }
 
         private void Start(string forcedSpeaker)
         {
