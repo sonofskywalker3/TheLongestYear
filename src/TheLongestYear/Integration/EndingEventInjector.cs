@@ -58,7 +58,7 @@ namespace TheLongestYear.Integration
             s.AddRange(new[]
             {
                 $"viewport {HallX} {HallY} true",
-                "globalFadeIn",
+                "globalFadeToClear",
                 "pause 600",
                 "playSound reward",
                 "screenFlash 0.4",
@@ -139,7 +139,7 @@ namespace TheLongestYear.Integration
             s.AddRange(new[]
             {
                 "viewport 32 14 true",
-                "globalFadeIn",
+                "globalFadeToClear",
                 "playSound junimoMeep1",
                 "jump Junimo0 8", "jump Junimo1 8", "jump Junimo2 8", "jump Junimo3 8", "jump Junimo4 8", "jump Junimo5 8",
                 "pause 800",
@@ -161,7 +161,7 @@ namespace TheLongestYear.Integration
                 "faceDirection farmer 0",
                 $"viewport {cast.ShrineX} {cast.ShrineY} true",
                 "ambientLight 120 100 160",
-                "globalFadeIn",
+                "globalFadeToClear",
                 "pause 1200",
                 GrandpaCandleCommand.Name,
                 "pause 1500",
