@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Netcode;
@@ -60,6 +61,11 @@ namespace TheLongestYear.Integration
         public const string PanToName = "tlyPanTo";
         public const string FadeTreesName = "tlyFadeTrees";
         public const string FadeInName = "tlyFadeIn";
+        public const string FadeOutName = "tlyFadeOut";
+        public const string SayName = "tlySay";
+        // How long the overlay stays black after the event ends before it lifts, so the hand-off
+        // to the continuation (viewport back to the player, the shrine menu) happens unseen.
+        private const float HoldAfterEndMs = 1500f, LiftAfterEndMs = 700f;
         private const string JunimoDisplayName = "Junimo";
 
         private static readonly MethodInfo EventChangeLocation = typeof(Event).GetMethod(
@@ -78,8 +84,9 @@ namespace TheLongestYear.Integration
         // actor unseen; tlyFadeIn lifts it. The game's own fade-in is cancelled at the load.
         private static bool _changing;
         private static float _black;
-        private static bool _fadingIn;
+        private static bool _fadingIn, _fadingOut;
         private static float _fadeElapsed, _fadeDuration;
+        private static float _afterEnd = -1f;   // ms since the event ended while black, -1 = not tracking
         private const float WarpFadeDone = 1.15f;
         private const float FadeSpeed = 0.02f;
 
@@ -115,6 +122,57 @@ namespace TheLongestYear.Integration
         {
             helper.Events.GameLoop.UpdateTicked += (_, _) => HoldTreesTranslucent();
             helper.Events.Display.Rendered += (_, e) => DrawBlack(e.SpriteBatch);
+
+            // tlyFadeOut [ms]: take the overlay to black, eased, and leave it there. Used before
+            // "end": the vanilla globalFade cleared itself when the event ended, which showed the
+            // shrine for a blink before the continuation moved the camera (2026-09-07). After the
+            // event ends the overlay holds a moment, then lifts on its own (see DrawBlack).
+            Event.RegisterCommand(FadeOutName, (evt, args, context) =>
+            {
+                if (!_fadingOut)
+                {
+                    ArgUtility.TryGetOptionalInt(args, 1, out int ms, out _, 1500);
+                    _fadeDuration = System.Math.Max(1, ms);
+                    _fadeElapsed = 0f;
+                    _fadingOut = true;
+                    return;
+                }
+                _fadeElapsed += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                float t = MathHelper.Clamp(_fadeElapsed / _fadeDuration, 0f, 1f);
+                _black = t * t * (3f - 2f * t);
+                if (t < 1f) return;
+                _black = 1f;
+                _fadingOut = false;
+                _afterEnd = 0f;
+                evt.CurrentCommand++;
+            });
+
+            // tlySay <Name> "<text>": the line in the plain (short) dialogue box, the speaker's name
+            // leading it, pages split on #$b#. The portrait box covers half the scene at 1080p
+            // (Jeff, 2026-09-07). The game advances the event when the box closes, like "message".
+            Event.RegisterCommand(SayName, (evt, args, context) =>
+            {
+                // Called every tick while the box is up (like vanilla's Message): open it once.
+                if (Game1.dialogueUp || Game1.activeClickableMenu != null) return;
+                if (!ArgUtility.TryGet(args, 1, out string name, out string error) || !ArgUtility.TryGet(args, 2, out string text, out error))
+                {
+                    monitor.Log($"{SayName}: {error}; skipping.", LogLevel.Warn);
+                    evt.CurrentCommand++;
+                    return;
+                }
+                var pages = new List<string>();
+                foreach (string raw in text.Split(new[] { "#$b#" }, StringSplitOptions.None))
+                {
+                    string page = System.Text.RegularExpressions.Regex.Replace(raw, @"\$[a-z0-9]+", "").Replace("@", Game1.player.Name).Trim();
+                    if (page.Length > 0) pages.Add(page);
+                }
+                if (pages.Count == 0) { evt.CurrentCommand++; return; }
+                string display = evt.getActorByName(name, out _)?.displayName ?? Game1.getCharacterFromName(name)?.displayName ?? name;
+                pages[0] = display + ": " + pages[0];
+                // The single-string box, pages joined with '#', is what vanilla's "message" uses; the
+                // list constructor sized its box so small the opening animation never finished.
+                Game1.drawDialogueNoTyping(string.Join("#", pages));
+            });
 
             // tlyFadeIn [ms]: lift the black overlay tlyChangeLocation left up, eased, then continue.
             Event.RegisterCommand(FadeInName, (evt, args, context) =>
@@ -297,9 +355,18 @@ namespace TheLongestYear.Integration
             Event ev = Game1.CurrentEvent;
             if (ev == null || ev.id != EndingEventKeys.EventId)
             {
-                _black = 0f;   // never leave the screen black after the ending
                 _fadingIn = false;
-                return;
+                _fadingOut = false;
+                if (_afterEnd < 0f)
+                {
+                    _black = 0f;   // the event went away without our fade-out: never stay black
+                    return;
+                }
+                // Hold, then lift, then stop tracking.
+                _afterEnd += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                float lift = MathHelper.Clamp((_afterEnd - HoldAfterEndMs) / LiftAfterEndMs, 0f, 1f);
+                _black = 1f - lift;
+                if (lift >= 1f) { _black = 0f; _afterEnd = -1f; return; }
             }
             b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.graphics.GraphicsDevice.Viewport.Width, Game1.graphics.GraphicsDevice.Viewport.Height), Color.Black * _black);
         }

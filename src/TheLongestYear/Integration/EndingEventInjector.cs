@@ -28,10 +28,10 @@ namespace TheLongestYear.Integration
         // (columns 46 to 49 and 54 to 57 above row 23) and the bush east of the steps.
         private const int FarmerX = HallX, FarmerY = HallY + 2;
         private const int LewisX = HallX, LewisY = HallY - 1;
-        private const int CameraY = HallY + 3;
-        // The speaker stands one row above the farmer's row: an NPC on the farmer's own row draws
-        // half a tile lower than the farmer (2026-09-07).
-        private const int SpeakerX = HallX - 2, SpeakerY = HallY + 1;
+        private const int CameraY = HallY + 2;
+        // The speaker stands on the farmer's row, as vanilla stages side-by-side talk (one row up
+        // read as half a tile too high, the same row as half a tile low; the row wins, 2026-09-07).
+        private const int SpeakerX = HallX - 2, SpeakerY = HallY + 2;
         private static readonly (int X, int Y)[] CrowdSlots =
         {
             (48, 23), (54, 23), (56, 23),
@@ -95,7 +95,7 @@ namespace TheLongestYear.Integration
                 // ---- Scene 1: the porch (Standard-farm tiles; the game offsets per farm type) ----
                 "warp farmer 66 18 true",
                 "addTemporaryActor Lewis 16 32 68 18 3 true Character",
-                "viewport 66 18 true",
+                "viewport 66 18 clamp true",
                 "faceDirection farmer 1",
                 "pause 800",
                 $"speak Lewis \"{EventText("event.ending.lewis-porch-1")}\"",
@@ -138,11 +138,11 @@ namespace TheLongestYear.Integration
                 $"jump {Junimo(0)} 8", $"jump {Junimo(1)} 8", $"jump {Junimo(2)} 8", $"jump {Junimo(3)} 8",
                 "playSound junimoMeep1",
                 "pause 800",
-                $"speak Lewis \"{EventText("event.ending.lewis-hall-1")}\"",
+                $"{EndingEventCommands.SayName} Lewis \"{EventText("event.ending.lewis-hall-1")}\"",
                 "pause 200",
-                $"speak Lewis \"{EventText("event.ending.lewis-hall-2")}\"",
+                $"{EndingEventCommands.SayName} Lewis \"{EventText("event.ending.lewis-hall-2")}\"",
                 "pause 200",
-                $"speak Lewis \"{EventText("event.ending.lewis-hall-3")}\"",
+                $"{EndingEventCommands.SayName} Lewis \"{EventText("event.ending.lewis-hall-3")}\"",
                 "pause 600",
             });
 
@@ -159,12 +159,12 @@ namespace TheLongestYear.Integration
                     $"move {cast.Speaker} 1 0 1",
                     "faceDirection farmer 3",
                     "pause 400",
-                    $"speak {cast.Speaker} \"{EventText(EndingLine.OpenKey)}\"",
+                    $"{EndingEventCommands.SayName} {cast.Speaker} \"{EventText(EndingLine.OpenKey)}\"",
                     $"emote {cast.Speaker} 8",
                     "pause 900",
-                    $"speak {cast.Speaker} \"{EventText(cast.SpeakerMiddleKey, tokens)}\"",
+                    $"{EndingEventCommands.SayName} {cast.Speaker} \"{EventText(cast.SpeakerMiddleKey, tokens)}\"",
                     "pause 400",
-                    $"speak {cast.Speaker} \"{EventText(EndingLine.CloseKey)}\"",
+                    $"{EndingEventCommands.SayName} {cast.Speaker} \"{EventText(EndingLine.CloseKey)}\"",
                     "pause 600",
                     "faceDirection farmer 0",
                 });
@@ -185,17 +185,17 @@ namespace TheLongestYear.Integration
                 $"move Morris 0 {-MorrisStepUp} 3",
                 "faceDirection farmer 1",
                 "pause 500",
-                $"speak Morris \"{EventText("event.ending.morris-1")}\"",
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-1")}\"",
                 "pause 200",
-                $"speak Morris \"{EventText("event.ending.morris-2")}\"",
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-2")}\"",
                 "pause 200",
-                $"speak Morris \"{EventText("event.ending.morris-3")}\"",
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-3")}\"",
                 "pause 300",
                 "changeSprite Morris Dark",
                 "glow 90 0 0 true",
                 "playSound shadowDie",
                 "pause 400",
-                $"speak Morris \"{EventText("event.ending.morris-4")}\"",
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-4")}\"",
                 "pause 700",
                 "stopGlowing",
                 "pause 300",
@@ -224,19 +224,19 @@ namespace TheLongestYear.Integration
                 $"jump {Junimo(0)} 8", $"jump {Junimo(1)} 8", $"jump {Junimo(2)} 8", $"jump {Junimo(3)} 8", $"jump {Junimo(4)} 8", $"jump {Junimo(5)} 8",
                 "pause 800",
                 $"jump {Junimo(0)} 6",
-                $"speak {Junimo(0)} \"{EventText("event.ending.junimo-1")}\"",
+                $"{EndingEventCommands.SayName} {Junimo(0)} \"{EventText("event.ending.junimo-1")}\"",
                 "pause 200",
                 $"jump {Junimo(1)} 6",
-                $"speak {Junimo(1)} \"{EventText("event.ending.junimo-2")}\"",
+                $"{EndingEventCommands.SayName} {Junimo(1)} \"{EventText("event.ending.junimo-2")}\"",
                 "pause 400",
                 $"jump {Junimo(2)} 6",
-                $"speak {Junimo(2)} \"{EventText("event.ending.junimo-3")}\"",
+                $"{EndingEventCommands.SayName} {Junimo(2)} \"{EventText("event.ending.junimo-3")}\"",
                 "pause 300",
                 $"jump {Junimo(3)} 6",
-                $"speak {Junimo(3)} \"{junimo4}\"",
+                $"{EndingEventCommands.SayName} {Junimo(3)} \"{junimo4}\"",
                 "pause 300",
                 $"jump {Junimo(0)} 6",
-                $"speak {Junimo(0)} \"{EventText("event.ending.junimo-5")}\"",
+                $"{EndingEventCommands.SayName} {Junimo(0)} \"{EventText("event.ending.junimo-5")}\"",
                 "pause 600",
 
                 // ---- Scene 6: home, then the shrine at dusk ----
@@ -269,7 +269,7 @@ namespace TheLongestYear.Integration
                 "pause 900",
                 GrandpaCandleCommand.Name,
                 "pause 2200",
-                "globalFade",
+                $"{EndingEventCommands.FadeOutName} 1500",
                 $"warp farmer {cast.DoorX} {cast.DoorY}",
                 $"addMailReceived {EndingEventKeys.SeenMail}",
                 "end",
