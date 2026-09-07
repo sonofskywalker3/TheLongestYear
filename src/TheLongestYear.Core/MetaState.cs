@@ -257,6 +257,10 @@ public sealed class MetaState
     /// FamiliarityRollup. Hearts themselves still reset; this is the only thing that remembers.</summary>
     public Dictionary<string, int> VillagerFamiliarity { get; set; } = new();
 
+    /// <summary>Year One Ending: per-villager counts behind the score (talks, gifts, birthday gifts,
+    /// heart events, and the loops each happened in). Feeds the ending's assembled line.</summary>
+    public Dictionary<string, VillagerMemory> VillagerMemory { get; set; } = new();
+
     /// <summary>
     /// Cooking recipe IDs banked in the Cookbook across runs. Keys match
     /// <c>Farmer.cookingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Fried_Egg").

@@ -13,7 +13,7 @@ public class FamiliarityRollupTests
         {
             new VillagerDaySignals("Pierre", Talked: true, Gifts: 2, HeartEvents: 1),
             new VillagerDaySignals("Haley", Talked: false, Gifts: 0, HeartEvents: 0),
-        });
+        }, loopNumber: 1);
         Assert.Equal(17, added);
         Assert.Equal(17, meta.VillagerFamiliarity["Pierre"]);
         Assert.False(meta.VillagerFamiliarity.ContainsKey("Haley"));   // nothing happened, no entry
@@ -24,7 +24,7 @@ public class FamiliarityRollupTests
     {
         var meta = new MetaState();
         for (int day = 0; day < 5; day++)
-            FamiliarityRollup.Apply(meta, new[] { new VillagerDaySignals("Pierre", true, 0, 0) });
+            FamiliarityRollup.Apply(meta, new[] { new VillagerDaySignals("Pierre", true, 0, 0) }, loopNumber: 1);
         Assert.Equal(5, meta.VillagerFamiliarity["Pierre"]);
     }
 }
