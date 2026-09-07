@@ -90,7 +90,39 @@ Ending choice: Loop again.
    are placed; only Jeff's playtest can judge the look. `tly_win` on a board finished by real
    donations was not exercised either; the debug arm was used throughout.
 
-Game left running minimized at the title screen, healthy.
+### Fix wave live check (2026-09-06)
+
+The whole-branch review's fix wave (`3cc1d71`, `086fd29`, `ef0bd7b`, `bb589f6`) re-checked headless on
+the throwaway Rodger save `None_448424597` (rotated by the run to `None_448426690`, then
+`None_448427173`). The critical finding was that vanilla event `191393`, the CC completion ceremony
+the Keep-playing branch hands to `eventsSeen`, was being banked into `MetaState.SeenEventsEver` and
+re-seeded into every later loop, so a loop after Keep playing would open on Spring 1 with a destroyed
+JojaMart, Pierre on post-completion hours and a lightning cutscene queued for the first storm.
+
+| Check | Result | Proof |
+|---|---|---|
+| Keep playing still flips vanilla's post-completion world for the current year | PASS | `Ending choice: Keep playing.` then, on the next day-start, `Applied trigger action 'Mail_Pierre_ExtendedHours' with actions [AddMail Current pierreHours]` |
+| The hand-off id is written to this run's `eventsSeen` | PASS | save `None_448426690`: `<eventsSeen>...<int>65</int><int>191393</int></eventsSeen>` |
+| It is NOT banked into the cross-loop memory | PASS | same save, after a full save cycle: `"SeenEventsEver":["65","112","60367","897405","100162","611439","0","992553","2120303"]` (no `191393`) |
+| It does not survive the loop reset | PASS | `Year 2 wall: Loop again.` then `Run 130 ready (seed 979028916). Spring day 1 (week 1).`; save `None_448427173`: `<eventsSeen><int>2120303</int><int>611439</int><int>897405</int><int>60367</int><int>112</int><int>65</int></eventsSeen>` (no `191393`) |
+| Mod loads clean on the new build | PASS | `Debug bridge: 'pause when window is inactive' switched off at launch so queued commands run without focus.` |
+
+Notes:
+
+- This save already carries the `tly_ending_seen` mail, so `tly_win` logged `Win night (tly_win):
+  ending already seen, queuing shrine + choice for the morning` and the run took the repeat-win path
+  (shrine, then the choice) rather than replaying the six-scene event. The event script itself was
+  unchanged by this fix wave, and the code paths that write and strip `191393` are exactly the ones
+  exercised here.
+- `RunState.EventsSeenAtDayStart` still carries `191393` in the post-reset save. Harmless: it is only
+  the previous-day snapshot `FamiliarityGlue` diffs against to spot new heart events, `191393` is not
+  a relationship event, and the field is overwritten at the next day-end rollup.
+- No `PurgeHandedOffEvents` line fired at load, i.e. this save had never banked the id, so the
+  heal-on-load path was not exercised live. It is covered by `PostCompletionEventsTests`.
+
+Game left running minimized, in a fresh loop, healthy.
+
+
 
 
 ## 2026-08-29 (late afternoon): played years on the real STANDARD and REMIXED boards, three-way comparison
