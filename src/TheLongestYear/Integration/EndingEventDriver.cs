@@ -43,9 +43,7 @@ namespace TheLongestYear.Integration
             Farmer p = Game1.player;
             if (p == null) return;
 
-            bool busy = Game1.eventUp || Game1.eventOver || Game1.currentLocation?.currentEvent != null
-                        || Game1.farmEvent != null || Game1.locationRequest != null || Game1.activeClickableMenu != null
-                        || Game1.newDay;
+            bool busy = IsBusy();
             var snap = new EndingSnapshot(
                 Armed: _meta.Run.EndingArmed || _replayOnly,
                 WorldReady: true,
@@ -78,6 +76,10 @@ namespace TheLongestYear.Integration
                 case EndingAction.ReArm:
                     _monitor.Log("Ending: the event ended without its seen flag; it will play again on the next step outside.", LogLevel.Warn);
                     _started = false;
+                    // An interrupted replay must not swallow a real armed morning: if it stayed
+                    // true, the automatic re-fire below would finish through the no-continuation
+                    // branch and skip EndingArmed=false/EndingSeen=true/Save/OnEndingFinished.
+                    _replayOnly = false;
                     Bump();
                     break;
             }
@@ -87,9 +89,19 @@ namespace TheLongestYear.Integration
         /// runs no continuation. <paramref name="forcedSpeaker"/> overrides the pick.</summary>
         public void StartNow(string forcedSpeaker)
         {
+            if (IsBusy())
+            {
+                _monitor.Log("tly_ending: the game is busy, try again outside with no menu open.", LogLevel.Warn);
+                return;
+            }
             _replayOnly = true;
             Start(forcedSpeaker);
         }
+
+        private static bool IsBusy()
+            => Game1.eventUp || Game1.eventOver || Game1.currentLocation?.currentEvent != null
+               || Game1.farmEvent != null || Game1.locationRequest != null || Game1.activeClickableMenu != null
+               || Game1.newDay;
 
         private void Start(string forcedSpeaker)
         {
