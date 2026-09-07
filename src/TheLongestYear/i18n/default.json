@@ -667,8 +667,9 @@
     "event.ending.junimo-2": "We sang all night. We haven't sung like that in a very long time.",
     "event.ending.junimo-3": "But... did you see the man from Joja? The thing that has him did not leave. It only moved.",
     "event.ending.junimo-4": "And the town still forgets. Every one of them. You saw the crack in it today, though. Didn't you?",
+    "event.ending.junimo-4-nocrack": "And the town still forgets. Every one of them. Not one of them could hold on to you today. Not yet.",
     "event.ending.junimo-5": "You've done well so far, but the work isn't over. Prepare yourself for what's next.#$b#On Spring 1, we get to work freeing the townsfolk.",
-    "event.ending.grandpa": "You've started what I couldn't finish. I'm so proud, but you must keep going.",
+    "event.ending.grandpa": "Good job, @. You've started what I could never finish. I'm so proud of you, but you must keep going. For the sake of the valley... and the world.",
 
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
     "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year. Don't worry, we have enough power left over to give you a head-start this time.#$b#Before we do, tell us: should we hold the town's wishes steady, or let time reshuffle them?$h",

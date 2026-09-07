@@ -102,12 +102,15 @@ Uses the existing `event.ending.crack.*` and `event.ending.scene.*` families abo
 
 ### Scene 5: inside the hall, six Junimos
 
+The lines pass between the Junimos (green, orange, turquoise, gold, then green again); `junimo-4-nocrack` replaces `junimo-4` when no villager stepped forward in scene 3.
+
 | Key | Text |
 | --- | --- |
 | `event.ending.junimo-1` | You did it, @! The hall is whole, and so are we.$h |
 | `event.ending.junimo-2` | We sang all night. We haven't sung like that in a very long time. |
 | `event.ending.junimo-3` | But... did you see the man from Joja? The thing that has him did not leave. It only moved. |
 | `event.ending.junimo-4` | And the town still forgets. Every one of them. You saw the crack in it today, though. Didn't you? |
+| `event.ending.junimo-4-nocrack` | And the town still forgets. Every one of them. Not one of them could hold on to you today. Not yet. |
 | `event.ending.junimo-5` | You've done well so far, but the work isn't over. Prepare yourself for what's next.#$b#On Spring 1, we get to work freeing the townsfolk. |
 
 Note: `junimo-5` carries the "keep playing" promise inside the event; Task 11's keep-playing
@@ -117,18 +120,13 @@ dialogue repeats the second half so a player who loops again has still heard it.
 
 | Key | Text |
 | --- | --- |
-| `event.ending.grandpa` | You've started what I couldn't finish. I'm so proud, but you must keep going. |
+| `event.ending.grandpa` | Good job, @. You've started what I could never finish. I'm so proud of you, but you must keep going. For the sake of the valley... and the world. |
 
 ### Build-time notes
 
-- Actor naming: `addTemporaryActor Junimo ... character Junimo0` (and `Junimo1`..`Junimo3`/`Junimo5`)
-  names each temporary actor with its numeric suffix, per the vanilla `addTemporaryActor` argument
-  order; `jump`/`speak` address those suffixed names directly. No fallback to a single shared
-  `Junimo` actor was needed.
-- Scene 4's two `move Morris` lines walk the row at `HallY + 2`, columns `HallX + 4` through
-  `HallX + 9` (the paved stretch east of the Community Center steps, toward the saloon). This was
-  not verified against a running game in this task; the Task 13 live runbook should eyeball those
-  tiles and, if the row is blocked, swap both moves for a single warp to `(HallX + 4, HallY + 2)`.
+- Staging, marks, timings and transitions are in `2026-09-07-year-one-ending-script.md`.
+- The Junimos are real coloured Junimo actors named `Junimo0`..`Junimo5` in the code and "Junimo"
+  on screen; `jump`/`speak` address the code names.
 
 ## The continuation choice (`dialog.ending.*`, Task 11)
 

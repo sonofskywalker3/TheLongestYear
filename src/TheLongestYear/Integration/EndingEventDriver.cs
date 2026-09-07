@@ -153,7 +153,8 @@ namespace TheLongestYear.Integration
             }
             List<string> crowd = EndingCast.DefaultCrowd.Where(n => Game1.getCharacterFromName(n) != null).ToList();
             Microsoft.Xna.Framework.Point shrine = Game1.getFarm().GetGrandpaShrinePosition();
-            return new EndingCast(speaker, middleKey, sceneKey, crowd, shrine.X, shrine.Y);
+            Microsoft.Xna.Framework.Point door = Game1.getFarm().GetMainFarmHouseEntry();
+            return new EndingCast(speaker, middleKey, sceneKey, crowd, shrine.X, shrine.Y, door.X, door.Y);
         }
 
         private void Bump() => _cooldownUntilTick = Game1.ticks + 30;
