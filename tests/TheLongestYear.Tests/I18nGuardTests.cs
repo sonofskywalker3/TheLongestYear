@@ -50,6 +50,10 @@ public class I18nGuardTests
     /// mistaken for a key reference.</summary>
     private static readonly Regex EventTextKey = new(@"EventText\(\s*""(?<key>[a-z0-9.\-]+)""", RegexOptions.Compiled);
 
+    /// <summary>SeasonTurn.Lines builds its keys as <c>KeyPrefix + "summer-1"</c>; the prefix is
+    /// "event.turn." (SeasonTurn.KeyPrefix).</summary>
+    private static readonly Regex SeasonTurnKey = new(@"KeyPrefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
+
     private static IEnumerable<string> AllSourceFiles()
         => Directory.EnumerateFiles(SrcRoot, "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
@@ -65,6 +69,7 @@ public class I18nGuardTests
         foreach (Match m in I18nToken.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EggColorKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EventTextKey.Matches(text)) into.Add(m.Groups["key"].Value);
+        foreach (Match m in SeasonTurnKey.Matches(text)) into.Add(TheLongestYear.Core.SeasonTurn.KeyPrefix + m.Groups["key"].Value);
     }
 
     /// <summary>
