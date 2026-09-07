@@ -1256,7 +1256,13 @@ namespace TheLongestYear
                 this.Monitor.Log($"tly_eventstep:   farmer tile ({(int)f.Tile.X}, {(int)f.Tile.Y}) pos ({(int)f.Position.X}, {(int)f.Position.Y}) box ({bb.X},{bb.Y},{bb.Width},{bb.Height}) moving={f.isMoving()} speed={f.getMovementSpeed():0.0} facing={f.FacingDirection} pending=[{targets}] viewport=({Game1.viewport.X},{Game1.viewport.Y}).", LogLevel.Info);
             }
 
-            if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
+            if (Game1.activeClickableMenu is Integration.EndingSpeechBox speech)
+            {
+                speech.receiveLeftClick(0, 0, false);   // finish typing, next page, or close
+                speech.receiveLeftClick(0, 0, false);
+                this.Monitor.Log("tly_eventstep: clicked the ending speech box on.", LogLevel.Info);
+            }
+            else if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
             {
                 string current = box.getCurrentString();
                 if (current != null) box.characterIndexInDialogue = current.Length;
