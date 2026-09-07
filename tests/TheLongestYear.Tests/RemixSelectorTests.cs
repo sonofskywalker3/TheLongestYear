@@ -128,4 +128,47 @@ public class RemixSelectorTests
         var b = RemixSelector.PickForRoom(OverlappingPools(), seed: 555, room: "Pantry");
         Assert.Equal(a.Select(x => x.Name), b.Select(x => x.Name));
     }
+
+    // Jeff, 2026-09-07: a Pantry with no seasonal crops bundle left Farming asking for saplings in
+    // week 1. A position that offers "Spring Crops" (or Summer/Fall) always takes it.
+    private static IReadOnlyList<IReadOnlyList<BundleSpec>> CropsPools() => new[]
+    {
+        (IReadOnlyList<BundleSpec>)new[] { Named("Spring Crops", 0), Named("Orchard", 0), Named("Preserver's", 0), Named("Home Cook's Feast", 0) },
+        new[] { Named("Summer Crops", 1), Named("Orchard", 1), Named("Preserver's", 1) },
+        new[] { Named("Fall Crops", 2), Named("Orchard", 2), Named("Home Cook's Feast", 2) },
+        new[] { Named("Quality Crops", 3), Named("Orchard", 3) },
+    };
+
+    [Fact]
+    public void SeasonalCropsBundles_AreAlwaysPicked_EverySeed()
+    {
+        for (int seed = 0; seed < 300; seed++)
+        {
+            var names = RemixSelector.PickForRoom(CropsPools(), seed, "Pantry").Select(x => x.Name).ToList();
+            Assert.Equal("Spring Crops", names[0]);
+            Assert.Equal("Summer Crops", names[1]);
+            Assert.Equal("Fall Crops", names[2]);
+        }
+    }
+
+    [Fact]
+    public void SeasonalCropsRule_LeavesOtherPositionsRandom()
+    {
+        var seen = new HashSet<string>();
+        for (int seed = 0; seed < 200; seed++)
+            seen.Add(RemixSelector.PickForRoom(CropsPools(), seed, "Pantry")[3].Name);
+        Assert.Contains("Quality Crops", seen);
+        Assert.Contains("Orchard", seen);
+    }
+
+    [Fact]
+    public void IsAlwaysPicked_MatchesOnlySeasonalCropsNames()
+    {
+        Assert.True(RemixSelector.IsAlwaysPicked("Spring Crops"));
+        Assert.True(RemixSelector.IsAlwaysPicked("Fall Crops"));
+        Assert.False(RemixSelector.IsAlwaysPicked("Quality Crops"));
+        Assert.False(RemixSelector.IsAlwaysPicked("Spring Foraging"));
+        Assert.False(RemixSelector.IsAlwaysPicked("Winter Crops"));
+        Assert.False(RemixSelector.IsAlwaysPicked(null));
+    }
 }
