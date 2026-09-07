@@ -108,7 +108,7 @@ loop-again branch never sets it, and the reset already scrubs every related mail
 
 `191393` is a **current-run hand-off only**: it is written into `eventsSeen` for the rest of that year
 and must never reach the next loop. That takes explicit work, because the reset does not scrub
-`eventsSeen` — it clears it and then *re-seeds it FROM* the cross-loop memory `MetaState.SeenEventsEver`
+`eventsSeen`: it clears it and then *re-seeds it FROM* the cross-loop memory `MetaState.SeenEventsEver`
 (which `ModEntry.RecordSeenEvents` merges `eventsSeen` into on every save). Left alone, the first
 "Keep playing" would bank `191393` forever and every later loop would open on Spring 1 with a
 destroyed JojaMart, Pierre on post-completion hours and the lightning cutscene queued for the first
