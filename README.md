@@ -14,6 +14,17 @@ This is a **beta** (`0.17.5`). It is feature-complete for v1 and stable in testi
 
 ---
 
+## See it played
+
+**Emmalution** is playing the whole loop on YouTube, and her edited episodes are the best introduction to the mod there is. Thank you, Emma, for the videos and for the bug reports that came with them.
+
+- Spring: [I must donate to the Community Centre OR RESET!](https://www.youtube.com/watch?v=fU4EVzlD1K8)
+- Summer: [The Junimos challenged me to complete these bundles...](https://www.youtube.com/watch?v=WaAzDjMWmt8)
+
+Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
+
+---
+
 ## What's New in 0.17.5
 
 **The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.**
@@ -239,7 +250,7 @@ Core game logic lives in `TheLongestYear.Core` (pure, unit-tested); SMAPI/Harmon
 
 ## Credits
 
-By **sonofskywalker3**. Banner art by **cwybabiesucks**. Book art by **supercam19**. Deja-vu villager dialogue idea by **u/Gribbleby**. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
+By **sonofskywalker3**. Banner art by **cwybabiesucks**. Book art by **supercam19**. Deja-vu villager dialogue idea by **u/Gribbleby**. Thanks to **Emmalution** for playing it on YouTube and for the feedback that shaped 0.16 and 0.17. Built on [SMAPI](https://smapi.io/) and [HarmonyX](https://github.com/BepInEx/HarmonyX). Stardew Valley is a trademark of ConcernedApe.
 
 ## License
 
