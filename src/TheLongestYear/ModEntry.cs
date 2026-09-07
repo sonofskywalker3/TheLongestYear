@@ -611,6 +611,7 @@ namespace TheLongestYear
             {
                 new GoalGroupCap(enginePools.FruitTreeFruitIds, 1),
                 new GoalGroupCap(enginePools.TrapFishIds, 1),
+                new GoalGroupCap(GoalGroupCap.JellyIds, 1),
             };
             _runController.Availability = _availability;
             _runController.ItemKindOf = id =>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace TheLongestYear.Core;
 
@@ -16,6 +17,17 @@ public static class RemixSelector
 {
     private const int RoomSaltPrime = 7919;
 
+    /// <summary>The Pantry's seasonal crops bundles ("Spring Crops", "Summer Crops", "Fall Crops").
+    /// A position offering one of these always takes it: a Pantry that rolled Orchard, Preserver's
+    /// and Home Cook's Feast instead left the Farming theme with nothing but saplings to ask for in
+    /// week 1 (Jeff, 2026-09-07: "a crops bundle every season"). Vanilla's own Pantry has all three
+    /// on every board; this keeps that guarantee under the remix.</summary>
+    private static readonly Regex SeasonalCropsName = new Regex(
+        @"^(Spring|Summer|Fall) Crops$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    public static bool IsAlwaysPicked(string bundleName)
+        => bundleName != null && SeasonalCropsName.IsMatch(bundleName);
+
     public static IReadOnlyList<BundleSpec> PickForRoom(
         IReadOnlyList<IReadOnlyList<BundleSpec>> slotPools, int seed, string room)
     {
@@ -26,7 +38,10 @@ public static class RemixSelector
         {
             var candidates = slotPools[position];
             IReadOnlyList<BundleSpec> pool = WithoutAlreadyPickedNames(candidates, pickedNames);
-            var chosen = pool[rng.Next(pool.Count)];
+            BundleSpec? mandatory = FirstAlwaysPicked(pool, pickedNames);
+            // The rng is consumed either way so every other position's roll stays where it was.
+            int roll = rng.Next(pool.Count);
+            var chosen = mandatory ?? pool[roll];
             pickedNames.Add(chosen.Name);
             picks.Add(chosen);
         }
@@ -61,6 +76,14 @@ public static class RemixSelector
             (unpicked ??= new List<BundleSpec>()).Add(candidate);
         }
         return unpicked is { Count: > 0 } ? unpicked : candidates;
+    }
+
+    private static BundleSpec? FirstAlwaysPicked(IReadOnlyList<BundleSpec> pool, HashSet<string> pickedNames)
+    {
+        foreach (BundleSpec candidate in pool)
+            if (IsAlwaysPicked(candidate.Name) && !pickedNames.Contains(candidate.Name))
+                return candidate;
+        return null;
     }
 
     /// <summary>Deterministic, culture/runtime-stable salt for a room name (string.GetHashCode
