@@ -2,10 +2,9 @@ using System.Collections.Generic;
 
 namespace TheLongestYear.Core
 {
-    /// <summary>Single source of truth for the win payoff's loop-count line, shared by the
-    /// <c>VictoryMenu</c> screen and the post-win "keep playing?" prompt so the two (shown seconds
-    /// apart in the same win sequence) can never drift. Both call sites supply their own surrounding
-    /// lead-in text; this is just the one-loop-vs-many sentence.</summary>
+    /// <summary>Single source of truth for the win payoff's loop-count line, used by the Year One
+    /// Ending's continuation prompt (<c>dialog.ending.prompt</c>). The call site supplies its own
+    /// surrounding lead-in text; this is just the one-loop-vs-many sentence.</summary>
     public static class WinSummary
     {
         /// <summary><paramref name="runNumber"/> is the attempt counter (incremented only on a full

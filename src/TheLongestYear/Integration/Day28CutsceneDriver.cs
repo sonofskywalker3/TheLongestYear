@@ -107,9 +107,7 @@ namespace TheLongestYear.Integration
                 $"Day-28 cutscene: opening the {branch} Junimo scene (eventUp={Game1.eventUp}, " +
                 $"farmEvent=none, newDay={Game1.newDay}).", LogLevel.Info);
             Action onComplete = () => _runController?.Invoke()?.OnCutsceneEnded();
-            Game1.activeClickableMenu = branch == Day28Branch.Win
-                ? new VictoryMenu(rc.CurrentRunNumber, onComplete)
-                : new Day28CutsceneMenu(branch, onComplete);
+            Game1.activeClickableMenu = new Day28CutsceneMenu(branch, onComplete);
             _openedMenu = Game1.activeClickableMenu;
             _opened = true;
         }
