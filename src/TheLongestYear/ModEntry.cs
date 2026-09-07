@@ -1586,9 +1586,16 @@ namespace TheLongestYear
                 string current = box.getCurrentString();
                 if (current != null) box.characterIndexInDialogue = current.Length;
                 box.safetyTimer = 0;
+                // A freshly opened question box sets transitioning=true until its open animation
+                // ends, and receiveLeftClick returns immediately while it is true, so the click
+                // would silently no-op. Clear it before clicking.
+                box.transitioning = false;
                 box.selectedResponse = n;
                 box.receiveLeftClick(0, 0, false);
-                this.Monitor.Log($"tly_answer: chose response {n} (\"{text}\").", LogLevel.Info);
+                if (object.ReferenceEquals(Game1.activeClickableMenu, box))
+                    this.Monitor.Log("tly_answer: the box did not close; send it again", LogLevel.Warn);
+                else
+                    this.Monitor.Log($"tly_answer: chose response {n} (\"{text}\").", LogLevel.Info);
             }
             catch (System.Exception ex)
             {
