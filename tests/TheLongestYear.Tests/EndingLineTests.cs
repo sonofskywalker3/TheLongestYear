@@ -51,6 +51,16 @@ public class EndingLineTests
     }
 
     [Fact]
+    public void Multiple_qualifying_heart_events_pick_lowest_id_numerically()
+    {
+        // "34" sorts before "6" lexicographically but not numerically. The rule is lowest id
+        // first by numeric value, so with both qualifying the scene must be the one for id "6".
+        Assert.Equal(EndingLineTier.HeartEvent, EndingLine.Tier(
+            Mem(hearts: new[] { ("34", new[] { 1, 2 }), ("6", new[] { 1, 2 }) }), out string? scene));
+        Assert.Equal("6", scene);
+    }
+
+    [Fact]
     public void SceneTable_ids_are_numeric_values_are_scene_keys_no_duplicates()
     {
         var seenValues = new HashSet<string>();
