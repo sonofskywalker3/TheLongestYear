@@ -59,6 +59,7 @@ namespace TheLongestYear.Integration
         public const string JunimoName = "tlyJunimo";
         public const string PanToName = "tlyPanTo";
         public const string FadeTreesName = "tlyFadeTrees";
+        public const string FadeInName = "tlyFadeIn";
         private const string JunimoDisplayName = "Junimo";
 
         private static readonly MethodInfo EventChangeLocation = typeof(Event).GetMethod(
@@ -68,10 +69,17 @@ namespace TheLongestYear.Integration
             "refurbishCommunityCenter", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo JunimoColour = typeof(Junimo).GetField(
             "color", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo PendingMoves = typeof(Event).GetField(
+            "actorPositionsAfterMove", BindingFlags.Instance | BindingFlags.NonPublic);
 
         // tlyChangeLocation state. WarpFadeDone is past the 1.1 the warp fade completes at, so the
-        // game performs the pending warp on its very next fade update.
+        // game performs the pending warp on its very next fade update. After the load the mod's own
+        // black overlay (_black, drawn in Display.Rendered) stays up so the script can place every
+        // actor unseen; tlyFadeIn lifts it. The game's own fade-in is cancelled at the load.
         private static bool _changing;
+        private static float _black;
+        private static bool _fadingIn;
+        private static float _fadeElapsed, _fadeDuration;
         private const float WarpFadeDone = 1.15f;
         private const float FadeSpeed = 0.02f;
 
@@ -106,6 +114,27 @@ namespace TheLongestYear.Integration
         public static void Register(IMonitor monitor, IModHelper helper)
         {
             helper.Events.GameLoop.UpdateTicked += (_, _) => HoldTreesTranslucent();
+            helper.Events.Display.Rendered += (_, e) => DrawBlack(e.SpriteBatch);
+
+            // tlyFadeIn [ms]: lift the black overlay tlyChangeLocation left up, eased, then continue.
+            Event.RegisterCommand(FadeInName, (evt, args, context) =>
+            {
+                if (!_fadingIn)
+                {
+                    ArgUtility.TryGetOptionalInt(args, 1, out int ms, out _, 1200);
+                    _fadeDuration = System.Math.Max(1, ms);
+                    _fadeElapsed = 0f;
+                    _fadingIn = true;
+                    return;
+                }
+                _fadeElapsed += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                float t = MathHelper.Clamp(_fadeElapsed / _fadeDuration, 0f, 1f);
+                _black = 1f - t * t * (3f - 2f * t);
+                if (t < 1f) return;
+                _black = 0f;
+                _fadingIn = false;
+                evt.CurrentCommand++;
+            });
 
             // tlyFadeTrees <x> <y>: from here to the end of the event, every tree whose tile is
             // within 4 tiles of (x, y) draws translucent, so the shrine is never hidden behind a
@@ -182,6 +211,10 @@ namespace TheLongestYear.Integration
                         Action onComplete = () =>
                         {
                             Game1.currentLocation.ResetForEvent(evt);
+                            // Cancel the game's own fade-in; the overlay holds black until tlyFadeIn.
+                            Game1.fadeToBlack = false;
+                            Game1.fadeToBlackAlpha = 0f;
+                            _black = 1f;
                             _changing = false;
                             evt.CurrentCommand++;
                         };
@@ -189,6 +222,14 @@ namespace TheLongestYear.Integration
                         // up inside the hall for a frame, and Lewis was still standing on the farm,
                         // 2026-09-07). Under black nobody sees them go.
                         evt.actors.Clear();
+                        // A "move ... true" left running (Morris's exit) stays in the event's
+                        // pending-move table, and with its actor gone it can never resolve. The
+                        // event then re-issues every later move command each tick until that table
+                        // empties: the farmer walked one tile, then another, into the farmhouse and
+                        // against its wall (2026-09-07). Clear the table with the actors.
+                        if (PendingMoves?.GetValue(evt) is System.Collections.IDictionary pending)
+                            pending.Clear();
+                        _black = 1f;
                         EventChangeLocation.Invoke(evt, new object[] { location, x, y, onComplete });
                         Game1.fadeToBlackAlpha = WarpFadeDone;
                     }
@@ -248,6 +289,19 @@ namespace TheLongestYear.Integration
                 }
                 evt.CurrentCommand++;
             });
+        }
+
+        private static void DrawBlack(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
+        {
+            if (_black <= 0f) return;
+            Event ev = Game1.CurrentEvent;
+            if (ev == null || ev.id != EndingEventKeys.EventId)
+            {
+                _black = 0f;   // never leave the screen black after the ending
+                _fadingIn = false;
+                return;
+            }
+            b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.graphics.GraphicsDevice.Viewport.Width, Game1.graphics.GraphicsDevice.Viewport.Height), Color.Black * _black);
         }
 
         private static void HoldTreesTranslucent()

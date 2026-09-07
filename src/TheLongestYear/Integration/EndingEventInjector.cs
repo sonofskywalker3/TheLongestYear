@@ -21,45 +21,52 @@ namespace TheLongestYear.Integration
         // Town: the Community Center doors are the warp at (52,20); the steps run along row 22.
         private const int HallX = 52, HallY = 22;
 
-        // Ceremony blocking (Town). Lewis on the top step in front of the doors, the farmer on the
-        // paving below him, the crowd in a loose fan around the farmer (rows 23..27, never the bush
-        // east of the steps at column 57+, where a straight line of twelve ended up on 2026-09-07).
-        // The speaker starts two tiles west of the farmer and steps in beside them for the crack.
+        // Ceremony blocking (Town), laid out from a 1080p screenshot at the player's zoom (about
+        // 15 by 8 tiles on screen; the dialogue box covers everything from row 26 down when the
+        // camera sits on row 25). Lewis on the top step in front of the doors, the farmer on the
+        // paving below him, the crowd in rows 23 to 25 around the farmer, clear of the big bushes
+        // (columns 46 to 49 and 54 to 57 above row 23) and the bush east of the steps.
         private const int FarmerX = HallX, FarmerY = HallY + 2;
         private const int LewisX = HallX, LewisY = HallY - 1;
-        private const int SpeakerX = HallX - 2, SpeakerY = HallY + 2;
+        private const int CameraY = HallY + 3;
+        // The speaker stands one row above the farmer's row: an NPC on the farmer's own row draws
+        // half a tile lower than the farmer (2026-09-07).
+        private const int SpeakerX = HallX - 2, SpeakerY = HallY + 1;
         private static readonly (int X, int Y)[] CrowdSlots =
         {
-            (49, 23), (55, 23),
-            (48, 24), (56, 24),
-            (47, 25), (50, 25), (54, 25),
-            (49, 26), (52, 26), (55, 26),
-            (51, 27), (53, 27), (48, 28),
+            (48, 23), (54, 23), (56, 23),
+            (47, 24), (49, 24), (55, 24), (57, 24),
+            (46, 25), (48, 25), (50, 25), (54, 25), (56, 25),
+            (52, 26),
         };
 
-        // Four Junimos scattered on the ground around the back and sides of the crowd (Town). The
-        // roof was tried first: anything on the hall's upper rows is hidden under the map's front
-        // layer, so they never showed (2026-09-07). Six on the hall floor, in front of the farmer;
-        // rows 16 to 18 are open floor (vanilla's own ceremony stands villagers on rows 17 to 22).
+        // Four Junimos on the open grass at the two edges of the screen, outside the crowd (the
+        // roof hid them under the front layer, the first ground spots put two inside a tree and a
+        // bush, 2026-09-07). Six on the hall floor, in front of the farmer.
         private static readonly (int X, int Y)[] TownJunimos =
         {
-            (46, 24), (46, 27), (55, 28), (51, 29),
+            (40, 23), (42, 25), (62, 23), (64, 25),
         };
-        private const int HallFarmerX = 32, HallFarmerY = 19, HallViewY = 17;
+        // Framed from a screenshot: the camera cannot go higher than about row 16 in the hall, and
+        // the dialogue box covers rows 16 and down, so the cast sits on rows 12 to 15 and stays
+        // clear of the potted plant at columns 34 to 36, rows 13 to 14 (2026-09-07).
+        private const int HallFarmerX = 32, HallFarmerY = 15, HallViewY = 13;
         private static readonly (int X, int Y)[] HallSeats =
         {
-            (29, 17), (31, 16), (33, 16), (35, 17), (30, 18), (34, 18),
+            (29, 13), (31, 12), (33, 12), (30, 14), (28, 15), (36, 15),
         };
 
         // Morris comes and goes along row 28, the open plaza south of the crowd (the paving row at
-        // HallY + 2 runs through the bush east of the steps, 2026-09-07), from off screen east; at
-        // 1080p the viewport is ~30 tiles wide, so 18 tiles east of the hall centre is off screen.
-        // He stops at the crowd's east edge and steps up two tiles to talk.
-        private const int MorrisRow = HallY + 6, MorrisFarX = HallX + 18, MorrisNearX = HallX + 5;
-        private const int MorrisStepUp = 2, MorrisSpeed = 5;
+        // HallY + 2 runs through the bush east of the steps, 2026-09-07), from off screen east
+        // (the screen ends about 8 tiles east of the hall centre at this zoom; 18 is safe for a
+        // zoomed-out player too). He stops east of the crowd and steps up three tiles to row 25,
+        // the last row the dialogue box leaves visible.
+        private const int MorrisRow = HallY + 6, MorrisFarX = HallX + 18, MorrisNearX = HallX + 6;
+        private const int MorrisStepUp = 3, MorrisSpeed = 5;
 
         // Scene 6 timings.
         private const int PanMs = 6000;
+        private const int FadeInMs = 1400;
 
         private static string Junimo(int i) => $"Junimo{i}";
 
@@ -101,11 +108,13 @@ namespace TheLongestYear.Integration
                 // back in on the hall (see EndingEventCommands). The viewport commands after each
                 // change carry no "true": that flag is vanilla's cut-to-black-then-fade-in, which
                 // read as a second flash on every transition (2026-09-07).
+                // The screen stays black after the change until tlyFadeIn, so the whole cast is in
+                // place before anyone sees the hall (they popped in after the fade, 2026-09-07).
                 $"{EndingEventCommands.ChangeLocationName} Town {FarmerX} {FarmerY}",
                 EndingEventCommands.RefurbishHallName,
                 $"warp farmer {FarmerX} {FarmerY}",
                 "faceDirection farmer 0",
-                $"viewport {HallX} {HallY}",
+                $"viewport {HallX} {CameraY}",
                 $"addTemporaryActor Lewis 16 32 {LewisX} {LewisY} 2 true Character",
             };
             int slot = 0;
@@ -122,6 +131,7 @@ namespace TheLongestYear.Integration
                 s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {TownJunimos[j].X} {TownJunimos[j].Y} {j}");
             s.AddRange(new[]
             {
+                $"{EndingEventCommands.FadeInName} {FadeInMs}",
                 "pause 600",
                 "playSound reward",
                 "screenFlash 0.4",
@@ -204,6 +214,7 @@ namespace TheLongestYear.Integration
             });
             for (int j = 0; j < HallSeats.Length; j++)
                 s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {HallSeats[j].X} {HallSeats[j].Y} {j}");
+            s.Add($"{EndingEventCommands.FadeInName} {FadeInMs}");
             // The lines pass between the Junimos: 0 opens, 1 and 2 carry the middle, 3 the warning,
             // 0 closes. Each speaker hops before its line so the eye finds it.
             string junimo4 = crack ? EventText("event.ending.junimo-4") : EventText("event.ending.junimo-4-nocrack");
@@ -237,9 +248,11 @@ namespace TheLongestYear.Integration
                 $"warp farmer {cast.DoorX} {cast.DoorY + 2}",
                 "faceDirection farmer 0",
                 $"viewport {cast.DoorX} {cast.DoorY} clamp",
-                // ambientLight is subtractive (the amount taken from each channel), so a warm dusk
-                // keeps red and takes green and blue; the first try (120 100 160) went green.
-                "ambientLight 50 120 90",
+                // ambientLight is subtractive (the amount taken from each channel). Vanilla's evening
+                // takes red and green and leaves blue; this is that at about half strength. The first
+                // try (120 100 160) went green, the second (50 120 90) red.
+                "ambientLight 120 120 40",
+                $"{EndingEventCommands.FadeInName} {FadeInMs}",
                 "pause 600",
                 // DoorY is the doorstep (the tile below the door itself); one step up from
                 // DoorY + 2 ends on it. Two steps walked the farmer into the wall (2026-09-07).
