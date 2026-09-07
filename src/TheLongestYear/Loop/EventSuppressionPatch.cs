@@ -13,7 +13,7 @@ namespace TheLongestYear.Loop
     /// <c>if (!string.IsNullOrEmpty(text) &amp;&amp; text != "-1" &amp;&amp; ...)</c>), so the
     /// candidate event is silently skipped without firing.
     ///
-    /// 2026-05-29 round 8 — suppress event 611439 (Demetrius + Lewis "have you seen the
+    /// 2026-05-29 round 8: suppress event 611439 (Demetrius + Lewis "have you seen the
     /// Community Center?" cutscene, vanilla Spring 5 Y1 in Town). The TLY player has been
     /// donating from day 1 of every loop, so the introduction beat is stale and out of order.
     /// Spec'd to be co-opted as TLY's day-1 narrative intro in a later pass (see TODO.md) —
