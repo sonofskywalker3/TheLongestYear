@@ -15,7 +15,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Debug
 
-- `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
+- `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
 ## 0.17.5 - 2026-09-05
 

@@ -343,8 +343,9 @@ namespace TheLongestYear.Loop
 
             // Year One Ending: the ending lights one shrine candle (Farm.grandpaScore = 1). A loop
             // starts with the shrine dark again; vanilla's year-3 judgement also keys off zero.
-            if (Game1.getFarm() != null)
-                Game1.getFarm().grandpaScore.Value = 0;
+            Farm farm = Game1.getFarm();
+            if (farm != null)
+                farm.grandpaScore.Value = 0;
 
             // 1a-mail. Purge any PENDING CC room-restoration mail from mailForTomorrow. The block
             // above clears mailReceived (the "already restored" record), but a ccVault/ccGreenhouse/…
