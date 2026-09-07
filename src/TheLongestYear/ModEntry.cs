@@ -63,6 +63,7 @@ namespace TheLongestYear
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
+        private Integration.MorrisDarkSprite _morrisDark;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -163,6 +164,10 @@ namespace TheLongestYear
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
+            // Year One Ending scene 4: changeSprite Morris Dark loads Characters/Morris_Dark, built
+            // here at load time with the irises recoloured red (spec 2026-09-06 §4).
+            _morrisDark = new Integration.MorrisDarkSprite(this.Monitor);
+            helper.Events.Content.AssetRequested += _morrisDark.OnAssetRequested;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -350,6 +355,7 @@ namespace TheLongestYear
                 "Junimo Stash chest, or print every stashed tool's slots + enchantments. " +
                 "Usage: tly_stashrod | tly_stashrod check",
                 this.CmdStashRod);
+            helper.ConsoleCommands.Add("tly_dumpsprite", "Write Characters/<Name> to test-output/sprite-<Name>.png so its colours can be read (debug). Usage: tly_dumpsprite Morris", this.CmdDumpSprite);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -1390,6 +1396,27 @@ namespace TheLongestYear
             }
             menu.exitThisMenu(playSound: false);
             this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
+        }
+
+        /// <summary>Debug: dump a Characters/&lt;Name&gt; sprite sheet to test-output as a PNG so its
+        /// pixel colours can be read with an image viewer (used to find Morris_Dark's iris colour).</summary>
+        private void CmdDumpSprite(string command, string[] args)
+        {
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_dumpsprite <Name>", LogLevel.Warn); return; }
+            try
+            {
+                var tex = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("Characters/" + args[0]);
+                string dir = System.IO.Path.Combine(this.Helper.DirectoryPath, "test-output");
+                System.IO.Directory.CreateDirectory(dir);
+                string path = System.IO.Path.Combine(dir, $"sprite-{args[0]}.png");
+                using var fs = System.IO.File.Create(path);
+                tex.SaveAsPng(fs, tex.Width, tex.Height);
+                this.Monitor.Log($"Wrote {path} ({tex.Width}x{tex.Height}).", LogLevel.Info);
+            }
+            catch (Microsoft.Xna.Framework.Content.ContentLoadException ex)
+            {
+                this.Monitor.Log($"No sprite named {args[0]}: {ex.Message}", LogLevel.Warn);
+            }
         }
 
         /// <summary>Today as a 1..112 day of year from the game's own date (the run calendar syncs
