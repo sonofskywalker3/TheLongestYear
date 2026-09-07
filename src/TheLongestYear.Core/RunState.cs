@@ -149,6 +149,11 @@ public sealed class RunState
     /// cleared on DayEnding (before the next night's update) and on a run reset.</summary>
     public List<DoubleProduceRecord> DoubleProduceToday { get; set; } = new();
 
+    /// <summary>Year One Ending (spec 2026-09-06): set at bedtime on the night the board completes.
+    /// The EndingEventDriver plays the ending the first time the player steps onto the farm the next
+    /// morning, then clears it. Survives a quit overnight.</summary>
+    public bool EndingArmed { get; set; }
+
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
     {

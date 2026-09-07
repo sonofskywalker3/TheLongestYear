@@ -183,6 +183,18 @@ public sealed class MetaState
     /// </summary>
     public bool VictoryAcknowledged { get; set; }
 
+    /// <summary>Year One Ending: the staged ending event has played once on this save. A later win
+    /// skips the event and goes straight to the shrine and the choice.</summary>
+    public bool EndingSeen { get; set; }
+
+    /// <summary>Year One Ending: the player chose Keep playing on this version or later. Spring 1 of
+    /// year 2 shows the "Year 2 is coming" wall until <see cref="Year2Started"/> is set by the Year 2
+    /// update. Cleared, with VictoryAcknowledged, when the wall's Loop again runs.</summary>
+    public bool Year2WallArmed { get; set; }
+
+    /// <summary>Reserved for the Year 2 update. Never set by this version.</summary>
+    public bool Year2Started { get; set; }
+
     /// <summary>
     /// True once the player has completed the day-1 Lewis-porch + CC-Junimo intro cutscene
     /// (or skipped it via Esc). Set by <c>IntroEventInjector</c> in <c>OnSaving</c> whenever
