@@ -1871,16 +1871,25 @@ let it slip.*** Scope to cover:
 *Captured 2026-06-05. User-flagged as the priority once bug fixes are clear —
 the next feature upgrade, not a polish afterthought.*
 
+**Still owed before release (built on branch `year-one-ending`, not merged):** Jeff's review of
+the lines file (`docs/superpowers/specs/2026-09-06-year-one-ending-lines.md`); the live runbook
+pass (`docs/HEADLESS_DRIVING.md` § The Year One Ending); the release notes (README What's New +
+Nexus description and changelog).
+
 Two distinct cutscene pieces:
 
 1. **Animated loop (reset) cutscene.** What we have now is *OK but static* — the
    user wants it **animated, not a still frame**. This is the transition the
    player sees when a loop resets (Winter 28 → next Spring 1). Make it feel like
-   the year actually rewinding rather than a placeholder card.
+   the year actually rewinding rather than a placeholder card. Still open.
 
-2. **Real ending / victory cutscene.** The current 0.9 `VictoryMenu` is a
-   placeholder (see the deferral note below + the `VictoryMenu` class comment).
-   The real 1.0 ending should be a proper cutscene that shows:
+2. **Real ending / victory cutscene: SHIPPED** (branch `year-one-ending`, not yet merged or
+   released). Design spec: `docs/superpowers/specs/2026-09-06-year-one-ending-design.md`. Finishing
+   the Community Center now ends the year the next morning with a real event (hall steps, a
+   villager's half-memory of the player, Morris closing the Pelican Town store, the Junimos'
+   warning, the shrine candle) and a Loop again / Keep playing this year choice; a keep-playing
+   save gets a "Year 2 is coming" wall on Spring 1 of year 2 until Year 2 ships. Replaces the old
+   placeholder `VictoryMenu`. Below is the original brief this shipped against:
    - **Joja giving up and closing the store** — the narrative payoff for
      restoring the CC and beating the loop.
    - **A Junimo party / celebration** (or similar) — the joyful button on the
@@ -1888,9 +1897,8 @@ Two distinct cutscene pieces:
 
 Ties together with the already-deferred items below: the "Win screen → JP shrine
 transition is jarring" entry explicitly defers transition polish into *this* real
-ending work, so fold them together when this gets spec'd. Not yet spec'd —
-needs an event-script design pass (custom `Data/Events`, Junimo sprite reuse from
-`Characters/Junimo`, Joja-store staging at JojaMart).
+ending work; the item 2 spec above covers it. (This paragraph described the pre-spec
+plan; superseded now that item 2 has shipped, kept for history.)
 
 **Known cosmetic to design OUT in the revamp (user decision 2026-06-10, do NOT fix in place):**
 the Lewis day-1 intro cutscene renders a **black bar along the right side of the screen**

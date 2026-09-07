@@ -3,6 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **The Year One Ending.** Finishing the Community Center now ends the year the next morning, whatever the date: a sunny day, the whole town on the hall steps, a villager who half-remembers you (assembled from what your save actually records), Morris closing the Pelican Town store for greener ground, the Junimos' warning, and one candle at grandpa's shrine. Loop again resets on the spot; Keep playing gives you the rest of the year to prepare and a "Year 2 is coming" notice on Spring 1. Replaces the win card. Vanilla's own completion ceremony no longer plays.
+
+### Changed
+
+- Vanilla's Community Center completion ceremony no longer plays; the ending owns that slot. The win card and its keep-playing prompt are gone.
+
+### Debug
+
+- `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
+
 ## 0.17.5 - 2026-09-05
 
 1984 tests.

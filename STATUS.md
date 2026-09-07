@@ -1,11 +1,23 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-08-29 late night (review fixes 0.16.166, sim diagnostics 0.16.167; two full-year sims on the boost build)
+**Last updated:** 2026-09-06 (Year One Ending Task 13 docs and runbook on branch year-one-ending; previously 2026-08-29 late night, review fixes 0.16.166, sim diagnostics 0.16.167; two full-year sims on the boost build)
 **Branch:** `master`; 0.16.167 PUSHED and RELEASED; nothing local-only
 **Tests:** 1822 passing, 0 failing
 **Build:** clean; 0.16.167 deployed to the game; game CLOSED at end of session
 **Last public release:** 0.16.167 (2026-08-29 night; GitHub release + Nexus file, version, description and changelog all live)
 **NEXT SESSION (2026-08-29 night):** JP Boosts built (spec + plan in docs/superpowers, 15 rows, three shrine tabs; live-checked over the bridge, `tly_openshrine` opens each tab; Jeff still owes the visual pass and rulings on Night Owl / Backpack Organizer, Fast Friends x1.65 with the book, host-only Boosts tab). Then release notes (README What's New + Nexus description + changelog) and release, Jeff's call. Nothing pushed.
+
+## 2026-09-06: Year One Ending built on branch year-one-ending (not merged, not released)
+
+Finishing the Community Center now ends the year the next morning with a real event (hall steps,
+a villager's half-memory of the player, Morris closing the Pelican Town store, the Junimos'
+warning, the shrine candle) and a Loop again / Keep playing this year choice, plus a Year 2 wall
+on Spring 1 of a keep-playing save.
+Branch `year-one-ending`, 12 tasks' worth of commits ahead of `master` (this session's Task 13 adds
+docs, the runbook and `tly_answer`); nothing pushed.
+2023 tests passing, 0 failing (`dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj -c Release`).
+Live run: pending Jeff's yes.
+Manifest still 0.17.5 on the branch; version set at merge.
 
 ## 2026-08-29 (late afternoon): played years on the real STANDARD and REMIXED boards, three-way comparison
 

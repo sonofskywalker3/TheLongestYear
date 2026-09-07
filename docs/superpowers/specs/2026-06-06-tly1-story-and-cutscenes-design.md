@@ -136,6 +136,7 @@ uneasy (blight has appeared) → **end-of-Fall** alarmed (reversion has joined i
 unavoidable Winter requirement-tampering.** (Winter 28 is the win/rewind, not a season-pass beat.)
 
 ### 5.4 The win / ending (CC restored) — Triumph + ominous hook
+Superseded by `2026-09-06-year-one-ending-design.md` (2026-09-06).
 - **Triumph first:** Joja **closes the town store**; **Junimo celebration**; the town whole.
 - **Then the hook:** Morris retreats with the **shadow still clinging**, vowing Joja will "find greener
   ground" (→ Ginger Island / TLY2). You won the battle, not the war.
