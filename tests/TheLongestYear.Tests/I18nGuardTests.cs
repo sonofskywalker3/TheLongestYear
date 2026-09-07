@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Ending;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -122,6 +123,17 @@ public class I18nGuardTests
                 _ = ReachText.Describe(def.RunReachRequirement);
             foreach (string metric in new[] { "rod", "backpack", "mastery", "book", "mail", "event", "stardrop_mines", "scythe", "house", "pet", "shortcuts", "bus", "room" })
                 _ = Strings.Get("reach." + metric);
+            // event.ending.crack.* is built from the tier + npc (EndingLine.MiddleKey); walk every
+            // tier for every voice-override npc plus one generic (non-overridden) npc.
+            var endingNpcs = EndingLine.VoiceOverrides.Append("Pierre");
+            foreach (EndingLineTier tier in Enum.GetValues<EndingLineTier>())
+                foreach (string npc in endingNpcs)
+                    _ = Strings.Get(EndingLine.MiddleKey(npc, tier));
+            _ = Strings.Get(EndingLine.OpenKey);
+            _ = Strings.Get(EndingLine.CloseKey);
+            // event.ending.scene.* is resolved by event id through EndingLine.SceneTable, never a literal.
+            foreach (string sceneKey in EndingLine.SceneTable.Values)
+                _ = Strings.Get(sceneKey);
         }
         finally
         {
@@ -212,7 +224,11 @@ public class I18nGuardTests
     /// already asserts no "{{" survives in resolved catalog output, which is strictly stronger proof
     /// for that family than a per-key token match here would be.</summary>
     private static readonly string[] ExcludedTokenFamilies =
-        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach." };   // reach.*: ReachText builds the key from the metric (ReachTextTests covers it)
+        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach.", "event.ending.crack.tier" };
+    // reach.*: ReachText builds the key from the metric (ReachTextTests covers it).
+    // event.ending.crack.tier*: the {{scene}} token is supplied at a call site whose key is a
+    // variable (the ending injector builds it via EndingLine.MiddleKey), so the literal-scanning
+    // token check above can never see that call site.
 
     /// <summary>
     /// For every default.json value containing a <c>{{token}}</c> placeholder (outside the
