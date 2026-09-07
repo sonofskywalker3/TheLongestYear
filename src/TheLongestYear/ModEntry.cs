@@ -1242,6 +1242,19 @@ namespace TheLongestYear
                 LogLevel.Info);
             foreach (NPC a in evt.actors)
                 this.Monitor.Log($"tly_eventstep:   actor {a.Name} at ({(int)a.Tile.X}, {(int)a.Tile.Y}) moving={a.isMoving()}.", LogLevel.Info);
+            {
+                Farmer f = Game1.player;
+                var bb = f.GetBoundingBox();
+                string targets = "";
+                try
+                {
+                    var fld = typeof(StardewValley.Event).GetField("actorPositionsAfterMove", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    if (fld?.GetValue(evt) is System.Collections.Generic.Dictionary<string, Microsoft.Xna.Framework.Vector3> d)
+                        targets = string.Join(",", d.Select(kv => $"{kv.Key}->({kv.Value.X},{kv.Value.Y})"));
+                }
+                catch (System.Exception ex) { targets = "<" + ex.GetType().Name + ">"; }
+                this.Monitor.Log($"tly_eventstep:   farmer tile ({(int)f.Tile.X}, {(int)f.Tile.Y}) pos ({(int)f.Position.X}, {(int)f.Position.Y}) box ({bb.X},{bb.Y},{bb.Width},{bb.Height}) moving={f.isMoving()} speed={f.getMovementSpeed():0.0} facing={f.FacingDirection} pending=[{targets}] viewport=({Game1.viewport.X},{Game1.viewport.Y}).", LogLevel.Info);
+            }
 
             if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
             {
