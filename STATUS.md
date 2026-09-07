@@ -1,4 +1,4 @@
-﻿# The Longest Year - Status
+# The Longest Year - Status
 
 **Last updated:** 2026-09-06 (Year One Ending Task 13 docs and runbook on branch year-one-ending; previously 2026-08-29 late night, review fixes 0.16.166, sim diagnostics 0.16.167; two full-year sims on the boost build)
 **Branch:** `master`; 0.16.167 PUSHED and RELEASED; nothing local-only

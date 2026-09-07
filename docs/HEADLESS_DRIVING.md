@@ -1,4 +1,4 @@
-﻿# Headless driving: verify The Longest Year without touching Jeff's desktop
+# Headless driving: verify The Longest Year without touching Jeff's desktop
 
 Since 0.16.69 an unattended verification run needs no mouse, no keyboard injection and no
 foreground window. Everything goes through SMAPI: the file bridge for `tly_*` commands, the SMAPI

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -1203,7 +1203,11 @@ namespace TheLongestYear
             }
             string cmd;
             try { cmd = evt.GetCurrentCommand(); }
-            catch (System.Exception ex) { cmd = "<" + ex.GetType().Name + ">"; }
+            catch (System.Exception ex)
+            {
+                this.Monitor.Log($"tly_eventstep: could not read the current command ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+                cmd = "<" + ex.GetType().Name + ">";
+            }
             this.Monitor.Log(
                 $"tly_eventstep: cmd[{evt.CurrentCommand}]='{cmd}', menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, dialogueUp={Game1.dialogueUp}, loc={Game1.currentLocation?.Name}.",
                 LogLevel.Info);
