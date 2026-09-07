@@ -104,7 +104,20 @@ that warns against suppressing it is rewritten: the ending owns the slot now, an
 branch (§5) adds `191393` to `eventsSeen` itself so the post-completion world (abandoned JojaMart on
 the next storm, Pierre open Wednesdays, the Joja shutdown) flips exactly as vanilla flips it. The
 loop-again branch never sets it, and the reset already scrubs every related mail (`WorldResetService`
-`mailToClear`) and re-seeds `eventsSeen`.
+`mailToClear`).
+
+`191393` is a **current-run hand-off only**: it is written into `eventsSeen` for the rest of that year
+and must never reach the next loop. That takes explicit work, because the reset does not scrub
+`eventsSeen` — it clears it and then *re-seeds it FROM* the cross-loop memory `MetaState.SeenEventsEver`
+(which `ModEntry.RecordSeenEvents` merges `eventsSeen` into on every save). Left alone, the first
+"Keep playing" would bank `191393` forever and every later loop would open on Spring 1 with a
+destroyed JojaMart, Pierre on post-completion hours and the lightning cutscene queued for the first
+storm, on a zero-bundle board. `TheLongestYear.Core.Ending.PostCompletionEvents.IsHandedOffOnly` names
+the id, and three places filter through it: `RecordSeenEvents` never banks it, `FarmerReset` skips it
+in the re-seed loop and removes it from `eventsSeen` afterwards, and `ModEntry` purges it from
+`SeenEventsEver` at load so a save that already banked it is healed. The replayable-cutscene scan
+cannot cover this: `BuildReplayableExclude` seeds from `EventSuppressionPatch.SuppressedEventIds`,
+which now contains `191393`, so the scan can never flag it replayable.
 
 ## 4. The event script
 

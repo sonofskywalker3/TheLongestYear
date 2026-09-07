@@ -400,6 +400,9 @@ namespace TheLongestYear
             this.Monitor.Log($"Farm type: {Game1.whichFarm} ({Game1.GetFarmTypeID()}).", LogLevel.Info);
 
             _meta.Load();
+            // Heal saves that banked the ending's current-run hand-off id before RecordSeenEvents
+            // learned to skip it (spec section 3).
+            this.PurgeHandedOffEvents();
 
             // Per-save opt-in. TLY only activates on a save that was STARTED as a Longest Year run:
             //   - a brand-new game created this session (_isNewGame, set by OnSaveCreating), or
@@ -844,7 +847,11 @@ namespace TheLongestYear
 
         /// <summary>Merge the run's seen vanilla events into the cross-loop SeenEventsEver memory so a
         /// scene watched in any run stays suppressed on later loops (event-gating Phase 1). Called
-        /// from OnSaving before the meta-state persists; FarmerReset re-seeds eventsSeen from it.</summary>
+        /// from OnSaving before the meta-state persists; FarmerReset re-seeds eventsSeen from it.
+        /// <para>Current-run hand-off ids (<see cref="TheLongestYear.Core.Ending.PostCompletionEvents"/>)
+        /// are skipped: the ending's Keep-playing branch writes the CC ceremony id into eventsSeen so
+        /// vanilla flips its post-completion world for THIS year, and recording it here would carry the
+        /// destroyed JojaMart / Pierre Wednesdays / storm cutscene into every later loop.</para></summary>
         private void RecordSeenEvents()
         {
             if (!Context.IsWorldReady || Game1.player?.eventsSeen == null)
@@ -854,12 +861,31 @@ namespace TheLongestYear
             var known = new System.Collections.Generic.HashSet<string>(seen, System.StringComparer.Ordinal);
             int added = 0;
             foreach (string id in Game1.player.eventsSeen)
+            {
+                if (TheLongestYear.Core.Ending.PostCompletionEvents.IsHandedOffOnly(id)) continue;
                 if (known.Add(id)) { seen.Add(id); added++; }
+            }
 
             if (added > 0)
                 this.Monitor.Log(
                     $"Recorded {added} newly-seen event id(s) to SeenEventsEver (total {seen.Count}).",
                     LogLevel.Trace);
+        }
+
+        /// <summary>Heal a save whose SeenEventsEver already banked a current-run hand-off id. Builds
+        /// before the RecordSeenEvents skip existed banked the CC ceremony id the first time a player
+        /// took "Keep playing", which would then be re-seeded into eventsSeen on every later reset.
+        /// Called from OnSaveLoaded right after MetaStore.Load.</summary>
+        private void PurgeHandedOffEvents()
+        {
+            System.Collections.Generic.List<string> seen = _meta.State.SeenEventsEver;
+            if (seen == null) return;
+            int removed = seen.RemoveAll(TheLongestYear.Core.Ending.PostCompletionEvents.IsHandedOffOnly);
+            if (removed > 0)
+                this.Monitor.Log(
+                    $"Removed {removed} current-run hand-off event id(s) from SeenEventsEver " +
+                    "(the CC ceremony flag must not survive a loop).",
+                    LogLevel.Info);
         }
 
         /// <summary>The exclusion seed for the replayable-cutscene scan: events we explicitly suppress

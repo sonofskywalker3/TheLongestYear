@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Tools;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Ending;
 
 namespace TheLongestYear.Loop
 {
@@ -211,6 +212,11 @@ namespace TheLongestYear.Loop
                 if (EventGatingTables.Default.IsReplayable(id)
                     || ReplayableEventScan.IsReplayable(id)) continue;
                 if (RelationshipEventIndex.Contains(id)) continue;
+                // Current-run hand-off ids (the CC completion ceremony the ending's Keep-playing
+                // branch writes into eventsSeen) are never re-seeded: a fresh loop must not open with
+                // vanilla's post-completion world on a zero-bundle board. Belt and braces with
+                // RecordSeenEvents, which already keeps them out of SeenEventsEver.
+                if (PostCompletionEvents.IsHandedOffOnly(id)) continue;
                 if (p.eventsSeen.Contains(id)) continue;
                 p.eventsSeen.Add(id);
                 reseeded++;
@@ -224,6 +230,14 @@ namespace TheLongestYear.Loop
             // which is exactly how Data/Powers grants the power.
             foreach (string id in baseline.KeptEventIds)
                 p.eventsSeen.Add(id);
+
+            // Last word on the hand-off ids: whatever the re-seed, the intro seed or a kept-event row
+            // put back, the CC completion ceremony flag leaves the fresh loop's eventsSeen. Without
+            // this the new Spring 1 would have a destroyed JojaMart, Pierre open Wednesdays and a
+            // lightning cutscene queued on the first storm (spec section 3).
+            foreach (string id in new System.Collections.Generic.List<string>(p.eventsSeen))
+                if (PostCompletionEvents.IsHandedOffOnly(id))
+                    p.eventsSeen.Remove(id);
 
             // Max health/stamina — rewind to the vanilla formula before refilling. NEVER reset
             // before (found live 2026-07-10: 500 max HP after 27 loops): maxHealth is a plain
