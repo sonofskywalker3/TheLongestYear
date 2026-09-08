@@ -3,6 +3,24 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.8 - 2026-09-08
+
+1991 tests.
+
+### Fixed
+
+- **A must-donate-all bundle's season gate takes any of its items.** The Bundle Log showed only
+  the items the deadline spread had pinned to the current season, and the gate refused the
+  bundle's other items even though the board takes any of them. The pins now decide how many of
+  the bundle are due by each checkpoint; which ones you bring is your call, as it already was for
+  pick-X-of-Y bundles. Winter still wants every slot. Reported by ada113.
+- **The Cookbook and Craftbook open between the shrine and the reset.** The books start at 0
+  slots, the first tier is bought at the loop-boundary shrine, and the reset that follows wipes
+  every learned recipe, so a book bought at the shrine had nothing to bank by the time it was
+  first opened. After the shrine closes, each book with a free slot and a recipe worth keeping now
+  opens with a one-line prompt, and the reset runs once both are closed. The pickers also stop
+  listing the new-save starter recipes, which the reset re-seeds anyway. Reported by ada113.
+
 ## 0.17.6 - 2026-09-07
 
 1987 tests.
