@@ -191,10 +191,9 @@ namespace TheLongestYear.Integration
                 {
                     // A real Junimo actor never loads a portrait itself; the mod serves Portraits/Junimo<i>.
                     try { portrait = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("Portraits/" + name); }
-                    catch (Exception ex) { monitor.Log($"{SayName}: no portrait for {name} ({ex.GetType().Name}); the box shows the name only.", LogLevel.Trace); }
+                    catch (Exception ex) { monitor.Log($"{SayName}: no portrait for {name} ({ex.GetType().Name}); the box shows the line only.", LogLevel.Trace); }
                 }
-                string display = actor?.displayName ?? name;
-                Game1.activeClickableMenu = new EndingSpeechBox(portrait, display, pages);
+                Game1.activeClickableMenu = new EndingSpeechBox(portrait, pages);
                 _saying = true;
             });
 
