@@ -73,17 +73,17 @@ namespace TheLongestYear.UI
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
         }
 
-        public void OpenCookbook()
+        public void OpenCookbook(string subtitle = null)
         {
             if (!CanOpen()) return;
-            Game1.activeClickableMenu = new CookbookMenu(_monitor, _store.State);
+            Game1.activeClickableMenu = new CookbookMenu(_monitor, _store.State, subtitle);
             _monitor.Log("Opened Cookbook menu.", LogLevel.Info);
         }
 
-        public void OpenCraftbook()
+        public void OpenCraftbook(string subtitle = null)
         {
             if (!CanOpen()) return;
-            Game1.activeClickableMenu = new CraftbookMenu(_monitor, _store.State);
+            Game1.activeClickableMenu = new CraftbookMenu(_monitor, _store.State, subtitle);
             _monitor.Log("Opened Craftbook menu.", LogLevel.Info);
         }
 
