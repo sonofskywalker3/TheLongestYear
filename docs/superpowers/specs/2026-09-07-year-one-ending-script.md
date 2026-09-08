@@ -19,7 +19,7 @@ How to read the tables: tiles are map coordinates (column, row). Facing: 0 up, 1
 | Junimos | Four on the ground in Town (green, orange, turquoise, gold), six on the hall floor (the same four plus purple and salmon). Real Junimo actors: their size, their colour, their idle bob and hops. Every one is called "Junimo" on screen. |
 
 Dialogue: the porch uses the game's portrait box. Every Town and hall line uses the mod's own
-half-height portrait box (portrait at half size, name under it, line beside it), so the scene
+half-height portrait box (portrait at half size, line beside it, no name label), so the scene
 stays visible behind it.
 
 Transitions: every location change fades to black with the world intact, swaps the map and the

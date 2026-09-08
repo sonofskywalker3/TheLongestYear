@@ -9,7 +9,8 @@ using StardewValley.Menus;
 namespace TheLongestYear.Integration
 {
     /// <summary>A speech box about half the height of the game's portrait dialogue box: the speaker's
-    /// portrait at half size on the left with the name under it, the line beside it, pages on click.
+    /// portrait at half size on the left, the line beside it, pages on click. No name label: "Junimo"
+    /// said nothing and Lewis's fell off the bottom of the box (Jeff, 2026-09-08).
     /// Vanilla's portrait box is a fixed 384 px because its portrait frame is 388 px tall, and at
     /// 1080p that covered half of every ending scene (Jeff, 2026-09-07). Opened by the tlySay event
     /// command, which watches for it to close and then advances the script.</summary>
@@ -23,7 +24,6 @@ namespace TheLongestYear.Integration
         private const int OpenGuardMs = 200;   // ignore the click that opened us
 
         private readonly Texture2D _portrait;
-        private readonly string _name;
         private readonly List<string> _pages;
         private readonly int _textWidth;
         private int _page;
@@ -31,10 +31,9 @@ namespace TheLongestYear.Integration
         private float _charTimer;
         private float _age;
 
-        public EndingSpeechBox(Texture2D portrait, string name, List<string> pages)
+        public EndingSpeechBox(Texture2D portrait, List<string> pages)
         {
             _portrait = portrait;
-            _name = name;
             _pages = pages;
             _textWidth = BoxWidth - TextX - Pad;
             width = BoxWidth;
@@ -104,9 +103,6 @@ namespace TheLongestYear.Integration
                 int px = x + Pad, py = y + Pad;
                 drawTextureBox(b, Game1.mouseCursors, new Rectangle(384, 373, 18, 18), px - 12, py - 12, PortraitDrawn + 24, PortraitDrawn + 24, Color.White, 4f, drawShadow: false);
                 b.Draw(_portrait, new Rectangle(px, py, PortraitDrawn, PortraitDrawn), new Rectangle(0, 0, PortraitSize, PortraitSize), Color.White);
-                Vector2 size = Game1.smallFont.MeasureString(_name);
-                Utility.drawTextWithShadow(b, _name, Game1.smallFont,
-                    new Vector2(px + PortraitDrawn / 2f - size.X / 2f, py + PortraitDrawn + 16), Game1.textColor);
             }
             SpriteText.drawString(b, _pages[_page], x + TextX, y + Pad, _shown, _textWidth);
             if (PageDone)
