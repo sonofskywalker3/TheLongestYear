@@ -3,9 +3,9 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.17.10 - 2026-09-09
+## 0.17.11 - 2026-09-09
 
-1994 tests.
+2000 tests.
 
 ### Fixed
 
@@ -17,6 +17,13 @@ aims to follow [Semantic Versioning](https://semver.org/).
   60-donation reward re-fires each loop, but Gunther's farm visit that actually hands the key
   over was stuck "seen" and never played again. Without the Keep Rusty Key upgrade there was no
   way to open the sewers after the first loop. Reported by ChaoticMindset.
+- **A restored Community Center counts as complete.** With the loop active the mod answers
+  the game's "is the Community Center complete" question from the bundle board, so the Gifts of
+  the Junimos can't flip the hall to complete with rooms still open. On a finished hall that board
+  walk could still say no, and everything downstream of the game's own question went quiet:
+  Willy's back-room letter never came, so Ginger Island stayed closed after choosing to keep
+  playing. Once every room's restoration has played, the hall itself is the authority. Reported
+  by ChaoticMindset.
 
 ### Changed
 
