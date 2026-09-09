@@ -197,12 +197,19 @@ namespace TheLongestYear.Loop
                 targets.Remove(next);
             }
 
+            int weekOfWinter = Run.WeekInMonth;
+            DifficultyStep step = Meta.BoardDifficulty(_config).Steps.StackSize;
             foreach (TamperTarget target in ordered)
             {
                 int effort = availability.For(target.ItemId).Effort;
                 TamperCandidate replacement = TamperRule.PickReplacement(target, effort, candidates, rng);
                 if (replacement == null) continue;
-                if (WriteTamper(worldState, target, replacement.ItemId, dayOfYear)) return true;
+                // The normal max count: the ceiling the board itself never rolls above (80% of the
+                // item's weekly basis, Jeff's 2026-08-30 ruling), by the Winter deadline.
+                double? basis = QuantityAskPass.BasisByDeadline(replacement.ItemId, CoreSeason.Winter);
+                int maxCount = basis == null ? 0 : (int)Math.Ceiling(basis.Value * AskBands.Ceiling);
+                int stack = TamperRule.Stack(maxCount, weekOfWinter, step, rng);
+                if (WriteTamper(worldState, target, replacement.ItemId, stack, dayOfYear)) return true;
             }
             _monitor.Log("Darkness: tampering rolled but no Winter item fits any open slot.", LogLevel.Info);
             return false;
@@ -259,13 +266,13 @@ namespace TheLongestYear.Loop
             return ids;
         }
 
-        private bool WriteTamper(StardewValley.Network.NetWorldState worldState, TamperTarget target, string newItemId, int dayOfYear)
+        private bool WriteTamper(StardewValley.Network.NetWorldState worldState, TamperTarget target, string newItemId, int stack, int dayOfYear)
         {
             Dictionary<string, string> live = worldState.BundleData;
             string key = BundleDataTamper.KeyForIndex(live, target.Bundle.BundleIndex);
             if (key == null) return false;
             Dictionary<string, string> tampered = BundleDataTamper.Apply(
-                live, key, target.IngredientIndex, newItemId, SabotageTuning.TamperStack, SabotageTuning.TamperQuality);
+                live, key, target.IngredientIndex, newItemId, stack, SabotageTuning.TamperQuality);
             if (tampered == null) return false;
 
             // The board, then the stored copy in lockstep: the next load's manifest check compares
@@ -285,15 +292,16 @@ namespace TheLongestYear.Loop
                 BundleName = target.Bundle.Name,
                 OldItemId = target.ItemId,
                 NewItemId = newItemId,
+                Stack = stack,
                 DayOfYear = dayOfYear,
             });
             Run.PendingSabotageReports.Add(new SabotageReport
             {
-                Kind = SabotageKind.Tampering, Count = 1, BundleName = target.Bundle.Name,
+                Kind = SabotageKind.Tampering, Count = stack, BundleName = target.Bundle.Name,
                 ItemId = newItemId, OldItemId = target.ItemId,
             });
             _monitor.Log(
-                $"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} now asks for {Strings.ItemName(newItemId)} instead of {Strings.ItemName(target.ItemId)} ({Run.Season} {Run.DayOfMonth}).",
+                $"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} now asks for {stack} {Strings.ItemName(newItemId)} instead of {Strings.ItemName(target.ItemId)} ({Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             _rebuildBoard("darkness tampering");
             return true;
@@ -314,9 +322,9 @@ namespace TheLongestYear.Loop
                 return false;
             }
             string oldName = Strings.ItemName(tamper.OldItemId);
-            string newName = Strings.ItemName(tamper.ItemId);
+            string ask = tamper.Count > 1 ? $"{tamper.Count} {Strings.ItemName(tamper.ItemId)}" : Strings.ItemName(tamper.ItemId);
             Run.PendingSabotageReports.RemoveAll(r => r.Kind == SabotageKind.Tampering);
-            StartTamperScene(oldName, newName, () => { ShowMorningReports(); continueWith?.Invoke(); });
+            StartTamperScene(oldName, ask, () => { ShowMorningReports(); continueWith?.Invoke(); });
             return true;
         }
 
@@ -368,7 +376,7 @@ namespace TheLongestYear.Loop
                 $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; units in chests (stash excluded): {SpoilagePass.StoredUnits()}",
             };
             foreach (TamperRecord t in Run.Tampers)
-                lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {Strings.ItemName(t.OldItemId)} -> {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");
+                lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {Strings.ItemName(t.OldItemId)} -> {t.Stack} {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");
             if (Run.PendingSabotageReports.Count > 0)
                 lines.Add($"  pending morning reports: {Run.PendingSabotageReports.Count}");
             return string.Join("\n", lines);

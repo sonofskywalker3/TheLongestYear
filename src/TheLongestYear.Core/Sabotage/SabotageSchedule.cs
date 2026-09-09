@@ -43,8 +43,12 @@ public static class SabotageTuning
     public const int TamperQuietFromDay = 21;
     /// <summary>How many of the closest-in-effort replacement candidates the roll picks among.</summary>
     public const int TamperCandidatePool = 5;
-    public const int TamperStack = 1;
     public const int TamperQuality = 0;
+    /// <summary>The tampered stack (Jeff, 2026-09-09): the item's normal max count, divided by the
+    /// Winter weeks already passed, then a roll of this wide a slice per difficulty step: Easy
+    /// 0 to 10%, Normal 10 to 20%, Hard 20 to 30%, Extreme 30 to 40%. A scramble, never a
+    /// trade-down to something trivial.</summary>
+    public const double TamperSliceWidth = 0.10;
 }
 
 /// <summary>Which fronts are open, whether tonight rolls, and the per-week and per-season caps.

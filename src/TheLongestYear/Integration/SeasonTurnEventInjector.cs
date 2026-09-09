@@ -65,8 +65,8 @@ namespace TheLongestYear.Integration
             // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
             string[] lines =
             {
-                Strings.Get("event.darkness.tamper-1"),
-                Strings.Get("event.darkness.tamper-2", new Dictionary<string, string> { ["old"] = oldItemName ?? "" }),
+                Strings.Get("event.darkness.tamper-1", new Dictionary<string, string> { ["old"] = oldItemName ?? "" }),
+                Strings.Get("event.darkness.tamper-2"),
                 Strings.Get("event.darkness.tamper-3", new Dictionary<string, string> { ["new"] = newItemName ?? "" }),
             };
             int[] who = { 0, 1, 0 };

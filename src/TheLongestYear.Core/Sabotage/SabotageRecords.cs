@@ -10,6 +10,7 @@ public sealed class TamperRecord
     public string BundleName { get; set; } = "";
     public string OldItemId { get; set; } = "";
     public string NewItemId { get; set; } = "";
+    public int Stack { get; set; } = 1;
     public int DayOfYear { get; set; }
 }
 

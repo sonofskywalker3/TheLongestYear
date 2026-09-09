@@ -219,6 +219,23 @@ public class TamperRuleTests
         Assert.Equal("(O)414", pick!.ItemId);
     }
 
+    [Theory]
+    [InlineData(100, 1, DifficultyStep.Normal, 10, 20)]   // weeks 1 and 2 keep the whole count
+    [InlineData(100, 2, DifficultyStep.Normal, 10, 20)]
+    [InlineData(100, 3, DifficultyStep.Normal, 5, 10)]    // week 3: 50 left, 10 to 20% of it
+    [InlineData(100, 4, DifficultyStep.Easy, 1, 3)]       // week 4: 33 left, 0 to 10% of it
+    [InlineData(100, 3, DifficultyStep.Hard, 10, 15)]
+    [InlineData(100, 3, DifficultyStep.Extreme, 15, 20)]
+    [InlineData(0, 3, DifficultyStep.Extreme, 1, 1)]      // no known max count: one
+    public void Tampered_stack_is_a_difficulty_slice_of_what_the_weeks_left(int max, int week, DifficultyStep step, int low, int high)
+    {
+        for (int seed = 0; seed < 50; seed++)
+        {
+            int stack = TamperRule.Stack(max, week, step, new Random(seed));
+            Assert.InRange(stack, low, high);
+        }
+    }
+
     [Fact]
     public void The_bulletin_board_takes_any_theme_and_closest_effort_wins()
     {

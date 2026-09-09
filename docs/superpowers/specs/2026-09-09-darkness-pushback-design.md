@@ -122,9 +122,15 @@ sting is that the thing you were saving is no longer asked for.
 Replacement item: from the mod's item catalog, same room theme as the bundle (the Bulletin
 Board's Mixed accepts any theme), not already an ingredient of that bundle, placed by the
 availability model with a pacing week in Winter (13 to the current week). Among those, the five
-closest in effort to the original item, one at random. Stack 1, quality basic (assumption: the
-quantity-realism ruling of 2026-08-30 says never roll a number that was not measured; a swap the
-player could not plan for gets the gentlest ask). If no candidate exists, nothing happens.
+closest in effort to the original item, one at random. Quality basic. If no candidate exists,
+nothing happens.
+
+**Stack (Jeff, 2026-09-09): a scramble, not a trade-down.** Start from the replacement's normal
+max count (80% of its weekly basis by the Winter deadline, the ceiling the board never rolls
+above). Divide by the Winter weeks already passed: weeks 1 and 2 keep it whole, week 3 halves
+it, week 4 thirds it. Then roll a slice of what is left by the Stack size difficulty step: Easy
+0 to 10%, Normal 10 to 20%, Hard 20 to 30%, Extreme 30 to 40%. Never below one; an item with no
+measured basis asks for one. Example: max 100, week 3, Normal: 50 left, ask 5 to 10.
 
 The write: rewrite that ingredient triple in the live `BundleData` entry, `SetBundleData`, update
 `MetaState.WrittenBoard` in lockstep (else the next load fails the manifest check and silently
