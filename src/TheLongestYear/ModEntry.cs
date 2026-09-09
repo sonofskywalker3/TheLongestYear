@@ -488,6 +488,8 @@ namespace TheLongestYear
             // not end the day, so the map stays re-entrant and vanilla would offer the hunt again.
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = () => _meta.Run;
             TheLongestYear.Loop.FestivalMainEventOncePatch.Monitor = this.Monitor;
+            TheLongestYear.Loop.CommunityCenterCompletePatch.Monitor = this.Monitor;
+            TheLongestYear.Loop.CommunityCenterCompletePatch.ResetLogGuards();
             // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
