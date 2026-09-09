@@ -3,7 +3,6 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-<<<<<<< HEAD
 ## Unreleased
 
 ### Added
@@ -18,10 +17,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
-## 0.17.10 - 2026-09-09
-=======
 ## 0.17.11 - 2026-09-09
->>>>>>> master
 
 2000 tests.
 
