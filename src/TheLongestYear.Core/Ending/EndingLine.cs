@@ -55,8 +55,14 @@ public static class EndingLine
         return EndingLineTier.Talks;
     }
 
+    /// <summary>Jeff, 2026-09-09: the Talks line ("I remember talking with you before you got here")
+    /// does not work, so the Talks and Gifts tiers share the tier-3 text ("the very first time I
+    /// saw you I could have sworn we'd already met"). The tier itself stays distinct for the log.</summary>
     public static string MiddleKey(string npc, EndingLineTier tier)
-        => VoiceOverrides.Contains(npc) ? $"{MiddlePrefix}{(int)tier}.{npc}" : $"{MiddlePrefix}{(int)tier}";
+    {
+        int keyTier = tier == EndingLineTier.Talks ? (int)EndingLineTier.Gifts : (int)tier;
+        return VoiceOverrides.Contains(npc) ? $"{MiddlePrefix}{keyTier}.{npc}" : $"{MiddlePrefix}{keyTier}";
+    }
 
     public static string? SceneKey(string eventId)
         => SceneTable.TryGetValue(eventId, out string? key) ? key : null;
