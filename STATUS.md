@@ -7,6 +7,18 @@
 **Last public release:** 0.16.167 (2026-08-29 night; GitHub release + Nexus file, version, description and changelog all live)
 **NEXT SESSION (2026-08-29 night):** JP Boosts built (spec + plan in docs/superpowers, 15 rows, three shrine tabs; live-checked over the bridge, `tly_openshrine` opens each tab; Jeff still owes the visual pass and rulings on Night Owl / Backpack Organizer, Fast Friends x1.65 with the book, host-only Boosts tab). Then release notes (README What's New + Nexus description + changelog) and release, Jeff's call. Nothing pushed.
 
+## 2026-09-09: Darkness pushback built on branch story (not live-tested, not merged)
+
+The sabotage mechanic from the story spec section 6: blight withers crops from Summer, a donated
+slot comes undone from Fall, an unfilled slot changes item in Winter. Wards tab at the shrine
+(two crop wards, five hall wards), three GMCM switches under Features, `tly_sabotage` debug
+command (status, blight [n], revert, tamper, report). Spec with every assumed number:
+`docs/superpowers/specs/2026-09-09-darkness-pushback-design.md`. Commits fa2eaa6 (spec) and
+b8ae6e3 (code) on `story`; nothing pushed. 2096 tests passing, build clean.
+**Still to do:** live run per the spec's Testing section (blight on a Summer save, revert and
+tamper on a Fall or Winter save, then reload and confirm "Requirements source: engine manifest"
+in the log). Jeff still owes the numbers and the ward prices.
+
 ## 2026-09-06: Year One Ending built on branch year-one-ending (not merged, not released)
 
 Finishing the Community Center now ends the year the next morning with a real event (hall steps,
