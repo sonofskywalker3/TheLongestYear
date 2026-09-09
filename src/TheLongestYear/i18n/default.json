@@ -704,9 +704,9 @@
     "event.turn.winter-2": "It is not only the fields now. It has found the hall. Gifts you gave came undone in the night. We put back what we could.",
     "event.turn.winter-3": "Winter is its season. It will not rot your crops. It will change what the hall asks of you.",
     "event.turn.winter-4": "One more season. Whatever the board says on a morning it changes, trust the work. On Winter 28 we will know.",
-    "event.darkness.tamper-1": "@! Wake up. Something is wrong with the hall.",
-    "event.darkness.tamper-2": "The darkness got into the {{old}}. All of them, everywhere. If we weave one into the hall, it comes in with it.",
-    "event.darkness.tamper-3": "We crossed it off the scroll. Bring us {{new}} instead. It has not touched those yet. Hurry.",
+    "event.darkness.tamper-1": "@, the {{old}} are tainted now. All of them.",
+    "event.darkness.tamper-2": "The darkness has touched them. We can no longer use them for our restoration.",
+    "event.darkness.tamper-3": "Bring us {{new}} instead. It remains pure.",
 
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
     "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year. Don't worry, we have enough power left over to give you a head-start this time.#$b#Before we do, tell us: should we hold the town's wishes steady, or let time reshuffle them?$h",

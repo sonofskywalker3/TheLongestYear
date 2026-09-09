@@ -143,6 +143,23 @@ public static class TamperRule
         return pool[rng.Next(pool.Count)];
     }
 
+    /// <summary>How many of the replacement the hall asks for (Jeff, 2026-09-09). Start from the
+    /// item's normal max count, divide by the Winter weeks already passed (week 3 halves it, week
+    /// 4 thirds it; weeks 1 and 2 keep it whole), then roll a 10%-wide slice of what is left by
+    /// difficulty: Easy 0 to 10%, Normal 10 to 20%, Hard 20 to 30%, Extreme 30 to 40%. Never
+    /// below one. An item with no known max count asks for one.</summary>
+    public static int Stack(int maxCount, int weekOfWinter, DifficultyStep step, Random rng)
+    {
+        if (rng is null) throw new ArgumentNullException(nameof(rng));
+        if (maxCount <= 0) return 1;
+        int weeksPassed = Math.Max(1, weekOfWinter - 1);
+        double remainder = (double)maxCount / weeksPassed;
+        double low = (int)step * SabotageTuning.TamperSliceWidth;
+        double high = low + SabotageTuning.TamperSliceWidth;
+        double fraction = low + rng.NextDouble() * (high - low);
+        return Math.Max(1, (int)Math.Round(remainder * fraction, MidpointRounding.AwayFromZero));
+    }
+
     /// <summary>The replacement: same room theme (the Bulletin Board's Mixed takes any), not
     /// already in the bundle, then the closest few in effort to the original, one at random.</summary>
     public static TamperCandidate? PickReplacement(
