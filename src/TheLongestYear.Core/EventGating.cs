@@ -53,7 +53,16 @@ public sealed class EventGatingTables
         { "addCraftingRecipe", "addCookingRecipe", "addMailReceived", "mailReceived", "addQuest",
           // Letter-delivering commands: the letter carries the unlock (e.g. Caroline's 2-heart Sunroom
           // event 719926 grants the Tea Sapling recipe via "mail CarolineTea" — Nexus bug 1115192).
-          "mail", "mailToday", "hostMail" };
+          "mail", "mailToday", "hostMail",
+          // Quest-COMPLETION scenes (Nexus bug 1130863): the reset wipes the quest log and the
+          // quest-granting scene replays (addQuest above), so the scene that finishes the quest
+          // (Jodi's bass dinner SamHouse 94, Marnie's cave carrot AnimalShop 92) must replay too
+          // or the re-granted quest can never be turned in.
+          "removeQuest",
+          // Gunther's farm visit (Farm 66) grants the Rusty Key with its own command, not mail.
+          // The reset wipes the key and the museum, so the 60-donation reward re-fires each loop
+          // but the scene that hands the key over was stuck "seen".
+          "rustyKey" };
 
     /// <summary>The grant command this script runs (for diagnostics), or null if none. Event scripts
     /// are "/"-delimited command segments; a grant is detected when a segment STARTS WITH a token
