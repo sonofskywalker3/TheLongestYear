@@ -1712,7 +1712,7 @@ namespace TheLongestYear
                     int crops = args.Length > 1 && int.TryParse(args[1], out int c) ? c
                         : TheLongestYear.Loop.BlightPass.CountFor(_meta.Run.Season);
                     int spoil = args.Length > 2 && int.TryParse(args[2], out int sp) ? sp
-                        : TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(TheLongestYear.Loop.SpoilagePass.PerishableUnits());
+                        : TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(TheLongestYear.Loop.SpoilagePass.StoredUnits());
                     int taken = _sabotage.Blight(crops, spoil, rng);
                     this.Monitor.Log($"Blight: {taken} thing(s) taken (asked {crops} crops, {spoil} stored). Sleep to see the report.", LogLevel.Info);
                     break;

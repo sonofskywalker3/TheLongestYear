@@ -22,18 +22,19 @@ public static class BlightRule
         return Math.Min(n, liveCrops);
     }
 
-    /// <summary>How many stored perishable units spoil on a blight night, from the total the
-    /// player has in chests (the Junimo Stash excluded by the caller).</summary>
-    public static int SpoilCount(int perishableUnits)
+    /// <summary>How many stored units are taken on a blight night, from the total the player has
+    /// in chests (the Junimo Stash excluded by the caller).</summary>
+    public static int SpoilCount(int storedUnits)
     {
-        if (perishableUnits <= 0) return 0;
-        int n = (int)Math.Ceiling(perishableUnits * SabotageTuning.SpoilShare);
+        if (storedUnits <= 0) return 0;
+        int n = (int)Math.Ceiling(storedUnits * SabotageTuning.SpoilShare);
         n = Math.Max(SabotageTuning.SpoilMinPerNight, Math.Min(SabotageTuning.SpoilMaxPerNight, n));
-        return Math.Min(n, perishableUnits);
+        return Math.Min(n, storedUnits);
     }
 
-    /// <summary>Vanilla object categories that rot: vegetables, fruit, flowers, forage greens,
-    /// fish, eggs, milk and other animal products. Artisan goods, minerals and the rest keep.</summary>
+    /// <summary>Vanilla object categories that are food and so "spoil": vegetables, fruit,
+    /// flowers, forage greens, fish, eggs, milk and other animal products, cooked dishes,
+    /// artisan goods. Anything else taken from a chest "goes missing" instead.</summary>
     public static bool IsPerishableCategory(int category) => category switch
     {
         -75 => true,   // vegetable
@@ -44,6 +45,8 @@ public static class BlightRule
         -5 => true,    // egg
         -6 => true,    // milk
         -18 => true,   // animal product
+        -7 => true,    // cooking
+        -26 => true,   // artisan goods
         _ => false,
     };
 

@@ -6,9 +6,11 @@ using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>The blight front reaching indoors (Jeff, 2026-09-09): perishables in the player's
-    /// chests spoil in the night, one unit at a time off random stacks. Every chest on every map
-    /// counts except the Junimo Stash, which is the cross-loop bank and is never touched.</summary>
+    /// <summary>The blight front reaching into storage (Jeff, 2026-09-09): units vanish from the
+    /// player's chests in the night, one at a time off random stacks. Food spoils; anything else
+    /// goes missing, taken by the people and creatures the darkness works through. Every chest
+    /// on every map counts except the Junimo Stash, which is the cross-loop bank and is never
+    /// touched. Only plain objects are taken (never tools, weapons or big craftables).</summary>
     internal static class SpoilagePass
     {
         private sealed class Stack
@@ -18,8 +20,15 @@ namespace TheLongestYear.Loop
             public Item Item;
         }
 
-        /// <summary>Every perishable stack in a chest that is not the stash, in a stable order.</summary>
-        private static List<Stack> PerishableStacks()
+        public readonly struct Taken
+        {
+            public readonly int Spoiled;
+            public readonly int Missing;
+            public Taken(int spoiled, int missing) { Spoiled = spoiled; Missing = missing; }
+            public int Total => Spoiled + Missing;
+        }
+
+        private static List<Stack> Stacks()
         {
             var stacks = new List<Stack>();
             Utility.ForEachLocation(loc =>
@@ -33,7 +42,7 @@ namespace TheLongestYear.Loop
                     {
                         Item item = items[i];
                         if (item == null || item.Stack <= 0) continue;
-                        if (!BlightRule.IsPerishableCategory(item.Category)) continue;
+                        if (item is not StardewValley.Object o || o.bigCraftable.Value) continue;
                         stacks.Add(new Stack { Chest = chest, Slot = i, Item = item });
                     }
                 }
@@ -42,21 +51,21 @@ namespace TheLongestYear.Loop
             return stacks;
         }
 
-        /// <summary>Total perishable units stored, for the roll.</summary>
-        public static int PerishableUnits()
+        /// <summary>Total units stored in chests (stash excluded), for the roll.</summary>
+        public static int StoredUnits()
         {
             int units = 0;
-            foreach (Stack s in PerishableStacks()) units += s.Item.Stack;
+            foreach (Stack s in Stacks()) units += s.Item.Stack;
             return units;
         }
 
-        /// <summary>Spoil up to <paramref name="count"/> units, each off a stack picked by
-        /// <paramref name="rng"/> weighted by stack size. Returns how many were removed.</summary>
-        public static int Strike(int count, Random rng)
+        /// <summary>Take up to <paramref name="count"/> units, each off a stack picked by
+        /// <paramref name="rng"/> weighted by stack size.</summary>
+        public static Taken Strike(int count, Random rng)
         {
-            if (count <= 0) return 0;
-            List<Stack> stacks = PerishableStacks();
-            int spoiled = 0;
+            if (count <= 0) return new Taken(0, 0);
+            List<Stack> stacks = Stacks();
+            int spoiled = 0, missing = 0;
             for (int n = 0; n < count && stacks.Count > 0; n++)
             {
                 int total = 0;
@@ -70,14 +79,14 @@ namespace TheLongestYear.Loop
                     if (roll < 0) { hit = s; break; }
                 }
                 hit.Item.Stack -= 1;
-                spoiled++;
+                if (BlightRule.IsPerishableCategory(hit.Item.Category)) spoiled++; else missing++;
                 if (hit.Item.Stack <= 0)
                 {
                     hit.Chest.Items[hit.Slot] = null;
                     stacks.Remove(hit);
                 }
             }
-            return spoiled;
+            return new Taken(spoiled, missing);
         }
     }
 }

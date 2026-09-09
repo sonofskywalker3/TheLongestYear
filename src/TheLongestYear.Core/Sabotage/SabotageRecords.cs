@@ -20,8 +20,10 @@ public sealed class SabotageReport
     public SabotageKind Kind { get; set; }
     /// <summary>Blight: crops that withered. Reversion and tampering: 1.</summary>
     public int Count { get; set; }
-    /// <summary>Blight: stored perishable units that spoiled.</summary>
+    /// <summary>Blight: stored food units that spoiled.</summary>
     public int Spoiled { get; set; }
+    /// <summary>Blight: stored non-food units that went missing.</summary>
+    public int Missing { get; set; }
     public string BundleName { get; set; } = "";
     public string ItemId { get; set; } = "";
     public string OldItemId { get; set; } = "";

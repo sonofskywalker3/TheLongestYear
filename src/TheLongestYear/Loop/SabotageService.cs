@@ -79,7 +79,7 @@ namespace TheLongestYear.Loop
                 {
                     // The ward covers crops in the ground, not chests (Jeff, 2026-09-09).
                     int crops = CropsWarded(season) ? 0 : BlightPass.CountFor(season);
-                    int spoil = BlightRule.SpoilCount(SpoilagePass.PerishableUnits());
+                    int spoil = BlightRule.SpoilCount(SpoilagePass.StoredUnits());
                     if (Blight(crops, spoil, rng) > 0)
                         SabotageSchedule.RecordStrike(SabotageKind.Blight, Run, week, dayOfYear);
                 }
@@ -116,15 +116,18 @@ namespace TheLongestYear.Loop
         public int Blight(int crops, int spoil, Random rng)
         {
             int killed = BlightPass.Strike(crops, rng);
-            int spoiled = SpoilagePass.Strike(spoil, rng);
-            if (killed <= 0 && spoiled <= 0)
+            SpoilagePass.Taken taken = SpoilagePass.Strike(spoil, rng);
+            if (killed <= 0 && taken.Total <= 0)
             {
-                _monitor.Log("Darkness: blight rolled but found nothing to wither or spoil.", LogLevel.Trace);
+                _monitor.Log("Darkness: blight rolled but found nothing to strike or take.", LogLevel.Trace);
                 return 0;
             }
-            Run.PendingSabotageReports.Add(new SabotageReport { Kind = SabotageKind.Blight, Count = killed, Spoiled = spoiled });
-            _monitor.Log($"Darkness: blight withered {killed} crop(s) and spoiled {spoiled} stored unit(s) on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
-            return killed + spoiled;
+            Run.PendingSabotageReports.Add(new SabotageReport
+            {
+                Kind = SabotageKind.Blight, Count = killed, Spoiled = taken.Spoiled, Missing = taken.Missing,
+            });
+            _monitor.Log($"Darkness: {killed} crop(s) struck down, {taken.Spoiled} stored unit(s) spoiled, {taken.Missing} gone missing on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
+            return killed + taken.Total;
         }
 
         // ------------------------------------------------------------------ reversion
@@ -302,33 +305,35 @@ namespace TheLongestYear.Loop
             if (!RunActivation.IsActive) return;
             List<SabotageReport> reports = Run.PendingSabotageReports;
             if (reports == null || reports.Count == 0) return;
+            // The hall fronts share one line and say it once, however many struck (Jeff, 2026-09-09:
+            // the player wakes with a feeling, the board tells the rest).
+            bool hallSaid = false;
             foreach (SabotageReport report in reports)
             {
                 _mail?.SendFirstStrikeLetter(report.Kind);
-                if (report.Kind == SabotageKind.Blight && report.Spoiled > 0)
-                    Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.sabotage.spoilage",
-                        new Dictionary<string, string> { ["count"] = report.Spoiled.ToString() }), HUDMessage.error_type));
-                string text = report.Kind switch
+                switch (report.Kind)
                 {
-                    SabotageKind.Blight when report.Count > 0 => Strings.Get("hud.sabotage.blight",
-                        new Dictionary<string, string> { ["count"] = report.Count.ToString() }),
-                    SabotageKind.Reversion => Strings.Get("hud.sabotage.reversion",
-                        new Dictionary<string, string> { ["item"] = Strings.ItemName(report.ItemId), ["bundle"] = report.BundleName }),
-                    SabotageKind.Tampering => Strings.Get("hud.sabotage.tamper",
-                        new Dictionary<string, string>
-                        {
-                            ["bundle"] = report.BundleName,
-                            ["item"] = Strings.ItemName(report.ItemId),
-                            ["old"] = Strings.ItemName(report.OldItemId),
-                        }),
-                    _ => null,
-                };
-                if (text != null)
-                    Game1.addHUDMessage(new HUDMessage(text, HUDMessage.error_type));
+                    case SabotageKind.Blight:
+                        // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
+                        if (report.Count > 0)
+                            Hud(Strings.Get("hud.sabotage.blight", new Dictionary<string, string> { ["count"] = report.Count.ToString() }));
+                        if (report.Spoiled > 0)
+                            Hud(Strings.Get("hud.sabotage.spoiled", new Dictionary<string, string> { ["count"] = report.Spoiled.ToString() }));
+                        if (report.Missing > 0)
+                            Hud(Strings.Get("hud.sabotage.missing", new Dictionary<string, string> { ["count"] = report.Missing.ToString() }));
+                        break;
+                    case SabotageKind.Reversion:
+                    case SabotageKind.Tampering:
+                        if (!hallSaid) Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.sabotage.hall"), HUDMessage.error_type));
+                        hallSaid = true;
+                        break;
+                }
             }
             reports.Clear();
             Game1.playSound("shadowDie");
         }
+
+        private static void Hud(string text) => Game1.addHUDMessage(new HUDMessage(text, HUDMessage.error_type));
 
         /// <summary>One-screen status for tly_sabotage.</summary>
         public string Status()
@@ -339,7 +344,7 @@ namespace TheLongestYear.Loop
                 $"  season {Run.Season} day {Run.DayOfMonth}: open fronts = {string.Join(", ", Enum.GetValues(typeof(SabotageKind)).Cast<SabotageKind>().Where(k => SabotageSchedule.IsOpen(k, Run.Season)))}",
                 $"  wards owned: {string.Join(", ", WardIds.All.Where(Meta.HasUpgrade).DefaultIfEmpty("none"))}",
                 $"  blight week {Run.BlightWeek} nights {Run.BlightNightsThisWeek}; last reversion week {Run.LastReversionWeek}; tamper days [{string.Join(",", Run.TamperDays)}]",
-                $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; perishable units in chests (stash excluded): {SpoilagePass.PerishableUnits()}",
+                $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; units in chests (stash excluded): {SpoilagePass.StoredUnits()}",
             };
             foreach (TamperRecord t in Run.Tampers)
                 lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {Strings.ItemName(t.OldItemId)} -> {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");

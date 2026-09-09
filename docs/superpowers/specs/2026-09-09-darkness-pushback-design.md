@@ -70,12 +70,14 @@ The greenhouse, indoor pots, Ginger Island and every other map are exempt (the d
 the land, and the greenhouse is the Junimos' gift). A Ward of the Fields for the season stops
 this half only.
 
-Storage targets: perishable stacks (vegetables, fruit, flowers, forage greens, fish, eggs, milk,
-animal products) in any chest on any map, one unit at a time off a stack picked in proportion to
-its size. The Junimo Stash is never touched. Artisan goods, minerals and everything else keep.
-No ward covers chests today (Jeff is naming one; see Open).
+Storage targets: plain object stacks in any chest on any map, one unit at a time off a stack
+picked in proportion to its size (tools, weapons and big craftables never). The Junimo Stash is
+never touched. Food (vegetables, fruit, flowers, forage, fish, eggs, milk, animal products,
+dishes, artisan goods) "spoils"; anything else "goes missing", taken by the people and creatures
+the darkness works through (Jeff, 2026-09-09). No ward covers chests.
 
-Morning lines: `hud.sabotage.blight` with the crop count, `hud.sabotage.spoilage` with the units.
+Morning lines (Jeff's wording): "{n} crops were struck down by the darkness overnight.", "Some of
+your things have spoiled in the night.", "Some of your things have gone missing overnight."
 
 ## Reversion
 
@@ -100,7 +102,8 @@ clone-assign, then `ItemDonationSync.Reconcile`. The item is consumed. Re-donati
 JP again (the observer sees a fresh false-to-true); that is the darkness's tax, not an exploit,
 and it is deliberate.
 
-Morning line: `hud.sabotage.reversion` with the item and bundle names.
+Morning line, shared with tampering and said once: "You awaken with a feeling that something
+is wrong at the Community Center." The board tells the rest.
 
 ## Tampering
 
@@ -130,7 +133,14 @@ demotes to the legacy path), rebuild the catalog and the requirements through th
 was this week's goal. A `TamperRecord` (bundle, slot, old id, new id, day) is kept on the run for
 `tly_sabotage status` and the log.
 
-Morning line: `hud.sabotage.tamper` with the bundle, old and new item names.
+Morning line: the shared Community Center line above.
+
+## First-strike letters
+
+The first time each front strikes on a save (once per save, `MetaState.SabotageLettersSent`), a
+villager's letter arrives with the morning report: Linus saw the crops go black (blight), Shane
+saw shadows through the Community Center windows (reversion), Lewis swears a bundle scroll
+changed (tampering). Short, and placeholders for Jeff. Keys `mail.darkness.*`.
 
 ## Wards (shrine)
 
@@ -190,8 +200,7 @@ manifest, not the legacy path.
 ## Open for Jeff
 
 - Every number in the tables.
-- A storage ward: Jeff wants one tied to the player (the Junimos' power is tied to you), shaped so
-  it changes how a player stores things, and a name for it. Not built.
+- A storage ward. Hearth and Lantern were both too hokey; not built, no shape agreed.
 - Ward prices.
 - A Darkness difficulty dial (Easy to Extreme) alongside the off switches. Not built.
 - Whether the Wards tab should hide when blight is off.
