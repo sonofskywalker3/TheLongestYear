@@ -11,6 +11,12 @@ public class ReplayableDetectionTests
     [InlineData("speak Marlon \"...\"/addMailReceived guildMember/end", "addMailReceived")]
     [InlineData("mailReceived guildMember/end", "mailReceived")]
     [InlineData("addQuest 16/end", "addQuest")]
+    // Quest-completion scenes (Nexus bug 1130863): Jodi's bass dinner (SamHouse 94) and Marnie's
+    // cave carrot (AnimalShop 92) finish a quest the reset re-grants, so they must replay too.
+    [InlineData("50s/6 15/farmer 4 19 0 Sam 17 13 0 Jodi 7 4 0/removeItem 136/removeQuest 22/speed Jodi 4/end", "removeQuest")]
+    [InlineData("jaunty/13 17/farmer 13 19 0 Marnie 13 14 2/move farmer 0 -1 0/removeQuest 21/removeItem 78/friendship Marnie 100/end", "removeQuest")]
+    // Gunther's farm visit (Farm 66) hands over the Rusty Key with its own command, not mail.
+    [InlineData("continue/64 15/farmer 64 16 2 Gunther 64 18 0/broadcastEvent/rustyKey/skippable/pause 1500/end", "rustyKey")]
     public void MatchedGrantToken_finds_the_grant_command(string script, string expected)
     {
         Assert.Equal(expected, EventGatingTables.MatchedGrantToken(script));
