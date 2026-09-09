@@ -28,20 +28,20 @@ once they exist.
 | `event.ending.crack.tier4.Shane` | I remember talking to you before you ever showed up. Don't ask me how. |
 | `event.ending.crack.tier1.George` | A year, you say. Then why do I remember you giving me presents two different times? Hmph. |
 | `event.ending.crack.tier2.George` | I remember {{scene}}. So why do I remember it twice, if you've only been here a year? |
-| `event.ending.crack.tier3.George` | First time I laid eyes on you, I could have sworn we'd met. At my age you notice that. |
+| `event.ending.crack.tier3.George` | First time I laid eyes on you, I could've sworn we'd met. And my memory isn't that bad. |
 | `event.ending.crack.tier4.George` | I remember talking to you before you moved here. Don't tell me I'm losing it. |
 | `event.ending.crack.tier1.Haley` | You've only been here a year, right? Because I totally remember you giving me a present at least two different times. |
-| `event.ending.crack.tier2.Haley` | I totally remember {{scene}}. But like, how many times did that even happen? |
-| `event.ending.crack.tier3.Haley` | The very first time I saw you I was like, wait, don't I know you? |
+| `event.ending.crack.tier2.Haley` | I totally remember {{scene}}. But how many times did that even happen? |
+| `event.ending.crack.tier3.Haley` | The very first time I saw you, I thought I already knew you. Weird, right? |
 | `event.ending.crack.tier4.Haley` | I remember talking to you before you even moved here. How does that work? |
 | `event.ending.crack.tier1.Abigail` | You've only been here a year, but I remember you giving me a present at least two different times. That's so weird. |
-| `event.ending.crack.tier2.Abigail` | I remember {{scene}}. But I swear it happened more than once. So weird. |
-| `event.ending.crack.tier3.Abigail` | The very first time I saw you I could have sworn we'd already met. Isn't that weird? |
+| `event.ending.crack.tier2.Abigail` | I remember {{scene}}. But I swear it happened more than once. Weird. |
+| `event.ending.crack.tier3.Abigail` | The very first time I saw you, I could have sworn we'd already met. Isn't that weird? |
 | `event.ending.crack.tier4.Abigail` | I remember talking with you before you ever got here. Isn't that so weird? |
-| `event.ending.crack.tier1.Wizard` | You have been here one year. Yet I recall two gifts from your hand, on two occasions. Curious. |
-| `event.ending.crack.tier2.Wizard` | I recall {{scene}}. Yet I recall it twice. Curious. |
-| `event.ending.crack.tier3.Wizard` | The first time I laid eyes upon you, I was certain we had met before. Curious. |
-| `event.ending.crack.tier4.Wizard` | I recall our conversations from before you set foot in this valley. Curious. |
+| `event.ending.crack.tier1.Wizard` | You have been here one year. Yet I recall gifts from your hand on two occasions. Curious. |
+| `event.ending.crack.tier2.Wizard` | I recall {{scene}}. Yet it seems to have happened twice. Curious. |
+| `event.ending.crack.tier3.Wizard` | The first time I saw you, I was certain we had met before. Curious. |
+| `event.ending.crack.tier4.Wizard` | I recall speaking with you before you came to this valley. Curious. |
 
 ## Scene phrases (`event.ending.scene.*`)
 
@@ -85,7 +85,7 @@ The six-scene event built by `EndingEventInjector.Build`, in scene order.
 | --- | --- |
 | `event.ending.lewis-hall-1` | Everyone. I can't explain what happened here overnight.#$b#But this building is ours again. |
 | `event.ending.lewis-hall-2` | We may not have said it, but we all saw you working in here this past year. |
-| `event.ending.lewis-hall-3` | Pelican Town has its heart back. Thank you. |
+| `event.ending.lewis-hall-3` | The Community Center belongs to Pelican Town again. Thank you. |
 
 ### Scene 3: the crack
 
@@ -97,7 +97,7 @@ Uses the existing `event.ending.crack.*` and `event.ending.scene.*` families abo
 | --- | --- |
 | `event.ending.morris-1` | Congratulations. Joja respects a competitor who can deliver. |
 | `event.ending.morris-2` | Joja will be closing its Pelican Town store, effective today. |
-| `event.ending.morris-3` | Our survey crews found iridium in the Skull Cavern. It will fund a resort on Ginger Island. This lease was never worth the paperwork. |
+| `event.ending.morris-3` | Our survey crews found enough iridium in the Skull Cavern to fund a resort on Ginger Island. This lease was never worth the paperwork. |
 | `event.ending.morris-4` | I wish you all the best. Nothing is going to slow this down now. |
 
 ### Scene 5: inside the hall, six Junimos
@@ -150,7 +150,7 @@ the Year 2 update ships. One response only: Loop again.
 
 | Key | Text |
 | --- | --- |
-| `dialog.year2wall.prompt` | The loop is broken, but the Junimos are not ready for the next fight.<br>Year 2 is coming in a future beta.<br>For now, the Junimos can send you around one more time. |
+| `dialog.year2wall.prompt` | The loop is broken, but the Junimos are not ready for what comes next.<br>Year 2 is coming in a future beta.<br>For now, the Junimos can begin another loop. |
 | `dialog.year2wall.loop` | Loop again |
 
 ## Season turns (`event.turn.*`, spec 2026-09-07-season-turn-beats)
