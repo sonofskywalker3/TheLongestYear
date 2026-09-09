@@ -27,6 +27,7 @@ namespace TheLongestYear.Loop
         private readonly Func<ItemAvailabilityModel> _availability;
         private readonly Func<ItemPools> _pools;
         private readonly Action<string> _rebuildBoard;
+        private readonly SabotageMailService _mail;
 
         private RunState Run => _store.Run;
         private MetaState Meta => _store.State;
@@ -36,8 +37,10 @@ namespace TheLongestYear.Loop
             Func<IReadOnlyList<BundleRequirement>> requirements,
             Func<ItemAvailabilityModel> availability,
             Func<ItemPools> pools,
-            Action<string> rebuildBoard)
+            Action<string> rebuildBoard,
+            SabotageMailService mail)
         {
+            _mail = mail;
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -301,6 +304,7 @@ namespace TheLongestYear.Loop
             if (reports == null || reports.Count == 0) return;
             foreach (SabotageReport report in reports)
             {
+                _mail?.SendFirstStrikeLetter(report.Kind);
                 if (report.Kind == SabotageKind.Blight && report.Spoiled > 0)
                     Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.sabotage.spoilage",
                         new Dictionary<string, string> { ["count"] = report.Spoiled.ToString() }), HUDMessage.error_type));

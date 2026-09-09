@@ -30,6 +30,7 @@ namespace TheLongestYear
         private BoostPurchaseService _boostPurchases;
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
         private TheLongestYear.Loop.SabotageService _sabotage;
+        private TheLongestYear.Loop.SabotageMailService _sabotageMail;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -173,6 +174,9 @@ namespace TheLongestYear
             // hooked before the first asset load (same reason as _introInjector above).
             _onboardingMail = new TheLongestYear.Loop.OnboardingMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _onboardingMail.OnAssetRequested;
+            // Darkness pushback first-strike letters (Linus, Shane, Lewis): same Data/Mail hook.
+            _sabotageMail = new TheLongestYear.Loop.SabotageMailService(this.Monitor, _meta);
+            helper.Events.Content.AssetRequested += _sabotageMail.OnAssetRequested;
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
@@ -636,7 +640,8 @@ namespace TheLongestYear
                 () => _runController?.Requirements ?? _requirements,
                 () => _availability,
                 () => _enginePools,
-                RebuildBoardDerivedState);
+                RebuildBoardDerivedState,
+                _sabotageMail);
             _runController.AttachSabotage(_sabotage);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)

@@ -191,6 +191,10 @@ public sealed class MetaState
     /// (SeasonTurn.SeenName values). A seen turn is skippable next time.</summary>
     public HashSet<string> SeasonTurnsSeen { get; set; } = new();
 
+    /// <summary>Darkness pushback (spec 2026-09-09): the first-strike letters already delivered
+    /// on this save (SabotageMailService keys). Once per save, whatever the loop.</summary>
+    public HashSet<string> SabotageLettersSent { get; set; } = new();
+
     /// <summary>Year One Ending: the player chose Keep playing on this version or later. Spring 1 of
     /// year 2 shows the "Year 2 is coming" wall until <see cref="Year2Started"/> is set by the Year 2
     /// update. Cleared, with VictoryAcknowledged, when the wall's Loop again runs.</summary>
