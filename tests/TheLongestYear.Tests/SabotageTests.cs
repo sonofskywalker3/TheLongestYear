@@ -278,9 +278,20 @@ public class WardIdsTests
             UpgradeDefinition? def = UpgradeCatalog.TryGet(id);
             Assert.NotNull(def);
             Assert.Equal(UpgradeCategory.Wards, def!.Category);
-            Assert.Null(def.PrerequisiteId);
             Assert.Null(def.RunReachRequirement);
         }
+    }
+
+    [Fact]
+    public void Circles_chain_and_count()
+    {
+        Assert.Null(UpgradeCatalog.TryGet(WardIds.Circle1)!.PrerequisiteId);
+        Assert.Equal(WardIds.Circle1, UpgradeCatalog.TryGet(WardIds.Circle2)!.PrerequisiteId);
+        Assert.Equal(WardIds.Circle2, UpgradeCatalog.TryGet(WardIds.Circle3)!.PrerequisiteId);
+        Assert.True(WardIds.Circle1Cost < WardIds.Circle2Cost && WardIds.Circle2Cost < WardIds.Circle3Cost);
+        var owned = new HashSet<string> { WardIds.Circle1, WardIds.Circle2 };
+        Assert.Equal(2, WardIds.CircleCount(owned.Contains));
+        Assert.Equal(0, WardIds.CircleCount(_ => false));
     }
 
     [Fact]
@@ -290,7 +301,7 @@ public class WardIdsTests
         Assert.Equal(WardIds.CropsSummer, WardIds.CropWardFor(Season.Summer));
         Assert.Equal(WardIds.CropsFall, WardIds.CropWardFor(Season.Fall));
         Assert.Equal(WardIds.CropsWinter, WardIds.CropWardFor(Season.Winter));
-        Assert.Equal(3, WardIds.All.Count);
+        Assert.Equal(6, WardIds.All.Count);
         Assert.DoesNotContain(UpgradeCatalog.All, u => u.Id.StartsWith("ward_hall_"));
     }
 }

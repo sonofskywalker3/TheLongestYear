@@ -31,6 +31,7 @@ namespace TheLongestYear
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
         private TheLongestYear.Loop.SabotageService _sabotage;
         private TheLongestYear.Loop.SabotageMailService _sabotageMail;
+        private TheLongestYear.Loop.CircleOfWardingService _circles;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -177,6 +178,8 @@ namespace TheLongestYear
             // Darkness pushback first-strike letters (Linus, Shane, Lewis): same Data/Mail hook.
             _sabotageMail = new TheLongestYear.Loop.SabotageMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _sabotageMail.OnAssetRequested;
+            // Circle of Warding furniture (Data/Furniture row + texture), granted per loop below.
+            _circles = new TheLongestYear.Loop.CircleOfWardingService(this.Monitor, _meta, helper);
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
@@ -540,6 +543,7 @@ namespace TheLongestYear
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
                 itemSeasonPins, bundleQuotas, this.Helper.GameContent);
+            _reset.ReconcileCircles = () => _circles.Reconcile();
             // The rewind must let a legendary be caught again: the game blocks a repeat catch
             // through SpawnFishData.CatchLimit against player.fishCaught, and FarmerReset never
             // touched that record. Read the catch-limited ids once here (same shape as
@@ -659,6 +663,9 @@ namespace TheLongestYear
             {
                 if (id == TheLongestYear.Loop.PierreYear2SeedsService.UpgradeId)
                     this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+                // A bought circle is handed over on the spot, not at the next loop.
+                if (id.StartsWith("ward_circle_", System.StringComparison.Ordinal))
+                    _circles.Reconcile();
             };
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
@@ -677,6 +684,7 @@ namespace TheLongestYear
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
             _bookFurniture.ReconcileInventory();
+            _circles.Reconcile();
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
             // not just after reset. AddIntroQuest is idempotent against the questLog, so this
             // safely surfaces quests added in code rounds that pre-date this save (e.g. the

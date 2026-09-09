@@ -21,8 +21,10 @@ namespace TheLongestYear.Loop
             var tiles = new List<Vector2>();
             Farm farm = Game1.getFarm();
             if (farm == null) return tiles;
+            var circles = CircleOfWardingService.ProtectedTiles();
             foreach (KeyValuePair<Vector2, TerrainFeature> pair in farm.terrainFeatures.Pairs)
-                if (pair.Value is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value)
+                if (pair.Value is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value
+                    && !CircleOfWardingService.Covers(circles, farm, pair.Key))
                     tiles.Add(pair.Key);
             tiles.Sort((a, b) => a.Y != b.Y ? a.Y.CompareTo(b.Y) : a.X.CompareTo(b.X));
             return tiles;

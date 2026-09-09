@@ -38,6 +38,8 @@ namespace TheLongestYear.Loop
         private readonly JunimoStashService _stashService;
         private readonly MountainUnlock _mountainUnlock;
         private readonly TheLongestYear.Integration.BookFurniture _bookFurniture;
+        /// <summary>Re-grants the owned Circles of Warding after the wipe (CircleOfWardingService.Reconcile).</summary>
+        public System.Action ReconcileCircles { get; set; }
         private readonly TheLongestYear.UI.PlanningShrineService _planningShrine;
         private readonly IReadOnlyDictionary<string, CoreSeason> _itemSeasonPins;
         private readonly IReadOnlyDictionary<string, int[]> _bundleQuotas;
@@ -698,6 +700,8 @@ namespace TheLongestYear.Loop
 
             // Books are inventory items wiped by FarmerReset; re-grant exactly one of each.
             _bookFurniture?.ReconcileInventory();
+            // Circles of Warding likewise (owned count, spec 2026-09-09).
+            ReconcileCircles?.Invoke();
 
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
