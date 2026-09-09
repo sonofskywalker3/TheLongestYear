@@ -24,16 +24,20 @@ public static class DejaVuLines
         return keys;
     }
 
-    public static IReadOnlyList<string> KeysFor(string npc, int tier, IReadOnlyCollection<string> available)
+    /// <param name="allowed">Per-line gate (Jeff, 2026-09-09: Marnie's "I haven't sold you any" only
+    /// before an animal is bought, Robin's only before she has built anything). A villager whose
+    /// own lines are all gated out this moment uses the default pool instead. Null allows all.</param>
+    public static IReadOnlyList<string> KeysFor(string npc, int tier, IReadOnlyCollection<string> available, Func<string, bool>? allowed = null)
     {
         var own = Pool(npc.ToLowerInvariant(), tier, available);
+        if (allowed != null) own.RemoveAll(k => !allowed(k));
         return own.Count > 0 ? own : Pool(DefaultPool, tier, available);
     }
 
     /// <summary><paramref name="rollIndex"/> maps a pool size to an index in [0,size).</summary>
-    public static string? Pick(string npc, int tier, IReadOnlyCollection<string> available, Func<int, int> rollIndex)
+    public static string? Pick(string npc, int tier, IReadOnlyCollection<string> available, Func<int, int> rollIndex, Func<string, bool>? allowed = null)
     {
-        IReadOnlyList<string> keys = KeysFor(npc, tier, available);
+        IReadOnlyList<string> keys = KeysFor(npc, tier, available, allowed);
         if (keys.Count == 0) return null;
         int i = Math.Clamp(rollIndex(keys.Count), 0, keys.Count - 1);
         return Strings.Get(keys[i]);

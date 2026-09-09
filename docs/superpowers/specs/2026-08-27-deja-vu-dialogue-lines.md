@@ -2,8 +2,9 @@
 
 Companion to `2026-08-27-deja-vu-dialogue-design.md`. Tier 1 plays at familiarity 60 to 179
 ("have we met?"); tier 2 at 180 and up ("I trust you, somehow"). One line per tier per villager to
-start; the fallback pool covers anyone without a pool. No line explains the loop. Status: DRAFT,
-not coded.
+start; the fallback pool covers anyone without a pool. No line explains the loop. Status: shipped in i18n (`dejavu.*`); text pass and Jeff's corrections 2026-09-09. The
+table below is superseded by i18n/default.json; Marnie's and Robin's tier-1 lines are gated in
+`DejaVuDialoguePatch.LineAllowed` (no animals bought yet, nothing built by Robin yet).
 
 ## Fallback pool (any villager without lines below)
 
