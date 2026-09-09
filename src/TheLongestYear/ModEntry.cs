@@ -290,7 +290,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report | scene [old] [new]", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -642,6 +642,7 @@ namespace TheLongestYear
                 () => _enginePools,
                 RebuildBoardDerivedState,
                 _sabotageMail);
+            _sabotage.StartTamperScene = (oldName, newName, done) => _seasonTurnDriver.StartTamperWhenSettled(oldName, newName, done);
             _runController.AttachSabotage(_sabotage);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
@@ -1724,10 +1725,15 @@ namespace TheLongestYear
                     this.Monitor.Log(_sabotage.Tamper(rng, dayOfYear) ? "Tampering: the board changed. Sleep to see the report." : "Tampering: no open slot with a Winter fit.", LogLevel.Info);
                     break;
                 case "report":
-                    _sabotage.ShowMorningReports();
+                    _sabotage.ShowMorning(null);
+                    break;
+                case "scene":
+                    _seasonTurnDriver.StartTamperWhenSettled(
+                        args.Length > 1 ? args[1] : "Parsnip", args.Length > 2 ? args[2] : "Crystal Fruit",
+                        () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report | scene [old] [new]", LogLevel.Info);
                     break;
             }
         }

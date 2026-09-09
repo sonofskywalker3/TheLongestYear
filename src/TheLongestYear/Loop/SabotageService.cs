@@ -28,6 +28,8 @@ namespace TheLongestYear.Loop
         private readonly Func<ItemPools> _pools;
         private readonly Action<string> _rebuildBoard;
         private readonly SabotageMailService _mail;
+        /// <summary>Starts the board-changed porch scene; set by ModEntry (the season-turn driver).</summary>
+        public Action<string, string, Action> StartTamperScene { get; set; }
 
         private RunState Run => _store.Run;
         private MetaState Meta => _store.State;
@@ -298,6 +300,25 @@ namespace TheLongestYear.Loop
         }
 
         // ------------------------------------------------------------------ the morning
+
+        /// <summary>The morning: HUD lines and letters for what the night took, and when the board
+        /// changed, the Junimos' porch scene first. Returns true when the scene was started and
+        /// <paramref name="continueWith"/> will run after it; false when the caller continues now.</summary>
+        public bool ShowMorning(Action continueWith)
+        {
+            if (!RunActivation.IsActive) return false;
+            SabotageReport tamper = Run.PendingSabotageReports?.Find(r => r.Kind == SabotageKind.Tampering);
+            if (tamper == null || StartTamperScene == null)
+            {
+                ShowMorningReports();
+                return false;
+            }
+            string oldName = Strings.ItemName(tamper.OldItemId);
+            string newName = Strings.ItemName(tamper.ItemId);
+            Run.PendingSabotageReports.RemoveAll(r => r.Kind == SabotageKind.Tampering);
+            StartTamperScene(oldName, newName, () => { ShowMorningReports(); continueWith?.Invoke(); });
+            return true;
+        }
 
         /// <summary>Show what the night took, as HUD lines, then forget them.</summary>
         public void ShowMorningReports()
