@@ -3,6 +3,29 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.10 - 2026-09-09
+
+1994 tests.
+
+### Fixed
+
+- **Quest-finishing scenes play again every loop.** The rewind lets a scene replay only when it
+  hands something out (a recipe, a letter, a quest). The scenes that finish a quest, Jodi's fish
+  casserole dinner and Marnie's cave carrot, were being treated as already seen from the first
+  loop, so the re-granted quest could never be turned in. Reported by ChaoticMindset.
+- **Gunther brings the Rusty Key again every loop.** The rewind empties the museum, so the
+  60-donation reward re-fires each loop, but Gunther's farm visit that actually hands the key
+  over was stuck "seen" and never played again. Without the Keep Rusty Key upgrade there was no
+  way to open the sewers after the first loop. Reported by ChaoticMindset.
+
+### Changed
+
+- `tly_runstate` now prints the Community Center completion check the way Willy's back-room
+  letter reads it (the board, the room flags, the completion mail, whether the letter trigger
+  already ran), for diagnosing a keep-playing save that never got the letter.
+- `tly_answer <n>` picks a response on an open question dialogue and `tly_skipscene` finishes the
+  win screen, so the keep-playing path can be driven from the headless runbook.
+
 ## 0.17.8 - 2026-09-08
 
 1991 tests.
