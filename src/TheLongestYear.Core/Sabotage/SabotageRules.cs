@@ -11,12 +11,41 @@ public static class BlightRule
     public static int Count(int liveCrops, Season season)
     {
         if (liveCrops <= 0) return 0;
-        double share = season == Season.Fall ? SabotageTuning.BlightShareFall : SabotageTuning.BlightShareSummer;
-        int max = season == Season.Fall ? SabotageTuning.BlightMaxFall : SabotageTuning.BlightMaxSummer;
+        (double share, int max) = season switch
+        {
+            Season.Fall => (SabotageTuning.BlightShareFall, SabotageTuning.BlightMaxFall),
+            Season.Winter => (SabotageTuning.BlightShareWinter, SabotageTuning.BlightMaxWinter),
+            _ => (SabotageTuning.BlightShareSummer, SabotageTuning.BlightMaxSummer),
+        };
         int n = (int)Math.Ceiling(liveCrops * share);
         n = Math.Max(SabotageTuning.BlightMinPerNight, Math.Min(max, n));
         return Math.Min(n, liveCrops);
     }
+
+    /// <summary>How many stored perishable units spoil on a blight night, from the total the
+    /// player has in chests (the Junimo Stash excluded by the caller).</summary>
+    public static int SpoilCount(int perishableUnits)
+    {
+        if (perishableUnits <= 0) return 0;
+        int n = (int)Math.Ceiling(perishableUnits * SabotageTuning.SpoilShare);
+        n = Math.Max(SabotageTuning.SpoilMinPerNight, Math.Min(SabotageTuning.SpoilMaxPerNight, n));
+        return Math.Min(n, perishableUnits);
+    }
+
+    /// <summary>Vanilla object categories that rot: vegetables, fruit, flowers, forage greens,
+    /// fish, eggs, milk and other animal products. Artisan goods, minerals and the rest keep.</summary>
+    public static bool IsPerishableCategory(int category) => category switch
+    {
+        -75 => true,   // vegetable
+        -79 => true,   // fruit
+        -80 => true,   // flower
+        -81 => true,   // greens / forage
+        -4 => true,    // fish
+        -5 => true,    // egg
+        -6 => true,    // milk
+        -18 => true,   // animal product
+        _ => false,
+    };
 
     /// <summary>Which of the live crops die: <paramref name="count"/> distinct positions, uniform.</summary>
     public static IReadOnlyList<int> PickIndexes(int liveCrops, int count, Random rng)
@@ -33,22 +62,24 @@ public static class BlightRule
     }
 }
 
-/// <summary>A filled slot the darkness may empty: in an unwarded item room, in a bundle that is
-/// not yet complete (a complete bundle keeps its reward and its room restoration intact).</summary>
+/// <summary>A filled slot the darkness may empty: in an item room, in a bundle that is not yet
+/// complete (a complete bundle keeps its reward and its room restoration intact). No ward: the
+/// Junimos protect crops, not the hall (Jeff, 2026-09-09).</summary>
 public static class ReversionRule
 {
+    /// <summary>Room themes (see RoomThemeMap): the five item rooms, never the Vault or Joja.</summary>
+    public static bool IsItemRoomTheme(Theme theme) => theme is Theme.Farming or Theme.Foraging or Theme.Fishing or Theme.Mining or Theme.Mixed;
+
     public static IReadOnlyList<DonatedSlot> Candidates(
-        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Func<string, bool> hasWard)
+        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements)
     {
         if (ledger is null) throw new ArgumentNullException(nameof(ledger));
         if (requirements is null) throw new ArgumentNullException(nameof(requirements));
-        if (hasWard is null) throw new ArgumentNullException(nameof(hasWard));
         var result = new List<DonatedSlot>();
         foreach (BundleRequirement req in requirements)
         {
             if (req.BundleIndex < 0) continue;
-            string? ward = WardIds.HallWardFor(req.Theme);
-            if (ward is null || hasWard(ward)) continue;
+            if (!IsItemRoomTheme(req.Theme)) continue;
             if (req.IsFullyComplete(ledger)) continue;
             foreach (DonatedSlot slot in ledger.Entries)
                 if (slot.BundleIndex == req.BundleIndex)
@@ -58,10 +89,10 @@ public static class ReversionRule
     }
 
     public static DonatedSlot? Pick(
-        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Func<string, bool> hasWard, Random rng)
+        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Random rng)
     {
         if (rng is null) throw new ArgumentNullException(nameof(rng));
-        IReadOnlyList<DonatedSlot> candidates = Candidates(ledger, requirements, hasWard);
+        IReadOnlyList<DonatedSlot> candidates = Candidates(ledger, requirements);
         return candidates.Count == 0 ? null : candidates[rng.Next(candidates.Count)];
     }
 }
@@ -87,7 +118,7 @@ public static class TamperRule
         foreach (BundleRequirement req in requirements)
         {
             if (req.BundleIndex < 0) continue;
-            if (WardIds.HallWardFor(req.Theme) is null) continue;   // not an item room
+            if (!ReversionRule.IsItemRoomTheme(req.Theme)) continue;
             if (req.IsFullyComplete(ledger)) continue;
             foreach (BundleSlot slot in req.Slots)
                 if (!ledger.IsFilled(req.BundleIndex, slot.IngredientIndex))

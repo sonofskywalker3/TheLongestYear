@@ -1,9 +1,15 @@
 # Darkness Pushback (the sabotage mechanic)
 
 **Date:** 2026-09-09
-**Status:** built from the story spec's section 6 on Jeff's "go ahead and implement" (2026-09-09);
-every number and every rule not already locked in that section is an ASSUMPTION for Jeff to
-retune, marked below. Branch `story`.
+**Status:** built from the story spec's section 6 on Jeff's "go ahead and implement" (2026-09-09),
+then reworked the same day on his rulings (below). Every number is still an ASSUMPTION for Jeff
+to retune. Branch `story`.
+
+**Jeff's rulings, 2026-09-09:**
+- Winter blight is wanted. The turn line that said otherwise was a draft, not a ruling.
+- No hall wards. The Junimos can protect your crops, not the Community Center. A player who
+  hates reversion or tampering turns it off in GMCM; that switch is the only counter.
+- Blight reaches into storage: any chest can be hit, the Junimo Stash never.
 **Story spec:** `2026-06-06-tly1-story-and-cutscenes-design.md` section 6 (forms, onsets,
 counterplay) and section 7 (hooks). The season-turn lines in
 `2026-09-07-season-turn-beats-design.md` already announce each front and are the fiction this
@@ -11,22 +17,22 @@ spec makes true.
 
 ## What it is
 
-The darkness acts on the world the way the Junimos do. From Summer it withers crops in the
-night; from Fall it also empties donated bundle slots; in Winter it also rewrites what an unfilled
-slot asks for. Each front is telegraphed the next morning by a HUD line only the player sees. The
-first two fronts can be bought off at the shrine, one ward per season of crops and one per hall
-room. The Winter front cannot.
+The darkness acts on the world the way the Junimos do. From Summer it withers crops and spoils
+stored perishables in the night; from Fall it also empties donated bundle slots; in Winter it also
+rewrites what an unfilled slot asks for. Each front is telegraphed the next morning by a HUD line
+only the player sees. Only the fields can be warded, one Ward of the Fields per season. The hall
+has no ward.
 
 Every front has its own switch in GMCM so a player who hates it can turn that one off.
 
 | Front | Seasons | What happens overnight | Counter |
 | --- | --- | --- | --- |
-| Blight | Summer, Fall | A few live crops on the farm die (vanilla `dead`, drawn withered). | Ward of the Fields, one per season (Summer, Fall) |
-| Reversion | Fall, Winter | One filled slot in an unfinished bundle empties; the item is gone. | Ward of the Hall, one per item room (five) |
-| Tampering | Winter | One unfilled slot in an unfinished bundle asks for a different item. | none, by design |
+| Blight | Summer, Fall, Winter | A few live crops on the farm die (vanilla `dead`, drawn withered) and a few perishable units in chests spoil. | Ward of the Fields, one per season, crops in the ground only |
+| Reversion | Fall, Winter | One filled slot in an unfinished bundle empties; the item is gone. | the GMCM switch |
+| Tampering | Winter | One unfilled slot in an unfinished bundle asks for a different item. | the GMCM switch |
 
-Spring is clean. Winter blight is absent: the Fall-to-Winter turn line says "It will not rot your
-crops" (spec 2026-09-07, `winter-3`), which settles the story spec's open question.
+Spring is clean. The `winter-3` turn line ("It will not rot your crops") must be rewritten; it is
+a draft and now wrong.
 
 ## When it runs
 
@@ -50,21 +56,26 @@ save-scum.
 
 Per night in an open, unwarded season, with the front switched on:
 
-| | Summer | Fall |
-| --- | --- | --- |
-| Chance the darkness strikes tonight | 25% | 35% |
-| Crops killed when it does | ceil(4% of live crops), clamped 1 to 6 | ceil(6% of live crops), clamped 1 to 10 |
-| Nights per week it can strike | 2 | 2 |
+| | Summer | Fall | Winter |
+| --- | --- | --- | --- |
+| Chance the darkness strikes tonight | 25% | 35% | 35% |
+| Crops killed when it does | ceil(4% of live crops), clamped 1 to 6 | ceil(6%), clamped 1 to 10 | ceil(6%), clamped 1 to 10 |
+| Stored units spoiled when it does | ceil(3% of perishable units), clamped 1 to 8 | same | same |
+| Nights per week it can strike | 2 | 2 | 2 |
 
 (All ASSUMPTIONS; `SabotageTuning` in Core holds them in one place.)
 
-Targets: `HoeDirt` with a live, non-dead crop on the Farm location only, chosen uniformly. The
-greenhouse, indoor pots, Ginger Island and every other map are exempt (the darkness poisons the
-land, and the greenhouse is the Junimos' gift). Nothing else rots: the story spec's "stored items"
-clause is left out for now (assumption: chests are the player's planning, and the Junimo Stash
-is the cross-loop bank; rotting either is a feel-bad with no counter yet).
+Crop targets: `HoeDirt` with a live, non-dead crop on the Farm location only, chosen uniformly.
+The greenhouse, indoor pots, Ginger Island and every other map are exempt (the darkness poisons
+the land, and the greenhouse is the Junimos' gift). A Ward of the Fields for the season stops
+this half only.
 
-Morning line: `hud.sabotage.blight` with the count.
+Storage targets: perishable stacks (vegetables, fruit, flowers, forage greens, fish, eggs, milk,
+animal products) in any chest on any map, one unit at a time off a stack picked in proportion to
+its size. The Junimo Stash is never touched. Artisan goods, minerals and everything else keep.
+No ward covers chests today (Jeff is naming one; see Open).
+
+Morning lines: `hud.sabotage.blight` with the crop count, `hud.sabotage.spoilage` with the units.
 
 ## Reversion
 
@@ -80,7 +91,7 @@ Per night in an open season, with the front switched on:
 (ASSUMPTIONS.) The quiet days leave time to redo a slot before the gate.
 
 Candidates: filled, non-category slots in item rooms (Pantry, Crafts Room, Fish Tank, Boiler
-Room, Bulletin Board) whose room has no ward and whose bundle is not fully complete. A complete
+Room, Bulletin Board) whose bundle is not fully complete. A complete
 bundle is never touched, so vanilla's reward, room restoration and the mod's completion awards
 stay consistent without an un-complete path. If there is no candidate, nothing happens.
 
@@ -93,7 +104,7 @@ Morning line: `hud.sabotage.reversion` with the item and bundle names.
 
 ## Tampering
 
-Winter only, unavoidable, with the front switched on:
+Winter only, with the front switched on:
 
 | Chance per night, Winter 1 to 20 | 15% |
 | Cap | 2 per Winter, at least 5 days apart |
@@ -123,28 +134,26 @@ Morning line: `hud.sabotage.tamper` with the bundle, old and new item names.
 
 ## Wards (shrine)
 
-New `UpgradeCategory.Wards`, a new tab, permanent like every other upgrade (the story spec puts
-the counters in the upgrade catalog, and TLY's upgrade philosophy is granular, buy-once).
+New `UpgradeCategory.Wards`, a new tab, permanent like every other upgrade. The Junimos can
+protect your crops and nothing else (Jeff, 2026-09-09).
 
 | Id | Name | Cost (assumption) |
 | --- | --- | --- |
 | `ward_crops_summer` | Ward of the Fields: Summer | 250 |
 | `ward_crops_fall` | Ward of the Fields: Fall | 300 |
-| `ward_hall_pantry` | Ward of the Hall: Pantry | 200 |
-| `ward_hall_craftsroom` | Ward of the Hall: Crafts Room | 200 |
-| `ward_hall_fishtank` | Ward of the Hall: Fish Tank | 200 |
-| `ward_hall_boilerroom` | Ward of the Hall: Boiler Room | 200 |
-| `ward_hall_bulletin` | Ward of the Hall: Bulletin Board | 200 |
+| `ward_crops_winter` | Ward of the Fields: Winter | 300 |
 
 No prerequisites, no reach requirement. Shrine prices scale with the difficulty dial like every
-other row. The story spec listed a Spring crop ward; Spring is clean so there is none.
+other row. Spring is clean so there is no Spring ward. A ward covers crops in the ground; chest
+spoilage in that season still happens.
 
 ## Config
 
 Three bools on `GameplayConfig`, default true, in the GMCM Features section (applies straight
 away, read live from the config instance): `EnableBlight`, `EnableBundleReversion`,
-`EnableRequirementTampering`. Wards stay purchasable with a front off; they simply have nothing
-to stop.
+`EnableRequirementTampering`. For reversion and tampering the switch is the only counter. The
+crop wards stay purchasable with blight off; they simply have nothing to stop. There is no
+difficulty dial for the darkness yet; every number is a constant in `SabotageTuning`.
 
 ## Reset and hold
 
@@ -164,10 +173,10 @@ right: the darkness changed the hall, and the hall is what the player chose to k
   `Tampers`, `PendingSabotageReports`.
 - `Core/UpgradeCatalog.cs` + `UpgradeCategory.Wards` + `WardIds`.
 - `Loop/SabotageService.cs` (glue): the night pass and the morning report; `Loop/BlightPass.cs`
-  for the crop walk; `Integration/CcSlotWriter.TryUnfill`; a tamper writer that calls back into
+  for the crop walk; `Loop/SpoilagePass.cs` for the chest walk (stash excluded); `Integration/CcSlotWriter.TryUnfill`; a tamper writer that calls back into
   `ModEntry` to rebuild catalog and requirements.
 - `RunController.OnDayEnding` calls the night pass on Continue; `OnDayStarted` shows reports.
-- Debug: `tly_sabotage status | blight [n] | revert | tamper`, console and file bridge.
+- Debug: `tly_sabotage status | blight [crops] [spoil] | revert | tamper | report`, console and file bridge.
 - i18n: `hud.sabotage.*`, `upgrade.ward_*.name/.desc`, `upgrade-category.wards`,
   `gmcm.blight.*`, `gmcm.reversion.*`, `gmcm.tampering.*`.
 
@@ -181,6 +190,9 @@ manifest, not the legacy path.
 ## Open for Jeff
 
 - Every number in the tables.
-- Whether blight should also touch stored items in Fall.
-- Ward prices and whether hall wards should share a ladder like the Gifts.
-- Whether the Wards tab should hide when all three fronts are off.
+- A storage ward: Jeff wants one tied to the player (the Junimos' power is tied to you), shaped so
+  it changes how a player stores things, and a name for it. Not built.
+- Ward prices.
+- A Darkness difficulty dial (Easy to Extreme) alongside the off switches. Not built.
+- Whether the Wards tab should hide when blight is off.
+- Rewrite the `winter-3` season-turn line.

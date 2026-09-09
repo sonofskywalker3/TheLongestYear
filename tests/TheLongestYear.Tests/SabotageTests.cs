@@ -13,7 +13,7 @@ public class SabotageScheduleTests
     [InlineData(SabotageKind.Blight, Season.Spring, false)]
     [InlineData(SabotageKind.Blight, Season.Summer, true)]
     [InlineData(SabotageKind.Blight, Season.Fall, true)]
-    [InlineData(SabotageKind.Blight, Season.Winter, false)]
+    [InlineData(SabotageKind.Blight, Season.Winter, true)]
     [InlineData(SabotageKind.Reversion, Season.Summer, false)]
     [InlineData(SabotageKind.Reversion, Season.Fall, true)]
     [InlineData(SabotageKind.Reversion, Season.Winter, true)]
@@ -123,8 +123,25 @@ public class BlightRuleTests
     [InlineData(1000, Season.Summer, 6)]    // capped
     [InlineData(100, Season.Fall, 6)]
     [InlineData(1000, Season.Fall, 10)]     // capped
+    [InlineData(50, Season.Winter, 3)]
     public void Count_is_a_share_of_the_field_clamped_to_a_nibble(int crops, Season season, int expected)
         => Assert.Equal(expected, BlightRule.Count(crops, season));
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 1)]
+    [InlineData(100, 3)]
+    [InlineData(10000, 8)]   // capped
+    public void Spoilage_is_a_share_of_stored_perishables_clamped(int units, int expected)
+        => Assert.Equal(expected, BlightRule.SpoilCount(units));
+
+    [Theory]
+    [InlineData(-75, true)]   // vegetable
+    [InlineData(-4, true)]    // fish
+    [InlineData(-26, false)]  // artisan goods keep
+    [InlineData(-2, false)]   // minerals keep
+    public void Only_perishable_categories_rot(int category, bool perishable)
+        => Assert.Equal(perishable, BlightRule.IsPerishableCategory(category));
 
     [Fact]
     public void Picks_distinct_positions_inside_the_field()
@@ -143,22 +160,21 @@ public class ReversionRuleTests
         => BundleRequirement.CreatePercentage(name, theme, ids, slots, new[] { 0, 0, 0, slots }, bundleIndex: index);
 
     [Fact]
-    public void Only_unwarded_unfinished_item_room_bundles_are_candidates()
+    public void Only_unfinished_item_room_bundles_are_candidates()
     {
         var pantry = Bundle("Spring Crops", Theme.Farming, 1, 2, "(O)24", "(O)188", "(O)190");
         var tank = Bundle("River Fish", Theme.Fishing, 2, 2, "(O)145", "(O)143");
+        var vault = Bundle("2,500g", Theme.Artisan, 3, 1, "(O)-1");
         var ledger = new SlotLedger();
         ledger.Add(1, 0, "(O)24");
         ledger.Add(2, 0, "(O)145");
         ledger.Add(2, 1, "(O)143");   // River Fish complete: never touched
 
-        var all = ReversionRule.Candidates(ledger, new[] { pantry, tank }, _ => false);
+        var all = ReversionRule.Candidates(ledger, new[] { pantry, tank, vault });
         Assert.Single(all);
         Assert.Equal(1, all[0].BundleIndex);
-
-        var warded = ReversionRule.Candidates(ledger, new[] { pantry, tank }, id => id == WardIds.HallPantry);
-        Assert.Empty(warded);
-        Assert.Null(ReversionRule.Pick(ledger, new[] { pantry, tank }, id => id == WardIds.HallPantry, new Random(1)));
+        Assert.Equal(1, ReversionRule.Pick(ledger, new[] { pantry, tank, vault }, new Random(1))!.BundleIndex);
+        Assert.Null(ReversionRule.Pick(new SlotLedger(), new[] { pantry, tank, vault }, new Random(1)));
     }
 }
 
@@ -267,12 +283,13 @@ public class WardIdsTests
     }
 
     [Fact]
-    public void Wards_map_to_seasons_and_rooms()
+    public void Wards_cover_every_blighted_season_and_nothing_else()
     {
         Assert.Null(WardIds.CropWardFor(Season.Spring));
         Assert.Equal(WardIds.CropsSummer, WardIds.CropWardFor(Season.Summer));
-        Assert.Null(WardIds.CropWardFor(Season.Winter));
-        Assert.Equal(WardIds.HallBulletin, WardIds.HallWardFor(Theme.Mixed));
-        Assert.Null(WardIds.HallWardFor(Theme.Artisan));
+        Assert.Equal(WardIds.CropsFall, WardIds.CropWardFor(Season.Fall));
+        Assert.Equal(WardIds.CropsWinter, WardIds.CropWardFor(Season.Winter));
+        Assert.Equal(3, WardIds.All.Count);
+        Assert.DoesNotContain(UpgradeCatalog.All, u => u.Id.StartsWith("ward_hall_"));
     }
 }

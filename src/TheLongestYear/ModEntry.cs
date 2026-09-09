@@ -286,7 +286,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [n] | revert | tamper | report", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -1704,10 +1704,12 @@ namespace TheLongestYear
                     break;
                 case "blight":
                 {
-                    int n = args.Length > 1 && int.TryParse(args[1], out int parsed) ? parsed
+                    int crops = args.Length > 1 && int.TryParse(args[1], out int c) ? c
                         : TheLongestYear.Loop.BlightPass.CountFor(_meta.Run.Season);
-                    int killed = _sabotage.Blight(n, rng);
-                    this.Monitor.Log($"Blight: {killed} crop(s) withered (asked {n}). Sleep to see the report.", LogLevel.Info);
+                    int spoil = args.Length > 2 && int.TryParse(args[2], out int sp) ? sp
+                        : TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(TheLongestYear.Loop.SpoilagePass.PerishableUnits());
+                    int taken = _sabotage.Blight(crops, spoil, rng);
+                    this.Monitor.Log($"Blight: {taken} thing(s) taken (asked {crops} crops, {spoil} stored). Sleep to see the report.", LogLevel.Info);
                     break;
                 }
                 case "revert":
@@ -1720,7 +1722,7 @@ namespace TheLongestYear
                     _sabotage.ShowMorningReports();
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | blight [n] | revert | tamper | report", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report", LogLevel.Info);
                     break;
             }
         }

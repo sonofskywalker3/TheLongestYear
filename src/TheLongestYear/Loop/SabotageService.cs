@@ -69,13 +69,16 @@ namespace TheLongestYear.Loop
             int dayOfYear = Calendar.DayOfYear((int)season, day);
             int week = Run.WeekOfYear;
 
-            if (Enabled(SabotageKind.Blight) && !CropsWarded(season))
+            if (Enabled(SabotageKind.Blight))
             {
                 Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear, SabotageKind.Blight);
                 if (SabotageSchedule.StrikesTonight(SabotageKind.Blight, Run, season, day, rng))
                 {
-                    int killed = Blight(BlightPass.CountFor(season), rng);
-                    if (killed > 0) SabotageSchedule.RecordStrike(SabotageKind.Blight, Run, week, dayOfYear);
+                    // The ward covers crops in the ground, not chests (Jeff, 2026-09-09).
+                    int crops = CropsWarded(season) ? 0 : BlightPass.CountFor(season);
+                    int spoil = BlightRule.SpoilCount(SpoilagePass.PerishableUnits());
+                    if (Blight(crops, spoil, rng) > 0)
+                        SabotageSchedule.RecordStrike(SabotageKind.Blight, Run, week, dayOfYear);
                 }
             }
 
@@ -104,19 +107,21 @@ namespace TheLongestYear.Loop
 
         // ------------------------------------------------------------------ blight
 
-        /// <summary>Kill <paramref name="count"/> crops now and queue the report. Returns the
-        /// number that died. Also the debug entry point (<c>tly_sabotage blight [n]</c>).</summary>
-        public int Blight(int count, Random rng)
+        /// <summary>Kill <paramref name="crops"/> crops and spoil <paramref name="spoil"/> stored
+        /// units now, then queue the report. Returns how many things were taken in all. Also the
+        /// debug entry point (<c>tly_sabotage blight [crops] [spoil]</c>).</summary>
+        public int Blight(int crops, int spoil, Random rng)
         {
-            int killed = BlightPass.Strike(count, rng);
-            if (killed <= 0)
+            int killed = BlightPass.Strike(crops, rng);
+            int spoiled = SpoilagePass.Strike(spoil, rng);
+            if (killed <= 0 && spoiled <= 0)
             {
-                _monitor.Log("Darkness: blight rolled but found no live crop on the farm.", LogLevel.Trace);
+                _monitor.Log("Darkness: blight rolled but found nothing to wither or spoil.", LogLevel.Trace);
                 return 0;
             }
-            Run.PendingSabotageReports.Add(new SabotageReport { Kind = SabotageKind.Blight, Count = killed });
-            _monitor.Log($"Darkness: blight withered {killed} crop(s) on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
-            return killed;
+            Run.PendingSabotageReports.Add(new SabotageReport { Kind = SabotageKind.Blight, Count = killed, Spoiled = spoiled });
+            _monitor.Log($"Darkness: blight withered {killed} crop(s) and spoiled {spoiled} stored unit(s) on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
+            return killed + spoiled;
         }
 
         // ------------------------------------------------------------------ reversion
@@ -127,10 +132,10 @@ namespace TheLongestYear.Loop
         {
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
             SlotLedger ledger = Run.DonatedLedger();
-            DonatedSlot pick = ReversionRule.Pick(ledger, _requirements(), Meta.HasUpgrade, rng);
+            DonatedSlot pick = ReversionRule.Pick(ledger, _requirements(), rng);
             if (pick == null)
             {
-                _monitor.Log("Darkness: reversion rolled but every filled slot is warded or in a finished bundle.", LogLevel.Trace);
+                _monitor.Log("Darkness: reversion rolled but every filled slot is in a finished bundle.", LogLevel.Trace);
                 return false;
             }
             if (!TheLongestYear.Integration.CcSlotWriter.TryUnfill(pick.BundleIndex, pick.IngredientIndex))
@@ -296,9 +301,12 @@ namespace TheLongestYear.Loop
             if (reports == null || reports.Count == 0) return;
             foreach (SabotageReport report in reports)
             {
+                if (report.Kind == SabotageKind.Blight && report.Spoiled > 0)
+                    Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.sabotage.spoilage",
+                        new Dictionary<string, string> { ["count"] = report.Spoiled.ToString() }), HUDMessage.error_type));
                 string text = report.Kind switch
                 {
-                    SabotageKind.Blight => Strings.Get("hud.sabotage.blight",
+                    SabotageKind.Blight when report.Count > 0 => Strings.Get("hud.sabotage.blight",
                         new Dictionary<string, string> { ["count"] = report.Count.ToString() }),
                     SabotageKind.Reversion => Strings.Get("hud.sabotage.reversion",
                         new Dictionary<string, string> { ["item"] = Strings.ItemName(report.ItemId), ["bundle"] = report.BundleName }),
@@ -327,7 +335,7 @@ namespace TheLongestYear.Loop
                 $"  season {Run.Season} day {Run.DayOfMonth}: open fronts = {string.Join(", ", Enum.GetValues(typeof(SabotageKind)).Cast<SabotageKind>().Where(k => SabotageSchedule.IsOpen(k, Run.Season)))}",
                 $"  wards owned: {string.Join(", ", WardIds.All.Where(Meta.HasUpgrade).DefaultIfEmpty("none"))}",
                 $"  blight week {Run.BlightWeek} nights {Run.BlightNightsThisWeek}; last reversion week {Run.LastReversionWeek}; tamper days [{string.Join(",", Run.TamperDays)}]",
-                $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}",
+                $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; perishable units in chests (stash excluded): {SpoilagePass.PerishableUnits()}",
             };
             foreach (TamperRecord t in Run.Tampers)
                 lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {Strings.ItemName(t.OldItemId)} -> {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");
