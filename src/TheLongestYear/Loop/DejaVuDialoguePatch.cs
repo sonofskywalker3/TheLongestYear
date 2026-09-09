@@ -71,7 +71,7 @@ namespace TheLongestYear.Loop
                 if (tier == 0) return;
                 if (force) ForceNext = null;
 
-                string text = DejaVuLines.Pick(npc, tier, _keys(), size => Game1.random.Next(size));
+                string text = DejaVuLines.Pick(npc, tier, _keys(), size => Game1.random.Next(size), LineAllowed);
                 if (text == null) return;
                 __instance.CurrentDialogue.Push(new Dialogue(__instance, TranslationKey, text));
                 _monitor.Log($"Deja-vu: {npc} tier {tier} on day {daysPlayed}{(force ? " (forced)" : "")}.", LogLevel.Trace);
@@ -79,6 +79,35 @@ namespace TheLongestYear.Loop
             catch (Exception ex)
             {
                 _monitor?.Log($"DejaVuDialoguePatch failed for {__instance?.Name}: {ex}", LogLevel.Error);
+            }
+        }
+
+        /// <summary>Lines that only make sense before something has happened this loop (Jeff,
+        /// 2026-09-09). Marnie's "I haven't sold you any, have I?" needs no farm animals yet; Robin's
+        /// "I keep thinking I've built something for you" needs nothing of hers built yet (no house
+        /// upgrade, no building on the farm that Data/Buildings says Robin builds).</summary>
+        private static bool LineAllowed(string key)
+        {
+            try
+            {
+                Farm farm = Game1.getFarm();
+                switch (key)
+                {
+                    case "dejavu.marnie.1.1":
+                        return farm == null || farm.getAllFarmAnimals().Count == 0;
+                    case "dejavu.robin.1.1":
+                        if (Game1.player.HouseUpgradeLevel > 0) return false;
+                        if (farm == null) return true;
+                        foreach (StardewValley.Buildings.Building b in farm.buildings)
+                            if (b.GetData()?.Builder == "Robin") return false;
+                        return true;
+                    default:
+                        return true;
+                }
+            }
+            catch (Exception)
+            {
+                return true;
             }
         }
     }

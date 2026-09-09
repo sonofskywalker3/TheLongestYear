@@ -19,6 +19,16 @@ public class DejaVuLinesTests
     };
 
     [Fact]
+    public void A_gated_out_own_line_falls_back_to_the_default_pool()
+    {
+        var keys = _fixture.Map.Keys.ToList();
+        Assert.Equal(new[] { "dejavu.marnie.1.1" }, DejaVuLines.KeysFor("Marnie", 1, keys, _ => true));
+        Assert.Equal(new[] { "dejavu.default.1.1", "dejavu.default.1.2", "dejavu.default.1.3" },
+            DejaVuLines.KeysFor("Marnie", 1, keys, k => k != "dejavu.marnie.1.1"));
+        Assert.Equal(new[] { "dejavu.marnie.2.1" }, DejaVuLines.KeysFor("Marnie", 2, keys, k => k != "dejavu.marnie.1.1"));
+    }
+
+    [Fact]
     public void Villager_pool_is_used_when_present_else_default()
     {
         var keys = _fixture.Map.Keys.ToList();
