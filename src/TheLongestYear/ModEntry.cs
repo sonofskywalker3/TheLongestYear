@@ -260,6 +260,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug). An optional seed loop pins the board the new run generates (same number tly_genbundles takes), so two runs can be played on the same board. Usage: tly_reset [seedLoop]", this.ForceReset);
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
+            helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
@@ -1501,6 +1502,53 @@ namespace TheLongestYear
 
         /// <summary>Debug: open the basic win screen → JP shrine → keep-playing choice, the real
         /// win-path flow. See <see cref="RunController.DebugForceWin"/>.</summary>
+
+        /// <summary>Debug: pick a response on the open question dialogue without the mouse, for the
+        /// headless runbook (e.g. the loop-again/keep-playing choice after the Year One Ending, or
+        /// the Year 2 wall). Forces the dialogue's text fully shown and its safety timer clear, then
+        /// drives the same <see cref="StardewValley.Menus.DialogueBox.receiveLeftClick"/> path a
+        /// click on that response takes.</summary>
+        private void CmdAnswer(string command, string[] args)
+        {
+            if (!(Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box) ||
+                !box.isQuestion || box.responses == null || box.responses.Length == 0)
+            {
+                this.Monitor.Log("tly_answer: no question dialogue is open.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length < 1 || !int.TryParse(args[0], out int n))
+            {
+                this.Monitor.Log("Usage: tly_answer <n> (0-based response index)", LogLevel.Warn);
+                return;
+            }
+            if (n < 0 || n >= box.responses.Length)
+            {
+                this.Monitor.Log($"tly_answer: {n} is out of range (0..{box.responses.Length - 1}); clamping.", LogLevel.Warn);
+                n = System.Math.Clamp(n, 0, box.responses.Length - 1);
+            }
+            try
+            {
+                string text = box.responses[n].responseText;
+                string current = box.getCurrentString();
+                if (current != null) box.characterIndexInDialogue = current.Length;
+                box.safetyTimer = 0;
+                // A freshly opened question box sets transitioning=true until its open animation
+                // ends, and receiveLeftClick returns immediately while it is true, so the click
+                // would silently no-op. Clear it before clicking.
+                box.transitioning = false;
+                box.selectedResponse = n;
+                box.receiveLeftClick(0, 0, false);
+                if (object.ReferenceEquals(Game1.activeClickableMenu, box))
+                    this.Monitor.Log("tly_answer: the box did not close; send it again", LogLevel.Warn);
+                else
+                    this.Monitor.Log($"tly_answer: chose response {n} (\"{text}\").", LogLevel.Info);
+            }
+            catch (System.Exception ex)
+            {
+                this.Monitor.Log($"tly_answer failed: {ex.Message}", LogLevel.Error);
+            }
+        }
+
         private void CmdForceWin(string command, string[] args)
         {
             if (!Context.IsWorldReady)
@@ -2036,6 +2084,7 @@ namespace TheLongestYear
                 case "tly_offer": this.CmdOffer(command, args); break;
                 case "tly_donate": this.CmdDonate(command, args); break;
                 case "tly_runstate": this.CmdRunState(command, args); break;
+                case "tly_answer": this.CmdAnswer(command, args); break;
                 case "tly_catalog": this.CmdCatalog(command, args); break;
                 case "tly_classify": this.CmdClassify(command, args); break;
                 case "tly_genbundles": this.CmdGenBundles(command, args); break;
@@ -2116,6 +2165,14 @@ namespace TheLongestYear
             {
                 scene.SkipToEnd();
                 this.Monitor.Log("tly_skipscene: finished the day-28 scene.", LogLevel.Info);
+                return;
+            }
+            if (Game1.activeClickableMenu is TheLongestYear.UI.VictoryMenu victory)
+            {
+                // The win screen finishes on any click; closing it any other way makes the
+                // day-28 driver re-arm it (headless keep-playing runbook, Nexus bug 1130863).
+                victory.receiveLeftClick(0, 0, playSound: false);
+                this.Monitor.Log("tly_skipscene: finished the win screen.", LogLevel.Info);
                 return;
             }
             string blocking = Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box
