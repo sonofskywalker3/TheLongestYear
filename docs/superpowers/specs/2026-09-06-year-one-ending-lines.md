@@ -14,8 +14,7 @@ once they exist.
 | `event.ending.crack.open` | Something is going on here that I don't understand. |
 | `event.ending.crack.tier1` | You've only been here a year, but I remember you giving me a present at least two different times. |
 | `event.ending.crack.tier2` | I can remember {{scene}}, but how many times did that happen? |
-| `event.ending.crack.tier3` | The very first time I saw you, I could have sworn we'd already met. |
-| `event.ending.crack.tier4` | I remember talking with you before you got here. |
+| `event.ending.crack.tier3` (also the Talks tier, Jeff 2026-09-09) | The very first time I saw you, I could have sworn we'd already met. |
 | `event.ending.crack.close` | I don't know how. But I want to help. |
 
 ### Voice overrides
@@ -25,23 +24,18 @@ once they exist.
 | `event.ending.crack.tier1.Shane` | You've been here a year. So how come I remember you giving me a present at least twice? |
 | `event.ending.crack.tier2.Shane` | I remember {{scene}}. So how come I remember it more than once? |
 | `event.ending.crack.tier3.Shane` | The first time I saw you, I could've sworn I already knew you. Figured it was the beer. |
-| `event.ending.crack.tier4.Shane` | I remember talking to you before you ever showed up. Don't ask me how. |
 | `event.ending.crack.tier1.George` | A year, you say. Then why do I remember you giving me presents two different times? Hmph. |
 | `event.ending.crack.tier2.George` | I remember {{scene}}. So why do I remember it twice, if you've only been here a year? |
 | `event.ending.crack.tier3.George` | First time I laid eyes on you, I could've sworn we'd met. And my memory isn't that bad. |
-| `event.ending.crack.tier4.George` | I remember talking to you before you moved here. Don't tell me I'm losing it. |
 | `event.ending.crack.tier1.Haley` | You've only been here a year, right? Because I totally remember you giving me a present at least two different times. |
 | `event.ending.crack.tier2.Haley` | I totally remember {{scene}}. But how many times did that even happen? |
 | `event.ending.crack.tier3.Haley` | The very first time I saw you, I thought I already knew you. Weird, right? |
-| `event.ending.crack.tier4.Haley` | I remember talking to you before you even moved here. How does that work? |
 | `event.ending.crack.tier1.Abigail` | You've only been here a year, but I remember you giving me a present at least two different times. That's so weird. |
 | `event.ending.crack.tier2.Abigail` | I remember {{scene}}. But I swear it happened more than once. Weird. |
 | `event.ending.crack.tier3.Abigail` | The very first time I saw you, I could have sworn we'd already met. Isn't that weird? |
-| `event.ending.crack.tier4.Abigail` | I remember talking with you before you ever got here. Isn't that so weird? |
 | `event.ending.crack.tier1.Wizard` | You have been here one year. Yet I recall gifts from your hand on two occasions. Curious. |
 | `event.ending.crack.tier2.Wizard` | I recall {{scene}}. Yet it seems to have happened twice. Curious. |
 | `event.ending.crack.tier3.Wizard` | The first time I saw you, I was certain we had met before. Curious. |
-| `event.ending.crack.tier4.Wizard` | I recall speaking with you before you came to this valley. Curious. |
 
 ## Scene phrases (`event.ending.scene.*`)
 

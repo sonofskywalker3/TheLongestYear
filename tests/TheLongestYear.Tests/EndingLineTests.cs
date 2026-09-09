@@ -71,4 +71,12 @@ public class EndingLineTests
             Assert.True(seenValues.Add(key), $"duplicate scene key '{key}'");
         }
     }
+
+    [Fact]
+    public void Talks_tier_reads_the_gifts_tier_text()
+    {
+        Assert.Equal("event.ending.crack.tier3", EndingLine.MiddleKey("Leah", EndingLineTier.Talks));
+        Assert.Equal("event.ending.crack.tier3.Shane", EndingLine.MiddleKey("Shane", EndingLineTier.Talks));
+        Assert.Equal("event.ending.crack.tier1.Shane", EndingLine.MiddleKey("Shane", EndingLineTier.BirthdayGift));
+    }
 }
