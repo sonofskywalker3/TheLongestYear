@@ -1,4 +1,4 @@
-0.17.11 - Quest scenes, the Rusty Key and Willy's letter come back
+0.17.12 - Quest scenes, the Rusty Key, the Copper Pan and Willy's letter come back
 
 Fixed
 - Willy's back-room letter arrives after you finish the Community Center and keep playing. A
@@ -12,6 +12,9 @@ Fixed
   60-donation reward re-fired, but his farm visit that hands over the key never played again,
   so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by
   ChaoticMindset.
+- Willy's Copper Pan scene, and any scene that only unlocks after another scene that replays
+  (the 14-heart chains, Shane's morning-after, Pam's bus follow-up), play again each loop. Found
+  by sweeping every vanilla scene for the same fault.
 - (0.17.8) A must-donate-all bundle's season gate takes any of its items; the pins only decide
   how many are due. Reported by ada113.
 - (0.17.8) The Cookbook and Craftbook open between the shrine and the reset, so a book bought at
