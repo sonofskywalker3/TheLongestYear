@@ -1,0 +1,20 @@
+0.17.10 - Quest scenes and the Rusty Key come back every loop
+
+Fixed
+- Jodi's fish casserole dinner and Marnie's cave carrot thank-you play again each loop. They
+  were treated as already seen from your first loop, so the quest came back but could never be
+  turned in. Reported by ChaoticMindset.
+- Gunther brings the Rusty Key again each loop. The museum empties on the rewind and the
+  60-donation reward re-fired, but his farm visit that hands over the key never played again,
+  so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by
+  ChaoticMindset.
+- (0.17.8) A must-donate-all bundle's season gate takes any of its items; the pins only decide
+  how many are due. Reported by ada113.
+- (0.17.8) The Cookbook and Craftbook open between the shrine and the reset, so a book bought at
+  the loop-boundary shrine has something to bank. Reported by ada113.
+
+Changed
+- tly_runstate prints the Community Center completion check as Willy's back-room letter reads
+  it, for diagnosing a keep-playing save that never got the letter.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
