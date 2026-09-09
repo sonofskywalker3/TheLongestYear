@@ -10,7 +10,8 @@ namespace TheLongestYear.Loop
     /// player's chests in the night, one at a time off random stacks. Food spoils; anything else
     /// goes missing, taken by the people and creatures the darkness works through. Every chest
     /// on every map counts except the Junimo Stash, which is the cross-loop bank and is never
-    /// touched. Only plain objects are taken (never tools, weapons or big craftables).</summary>
+    /// touched, and chests standing on a Circle of Warding. Only plain objects are taken (never
+    /// tools, weapons or big craftables).</summary>
     internal static class SpoilagePass
     {
         private sealed class Stack
@@ -31,12 +32,14 @@ namespace TheLongestYear.Loop
         private static List<Stack> Stacks()
         {
             var stacks = new List<Stack>();
+            var circles = CircleOfWardingService.ProtectedTiles();
             Utility.ForEachLocation(loc =>
             {
                 foreach (StardewValley.Object obj in loc.objects.Values)
                 {
                     if (obj is not Chest chest) continue;
                     if (chest.modData.ContainsKey(JunimoStashService.StashModDataKey)) continue;
+                    if (CircleOfWardingService.Covers(circles, loc, chest.TileLocation)) continue;
                     var items = chest.Items;
                     for (int i = 0; i < items.Count; i++)
                     {

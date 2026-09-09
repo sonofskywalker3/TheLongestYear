@@ -280,6 +280,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition(Sabotage.WardIds.CropsSummer, UpgradeCategory.Wards, Sabotage.WardIds.CropsSummerCost),
         new UpgradeDefinition(Sabotage.WardIds.CropsFall, UpgradeCategory.Wards, Sabotage.WardIds.CropsFallCost),
         new UpgradeDefinition(Sabotage.WardIds.CropsWinter, UpgradeCategory.Wards, Sabotage.WardIds.CropsWinterCost),
+        // Circle of Warding: three on a ladder, each tier needs the one before.
+        new UpgradeDefinition(Sabotage.WardIds.Circle1, UpgradeCategory.Wards, Sabotage.WardIds.Circle1Cost),
+        new UpgradeDefinition(Sabotage.WardIds.Circle2, UpgradeCategory.Wards, Sabotage.WardIds.Circle2Cost, Sabotage.WardIds.Circle1),
+        new UpgradeDefinition(Sabotage.WardIds.Circle3, UpgradeCategory.Wards, Sabotage.WardIds.Circle3Cost, Sabotage.WardIds.Circle2),
 
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
