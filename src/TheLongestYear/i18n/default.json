@@ -16,10 +16,10 @@
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
     "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
-    "hud.sabotage.blight": "{{count}} of your crops withered in the night. It was not the weather.",
-    "hud.sabotage.spoilage": "{{count}} things in your chests spoiled in the night. It was not the weather.",
-    "hud.sabotage.reversion": "A gift you gave the hall came undone in the night: {{item}} is gone from {{bundle}}.",
-    "hud.sabotage.tamper": "The board changed in the night. {{bundle}} now asks for {{item}} where it asked for {{old}}.",
+    "hud.sabotage.blight": "{{count}} crops were struck down by the darkness overnight.",
+    "hud.sabotage.spoiled": "Some of your things have spoiled in the night. ({{count}})",
+    "hud.sabotage.missing": "Some of your things have gone missing overnight. ({{count}})",
+    "hud.sabotage.hall": "You awaken with a feeling that something is wrong at the Community Center.",
 
     // -- question / message dialogues ---------------------------------------------
     "dialog.cave.prompt": "The cave waits, familiar and patient. What should it nurture this year?",
@@ -504,11 +504,11 @@
 
     // -- onboarding mail / furniture display names ---------------------------------
     "mail.darkness.blight.title": "From Linus",
-    "mail.darkness.blight.body": "I don't sleep much, so I walk. Last night I came down past your farm.^^I saw your crops go black. Not wilt. Go black, all at once, and fall in on themselves like something had been eaten out of the middle. There was no frost. There was no wind. It was warm.^^I stood there a while. Nothing moved that I could see. But the air over that patch smelled like a cellar that's been shut too long.^^I don't know what I saw. I'm telling you because I think you'd want to know, and because nobody else would believe me.^^  - Linus",
+    "mail.darkness.blight.body": "Walked past your farm last night. Your crops turned black and fell in on themselves, all at once. No frost, no wind.^^I don't know what that was. Thought you should know.^^  - Linus",
     "mail.darkness.reversion.title": "From Shane",
-    "mail.darkness.reversion.body": "Hey. Look, I'd had a few. So take this how you want.^^I was cutting through town late and the Community Center windows were lit. Not lamp-lit. Sort of a grey light, like a screen with nothing on it. And there were shadows moving across it. Tall. Wrong shape for people.^^I got closer and the light was gone and the windows were just windows.^^Probably nothing. Marnie says I should lay off. But if you've got stuff in there, maybe check on it.^^  - Shane",
+    "mail.darkness.reversion.body": "I'd had a few, so take it how you want. There was a light in the Community Center windows last night. Shadows moving past it. Not people.^^Got closer and it was gone.^^If you've got stuff in there, check on it.^^  - Shane",
     "mail.darkness.tamper.title": "From Mayor Lewis",
-    "mail.darkness.tamper.body": "I stopped in at the Community Center this morning to see how the restoration is coming along, and I have to admit something has been bothering me since.^^I looked over one of the bundle scrolls and I could have sworn it asked for something different the last time I read it. I keep notes, you know. My notes say one thing and the scroll says another, in the same hand, on the same paper.^^I am probably misremembering. It has been a long year. But I thought you should hear it from me before you go to the trouble of gathering something the hall no longer wants.^^  - Lewis",
+    "mail.darkness.tamper.body": "Stopped by the Community Center this morning. One of the bundle scrolls asks for something different than my notes say it did. Same hand, same paper.^^Probably me misremembering. But check before you gather anything.^^  - Lewis",
     "mail.intro.title": "The Longest Year",
     "mail.intro.body": "Welcome to The Longest Year!^^You're stuck looping Year 1 until you finish the Community Center. Each loop you spend Junimo Points (JP) on permanent upgrades.^^Two things that trip everyone up:^1) You earn a LOT more JP the deeper into the year you get, so don't feel behind early.^2) DON'T rush to complete bundles! Hold an item until its weekly theme comes up, then donate it - you bank a 1.5x JP bonus AND clear that week's downside. Rushing donations wastes both.^^Also: festivals give your day back on purpose. You can leave and come back, and leaving early keeps your clock - returning 'early' is intended, not a bug.^^Good luck. The Junimos are counting on you.",
     "furniture.cookbook": "The Longest Year Cookbook",
@@ -709,7 +709,7 @@
     "gmcm.dejavu.name": "Deja-vu dialogue",
     "gmcm.dejavu.tooltip": "Villagers you have spent a lot of time with across loops occasionally half-remember you. Rare, no gameplay effect. Off = never.",
     "gmcm.blight.name": "Darkness: blight",
-    "gmcm.blight.tooltip": "From Summer, on some nights a few crops on the farm wither and a few perishables in your chests spoil (never the Junimo Stash). The Junimos can ward your fields per season at the shrine; chests have no ward. Off = nothing withers or spoils.",
+    "gmcm.blight.tooltip": "From Summer, on some nights the darkness strikes down a few crops on the farm and a few things in your chests spoil or go missing (never the Junimo Stash). The Junimos can ward your fields per season at the shrine; chests have no ward. Off = nothing is struck or taken.",
     "gmcm.reversion.name": "Darkness: donations come undone",
     "gmcm.reversion.tooltip": "From Fall, about once a week a donated slot in an unfinished bundle empties overnight and the item is gone. The Junimos cannot protect the Community Center; this switch is the only counter. Off = donations always stay.",
     "gmcm.tampering.name": "Darkness: the board changes",

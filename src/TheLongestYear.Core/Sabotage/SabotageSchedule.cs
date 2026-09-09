@@ -23,8 +23,8 @@ public static class SabotageTuning
     public const int BlightMaxFall = 10;
     public const int BlightMaxWinter = 10;
     public const int BlightNightsPerWeek = 2;
-    /// <summary>Chest spoilage on a blight night: this share of every perishable unit the player
-    /// has stored, clamped. The Junimo Stash is never touched.</summary>
+    /// <summary>Storage loss on a blight night: this share of every unit the player has in
+    /// chests, clamped. Food spoils, anything else goes missing. The Junimo Stash is never touched.</summary>
     public const double SpoilShare = 0.03;
     public const int SpoilMinPerNight = 1;
     public const int SpoilMaxPerNight = 8;
