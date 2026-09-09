@@ -66,32 +66,31 @@ go through the ending's `tlySay`, so `#$b#` pages work and `$h`-style codes are 
 
 | Key | Who | Text |
 | --- | --- | --- |
-| `summer-1` | A | You did it, @! Spring is ours. The hall took every gift you gave it. |
-| `summer-2` | B | We grow stronger when you work. Can you feel it? The valley can. |
-| `summer-3` | A | Summer is warm and long. Keep going. We'll be watching from the walls. |
+| `summer-1` | A | You did it, @. Spring is done. |
+| `summer-2` | B | Every gift makes us stronger. |
+| `summer-3` | A | Keep going. We will be watching. |
 
 **Summer to Fall**
 
 | Key | Who | Text |
 | --- | --- | --- |
-| `fall-1` | A | Summer is done. You held on, @. We held on with you. |
-| `fall-2` | B | But... did you see it? Something got into the soil this season. Things withered that should not have. |
-| `fall-3` | C | It is not the weather. We think it noticed you. |
-| `fall-4` | A | Fall is the harvest. Guard what you grow. We will guard what we can. |
+| `fall-1` | A | Summer is done, @. You held on. |
+| `fall-2` | B | Did you see your crops? Something is in the soil. |
+| `fall-3` | C | It has noticed you. |
+| `fall-4` | A | Guard what you grow. We will help where we can. |
 
 **Fall to Winter**
 
 | Key | Who | Text |
 | --- | --- | --- |
-| `winter-1` | A | Fall is over. You kept the hall standing, @. Barely, but standing. |
-| `winter-2` | B | It is not only the fields now. It has found the hall. Gifts you gave came undone in the night. We put back what we could. |
-| `winter-3` | C | Winter is its season. It will not rot your crops. It will change what the hall asks of you. |
-| `winter-4` | A | One more season. Whatever the board says on a morning it changes, trust the work. On Winter 28 we will know. |
+| `winter-1` | A | Fall is over, @. The hall is still standing. |
+| `winter-2` | B | It has found the hall. Some of your gifts have been taken. |
+| `winter-3` | C | It will corrupt whatever it can. Our plans may be changed, but not thwarted. |
+| `winter-4` | A | One final season. The darkness is strong. But because of you, we may yet grow stronger. |
 
-Until the sabotage mechanics exist, `fall-2` and `winter-2` describe things the player did not
-see. **Assumption:** that is acceptable as foreshadowing for now, and the lines get a second pass
-when blight and reversion land. If Jeff would rather not promise what the game does not yet do,
-the fallback is softer wording ("we feel something in the soil", "it is looking at the hall now").
+Lines rewritten 2026-09-09 through the game-writing skill; `winter-3` and `winter-4` are Jeff's
+own. The sabotage mechanics now exist (spec 2026-09-09-darkness-pushback), so the lines describe
+things the player has seen.
 
 ## Repeat loops
 

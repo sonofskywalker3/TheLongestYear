@@ -11,37 +11,37 @@ once they exist.
 
 | Key | Text |
 | --- | --- |
-| `event.ending.crack.open` | I know something is going on here that I can't understand.#$b#I keep remembering conversations with you that never happened. |
-| `event.ending.crack.tier1` | You've only been here a year, but I remember you bringing me a birthday present twice. |
-| `event.ending.crack.tier2` | You've only been here a year, but I remember the day we {{scene}}, and I remember it twice. |
-| `event.ending.crack.tier3` | You've only been here a year, but I remember you bringing me things you couldn't have known I liked. |
-| `event.ending.crack.tier4` | You've only been here a year, but I remember talking with you before you ever arrived. |
-| `event.ending.crack.close` | I don't know how, but I want to help. |
+| `event.ending.crack.open` | Something is going on here that I don't understand.#$b#I keep remembering things with you that never happened. |
+| `event.ending.crack.tier1` | You've been here a year. But I remember you bringing me a birthday present twice. |
+| `event.ending.crack.tier2` | You've been here a year. But I remember the day we {{scene}}, and I remember it twice. |
+| `event.ending.crack.tier3` | You've been here a year. But you brought me things you couldn't have known I liked. |
+| `event.ending.crack.tier4` | You've been here a year. But I remember talking with you before you got here. |
+| `event.ending.crack.close` | I don't know how. But I want to help. |
 
 ### Voice overrides
 
 | Key | Text |
 | --- | --- |
-| `event.ending.crack.tier1.Shane` | You've been here a year. So why do I remember you turning up with a birthday present two years running? |
-| `event.ending.crack.tier2.Shane` | You've been here a year. So why do I remember the day we {{scene}} like it happened twice? |
+| `event.ending.crack.tier1.Shane` | You've been here a year. So why do I remember two birthday presents from you? |
+| `event.ending.crack.tier2.Shane` | You've been here a year. So why do I remember the day we {{scene}} twice? |
 | `event.ending.crack.tier3.Shane` | You've been here a year. So why do I remember you bringing me stuff you had no business knowing I liked? |
-| `event.ending.crack.tier4.Shane` | You've been here a year. So why do I remember talking to you before you ever showed up? |
-| `event.ending.crack.tier1.George` | Only been here a year, you say. Then explain why I remember two birthday presents from you. Two. |
-| `event.ending.crack.tier2.George` | Only been here a year, you say. Then explain why I remember the day we {{scene}} twice over. |
-| `event.ending.crack.tier3.George` | Only been here a year, you say. Then explain why I remember you bringing me things nobody told you about. |
-| `event.ending.crack.tier4.George` | Only been here a year, you say. Then explain why I remember talking to you before you got here. |
-| `event.ending.crack.tier1.Haley` | You've only been here a year, right? Because I totally remember you bringing me a birthday present twice. |
-| `event.ending.crack.tier2.Haley` | You've only been here a year, right? Because I totally remember the day we {{scene}}. Twice. |
-| `event.ending.crack.tier3.Haley` | You've only been here a year, right? Because I totally remember you bringing me things you couldn't have known I'd like. |
-| `event.ending.crack.tier4.Haley` | You've only been here a year, right? Because I totally remember talking to you before you moved here. |
-| `event.ending.crack.tier1.Abigail` | You've only been here a year... but I swear I remember you bringing me a birthday present twice. That's so weird. |
-| `event.ending.crack.tier2.Abigail` | You've only been here a year... but I swear I remember the day we {{scene}} happening twice. That's so weird. |
-| `event.ending.crack.tier3.Abigail` | You've only been here a year... but I swear you kept bringing me things you couldn't have known I liked. |
-| `event.ending.crack.tier4.Abigail` | You've only been here a year... but I swear I remember talking with you before you ever arrived. |
-| `event.ending.crack.tier1.Wizard` | You have been here a single year. Yet I hold the memory of two birthday gifts from your hand. Curious. |
-| `event.ending.crack.tier2.Wizard` | You have been here a single year. Yet I hold the memory of the day we {{scene}}, and I hold it twice. Curious. |
-| `event.ending.crack.tier3.Wizard` | You have been here a single year. Yet you brought me things no mortal could have known I favour. Curious. |
-| `event.ending.crack.tier4.Wizard` | You have been here a single year. Yet I recall our conversations from before you set foot in this valley. Curious. |
+| `event.ending.crack.tier4.Shane` | You've been here a year. So why do I remember talking to you before you showed up? |
+| `event.ending.crack.tier1.George` | A year, you say. Then why do I remember two birthday presents from you? |
+| `event.ending.crack.tier2.George` | A year, you say. Then why do I remember the day we {{scene}} twice over? |
+| `event.ending.crack.tier3.George` | A year, you say. Then why do I remember you bringing me things nobody told you about? |
+| `event.ending.crack.tier4.George` | A year, you say. Then why do I remember talking to you before you got here? |
+| `event.ending.crack.tier1.Haley` | You've only been here a year, right? Because I remember you bringing me a birthday present twice. |
+| `event.ending.crack.tier2.Haley` | You've only been here a year, right? Because I remember the day we {{scene}}. Twice. |
+| `event.ending.crack.tier3.Haley` | You've only been here a year, right? Because I remember you bringing me things you couldn't have known I'd like. |
+| `event.ending.crack.tier4.Haley` | You've only been here a year, right? Because I remember talking to you before you moved here. |
+| `event.ending.crack.tier1.Abigail` | You've been here a year. But I swear I remember you bringing me a birthday present twice. That's so weird. |
+| `event.ending.crack.tier2.Abigail` | You've been here a year. But I swear I remember the day we {{scene}} happening twice. That's so weird. |
+| `event.ending.crack.tier3.Abigail` | You've been here a year. But I swear you kept bringing me things you couldn't have known I liked. |
+| `event.ending.crack.tier4.Abigail` | You've been here a year. But I swear I remember talking with you before you got here. |
+| `event.ending.crack.tier1.Wizard` | One year. Yet I remember two birthday gifts from your hand. |
+| `event.ending.crack.tier2.Wizard` | One year. Yet I remember the day we {{scene}}, and I remember it twice. |
+| `event.ending.crack.tier3.Wizard` | One year. Yet you brought me things you could not have known I favour. |
+| `event.ending.crack.tier4.Wizard` | One year. Yet I remember our talks from before you came to this valley. |
 
 ## Scene phrases (`event.ending.scene.*`)
 
@@ -76,15 +76,15 @@ The six-scene event built by `EndingEventInjector.Build`, in scene order.
 
 | Key | Text |
 | --- | --- |
-| `event.ending.lewis-porch-1` | @! There you are. Come quick, you have to see this.$h |
-| `event.ending.lewis-porch-2` | The Community Center... it's lit up. The whole town is out there. I don't understand it, but come on! |
+| `event.ending.lewis-porch-1` | @! There you are. Come quick.$h |
+| `event.ending.lewis-porch-2` | The Community Center is lit up. The whole town is out there. Come on! |
 
 ### Scene 2: the hall steps (Lewis)
 
 | Key | Text |
 | --- | --- |
-| `event.ending.lewis-hall-1` | Everyone, everyone... I still can't explain what happened here overnight.#$b#But this building is ours again. |
-| `event.ending.lewis-hall-2` | And we all know whose hands did the work this year. Three cheers for our farmer!$h |
+| `event.ending.lewis-hall-1` | Everyone. I can't explain what happened here overnight.#$b#But this building is ours again. |
+| `event.ending.lewis-hall-2` | And we all know who did the work this year. Three cheers for our farmer!$h |
 | `event.ending.lewis-hall-3` | Pelican Town has its heart back. Thank you. |
 
 ### Scene 3: the crack
@@ -95,9 +95,9 @@ Uses the existing `event.ending.crack.*` and `event.ending.scene.*` families abo
 
 | Key | Text |
 | --- | --- |
-| `event.ending.morris-1` | Congratulations. Genuinely. Joja values a competitor who can deliver. |
-| `event.ending.morris-2` | I'm here to let you all know that Joja will be closing its Pelican Town location, effective today. |
-| `event.ending.morris-3` | Our survey crews found an iridium deposit in the Skull Cavern. It will fund a resort on Ginger Island. This lease was never worth the paperwork. |
+| `event.ending.morris-1` | Congratulations. Joja respects a competitor who can deliver. |
+| `event.ending.morris-2` | Joja will be closing its Pelican Town store, effective today. |
+| `event.ending.morris-3` | Our survey crews found iridium in the Skull Cavern. It will fund a resort on Ginger Island. This lease was never worth the paperwork. |
 | `event.ending.morris-4` | I wish you all the best. Nothing is going to slow this down now. |
 
 ### Scene 5: inside the hall, six Junimos
@@ -106,11 +106,11 @@ The lines pass between the Junimos (green, orange, turquoise, gold, then green a
 
 | Key | Text |
 | --- | --- |
-| `event.ending.junimo-1` | You did it, @! The hall is whole, and so are we.$h |
-| `event.ending.junimo-2` | We sang all night. We haven't sung like that in a very long time. |
-| `event.ending.junimo-3` | But... did you see the man from Joja? The thing that has him did not leave. It only moved. |
-| `event.ending.junimo-4` | And the town still forgets. Every one of them. You saw the crack in it today, though. Didn't you? |
-| `event.ending.junimo-4-nocrack` | And the town still forgets. Every one of them. Not one of them could hold on to you today. Not yet. |
+| `event.ending.junimo-1` | You did it, @. The hall is whole, and so are we. |
+| `event.ending.junimo-2` | We sang all night. |
+| `event.ending.junimo-3` | Did you see the man from Joja? The thing that has him did not leave. It only moved. |
+| `event.ending.junimo-4` | The town still forgets. But you saw the crack in it today. |
+| `event.ending.junimo-4-nocrack` | The town still forgets. Not one of them could hold on to you today. |
 | `event.ending.junimo-5` | You've done well so far, but the work isn't over. Prepare yourself for what's next.#$b#On Spring 1, we get to work freeing the townsfolk. |
 
 Note: `junimo-5` carries the "keep playing" promise inside the event; Task 11's keep-playing
@@ -120,7 +120,7 @@ dialogue repeats the second half so a player who loops again has still heard it.
 
 | Key | Text |
 | --- | --- |
-| `event.ending.grandpa` | Good job, @. You've started what I could never finish. I'm so proud of you, but you must keep going. For the sake of the valley... and the world. |
+| `event.ending.grandpa` | @. You've started what I couldn't finish. I'm so proud, but you must keep going. |
 
 ### Build-time notes
 
@@ -134,7 +134,7 @@ Shown after the event and the shrine spend (and, on a repeat win, straight off t
 
 | Key | Text |
 | --- | --- |
-| `dialog.ending.prompt` | {{loopline}}<br>The loop is yours to keep or to break. Begin a new loop now, or keep playing this year? |
+| `dialog.ending.prompt` | {{loopline}}<br>Begin a new loop, or keep playing this year? |
 | `dialog.ending.new-loop` | Loop again |
 | `dialog.ending.keep-playing` | Keep playing this year |
 | `dialog.ending.keep-1` | You've done well so far, but the work isn't over. Prepare yourself for what's next. |
@@ -150,7 +150,7 @@ the Year 2 update ships. One response only: Loop again.
 
 | Key | Text |
 | --- | --- |
-| `dialog.year2wall.prompt` | The loop is broken, and the Junimos are not yet ready to lead the next fight.<br>Year 2 of The Longest Year is coming in a future beta. Stay tuned!<br>For now, the Junimos can send you around one more time. |
+| `dialog.year2wall.prompt` | The loop is broken, but the Junimos are not ready for the next fight.<br>Year 2 is coming in a future beta.<br>For now, the Junimos can send you around one more time. |
 | `dialog.year2wall.loop` | Loop again |
 
 ## Season turns (`event.turn.*`, spec 2026-09-07-season-turn-beats)
@@ -163,24 +163,24 @@ which line is a table in `SeasonTurn.Lines`; the text is here and in i18n only.
 
 | Key | Who | Text |
 | --- | --- | --- |
-| `event.turn.summer-1` | A (green) | You did it, @! Spring is ours. The hall took every gift you gave it. |
-| `event.turn.summer-2` | B (orange) | We grow stronger when you work. Can you feel it? The valley can. |
-| `event.turn.summer-3` | A (green) | Summer is warm and long. Keep going. We'll be watching from the walls. |
+| `event.turn.summer-1` | A (green) | You did it, @. Spring is done. |
+| `event.turn.summer-2` | B (orange) | Every gift makes us stronger. |
+| `event.turn.summer-3` | A (green) | Keep going. We will be watching. |
 
 ### Summer to Fall
 
 | Key | Who | Text |
 | --- | --- | --- |
-| `event.turn.fall-1` | A (green) | Summer is done. You held on, @. We held on with you. |
-| `event.turn.fall-2` | B (orange) | But... did you see it? Something got into the soil this season. Things withered that should not have. |
-| `event.turn.fall-3` | C (turquoise) | It is not the weather. We think it noticed you. |
-| `event.turn.fall-4` | A (green) | Fall is the harvest. Guard what you grow. We will guard what we can. |
+| `event.turn.fall-1` | A (green) | Summer is done, @. You held on. |
+| `event.turn.fall-2` | B (orange) | Did you see your crops? Something is in the soil. |
+| `event.turn.fall-3` | C (turquoise) | It has noticed you. |
+| `event.turn.fall-4` | A (green) | Guard what you grow. We will help where we can. |
 
 ### Fall to Winter
 
 | Key | Who | Text |
 | --- | --- | --- |
-| `event.turn.winter-1` | A (green) | Fall is over. You kept the hall standing, @. Barely, but standing. |
-| `event.turn.winter-2` | B (orange) | It is not only the fields now. It has found the hall. Gifts you gave came undone in the night. We put back what we could. |
-| `event.turn.winter-3` | C (turquoise) | Winter is its season. It will not rot your crops. It will change what the hall asks of you. |
-| `event.turn.winter-4` | A (green) | One more season. Whatever the board says on a morning it changes, trust the work. On Winter 28 we will know. |
+| `event.turn.winter-1` | A (green) | Fall is over, @. The hall is still standing. |
+| `event.turn.winter-2` | B (orange) | It has found the hall. Some of your gifts have been taken. |
+| `event.turn.winter-3` | C (turquoise) | It will corrupt whatever it can. Our plans may be changed, but not thwarted. |
+| `event.turn.winter-4` | A (green) | One final season. The darkness is strong. But because of you, we may yet grow stronger. |
