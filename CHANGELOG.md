@@ -3,9 +3,9 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.17.11 - 2026-09-09
+## 0.17.12 - 2026-09-09
 
-2000 tests.
+2004 tests.
 
 ### Fixed
 
@@ -17,6 +17,13 @@ aims to follow [Semantic Versioning](https://semver.org/).
   60-donation reward re-fires each loop, but Gunther's farm visit that actually hands the key
   over was stuck "seen" and never played again. Without the Keep Rusty Key upgrade there was no
   way to open the sewers after the first loop. Reported by ChaoticMindset.
+- **Willy's Copper Pan, the one-off gifts and the second half of every chained scene come back
+  each loop.** Same family as the two above, found by sweeping every vanilla scene: Willy's pan
+  scene (gated on the Fish Tank letter the reset re-sends) grants the pan with a command the
+  replay scan didn't know, and a scene that only unlocks after another replayable scene (Sam's,
+  Shane's, Penny's and Maru's 14-heart chains, Shane's morning-after, Pam's bus follow-up) was
+  stuck as seen from the first loop. The scan now treats gift and world-state commands as grants
+  and lets a scene replay when the scene it chains onto replays.
 - **A restored Community Center counts as complete.** With the loop active the mod answers
   the game's "is the Community Center complete" question from the bundle board, so the Gifts of
   the Junimos can't flip the hall to complete with rooms still open. On a finished hall that board
