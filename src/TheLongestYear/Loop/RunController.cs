@@ -1370,6 +1370,41 @@ namespace TheLongestYear.Loop
                 $"slots filled={Run.DonatedSlots.Count}, JP banked={_store.State.JunimoPoints}, " +
                 $"yearTwoSeedsWeek={Run.YearTwoSeedsWeek}, sneakPeekSeason={Run.SneakPeekSeason}.",
                 LogLevel.Info);
+            PrintCommunityCenterCompletion();
+        }
+
+        /// <summary>Everything vanilla's Willy back-room letter trigger reads (Nexus bug 1130863):
+        /// <c>Mail_Willy_BackRoomUnlocked</c> fires on DayEnding when
+        /// <c>Game1.MasterPlayer.hasCompletedCommunityCenter()</c> is true, which this mod patches
+        /// to also require every room complete on the live board. Prints both halves so a
+        /// player's paste shows which one said no.</summary>
+        private void PrintCommunityCenterCompletion()
+        {
+            Farmer p = Game1.MasterPlayer ?? Game1.player;
+            if (p == null) return;
+            string[] rooms = { "Pantry", "CraftsRoom", "FishTank", "BoilerRoom", "Vault" };
+            var roomBits = new List<string>();
+            foreach (string room in rooms)
+                roomBits.Add($"{room}={(Integration.RunReachEvaluator.RoomComplete(room) ? "done" : "OPEN")}");
+            string[] mails = { "ccPantry", "ccCraftsRoom", "ccFishTank", "ccBoilerRoom", "ccVault", "ccBulletin",
+                               "ccIsComplete", "willyBackRoomInvitation", "willyBackRoom", "JojaMember" };
+            var mailBits = new List<string>();
+            foreach (string m in mails)
+                if (p.mailReceived.Contains(m)) mailBits.Add(m);
+            string areas = "?";
+            if (Game1.getLocationFromName("CommunityCenter") is StardewValley.Locations.CommunityCenter cc)
+            {
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < cc.areasComplete.Count; i++) sb.Append(cc.areasComplete[i] ? 'T' : 'F');
+                areas = sb.ToString();
+            }
+            bool willyFired = p.triggerActionsRun.Contains("Mail_Willy_BackRoomUnlocked");
+            _monitor.Log(
+                $"CC completion: hasCompletedCommunityCenter={p.hasCompletedCommunityCenter()}, " +
+                $"board rooms [{string.Join(", ", roomBits)}], areasComplete={areas}, " +
+                $"mail=[{string.Join(", ", mailBits)}], willyTriggerRan={willyFired}, " +
+                $"victoryAcknowledged={_store.State.VictoryAcknowledged}, year={Game1.year}.",
+                LogLevel.Info);
         }
 
         /// <summary>Wired by ModEntry after the launcher is constructed.</summary>
