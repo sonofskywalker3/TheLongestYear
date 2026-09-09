@@ -41,7 +41,7 @@ public class DejaVuLinesTests
     public void Pick_resolves_text_and_every_villager_has_both_tiers()
     {
         var keys = _fixture.Map.Keys.ToList();
-        Assert.Equal("Have you shopped here before? I feel like I know your order.",
+        Assert.Equal("Have you shopped here before? I feel like I've rung you up a hundred times.",
             DejaVuLines.Pick("Pierre", 1, keys, _ => 0));
         Assert.Equal("Being with you feels like the island. Safe.", DejaVuLines.Pick("Leo", 2, keys, _ => 0));
         Assert.Equal("Hey... you... Sorry, I swear I knew your name for a second.",
