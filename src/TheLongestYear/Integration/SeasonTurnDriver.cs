@@ -19,6 +19,9 @@ namespace TheLongestYear.Integration
         private Action _onComplete;
         private bool _running;
         private int _startedTick;
+        private Func<bool> _pendingStart;
+        private int _pendingSince;
+        private const int PendingTimeoutTicks = 60 * 20;
 
         public bool Running => _running;
 
@@ -45,6 +48,33 @@ namespace TheLongestYear.Integration
             return true;
         }
 
+        /// <summary>Darkness pushback: the porch scene the morning after the board changed. Starts
+        /// the moment the wake frame settles (no new-day fade, no farm event, no warp, no menu), and
+        /// gives up after a while so a morning is never stranded: then the continuation just runs.
+        /// The scene is skippable from its second showing on the save.</summary>
+        public void StartTamperWhenSettled(string oldItemName, string newItemName, Action onComplete)
+        {
+            _pendingSince = Game1.ticks;
+            _pendingStart = () =>
+            {
+                GameLocation loc = Game1.currentLocation;
+                if (loc == null || Game1.eventUp || loc.currentEvent != null) return false;
+                Microsoft.Xna.Framework.Point door = Game1.getFarm().GetMainFarmHouseEntry();
+                bool skippable = _meta.State.SeasonTurnsSeen.Contains(TamperSeenName);
+                _monitor.Log($"Darkness: starting the board-changed scene ({oldItemName} -> {newItemName}, skippable={skippable}).", LogLevel.Info);
+                loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(door.X, door.Y, oldItemName, newItemName, skippable), null, SeasonTurnEventKeys.EventId));
+                _meta.State.SeasonTurnsSeen.Add(TamperSeenName);
+                _onComplete = onComplete;
+                _running = true;
+                _startedTick = Game1.ticks;
+                return true;
+            };
+            _pendingOnComplete = onComplete;
+        }
+
+        public const string TamperSeenName = "DarknessTamper";
+        private Action _pendingOnComplete;
+
         /// <summary>Debug replay (tly_seasonturn): the scene alone, no continuation.</summary>
         public void StartNow(SeasonTurnKind kind)
         {
@@ -59,6 +89,26 @@ namespace TheLongestYear.Integration
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (_pendingStart != null && Context.IsWorldReady)
+            {
+                bool settled = !Game1.newDay && !Game1.eventUp && Game1.farmEvent == null
+                    && Game1.locationRequest == null && Game1.activeClickableMenu == null
+                    && Game1.currentLocation != null && Game1.player.CanMove;
+                bool timedOut = Game1.ticks - _pendingSince > PendingTimeoutTicks;
+                if (settled || timedOut)
+                {
+                    Func<bool> start = _pendingStart;
+                    Action pendingCb = _pendingOnComplete;
+                    _pendingStart = null;
+                    _pendingOnComplete = null;
+                    if (timedOut || !start())
+                    {
+                        _monitor.Log("Darkness: the board-changed scene could not start; continuing the morning.", LogLevel.Warn);
+                        pendingCb?.Invoke();
+                    }
+                }
+                return;
+            }
             if (!_running || !Context.IsWorldReady) return;
             if (Game1.ticks - _startedTick < SettleTicks) return;
             bool eventGone = !Game1.eventUp && Game1.currentLocation?.currentEvent == null;

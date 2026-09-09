@@ -924,8 +924,14 @@ namespace TheLongestYear.Loop
         /// exitFunction callback.</summary>
         private void DoDayStartSeasonAndHub()
         {
-            // What the darkness took in the night, before the hub can cover it.
-            _sabotage?.ShowMorningReports();
+            // What the darkness took in the night, before the hub can cover it. A changed board
+            // plays the Junimos' porch scene first and continues the morning after it.
+            if (_sabotage != null && _sabotage.ShowMorning(DoDayStartSeasonAndHubCore)) return;
+            DoDayStartSeasonAndHubCore();
+        }
+
+        private void DoDayStartSeasonAndHubCore()
+        {
             // Sync state from the game date; a new month clears the month's selections (the
             // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
             // CurrentSelection).
