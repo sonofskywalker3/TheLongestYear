@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.17.11`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.17.12`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.17.11
+## What's New in 0.17.12
 
 **The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.**
 
@@ -33,9 +33,10 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 - **Legendary fish are asked for once, plain, and rarely.** Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
 - **Hard and Extreme mean it.** Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
 - **Two new mineral bundles.** Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
-- **0.17.11: Willy's letter arrives after you keep playing.** A finished Community Center could still be read as unfinished by the mod's own check, which silently blocked the game from sending Willy's back-room letter, so Ginger Island stayed shut. The restored hall is now the authority. Reported by ChaoticMindset.
-- **0.17.11: quest-finishing scenes play again every loop.** Jodi's fish casserole dinner and Marnie's cave carrot thank-you were being treated as already seen from your first loop, so the quest came back each loop but could never be turned in. Reported by ChaoticMindset.
-- **0.17.11: Gunther brings the Rusty Key again every loop.** The museum empties on the rewind and the 60-donation reward re-fired, but Gunther's farm visit that hands the key over never played again, so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by ChaoticMindset.
+- **0.17.12: the Copper Pan and chained scenes come back every loop.** Same family: Willy's pan scene, and any scene that only unlocks after another scene that replays (the 14-heart chains, Shane's morning-after, Pam's bus follow-up), were stuck as seen from loop 1.
+- **0.17.12: Willy's letter arrives after you keep playing.** A finished Community Center could still be read as unfinished by the mod's own check, which silently blocked the game from sending Willy's back-room letter, so Ginger Island stayed shut. The restored hall is now the authority. Reported by ChaoticMindset.
+- **0.17.12: quest-finishing scenes play again every loop.** Jodi's fish casserole dinner and Marnie's cave carrot thank-you were being treated as already seen from your first loop, so the quest came back each loop but could never be turned in. Reported by ChaoticMindset.
+- **0.17.12: Gunther brings the Rusty Key again every loop.** The museum empties on the rewind and the 60-donation reward re-fired, but Gunther's farm visit that hands the key over never played again, so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by ChaoticMindset.
 - **0.17.8: a must-donate-all bundle's season gate takes any of its items.** The Bundle Log showed only the items pinned to the current season and the gate refused the rest. The pins now decide how many are due; which ones you bring is your call. Reported by ada113.
 - **0.17.8: the Cookbook and Craftbook open between the shrine and the reset.** A book bought at the loop-boundary shrine had nothing to bank by the time it first opened, because the reset had already wiped your recipes. Each book with a free slot now opens right after the shrine. Reported by ada113.
 - **0.17.6: a crops bundle every season.** The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board now. A board could roll Orchard, Preserver's and Home Cook's Feast in their place, which left the Farming theme with nothing to ask for in week 1 but saplings.

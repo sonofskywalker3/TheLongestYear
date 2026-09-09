@@ -62,7 +62,13 @@ public sealed class EventGatingTables
           // Gunther's farm visit (Farm 66) grants the Rusty Key with its own command, not mail.
           // The reset wipes the key and the museum, so the 60-donation reward re-fires each loop
           // but the scene that hands the key over was stuck "seen".
-          "rustyKey" };
+          "rustyKey",
+          // Willy's Copper Pan (Mountain 404798, gated on the ccFishTank mail the reset re-sends
+          // every loop) and the other one-off gifts (training rod, slime egg, sculpture, jukebox).
+          "awardFestivalPrize",
+          // World-state flags (Sebastian's frog terrarium, Shane's saloon room, Elliott gone):
+          // Game1.worldStateIDs is wiped at reset, so the scene that sets one must replay.
+          "addWorldState" };
 
     /// <summary>The grant command this script runs (for diagnostics), or null if none. Event scripts
     /// are "/"-delimited command segments; a grant is detected when a segment STARTS WITH a token
@@ -88,6 +94,53 @@ public sealed class EventGatingTables
             }
         }
         return null;
+    }
+
+    /// <summary>Chain propagation: an event whose precondition key carries <c>e &lt;id&gt;</c> (saw
+    /// event) onto a replayable id must replay too, or the chain breaks at its second link every
+    /// loop (Sam's 14-heart job chain 3918600..3, Jodi's dinner behind her farm visit). Roots are
+    /// the flagged set plus <paramref name="chainRoots"/> (relationship-gated and vanilla
+    /// always-replayable ids, which the scan itself never flags). Iterates to a fixpoint. Never
+    /// adds an <paramref name="exclude"/>d id (narrative-suppressed scenes stay suppressed even
+    /// when chained onto a replayable one). Mutates <paramref name="flagged"/>.</summary>
+    public static void PropagateChains(
+        IEnumerable<(string id, string key)> events,
+        HashSet<string> flagged,
+        ISet<string>? chainRoots,
+        ISet<string>? exclude)
+    {
+        var seenAgain = new HashSet<string>(flagged, StringComparer.Ordinal);
+        if (chainRoots != null) seenAgain.UnionWith(chainRoots);
+        var deps = new List<(string id, List<string> sawIds)>();
+        foreach ((string id, string key) in events)
+        {
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(key)) continue;
+            var saw = new List<string>();
+            foreach (string seg in key.Split('/'))
+            {
+                if (!seg.StartsWith("e ", StringComparison.Ordinal)) continue;
+                foreach (string tok in seg.Substring(2).Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    saw.Add(tok);
+            }
+            if (saw.Count > 0) deps.Add((id, saw));
+        }
+        bool changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach ((string id, List<string> sawIds) in deps)
+            {
+                if (seenAgain.Contains(id)) continue;
+                if (exclude != null && exclude.Contains(id)) continue;
+                bool chained = false;
+                foreach (string dep in sawIds)
+                    if (seenAgain.Contains(dep)) { chained = true; break; }
+                if (!chained) continue;
+                flagged.Add(id);
+                seenAgain.Add(id);
+                changed = true;
+            }
+        }
     }
 
     /// <summary>True if the event script grants a run-wipe-able unlock (see <see cref="MatchedGrantToken"/>).</summary>
