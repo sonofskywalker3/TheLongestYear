@@ -53,6 +53,7 @@ namespace TheLongestYear.Loop
                     locationNames.Add(loc.Name);
 
             var events = new List<(string id, string script)>();
+            var keys = new List<(string id, string key)>();
             foreach (string loc in locationNames)
             {
                 Dictionary<string, string> data;
@@ -71,13 +72,20 @@ namespace TheLongestYear.Loop
                     int slash = kv.Key.IndexOf('/');
                     string id = slash < 0 ? kv.Key : kv.Key.Substring(0, slash);
                     events.Add((id, kv.Value ?? ""));
+                    keys.Add((id, kv.Key));
                 }
             }
 
             _ids = EventGatingTables.CollectReplayableIds(events, baseReplayableIds, exclude);
+            int grants = _ids.Count;
+            // Chain roots: relationship-gated scenes (skipped by the re-seed, so they replay) and
+            // the vanilla always-replayable ids. A scene gated "e <root>" replays with its root.
+            var roots = new HashSet<string>(RelationshipEventIndex.Ids, StringComparer.Ordinal);
+            roots.UnionWith(baseReplayableIds);
+            EventGatingTables.PropagateChains(keys, _ids, roots, exclude);
             monitor.Log(
-                $"Replayable-cutscene scan: flagged {_ids.Count} unlock-granting event id(s) across " +
-                $"{locationNames.Count} location(s).",
+                $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) and " +
+                $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
         }
     }
