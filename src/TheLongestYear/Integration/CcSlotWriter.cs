@@ -48,5 +48,21 @@ namespace TheLongestYear.Integration
             worldState.Bundles[bundleIndex] = arr;   // NetArray needs a whole-array assign
             return true;
         }
+
+        /// <summary>Mark a slot open on the board (darkness pushback, spec 2026-09-09: a donation
+        /// comes undone). True if it is open afterwards; false when the bundle or the slot does
+        /// not exist. The caller re-mirrors the ledger (ItemDonationSync.Reconcile) afterwards.</summary>
+        public static bool TryUnfill(int bundleIndex, int ingredientIndex)
+        {
+            var worldState = Game1.netWorldState?.Value;
+            if (worldState?.Bundles?.FieldDict == null) return false;
+            if (!worldState.Bundles.FieldDict.ContainsKey(bundleIndex)) return false;
+            bool[] arr = (bool[])worldState.Bundles[bundleIndex].Clone();
+            if (ingredientIndex < 0 || ingredientIndex >= arr.Length) return false;
+            if (!arr[ingredientIndex]) return true;
+            arr[ingredientIndex] = false;
+            worldState.Bundles[bundleIndex] = arr;
+            return true;
+        }
     }
 }

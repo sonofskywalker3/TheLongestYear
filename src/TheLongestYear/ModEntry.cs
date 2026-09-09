@@ -29,6 +29,7 @@ namespace TheLongestYear
         private UpgradePurchaseService _purchases;
         private BoostPurchaseService _boostPurchases;
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
+        private TheLongestYear.Loop.SabotageService _sabotage;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -285,6 +286,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [n] | revert | tamper | report", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -628,6 +630,14 @@ namespace TheLongestYear
                     : ItemKind.Other;
             };
             _runController.AttachQuestService(_questService);
+            // Darkness pushback (spec 2026-09-09): the night pass and the morning report.
+            _sabotage = new TheLongestYear.Loop.SabotageService(
+                this.Monitor, _meta, _config,
+                () => _runController?.Requirements ?? _requirements,
+                () => _availability,
+                () => _enginePools,
+                RebuildBoardDerivedState);
+            _runController.AttachSabotage(_sabotage);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
@@ -1680,6 +1690,59 @@ namespace TheLongestYear
         }
 
         /// <summary>Debug: replay a season-turn scene now (spec 2026-09-07), no continuation.</summary>
+        /// <summary>Darkness pushback debug: force a front now, or print the state.</summary>
+        private void CmdSabotage(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _sabotage == null) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            string sub = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            var rng = new System.Random();
+            int dayOfYear = TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
+            switch (sub)
+            {
+                case "status":
+                    this.Monitor.Log(_sabotage.Status(), LogLevel.Info);
+                    break;
+                case "blight":
+                {
+                    int n = args.Length > 1 && int.TryParse(args[1], out int parsed) ? parsed
+                        : TheLongestYear.Loop.BlightPass.CountFor(_meta.Run.Season);
+                    int killed = _sabotage.Blight(n, rng);
+                    this.Monitor.Log($"Blight: {killed} crop(s) withered (asked {n}). Sleep to see the report.", LogLevel.Info);
+                    break;
+                }
+                case "revert":
+                    this.Monitor.Log(_sabotage.Revert(rng) ? "Reversion: a slot came undone. Sleep to see the report." : "Reversion: no candidate slot.", LogLevel.Info);
+                    break;
+                case "tamper":
+                    this.Monitor.Log(_sabotage.Tamper(rng, dayOfYear) ? "Tampering: the board changed. Sleep to see the report." : "Tampering: no open slot with a Winter fit.", LogLevel.Info);
+                    break;
+                case "report":
+                    _sabotage.ShowMorningReports();
+                    break;
+                default:
+                    this.Monitor.Log("Usage: tly_sabotage status | blight [n] | revert | tamper | report", LogLevel.Info);
+                    break;
+            }
+        }
+
+        /// <summary>After the darkness rewrites a bundle on the live board (and in the stored
+        /// copy), re-derive everything that was built from the board: the CcItem catalog, the
+        /// requirements (through the same resolve path save load uses, so the manifest check runs
+        /// against the updated stored board), the fingerprint the Vanilla-mode watcher compares,
+        /// and the non-object slot flag.</summary>
+        private void RebuildBoardDerivedState(string reason)
+        {
+            if (_boardBuilder == null || _runController == null) return;
+            _catalog = _boardBuilder.Build();
+            _requirements = ResolveRequirements(_boardBuilder, ParseItemSeasonPins(), ParseBundleQuotas());
+            _boardFingerprint = BoardInspection.Fingerprint(Game1.netWorldState.Value.BundleData);
+            _runController.ReplaceCatalog(_catalog);
+            _runController.ReplaceRequirements(_requirements);
+            TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots =
+                BoardInspection.HasNonObjectIngredients(Game1.netWorldState.Value.BundleData);
+            this.Monitor.Log($"Board re-derived after {reason}: {_requirements.Count} bundles, {_catalog.Count} catalog items.", LogLevel.Info);
+        }
+
         private void CmdSeasonTurn(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -2021,6 +2084,23 @@ namespace TheLongestYear
                 name: () => Strings.Get("gmcm.non-object.name"),
                 tooltip: () => Strings.Get("gmcm.non-object.tooltip"));
 
+            // Darkness pushback (spec 2026-09-09): one switch per front, read live by SabotageService.
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableBlight,
+                setValue: v => _config.EnableBlight = v,
+                name: () => Strings.Get("gmcm.blight.name"),
+                tooltip: () => Strings.Get("gmcm.blight.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableBundleReversion,
+                setValue: v => _config.EnableBundleReversion = v,
+                name: () => Strings.Get("gmcm.reversion.name"),
+                tooltip: () => Strings.Get("gmcm.reversion.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableRequirementTampering,
+                setValue: v => _config.EnableRequirementTampering = v,
+                name: () => Strings.Get("gmcm.tampering.name"),
+                tooltip: () => Strings.Get("gmcm.tampering.tooltip"));
+
             gmcm.AddNumberOption(this.ModManifest,
                 getValue: () => (float)_config.SelectionBonusMultiplier,
                 setValue: v => _config.SelectionBonusMultiplier = v,
@@ -2255,6 +2335,7 @@ namespace TheLongestYear
                 case "tly_ending": this.CmdEnding(command, args); break;
                 case "tly_seasonturn": this.CmdSeasonTurn(command, args); break;
                 case "tly_remember": this.CmdRemember(command, args); break;
+                case "tly_sabotage": this.CmdSabotage(command, args); break;
                 case "tly_year2wall":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugShowYear2Wall(); break;

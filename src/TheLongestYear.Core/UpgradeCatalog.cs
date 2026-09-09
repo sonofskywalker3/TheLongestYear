@@ -273,6 +273,17 @@ public static class UpgradeCatalog
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
             metaRequirement: null, runReachRequirement: "bus:4"),
 
+        // Wards (spec 2026-09-09 darkness pushback): buy off a front. Ward of the Fields stops
+        // blight in one season; Ward of the Hall stops donations in one item room coming undone.
+        // Winter's requirement tampering has no ward on purpose. No prerequisites, no reach gate.
+        new UpgradeDefinition(Sabotage.WardIds.CropsSummer, UpgradeCategory.Wards, Sabotage.WardIds.CropsSummerCost),
+        new UpgradeDefinition(Sabotage.WardIds.CropsFall, UpgradeCategory.Wards, Sabotage.WardIds.CropsFallCost),
+        new UpgradeDefinition(Sabotage.WardIds.HallPantry, UpgradeCategory.Wards, Sabotage.WardIds.HallCost),
+        new UpgradeDefinition(Sabotage.WardIds.HallCraftsRoom, UpgradeCategory.Wards, Sabotage.WardIds.HallCost),
+        new UpgradeDefinition(Sabotage.WardIds.HallFishTank, UpgradeCategory.Wards, Sabotage.WardIds.HallCost),
+        new UpgradeDefinition(Sabotage.WardIds.HallBoilerRoom, UpgradeCategory.Wards, Sabotage.WardIds.HallCost),
+        new UpgradeDefinition(Sabotage.WardIds.HallBulletin, UpgradeCategory.Wards, Sabotage.WardIds.HallCost),
+
         // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
         // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
         // Coop birds:
