@@ -152,10 +152,21 @@ protect your crops and nothing else (Jeff, 2026-09-09).
 | `ward_crops_summer` | Ward of the Fields: Summer | 250 |
 | `ward_crops_fall` | Ward of the Fields: Fall | 300 |
 | `ward_crops_winter` | Ward of the Fields: Winter | 300 |
+| `ward_circle_1` | Circle of Warding | 400 |
+| `ward_circle_2` | Circle of Warding II | 800, needs I |
+| `ward_circle_3` | Circle of Warding III | 1600, needs II |
 
-No prerequisites, no reach requirement. Shrine prices scale with the difficulty dial like every
-other row. Spring is clean so there is no Spring ward. A ward covers crops in the ground; chest
-spoilage in that season still happens.
+No reach requirement. Shrine prices scale with the difficulty dial like every other row. Spring
+is clean so there is no Spring ward. A field ward covers crops in the ground; chest loss in that
+season still happens.
+
+**Circle of Warding (Jeff, 2026-09-09).** A 3x3 rug-type furniture (custom row in Data/Furniture,
+`assets/circle_of_warding.png`, a placeholder magic-circle sprite), placeable indoors or out. The
+nine tiles under it are beyond the darkness: crops there never blight, chests there never spoil
+or lose anything. Up to three on the ladder above. Owned circles are granted on purchase and
+re-granted every loop; the count is kept exact across the world, the inventory and chests
+(`CircleOfWardingService.Reconcile`, the books' idiom). Where the circles go is the player's
+storage plan, which is the point.
 
 ## Config
 
@@ -200,7 +211,7 @@ manifest, not the legacy path.
 ## Open for Jeff
 
 - Every number in the tables.
-- A storage ward. Hearth and Lantern were both too hokey; not built, no shape agreed.
+- The circle sprite: a generated placeholder, to be replaced with the Wizard's floor circle look.
 - Ward prices.
 - A Darkness difficulty dial (Easy to Extreme) alongside the off switches. Not built.
 - Whether the Wards tab should hide when blight is off.
