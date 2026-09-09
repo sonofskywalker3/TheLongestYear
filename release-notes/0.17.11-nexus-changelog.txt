@@ -1,6 +1,10 @@
-0.17.10 - Quest scenes and the Rusty Key come back every loop
+0.17.11 - Quest scenes, the Rusty Key and Willy's letter come back
 
 Fixed
+- Willy's back-room letter arrives after you finish the Community Center and keep playing. A
+  finished hall could still be read as unfinished by the mod's own check, which silently blocked
+  the game from sending the letter, so Ginger Island stayed shut. The restored hall is now the
+  authority. Reported by ChaoticMindset.
 - Jodi's fish casserole dinner and Marnie's cave carrot thank-you play again each loop. They
   were treated as already seen from your first loop, so the quest came back but could never be
   turned in. Reported by ChaoticMindset.
