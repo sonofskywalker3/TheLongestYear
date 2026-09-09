@@ -46,6 +46,7 @@ namespace TheLongestYear.Loop
         public Day28Branch PendingCutscene => _pendingCutscene;
         private TheLongestYear.UI.MenuLauncher _launcher;
         private WeeklyThemeQuestService _questService;
+        private SabotageService _sabotage;
 
         /// <summary>A planning-hub offer that couldn't open because the menu surface was busy
         /// (e.g. the post-win keep-playing <c>DialogueBox</c> still closing when the new loop's
@@ -923,6 +924,8 @@ namespace TheLongestYear.Loop
         /// exitFunction callback.</summary>
         private void DoDayStartSeasonAndHub()
         {
+            // What the darkness took in the night, before the hub can cover it.
+            _sabotage?.ShowMorningReports();
             // Sync state from the game date; a new month clears the month's selections (the
             // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
             // CurrentSelection).
@@ -1055,6 +1058,11 @@ namespace TheLongestYear.Loop
             {
                 ForceTomorrowSunny();   // a festival deferred us; keep tomorrow clear too
             }
+
+            // Darkness pushback (spec 2026-09-09): only an ordinary night. A day 28 belongs to the
+            // gate (it judges what the player actually had), the win night to the ending.
+            if (action == RunAction.Continue && !Run.EndingArmed)
+                _sabotage?.RunNight();
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
             // DayEnding fires while the player can't open menus.
         }
@@ -1517,6 +1525,9 @@ namespace TheLongestYear.Loop
         /// quest in the player's quest log — created on theme selection, refreshed on donation,
         /// auto-completed when every goal slot is complete.</summary>
         public void AttachQuestService(WeeklyThemeQuestService quest) => _questService = quest;
+        /// <summary>Darkness pushback (spec 2026-09-09): the night pass rolls from OnDayEnding on a
+        /// Continue verdict, the morning report shows from the normal day start.</summary>
+        public void AttachSabotage(SabotageService sabotage) => _sabotage = sabotage;
 
         /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
         /// <c>Run.WeekOfYear + 1</c> (and a <paramref name="seasonOverride"/> on day 28) so the

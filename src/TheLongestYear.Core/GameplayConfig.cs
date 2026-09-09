@@ -248,6 +248,13 @@ public sealed class GameplayConfig
     /// occasionally half-remember you. No mechanical effect. GMCM "Features".</summary>
     public bool EnableDejaVuDialogue { get; set; } = true;
 
+    /// <summary>Darkness pushback (spec 2026-09-09): one switch per front, read live.
+    /// Blight withers crops from Summer; reversion empties a donated slot from Fall; tampering
+    /// rewrites an unfilled slot in Winter. Off = that front never fires.</summary>
+    public bool EnableBlight { get; set; } = true;
+    public bool EnableBundleReversion { get; set; } = true;
+    public bool EnableRequirementTampering { get; set; } = true;
+
     /// <summary>Familiarity points (talk 1, gift 3, heart event 10, summed over every loop) a
     /// villager needs before a deja-vu line can play. Tier 2 lines start at three times this.</summary>
     public int DejaVuThreshold { get; set; } = 60;

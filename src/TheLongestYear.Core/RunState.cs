@@ -154,6 +154,20 @@ public sealed class RunState
     /// morning, then clears it. Survives a quit overnight.</summary>
     public bool EndingArmed { get; set; }
 
+    // ---- Darkness pushback (spec 2026-09-09) ----
+    /// <summary>Week of the year the blight counter below belongs to; -1 until blight first strikes.</summary>
+    public int BlightWeek { get; set; } = -1;
+    /// <summary>Nights blight has struck in <see cref="BlightWeek"/>.</summary>
+    public int BlightNightsThisWeek { get; set; }
+    /// <summary>Week of the year a donation last came undone; -1 until it happens.</summary>
+    public int LastReversionWeek { get; set; } = -1;
+    /// <summary>Days of the year (Winter) a requirement was rewritten this loop.</summary>
+    public List<int> TamperDays { get; set; } = new();
+    /// <summary>Every rewrite this loop, for tly_sabotage status and the log.</summary>
+    public List<Sabotage.TamperRecord> Tampers { get; set; } = new();
+    /// <summary>Morning HUD lines the night pass queued; drained by the next OnDayStarted.</summary>
+    public List<Sabotage.SabotageReport> PendingSabotageReports { get; set; } = new();
+
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
     {
@@ -314,6 +328,12 @@ public sealed class RunState
         WeatherOverrideDay = -1;
         WeatherOverride = null;
         YearTwoSeedsWeek = -1;
-        SneakPeekSeason = -1;
+                SneakPeekSeason = -1;
+        BlightWeek = -1;
+        BlightNightsThisWeek = 0;
+        LastReversionWeek = -1;
+        (TamperDays ??= new()).Clear();
+        (Tampers ??= new()).Clear();
+        (PendingSabotageReports ??= new()).Clear();
     }
 }
