@@ -9,16 +9,25 @@ public enum SabotageKind { Blight, Reversion, Tampering }
 /// All values are the 2026-09-09 opening assumptions.</summary>
 public static class SabotageTuning
 {
-    // Blight: crops on the farm die in the night. Summer and Fall only (Winter is the hall's
-    // season, and the turn line promises "it will not rot your crops").
+    // Blight: crops on the farm die and perishables in chests spoil in the night. Summer, Fall
+    // and Winter (Jeff, 2026-09-09: Winter blight is wanted; Winter fields are near empty so the
+    // chests carry it).
     public const double BlightChanceSummer = 0.25;
     public const double BlightChanceFall = 0.35;
+    public const double BlightChanceWinter = 0.35;
     public const double BlightShareSummer = 0.04;
     public const double BlightShareFall = 0.06;
+    public const double BlightShareWinter = 0.06;
     public const int BlightMinPerNight = 1;
     public const int BlightMaxSummer = 6;
     public const int BlightMaxFall = 10;
+    public const int BlightMaxWinter = 10;
     public const int BlightNightsPerWeek = 2;
+    /// <summary>Chest spoilage on a blight night: this share of every perishable unit the player
+    /// has stored, clamped. The Junimo Stash is never touched.</summary>
+    public const double SpoilShare = 0.03;
+    public const int SpoilMinPerNight = 1;
+    public const int SpoilMaxPerNight = 8;
 
     // Reversion: one filled slot in an unfinished bundle empties. Fall and Winter.
     public const double ReversionChanceFall = 0.20;
@@ -44,7 +53,7 @@ public static class SabotageSchedule
 {
     public static bool IsOpen(SabotageKind kind, Season season) => kind switch
     {
-        SabotageKind.Blight => season == Season.Summer || season == Season.Fall,
+        SabotageKind.Blight => season != Season.Spring,
         SabotageKind.Reversion => season == Season.Fall || season == Season.Winter,
         SabotageKind.Tampering => season == Season.Winter,
         _ => false,
@@ -54,6 +63,7 @@ public static class SabotageSchedule
     {
         (SabotageKind.Blight, Season.Summer) => SabotageTuning.BlightChanceSummer,
         (SabotageKind.Blight, Season.Fall) => SabotageTuning.BlightChanceFall,
+        (SabotageKind.Blight, Season.Winter) => SabotageTuning.BlightChanceWinter,
         (SabotageKind.Reversion, Season.Fall) => SabotageTuning.ReversionChanceFall,
         (SabotageKind.Reversion, Season.Winter) => SabotageTuning.ReversionChanceWinter,
         (SabotageKind.Tampering, Season.Winter) => SabotageTuning.TamperChance,
