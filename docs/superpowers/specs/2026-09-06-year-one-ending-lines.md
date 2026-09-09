@@ -11,58 +11,58 @@ once they exist.
 
 | Key | Text |
 | --- | --- |
-| `event.ending.crack.open` | Something is going on here that I don't understand.#$b#I keep remembering things with you that never happened. |
-| `event.ending.crack.tier1` | You've been here a year. But I remember you bringing me a birthday present twice. |
-| `event.ending.crack.tier2` | You've been here a year. But I remember the day we {{scene}}, and I remember it twice. |
-| `event.ending.crack.tier3` | You've been here a year. But you brought me things you couldn't have known I liked. |
-| `event.ending.crack.tier4` | You've been here a year. But I remember talking with you before you got here. |
+| `event.ending.crack.open` | Something is going on here that I don't understand. |
+| `event.ending.crack.tier1` | You've only been here a year, but I remember you giving me a present at least two different times. |
+| `event.ending.crack.tier2` | I can remember {{scene}}, but how many times did that happen? |
+| `event.ending.crack.tier3` | The very first time I saw you, I could have sworn we'd already met. |
+| `event.ending.crack.tier4` | I remember talking with you before you got here. |
 | `event.ending.crack.close` | I don't know how. But I want to help. |
 
 ### Voice overrides
 
 | Key | Text |
 | --- | --- |
-| `event.ending.crack.tier1.Shane` | You've been here a year. So why do I remember two birthday presents from you? |
-| `event.ending.crack.tier2.Shane` | You've been here a year. So why do I remember the day we {{scene}} twice? |
-| `event.ending.crack.tier3.Shane` | You've been here a year. So why do I remember you bringing me stuff you had no business knowing I liked? |
-| `event.ending.crack.tier4.Shane` | You've been here a year. So why do I remember talking to you before you showed up? |
-| `event.ending.crack.tier1.George` | A year, you say. Then why do I remember two birthday presents from you? |
-| `event.ending.crack.tier2.George` | A year, you say. Then why do I remember the day we {{scene}} twice over? |
-| `event.ending.crack.tier3.George` | A year, you say. Then why do I remember you bringing me things nobody told you about? |
-| `event.ending.crack.tier4.George` | A year, you say. Then why do I remember talking to you before you got here? |
-| `event.ending.crack.tier1.Haley` | You've only been here a year, right? Because I remember you bringing me a birthday present twice. |
-| `event.ending.crack.tier2.Haley` | You've only been here a year, right? Because I remember the day we {{scene}}. Twice. |
-| `event.ending.crack.tier3.Haley` | You've only been here a year, right? Because I remember you bringing me things you couldn't have known I'd like. |
-| `event.ending.crack.tier4.Haley` | You've only been here a year, right? Because I remember talking to you before you moved here. |
-| `event.ending.crack.tier1.Abigail` | You've been here a year. But I swear I remember you bringing me a birthday present twice. That's so weird. |
-| `event.ending.crack.tier2.Abigail` | You've been here a year. But I swear I remember the day we {{scene}} happening twice. That's so weird. |
-| `event.ending.crack.tier3.Abigail` | You've been here a year. But I swear you kept bringing me things you couldn't have known I liked. |
-| `event.ending.crack.tier4.Abigail` | You've been here a year. But I swear I remember talking with you before you got here. |
-| `event.ending.crack.tier1.Wizard` | One year. Yet I remember two birthday gifts from your hand. |
-| `event.ending.crack.tier2.Wizard` | One year. Yet I remember the day we {{scene}}, and I remember it twice. |
-| `event.ending.crack.tier3.Wizard` | One year. Yet you brought me things you could not have known I favour. |
-| `event.ending.crack.tier4.Wizard` | One year. Yet I remember our talks from before you came to this valley. |
+| `event.ending.crack.tier1.Shane` | You've been here a year. So how come I remember you giving me a present at least twice? |
+| `event.ending.crack.tier2.Shane` | I remember {{scene}}. So how come I remember it more than once? |
+| `event.ending.crack.tier3.Shane` | The first time I saw you, I could've sworn I already knew you. Figured it was the beer. |
+| `event.ending.crack.tier4.Shane` | I remember talking to you before you ever showed up. Don't ask me how. |
+| `event.ending.crack.tier1.George` | A year, you say. Then why do I remember you giving me presents two different times? Hmph. |
+| `event.ending.crack.tier2.George` | I remember {{scene}}. So why do I remember it twice, if you've only been here a year? |
+| `event.ending.crack.tier3.George` | First time I laid eyes on you, I could have sworn we'd met. At my age you notice that. |
+| `event.ending.crack.tier4.George` | I remember talking to you before you moved here. Don't tell me I'm losing it. |
+| `event.ending.crack.tier1.Haley` | You've only been here a year, right? Because I totally remember you giving me a present at least two different times. |
+| `event.ending.crack.tier2.Haley` | I totally remember {{scene}}. But like, how many times did that even happen? |
+| `event.ending.crack.tier3.Haley` | The very first time I saw you I was like, wait, don't I know you? |
+| `event.ending.crack.tier4.Haley` | I remember talking to you before you even moved here. How does that work? |
+| `event.ending.crack.tier1.Abigail` | You've only been here a year, but I remember you giving me a present at least two different times. That's so weird. |
+| `event.ending.crack.tier2.Abigail` | I remember {{scene}}. But I swear it happened more than once. So weird. |
+| `event.ending.crack.tier3.Abigail` | The very first time I saw you I could have sworn we'd already met. Isn't that weird? |
+| `event.ending.crack.tier4.Abigail` | I remember talking with you before you ever got here. Isn't that so weird? |
+| `event.ending.crack.tier1.Wizard` | You have been here one year. Yet I recall two gifts from your hand, on two occasions. Curious. |
+| `event.ending.crack.tier2.Wizard` | I recall {{scene}}. Yet I recall it twice. Curious. |
+| `event.ending.crack.tier3.Wizard` | The first time I laid eyes upon you, I was certain we had met before. Curious. |
+| `event.ending.crack.tier4.Wizard` | I recall our conversations from before you set foot in this valley. Curious. |
 
 ## Scene phrases (`event.ending.scene.*`)
 
-Fill the `{{scene}}` token in a tier-2 line above: "the day we `{{scene}}`". Each row names the
+Fill the `{{scene}}` token in a tier-2 line above: "I can remember `{{scene}}`, but how many times did that happen?" (Jeff, 2026-09-09: custom wording per villager so it never reads awkwardly; the villager is the speaker). Each row names the
 real heart event behind the phrase (id, friendship points at the time, source location), read
 from a live Data/Events dump against the installed game on 2026-09-06.
 
 | Key | Text | Event id | Points (hearts) | Location |
 | --- | --- | --- | --- | --- |
-| `event.ending.scene.abigail-2` | played the video game together | 1 | 500 (2) | SeedShop |
-| `event.ending.scene.alex-2` | played catch on the beach | 20 | 500 (2) | Beach |
-| `event.ending.scene.elliott-2` | toured the cabin | 39 | 500 (2) | ElliottHouse |
-| `event.ending.scene.emily-2` | shared a strange dream | 471942 | 500 (2) | HaleyHouse |
-| `event.ending.scene.haley-2` | watched the sisters argue | 11 | 500 (2) | HaleyHouse |
-| `event.ending.scene.harvey-2` | watched a check-up | 56 | 500 (2) | JoshHouse |
-| `event.ending.scene.leah-2` | looked at the sculpture | 50 | 500 (2) | LeahHouse |
-| `event.ending.scene.maru-2` | helped test the soil | 6 | 500 (2) | ScienceHouse |
-| `event.ending.scene.penny-2` | watched her help an elder | 34 | 500 (2) | Town |
-| `event.ending.scene.sam-2` | listened to the jam session | 44 | 500 (2) | SamHouse |
-| `event.ending.scene.sebastian-4` | looked at the motorcycle | 384883 | 1000 (4) | Mountain |
-| `event.ending.scene.shane-2` | shared a drink outside | 611944 | 500 (2) | Forest |
+| `event.ending.scene.abigail-2` | playing that video game with you | 1 | 500 (2) | SeedShop |
+| `event.ending.scene.alex-2` | throwing the gridball around on the beach with you | 20 | 500 (2) | Beach |
+| `event.ending.scene.elliott-2` | showing you around my cabin | 39 | 500 (2) | ElliottHouse |
+| `event.ending.scene.emily-2` | that dream we both had | 471942 | 500 (2) | HaleyHouse |
+| `event.ending.scene.haley-2` | you walking in on Emily and me fighting | 11 | 500 (2) | HaleyHouse |
+| `event.ending.scene.harvey-2` | your check-up at the clinic | 56 | 500 (2) | JoshHouse |
+| `event.ending.scene.leah-2` | showing you my sculpture | 50 | 500 (2) | LeahHouse |
+| `event.ending.scene.maru-2` | testing soil samples with you | 6 | 500 (2) | ScienceHouse |
+| `event.ending.scene.penny-2` | you helping me with George's wheelchair | 34 | 500 (2) | Town |
+| `event.ending.scene.sam-2` | you sitting in on our band practice | 44 | 500 (2) | SamHouse |
+| `event.ending.scene.sebastian-4` | showing you my bike up on the mountain | 384883 | 1000 (4) | Mountain |
+| `event.ending.scene.shane-2` | that beer we had outside the ranch | 611944 | 500 (2) | Forest |
 
 Villagers with no scene entry (their lowest-hearts events were too ambiguous, or reserved for a
 higher tier already) fall through to the gifts or talks tier instead: no scene phrase is
@@ -84,7 +84,7 @@ The six-scene event built by `EndingEventInjector.Build`, in scene order.
 | Key | Text |
 | --- | --- |
 | `event.ending.lewis-hall-1` | Everyone. I can't explain what happened here overnight.#$b#But this building is ours again. |
-| `event.ending.lewis-hall-2` | And we all know who did the work this year. Three cheers for our farmer!$h |
+| `event.ending.lewis-hall-2` | We may not have said it, but we all saw you working in here this past year. |
 | `event.ending.lewis-hall-3` | Pelican Town has its heart back. Thank you. |
 
 ### Scene 3: the crack
