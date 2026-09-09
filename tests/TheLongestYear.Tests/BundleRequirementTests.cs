@@ -63,7 +63,7 @@ public class BundleRequirementTests
     }
 
     [Fact]
-    public void PerItem_bundle_fails_when_earlier_pinned_item_undonated()
+    public void PerItem_bundle_fails_when_fewer_items_donated_than_are_due()
     {
         var b = BundleRequirement.CreatePerItem("Blacksmiths", Theme.Mining,
             new Dictionary<string, Season>
@@ -72,9 +72,32 @@ public class BundleRequirementTests
                 ["Iron"] = Season.Summer,
                 ["Gold"] = Season.Fall
             });
-        // At Summer 28 both Copper and Iron are due. Missing Copper -> fail.
+        // At Summer 28 two slots are due. One donation -> fail, whichever item it was.
         var donated = TestLedger.Fill(b, "Iron");
         Assert.False(b.IsSatisfiedAtSeasonEnd(Season.Summer, donated));
+        var missing = b.MissingForSeason(Season.Summer, donated);
+        Assert.Equal(1, missing.Count);
+        Assert.Equal(new[] { "Copper", "Gold" }, missing.ItemIds);
+    }
+
+    /// <summary>Nexus post ada113, 2026-09-07: the pins say how many of the bundle are due by a
+    /// checkpoint, not which ones. Donating the Summer item in Spring meets Spring's one-slot ask,
+    /// exactly as the board itself accepts any of the bundle's items.</summary>
+    [Fact]
+    public void PerItem_bundle_accepts_any_of_its_items_toward_the_seasons_count()
+    {
+        var b = BundleRequirement.CreatePerItem("Blacksmiths", Theme.Mining,
+            new Dictionary<string, Season>
+            {
+                ["Copper"] = Season.Spring,
+                ["Iron"] = Season.Summer,
+                ["Gold"] = Season.Fall
+            });
+        var donated = TestLedger.Fill(b, "Iron");
+        Assert.True(b.IsSatisfiedAtSeasonEnd(Season.Spring, donated));
+        Assert.Equal(0, b.MissingForSeason(Season.Spring, donated).Count);
+        // Winter still wants every slot, so the bundle must be completed to win.
+        Assert.Equal(2, b.MissingForSeason(Season.Winter, donated).Count);
     }
 
     [Fact]
@@ -273,18 +296,21 @@ public class BundleRequirementTests
     }
 
     [Fact]
-    public void A_doubled_id_needs_both_slots_filled()
+    public void A_doubled_id_counts_as_two_due_slots()
     {
         var construction = Construction(13);
         var ledger = new SlotLedger();
         ledger.Add(13, 0, "(O)388");
         ledger.Add(13, 2, "(O)390");
-        ledger.Add(13, 3, "(O)709");
-        Assert.False(construction.IsFullyComplete(ledger));            // 3 of 4 slots
-        Assert.False(construction.IsSatisfiedAtSeasonEnd(Season.Spring, ledger));  // Wood slot 1 is pinned Spring too
+        Assert.False(construction.IsFullyComplete(ledger));            // 2 of 4 slots
+        // Both Wood slots and Stone are pinned Spring: three slots due, two filled.
+        Assert.False(construction.IsSatisfiedAtSeasonEnd(Season.Spring, ledger));
         var missing = construction.MissingForSeason(Season.Spring, ledger);
         Assert.Equal(1, missing.Count);
-        Assert.Equal(new[] { "(O)388" }, missing.ItemIds);
+        Assert.Equal(new[] { "(O)388", "(O)709" }, missing.ItemIds);   // any unfilled slot will do
+        ledger.Add(13, 3, "(O)709");                                    // the Summer-pinned one counts
+        Assert.True(construction.IsSatisfiedAtSeasonEnd(Season.Spring, ledger));
+        Assert.False(construction.IsSatisfiedAtSeasonEnd(Season.Summer, ledger));   // 4 due, 3 filled
         ledger.Add(13, 1, "(O)388");
         Assert.True(construction.IsFullyComplete(ledger));
         Assert.True(construction.IsSatisfiedAtSeasonEnd(Season.Winter, ledger));

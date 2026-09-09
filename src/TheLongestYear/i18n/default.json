@@ -481,6 +481,7 @@
     // craftbook also displays (renaming later would break existing translation files).
     "menu.books.no-new": "No new recipes to add. Learn more recipes first.",
     "menu.books.choose": "Choose a recipe to bank:",
+    "menu.books.bank-before-reset": "The loop is about to reset. Bank the recipes you want to keep, then close the book.",
     "menu.cookbook.title": "Cookbook: {{used}} / {{total}} slots",
     "menu.craftbook.title": "Craftbook: {{used}} / {{total}} slots",
     "menu.books.empty-slot": "[empty, click to add]",

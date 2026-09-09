@@ -35,6 +35,11 @@ namespace TheLongestYear.UI
         private readonly MetaState _meta;
         private readonly int _slotCount;
 
+        /// <summary>Optional line under the title, set by the loop-boundary offer ("bank what you
+        /// want to keep before the reset"). Null when opened from the book itself.</summary>
+        private readonly string _subtitle;
+        private int HeaderHeight => _subtitle == null ? 80 : 120;
+
         // Sub-mode: when non-null we are in "pick a recipe to fill slot _pendingSlot".
         private int _pendingSlot = -1;
         private List<string> _pickerList;   // recipe ids available to pick; null = normal mode
@@ -46,11 +51,12 @@ namespace TheLongestYear.UI
         private ClickableTextureComponent _scrollUp;
         private ClickableTextureComponent _scrollDown;
 
-        public CookbookMenu(IMonitor monitor, MetaState meta)
+        public CookbookMenu(IMonitor monitor, MetaState meta, string subtitle = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _monitor = monitor;
             _meta    = meta;
+            _subtitle = subtitle;
             int tier = meta.HighestKeptTier("cookbook_", maxTier: 3);
             _slotCount = UpgradeCatalog.CookbookSlotCount(tier);
             RecomputeLayout();
@@ -72,9 +78,9 @@ namespace TheLongestYear.UI
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             int listX = xPositionOnScreen + PanelPad;
-            int listY = yPositionOnScreen + 80;
+            int listY = yPositionOnScreen + HeaderHeight;
             int listW = width - PanelPad * 2 - 52;   // leave room for scroll arrows
-            int listH = height - 80 - PanelPad;
+            int listH = height - HeaderHeight - PanelPad;
             _rowsPerPage = Math.Max(1, listH / (RowHeight + RowSpacing));
 
             _rowSlots.Clear();
@@ -212,14 +218,11 @@ namespace TheLongestYear.UI
                 _ => Game1.activeClickableMenu = this);
         }
 
+        /// <summary>Known, unbanked, and not a new-save starter recipe: the reset re-seeds the
+        /// starters, so a slot spent on one keeps nothing.</summary>
         private List<string> AvailableRecipesToBank()
-        {
-            var already = new HashSet<string>(_meta.CookbookRecipes);
-            return Game1.player.cookingRecipes.Keys
-                .Where(id => !already.Contains(id))
-                .OrderBy(id => id)
-                .ToList();
-        }
+            => RecipeBanking.Bankable(Game1.player.cookingRecipes.Keys, _meta.CookbookRecipes,
+                TheLongestYear.Loop.RecipeDefaults.IsDefaultCooking);
 
         private void Scroll(int delta)
         {
@@ -272,6 +275,13 @@ namespace TheLongestYear.UI
                     });
             StardewValley.BellsAndWhistles.SpriteText.drawStringHorizontallyCenteredAt(
                 b, title, xPositionOnScreen + width / 2, yPositionOnScreen + 24);
+            if (_subtitle != null)
+            {
+                Vector2 size = Game1.smallFont.MeasureString(_subtitle);
+                Utility.drawTextWithShadow(b, _subtitle, Game1.smallFont,
+                    new Vector2(xPositionOnScreen + (width - size.X) / 2, yPositionOnScreen + 84),
+                    Game1.textColor);
+            }
 
             if (_pickerList != null)
                 DrawPickerRows(b);

@@ -17,6 +17,47 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.17.10 - 2026-09-09
+
+1994 tests.
+
+### Fixed
+
+- **Quest-finishing scenes play again every loop.** The rewind lets a scene replay only when it
+  hands something out (a recipe, a letter, a quest). The scenes that finish a quest, Jodi's fish
+  casserole dinner and Marnie's cave carrot, were being treated as already seen from the first
+  loop, so the re-granted quest could never be turned in. Reported by ChaoticMindset.
+- **Gunther brings the Rusty Key again every loop.** The rewind empties the museum, so the
+  60-donation reward re-fires each loop, but Gunther's farm visit that actually hands the key
+  over was stuck "seen" and never played again. Without the Keep Rusty Key upgrade there was no
+  way to open the sewers after the first loop. Reported by ChaoticMindset.
+
+### Changed
+
+- `tly_runstate` now prints the Community Center completion check the way Willy's back-room
+  letter reads it (the board, the room flags, the completion mail, whether the letter trigger
+  already ran), for diagnosing a keep-playing save that never got the letter.
+- `tly_answer <n>` picks a response on an open question dialogue and `tly_skipscene` finishes the
+  win screen, so the keep-playing path can be driven from the headless runbook.
+
+## 0.17.8 - 2026-09-08
+
+1991 tests.
+
+### Fixed
+
+- **A must-donate-all bundle's season gate takes any of its items.** The Bundle Log showed only
+  the items the deadline spread had pinned to the current season, and the gate refused the
+  bundle's other items even though the board takes any of them. The pins now decide how many of
+  the bundle are due by each checkpoint; which ones you bring is your call, as it already was for
+  pick-X-of-Y bundles. Winter still wants every slot. Reported by ada113.
+- **The Cookbook and Craftbook open between the shrine and the reset.** The books start at 0
+  slots, the first tier is bought at the loop-boundary shrine, and the reset that follows wipes
+  every learned recipe, so a book bought at the shrine had nothing to bank by the time it was
+  first opened. After the shrine closes, each book with a free slot and a recipe worth keeping now
+  opens with a one-line prompt, and the reset runs once both are closed. The pickers also stop
+  listing the new-save starter recipes, which the reset re-seeds anyway. Reported by ada113.
+
 ## 0.17.6 - 2026-09-07
 
 1987 tests.

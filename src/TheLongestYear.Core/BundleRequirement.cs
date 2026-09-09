@@ -208,10 +208,18 @@ public sealed class BundleRequirement
 
     /// <summary>For the <paramref name="season"/> checkpoint: how many more slots the gate needs and
     /// which ids could fill them. Seasonal: every unfilled slot once its season is due. PerItem:
-    /// every unfilled slot whose id is pinned at or before the season (a doubled id demands every
-    /// slot with that id). Percentage: required minus filled, with every unfilled slot's id as a
-    /// candidate (the count and the list differ there: Quality Crops needs 1 of 4 in Spring). The
-    /// Season Goals page, the gate and tly_gateneeds all read this one method.</summary>
+    /// as many slots as are pinned at or before the season, fillable by ANY of the bundle's
+    /// unfilled slots (a doubled id counts as two pinned slots). Percentage: required minus filled,
+    /// with every unfilled slot's id as a candidate. For PerItem and Percentage the count and the
+    /// list differ (Quality Crops needs 1 of 4 in Spring). The Season Goals page, the gate and
+    /// tly_gateneeds all read this one method.
+    ///
+    /// PerItem used to demand the specific pinned ids (Nexus post ada113, 2026-09-07: the Bundle
+    /// Log showed two of Construction's four items and the gate refused the other two even though
+    /// the board takes any of them). The pins still decide HOW MANY are due by each checkpoint, and
+    /// since every pin is clamped to a season its item can exist in, that count is always
+    /// fillable; which items the player brings is their call, as it already was for
+    /// pick-X-of-Y bundles.</summary>
     public (int Count, IReadOnlyList<string> ItemIds) MissingForSeason(Season season, SlotLedger ledger)
     {
         if (ledger is null) throw new ArgumentNullException(nameof(ledger));
@@ -223,8 +231,11 @@ public sealed class BundleRequirement
                 return (sItems.Count, sItems);
 
             case BundleKind.PerItem:
-                var pItems = UnfilledIds(ledger, id => ItemSeasonPins!.TryGetValue(id, out Season due) && (int)due <= (int)season);
-                return (pItems.Count, pItems);
+                int dueSlots = Slots.Count(slot =>
+                    ItemSeasonPins!.TryGetValue(slot.ItemId, out Season due) && (int)due <= (int)season);
+                int stillNeeded = Math.Max(0, dueSlots - ledger.FilledCount(BundleIndex));
+                if (stillNeeded == 0) return (0, Array.Empty<string>());
+                return (stillNeeded, UnfilledIds(ledger, _ => true));
 
             case BundleKind.Percentage:
                 int required = CumulativeRequiredBySeason![(int)season];

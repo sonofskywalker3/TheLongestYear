@@ -741,9 +741,64 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Performs
-        /// the actual world reset and resumes the normal day-start sync + hub trigger.</summary>
-        private void ContinueAfterResetSpend() => FinalizeReset("shrine closed");
+        /// <summary>Continuation called after the JP-spend popup closes on a loop reset. Offers the
+        /// recipe books, then performs the actual world reset and resumes the normal day-start
+        /// sync + hub trigger.</summary>
+        private void ContinueAfterResetSpend()
+            => OfferRecipeBanking(() => FinalizeReset("shrine closed"));
+
+        /// <summary>Nexus post ada113, 2026-09-07: the Cookbook and Craftbook start at 0 slots, the
+        /// first tier is bought at the shrine that opens right here, and the reset that follows wipes
+        /// every learned recipe. A book bought at the shrine therefore had nothing left to bank the
+        /// first time it was opened. So between the shrine and the reset, open each book that has a
+        /// free slot and something worth putting in it (see <see cref="RecipeBanking"/>), Cookbook
+        /// then Craftbook, and continue once both are closed. Same watchdog as the shrine, so a menu
+        /// torn down underneath us still ends in a reset.</summary>
+        private void OfferRecipeBanking(System.Action onContinue)
+            => OfferBook(isCooking: true, () => OfferBook(isCooking: false, onContinue));
+
+        private void OfferBook(bool isCooking, System.Action onContinue)
+        {
+            Farmer player = Game1.player;
+            MetaState meta = _store.State;
+            if (player == null || meta == null || _launcher == null) { onContinue(); return; }
+
+            string bookName = isCooking ? "Cookbook" : "Craftbook";
+            int slots = isCooking
+                ? UpgradeCatalog.CookbookSlotCount(meta.HighestKeptTier("cookbook_", maxTier: 3))
+                : UpgradeCatalog.CraftbookSlotCount(meta.HighestKeptTier("craftbook_", maxTier: 3));
+            List<string> banked = isCooking ? meta.CookbookRecipes : meta.CraftbookRecipes;
+            int bankable = isCooking
+                ? RecipeBanking.Bankable(player.cookingRecipes.Keys, banked, RecipeDefaults.IsDefaultCooking).Count
+                : RecipeBanking.Bankable(player.craftingRecipes.Keys, banked, RecipeDefaults.IsDefaultCrafting).Count;
+            if (!RecipeBanking.ShouldOfferAtReset(slots, banked.Count, bankable))
+            {
+                _monitor.Log($"{bookName} not offered before the reset: slots={slots}, banked={banked.Count}, bankable={bankable}.", LogLevel.Trace);
+                onContinue();
+                return;
+            }
+
+            string subtitle = Strings.Get("menu.books.bank-before-reset");
+            if (isCooking) _launcher.OpenCookbook(subtitle); else _launcher.OpenCraftbook(subtitle);
+            if (Game1.activeClickableMenu is TheLongestYear.UI.CookbookMenu or TheLongestYear.UI.CraftbookMenu)
+            {
+                StardewValley.Menus.IClickableMenu menu = Game1.activeClickableMenu;
+                _monitor.Log($"{bookName} offered before the reset: slots={slots}, banked={banked.Count}, bankable={bankable}.", LogLevel.Info);
+                _menuWatch = (menu, onContinue);
+                menu.exitFunction = () =>
+                {
+                    _menuWatch = null;
+                    onContinue();
+                };
+                return;
+            }
+            string blockingMenu = Game1.activeClickableMenu?.GetType().Name ?? "none";
+            _monitor.Log(
+                $"{bookName} could not open before the reset; continuing without it. " +
+                $"activeClickableMenu={blockingMenu}, eventUp={Game1.eventUp}.",
+                LogLevel.Warn);
+            onContinue();
+        }
 
         /// <summary>
         /// THE one loop-reset finalizer (tech-debt consolidation, 2026-06-10). Every path that
@@ -1417,6 +1472,41 @@ namespace TheLongestYear.Loop
                 $"selectedThisMonth=[{string.Join(",", Run.SelectedThemesThisMonth)}], " +
                 $"slots filled={Run.DonatedSlots.Count}, JP banked={_store.State.JunimoPoints}, " +
                 $"yearTwoSeedsWeek={Run.YearTwoSeedsWeek}, sneakPeekSeason={Run.SneakPeekSeason}.",
+                LogLevel.Info);
+            PrintCommunityCenterCompletion();
+        }
+
+        /// <summary>Everything vanilla's Willy back-room letter trigger reads (Nexus bug 1130863):
+        /// <c>Mail_Willy_BackRoomUnlocked</c> fires on DayEnding when
+        /// <c>Game1.MasterPlayer.hasCompletedCommunityCenter()</c> is true, which this mod patches
+        /// to also require every room complete on the live board. Prints both halves so a
+        /// player's paste shows which one said no.</summary>
+        private void PrintCommunityCenterCompletion()
+        {
+            Farmer p = Game1.MasterPlayer ?? Game1.player;
+            if (p == null) return;
+            string[] rooms = { "Pantry", "CraftsRoom", "FishTank", "BoilerRoom", "Vault" };
+            var roomBits = new List<string>();
+            foreach (string room in rooms)
+                roomBits.Add($"{room}={(Integration.RunReachEvaluator.RoomComplete(room) ? "done" : "OPEN")}");
+            string[] mails = { "ccPantry", "ccCraftsRoom", "ccFishTank", "ccBoilerRoom", "ccVault", "ccBulletin",
+                               "ccIsComplete", "willyBackRoomInvitation", "willyBackRoom", "JojaMember" };
+            var mailBits = new List<string>();
+            foreach (string m in mails)
+                if (p.mailReceived.Contains(m)) mailBits.Add(m);
+            string areas = "?";
+            if (Game1.getLocationFromName("CommunityCenter") is StardewValley.Locations.CommunityCenter cc)
+            {
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < cc.areasComplete.Count; i++) sb.Append(cc.areasComplete[i] ? 'T' : 'F');
+                areas = sb.ToString();
+            }
+            bool willyFired = p.triggerActionsRun.Contains("Mail_Willy_BackRoomUnlocked");
+            _monitor.Log(
+                $"CC completion: hasCompletedCommunityCenter={p.hasCompletedCommunityCenter()}, " +
+                $"board rooms [{string.Join(", ", roomBits)}], areasComplete={areas}, " +
+                $"mail=[{string.Join(", ", mailBits)}], willyTriggerRan={willyFired}, " +
+                $"victoryAcknowledged={_store.State.VictoryAcknowledged}, year={Game1.year}.",
                 LogLevel.Info);
         }
 
