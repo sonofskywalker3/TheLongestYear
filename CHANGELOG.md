@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2044 tests.
+2052 tests.
 
 ### Added
 
@@ -48,6 +48,12 @@ aims to follow [Semantic Versioning](https://semver.org/).
   door leads through IslandSouth. Five of those dishes use entirely vanilla ingredients (real
   ingredient lists, category refs included) and drop only because their recipe cannot be
   learned, proving the learnability rule does the work an ingredient check alone could not.
+
+### Fixed
+
+- **Impossible asks are cleared from boards that already have them.** If a bundle on your
+  current board wants something this run can never reach, it is swapped for something you can
+  actually get, the next time you load. Anything you had already donated stays donated.
 
 ## 0.17.15 - 2026-09-10
 
