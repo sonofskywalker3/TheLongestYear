@@ -762,8 +762,26 @@ Append to `SourceReachabilityTests`:
         Assert.False(rule.IsUnreachable("(O)FishmongerCrop"));
     }
 
+    // BOTH orderings, deliberately. A single ordering only catches HALF the scalar bug: with the
+    // reachable seed last, a "last row wins" scalar dictionary keeps the reachable one and the test
+    // still passes, hiding exactly the defect it was written to catch. One test per ordering means
+    // a scalar fails whichever way the rows enumerate.
     [Fact]
-    public void A_reachable_alternative_seed_rescues_the_crop()
+    public void A_reachable_alternative_seed_rescues_the_crop_reachable_first()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Shared", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+            new RawCropEntry("(O)Shared", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+        };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Shared"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_seed_rescues_the_crop_reachable_last()
     {
         var crops = new[]
         {
@@ -853,12 +871,12 @@ In `src/TheLongestYear/Loop/GameDataPools.cs`, find where `RawCropEntry` is cons
 - [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 14 passed (9 from Task 3 plus 5 new).
+Expected: 15 passed (9 from Task 3 plus 6 new).
 
 - [ ] **Step 7: Run the whole suite and build the mod**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2027 passed, 0 failed.
+Expected: 2028 passed, 0 failed.
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.` (close the game first if it is running)
 
@@ -934,8 +952,22 @@ Append to `SourceReachabilityTests`:
         Assert.False(rule.IsUnreachable("(O)Dish"));
     }
 
+    // BOTH orderings, for the same reason as the seed tests: with the cookable recipe last, a
+    // "last row wins" scalar dictionary keeps it and the test passes despite the bug.
     [Fact]
-    public void A_reachable_alternative_recipe_rescues_the_dish()
+    public void A_reachable_alternative_recipe_rescues_the_dish_cookable_first()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, "s Farming 3"),
+            new RawRecipeEntry("(O)Dish", new[] { "(O)FishmongerSeed" }, "none"),
+        };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_recipe_rescues_the_dish_cookable_last()
     {
         var recipes = new[]
         {
@@ -1096,12 +1128,12 @@ Add the helpers:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 25 passed (14 from Tasks 3 and 4 plus 11 new; the two [Theory] blocks contribute 6 cases between them).
+Expected: 27 passed (15 from Tasks 3 and 4 plus 12 new; the two [Theory] blocks contribute 6 cases between them).
 
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2038 passed, 0 failed.
+Expected: 2040 passed, 0 failed.
 
 - [ ] **Step 6: Changelog and commit**
 
@@ -1223,7 +1255,7 @@ Expected: 1 passed.
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2039 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
+Expected: 2041 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
 
 - [ ] **Step 6: Changelog and commit**
 
@@ -1468,7 +1500,7 @@ After the `Build` call, beside the existing pool-count log:
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.`
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2039 passed.
+Expected: 2041 passed.
 
 - [ ] **Step 6: Verify on a vanilla save that nothing is wrongly dropped**
 
@@ -1566,7 +1598,7 @@ Create `tests/TheLongestYear.Tests/FishmongerRegressionTests.cs`. Build the worl
 - [ ] **Step 3: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter FishmongerRegressionTests`
-Expected: 3 passed (full suite 2042). If the five all-vanilla dishes fail, the learnability rule from Task 5 is not firing; that is the whole point of this fixture.
+Expected: 3 passed (full suite 2044). If the five all-vanilla dishes fail, the learnability rule from Task 5 is not firing; that is the whole point of this fixture.
 
 - [ ] **Step 4: Run the whole suite, then commit**
 
@@ -1777,7 +1809,7 @@ On the same run, confirm Cactus Fruit and the other Desert items are still in th
 - [ ] **Step 3: Run the full suite one more time**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: all passing. The running total after Task 8 is 2042, plus whatever Task 9's ReplacementFor tests add.
+Expected: all passing. The running total after Task 8 is 2044, plus whatever Task 9's ReplacementFor tests add.
 
 - [ ] **Step 4: Roll the version to 0.18.0 (the ONLY step in the whole plan that touches manifest.json)**
 
