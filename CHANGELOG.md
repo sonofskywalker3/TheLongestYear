@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2013 tests.
+2022 tests.
 
 ### Added
 
@@ -13,6 +13,11 @@ aims to follow [Semantic Versioning](https://semver.org/).
   targets. Groundwork for deciding which places a run can actually reach.
 - The groundwork for judging which places a run can reach by walking doors rather than
   matching map names.
+- **`SourceReachability`**, the class that answers whether an item is provably out of reach
+  this run. Its first rule: an item sold only by shops that sit somewhere unreachable is
+  condemned; an item with no known source, or with even one reachable seller, stays allowed.
+  Crop and recipe rules come next; the constructor already takes their parameters so nothing
+  else has to change when they land.
 
 ## 0.17.15 - 2026-09-10
 
