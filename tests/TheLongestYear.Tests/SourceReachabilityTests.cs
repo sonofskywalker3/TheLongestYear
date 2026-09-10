@@ -135,8 +135,26 @@ public class SourceReachabilityTests
         Assert.False(rule.IsUnreachable("(O)FishmongerCrop"));
     }
 
+    // BOTH orderings, deliberately. A single ordering only catches HALF the scalar bug: with the
+    // reachable seed last, a "last row wins" scalar dictionary keeps the reachable one and the test
+    // still passes, hiding exactly the defect it was written to catch. One test per ordering means
+    // a scalar fails whichever way the rows enumerate.
     [Fact]
-    public void A_reachable_alternative_seed_rescues_the_crop()
+    public void A_reachable_alternative_seed_rescues_the_crop_reachable_first()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Shared", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+            new RawCropEntry("(O)Shared", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+        };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Shared"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_seed_rescues_the_crop_reachable_last()
     {
         var crops = new[]
         {
