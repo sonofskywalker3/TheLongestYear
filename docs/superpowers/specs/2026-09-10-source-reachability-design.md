@@ -69,9 +69,9 @@ All four taken by Jeff on 2026-09-10.
 1. **Conservative rule.** Only exclude what is provably unreachable. An item we cannot trace stays
    allowed. Flipping the assumption (prove reachable or be dropped) would silently strip large
    amounts of legitimate content from packs like SVE.
-2. **Full chain, recipes included.** Three source rules, not one: shops, crop seeds, and recipe
-   ingredients. Fixing crops alone would leave this mod's eleven dishes leaking and would put us
-   back here.
+2. **Full chain, recipes included.** Several source rules, not one: shops, crop seeds, recipe
+   ingredients, and whether a recipe can be learned at all. Fixing crops alone would leave this
+   mod's eleven dishes leaking and would put us back here.
 3. **Reachability by doors, seeded by the marker list.** The marker list stays as the set of
    forbidden places; everything reachable only through a forbidden place is out of reach too.
 4. **Repair live boards on load.** A player mid-year is holding a board built by the old rules,
@@ -90,7 +90,8 @@ Core means it is covered by the suite.
 
 **Inputs**, as `Raw*` boundary records following the existing `ItemPoolModel` pattern:
 
-- `RawShopListing(ItemId, ShopId)`: who sells what, from `Data/Shops`.
+- `RawShopListing(ItemId, ShopId, IsRecipe)`: who sells what, from `Data/Shops`. `IsRecipe`
+  separates "sells the item" from "teaches the recipe".
 - `RawShopPlacement(ShopId, LocationName)`: where a shop can be opened.
 - `RawLocationLink(From, To)`: one warp edge.
 - Seed to harvest, from `Data/Crops` (already keyed by seed id, so the seed is in hand).
@@ -117,19 +118,34 @@ that Desert and Deluxe Coop items are valid targets the player invests in during
 `LocationGating` already handles the *timing* of those places, and this rule must not duplicate or
 contradict it: reachability answers "ever, this run", `LocationGating` answers "from which week".
 
-### 3. The three source rules
+### 3. The source rules
 
 An item is unreachable when **every** known source of it is unreachable. Any untraceable source
-leaves the item allowed.
+leaves the item allowed. Sources are alternatives, so one reachable source is enough to keep an
+item on the board.
 
-- **Shop**: unreachable if every shop listing it sits in an unreachable location.
+- **Shop**: an item is bought if some shop lists it for sale. Unreachable if every such shop sits
+  in an unreachable location. `Data/Shops` entries carry `IsRecipe`, and a recipe listing teaches
+  a recipe rather than selling the item, so only non-recipe listings count as a source of the item
+  itself.
 - **Crop**: unreachable if its seed is unreachable.
-- **Cooked or crafted**: unreachable if any single required ingredient is unreachable. (Any, not
-  every: one impossible ingredient is enough to make the dish impossible.)
+- **Cooked or crafted**: cooking is a source only if **both** the recipe can be learned **and**
+  every required ingredient is reachable. One impossible ingredient is enough to close this route,
+  and so is an unlearnable recipe.
+- **Recipe learnability**: a recipe is learnable if its `Data/CookingRecipes` unlock field names a
+  normal route (`default`, a skill level, the TV, or friendship with an NPC whose home is
+  reachable), or if some shop in a reachable location lists it with `IsRecipe`. A recipe whose
+  unlock is `none` and which is taught only by an unreachable shop cannot be learned.
 
 Recursive, with a visited set as a cycle guard and memoisation per generation. Category refs in
 recipes ("any milk") resolve the way `CookedDishAvailability` already resolves them: a category is
 unreachable only if every member is.
+
+**Why learnability is not optional.** Five of The Fishmonger's eleven dishes (Baked Red Snapper
+Curry, Crispy Fish and Chips, Mouth Watering Fishburger, Fish Croquettes Aioli, Crispy Salmon
+Schnitzel) are cooked entirely from vanilla ingredients. An ingredient-only rule would call all
+five reachable and leave them on the board. Their recipes are sold by Constance behind a four-heart
+condition, with `unlock` set to `none`, so learnability is the only thing that rules them out.
 
 ### 4. Applying the verdict
 
@@ -169,7 +185,7 @@ count and quality asks.
 
 ## Scope
 
-**In:** the reachability walk, the three source rules, the pool-builder hook, the load-time board
+**In:** the reachability walk, the source rules, the pool-builder hook, the load-time board
 repair, diagnostics, unit tests.
 
 **Out:**
@@ -190,10 +206,14 @@ Core rules are pure, so the suite covers them directly:
 - Crop rule: unreachable seed drops the harvest.
 - Recipe rule: one unreachable ingredient drops the dish; a category ref with one reachable member
   does not.
+- Learnability rule: a dish with entirely reachable ingredients still drops when its recipe is
+  taught only by an unreachable shop and its unlock is `none`; the same dish stays when the unlock
+  is a skill level, or when a reachable shop teaches it.
 - Conservative default: an item with no traceable source is never dropped.
 - A regression fixture built from the real Fishmonger data (10 crops, 11 dishes, the
   `IslandSouth` warp) asserting exactly those 21 ids drop and the 21 island fish are unaffected,
-  since the `Island` marker already handles them.
+  since the `Island` marker already handles them. The fixture must include the five
+  vanilla-ingredient dishes, which only drop via the learnability rule.
 
 The board repair needs an in-game run: load a save whose board holds an unreachable ask, confirm
 the swap, confirm donated slots survive, confirm a clean board is untouched.
