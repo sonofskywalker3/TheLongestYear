@@ -95,11 +95,18 @@ Core means it is covered by the suite.
 - `RawShopPlacement(ShopId, LocationName)`: where a shop can be opened.
 - `RawLocationLink(From, To)`: one warp edge.
 - Seed to harvest, from `Data/Crops` (already keyed by seed id, so the seed is in hand).
-- Recipe output to ingredients, from `Data/CookingRecipes`. Crafting recipes are out of scope for
-  0.18: cooking covers the reported case, and `Data/CraftingRecipes` can follow the same shape if a
-  report ever needs it.
+- Recipe output to ingredients, from `Data/CookingRecipes`. `Data/CraftingRecipes` stays out of
+  scope as a SOURCE RULE, unchanged: cooking covers the reported case, and this class never tries
+  to prove a craftable item unreachable. Its OUTPUT ids do feed the positive-proof set below
+  (fix round 1, 2026-09-10), which is a different thing: proof that an item is reachable, never
+  proof that one is not.
 - Every id the game spawns, from the forage, fish, crab-pot, monster-drop, geode-drop and
-  fruit-tree tables `GameDataPools` already reads.
+  fruit-tree tables `GameDataPools` already reads, plus two sources added after a live run against
+  a real third-party pack wrongly condemned Driftwood and Rain Totem: the fishing trash ids
+  (`FishingTrashAvailability`'s range, which has no `Data/Locations` row of its own) and
+  `Data/CraftingRecipes` output ids (positive proof only, per above). Both are universally
+  obtainable items whose real source category had no representation on the reachable side until
+  these were added.
 
 **Output**: the set of qualified ids that are provably unreachable, plus a reason string per id for
 the log.
@@ -135,10 +142,14 @@ leaves the item allowed. Sources are alternatives, so one reachable source is en
 item on the board.
 
 - **Spawn (positive proof, overrides everything below)**: an item the game spawns somewhere
-  reachable, from the forage, fish, crab-pot, monster-drop, geode-drop or fruit-tree tables, is
-  reachable full stop. Without this rule, "every known source" would silently mean "every source
-  this component happens to model", and a forageable item that a mod also lists in an island shop
-  would be condemned while its perfectly good spawn never got a vote.
+  reachable, from the forage, fish, crab-pot, monster-drop, geode-drop or fruit-tree tables, the
+  fishing trash ids, or a `Data/CraftingRecipes` output id, is reachable full stop. Without this
+  rule, "every known source" would silently mean "every source this component happens to model",
+  and a forageable item that a mod also lists in an island shop would be condemned while its
+  perfectly good spawn never got a vote. Fishing trash and crafting outputs joined this list after
+  a live run against a real third-party pack wrongly condemned Driftwood and Rain Totem: both are
+  universally obtainable, and neither has a `Data/Locations` row (trash) or a source rule
+  (crafting is out of scope, see Inputs above), so nothing spoke for either before.
 - **Shop**: an item is bought if some shop lists it for sale. Unreachable if every such shop sits
   in an unreachable location. **A shop with no discoverable placement keeps the item allowed**: the
   Traveling Cart, the Night Market and festival vendors are opened from game code and have no

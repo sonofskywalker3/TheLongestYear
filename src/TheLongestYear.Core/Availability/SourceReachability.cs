@@ -91,7 +91,13 @@ public sealed class SourceReachability
         if (_memo.TryGetValue(id, out bool cached)) return cached;
 
         // A cycle means we are already asking this question further up the stack. Answer
-        // "reachable" so a loop can never condemn an item on its own account.
+        // "reachable" so a loop can never condemn an item on its own account. Never make this
+        // guard exact (tracking the cycle's own reachability and resolving it precisely once
+        // the loop closes): an exact answer here could still land on "unreachable" and condemn
+        // an item purely because of how a recipe graph happens to be shaped, which this class
+        // must never do. The provisional "reachable" answer this guard gives can only ever be
+        // too generous, and generous is the accepted direction; a memo built on top of it can
+        // therefore only ever be too generous as well, never wrongly condemning.
         if (!_inProgress.Add(id)) return false;
         try
         {
@@ -185,12 +191,19 @@ public sealed class SourceReachability
         if (!unlock.Equals("none", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (!_listingsByItem.TryGetValue(id, out List<RawShopListing>? listings)) return false;
+        if (!_listingsByItem.TryGetValue(id, out List<RawShopListing>? listings)) return true;
         bool anyPlaced = false, allUnreachable = true;
         foreach (RawShopListing listing in listings)
         {
             if (!listing.IsRecipe) continue;
-            if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places)) continue;
+            if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places))
+            {
+                // An unplaced teaching shop is an UNKNOWN route, not a closed one, exactly like
+                // BoughtSomewhere's own unplaced-shop case: the Traveling Cart, Night Market and
+                // festival vendors teach recipes too, and have no discoverable placement.
+                allUnreachable = false;
+                continue;
+            }
             foreach (string place in places)
             {
                 anyPlaced = true;
