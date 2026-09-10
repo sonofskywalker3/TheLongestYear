@@ -73,6 +73,9 @@ namespace TheLongestYear.Loop
             int day = Run.DayOfMonth;
             int dayOfYear = Calendar.DayOfYear((int)season, day);
             int week = Run.WeekOfYear;
+            _monitor.Log(
+                $"Darkness: night roll {season} {day}: open={string.Join(",", Enum.GetValues(typeof(SabotageKind)).Cast<SabotageKind>().Where(k => SabotageSchedule.IsOpen(k, season) && Enabled(k)))}, crops={BlightPass.LiveCropTiles().Count}, stored={SpoilagePass.StoredUnits()}.",
+                LogLevel.Trace);
 
             if (Enabled(SabotageKind.Blight))
             {

@@ -293,7 +293,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report | scene [old] [new]", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report | scene [old] [new] | fixture | circle", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -1735,13 +1735,57 @@ namespace TheLongestYear
                 case "report":
                     _sabotage.ShowMorning(null);
                     break;
+                case "circle":
+                {
+                    // Test scaffolding: place one carried Circle of Warding at (door.X-7, door.Y+6),
+                    // covering the fixture's first two parsnips and its chest.
+                    Farm farm = Game1.getFarm();
+                    Microsoft.Xna.Framework.Vector2 door = Utility.PointToVector2(farm.GetMainFarmHouseEntry());
+                    var at = new Microsoft.Xna.Framework.Vector2(door.X - 7, door.Y + 6);
+                    int slot = -1;
+                    for (int i = 0; i < Game1.player.Items.Count; i++)
+                        if (Game1.player.Items[i]?.ItemId == TheLongestYear.Loop.CircleOfWardingService.CircleId) { slot = i; break; }
+                    if (slot < 0) { this.Monitor.Log("No Circle of Warding in the inventory.", LogLevel.Warn); break; }
+                    var circle = (StardewValley.Objects.Furniture)Game1.player.Items[slot];
+                    Game1.player.Items[slot] = null;
+                    circle.TileLocation = at;
+                    farm.furniture.Add(circle);
+                    this.Monitor.Log($"Circle of Warding placed at ({at.X},{at.Y}); covers x {at.X}..{at.X + 2}, y {at.Y}..{at.Y + 2}.", LogLevel.Info);
+                    break;
+                }
+                case "fixture":
+                {
+                    // Test scaffolding: ten parsnips in the ground and a chest with food and ore,
+                    // on the farm just below the stash, so blight has something to take.
+                    Farm farm = Game1.getFarm();
+                    Microsoft.Xna.Framework.Vector2 door = Utility.PointToVector2(farm.GetMainFarmHouseEntry());
+                    int planted = 0;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        var tile = new Microsoft.Xna.Framework.Vector2(door.X - 6 + i, door.Y + 6);
+                        farm.terrainFeatures.Remove(tile);
+                        farm.objects.Remove(tile);
+                        var dirt = new StardewValley.TerrainFeatures.HoeDirt(1, farm);
+                        farm.terrainFeatures.Add(tile, dirt);
+                        dirt.crop = new Crop("472", (int)tile.X, (int)tile.Y, farm);
+                        planted++;
+                    }
+                    var chestTile = new Microsoft.Xna.Framework.Vector2(door.X - 6, door.Y + 8);
+                    farm.objects.Remove(chestTile);
+                    var chest = new StardewValley.Objects.Chest(true, chestTile);
+                    chest.Items.Add(ItemRegistry.Create("(O)24", 20));
+                    chest.Items.Add(ItemRegistry.Create("(O)378", 10));
+                    farm.objects.Add(chestTile, chest);
+                    this.Monitor.Log($"Sabotage fixture: {planted} parsnips at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore.", LogLevel.Info);
+                    break;
+                }
                 case "scene":
                     _seasonTurnDriver.StartTamperWhenSettled(
                         args.Length > 1 ? args[1] : "Parsnip", args.Length > 2 ? args[2] : "Crystal Fruit",
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report | scene [old] [new]", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | blight [crops] [spoil] | revert | tamper | report | scene [old] [new] | fixture | circle", LogLevel.Info);
                     break;
             }
         }
