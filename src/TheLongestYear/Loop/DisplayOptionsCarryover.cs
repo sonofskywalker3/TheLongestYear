@@ -98,7 +98,7 @@ namespace TheLongestYear.Loop
             options.localCoopDesiredUIScale = snapshot.LocalCoopUiScale;
 
             monitor?.Log(
-                $"Reset: display options carried over — zoom {snapshot.SinglePlayerZoom:0.##}x, " +
+                $"Reset: display options carried over. Zoom {snapshot.SinglePlayerZoom:0.##}x, " +
                 $"UI scale {(snapshot.SinglePlayerUiScale < 0f ? "unset" : snapshot.SinglePlayerUiScale.ToString("0.##") + "x")}.",
                 LogLevel.Trace);
         }

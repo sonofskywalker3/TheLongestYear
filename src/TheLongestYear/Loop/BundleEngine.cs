@@ -100,6 +100,13 @@ namespace TheLongestYear.Loop
         /// fixed-key-space note in the class doc). Emitting vanilla's own entry overwrites it.</summary>
         private static readonly IReadOnlyList<string> PassThroughRooms = new[] { VaultRoomName, AbandonedJojaRoomName };
 
+        /// <summary>Whether <see cref="Generate"/> emits this room's vanilla entry untouched instead
+        /// of re-rolling it. Exposed so the tly_dumpbundles catalogue reports these rooms the way the
+        /// engine actually treats them: that report classifies each candidate on its own, so without
+        /// this it describes the pool a pass-through room WOULD have drawn from and reads as though
+        /// the room still re-rolls.</summary>
+        public static bool IsPassThroughRoom(string room) => PassThroughRooms.Contains(room);
+
         // Per-bundle RNG salt for slot composition (trim + Plan-2 slot filling). spec.Index is
         // vanilla's own absolute bundle index — unique per generation — so each bundle gets an
         // independent deterministic stream from the loop seed.
