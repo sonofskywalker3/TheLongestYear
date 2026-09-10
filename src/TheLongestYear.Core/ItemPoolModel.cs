@@ -161,6 +161,20 @@ public sealed record RawGeodeDropEntry(string ItemId);
 /// frequently declare the door on one side only.</summary>
 public sealed record RawLocationLink(string From, string To);
 
+/// <summary>One Data/Shops stock line. <paramref name="IsRecipe"/> is the shop entry's own
+/// IsRecipe flag: such a line teaches a recipe rather than selling the item, so it is a source of
+/// the KNOWLEDGE, never of the item itself.</summary>
+public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false);
+
+/// <summary>Where a shop can actually be opened. A shop with no known placement leaves everything
+/// it sells allowed, per the conservative rule.</summary>
+public sealed record RawShopPlacement(string ShopId, string LocationName);
+
+/// <summary>One cooking or crafting recipe. <paramref name="Unlock"/> is the raw unlock-conditions
+/// field from Data/CookingRecipes ("default", "s Farming 3", "f Robin 7", "l", or "none").</summary>
+public sealed record RawRecipeEntry(
+    string OutputItemId, IReadOnlyList<string> IngredientItemIds, string Unlock);
+
 /// <summary>One Data/Fish row, reduced to the fields the availability model gates on.
 ///
 /// Field indices verified against the decompiled Android source, GameLocation.
