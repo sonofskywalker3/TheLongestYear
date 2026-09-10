@@ -168,7 +168,7 @@ public class ReachabilityGraphTests
 {
     private static readonly string[] Everything =
     {
-        "Farm", "Town", "Beach", "IslandSouth", "ShopBehindTheIsland", "Desert", "BusStop",
+        "Farm", "Town", "Beach", "IslandSouth", "FishmongerShop", "Desert", "BusStop",
     };
 
     private static readonly RawLocationLink[] Links =
@@ -178,7 +178,7 @@ public class ReachabilityGraphTests
         new("Town", "BusStop"),
         new("BusStop", "Desert"),
         new("Beach", "IslandSouth"),
-        new("IslandSouth", "ShopBehindTheIsland"),
+        new("IslandSouth", "FishmongerShop"),
     };
 
     private static bool IslandForbidden(string name) => name.Contains("Island", StringComparison.Ordinal);
@@ -193,9 +193,10 @@ public class ReachabilityGraphTests
     [Fact]
     public void Location_reachable_only_through_a_forbidden_place_is_unreachable()
     {
-        // The Fishmonger's shop: its one door leads to IslandSouth, and its name says nothing.
+        // The Fishmonger shop: its one door leads to IslandSouth, and its NAME matches no marker,
+        // which is the whole point. The real map is called VoidWitchCult.TheFishmonger_Fishmonger_GI_Inside.
         var unreachable = ReachabilityGraph.UnreachableLocations(Links, Everything, IslandForbidden);
-        Assert.Contains("ShopBehindTheIsland", unreachable);
+        Assert.Contains("FishmongerShop", unreachable);
     }
 
     [Fact]
@@ -218,9 +219,9 @@ public class ReachabilityGraphTests
     [Fact]
     public void Second_door_to_the_world_keeps_a_location_reachable()
     {
-        var links = new List<RawLocationLink>(Links) { new("ShopBehindTheIsland", "Town") };
+        var links = new List<RawLocationLink>(Links) { new("FishmongerShop", "Town") };
         var unreachable = ReachabilityGraph.UnreachableLocations(links, Everything, IslandForbidden);
-        Assert.DoesNotContain("ShopBehindTheIsland", unreachable);
+        Assert.DoesNotContain("FishmongerShop", unreachable);
     }
 
     [Fact]
