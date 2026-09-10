@@ -279,6 +279,10 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
+            helper.ConsoleCommands.Add(
+                "tly_warpgraph",
+                "Print every loaded location and its warp targets, for verifying reachability derivation. Usage: tly_warpgraph [filter]",
+                this.CmdWarpGraph);
             helper.ConsoleCommands.Add("tly_dumpavailability", "Write a Markdown listing of every item in every bundle on the LIVE board with the earliest season the engine says it can exist, why, and the season its gate demands it. Usage: tly_dumpavailability [fileName]", this.CmdDumpAvailability);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
@@ -2111,6 +2115,7 @@ namespace TheLongestYear
                 case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
+                case "tly_warpgraph": this.CmdWarpGraph(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_gateneeds": this.CmdGateNeeds(command, args); break;
                 case "tly_forageyield": this.CmdForageYield(command, args); break;
@@ -3357,6 +3362,36 @@ namespace TheLongestYear
 
         private static IEnumerable<string> VaultLadder()
             => VaultRules.VaultIndices.Select(i => $"{VaultRules.GoldForIndex(i):N0}g");
+
+        /// <summary><c>tly_warpgraph [filter]</c>: print every loaded location and its warp targets,
+        /// for verifying reachability derivation. Kept permanently as a diagnostic.</summary>
+        private void CmdWarpGraph(string command, string[] args)
+        {
+            string filter = args.Length > 0 ? args[0] : null;
+            int locations = 0, edges = 0;
+            var lines = new List<string>();
+            foreach (GameLocation location in Game1.locations)
+            {
+                if (location?.Name == null)
+                    continue;
+                locations++;
+                var targets = new List<string>();
+                foreach (Warp warp in location.warps)
+                {
+                    if (string.IsNullOrEmpty(warp?.TargetName))
+                        continue;
+                    edges++;
+                    if (!targets.Contains(warp.TargetName))
+                        targets.Add(warp.TargetName);
+                }
+                if (filter != null && location.Name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                lines.Add($"  {location.Name} -> {(targets.Count == 0 ? "(none)" : string.Join(", ", targets))}");
+            }
+            this.Monitor.Log($"Warp graph: {locations} locations, {edges} warp edges.", LogLevel.Info);
+            foreach (string line in lines)
+                this.Monitor.Log(line, LogLevel.Info);
+        }
 
         private void CmdDumpBundles(string command, string[] args)
         {
