@@ -192,12 +192,18 @@ namespace TheLongestYear.Loop
                 // CraftingRecipe(string, bool) constructor: ingredients / unused / output / bigCraftable
                 // / unlockConditions / displayName, the same ingredient/output field indices as cooking
                 // (index 3 differs: bigCraftable bool here, not unlockConditions), so field[2] is the
-                // output pair "id qty..." exactly like cooking's field[2].
+                // output pair "id qty..." exactly like cooking's field[2]. Big-craftable outputs are
+                // skipped here: they need the (BC) qualifier, not (O), and this class only ever tracks
+                // (O) ids, so leaving field 3 unread would wrongly mark an OBJECT with the same
+                // numeric id as reachable.
+                const int CraftingBigCraftableFieldIndex = 3;
                 var craftingOutputs = new List<string>();
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
-                    if (fields.Length < 3) continue;
+                    if (fields.Length <= CraftingBigCraftableFieldIndex) continue;
+                    if (bool.TryParse(fields[CraftingBigCraftableFieldIndex], out bool isBigCraftable) && isBigCraftable)
+                        continue;
                     string output = fields[2].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                     if (!string.IsNullOrEmpty(output)) craftingOutputs.Add(output);
                 }
@@ -249,6 +255,11 @@ namespace TheLongestYear.Loop
                 }
                 foreach (RawSpawnEntry spawn in forage) MarkSpawn(spawn?.ItemId);
                 foreach (RawSpawnEntry spawn in fish) MarkSpawn(spawn?.ItemId);
+                // Crab-pot ids (Lobster, Crab, Cockle, Mussel, Oyster, Shrimp, Snail, Periwinkle,
+                // Crayfish, any mod trap fish): trap-only catches have no Data/Locations row, so
+                // nothing else speaks for them on the reachable side. Same failure mode as the
+                // Driftwood bug above: a mod listing one in an unreachable shop would condemn it.
+                foreach (string trapId in trapIds) MarkSpawn(trapId);
                 foreach (RawMonsterDropEntry drop in drops) MarkSpawn(drop?.ItemId);
                 foreach (RawGeodeDropEntry drop in geodeDrops) MarkSpawn(drop?.ItemId);
                 foreach (RawFruitTreeEntry tree in fruitTrees)

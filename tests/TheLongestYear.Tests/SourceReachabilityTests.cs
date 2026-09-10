@@ -289,6 +289,34 @@ public class SourceReachabilityTests
     }
 
     [Fact]
+    public void Dish_with_unlock_none_and_no_shop_listing_at_all_is_allowed()
+    {
+        // "none" plus zero listings means "taught some other way we don't model": mail, an
+        // event, a quest, or a shop framework other than Data/Shops. Unknown must mean
+        // learnable, the same as BoughtSomewhere treats an unplaced shop as unknown rather
+        // than closed. Before the fix, RecipeLearnable's early "no listings at all" branch
+        // returned false (unlearnable) here, condemning the dish on no evidence.
+        var recipes = new[] { new RawRecipeEntry("(O)MailTaught", new[] { "(O)150" }, "none") };
+        var rule = WithRecipes(recipes);
+        Assert.False(rule.IsUnreachable("(O)MailTaught"));
+    }
+
+    [Fact]
+    public void Dish_taught_by_an_unreachable_shop_and_an_unplaced_shop_is_allowed()
+    {
+        // Mirrors BoughtSomewhere's own rule for an unplaced shop: an unplaced teaching shop
+        // is an UNKNOWN route, not a closed one, so it must vote allUnreachable = false rather
+        // than being silently skipped. Before the fix, the unplaced listing was `continue`d
+        // without setting allUnreachable, so only the unreachable island listing voted and the
+        // dish was wrongly condemned.
+        var recipes = new[] { new RawRecipeEntry("(O)Curry", new[] { "(O)150" }, "none") };
+        var rule = WithRecipes(recipes,
+            new RawShopListing("(O)Curry", IslandShop, IsRecipe: true),
+            new RawShopListing("(O)Curry", "ShopNobodyPlaced", IsRecipe: true));
+        Assert.False(rule.IsUnreachable("(O)Curry"));
+    }
+
+    [Fact]
     public void Recipe_cycles_terminate_and_do_not_condemn()
     {
         var recipes = new[]
