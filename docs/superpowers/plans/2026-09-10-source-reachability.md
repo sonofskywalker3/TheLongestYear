@@ -121,7 +121,7 @@ Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 Add to `CHANGELOG.md`:
 
 ```markdown
-## 0.17.16 - 2026-09-10
+## Unreleased
 
 2004 tests.
 
@@ -246,6 +246,18 @@ public class ReachabilityGraphTests
     }
 
     [Fact]
+    public void Location_with_no_doors_at_all_is_unknown_not_unreachable()
+    {
+        // Verified in-game 2026-09-10: MovieTheater, WizardHouseBasement and LewisBasement are
+        // loaded with zero warps. A map with no doors is evidence of our ignorance about how it
+        // is entered, never proof that a player cannot get there.
+        var all = new[] { "Farm", "Town", "MovieTheater" };
+        var links = new[] { new RawLocationLink("Farm", "Town") };
+        var unreachable = ReachabilityGraph.UnreachableLocations(links, all, _ => false);
+        Assert.DoesNotContain("MovieTheater", unreachable);
+    }
+
+    [Fact]
     public void Island_only_world_does_not_strip_everything_when_start_is_missing()
     {
         // Fail open: an unknown start location must not mark the whole world unreachable.
@@ -355,8 +367,15 @@ public static class ReachabilityGraph
         }
 
         foreach (string name in known)
-            if (!visited.Contains(name))
-                unreachable.Add(name);
+        {
+            if (visited.Contains(name)) continue;
+            // A location with no doors at all was never proved unreachable, only never
+            // explained. Verified in-game 2026-09-10: MovieTheater, WizardHouseBasement and
+            // LewisBasement all load with zero warps because they are entered by scripted
+            // actions. Condemning them would be inventing proof we do not have.
+            if (!neighbours.ContainsKey(name) && !isForbidden(name)) continue;
+            unreachable.Add(name);
+        }
         return unreachable;
     }
 }
@@ -399,7 +418,8 @@ git commit -m "v0.17.17: ReachabilityGraph walks warps to find places a run cann
 - Produces:
   - `public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false);`
   - `public sealed record RawShopPlacement(string ShopId, string LocationName);`
-  - `public sealed class SourceReachability` with constructor `(IReadOnlySet<string> unreachableLocations, IReadOnlyList<RawShopListing> shopListings, IReadOnlyList<RawShopPlacement> shopPlacements, IReadOnlyList<RawCropEntry> crops, IReadOnlyList<RawRecipeEntry> recipes)`, method `bool IsUnreachable(string qualifiedItemId)`, property `IReadOnlyDictionary<string, string> Reasons`.
+  - `public sealed class SourceReachability` with constructor `(IReadOnlySet<string> unreachableLocations, IReadOnlyList<RawShopListing> shopListings, IReadOnlyList<RawShopPlacement> shopPlacements, IReadOnlyList<RawCropEntry> crops, IReadOnlyList<RawRecipeEntry> recipes, IReadOnlySet<string> reachableSpawnIds)`, method `bool IsUnreachable(string qualifiedItemId)`, property `IReadOnlyDictionary<string, string> Reasons`.
+  - `reachableSpawnIds` is POSITIVE proof: any id in it is reachable and no rule may condemn it. It carries every forage, fish, crab-pot, monster-drop, geode-drop and fruit-tree id whose source is not itself gated. Without it, "every known source" silently means "every source this class happens to model", which is not conservative: a forageable item also listed in an island shop would be condemned by the shop rule while its perfectly good spawn never got a vote.
   - Tasks 4 and 5 extend the same class; the constructor signature above is final, so build it now and leave the crop and recipe parameters unused until then.
 
 - [ ] **Step 1: Write the failing tests**
@@ -431,9 +451,11 @@ public class SourceReachabilityTests
         new(TownShop, TownMap),
     };
 
+    private static readonly IReadOnlySet<string> NoSpawns = new HashSet<string>(StringComparer.Ordinal);
+
     private static SourceReachability Build(params RawShopListing[] listings) => new(
         Unreachable, listings, Placements,
-        Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>());
+        Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), NoSpawns);
 
     [Fact]
     public void Item_sold_only_in_an_unreachable_shop_is_unreachable()
@@ -479,6 +501,28 @@ public class SourceReachabilityTests
     {
         var rule = Build(new RawShopListing("FishmongerSeed", IslandShop));
         Assert.True(rule.IsUnreachable("(O)FishmongerSeed"));
+    }
+
+    [Fact]
+    public void Item_with_a_reachable_spawn_is_never_condemned()
+    {
+        // A forageable or fishable item that a mod ALSO lists in an island shop must stay.
+        var spawns = new HashSet<string>(StringComparer.Ordinal) { "(O)Forageable" };
+        var rule = new SourceReachability(
+            Unreachable, new[] { new RawShopListing("(O)Forageable", IslandShop) }, Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), spawns);
+        Assert.False(rule.IsUnreachable("(O)Forageable"));
+    }
+
+    [Fact]
+    public void Unreachable_shop_plus_an_unplaced_shop_leaves_the_item_allowed()
+    {
+        // The Traveling Cart and festival vendors are opened from code, so they have no
+        // discoverable placement. An unplaced shop is an unknown, and unknown means allowed.
+        var rule = Build(
+            new RawShopListing("(O)Seed", IslandShop),
+            new RawShopListing("(O)Seed", "ShopNobodyPlaced"));
+        Assert.False(rule.IsUnreachable("(O)Seed"));
     }
 
     [Fact]
@@ -539,6 +583,7 @@ public sealed class SourceReachability
     private readonly IReadOnlySet<string> _unreachableLocations;
     private readonly Dictionary<string, List<RawShopListing>> _listingsByItem;
     private readonly Dictionary<string, List<string>> _shopLocations;
+    private readonly IReadOnlySet<string> _reachableSpawnIds;
     private readonly Dictionary<string, bool> _memo = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _reasons = new(StringComparer.Ordinal);
 
@@ -547,9 +592,11 @@ public sealed class SourceReachability
         IReadOnlyList<RawShopListing> shopListings,
         IReadOnlyList<RawShopPlacement> shopPlacements,
         IReadOnlyList<RawCropEntry> crops,
-        IReadOnlyList<RawRecipeEntry> recipes)
+        IReadOnlyList<RawRecipeEntry> recipes,
+        IReadOnlySet<string> reachableSpawnIds)
     {
         _unreachableLocations = unreachableLocations ?? new HashSet<string>(StringComparer.Ordinal);
+        _reachableSpawnIds = reachableSpawnIds ?? new HashSet<string>(StringComparer.Ordinal);
 
         _listingsByItem = new Dictionary<string, List<RawShopListing>>(StringComparer.Ordinal);
         foreach (RawShopListing listing in shopListings ?? Array.Empty<RawShopListing>())
@@ -590,6 +637,11 @@ public sealed class SourceReachability
     private bool Decide(string id, out string reason)
     {
         reason = "";
+
+        // Positive proof beats every condemning rule. An item that spawns somewhere reachable
+        // is reachable, whatever else also happens to list it.
+        if (_reachableSpawnIds.Contains(id)) return false;
+
         bool anySourceKnown = false;
 
         if (BoughtSomewhere(id, out bool shopUnreachable))
@@ -615,7 +667,16 @@ public sealed class SourceReachability
         {
             if (listing.IsRecipe) continue;       // teaches the recipe, does not sell the item
             anySale = true;
-            if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places)) continue;
+            if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places) || places.Count == 0)
+            {
+                // A shop nobody could place is an UNKNOWN route, not a closed one. The
+                // Traveling Cart, Night Market and festival vendors are opened from game code
+                // and have no discoverable placement, and mods open shops from dialogue and
+                // events. Skipping these would let one island shop condemn an item the cart
+                // sells every spring, so a single unplaced seller keeps the item allowed.
+                allUnreachable = false;
+                continue;
+            }
             foreach (string place in places)
             {
                 anyPlaced = true;
@@ -623,7 +684,6 @@ public sealed class SourceReachability
             }
         }
         if (!anySale) return false;
-        // A shop nobody placed tells us nothing, so the item keeps the benefit of the doubt.
         unreachable = anyPlaced && allUnreachable;
         return true;
     }
@@ -672,7 +732,7 @@ Append to `SourceReachabilityTests`:
 ```csharp
     private static SourceReachability WithCrops(
         IReadOnlyList<RawCropEntry> crops, params RawShopListing[] listings) => new(
-        Unreachable, listings, Placements, crops, Array.Empty<RawRecipeEntry>());
+        Unreachable, listings, Placements, crops, Array.Empty<RawRecipeEntry>(), NoSpawns);
 
     [Fact]
     public void Crop_whose_seed_is_unreachable_is_unreachable()
@@ -699,6 +759,20 @@ Append to `SourceReachabilityTests`:
             new RawShopListing("(O)FishmongerSeed", IslandShop),
             new RawShopListing("(O)FishmongerCrop", TownShop));
         Assert.False(rule.IsUnreachable("(O)FishmongerCrop"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_seed_rescues_the_crop()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Shared", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+            new RawCropEntry("(O)Shared", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+        };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Shared"));
     }
 
     [Fact]
@@ -734,28 +808,40 @@ public sealed record RawCropEntry(
 In `SourceReachability`, add a field, fill it in the constructor, and extend `Decide`:
 
 ```csharp
-    private readonly Dictionary<string, string> _seedByHarvest;
+    private readonly Dictionary<string, List<string>> _seedByHarvest;
 ```
 
 In the constructor, after the shop maps:
 
 ```csharp
-        _seedByHarvest = new Dictionary<string, string>(StringComparer.Ordinal);
+        // A LIST, not a single value: mods define several seeds yielding one harvest, and a
+        // scalar would let whichever row enumerated last erase a reachable alternative.
+        _seedByHarvest = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         foreach (RawCropEntry crop in crops ?? Array.Empty<RawCropEntry>())
         {
             if (crop?.HarvestItemId == null || string.IsNullOrEmpty(crop.SeedItemId)) continue;
-            _seedByHarvest[Qualify(crop.HarvestItemId)] = Qualify(crop.SeedItemId);
+            string harvest = Qualify(crop.HarvestItemId);
+            if (!_seedByHarvest.TryGetValue(harvest, out List<string>? seeds))
+                _seedByHarvest[harvest] = seeds = new List<string>();
+            string seed = Qualify(crop.SeedItemId);
+            if (!seeds.Contains(seed)) seeds.Add(seed);
         }
 ```
 
 In `Decide`, after the shop block:
 
 ```csharp
-        if (_seedByHarvest.TryGetValue(id, out string? seed))
+        if (_seedByHarvest.TryGetValue(id, out List<string>? seeds) && seeds.Count > 0)
         {
             anySourceKnown = true;
-            if (!IsUnreachable(seed)) return false;
-            reason = $"its seed {seed} is out of reach";
+            string? blockedSeed = null;
+            foreach (string seed in seeds)
+            {
+                if (!IsUnreachable(seed)) { blockedSeed = null; break; }   // one good seed is enough
+                blockedSeed ??= seed;
+            }
+            if (blockedSeed == null) return false;
+            reason = $"its seed {blockedSeed} is out of reach";
         }
 ```
 
@@ -805,7 +891,7 @@ Append to `SourceReachabilityTests`:
 ```csharp
     private static SourceReachability WithRecipes(
         IReadOnlyList<RawRecipeEntry> recipes, params RawShopListing[] listings) => new(
-        Unreachable, listings, Placements, Array.Empty<RawCropEntry>(), recipes);
+        Unreachable, listings, Placements, Array.Empty<RawCropEntry>(), recipes, NoSpawns);
 
     [Fact]
     public void Dish_with_an_unreachable_ingredient_is_unreachable()
@@ -848,6 +934,29 @@ Append to `SourceReachabilityTests`:
     }
 
     [Fact]
+    public void A_reachable_alternative_recipe_rescues_the_dish()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)Dish", new[] { "(O)FishmongerSeed" }, "none"),
+            new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, "s Farming 3"),
+        };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("null")]
+    public void Dish_with_an_empty_or_null_unlock_field_is_allowed(string unlock)
+    {
+        // Vanilla Cookies carries the literal string "null" and is taught by Evelyn's event.
+        var recipes = new[] { new RawRecipeEntry("(O)Cookies", new[] { "(O)150" }, unlock) };
+        var rule = WithRecipes(recipes);
+        Assert.False(rule.IsUnreachable("(O)Cookies"));
+    }
+
+    [Fact]
     public void Recipe_cycles_terminate_and_do_not_condemn()
     {
         var recipes = new[]
@@ -870,18 +979,24 @@ Expected: the five new tests fail (recipes are ignored, so nothing is condemned)
 Add fields and constructor wiring:
 
 ```csharp
-    private readonly Dictionary<string, RawRecipeEntry> _recipesByOutput;
+    private readonly Dictionary<string, List<RawRecipeEntry>> _recipesByOutput;
     private readonly HashSet<string> _inProgress = new(StringComparer.Ordinal);
 ```
 
 In the constructor:
 
 ```csharp
-        _recipesByOutput = new Dictionary<string, RawRecipeEntry>(StringComparer.Ordinal);
+        // A LIST for the same reason as the seeds: a reachable vanilla recipe and an
+        // unreachable mod recipe can produce the same object, and the last one written must not
+        // become the only one considered.
+        _recipesByOutput = new Dictionary<string, List<RawRecipeEntry>>(StringComparer.Ordinal);
         foreach (RawRecipeEntry recipe in recipes ?? Array.Empty<RawRecipeEntry>())
         {
             if (recipe?.OutputItemId == null) continue;
-            _recipesByOutput[Qualify(recipe.OutputItemId)] = recipe;
+            string output = Qualify(recipe.OutputItemId);
+            if (!_recipesByOutput.TryGetValue(output, out List<RawRecipeEntry>? list))
+                _recipesByOutput[output] = list = new List<RawRecipeEntry>();
+            list.Add(recipe);
         }
 ```
 
@@ -909,16 +1024,21 @@ Guard the recursion in `IsUnreachable`, right after the memo lookup:
 Extend `Decide`, after the crop block:
 
 ```csharp
-        if (_recipesByOutput.TryGetValue(id, out RawRecipeEntry? recipe))
+        if (_recipesByOutput.TryGetValue(id, out List<RawRecipeEntry>? recipeList) && recipeList.Count > 0)
         {
             anySourceKnown = true;
-            string? blocked = FirstUnreachableIngredient(recipe);
-            if (blocked != null)
-                reason = $"ingredient {blocked} is out of reach";
-            else if (!RecipeLearnable(id, recipe))
-                reason = "its recipe cannot be learned anywhere reachable";
-            else
-                return false;   // cooking is a live route
+            string? recipeReason = null;
+            foreach (RawRecipeEntry recipe in recipeList)
+            {
+                string? blocked = FirstUnreachableIngredient(recipe);
+                if (blocked != null)
+                    recipeReason ??= $"ingredient {blocked} is out of reach";
+                else if (!RecipeLearnable(id, recipe))
+                    recipeReason ??= "its recipe cannot be learned anywhere reachable";
+                else
+                    return false;   // one cookable route is enough
+            }
+            reason = recipeReason ?? "";
         }
 ```
 
@@ -946,7 +1066,12 @@ Add the helpers:
     private bool RecipeLearnable(string id, RawRecipeEntry recipe)
     {
         string unlock = (recipe.Unlock ?? "").Trim();
-        if (unlock.Length > 0 && !unlock.Equals("none", StringComparison.OrdinalIgnoreCase))
+        // Only the LITERAL string "none" is treated as "no normal route". Anything else,
+        // including an empty or missing field, counts as learnable. Verified against the live
+        // Data/CookingRecipes on 2026-09-10: all 81 vanilla recipes use l, f, s, default or the
+        // literal string "null", and NOT ONE uses "none" or an empty field. So this rule cannot
+        // touch vanilla cooking, and condemning an unparsed field would be inventing proof.
+        if (!unlock.Equals("none", StringComparison.OrdinalIgnoreCase))
             return true;
 
         if (!_listingsByItem.TryGetValue(id, out List<RawShopListing>? listings)) return false;
@@ -1019,7 +1144,7 @@ Append to `SourceReachabilityTests`:
         var rule = new SourceReachability(
             Unreachable,
             new[] { new RawShopListing("(O)FishmongerSeed", IslandShop), new RawShopListing("(O)ParsnipSeed", TownShop) },
-            Placements, crops, Array.Empty<RawRecipeEntry>());
+            Placements, crops, Array.Empty<RawRecipeEntry>(), NoSpawns);
 
         ItemPools pools = ItemPoolBuilder.Build(
             crops, objects, Array.Empty<RawSpawnEntry>(), Array.Empty<RawSpawnEntry>(),
@@ -1246,15 +1371,58 @@ before compiling. `DefaultMap` is the NPC's home map, which is what
 Just before the `ItemPoolBuilder.Build` call:
 
 ```csharp
+            // Positive-reachability evidence: every id the game already told us spawns
+            // somewhere, from tables this method has ALREADY read. Without this, an item that
+            // is forageable AND listed in an island shop would be condemned by the shop rule
+            // while its perfectly good spawn never got a vote.
+            var reachableSpawnIds = new HashSet<string>(StringComparer.Ordinal);
+            void MarkSpawn(string rawId)
+            {
+                if (string.IsNullOrEmpty(rawId)) return;
+                reachableSpawnIds.Add(BundleParsing.NormalizeItemId(rawId));
+            }
+            foreach (RawSpawnEntry spawn in forage) MarkSpawn(spawn?.ItemId);
+            foreach (RawSpawnEntry spawn in fish) MarkSpawn(spawn?.ItemId);
+            foreach (RawMonsterDropEntry drop in drops) MarkSpawn(drop?.ItemId);
+            foreach (RawGeodeDropEntry drop in geodeDrops) MarkSpawn(drop?.ItemId);
+            foreach (RawFruitTreeEntry tree in fruitTrees)
+                foreach (string fruit in tree?.FruitItemIds ?? System.Array.Empty<string>())
+                    MarkSpawn(fruit);
+
             IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                 links, allLocations,
                 name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
             var reachability = new SourceReachability(
-                unreachablePlaces, shopListings, shopPlacements, crops, recipes);
+                unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds);
             this.LastReachability = reachability;
             _monitor?.Log(
                 $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
                 LogLevel.Trace);
+```
+
+**Fail open if any input read throws.** Every read above sits inside the existing `try` whose
+`catch` logs "pools may be partial". A partial source graph is far worse than no source graph: it
+looks authoritative while missing exactly the alternative route that would have kept an item. So
+wrap the shop, recipe and warp reads in their own `try`, and on ANY exception leave
+`LastReachability` null and pass null to the builder, which restores today's behaviour exactly:
+
+```csharp
+            SourceReachability reachability = null;
+            try
+            {
+                // ... the shop, recipe, warp and spawn reads above ...
+                reachability = new SourceReachability(
+                    unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds);
+            }
+            catch (System.Exception ex)
+            {
+                _monitor?.Log(
+                    $"Reachability derivation failed ({ex.GetType().Name}: {ex.Message}). " +
+                    "No item will be excluded for reachability this generation.",
+                    LogLevel.Warn);
+                reachability = null;
+            }
+            this.LastReachability = reachability;
 ```
 
 and add `reachability` as the final argument to `ItemPoolBuilder.Build`.
@@ -1414,11 +1582,48 @@ git commit -m "v0.17.23: regression fixture for the Fishmonger crops and dishes"
 
 **Files:**
 - Create: `src/TheLongestYear/Loop/BoardRepairService.cs`
+- Modify: `src/TheLongestYear.Core/BundleSlotFiller.cs` (add the `ReplacementFor` API below)
 - Modify: `src/TheLongestYear/ModEntry.cs` (call it from the existing `SaveLoaded` handler, after the availability model is built)
+- Test: `tests/TheLongestYear.Tests/BundleSlotFillerReplacementTests.cs`
 
 **Interfaces:**
-- Consumes: `SourceReachability` (Tasks 3 to 5), `BundleSlotFiller.Fill`, `BundleDataWriter`, `Game1.netWorldState.Value.BundleData`.
-- Produces: `internal sealed class BoardRepairService` with `public int RepairIfNeeded()`, returning the number of slots swapped.
+- Consumes: `SourceReachability` via `GameDataPools.LastReachability` (Task 7), `PoolDomainClassifier.Classify`, `BundleParsing`, `Game1.netWorldState.Value.BundleData`.
+- Produces:
+  - `BundleSlotFiller.ReplacementFor(...)` returning `PoolItem?` (signature below), the only new Core surface.
+  - `internal sealed class BoardRepairService` with `public int RepairIfNeeded()`, returning the number of slots swapped.
+
+**Three corrections from the plan review (2026-09-10), all verified against the code:**
+
+1. **`BundleSlotFiller.Fill` fills a WHOLE bundle** and its candidate picker is private. Calling it
+   on a live bundle fights the donated-slot rule, and calling it on a fabricated one-slot bundle
+   loses recipe-part identity, which breaks composite bundles like Dye and Field Research where
+   each slot belongs to a different part. **Add a narrow public Core API instead**, in
+   `BundleSlotFiller`, and list that file as Modified for this task:
+
+   ```csharp
+   /// <summary>One replacement candidate for a single slot of an existing bundle, drawn from the
+   /// same pool (and, for a Recipe bundle, the same PART) the slot came from, excluding everything
+   /// already asked for on the board. Null when nothing suitable exists, which the caller must
+   /// treat as "leave the slot alone", never as success.</summary>
+   public static PoolItem? ReplacementFor(
+       BundleSpec spec, int slotIndex, DomainMatch match, ItemPools pools,
+       BundleGenerationTuning tuning, Random rng, IReadOnlySet<string> avoid,
+       ItemAvailabilityModel? availability, PoolRecipe? knownRecipe)
+   ```
+
+2. **`SetBundleData` does not refresh the Community Center's ingredient cache.**
+   `CommunityCenter` builds `bundlesIngredientsInfo` separately, and donation checks read THAT.
+   Rewriting the board without refreshing it leaves the new ask on screen while the donation logic
+   still wants the old item. After the final write, call the CC's refresh
+   (`refreshBundlesIngredientsInfo`, verify the exact name in the decompile at
+   `StardewValley.Locations/CommunityCenter.cs`). Step 4 must physically donate the replacement to
+   prove it, not merely look at it.
+
+3. **Host only.** `SaveLoaded` fires on multiplayer farmhands too, and mutating `NetWorldState`
+   from a peer races the host. Guard the whole repair with `Context.IsMainPlayer`.
+
+Quality and stack are preserved from the old slot ONLY when the replacement can carry them: check
+`pools.QualityEligibleIds` before keeping a silver or gold ask, and fall back to quality 0.
 
 - [ ] **Step 1: Write the service**
 
@@ -1450,7 +1655,7 @@ internal sealed class BoardRepairService
 }
 ```
 
-Reuse `PoolDomainClassifier.Classify` to find the bundle's pool and `BundleSlotFiller`'s candidate selection so a repaired slot is indistinguishable from a freshly generated one. Write back with the same merge-and-upsert call the engine uses (`Game1.netWorldState.Value.SetBundleData`), one key at a time, and never remove a key.
+Use `PoolDomainClassifier.Classify` to find the bundle's domain and `BundleSlotFiller.ReplacementFor` (added above) to pick the replacement, so a repaired slot comes from the same pool and the same recipe part the original did. Write back with the same merge-and-upsert call the engine uses (`Game1.netWorldState.Value.SetBundleData`), one key at a time, and never remove a key. A null return from `ReplacementFor` means leave the slot exactly as it is and log that the ask could not be replaced; it is never counted as a repair.
 
 - [ ] **Step 2: Wire it into save load**
 
@@ -1465,13 +1670,29 @@ In `ModEntry`'s `SaveLoaded` handler, after `_availability` is built and the poo
                     LogLevel.Info);
 ```
 
+- [ ] **Step 2b: Write the Core tests for the new API**
+
+`ReplacementFor` is pure Core, so it is unit-testable: a slot whose pool has candidates returns one
+that is not in `avoid`; a slot whose pool is exhausted returns null; a Recipe bundle returns a
+candidate from the same part, not merely the same domain.
+
+Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter BundleSlotFiller`
+
 - [ ] **Step 3: Verify on a clean board**
 
 Deploy, load the throwaway save, confirm the log says nothing about repairs and `tly_gatecheck` reports the same numbers as before the update. **A clean board must not be touched.**
 
 - [ ] **Step 4: Verify on a dirty board**
 
-Hand-write an unreachable id into one slot of the throwaway save's board (edit `BundleData` in the save XML while the game is closed, using an id the rule condemns), load, and confirm: the slot is swapped, the log names it, donated slots elsewhere are unchanged, and `tly_gatecheck` still passes.
+Hand-write an unreachable id into one slot of the throwaway save's board (edit `BundleData` in the
+save XML while the game is closed, using an id the rule condemns), load, and confirm all five:
+
+1. the slot is swapped and the log names it,
+2. donated slots elsewhere are unchanged,
+3. `tly_gatecheck` still passes,
+4. **the replacement can actually be donated** (give yourself the item and hand it in). This is the
+   cache test: if the donation is refused, the ingredient cache was not refreshed,
+5. loading the same save a second time repairs nothing further (idempotent).
 
 - [ ] **Step 5: Changelog and commit**
 

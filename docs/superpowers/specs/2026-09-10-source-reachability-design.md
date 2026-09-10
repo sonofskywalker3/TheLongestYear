@@ -95,7 +95,11 @@ Core means it is covered by the suite.
 - `RawShopPlacement(ShopId, LocationName)`: where a shop can be opened.
 - `RawLocationLink(From, To)`: one warp edge.
 - Seed to harvest, from `Data/Crops` (already keyed by seed id, so the seed is in hand).
-- Recipe output to ingredients, from `Data/CookingRecipes` and `Data/CraftingRecipes`.
+- Recipe output to ingredients, from `Data/CookingRecipes`. Crafting recipes are out of scope for
+  0.18: cooking covers the reported case, and `Data/CraftingRecipes` can follow the same shape if a
+  report ever needs it.
+- Every id the game spawns, from the forage, fish, crab-pot, monster-drop, geode-drop and
+  fruit-tree tables `GameDataPools` already reads.
 
 **Output**: the set of qualified ids that are provably unreachable, plus a reason string per id for
 the log.
@@ -106,7 +110,13 @@ the log.
    today.
 2. Build the warp graph from the live locations at the game boundary.
 3. Flood-fill from the farm, refusing to enter any forbidden node.
-4. Every location the fill does not reach is out of reach, whatever it is called.
+4. Every location the fill does not reach is out of reach, whatever it is called, EXCEPT a
+   location with no warp edges at all, which is unknown rather than unreachable.
+
+**A map with no doors is not proof.** Verified in-game on 2026-09-10: `MovieTheater`,
+`WizardHouseBasement` and `LewisBasement` all load carrying zero warps, because they are entered by
+scripted actions rather than map warps. Condemning a location merely because we cannot see how it
+is entered would be inventing proof we do not have, so a zero-edge location is left reachable.
 
 **Doors that open during the year count as passable.** The bus to the Desert, the Rusty Key to the
 Sewer, the Steel Axe to the Secret Woods: the walk asks whether a map is connected to the world by
@@ -124,22 +134,37 @@ An item is unreachable when **every** known source of it is unreachable. Any unt
 leaves the item allowed. Sources are alternatives, so one reachable source is enough to keep an
 item on the board.
 
+- **Spawn (positive proof, overrides everything below)**: an item the game spawns somewhere
+  reachable, from the forage, fish, crab-pot, monster-drop, geode-drop or fruit-tree tables, is
+  reachable full stop. Without this rule, "every known source" would silently mean "every source
+  this component happens to model", and a forageable item that a mod also lists in an island shop
+  would be condemned while its perfectly good spawn never got a vote.
 - **Shop**: an item is bought if some shop lists it for sale. Unreachable if every such shop sits
-  in an unreachable location. `Data/Shops` entries carry `IsRecipe`, and a recipe listing teaches
+  in an unreachable location. **A shop with no discoverable placement keeps the item allowed**: the
+  Traveling Cart, the Night Market and festival vendors are opened from game code and have no
+  placement to find, so treating them as absent would let one island shop condemn an item the cart
+  sells every spring. `Data/Shops` entries carry `IsRecipe`, and a recipe listing teaches
   a recipe rather than selling the item, so only non-recipe listings count as a source of the item
   itself.
-- **Crop**: unreachable if its seed is unreachable.
-- **Cooked or crafted**: cooking is a source only if **both** the recipe can be learned **and**
-  every required ingredient is reachable. One impossible ingredient is enough to close this route,
-  and so is an unlearnable recipe.
-- **Recipe learnability**: a recipe is learnable if its `Data/CookingRecipes` unlock field names a
-  normal route (`default`, a skill level, the TV, or friendship with an NPC whose home is
-  reachable), or if some shop in a reachable location lists it with `IsRecipe`. A recipe whose
-  unlock is `none` and which is taught only by an unreachable shop cannot be learned.
+- **Crop**: unreachable if EVERY seed that yields it is unreachable. Several seeds can share one
+  harvest, so one reachable seed keeps the crop.
+- **Cooked**: cooking is a source only if **both** the recipe can be learned **and** every required
+  ingredient is reachable. One impossible ingredient is enough to close this route, and so is an
+  unlearnable recipe. Several recipes can produce one object, and one cookable route is enough.
+- **Recipe learnability**: only the LITERAL unlock value `none` counts as "no normal route".
+  Anything else, including an empty or missing field, is treated as learnable. Such a recipe is
+  unlearnable only when every shop teaching it (an `IsRecipe` listing) is unreachable.
 
-Recursive, with a visited set as a cycle guard and memoisation per generation. Category refs in
-recipes ("any milk") resolve the way `CookedDishAvailability` already resolves them: a category is
-unreachable only if every member is.
+  This is the one inference in the design that goes beyond strict proof, and it is safe because it
+  cannot touch vanilla. Verified against the live `Data/CookingRecipes` on 2026-09-10: all 81
+  vanilla recipes use `l` (34), `f` (36), `s` (9), `default` (1) or the literal string `null` (1,
+  Cookies, taught by Evelyn's event). **Not one uses `none`, and not one is empty.** The rule
+  therefore fires only on the mod pattern it was written for.
+
+Recursive, with a visited set as a cycle guard and memoisation per generation. A category ref in a
+recipe ("any milk") is satisfiable by many items, so it is treated as reachable and never
+condemns a dish. Expanding category members is deliberately out of scope: it could only ever make
+the rule condemn MORE, and the conservative direction is to condemn less.
 
 **Why learnability is not optional.** Five of The Fishmonger's eleven dishes (Baked Red Snapper
 Curry, Crispy Fish and Chips, Mouth Watering Fishburger, Fish Croquettes Aioli, Crispy Salmon
@@ -167,8 +192,16 @@ On save load, re-derive the unreachable set and walk the existing board. For any
 unreachable item, swap in a reachable one from the same pool, preserving the bundle's theme, slot
 count and quality asks.
 
+- **Host only.** `SaveLoaded` fires on multiplayer farmhands too, and mutating `NetWorldState`
+  from a peer races the host, so the whole repair is guarded on `Context.IsMainPlayer`.
+- **The Community Center's ingredient cache must be refreshed after the write.**
+  `SetBundleData` updates the board, but `CommunityCenter` keeps a separate
+  `bundlesIngredientsInfo` lookup and the donation check reads THAT. Rewriting the board without
+  refreshing it leaves the new ask on screen while donation logic still wants the old item.
 - Slots already donated are left exactly as they are. A player who somehow has the item keeps
   credit for it.
+- If no suitable replacement exists, the slot is left alone and the failure logged. Never counted
+  as a repair.
 - The swap reuses the existing slot filler so a repaired slot is indistinguishable from a freshly
   generated one.
 - Repairs are logged per slot and counted in one summary line.
@@ -231,6 +264,10 @@ the swap, confirm donated slots survive, confirm a clean board is untouched.
 4. **Performance.** One graph walk plus a memoised recursion per generation. Expected to be
    negligible against the existing generation cost, but worth a timing check on a heavily modded
    setup.
+5. **A partial source graph is worse than none.** If reading shops, recipes or warps throws, the
+   result would look authoritative while missing exactly the alternative route that keeps an item.
+   Any failure in the reachability inputs disables the rule for that generation and logs a warning,
+   which restores the previous behaviour exactly.
 
 ## Verification of the original report
 
