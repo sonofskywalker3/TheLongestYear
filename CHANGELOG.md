@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+2004 tests.
+
+### Added
+
+- **`tly_warpgraph`**, a developer command that prints every loaded location and its warp
+  targets. Groundwork for deciding which places a run can actually reach.
+
 ## 0.17.15 - 2026-09-10
 
 2004 tests.
