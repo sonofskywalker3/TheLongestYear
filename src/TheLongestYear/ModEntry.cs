@@ -3441,12 +3441,19 @@ namespace TheLongestYear
                     // description. Collapse those: the reader wants the distinct possibilities.
                     var seen = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
                     var described = new System.Collections.Generic.List<string>();
+                    bool passThrough = TheLongestYear.Loop.BundleEngine.IsPassThroughRoom(room.Key);
                     foreach (BundleSpec c in candidates)
                     {
                         DomainMatch match = PoolDomainClassifier.Classify(c, pools);
                         int shown = c.PickCount > 0 ? System.Math.Min(c.PickCount, c.Slots.Count) : c.Slots.Count;
                         string body;
-                        if (match.Domain == PoolDomain.Recipe)
+                        if (passThrough)
+                        {
+                            // The Vault and the Abandoned Joja Mart never re-roll, whatever the
+                            // classifier would say about their items in isolation.
+                            body = $"  - Keeps vanilla's items: {DescribeSlots(c)}";
+                        }
+                        else if (match.Domain == PoolDomain.Recipe)
                         {
                             // "the Recipe pool" is not a pool anyone can look up: name the parts
                             // the bundle actually draws from (Jeff, 2026-08-29).

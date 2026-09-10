@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.15 - 2026-09-10
+
+2004 tests.
+
+### Fixed
+
+- **The bundle catalogue reports the two untouched rooms honestly.** `tly_dumpbundles`
+  classifies each candidate on its own, so it described the Vault and the Abandoned Joja
+  Mart as re-rolling from a pool when the generator never touches either. Developer
+  diagnostic only, no effect on play.
+
 ## 0.17.14 - 2026-09-10
 
 2004 tests.
