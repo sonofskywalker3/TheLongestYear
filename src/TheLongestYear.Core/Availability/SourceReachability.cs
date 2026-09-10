@@ -16,6 +16,7 @@ public sealed class SourceReachability
     private readonly IReadOnlySet<string> _unreachableLocations;
     private readonly Dictionary<string, List<RawShopListing>> _listingsByItem;
     private readonly Dictionary<string, List<string>> _shopLocations;
+    private readonly Dictionary<string, List<string>> _seedByHarvest;
     private readonly IReadOnlySet<string> _reachableSpawnIds;
     private readonly Dictionary<string, bool> _memo = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _reasons = new(StringComparer.Ordinal);
@@ -48,6 +49,19 @@ public sealed class SourceReachability
             if (!_shopLocations.TryGetValue(placement.ShopId, out List<string>? list))
                 _shopLocations[placement.ShopId] = list = new List<string>();
             if (!string.IsNullOrEmpty(placement.LocationName)) list.Add(placement.LocationName);
+        }
+
+        // A LIST, not a single value: mods define several seeds yielding one harvest, and a
+        // scalar would let whichever row enumerated last erase a reachable alternative.
+        _seedByHarvest = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        foreach (RawCropEntry crop in crops ?? Array.Empty<RawCropEntry>())
+        {
+            if (crop?.HarvestItemId == null || string.IsNullOrEmpty(crop.SeedItemId)) continue;
+            string harvest = Qualify(crop.HarvestItemId);
+            if (!_seedByHarvest.TryGetValue(harvest, out List<string>? seeds))
+                _seedByHarvest[harvest] = seeds = new List<string>();
+            string seed = Qualify(crop.SeedItemId);
+            if (!seeds.Contains(seed)) seeds.Add(seed);
         }
     }
 
@@ -82,6 +96,19 @@ public sealed class SourceReachability
             anySourceKnown = true;
             if (!shopUnreachable) return false;   // a reachable shop is enough
             reason = "no reachable shop sells it";
+        }
+
+        if (_seedByHarvest.TryGetValue(id, out List<string>? seeds) && seeds.Count > 0)
+        {
+            anySourceKnown = true;
+            string? blockedSeed = null;
+            foreach (string seed in seeds)
+            {
+                if (!IsUnreachable(seed)) { blockedSeed = null; break; }   // one good seed is enough
+                blockedSeed ??= seed;
+            }
+            if (blockedSeed == null) return false;
+            reason = $"its seed {blockedSeed} is out of reach";
         }
 
         return anySourceKnown;

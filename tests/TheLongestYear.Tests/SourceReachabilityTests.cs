@@ -103,4 +103,57 @@ public class SourceReachabilityTests
         rule.IsUnreachable("(O)FishmongerSeed");
         Assert.Contains("shop", rule.Reasons["(O)FishmongerSeed"], StringComparison.OrdinalIgnoreCase);
     }
+
+    private static SourceReachability WithCrops(
+        IReadOnlyList<RawCropEntry> crops, params RawShopListing[] listings) => new(
+        Unreachable, listings, Placements, crops, Array.Empty<RawRecipeEntry>(), NoSpawns);
+
+    [Fact]
+    public void Crop_whose_seed_is_unreachable_is_unreachable()
+    {
+        var crops = new[] { new RawCropEntry("(O)FishmongerCrop", new[] { Season.Fall }, null, "(O)FishmongerSeed") };
+        var rule = WithCrops(crops, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.True(rule.IsUnreachable("(O)FishmongerCrop"));
+        Assert.Contains("seed", rule.Reasons["(O)FishmongerCrop"], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Crop_whose_seed_is_reachable_is_allowed()
+    {
+        var crops = new[] { new RawCropEntry("(O)Parsnip", new[] { Season.Spring }, null, "(O)ParsnipSeed") };
+        var rule = WithCrops(crops, new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Parsnip"));
+    }
+
+    [Fact]
+    public void Crop_also_sold_somewhere_reachable_is_allowed()
+    {
+        var crops = new[] { new RawCropEntry("(O)FishmongerCrop", new[] { Season.Fall }, null, "(O)FishmongerSeed") };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)FishmongerCrop", TownShop));
+        Assert.False(rule.IsUnreachable("(O)FishmongerCrop"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_seed_rescues_the_crop()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Shared", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+            new RawCropEntry("(O)Shared", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+        };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Shared"));
+    }
+
+    [Fact]
+    public void Crop_with_no_recorded_seed_is_allowed()
+    {
+        var crops = new[] { new RawCropEntry("(O)MysteryCrop", new[] { Season.Spring }) };
+        var rule = WithCrops(crops);
+        Assert.False(rule.IsUnreachable("(O)MysteryCrop"));
+    }
 }
