@@ -54,6 +54,12 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **Impossible asks are cleared from boards that already have them.** If a bundle on your
   current board wants something this run can never reach, it is swapped for something you can
   actually get, the next time you load. Anything you had already donated stays donated.
+- **`tly_dumpbundles` now says what the reachability rule kept off the board.** A stale
+  catalogue that classified candidates without knowing about a rule change is what hid a real
+  bug for two weeks, so this dump can no longer make that mistake about reachability: it names
+  every condemned item and why, states plainly when nothing was condemned, and, if the check
+  did not run or failed open, says that too instead of ever printing "nothing" for "we did not
+  check".
 
 ## 0.17.15 - 2026-09-10
 

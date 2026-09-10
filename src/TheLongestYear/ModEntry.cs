@@ -10,6 +10,7 @@ using StardewValley.Menus;
 using StardewValley.Network;
 using StardewValley.Quests;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Availability;
 using TheLongestYear.Donations;
 using TheLongestYear.Integration;
 using TheLongestYear.Loop;
@@ -3421,7 +3422,8 @@ namespace TheLongestYear
             MetaState state = _meta.State;
             TheLongestYear.Core.DifficultyProfile difficulty = state.BoardDifficulty(_config);
             BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
-            ItemPools pools = new TheLongestYear.Loop.GameDataPools(this.Monitor)
+            var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
+            ItemPools pools = enginePoolReader
                 .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity));
             pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
 
@@ -3434,6 +3436,7 @@ namespace TheLongestYear
             sb.AppendLine();
 
             AppendQuantityRules(sb, tuning, difficulty);
+            AppendReachability(sb, enginePoolReader.LastReachability);
             AppendCandidates(sb, pools);
             AppendAuthored(sb);
             AppendPools(sb, pools);
@@ -3460,6 +3463,29 @@ namespace TheLongestYear
             sb.AppendLine($"Every quantity above except the banded fish and forage, and every quantity kept from vanilla, is then multiplied by the stack-size difficulty dial (currently **x{d.StackFactor}**, step {d.Steps.StackSize}), rounded away from zero, floored at 1 and **capped at 99**. Money bundles are never scaled.");
             sb.AppendLine();
             sb.AppendLine($"Quality: a re-rolled crop, forage or fish slot rolls {t.GoldQualityChance:P1} for gold then {t.SilverQualityChance:P1} for silver, and only ever on an item the game itself can star.");
+            sb.AppendLine();
+        }
+
+        private void AppendReachability(System.Text.StringBuilder sb, SourceReachability reachability)
+        {
+            sb.AppendLine("## Items kept off the board");
+            sb.AppendLine();
+            if (reachability == null)
+            {
+                sb.AppendLine("Reachability was not available for this dump (the reads failed and the rule fails open, or it has not run on this reader). Nothing can be concluded about what is reachable this run; this is NOT the same as \"nothing was condemned\".");
+                sb.AppendLine();
+                return;
+            }
+            if (reachability.Reasons.Count == 0)
+            {
+                sb.AppendLine("Nothing. Every item in every pool has a route this run can reach.");
+                sb.AppendLine();
+                return;
+            }
+            sb.AppendLine($"{reachability.Reasons.Count} item(s) cannot be reached in a single loop:");
+            sb.AppendLine();
+            foreach (var reason in reachability.Reasons.OrderBy(r => r.Key, System.StringComparer.Ordinal))
+                sb.AppendLine($"- **{reason.Key}**: {reason.Value}");
             sb.AppendLine();
         }
 
