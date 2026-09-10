@@ -115,12 +115,15 @@ namespace TheLongestYear.Loop
 
             int repaired = 0;
             int unfixable = 0;
+            int scanned = 0;
+            int slotsRead = 0;
             foreach (KeyValuePair<string, string> entry in board)
             {
                 ParsedBundle bundle = TryParse(entry.Key, entry.Value);
                 if (bundle == null) continue;
                 if (!RoomThemeMap.TryGetTheme(bundle.Room, out _)) continue;
 
+                scanned++;
                 bool[] donated = DonatedFlags(worldState, bundle.Index);
                 List<BundleIngredient> slots = bundle.Ingredients.ToList();
                 bool changed = false;
@@ -135,6 +138,7 @@ namespace TheLongestYear.Loop
                     if (!IsConcrete(slot.ItemRef)) continue;
                     if (donated != null && i < donated.Length && donated[i]) continue;
 
+                    slotsRead++;
                     string oldId = BundleParsing.NormalizeItemId(slot.ItemRef);
                     if (!_reachability.IsUnreachable(oldId)) continue;
 
@@ -181,6 +185,11 @@ namespace TheLongestYear.Loop
                 Write(worldState, entry.Key, entry.Value, slots);
             }
 
+            _monitor?.Log(
+                $"Board repair: read {slotsRead} open slot(s) across {scanned} themed bundle(s); " +
+                $"{repaired} swapped, {unfixable} unreplaceable.",
+                LogLevel.Trace);
+
             if (repaired == 0)
             {
                 if (unfixable > 0)
@@ -193,9 +202,6 @@ namespace TheLongestYear.Loop
             // Correction 2: the donation check reads the CC's own ingredient cache, not the board
             // that was just written. Without this the swapped-in item is refused at the junimo note.
             RefreshIngredientCache();
-            _monitor?.Log(
-                $"Board repair: {repaired} slot(s) swapped, {unfixable} left as they were.",
-                LogLevel.Trace);
             return repaired;
         }
 
