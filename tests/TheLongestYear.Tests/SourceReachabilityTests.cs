@@ -86,6 +86,38 @@ public class SourceReachabilityTests
     }
 
     [Fact]
+    public void Fishing_trash_listed_in_an_unreachable_shop_stays_allowed()
+    {
+        // The exact bug found in the 2026-09-10 live-verification run: Driftwood (169) has no
+        // Data/Locations row (FishingTrashAvailability), so before GameDataPools fed the trash
+        // range into reachableSpawnIds, a mod listing it in a shop it also placed on Ginger
+        // Island wrongly condemned it, even though trash comes off the line from day 1 in any
+        // water. Removing FishingTrashAvailability.QualifiedIds() from that set (or this
+        // assertion) would make this test fail exactly the way the live run did.
+        var trashSpawns = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string id in FishingTrashAvailability.QualifiedIds()) trashSpawns.Add(id);
+        var rule = new SourceReachability(
+            Unreachable, new[] { new RawShopListing("(O)169", IslandShop) }, Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), trashSpawns);
+        Assert.False(rule.IsUnreachable("(O)169"));
+    }
+
+    [Fact]
+    public void A_craftable_item_listed_in_an_unreachable_shop_stays_allowed()
+    {
+        // GameDataPools reads Data/CraftingRecipes and feeds every recipe's OUTPUT id into
+        // reachableSpawnIds as positive proof only (no crafting source rule: this class never
+        // concludes a craftable item is unreachable, only ever the opposite). (O)681 (Rain
+        // Totem) is craftable but was wrongly condemned before that read existed, because
+        // nothing else spoke up for it once a mod also listed it in an unreachable shop.
+        var craftedSpawns = new HashSet<string>(StringComparer.Ordinal) { "(O)681" };
+        var rule = new SourceReachability(
+            Unreachable, new[] { new RawShopListing("(O)681", IslandShop) }, Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), craftedSpawns);
+        Assert.False(rule.IsUnreachable("(O)681"));
+    }
+
+    [Fact]
     public void Unreachable_shop_plus_an_unplaced_shop_leaves_the_item_allowed()
     {
         // The Traveling Cart and festival vendors are opened from code, so they have no
