@@ -6,6 +6,40 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Darkness pushback: Jeff's live test before it ships (story branch, 2026-09-10)
+
+Built and headless-tested 2026-09-09 (see STATUS.md and
+`docs/superpowers/specs/2026-09-09-darkness-pushback-design.md`). What only a played run can check:
+
+- **On screen:** the morning HUD lines ("X crops were struck down by the darkness overnight",
+  "Some of your things have spoiled in the night", "gone missing overnight", "You awaken with a
+  feeling that something is wrong at the Community Center"). The log cannot show them.
+- **Blight on crops in Summer and Fall** with a real field: are the counts a nibble or a wipe?
+  Tuning: `SabotageTuning` in Core (chance 25/35/35%, share 4/6/6%, caps 6/10/10, two nights a
+  week). Winter blight only ever hits chests unless Winter crops are planted.
+- **Chest loss:** food spoils, anything else goes missing, stash never. Is 3% of stored units
+  (1 to 8 a night) right? Should machines' held output count? (It does not today.)
+- **Circle of Warding:** buy at the shrine (Wards tab, 400/800/1600 JP), place it like a rug,
+  indoors and out; chests must be placeable on it; crops and chests on it must be skipped. The
+  sprite is a generated placeholder; swap in the Wizard's floor circle look.
+- **Ward of the Fields** (250/300/300): buy one, confirm that season's crops are safe and chests
+  are not.
+- **Reversion:** from Fall, about weekly, a slot in an unfinished bundle empties. Redoing it pays
+  donation JP again (deliberate). Never in days 25 to 28.
+- **Tampering:** Winter, up to twice, never in days 21 to 28. The porch scene the next morning
+  (skippable from the second showing), then the planning hub. The new ask's stack: max count
+  divided by Winter weeks passed, then a 10% slice by the Stack size dial. Check the Bundle Log
+  and the Season Goals page show the new item; check a weekly goal card that pointed at the
+  swapped slot is dropped, not stale.
+- **Letters:** Linus after the first blight, Shane after the first reversion, once per save.
+- **GMCM:** the three Darkness switches under Features turn each front off live.
+- **Retune every number** after the run; all of them are my assumptions.
+- **Known lag:** `tly_sabotage blight|revert|tamper` read the run's calendar, which syncs at day
+  start; after `debug season X`, sleep once before forcing. `tly_sabotage fixture` plants ten
+  parsnips and a stocked chest below the stash; `tly_sabotage circle` places a carried circle.
+- **Pre-existing bug fixed on the way:** `EndingArmed` survived a reset (forced every night sunny
+  for the whole next loop). Worth a master cherry-pick if a player report matches.
+
 ### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — measure real yields in game, clamp requirement rolls off the measured average
 
 #### RULING (Jeff, 2026-08-30) — the numbers and the bands
