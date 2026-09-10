@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2041 tests.
+2044 tests.
 
 ### Added
 
@@ -42,6 +42,12 @@ aims to follow [Semantic Versioning](https://semver.org/).
   any of these reads throws, the whole reachability result is discarded and the pools build
   exactly as before (fail open, never a partial source graph). Verified on a vanilla save:
   0 items kept off the board.
+- **A regression fixture for the exact case that prompted this work**: The Fishmonger (Nexus
+  16326) sells 10 crop seeds and teaches 11 dishes from a shop on Ginger Island, inside a
+  custom map whose name matches no location marker and is only unreachable because its one
+  door leads through IslandSouth. Five of those dishes use entirely vanilla ingredients (real
+  ingredient lists, category refs included) and drop only because their recipe cannot be
+  learned, proving the learnability rule does the work an ingredient check alone could not.
 
 ## 0.17.15 - 2026-09-10
 
