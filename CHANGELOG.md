@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2022 tests.
+2027 tests.
 
 ### Added
 
@@ -18,6 +18,9 @@ aims to follow [Semantic Versioning](https://semver.org/).
   condemned; an item with no known source, or with even one reachable seller, stays allowed.
   Crop and recipe rules come next; the constructor already takes their parameters so nothing
   else has to change when they land.
+- **The crop seed rule**: a crop is out of reach only when every seed that grows it is out of
+  reach. A crop with no recorded seed, or with even one reachable seed among several that
+  yield it, stays allowed.
 
 ## 0.17.15 - 2026-09-10
 

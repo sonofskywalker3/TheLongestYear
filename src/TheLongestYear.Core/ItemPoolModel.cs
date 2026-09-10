@@ -116,8 +116,12 @@ public sealed record RawObjectEntry(
 /// (empty = any season, mirroring CropData.Seasons' empty default). HarvestMaxQuality
 /// mirrors CropData.HarvestMaxQuality: null = uncapped (vanilla default), 0 = the game
 /// clamps the harvest to base quality (e.g. Fiber) so it can never carry a quality ask.</summary>
+/// <remarks><paramref name="SeedItemId"/> is the row's KEY (Data/Crops is keyed by seed id),
+/// which is how a crop's reachability is traced: you cannot grow what you cannot plant.
+/// Optional because hand-built test pools and the curated CropPoolAdditions have no seed.</remarks>
 public sealed record RawCropEntry(
-    string HarvestItemId, IReadOnlyList<Season> Seasons, int? HarvestMaxQuality = null);
+    string HarvestItemId, IReadOnlyList<Season> Seasons, int? HarvestMaxQuality = null,
+    string? SeedItemId = null);
 
 /// <summary>One Data/Locations spawn entry (LocationData.Forage or LocationData.Fish):
 /// Season null = any season unless the Condition string names seasons.
