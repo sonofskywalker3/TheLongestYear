@@ -194,10 +194,20 @@ count and quality asks.
 
 - **Host only.** `SaveLoaded` fires on multiplayer farmhands too, and mutating `NetWorldState`
   from a peer races the host, so the whole repair is guarded on `Context.IsMainPlayer`.
-- **The Community Center's ingredient cache must be refreshed after the write.**
-  `SetBundleData` updates the board, but `CommunityCenter` keeps a separate
-  `bundlesIngredientsInfo` lookup and the donation check reads THAT. Rewriting the board without
-  refreshing it leaves the new ask on screen while donation logic still wants the old item.
+- **The Community Center's ingredient cache is refreshed after the write**, via
+  `CommunityCenter.refreshBundlesIngredientsInfo()`.
+
+  The original rationale for this was WRONG, and the correction is worth recording so nobody
+  reinstates the wrong reason. The adversarial review claimed the donation check reads the
+  `bundlesIngredientsInfo` cache, so a stale cache would make the game refuse the new ask. Verified
+  against the 1.6 decompile on 2026-09-10, that is not how it works: `bundlesIngredientsInfo` is
+  read only by `couldThisIngredienteBeUsedInABundle`, whose single caller is `InventoryMenu`
+  setting `GameMenu.bundleItemHovered`. The donation UI, `JunimoNoteMenu`, reads
+  `Game1.netWorldState.Value.BundleData` directly.
+
+  So the real consequence of skipping the refresh is a stale inventory hover glow, cosmetic rather
+  than blocking. The call stays because that glow is still wrong without it and the refresh is
+  cheap, but it is a polish fix, not a correctness one.
 - Slots already donated are left exactly as they are. A player who somehow has the item keeps
   credit for it.
 - If no suitable replacement exists, the slot is left alone and the failure logged. Never counted
@@ -261,10 +271,17 @@ the swap, confirm donated slots survive, confirm a clean board is untouched.
 3. **Over-exclusion would be invisible and bad.** A bug in the walk could quietly strip real
    content. The conservative default limits the blast radius, and the diagnostics exist so it shows
    up in a log rather than as a confused player.
-4. **Performance.** One graph walk plus a memoised recursion per generation. Expected to be
+4. **Shop placement is weaker than it looks for unvisited maps.** A shop is placed either by an
+   `OpenShop` tile action or by its owning NPC's home and current location. The tile scan needs the
+   map's tile data, which is not loaded for a location the player has never visited, so in practice
+   the OWNER path does nearly all the real work. This matches what the pre-flight scan found: the
+   mod that prompted this feature opens its shop by talking to an NPC and adds no tile action at
+   all. The failure mode is an unplaced shop, which under the conservative rule leaves its items
+   allowed, so it fails safe.
+5. **Performance.** One graph walk plus a memoised recursion per generation. Expected to be
    negligible against the existing generation cost, but worth a timing check on a heavily modded
    setup.
-5. **A partial source graph is worse than none.** If reading shops, recipes or warps throws, the
+6. **A partial source graph is worse than none.** If reading shops, recipes or warps throws, the
    result would look authoritative while missing exactly the alternative route that keeps an item.
    Any failure in the reachability inputs disables the rule for that generation and logs a warning,
    which restores the previous behaviour exactly.
