@@ -267,4 +267,32 @@ public class SourceReachabilityTests
         var rule = WithRecipes(recipes);
         Assert.False(rule.IsUnreachable("(O)A"));
     }
+
+    [Fact]
+    public void Unreachable_crop_never_reaches_the_crop_pool()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Parsnip", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+            new RawCropEntry("(O)FishmongerCrop", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+        };
+        var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal)
+        {
+            ["Parsnip"] = new("Basic", -75, 35, false, Array.Empty<string>()),
+            ["FishmongerCrop"] = new("Basic", -75, 100, false, Array.Empty<string>()),
+        };
+        var rule = new SourceReachability(
+            Unreachable,
+            new[] { new RawShopListing("(O)FishmongerSeed", IslandShop), new RawShopListing("(O)ParsnipSeed", TownShop) },
+            Placements, crops, Array.Empty<RawRecipeEntry>(), NoSpawns);
+
+        ItemPools pools = ItemPoolBuilder.Build(
+            crops, objects, Array.Empty<RawSpawnEntry>(), Array.Empty<RawSpawnEntry>(),
+            new HashSet<string>(StringComparer.Ordinal), Array.Empty<RawMonsterDropEntry>(),
+            Array.Empty<RawFruitTreeEntry>(), Array.Empty<RawGeodeDropEntry>(),
+            new BundleGenerationTuning(), null, null, null, rule);
+
+        Assert.DoesNotContain(pools.Crops, item => item.ItemId == "(O)FishmongerCrop");
+        Assert.Contains(pools.Crops, item => item.ItemId == "(O)Parsnip");
+    }
 }
