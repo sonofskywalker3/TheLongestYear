@@ -517,8 +517,12 @@ namespace TheLongestYear
             // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed
             // the SeasonResolver (so weekly themes can't ask for out-of-season fish, Nexus
             // 1122423) and DerivedSeasonPins feed the obtainability clamp below.
+            // Held in a local (rather than the old new-and-Build one-liner) so its
+            // LastReachability survives the call: the board repair below re-checks the LIVE board
+            // against exactly the verdicts these pools were built from.
+            var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             TheLongestYear.Core.ItemPools enginePools =
-                new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
+                enginePoolReader.Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity));
             _seasonResolver = new SeasonResolver(
@@ -551,6 +555,19 @@ namespace TheLongestYear
                     "Rejected season pins (derived floor kept instead): "
                     + string.Join(", ", _availability.RejectedSeasonOverrides),
                     LogLevel.Warn);
+            // Repair a board built before the reachability rule existed (spec
+            // 2026-09-10-source-reachability, task 9). Runs HERE, above the catalog and the
+            // fingerprint, so everything downstream reads the repaired board rather than the one
+            // with the impossible ask still in it. Host only, donated slots untouched, and a
+            // no-op on a clean board.
+            int repaired = new TheLongestYear.Loop.BoardRepairService(
+                this.Monitor, enginePoolReader.LastReachability, enginePools,
+                _config.PoolTuning, _availability, _meta.Run.Seed).RepairIfNeeded();
+            if (repaired > 0)
+                this.Monitor.Log(
+                    $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",
+                    LogLevel.Info);
+
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 themeOverrides, itemSeasonPins, bundleQuotas, _availability);
