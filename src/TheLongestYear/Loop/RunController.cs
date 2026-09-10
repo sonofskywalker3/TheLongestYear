@@ -1069,6 +1069,8 @@ namespace TheLongestYear.Loop
             // gate (it judges what the player actually had), the win night to the ending.
             if (action == RunAction.Continue && !Run.EndingArmed)
                 _sabotage?.RunNight();
+            else
+                _monitor.Log($"Darkness: no night roll (action={action}, endingArmed={Run.EndingArmed}).", LogLevel.Trace);
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
             // DayEnding fires while the player can't open menus.
         }

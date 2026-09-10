@@ -698,7 +698,7 @@
     "event.turn.winter-2": "It has found the hall. Some of your gifts have been taken.",
     "event.turn.winter-3": "It will corrupt whatever it can. Our plans may be changed, but not thwarted.",
     "event.turn.winter-4": "One final season. The darkness is strong. But because of you, we may yet grow stronger.",
-    "event.darkness.tamper-1": "@, the {{old}} are tainted now. All of them.",
+    "event.darkness.tamper-1": "@, every {{old}} is tainted now.",
     "event.darkness.tamper-2": "The darkness has touched them. We can no longer use them for our restoration.",
     "event.darkness.tamper-3": "Bring us {{new}} instead. It remains pure.",
 

@@ -15,9 +15,15 @@ slot comes undone from Fall, an unfilled slot changes item in Winter. Wards tab 
 command (status, blight [n], revert, tamper, report). Spec with every assumed number:
 `docs/superpowers/specs/2026-09-09-darkness-pushback-design.md`. Commits fa2eaa6 (spec) and
 b8ae6e3 (code) on `story`; nothing pushed. 2096 tests passing, build clean.
-**Still to do:** live run per the spec's Testing section (blight on a Summer save, revert and
-tamper on a Fall or Winter save, then reload and confirm "Requirements source: engine manifest"
-in the log). Jeff still owes the numbers and the ward prices.
+**Live run DONE 2026-09-09 (headless, throwaway None_ lineage):** fixture + Circle of Warding bought,
+granted, placed; forced blight took 8 of 10 crops and nothing from the chest on the circle; Linus
+and Shane letters delivered; forced reversion flipped the board and the ledger mirrored 4 of 5;
+forced tamper rewrote Preserver's slot 3 (Wine -> 5 Winter Root), requirements re-resolved from
+the stored engine board, and again after a reload; the porch scene played all three lines and the
+day continued; the circle came back after a loop reset; six natural Fall nights fired a reversion
+(Fall 4) and a spoilage (Fall 6) from the roll alone. One bug found and fixed: `EndingArmed`
+survived a reset and silenced every night. Jeff has approved the numbers for testing; retune after
+his own run. Debug: `tly_sabotage fixture` and `tly_sabotage circle` build the test farm.
 
 ## 2026-09-06: Year One Ending built on branch year-one-ending (not merged, not released)
 

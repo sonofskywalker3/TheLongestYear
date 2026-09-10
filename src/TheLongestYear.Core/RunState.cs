@@ -329,6 +329,11 @@ public sealed class RunState
         WeatherOverride = null;
         YearTwoSeedsWeek = -1;
                 SneakPeekSeason = -1;
+        // A new run cannot have a win night pending: a reset taken while the ending was armed
+        // (tly_reset the same night, or a fail-night reset racing a win) left the flag set for
+        // the whole next loop, which forced every night sunny and, since 2026-09-09, silenced the
+        // darkness (live run, 2026-09-09).
+        EndingArmed = false;
         BlightWeek = -1;
         BlightNightsThisWeek = 0;
         LastReversionWeek = -1;

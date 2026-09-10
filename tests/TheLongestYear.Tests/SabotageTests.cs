@@ -97,7 +97,9 @@ public class SabotageScheduleTests
         SabotageSchedule.RecordStrike(SabotageKind.Tampering, run, 13, 90);
         run.Tampers.Add(new TamperRecord { BundleIndex = 1 });
         run.PendingSabotageReports.Add(new SabotageReport { Kind = SabotageKind.Blight, Count = 2 });
+        run.EndingArmed = true;
         run.BeginNewRun(7);
+        Assert.False(run.EndingArmed);
         Assert.Equal(-1, run.BlightWeek);
         Assert.Equal(0, run.BlightNightsThisWeek);
         Assert.Equal(-1, run.LastReversionWeek);
