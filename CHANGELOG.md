@@ -32,6 +32,16 @@ aims to follow [Semantic Versioning](https://semver.org/).
   the same excluded set every pool already consults, so a Community Center bundle (or any
   other pool) never asks for an item no route reaches this run. Passing nothing keeps
   today's behaviour exactly: the parameter defaults to null.
+- **Reachability now runs on live game data.** `GameDataPools.Build` reads `Data/Shops`
+  (both the tile-scanned placement and, for shops opened by talking to an NPC like the
+  Fishmonger, the owner's home and current location), `Data/CookingRecipes`, and every
+  loaded location's warps, then builds the `SourceReachability` those tables feed and passes
+  it straight through to `ItemPoolBuilder.Build`. The forage, fish, monster-drop, geode-drop
+  and fruit-tree rows this method already reads double as positive proof an item spawns
+  somewhere, so a spawnable item can never be condemned by an unreachable shop listing. If
+  any of these reads throws, the whole reachability result is discarded and the pools build
+  exactly as before (fail open, never a partial source graph). Verified on a vanilla save:
+  0 items kept off the board.
 
 ## 0.17.15 - 2026-09-10
 
