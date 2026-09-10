@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2028 tests.
+2040 tests.
 
 ### Added
 
@@ -21,6 +21,12 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **The crop seed rule**: a crop is out of reach only when every seed that grows it is out of
   reach. A crop with no recorded seed, or with even one reachable seed among several that
   yield it, stays allowed.
+- **The cooking rules**: a dish is out of reach when every recipe that produces it is out of
+  reach, and a recipe is out of reach when one of its ingredients is out of reach or its
+  recipe cannot be learned anywhere reachable. An unlock field of "none" means no normal
+  route exists (skill, TV, friendship, or known from the start), so learning it depends
+  entirely on a reachable shop teaching it. This is what rules out dishes cooked from
+  otherwise-ordinary ingredients whose recipe is sold only on Ginger Island.
 
 ## 0.17.15 - 2026-09-10
 

@@ -174,4 +174,97 @@ public class SourceReachabilityTests
         var rule = WithCrops(crops);
         Assert.False(rule.IsUnreachable("(O)MysteryCrop"));
     }
+
+    private static SourceReachability WithRecipes(
+        IReadOnlyList<RawRecipeEntry> recipes, params RawShopListing[] listings) => new(
+        Unreachable, listings, Placements, Array.Empty<RawCropEntry>(), recipes, NoSpawns);
+
+    [Fact]
+    public void Dish_with_an_unreachable_ingredient_is_unreachable()
+    {
+        var recipes = new[] { new RawRecipeEntry("(O)Sauce", new[] { "(O)FishmongerSeed", "(O)246" }, "default") };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.True(rule.IsUnreachable("(O)Sauce"));
+        Assert.Contains("ingredient", rule.Reasons["(O)Sauce"], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Dish_with_vanilla_ingredients_but_an_unlearnable_recipe_is_unreachable()
+    {
+        // Baked Red Snapper Curry: Red Snapper, Potato, Hot Pepper, all vanilla. Only Constance
+        // teaches it, and its unlock field is "none".
+        var recipes = new[] { new RawRecipeEntry("(O)Curry", new[] { "(O)150", "(O)192", "(O)260" }, "none") };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)Curry", IslandShop, IsRecipe: true));
+        Assert.True(rule.IsUnreachable("(O)Curry"));
+        Assert.Contains("recipe", rule.Reasons["(O)Curry"], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Dish_taught_by_a_reachable_shop_is_allowed()
+    {
+        var recipes = new[] { new RawRecipeEntry("(O)Curry", new[] { "(O)150" }, "none") };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)Curry", TownShop, IsRecipe: true));
+        Assert.False(rule.IsUnreachable("(O)Curry"));
+    }
+
+    [Theory]
+    [InlineData("default")]
+    [InlineData("s Farming 3")]
+    [InlineData("l")]
+    [InlineData("f Robin 7")]
+    public void Dish_with_a_normal_unlock_route_is_allowed(string unlock)
+    {
+        var recipes = new[] { new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, unlock) };
+        var rule = WithRecipes(recipes);
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    // BOTH orderings, for the same reason as the seed tests: with the cookable recipe last, a
+    // "last row wins" scalar dictionary keeps it and the test passes despite the bug.
+    [Fact]
+    public void A_reachable_alternative_recipe_rescues_the_dish_cookable_first()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, "s Farming 3"),
+            new RawRecipeEntry("(O)Dish", new[] { "(O)FishmongerSeed" }, "none"),
+        };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_recipe_rescues_the_dish_cookable_last()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)Dish", new[] { "(O)FishmongerSeed" }, "none"),
+            new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, "s Farming 3"),
+        };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("null")]
+    public void Dish_with_an_empty_or_null_unlock_field_is_allowed(string unlock)
+    {
+        // Vanilla Cookies carries the literal string "null" and is taught by Evelyn's event.
+        var recipes = new[] { new RawRecipeEntry("(O)Cookies", new[] { "(O)150" }, unlock) };
+        var rule = WithRecipes(recipes);
+        Assert.False(rule.IsUnreachable("(O)Cookies"));
+    }
+
+    [Fact]
+    public void Recipe_cycles_terminate_and_do_not_condemn()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)A", new[] { "(O)B" }, "default"),
+            new RawRecipeEntry("(O)B", new[] { "(O)A" }, "default"),
+        };
+        var rule = WithRecipes(recipes);
+        Assert.False(rule.IsUnreachable("(O)A"));
+    }
 }
