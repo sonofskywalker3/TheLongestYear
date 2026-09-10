@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Target release **0.18**. Bump `src/TheLongestYear/manifest.json` `Version` on every commit (master is the release line). Add a `CHANGELOG.md` entry per version.
+- Target release **0.18**. **This work happens on a feature branch, so the manifest `Version` stays at its branch-point value of `0.17.15` and is NEVER bumped by a task.** The workspace rule is explicit: only the release line owns version bumps, because a `Version` line changed on two branches conflicts on every merge. Master sets `0.18.0` once, at merge time (Task 11). Accumulate changelog entries under a single `## Unreleased` heading at the top of `CHANGELOG.md`; Task 11 retitles it. (Controller ruling, 2026-09-10, reconciling the plan with the workspace CLAUDE.md.)
 - **Never push and never release without Jeff's explicit "yes".** Local commits only.
 - **No em dashes** in any string, log line, comment or doc. Purge on sight.
 - The test project references **only** `TheLongestYear.Core`. Anything needing `Game1` cannot be unit-tested, so put logic in Core and keep the mod-project layer a thin data reader.
@@ -114,9 +114,11 @@ tools/bridge.ps1 -Action send -Lines "tly_reset|tly_warpgraph"
 
 Expected: the same location and edge counts as step 4, give or take the farm rebuild. **If interiors are missing or the counts collapse, STOP and report to Jeff before continuing.** The design assumes this data exists at generation time; if it does not, the reachability walk must move to a later hook and the plan needs revising.
 
-- [ ] **Step 6: Bump version, changelog, commit**
+- [ ] **Step 6: Changelog and commit**
 
-Bump `manifest.json` to `0.17.16`. Add to `CHANGELOG.md`:
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
+
+Add to `CHANGELOG.md`:
 
 ```markdown
 ## 0.17.16 - 2026-09-10
@@ -130,7 +132,7 @@ Bump `manifest.json` to `0.17.16`. Add to `CHANGELOG.md`:
 ```
 
 ```bash
-git add src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/ModEntry.cs CHANGELOG.md
 git commit -m "v0.17.16: tly_warpgraph diagnostic for reachability derivation"
 ```
 
@@ -372,12 +374,14 @@ Expected: 8 passed.
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
 Expected: 2012 passed, 0 failed.
 
-- [ ] **Step 7: Bump version, changelog, commit**
+- [ ] **Step 7: Changelog and commit**
 
-Bump `manifest.json` to `0.17.17`. Changelog entry under `### Added`: "The groundwork for judging which places a run can reach by walking doors rather than matching map names."
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
+
+Changelog entry under `### Added`: "The groundwork for judging which places a run can reach by walking doors rather than matching map names."
 
 ```bash
-git add src/TheLongestYear.Core/Availability/ReachabilityGraph.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/ReachabilityGraphTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/Availability/ReachabilityGraph.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/ReachabilityGraphTests.cs CHANGELOG.md
 git commit -m "v0.17.17: ReachabilityGraph walks warps to find places a run cannot reach"
 ```
 
@@ -638,12 +642,12 @@ Expected: 7 passed.
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
 Expected: 2019 passed, 0 failed.
 
-- [ ] **Step 7: Bump version, changelog, commit**
+- [ ] **Step 7: Changelog and commit**
 
-Bump to `0.17.18`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core/Availability/SourceReachability.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/Availability/SourceReachability.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.18: shop source rule, an item sold only where you cannot go is out of reach"
 ```
 
@@ -771,12 +775,12 @@ Expected: 2023 passed, 0 failed.
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.` (close the game first if it is running)
 
-- [ ] **Step 8: Bump version, changelog, commit**
+- [ ] **Step 8: Changelog and commit**
 
-Bump to `0.17.19`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core src/TheLongestYear/Loop/GameDataPools.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core src/TheLongestYear/Loop/GameDataPools.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.19: crop seed rule, you cannot grow what you cannot plant"
 ```
 
@@ -973,12 +977,12 @@ Expected: 19 passed.
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
 Expected: 2031 passed, 0 failed.
 
-- [ ] **Step 6: Bump version, changelog, commit**
+- [ ] **Step 6: Changelog and commit**
 
-Bump to `0.17.20`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core/Availability/SourceReachability.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/Availability/SourceReachability.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.20: cooking rules, a dish needs both its ingredients and a learnable recipe"
 ```
 
@@ -1095,12 +1099,12 @@ Expected: 1 passed.
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
 Expected: 2032 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
 
-- [ ] **Step 6: Bump version, changelog, commit**
+- [ ] **Step 6: Changelog and commit**
 
-Bump to `0.17.21`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core/ItemPoolBuilder.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/ItemPoolBuilder.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.21: unreachable items are excluded from every pool"
 ```
 
@@ -1192,18 +1196,50 @@ Add the tile scan:
         }
 ```
 
-Also place shops by their owning NPC's current location, so a shop opened by talking to an NPC is covered:
+**The owner path is the important one, not the tile scan.** Verified against the real pack on
+2026-09-10: The Fishmonger's shop is opened by talking to Constance. It has an `Owners` list and the
+mod adds **no** `OpenShop` tile action anywhere. A tile scan alone finds nothing and the whole fix
+does nothing for the mod that prompted it. Vanilla shopkeepers live at their shop (Pierre at
+`SeedShop`, Willy at `FishShop`, Marnie at `AnimalShop`), so an owner's home is a sound placement.
+
+Collect owners while reading `Data/Shops` in step 1, in the same loop:
 
 ```csharp
-            foreach (NPC npc in Utility.getAllCharacters())
+            // shopId -> owner NPC names, for placing shops that are opened by talking to someone.
+            var shopOwners = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            // ... inside the Data/Shops loop, alongside the Items loop:
+                foreach (var owner in kv.Value.Owners ?? new List<StardewValley.GameData.Shops.ShopOwnerData>())
+                {
+                    if (string.IsNullOrEmpty(owner?.Name)) continue;
+                    if (!shopOwners.TryGetValue(kv.Key, out List<string> names))
+                        shopOwners[kv.Key] = names = new List<string>();
+                    if (!names.Contains(owner.Name)) names.Add(owner.Name);
+                }
+```
+
+Then place each shop at both its owner's home and its owner's current location. Both count, and a
+shop is only condemned when every placement is unreachable, so listing more places is the
+conservative direction:
+
+```csharp
+            foreach (KeyValuePair<string, List<string>> shop in shopOwners)
             {
-                if (npc?.currentLocation?.Name == null) continue;
-                foreach (string shopId in ShopIdsOwnedBy(npc.Name, shopOwners))
-                    shopPlacements.Add(new RawShopPlacement(shopId, npc.currentLocation.Name));
+                foreach (string ownerName in shop.Value)
+                {
+                    if (ownerName == "AnyOrNone" || ownerName == "None") continue;
+                    NPC npc = Game1.getCharacterFromName(ownerName);
+                    if (npc == null) continue;
+                    if (!string.IsNullOrEmpty(npc.DefaultMap))
+                        shopPlacements.Add(new RawShopPlacement(shop.Key, npc.DefaultMap));
+                    if (!string.IsNullOrEmpty(npc.currentLocation?.Name))
+                        shopPlacements.Add(new RawShopPlacement(shop.Key, npc.currentLocation.Name));
+                }
             }
 ```
 
-Build `shopOwners` from each `ShopData.Owners` entry's `Name` while reading `Data/Shops` in step 1.
+Check `ShopOwnerData`'s real property names and the `DefaultMap` property against the decompile
+before compiling. `DefaultMap` is the NPC's home map, which is what
+`Data/Characters`'s `Home` entry sets.
 
 - [ ] **Step 3: Construct the rule and pass it to the builder**
 
@@ -1215,12 +1251,35 @@ Just before the `ItemPoolBuilder.Build` call:
                 name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
             var reachability = new SourceReachability(
                 unreachablePlaces, shopListings, shopPlacements, crops, recipes);
+            this.LastReachability = reachability;
             _monitor?.Log(
                 $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
                 LogLevel.Trace);
 ```
 
 and add `reachability` as the final argument to `ItemPoolBuilder.Build`.
+
+**Expose the instance.** Tasks 9 and 10 both need the same verdicts (the board repair and the
+dump), and rebuilding them would re-read every table and risk a different answer. Add to
+`GameDataPools`:
+
+```csharp
+        /// <summary>The reachability verdicts from the most recent <see cref="Build"/> on this
+        /// instance. Null before the first call. Held so the board repair and tly_dumpbundles
+        /// report exactly what the pools were built from, rather than re-deriving it.</summary>
+        public SourceReachability LastReachability { get; private set; }
+```
+
+Callers that need it must keep the `GameDataPools` instance rather than discarding it:
+
+```csharp
+        var dataPools = new GameDataPools(this.Monitor);
+        ItemPools pools = dataPools.Build(tuning, extraExcludedIds);
+        SourceReachability reachability = dataPools.LastReachability;
+```
+
+Update every existing `new GameDataPools(...).Build(...)` call site that later needs the verdicts.
+Call sites that do not need them may stay as they are.
 
 - [ ] **Step 4: Log what was dropped**
 
@@ -1252,12 +1311,12 @@ tools/bridge.ps1 -Action send -Lines "tly_reset"
 
 Expected in the log: `Reachability: N of M locations out of reach` with N covering the island maps, and **`Reachability: 0 items kept off the board`** on an unmodded install. Cactus Fruit and every Desert item must still appear in the pools; check the pool counts against the previous run's log line. **A non-zero drop count on vanilla means the rule is over-eager. Stop and report.**
 
-- [ ] **Step 7: Bump version, changelog, commit**
+- [ ] **Step 7: Changelog and commit**
 
-Bump to `0.17.22`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear/Loop/GameDataPools.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/Loop/GameDataPools.cs CHANGELOG.md
 git commit -m "v0.17.22: read shops, recipes and warps so reachability runs on live game data"
 ```
 
@@ -1342,10 +1401,10 @@ Expected: 3 passed. If the five all-vanilla dishes fail, the learnability rule f
 
 - [ ] **Step 4: Run the whole suite, then commit**
 
-Bump to `0.17.23`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add tests/TheLongestYear.Tests/Fixtures/fishmonger_sources.json tests/TheLongestYear.Tests/FishmongerRegressionTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add tests/TheLongestYear.Tests/Fixtures/fishmonger_sources.json tests/TheLongestYear.Tests/FishmongerRegressionTests.cs CHANGELOG.md
 git commit -m "v0.17.23: regression fixture for the Fishmonger crops and dishes"
 ```
 
@@ -1414,9 +1473,11 @@ Deploy, load the throwaway save, confirm the log says nothing about repairs and 
 
 Hand-write an unreachable id into one slot of the throwaway save's board (edit `BundleData` in the save XML while the game is closed, using an id the rule condemns), load, and confirm: the slot is swapped, the log names it, donated slots elsewhere are unchanged, and `tly_gatecheck` still passes.
 
-- [ ] **Step 5: Bump version, changelog, commit**
+- [ ] **Step 5: Changelog and commit**
 
-Bump to `0.17.24`. Changelog under `### Fixed`, in player language:
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
+
+Changelog under `### Fixed`, in player language:
 
 ```markdown
 - **Impossible asks are cleared from boards that already have them.** If a bundle on your current
@@ -1425,7 +1486,7 @@ Bump to `0.17.24`. Changelog under `### Fixed`, in player language:
 ```
 
 ```bash
-git add src/TheLongestYear/Loop/BoardRepairService.cs src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/Loop/BoardRepairService.cs src/TheLongestYear/ModEntry.cs CHANGELOG.md
 git commit -m "v0.17.24: repair boards that already carry unreachable asks"
 ```
 
@@ -1465,12 +1526,12 @@ After `AppendQuantityRules`, add `AppendReachability(sb, reachability)`:
 
 Deploy, run `tly_dumpbundles` on the vanilla install, confirm the new section reads "Nothing." Copy the file to `docs/engine-bundle-catalogue.md` (gitignored) so the repo copy stays current.
 
-- [ ] **Step 3: Bump version, changelog, commit**
+- [ ] **Step 3: Changelog and commit**
 
-Bump to `0.17.25`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/ModEntry.cs CHANGELOG.md
 git commit -m "v0.17.25: tly_dumpbundles lists what reachability kept off the board"
 ```
 
@@ -1496,9 +1557,9 @@ On the same run, confirm Cactus Fruit and the other Desert items are still in th
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
 Expected: all passing, roughly 2035.
 
-- [ ] **Step 4: Roll the version to 0.18.0**
+- [ ] **Step 4: Roll the version to 0.18.0 (the ONLY step in the whole plan that touches manifest.json)**
 
-Set `manifest.json` to `0.18.0`. Fold every `0.17.16` through `0.17.25` changelog entry into one `## 0.18.0` section written in player language, leading with the player-visible fix and keeping the developer entries brief.
+Set `manifest.json` to `0.18.0` (it has sat at `0.17.15` for the whole branch). Retitle the accumulated `## Unreleased` changelog section to `## 0.18.0 - <date>`, rewriting it as one coherent section in player language: lead with the player-visible fix, keep the developer entries brief.
 
 - [ ] **Step 5: Update README and Nexus description together**
 
