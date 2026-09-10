@@ -3,63 +3,34 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.18.0 - 2026-09-10
 
 2054 tests.
 
-### Added
-
-- **`tly_warpgraph`**, a developer command that prints every loaded location and its warp
-  targets. Groundwork for deciding which places a run can actually reach.
-- The groundwork for judging which places a run can reach by walking doors rather than
-  matching map names.
-- **`SourceReachability`**, the class that answers whether an item is provably out of reach
-  this run. Its first rule: an item sold only by shops that sit somewhere unreachable is
-  condemned; an item with no known source, or with even one reachable seller, stays allowed.
-  Crop and recipe rules come next; the constructor already takes their parameters so nothing
-  else has to change when they land.
-- **The crop seed rule**: a crop is out of reach only when every seed that grows it is out of
-  reach. A crop with no recorded seed, or with even one reachable seed among several that
-  yield it, stays allowed.
-- **The cooking rules**: a dish is out of reach when every recipe that produces it is out of
-  reach, and a recipe is out of reach when one of its ingredients is out of reach or its
-  recipe cannot be learned anywhere reachable. An unlock field of "none" means no normal
-  route exists (skill, TV, friendship, or known from the start), so learning it depends
-  entirely on a reachable shop teaching it. This is what rules out dishes cooked from
-  otherwise-ordinary ingredients whose recipe is sold only on Ginger Island.
-- Provably unreachable items are now excluded from every item pool. `ItemPoolBuilder.Build`
-  takes an optional `SourceReachability` and, when one is supplied, folds its verdicts into
-  the same excluded set every pool already consults, so a Community Center bundle (or any
-  other pool) never asks for an item no route reaches this run. Passing nothing keeps
-  today's behaviour exactly: the parameter defaults to null.
-- **Reachability now runs on live game data.** `GameDataPools.Build` reads `Data/Shops`
-  (both the tile-scanned placement and, for shops opened by talking to an NPC like the
-  Fishmonger, the owner's home and current location), `Data/CookingRecipes`, and every
-  loaded location's warps, then builds the `SourceReachability` those tables feed and passes
-  it straight through to `ItemPoolBuilder.Build`. The forage, fish, monster-drop, geode-drop
-  and fruit-tree rows this method already reads double as positive proof an item spawns
-  somewhere, so a spawnable item can never be condemned by an unreachable shop listing. If
-  any of these reads throws, the whole reachability result is discarded and the pools build
-  exactly as before (fail open, never a partial source graph). Verified on a vanilla save:
-  0 items kept off the board.
-- **A regression fixture for the exact case that prompted this work**: The Fishmonger (Nexus
-  16326) sells 10 crop seeds and teaches 11 dishes from a shop on Ginger Island, inside a
-  custom map whose name matches no location marker and is only unreachable because its one
-  door leads through IslandSouth. Five of those dishes use entirely vanilla ingredients (real
-  ingredient lists, category refs included) and drop only because their recipe cannot be
-  learned, proving the learnability rule does the work an ingredient check alone could not.
-
 ### Fixed
 
-- **Impossible asks are cleared from boards that already have them.** If a bundle on your
-  current board wants something this run can never reach, it is swapped for something you can
-  actually get, the next time you load. Anything you had already donated stays donated.
-- **`tly_dumpbundles` now says what the reachability rule kept off the board.** A stale
-  catalogue that classified candidates without knowing about a rule change is what hid a real
-  bug for two weeks, so this dump can no longer make that mistake about reachability: it names
-  every condemned item and why, states plainly when nothing was condemned, and, if the check
-  did not run or failed open, says that too instead of ever printing "nothing" for "we did not
-  check".
+- **Bundles no longer ask for things this run cannot reach.** Reported by pitytheviolins:
+  with The Fishmonger installed, a Community Center bundle asked for a dish only Constance
+  sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no
+  way to complete that bundle. The game now traces every item back to where it actually comes
+  from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at
+  least one of those routes is somewhere this run can reach. An item with no known source at
+  all is left alone, so this only ever removes things proven unreachable, never guesses.
+- **A board you already have gets repaired, not just new ones.** If a bundle on your current
+  board is asking for something this run can never reach, it is swapped for something you can
+  actually get the next time you load that save. Anything you already donated stays donated.
+- **The bundle catalogue now says what got kept off the board and why**, instead of silently
+  listing candidates as if nothing had changed. This is a developer/debug tool
+  (`tly_dumpbundles`), not something players see in normal play.
+
+### Added
+
+- A developer command (`tly_warpgraph`) for tracing which places a run can and cannot reach,
+  used to build and verify the fix above.
+- A regression test built from the exact case reported: The Fishmonger's 10 crop seeds and 11
+  dishes, all sold only on Ginger Island, are now provably kept off the board. Five of those
+  dishes use entirely ordinary ingredients and are only blocked because their recipe itself
+  can't be learned anywhere reachable, which an ingredient-only check would have missed.
 
 ## 0.17.15 - 2026-09-10
 
