@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## 0.18.0 - 2026-09-10
 
-2054 tests.
+2057 tests.
 
 ### Fixed
 
@@ -19,6 +19,13 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **A board you already have gets repaired, not just new ones.** If a bundle on your current
   board is asking for something this run can never reach, it is swapped for something you can
   actually get the next time you load that save. Anything you already donated stays donated.
+- **Two ordinary items (Driftwood and, likely, Rain Totem) could have been wrongly kept off a
+  board that had The Fishmonger installed, even though both are freely obtainable.** The check
+  above did not yet know that fishing trash comes off the line in any water from day one, or
+  that a craftable item is reachable by definition, so a mod listing either kind of item in an
+  unreachable shop could tip it the wrong way. Both are now recognised as reachable, closing
+  that gap. Found and fixed during live verification against the real reported mod, before
+  this release ever shipped.
 - **The bundle catalogue now says what got kept off the board and why**, instead of silently
   listing candidates as if nothing had changed. This is a developer/debug tool
   (`tly_dumpbundles`), not something players see in normal play.

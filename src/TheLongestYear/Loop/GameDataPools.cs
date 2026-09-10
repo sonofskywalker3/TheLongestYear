@@ -184,6 +184,24 @@ namespace TheLongestYear.Loop
                     recipes.Add(new RawRecipeEntry(output, ingredients, fields[3]));
                 }
 
+                // Crafting outputs, POSITIVE PROOF ONLY (2026-09-10 fix round 1): a craftable item
+                // is reachable, full stop, so its output id joins reachableSpawnIds below. This is
+                // deliberately NOT a recipe source rule (no _recipesByOutput entry, no ingredient or
+                // learnability check): 0.18 draws no conclusion about whether a craftable item is
+                // UNREACHABLE, only ever the opposite. Format verified against the decompiled
+                // CraftingRecipe(string, bool) constructor: ingredients / unused / output / bigCraftable
+                // / unlockConditions / displayName, the same ingredient/output field indices as cooking
+                // (index 3 differs: bigCraftable bool here, not unlockConditions), so field[2] is the
+                // output pair "id qty..." exactly like cooking's field[2].
+                var craftingOutputs = new List<string>();
+                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
+                {
+                    string[] fields = (kv.Value ?? "").Split('/');
+                    if (fields.Length < 3) continue;
+                    string output = fields[2].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(output)) craftingOutputs.Add(output);
+                }
+
                 var links = new List<RawLocationLink>();
                 var allLocations = new List<string>();
                 var shopPlacements = new List<RawShopPlacement>();
@@ -236,6 +254,16 @@ namespace TheLongestYear.Loop
                 foreach (RawFruitTreeEntry tree in fruitTrees)
                     foreach (string fruit in tree?.FruitItemIds ?? Array.Empty<string>())
                         MarkSpawn(fruit);
+                // Fishing trash (167-172) comes off the line from day 1 in any reachable water and
+                // has no Data/Locations row to speak for it (FishingTrashAvailability); without this
+                // it was invisible to the positive-proof set, so a mod that also lists a trash id in
+                // an unreachable shop (e.g. Driftwood, 169) got it wrongly condemned.
+                foreach (string trashId in FishingTrashAvailability.QualifiedIds())
+                    MarkSpawn(trashId);
+                // Crafting outputs: positive proof only (see the read loop above for why this is not
+                // a source rule).
+                foreach (string output in craftingOutputs)
+                    MarkSpawn(output);
 
                 IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                     links, allLocations,

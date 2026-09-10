@@ -31,6 +31,14 @@ public class FishingTrashTests
     }
 
     [Fact]
+    public void QualifiedIds_covers_167_to_172_and_nothing_else()
+    {
+        Assert.Equal(
+            new[] { "(O)167", "(O)168", "(O)169", "(O)170", "(O)171", "(O)172" },
+            FishingTrashAvailability.QualifiedIds());
+    }
+
+    [Fact]
     public void A_forage_route_beats_a_trap_row_for_clam()
     {
         var pools = new ItemPools { TrapFishIds = new HashSet<string> { "(O)372" } };
