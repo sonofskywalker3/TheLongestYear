@@ -696,12 +696,12 @@ public sealed class SourceReachability
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 7 passed.
+Expected: 9 passed.
 
 - [ ] **Step 6: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2019 passed, 0 failed.
+Expected: 2022 passed, 0 failed.
 
 - [ ] **Step 7: Changelog and commit**
 
@@ -853,12 +853,12 @@ In `src/TheLongestYear/Loop/GameDataPools.cs`, find where `RawCropEntry` is cons
 - [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 11 passed.
+Expected: 14 passed (9 from Task 3 plus 5 new).
 
 - [ ] **Step 7: Run the whole suite and build the mod**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2023 passed, 0 failed.
+Expected: 2027 passed, 0 failed.
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.` (close the game first if it is running)
 
@@ -1096,12 +1096,12 @@ Add the helpers:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 19 passed.
+Expected: 25 passed (14 from Tasks 3 and 4 plus 11 new; the two [Theory] blocks contribute 6 cases between them).
 
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2031 passed, 0 failed.
+Expected: 2038 passed, 0 failed.
 
 - [ ] **Step 6: Changelog and commit**
 
@@ -1223,7 +1223,7 @@ Expected: 1 passed.
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2032 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
+Expected: 2039 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
 
 - [ ] **Step 6: Changelog and commit**
 
@@ -1468,7 +1468,7 @@ After the `Build` call, beside the existing pool-count log:
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.`
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2032 passed.
+Expected: 2039 passed.
 
 - [ ] **Step 6: Verify on a vanilla save that nothing is wrongly dropped**
 
@@ -1566,7 +1566,7 @@ Create `tests/TheLongestYear.Tests/FishmongerRegressionTests.cs`. Build the worl
 - [ ] **Step 3: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter FishmongerRegressionTests`
-Expected: 3 passed. If the five all-vanilla dishes fail, the learnability rule from Task 5 is not firing; that is the whole point of this fixture.
+Expected: 3 passed (full suite 2042). If the five all-vanilla dishes fail, the learnability rule from Task 5 is not firing; that is the whole point of this fixture.
 
 - [ ] **Step 4: Run the whole suite, then commit**
 
@@ -1777,7 +1777,7 @@ On the same run, confirm Cactus Fruit and the other Desert items are still in th
 - [ ] **Step 3: Run the full suite one more time**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: all passing, roughly 2035.
+Expected: all passing. The running total after Task 8 is 2042, plus whatever Task 9's ReplacementFor tests add.
 
 - [ ] **Step 4: Roll the version to 0.18.0 (the ONLY step in the whole plan that touches manifest.json)**
 
