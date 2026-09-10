@@ -1566,6 +1566,14 @@ Source data is in the extracted pack (re-extract from Nexus 16326 if the scratch
 
 Create `tests/TheLongestYear.Tests/FishmongerRegressionTests.cs`. Build the world (`Farm - Town - Beach - IslandSouth - GI_Inside`), mark `IslandSouth` forbidden via a marker predicate, list every seed and recipe in the island shop (recipes with `IsRecipe: true`, `unlock: "none"`), give each crop its seed, give the six modded-ingredient dishes an ingredient from the crop list and the five vanilla dishes only ids like `(O)150`, then assert:
 
+**Use the real ingredient lists, category refs included.** Task 5's review noted that no test yet
+exercises the category-ref skip in `FirstUnreachableIngredient`, because that task's fixtures had no
+category refs in them. This fixture closes that gap for free, because the real recipes are full of
+them: Crispy Fish and Chips is `-4` (any fish), `192`, `247`; Mouth Watering Fishburger is `-5` (any
+egg), `216`, `256`; Fish Croquettes Aioli is `-4`, `246`, `247`, `248`. Transcribe those ingredient
+lists as they actually are. A category ref must never condemn a dish, so these five must still drop
+via the learnability rule alone, which is exactly what the second assertion below checks.
+
 ```csharp
     [Fact]
     public void All_ten_crops_and_all_eleven_dishes_are_unreachable()
