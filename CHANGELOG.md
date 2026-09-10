@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2040 tests.
+2041 tests.
 
 ### Added
 
@@ -27,6 +27,11 @@ aims to follow [Semantic Versioning](https://semver.org/).
   route exists (skill, TV, friendship, or known from the start), so learning it depends
   entirely on a reachable shop teaching it. This is what rules out dishes cooked from
   otherwise-ordinary ingredients whose recipe is sold only on Ginger Island.
+- Provably unreachable items are now excluded from every item pool. `ItemPoolBuilder.Build`
+  takes an optional `SourceReachability` and, when one is supplied, folds its verdicts into
+  the same excluded set every pool already consults, so a Community Center bundle (or any
+  other pool) never asks for an item no route reaches this run. Passing nothing keeps
+  today's behaviour exactly: the parameter defaults to null.
 
 ## 0.17.15 - 2026-09-10
 
