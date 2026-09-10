@@ -156,6 +156,11 @@ public sealed record RawFruitTreeEntry(string SaplingItemId, IReadOnlyList<strin
 /// not data) and then filtered to exclude gem-category items.</summary>
 public sealed record RawGeodeDropEntry(string ItemId);
 
+/// <summary>One warp edge between two locations, as the world actually connects them.
+/// Direction is recorded but the reachability walk treats edges as two-way: vanilla interiors
+/// frequently declare the door on one side only.</summary>
+public sealed record RawLocationLink(string From, string To);
+
 /// <summary>One Data/Fish row, reduced to the fields the availability model gates on.
 ///
 /// Field indices verified against the decompiled Android source, GameLocation.

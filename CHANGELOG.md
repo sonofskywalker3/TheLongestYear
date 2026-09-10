@@ -5,12 +5,14 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-2004 tests.
+2013 tests.
 
 ### Added
 
 - **`tly_warpgraph`**, a developer command that prints every loaded location and its warp
   targets. Groundwork for deciding which places a run can actually reach.
+- The groundwork for judging which places a run can reach by walking doors rather than
+  matching map names.
 
 ## 0.17.15 - 2026-09-10
 
