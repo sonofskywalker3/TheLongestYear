@@ -27,12 +27,19 @@ namespace TheLongestYear.Loop
     ///    the same pool and the same recipe part.
     ///
     /// 2. <c>NetWorldState.SetBundleData</c> does NOT refresh the Community Center's ingredient
-    ///    cache. <c>CommunityCenter.bundlesIngredientsInfo</c> is built separately and the
-    ///    DONATION CHECK reads THAT (decompile: StardewValley.Locations/CommunityCenter.cs,
-    ///    <c>refreshBundlesIngredientsInfo</c>, read by <c>getBundlesIngredientsInfo</c>'s
-    ///    callers around line 709). Rewriting the board without refreshing it shows the player the
-    ///    new ask while the game still wants the old item. So the final write is followed by
-    ///    <c>cc.refreshBundlesIngredientsInfo()</c>.
+    ///    cache, so the final write is followed by <c>cc.refreshBundlesIngredientsInfo()</c>.
+    ///    That call is POLISH, not correctness, and the difference is worth stating because the
+    ///    obvious guess is the wrong one. Decompile, StardewValley.Locations/CommunityCenter.cs:
+    ///    <c>bundlesIngredientsInfo</c> is built by <c>refreshBundlesIngredientsInfo</c> (line 129)
+    ///    and read in exactly two places, lines 709 and 719, both inside
+    ///    <c>couldThisIngredienteBeUsedInABundle</c>. That method has exactly one caller in the
+    ///    whole game: StardewValley.Menus/InventoryMenu.cs line 510, which sets
+    ///    <c>GameMenu.bundleItemHovered</c>. It is the "a bundle wants this" hover glow, nothing
+    ///    more. The DONATION path never consults the cache: <c>JunimoNoteMenu</c> builds its
+    ///    <c>Bundle</c> objects straight from <c>Game1.netWorldState.Value.BundleData</c> every
+    ///    time it opens (JunimoNoteMenu.cs lines 358, 1027, 1143). So skipping the refresh would
+    ///    leave the hover glow pointing at the old, impossible item and ignoring the new one; it
+    ///    would NOT refuse the donation.
     ///
     /// 3. <c>SaveLoaded</c> fires on multiplayer farmhands too, and mutating
     ///    <c>NetWorldState</c> from a peer races the host, so the whole repair is guarded by
@@ -199,8 +206,9 @@ namespace TheLongestYear.Loop
                 return 0;
             }
 
-            // Correction 2: the donation check reads the CC's own ingredient cache, not the board
-            // that was just written. Without this the swapped-in item is refused at the junimo note.
+            // Keep the CC's ingredient cache in step with the board just written. Polish, not
+            // correctness: that cache only drives the inventory hover glow, and the donation path
+            // reads BundleData directly. See point 2 of the class doc for the decompile trail.
             RefreshIngredientCache();
             return repaired;
         }
@@ -217,7 +225,10 @@ namespace TheLongestYear.Loop
             {
                 var rng = new Random(unchecked(_seed ^ (bundleIndex * RepairSaltPrime) ^ (slotIndex + attempt)));
                 PoolItem pick = BundleSlotFiller.ReplacementFor(
-                    spec, slotIndex, match, _pools, _tuning, rng, rejected, _availability, recipe);
+                    spec, slotIndex, match, _pools, _tuning, rng, rejected, _availability, recipe,
+                    // Only the first attempt reports: the retries re-draw from the same recipe and
+                    // would repeat the same line up to MaxDrawAttempts times.
+                    attempt == 0 ? note => _monitor?.Log($"Board repair: {note}", LogLevel.Trace) : null);
                 if (pick == null) return null;
                 if (!_reachability.IsUnreachable(pick.ItemId)) return pick;
                 rejected.Add(pick.ItemId);
@@ -258,9 +269,10 @@ namespace TheLongestYear.Loop
             worldState.SetBundleData(new Dictionary<string, string> { [key] = string.Join("/", fields) });
         }
 
-        /// <summary>The CC's ingredient cache, rebuilt from the board that was just written.
+        /// <summary>The CC's inventory-hover cache, rebuilt from the board that was just written.
         /// Verified name: <c>CommunityCenter.refreshBundlesIngredientsInfo</c> (public, decompile
-        /// StardewValley.Locations/CommunityCenter.cs line 129).</summary>
+        /// StardewValley.Locations/CommunityCenter.cs line 129). Not on the donation path: see
+        /// point 2 of the class doc.</summary>
         private void RefreshIngredientCache()
         {
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;

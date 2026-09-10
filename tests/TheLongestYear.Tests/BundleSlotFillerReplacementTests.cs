@@ -139,6 +139,46 @@ public class BundleSlotFillerReplacementTests
         }
     }
 
+    /// <summary>Field Research's four parts ask for one slot each, so on a SIX-slot bundle they
+    /// cannot account for every slot and the reconstructed boundaries are not the ones the bundle
+    /// was filled with. Rather than trust them and draw from a mis-identified part, the draw falls
+    /// back to the whole recipe: still a usable candidate, still outside `avoid`, just a broader
+    /// pool. Proven by the picks spanning more than one part across seeds, which a single
+    /// mis-identified part could not produce.</summary>
+    [Fact]
+    public void A_recipe_whose_parts_do_not_account_for_every_slot_draws_from_the_whole_recipe()
+    {
+        var pools = new ItemPools
+        {
+            Forage = new[] { Item("(O)forage1"), Item("(O)forage2"), Item("(O)forage3") },
+            Artifacts = new[] { Item("(O)artifact1"), Item("(O)artifact2") },
+            Fish = new[] { Item("(O)fish1"), Item("(O)fish2"), Item("(O)fish3") },
+            GeodeMinerals = new[] { Item("(O)mineral1"), Item("(O)mineral2") },
+        };
+        var spec = Spec("Field Research",
+            "(O)forage1", "(O)artifact1", "(O)fish1", "(O)mineral1", "(O)forage2", "(O)fish2");
+        var free = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "(O)forage3", "(O)artifact2", "(O)fish3", "(O)mineral2",
+        };
+        var notes = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        for (int seed = 0; seed < 40; seed++)
+        {
+            PoolItem? pick = BundleSlotFiller.ReplacementFor(
+                spec, 4, new DomainMatch(PoolDomain.Recipe, null), pools, Tuning, new Random(seed),
+                Nothing, availability: null, knownRecipe: null, log: notes.Add);
+
+            Assert.NotNull(pick);
+            Assert.Contains(pick!.ItemId, free);
+            seen.Add(pick.ItemId);
+        }
+
+        Assert.True(seen.Count > 1, $"expected the union, got only {string.Join(",", seen)}");
+        Assert.Contains(notes, n => n.Contains("could not identify which recipe part"));
+    }
+
     [Fact]
     public void A_domain_of_none_is_never_repaired()
     {

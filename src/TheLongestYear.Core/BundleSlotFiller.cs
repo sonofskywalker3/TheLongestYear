@@ -279,7 +279,7 @@ public static class BundleSlotFiller
     public static PoolItem? ReplacementFor(
         BundleSpec spec, int slotIndex, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng, IReadOnlySet<string> avoid,
-        ItemAvailabilityModel? availability, PoolRecipe? knownRecipe)
+        ItemAvailabilityModel? availability, PoolRecipe? knownRecipe, Action<string>? log = null)
     {
         if (spec == null || pools == null || rng == null || match == null) return null;
         if (match.Domain == PoolDomain.None) return null;
@@ -293,9 +293,20 @@ public static class BundleSlotFiller
             List<IReadOnlyList<PoolItem>> parts = recipe.Parts
                 .Select(part => part.Source(pools, availability)).ToList();
             int part = PartIndexForSlot(recipe, slotIndex, spec.Slots.Count);
-            candidates = part >= 0 && part < parts.Count
-                ? parts[part]
-                : BundlePoolRecipes.Union(parts.ToArray());
+            if (part >= 0 && part < parts.Count)
+            {
+                candidates = parts[part];
+            }
+            else
+            {
+                // The union, not a guessed part: a replacement from the WRONG part gives a
+                // thematically odd bundle, while the union only gives a broader draw. Both stay
+                // inside the recipe, which is what keeps the pick reachable.
+                candidates = BundlePoolRecipes.Union(parts.ToArray());
+                log?.Invoke(
+                    $"'{spec.Name}': could not identify which recipe part slot {slotIndex} came from " +
+                    $"({recipe.Parts.Count} part(s) against {spec.Slots.Count} slot(s)); drawing from the whole recipe.");
+            }
         }
         else
         {
@@ -338,12 +349,33 @@ public static class BundleSlotFiller
 
     /// <summary>Which recipe part a given slot index belongs to, walking the parts in the same
     /// fixed order <see cref="SampleByParts"/> filled them in, so a repair draws from the part the
-    /// original slot actually came from. -1 when the index falls past every part (the tail
-    /// <see cref="SampleByParts"/> takes from the union).</summary>
+    /// original slot actually came from. -1 means "cannot be identified", and the caller must then
+    /// draw from the whole recipe rather than from a guessed part.
+    ///
+    /// This RECONSTRUCTS the boundaries by assumption, because they are not recorded anywhere: the
+    /// generation-time part of each slot is not written into BundleData and cannot be recovered
+    /// from it. The assumption is that every part filled exactly the count it asked for, which
+    /// holds for a board this engine generated with fully-filled parts, and fails in two ways:
+    ///
+    /// <list type="bullet">
+    /// <item>A part that came up SHORT. <see cref="SampleByParts"/> fills through
+    /// <c>WeightedSampler.Sample</c>, which can return fewer items than asked for even after the
+    /// union fallback; <c>chosen.Count</c> then advances by less than the part wanted and every
+    /// later boundary shifts. That shortfall leaves no trace in the finished bundle, so it cannot
+    /// be detected here. What CAN be detected is the structural version of the same problem: parts
+    /// whose counts do not add up to the bundle's slots at all, which is the check below.</item>
+    /// <item>A board this engine never generated (a vanilla-preserved bundle, or another mod's),
+    /// where slot order need not follow recipe-part order in the first place.</item>
+    /// </list>
+    ///
+    /// So the answer is only trusted when the parts account for EVERY slot; anything else returns
+    /// -1 and the caller falls back to the union, which is the conservative direction (a broader
+    /// draw rather than a wrong-part one, both still inside the recipe).</summary>
     private static int PartIndexForSlot(PoolRecipe recipe, int slotIndex, int targetCount)
     {
-        if (recipe == null) return -1;
+        if (recipe == null || targetCount <= 0) return -1;
         int filled = 0;
+        int answer = -1;
         for (int i = 0; i < recipe.Parts.Count && filled < targetCount; i++)
         {
             int remaining = targetCount - filled;
@@ -351,9 +383,11 @@ public static class BundleSlotFiller
                 ? remaining
                 : Math.Min(recipe.Parts[i].Count, remaining);
             filled += want;
-            if (slotIndex < filled) return i;
+            if (answer < 0 && slotIndex < filled) answer = i;
         }
-        return -1;
+        // The parts leave slots unaccounted for, so the boundaries this walk produced are not the
+        // ones the bundle was actually filled with. Refuse to answer rather than answer wrongly.
+        return filled == targetCount ? answer : -1;
     }
 
     /// <summary>The season this slot will be due, as BundleClassifier will later decide it: a
