@@ -3,6 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.14 - 2026-09-10
+
+2004 tests.
+
+### Fixed
+
+- **The Abandoned Joja Mart's bundle is vanilla again.** The Missing Bundle was being
+  re-rolled by the mod's own board generator, which is how it came to ask for a legendary
+  fish. That room sits outside the loop entirely: it never carries a season theme, never
+  counts toward a goal and only opens once the hall is finished and the year has turned.
+  It is now passed through untouched, exactly as the Vault always has been, and a save
+  that already picked up a re-rolled version gets the real one back on its next rewind.
+  Reported by ChaoticMindset.
+
 ## 0.17.13 - 2026-09-10
 
 2004 tests.
