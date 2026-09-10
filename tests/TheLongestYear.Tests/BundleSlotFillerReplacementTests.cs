@@ -140,44 +140,68 @@ public class BundleSlotFillerReplacementTests
     }
 
     /// <summary>Field Research's four parts ask for one slot each, so on a SIX-slot bundle they
-    /// cannot account for every slot and the reconstructed boundaries are not the ones the bundle
-    /// was filled with. Rather than trust them and draw from a mis-identified part, the draw falls
-    /// back to the whole recipe: still a usable candidate, still outside `avoid`, just a broader
-    /// pool. Proven by the picks spanning more than one part across seeds, which a single
-    /// mis-identified part could not produce.</summary>
-    [Fact]
-    public void A_recipe_whose_parts_do_not_account_for_every_slot_draws_from_the_whole_recipe()
+    /// cannot account for every slot: the reconstructed boundaries are not the ones the bundle was
+    /// filled with, whatever they say. Every slot is affected, INCLUDING the ones an early part
+    /// appears to cover.</summary>
+    private static ItemPools ShortRecipePools() => new()
     {
-        var pools = new ItemPools
-        {
-            Forage = new[] { Item("(O)forage1"), Item("(O)forage2"), Item("(O)forage3") },
-            Artifacts = new[] { Item("(O)artifact1"), Item("(O)artifact2") },
-            Fish = new[] { Item("(O)fish1"), Item("(O)fish2"), Item("(O)fish3") },
-            GeodeMinerals = new[] { Item("(O)mineral1"), Item("(O)mineral2") },
-        };
-        var spec = Spec("Field Research",
-            "(O)forage1", "(O)artifact1", "(O)fish1", "(O)mineral1", "(O)forage2", "(O)fish2");
-        var free = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "(O)forage3", "(O)artifact2", "(O)fish3", "(O)mineral2",
-        };
+        Forage = new[] { Item("(O)forage1"), Item("(O)forage2"), Item("(O)forage3") },
+        Artifacts = new[] { Item("(O)artifact1"), Item("(O)artifact2") },
+        Fish = new[] { Item("(O)fish1"), Item("(O)fish2"), Item("(O)fish3") },
+        GeodeMinerals = new[] { Item("(O)mineral1"), Item("(O)mineral2") },
+    };
+
+    private static BundleSpec ShortRecipeSpec() => Spec("Field Research",
+        "(O)forage1", "(O)artifact1", "(O)fish1", "(O)mineral1", "(O)forage2", "(O)fish2");
+
+    /// <summary>The candidates the fixture leaves free: one per part, so a draw confined to a
+    /// single part can only ever return one id, and a union draw returns several.</summary>
+    private static readonly IReadOnlySet<string> ShortRecipeFree = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)forage3", "(O)artifact2", "(O)fish3", "(O)mineral2",
+    };
+
+    private static void AssertUnionDraw(int slotIndex)
+    {
+        ItemPools pools = ShortRecipePools();
+        BundleSpec spec = ShortRecipeSpec();
         var notes = new List<string>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
         for (int seed = 0; seed < 40; seed++)
         {
             PoolItem? pick = BundleSlotFiller.ReplacementFor(
-                spec, 4, new DomainMatch(PoolDomain.Recipe, null), pools, Tuning, new Random(seed),
-                Nothing, availability: null, knownRecipe: null, log: notes.Add);
+                spec, slotIndex, new DomainMatch(PoolDomain.Recipe, null), pools, Tuning,
+                new Random(seed), Nothing, availability: null, knownRecipe: null, log: notes.Add);
 
             Assert.NotNull(pick);
-            Assert.Contains(pick!.ItemId, free);
+            Assert.Contains(pick!.ItemId, ShortRecipeFree);
             seen.Add(pick.ItemId);
         }
 
-        Assert.True(seen.Count > 1, $"expected the union, got only {string.Join(",", seen)}");
+        Assert.True(seen.Count > 1,
+            $"slot {slotIndex} drew from a single part ({string.Join(",", seen)}), not the union.");
         Assert.Contains(notes, n => n.Contains("could not identify which recipe part"));
     }
+
+    /// <summary>The regression this fix exists for. Slot 1 sits INSIDE what part 1 appears to
+    /// cover, so a walk that returns the moment `slotIndex &lt; filled` answers "part 1" and never
+    /// notices that the parts account for only four of the bundle's six slots. That answer is
+    /// wrong: the boundaries it came from are not the ones the bundle was filled with. The draw
+    /// must union instead.
+    ///
+    /// Deliberately NOT slot 4: that index falls past every part's covered range, so even the
+    /// early-returning walk fell through to -1 and unioned already. A test on slot 4 passes
+    /// against the unfixed code and protects nothing.</summary>
+    [Fact]
+    public void A_slot_inside_an_early_part_still_unions_when_the_parts_are_structurally_short()
+        => AssertUnionDraw(1);
+
+    /// <summary>The other half: a slot past every part's covered range. Already handled before the
+    /// coverage check existed, kept so the fall-through path stays covered too.</summary>
+    [Fact]
+    public void A_slot_past_every_part_unions_when_the_parts_are_structurally_short()
+        => AssertUnionDraw(4);
 
     [Fact]
     public void A_domain_of_none_is_never_repaired()
