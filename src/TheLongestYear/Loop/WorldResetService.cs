@@ -270,8 +270,19 @@ namespace TheLongestYear.Loop
             // save (all of day 28) was restored from a stale snapshot at step 13 (Nexus bug 1111046).
             _stashService?.BankToMeta();
 
+            // 0e. Capture the player's Zoom Level + UI Scale BEFORE loadForNewGame swaps in a
+            // fresh Options instance. Those two dials are the only ones vanilla's
+            // LoadDefaultOptions refuses to carry (they're marked [DontLoadDefaultSetting] as
+            // per-save settings), so they -- and only they -- snapped back to default on every
+            // loop (Nexus posts, RiseiJaku 2026-09-09). See DisplayOptionsCarryover.
+            DisplayOptionsCarryover.Snapshot displayOptions = DisplayOptionsCarryover.Capture();
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
+
+            // 1-display. Put the zoom + UI scale back on the new Options instance. Game1.Update
+            // notices the change on its next tick and calls refreshWindowSettings itself.
+            DisplayOptionsCarryover.Restore(displayOptions, _monitor);
 
             // 1-seeds. First-loop-only starting seeds: loadForNewGame rebuilds the FarmHouse, whose
             // constructor (AddStarterGiftBox) drops a starter gift box of 15 parsnip seeds. FarmerReset

@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.17.13 - 2026-09-10
+
+2004 tests.
+
+### Fixed
+
+- **Zoom Level and UI Scale survive the rewind.** Both dials snapped back to the game's
+  defaults every time the Junimos rewound the year, and there was no way to change what
+  those defaults were. The game treats zoom and UI scale as belonging to the save rather
+  than to the player, so the fresh year the rewind builds was starting them over while
+  every other setting came back on its own. The loop now carries both across the reset.
+  Reported by RiseiJaku.
+
 ## 0.17.12 - 2026-09-09
 
 2004 tests.
