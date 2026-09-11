@@ -6,6 +6,20 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### The shrine's foresight is seeded on the old run during a rewind
+Found 2026-09-11 while building the rewind cutscene. `UI/ShrinePreviewMenu.cs` reads
+`Game1.dayOfMonth` and `Game1.season` directly in its weather and cart foresight, rather than the
+`_run` state the rest of the class uses. The rewind now paints Spring 1 before the shrine opens, so
+the foresight is computed for the right date but still seeded on the pre-reset run.
+
+- This is not new and the paint made it better, not worse: before, the shrine previewed the stale
+  failed-season date, which was wrong outright.
+- The real question is whether the in-place reset re-seeds: a reset rotates the save folder to a new
+  `None_<id>`, so if the foresight is keyed on `uniqueIDForThisGame` it changes underneath.
+- Consequence if it does: a player spending Junimo Points at the rewind shrine is reading weather and
+  cart foresight for a run that is about to stop existing.
+
+
 ### IDEA (not designed): the rewind costs JP, and going broke ends the run
 Jeff, 2026-09-10, raised while speccing the rewind cutscene. Today a failed season gate always
 rewinds. Instead, charge Junimo Points for the rewind and end the run outright when the player
