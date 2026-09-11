@@ -6,6 +6,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### IDEA (not designed): the rewind costs JP, and going broke ends the run
+Jeff, 2026-09-10, raised while speccing the rewind cutscene. Today a failed season gate always
+rewinds. Instead, charge Junimo Points for the rewind and end the run outright when the player
+cannot pay: roguelike rather than roguelite, and only at the harder settings.
+
+- Opening straw man, explicitly un-costed: Extreme 500, Hard 250, Normal 100, Easy free.
+- **The numbers need a real pass before any of this is built.** JP income per loop is already
+  modelled (`tly_jpbudget`), so the question is answerable: what does a run actually bank by
+  Spring 28, by Fall 28, and does a 500 charge read as tension or as a dead run three seasons in?
+- Open questions: does the charge scale with how many rewinds you have already bought, does the
+  pity system interact with it, and what does "you lose" actually do to the save?
+- Ties into the rewind scene: if the Junimos are spending their power to rewind the year, the
+  scene already says out loud that the power is finite, so the cost has a story to stand on.
+
+
 ### Darkness pushback: Jeff's live test before it ships (story branch, 2026-09-10)
 
 Built and headless-tested 2026-09-09 (see STATUS.md and
