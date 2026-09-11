@@ -1,4 +1,4 @@
-{
+﻿{
     // ============================================================================
     // The Longest Year: English source of truth.
     // TRANSLATORS: copy this file to <locale>.json (e.g. zh.json), translate the
@@ -32,16 +32,16 @@
     "dialog.ending.keep-1": "You've done well so far, but the work isn't over. Prepare yourself for what's next.",
     "dialog.year2wall.prompt": "The loop is broken, but the Junimos are not ready for what comes next.\nYear 2 is coming in a future beta.\nFor now, the Junimos can begin another loop.",
     "dialog.year2wall.loop": "Loop again",
-    "dialog.hold.prompt": "Should we hold the town's wishes steady for your next spring?",
+    "dialog.hold.prompt": "We can use some of our power to hold the gifts of the year once more, or release them and let fate decide.",
     "dialog.pity.prompt-ease": "It looks like {{season}} has been giving you a hard time. Would you like us to use some of our power to make the town's requests easier to fulfil? We would ask a little less of {{season}} next time.",
     "dialog.pity.prompt-trim": "It looks like {{season}} has been giving you a hard time. Would you like us to use some of our power to make the town's requests easier to fulfil? We would leave out the hardest of {{season}}'s asks.",
     "dialog.pity.yes-free": "Yes please (free)",
     "dialog.pity.yes": "Yes please ({{cost}} JP)",
     "dialog.pity.no": "No thank you, I will manage",
     "dialog.pity.not-enough-jp": "The Junimos need {{cost}} JP to ease the town's requests. You have {{have}}.",
-    "dialog.hold.keep-free": "Keep these bundles (free)",
-    "dialog.hold.keep": "Keep these bundles ({{cost}} JP)",
-    "dialog.hold.reshuffle": "Let time reshuffle them",
+    "dialog.hold.keep-free": "Keep current bundles (free)",
+    "dialog.hold.keep": "Keep current bundles ({{cost}} JP)",
+    "dialog.hold.reshuffle": "Release them",
     "dialog.hold.not-enough-jp": "The Junimos need {{cost}} JP to hold the town's wishes. You have {{have}}.",
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
     "dialog.mines.uneasy-1": "The mines feel uneasy this week. The elevator and lower ladders will not respond.",
@@ -501,7 +501,7 @@
     // craftbook also displays (renaming later would break existing translation files).
     "menu.books.no-new": "No new recipes to add. Learn more recipes first.",
     "menu.books.choose": "Choose a recipe to bank:",
-    "menu.books.bank-before-reset": "The loop is about to reset. Bank the recipes you want to keep, then close the book.",
+    "menu.books.bank-before-reset": "Last chance to change saved recipes",
     "menu.cookbook.title": "Cookbook: {{used}} / {{total}} slots",
     "menu.craftbook.title": "Craftbook: {{used}} / {{total}} slots",
     "menu.books.empty-slot": "[empty, click to add]",
