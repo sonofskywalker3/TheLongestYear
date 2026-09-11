@@ -177,7 +177,35 @@ namespace TheLongestYear.Integration
             // the NEXT season (day 28 is a season's last day), while RunController.CurrentSeason
             // (Run.Season) still holds the failed season until the real reset lands, well after this
             // whole sequence finishes.
-            RewindPanScene.Start(rc.CurrentSeason, OnRewindPanComplete);
+            RewindPanScene.Start(rc.CurrentSeason, OnRewindPanComplete, OnRewindPanAborted);
+        }
+
+        /// <summary>RewindPanScene's abnormal end (an exception mid-tick, or a quit to the title).
+        /// The pan has already restored season, clock, weather, camera and the control flags to what
+        /// they were before it started, so the world is back on the failed season's night frame and
+        /// the sequence can simply be opened again from beat 1.
+        ///
+        /// This is the re-arm the pan phase otherwise has no way to get. <see cref="_openedMenu"/> is
+        /// deliberately null for the whole pan (see <see cref="OnRewindBedroomComplete"/>), which
+        /// switches the generic steal-detector at the top of <see cref="OnUpdateTicked"/> off, so
+        /// without this callback an aborted pan left <see cref="_opened"/> true with
+        /// <c>PendingCutscene</c> still Fail and nothing watching: no reset, no shrine, no Spring 1,
+        /// and the failed season rolling on as though the gate had passed. PendingCutscene is not
+        /// persisted either, so a reload would not have recovered it.
+        ///
+        /// Clearing the two fields is the whole re-arm: the next tick falls through to the normal
+        /// open path, which waits out any menu/event/fade of its own accord before reopening
+        /// <see cref="RewindBedroomScene"/>. If the abort was a quit to the title, that tick never
+        /// comes (the driver returns early on RunActivation), and clearing them is exactly the
+        /// per-save reset the next load wants anyway.</summary>
+        private void OnRewindPanAborted()
+        {
+            _monitor.Log(
+                "Day-28 rewind: the Town pan ended abnormally and restored the world; re-arming the " +
+                "sequence from the bedroom rather than stranding the Fail branch.",
+                LogLevel.Warn);
+            _opened = false;
+            _openedMenu = null;
         }
 
         /// <summary>RewindPanScene's completion (beat 10 done). Two handoffs land here:

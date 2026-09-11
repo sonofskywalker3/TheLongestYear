@@ -94,6 +94,7 @@ namespace TheLongestYear.Integration
 
         private static bool _active;
         private static Action _onComplete;
+        private static Action _onAbort;
         private static float _elapsed;
 
         private static IReadOnlyList<CoreSeason> _seasons;
@@ -129,8 +130,19 @@ namespace TheLongestYear.Integration
         /// <summary>Starts the pan for a run that failed in <paramref name="failed"/>. Calls
         /// <paramref name="onComplete"/> once the camera reaches PanEnd. If Town is not loaded (should
         /// never happen; it is one of the game's always-loaded outdoor locations) the callback still
-        /// fires immediately so the rest of the sequence is not stranded.</summary>
-        public static void Start(CoreSeason failed, Action onComplete)
+        /// fires immediately so the rest of the sequence is not stranded.
+        ///
+        /// <paramref name="onAbort"/> is the other half of that promise and the reason it is a second
+        /// callback rather than a flag on the first: for the whole pan there is no menu of ours for
+        /// the day-28 driver's steal watchdog to watch (the driver clears its _openedMenu at the
+        /// hand-off precisely so the watchdog does not misread the hand-off as a steal), so if the pan
+        /// ends abnormally -- an exception mid-Tick, or a quit to title -- nothing at all is watching
+        /// and the driver would sit on _opened forever with PendingCutscene still Fail: no reset, no
+        /// shrine, no Spring 1, the failed season rolling silently on. <see cref="ForceTeardown"/>
+        /// invokes this synchronously after it has restored the world, so the driver re-arms on a
+        /// world that is back where it started rather than mid-rewind. Exactly one of onComplete and
+        /// onAbort ever runs.</summary>
+        public static void Start(CoreSeason failed, Action onComplete, Action onAbort = null)
         {
             if (_active)
             {
@@ -152,6 +164,7 @@ namespace TheLongestYear.Integration
             _seasonIndex = 0;
             _elapsed = 0f;
             _onComplete = onComplete;
+            _onAbort = onAbort;
 
             _priorLocation = Game1.currentLocation;
             _priorFreezeControls = Game1.freezeControls;
@@ -348,6 +361,7 @@ namespace TheLongestYear.Integration
             TeardownVillager();
             Action onComplete = _onComplete;
             _onComplete = null;
+            _onAbort = null;   // exactly one of the two ever runs
             onComplete?.Invoke();
         }
 
@@ -355,7 +369,9 @@ namespace TheLongestYear.Integration
         /// Nothing else is watching this scene, so unlike <see cref="Finish"/> this restores season,
         /// clock, weather, camera and the control-freeze flags to what they were before <see cref="Start"/>
         /// rather than leave the save windy, dark and frozen, and does not invoke the completion
-        /// callback (the sequence it would continue into assumes the pan actually finished).</summary>
+        /// callback (the sequence it would continue into assumes the pan actually finished). It DOES
+        /// invoke the abort callback, last, once the world is restored: see <see cref="Start"/> for
+        /// why leaving that unsaid strands the whole day-28 loop.</summary>
         private static void ForceTeardown(string reason)
         {
             if (!_active) return;
@@ -380,6 +396,18 @@ namespace TheLongestYear.Integration
                 _monitor?.Log($"RewindPanScene: {ex.GetType().Name} restoring state: {ex.Message}", LogLevel.Error);
             }
             _onComplete = null;
+            Action onAbort = _onAbort;
+            _onAbort = null;
+            // Last, and outside the restore try: the driver re-arms onto a world that is already back
+            // where Start found it. Its own failure must not be able to skip the restore above.
+            try
+            {
+                onAbort?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"RewindPanScene: {ex.GetType().Name} in the abort callback: {ex.Message}", LogLevel.Error);
+            }
         }
 
         private static Vector2 ClampedCentre(int x, int y)
