@@ -16,13 +16,17 @@ namespace TheLongestYear.Integration
     /// failed load is retried forever. Supplying the asset ends the retry loop.
     ///
     /// The portrait is generated from the game's own Characters/Junimo sheet, so no art ships in the
-    /// mod: frame 0 scaled 4x into the first 64x64 cell of a 128x128 portrait sheet, tinted the
+    /// mod: frame 0 scaled 3x and centred in the first 64x64 cell of a 128x128 portrait sheet, tinted the
     /// classic Junimo green (the vanilla sheet is a white silhouette that takes a tint).</summary>
     internal sealed class JunimoPortrait
     {
         private const string Prefix = "Portraits/Junimo";
         private const string SourceAsset = "Characters/Junimo";
-        private const int PortraitSheet = 128, Cell = 64, Frame = 16, Scale = 4;
+        private const int PortraitSheet = 128, Cell = 64, Frame = 16, Scale = 3;
+        // The Junimo is 16 px of real art, so filling the whole 64 px cell the way a hand-drawn
+        // villager portrait does made it read as a wall of giant pixels in the speech box (Jeff,
+        // 2026-09-10). It is drawn at 3x and centred in the cell instead, leaving a margin.
+        private const int Drawn = Frame * Scale, Inset = (Cell - Drawn) / 2;
         // "Portraits/Junimo" (the intro's single Junimo) keeps the classic green; "Portraits/Junimo<i>"
         // takes the ending's palette entry i, the same colour tlyJunimo paints that actor's sprite.
         private static readonly Color JunimoGreen = new Color(110, 200, 74);
@@ -67,15 +71,15 @@ namespace TheLongestYear.Integration
                 Texture2D source = Game1.content.Load<Texture2D>(SourceAsset);
                 var src = new Color[source.Width * source.Height];
                 source.GetData(src);
-                for (int y = 0; y < Cell; y++)
+                for (int y = 0; y < Drawn; y++)
                 {
-                    for (int x = 0; x < Cell; x++)
+                    for (int x = 0; x < Drawn; x++)
                     {
                         int sx = x / Scale, sy = y / Scale;
                         if (sx >= source.Width || sy >= source.Height || sx >= Frame || sy >= Frame) continue;
                         Color c = src[sy * source.Width + sx];
                         if (c.A == 0) continue;
-                        pixels[y * PortraitSheet + x] = new Color(
+                        pixels[(y + Inset) * PortraitSheet + (x + Inset)] = new Color(
                             (byte)(c.R * tint.R / 255),
                             (byte)(c.G * tint.G / 255),
                             (byte)(c.B * tint.B / 255),
