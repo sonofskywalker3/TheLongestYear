@@ -393,11 +393,9 @@ namespace TheLongestYear.Loop
             if (!Game1.player.eventsSeen.Contains(PostCompletionEvents.CeremonyEventId))
                 Game1.player.eventsSeen.Add(PostCompletionEvents.CeremonyEventId);
             _store.Save();   // persist immediately, no save-scum revert
-            var lines = new List<string>
-            {
-                Strings.Get("dialog.ending.keep-1"),
-                Strings.Get("dialog.ending.keep-2"),
-            };
+            // One box only: the second line (the Spring 1 promise) was cut, the Junimos now
+            // close the hall scene with it (Jeff, 2026-09-10).
+            var lines = new List<string> { Strings.Get("dialog.ending.keep-1") };
             Game1.afterDialogues = () => { Game1.afterDialogues = null; DoDayStartSeasonAndHub(); };
             // drawObjectDialogue, not a raw DialogueBox assignment: vanilla sets dialogueUp, blocks
             // movement, and emergency-shuts-down whatever menu was up before the box opens.

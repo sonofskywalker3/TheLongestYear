@@ -190,12 +190,15 @@ namespace TheLongestYear.Integration
                 $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-2")}\"",
                 "pause 200",
                 $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-3")}\"",
+                "pause 200",
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-4")}\"",
                 "pause 300",
                 "changeSprite Morris Dark",
                 "glow 90 0 0 true",
                 "playSound shadowDie",
                 "pause 400",
-                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-4")}\"",
+                // The darkened face, not Morris's own: the shadow is on him for this line only.
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-5")}\" {MorrisDarkPortrait.AssetName}",
                 "pause 700",
                 "stopGlowing",
                 "pause 300",
@@ -217,7 +220,9 @@ namespace TheLongestYear.Integration
             s.Add($"{EndingEventCommands.FadeInName} {FadeInMs}");
             // The lines pass between the Junimos: 0 opens, 1 and 2 carry the middle, 3 the warning,
             // 0 closes. Each speaker hops before its line so the eye finds it.
-            string junimo4 = crack ? EventText("event.ending.junimo-4") : EventText("event.ending.junimo-4-nocrack");
+            // One line either way: the rewrite stopped referring to the crack, so a no-crack
+            // variant had nothing left to say (Jeff, 2026-09-10).
+            string junimo4 = EventText("event.ending.junimo-4");
             s.AddRange(new[]
             {
                 "playSound junimoMeep1",

@@ -70,6 +70,7 @@ namespace TheLongestYear
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
         private Integration.MorrisDarkSprite _morrisDark;
+        private Integration.MorrisDarkPortrait _morrisDarkPortrait;
         private Integration.JunimoPortrait _junimoPortrait;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
@@ -188,6 +189,8 @@ namespace TheLongestYear
             // here at load time with the irises recoloured red (spec 2026-09-06 §4).
             _morrisDark = new Integration.MorrisDarkSprite(this.Monitor);
             helper.Events.Content.AssetRequested += _morrisDark.OnAssetRequested;
+            _morrisDarkPortrait = new Integration.MorrisDarkPortrait(this.Monitor);
+            helper.Events.Content.AssetRequested += _morrisDarkPortrait.OnAssetRequested;
             // Junimo temporary actors speak in the ending and intro; with no Portraits/Junimo* asset the
             // dialogue box retried the failed portrait load every frame (live run 2026-09-06).
             _junimoPortrait = new Integration.JunimoPortrait(this.Monitor);
