@@ -61,6 +61,8 @@ namespace TheLongestYear.Integration
         private static bool _holding;
         private static Color _ambient = NightAmbient;
         private static ICollection<string> _ownedLightIds;
+        private static GameLocation _nightTiles;
+        private static double _heartbeatMs;
 
         /// <summary>Wires the per-tick write and the return-to-title safety net. Safe to call more
         /// than once; the subscriptions only happen on the first call. Called once from
@@ -71,6 +73,7 @@ namespace TheLongestYear.Integration
             if (_registered) return;
             _registered = true;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+            helper.Events.Display.Rendered += OnRendered;
             helper.Events.GameLoop.ReturnedToTitle += (_, _) => Release();
         }
 
@@ -82,6 +85,9 @@ namespace TheLongestYear.Integration
             _ownedLightIds = ownedLightIds;
             _ambient = NightAmbient;
             _holding = true;
+            _heartbeatMs = 0.0;
+            _nightTiles = Game1.currentLocation;
+            SwitchTiles(_nightTiles, night: true);
             Paint();
         }
 
@@ -102,6 +108,8 @@ namespace TheLongestYear.Integration
             if (!_holding) return;
             _holding = false;
             _ownedLightIds = null;
+            SwitchTiles(_nightTiles, night: false);
+            _nightTiles = null;
             _monitor?.Log("RewindNightLight: released the room's lighting back to the engine.", LogLevel.Info);
         }
 
@@ -115,6 +123,85 @@ namespace TheLongestYear.Integration
         {
             var complement = new Color(255 - palette.R, 255 - palette.G, 255 - palette.B);
             return Color.Lerp(Color.Black, complement, MathHelper.Clamp(strength, 0f, 1f));
+        }
+
+        /// <summary>A pool's finished light colour: its tint, held back from full brightness.
+        ///
+        /// <paramref name="brightness"/> is the piece the first version was missing. A light source
+        /// that subtracts nothing does not make its pool bright, it makes the pool the brightness
+        /// the world was ALREADY drawn at, which is full daylight; that is why six of them turned a
+        /// cave-dark room into an ordinary afternoon. Interpolating from the ambient instead means a
+        /// pool takes back only part of what the darkness removed: lit, and still night.</summary>
+        public static Color PoolColour(Color palette, float tintStrength, float brightness)
+            => Color.Lerp(
+                NightAmbient,
+                PoolTint(palette, tintStrength),
+                MathHelper.Clamp(brightness, 0f, 1f));
+
+
+        /// <summary>Swaps the room's windows between their day and night art.
+        ///
+        /// The ambient can take the room down to a cave and the windows will still be painted with
+        /// daylight coming through them, because the window tiles are MAP DATA, not lighting: the
+        /// game swaps them from the <c>NightTiles</c> and <c>DayTiles</c> map properties, and only
+        /// ever at a location entry or on the ten-minute clock tick that crosses dusk. This scene
+        /// arrives on a 6am wake frame and paints two in the morning over it, so neither of those
+        /// ever ran and the sun stayed in the window (playtest 2026-09-11: "the sun is shining in
+        /// the window, what's going on?").
+        ///
+        /// Night is vanilla's own <c>switchOutNightTiles</c>. Day has no public counterpart -- it is
+        /// inline in <c>GameLocation.resetLocalState</c> -- so the same <c>DayTiles</c> property is
+        /// read back here. Both are wrapped: a map without either property, or with a malformed
+        /// entry, must not take the cutscene down with it.</summary>
+        private static void SwitchTiles(GameLocation loc, bool night)
+        {
+            if (loc?.map == null) return;
+            try
+            {
+                if (night)
+                {
+                    int entries = loc.GetMapPropertySplitBySpaces("NightTiles").Length / 4;
+                    _monitor?.Log(
+                        $"RewindNightLight: swapping in {entries} night tile(s) for '{loc.Name}'.",
+                        LogLevel.Info);
+                    loc.switchOutNightTiles();
+                    return;
+                }
+
+                string[] dayTiles = loc.GetMapPropertySplitBySpaces("DayTiles");
+                for (int i = 0; i + 3 < dayTiles.Length; i += 4)
+                {
+                    if (!ArgUtility.TryGet(dayTiles, i, out string layerId, out string _)
+                        || !ArgUtility.TryGetPoint(dayTiles, i + 1, out Point position, out string _)
+                        || !ArgUtility.TryGetInt(dayTiles, i + 3, out int tileIndex, out string _))
+                        continue;
+                    xTile.Layers.Layer layer = loc.map.GetLayer(layerId);
+                    xTile.Tiles.Tile tile = layer?.Tiles[position.X, position.Y];
+                    if (tile != null) tile.TileIndex = tileIndex;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _monitor?.Log($"RewindNightLight: could not swap the {(night ? "night" : "day")} tiles: {ex.Message}", LogLevel.Warn);
+            }
+        }
+
+        /// <summary>What the finished frame ACTUALLY had, once a second, after everything that
+        /// could have overwritten it has run. This scene cannot be read off a screenshot from here
+        /// and its whole job is three globals, so it says out loud what they were at draw time: the
+        /// difference between "the room is not dark" meaning the ambient never landed and it meaning
+        /// the Junimo pools are washing it out is one line of log rather than another playtest.</summary>
+        private static void OnRendered(object sender, RenderedEventArgs e)
+        {
+            if (!_holding) return;
+            _heartbeatMs += Game1.currentGameTime?.ElapsedGameTime.TotalMilliseconds ?? 0.0;
+            if (_heartbeatMs < 1000.0) return;
+            _heartbeatMs = 0.0;
+            _monitor?.Log(
+                $"RewindNightLight: drawLighting={Game1.drawLighting}, ambient={Game1.ambientLight}, " +
+                $"lights={Game1.currentLightSources.Count}, fadeToBlack={Game1.fadeToBlackAlpha:0.00}, " +
+                $"timeOfDay={Game1.timeOfDay}.",
+                LogLevel.Trace);
         }
 
         private static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
