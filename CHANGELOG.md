@@ -3,6 +3,28 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.1 - 2026-09-10
+
+2063 tests.
+
+### Changed
+
+- **Garlic can be cultivated too, and both Cultivation upgrades now cost less.** The shrine sold
+  Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage is guaranteed
+  from the Traveling Cart once in year 1, while Garlic has no year-1 source at all. Cultivation:
+  Garlic joins it, giving Spring Mixed Seeds a 10% chance of Garlic, and both now cost 3,000
+  Junimo Points instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's
+  Special Order, which stays the guaranteed route. Raised by Tottelotta123, who asked why Garlic
+  was on a Spring board when the cart was the only way to get it.
+
+### Fixed
+
+- **Artichoke is no longer held off an Easy board.** On the Easy item-rarity setting the mod kept
+  all three of Pierre's year-two crops off the board until you bought an upgrade, but Artichoke
+  never needed one: planting Mixed Seeds in Fall gives Artichoke Seeds about a quarter of the
+  time, in any year, for free. It is now treated as the ordinary Fall crop it is, and its pacing
+  week moves from 11 to 10 to match when you can actually harvest one.
+
 ## 0.18.0 - 2026-09-10 - The Mod Compatibility Update
 
 2059 tests.

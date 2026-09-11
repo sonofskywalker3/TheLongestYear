@@ -120,13 +120,23 @@ public static class UpgradeCatalog
         new UpgradeDefinition("jp_boost_4", UpgradeCategory.Efficiency, 850, "jp_boost_3"),
         new UpgradeDefinition("jp_boost_5", UpgradeCategory.Efficiency, 1300, "jp_boost_4"),
 
-        // Obtainability — user ruling 2026-08-21 (JP budget: a strong loop banks ~8–9.5k):
-        //   cult_red_cabbage 750 → 5,000 (RNG route, "hefty but not impossible"; red cabbage
-        //   may not even be asked on a remix/engine board);
+        // Obtainability — year-2 crops. Re-costed 2026-09-10 (Jeff) after checking the game data:
+        // only the SHOP listing is year-gated, and the three crops do not share a year-1 route
+        // (the reasoning lives in YearTwoCrops, which is the authority).
+        //   cult_garlic 3,000 and cult_red_cabbage 3,000 — the random route. One price for both,
+        //   because both buy the same thing: a 10% Mixed Seeds substitution for a crop with no
+        //   free random route of its own. Buying both costs 6,000, deliberately under Pierre, so
+        //   luck stays the cheap option even for a player who wants every crop.
+        //   cult_red_cabbage was 5,000; the 2026-08-21 ruling priced it as the only RNG route
+        //   worth selling, before the Traveling Cart's guaranteed year-1 Red Cabbage (which this
+        //   mod's own cart cap throttles) and Garlic's total absence of one were spotted.
         //   pierre_year2_seeds 10,000 — the sure thing: Pierre sells his year-2 seeds
-        //   (Garlic / Red Cabbage / Artichoke) in year 1 (PierreYear2SeedsService);
-        //   cult_starfruit REMOVED — anyone can reach the desert, there's no RNG to buy off.
-        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 5000),
+        //   (Garlic / Red Cabbage / Artichoke) in year 1 (PierreYear2SeedsService).
+        //   NO cult_artichoke — vanilla's Fall Mixed Seeds roll already yields Artichoke Seeds at
+        //   25% in any year, so there is no RNG to buy off, the same reason cult_starfruit was
+        //   REMOVED (anyone can reach the desert).
+        new UpgradeDefinition("cult_garlic", UpgradeCategory.Obtainability, 3000),
+        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 3000),
         new UpgradeDefinition("pierre_year2_seeds", UpgradeCategory.Obtainability, 10000),
         new UpgradeDefinition("keep_garden_pot", UpgradeCategory.Obtainability, 750),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, 525),

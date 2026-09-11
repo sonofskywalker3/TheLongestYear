@@ -79,7 +79,7 @@ public class AvailabilityWeeksTests
     [InlineData("(O)268", 11, 11)]  // Starfruit
     [InlineData("(O)248", 4, 2)]    // Garlic, year-two crop: buy at 4, Boost route at 2
     [InlineData("(O)266", 7, 6)]    // Red Cabbage, year-two crop
-    [InlineData("(O)274", 11, 10)]  // Artichoke, year-two crop
+    [InlineData("(O)274", 10, 10)]  // Artichoke: free from vanilla Fall Mixed Seeds, no buy needed
     public void Seed_source_weeks(string id, int week, int hard)
     {
         Assert.Equal(week, AvailabilityWeeks.SeedSourceWeeks[id].Week);
