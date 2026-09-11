@@ -200,6 +200,40 @@ namespace TheLongestYear.Integration
             _active = true;
         }
 
+        /// <summary>True while the pan is running. The pan owns no menu, so this is the only way
+        /// anything outside can tell it is on screen.</summary>
+        public static bool IsActive => _active;
+
+        /// <summary>Fast-forwards the pan to its last frame and finishes it, as if eleven seconds had
+        /// passed in one tick. The pan's own <see cref="Tick"/> does the work, so every remaining
+        /// season swap still lands (<see cref="TickSeasons"/> advances with a while loop precisely so
+        /// a large jump in progress does not skip any) and the clock, camera and villager all end
+        /// where a watched run would leave them, which is what the next beats assume.
+        ///
+        /// This is the pan's half of the three per-scene skip entry points behind
+        /// <c>tly_skipscene</c>; the two Junimo beats have their own
+        /// <see cref="TheLongestYear.UI.RewindJunimoScene.SkipToEnd"/>. Returns false when the pan is
+        /// not running, so the caller can try the next scene instead of reporting a skip that did not
+        /// happen.</summary>
+        public static bool SkipToEnd()
+        {
+            if (!_active) return false;
+            _monitor?.Log("RewindPanScene: fast-forwarding the pan to its last frame.", LogLevel.Info);
+            _elapsed = PanDurationMs;
+            try
+            {
+                // A zero-length GameTime: Tick adds ElapsedGameTime to _elapsed before using it, and
+                // the jump has already been made above.
+                Tick(new GameTime());
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"RewindPanScene: {ex.GetType().Name}: {ex.Message}; ending the pan early.", LogLevel.Error);
+                ForceTeardown("exception while skipping");
+            }
+            return true;
+        }
+
         private static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             if (!_active) return;

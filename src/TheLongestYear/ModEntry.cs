@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -313,7 +313,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
-            helper.ConsoleCommands.Add("tly_skipscene", "Finish the open day-28 Junimo scene as if clicked through (debug/automation).", this.CmdSkipScene);
+            helper.ConsoleCommands.Add("tly_skipscene", "Finish whichever day-28 scene is on screen as if clicked through: the CONTINUE card, either rewind Junimo beat, or the rewind Town pan. One beat per call (debug/automation).", this.CmdSkipScene);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
@@ -2536,16 +2536,36 @@ namespace TheLongestYear
         private void CmdSkipScene(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            // The CONTINUE branch's card.
             if (Game1.activeClickableMenu is TheLongestYear.UI.Day28CutsceneMenu scene)
             {
                 scene.SkipToEnd();
                 this.Monitor.Log("tly_skipscene: finished the day-28 scene.", LogLevel.Info);
                 return;
             }
+            // The FAIL branch's rewind sequence, which the card no longer covers. Three separate
+            // per-scene entry points rather than one sequence-wide skip, so each beat can be skipped
+            // on its own: the two Junimo beats (RewindBedroomScene beats 1-9 and RewindMorningScene
+            // beats 11-12) share RewindJunimoScene.SkipToEnd, and the Town pan (beat 10) owns no menu
+            // at all, so it is asked separately. Run the command once per beat to step through the
+            // whole sequence, since finishing one beat is what starts the next.
+            if (Game1.activeClickableMenu is TheLongestYear.UI.RewindJunimoScene rewindScene)
+            {
+                rewindScene.SkipToEnd();
+                this.Monitor.Log(
+                    $"tly_skipscene: finished the {rewindScene.GetType().Name} beat of the rewind sequence.",
+                    LogLevel.Info);
+                return;
+            }
+            if (TheLongestYear.Integration.RewindPanScene.SkipToEnd())
+            {
+                this.Monitor.Log("tly_skipscene: fast-forwarded the rewind Town pan to its end.", LogLevel.Info);
+                return;
+            }
             string blocking = Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box
                 ? $" text=\"{box.getCurrentString()}\""
                 : "";
-            this.Monitor.Log($"tly_skipscene: no day-28 scene is open (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}{blocking}).", LogLevel.Info);
+            this.Monitor.Log($"tly_skipscene: no day-28 scene or rewind beat is running (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}{blocking}).", LogLevel.Info);
         }
 
         private void CmdOffer(string command, string[] args)
