@@ -54,7 +54,7 @@ Fourteen beats, in order. Beats 1 to 9 are the bedroom, 10 is the pan, 11 onward
     no light aura now.
 12. "We have bought you more time. Use it and what remains of our power wisely, and remember that
     every step you take is a small victory."
-13. The pity dialogs.
+13. ~~The pity dialogs.~~ Season pity was retired 2026-09-11 (round 2); this beat is gone.
 14. The shrine.
 
 Lines 4, 5, 7, 8 and 12 are Jeff's, to be used verbatim and moved into `i18n/default.json` under
@@ -102,7 +102,8 @@ that reads season during it must be checked. Call this out in the plan.
 
 The prompt asking whether to hold the town's wishes steady or let time reshuffle them decides how the
 new board is built. It cannot be asked after the reset, because by then the board exists. Jeff's beat
-order put the keep and pity dialogs at 13; the pity half can live there, the hold half cannot.
+order put the keep and pity dialogs at 13; the pity half could live there, the hold half cannot.
+(Season pity was retired in round 2, 2026-09-11, so only the hold question remains.)
 
 It moves to beat 8, which is where the existing written line already puts it: the Junimos say they
 will spend their power to give you another chance, and ask the question before they spend it.
@@ -185,9 +186,9 @@ indicator.
 ## Section 3: the return, beats 11 to 14
 
 The pan ends, Spring 1 is painted per Paint versus state, and we are back in the farmhouse with the
-farmer asleep and the Junimos still circling without their auras. Line 12 plays, then the pity
-dialogs, then the shrine, all under the Spring 1 paint. The existing reset runs underneath and the
-player takes control on a real Spring 1.
+farmer asleep and the Junimos still circling without their auras. Line 12 plays, then the shrine,
+all under the Spring 1 paint. (The pity dialogs used to sit between them; season pity was retired
+2026-09-11.) The existing reset runs underneath and the player takes control on a real Spring 1.
 
 ## Components
 
