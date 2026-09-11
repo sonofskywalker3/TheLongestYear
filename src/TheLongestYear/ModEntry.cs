@@ -10,6 +10,7 @@ using StardewValley.Menus;
 using StardewValley.Network;
 using StardewValley.Quests;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Availability;
 using TheLongestYear.Donations;
 using TheLongestYear.Integration;
 using TheLongestYear.Loop;
@@ -313,6 +314,10 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
+            helper.ConsoleCommands.Add(
+                "tly_warpgraph",
+                "Print every loaded location and its warp targets, for verifying reachability derivation. Usage: tly_warpgraph [filter]",
+                this.CmdWarpGraph);
             helper.ConsoleCommands.Add("tly_dumpavailability", "Write a Markdown listing of every item in every bundle on the LIVE board with the earliest season the engine says it can exist, why, and the season its gate demands it. Usage: tly_dumpavailability [fileName]", this.CmdDumpAvailability);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
@@ -553,8 +558,12 @@ namespace TheLongestYear
             // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed
             // the SeasonResolver (so weekly themes can't ask for out-of-season fish, Nexus
             // 1122423) and DerivedSeasonPins feed the obtainability clamp below.
+            // Held in a local (rather than the old new-and-Build one-liner) so its
+            // LastReachability survives the call: the board repair below re-checks the LIVE board
+            // against exactly the verdicts these pools were built from.
+            var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             TheLongestYear.Core.ItemPools enginePools =
-                new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
+                enginePoolReader.Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity));
             _seasonResolver = new SeasonResolver(
@@ -587,6 +596,19 @@ namespace TheLongestYear
                     "Rejected season pins (derived floor kept instead): "
                     + string.Join(", ", _availability.RejectedSeasonOverrides),
                     LogLevel.Warn);
+            // Repair a board built before the reachability rule existed (spec
+            // 2026-09-10-source-reachability, task 9). Runs HERE, above the catalog and the
+            // fingerprint, so everything downstream reads the repaired board rather than the one
+            // with the impossible ask still in it. Host only, donated slots untouched, and a
+            // no-op on a clean board.
+            int repaired = new TheLongestYear.Loop.BoardRepairService(
+                this.Monitor, enginePoolReader.LastReachability, enginePools,
+                _config.PoolTuning, _availability, _meta.Run.Seed).RepairIfNeeded();
+            if (repaired > 0)
+                this.Monitor.Log(
+                    $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",
+                    LogLevel.Info);
+
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
                 themeOverrides, itemSeasonPins, bundleQuotas, _availability);
@@ -2447,6 +2469,7 @@ namespace TheLongestYear
                 case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;
                 case "tly_dumpbundles": this.CmdDumpBundles(command, args); break;
+                case "tly_warpgraph": this.CmdWarpGraph(command, args); break;
                 case "tly_gatecheck": this.CmdGateCheck(command, args); break;
                 case "tly_gateneeds": this.CmdGateNeeds(command, args); break;
                 case "tly_forageyield": this.CmdForageYield(command, args); break;
@@ -3687,6 +3710,36 @@ namespace TheLongestYear
         private static IEnumerable<string> VaultLadder()
             => VaultRules.VaultIndices.Select(i => $"{VaultRules.GoldForIndex(i):N0}g");
 
+        /// <summary><c>tly_warpgraph [filter]</c>: print every loaded location and its warp targets,
+        /// for verifying reachability derivation. Kept permanently as a diagnostic.</summary>
+        private void CmdWarpGraph(string command, string[] args)
+        {
+            string filter = args.Length > 0 ? args[0] : null;
+            int locations = 0, edges = 0;
+            var lines = new List<string>();
+            foreach (GameLocation location in Game1.locations)
+            {
+                if (location?.Name == null)
+                    continue;
+                locations++;
+                var targets = new List<string>();
+                foreach (Warp warp in location.warps)
+                {
+                    if (string.IsNullOrEmpty(warp?.TargetName))
+                        continue;
+                    edges++;
+                    if (!targets.Contains(warp.TargetName))
+                        targets.Add(warp.TargetName);
+                }
+                if (filter != null && location.Name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                lines.Add($"  {location.Name} -> {(targets.Count == 0 ? "(none)" : string.Join(", ", targets))}");
+            }
+            this.Monitor.Log($"Warp graph: {locations} locations, {edges} warp edges.", LogLevel.Info);
+            foreach (string line in lines)
+                this.Monitor.Log(line, LogLevel.Info);
+        }
+
         private void CmdDumpBundles(string command, string[] args)
         {
             if (!Context.IsWorldReady)
@@ -3698,7 +3751,8 @@ namespace TheLongestYear
             MetaState state = _meta.State;
             TheLongestYear.Core.DifficultyProfile difficulty = state.BoardDifficulty(_config);
             BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
-            ItemPools pools = new TheLongestYear.Loop.GameDataPools(this.Monitor)
+            var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
+            ItemPools pools = enginePoolReader
                 .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity));
             pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
 
@@ -3711,6 +3765,7 @@ namespace TheLongestYear
             sb.AppendLine();
 
             AppendQuantityRules(sb, tuning, difficulty);
+            AppendReachability(sb, enginePoolReader.LastReachability);
             AppendCandidates(sb, pools);
             AppendAuthored(sb);
             AppendPools(sb, pools);
@@ -3737,6 +3792,29 @@ namespace TheLongestYear
             sb.AppendLine($"Every quantity above except the banded fish and forage, and every quantity kept from vanilla, is then multiplied by the stack-size difficulty dial (currently **x{d.StackFactor}**, step {d.Steps.StackSize}), rounded away from zero, floored at 1 and **capped at 99**. Money bundles are never scaled.");
             sb.AppendLine();
             sb.AppendLine($"Quality: a re-rolled crop, forage or fish slot rolls {t.GoldQualityChance:P1} for gold then {t.SilverQualityChance:P1} for silver, and only ever on an item the game itself can star.");
+            sb.AppendLine();
+        }
+
+        private void AppendReachability(System.Text.StringBuilder sb, SourceReachability reachability)
+        {
+            sb.AppendLine("## Items kept off the board");
+            sb.AppendLine();
+            if (reachability == null)
+            {
+                sb.AppendLine("Reachability was not available for this dump (the reads failed and the rule fails open, or it has not run on this reader). Nothing can be concluded about what is reachable this run; this is NOT the same as \"nothing was condemned\".");
+                sb.AppendLine();
+                return;
+            }
+            if (reachability.Reasons.Count == 0)
+            {
+                sb.AppendLine("Nothing. Every item in every pool has a route this run can reach.");
+                sb.AppendLine();
+                return;
+            }
+            sb.AppendLine($"{reachability.Reasons.Count} item(s) cannot be reached in a single loop:");
+            sb.AppendLine();
+            foreach (var reason in reachability.Reasons.OrderBy(r => r.Key, System.StringComparer.Ordinal))
+                sb.AppendLine($"- **{reason.Key}**: {reason.Value}");
             sb.AppendLine();
         }
 
@@ -3770,12 +3848,19 @@ namespace TheLongestYear
                     // description. Collapse those: the reader wants the distinct possibilities.
                     var seen = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
                     var described = new System.Collections.Generic.List<string>();
+                    bool passThrough = TheLongestYear.Loop.BundleEngine.IsPassThroughRoom(room.Key);
                     foreach (BundleSpec c in candidates)
                     {
                         DomainMatch match = PoolDomainClassifier.Classify(c, pools);
                         int shown = c.PickCount > 0 ? System.Math.Min(c.PickCount, c.Slots.Count) : c.Slots.Count;
                         string body;
-                        if (match.Domain == PoolDomain.Recipe)
+                        if (passThrough)
+                        {
+                            // The Vault and the Abandoned Joja Mart never re-roll, whatever the
+                            // classifier would say about their items in isolation.
+                            body = $"  - Keeps vanilla's items: {DescribeSlots(c)}";
+                        }
+                        else if (match.Domain == PoolDomain.Recipe)
                         {
                             // "the Recipe pool" is not a pool anyone can look up: name the parts
                             // the bundle actually draws from (Jeff, 2026-08-29).

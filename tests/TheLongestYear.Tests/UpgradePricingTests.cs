@@ -8,12 +8,17 @@ namespace TheLongestYear.Tests;
 /// a strong loop banks ~8–9.5k JP).</summary>
 public class UpgradePricingTests
 {
-    [Fact]
-    public void Red_cabbage_roll_costs_5000()
+    /// <summary>Re-costed 5,000 -> 3,000 on 2026-09-10 when Garlic got a Cultivation upgrade of
+    /// its own: the two random routes buy the same thing, so they carry the same price, and both
+    /// together stay under Pierre's 10,000 sure thing.</summary>
+    [Theory]
+    [InlineData("cult_garlic")]
+    [InlineData("cult_red_cabbage")]
+    public void A_cultivation_roll_costs_3000(string id)
     {
-        var def = UpgradeCatalog.TryGet("cult_red_cabbage");
+        var def = UpgradeCatalog.TryGet(id);
         Assert.NotNull(def);
-        Assert.Equal(5000, def!.Cost);
+        Assert.Equal(3000, def!.Cost);
         Assert.Equal(UpgradeCategory.Obtainability, def.Category);
     }
 

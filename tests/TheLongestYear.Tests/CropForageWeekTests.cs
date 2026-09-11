@@ -103,8 +103,10 @@ public class CropForageWeekTests
         Assert.Equal(7, redCabbage.EarliestWeek);
         Assert.Equal(6, redCabbage.HardWeek);
 
+        // Artichoke is the exception: vanilla's Fall Mixed Seeds roll already yields its seed at
+        // 25% in any year, so there is no permanent buy to wait for and both weeks are the same.
         ItemEffort artichoke = CropForageAvailability.DeriveCrop(YearTwoCrops.Artichoke, crops)!;
-        Assert.Equal(11, artichoke.EarliestWeek);
+        Assert.Equal(10, artichoke.EarliestWeek);
         Assert.Equal(10, artichoke.HardWeek);
     }
 

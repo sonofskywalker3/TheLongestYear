@@ -1,0 +1,18 @@
+0.18.1 - Garlic can be cultivated too, and both Cultivation upgrades are cheaper
+
+Changed
+- Cultivation: Garlic joins the shrine, and both Cultivation upgrades drop to 3,000 Junimo
+  Points. The shrine sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards:
+  Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at
+  all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000
+  instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order,
+  which stays the guaranteed route. Raised by Tottelotta123.
+
+Fixed
+- Artichoke is no longer held off an Easy board. On the Easy item-rarity setting all three of
+  Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke
+  never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the
+  time, in any year, for free. Its pacing week moves from 11 to 10 to match when you can
+  actually harvest one.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

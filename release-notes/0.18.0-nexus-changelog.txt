@@ -1,0 +1,33 @@
+0.18.0 - The Mod Compatibility Update: no bundle asks for something this run cannot reach
+
+Fixed
+- Bundles no longer ask for things this run cannot reach. With The Fishmonger installed, a
+  Community Center bundle asked for a dish only Constance sells, from a shop on Ginger Island,
+  which this mod's time loop never reaches, so the bundle could not be finished. Every item is
+  now traced back to where it actually comes from, a shop, a crop's seed or a cooking recipe,
+  and it stays off the board unless at least one of those routes is somewhere this run can
+  reach. An item whose source the mod cannot identify is left alone, so this only ever removes
+  what is proven unreachable and never guesses. Reported by pitytheviolins.
+- A board you already have gets repaired, not just new ones. If a bundle on your current board
+  is asking for something this run can never reach, it is swapped for something you can
+  actually get the next time you load that save. Anything you already donated stays donated,
+  and a board with nothing wrong with it is not touched at all.
+
+- The Abandoned Joja Mart's bundle is vanilla again. The Missing Bundle was being re-rolled by
+  the mod's own board generator, which is how it came to ask for a legendary fish. That room
+  sits outside the loop entirely, so it is now passed through untouched exactly as the Vault
+  always has been, and a save that already picked up a re-rolled version gets the real one back
+  on its next rewind. Reported by ChaoticMindset.
+- Zoom Level and UI Scale survive the rewind. Both dials snapped back to the game's defaults
+  every time the Junimos rewound the year, and there was no way to change what those defaults
+  were. The loop now carries both across the reset. Reported by RiseiJaku.
+
+Changed
+- The bundle catalogue (tly_dumpbundles) now names every item kept off the board and why, and
+  says so plainly when nothing was kept off. Developer diagnostic, not something you see in
+  normal play.
+
+Added
+- tly_warpgraph, a developer command for tracing which places a run can and cannot reach.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
