@@ -107,6 +107,28 @@ namespace TheLongestYear.Integration
         /// it. See <see cref="Start"/>.</summary>
         private const int LastSafeClock = 2550;
 
+        // THE WEATHER, one kind per season (Jeff, 2026-09-11): rain in Spring, a storm in Summer,
+        // the really windy day in Fall, a snowstorm in Winter. No green rain, by his call. Each one
+        // lands on the season swap, so the year running backwards changes the sky as well as the map.
+        //
+        // Wind runs under ALL of them, because the gust is what hides the tilesheet swap, which is a
+        // dispose-and-reload and cannot cross-fade. Fall is simply the windiest.
+        private const int GaleDebris = 110;          // vanilla's own gust is a random 16 to 64
+        private const int FallGaleDebris = 170;      // "the really windy day"
+        private const float GaleDriftX = -1.4f;      // vanilla drifts at -0.2 to 0
+        private const float GaleDriftSpread = 0.9f;
+        private const float GaleFallY = 0.35f;
+        private const double StormFlashEveryMs = 1900.0;
+
+        // ONE DAY OF IT, not the whole season. The weather used to be switched on at the season swap
+        // and left on until the next one, so every season was a solid block of rain or snow: "I
+        // didn't mean for the weather to happen for the entirety of that seasons turn, just one of
+        // the day/night cycles within that season, like the actual game does" (Jeff, 2026-09-11).
+        // Each season now gets a single cycle of its weather, held off the swap by one cycle so the
+        // change of sky reads as its own beat rather than as part of the change of map.
+        private const double WeatherAfterSwapMs = 3000.0;   // one light cycle
+        private const double WeatherLastsMs = 3000.0;       // one light cycle
+
         // EndingEventCommands.PanToName's own centring math, reused by reflection instead of
         // reimplemented (see the class comment: this task touches only this one file).
         private static readonly MethodInfo ClampedCentreMethod = typeof(EndingEventCommands).GetMethod(
@@ -132,7 +154,10 @@ namespace TheLongestYear.Integration
         private static GameLocation _priorLocation;
         private static bool _priorFreezeControls, _priorViewportFreeze, _priorIsDebrisWeather;
         private static bool _priorCanMove;
-        private static bool _priorTownDebrisWeather;
+        private static bool _priorTownDebrisWeather, _priorTownRain, _priorTownSnow, _priorTownLightning;
+        private static double _stormFlashMs;
+        private static bool _weatherOn;
+        private static double _extrasLogMs;
         private static StardewValley.Season _priorSeason;   // Game1.season's own type
         private static int _priorTimeOfDay;
         private static float _fadeAlpha;
@@ -197,6 +222,12 @@ namespace TheLongestYear.Integration
             _priorViewportFreeze = Game1.viewportFreeze;
             _priorIsDebrisWeather = Game1.isDebrisWeather;
             _priorTownDebrisWeather = town.GetWeather().IsDebrisWeather;
+            _priorTownRain = town.GetWeather().IsRaining;
+            _priorTownSnow = town.GetWeather().IsSnowing;
+            _priorTownLightning = town.GetWeather().IsLightning;
+            _stormFlashMs = 0.0;
+            _weatherOn = false;
+            _extrasLogMs = 0.0;
             _priorSeason = Game1.season;
             _priorTimeOfDay = Game1.timeOfDay;
 
@@ -247,6 +278,7 @@ namespace TheLongestYear.Integration
             // other, which is what makes a Spring failure look right instead of Summer-tinted.
             Game1.season = (StardewValley.Season)(int)_seasons[0];
             _town.updateSeasonalTileSheets();
+            ClearWeather();
             Gust();
 
             RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd, PanDurationMs);
@@ -330,10 +362,23 @@ namespace TheLongestYear.Integration
             // clock is the whole effect; this class does no tinting of its own.
             Game1.timeOfDay = RewindSchedule.CycleClockAt(
                 _elapsed, LightCycleMs, LightCycleDusk, DaylightTime());
+            TickWeather();
+            TickStorm(time);
             TickFade();
-            RewindReversedExtras.Tick(_elapsed, time);
+            RewindReversedExtras.Tick(_elapsed, Ease(travel), time);
+            TickExtrasLog(time);
 
             if (progress >= 1.0) Finish();
+        }
+
+        /// <summary>Says once a second where the extras are against where the camera is pointed.
+        /// See RewindReversedExtras.Positions.</summary>
+        private static void TickExtrasLog(GameTime time)
+        {
+            _extrasLogMs += time.ElapsedGameTime.TotalMilliseconds;
+            if (_extrasLogMs < 1000.0) return;
+            _extrasLogMs = 0.0;
+            _monitor?.Log($"RewindPanScene: {Game1.season} {RewindReversedExtras.Positions()}", LogLevel.Trace);
         }
 
         /// <summary>Eased along the TRAVEL leg only, so the camera reaches the west road at 25
@@ -410,6 +455,101 @@ namespace TheLongestYear.Integration
         private static int DaylightTime()
             => Game1.getStartingToGetDarkTime(_town ?? Game1.currentLocation) - LightCycleDawnMargin;
 
+        /// <summary>The sky for the season now on screen. See the weather constants for the shape of
+        /// it. This sets the LOCATION's weather, which is what every one of vanilla's draw paths
+        /// actually reads (<c>IsRainingHere</c>, <c>IsSnowingHere</c> and the rest all go through
+        /// <c>GetWeather()</c>), and mirrors it onto the Game1 globals other code still uses. Rain
+        /// needs its drop positions seeded or the flag draws nothing at all.</summary>
+        private static void ApplyWeather(CoreSeason season)
+        {
+            if (_town == null) return;
+            StardewValley.Network.LocationWeather weather = _town.GetWeather();
+            bool rain = season == CoreSeason.Spring || season == CoreSeason.Summer;
+            bool storm = season == CoreSeason.Summer;
+            bool snow = season == CoreSeason.Winter;
+
+            weather.IsRaining = rain;
+            weather.IsLightning = storm;
+            weather.IsSnowing = snow;
+            weather.IsDebrisWeather = true;
+            weather.IsGreenRain = false;    // explicitly out, by the designer's call
+
+            Game1.isRaining = rain;
+            Game1.isLightning = storm;
+            Game1.isSnowing = snow;
+            Game1.isDebrisWeather = true;
+            Game1.isGreenRain = false;
+
+            if (rain) Game1.randomizeRainPositions();
+            if (season == CoreSeason.Fall) Gale();
+        }
+
+        /// <summary>Back to an ordinary sky: the breeze that hides the tilesheet swaps stays, and
+        /// everything else goes.</summary>
+        private static void ClearWeather()
+        {
+            if (_town == null) return;
+            StardewValley.Network.LocationWeather weather = _town.GetWeather();
+            weather.IsRaining = false;
+            weather.IsLightning = false;
+            weather.IsSnowing = false;
+            weather.IsGreenRain = false;
+            weather.IsDebrisWeather = true;
+
+            Game1.isRaining = false;
+            Game1.isLightning = false;
+            Game1.isSnowing = false;
+            Game1.isGreenRain = false;
+            Game1.isDebrisWeather = true;
+            Game1.flashAlpha = 0f;
+        }
+
+        /// <summary>Switches this season's weather on for one day/night cycle and off again. See
+        /// WeatherAfterSwapMs. The span of the pan that belongs to the season on screen runs from the
+        /// swap that brought it in to the swap that takes it away, and the weather sits one cycle
+        /// inside that, so it never lands on the same frame as the map changing.</summary>
+        private static void TickWeather()
+        {
+            if (_seasons == null || _seasonIndex >= _seasons.Count) return;
+            double spanStart = _seasonIndex == 0 ? 0.0 : _swaps[_seasonIndex - 1];
+            double spanEnd = _seasonIndex < _swaps.Count ? _swaps[_seasonIndex] : 1.0;
+            double startMs = spanStart * PanDurationMs;
+            double endMs = spanEnd * PanDurationMs;
+
+            double from = startMs + WeatherAfterSwapMs;
+            double to = from + WeatherLastsMs;
+            if (to > endMs)
+            {
+                // A season too short to hold a held-off day still gets one, centred in what it has.
+                double middle = (startMs + endMs) / 2.0;
+                from = middle - WeatherLastsMs / 2.0;
+                to = middle + WeatherLastsMs / 2.0;
+            }
+
+            bool wanted = _elapsed >= from && _elapsed < to;
+            if (wanted == _weatherOn) return;
+            _weatherOn = wanted;
+            if (wanted) ApplyWeather(_seasons[_seasonIndex]);
+            else ClearWeather();
+        }
+
+        /// <summary>The storm's flashes, while Summer is the season on screen.
+        ///
+        /// <c>Game1.flashAlpha</c> is vanilla's own lightning flash and it fades itself, so this only
+        /// has to strike it. What it deliberately does NOT do is call
+        /// <c>Utility.performLightningUpdate</c>, which is the real strike: that one hits the farm,
+        /// can kill crops and charge lightning rods, and none of that belongs in a scene that is a
+        /// memory of a year rather than a night in it.</summary>
+        private static void TickStorm(GameTime time)
+        {
+            if (_seasons == null || _seasonIndex >= _seasons.Count) return;
+            if (!_weatherOn || _seasons[_seasonIndex] != CoreSeason.Summer) { _stormFlashMs = 0.0; return; }
+            _stormFlashMs += time.ElapsedGameTime.TotalMilliseconds;
+            if (_stormFlashMs < StormFlashEveryMs) return;
+            _stormFlashMs = 0.0;
+            Game1.flashAlpha = 1f;
+        }
+
         private static void Gust()
         {
             // BOTH of these, and the location one is the one that draws. Game1.drawWeather gates the
@@ -422,13 +562,50 @@ namespace TheLongestYear.Integration
             Game1.populateDebrisWeatherArray();
         }
 
+        /// <summary>Replaces vanilla's gust with a real one.
+        ///
+        /// <c>populateDebrisWeatherArray</c> makes between sixteen and sixty-four pieces of debris
+        /// drifting at -0.2 to 0 across, which on screen is a breeze: "it was just gentle brezes the
+        /// whole way through. it helped some, but is there a more windy option?" (Jeff, 2026-09-11).
+        /// This keeps vanilla's call for the season-correct sprite index, then refills the array with
+        /// far more of it moving far faster. Fall gets the most, that being the season the valley's
+        /// windy day belongs to.</summary>
+        private static void Gale()
+        {
+            if (Game1.debrisWeather == null) return;
+            bool fall = _seasons != null && _seasonIndex < _seasons.Count
+                        && _seasons[_seasonIndex] == CoreSeason.Fall;
+            int count = fall ? FallGaleDebris : GaleDebris;
+            int which = Game1.debrisWeather.Count > 0 ? Game1.debrisWeather[0].which : 0;
+            Game1.debrisWeather.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                var at = new Vector2(
+                    Game1.random.Next(0, Math.Max(1, Game1.viewport.Width)),
+                    Game1.random.Next(0, Math.Max(1, Game1.viewport.Height)));
+                float drift = GaleDriftX - (float)Game1.random.NextDouble() * GaleDriftSpread;
+                Game1.debrisWeather.Add(new WeatherDebris(
+                    at, which, (float)Game1.random.Next(15) / 500f, drift,
+                    (float)Game1.random.NextDouble() * GaleFallY));
+            }
+        }
+
         /// <summary>Puts the town's own debris weather back. The wind is this scene's, not the
         /// save's, and a location's weather outlives the day it was set on.</summary>
         private static void RestoreTownWeather()
         {
             try
             {
-                if (_town != null) _town.GetWeather().IsDebrisWeather = _priorTownDebrisWeather;
+                if (_town == null) return;
+                StardewValley.Network.LocationWeather weather = _town.GetWeather();
+                weather.IsDebrisWeather = _priorTownDebrisWeather;
+                weather.IsRaining = _priorTownRain;
+                weather.IsSnowing = _priorTownSnow;
+                weather.IsLightning = _priorTownLightning;
+                Game1.isRaining = _priorTownRain;
+                Game1.isSnowing = _priorTownSnow;
+                Game1.isLightning = _priorTownLightning;
+                Game1.flashAlpha = 0f;
             }
             catch (Exception ex)
             {
