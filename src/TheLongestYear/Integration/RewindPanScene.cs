@@ -132,6 +132,7 @@ namespace TheLongestYear.Integration
         private static GameLocation _priorLocation;
         private static bool _priorFreezeControls, _priorViewportFreeze, _priorIsDebrisWeather;
         private static bool _priorCanMove;
+        private static bool _priorTownDebrisWeather;
         private static StardewValley.Season _priorSeason;   // Game1.season's own type
         private static int _priorTimeOfDay;
         private static float _fadeAlpha;
@@ -195,6 +196,7 @@ namespace TheLongestYear.Integration
             _priorFreezeControls = Game1.freezeControls;
             _priorViewportFreeze = Game1.viewportFreeze;
             _priorIsDebrisWeather = Game1.isDebrisWeather;
+            _priorTownDebrisWeather = town.GetWeather().IsDebrisWeather;
             _priorSeason = Game1.season;
             _priorTimeOfDay = Game1.timeOfDay;
 
@@ -248,6 +250,7 @@ namespace TheLongestYear.Integration
             Gust();
 
             RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd, PanDurationMs);
+            RewindReversedExtras.RefreshAppearance();
         }
 
         /// <summary>True while the pan is running. The pan owns no menu, so this is the only way
@@ -389,6 +392,8 @@ namespace TheLongestYear.Integration
                 // Core.Season and StardewValley.Season share Spring=0..Winter=3 (see GameEffortData.cs).
                 Game1.season = (StardewValley.Season)(int)_seasons[_seasonIndex];
                 _town.updateSeasonalTileSheets();
+                // The extras change with the map. See RewindReversedExtras.RefreshAppearance.
+                RewindReversedExtras.RefreshAppearance();
                 Gust();
             }
         }
@@ -407,8 +412,28 @@ namespace TheLongestYear.Integration
 
         private static void Gust()
         {
+            // BOTH of these, and the location one is the one that draws. Game1.drawWeather gates the
+            // debris on currentLocation.IsDebrisWeatherHere(), which reads the location's own
+            // LocationWeather, not the Game1 flag: setting the flag alone left the season swaps
+            // completely unhidden ("there's no wind blowing to obscure the season change", Jeff,
+            // 2026-09-11). The Game1 flag stays set because other code still reads it.
             Game1.isDebrisWeather = true;
+            if (_town != null) _town.GetWeather().IsDebrisWeather = true;
             Game1.populateDebrisWeatherArray();
+        }
+
+        /// <summary>Puts the town's own debris weather back. The wind is this scene's, not the
+        /// save's, and a location's weather outlives the day it was set on.</summary>
+        private static void RestoreTownWeather()
+        {
+            try
+            {
+                if (_town != null) _town.GetWeather().IsDebrisWeather = _priorTownDebrisWeather;
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"RewindPanScene: could not restore the town's weather: {ex.Message}", LogLevel.Warn);
+            }
         }
 
         /// <summary>Normal end of the pan: the rewound season/clock/weather/camera are left exactly as
@@ -418,6 +443,7 @@ namespace TheLongestYear.Integration
         {
             if (!_active) return;
             _active = false;
+            RestoreTownWeather();
             RewindReversedExtras.Teardown();
             Action onComplete = _onComplete;
             _onComplete = null;
@@ -453,6 +479,7 @@ namespace TheLongestYear.Integration
                 // for a path whose whole job is to leave the save usable.
                 Game1.timeOfDay = Math.Min(_priorTimeOfDay, LastSafeClock);
                 Game1.isDebrisWeather = _priorIsDebrisWeather;
+                RestoreTownWeather();
                 if (Game1.player != null) Game1.player.CanMove = _priorCanMove;
                 Game1.freezeControls = _priorFreezeControls;
                 Game1.viewportFreeze = _priorViewportFreeze;
