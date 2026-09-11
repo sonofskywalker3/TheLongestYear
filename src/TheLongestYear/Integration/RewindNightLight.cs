@@ -49,32 +49,12 @@ namespace TheLongestYear.Integration
         /// until you turn on the cave darkness"). The pools have to be visible from the first
         /// frame, so the room starts at cave dark rather than arriving there.
         ///
-        /// DEEPER THAN THE MINE'S OWN 230/200/90, and the window is why.
-        ///
-        /// How vanilla darkens the farmhouse window, captured frame by frame at 4fps across a jump
-        /// to 10pm (2026-09-11), because two rounds of guessing at it were wrong. Three things make
-        /// the pane, and they go out in this order:
-        ///
-        /// 1. A <c>LightSource</c> at the window tile, <c>LightContext.WindowLight</c>, whose colour
-        ///    is <c>Color.Black</c>. Read that subtractively: it removes nothing, so it holds that
-        ///    patch of the lightmap at full brightness no matter how dark the ambient gets.
-        /// 2. Once <c>Game1.isTimeToTurnOffLighting</c> is true (<c>trulyDark - 100</c>, so 1900 in
-        ///    Spring), <c>LightSource.Draw</c> sets <c>fadeOut = 4</c> and takes 4 off the light's
-        ///    alpha every frame. Measured at the window: 255/255/251, then 232/232/251, then
-        ///    128/128/251 over about a second. Only red and green move, because vanilla's farmhouse
-        ///    night ambient is 180/180/0 and subtracts no blue at all.
-        /// 3. On the next ten-minute tick the light is dropped and <c>lightGlows</c> goes 1 to 0,
-        ///    and the blue finally collapses: 0/0/28, which is the black pane.
-        ///
-        /// This scene cannot play that fade, because it opens at 2am with the pane already lit and
-        /// the beat is seconds long. It reproduces the END state instead: the WindowLight goes with
-        /// every other foreign light (<see cref="StripForeignLights"/>), the glow goes every tick
-        /// (<see cref="StripLightGlows"/>), and the ambient has to finish the job. Vanilla's own
-        /// 180/180/0 would leave the room far brighter than this scene wants, so the ambient here is
-        /// deeper and the pane measures 0/0/0 against vanilla's 0/0/28. What pays for a room this
-        /// dark is the Junimo pools, which do not go through the ambient: the room is black and they
-        /// are not.</summary>
-        public static readonly Color NightAmbient = new Color(243, 232, 210);
+        /// The window used to force this deeper than the mine's own colour, and it does not any
+        /// more: see <see cref="SwitchWindows"/>. Darkening a window that was still painted with its
+        /// daylight sprite only ever got a dim blue pane, because it was dark laid over a white base;
+        /// switching the base to the night sprite means the ordinary cave ambient is enough, and the
+        /// room keeps the blue the mine floors have.</summary>
+        public static readonly Color NightAmbient = new Color(230, 200, 90);
 
         /// <summary>The darkness at its deepest, past even the deepest mine floor
         /// (MineShaft.cs:688 is 237/212/185). Not a full 255 subtraction, so the room goes very
@@ -134,6 +114,7 @@ namespace TheLongestYear.Integration
             if (!_holding) return;
             _holding = false;
             _ownedLightIds = null;
+            SwitchWindows(_nightTiles, night: false);
             SwitchTiles(_nightTiles, night: false);
             _nightTiles = null;
             _monitor?.Log("RewindNightLight: released the room's lighting back to the engine.", LogLevel.Info);
@@ -256,6 +237,7 @@ namespace TheLongestYear.Integration
         {
             StripForeignLights();
             StripLightGlows();
+            SwitchWindows(Game1.currentLocation, night: true);
             Game1.ambientLight = _ambient;
             // UpdateOther already recomputed this from the ambient the location put back, so setting
             // the colour alone is not enough: say so directly. See the class comment.
@@ -275,6 +257,41 @@ namespace TheLongestYear.Integration
         /// The morning beat deliberately does NOT do this. A white window is right at 6am, and the
         /// designer said so: "The morning is supposed to have a white window, the night one should be
         /// black."</summary>
+        /// <summary>Puts the room's windows on their NIGHT sprite.
+        ///
+        /// THIS IS THE ONE THAT MATTERED, and it took the designer to name it: "it's dark OVER the
+        /// white base instead of dark over the dark base" (Jeff, 2026-09-11). The farmhouse window is
+        /// not map art and not a light: it is a <c>Furniture</c> of type
+        /// <c>Furniture.window</c> (13), and it carries two sprites side by side in its sheet.
+        /// <c>sourceIndexOffset</c> 0 is the daylight pane, which is very nearly white; 1 is the
+        /// unlit one. Vanilla flips it in <c>Furniture.addLights</c>, which for type 13 sets the
+        /// offset to 1 and takes the window's glow off the location, and that runs on the dusk
+        /// TRANSITION. This scene paints two in the morning onto a room that woke at six and never
+        /// crossed dusk, so the flip never happened and every previous attempt was darkening a white
+        /// pane: no ambient this scene could use got it past a dim blue, and the ones that came close
+        /// took the whole room to black with them.
+        ///
+        /// Calling vanilla's own <c>addLights</c> is the switch, and <c>removeLights</c> on the way
+        /// out puts the daylight pane and the glow back. Both are re-asserted every tick for the same
+        /// reason the glows are: furniture updates itself while the room is current.</summary>
+        private static void SwitchWindows(GameLocation loc, bool night)
+        {
+            if (loc == null) return;
+            foreach (StardewValley.Objects.Furniture f in loc.furniture)
+            {
+                if (f == null || f.furniture_type.Value != StardewValley.Objects.Furniture.window) continue;
+                try
+                {
+                    if (night) f.addLights();
+                    else f.removeLights();
+                }
+                catch (System.Exception ex)
+                {
+                    _monitor?.Log($"RewindNightLight: could not switch a window: {ex.Message}", LogLevel.Warn);
+                }
+            }
+        }
+
         private static void StripLightGlows()
         {
             GameLocation loc = Game1.currentLocation;

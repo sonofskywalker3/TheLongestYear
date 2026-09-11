@@ -33,7 +33,9 @@ namespace TheLongestYear.Integration
     {
         /// <summary>How many to put on the road. Enough to read as traffic, few enough that the shot
         /// is still a shot of the town rather than of a crowd.</summary>
-        private const int Count = 5;
+        /// <summary>How many villagers a rewind puts on the road, inclusive. Three or four: enough to
+        /// read as traffic, few enough that none of them becomes the thing you watch.</summary>
+        private const int MinCast = 3, MaxCast = 4;
 
         /// <summary>How long a route to ask the pathfinder for, in tiles, and how far it may search
         /// before giving up. The pace is not set here any more: each extra covers its own route once
@@ -73,9 +75,21 @@ namespace TheLongestYear.Integration
         private static IMonitor _monitor;
         private static GameLocation _town;
 
-        /// <summary>Borrows up to <see cref="Count"/> villagers and puts them on routes through the
-        /// square. Safe to call when there are none to borrow, or when no route can be found: the
-        /// pan runs on its other dials alone.</summary>
+        /// <summary>Borrows a few villagers and puts them on routes through the square. Safe to call
+        /// when there are none to borrow, or when no route can be found: the pan runs on its other
+        /// dials alone.
+        ///
+        /// A DIFFERENT FEW EVERY TIME. This used to take the first five villagers the game happened
+        /// to enumerate, which is a stable order, so every rewind in a run showed Evelyn, George,
+        /// Alex, Emily and Haley walking the same ground: "watching the same exact people run through
+        /// their paths backwards every reset is going to get tedious" (Jeff, 2026-09-11). The whole
+        /// eligible cast is shuffled now and walked in that order until enough of them have a route,
+        /// so anyone in town can turn up and the ones who do are different each rewind.
+        ///
+        /// Shuffling first, rather than pathfinding for all thirty-odd villagers and then choosing,
+        /// is deliberate: it gives the same variety for the cost of the three or four routes that are
+        /// actually used, and this runs on the frame the white flash hands over to the pan, which is
+        /// not a frame to spend a hundred pathfinder searches on.</summary>
         public static void Spawn(IMonitor monitor, GameLocation town, Point from, Point to, float durationMs)
         {
             _monitor = monitor;
@@ -83,11 +97,15 @@ namespace TheLongestYear.Integration
             Extras.Clear();
             if (town == null) return;
 
-            List<NPC> cast = Cast();
+            List<NPC> cast = Shuffle(Cast());
+            int wanted = MinCast + Game1.random.Next(MaxCast - MinCast + 1);
             var placed = new List<string>();
-            for (int i = 0; i < cast.Count; i++)
+            for (int i = 0; i < cast.Count && Extras.Count < wanted; i++)
             {
-                Point[] route = FindRoute(town, from, to, i, cast.Count);
+                // The anchor spreads the walks along the camera's line, so it counts placements
+                // rather than candidates: a villager who could not be routed must not leave a gap in
+                // the shot where the next one should have been.
+                Point[] route = FindRoute(town, from, to, Extras.Count, wanted);
                 if (route == null || route.Length < 4) continue;
 
                 NPC npc = cast[i];
@@ -204,6 +222,18 @@ namespace TheLongestYear.Integration
             return null;
         }
 
+        /// <summary>A copy of <paramref name="cast"/> in a random order (Fisher-Yates, on the game's
+        /// own random so a run is still reproducible from its seed).</summary>
+        private static List<NPC> Shuffle(List<NPC> cast)
+        {
+            for (int i = cast.Count - 1; i > 0; i--)
+            {
+                int j = Game1.random.Next(i + 1);
+                (cast[i], cast[j]) = (cast[j], cast[i]);
+            }
+            return cast;
+        }
+
         /// <summary>Villagers that can be borrowed without the scene reading as wrong: real
         /// townsfolk, not children, not the player's spouse (who should be at home in the bed the
         /// farmer is asleep in), and not anyone already committed to an event.</summary>
@@ -213,7 +243,6 @@ namespace TheLongestYear.Integration
             string spouse = Game1.player?.spouse;
             Utility.ForEachVillager(npc =>
             {
-                if (cast.Count >= Count) return false;
                 if (npc == null || npc is Child || npc is Horse || npc is Pet) return true;
                 if (!npc.IsVillager || npc.IsInvisible) return true;
                 if (spouse != null && npc.Name == spouse) return true;

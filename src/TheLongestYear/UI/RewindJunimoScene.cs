@@ -56,7 +56,14 @@ namespace TheLongestYear.UI
         // it's still weird because it's like an oval instead of a circle" (Jeff, 2026-09-11). The
         // room is made to fit the ring instead, by lifting the camera (see CameraLift) so the two
         // tiles below the bed are not behind the dialogue box.
-        private const float RingRadius = 1.75f;
+        // Sized off the bed, not picked. The starter bed's own box is two tiles wide and three deep
+        // (logged with the stations), so its posts stand at x centre +/- 1. A hexagon's four off-axis
+        // points sit at +/- R/2 horizontally, so R just under 2 puts those four on the posts: at 1.9
+        // they land 0.05 of a tile inside, which is three screen pixels, less than one pixel of the
+        // art. The two on-axis points then fall at +/- 1.9, the right one standing on the wall tile
+        // rather than in the black past it, and the top and bottom of the ring clear the bed's ends
+        // at +/- 1.645 against a bed that runs from 8 to 11.
+        private const float RingRadius = 1.9f;
         private const int RingPoints = 6;
 
         /// <summary>How far up the room is nudged for these beats, in pixels.
@@ -73,9 +80,21 @@ namespace TheLongestYear.UI
         /// <summary>How far outside the clear floor a station may sit. Wall tiles are explicitly fine
         /// ("I specifically said that I was ok with the junimos on the wall", 2026-09-11) and
         /// <see cref="OnRenderedWorld"/> now draws the actors over the wall art, so the ring is
-        /// allowed one tile of wall on every side. What it is NOT allowed is the black past the
-        /// building, which is what two of them were standing in.</summary>
-        private const float RingWallAllowance = 1.5f;
+        /// allowed onto it. It has to be this generous or the clamp pulls the ring off the bed it is
+        /// supposed to be centred on, which is visible as soon as you look for it: a quarter of a
+        /// tile of it read as "they're each offset to the left of the bedpost just slightly and the
+        /// gap between the side of the bed and the left junimo is slightly larger than the gap
+        /// between the right of the bed and the right junimo" (Jeff, 2026-09-11).</summary>
+        private const float RingWallAllowanceX = 2f;
+
+        /// <summary>The same, downward, and deliberately tighter. Sideways the ring only has to clear
+        /// the wall, which it is allowed to stand on; downward it runs out of house. Centring the
+        /// ring honestly on the bed's box pushed its lowest pair onto the building's bottom edge and
+        /// the whole ring visibly sank with it ("better symetry, but you moved it down too, not just
+        /// over", Jeff, 2026-09-11). The bed's box runs a tile deeper than the bed reads, so the ring
+        /// is centred on the bed across and held up off the floor's bottom edge down: this value puts
+        /// its lowest pair on the bottom wall row rather than past it.</summary>
+        private const float RingWallAllowanceY = 1.65f;
 
         private const string JunimoDisplayName = "Junimo";
 
@@ -236,6 +255,11 @@ namespace TheLongestYear.UI
             Vector2 centre = RingCentre(loc, playerTile);
             List<Vector2> stations = RingStations(loc, centre);
 
+            Rectangle bed = BedBox(loc);
+            _monitor?.Log(
+                $"Rewind Junimos: bed box {bed} = tiles x {bed.Left / 64f:0.00}..{bed.Right / 64f:0.00}, " +
+                $"y {bed.Top / 64f:0.00}..{bed.Bottom / 64f:0.00}; floor {FloorBox(loc, playerTile)}.",
+                LogLevel.Info);
             _monitor?.Log(
                 $"Rewind Junimos: farmer at ({playerTile.X}, {playerTile.Y}) in '{loc.Name}'; ring centred on " +
                 $"({centre.X:0.00}, {centre.Y:0.00}); stations " +
@@ -291,29 +315,34 @@ namespace TheLongestYear.UI
         /// tile of that is fine and wanted (the wall), but two of the six were standing in the black
         /// past the house. Clamping the CENTRE rather than each station individually is what keeps
         /// the shape a ring: every point moves together.</summary>
-        private static Vector2 RingCentre(GameLocation loc, Point playerTile)
+        /// <summary>The bed's own rectangle in world pixels, or empty if this room has none.</summary>
+        private static Rectangle BedBox(GameLocation loc)
         {
-            Vector2 centre = new Vector2(playerTile.X + 0.5f, playerTile.Y + 0.5f);
             if (loc is StardewValley.Locations.FarmHouse house)
             {
                 try
                 {
                     StardewValley.Objects.BedFurniture bed = house.GetPlayerBed();
-                    if (bed != null)
-                    {
-                        Rectangle box = bed.GetBoundingBox();
-                        centre = new Vector2((box.X + box.Width / 2f) / 64f, (box.Y + box.Height / 2f) / 64f);
-                    }
+                    if (bed != null) return bed.GetBoundingBox();
                 }
-                catch (Exception) { /* no bed, or a modded house: the farmer is a fine fallback */ }
+                catch (Exception) { /* no bed, or a modded house */ }
             }
+            return Rectangle.Empty;
+        }
+
+        private static Vector2 RingCentre(GameLocation loc, Point playerTile)
+        {
+            Vector2 centre = new Vector2(playerTile.X + 0.5f, playerTile.Y + 0.5f);
+            Rectangle bed = BedBox(loc);
+            if (bed.Width > 0)
+                centre = new Vector2((bed.X + bed.Width / 2f) / 64f, (bed.Y + bed.Height / 2f) / 64f);
 
             Rectangle floor = FloorBox(loc, playerTile);
             if (floor.Width <= 0 || floor.Height <= 0) return centre;
-            float minX = floor.Left - RingWallAllowance + RingRadius;
-            float maxX = floor.Right + RingWallAllowance - RingRadius;
-            float minY = floor.Top - RingWallAllowance + RingRadius;
-            float maxY = floor.Bottom + RingWallAllowance - RingRadius;
+            float minX = floor.Left - RingWallAllowanceX + RingRadius;
+            float maxX = floor.Right + RingWallAllowanceX - RingRadius;
+            float minY = floor.Top - RingWallAllowanceY + RingRadius;
+            float maxY = floor.Bottom + RingWallAllowanceY - RingRadius;
             return new Vector2(
                 maxX < minX ? (minX + maxX) / 2f : MathHelper.Clamp(centre.X, minX, maxX),
                 maxY < minY ? (minY + maxY) / 2f : MathHelper.Clamp(centre.Y, minY, maxY));
