@@ -52,104 +52,68 @@ public class RewindScheduleTests
         Assert.Equal(0, t % 10);
     }
     [Fact]
-    public void DateAt_starts_on_the_failed_date_and_ends_on_spring_one()
-    {
-        Assert.Equal((Season.Fall, 28), RewindSchedule.DateAt(0.0, Season.Fall));
-        Assert.Equal((Season.Spring, 1), RewindSchedule.DateAt(1.0, Season.Fall));
-
-        Assert.Equal((Season.Winter, 28), RewindSchedule.DateAt(0.0, Season.Winter));
-        Assert.Equal((Season.Spring, 1), RewindSchedule.DateAt(1.0, Season.Winter));
-    }
-
-    [Fact]
-    public void DateAt_for_spring_still_counts_the_month_down_with_nothing_to_repaint()
-    {
-        Assert.Equal((Season.Spring, 28), RewindSchedule.DateAt(0.0, Season.Spring));
-        Assert.Equal((Season.Spring, 14), RewindSchedule.DateAt(0.5, Season.Spring));
-        Assert.Equal((Season.Spring, 1), RewindSchedule.DateAt(1.0, Season.Spring));
-    }
-
-    [Fact]
-    public void DateAt_changes_season_exactly_where_the_map_repaints()
-    {
-        // The date dial and the tilesheet swaps have to agree on which season is on screen, or the
-        // HUD reads one season over a map painted as another.
-        foreach (Season failed in new[] { Season.Summer, Season.Fall, Season.Winter })
-        {
-            IReadOnlyList<Season> seasons = RewindSchedule.SeasonsToUnwind(failed);
-            IReadOnlyList<double> swaps = RewindSchedule.SwapFractions(failed);
-            for (int i = 0; i < swaps.Count; i++)
-            {
-                Assert.Equal(seasons[i], RewindSchedule.DateAt(swaps[i] - 1e-9, failed).Season);
-                Assert.Equal(seasons[i + 1], RewindSchedule.DateAt(swaps[i], failed).Season);
-            }
-        }
-    }
-
-    [Fact]
-    public void DateAt_never_leaves_the_month()
-    {
-        for (int i = 0; i <= 300; i++)
-        {
-            (Season _, int day) = RewindSchedule.DateAt(i / 300.0, Season.Winter);
-            Assert.InRange(day, 1, 28);
-        }
-    }
-
-    [Fact]
-    public void DateAt_only_ever_runs_backward()
-    {
-        (Season Season, int DayOfMonth) previous = RewindSchedule.DateAt(0.0, Season.Fall);
-        for (int i = 1; i <= 300; i++)
-        {
-            (Season Season, int DayOfMonth) now = RewindSchedule.DateAt(i / 300.0, Season.Fall);
-            bool sameSeasonAndNotLater = now.Season == previous.Season && now.DayOfMonth <= previous.DayOfMonth;
-            bool steppedBackASeason = (int)now.Season == (int)previous.Season - 1;
-            Assert.True(sameSeasonAndNotLater || steppedBackASeason);
-            previous = now;
-        }
-    }
-
-    [Fact]
     public void CycleClockAt_repeats_dusk_to_dawn_on_its_own_clock()
     {
         // Fifteen cycles across a thirty second scene: every cycle looks like every other one, which
         // is what makes the light read as time coming undone over and over rather than as one sunset.
-        Assert.Equal(RewindSchedule.CycleClockAt(0, 2000, 2400, 600),
-                     RewindSchedule.CycleClockAt(2000, 2000, 2400, 600));
-        Assert.Equal(RewindSchedule.CycleClockAt(500, 2000, 2400, 600),
-                     RewindSchedule.CycleClockAt(28500, 2000, 2400, 600));
-        Assert.Equal(2400, RewindSchedule.CycleClockAt(0, 2000, 2400, 600));
+        Assert.Equal(RewindSchedule.CycleClockAt(0, 2000, 2200, 1700),
+                     RewindSchedule.CycleClockAt(2000, 2000, 2200, 1700));
+        Assert.Equal(RewindSchedule.CycleClockAt(500, 2000, 2200, 1700),
+                     RewindSchedule.CycleClockAt(28500, 2000, 2200, 1700));
+        Assert.Equal(2200, RewindSchedule.CycleClockAt(0, 2000, 2200, 1700));
     }
 
     [Fact]
-    public void CycleClockAt_runs_backward_within_one_cycle()
+    public void CycleClockAt_is_a_triangle_a_sunrise_then_a_sunset()
     {
-        int early = RewindSchedule.CycleClockAt(200, 2000, 2400, 600);
-        int late = RewindSchedule.CycleClockAt(1800, 2000, 2400, 600);
-        Assert.True(late < early);
+        // A sawtooth had no sunrise in it: it only ever ran one way and cut back (playtest
+        // 2026-09-11, "there is no sunrise"). The first half of a cycle runs the clock BACK from
+        // dark to light, the second half runs it FORWARD from light to dark, and the two ends meet.
+        const double cycle = 2000.0;
+
+        Assert.Equal(2200, RewindSchedule.CycleClockAt(0, cycle, 2200, 1700));
+        Assert.Equal(1700, RewindSchedule.CycleClockAt(cycle / 2.0, cycle, 2200, 1700));
+
+        int quarterIn = RewindSchedule.CycleClockAt(cycle / 4.0, cycle, 2200, 1700);
+        int threeQuartersIn = RewindSchedule.CycleClockAt(cycle * 3.0 / 4.0, cycle, 2200, 1700);
+        Assert.InRange(quarterIn, 1701, 2199);          // mid sunrise
+        Assert.InRange(threeQuartersIn, 1701, 2199);    // mid sunset
+        Assert.Equal(quarterIn, threeQuartersIn);       // the same point, walked the other way
     }
 
     [Fact]
-    public void The_light_and_the_date_are_not_synchronised()
+    public void CycleClockAt_never_jumps_between_neighbouring_moments()
     {
-        // Jeff, 2026-09-11, was explicit: the date must not line up with the visual sunset. Over the
-        // thirty seconds the date unwinds ONCE, start to end, while the light goes round fifteen
-        // times, so the two never track each other.
-        const double totalMs = 30000.0, cycleMs = 2000.0;
-
-        int dusks = 0;
-        int previous = RewindSchedule.CycleClockAt(0, cycleMs, 2400, 600);
-        for (int ms = 1; ms <= (int)totalMs; ms++)
+        // The whole complaint about the sawtooth was the hard cut at the seam. A triangle has no
+        // seam: over a whole cycle no two adjacent milliseconds are more than one ten-minute step
+        // apart, wrap included.
+        const double cycle = 2000.0;
+        int previous = RewindSchedule.CycleClockAt(0, cycle, 2200, 1700);
+        for (int ms = 1; ms <= 4000; ms++)
         {
-            int now = RewindSchedule.CycleClockAt(ms, cycleMs, 2400, 600);
-            if (now > previous) dusks++;   // the clock jumped back up: a new dusk
+            int now = RewindSchedule.CycleClockAt(ms, cycle, 2200, 1700);
+            Assert.True(System.Math.Abs(Minutes(now) - Minutes(previous)) <= 10,
+                $"jumped from {previous} to {now} at {ms}ms");
             previous = now;
         }
-        Assert.Equal((int)(totalMs / cycleMs), dusks);
+    }
 
-        // The date, over the same stretch, goes from the failed date to Spring 1 and no further.
-        Assert.Equal((Season.Fall, 28), RewindSchedule.DateAt(0.0, Season.Fall));
-        Assert.Equal((Season.Spring, 1), RewindSchedule.DateAt(1.0, Season.Fall));
+    private static int Minutes(int clock) => clock / 100 * 60 + clock % 100;
+
+    [Fact]
+    public void The_light_goes_round_fifteen_times_across_the_scene()
+    {
+        // Two seconds a cycle over a thirty second pan. Each cycle is a sunrise and a sunset, so
+        // the valley lights and unlights itself fifteen times as the year comes undone.
+        const double totalMs = 30000.0, cycleMs = 2000.0;
+
+        int dawns = 0;
+        for (int ms = 1; ms <= (int)totalMs; ms++)
+        {
+            bool wasDawn = RewindSchedule.CycleClockAt(ms - 1, cycleMs, 2200, 1700) != 1700;
+            bool isDawn = RewindSchedule.CycleClockAt(ms, cycleMs, 2200, 1700) == 1700;
+            if (wasDawn && isDawn) dawns++;   // reached full daylight: the bottom of a triangle
+        }
+        Assert.Equal((int)(totalMs / cycleMs), dawns);
     }
 }
