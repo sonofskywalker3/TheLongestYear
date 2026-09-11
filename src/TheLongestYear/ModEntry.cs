@@ -363,6 +363,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
+            helper.ConsoleCommands.Add("tly_tiles", "Debug: print the tile index on every layer for a rectangle of the current map (tly_tiles x y [w] [h]). Diff two runs of it to find what the game swaps and when.", this.CmdTiles);
             helper.ConsoleCommands.Add("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1291,6 +1292,21 @@ namespace TheLongestYear
                 this.Monitor.Log("Load a save first.", LogLevel.Warn);
                 return;
             }
+            // The rewind cutscene's farmhouse beats are drawn menus, not vanilla Events, and their
+            // speech box is a plain object the scene forwards input to rather than the active menu.
+            // So neither the "no event" bail below nor the EndingSpeechBox branch further down can
+            // reach it, and headlessly the scene sat on its first line forever: the only way through
+            // was tly_skipscene, which jumps the whole beat and is why the middle of the scene had
+            // never been looked at. Step it here, before the event check.
+            if (Game1.activeClickableMenu is UI.RewindJunimoScene rewind)
+            {
+                rewind.receiveLeftClick(0, 0, false);
+                this.Monitor.Log(
+                    $"tly_eventstep: clicked the rewind scene's speech box on ({rewind.GetType().Name}).",
+                    LogLevel.Info);
+                return;
+            }
+
             StardewValley.Event evt = Game1.currentLocation?.currentEvent;
             if (evt == null)
             {
@@ -1337,6 +1353,53 @@ namespace TheLongestYear
                 box.transitioning = false;
                 box.receiveLeftClick(0, 0, false);
                 this.Monitor.Log("tly_eventstep: clicked the dialogue box on.", LogLevel.Info);
+            }
+        }
+
+        /// <summary>Debug: what art is actually on the map, per layer, for a rectangle of tiles.
+        /// Written to settle a question a screenshot alone could not (2026-09-11): the farmhouse
+        /// window is white in the morning and near-black at midnight, but the farmhouse's night
+        /// ambient is only 180/180/0, which cannot take a white pane to black, and the map reports no
+        /// NightTiles and no DayTiles property at all. Running this at both times says whether the
+        /// art changes or the light does.</summary>
+        private void CmdTiles(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            GameLocation loc = Game1.currentLocation;
+            if (loc?.map == null) { this.Monitor.Log("tly_tiles: no map.", LogLevel.Warn); return; }
+            if (args.Length < 2
+                || !int.TryParse(args[0], out int x0) || !int.TryParse(args[1], out int y0))
+            {
+                this.Monitor.Log("tly_tiles <x> <y> [width] [height]", LogLevel.Warn);
+                return;
+            }
+            int w = args.Length > 2 && int.TryParse(args[2], out int pw) ? pw : 3;
+            int h = args.Length > 3 && int.TryParse(args[3], out int ph) ? ph : 3;
+
+            this.Monitor.Log(
+                $"tly_tiles: '{loc.Name}' at ({x0},{y0}) {w}x{h}, timeOfDay={Game1.timeOfDay}, " +
+                $"ambient={Game1.ambientLight}, lightGlows={loc.lightGlows.Count}.",
+                LogLevel.Info);
+            foreach (xTile.Layers.Layer layer in loc.map.Layers)
+            {
+                var sb = new System.Text.StringBuilder($"tly_tiles:   {layer.Id}:");
+                for (int y = y0; y < y0 + h; y++)
+                {
+                    for (int x = x0; x < x0 + w; x++)
+                    {
+                        string cell;
+                        try
+                        {
+                            xTile.Tiles.Tile tile = x >= 0 && y >= 0 && x < layer.LayerWidth && y < layer.LayerHeight
+                                ? layer.Tiles[x, y]
+                                : null;
+                            cell = tile == null ? "-" : tile.TileIndex.ToString();
+                        }
+                        catch (System.Exception) { cell = "?"; }
+                        sb.Append(' ').Append($"({x},{y})={cell}");
+                    }
+                }
+                this.Monitor.Log(sb.ToString(), LogLevel.Info);
             }
         }
 
