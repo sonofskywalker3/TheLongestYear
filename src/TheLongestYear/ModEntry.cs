@@ -148,11 +148,12 @@ namespace TheLongestYear
             // UpdateTicked never subscribes (the pan would start and then never advance), and
             // RewindSpringPaint's per-tick hold never subscribes either (the paint would apply once
             // and immediately go stale, and never release).
-            UI.RewindJunimoScene.Register(helper);
+            UI.RewindJunimoScene.Register(this.Monitor, helper);
             Integration.RewindPanScene.Register(this.Monitor, helper, _meta, _config);
             Integration.RewindSpringPaint.Register(this.Monitor, helper);
             Integration.RewindNightPaint.Register(this.Monitor, helper);
             Integration.RewindNightLight.Register(this.Monitor, helper);
+            Integration.RewindBlackout.Register(this.Monitor, helper);
             // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires
@@ -1993,8 +1994,9 @@ namespace TheLongestYear
         /// weekly theme quest is complete and the drawback is suppressed) on the bottom.
         /// Positioned directly below the vanilla day/time/money box so it doesn't fight other
         /// HUD elements for screen space. Hidden when the player has toggled the HUD off
-        /// (<c>Game1.displayHUD</c>), during cutscenes (<c>Game1.eventUp</c>), or when the
-        /// mod-side toggle <see cref="GameplayConfig.ShowJpHud"/> is off.
+        /// (<c>Game1.displayHUD</c>), during cutscenes (<c>Game1.eventUp</c>), during the rewind
+        /// sequence (<see cref="Integration.RewindBlackout.HudSuppressed"/>), or when the mod-side
+        /// toggle <see cref="GameplayConfig.ShowJpHud"/> is off.
         /// </summary>
         private void DrawJpHud(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
         {
@@ -2003,6 +2005,11 @@ namespace TheLongestYear
             if (!_config.ShowJpHud) return;
             if (!Game1.displayHUD) return;
             if (Game1.eventUp) return;
+            // The rewind cutscene is not a moment to be reading a JP counter (Jeff, 2026-09-11:
+            // "The JP box shows but the clock and date don't. Hide the JP."). Vanilla's own HUD
+            // needs no help during the pan, which freezes controls, and Game1 skips drawHUD outright
+            // while that is set; this box draws from our own render hook and so has to be told.
+            if (Integration.RewindBlackout.HudSuppressed) return;
 
             long jp = _meta.State.JunimoPoints;
             // 2026-05-29 playtest: theme line removed. The current theme + lifted/active state
