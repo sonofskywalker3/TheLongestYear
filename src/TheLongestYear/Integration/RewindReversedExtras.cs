@@ -373,6 +373,49 @@ namespace TheLongestYear.Integration
             else { extra.Npc.faceDirection(Game1.up); extra.Npc.Sprite?.AnimateUp(time); }
         }
 
+        /// <summary>Re-picks every borrowed villager's clothes for the season that is on screen now,
+        /// without moving them.
+        ///
+        /// The pan rewinds the year under the camera, and the extras kept wearing whatever they had
+        /// on when the rewind started: "the villagers are in their clothes from the last season (fall
+        /// in this case) through the whole rewind, so it scans weird" (Jeff, 2026-09-11). Vanilla
+        /// picks an NPC's sprite from the <c>Appearance</c> list in <c>Data/Characters</c>, matching
+        /// on <c>location.GetSeason()</c> among other things, and <c>NPC.ChooseAppearance</c> does
+        /// that every time it is called with no caching, so calling it right after the season swap is
+        /// the whole change of clothes.
+        ///
+        /// The frame and position are put back around the call because choosing an appearance
+        /// replaces the sprite's texture, and an extra that blinked back to a standing frame in the
+        /// middle of its walk would undo the one thing this scene is for.</summary>
+        public static void RefreshAppearance()
+        {
+            var dressed = new List<string>();
+            foreach (Extra extra in Extras)
+            {
+                NPC npc = extra.Npc;
+                if (npc == null) continue;
+                try
+                {
+                    Vector2 position = npc.Position;
+                    int facing = npc.FacingDirection;
+                    int frame = npc.Sprite?.CurrentFrame ?? 0;
+                    npc.ChooseAppearance();
+                    npc.Position = position;
+                    npc.faceDirection(facing);
+                    if (npc.Sprite != null) npc.Sprite.CurrentFrame = frame;
+                    dressed.Add($"{npc.Name}={npc.Sprite?.Texture?.Name ?? "?"}");
+                }
+                catch (Exception ex)
+                {
+                    _monitor?.Log($"RewindReversedExtras: could not redress {npc.Name}: {ex.Message}", LogLevel.Trace);
+                }
+            }
+            if (dressed.Count > 0)
+                _monitor?.Log(
+                    $"RewindReversedExtras: dressed for {Game1.season}: {string.Join(", ", dressed)}.",
+                    LogLevel.Trace);
+        }
+
         /// <summary>Gives every borrowed villager back exactly where it was found. Idempotent and
         /// safe when nothing was borrowed.</summary>
         public static void Teardown()
