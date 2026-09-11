@@ -142,6 +142,14 @@ namespace TheLongestYear
             _meta = new MetaStore(helper.Data);
             GrandpaCandleCommand.Register(this.Monitor);
             Integration.EndingEventCommands.Register(this.Monitor, helper);
+            // Rewind cutscene (spec 2026-09-11-rewind-cutscene, task 7): REQUIRED WIRING for all
+            // three scenes the day-28 FAIL branch chains together. Without these, RewindBedroomScene's
+            // menu-steal teardown is dead code, RewindPanScene's own UpdateTicked never subscribes (the
+            // pan would start and then never advance), and RewindSpringPaint's per-tick hold never
+            // subscribes either (the paint would apply once and immediately go stale).
+            UI.RewindBedroomScene.Register(helper);
+            Integration.RewindPanScene.Register(this.Monitor, helper, _meta, _config);
+            Integration.RewindSpringPaint.Register(this.Monitor, helper);
             // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires

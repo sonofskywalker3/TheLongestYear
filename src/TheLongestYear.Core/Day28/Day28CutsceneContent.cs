@@ -6,10 +6,11 @@ namespace TheLongestYear.Core.Day28
     /// intentionally no cross-loop suppression (unlike the intro's HasSeenIntro).</summary>
     public static class Day28CutsceneContent
     {
-        /// <summary>Gate CLOSED: the year will rewind; the Junimo offers a head-start (JP shop
-        /// follows). <c>@</c> = player name; <c>#$b#</c> = dialogue-box page break; <c>$h</c> =
-        /// happy portrait pose (harmless on the portrait-less Junimo).</summary>
-        public static string FailDialogue => Strings.Get("cutscene.day28.fail");
+        // Gate CLOSED used to show a static "cutscene.day28.fail" card here. Retired 2026-09-11
+        // (spec 2026-09-11-rewind-cutscene, task 7): Day28CutsceneDriver now opens the played-out
+        // rewind sequence (RewindBedroomScene -> RewindPanScene -> RewindSpringPaint) for the FAIL
+        // branch instead of this menu, and that sequence's own bedroom beats 3/4
+        // (cutscene.rewind.junimo-3/4) carry the "we will rewind the year" beat this card used to.
 
         /// <summary>Gate OPEN: on track; roll into the next season (no shop).</summary>
         public static string ContinueDialogue => Strings.Get("cutscene.day28.continue");

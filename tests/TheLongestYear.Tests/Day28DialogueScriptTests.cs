@@ -53,19 +53,10 @@ public class Day28DialogueScriptTests
         Assert.Empty(Day28DialogueScript.ToPages(null!, "X"));
     }
 
-    [Fact]
-    public void Real_fail_dialogue_parses_to_clean_code_free_pages()
-    {
-        var pages = Day28DialogueScript.ToPages(Day28CutsceneContent.FailDialogue, "Rodger");
-        Assert.NotEmpty(pages);
-        Assert.All(pages, p =>
-        {
-            Assert.DoesNotContain("$", p);   // no pose codes
-            Assert.DoesNotContain("#", p);   // no break/markup leftovers
-            Assert.DoesNotContain("@", p);   // name substituted
-        });
-        Assert.Contains(pages, p => p.Contains("Rodger"));
-    }
+    // Real_fail_dialogue_parses_to_clean_code_free_pages was removed 2026-09-11 (spec
+    // 2026-09-11-rewind-cutscene, task 7) along with Day28CutsceneContent.FailDialogue and its
+    // backing key cutscene.day28.fail: the FAIL branch no longer shows this static card, it opens
+    // the rewind sequence instead (RewindBedroomScene -> RewindPanScene -> RewindSpringPaint).
 
     [Fact]
     public void Real_continue_dialogue_parses_to_clean_code_free_pages()
