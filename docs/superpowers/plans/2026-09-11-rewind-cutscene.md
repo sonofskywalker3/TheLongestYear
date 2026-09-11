@@ -436,10 +436,19 @@ git commit -m "rewind: the bedroom scene, beats 1 to 9"
 
 **Measured endpoints** (fill from Task 3, do not guess):
 
+Measured live on 2026-09-11 with `tly_townroute`:
+
 ```csharp
-private static readonly Point PanStart = new Point(/* Blacksmith door from tly_townroute */);
-private static readonly Point PanEnd   = new Point(/* Farm warp from tly_townroute */);
+// Clint's shop door, Town (94,81).
+private static readonly Point PanStart = new Point(94, 81);
+// The west-edge road out to the Bus Stop, Town (-1,53..55): the way to the farm, and the
+// "top left" of Jeff's brief relative to Clint's. x=0 rather than -1, which is off-map.
+private static readonly Point PanEnd   = new Point(0, 54);
 ```
+
+**Town has no warp targeting `Farm`.** The probe printed 16 doors and Town's full warp list: BusStop
+at (-1,53..55), Mountain along y=-1, Forest at (-1,89..93), Beach along y=110. The farm is reached
+through the Bus Stop, not from Town directly, so the pan's far end is that west-edge road.
 
 - [ ] **Step 1: Write the scene**
 
