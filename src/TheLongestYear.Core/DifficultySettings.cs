@@ -1,4 +1,4 @@
-namespace TheLongestYear.Core;
+﻿namespace TheLongestYear.Core;
 
 /// <summary>The ten configured difficulty modifiers, serialized into
 /// <see cref="GameplayConfig.Difficulty"/>. Each one is independent: there is no overall tier, so
@@ -47,17 +47,13 @@ public sealed class DifficultySettings
     /// <summary>How many items the Traveling Cart shows before any Cart Stall upgrade.</summary>
     public DifficultyStep CartSlots { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Scales the JP price of holding the board on a Fail night, and of accepting the
-    /// Junimos' pity offer. The first of each stays free at every step, because the curves start
-    /// at 0: the step makes REPEATED holds expensive, it does not tax the first mistake.</summary>
+    /// <summary>Scales the JP price of holding the board across a Fail-night reset. The first hold
+    /// stays free at every step, because the curve starts at 0: the step makes REPEATED holds
+    /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
-    // ---- Mercy ----
-
-    /// <summary>How readily the Junimos ease a season you keep failing. Extreme turns season
-    /// pity off entirely; the fail counting still runs, so dropping back to Normal resumes where
-    /// easing would have been.</summary>
-    public DifficultyStep SeasonPity { get; set; } = DifficultyStep.Normal;
+    // A Mercy section held SeasonPity, the step that scaled how readily the Junimos eased a
+    // season the player kept failing. Retired with the rest of season pity, 2026-09-11.
 
     /// <summary>True when every modifier is Normal, i.e. this build behaves exactly as a
     /// pre-difficulty build.</summary>
@@ -67,8 +63,7 @@ public sealed class DifficultySettings
            && ShrinePrices == DifficultyStep.Normal
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
-           && HoldPrices == DifficultyStep.Normal
-           && SeasonPity == DifficultyStep.Normal;
+           && HoldPrices == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
     /// the Vanilla post-pass, so the default Vanilla path keeps its current zero-write behaviour.
@@ -92,6 +87,5 @@ public sealed class DifficultySettings
         StartingGold = StartingGold,
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
-        SeasonPity = SeasonPity,
     };
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -149,7 +149,7 @@ namespace TheLongestYear.Loop
             // Standard set. Remixed re-rolls off the fresh uniqueIDForThisGame below.
             // Difficulty modifiers (spec 2026-08-26): resolve the ten configured steps ONCE, here,
             // and stamp the result on the save. Everything downstream -- board generation this
-            // reset, and the JP / price / cart / pity reads for the whole loop -- reads the stamp,
+            // reset, and the JP / price / cart reads for the whole loop -- reads the stamp,
             // which is what makes a GMCM change take effect at the NEXT reset rather than
             // mid-season. Stamped before the board is built, because the board is built from it.
             _meta.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
@@ -161,7 +161,7 @@ namespace TheLongestYear.Loop
                     $"JP {_meta.Difficulty.Steps.JpEarned}, prices {_meta.Difficulty.Steps.ShrinePrices}, " +
                     $"gold {_meta.Difficulty.Steps.StartingGold} ({_meta.Difficulty.StartingGold}g), " +
                     $"cart {_meta.Difficulty.Steps.CartSlots} ({_meta.Difficulty.StartingCartSlots} slots), " +
-                    $"holds {_meta.Difficulty.Steps.HoldPrices}, pity {_meta.Difficulty.Steps.SeasonPity}.",
+                    $"holds {_meta.Difficulty.Steps.HoldPrices}.",
                     LogLevel.Info);
 
             // The availability model's week mode is a function of the same step (item rarity is
@@ -604,6 +604,12 @@ namespace TheLongestYear.Loop
             // must behave like a reshuffle; BundleHold.ConsumeChoiceAtReset owns that rule.
             TheLongestYear.Core.BundleHold.ConsumeChoiceAtReset(_meta);
 
+            // Season pity was retired 2026-09-11. Jeff's migration rule: state already written to a
+            // save is left exactly as it is and cleared at the next loop, rather than dropped out
+            // from under the player on load. This is that next loop.
+            if (_meta.ClearRetiredSeasonPityState())
+                _monitor.Log("Reset: cleared the retired season-pity state carried by this save.", LogLevel.Info);
+
             if (vanillaBoard)
             {
                 // Vanilla mode: the board loadForNewGame just wrote IS the board. No engine write,
@@ -641,22 +647,20 @@ namespace TheLongestYear.Loop
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
-                PityTrim trim = BundleEngine.TrimFor(_meta);
-                GeneratedBundleSet generatedSet = engine.Generate(seed, trim);
+                GeneratedBundleSet generatedSet = engine.Generate(seed);
                 engine.WriteToWorld(generatedSet, _monitor);
                 // Persist exactly what was written (and the derived pins it was classified under)
                 // so later loads verify the live board against this instead of re-deriving from
                 // the seed; see MetaState.WrittenBoard.
                 _meta.WrittenBoard = new Dictionary<string, string>(generatedSet.ToBundleData());
                 _meta.WrittenBoardSeasonPins = TheLongestYear.Core.BoardRequirements.PinsToStored(engine.LastDerivedSeasonPins);
-                SeasonEase ease = SeasonPity.CurrentQuotaEase(_meta, _config);
                 _monitor.Log(
-                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}, " +
-                    $"pity trim {(trim == null ? "none" : $"{trim.Season} x{trim.Units}")}, pity ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps")}).",
+                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, " +
+                    $"consecutive holds {_meta.ConsecutiveHolds}).",
                     LogLevel.Info);
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
                 LastGeneratedRequirements = engine.BuildRequirements(
-                    generatedSet, _itemSeasonPins, _bundleQuotas, ease, AvailabilityModel);
+                    generatedSet, _itemSeasonPins, _bundleQuotas, AvailabilityModel);
             }
 
             // 11b. Gifts of the Junimos (kept bus, greenhouse, quarry bridge, boulder, minecarts):

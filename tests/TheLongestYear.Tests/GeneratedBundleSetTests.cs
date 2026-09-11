@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
@@ -165,7 +165,6 @@ public class GeneratedBundleSetTests
         var reqs = set.BuildRequirements(
             itemSeasonPins: new Dictionary<string, Season>(),
             bundleQuotas: new Dictionary<string, int[]>(),
-            ease: null,
             availability: model);
         var req = Assert.Single(reqs);
         Assert.Equal(Season.Spring, Assert.Contains("(O)b", req.StretchLines));

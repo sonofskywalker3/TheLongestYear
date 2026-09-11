@@ -1,3 +1,4 @@
+﻿using System.Collections.Generic;
 using System.Text.Json;
 using TheLongestYear.Core;
 using Xunit;
@@ -435,7 +436,7 @@ public class MetaStateDifficultyStampTests
                 {
                     StackSize = DifficultyStep.Hard,
                     JpEarned = DifficultyStep.Extreme,
-                    SeasonPity = DifficultyStep.Extreme,
+                    ShrinePrices = DifficultyStep.Easy,
                 },
                 cfg),
         };
@@ -446,9 +447,56 @@ public class MetaStateDifficultyStampTests
         Assert.NotNull(restored.Difficulty);
         Assert.Equal(1.5, restored.Difficulty!.StackFactor, 6);
         Assert.Equal(0.5, restored.Difficulty.JpEarnedFactor, 6);
-        Assert.False(restored.Difficulty.Pity.Enabled);
+        Assert.Equal(0.75, restored.Difficulty.ShrinePriceFactor, 6);
         Assert.Equal(DifficultyStep.Hard, restored.Difficulty.Steps.StackSize);
-        Assert.Equal(DifficultyStep.Extreme, restored.Difficulty.Steps.SeasonPity);
+        Assert.Equal(DifficultyStep.Easy, restored.Difficulty.Steps.ShrinePrices);
+    }
+}
+
+public class RetiredSeasonPityStateTests
+{
+    /// <summary>Jeff's migration rule (2026-09-11): pity state already on a save is left exactly as
+    /// it is and cleared at the NEXT loop, rather than dropped out from under the player on load.
+    /// The fields therefore still round-trip; only the reset wipes them.</summary>
+    [Fact]
+    public void A_save_that_already_has_pity_state_keeps_it_until_the_reset_clears_it()
+    {
+        var state = new MetaState
+        {
+            SeasonFailCounts = new List<int> { 7, 0, 2, 0 },
+            LastFailSeason = 2,
+            BoardTrimSeason = 2,
+            BoardTrimSteps = 4,
+            ConsecutivePityUses = 3,
+            BoardEaseSeason = 0,
+            BoardEaseSteps = 2,
+        };
+
+        string json = JsonSerializer.Serialize(state);
+        MetaState loaded = JsonSerializer.Deserialize<MetaState>(json)!;
+
+        // Untouched by the load.
+        Assert.Equal(new List<int> { 7, 0, 2, 0 }, loaded.SeasonFailCounts);
+        Assert.Equal(2, loaded.LastFailSeason);
+        Assert.Equal(4, loaded.BoardTrimSteps);
+        Assert.Equal(3, loaded.ConsecutivePityUses);
+        Assert.Equal(2, loaded.BoardEaseSteps);
+
+        Assert.True(loaded.ClearRetiredSeasonPityState());
+
+        Assert.Equal(new List<int> { 0, 0, 0, 0 }, loaded.SeasonFailCounts);
+        Assert.Equal(-1, loaded.LastFailSeason);
+        Assert.Equal(-1, loaded.BoardTrimSeason);
+        Assert.Equal(0, loaded.BoardTrimSteps);
+        Assert.Equal(0, loaded.ConsecutivePityUses);
+        Assert.Equal(-1, loaded.BoardEaseSeason);
+        Assert.Equal(0, loaded.BoardEaseSteps);
+    }
+
+    [Fact]
+    public void A_save_with_nothing_stamped_reports_nothing_to_clear()
+    {
+        Assert.False(new MetaState().ClearRetiredSeasonPityState());
     }
 }
 

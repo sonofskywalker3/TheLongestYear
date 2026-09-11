@@ -1,4 +1,4 @@
-using TheLongestYear.Core;
+﻿using TheLongestYear.Core;
 
 namespace TheLongestYear.Tests;
 
@@ -22,71 +22,6 @@ public class DifficultyResolverTests
         Assert.Equal(cfg.StartingMoney, p.StartingGold);
         Assert.Equal(CartSlotRules.MinSlots, p.StartingCartSlots);
         Assert.Equal(1.0, p.HoldPriceFactor);
-
-        Assert.True(p.Pity.Enabled);
-        Assert.Equal(cfg.PityThreshold, p.Pity.Threshold);
-        Assert.Equal(cfg.PityQuotaStep, p.Pity.QuotaStep, 6);
-        Assert.Equal(cfg.PityQuotaFloor, p.Pity.QuotaFloor, 6);
-        Assert.Equal(cfg.PityTrimPerStep, p.Pity.TrimPerStep);
-    }
-
-    [Fact]
-    public void Extreme_Pity_Is_Disabled_But_The_Baselines_Are_Preserved()
-    {
-        var cfg = new GameplayConfig();
-        var p = DifficultyResolver.Resolve(
-            new DifficultySettings { SeasonPity = DifficultyStep.Extreme }, cfg);
-
-        Assert.False(p.Pity.Enabled);
-        Assert.Equal(cfg.PityThreshold, p.Pity.Threshold);
-        Assert.Equal(cfg.PityQuotaFloor, p.Pity.QuotaFloor, 6);
-    }
-
-    /// <summary>A step can turn pity off, never on.</summary>
-    [Fact]
-    public void Pity_Disabled_In_Config_Stays_Disabled_At_Easy()
-    {
-        var cfg = new GameplayConfig { PityEnabled = false };
-        var p = DifficultyResolver.Resolve(
-            new DifficultySettings { SeasonPity = DifficultyStep.Easy }, cfg);
-
-        Assert.False(p.Pity.Enabled);
-    }
-
-    [Fact]
-    public void Hard_Pity_Starts_Later_And_Eases_Less()
-    {
-        var p = DifficultyResolver.Resolve(
-            new DifficultySettings { SeasonPity = DifficultyStep.Hard }, new GameplayConfig());
-
-        Assert.Equal(8, p.Pity.Threshold);          // 5 * 1.6
-        Assert.Equal(0.05, p.Pity.QuotaStep, 6);    // 0.10 * 0.5
-        Assert.Equal(0.75, p.Pity.QuotaFloor, 6);   // 1 - (1 - 0.5) * 0.5
-        Assert.Equal(1, p.Pity.TrimPerStep);        // 2 * 0.5
-    }
-
-    [Fact]
-    public void Easy_Pity_Starts_Sooner_And_Eases_Further()
-    {
-        var p = DifficultyResolver.Resolve(
-            new DifficultySettings { SeasonPity = DifficultyStep.Easy }, new GameplayConfig());
-
-        Assert.Equal(3, p.Pity.Threshold);          // 5 * 0.6
-        Assert.Equal(0.15, p.Pity.QuotaStep, 6);    // 0.10 * 1.5
-        Assert.Equal(0.40, p.Pity.QuotaFloor, 6);   // 1 - (1 - 0.5) * 1.2
-        Assert.Equal(3, p.Pity.TrimPerStep);        // 2 * 1.5
-    }
-
-    /// <summary>The trim can never round down to zero: a reshuffle-path ease that removed nothing
-    /// would be a silent no-op the player paid for.</summary>
-    [Fact]
-    public void Pity_Trim_Never_Rounds_Down_To_Zero()
-    {
-        var cfg = new GameplayConfig { PityTrimPerStep = 1 };
-        var p = DifficultyResolver.Resolve(
-            new DifficultySettings { SeasonPity = DifficultyStep.Hard }, cfg);
-
-        Assert.Equal(1, p.Pity.TrimPerStep);
     }
 
     [Theory]
