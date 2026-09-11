@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,9 +11,9 @@ namespace TheLongestYear.Core;
 /// biasing those weights up front shifts the sampled distribution with no edit to the sampler,
 /// to <see cref="BundleSlotFiller"/>, or to <see cref="AuthoredBundleComposer"/>.
 ///
-/// Hardness reuses <see cref="ItemHardness.Score"/>, the same 1-to-7 ranking the reshuffle-path
-/// pity trim uses (rarity tier 1-4, +2 when the domain needs a station or recipe, +1 when the
-/// item's earliest spawn season is Fall or Winter). A weight becomes
+/// Hardness reuses <see cref="ItemHardness.Score"/>, a 1-to-7 ranking (rarity tier 1-4, +2 when
+/// the domain needs a station or recipe, +1 when the item's earliest spawn season is Fall or
+/// Winter). A weight becomes
 /// <c>round(weight * bias^(score - 1))</c>, so a score-1 item is never moved and everything
 /// harder moves further the harder it is.
 ///

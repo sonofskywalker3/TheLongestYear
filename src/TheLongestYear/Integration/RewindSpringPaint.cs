@@ -1,4 +1,4 @@
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using TheLongestYear.Core;
@@ -8,7 +8,7 @@ namespace TheLongestYear.Integration
 {
     /// <summary>Beats 11 to 14 of the rewind cutscene (design 2026-09-11): paint versus state. Once
     /// <see cref="RewindPanScene"/> (beat 10) finishes, the screen must LOOK like Spring 1 from that
-    /// last frame through the day-28 FAIL choice, the pity dialogs and the Junimo Shrine shopping,
+    /// last frame through the day-28 FAIL choice and the Junimo Shrine shopping,
     /// until the player actually takes control and the clock starts. The real world reset does not
     /// have to happen during any of that; <see cref="TheLongestYear.Loop.WorldResetService"/> still
     /// runs where it always did (<c>WorldResetService.cs:419</c>) and reconciles everything for real,
@@ -37,8 +37,8 @@ namespace TheLongestYear.Integration
     ///
     /// AUDIT (step 3, spec's flagged risk): every hit of `Game1.season`, `Game1.dayOfMonth` or
     /// `Game1.timeOfDay` in src/TheLongestYear (grep below), checked against whether it can run
-    /// between the end of the pan and the player regaining control (the FAIL choice, the pity
-    /// re-asks, the Junimo Shrine and its Boosts/Plan tabs, the recipe-bank prompts):
+    /// between the end of the pan and the player regaining control (the FAIL choice, the Junimo
+    /// Shrine and its Boosts/Plan tabs, the recipe-bank prompts):
     ///
     ///   grep -rn "Game1.season\|Game1.dayOfMonth\|Game1.timeOfDay" src/TheLongestYear/ --include=*.cs
     ///
@@ -67,7 +67,7 @@ namespace TheLongestYear.Integration
     ///   checkEventPrecondition) runs as part of a location's normal tick, which RewindPanScene.cs's
     ///   own class comment notes vanilla gates off while a menu is up ("Game1.UpdateGameClock ...
     ///   runs unconditionally while no menu or minigame is up"), and this window is menu-dominated
-    ///   throughout (Day28CutsceneMenu, then the choice/pity dialogs, then ShrinePreviewMenu, then
+    ///   throughout (Day28CutsceneMenu, then the choice dialog, then ShrinePreviewMenu, then
     ///   the recipe-bank prompts, with TickShrineWatchdog immediately opening the next one); (2) even
     ///   in a one-frame gap between menus, the Spring-hold rule reading the painted Spring 1 would
     ///   suppress DemetriusCaveEventId exactly as it should once the real reset actually lands on

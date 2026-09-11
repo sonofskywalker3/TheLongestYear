@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -51,7 +51,7 @@ public static class BundlePoolRecipes
     /// A synthesized PoolItem also carries price 0 and no seasons, because the pools are the only
     /// place that data lives and by definition no pool knows this id. <see cref="ItemHardness"/>
     /// therefore ranks it Common (price 0 is below every rarity threshold) and gives it no
-    /// out-of-season bonus, so the pity trim drops it LAST. That is the intended direction: the
+    /// out-of-season bonus, so a hardness ranking places it LAST. That is the intended direction: the
     /// item is what vanilla itself asked for, so it is the safest thing in the list.</summary>
     private const int SynthesizedWeight = 1;
 

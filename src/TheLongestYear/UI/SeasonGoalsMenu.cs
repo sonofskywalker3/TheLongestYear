@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -54,7 +54,6 @@ namespace TheLongestYear.UI
         private readonly MetaState _meta;
         private readonly IReadOnlyList<BundleRequirement> _requirements;
         private readonly CoreSeason _season;
-        private readonly int _easeSteps;
 
         private List<BundleEntry> _entries = new();
         private int _scrollIndex;
@@ -67,7 +66,7 @@ namespace TheLongestYear.UI
         private string _hoverText = "";
 
         public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
-            IReadOnlyList<BundleRequirement> requirements, int easeSteps = 0)
+            IReadOnlyList<BundleRequirement> requirements)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _monitor = monitor;
@@ -75,7 +74,6 @@ namespace TheLongestYear.UI
             _meta = meta;
             _requirements = requirements ?? new List<BundleRequirement>();
             _season = run.Season;
-            _easeSteps = easeSteps;
 
             BuildEntries();
             RecomputeBoundsAndLayout();
@@ -362,39 +360,24 @@ namespace TheLongestYear.UI
             // text for "Strings.Get(\"key\", new Dictionary<string, string> { ... })" at each call
             // site: a shared variable passed by reference is invisible to that regex and would
             // make every key here report as having no call site.
+            // The "eased" half of this title reported season pity's ease steps; that system was
+            // retired 2026-09-11, so the title is now held or plain.
             bool held = _meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0;
-            bool eased = _easeSteps > 0 && _meta != null && _meta.BundlesGeneratedForReset >= 0;
             string season = SeasonName(_season);
             string day = _run.DayOfMonth.ToString();
             string holds = held ? _meta.ConsecutiveHolds.ToString() : "0";
-            string steps = _easeSteps.ToString();
-            string title = (held, eased) switch
-            {
-                (true, true) => Strings.Get("menu.goals.title-held-eased", new Dictionary<string, string>
+            string title = held
+                ? Strings.Get("menu.goals.title-held", new Dictionary<string, string>
                 {
                     ["season"] = season,
                     ["day"] = day,
                     ["holds"] = holds,
-                    ["steps"] = steps,
-                }),
-                (true, false) => Strings.Get("menu.goals.title-held", new Dictionary<string, string>
+                })
+                : Strings.Get("menu.goals.title", new Dictionary<string, string>
                 {
                     ["season"] = season,
                     ["day"] = day,
-                    ["holds"] = holds,
-                }),
-                (false, true) => Strings.Get("menu.goals.title-eased", new Dictionary<string, string>
-                {
-                    ["season"] = season,
-                    ["day"] = day,
-                    ["steps"] = steps,
-                }),
-                _ => Strings.Get("menu.goals.title", new Dictionary<string, string>
-                {
-                    ["season"] = season,
-                    ["day"] = day,
-                }),
-            };
+                });
             SpriteText.drawStringHorizontallyCenteredAt(b, title,
                 xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 

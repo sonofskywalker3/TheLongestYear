@@ -1,4 +1,4 @@
-using TheLongestYear.Core;
+﻿using TheLongestYear.Core;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -125,33 +125,19 @@ public class BundleHoldTests
         Assert.False(s.HoldChoiceMadeForReset);
     }
 
+    /// <summary>Season pity was retired 2026-09-11, and with it ConsumeChoiceAtReset's clearing of
+    /// the board trim and ease stamps. The stamps themselves are still declared on MetaState so an
+    /// existing save keeps its values untouched; the reset wipes them once, through
+    /// MetaState.ClearRetiredSeasonPityState.</summary>
     [Fact]
-    public void ConsumeChoiceAtReset_without_a_choice_clears_the_board_trim_stamp()
+    public void ConsumeChoiceAtReset_leaves_the_retired_pity_stamps_alone()
     {
-        var s = new MetaState { CompletedResets = 4, BoardTrimSeason = 0, BoardTrimSteps = 4 };
-        bool made = BundleHold.ConsumeChoiceAtReset(s);
-        Assert.False(made);
-        Assert.Equal(-1, s.BoardTrimSeason);
-        Assert.Equal(0, s.BoardTrimSteps);
-    }
-
-    [Fact]
-    public void ConsumeChoiceAtReset_without_a_choice_clears_the_ease_stamp()
-    {
-        var s = new MetaState { CompletedResets = 4, BoardEaseSeason = 0, BoardEaseSteps = 2 };
-        bool made = BundleHold.ConsumeChoiceAtReset(s);
-        Assert.False(made);
-        Assert.Equal(-1, s.BoardEaseSeason);
-        Assert.Equal(0, s.BoardEaseSteps);
-    }
-
-    [Fact]
-    public void ConsumeChoiceAtReset_with_a_choice_keeps_the_board_trim_stamp()
-    {
-        var s = new MetaState { CompletedResets = 4, BoardTrimSeason = 0, BoardTrimSteps = 4, HoldChoiceMadeForReset = true };
-        Assert.True(BundleHold.ConsumeChoiceAtReset(s));
+        var s = new MetaState { CompletedResets = 4, BoardTrimSeason = 0, BoardTrimSteps = 4, BoardEaseSeason = 0, BoardEaseSteps = 2 };
+        Assert.False(BundleHold.ConsumeChoiceAtReset(s));
         Assert.Equal(0, s.BoardTrimSeason);
         Assert.Equal(4, s.BoardTrimSteps);
+        Assert.Equal(0, s.BoardEaseSeason);
+        Assert.Equal(2, s.BoardEaseSteps);
     }
 
     /// <summary>Jeff's ruling 2026-08-27: all three sources can hold the current board. A vanilla
