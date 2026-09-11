@@ -151,6 +151,8 @@ namespace TheLongestYear
             UI.RewindJunimoScene.Register(helper);
             Integration.RewindPanScene.Register(this.Monitor, helper, _meta, _config);
             Integration.RewindSpringPaint.Register(this.Monitor, helper);
+            Integration.RewindNightPaint.Register(this.Monitor, helper);
+            Integration.RewindNightLight.Register(this.Monitor, helper);
             // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires

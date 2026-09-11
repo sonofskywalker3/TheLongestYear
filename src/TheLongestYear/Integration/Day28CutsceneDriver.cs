@@ -161,7 +161,11 @@ namespace TheLongestYear.Integration
             _monitor.Log(
                 $"Day-28 cutscene: opening the Fail rewind sequence (eventUp={Game1.eventUp}, " +
                 $"farmEvent=none, newDay={Game1.newDay}).", LogLevel.Info);
-            Game1.activeClickableMenu = new RewindBedroomScene(OnRewindBedroomComplete);
+            // rc.CurrentSeason, not Game1.season: day 28 is a season's last day, so the overnight
+            // transition has already rolled the global forward to the NEXT season by the time this
+            // driver runs. The bedroom needs the season that failed, both to paint the failed night
+            // over the HUD and to hand the pan its starting point (see OnRewindBedroomComplete).
+            Game1.activeClickableMenu = new RewindBedroomScene(rc.CurrentSeason, OnRewindBedroomComplete);
             _openedMenu = Game1.activeClickableMenu;
             _opened = true;
         }
