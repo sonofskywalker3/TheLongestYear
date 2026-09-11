@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Integration;
@@ -30,7 +31,14 @@ namespace TheLongestYear.UI
         /// four bedroom lines run 0, 1, 2, 3.</summary>
         private const int ClosingSpeaker = 0;
 
+        /// <summary>The pan's last two seconds fade the screen to black and it hands over on the
+        /// black frame, so this beat opens on black and fades up. Both halves happen inside one
+        /// synchronous step of the driver's hand-off, so there is never a lit frame between them.</summary>
+        private const float FadeInMs = 700f;
+
         protected override string JunimoNamePrefix => "TlyRewindMorningJunimo";
+
+        private float _fadeElapsed;
 
         public RewindMorningScene(Action onComplete)
             : base(onComplete)
@@ -48,8 +56,21 @@ namespace TheLongestYear.UI
         public override void update(GameTime time)
         {
             base.update(time);   // keeps the Junimos bobbing even after the line is done
+            _fadeElapsed += (float)time.ElapsedGameTime.TotalMilliseconds;
             if (Completed) return;
             ActiveBox?.update(time);
+        }
+
+        public override void draw(SpriteBatch b)
+        {
+            float alpha = 1f - MathHelper.Clamp(_fadeElapsed / FadeInMs, 0f, 1f);
+            if (alpha > 0f)
+            {
+                b.Draw(Game1.fadeToBlackRect,
+                    new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
+                    Color.Black * alpha);
+            }
+            base.draw(b);   // the speech box on top
         }
     }
 }
