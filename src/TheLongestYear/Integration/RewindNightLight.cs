@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -41,14 +41,20 @@ namespace TheLongestYear.Integration
     /// union-ed into <c>currentLightSources</c> on location entry, so removing them here holds.</summary>
     internal static class RewindNightLight
     {
-        /// <summary>Vanilla's own indoor night ambient (<c>GameLocation.indoorLightingNightColor</c>),
-        /// the colour the farmhouse would subtract on an ordinary late evening.</summary>
-        public static readonly Color NightAmbient = new Color(150, 150, 30);
+        /// <summary>Where the scene opens. This is <c>MineShaft</c>'s own dark-area lighting colour
+        /// (MineShaft.cs:656), the floors that need a lantern: the "cave darkness" the designer asked
+        /// for. The first pass used vanilla's ordinary indoor night ambient
+        /// (<c>indoorLightingNightColor</c>, 150/150/30) and the room stayed far too bright for the
+        /// Junimo pools to read against at all (playtest 2026-09-11: "I still can't see the light
+        /// until you turn on the cave darkness"). The pools have to be visible from the first
+        /// frame, so the room starts at cave dark rather than arriving there.</summary>
+        public static readonly Color NightAmbient = new Color(230, 200, 90);
 
-        /// <summary>The darkness at its deepest. Not a full 255 subtraction, so the room goes very
+        /// <summary>The darkness at its deepest, past even the deepest mine floor
+        /// (MineShaft.cs:688 is 237/212/185). Not a full 255 subtraction, so the room goes very
         /// dark rather than mathematically black and the Junimo pools still have something to sit
         /// on.</summary>
-        public static readonly Color DeepAmbient = new Color(238, 238, 228);
+        public static readonly Color DeepAmbient = new Color(245, 238, 225);
 
         private static IMonitor _monitor;
         private static bool _registered;
