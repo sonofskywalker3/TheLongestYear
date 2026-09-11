@@ -12,17 +12,29 @@ namespace TheLongestYear.Integration
         {
             helper.ConsoleCommands.Add(
                 "tly_townroute",
-                "Print Town's Blacksmith door tile and its Farm warp tile (debug: the rewind pan's endpoints).",
+                "Print every door tile in Town and every warp tile out of Town, with its target location (debug: source data for the rewind pan's endpoints).",
                 (_, _) =>
                 {
                     GameLocation town = Game1.getLocationFromName("Town");
                     if (town == null) { monitor.Log("tly_townroute: Town is not loaded.", LogLevel.Warn); return; }
 
+                    int doorCount = 0;
                     foreach (var door in town.doors.Pairs)
+                    {
+                        doorCount++;
                         monitor.Log($"tly_townroute: door at ({door.Key.X},{door.Key.Y}) -> {door.Value}", LogLevel.Info);
+                    }
+                    if (doorCount == 0)
+                        monitor.Log("tly_townroute: no doors found in Town.", LogLevel.Warn);
 
-                    foreach (Warp w in town.warps.Where(w => w.TargetName == "Farm"))
-                        monitor.Log($"tly_townroute: warp to Farm at ({w.X},{w.Y})", LogLevel.Info);
+                    int warpCount = 0;
+                    foreach (Warp w in town.warps)
+                    {
+                        warpCount++;
+                        monitor.Log($"tly_townroute: warp at ({w.X},{w.Y}) -> {w.TargetName}", LogLevel.Info);
+                    }
+                    if (warpCount == 0)
+                        monitor.Log("tly_townroute: no warps found in Town.", LogLevel.Warn);
                 });
         }
     }
