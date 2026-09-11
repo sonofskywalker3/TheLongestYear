@@ -43,14 +43,14 @@ namespace TheLongestYear.Integration
         /// for roughly this many tiles is what keeps that speed an ordinary walk.</summary>
         // Long enough that a person walking at an ordinary pace is still walking when the pan ends.
         // At the old fourteen the pathfinder returned routes of about thirty to forty-five tiles,
-        // which is a little over fifteen seconds of walking in a thirty-second shot, and the extras
-        // spent the second half of every pan walking back the way they came.
+        // which is a little over fifteen seconds of walking in a shot of twenty-five, and the extras
+        // spent the back half of every pan walking the way they had come.
         private const int PathfinderLimit = 900;
 
         /// <summary>Route lengths to try, in tiles, longest first. The long ones keep an extra
-        /// walking backwards for the whole thirty seconds at an ordinary pace; the short ones are
+        /// walking backwards for the whole pan at an ordinary pace; the short ones are
         /// the fallback for a start tile with nothing that far away.</summary>
-        private static readonly int[] RouteTileChoices = { 42, 30, 22, 14 };
+        private static readonly int[] RouteTileChoices = { 34, 26, 20, 14 };
 
         /// <summary>How far off the camera's line an extra starts, so they are scattered around the
         /// square rather than queued along one path.</summary>
@@ -240,18 +240,47 @@ namespace TheLongestYear.Integration
         private static List<NPC> Cast()
         {
             var cast = new List<NPC>();
+            var rejected = new List<string>();
             string spouse = Game1.player?.spouse;
             Utility.ForEachVillager(npc =>
             {
                 if (npc == null || npc is Child || npc is Horse || npc is Pet) return true;
+                if (!CanWalk(npc)) { rejected.Add(npc.Name); return true; }
                 if (!npc.IsVillager || npc.IsInvisible) return true;
                 if (spouse != null && npc.Name == spouse) return true;
                 if (npc.EventActor) return true;
                 cast.Add(npc);
                 return true;
             });
+            if (rejected.Count > 0)
+                _monitor?.Log(
+                    $"RewindReversedExtras: not borrowing {string.Join(", ", rejected)}; no walk cycle in their sprite sheet.",
+                    LogLevel.Trace);
             return cast;
         }
+
+        /// <summary>True when this villager's sprite sheet actually holds a walk cycle.
+        ///
+        /// <c>AnimatedSprite.framesPerAnimation</c> is 4 and the walk helpers this scene calls index
+        /// by direction off that: down is frames 0-3, right 4-7, up 8-11, left 12-15. A villager who
+        /// never walks in vanilla can ship a much shorter sheet, and asking for frame 12 of a sheet
+        /// that holds four runs the source rect clean off the texture. On screen that is a character
+        /// flickering and then drawing as a white block, which is what the weapon shop's Marlon did
+        /// during a pan (Jeff, 2026-09-11: "the weapon shop guy was blinking in and out, and was a
+        /// white box at some point"). Cheaper and more honest to not borrow them than to clamp the
+        /// animation and have them slide along on a single standing frame.</summary>
+        private static bool CanWalk(NPC npc)
+        {
+            StardewValley.AnimatedSprite sprite = npc?.Sprite;
+            Microsoft.Xna.Framework.Graphics.Texture2D texture = sprite?.Texture;
+            if (texture == null || sprite.SpriteWidth <= 0 || sprite.SpriteHeight <= 0) return false;
+            int frames = (texture.Width / sprite.SpriteWidth) * (texture.Height / sprite.SpriteHeight);
+            return frames >= WalkCycleFrames;
+        }
+
+        /// <summary>Frames a full four-direction walk cycle occupies: four directions at
+        /// <c>AnimatedSprite.framesPerAnimation</c> each.</summary>
+        private const int WalkCycleFrames = 16;
 
         /// <summary>Moves every extra along for this frame. <paramref name="elapsedMs"/> is the
         /// pan's own clock, so they walk at a steady pace regardless of what the camera is doing.</summary>
@@ -263,7 +292,7 @@ namespace TheLongestYear.Integration
 
                 // BACKWARDS, ONCE, FOR THE WHOLE PAN. This used to be a triangle along the route,
                 // walking back to the start and then forward again, because the routes were about
-                // fourteen tiles and the walk ran out long before the thirty seconds did. The turn
+                // fourteen tiles and the walk ran out long before the shot did. The turn
                 // was plainly visible: "the people are walking backwards and forwards across the
                 // same path, that's not what I want. Just backwards, on a path long enough that they
                 // can go backwards the whole time they're on screen" (Jeff, 2026-09-11).
@@ -272,7 +301,7 @@ namespace TheLongestYear.Integration
                 // the pan's own duration rather than a fixed tiles-per-second: every extra leaves the
                 // far end of its route at the first frame and arrives at the near end on the last
                 // one, so nobody turns round and nobody stands still waiting. The pace that falls out
-                // of that is the route's length over thirty seconds, which for the lengths the
+                // of that is the route's length over the pan's duration, which for the lengths the
                 // pathfinder returns here is an ordinary walking speed.
                 double progress = extra.DurationMs > 0.0
                     ? Math.Clamp(elapsedMs / extra.DurationMs, 0.0, 1.0)
