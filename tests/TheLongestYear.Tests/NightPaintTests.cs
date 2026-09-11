@@ -1,4 +1,4 @@
-using TheLongestYear.Core;
+﻿using TheLongestYear.Core;
 using TheLongestYear.Core.Rewind;
 using Xunit;
 
@@ -22,11 +22,14 @@ public class NightPaintTests
     }
 
     [Fact]
-    public void Values_read_three_in_the_morning()
+    public void Values_read_the_small_hours_in_the_encoding_the_clock_dial_understands()
     {
-        // Fiction, not simulation (Jeff, 2026-09-11): 3am leaves room for the player to have passed
-        // out elsewhere and been carried to bed.
-        Assert.Equal(300, NightPaint.Values(Season.Fall).TimeOfDay);
+        // Fiction, not simulation (Jeff, 2026-09-11): the small hours leave room for the player to
+        // have passed out elsewhere and been carried to bed. 2600 is 2am the way Stardew writes it;
+        // a literal 300 is read by the clock as three in the MORNING and draws the hand before
+        // sunrise.
+        Assert.Equal(2600, NightPaint.Values(Season.Fall).TimeOfDay);
+        Assert.True(NightPaint.Values(Season.Fall).TimeOfDay > 2400);
     }
 
     [Fact]
@@ -37,6 +40,8 @@ public class NightPaintTests
 
         Assert.NotEqual(night.Season, morning.Season);
         Assert.NotEqual(night.DayOfMonth, morning.DayOfMonth);
-        Assert.True(night.TimeOfDay < morning.TimeOfDay);
+        // Past midnight, so numerically LATER than the 6am wake even though it is earlier in the
+        // night: that is exactly the encoding the clock dial reads.
+        Assert.True(night.TimeOfDay > morning.TimeOfDay);
     }
 }
