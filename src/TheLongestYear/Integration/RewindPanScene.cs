@@ -101,6 +101,11 @@ namespace TheLongestYear.Integration
         private const int LightCycleDawnMargin = 100;   // below the hour the valley starts to darken
         private const double LightCycleMs = 2000.0;
 
+        /// <summary>The latest clock this scene will ever leave on the world. Vanilla passes the
+        /// farmer out at 2600 (Game1.cs:6021), so anything at or past it is a NewDay with a fuse on
+        /// it. See <see cref="Start"/>.</summary>
+        private const int LastSafeClock = 2550;
+
         // EndingEventCommands.PanToName's own centring math, reused by reflection instead of
         // reimplemented (see the class comment: this task touches only this one file).
         private static readonly MethodInfo ClampedCentreMethod = typeof(EndingEventCommands).GetMethod(
@@ -125,6 +130,7 @@ namespace TheLongestYear.Integration
         private static GameLocation _town;
         private static GameLocation _priorLocation;
         private static bool _priorFreezeControls, _priorViewportFreeze, _priorIsDebrisWeather;
+        private static bool _priorCanMove;
         private static StardewValley.Season _priorSeason;   // Game1.season's own type
         private static int _priorTimeOfDay;
         private static float _fadeAlpha;
@@ -201,6 +207,26 @@ namespace TheLongestYear.Integration
             Game1.currentLocation = _town;
             Game1.freezeControls = true;
             Game1.viewportFreeze = true;
+            // THE CLOCK MUST COME OFF 2am IN THIS CALL, not on the first Tick (bug found from a
+            // screenshot, 2026-09-11). The bedroom beat paints the failed night, which leaves
+            // Game1.timeOfDay at 2600, and vanilla passes the farmer out at 2am: Game1.cs:6021 runs
+            // "if (timeOfDay >= 2600 ... && activeClickableMenu == null) { player.startToPassOut();
+            // player.freezePause = 7000; }" every tick. All through the bedroom that branch was held
+            // off by the scene's own menu; the moment the scene finished and handed over to this pan,
+            // which deliberately owns NO menu, the branch fired on the very next frame. Seven seconds
+            // later the farmer passed out, the game ran a full NewDay ("Can't wake up in last sleep
+            // location 'Town'", then a save, then "starting spring 1 Y2"), the player was warped home
+            // and the thirty-second pan was over in four: "you never fixed the pan only lasting like
+            // 4 seconds" (Jeff, 2026-09-11).
+            //
+            // Start runs synchronously inside the bedroom menu's own update, so writing the clock
+            // here lands BEFORE that check next sees it. CanMove is the same guard from the other
+            // side: the branch also requires player.canMove, and the farmer is not walking anywhere
+            // during a camera pan. Both, because either one alone would put the whole beat back on
+            // one line holding.
+            Game1.timeOfDay = RewindSchedule.CycleClockAt(0.0, LightCycleMs, LightCycleDusk, DaylightTime());
+            _priorCanMove = Game1.player?.canMove ?? true;
+            if (Game1.player != null) Game1.player.CanMove = false;
             SetCentre(ClampedCentre(PanStart.X, PanStart.Y));
             // Open ON the season that just failed, which is _seasons[0]. Game1.season is NOT that
             // season here: day 28 is a season's last day, so the overnight transition has already
@@ -220,7 +246,7 @@ namespace TheLongestYear.Integration
             _town.updateSeasonalTileSheets();
             Gust();
 
-            RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd);
+            RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd, PanDurationMs);
         }
 
         /// <summary>True while the pan is running. The pan owns no menu, so this is the only way
@@ -291,6 +317,10 @@ namespace TheLongestYear.Integration
             // contribution out of the outdoorLight ramp below, which is one fewer thing moving
             // under the light cycle.
             Game1.gameTimeInterval = 0;
+            // Hold the 2am pass-out off for the whole beat, not just its first frame. See Start: the
+            // branch at Game1.cs:6021 is checked every tick, this scene has no menu to block it, and
+            // anything that puts the clock back past 2600 mid-pan would end the beat the same way.
+            if (Game1.player != null) Game1.player.CanMove = false;
             // The light. A sunrise-and-sunset loop on its own clock. Game1.UpdateGameClock
             // recomputes outdoorLight from timeOfDay every tick while no menu is up, so writing the
             // clock is the whole effect; this class does no tinting of its own.
@@ -415,8 +445,14 @@ namespace TheLongestYear.Integration
                     Game1.season = _priorSeason;
                     _town.updateSeasonalTileSheets();
                 }
-                Game1.timeOfDay = _priorTimeOfDay;
+                // Not past 2am, whatever it was. The clock this scene was handed IS 2600 (the
+                // bedroom's painted failed night), and putting that back on a world with no menu on
+                // it is the same pass-out trap Start documents: the abort path would hand the driver
+                // a farmer who collapses seven seconds later. One minute short of it is close enough
+                // for a path whose whole job is to leave the save usable.
+                Game1.timeOfDay = Math.Min(_priorTimeOfDay, LastSafeClock);
                 Game1.isDebrisWeather = _priorIsDebrisWeather;
+                if (Game1.player != null) Game1.player.CanMove = _priorCanMove;
                 Game1.freezeControls = _priorFreezeControls;
                 Game1.viewportFreeze = _priorViewportFreeze;
                 if (_priorLocation != null) Game1.currentLocation = _priorLocation;

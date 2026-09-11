@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
@@ -35,14 +35,20 @@ namespace TheLongestYear.Integration
         /// is still a shot of the town rather than of a crowd.</summary>
         private const int Count = 5;
 
-        /// <summary>Tiles a second. Vanilla walking pace is about three; this is deliberately just
-        /// under, because the thing that killed the first attempt at a walking villager was speed.</summary>
-        private const float TilesPerSecond = 2.5f;
-
         /// <summary>How long a route to ask the pathfinder for, in tiles, and how far it may search
-        /// before giving up. Short routes: these are people crossing the frame the camera happens to
-        /// be on, not travellers.</summary>
-        private const int RouteTiles = 14, PathfinderLimit = 400;
+        /// before giving up. The pace is not set here any more: each extra covers its own route once
+        /// across the pan's whole duration (see Tick), so the route length IS the speed, and asking
+        /// for roughly this many tiles is what keeps that speed an ordinary walk.</summary>
+        // Long enough that a person walking at an ordinary pace is still walking when the pan ends.
+        // At the old fourteen the pathfinder returned routes of about thirty to forty-five tiles,
+        // which is a little over fifteen seconds of walking in a thirty-second shot, and the extras
+        // spent the second half of every pan walking back the way they came.
+        private const int PathfinderLimit = 900;
+
+        /// <summary>Route lengths to try, in tiles, longest first. The long ones keep an extra
+        /// walking backwards for the whole thirty seconds at an ordinary pace; the short ones are
+        /// the fallback for a start tile with nothing that far away.</summary>
+        private static readonly int[] RouteTileChoices = { 42, 30, 22, 14 };
 
         /// <summary>How far off the camera's line an extra starts, so they are scattered around the
         /// square rather than queued along one path.</summary>
@@ -59,7 +65,8 @@ namespace TheLongestYear.Integration
             public int HomeFacing;
             public int HomeForceUpdateTimer;
             public Point[] Route;      // forward order: Route[0] is where a normal walk would start
-            public double Phase;       // where on the route this one begins, 0..1
+            public double Phase;       // kept for the placement scatter; the walk itself is paced off DurationMs
+            public double DurationMs;  // how long this extra has to cover its route, once, backwards
         }
 
         private static readonly List<Extra> Extras = new List<Extra>();
@@ -69,7 +76,7 @@ namespace TheLongestYear.Integration
         /// <summary>Borrows up to <see cref="Count"/> villagers and puts them on routes through the
         /// square. Safe to call when there are none to borrow, or when no route can be found: the
         /// pan runs on its other dials alone.</summary>
-        public static void Spawn(IMonitor monitor, GameLocation town, Point from, Point to)
+        public static void Spawn(IMonitor monitor, GameLocation town, Point from, Point to, float durationMs)
         {
             _monitor = monitor;
             _town = town;
@@ -93,6 +100,7 @@ namespace TheLongestYear.Integration
                     HomeForceUpdateTimer = npc.forceUpdateTimer,
                     Route = route,
                     Phase = i / (double)Math.Max(1, cast.Count),
+                    DurationMs = durationMs,
                 };
 
                 try
@@ -143,24 +151,31 @@ namespace TheLongestYear.Integration
 
             // Aim along the camera's line so the walks read as traffic heading the way the shot is
             // going, then let the pathfinder work out how a person actually gets there.
-            int dx = Math.Sign(to.X - from.X) * RouteTiles;
-            int dy = Math.Sign(to.Y - from.Y) * RouteTiles;
-            Point? end = NearestWalkable(town, new Point(start.Value.X + dx, start.Value.Y + dy))
-                         ?? NearestWalkable(town, new Point(start.Value.X - dx, start.Value.Y - dy));
-            if (end == null || end.Value == start.Value) return null;
+            // Longest first, then settle for less. Asking only for the long route dropped the cast
+            // from five to two, because most start tiles have nothing walkable that far along the
+            // camera's line; a shorter route walked slower is much better than an extra that never
+            // appears.
+            foreach (int reach in RouteTileChoices)
+            {
+                int dx = Math.Sign(to.X - from.X) * reach;
+                int dy = Math.Sign(to.Y - from.Y) * reach;
+                Point? end = NearestWalkable(town, new Point(start.Value.X + dx, start.Value.Y + dy))
+                             ?? NearestWalkable(town, new Point(start.Value.X - dx, start.Value.Y - dy));
+                if (end == null || end.Value == start.Value) continue;
 
-            try
-            {
-                Stack<Point> path = PathFindController.findPathForNPCSchedules(
-                    start.Value, end.Value, town, PathfinderLimit);
-                if (path == null || path.Count < 4) return null;
-                return path.ToArray();
+                try
+                {
+                    Stack<Point> path = PathFindController.findPathForNPCSchedules(
+                        start.Value, end.Value, town, PathfinderLimit);
+                    if (path == null || path.Count < 4) continue;
+                    return path.ToArray();
+                }
+                catch (Exception ex)
+                {
+                    _monitor?.Log($"RewindReversedExtras: pathfinder refused a route: {ex.Message}", LogLevel.Trace);
+                }
             }
-            catch (Exception ex)
-            {
-                _monitor?.Log($"RewindReversedExtras: pathfinder refused a route: {ex.Message}", LogLevel.Trace);
-                return null;
-            }
+            return null;
         }
 
         /// <summary>The nearest tile to <paramref name="wanted"/> a villager could stand on, searched
@@ -217,13 +232,23 @@ namespace TheLongestYear.Integration
             {
                 if (extra.Npc == null || extra.Route == null) continue;
 
-                // A triangle along the route: back to its start, then forward again, so an extra
-                // never runs off the end and never has to be respawned. The BACKWARD half is the
-                // one the scene is about; the forward half reads as the same footage rewinding on.
-                double tilesWalked = elapsedMs / 1000.0 * TilesPerSecond;
-                double laps = tilesWalked / Math.Max(1, extra.Route.Length - 1) + extra.Phase;
-                double within = laps % 2.0;
-                double along = within <= 1.0 ? 1.0 - within : within - 1.0;
+                // BACKWARDS, ONCE, FOR THE WHOLE PAN. This used to be a triangle along the route,
+                // walking back to the start and then forward again, because the routes were about
+                // fourteen tiles and the walk ran out long before the thirty seconds did. The turn
+                // was plainly visible: "the people are walking backwards and forwards across the
+                // same path, that's not what I want. Just backwards, on a path long enough that they
+                // can go backwards the whole time they're on screen" (Jeff, 2026-09-11).
+                //
+                // So the route is now asked to be long enough (RouteTiles) and the walk is paced off
+                // the pan's own duration rather than a fixed tiles-per-second: every extra leaves the
+                // far end of its route at the first frame and arrives at the near end on the last
+                // one, so nobody turns round and nobody stands still waiting. The pace that falls out
+                // of that is the route's length over thirty seconds, which for the lengths the
+                // pathfinder returns here is an ordinary walking speed.
+                double progress = extra.DurationMs > 0.0
+                    ? Math.Clamp(elapsedMs / extra.DurationMs, 0.0, 1.0)
+                    : 0.0;
+                double along = 1.0 - progress;
                 Place(extra, along);
                 Animate(extra, along, time);
             }
