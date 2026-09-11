@@ -49,18 +49,31 @@ namespace TheLongestYear.Integration
         /// until you turn on the cave darkness"). The pools have to be visible from the first
         /// frame, so the room starts at cave dark rather than arriving there.
         ///
-        /// DEEPER THAN THE MINE'S OWN 230/200/90, and the window is why. That colour leaves most of
-        /// the blue channel alone, and the farmhouse window's art is very nearly white, so it came
-        /// through a "dark" room as a lit blue pane: the brightest thing on screen at two in the
-        /// morning ("the sun is shining in the window, what's going on?", then "the window is still
-        /// white", 2026-09-11). It is not a glow and not a day/night art swap, both of which were
-        /// chased first and ruled out from the game itself: <c>tly_tiles</c> printed byte-identical
-        /// tile indices on every layer at 8am and at midnight, the map has neither a
-        /// <c>NightTiles</c> nor a <c>DayTiles</c> property, and the scene's own heartbeat logs
-        /// <c>lightGlows=0</c> with only its own seven lights in the table. The art is simply bright,
-        /// so the only lever left is how much light the room subtracts, and it has to subtract nearly
-        /// all of it. What pays for that is the Junimo pools, which do not go through the ambient:
-        /// the room is black and they are not.</summary>
+        /// DEEPER THAN THE MINE'S OWN 230/200/90, and the window is why.
+        ///
+        /// How vanilla darkens the farmhouse window, captured frame by frame at 4fps across a jump
+        /// to 10pm (2026-09-11), because two rounds of guessing at it were wrong. Three things make
+        /// the pane, and they go out in this order:
+        ///
+        /// 1. A <c>LightSource</c> at the window tile, <c>LightContext.WindowLight</c>, whose colour
+        ///    is <c>Color.Black</c>. Read that subtractively: it removes nothing, so it holds that
+        ///    patch of the lightmap at full brightness no matter how dark the ambient gets.
+        /// 2. Once <c>Game1.isTimeToTurnOffLighting</c> is true (<c>trulyDark - 100</c>, so 1900 in
+        ///    Spring), <c>LightSource.Draw</c> sets <c>fadeOut = 4</c> and takes 4 off the light's
+        ///    alpha every frame. Measured at the window: 255/255/251, then 232/232/251, then
+        ///    128/128/251 over about a second. Only red and green move, because vanilla's farmhouse
+        ///    night ambient is 180/180/0 and subtracts no blue at all.
+        /// 3. On the next ten-minute tick the light is dropped and <c>lightGlows</c> goes 1 to 0,
+        ///    and the blue finally collapses: 0/0/28, which is the black pane.
+        ///
+        /// This scene cannot play that fade, because it opens at 2am with the pane already lit and
+        /// the beat is seconds long. It reproduces the END state instead: the WindowLight goes with
+        /// every other foreign light (<see cref="StripForeignLights"/>), the glow goes every tick
+        /// (<see cref="StripLightGlows"/>), and the ambient has to finish the job. Vanilla's own
+        /// 180/180/0 would leave the room far brighter than this scene wants, so the ambient here is
+        /// deeper and the pane measures 0/0/0 against vanilla's 0/0/28. What pays for a room this
+        /// dark is the Junimo pools, which do not go through the ambient: the room is black and they
+        /// are not.</summary>
         public static readonly Color NightAmbient = new Color(243, 232, 210);
 
         /// <summary>The darkness at its deepest, past even the deepest mine floor
@@ -249,29 +262,19 @@ namespace TheLongestYear.Integration
             Game1.drawLighting = true;
         }
 
-        /// <summary>THE WHITE WINDOW. Not lighting, and not the window's art either: a light glow.
+        /// <summary>Drops the window glow, the white sprite <c>GameLocation.addLightGlows</c> paints
+        /// over the pane while the sun is up. It is half of the white window; the other half is the
+        /// WindowLight source that <see cref="StripForeignLights"/> takes, and
+        /// <see cref="NightAmbient"/> documents the whole sequence and how it was measured.
         ///
-        /// This took three rounds and a tile dump to pin down. The farmhouse window reads white in
-        /// the morning and near-black at midnight, so it looks like a day/night art swap, but the map
-        /// has no <c>NightTiles</c> and no <c>DayTiles</c> property at all, and <c>tly_tiles</c> run
-        /// at 8am and again at midnight printed byte-identical tile indices on every layer. The only
-        /// two things that changed were the ambient and the line <c>lightGlows=1</c> becoming
-        /// <c>lightGlows=0</c>.
-        ///
-        /// So the window tile is ALWAYS the dark pane, and the white is a glow sprite that
-        /// <c>GameLocation.addLightGlows</c> puts over it while the sun is up and that vanilla drops
-        /// at dusk. Glows are drawn with the world, before the lightmap is subtracted, but they are
-        /// drawn bright enough that no ambient this scene can reasonably use will take them down:
-        /// raising the ambient's blue far enough to dim the glow only turned the pane from white to
-        /// a lit blue and took the cave colour out of the rest of the room with it.
-        ///
-        /// Clearing them is what vanilla itself does on the way into a dark hour
-        /// (<c>switchOutNightTiles</c> ends with <c>lightGlows.Clear()</c>). It has to run every
-        /// tick rather than once at Begin, because furniture re-adds its own glows from
+        /// Every tick rather than once at Begin, because furniture re-adds its own glows from
         /// <c>Furniture.updateWhenCurrentLocation</c>, which runs every tick the room is current.
-        /// The morning beat deliberately does NOT do this: a white window is exactly right at 6am,
-        /// and Jeff said so ("The morning is supposed to have a white window, the night one should be
-        /// black").</summary>
+        /// Clearing them is exactly what vanilla does on the way into a dark hour:
+        /// <c>switchOutNightTiles</c> ends with <c>lightGlows.Clear()</c>.
+        ///
+        /// The morning beat deliberately does NOT do this. A white window is right at 6am, and the
+        /// designer said so: "The morning is supposed to have a white window, the night one should be
+        /// black."</summary>
         private static void StripLightGlows()
         {
             GameLocation loc = Game1.currentLocation;
