@@ -177,6 +177,22 @@ namespace TheLongestYear.Integration
             Game1.freezeControls = true;
             Game1.viewportFreeze = true;
             SetCentre(ClampedCentre(PanStart.X, PanStart.Y));
+            // Open ON the season that just failed, which is _seasons[0]. Game1.season is NOT that
+            // season here: day 28 is a season's last day, so the overnight transition has already
+            // rolled it forward to the NEXT one by the time this driver ever runs (which is exactly
+            // why Start is handed the failed season rather than reading the global). Without this,
+            // TickSeasons' increment-then-index only ever applied _seasons[1..] and the pan opened one
+            // season ahead: a Fall failure showed Winter, Summer, Spring and never Fall; a Winter
+            // failure opened in SPRING, the state it is rewinding to, then went forward to Fall; a
+            // Spring failure (no swaps at all) played the entire pan in Summer with no repaint. The
+            // headline beat read as backwards-then-forwards in every branch.
+            //
+            // Repaint, never seasonUpdate(): updateSeasonalTileSheets disposes and reloads the map's
+            // tilesheets under the current season key, where seasonUpdate would mutate terrain, crops
+            // and features. Spring is not a special case here; it repaints Town to Spring like any
+            // other, which is what makes a Spring failure look right instead of Summer-tinted.
+            Game1.season = (StardewValley.Season)(int)_seasons[0];
+            _town.updateSeasonalTileSheets();
             Gust();
 
             SpawnVillager();
@@ -222,7 +238,13 @@ namespace TheLongestYear.Integration
         /// <summary>Advances through <see cref="_swaps"/> with a while loop rather than a single if, so
         /// more than one swap crossed in the same tick (a very short pan, or a hitch) still lands every
         /// one of them instead of skipping. A Spring failure's empty <see cref="_swaps"/> makes the
-        /// loop condition false immediately: no division, no indexing, nothing happens.</summary>
+        /// loop condition false immediately: no division, no indexing, nothing happens (and the whole
+        /// pan therefore stays on the Spring that <see cref="Start"/> already applied).
+        ///
+        /// Increment-then-index is correct BECAUSE Start applies <c>_seasons[0]</c> itself: the season
+        /// at index _seasonIndex is always the one currently on screen, and crossing swap n moves to
+        /// _seasons[n]. _swaps has exactly one fewer entry than _seasons (RewindSchedule), so the last
+        /// swap lands on _seasons[Count - 1] and never runs off the end.</summary>
         private static void TickSeasons(double progress)
         {
             while (_seasonIndex < _swaps.Count && progress >= _swaps[_seasonIndex])
