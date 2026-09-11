@@ -95,7 +95,18 @@ Core means it is covered by the suite.
 - `RawShopPlacement(ShopId, LocationName)`: where a shop can be opened.
 - `RawLocationLink(From, To)`: one warp edge.
 - Seed to harvest, from `Data/Crops` (already keyed by seed id, so the seed is in hand).
-- Recipe output to ingredients, from `Data/CookingRecipes` and `Data/CraftingRecipes`.
+- Recipe output to ingredients, from `Data/CookingRecipes`. `Data/CraftingRecipes` stays out of
+  scope as a SOURCE RULE, unchanged: cooking covers the reported case, and this class never tries
+  to prove a craftable item unreachable. Its OUTPUT ids do feed the positive-proof set below
+  (fix round 1, 2026-09-10), which is a different thing: proof that an item is reachable, never
+  proof that one is not.
+- Every id the game spawns, from the forage, fish, crab-pot, monster-drop, geode-drop and
+  fruit-tree tables `GameDataPools` already reads, plus two sources added after a live run against
+  a real third-party pack wrongly condemned Driftwood and Rain Totem: the fishing trash ids
+  (`FishingTrashAvailability`'s range, which has no `Data/Locations` row of its own) and
+  `Data/CraftingRecipes` output ids (positive proof only, per above). Both are universally
+  obtainable items whose real source category had no representation on the reachable side until
+  these were added.
 
 **Output**: the set of qualified ids that are provably unreachable, plus a reason string per id for
 the log.
@@ -106,7 +117,13 @@ the log.
    today.
 2. Build the warp graph from the live locations at the game boundary.
 3. Flood-fill from the farm, refusing to enter any forbidden node.
-4. Every location the fill does not reach is out of reach, whatever it is called.
+4. Every location the fill does not reach is out of reach, whatever it is called, EXCEPT a
+   location with no warp edges at all, which is unknown rather than unreachable.
+
+**A map with no doors is not proof.** Verified in-game on 2026-09-10: `MovieTheater`,
+`WizardHouseBasement` and `LewisBasement` all load carrying zero warps, because they are entered by
+scripted actions rather than map warps. Condemning a location merely because we cannot see how it
+is entered would be inventing proof we do not have, so a zero-edge location is left reachable.
 
 **Doors that open during the year count as passable.** The bus to the Desert, the Rusty Key to the
 Sewer, the Steel Axe to the Secret Woods: the walk asks whether a map is connected to the world by
@@ -124,22 +141,41 @@ An item is unreachable when **every** known source of it is unreachable. Any unt
 leaves the item allowed. Sources are alternatives, so one reachable source is enough to keep an
 item on the board.
 
+- **Spawn (positive proof, overrides everything below)**: an item the game spawns somewhere
+  reachable, from the forage, fish, crab-pot, monster-drop, geode-drop or fruit-tree tables, the
+  fishing trash ids, or a `Data/CraftingRecipes` output id, is reachable full stop. Without this
+  rule, "every known source" would silently mean "every source this component happens to model",
+  and a forageable item that a mod also lists in an island shop would be condemned while its
+  perfectly good spawn never got a vote. Fishing trash and crafting outputs joined this list after
+  a live run against a real third-party pack wrongly condemned Driftwood and Rain Totem: both are
+  universally obtainable, and neither has a `Data/Locations` row (trash) or a source rule
+  (crafting is out of scope, see Inputs above), so nothing spoke for either before.
 - **Shop**: an item is bought if some shop lists it for sale. Unreachable if every such shop sits
-  in an unreachable location. `Data/Shops` entries carry `IsRecipe`, and a recipe listing teaches
+  in an unreachable location. **A shop with no discoverable placement keeps the item allowed**: the
+  Traveling Cart, the Night Market and festival vendors are opened from game code and have no
+  placement to find, so treating them as absent would let one island shop condemn an item the cart
+  sells every spring. `Data/Shops` entries carry `IsRecipe`, and a recipe listing teaches
   a recipe rather than selling the item, so only non-recipe listings count as a source of the item
   itself.
-- **Crop**: unreachable if its seed is unreachable.
-- **Cooked or crafted**: cooking is a source only if **both** the recipe can be learned **and**
-  every required ingredient is reachable. One impossible ingredient is enough to close this route,
-  and so is an unlearnable recipe.
-- **Recipe learnability**: a recipe is learnable if its `Data/CookingRecipes` unlock field names a
-  normal route (`default`, a skill level, the TV, or friendship with an NPC whose home is
-  reachable), or if some shop in a reachable location lists it with `IsRecipe`. A recipe whose
-  unlock is `none` and which is taught only by an unreachable shop cannot be learned.
+- **Crop**: unreachable if EVERY seed that yields it is unreachable. Several seeds can share one
+  harvest, so one reachable seed keeps the crop.
+- **Cooked**: cooking is a source only if **both** the recipe can be learned **and** every required
+  ingredient is reachable. One impossible ingredient is enough to close this route, and so is an
+  unlearnable recipe. Several recipes can produce one object, and one cookable route is enough.
+- **Recipe learnability**: only the LITERAL unlock value `none` counts as "no normal route".
+  Anything else, including an empty or missing field, is treated as learnable. Such a recipe is
+  unlearnable only when every shop teaching it (an `IsRecipe` listing) is unreachable.
 
-Recursive, with a visited set as a cycle guard and memoisation per generation. Category refs in
-recipes ("any milk") resolve the way `CookedDishAvailability` already resolves them: a category is
-unreachable only if every member is.
+  This is the one inference in the design that goes beyond strict proof, and it is safe because it
+  cannot touch vanilla. Verified against the live `Data/CookingRecipes` on 2026-09-10: all 81
+  vanilla recipes use `l` (34), `f` (36), `s` (9), `default` (1) or the literal string `null` (1,
+  Cookies, taught by Evelyn's event). **Not one uses `none`, and not one is empty.** The rule
+  therefore fires only on the mod pattern it was written for.
+
+Recursive, with a visited set as a cycle guard and memoisation per generation. A category ref in a
+recipe ("any milk") is satisfiable by many items, so it is treated as reachable and never
+condemns a dish. Expanding category members is deliberately out of scope: it could only ever make
+the rule condemn MORE, and the conservative direction is to condemn less.
 
 **Why learnability is not optional.** Five of The Fishmonger's eleven dishes (Baked Red Snapper
 Curry, Crispy Fish and Chips, Mouth Watering Fishburger, Fish Croquettes Aioli, Crispy Salmon
@@ -167,8 +203,26 @@ On save load, re-derive the unreachable set and walk the existing board. For any
 unreachable item, swap in a reachable one from the same pool, preserving the bundle's theme, slot
 count and quality asks.
 
+- **Host only.** `SaveLoaded` fires on multiplayer farmhands too, and mutating `NetWorldState`
+  from a peer races the host, so the whole repair is guarded on `Context.IsMainPlayer`.
+- **The Community Center's ingredient cache is refreshed after the write**, via
+  `CommunityCenter.refreshBundlesIngredientsInfo()`.
+
+  The original rationale for this was WRONG, and the correction is worth recording so nobody
+  reinstates the wrong reason. The adversarial review claimed the donation check reads the
+  `bundlesIngredientsInfo` cache, so a stale cache would make the game refuse the new ask. Verified
+  against the 1.6 decompile on 2026-09-10, that is not how it works: `bundlesIngredientsInfo` is
+  read only by `couldThisIngredienteBeUsedInABundle`, whose single caller is `InventoryMenu`
+  setting `GameMenu.bundleItemHovered`. The donation UI, `JunimoNoteMenu`, reads
+  `Game1.netWorldState.Value.BundleData` directly.
+
+  So the real consequence of skipping the refresh is a stale inventory hover glow, cosmetic rather
+  than blocking. The call stays because that glow is still wrong without it and the refresh is
+  cheap, but it is a polish fix, not a correctness one.
 - Slots already donated are left exactly as they are. A player who somehow has the item keeps
   credit for it.
+- If no suitable replacement exists, the slot is left alone and the failure logged. Never counted
+  as a repair.
 - The swap reuses the existing slot filler so a repaired slot is indistinguishable from a freshly
   generated one.
 - Repairs are logged per slot and counted in one summary line.
@@ -228,9 +282,20 @@ the swap, confirm donated slots survive, confirm a clean board is untouched.
 3. **Over-exclusion would be invisible and bad.** A bug in the walk could quietly strip real
    content. The conservative default limits the blast radius, and the diagnostics exist so it shows
    up in a log rather than as a confused player.
-4. **Performance.** One graph walk plus a memoised recursion per generation. Expected to be
+4. **Shop placement is weaker than it looks for unvisited maps.** A shop is placed either by an
+   `OpenShop` tile action or by its owning NPC's home and current location. The tile scan needs the
+   map's tile data, which is not loaded for a location the player has never visited, so in practice
+   the OWNER path does nearly all the real work. This matches what the pre-flight scan found: the
+   mod that prompted this feature opens its shop by talking to an NPC and adds no tile action at
+   all. The failure mode is an unplaced shop, which under the conservative rule leaves its items
+   allowed, so it fails safe.
+5. **Performance.** One graph walk plus a memoised recursion per generation. Expected to be
    negligible against the existing generation cost, but worth a timing check on a heavily modded
    setup.
+6. **A partial source graph is worse than none.** If reading shops, recipes or warps throws, the
+   result would look authoritative while missing exactly the alternative route that keeps an item.
+   Any failure in the reachability inputs disables the rule for that generation and logs a warning,
+   which restores the previous behaviour exactly.
 
 ## Verification of the original report
 

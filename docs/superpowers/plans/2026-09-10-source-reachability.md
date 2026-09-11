@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Target release **0.18**. Bump `src/TheLongestYear/manifest.json` `Version` on every commit (master is the release line). Add a `CHANGELOG.md` entry per version.
+- Target release **0.18**. **This work happens on a feature branch, so the manifest `Version` stays at its branch-point value of `0.17.15` and is NEVER bumped by a task.** The workspace rule is explicit: only the release line owns version bumps, because a `Version` line changed on two branches conflicts on every merge. Master sets `0.18.0` once, at merge time (Task 11). Accumulate changelog entries under a single `## Unreleased` heading at the top of `CHANGELOG.md`; Task 11 retitles it. (Controller ruling, 2026-09-10, reconciling the plan with the workspace CLAUDE.md.)
 - **Never push and never release without Jeff's explicit "yes".** Local commits only.
 - **No em dashes** in any string, log line, comment or doc. Purge on sight.
 - The test project references **only** `TheLongestYear.Core`. Anything needing `Game1` cannot be unit-tested, so put logic in Core and keep the mod-project layer a thin data reader.
@@ -114,12 +114,14 @@ tools/bridge.ps1 -Action send -Lines "tly_reset|tly_warpgraph"
 
 Expected: the same location and edge counts as step 4, give or take the farm rebuild. **If interiors are missing or the counts collapse, STOP and report to Jeff before continuing.** The design assumes this data exists at generation time; if it does not, the reachability walk must move to a later hook and the plan needs revising.
 
-- [ ] **Step 6: Bump version, changelog, commit**
+- [ ] **Step 6: Changelog and commit**
 
-Bump `manifest.json` to `0.17.16`. Add to `CHANGELOG.md`:
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
+
+Add to `CHANGELOG.md`:
 
 ```markdown
-## 0.17.16 - 2026-09-10
+## Unreleased
 
 2004 tests.
 
@@ -130,7 +132,7 @@ Bump `manifest.json` to `0.17.16`. Add to `CHANGELOG.md`:
 ```
 
 ```bash
-git add src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/ModEntry.cs CHANGELOG.md
 git commit -m "v0.17.16: tly_warpgraph diagnostic for reachability derivation"
 ```
 
@@ -166,7 +168,7 @@ public class ReachabilityGraphTests
 {
     private static readonly string[] Everything =
     {
-        "Farm", "Town", "Beach", "IslandSouth", "ShopBehindTheIsland", "Desert", "BusStop",
+        "Farm", "Town", "Beach", "IslandSouth", "FishmongerShop", "Desert", "BusStop",
     };
 
     private static readonly RawLocationLink[] Links =
@@ -176,7 +178,7 @@ public class ReachabilityGraphTests
         new("Town", "BusStop"),
         new("BusStop", "Desert"),
         new("Beach", "IslandSouth"),
-        new("IslandSouth", "ShopBehindTheIsland"),
+        new("IslandSouth", "FishmongerShop"),
     };
 
     private static bool IslandForbidden(string name) => name.Contains("Island", StringComparison.Ordinal);
@@ -191,9 +193,10 @@ public class ReachabilityGraphTests
     [Fact]
     public void Location_reachable_only_through_a_forbidden_place_is_unreachable()
     {
-        // The Fishmonger's shop: its one door leads to IslandSouth, and its name says nothing.
+        // The Fishmonger shop: its one door leads to IslandSouth, and its NAME matches no marker,
+        // which is the whole point. The real map is called VoidWitchCult.TheFishmonger_Fishmonger_GI_Inside.
         var unreachable = ReachabilityGraph.UnreachableLocations(Links, Everything, IslandForbidden);
-        Assert.Contains("ShopBehindTheIsland", unreachable);
+        Assert.Contains("FishmongerShop", unreachable);
     }
 
     [Fact]
@@ -216,9 +219,9 @@ public class ReachabilityGraphTests
     [Fact]
     public void Second_door_to_the_world_keeps_a_location_reachable()
     {
-        var links = new List<RawLocationLink>(Links) { new("ShopBehindTheIsland", "Town") };
+        var links = new List<RawLocationLink>(Links) { new("FishmongerShop", "Town") };
         var unreachable = ReachabilityGraph.UnreachableLocations(links, Everything, IslandForbidden);
-        Assert.DoesNotContain("ShopBehindTheIsland", unreachable);
+        Assert.DoesNotContain("FishmongerShop", unreachable);
     }
 
     [Fact]
@@ -241,6 +244,18 @@ public class ReachabilityGraphTests
         };
         var unreachable = ReachabilityGraph.UnreachableLocations(links, new[] { "Farm", "Town", "Beach" }, _ => false);
         Assert.Empty(unreachable);
+    }
+
+    [Fact]
+    public void Location_with_no_doors_at_all_is_unknown_not_unreachable()
+    {
+        // Verified in-game 2026-09-10: MovieTheater, WizardHouseBasement and LewisBasement are
+        // loaded with zero warps. A map with no doors is evidence of our ignorance about how it
+        // is entered, never proof that a player cannot get there.
+        var all = new[] { "Farm", "Town", "MovieTheater" };
+        var links = new[] { new RawLocationLink("Farm", "Town") };
+        var unreachable = ReachabilityGraph.UnreachableLocations(links, all, _ => false);
+        Assert.DoesNotContain("MovieTheater", unreachable);
     }
 
     [Fact]
@@ -353,8 +368,15 @@ public static class ReachabilityGraph
         }
 
         foreach (string name in known)
-            if (!visited.Contains(name))
-                unreachable.Add(name);
+        {
+            if (visited.Contains(name)) continue;
+            // A location with no doors at all was never proved unreachable, only never
+            // explained. Verified in-game 2026-09-10: MovieTheater, WizardHouseBasement and
+            // LewisBasement all load with zero warps because they are entered by scripted
+            // actions. Condemning them would be inventing proof we do not have.
+            if (!neighbours.ContainsKey(name) && !isForbidden(name)) continue;
+            unreachable.Add(name);
+        }
         return unreachable;
     }
 }
@@ -372,12 +394,14 @@ Expected: 8 passed.
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
 Expected: 2012 passed, 0 failed.
 
-- [ ] **Step 7: Bump version, changelog, commit**
+- [ ] **Step 7: Changelog and commit**
 
-Bump `manifest.json` to `0.17.17`. Changelog entry under `### Added`: "The groundwork for judging which places a run can reach by walking doors rather than matching map names."
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
+
+Changelog entry under `### Added`: "The groundwork for judging which places a run can reach by walking doors rather than matching map names."
 
 ```bash
-git add src/TheLongestYear.Core/Availability/ReachabilityGraph.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/ReachabilityGraphTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/Availability/ReachabilityGraph.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/ReachabilityGraphTests.cs CHANGELOG.md
 git commit -m "v0.17.17: ReachabilityGraph walks warps to find places a run cannot reach"
 ```
 
@@ -395,7 +419,8 @@ git commit -m "v0.17.17: ReachabilityGraph walks warps to find places a run cann
 - Produces:
   - `public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false);`
   - `public sealed record RawShopPlacement(string ShopId, string LocationName);`
-  - `public sealed class SourceReachability` with constructor `(IReadOnlySet<string> unreachableLocations, IReadOnlyList<RawShopListing> shopListings, IReadOnlyList<RawShopPlacement> shopPlacements, IReadOnlyList<RawCropEntry> crops, IReadOnlyList<RawRecipeEntry> recipes)`, method `bool IsUnreachable(string qualifiedItemId)`, property `IReadOnlyDictionary<string, string> Reasons`.
+  - `public sealed class SourceReachability` with constructor `(IReadOnlySet<string> unreachableLocations, IReadOnlyList<RawShopListing> shopListings, IReadOnlyList<RawShopPlacement> shopPlacements, IReadOnlyList<RawCropEntry> crops, IReadOnlyList<RawRecipeEntry> recipes, IReadOnlySet<string> reachableSpawnIds)`, method `bool IsUnreachable(string qualifiedItemId)`, property `IReadOnlyDictionary<string, string> Reasons`.
+  - `reachableSpawnIds` is POSITIVE proof: any id in it is reachable and no rule may condemn it. It carries every forage, fish, crab-pot, monster-drop, geode-drop and fruit-tree id whose source is not itself gated. Without it, "every known source" silently means "every source this class happens to model", which is not conservative: a forageable item also listed in an island shop would be condemned by the shop rule while its perfectly good spawn never got a vote.
   - Tasks 4 and 5 extend the same class; the constructor signature above is final, so build it now and leave the crop and recipe parameters unused until then.
 
 - [ ] **Step 1: Write the failing tests**
@@ -427,9 +452,11 @@ public class SourceReachabilityTests
         new(TownShop, TownMap),
     };
 
+    private static readonly IReadOnlySet<string> NoSpawns = new HashSet<string>(StringComparer.Ordinal);
+
     private static SourceReachability Build(params RawShopListing[] listings) => new(
         Unreachable, listings, Placements,
-        Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>());
+        Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), NoSpawns);
 
     [Fact]
     public void Item_sold_only_in_an_unreachable_shop_is_unreachable()
@@ -475,6 +502,28 @@ public class SourceReachabilityTests
     {
         var rule = Build(new RawShopListing("FishmongerSeed", IslandShop));
         Assert.True(rule.IsUnreachable("(O)FishmongerSeed"));
+    }
+
+    [Fact]
+    public void Item_with_a_reachable_spawn_is_never_condemned()
+    {
+        // A forageable or fishable item that a mod ALSO lists in an island shop must stay.
+        var spawns = new HashSet<string>(StringComparer.Ordinal) { "(O)Forageable" };
+        var rule = new SourceReachability(
+            Unreachable, new[] { new RawShopListing("(O)Forageable", IslandShop) }, Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), spawns);
+        Assert.False(rule.IsUnreachable("(O)Forageable"));
+    }
+
+    [Fact]
+    public void Unreachable_shop_plus_an_unplaced_shop_leaves_the_item_allowed()
+    {
+        // The Traveling Cart and festival vendors are opened from code, so they have no
+        // discoverable placement. An unplaced shop is an unknown, and unknown means allowed.
+        var rule = Build(
+            new RawShopListing("(O)Seed", IslandShop),
+            new RawShopListing("(O)Seed", "ShopNobodyPlaced"));
+        Assert.False(rule.IsUnreachable("(O)Seed"));
     }
 
     [Fact]
@@ -535,6 +584,7 @@ public sealed class SourceReachability
     private readonly IReadOnlySet<string> _unreachableLocations;
     private readonly Dictionary<string, List<RawShopListing>> _listingsByItem;
     private readonly Dictionary<string, List<string>> _shopLocations;
+    private readonly IReadOnlySet<string> _reachableSpawnIds;
     private readonly Dictionary<string, bool> _memo = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _reasons = new(StringComparer.Ordinal);
 
@@ -543,9 +593,11 @@ public sealed class SourceReachability
         IReadOnlyList<RawShopListing> shopListings,
         IReadOnlyList<RawShopPlacement> shopPlacements,
         IReadOnlyList<RawCropEntry> crops,
-        IReadOnlyList<RawRecipeEntry> recipes)
+        IReadOnlyList<RawRecipeEntry> recipes,
+        IReadOnlySet<string> reachableSpawnIds)
     {
         _unreachableLocations = unreachableLocations ?? new HashSet<string>(StringComparer.Ordinal);
+        _reachableSpawnIds = reachableSpawnIds ?? new HashSet<string>(StringComparer.Ordinal);
 
         _listingsByItem = new Dictionary<string, List<RawShopListing>>(StringComparer.Ordinal);
         foreach (RawShopListing listing in shopListings ?? Array.Empty<RawShopListing>())
@@ -586,6 +638,11 @@ public sealed class SourceReachability
     private bool Decide(string id, out string reason)
     {
         reason = "";
+
+        // Positive proof beats every condemning rule. An item that spawns somewhere reachable
+        // is reachable, whatever else also happens to list it.
+        if (_reachableSpawnIds.Contains(id)) return false;
+
         bool anySourceKnown = false;
 
         if (BoughtSomewhere(id, out bool shopUnreachable))
@@ -611,7 +668,16 @@ public sealed class SourceReachability
         {
             if (listing.IsRecipe) continue;       // teaches the recipe, does not sell the item
             anySale = true;
-            if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places)) continue;
+            if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places) || places.Count == 0)
+            {
+                // A shop nobody could place is an UNKNOWN route, not a closed one. The
+                // Traveling Cart, Night Market and festival vendors are opened from game code
+                // and have no discoverable placement, and mods open shops from dialogue and
+                // events. Skipping these would let one island shop condemn an item the cart
+                // sells every spring, so a single unplaced seller keeps the item allowed.
+                allUnreachable = false;
+                continue;
+            }
             foreach (string place in places)
             {
                 anyPlaced = true;
@@ -619,7 +685,6 @@ public sealed class SourceReachability
             }
         }
         if (!anySale) return false;
-        // A shop nobody placed tells us nothing, so the item keeps the benefit of the doubt.
         unreachable = anyPlaced && allUnreachable;
         return true;
     }
@@ -631,19 +696,19 @@ public sealed class SourceReachability
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 7 passed.
+Expected: 9 passed.
 
 - [ ] **Step 6: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2019 passed, 0 failed.
+Expected: 2022 passed, 0 failed.
 
-- [ ] **Step 7: Bump version, changelog, commit**
+- [ ] **Step 7: Changelog and commit**
 
-Bump to `0.17.18`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core/Availability/SourceReachability.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/Availability/SourceReachability.cs src/TheLongestYear.Core/ItemPoolModel.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.18: shop source rule, an item sold only where you cannot go is out of reach"
 ```
 
@@ -668,7 +733,7 @@ Append to `SourceReachabilityTests`:
 ```csharp
     private static SourceReachability WithCrops(
         IReadOnlyList<RawCropEntry> crops, params RawShopListing[] listings) => new(
-        Unreachable, listings, Placements, crops, Array.Empty<RawRecipeEntry>());
+        Unreachable, listings, Placements, crops, Array.Empty<RawRecipeEntry>(), NoSpawns);
 
     [Fact]
     public void Crop_whose_seed_is_unreachable_is_unreachable()
@@ -695,6 +760,38 @@ Append to `SourceReachabilityTests`:
             new RawShopListing("(O)FishmongerSeed", IslandShop),
             new RawShopListing("(O)FishmongerCrop", TownShop));
         Assert.False(rule.IsUnreachable("(O)FishmongerCrop"));
+    }
+
+    // BOTH orderings, deliberately. A single ordering only catches HALF the scalar bug: with the
+    // reachable seed last, a "last row wins" scalar dictionary keeps the reachable one and the test
+    // still passes, hiding exactly the defect it was written to catch. One test per ordering means
+    // a scalar fails whichever way the rows enumerate.
+    [Fact]
+    public void A_reachable_alternative_seed_rescues_the_crop_reachable_first()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Shared", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+            new RawCropEntry("(O)Shared", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+        };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Shared"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_seed_rescues_the_crop_reachable_last()
+    {
+        var crops = new[]
+        {
+            new RawCropEntry("(O)Shared", new[] { Season.Fall }, null, "(O)FishmongerSeed"),
+            new RawCropEntry("(O)Shared", new[] { Season.Spring }, null, "(O)ParsnipSeed"),
+        };
+        var rule = WithCrops(crops,
+            new RawShopListing("(O)FishmongerSeed", IslandShop),
+            new RawShopListing("(O)ParsnipSeed", TownShop));
+        Assert.False(rule.IsUnreachable("(O)Shared"));
     }
 
     [Fact]
@@ -730,28 +827,40 @@ public sealed record RawCropEntry(
 In `SourceReachability`, add a field, fill it in the constructor, and extend `Decide`:
 
 ```csharp
-    private readonly Dictionary<string, string> _seedByHarvest;
+    private readonly Dictionary<string, List<string>> _seedByHarvest;
 ```
 
 In the constructor, after the shop maps:
 
 ```csharp
-        _seedByHarvest = new Dictionary<string, string>(StringComparer.Ordinal);
+        // A LIST, not a single value: mods define several seeds yielding one harvest, and a
+        // scalar would let whichever row enumerated last erase a reachable alternative.
+        _seedByHarvest = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         foreach (RawCropEntry crop in crops ?? Array.Empty<RawCropEntry>())
         {
             if (crop?.HarvestItemId == null || string.IsNullOrEmpty(crop.SeedItemId)) continue;
-            _seedByHarvest[Qualify(crop.HarvestItemId)] = Qualify(crop.SeedItemId);
+            string harvest = Qualify(crop.HarvestItemId);
+            if (!_seedByHarvest.TryGetValue(harvest, out List<string>? seeds))
+                _seedByHarvest[harvest] = seeds = new List<string>();
+            string seed = Qualify(crop.SeedItemId);
+            if (!seeds.Contains(seed)) seeds.Add(seed);
         }
 ```
 
 In `Decide`, after the shop block:
 
 ```csharp
-        if (_seedByHarvest.TryGetValue(id, out string? seed))
+        if (_seedByHarvest.TryGetValue(id, out List<string>? seeds) && seeds.Count > 0)
         {
             anySourceKnown = true;
-            if (!IsUnreachable(seed)) return false;
-            reason = $"its seed {seed} is out of reach";
+            string? blockedSeed = null;
+            foreach (string seed in seeds)
+            {
+                if (!IsUnreachable(seed)) { blockedSeed = null; break; }   // one good seed is enough
+                blockedSeed ??= seed;
+            }
+            if (blockedSeed == null) return false;
+            reason = $"its seed {blockedSeed} is out of reach";
         }
 ```
 
@@ -762,21 +871,21 @@ In `src/TheLongestYear/Loop/GameDataPools.cs`, find where `RawCropEntry` is cons
 - [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 11 passed.
+Expected: 15 passed (9 from Task 3 plus 6 new).
 
 - [ ] **Step 7: Run the whole suite and build the mod**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2023 passed, 0 failed.
+Expected: 2028 passed, 0 failed.
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.` (close the game first if it is running)
 
-- [ ] **Step 8: Bump version, changelog, commit**
+- [ ] **Step 8: Changelog and commit**
 
-Bump to `0.17.19`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core src/TheLongestYear/Loop/GameDataPools.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core src/TheLongestYear/Loop/GameDataPools.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.19: crop seed rule, you cannot grow what you cannot plant"
 ```
 
@@ -801,7 +910,7 @@ Append to `SourceReachabilityTests`:
 ```csharp
     private static SourceReachability WithRecipes(
         IReadOnlyList<RawRecipeEntry> recipes, params RawShopListing[] listings) => new(
-        Unreachable, listings, Placements, Array.Empty<RawCropEntry>(), recipes);
+        Unreachable, listings, Placements, Array.Empty<RawCropEntry>(), recipes, NoSpawns);
 
     [Fact]
     public void Dish_with_an_unreachable_ingredient_is_unreachable()
@@ -843,6 +952,43 @@ Append to `SourceReachabilityTests`:
         Assert.False(rule.IsUnreachable("(O)Dish"));
     }
 
+    // BOTH orderings, for the same reason as the seed tests: with the cookable recipe last, a
+    // "last row wins" scalar dictionary keeps it and the test passes despite the bug.
+    [Fact]
+    public void A_reachable_alternative_recipe_rescues_the_dish_cookable_first()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, "s Farming 3"),
+            new RawRecipeEntry("(O)Dish", new[] { "(O)FishmongerSeed" }, "none"),
+        };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    [Fact]
+    public void A_reachable_alternative_recipe_rescues_the_dish_cookable_last()
+    {
+        var recipes = new[]
+        {
+            new RawRecipeEntry("(O)Dish", new[] { "(O)FishmongerSeed" }, "none"),
+            new RawRecipeEntry("(O)Dish", new[] { "(O)150" }, "s Farming 3"),
+        };
+        var rule = WithRecipes(recipes, new RawShopListing("(O)FishmongerSeed", IslandShop));
+        Assert.False(rule.IsUnreachable("(O)Dish"));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("null")]
+    public void Dish_with_an_empty_or_null_unlock_field_is_allowed(string unlock)
+    {
+        // Vanilla Cookies carries the literal string "null" and is taught by Evelyn's event.
+        var recipes = new[] { new RawRecipeEntry("(O)Cookies", new[] { "(O)150" }, unlock) };
+        var rule = WithRecipes(recipes);
+        Assert.False(rule.IsUnreachable("(O)Cookies"));
+    }
+
     [Fact]
     public void Recipe_cycles_terminate_and_do_not_condemn()
     {
@@ -866,18 +1012,24 @@ Expected: the five new tests fail (recipes are ignored, so nothing is condemned)
 Add fields and constructor wiring:
 
 ```csharp
-    private readonly Dictionary<string, RawRecipeEntry> _recipesByOutput;
+    private readonly Dictionary<string, List<RawRecipeEntry>> _recipesByOutput;
     private readonly HashSet<string> _inProgress = new(StringComparer.Ordinal);
 ```
 
 In the constructor:
 
 ```csharp
-        _recipesByOutput = new Dictionary<string, RawRecipeEntry>(StringComparer.Ordinal);
+        // A LIST for the same reason as the seeds: a reachable vanilla recipe and an
+        // unreachable mod recipe can produce the same object, and the last one written must not
+        // become the only one considered.
+        _recipesByOutput = new Dictionary<string, List<RawRecipeEntry>>(StringComparer.Ordinal);
         foreach (RawRecipeEntry recipe in recipes ?? Array.Empty<RawRecipeEntry>())
         {
             if (recipe?.OutputItemId == null) continue;
-            _recipesByOutput[Qualify(recipe.OutputItemId)] = recipe;
+            string output = Qualify(recipe.OutputItemId);
+            if (!_recipesByOutput.TryGetValue(output, out List<RawRecipeEntry>? list))
+                _recipesByOutput[output] = list = new List<RawRecipeEntry>();
+            list.Add(recipe);
         }
 ```
 
@@ -905,16 +1057,21 @@ Guard the recursion in `IsUnreachable`, right after the memo lookup:
 Extend `Decide`, after the crop block:
 
 ```csharp
-        if (_recipesByOutput.TryGetValue(id, out RawRecipeEntry? recipe))
+        if (_recipesByOutput.TryGetValue(id, out List<RawRecipeEntry>? recipeList) && recipeList.Count > 0)
         {
             anySourceKnown = true;
-            string? blocked = FirstUnreachableIngredient(recipe);
-            if (blocked != null)
-                reason = $"ingredient {blocked} is out of reach";
-            else if (!RecipeLearnable(id, recipe))
-                reason = "its recipe cannot be learned anywhere reachable";
-            else
-                return false;   // cooking is a live route
+            string? recipeReason = null;
+            foreach (RawRecipeEntry recipe in recipeList)
+            {
+                string? blocked = FirstUnreachableIngredient(recipe);
+                if (blocked != null)
+                    recipeReason ??= $"ingredient {blocked} is out of reach";
+                else if (!RecipeLearnable(id, recipe))
+                    recipeReason ??= "its recipe cannot be learned anywhere reachable";
+                else
+                    return false;   // one cookable route is enough
+            }
+            reason = recipeReason ?? "";
         }
 ```
 
@@ -942,7 +1099,12 @@ Add the helpers:
     private bool RecipeLearnable(string id, RawRecipeEntry recipe)
     {
         string unlock = (recipe.Unlock ?? "").Trim();
-        if (unlock.Length > 0 && !unlock.Equals("none", StringComparison.OrdinalIgnoreCase))
+        // Only the LITERAL string "none" is treated as "no normal route". Anything else,
+        // including an empty or missing field, counts as learnable. Verified against the live
+        // Data/CookingRecipes on 2026-09-10: all 81 vanilla recipes use l, f, s, default or the
+        // literal string "null", and NOT ONE uses "none" or an empty field. So this rule cannot
+        // touch vanilla cooking, and condemning an unparsed field would be inventing proof.
+        if (!unlock.Equals("none", StringComparison.OrdinalIgnoreCase))
             return true;
 
         if (!_listingsByItem.TryGetValue(id, out List<RawShopListing>? listings)) return false;
@@ -966,19 +1128,19 @@ Add the helpers:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter SourceReachabilityTests`
-Expected: 19 passed.
+Expected: 27 passed (15 from Tasks 3 and 4 plus 12 new; the two [Theory] blocks contribute 6 cases between them).
 
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2031 passed, 0 failed.
+Expected: 2040 passed, 0 failed.
 
-- [ ] **Step 6: Bump version, changelog, commit**
+- [ ] **Step 6: Changelog and commit**
 
-Bump to `0.17.20`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core/Availability/SourceReachability.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/Availability/SourceReachability.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.20: cooking rules, a dish needs both its ingredients and a learnable recipe"
 ```
 
@@ -1015,7 +1177,7 @@ Append to `SourceReachabilityTests`:
         var rule = new SourceReachability(
             Unreachable,
             new[] { new RawShopListing("(O)FishmongerSeed", IslandShop), new RawShopListing("(O)ParsnipSeed", TownShop) },
-            Placements, crops, Array.Empty<RawRecipeEntry>());
+            Placements, crops, Array.Empty<RawRecipeEntry>(), NoSpawns);
 
         ItemPools pools = ItemPoolBuilder.Build(
             crops, objects, Array.Empty<RawSpawnEntry>(), Array.Empty<RawSpawnEntry>(),
@@ -1093,14 +1255,14 @@ Expected: 1 passed.
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2032 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
+Expected: 2041 passed, 0 failed. **Every pre-existing test must still pass**: `reachability` defaults to null, so nothing else changes behaviour. If any existing test fails, the merge is too eager. Stop and investigate.
 
-- [ ] **Step 6: Bump version, changelog, commit**
+- [ ] **Step 6: Changelog and commit**
 
-Bump to `0.17.21`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear.Core/ItemPoolBuilder.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear.Core/ItemPoolBuilder.cs tests/TheLongestYear.Tests/SourceReachabilityTests.cs CHANGELOG.md
 git commit -m "v0.17.21: unreachable items are excluded from every pool"
 ```
 
@@ -1192,35 +1354,133 @@ Add the tile scan:
         }
 ```
 
-Also place shops by their owning NPC's current location, so a shop opened by talking to an NPC is covered:
+**The owner path is the important one, not the tile scan.** Verified against the real pack on
+2026-09-10: The Fishmonger's shop is opened by talking to Constance. It has an `Owners` list and the
+mod adds **no** `OpenShop` tile action anywhere. A tile scan alone finds nothing and the whole fix
+does nothing for the mod that prompted it. Vanilla shopkeepers live at their shop (Pierre at
+`SeedShop`, Willy at `FishShop`, Marnie at `AnimalShop`), so an owner's home is a sound placement.
+
+Collect owners while reading `Data/Shops` in step 1, in the same loop:
 
 ```csharp
-            foreach (NPC npc in Utility.getAllCharacters())
+            // shopId -> owner NPC names, for placing shops that are opened by talking to someone.
+            var shopOwners = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            // ... inside the Data/Shops loop, alongside the Items loop:
+                foreach (var owner in kv.Value.Owners ?? new List<StardewValley.GameData.Shops.ShopOwnerData>())
+                {
+                    if (string.IsNullOrEmpty(owner?.Name)) continue;
+                    if (!shopOwners.TryGetValue(kv.Key, out List<string> names))
+                        shopOwners[kv.Key] = names = new List<string>();
+                    if (!names.Contains(owner.Name)) names.Add(owner.Name);
+                }
+```
+
+Then place each shop at both its owner's home and its owner's current location. Both count, and a
+shop is only condemned when every placement is unreachable, so listing more places is the
+conservative direction:
+
+```csharp
+            foreach (KeyValuePair<string, List<string>> shop in shopOwners)
             {
-                if (npc?.currentLocation?.Name == null) continue;
-                foreach (string shopId in ShopIdsOwnedBy(npc.Name, shopOwners))
-                    shopPlacements.Add(new RawShopPlacement(shopId, npc.currentLocation.Name));
+                foreach (string ownerName in shop.Value)
+                {
+                    if (ownerName == "AnyOrNone" || ownerName == "None") continue;
+                    NPC npc = Game1.getCharacterFromName(ownerName);
+                    if (npc == null) continue;
+                    if (!string.IsNullOrEmpty(npc.DefaultMap))
+                        shopPlacements.Add(new RawShopPlacement(shop.Key, npc.DefaultMap));
+                    if (!string.IsNullOrEmpty(npc.currentLocation?.Name))
+                        shopPlacements.Add(new RawShopPlacement(shop.Key, npc.currentLocation.Name));
+                }
             }
 ```
 
-Build `shopOwners` from each `ShopData.Owners` entry's `Name` while reading `Data/Shops` in step 1.
+Check `ShopOwnerData`'s real property names and the `DefaultMap` property against the decompile
+before compiling. `DefaultMap` is the NPC's home map, which is what
+`Data/Characters`'s `Home` entry sets.
 
 - [ ] **Step 3: Construct the rule and pass it to the builder**
 
 Just before the `ItemPoolBuilder.Build` call:
 
 ```csharp
+            // Positive-reachability evidence: every id the game already told us spawns
+            // somewhere, from tables this method has ALREADY read. Without this, an item that
+            // is forageable AND listed in an island shop would be condemned by the shop rule
+            // while its perfectly good spawn never got a vote.
+            var reachableSpawnIds = new HashSet<string>(StringComparer.Ordinal);
+            void MarkSpawn(string rawId)
+            {
+                if (string.IsNullOrEmpty(rawId)) return;
+                reachableSpawnIds.Add(BundleParsing.NormalizeItemId(rawId));
+            }
+            foreach (RawSpawnEntry spawn in forage) MarkSpawn(spawn?.ItemId);
+            foreach (RawSpawnEntry spawn in fish) MarkSpawn(spawn?.ItemId);
+            foreach (RawMonsterDropEntry drop in drops) MarkSpawn(drop?.ItemId);
+            foreach (RawGeodeDropEntry drop in geodeDrops) MarkSpawn(drop?.ItemId);
+            foreach (RawFruitTreeEntry tree in fruitTrees)
+                foreach (string fruit in tree?.FruitItemIds ?? System.Array.Empty<string>())
+                    MarkSpawn(fruit);
+
             IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                 links, allLocations,
                 name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
             var reachability = new SourceReachability(
-                unreachablePlaces, shopListings, shopPlacements, crops, recipes);
+                unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds);
+            this.LastReachability = reachability;
             _monitor?.Log(
                 $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
                 LogLevel.Trace);
 ```
 
+**Fail open if any input read throws.** Every read above sits inside the existing `try` whose
+`catch` logs "pools may be partial". A partial source graph is far worse than no source graph: it
+looks authoritative while missing exactly the alternative route that would have kept an item. So
+wrap the shop, recipe and warp reads in their own `try`, and on ANY exception leave
+`LastReachability` null and pass null to the builder, which restores today's behaviour exactly:
+
+```csharp
+            SourceReachability reachability = null;
+            try
+            {
+                // ... the shop, recipe, warp and spawn reads above ...
+                reachability = new SourceReachability(
+                    unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds);
+            }
+            catch (System.Exception ex)
+            {
+                _monitor?.Log(
+                    $"Reachability derivation failed ({ex.GetType().Name}: {ex.Message}). " +
+                    "No item will be excluded for reachability this generation.",
+                    LogLevel.Warn);
+                reachability = null;
+            }
+            this.LastReachability = reachability;
+```
+
 and add `reachability` as the final argument to `ItemPoolBuilder.Build`.
+
+**Expose the instance.** Tasks 9 and 10 both need the same verdicts (the board repair and the
+dump), and rebuilding them would re-read every table and risk a different answer. Add to
+`GameDataPools`:
+
+```csharp
+        /// <summary>The reachability verdicts from the most recent <see cref="Build"/> on this
+        /// instance. Null before the first call. Held so the board repair and tly_dumpbundles
+        /// report exactly what the pools were built from, rather than re-deriving it.</summary>
+        public SourceReachability LastReachability { get; private set; }
+```
+
+Callers that need it must keep the `GameDataPools` instance rather than discarding it:
+
+```csharp
+        var dataPools = new GameDataPools(this.Monitor);
+        ItemPools pools = dataPools.Build(tuning, extraExcludedIds);
+        SourceReachability reachability = dataPools.LastReachability;
+```
+
+Update every existing `new GameDataPools(...).Build(...)` call site that later needs the verdicts.
+Call sites that do not need them may stay as they are.
 
 - [ ] **Step 4: Log what was dropped**
 
@@ -1240,7 +1500,7 @@ After the `Build` call, beside the existing pool-count log:
 Run: `dotnet build src/TheLongestYear/TheLongestYear.csproj`
 Expected: `Build succeeded.`
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: 2032 passed.
+Expected: 2041 passed.
 
 - [ ] **Step 6: Verify on a vanilla save that nothing is wrongly dropped**
 
@@ -1252,12 +1512,12 @@ tools/bridge.ps1 -Action send -Lines "tly_reset"
 
 Expected in the log: `Reachability: N of M locations out of reach` with N covering the island maps, and **`Reachability: 0 items kept off the board`** on an unmodded install. Cactus Fruit and every Desert item must still appear in the pools; check the pool counts against the previous run's log line. **A non-zero drop count on vanilla means the rule is over-eager. Stop and report.**
 
-- [ ] **Step 7: Bump version, changelog, commit**
+- [ ] **Step 7: Changelog and commit**
 
-Bump to `0.17.22`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear/Loop/GameDataPools.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/Loop/GameDataPools.cs CHANGELOG.md
 git commit -m "v0.17.22: read shops, recipes and warps so reachability runs on live game data"
 ```
 
@@ -1306,6 +1566,14 @@ Source data is in the extracted pack (re-extract from Nexus 16326 if the scratch
 
 Create `tests/TheLongestYear.Tests/FishmongerRegressionTests.cs`. Build the world (`Farm - Town - Beach - IslandSouth - GI_Inside`), mark `IslandSouth` forbidden via a marker predicate, list every seed and recipe in the island shop (recipes with `IsRecipe: true`, `unlock: "none"`), give each crop its seed, give the six modded-ingredient dishes an ingredient from the crop list and the five vanilla dishes only ids like `(O)150`, then assert:
 
+**Use the real ingredient lists, category refs included.** Task 5's review noted that no test yet
+exercises the category-ref skip in `FirstUnreachableIngredient`, because that task's fixtures had no
+category refs in them. This fixture closes that gap for free, because the real recipes are full of
+them: Crispy Fish and Chips is `-4` (any fish), `192`, `247`; Mouth Watering Fishburger is `-5` (any
+egg), `216`, `256`; Fish Croquettes Aioli is `-4`, `246`, `247`, `248`. Transcribe those ingredient
+lists as they actually are. A category ref must never condemn a dish, so these five must still drop
+via the learnability rule alone, which is exactly what the second assertion below checks.
+
 ```csharp
     [Fact]
     public void All_ten_crops_and_all_eleven_dishes_are_unreachable()
@@ -1338,14 +1606,14 @@ Create `tests/TheLongestYear.Tests/FishmongerRegressionTests.cs`. Build the worl
 - [ ] **Step 3: Run the tests to verify they pass**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter FishmongerRegressionTests`
-Expected: 3 passed. If the five all-vanilla dishes fail, the learnability rule from Task 5 is not firing; that is the whole point of this fixture.
+Expected: 3 passed (full suite 2044). If the five all-vanilla dishes fail, the learnability rule from Task 5 is not firing; that is the whole point of this fixture.
 
 - [ ] **Step 4: Run the whole suite, then commit**
 
-Bump to `0.17.23`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add tests/TheLongestYear.Tests/Fixtures/fishmonger_sources.json tests/TheLongestYear.Tests/FishmongerRegressionTests.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add tests/TheLongestYear.Tests/Fixtures/fishmonger_sources.json tests/TheLongestYear.Tests/FishmongerRegressionTests.cs CHANGELOG.md
 git commit -m "v0.17.23: regression fixture for the Fishmonger crops and dishes"
 ```
 
@@ -1355,11 +1623,48 @@ git commit -m "v0.17.23: regression fixture for the Fishmonger crops and dishes"
 
 **Files:**
 - Create: `src/TheLongestYear/Loop/BoardRepairService.cs`
+- Modify: `src/TheLongestYear.Core/BundleSlotFiller.cs` (add the `ReplacementFor` API below)
 - Modify: `src/TheLongestYear/ModEntry.cs` (call it from the existing `SaveLoaded` handler, after the availability model is built)
+- Test: `tests/TheLongestYear.Tests/BundleSlotFillerReplacementTests.cs`
 
 **Interfaces:**
-- Consumes: `SourceReachability` (Tasks 3 to 5), `BundleSlotFiller.Fill`, `BundleDataWriter`, `Game1.netWorldState.Value.BundleData`.
-- Produces: `internal sealed class BoardRepairService` with `public int RepairIfNeeded()`, returning the number of slots swapped.
+- Consumes: `SourceReachability` via `GameDataPools.LastReachability` (Task 7), `PoolDomainClassifier.Classify`, `BundleParsing`, `Game1.netWorldState.Value.BundleData`.
+- Produces:
+  - `BundleSlotFiller.ReplacementFor(...)` returning `PoolItem?` (signature below), the only new Core surface.
+  - `internal sealed class BoardRepairService` with `public int RepairIfNeeded()`, returning the number of slots swapped.
+
+**Three corrections from the plan review (2026-09-10), all verified against the code:**
+
+1. **`BundleSlotFiller.Fill` fills a WHOLE bundle** and its candidate picker is private. Calling it
+   on a live bundle fights the donated-slot rule, and calling it on a fabricated one-slot bundle
+   loses recipe-part identity, which breaks composite bundles like Dye and Field Research where
+   each slot belongs to a different part. **Add a narrow public Core API instead**, in
+   `BundleSlotFiller`, and list that file as Modified for this task:
+
+   ```csharp
+   /// <summary>One replacement candidate for a single slot of an existing bundle, drawn from the
+   /// same pool (and, for a Recipe bundle, the same PART) the slot came from, excluding everything
+   /// already asked for on the board. Null when nothing suitable exists, which the caller must
+   /// treat as "leave the slot alone", never as success.</summary>
+   public static PoolItem? ReplacementFor(
+       BundleSpec spec, int slotIndex, DomainMatch match, ItemPools pools,
+       BundleGenerationTuning tuning, Random rng, IReadOnlySet<string> avoid,
+       ItemAvailabilityModel? availability, PoolRecipe? knownRecipe)
+   ```
+
+2. **`SetBundleData` does not refresh the Community Center's ingredient cache.**
+   `CommunityCenter` builds `bundlesIngredientsInfo` separately, and donation checks read THAT.
+   Rewriting the board without refreshing it leaves the new ask on screen while the donation logic
+   still wants the old item. After the final write, call the CC's refresh
+   (`refreshBundlesIngredientsInfo`, verify the exact name in the decompile at
+   `StardewValley.Locations/CommunityCenter.cs`). Step 4 must physically donate the replacement to
+   prove it, not merely look at it.
+
+3. **Host only.** `SaveLoaded` fires on multiplayer farmhands too, and mutating `NetWorldState`
+   from a peer races the host. Guard the whole repair with `Context.IsMainPlayer`.
+
+Quality and stack are preserved from the old slot ONLY when the replacement can carry them: check
+`pools.QualityEligibleIds` before keeping a silver or gold ask, and fall back to quality 0.
 
 - [ ] **Step 1: Write the service**
 
@@ -1391,7 +1696,7 @@ internal sealed class BoardRepairService
 }
 ```
 
-Reuse `PoolDomainClassifier.Classify` to find the bundle's pool and `BundleSlotFiller`'s candidate selection so a repaired slot is indistinguishable from a freshly generated one. Write back with the same merge-and-upsert call the engine uses (`Game1.netWorldState.Value.SetBundleData`), one key at a time, and never remove a key.
+Use `PoolDomainClassifier.Classify` to find the bundle's domain and `BundleSlotFiller.ReplacementFor` (added above) to pick the replacement, so a repaired slot comes from the same pool and the same recipe part the original did. Write back with the same merge-and-upsert call the engine uses (`Game1.netWorldState.Value.SetBundleData`), one key at a time, and never remove a key. A null return from `ReplacementFor` means leave the slot exactly as it is and log that the ask could not be replaced; it is never counted as a repair.
 
 - [ ] **Step 2: Wire it into save load**
 
@@ -1406,17 +1711,35 @@ In `ModEntry`'s `SaveLoaded` handler, after `_availability` is built and the poo
                     LogLevel.Info);
 ```
 
+- [ ] **Step 2b: Write the Core tests for the new API**
+
+`ReplacementFor` is pure Core, so it is unit-testable: a slot whose pool has candidates returns one
+that is not in `avoid`; a slot whose pool is exhausted returns null; a Recipe bundle returns a
+candidate from the same part, not merely the same domain.
+
+Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj --filter BundleSlotFiller`
+
 - [ ] **Step 3: Verify on a clean board**
 
 Deploy, load the throwaway save, confirm the log says nothing about repairs and `tly_gatecheck` reports the same numbers as before the update. **A clean board must not be touched.**
 
 - [ ] **Step 4: Verify on a dirty board**
 
-Hand-write an unreachable id into one slot of the throwaway save's board (edit `BundleData` in the save XML while the game is closed, using an id the rule condemns), load, and confirm: the slot is swapped, the log names it, donated slots elsewhere are unchanged, and `tly_gatecheck` still passes.
+Hand-write an unreachable id into one slot of the throwaway save's board (edit `BundleData` in the
+save XML while the game is closed, using an id the rule condemns), load, and confirm all five:
 
-- [ ] **Step 5: Bump version, changelog, commit**
+1. the slot is swapped and the log names it,
+2. donated slots elsewhere are unchanged,
+3. `tly_gatecheck` still passes,
+4. **the replacement can actually be donated** (give yourself the item and hand it in). This is the
+   cache test: if the donation is refused, the ingredient cache was not refreshed,
+5. loading the same save a second time repairs nothing further (idempotent).
 
-Bump to `0.17.24`. Changelog under `### Fixed`, in player language:
+- [ ] **Step 5: Changelog and commit**
+
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
+
+Changelog under `### Fixed`, in player language:
 
 ```markdown
 - **Impossible asks are cleared from boards that already have them.** If a bundle on your current
@@ -1425,7 +1748,7 @@ Bump to `0.17.24`. Changelog under `### Fixed`, in player language:
 ```
 
 ```bash
-git add src/TheLongestYear/Loop/BoardRepairService.cs src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/Loop/BoardRepairService.cs src/TheLongestYear/ModEntry.cs CHANGELOG.md
 git commit -m "v0.17.24: repair boards that already carry unreachable asks"
 ```
 
@@ -1465,12 +1788,12 @@ After `AppendQuantityRules`, add `AppendReachability(sb, reachability)`:
 
 Deploy, run `tly_dumpbundles` on the vanilla install, confirm the new section reads "Nothing." Copy the file to `docs/engine-bundle-catalogue.md` (gitignored) so the repo copy stays current.
 
-- [ ] **Step 3: Bump version, changelog, commit**
+- [ ] **Step 3: Changelog and commit**
 
-Bump to `0.17.25`.
+Add the changelog entry under `## Unreleased`. Do NOT touch `manifest.json`.
 
 ```bash
-git add src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json CHANGELOG.md
+git add src/TheLongestYear/ModEntry.cs CHANGELOG.md
 git commit -m "v0.17.25: tly_dumpbundles lists what reachability kept off the board"
 ```
 
@@ -1494,11 +1817,11 @@ On the same run, confirm Cactus Fruit and the other Desert items are still in th
 - [ ] **Step 3: Run the full suite one more time**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj`
-Expected: all passing, roughly 2035.
+Expected: all passing. The running total after Task 8 is 2044, plus whatever Task 9's ReplacementFor tests add.
 
-- [ ] **Step 4: Roll the version to 0.18.0**
+- [ ] **Step 4: Roll the version to 0.18.0 (the ONLY step in the whole plan that touches manifest.json)**
 
-Set `manifest.json` to `0.18.0`. Fold every `0.17.16` through `0.17.25` changelog entry into one `## 0.18.0` section written in player language, leading with the player-visible fix and keeping the developer entries brief.
+Set `manifest.json` to `0.18.0` (it has sat at `0.17.15` for the whole branch). Retitle the accumulated `## Unreleased` changelog section to `## 0.18.0 - <date>`, rewriting it as one coherent section in player language: lead with the player-visible fix, keep the developer entries brief.
 
 - [ ] **Step 5: Update README and Nexus description together**
 

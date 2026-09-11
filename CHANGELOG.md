@@ -3,6 +3,51 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.0 - 2026-09-10
+
+2059 tests.
+
+### Fixed
+
+- **Bundles no longer ask for things this run cannot reach.** Reported by pitytheviolins:
+  with The Fishmonger installed, a Community Center bundle asked for a dish only Constance
+  sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no
+  way to complete that bundle. The game now traces every item back to where it actually comes
+  from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at
+  least one of those routes is somewhere this run can reach. An item with no known source at
+  all is left alone, so this only ever removes things proven unreachable, never guesses.
+- **A board you already have gets repaired, not just new ones.** If a bundle on your current
+  board is asking for something this run can never reach, it is swapped for something you can
+  actually get the next time you load that save. Anything you already donated stays donated.
+- **Driftwood, Rain Totem and Ostrich Egg were wrongly kept off a board that had The Fishmonger
+  installed, even though all three are freely obtainable.** The check above did not yet know
+  that fishing trash comes off the line in any water from day one, or that a craftable item is
+  reachable by definition, so a mod listing an item like these in an unreachable shop could tip
+  it the wrong way. All three are now confirmed reachable in a live re-run, closing that gap.
+  Found and fixed during live verification against the real reported mod, before this release
+  ever shipped.
+- **The bundle catalogue now says what got kept off the board and why**, instead of silently
+  listing candidates as if nothing had changed. This is a developer/debug tool
+  (`tly_dumpbundles`), not something players see in normal play.
+- **Final review before merge caught three more ways this same check was too strict.** A
+  recipe taught only by mail, an event, or a quest (no shop selling it at all) was being
+  treated as unlearnable instead of unknown; a recipe taught by both an unreachable shop and
+  one this mod can't place (the Traveling Cart, the Night Market, a festival vendor) was
+  outvoted by the one shop that could be placed; and crab-pot catches (Lobster, Crab, Cockle,
+  Mussel, Oyster, Shrimp, Snail, Periwinkle, Crayfish) had no source recorded for them at all,
+  the same gap Driftwood and Rain Totem fell through above. All three now count as reachable,
+  same direction as everything else in this release: never taking real content off a board,
+  only ever putting it back.
+
+### Added
+
+- A developer command (`tly_warpgraph`) for tracing which places a run can and cannot reach,
+  used to build and verify the fix above.
+- A regression test built from the exact case reported: The Fishmonger's 10 crop seeds and 11
+  dishes, all sold only on Ginger Island, are now provably kept off the board. Five of those
+  dishes use entirely ordinary ingredients and are only blocked because their recipe itself
+  can't be learned anywhere reachable, which an ingredient-only check would have missed.
+
 ## 0.17.15 - 2026-09-10
 
 2004 tests.
