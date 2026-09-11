@@ -185,7 +185,17 @@ namespace TheLongestYear.Integration
                 if (pages.Count == 0) { evt.CurrentCommand++; return; }
                 NPC actor = evt.getActorByName(name, out _) ?? Game1.getCharacterFromName(name);
                 Microsoft.Xna.Framework.Graphics.Texture2D portrait = null;
-                try { portrait = actor?.Portrait; }
+                // Optional third arg: a portrait asset to show instead of the speaker's own, for a
+                // face the actor never wears in the world (Morris_Dark at the end of scene 4).
+                if (ArgUtility.TryGet(args, 3, out string portraitAsset, out _, allowBlank: false))
+                {
+                    try { portrait = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>(portraitAsset); }
+                    catch (Exception ex)
+                    {
+                        monitor.Log($"{SayName}: could not load portrait '{portraitAsset}' ({ex.GetType().Name}); using {name}'s own.", LogLevel.Warn);
+                    }
+                }
+                try { portrait ??= actor?.Portrait; }
                 catch (Exception) { portrait = null; }
                 if (portrait == null)
                 {
