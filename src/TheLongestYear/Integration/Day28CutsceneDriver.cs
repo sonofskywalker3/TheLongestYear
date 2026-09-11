@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Xna.Framework;
@@ -19,13 +19,13 @@ namespace TheLongestYear.Integration
 {
     /// <summary>
     /// Opens the day-28 bedtime Junimo cutscene when <see cref="RunController.PendingCutscene"/> is
-    /// set, on a settled frame (see the timing comment inside <see cref="OnUpdateTicked"/> — that
+    /// set, on a settled frame (see the timing comment inside <see cref="OnUpdateTicked"/>: that
     /// window is load-bearing and untouched by the rewind sequence below). CONTINUE opens the
-    /// self-drawn <see cref="Day28CutsceneMenu"/> (not a vanilla Event — see that class for why),
+    /// self-drawn <see cref="Day28CutsceneMenu"/> (not a vanilla Event, see that class for why),
     /// unchanged. FAIL instead opens the rewind sequence (spec 2026-09-11-rewind-cutscene): the
     /// bedroom (<see cref="RewindBedroomScene"/>, beats 1-9) hands off to the Town pan
     /// (<see cref="RewindPanScene"/>, beat 10), which hands off to <see cref="RewindSpringPaint"/> and
-    /// the farmhouse morning beat (<see cref="RewindMorningScene"/>, beats 11-12) — every hand-off in
+    /// the farmhouse morning beat (<see cref="RewindMorningScene"/>, beats 11-12). Every hand-off in
     /// between is this driver's own job (<see cref="OnRewindBedroomComplete"/>,
     /// <see cref="OnRewindPanComplete"/>, <see cref="OpenRewindMorningBeat"/>). Either branch's last
     /// step runs <see cref="RunController.OnCutsceneEnded"/> (FAIL → shop+reset, CONTINUE → next
@@ -40,6 +40,10 @@ namespace TheLongestYear.Integration
         private bool _opened;
         private IClickableMenu _openedMenu;
         private bool _farmEventDeferLogged;
+        // I5: the morning beat (beats 11-12) is waiting for something else's menu to close before it
+        // opens. See OpenRewindMorningBeat.
+        private bool _pendingMorningBeat;
+        private bool _morningDeferLogged;
 
         public Day28CutsceneDriver(IMonitor monitor)
         {
@@ -47,7 +51,7 @@ namespace TheLongestYear.Integration
         }
 
         /// <summary>Subscribe once (from ModEntry.Entry). The RunController is built later on save
-        /// load, so it's resolved through a thunk — same pattern as the intro driver's launcher.</summary>
+        /// load, so it's resolved through a thunk, the same pattern as the intro driver's launcher.</summary>
         public void Attach(IModHelper helper, Func<RunController> runController, Func<SeasonTurnDriver> turnDriver = null)
         {
             _runController = runController;
@@ -66,13 +70,25 @@ namespace TheLongestYear.Integration
             {
                 _opened = false; // idle / re-arm for the next pending episode
                 _farmEventDeferLogged = false;
+                _pendingMorningBeat = false;
+                _morningDeferLogged = false;
                 return;
             }
 
             if (_opened)
             {
+                // I5: the pan finished onto somebody else's menu and the morning beat is queued
+                // behind it. Poll the same surface the initial open waits on rather than replacing
+                // whatever is there. The Spring 1 paint is already holding, so the deferred frames
+                // look right; only the Junimo beat is waiting.
+                if (_pendingMorningBeat)
+                {
+                    if (Game1.activeClickableMenu != null || Game1.eventUp || Game1.farmEvent != null) return;
+                    OpenRewindMorningBeat();
+                    return;
+                }
                 // Watchdog: our scene is gone but the branch is still pending, so its completion
-                // callback never ran — something replaced activeClickableMenu underneath us (vanilla's
+                // callback never ran, so something replaced activeClickableMenu underneath us (vanilla's
                 // showEndOfNightStuff → SaveGameMenu after a FarmEvent is the known case; the owl event
                 // pauses on the exact tick that opens the window, Nexus post faldans 2026-08-11). Re-arm
                 // so the scene reopens once the surface is clear instead of stranding the loop on a
@@ -81,7 +97,7 @@ namespace TheLongestYear.Integration
                 {
                     _monitor.Log(
                         $"Day-28 cutscene: the {rc.PendingCutscene} scene was replaced by " +
-                        $"{Game1.activeClickableMenu?.GetType().Name ?? "nothing"} before it finished — re-arming.",
+                        $"{Game1.activeClickableMenu?.GetType().Name ?? "nothing"} before it finished; re-arming.",
                         LogLevel.Warn);
                     _opened = false;
                     _openedMenu = null;
@@ -90,7 +106,7 @@ namespace TheLongestYear.Integration
             }
             if (!Context.IsWorldReady || Game1.currentMinigame != null) return;
             // Open as soon as the night-save / new-day sequence is done, but WHILE the wake-up fade
-            // is still dark — so the black cutscene takes over before the farmhouse fades into view
+            // is still dark, so the black cutscene takes over before the farmhouse fades into view
             // (2026-06-03 playtest: "it loads the new day, then blanks to the message"). A menu,
             // unlike a vanilla event, doesn't fight the engine's player placement, so we don't need
             // to wait for the fade to settle.
@@ -115,7 +131,7 @@ namespace TheLongestYear.Integration
                 return;                                            // let the save / new-day / FarmEvent finish first
             }
             // The post-FarmEvent warp is queued (locationRequest) until the fade completes, and
-            // showEndOfNightStuff runs from that warp — opening before it lands gets us clobbered.
+            // showEndOfNightStuff runs from that warp, so opening before it lands gets us clobbered.
             if (Game1.locationRequest != null) return;
             if (Game1.activeClickableMenu != null) return;         // don't stack on another menu
 
@@ -206,6 +222,8 @@ namespace TheLongestYear.Integration
                 LogLevel.Warn);
             _opened = false;
             _openedMenu = null;
+            _pendingMorningBeat = false;
+            _morningDeferLogged = false;
         }
 
         /// <summary>RewindPanScene's completion (beat 10 done). Two handoffs land here:
@@ -254,6 +272,33 @@ namespace TheLongestYear.Integration
         /// either: PendingCutscene is cleared by OnCutsceneEnded before the driver's next tick).</summary>
         private void OpenRewindMorningBeat()
         {
+            // I5: never clobber a menu that opened underneath the pan. The pan runs for eleven
+            // seconds with no menu of ours up and player control frozen but the rest of the engine
+            // ticking, so a SaveGameMenu, ShippingMenu or LevelUpMenu can legitimately be on screen
+            // when it ends. A bare assignment to activeClickableMenu drops that menu WITHOUT running
+            // its exitFunction, which is the exact bug class the open-path watchdog above was written
+            // for (a torn-down menu's exitFunction is how the reset itself gets continued). Defer
+            // instead: the queued check at the top of OnUpdateTicked reopens this the moment the
+            // surface is clear.
+            if (Game1.activeClickableMenu != null || Game1.eventUp || Game1.farmEvent != null)
+            {
+                _pendingMorningBeat = true;
+                _opened = true;
+                _openedMenu = null;   // nothing of ours to watch while we wait
+                if (!_morningDeferLogged)
+                {
+                    _morningDeferLogged = true;
+                    _monitor.Log(
+                        "Day-28 rewind: the pan ended with " +
+                        $"{Game1.activeClickableMenu?.GetType().Name ?? "an event"} on screen; deferring the " +
+                        "morning beat until it closes rather than replacing it.",
+                        LogLevel.Info);
+                }
+                return;
+            }
+
+            _pendingMorningBeat = false;
+            _morningDeferLogged = false;
             Action onComplete = () => _runController?.Invoke()?.OnCutsceneEnded();
             var scene = new RewindMorningScene(onComplete);
             Game1.activeClickableMenu = scene;
