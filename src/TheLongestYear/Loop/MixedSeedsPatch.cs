@@ -82,10 +82,10 @@ namespace TheLongestYear.Loop
             if (location == null) return;
             if (location is StardewValley.Locations.IslandLocation) return; // vanilla overrides island picks
 
-            StardewValley.Season season = location.GetSeason();
+            StardewValley.Season here = location.GetSeason();
             foreach ((StardewValley.Season s, string upgrade, string seedId) in Cultivations)
             {
-                if (s != season) continue;
+                if (s != here) continue;
                 if (!UpgradeChecker.HasUpgrade(upgrade)) break;
                 if (Game1.random.NextDouble() < SubstitutionChance) __result = seedId;
                 break;
