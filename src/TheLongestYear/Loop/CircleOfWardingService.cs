@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -11,11 +11,18 @@ using TheLongestYear.Core.Sabotage;
 namespace TheLongestYear.Loop
 {
     /// <summary>Circle of Warding (Jeff, 2026-09-09): a 3x3 rug the Junimos charge for the player,
-    /// bought at the shrine up to three times on an escalating ladder. Whatever stands on its nine
-    /// tiles is beyond the darkness's reach: crops there never blight, chests there never spoil or
-    /// lose a thing. Placeable anywhere, indoors or out, so where the circles go is the player's
-    /// storage plan. Owned circles are re-granted every loop (the reset wipes the world and the
-    /// inventory), and the count is kept exact the way the books are.</summary>
+    /// bought at the shrine up to three times on an escalating ladder. Chests standing on its nine
+    /// tiles are beyond the darkness's reach: they never spoil and never lose a thing. Placeable
+    /// anywhere, indoors or out, so where the circles go is the player's storage plan. Owned circles
+    /// are re-granted every loop (the reset wipes the world and the inventory), and the count is
+    /// kept exact the way the books are.
+    ///
+    /// CHESTS ONLY, as of 2026-09-11. It warded crops too, and a rug cannot share a tile with a crop
+    /// in any way that plays: it draws beneath tilled soil, the watering can picks the rug up instead
+    /// of watering the seed under it, and once a seed is in the ground the rug will not go back down
+    /// on that tile or next to it. Jeff, having tried the whole sequence: "so let's just make it for
+    /// chests, ok?" <see cref="BlightPass"/> no longer asks about circles at all; only
+    /// <see cref="SpoilagePass"/> does.</summary>
     internal sealed class CircleOfWardingService
     {
         internal const string CircleId = "sonofskywalker3.TheLongestYear_CircleOfWarding";

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewValley;
@@ -21,10 +21,12 @@ namespace TheLongestYear.Loop
             var tiles = new List<Vector2>();
             Farm farm = Game1.getFarm();
             if (farm == null) return tiles;
-            var circles = CircleOfWardingService.ProtectedTiles();
+            // No Circle of Warding exemption here any more: the circle wards CHESTS, not crops. A
+            // rug and a crop cannot share a tile in any way that plays (Jeff, 2026-09-11): the rug
+            // draws under tilled soil, the watering can picks the rug up instead of watering, and
+            // once a seed is in the ground the rug will not go back down on it or beside it.
             foreach (KeyValuePair<Vector2, TerrainFeature> pair in farm.terrainFeatures.Pairs)
-                if (pair.Value is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value
-                    && !CircleOfWardingService.Covers(circles, farm, pair.Key))
+                if (pair.Value is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value)
                     tiles.Add(pair.Key);
             tiles.Sort((a, b) => a.Y != b.Y ? a.Y.CompareTo(b.Y) : a.X.CompareTo(b.X));
             return tiles;

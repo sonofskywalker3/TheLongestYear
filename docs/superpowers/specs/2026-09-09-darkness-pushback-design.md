@@ -166,10 +166,17 @@ No reach requirement. Shrine prices scale with the difficulty dial like every ot
 is clean so there is no Spring ward. A field ward covers crops in the ground; chest loss in that
 season still happens.
 
-**Circle of Warding (Jeff, 2026-09-09).** A 3x3 rug-type furniture (custom row in Data/Furniture,
-`assets/circle_of_warding.png`, a placeholder magic-circle sprite), placeable indoors or out. The
-nine tiles under it are beyond the darkness: crops there never blight, chests there never spoil
-or lose anything. Up to three on the ladder above. Owned circles are granted on purchase and
+**Circle of Warding (Jeff, 2026-09-09; chests only from 2026-09-11).** A 3x3 rug-type furniture
+(custom row in Data/Furniture, `assets/circle_of_warding.png`, a placeholder magic-circle sprite),
+placeable indoors or out. Chests on its nine tiles are beyond the darkness: they never spoil and
+never lose anything.
+
+It warded crops too until Jeff played the whole sequence through on 2026-09-11 and found a rug and
+a crop cannot share a tile in any way that plays. The rug draws beneath tilled soil; the watering
+can picks the rug up instead of watering the seed under it; and once a seed is in the ground the
+rug will not go back down on that tile or on one beside it. Vanilla is consistent here rather than
+buggy (`Hoe.DoFunction` refuses any tile `IsTileOccupiedBy` reports furniture on, passable or not),
+so the feature moved rather than the engine. Crop protection remains the Ward of the Fields' job. Up to three on the ladder above. Owned circles are granted on purchase and
 re-granted every loop; the count is kept exact across the world, the inventory and chests
 (`CircleOfWardingService.Reconcile`, the books' idiom). Where the circles go is the player's
 storage plan, which is the point.
