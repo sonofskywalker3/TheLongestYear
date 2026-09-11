@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,6 +6,7 @@ using StardewValley;
 using StardewValley.Characters;
 using TheLongestYear.Core;
 using TheLongestYear.Integration;
+using CoreSeason = TheLongestYear.Core.Season;
 
 namespace TheLongestYear.UI
 {
@@ -14,17 +15,29 @@ namespace TheLongestYear.UI
     /// white as they spend everything they have.
     ///
     /// Drawn entirely by us, like <see cref="Day28CutsceneMenu"/> and for the same reason (see that
-    /// class's comment): a menu draws the already-rendered world, our screen-space darkness/white
-    /// overlay, and the dialogue box in one ordered pass, where a vanilla Event's
-    /// <c>fade</c>/<c>globalFade</c>/<c>RenderedWorld</c> trio fought each other on this exact frame in
-    /// playtest.
+    /// class's comment): a menu draws the already-rendered world and the dialogue box in one ordered
+    /// pass, where a vanilla Event's <c>fade</c>/<c>globalFade</c>/<c>RenderedWorld</c> trio fought
+    /// each other on this exact frame in playtest.
     ///
-    /// The Junimo actors, their hand-driven idle animation, their teardown, the
+    /// The Junimo actors, their hand-driven idle animation, the sleeping farmer, their teardown, the
     /// <c>Display.MenuChanged</c> steal watch, the speech-box input forwarding and the single-shot
     /// finish all live in <see cref="RewindJunimoScene"/>, shared with
     /// <see cref="RewindMorningScene"/>. What is this scene's own is the three dials it adds on top:
-    /// the room's lights going out and staying out, each Junimo's light radius, and the screen-space
-    /// overlay that carries black to white.
+    /// the failed night painted over the HUD, the room's lighting, and the white flash that ends it.
+    ///
+    /// THE DARKNESS IS THE ENGINE'S OWN LIGHTING, not an overlay (reworked 2026-09-11 after the first
+    /// playtest: a flat translucent sheet over the finished frame dimmed the HUD along with the
+    /// world, produced no light pools, and read as someone turning the brightness down).
+    /// <see cref="RewindNightLight"/> owns the mechanism and documents it; this scene owns the two
+    /// dials that move along it, the ambient colour and the Junimos' light radii, and the light
+    /// colours that make each pool read as that Junimo's palette entry.
+    ///
+    /// THE WHITE FLASH keeps a screen-space overlay, and only the white flash does. The engine's
+    /// lighting pass is subtractive: it can take the room down to black and give it back, but it can
+    /// never push a pixel past the brightness the world was already drawn at, so the radii growing
+    /// past the screen open the room to full brightness and the overlay carries it the rest of the
+    /// way to white. The overlay is opaque by the last frame, which is what the Town pan takes the
+    /// frame from.
     ///
     /// Non-skippable for the player: <see cref="RewindJunimoScene.readyToClose"/> is always false and
     /// cancel/ESC are ignored (forwarding a cancel press to the open dialogue box only advances its
@@ -51,18 +64,23 @@ namespace TheLongestYear.UI
         // Beat 2/6/9's light dials. sconceLight is a small round light, the same texture index used
         // for ordinary room lights elsewhere in the game.
         private const int JunimoLightTexture = StardewValley.LightSource.sconceLight;
-        private const float JunimoLightRadiusStart = 2f;
-        private const float JunimoLightRadiusFloor = 0.5f;
-        // "Past the screen size" per the brief: large enough that the light's own falloff blows out
+        private const float JunimoLightRadiusStart = 2.5f;
+        private const float JunimoLightRadiusFloor = 0.75f;
+        // "Past the screen size" per the brief: large enough that the light's own falloff covers
         // every pixel long before the geometric radius is reached.
         private const float JunimoLightRadiusFlash = 40f;
 
-        // Beat 6/9's screen-space overlay: darkness eases in to DarknessMaxAlpha (not fully opaque,
-        // so the Junimos' own light should still be visible poking through it), then beat 9 carries
-        // both the alpha and the colour the rest of the way to an opaque white flash.
-        private const float DarknessMaxAlpha = 0.9f;
+        // How far a pool leans toward its Junimo's palette colour. Gentle on purpose: at 1 a pool is
+        // a flat colour wash rather than a lit patch of floor. See RewindNightLight.PoolTint.
+        private const float JunimoPoolTintStrength = 0.35f;
 
         private const string JunimoLightIdPrefix = "TlyRewindJunimoLight";
+
+        // Which of the six Junimos speaks each line, in order, the way the ending's hall scene passes
+        // its lines around the circle. Index i is both the palette colour of that actor's sprite and
+        // the tint of the Portraits/Junimo<i> asset the speech box shows, so the portrait always
+        // matches the Junimo the line came from.
+        private static readonly int[] SpeakerOrder = { 0, 1, 2, 3 };
 
         protected override string JunimoNamePrefix => "TlyRewindJunimo";
 
@@ -72,12 +90,16 @@ namespace TheLongestYear.UI
 
         private Phase _phase;
         private float _phaseElapsed;
-        private Color _overlayColor = Color.Black;
-        private float _overlayAlpha;
+        private float _flashAlpha;
 
-        public RewindBedroomScene(Action onComplete)
+        public RewindBedroomScene(CoreSeason failed, Action onComplete)
             : base(onComplete)
         {
+            // Beat 1: the HUD is still on the morning after the failed day (a Spring 28 failure
+            // reads "Summer 1, 6:00am" over a scene that is the night the year ran out). Paint the
+            // failed night over it before anything else is on screen.
+            RewindNightPaint.Apply(failed);
+            RewindNightLight.Begin(_junimoLightIds);
             EnterPhase(Phase.LightsOut);
         }
 
@@ -90,25 +112,25 @@ namespace TheLongestYear.UI
             switch (next)
             {
                 case Phase.LightsOut:
-                    // Beat 2: the room is still daylit on Spring 1, only the glowing auras go (Jeff,
-                    // 2026-09-11). Nothing is re-added afterward, StripForeignLights keeps it that
-                    // way every tick from here on.
+                    // Beat 2: the farmhouse's own lamps and fireplace go, and RewindNightLight keeps
+                    // them (and anything the farmer carries) out every tick from here on.
                     Game1.currentLightSources.Clear();
+                    RewindNightLight.Ambient = RewindNightLight.NightAmbient;
                     break;
                 case Phase.JunimosIn:
                     SpawnJunimos();
                     break;
                 case Phase.Say1:
-                    OpenBox(Strings.Get("cutscene.rewind.junimo-1"));
+                    OpenBox(0, Strings.Get("cutscene.rewind.junimo-1"));
                     break;
                 case Phase.Say2:
-                    OpenBox(Strings.Get("cutscene.rewind.junimo-2"));
+                    OpenBox(1, Strings.Get("cutscene.rewind.junimo-2"));
                     break;
                 case Phase.Say3:
-                    OpenBox(Strings.Get("cutscene.rewind.junimo-3"));
+                    OpenBox(2, Strings.Get("cutscene.rewind.junimo-3"));
                     break;
                 case Phase.Say4:
-                    OpenBox(Strings.Get("cutscene.rewind.junimo-4"));
+                    OpenBox(3, Strings.Get("cutscene.rewind.junimo-4"));
                     break;
                 case Phase.DarknessIn:
                 case Phase.White:
@@ -118,18 +140,26 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>This scene's addition to a spawned actor: its own small light aura, which beats 6
-        /// and 9 then shrink and flare. The morning beat deliberately adds none.</summary>
+        /// and 9 then shrink and flare. The morning beat deliberately adds none.
+        ///
+        /// The light's colour is NOT the palette colour. The lightmap is subtracted from the world,
+        /// so a light's colour is the colour it removes, and handing a Junimo's green straight to its
+        /// light would carve a magenta hole rather than a green pool. <c>PoolTint</c> converts it.</summary>
         protected override void OnJunimoSpawned(int index, Junimo junimo, Vector2 worldPos, Color colour)
         {
             string lightId = JunimoLightIdPrefix + index;
-            var light = new LightSource(lightId, JunimoLightTexture, worldPos, JunimoLightRadiusStart, colour);
+            Color lightColour = RewindNightLight.PoolTint(colour, JunimoPoolTintStrength);
+            var light = new LightSource(lightId, JunimoLightTexture, worldPos, JunimoLightRadiusStart, lightColour);
             Game1.currentLightSources[lightId] = light;
             _junimoLightIds.Add(lightId);
             _junimoLights.Add(light);
-            _junimoBaseColours.Add(colour);
+            _junimoBaseColours.Add(lightColour);
         }
 
-        /// <summary>The lights go with the actors. Runs inside the base teardown's once-only guard.</summary>
+        /// <summary>The lights and the two per-tick holds go with the actors. Runs inside the base
+        /// teardown's once-only guard, so it never runs twice, and it is reached by the menu-steal
+        /// path as well as by normal completion: without that, a stolen frame would leave the room
+        /// black and the calendar stuck on the failed night.</summary>
         protected override void TeardownSceneExtras()
         {
             foreach (string lightId in _junimoLightIds)
@@ -137,15 +167,19 @@ namespace TheLongestYear.UI
             _junimoLightIds.Clear();
             _junimoLights.Clear();
             _junimoBaseColours.Clear();
+            RewindNightLight.Release();
+            // The pan takes the clock and the calendar over from here (Day28CutsceneDriver chains
+            // them), so this hands them on rather than restoring anything.
+            RewindNightPaint.Release();
         }
 
-        private void OpenBox(params string[] lines)
+        private void OpenBox(int speaker, params string[] lines)
         {
             string playerName = Game1.player?.Name ?? string.Empty;
             var pages = new List<string>();
             foreach (string line in lines)
                 pages.Add(line.Replace("@", playerName));
-            ActiveBox = new EndingSpeechBox(Portrait, pages);
+            ActiveBox = new EndingSpeechBox(PortraitFor(SpeakerOrder[speaker % SpeakerOrder.Length]), pages);
         }
 
         protected override void OnBoxClosed()
@@ -161,40 +195,34 @@ namespace TheLongestYear.UI
 
         protected override void OnFinishing() => _phase = Phase.Done;
 
-        private void StripForeignLights()
-        {
-            List<string> foreign = null;
-            foreach (string key in Game1.currentLightSources.Keys)
-            {
-                if (_junimoLightIds.Contains(key)) continue;
-                (foreign ??= new List<string>()).Add(key);
-            }
-            if (foreign == null) return;
-            foreach (string key in foreign)
-                Game1.currentLightSources.Remove(key);
-        }
-
+        /// <summary>Beat 6: the ambient deepens toward black and every pool shrinks, so the visible
+        /// world closes to a few small circles around the bed.</summary>
         private void ApplyDarkness(float t)
         {
             float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
-            _overlayColor = Color.Black;
-            _overlayAlpha = eased * DarknessMaxAlpha;
+            RewindNightLight.Ambient = Color.Lerp(
+                RewindNightLight.NightAmbient, RewindNightLight.DeepAmbient, eased);
             float radius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusFloor, eased);
             foreach (LightSource light in _junimoLights)
                 light.radius.Value = radius;
         }
 
+        /// <summary>Beat 9: the same dials reversed. The radii grow past the size of the screen and
+        /// every light goes fully neutral (black subtracts nothing), which opens the room back to
+        /// full brightness; the ambient follows them down to black so no corner is left dark; and the
+        /// overlay carries the last stretch to white, which subtractive lighting cannot do on its
+        /// own.</summary>
         private void ApplyWhite(float t)
         {
             float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
-            _overlayColor = Color.Lerp(Color.Black, Color.White, eased);
-            _overlayAlpha = MathHelper.Lerp(DarknessMaxAlpha, 1f, eased);
+            RewindNightLight.Ambient = Color.Lerp(RewindNightLight.DeepAmbient, Color.Black, eased);
             float radius = MathHelper.Lerp(JunimoLightRadiusFloor, JunimoLightRadiusFlash, eased);
             for (int i = 0; i < _junimoLights.Count; i++)
             {
                 _junimoLights[i].radius.Value = radius;
-                _junimoLights[i].color.Value = Color.Lerp(_junimoBaseColours[i], Color.White, eased);
+                _junimoLights[i].color.Value = Color.Lerp(_junimoBaseColours[i], Color.Black, eased);
             }
+            _flashAlpha = eased;
         }
 
         public override void update(GameTime time)
@@ -213,20 +241,16 @@ namespace TheLongestYear.UI
             switch (_phase)
             {
                 case Phase.LightsOut:
-                    StripForeignLights();
                     if (_phaseElapsed >= LightsOutHoldMs) EnterPhase(Phase.JunimosIn);
                     break;
                 case Phase.JunimosIn:
-                    StripForeignLights();
                     if (_phaseElapsed >= JunimosInHoldMs) EnterPhase(Phase.Say1);
                     break;
                 case Phase.DarknessIn:
-                    StripForeignLights();
                     ApplyDarkness(_phaseElapsed / DarknessInMs);
                     if (_phaseElapsed >= DarknessInMs) EnterPhase(Phase.Say3);
                     break;
                 case Phase.White:
-                    StripForeignLights();
                     ApplyWhite(_phaseElapsed / WhiteMs);
                     if (_phaseElapsed >= WhiteMs) Finish();
                     break;
@@ -250,10 +274,10 @@ namespace TheLongestYear.UI
 
         public override void draw(SpriteBatch b)
         {
-            if (_overlayAlpha > 0f)
+            if (_flashAlpha > 0f)
             {
                 int w = Game1.uiViewport.Width, h = Game1.uiViewport.Height;
-                b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, w, h), _overlayColor * _overlayAlpha);
+                b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, w, h), Color.White * _flashAlpha);
             }
             base.draw(b);   // the speech box on top
         }
