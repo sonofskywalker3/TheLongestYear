@@ -64,14 +64,41 @@ namespace TheLongestYear.UI
         // Beat 2/6/9's light dials. sconceLight is a small round light, the same texture index used
         // for ordinary room lights elsewhere in the game.
         private const int JunimoLightTexture = StardewValley.LightSource.sconceLight;
-        // Sized for the room the scene is actually in. The starter farmhouse is about eight tiles
-        // across, so a radius that would read as one lamp in a mine lights the whole house: at 4 the
-        // six pools overlapped into plain daylight ("dark for a second, then light", screenshot
-        // 2026-09-11). Six of these, two tiles out, still overlap into one unbroken lit area around
-        // the bed, which is what was asked for, but the falloff reaches the room's edges rather
-        // than passing straight through them.
-        private const float JunimoLightRadiusStart = 1.5f;
-        private const float JunimoLightRadiusFloor = 0.5f;
+        // Sized for the room the scene is actually in, and for SIX of them. The starter farmhouse is
+        // about ten tiles across, so a radius that would read as one lamp in a mine lights the whole
+        // house: at 4, and then again at 1.5, the six pools overlapped into plain daylight ("dark for
+        // a second, then light", screenshots 2026-09-11). Overlap is why the count matters so much
+        // more than it looks: the lights are alpha-blended into the lightmap one after another, so
+        // six faint tails at the same pixel compound into a strong one. These still overlap into one
+        // unbroken lit area around the bed, which is what was asked for, but the falloff dies before
+        // it reaches the far side of the room.
+        private const float JunimoLightRadiusStart = 1.0f;
+
+        // THE HEARTH. One big light on the bed, and the only thing that moves when the darkness
+        // closes in.
+        //
+        // Beat 6 used to deepen the ambient AND shrink all six Junimo pools together, which is not
+        // what closing in looks like: every pool dimmed in place, so the room got evenly darker
+        // rather than the dark advancing on the bed. Jeff, 2026-09-11: "the darkness pushing in needs
+        // to push in from the outside but not diminish the Junimo's light. If that means you need to
+        // make the farmer the center of the bed be the true light source that's fine, but it needs to
+        // have a pushing in effect, not a reducing the range thing like it is now."
+        //
+        // So the six Junimo pools are now fixed for the whole beat and this one is the dial. It
+        // starts wide enough to reach the room's corners and shrinks to the bed, which reads as the
+        // lit area contracting from the walls inward while the Junimos go on burning exactly as
+        // brightly as they were. It is also what answers "it's leaving pockets of darkness, I want
+        // them to be enough to light up everything around the player": at its opening radius there
+        // is one continuous lit area around the bed, not six separate pools with gaps between them.
+        // Sized like the Junimo pools, not like a floodlight: a sconce light's own falloff reaches
+        // roughly three tiles for every one of radius, so anything much past this lights the far wall
+        // and the scene is an afternoon again. Dimmer than a Junimo pool too, because its job is to
+        // fill the gaps BETWEEN them rather than to be a seventh light anyone looks at.
+        private const float HearthRadiusStart = 1.6f;
+        private const float HearthRadiusFloor = 0.35f;
+        private const float HearthTintStrength = 0.0f;   // vanilla's lantern, untinted: this one is not a Junimo
+        private const float HearthBrightness = 0.6f;
+        private const string HearthLightId = "TlyRewindHearthLight";
         // "Past the screen size" per the brief: large enough that the light's own falloff covers
         // every pixel long before the geometric radius is reached.
         private const float JunimoLightRadiusFlash = 40f;
@@ -80,11 +107,11 @@ namespace TheLongestYear.UI
         // a flat colour wash rather than a lit patch of floor. See RewindNightLight.PoolTint.
         private const float JunimoPoolTintStrength = 0.35f;
 
-        // How bright a pool gets, against the surrounding dark. NOT 1: the lightmap is subtractive,
-        // so a light that subtracts nothing restores the world to the brightness it was DRAWN at,
-        // which is full daylight, and six of those is a lit room with no night in it at all. At 0.8
-        // a pool is clearly lit and clearly still night. See RewindNightLight.PoolColour.
-        private const float JunimoPoolBrightness = 0.8f;
+        // How far a pool travels from the surrounding dark toward a full lantern. Near 1, because
+        // the thing it is travelling toward is now vanilla's own lantern colour rather than "subtract
+        // nothing": a pool at 1 is a lit patch of cave floor, not daylight. See
+        // RewindNightLight.PoolColour and LanternPool.
+        private const float JunimoPoolBrightness = 0.9f;
 
         private const string JunimoLightIdPrefix = "TlyRewindJunimoLight";
 
@@ -99,6 +126,8 @@ namespace TheLongestYear.UI
         private readonly List<string> _junimoLightIds = new List<string>();
         private readonly List<LightSource> _junimoLights = new List<LightSource>();
         private readonly List<Color> _junimoBaseColours = new List<Color>();
+        private LightSource _hearthLight;
+        private Color _hearthBaseColour;
 
         private Phase _phase;
         private float _phaseElapsed;
@@ -134,6 +163,7 @@ namespace TheLongestYear.UI
                     RewindNightLight.Ambient = RewindNightLight.NightAmbient;
                     break;
                 case Phase.JunimosIn:
+                    SpawnHearth();
                     SpawnJunimos();
                     break;
                 case Phase.Say1:
@@ -153,6 +183,44 @@ namespace TheLongestYear.UI
                 case Phase.Done:
                     break;
             }
+        }
+
+        /// <summary>The one light that is not a Junimo: a wide, soft pool centred on the bed, which
+        /// beat 6 then closes in. See HearthRadiusStart for why the closing-in lives here rather than
+        /// on the six actors.
+        ///
+        /// Centred on the BED, not the farmer, for the same reason the ring is: the sleeper lies at
+        /// one end of it, and a light hung off the farmer's own tile lights the pillow and leaves the
+        /// foot of the bed in the dark.</summary>
+        private void SpawnHearth()
+        {
+            Vector2 centre = BedCentre();
+            _hearthBaseColour = RewindNightLight.PoolColour(
+                RewindNightLight.LanternPool, HearthTintStrength, HearthBrightness);
+            _hearthLight = new LightSource(
+                HearthLightId, JunimoLightTexture, centre, HearthRadiusStart, _hearthBaseColour);
+            Game1.currentLightSources[HearthLightId] = _hearthLight;
+            _junimoLightIds.Add(HearthLightId);
+        }
+
+        /// <summary>The middle of the bed in world pixels, or the farmer if this room has no bed to
+        /// find.</summary>
+        private static Vector2 BedCentre()
+        {
+            if (Game1.currentLocation is StardewValley.Locations.FarmHouse house)
+            {
+                try
+                {
+                    StardewValley.Objects.BedFurniture bed = house.GetPlayerBed();
+                    if (bed != null)
+                    {
+                        Rectangle box = bed.GetBoundingBox();
+                        return new Vector2(box.X + box.Width / 2f, box.Y + box.Height / 2f);
+                    }
+                }
+                catch (Exception) { /* fall through to the farmer */ }
+            }
+            return Game1.player?.Position ?? Vector2.Zero;
         }
 
         /// <summary>This scene's addition to a spawned actor: its own small light aura, which beats 6
@@ -183,6 +251,7 @@ namespace TheLongestYear.UI
             _junimoLightIds.Clear();
             _junimoLights.Clear();
             _junimoBaseColours.Clear();
+            _hearthLight = null;
             RewindNightLight.Release();
             // The pan takes the clock and the calendar over from here (Day28CutsceneDriver chains
             // them), so this hands them on rather than restoring anything.
@@ -218,9 +287,9 @@ namespace TheLongestYear.UI
             float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
             RewindNightLight.Ambient = Color.Lerp(
                 RewindNightLight.NightAmbient, RewindNightLight.DeepAmbient, eased);
-            float radius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusFloor, eased);
-            foreach (LightSource light in _junimoLights)
-                light.radius.Value = radius;
+            // The hearth alone. The six Junimo pools are deliberately untouched: see HearthRadiusStart.
+            if (_hearthLight != null)
+                _hearthLight.radius.Value = MathHelper.Lerp(HearthRadiusStart, HearthRadiusFloor, eased);
         }
 
         /// <summary>Beat 9: the same dials reversed. The radii grow past the size of the screen and
@@ -232,11 +301,16 @@ namespace TheLongestYear.UI
         {
             float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
             RewindNightLight.Ambient = Color.Lerp(RewindNightLight.DeepAmbient, Color.Black, eased);
-            float radius = MathHelper.Lerp(JunimoLightRadiusFloor, JunimoLightRadiusFlash, eased);
+            float radius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusFlash, eased);
             for (int i = 0; i < _junimoLights.Count; i++)
             {
                 _junimoLights[i].radius.Value = radius;
                 _junimoLights[i].color.Value = Color.Lerp(_junimoBaseColours[i], Color.Black, eased);
+            }
+            if (_hearthLight != null)
+            {
+                _hearthLight.radius.Value = MathHelper.Lerp(HearthRadiusFloor, JunimoLightRadiusFlash, eased);
+                _hearthLight.color.Value = Color.Lerp(_hearthBaseColour, Color.Black, eased);
             }
             _flashAlpha = eased;
         }
