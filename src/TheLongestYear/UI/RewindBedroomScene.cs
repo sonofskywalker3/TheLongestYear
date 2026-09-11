@@ -15,7 +15,10 @@ using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
 {
-    /// <summary>The first half of the rewind cutscene: the Junimos appear around the sleeping farmer,
+    /// <summary>REQUIRED WIRING: ModEntry.Entry must call <see cref="Register"/> once, or the
+    /// teardown safety net is dead code. See the remarks below for why.
+    ///
+    /// The first half of the rewind cutscene: the Junimos appear around the sleeping farmer,
     /// the room's own lights go out, the darkness closes in, and their light flares white as they
     /// spend everything they have. Drawn entirely by us, like <see cref="Day28CutsceneMenu"/> and for
     /// the same reason (see that class's comment): a menu draws the already-rendered world, our
@@ -24,9 +27,13 @@ namespace TheLongestYear.UI
     /// frame in playtest. Non-skippable: <see cref="readyToClose"/> is always false and cancel/ESC are
     /// ignored (forwarding a cancel press to the open dialogue box only advances its page, not the
     /// scene). The Junimos themselves are real <see cref="Junimo"/> actors added to the current
-    /// location's own character list, so the game's normal per-location update and world-space draw
-    /// pass animates and positions them correctly under the camera transform; this menu never draws
-    /// them itself, only the overlay and the dialogue on top.
+    /// location's own character list, so the game's normal world-space draw pass positions them
+    /// correctly under the camera transform; this menu never draws them itself, only the overlay and
+    /// the dialogue on top. Their own idle animation is NOT free from that, though: this scene's own
+    /// <c>update</c> drives it directly every tick (see <see cref="AnimateJunimos"/>), because
+    /// <see cref="Game1.shouldTimePass"/> is false for this scene's whole run and the game's own
+    /// per-character update (where that animation would otherwise come from) never runs while that's
+    /// false.
     ///
     /// This class only builds the scene. Nothing opens it yet (a later task wires it into the day-28
     /// driver in place of <see cref="Day28CutsceneMenu"/> for the fail branch), and it exposes nothing
@@ -34,15 +41,14 @@ namespace TheLongestYear.UI
     /// already runs from <c>OnCutsceneEnded</c>, which this scene's completion precedes, so there is no
     /// hold-or-reshuffle question here to answer or store.
     ///
-    /// IMPORTANT for whichever task opens this scene: call <see cref="Register"/> once from
-    /// ModEntry.Entry, the same way <c>EndingEventCommands.Register</c> and
-    /// <c>TownRouteProbe.Register</c> are already called. This scene's own completion path
-    /// (<see cref="Finish"/>) always cleans up its Junimos and their lights, but something else can
-    /// steal <see cref="Game1.activeClickableMenu"/> out from under it before that runs (vanilla's
-    /// own end-of-night menus after an overnight FarmEvent are the documented case,
-    /// see <c>Day28CutsceneDriver</c>'s watchdog comment). <see cref="Register"/> wires a
-    /// <c>Display.MenuChanged</c> watch that notices that and tears the world state down anyway.
-    /// Without it, a stolen scene leaks its actors and lights into the save.</summary>
+    /// Call <see cref="Register"/> once from ModEntry.Entry, the same way
+    /// <c>EndingEventCommands.Register</c> and <c>TownRouteProbe.Register</c> are already called.
+    /// This scene's own completion path (<see cref="Finish"/>) always cleans up its Junimos and their
+    /// lights, but something else can steal <see cref="Game1.activeClickableMenu"/> out from under it
+    /// before that runs (vanilla's own end-of-night menus after an overnight FarmEvent are the
+    /// documented case, see <c>Day28CutsceneDriver</c>'s watchdog comment). <see cref="Register"/>
+    /// wires a <c>Display.MenuChanged</c> watch that notices that and tears the world state down
+    /// anyway. Without it, a stolen scene leaks its actors and lights into the save.</summary>
     internal sealed class RewindBedroomScene : IClickableMenu
     {
         /// <summary>Phase order. Each advances on a timer except a Say phase, which waits for its
@@ -294,9 +300,35 @@ namespace TheLongestYear.UI
             }
         }
 
+        // Idle-bob constants for StardewValley.Characters.Junimo's own Sprite (frame 8, 4 frames,
+        // 100ms each): the same animation vanilla plays for a standing-still, non-temporary Junimo
+        // (its update()'s final "motion is zero" branch, and its updateSlaveAnimation's matching idle
+        // branch), the Community Center ending look the user asked for ("moving normally", not static).
+        private const int JunimoIdleFrame = 8;
+        private const int JunimoIdleFrameCount = 4;
+        private const float JunimoIdleFrameMs = 100f;
+
+        /// <summary>Drives the Junimos' idle animation ourselves, every tick this scene is active.
+        /// <see cref="Game1.shouldTimePass"/> is false for this scene's whole run (any non-BobberBar
+        /// activeClickableMenu forces it false), so <c>GameLocation.updateCharacters</c> never calls
+        /// these Junimos' own <c>update(time, location)</c>, and their idle animation would otherwise
+        /// never advance despite <see cref="StardewValley.Characters.Junimo.stayPut"/> being set to
+        /// hold them in place, not freeze them. Their own <c>update</c> also can't simply be called
+        /// here instead: its <c>temporaryJunimo</c> branch plays a different animation (frame 12), and
+        /// its otherwise-idle branch depends on <c>Game1.IsMasterGame</c> and other world-state checks
+        /// this scene doesn't want to reason about. Calling <c>Sprite.Animate</c> directly is exactly
+        /// what <c>Junimo.updateSlaveAnimation</c>'s own idle branch does, and is the only piece of the
+        /// vanilla animation logic this scene actually needs.</summary>
+        private void AnimateJunimos(GameTime time)
+        {
+            foreach (Junimo j in _junimos)
+                j.Sprite?.Animate(time, JunimoIdleFrame, JunimoIdleFrameCount, JunimoIdleFrameMs);
+        }
+
         public override void update(GameTime time)
         {
             base.update(time);
+            AnimateJunimos(time);
             if (_completed) return;
 
             if (_activeBox != null)
