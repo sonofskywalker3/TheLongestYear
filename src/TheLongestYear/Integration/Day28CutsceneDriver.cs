@@ -239,6 +239,9 @@ namespace TheLongestYear.Integration
                 _openedMenu = null;
                 _pendingMorningBeat = false;
                 _morningDeferLogged = false;
+                // The bedroom hid the mod's HUD for the sequence and nothing is going to reach the
+                // blackout that would normally give it back, so hand it over here.
+                RewindBlackout.Release("the pan gave up");
                 _runController?.Invoke()?.OnCutsceneEnded();
                 return;
             }

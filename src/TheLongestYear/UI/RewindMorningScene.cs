@@ -36,9 +36,17 @@ namespace TheLongestYear.UI
         /// synchronous step of the driver's hand-off, so there is never a lit frame between them.</summary>
         private const float FadeInMs = 700f;
 
+        /// <summary>And out again once the line is done. The beat used to end by tearing its actors
+        /// down and handing straight to the hold question, so the Junimo circle blinked out from
+        /// under the player mid-frame (playtest 2026-09-11). It fades out instead, and
+        /// <see cref="RewindBlackout"/> picks the black up from here and holds it through the
+        /// question, the shrine and the theme picker.</summary>
+        private const float FadeOutMs = 900f;
+
         protected override string JunimoNamePrefix => "TlyRewindMorningJunimo";
 
-        private float _fadeElapsed;
+        private float _fadeInElapsed;
+        private float _fadeOutElapsed = -1f;   // negative until the line closes
 
         public RewindMorningScene(Action onComplete)
             : base(onComplete)
@@ -50,20 +58,48 @@ namespace TheLongestYear.UI
             ActiveBox = new EndingSpeechBox(PortraitFor(ClosingSpeaker), new List<string> { line });
         }
 
-        /// <summary>The only line of the beat has finished, so the beat has.</summary>
-        protected override void OnBoxClosed() => Finish();
+        /// <summary>The only line of the beat has finished, so the beat starts fading out. It does
+        /// NOT finish here: <see cref="update"/> finishes it once the screen is black.</summary>
+        protected override void OnBoxClosed() => _fadeOutElapsed = 0f;
+
+        /// <summary>Skipping lands on the black a watched run ends on, so the hand-off into the hold
+        /// question looks the same either way.</summary>
+        public override void SkipToEnd()
+        {
+            _fadeOutElapsed = FadeOutMs;
+            RewindBlackout.Begin();
+            base.SkipToEnd();
+        }
 
         public override void update(GameTime time)
         {
             base.update(time);   // keeps the Junimos bobbing even after the line is done
-            _fadeElapsed += (float)time.ElapsedGameTime.TotalMilliseconds;
+            float ms = (float)time.ElapsedGameTime.TotalMilliseconds;
+            _fadeInElapsed += ms;
             if (Completed) return;
+
+            if (_fadeOutElapsed >= 0f)
+            {
+                _fadeOutElapsed += ms;
+                if (_fadeOutElapsed >= FadeOutMs)
+                {
+                    // Hand the black over BEFORE finishing, in the same step: Finish() tears the
+                    // Junimos down and runs OnCutsceneEnded, which opens the hold question, and the
+                    // blackout has to already be painting by then or that frame flashes lit.
+                    RewindBlackout.Begin();
+                    Finish();
+                }
+                return;
+            }
+
             ActiveBox?.update(time);
         }
 
         public override void draw(SpriteBatch b)
         {
-            float alpha = 1f - MathHelper.Clamp(_fadeElapsed / FadeInMs, 0f, 1f);
+            float alpha = _fadeOutElapsed >= 0f
+                ? MathHelper.Clamp(_fadeOutElapsed / FadeOutMs, 0f, 1f)
+                : 1f - MathHelper.Clamp(_fadeInElapsed / FadeInMs, 0f, 1f);
             if (alpha > 0f)
             {
                 b.Draw(Game1.fadeToBlackRect,

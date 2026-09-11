@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -100,6 +100,10 @@ namespace TheLongestYear.UI
             // failed night over it before anything else is on screen.
             RewindNightPaint.Apply(failed);
             RewindNightLight.Begin(_junimoLightIds);
+            // The mod's JP box is not part of a dream. Vanilla's clock and date ARE, for this beat
+            // (the failed night is what the paint above is for), and they hide themselves for the
+            // pan, which freezes controls. RewindBlackout owns both from the morning beat on.
+            RewindBlackout.SuppressHud();
             EnterPhase(Phase.LightsOut);
         }
 
