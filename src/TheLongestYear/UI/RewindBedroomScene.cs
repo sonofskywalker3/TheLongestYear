@@ -5,6 +5,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Netcode;
+using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Menus;
@@ -30,7 +32,17 @@ namespace TheLongestYear.UI
     /// driver in place of <see cref="Day28CutsceneMenu"/> for the fail branch), and it exposes nothing
     /// for a driver to read afterward beyond <paramref name="onComplete"/>: <c>RunController.ShowHoldChoice</c>
     /// already runs from <c>OnCutsceneEnded</c>, which this scene's completion precedes, so there is no
-    /// hold-or-reshuffle question here to answer or store.</summary>
+    /// hold-or-reshuffle question here to answer or store.
+    ///
+    /// IMPORTANT for whichever task opens this scene: call <see cref="Register"/> once from
+    /// ModEntry.Entry, the same way <c>EndingEventCommands.Register</c> and
+    /// <c>TownRouteProbe.Register</c> are already called. This scene's own completion path
+    /// (<see cref="Finish"/>) always cleans up its Junimos and their lights, but something else can
+    /// steal <see cref="Game1.activeClickableMenu"/> out from under it before that runs (vanilla's
+    /// own end-of-night menus after an overnight FarmEvent are the documented case,
+    /// see <c>Day28CutsceneDriver</c>'s watchdog comment). <see cref="Register"/> wires a
+    /// <c>Display.MenuChanged</c> watch that notices that and tears the world state down anyway.
+    /// Without it, a stolen scene leaks its actors and lights into the save.</summary>
     internal sealed class RewindBedroomScene : IClickableMenu
     {
         /// <summary>Phase order. Each advances on a timer except a Say phase, which waits for its
@@ -62,15 +74,23 @@ namespace TheLongestYear.UI
         // every pixel long before the geometric radius is reached.
         private const float JunimoLightRadiusFlash = 40f;
 
-        // Beat 6/9's screen-space overlay: darkness eases in to DarknessMaxAlpha (not fully opaque —
-        // the Junimos' own light should still be visible poking through it), then beat 9 carries both
-        // the alpha and the colour the rest of the way to an opaque white flash.
+        // Beat 6/9's screen-space overlay: darkness eases in to DarknessMaxAlpha (not fully opaque,
+        // so the Junimos' own light should still be visible poking through it), then beat 9 carries
+        // both the alpha and the colour the rest of the way to an opaque white flash.
         private const float DarknessMaxAlpha = 0.9f;
 
         private static readonly FieldInfo JunimoColourField = typeof(Junimo).GetField(
             "color", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private const string JunimoLightIdPrefix = "TlyRewindJunimoLight";
+
+        // Set once from ModEntry.Entry (see the class comment). Null until then, in which case the
+        // menu-steal safety net below is simply inert; the scene still runs correctly end to end on
+        // its own, it just has no way to notice a steal without SMAPI's own event pump, which needs
+        // a helper it cannot get through this class's fixed constructor.
+        private static IModHelper _helper;
+
+        public static void Register(IModHelper helper) => _helper = helper;
 
         private readonly Action _onComplete;
         private readonly Texture2D _portrait;
@@ -84,7 +104,12 @@ namespace TheLongestYear.UI
         private EndingSpeechBox _activeBox;
         private Color _overlayColor = Color.Black;
         private float _overlayAlpha;
-        private bool _done;
+        // _completed guards the normal Finish() path (world teardown + onComplete, once).
+        // _tornDown guards just the world teardown (Junimos + lights), which can also run on its own
+        // if a steal is caught, without _completed ever becoming true or onComplete ever firing.
+        private bool _completed;
+        private bool _tornDown;
+        private bool _menuWatchSubscribed;
 
         public RewindBedroomScene(Action onComplete)
             : base(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height, showUpperRightCloseButton: false)
@@ -94,7 +119,36 @@ namespace TheLongestYear.UI
             try { _portrait = Game1.content.Load<Texture2D>("Portraits/Junimo0"); }
             catch (Exception) { _portrait = null; }
 
+            SubscribeMenuWatch();
             EnterPhase(Phase.LightsOut);
+        }
+
+        /// <summary>Watches for something else replacing this scene as the active menu (a steal, not
+        /// this scene's own normal completion) and tears down the world state if that happens, since
+        /// nothing else will: this scene's own <c>update</c>/<c>draw</c> only run while it IS the
+        /// active menu, so it cannot notice or react to losing that slot on its own. SMAPI's event
+        /// pump runs regardless, which is the whole reason this needs a helper reference at all.</summary>
+        private void SubscribeMenuWatch()
+        {
+            if (_helper == null || _menuWatchSubscribed) return;
+            _helper.Events.Display.MenuChanged += OnMenuChanged;
+            _menuWatchSubscribed = true;
+        }
+
+        private void UnsubscribeMenuWatch()
+        {
+            if (!_menuWatchSubscribed) return;
+            _helper.Events.Display.MenuChanged -= OnMenuChanged;
+            _menuWatchSubscribed = false;
+        }
+
+        private void OnMenuChanged(object sender, MenuChangedEventArgs e)
+        {
+            if (ReferenceEquals(Game1.activeClickableMenu, this)) return;
+            // Not stranding (Day28CutsceneDriver's watchdog already covers that survivably), just the
+            // leak: whatever replaced us, our Junimos and lights do not belong in the save any more.
+            TeardownWorldState();
+            UnsubscribeMenuWatch();
         }
 
         private static float Ease(float t) => t * t * (3f - 2f * t);
@@ -107,8 +161,8 @@ namespace TheLongestYear.UI
             {
                 case Phase.LightsOut:
                     // Beat 2: the room is still daylit on Spring 1, only the glowing auras go (Jeff,
-                    // 2026-09-11). Nothing is re-added afterward — StripForeignLights keeps it that way
-                    // every tick from here on.
+                    // 2026-09-11). Nothing is re-added afterward, StripForeignLights keeps it that
+                    // way every tick from here on.
                     Game1.currentLightSources.Clear();
                     break;
                 case Phase.JunimosIn:
@@ -136,7 +190,7 @@ namespace TheLongestYear.UI
         private void SpawnJunimos()
         {
             GameLocation loc = Game1.currentLocation;
-            if (loc == null) return;
+            if (loc == null || Game1.player == null) return;
             Point playerTile = Game1.player.TilePoint;
 
             for (int i = 0; i < JunimoOffsets.Length; i++)
@@ -178,8 +232,8 @@ namespace TheLongestYear.UI
 
         /// <summary>Forwards player input to the open dialogue box, which is a plain object here (not
         /// the active menu) so this scene keeps ticking behind it. <see cref="EndingSpeechBox"/> ends
-        /// itself by calling <c>Game1.exitActiveMenu()</c> on its last page, which — since it isn't
-        /// actually the active menu, we are — just clears the static field; we notice that happen in
+        /// itself by calling <c>Game1.exitActiveMenu()</c> on its last page. Since it isn't actually
+        /// the active menu (we are), that call just clears the static field; we notice that happen in
         /// the same call and put ourselves straight back, all before the game gets another frame.</summary>
         private void ForwardToBox(Action<EndingSpeechBox> invoke)
         {
@@ -243,7 +297,7 @@ namespace TheLongestYear.UI
         public override void update(GameTime time)
         {
             base.update(time);
-            if (_done) return;
+            if (_completed) return;
 
             if (_activeBox != null)
             {
@@ -282,11 +336,15 @@ namespace TheLongestYear.UI
             }
         }
 
-        private void Finish()
+        /// <summary>Removes the Junimo actors and their light sources, idempotently: safe to call
+        /// more than once (the normal completion path and the menu-steal watch can both reach it),
+        /// and safe to call when some or all of them are already gone (<c>Dictionary.Remove</c> and
+        /// <c>NetCollection.Remove</c> both no-op on a missing entry rather than throwing, so nothing
+        /// extra is needed to tolerate that here).</summary>
+        private void TeardownWorldState()
         {
-            if (_done) return;
-            _done = true;
-            _phase = Phase.Done;
+            if (_tornDown) return;
+            _tornDown = true;
 
             GameLocation loc = Game1.currentLocation;
             foreach (Junimo j in _junimos)
@@ -297,6 +355,16 @@ namespace TheLongestYear.UI
             _junimoLightIds.Clear();
             _junimoLights.Clear();
             _junimoBaseColours.Clear();
+        }
+
+        private void Finish()
+        {
+            if (_completed) return;
+            _completed = true;
+            _phase = Phase.Done;
+
+            TeardownWorldState();
+            UnsubscribeMenuWatch();
 
             if (ReferenceEquals(Game1.activeClickableMenu, this))
                 Game1.activeClickableMenu = null;
