@@ -36,11 +36,17 @@ namespace TheLongestYear.UI
     /// are all documented on the members below and in <see cref="Day28CutsceneMenu"/>.</summary>
     internal abstract class RewindJunimoScene : IClickableMenu
     {
-        // Four stations around the bed, one palette colour each (JunimoPalette has six; these scenes
-        // only need four).
+        // Six stations in a ring around the bed, one palette colour each, matching the six the ending
+        // seats in the Community Center hall (Jeff, 2026-09-11). Widened from a tight four at the
+        // same time: at one tile out, the two above the sleeper sat inside the bed's own sprite,
+        // which draws in front of anything with a smaller Y, so only two of the four were ever
+        // visible on screen. Every station here clears the bed's footprint horizontally, which is
+        // what actually decides it. Wall tiles are fine to stand on for this scene.
         private static readonly Point[] JunimoOffsets =
         {
-            new Point(-1, -1), new Point(1, -1), new Point(-1, 1), new Point(1, 1),
+            new Point(-2, -2), new Point(2, -2),
+            new Point(-3, 0), new Point(3, 0),
+            new Point(-2, 3), new Point(2, 3),
         };
         private const string JunimoDisplayName = "Junimo";
 
@@ -51,6 +57,16 @@ namespace TheLongestYear.UI
         private const int JunimoIdleFrame = 8;
         private const int JunimoIdleFrameCount = 4;
         private const float JunimoIdleFrameMs = 100f;
+
+        // The lying-down farmer frame, the one vanilla shows for a collapsed player
+        // (Farmer.performPassoutWarp and MineShaft's own faint both use showFrame(5)). Its art has
+        // the eyes shut, and FarmerRenderer skips its separate eye pass entirely while
+        // PauseForSingleAnimation is set, so this alone is the whole "asleep" look.
+        private const int FarmerSleepingFrame = 5;
+
+        // How many palette entries (and generated Portraits/Junimo<i> assets) exist. JunimoPortrait
+        // serves 0..5 and JunimoPalette holds six colours; a speaker index is taken modulo this.
+        private const int JunimoCastSize = 6;
 
         private static readonly FieldInfo JunimoColourField = typeof(Junimo).GetField(
             "color", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -65,11 +81,12 @@ namespace TheLongestYear.UI
 
         private readonly Action _onComplete;
         private readonly List<Junimo> _junimos = new List<Junimo>();
+        private readonly Texture2D[] _portraits = new Texture2D[JunimoCastSize];
         private bool _tornDown;
         private bool _menuWatchSubscribed;
-
-        /// <summary>The Junimo portrait for this scene's speech box, or null if it would not load.</summary>
-        protected Texture2D Portrait { get; }
+        private bool _farmerAsleep;
+        private bool _farmerWasInBed;
+        private StardewValley.Objects.Hat _stashedHat;
 
         /// <summary>The open speech box, or null when no line is playing. A plain object, never the
         /// active menu (this scene is), which is what lets the scene keep ticking behind it.</summary>
@@ -87,10 +104,24 @@ namespace TheLongestYear.UI
         {
             _onComplete = onComplete;
 
-            try { Portrait = Game1.content.Load<Texture2D>("Portraits/Junimo0"); }
-            catch (Exception) { Portrait = null; }
+            for (int i = 0; i < _portraits.Length; i++)
+            {
+                try { _portraits[i] = Game1.content.Load<Texture2D>("Portraits/Junimo" + i); }
+                catch (Exception) { _portraits[i] = null; }
+            }
 
+            SleepFarmer();
             SubscribeMenuWatch();
+        }
+
+        /// <summary>The generated portrait for palette entry <paramref name="index"/>, tinted to the
+        /// same colour <see cref="SpawnJunimos"/> paints that actor's sprite (see JunimoPortrait), or
+        /// null if it would not load. Rotating the index per line is what makes each line read as a
+        /// different Junimo speaking, the way the ending's hall scene does.</summary>
+        protected Texture2D PortraitFor(int index)
+        {
+            int i = ((index % JunimoCastSize) + JunimoCastSize) % JunimoCastSize;
+            return _portraits[i];
         }
 
         /// <summary>Watches for something else replacing this scene as the active menu (a steal, not
@@ -121,11 +152,16 @@ namespace TheLongestYear.UI
             UnsubscribeMenuWatch();
         }
 
-        /// <summary>Spawns the four actors around the sleeping farmer. Real <see cref="Junimo"/>
-        /// instances added to the current location's own character list, so the game's normal
-        /// world-space draw pass positions them under the camera transform; these scenes never draw
-        /// them. <see cref="OnJunimoSpawned"/> is where a scene adds anything of its own (the bedroom
-        /// gives each one a light; the morning beat deliberately gives none, that being its point).</summary>
+        /// <summary>Spawns the six actors in a ring around the sleeping farmer. Real
+        /// <see cref="Junimo"/> instances added to the current location's own character list, so the
+        /// game's normal world-space draw pass positions them under the camera transform; these
+        /// scenes never draw them. <see cref="OnJunimoSpawned"/> is where a scene adds anything of
+        /// its own (the bedroom gives each one a light; the morning beat deliberately gives none,
+        /// that being its point).
+        ///
+        /// Stations are clamped into the map rather than validated: standing on a wall tile is fine
+        /// here (Jeff, 2026-09-11), standing outside the map is not, and the starter farmhouse is
+        /// small enough that the wider ring can reach past its edge.</summary>
         protected void SpawnJunimos()
         {
             GameLocation loc = Game1.currentLocation;
@@ -134,7 +170,7 @@ namespace TheLongestYear.UI
 
             for (int i = 0; i < JunimoOffsets.Length; i++)
             {
-                Vector2 worldPos = new Vector2(playerTile.X + JunimoOffsets[i].X, playerTile.Y + JunimoOffsets[i].Y) * 64f;
+                Vector2 worldPos = ClampToMap(loc, playerTile.X + JunimoOffsets[i].X, playerTile.Y + JunimoOffsets[i].Y) * 64f;
                 Color colour = JunimoPalette.Get(i);
 
                 var junimo = new Junimo(worldPos, -1, temporary: true)
@@ -145,6 +181,17 @@ namespace TheLongestYear.UI
                     currentLocation = loc,
                 };
                 junimo.stayPut.Value = true;
+                // THE JUMPING (playtest 2026-09-11). Junimo's constructor sets forceUpdateTimer to
+                // 9999, and GameLocation.updateCharacters runs a character's own update() when
+                // EITHER time is passing OR that timer is above zero. So despite Game1.shouldTimePass
+                // being false for this scene's whole run, these Junimos' update() was running every
+                // tick, and re-arming the timer to 99999 on the way through (Junimo.cs:536), forever.
+                // Its temporaryJunimo branch plays a different animation AND rolls for a
+                // jumpWithoutSound every tick, which is what the player was watching: the actors
+                // hopping, over the top of the idle this scene drives by hand. Zeroing the timer
+                // stops update() ever being called, which leaves AnimateJunimos below as the only
+                // thing animating them and the standing idle intact.
+                junimo.forceUpdateTimer = 0;
                 if (JunimoColourField?.GetValue(junimo) is NetColor net)
                     net.Value = colour;
                 loc.characters.Add(junimo);
@@ -156,6 +203,63 @@ namespace TheLongestYear.UI
 
         /// <summary>Per-scene extras for one freshly spawned actor. Does nothing by default.</summary>
         protected virtual void OnJunimoSpawned(int index, Junimo junimo, Vector2 worldPos, Color colour) { }
+
+        private static Vector2 ClampToMap(GameLocation loc, int tileX, int tileY)
+        {
+            int maxX = (loc.map?.Layers?.Count > 0 ? loc.map.Layers[0].LayerWidth : 0) - 1;
+            int maxY = (loc.map?.Layers?.Count > 0 ? loc.map.Layers[0].LayerHeight : 0) - 1;
+            if (maxX < 0 || maxY < 0) return new Vector2(tileX, tileY);
+            return new Vector2(Math.Clamp(tileX, 0, maxX), Math.Clamp(tileY, 0, maxY));
+        }
+
+        /// <summary>Beat 1: the farmer reads as asleep rather than standing at the top edge of the
+        /// bed facing the wall with a hat on, as though they had walked into it (playtest
+        /// 2026-09-11; the designer's word for the scene is "a dream"). Three pieces:
+        /// <c>showFrame</c> holds vanilla's own lying-down frame, whose art has the eyes shut and
+        /// whose PauseForSingleAnimation suppresses FarmerRenderer's separate eye pass; the hat comes
+        /// off for the duration; and isInBed is set so anything reading it agrees with the picture.
+        /// <see cref="WakeFarmer"/> puts all three back.</summary>
+        private void SleepFarmer()
+        {
+            Farmer player = Game1.player;
+            if (player == null || _farmerAsleep) return;
+            _farmerAsleep = true;
+            _farmerWasInBed = player.isInBed.Value;
+            _stashedHat = player.hat.Value;
+            player.hat.Value = null;
+            player.isInBed.Value = true;
+            player.showFrame(FarmerSleepingFrame);
+        }
+
+        /// <summary>Re-asserts the sleeping pose if anything has knocked the farmer out of it.
+        /// <c>Farmer.Update</c> runs every tick regardless of this menu (Game1.UpdateCharacters is
+        /// not gated on shouldTimePass), so the frame is not simply set once and left.</summary>
+        private void HoldFarmerAsleep()
+        {
+            if (!_farmerAsleep) return;
+            Farmer player = Game1.player;
+            if (player?.FarmerSprite == null) return;
+            if (player.FarmerSprite.CurrentFrame != FarmerSleepingFrame || !player.FarmerSprite.PauseForSingleAnimation)
+                player.showFrame(FarmerSleepingFrame);
+        }
+
+        /// <summary>Gives the farmer back their pose, their hat and their real isInBed. Runs inside
+        /// <see cref="TeardownWorldState"/>'s once-only guard, so every exit path reaches it exactly
+        /// once: normal completion, and the menu-steal watch.</summary>
+        private void WakeFarmer()
+        {
+            if (!_farmerAsleep) return;
+            _farmerAsleep = false;
+            Farmer player = Game1.player;
+            if (player == null) return;
+            player.stopShowingFrame();
+            player.isInBed.Value = _farmerWasInBed;
+            if (_stashedHat != null)
+            {
+                player.hat.Value = _stashedHat;
+                _stashedHat = null;
+            }
+        }
 
         /// <summary>Drives the Junimos' idle animation directly, every tick the scene is active.
         /// <see cref="Game1.shouldTimePass"/> is false for a scene's whole run (any non-BobberBar
@@ -189,6 +293,7 @@ namespace TheLongestYear.UI
                 loc?.characters.Remove(j);
             _junimos.Clear();
 
+            WakeFarmer();
             TeardownSceneExtras();
         }
 
@@ -252,6 +357,7 @@ namespace TheLongestYear.UI
         {
             base.update(time);
             AnimateJunimos(time);
+            HoldFarmerAsleep();
         }
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)

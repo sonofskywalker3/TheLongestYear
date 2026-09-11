@@ -25,6 +25,11 @@ namespace TheLongestYear.UI
     /// driver is the thing that chains the beats, not a place to keep one.</summary>
     internal sealed class RewindMorningScene : RewindJunimoScene
     {
+        /// <summary>Which of the six speaks the closing line. The ending's hall scene has Junimo 0
+        /// open the circle and come back to close it; this is the same shape across the rewind, whose
+        /// four bedroom lines run 0, 1, 2, 3.</summary>
+        private const int ClosingSpeaker = 0;
+
         protected override string JunimoNamePrefix => "TlyRewindMorningJunimo";
 
         public RewindMorningScene(Action onComplete)
@@ -34,7 +39,7 @@ namespace TheLongestYear.UI
 
             string playerName = Game1.player?.Name ?? string.Empty;
             string line = Strings.Get("cutscene.rewind.morning").Replace("@", playerName);
-            ActiveBox = new EndingSpeechBox(Portrait, new List<string> { line });
+            ActiveBox = new EndingSpeechBox(PortraitFor(ClosingSpeaker), new List<string> { line });
         }
 
         /// <summary>The only line of the beat has finished, so the beat has.</summary>
