@@ -124,9 +124,7 @@ namespace TheLongestYear.UI
                     OpenBox(Strings.Get("cutscene.rewind.junimo-3"));
                     break;
                 case Phase.Say4:
-                    // The Junimos' last two lines run as one box's two pages: the reset, then the
-                    // send-off, both spoken in the same breath as they spend the last of their power.
-                    OpenBox(Strings.Get("cutscene.rewind.junimo-4"), Strings.Get("cutscene.rewind.morning"));
+                    OpenBox(Strings.Get("cutscene.rewind.junimo-4"));
                     break;
                 case Phase.DarknessIn:
                 case Phase.White:

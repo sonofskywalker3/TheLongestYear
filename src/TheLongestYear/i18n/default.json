@@ -713,7 +713,6 @@
     "cutscene.rewind.junimo-2": "Your efforts have attracted the attention of our adversary. It is coming for you now, and we cannot hold it back.",
     "cutscene.rewind.junimo-3": "But the work must continue, we cannot fail here. So we will use what power we have to give you another chance.",
     "cutscene.rewind.junimo-4": "The year will begin again, and the darkness will sleep once more, until the light begins to grow.",
-    "cutscene.rewind.morning": "We have bought you more time. Use it and what remains of our power wisely, and remember that every step you take is a small victory.",
 
     // -- deja-vu villager dialogue (spec 2026-08-27; lines approved by Jeff) ----------------
     // Keys dejavu.<npc lower-case>.<tier>.<n>; the "default" pool covers any villager without lines.
