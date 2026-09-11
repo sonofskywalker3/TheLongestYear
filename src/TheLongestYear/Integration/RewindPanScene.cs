@@ -19,13 +19,14 @@ namespace TheLongestYear.Integration
     /// year visibly runs backward underneath it.
     ///
     /// THIRTY SECONDS, FIXED, no matter how many seasons are being unwound: twenty-five of camera
-    /// travel, three held still on the road out, two fading to black. (Retimed 2026-09-11: the first
-    /// playtest ran the whole thing in about four seconds and nothing in it had time to read.) Dials:
+    /// unbroken camera travel, the last two of them fading to black while the camera is still
+    /// moving. (Retimed 2026-09-11: the first playtest ran the whole thing in about four seconds and
+    /// nothing in it had time to read.) Dials:
     ///
-    /// - Camera: PanStart to PanEnd over the TRAVEL leg only, eased the same smoothstep
-    ///   <see cref="EndingEventCommands.PanToName"/> (tlyPanTo) uses, then still for the last five
-    ///   seconds. That command's own centring math (ClampedCentre/SetCentre) is reused here through
-    ///   reflection rather than reimplemented.
+    /// - Camera: PanStart to PanEnd across the whole thirty seconds, eased the same smoothstep
+    ///   <see cref="EndingEventCommands.PanToName"/> (tlyPanTo) uses. That command's own centring
+    ///   math (ClampedCentre/SetCentre) is reused here through reflection rather than
+    ///   reimplemented.
     /// - Seasons: <see cref="RewindSchedule.SwapFractions"/>/<see cref="RewindSchedule.SeasonsToUnwind"/>
     ///   drive <c>GameLocation.updateSeasonalTileSheets()</c> swaps only. NEVER <c>seasonUpdate()</c>,
     ///   which would mutate terrain, crops and features instead of just repainting them.
@@ -46,13 +47,14 @@ namespace TheLongestYear.Integration
     ///   (re-seeded debris via <c>Game1.populateDebrisWeatherArray()</c>) on every season swap to hide
     ///   the tilesheet cut, which is a dispose-and-reload and cannot cross-fade.
     ///
-    /// NO VILLAGER. The spec's beat 10 had the villager the player is most bonded with walking the
-    /// path to the farm, stopping and turning back, the cost of the rewind made personal. It was
-    /// built twice and cut on Jeff's call after the second playtest (2026-09-11): "Drop the NPC, it
-    /// doesn't work." A borrowed NPC slid along the route with no walk cycle the engine would drive
-    /// for it (the pan freezes controls, so nothing updates characters), and at any speed that kept
-    /// it in the shot it read as a prop being dragged rather than a person leaving. The held beat it
-    /// used to fill is now three seconds of the road out with the light still cycling over it.
+    /// NO SINGLE VILLAGER, BUT TRAFFIC. The spec's beat 10 had the villager the player is most
+    /// bonded with walking the path to the farm, stopping and turning back, the cost of the rewind
+    /// made personal. It was built twice and cut on Jeff's call (2026-09-11): "Drop the NPC, it
+    /// doesn't work." It covered the whole route in seconds and read as a prop being dragged rather
+    /// than a person leaving. What replaced it, at his ask, is ambient rather than focal:
+    /// <see cref="RewindReversedExtras"/> puts a handful of townsfolk on the road at an ordinary
+    /// walking pace, facing the way they are going and sliding the other way, as one more reading
+    /// that time is running backwards.
     ///
     /// The farmer never moves. <see cref="Game1.currentLocation"/> switches to Town for the pan the
     /// same way <c>WorldResetService</c> places the player without a warp (a bare reassignment; that
@@ -79,13 +81,15 @@ namespace TheLongestYear.Integration
         private static readonly Point PanStart = new Point(94, 81);   // Clint's shop door, Town.
         private static readonly Point PanEnd = new Point(0, 54);      // West-edge road out to the Bus Stop.
 
-        // THE SHAPE OF THE SCENE. Thirty seconds, in three parts, and the total is fixed no matter
-        // how many seasons are being unwound. (Retimed 2026-09-11 from about four seconds, where the
-        // light cycle was blink-and-miss and nothing in the shot had time to read.)
-        private const float TravelMs = 25000f;   // the camera moving, Clint's door out to the west road
-        private const float HoldMs = 3000f;      // held still on the road out, the light still cycling
-        private const float FadeOutMs = 2000f;   // the screen fades to black
-        private const float PanDurationMs = TravelMs + HoldMs + FadeOutMs;
+        // THE SHAPE OF THE SCENE. Thirty seconds of unbroken camera travel, and the total is fixed
+        // no matter how many seasons are being unwound. The last two of those thirty fade the screen
+        // out WHILE the camera is still moving: the shot never stops (Jeff, 2026-09-11, "don't hold.
+        // add the extra 5 seconds into the sweep timer, and fade out for the last 2 seconds while
+        // you're still sweeping" -- the version before this one stopped for three seconds before
+        // fading, which was the held beat the cut villager used to fill).
+        private const float PanDurationMs = 30000f;
+        private const float TravelMs = PanDurationMs;
+        private const float FadeOutMs = 2000f;
 
         // Sunset and sunrise, looped: two seconds a cycle, one second each way, so roughly fifteen
         // of them across the scene. The dark end is ten at night (Jeff, 2026-09-11); the light end is
@@ -216,6 +220,7 @@ namespace TheLongestYear.Integration
             _town.updateSeasonalTileSheets();
             Gust();
 
+            RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd);
         }
 
         /// <summary>True while the pan is running. The pan owns no menu, so this is the only way
@@ -292,6 +297,7 @@ namespace TheLongestYear.Integration
             Game1.timeOfDay = RewindSchedule.CycleClockAt(
                 _elapsed, LightCycleMs, LightCycleDusk, DaylightTime());
             TickFade();
+            RewindReversedExtras.Tick(_elapsed, time);
 
             if (progress >= 1.0) Finish();
         }
@@ -315,7 +321,7 @@ namespace TheLongestYear.Integration
         /// ScreenFade owns and would fight us for.</summary>
         private static void TickFade()
         {
-            float fadeStart = TravelMs + HoldMs;
+            float fadeStart = PanDurationMs - FadeOutMs;
             _fadeAlpha = _elapsed <= fadeStart
                 ? 0f
                 : MathHelper.Clamp((_elapsed - fadeStart) / FadeOutMs, 0f, 1f);
@@ -381,6 +387,7 @@ namespace TheLongestYear.Integration
         {
             if (!_active) return;
             _active = false;
+            RewindReversedExtras.Teardown();
             Action onComplete = _onComplete;
             _onComplete = null;
             _onAbort = null;   // exactly one of the two ever runs
@@ -399,6 +406,7 @@ namespace TheLongestYear.Integration
             if (!_active) return;
             _active = false;
             _fadeAlpha = 0f;
+            RewindReversedExtras.Teardown();
             _monitor?.Log($"RewindPanScene: forcing teardown ({reason}); restoring season, clock, weather and camera.", LogLevel.Warn);
             try
             {

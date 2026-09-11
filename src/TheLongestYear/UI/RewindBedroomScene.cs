@@ -64,8 +64,14 @@ namespace TheLongestYear.UI
         // Beat 2/6/9's light dials. sconceLight is a small round light, the same texture index used
         // for ordinary room lights elsewhere in the game.
         private const int JunimoLightTexture = StardewValley.LightSource.sconceLight;
-        private const float JunimoLightRadiusStart = 2.5f;
-        private const float JunimoLightRadiusFloor = 0.75f;
+        // Sized for the room the scene is actually in. The starter farmhouse is about eight tiles
+        // across, so a radius that would read as one lamp in a mine lights the whole house: at 4 the
+        // six pools overlapped into plain daylight ("dark for a second, then light", screenshot
+        // 2026-09-11). Six of these, two tiles out, still overlap into one unbroken lit area around
+        // the bed, which is what was asked for, but the falloff reaches the room's edges rather
+        // than passing straight through them.
+        private const float JunimoLightRadiusStart = 1.5f;
+        private const float JunimoLightRadiusFloor = 0.5f;
         // "Past the screen size" per the brief: large enough that the light's own falloff covers
         // every pixel long before the geometric radius is reached.
         private const float JunimoLightRadiusFlash = 40f;
@@ -73,6 +79,12 @@ namespace TheLongestYear.UI
         // How far a pool leans toward its Junimo's palette colour. Gentle on purpose: at 1 a pool is
         // a flat colour wash rather than a lit patch of floor. See RewindNightLight.PoolTint.
         private const float JunimoPoolTintStrength = 0.35f;
+
+        // How bright a pool gets, against the surrounding dark. NOT 1: the lightmap is subtractive,
+        // so a light that subtracts nothing restores the world to the brightness it was DRAWN at,
+        // which is full daylight, and six of those is a lit room with no night in it at all. At 0.8
+        // a pool is clearly lit and clearly still night. See RewindNightLight.PoolColour.
+        private const float JunimoPoolBrightness = 0.8f;
 
         private const string JunimoLightIdPrefix = "TlyRewindJunimoLight";
 
@@ -152,7 +164,7 @@ namespace TheLongestYear.UI
         protected override void OnJunimoSpawned(int index, Junimo junimo, Vector2 worldPos, Color colour)
         {
             string lightId = JunimoLightIdPrefix + index;
-            Color lightColour = RewindNightLight.PoolTint(colour, JunimoPoolTintStrength);
+            Color lightColour = RewindNightLight.PoolColour(colour, JunimoPoolTintStrength, JunimoPoolBrightness);
             var light = new LightSource(lightId, JunimoLightTexture, worldPos, JunimoLightRadiusStart, lightColour);
             Game1.currentLightSources[lightId] = light;
             _junimoLightIds.Add(lightId);

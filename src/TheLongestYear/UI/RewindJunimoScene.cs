@@ -36,36 +36,22 @@ namespace TheLongestYear.UI
     /// are all documented on the members below and in <see cref="Day28CutsceneMenu"/>.</summary>
     internal abstract class RewindJunimoScene : IClickableMenu
     {
-        // Six directions to spread the actors around, one palette colour each, matching the six the
-        // ending seats in the Community Center hall (Jeff, 2026-09-11).
+        // A tight hexagonal ring two tiles out, one palette colour each, matching the six the ending
+        // seats in the Community Center hall.
         //
-        // WHY THE TILES ARE SEARCHED FOR AND NOT COMPUTED. Three playtests running, only two of them
-        // were ever on screen. A tight ring one tile out put two inside the bed's own sprite, which
-        // draws in front of anything with a smaller Y. A wider fixed ring cleared the bed and walked
-        // the outer ones into the walls, where the Front layer draws over them ("I only see 2
-        // junimos, I guess they're behind the wall instead of on-top of it?"). Walking each
-        // direction outward-in fixed the ones that fit and dumped the rest back onto the bed through
-        // its own fallback: measured live, the farmer is at (9, 9) in the starter FarmHouse with the
-        // bed in the top-RIGHT corner, so half the compass is wall within two tiles.
-        //
-        // No fixed shape survives that, because the room's size, the bed's corner and the amount of
-        // open floor all change with the farmhouse upgrade level and the farm type. So
-        // <see cref="ChooseStations"/> collects the real standable floor around the sleeper and
-        // picks the six tiles that spread best across it: a ring where the room allows one, an arc
-        // into the open half where it does not, and never a tile the bed or a wall is drawn over.
-        private static readonly Vector2[] JunimoDirections =
+        // WALL TILES ARE FINE. This went round three times. A fixed ring one tile out buried two of
+        // them in the bed sprite; a fixed ring two to three tiles out walked the outer ones into the
+        // walls; searching for standable floor instead put them wherever the room happened to have
+        // space, which is what Jeff saw and rejected: "I specifically said that I was ok with the
+        // junimos on the wall, it look super weird for them to be where they are" (2026-09-11). So
+        // the shape wins over the floor plan: a symmetric ring round the sleeper, clamped only so
+        // nothing lands off the map, standing in the wall where the wall is where the ring goes.
+        // What made the first ring fail was the BED, not the walls, and two tiles out clears it.
+        private static readonly Point[] JunimoOffsets =
         {
-            new Vector2(1f, 0f), new Vector2(0.5f, 0.87f), new Vector2(-0.5f, 0.87f),
-            new Vector2(-1f, 0f), new Vector2(-0.5f, -0.87f), new Vector2(0.5f, -0.87f),
+            new Point(2, 0), new Point(1, 2), new Point(-1, 2),
+            new Point(-2, 0), new Point(-1, -2), new Point(1, -2),
         };
-
-        /// <summary>How far from the sleeper a station may sit. The near edge keeps them off the bed
-        /// and out of the farmer's own sprite; the far edge keeps the circle readable in one shot.</summary>
-        private const int JunimoNearestTile = 2, JunimoFurthestTile = 6;
-
-        /// <summary>How much a candidate is penalised for sitting next to one already chosen, so six
-        /// actors spread out instead of bunching in whichever corner has the most floor.</summary>
-        private const float JunimoCrowdingPenalty = 2.5f;
 
         private const string JunimoDisplayName = "Junimo";
 
@@ -183,19 +169,21 @@ namespace TheLongestYear.UI
         /// its own (the bedroom gives each one a light; the morning beat deliberately gives none,
         /// that being its point).
         ///
-        /// Every station is a real standable tile found by <see cref="PickStation"/>, and the six it
-        /// chose are logged, so a scene that comes out wrong can be read off the log rather than
-        /// guessed at from a screenshot.</summary>
+        /// The six stations are logged, so a scene that comes out wrong can be read off the log
+        /// rather than guessed at from a screenshot.</summary>
         protected void SpawnJunimos()
         {
             GameLocation loc = Game1.currentLocation;
             if (loc == null || Game1.player == null) return;
             Point playerTile = Game1.player.TilePoint;
-            List<Point> stations = ChooseStations(loc, playerTile);
+            var stations = new List<Point>();
+            foreach (Point offset in JunimoOffsets)
+                stations.Add(ClampToMap(loc, playerTile.X + offset.X, playerTile.Y + offset.Y));
 
             _monitor?.Log(
                 $"Rewind Junimos: farmer at ({playerTile.X}, {playerTile.Y}) in '{loc.Name}'; stations " +
-                string.Join(", ", stations.ConvertAll(p => $"({p.X}, {p.Y})")) + ".",
+                string.Join(", ", stations.ConvertAll(p => $"({p.X}, {p.Y})")) +
+                $"; walkable floor {WalkableBox(loc, playerTile)}.",
                 LogLevel.Info);
 
             for (int i = 0; i < stations.Count; i++)
@@ -234,84 +222,37 @@ namespace TheLongestYear.UI
         /// <summary>Per-scene extras for one freshly spawned actor. Does nothing by default.</summary>
         protected virtual void OnJunimoSpawned(int index, Junimo junimo, Vector2 worldPos, Color colour) { }
 
-        /// <summary>The six tiles the actors stand on. Collects every standable floor tile in the
-        /// band around the sleeper, then hands one to each of <see cref="JunimoDirections"/>: the
-        /// candidate that lies most nearly in that direction, furthest out, and least crowded by the
-        /// ones already chosen. Where the room is open on all sides that reproduces a ring; where it
-        /// is not, the circle bends into the floor that exists instead of walking into the wall.
-        ///
-        /// If the room has nothing standable at all (no candidates), the sleeper's own tile stands
-        /// in and the caller logs it: six actors always spawn, so no beat is ever short.</summary>
-        private static List<Point> ChooseStations(GameLocation loc, Point centre)
+
+        /// <summary>The room's walkable extent around the sleeper, logged with the stations so the
+        /// ring can be judged against the floor plan it has to fit rather than guessed at.</summary>
+        private static string WalkableBox(GameLocation loc, Point centre)
         {
-            var candidates = new List<Point>();
-            for (int dx = -JunimoFurthestTile; dx <= JunimoFurthestTile; dx++)
+            int minX = int.MaxValue, maxX = int.MinValue, minY = int.MaxValue, maxY = int.MinValue;
+            for (int dx = -10; dx <= 10; dx++)
             {
-                for (int dy = -JunimoFurthestTile; dy <= JunimoFurthestTile; dy++)
+                for (int dy = -10; dy <= 10; dy++)
                 {
-                    var tile = new Point(centre.X + dx, centre.Y + dy);
-                    float distance = Distance(centre, tile);
-                    if (distance < JunimoNearestTile || distance > JunimoFurthestTile) continue;
-                    if (IsStandable(loc, tile)) candidates.Add(tile);
+                    int x = centre.X + dx, y = centre.Y + dy;
+                    if (!loc.isTileOnMap(x, y)) continue;
+                    bool passable;
+                    try { passable = loc.isTilePassable(new xTile.Dimensions.Location(x, y), Game1.viewport); }
+                    catch (Exception) { continue; }
+                    if (!passable) continue;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
                 }
             }
-
-            var chosen = new List<Point>();
-            foreach (Vector2 direction in JunimoDirections)
-            {
-                Point? best = null;
-                float bestScore = float.MinValue;
-                foreach (Point tile in candidates)
-                {
-                    if (chosen.Contains(tile)) continue;
-                    float score = Score(centre, tile, direction, chosen);
-                    if (score <= bestScore) continue;
-                    bestScore = score;
-                    best = tile;
-                }
-                chosen.Add(best ?? centre);
-            }
-            return chosen;
+            return minX > maxX ? "none found" : $"x {minX}..{maxX}, y {minY}..{maxY}";
         }
 
-        /// <summary>How well one tile serves one direction: mostly how nearly it lies along it,
-        /// then how far out it is, less a penalty for every station already standing beside it.</summary>
-        private static float Score(Point centre, Point tile, Vector2 direction, List<Point> chosen)
+        private static Point ClampToMap(GameLocation loc, int tileX, int tileY)
         {
-            var offset = new Vector2(tile.X - centre.X, tile.Y - centre.Y);
-            float distance = offset.Length();
-            if (distance <= 0f) return float.MinValue;
-
-            float alignment = Vector2.Dot(offset / distance, Vector2.Normalize(direction));
-            float score = alignment * 3f + distance / JunimoFurthestTile;
-            foreach (Point other in chosen)
-            {
-                float gap = Distance(other, tile);
-                if (gap < JunimoNearestTile) score -= JunimoCrowdingPenalty * (JunimoNearestTile - gap);
-            }
-            return score;
-        }
-
-        private static float Distance(Point a, Point b)
-            => new Vector2(a.X - b.X, a.Y - b.Y).Length();
-
-        private static bool IsStandable(GameLocation loc, Point tile)
-        {
-            if (!loc.isTileOnMap(tile.X, tile.Y)) return false;
-            try
-            {
-                if (!loc.isTilePassable(new xTile.Dimensions.Location(tile.X, tile.Y), Game1.viewport))
-                    return false;
-            }
-            catch (Exception)
-            {
-                return false;   // a map without the layers the check reads; treat as unusable
-            }
-            // Any furniture, not just the bed. The bed is the one that hid the first ring (its
-            // sprite draws in front of anything with a smaller Y), but a Junimo standing inside the
-            // table or the bookcase reads no better.
-            if (loc.GetFurnitureAt(new Vector2(tile.X, tile.Y)) != null) return false;
-            return !loc.objects.ContainsKey(new Vector2(tile.X, tile.Y));
+            int maxX = (loc.map?.Layers?.Count > 0 ? loc.map.Layers[0].LayerWidth : 0) - 1;
+            int maxY = (loc.map?.Layers?.Count > 0 ? loc.map.Layers[0].LayerHeight : 0) - 1;
+            if (maxX < 0 || maxY < 0) return new Point(tileX, tileY);
+            return new Point(Math.Clamp(tileX, 0, maxX), Math.Clamp(tileY, 0, maxY));
         }
 
         /// <summary>Beat 1: the farmer reads as asleep rather than standing at the top edge of the
