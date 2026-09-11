@@ -245,7 +245,8 @@ namespace TheLongestYear.Integration
             Utility.ForEachVillager(npc =>
             {
                 if (npc == null || npc is Child || npc is Horse || npc is Pet) return true;
-                if (!CanWalk(npc)) { rejected.Add(npc.Name); return true; }
+                if (!WalksTheTown(npc)) { rejected.Add(npc.Name); return true; }
+                if (!CanWalk(npc)) { rejected.Add($"{npc.Name}({FrameCount(npc)} frames)"); return true; }
                 if (!npc.IsVillager || npc.IsInvisible) return true;
                 if (spouse != null && npc.Name == spouse) return true;
                 if (npc.EventActor) return true;
@@ -254,7 +255,7 @@ namespace TheLongestYear.Integration
             });
             if (rejected.Count > 0)
                 _monitor?.Log(
-                    $"RewindReversedExtras: not borrowing {string.Join(", ", rejected)}; no walk cycle in their sprite sheet.",
+                    $"RewindReversedExtras: not borrowing {string.Join(", ", rejected)}.",
                     LogLevel.Trace);
             return cast;
         }
@@ -269,6 +270,34 @@ namespace TheLongestYear.Integration
         /// during a pan (Jeff, 2026-09-11: "the weapon shop guy was blinking in and out, and was a
         /// white box at some point"). Cheaper and more honest to not borrow them than to clamp the
         /// animation and have them slide along on a single standing frame.</summary>
+        /// <summary>True when this villager is someone who actually walks Pelican Town, which is
+        /// what a schedule means: it is the list of places vanilla sends them during a day, and an
+        /// NPC without one stands where they were put and never goes anywhere.
+        ///
+        /// This is the check that catches the weapon shop's Marlon, and the sprite-sheet one below
+        /// does not: his sheet holds exactly sixteen frames, which passes. Logged counts on the whole
+        /// cast put the line in the right place, though. Schedule-less: Marlon, Gunther, Mister Qi,
+        /// the Dwarf, Krobus, Birdie and the Wizard, none of whom belong on the road in a shot about
+        /// the town's ordinary traffic running backwards. Sandy has a schedule of one entry and never
+        /// leaves the desert, so two is the floor rather than one.</summary>
+        private static bool WalksTheTown(NPC npc)
+            => npc?.Schedule != null && npc.Schedule.Count >= MinScheduleEntries;
+
+        /// <summary>Schedule entries a villager needs before this scene will borrow them. See
+        /// <see cref="WalksTheTown"/>.</summary>
+        private const int MinScheduleEntries = 2;
+
+        /// <summary>Frames this villager's sprite sheet holds, or 0 when it has no usable texture.
+        /// Logged with a rejection so a villager who draws wrong can be checked against
+        /// <see cref="WalkCycleFrames"/> instead of guessed at.</summary>
+        private static int FrameCount(NPC npc)
+        {
+            StardewValley.AnimatedSprite sprite = npc?.Sprite;
+            Microsoft.Xna.Framework.Graphics.Texture2D texture = sprite?.Texture;
+            if (texture == null || sprite.SpriteWidth <= 0 || sprite.SpriteHeight <= 0) return 0;
+            return (texture.Width / sprite.SpriteWidth) * (texture.Height / sprite.SpriteHeight);
+        }
+
         private static bool CanWalk(NPC npc)
         {
             StardewValley.AnimatedSprite sprite = npc?.Sprite;
