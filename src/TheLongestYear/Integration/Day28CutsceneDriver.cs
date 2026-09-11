@@ -37,6 +37,14 @@ namespace TheLongestYear.Integration
         // opens. See OpenRewindMorningBeat.
         private bool _pendingMorningBeat;
         private bool _morningDeferLogged;
+        // How many times the Town pan has ended abnormally for THIS pending episode. See
+        // OnRewindPanAborted: without a cap, a deterministic exception in the pan loops bedroom to
+        // pan to throw to re-arm forever.
+        private int _panAborts;
+
+        /// <summary>Aborted pans tolerated before the driver stops replaying the scene and just runs
+        /// the reset. One retry covers a transient failure; a second is a deterministic one.</summary>
+        private const int MaxPanAborts = 2;
 
         public Day28CutsceneDriver(IMonitor monitor)
         {
@@ -65,6 +73,7 @@ namespace TheLongestYear.Integration
                 _farmEventDeferLogged = false;
                 _pendingMorningBeat = false;
                 _morningDeferLogged = false;
+                _panAborts = 0;
                 return;
             }
 
@@ -213,6 +222,27 @@ namespace TheLongestYear.Integration
         /// per-save reset the next load wants anyway.</summary>
         private void OnRewindPanAborted()
         {
+            _panAborts++;
+            // THE CAP. Re-arming replays the sequence from beat 1, so a DETERMINISTIC failure in the
+            // pan (a missing tilesheet, a bad villager, anything that throws on the same frame every
+            // time) is a closed loop: bedroom, pan, throw, re-arm, bedroom, forever, with the player
+            // watching the same four lines over and over and the reset never landing. One retry is
+            // worth having, since a genuinely transient failure exists; a second identical one is
+            // evidence the pan cannot run on this save, and the loop matters more than the scene.
+            if (_panAborts >= MaxPanAborts)
+            {
+                _monitor.Log(
+                    $"Day-28 rewind: the Town pan has ended abnormally {_panAborts} times; giving up on " +
+                    "the scene and running the end-of-cutscene reset directly so the loop is not stranded.",
+                    LogLevel.Error);
+                _opened = true;              // nothing left to re-arm for this episode
+                _openedMenu = null;
+                _pendingMorningBeat = false;
+                _morningDeferLogged = false;
+                _runController?.Invoke()?.OnCutsceneEnded();
+                return;
+            }
+
             _monitor.Log(
                 "Day-28 rewind: the Town pan ended abnormally and restored the world; re-arming the " +
                 "sequence from the bedroom rather than stranding the Fail branch.",
@@ -269,7 +299,7 @@ namespace TheLongestYear.Integration
         /// either: PendingCutscene is cleared by OnCutsceneEnded before the driver's next tick).</summary>
         private void OpenRewindMorningBeat()
         {
-            // I5: never clobber a menu that opened underneath the pan. The pan runs for eleven
+            // I5: never clobber a menu that opened underneath the pan. The pan runs for thirty
             // seconds with no menu of ours up and player control frozen but the rest of the engine
             // ticking, so a SaveGameMenu, ShippingMenu or LevelUpMenu can legitimately be on screen
             // when it ends. A bare assignment to activeClickableMenu drops that menu WITHOUT running
