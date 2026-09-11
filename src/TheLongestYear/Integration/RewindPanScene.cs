@@ -18,12 +18,12 @@ namespace TheLongestYear.Integration
     /// across Town from Clint's shop door out to the west-edge road toward the Bus Stop, while the
     /// year visibly runs backward underneath it.
     ///
-    /// THIRTY SECONDS, FIXED, no matter how many seasons are being unwound: twenty-five of camera
-    /// unbroken camera travel, the last two of them fading to black while the camera is still
-    /// moving. (Retimed 2026-09-11: the first playtest ran the whole thing in about four seconds and
-    /// nothing in it had time to read.) Dials:
+    /// TWENTY-FIVE SECONDS, FIXED, no matter how many seasons are being unwound: unbroken camera
+    /// travel throughout, the last two of them fading to black while the camera is still moving.
+    /// (Retimed 2026-09-11: the first playtest ran the whole thing in about four seconds and nothing
+    /// in it had time to read; thirty then felt long and came back down by five.) Dials:
     ///
-    /// - Camera: PanStart to PanEnd across the whole thirty seconds, eased the same smoothstep
+    /// - Camera: PanStart to PanEnd across the whole twenty-five seconds, eased the same smoothstep
     ///   <see cref="EndingEventCommands.PanToName"/> (tlyPanTo) uses. That command's own centring
     ///   math (ClampedCentre/SetCentre) is reused here through reflection rather than
     ///   reimplemented.
@@ -31,7 +31,7 @@ namespace TheLongestYear.Integration
     ///   drive <c>GameLocation.updateSeasonalTileSheets()</c> swaps only. NEVER <c>seasonUpdate()</c>,
     ///   which would mutate terrain, crops and features instead of just repainting them.
     /// - Light: <see cref="RewindSchedule.CycleClockAt"/>, a sunrise-and-sunset loop about every
-    ///   two seconds, so roughly fifteen cycles across the scene. <c>Game1.UpdateGameClock</c>
+    ///   three seconds, so roughly eight cycles across the scene. <c>Game1.UpdateGameClock</c>
     ///   already recomputes <c>outdoorLight</c> from <c>Game1.timeOfDay</c> on its own each frame
     ///   (it runs unconditionally while no menu or minigame is up), so driving the clock is the
     ///   whole effect; this class does no tinting of its own.
@@ -81,25 +81,26 @@ namespace TheLongestYear.Integration
         private static readonly Point PanStart = new Point(94, 81);   // Clint's shop door, Town.
         private static readonly Point PanEnd = new Point(0, 54);      // West-edge road out to the Bus Stop.
 
-        // THE SHAPE OF THE SCENE. Thirty seconds of unbroken camera travel, and the total is fixed
-        // no matter how many seasons are being unwound. The last two of those thirty fade the screen
+        // THE SHAPE OF THE SCENE. Twenty-five seconds of unbroken camera travel, and the total is fixed
+        // no matter how many seasons are being unwound. The last two of those twenty-five fade the screen
         // out WHILE the camera is still moving: the shot never stops (Jeff, 2026-09-11, "don't hold.
         // add the extra 5 seconds into the sweep timer, and fade out for the last 2 seconds while
         // you're still sweeping" -- the version before this one stopped for three seconds before
         // fading, which was the held beat the cut villager used to fill).
-        private const float PanDurationMs = 30000f;
+        private const float PanDurationMs = 25000f;
         private const float TravelMs = PanDurationMs;
         private const float FadeOutMs = 2000f;
 
-        // Sunset and sunrise, looped: two seconds a cycle, one second each way, so roughly fifteen
-        // of them across the scene. The dark end is ten at night (Jeff, 2026-09-11); the light end is
+        // Sunset and sunrise, looped: three seconds a cycle, a second and a half each way, so about
+        // eight of them across the scene. Slowed by half from two seconds on 2026-09-11; at the old
+        // rate the valley strobed rather than breathed. The dark end is ten at night (Jeff, 2026-09-11); the light end is
         // read off the location per season rather than fixed, because the hour the valley starts to
         // darken moves (Spring 1800, Fall 1700, Winter 1500) and a fixed floor would never reach
         // full daylight in Winter. Impressionistic, not a calendar, and deliberately NOT synchronised
         // with the date.
         private const int LightCycleDusk = 2200;
         private const int LightCycleDawnMargin = 100;   // below the hour the valley starts to darken
-        private const double LightCycleMs = 2000.0;
+        private const double LightCycleMs = 3000.0;
 
         /// <summary>The latest clock this scene will ever leave on the world. Vanilla passes the
         /// farmer out at 2600 (Game1.cs:6021), so anything at or past it is a NewDay with a fuse on
@@ -216,7 +217,7 @@ namespace TheLongestYear.Integration
             // which deliberately owns NO menu, the branch fired on the very next frame. Seven seconds
             // later the farmer passed out, the game ran a full NewDay ("Can't wake up in last sleep
             // location 'Town'", then a save, then "starting spring 1 Y2"), the player was warped home
-            // and the thirty-second pan was over in four: "you never fixed the pan only lasting like
+            // and the whole pan was over in four: "you never fixed the pan only lasting like
             // 4 seconds" (Jeff, 2026-09-11).
             //
             // Start runs synchronously inside the bedroom menu's own update, so writing the clock
@@ -253,8 +254,8 @@ namespace TheLongestYear.Integration
         /// anything outside can tell it is on screen.</summary>
         public static bool IsActive => _active;
 
-        /// <summary>Fast-forwards the pan to its last frame and finishes it, as if the whole thirty
-        /// seconds had passed in one tick. The pan's own <see cref="Tick"/> does the work, so every remaining
+        /// <summary>Fast-forwards the pan to its last frame and finishes it, as if the whole run
+        /// had passed in one tick. The pan's own <see cref="Tick"/> does the work, so every remaining
         /// season swap still lands (<see cref="TickSeasons"/> advances with a while loop precisely so
         /// a large jump in progress does not skip any) and the clock, camera and fade all end where
         /// a watched run would leave them, which is what the next beats assume.
@@ -311,7 +312,7 @@ namespace TheLongestYear.Integration
             // so it fired during the pan. That handler reads Data/Festivals/<season><day> whenever
             // today is a festival and can show the festival-has-started message when the clock it
             // is handed matches the start time, both of which this scene is now sweeping past
-            // fifteen times. Live 2026-09-11, on a save sitting on the Flower Dance, it threw
+            // eight times. Live 2026-09-11, on a save sitting on the Flower Dance, it threw
             // ContentLoadException for Data/Festivals/spring15 three times in one pan. Zeroing the
             // accumulator every tick stops the handler firing at all, and also takes its
             // contribution out of the outdoorLight ramp below, which is one fewer thing moving
