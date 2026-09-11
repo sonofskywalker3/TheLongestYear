@@ -44,6 +44,14 @@ namespace TheLongestYear.Loop
 
         /// <summary>Exposed for the driver's per-tick decision.</summary>
         public Day28Branch PendingCutscene => _pendingCutscene;
+
+        /// <summary>The season <c>Run.Season</c> currently reflects. Exposed so
+        /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can hand
+        /// <c>RewindPanScene.Start</c> the season that just failed: by the time the FAIL cutscene
+        /// opens, <c>Game1.season</c> has already rolled over to the next season overnight, while
+        /// <c>Run.Season</c> stays at the failed season until the real reset (FinalizeReset) runs,
+        /// well after the rewind sequence completes.</summary>
+        public CoreSeason CurrentSeason => Run.Season;
         private TheLongestYear.UI.MenuLauncher _launcher;
         private WeeklyThemeQuestService _questService;
         private SabotageService _sabotage;

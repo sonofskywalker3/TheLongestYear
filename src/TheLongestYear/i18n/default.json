@@ -705,7 +705,6 @@
     "event.darkness.tamper-3": "Bring us {{new}} instead. It remains pure.",
 
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
-    "cutscene.day28.fail": "At this pace we won't be able to restore the Community Center in time, @.#$b#So we will use our magic to rewind the year. Don't worry, we have enough power left over to give you a head-start this time.#$b#Before we do, tell us: should we hold the town's wishes steady, or let time reshuffle them?$h",
     "cutscene.day28.continue": "Great job, @, you're doing well!#$b#Keep this up and we'll save the valley together. We'll gain even more power from the work you do this season.$h",
 
     // -- rewind bedroom scene (RewindBedroomScene; Jeff's text, verbatim) --------------------
@@ -713,6 +712,7 @@
     "cutscene.rewind.junimo-2": "Your efforts have attracted the attention of our adversary. It is coming for you now, and we cannot hold it back.",
     "cutscene.rewind.junimo-3": "But the work must continue, we cannot fail here. So we will use what power we have to give you another chance.",
     "cutscene.rewind.junimo-4": "The year will begin again, and the darkness will sleep once more, until the light begins to grow.",
+    "cutscene.rewind.morning": "We have bought you more time. Use it and what remains of our power wisely, and remember that every step you take is a small victory.",
 
     // -- deja-vu villager dialogue (spec 2026-08-27; lines approved by Jeff) ----------------
     // Keys dejavu.<npc lower-case>.<tier>.<n>; the "default" pool covers any villager without lines.

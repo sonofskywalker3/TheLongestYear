@@ -35,9 +35,11 @@ namespace TheLongestYear.UI
         public Day28CutsceneMenu(Day28Branch branch, Action onComplete)
             : base(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height, showUpperRightCloseButton: false)
         {
-            string raw = branch == Day28Branch.Fail
-                ? Day28CutsceneContent.FailDialogue
-                : Day28CutsceneContent.ContinueDialogue;
+            // Day28CutsceneDriver only ever opens this menu for Continue now (spec 2026-09-11-rewind-
+            // cutscene, task 7): FAIL opens the rewind sequence (RewindBedroomScene -> RewindPanScene
+            // -> RewindSpringPaint) instead. The branch parameter is kept for signature stability;
+            // Day28CutsceneContent.FailDialogue was retired along with cutscene.day28.fail.
+            string raw = Day28CutsceneContent.ContinueDialogue;
             _pages = Day28DialogueScript.ToPages(raw, Game1.player?.Name ?? string.Empty);
             _onComplete = onComplete;
 
