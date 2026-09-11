@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.18.0 - 2026-09-10
+## 0.18.0 - 2026-09-10 - The Mod Compatibility Update
 
 2059 tests.
 
