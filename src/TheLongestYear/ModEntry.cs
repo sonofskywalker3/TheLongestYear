@@ -363,6 +363,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
+            helper.ConsoleCommands.Add("tly_lights", "Debug: dump every light source in the current location with its context, colour, alpha, radius and fadeOut, plus the ambient and the lighting thresholds.", this.CmdLights);
             helper.ConsoleCommands.Add("tly_tiles", "Debug: print the tile index on every layer for a rectangle of the current map (tly_tiles x y [w] [h]). Diff two runs of it to find what the game swaps and when.", this.CmdTiles);
             helper.ConsoleCommands.Add("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             helper.ConsoleCommands.Add("tly_opencookbook",
@@ -1400,6 +1401,38 @@ namespace TheLongestYear
                     }
                 }
                 this.Monitor.Log(sb.ToString(), LogLevel.Info);
+            }
+        }
+
+        /// <summary>Debug: the whole lighting picture for one frame, in one place.
+        ///
+        /// Written for the farmhouse window (2026-09-11). The window stays lit for about a second
+        /// after the room goes dark and then fades to black, which is the signature of a
+        /// <c>LightSource</c> with <c>fadeOut</c> set, not of tile art: vanilla sets
+        /// <c>fadeOut = 4</c> on any <c>LightContext.WindowLight</c> source once
+        /// <c>Game1.isTimeToTurnOffLighting</c> is true, and <c>LightSource.Draw</c> then takes 4 off
+        /// its alpha every frame until it stops drawing. This prints the alpha so that fade can be
+        /// watched happening rather than inferred.</summary>
+        private void CmdLights(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            GameLocation loc = Game1.currentLocation;
+            this.Monitor.Log(
+                $"tly_lights: '{loc?.Name}' timeOfDay={Game1.timeOfDay}, ambient={Game1.ambientLight}, " +
+                $"drawLighting={Game1.drawLighting}, startDark={Game1.getStartingToGetDarkTime(loc)}, " +
+                $"trulyDark={Game1.getTrulyDarkTime(loc)}, turnOffLighting={Game1.isTimeToTurnOffLighting(loc)}, " +
+                $"lightGlows={loc?.lightGlows.Count}, sharedLights={loc?.sharedLights.Length}, " +
+                $"sources={Game1.currentLightSources.Count}.",
+                LogLevel.Info);
+            foreach (var pair in Game1.currentLightSources)
+            {
+                StardewValley.LightSource light = pair.Value;
+                this.Monitor.Log(
+                    $"tly_lights:   '{pair.Key}' context={light.lightContext.Value} colour={light.color.Value} " +
+                    $"alpha={light.color.Value.A} radius={light.radius.Value:0.00} " +
+                    $"pos=({light.position.Value.X:0},{light.position.Value.Y:0}) fadeOut={light.fadeOut.Value} " +
+                    $"texture={light.textureIndex.Value}.",
+                    LogLevel.Info);
             }
         }
 
