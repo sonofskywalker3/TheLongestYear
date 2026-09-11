@@ -37,6 +37,12 @@ namespace TheLongestYear.Integration
         /// read as traffic, few enough that none of them becomes the thing you watch.</summary>
         private const int MinCast = 3, MaxCast = 4;
 
+        /// <summary>How much of the camera's travel an extra takes to walk its whole route. Wider is
+        /// slower and keeps them in shot longer; narrower makes them hurry through. At this value a
+        /// route of the lengths the pathfinder returns here walks at about three tiles a second,
+        /// which is vanilla's own pace.</summary>
+        private const double CameraBand = 0.55;
+
         /// <summary>How long a route to ask the pathfinder for, in tiles, and how far it may search
         /// before giving up. The pace is not set here any more: each extra covers its own route once
         /// across the pan's whole duration (see Tick), so the route length IS the speed, and asking
@@ -50,7 +56,7 @@ namespace TheLongestYear.Integration
         /// <summary>Route lengths to try, in tiles, longest first. The long ones keep an extra
         /// walking backwards for the whole pan at an ordinary pace; the short ones are
         /// the fallback for a start tile with nothing that far away.</summary>
-        private static readonly int[] RouteTileChoices = { 34, 26, 20, 14 };
+        private static readonly int[] RouteTileChoices = { 9, 7, 5, 4 };
 
         /// <summary>How far off the camera's line an extra starts, so they are scattered around the
         /// square rather than queued along one path.</summary>
@@ -67,8 +73,9 @@ namespace TheLongestYear.Integration
             public int HomeFacing;
             public int HomeForceUpdateTimer;
             public Point[] Route;      // forward order: Route[0] is where a normal walk would start
-            public double Phase;       // kept for the placement scatter; the walk itself is paced off DurationMs
-            public double DurationMs;  // how long this extra has to cover its route, once, backwards
+            public double Phase;       // kept for the placement scatter
+            public double DurationMs;  // unused since the walk became camera-driven; see Tick
+            public double Anchor;      // where along the camera's line this one stands, 0 at the start
         }
 
         private static readonly List<Extra> Extras = new List<Extra>();
@@ -119,6 +126,7 @@ namespace TheLongestYear.Integration
                     Route = route,
                     Phase = i / (double)Math.Max(1, cast.Count),
                     DurationMs = durationMs,
+                    Anchor = AnchorFraction(Extras.Count, wanted),
                 };
 
                 try
@@ -156,9 +164,27 @@ namespace TheLongestYear.Integration
         /// Both ends are sampled off the camera's line, scattered, and then snapped to somewhere the
         /// pathfinder will actually accept, so the result follows the roads and bridges the town has
         /// rather than the straight line the camera takes.</summary>
+        /// <summary>Where along the camera's line extra <paramref name="index"/> of
+        /// <paramref name="count"/> stands, 0 at the start of the pan and 1 at the end. The same
+        /// fraction <see cref="FindRoute"/> anchors the route at, kept so <see cref="Tick"/> can walk
+        /// them when the camera is actually looking at them.
+        ///
+        /// Spread across <see cref="AnchorFirst"/> to <see cref="AnchorLast"/> rather than evenly
+        /// over the whole line, and the first season is why. The camera's travel is eased, so it
+        /// covers the first fifth of the line over the first quarter or so of the running time: an
+        /// extra sitting at the midpoint of the first of four even slots is not reached until after
+        /// the season it belongs to has already been swapped away.</summary>
+        private static double AnchorFraction(int index, int count)
+        {
+            if (count <= 1) return (AnchorFirst + AnchorLast) / 2.0;
+            return AnchorFirst + (AnchorLast - AnchorFirst) * index / (count - 1.0);
+        }
+
+        private const double AnchorFirst = 0.10, AnchorLast = 0.90;
+
         private static Point[] FindRoute(GameLocation town, Point from, Point to, int index, int count)
         {
-            double alongLine = (index + 0.5) / Math.Max(1, count);
+            double alongLine = AnchorFraction(index, count);
             Point scatter = Scatter[index % Scatter.Length];
             var anchor = new Point(
                 (int)Math.Round(from.X + (to.X - from.X) * alongLine) + scatter.X,
@@ -175,8 +201,20 @@ namespace TheLongestYear.Integration
             // appears.
             foreach (int reach in RouteTileChoices)
             {
-                int dx = Math.Sign(to.X - from.X) * reach;
-                int dy = Math.Sign(to.Y - from.Y) * reach;
+                // PROPORTIONAL to the camera's line, not Math.Sign on each axis. Sign aimed every
+                // route at 45 degrees, and the camera's line is nothing like 45 degrees: it runs
+                // (94,81) to (0,54), which is about three and a half across for every one down. So a
+                // twenty tile route aimed by sign went twenty DOWN as well as twenty across and
+                // walked the villager clean off the line the camera travels. Measured live: during
+                // the winter stretch the camera sat at (94,81) with the nearest extra 43 tiles away,
+                // which is well off screen. "I've never seen a villager during the winter section,
+                // because they're not walking where the camera is showing!" (Jeff, 2026-09-11).
+                double spanX = to.X - from.X;
+                double spanY = to.Y - from.Y;
+                double span = Math.Sqrt(spanX * spanX + spanY * spanY);
+                if (span < 1.0) continue;
+                int dx = (int)Math.Round(reach * spanX / span);
+                int dy = (int)Math.Round(reach * spanY / span);
                 Point? end = NearestWalkable(town, new Point(start.Value.X + dx, start.Value.Y + dy))
                              ?? NearestWalkable(town, new Point(start.Value.X - dx, start.Value.Y - dy));
                 if (end == null || end.Value == start.Value) continue;
@@ -186,7 +224,15 @@ namespace TheLongestYear.Integration
                     Stack<Point> path = PathFindController.findPathForNPCSchedules(
                         start.Value, end.Value, town, PathfinderLimit);
                     if (path == null || path.Count < 4) continue;
-                    return path.ToArray();
+                    Point[] route = path.ToArray();
+                    // Longest aim first, so this returns the longest route that still keeps the
+                    // villager near the spot the camera passes. A length floor was tried on top of
+                    // this and taken back out: a floor and a radius together are two constraints
+                    // that fight, and every pairing of the two numbers threw away every route in the
+                    // town, leaving the pan with nobody on the road at all. A short route at the
+                    // right place beats a long one the player never sees.
+                    if (MaxStray(route, start.Value) > AnchorRadiusTiles) continue;
+                    return route;
                 }
                 catch (Exception ex)
                 {
@@ -195,6 +241,37 @@ namespace TheLongestYear.Integration
             }
             return null;
         }
+
+        /// <summary>How far <paramref name="route"/> ever gets from <paramref name="anchor"/>, the
+        /// point on the camera's line this extra was placed at. Lower is better: the camera is only
+        /// ever near ONE extra at a time, the one whose anchor it is passing, so the route that keeps
+        /// closest to that spot is the one the player actually sees somebody walking.
+        ///
+        /// Aiming the route along the camera's line is not enough on its own, because the pathfinder
+        /// walks ROADS and the town's roads wander: a route aimed west from Clint's still went up
+        /// through the square and left the villager twenty tiles north of anything the camera was
+        /// pointed at. Measured live before this check, during the winter stretch: camera at (94,81),
+        /// nearest extra at (81,57).
+        ///
+        /// Measuring against the anchor rather than against the straight line between the pan's ends
+        /// is deliberate, and the first attempt got it wrong: a corridor around that line rejected
+        /// every route in the town and the pan ran with no extras at all.</summary>
+        private static double MaxStray(Point[] route, Point anchor)
+        {
+            double worst = 0.0;
+            foreach (Point step in route)
+            {
+                double dx = step.X - anchor.X, dy = step.Y - anchor.Y;
+                double away = Math.Sqrt(dx * dx + dy * dy);
+                if (away > worst) worst = away;
+            }
+            return worst;
+        }
+
+        /// <summary>How far from its anchor a route may stray, in tiles. The camera shows about
+        /// fifteen tiles either side of centre across and only eight up and down, so this is roughly
+        /// "still in shot while the camera is on you".</summary>
+        private const double AnchorRadiusTiles = 11.0;
 
         /// <summary>The nearest tile to <paramref name="wanted"/> a villager could stand on, searched
         /// outward in rings. Null when there is nothing walkable nearby at all.</summary>
@@ -245,6 +322,7 @@ namespace TheLongestYear.Integration
             Utility.ForEachVillager(npc =>
             {
                 if (npc == null || npc is Child || npc is Horse || npc is Pet) return true;
+                if (!InTheWorld(npc)) { rejected.Add(npc.Name + "(not here yet)"); return true; }
                 if (!WalksTheTown(npc)) { rejected.Add(npc.Name); return true; }
                 if (!CanWalk(npc)) { rejected.Add($"{npc.Name}({FrameCount(npc)} frames)"); return true; }
                 if (!npc.IsVillager || npc.IsInvisible) return true;
@@ -270,6 +348,35 @@ namespace TheLongestYear.Integration
         /// during a pan (Jeff, 2026-09-11: "the weapon shop guy was blinking in and out, and was a
         /// white box at some point"). Cheaper and more honest to not borrow them than to clamp the
         /// animation and have them slide along on a single standing frame.</summary>
+        /// <summary>Every appearance entry this villager has in <c>Data/Characters</c>, with the
+        /// season each one is for. Logged next to the one that actually got picked, because the
+        /// clothes not changing across a rewind has two very different causes and they look the same
+        /// on screen: either vanilla has no seasonal outfit for them at all, or it has one and this
+        /// scene is failing to select it.</summary>
+        private static string AppearanceOptions(NPC npc)
+        {
+            try
+            {
+                var data = npc?.GetData();
+                if (data?.Appearance == null || data.Appearance.Count == 0) return "none";
+                var parts = new List<string>();
+                foreach (var option in data.Appearance)
+                    parts.Add($"{option.Id}:{option.Season?.ToString() ?? "any"}");
+                return string.Join("|", parts);
+            }
+            catch (Exception) { return "?"; }
+        }
+
+        /// <summary>True when this villager is actually in the valley right now.
+        ///
+        /// Villagers who have not arrived yet still exist to enumerate, and one of them turned up on
+        /// the road: "you had kent there... kent shouldn't be there unless it's a year 2 rewind"
+        /// (Jeff, 2026-09-11). An NPC the game has not placed has no current location, which is the
+        /// cheapest honest test for whether they are someone the player could have passed in the
+        /// street that year.</summary>
+        private static bool InTheWorld(NPC npc)
+            => npc?.currentLocation != null;
+
         /// <summary>True when this villager is someone who actually walks Pelican Town, which is
         /// what a schedule means: it is the list of places vanilla sends them during a day, and an
         /// NPC without one stands where they were put and never goes anywhere.
@@ -313,29 +420,29 @@ namespace TheLongestYear.Integration
 
         /// <summary>Moves every extra along for this frame. <paramref name="elapsedMs"/> is the
         /// pan's own clock, so they walk at a steady pace regardless of what the camera is doing.</summary>
-        public static void Tick(float elapsedMs, GameTime time)
+        public static void Tick(float elapsedMs, double cameraFraction, GameTime time)
         {
             foreach (Extra extra in Extras)
             {
                 if (extra.Npc == null || extra.Route == null) continue;
 
-                // BACKWARDS, ONCE, FOR THE WHOLE PAN. This used to be a triangle along the route,
-                // walking back to the start and then forward again, because the routes were about
-                // fourteen tiles and the walk ran out long before the shot did. The turn
-                // was plainly visible: "the people are walking backwards and forwards across the
-                // same path, that's not what I want. Just backwards, on a path long enough that they
-                // can go backwards the whole time they're on screen" (Jeff, 2026-09-11).
+                // BACKWARDS, AND WHILE THE CAMERA IS ON THEM. Two rounds of feedback are in this
+                // one line. It was a triangle along the route first, walking back and then forward
+                // again because the routes ran out before the shot did: "Just backwards, on a path
+                // long enough that they can go backwards the whole time they're on screen". Pacing
+                // the whole route across the whole pan fixed the turn but not the aim, because the
+                // camera is travelling too: each extra happened to be near it or not. "I've never
+                // seen a villager during the winter section, because they're not walking where the
+                // camera is showing!" (Jeff, 2026-09-11).
                 //
-                // So the route is now asked to be long enough (RouteTiles) and the walk is paced off
-                // the pan's own duration rather than a fixed tiles-per-second: every extra leaves the
-                // far end of its route at the first frame and arrives at the near end on the last
-                // one, so nobody turns round and nobody stands still waiting. The pace that falls out
-                // of that is the route's length over the pan's duration, which for the lengths the
-                // pathfinder returns here is an ordinary walking speed.
-                double progress = extra.DurationMs > 0.0
-                    ? Math.Clamp(elapsedMs / extra.DurationMs, 0.0, 1.0)
-                    : 0.0;
-                double along = 1.0 - progress;
+                // So the walk is driven off the CAMERA's own progress rather than the clock. Each
+                // extra is halfway along its route exactly when the camera reaches the point it was
+                // anchored at, and walks from the far end to the near end across a band of the pan
+                // either side of that. Before and after the band it is parked at an end, which is far
+                // off screen by then. The direction is unchanged: along runs 1 to 0, so they are
+                // always walking backwards, and now they are doing it in shot.
+                double along = Math.Clamp(
+                    0.5 - (cameraFraction - extra.Anchor) / CameraBand, 0.0, 1.0);
                 Place(extra, along);
                 Animate(extra, along, time);
             }
@@ -373,6 +480,24 @@ namespace TheLongestYear.Integration
             else { extra.Npc.faceDirection(Game1.up); extra.Npc.Sprite?.AnimateUp(time); }
         }
 
+        /// <summary>Where every extra is against where the camera is looking, in tiles. The whole
+        /// point of the camera-driven walk is that these stay close while each extra is in its band,
+        /// and it is far easier to read off a log line than off a screenshot of a moving shot.</summary>
+        public static string Positions()
+        {
+            var parts = new List<string>();
+            Vector2 centre = new Vector2(
+                (Game1.viewport.X + Game1.viewport.Width / 2f) / 64f,
+                (Game1.viewport.Y + Game1.viewport.Height / 2f) / 64f);
+            foreach (Extra extra in Extras)
+            {
+                if (extra.Npc == null) continue;
+                Vector2 at = extra.Npc.Tile;
+                parts.Add($"{extra.Npc.Name}@({at.X:0},{at.Y:0}) d={Vector2.Distance(at, centre):0}");
+            }
+            return $"camera({centre.X:0},{centre.Y:0}) " + string.Join(" ", parts);
+        }
+
         /// <summary>Re-picks every borrowed villager's clothes for the season that is on screen now,
         /// without moving them.
         ///
@@ -403,7 +528,7 @@ namespace TheLongestYear.Integration
                     npc.Position = position;
                     npc.faceDirection(facing);
                     if (npc.Sprite != null) npc.Sprite.CurrentFrame = frame;
-                    dressed.Add($"{npc.Name}={npc.Sprite?.Texture?.Name ?? "?"}");
+                    dressed.Add($"{npc.Name}={npc.Sprite?.Texture?.Name ?? "?"} picked={npc.LastAppearanceId ?? "none"} options=[{AppearanceOptions(npc)}]");
                 }
                 catch (Exception ex)
                 {
