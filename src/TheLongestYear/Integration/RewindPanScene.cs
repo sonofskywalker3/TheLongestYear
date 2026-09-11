@@ -19,9 +19,8 @@ namespace TheLongestYear.Integration
     /// year visibly runs backward underneath it.
     ///
     /// THIRTY SECONDS, FIXED, no matter how many seasons are being unwound: twenty-five of camera
-    /// travel, three held on the villager turning around, two fading out as he walks away. (Retimed
-    /// 2026-09-11: the first playtest ran the whole thing in about four seconds, and the turn-back
-    /// was never on screen.) Dials:
+    /// travel, three held still on the road out, two fading to black. (Retimed 2026-09-11: the first
+    /// playtest ran the whole thing in about four seconds and nothing in it had time to read.) Dials:
     ///
     /// - Camera: PanStart to PanEnd over the TRAVEL leg only, eased the same smoothstep
     ///   <see cref="EndingEventCommands.PanToName"/> (tlyPanTo) uses, then still for the last five
@@ -30,24 +29,30 @@ namespace TheLongestYear.Integration
     /// - Seasons: <see cref="RewindSchedule.SwapFractions"/>/<see cref="RewindSchedule.SeasonsToUnwind"/>
     ///   drive <c>GameLocation.updateSeasonalTileSheets()</c> swaps only. NEVER <c>seasonUpdate()</c>,
     ///   which would mutate terrain, crops and features instead of just repainting them.
-    /// - Date: <see cref="RewindSchedule.DateAt"/>, unwinding once and steadily across the whole
-    ///   thirty seconds from the failed date back to Spring 1. This is what the HUD shows.
-    /// - Light: <see cref="RewindSchedule.CycleClockAt"/>, a dusk-to-dawn loop about every two
-    ///   seconds, so roughly fifteen cycles across the scene. <c>Game1.UpdateGameClock</c> already
-    ///   recomputes <c>outdoorLight</c> from <c>Game1.timeOfDay</c> on its own each frame (it runs
-    ///   unconditionally while no menu or minigame is up), so driving the clock is the whole effect;
-    ///   this class does no tinting of its own. The light and the date are TWO INDEPENDENT DIALS and
-    ///   are deliberately not synchronised: Jeff, 2026-09-11, was explicit that the date must not
-    ///   line up with the visual sunset.
+    /// - Light: <see cref="RewindSchedule.CycleClockAt"/>, a sunrise-and-sunset loop about every
+    ///   two seconds, so roughly fifteen cycles across the scene. <c>Game1.UpdateGameClock</c>
+    ///   already recomputes <c>outdoorLight</c> from <c>Game1.timeOfDay</c> on its own each frame
+    ///   (it runs unconditionally while no menu or minigame is up), so driving the clock is the
+    ///   whole effect; this class does no tinting of its own.
+    ///
+    /// NO DATE DIAL, AND NO CLOCK ON SCREEN. The date used to unwind across the pan for the HUD to
+    /// show. It never showed: Game1 skips drawHUD entirely while <c>freezeControls</c> is set, which
+    /// this scene sets for its whole run, so the clock and date were hidden the whole time and the
+    /// dial had no output at all. Jeff, 2026-09-11, ruled that the clock SHOULD stay hidden (the
+    /// light cycle would make nonsense of it), which leaves writing <c>Game1.dayOfMonth</c> as pure
+    /// risk with nothing to show for it, and it was live risk: see the gameTimeInterval note in
+    /// <see cref="Tick"/>.
     /// - Weather: <c>Game1.isDebrisWeather</c> for the whole pan (the wind), with a harder gust
     ///   (re-seeded debris via <c>Game1.populateDebrisWeatherArray()</c>) on every season swap to hide
     ///   the tilesheet cut, which is a dispose-and-reload and cannot cross-fade.
     ///
-    /// The villager beat borrows the ending's own cast selector, <see cref="EndingSpeaker.Pick"/>, with
-    /// the same eligibility rule <see cref="EndingEventDriver"/> uses (present, not a child, not the
-    /// spouse) so the villager who almost remembers the player at the good ending is the one who
-    /// forgets them here. Pick can return null (no bonded villager yet); the pan still runs its full
-    /// length on wind, clock and camera alone.
+    /// NO VILLAGER. The spec's beat 10 had the villager the player is most bonded with walking the
+    /// path to the farm, stopping and turning back, the cost of the rewind made personal. It was
+    /// built twice and cut on Jeff's call after the second playtest (2026-09-11): "Drop the NPC, it
+    /// doesn't work." A borrowed NPC slid along the route with no walk cycle the engine would drive
+    /// for it (the pan freezes controls, so nothing updates characters), and at any speed that kept
+    /// it in the shot it read as a prop being dragged rather than a person leaving. The held beat it
+    /// used to fill is now three seconds of the road out with the light still cycling over it.
     ///
     /// The farmer never moves. <see cref="Game1.currentLocation"/> switches to Town for the pan the
     /// same way <c>WorldResetService</c> places the player without a warp (a bare reassignment; that
@@ -74,29 +79,22 @@ namespace TheLongestYear.Integration
         private static readonly Point PanStart = new Point(94, 81);   // Clint's shop door, Town.
         private static readonly Point PanEnd = new Point(0, 54);      // West-edge road out to the Bus Stop.
 
-        // THE SHAPE OF THE SCENE (retimed 2026-09-11 after the first playtest, where the whole pan
-        // ran about four seconds: the villager shot across the square diagonally, the turn-back beat
-        // was never visible at all, and the light cycle was blink-and-miss). Thirty seconds, in three
-        // parts, and the total is fixed no matter how many seasons are being unwound.
+        // THE SHAPE OF THE SCENE. Thirty seconds, in three parts, and the total is fixed no matter
+        // how many seasons are being unwound. (Retimed 2026-09-11 from about four seconds, where the
+        // light cycle was blink-and-miss and nothing in the shot had time to read.)
         private const float TravelMs = 25000f;   // the camera moving, Clint's door out to the west road
-        private const float TurnHoldMs = 3000f;  // held on the villager, stopped, looking back
-        private const float WalkAwayMs = 2000f;  // he walks on, the screen fades out
-        private const float PanDurationMs = TravelMs + TurnHoldMs + WalkAwayMs;
+        private const float HoldMs = 3000f;      // held still on the road out, the light still cycling
+        private const float FadeOutMs = 2000f;   // the screen fades to black
+        private const float PanDurationMs = TravelMs + HoldMs + FadeOutMs;
 
-        // The villager keeps station ahead of the camera rather than walking a fixed stretch of the
-        // route on his own clock: his route fraction is the camera's plus a lead that closes to zero
-        // by the end of the travel, so he is always on screen, always moving in the same direction as
-        // the pan, and standing dead centre at the moment the camera stops for the turn. The old
-        // fixed-stretch version is what produced the diagonal dash.
-        private const double VillagerLeadFraction = 0.10;
-        private const double VillagerEnterFraction = 0.35;   // of the travel, before which he holds
-        // How far he walks on, along the route, during the fade.
-        private const double VillagerWalkAwayFraction = 0.05;
-
-        // Dusk down to dawn, looped: one cycle every two seconds, so roughly fifteen of them across
-        // the scene. Impressionistic, not a calendar (Jeff, 2026-09-11), and deliberately NOT
-        // synchronised with the date below.
-        private const int ClockStart = 2400, ClockEnd = 600;
+        // Sunset and sunrise, looped: two seconds a cycle, one second each way, so roughly fifteen
+        // of them across the scene. The dark end is ten at night (Jeff, 2026-09-11); the light end is
+        // read off the location per season rather than fixed, because the hour the valley starts to
+        // darken moves (Spring 1800, Fall 1700, Winter 1500) and a fixed floor would never reach
+        // full daylight in Winter. Impressionistic, not a calendar, and deliberately NOT synchronised
+        // with the date.
+        private const int LightCycleDusk = 2200;
+        private const int LightCycleDawnMargin = 100;   // below the hour the valley starts to darken
         private const double LightCycleMs = 2000.0;
 
         // EndingEventCommands.PanToName's own centring math, reused by reflection instead of
@@ -125,15 +123,7 @@ namespace TheLongestYear.Integration
         private static bool _priorFreezeControls, _priorViewportFreeze, _priorIsDebrisWeather;
         private static StardewValley.Season _priorSeason;   // Game1.season's own type
         private static int _priorTimeOfDay;
-        private static int _priorDayOfMonth;
-        private static CoreSeason _failed;
         private static float _fadeAlpha;
-
-        private static NPC _villager;
-        private static GameLocation _villagerHomeLocation;
-        private static Vector2 _villagerHomePosition;
-        private static int _villagerHomeFacing;
-        private static bool _villagerEmoted;
 
         /// <summary>Wires the ticking and the return-to-title safety net. Safe to call more than once
         /// (later calls just refresh the stored references); the event subscription itself only
@@ -182,7 +172,6 @@ namespace TheLongestYear.Integration
             }
 
             _town = town;
-            _failed = failed;
             _seasons = RewindSchedule.SeasonsToUnwind(failed);
             _swaps = RewindSchedule.SwapFractions(failed);
             _seasonIndex = 0;
@@ -197,11 +186,10 @@ namespace TheLongestYear.Integration
             _priorIsDebrisWeather = Game1.isDebrisWeather;
             _priorSeason = Game1.season;
             _priorTimeOfDay = Game1.timeOfDay;
-            _priorDayOfMonth = Game1.dayOfMonth;
 
             // BEFORE anything below is written, not after (bug found 2026-09-11). Everything from
             // here on mutates the world, and ForceTeardown bails on !_active, so a throw inside
-            // Gust() or SpawnVillager() used to leave Town painted in the failed season and the
+            // Gust() used to leave Town painted in the failed season and the
             // camera frozen on it with no abort callback and nothing watching. Arming the flag
             // first means any throw below reaches the restore path.
             _active = true;
@@ -228,7 +216,6 @@ namespace TheLongestYear.Integration
             _town.updateSeasonalTileSheets();
             Gust();
 
-            SpawnVillager();
         }
 
         /// <summary>True while the pan is running. The pan owns no menu, so this is the only way
@@ -238,8 +225,8 @@ namespace TheLongestYear.Integration
         /// <summary>Fast-forwards the pan to its last frame and finishes it, as if the whole thirty
         /// seconds had passed in one tick. The pan's own <see cref="Tick"/> does the work, so every remaining
         /// season swap still lands (<see cref="TickSeasons"/> advances with a while loop precisely so
-        /// a large jump in progress does not skip any) and the clock, camera and villager all end
-        /// where a watched run would leave them, which is what the next beats assume.
+        /// a large jump in progress does not skip any) and the clock, camera and fade all end where
+        /// a watched run would leave them, which is what the next beats assume.
         ///
         /// This is the pan's half of the three per-scene skip entry points behind
         /// <c>tly_skipscene</c>; the two Junimo beats have their own
@@ -287,13 +274,23 @@ namespace TheLongestYear.Integration
 
             TickCamera(travel);
             TickSeasons(progress);
-            TickDate(progress);
-            // The light. A repeating dusk-to-dawn loop on its OWN clock, deliberately not lined up
-            // with the date above (Jeff, 2026-09-11). Game1.UpdateGameClock recomputes outdoorLight
-            // from timeOfDay every tick while no menu is up, so writing the clock is the whole
-            // effect; this class does no tinting of its own.
-            Game1.timeOfDay = RewindSchedule.CycleClockAt(_elapsed, LightCycleMs, ClockStart, ClockEnd);
-            TickVillager(travel);
+            // NOTHING MUST TICK OVER while the clock is being used as a light dial.
+            // Game1.UpdateGameClock fires performTenMinuteClockUpdate once gameTimeInterval passes
+            // realMilliSecondsPerGameTenMinutes, and it arrives here already full from normal play,
+            // so it fired during the pan. That handler reads Data/Festivals/<season><day> whenever
+            // today is a festival and can show the festival-has-started message when the clock it
+            // is handed matches the start time, both of which this scene is now sweeping past
+            // fifteen times. Live 2026-09-11, on a save sitting on the Flower Dance, it threw
+            // ContentLoadException for Data/Festivals/spring15 three times in one pan. Zeroing the
+            // accumulator every tick stops the handler firing at all, and also takes its
+            // contribution out of the outdoorLight ramp below, which is one fewer thing moving
+            // under the light cycle.
+            Game1.gameTimeInterval = 0;
+            // The light. A sunrise-and-sunset loop on its own clock. Game1.UpdateGameClock
+            // recomputes outdoorLight from timeOfDay every tick while no menu is up, so writing the
+            // clock is the whole effect; this class does no tinting of its own.
+            Game1.timeOfDay = RewindSchedule.CycleClockAt(
+                _elapsed, LightCycleMs, LightCycleDusk, DaylightTime());
             TickFade();
 
             if (progress >= 1.0) Finish();
@@ -313,26 +310,15 @@ namespace TheLongestYear.Integration
 
         private static float Ease(double t) => (float)(t * t * (3.0 - 2.0 * t));   // smoothstep, matching tlyPanTo
 
-        /// <summary>The date the HUD shows, unwinding once and steadily across the whole thirty
-        /// seconds from the failed date back to Spring 1. <see cref="RewindSchedule.DateAt"/> owns
-        /// the arithmetic and divides the scene evenly between the seasons being unwound, which is
-        /// the same division <see cref="RewindSchedule.SwapFractions"/> uses for the repaints, so the
-        /// day counter and the map always agree on which season is on screen.</summary>
-        private static void TickDate(double progress)
-        {
-            (CoreSeason _, int day) = RewindSchedule.DateAt(progress, _failed);
-            Game1.dayOfMonth = day;
-        }
-
-        /// <summary>The last two seconds, fading out while the villager walks on. Drawn by
+        /// <summary>The last two seconds, fading out. Drawn by
         /// <see cref="OnRendered"/> rather than through Game1's own fade fields, which the engine's
         /// ScreenFade owns and would fight us for.</summary>
         private static void TickFade()
         {
-            float fadeStart = TravelMs + TurnHoldMs;
+            float fadeStart = TravelMs + HoldMs;
             _fadeAlpha = _elapsed <= fadeStart
                 ? 0f
-                : MathHelper.Clamp((_elapsed - fadeStart) / WalkAwayMs, 0f, 1f);
+                : MathHelper.Clamp((_elapsed - fadeStart) / FadeOutMs, 0f, 1f);
         }
 
         /// <summary>The pan owns no menu, so its fade has to be painted here, after everything else
@@ -375,143 +361,26 @@ namespace TheLongestYear.Integration
         /// from the current season, so calling it again right after a tilesheet swap also refreshes the
         /// debris to match (leaves in Fall, snow in Winter) rather than leaving the old season's look
         /// blowing across the new one.</summary>
+        /// <summary>The light end of the cycle: just under the hour this location and season start to
+        /// darken, so the loop always reaches genuine full daylight (below that threshold
+        /// <c>UpdateGameClock</c> leaves outdoorLight at the ambient and stops drawing lighting at
+        /// all) and spends the whole second ramping rather than sitting flat.</summary>
+        private static int DaylightTime()
+            => Game1.getStartingToGetDarkTime(_town ?? Game1.currentLocation) - LightCycleDawnMargin;
+
         private static void Gust()
         {
             Game1.isDebrisWeather = true;
             Game1.populateDebrisWeatherArray();
         }
 
-        private static void SpawnVillager()
-        {
-            Func<string, bool> eligible = name =>
-            {
-                NPC candidate = Game1.getCharacterFromName(name);
-                if (candidate == null || candidate is Child) return false;
-                Farmer player = Game1.player;
-                if (player?.spouse != null && player.spouse == name) return false;
-                return true;
-            };
-
-            string name = _meta != null ? EndingSpeaker.Pick(_meta.State, _config?.DejaVuThreshold ?? 0, eligible) : null;
-            if (name == null) { _villager = null; return; }
-
-            NPC npc = Game1.getCharacterFromName(name);
-            if (npc == null) { _villager = null; return; }
-
-            _villagerHomeLocation = npc.currentLocation;
-            _villagerHomePosition = npc.Position;
-            _villagerHomeFacing = npc.FacingDirection;
-            _villagerEmoted = false;
-
-            npc.controller = null;
-            npc.Halt();
-            if (_villagerHomeLocation != _town)
-            {
-                _villagerHomeLocation?.characters.Remove(npc);
-                if (!_town.characters.Contains(npc)) _town.characters.Add(npc);
-            }
-            npc.currentLocation = _town;
-            // Same reason as the Junimos in the bedroom beats: a character whose forceUpdateTimer is
-            // above zero gets its own update() run by GameLocation.updateCharacters even though
-            // shouldTimePass is false, which would put this one back on its schedule mid-shot.
-            npc.forceUpdateTimer = 0;
-            npc.faceDirection(Game1.left);
-
-            _villager = npc;
-            PlaceVillagerAt(VillagerFractionAt(0.0));
-        }
-
-        /// <summary>Where along the route the villager stands at a given point in the camera's
-        /// travel. He keeps station AHEAD of the camera by a lead that closes to nothing by the end
-        /// of the travel, rather than walking his own fixed stretch on his own clock: that is what
-        /// keeps him on screen for the whole shot, moving the same way the pan is, and standing dead
-        /// centre at the moment the camera stops. Walking a fixed stretch against an eased camera is
-        /// what made him shoot diagonally across the square in the first playtest.</summary>
-        private static double VillagerFractionAt(double travel)
-        {
-            double camera = Ease(travel);
-            double closing = travel <= VillagerEnterFraction
-                ? 1.0
-                : 1.0 - (travel - VillagerEnterFraction) / (1.0 - VillagerEnterFraction);
-            return Math.Clamp(camera + VillagerLeadFraction * closing, 0.0, 1.0);
-        }
-
-        /// <summary>Three beats, on the same clock as the camera: he walks the path toward the farm
-        /// while the camera travels, stops and looks back for the three held seconds, then turns away
-        /// and walks on through the fade. The looking back is the cost the scene is about: the
-        /// villager the player is most bonded with, half-remembering them, about to not.</summary>
-        private static void TickVillager(double travel)
-        {
-            if (_villager == null) return;
-
-            if (travel < 1.0)
-            {
-                PlaceVillagerAt(VillagerFractionAt(travel));
-                _villager.faceDirection(Game1.left);
-                if (travel > VillagerEnterFraction) _villager.Sprite?.AnimateLeft(Game1.currentGameTime);
-                return;
-            }
-
-            float turnEnd = TravelMs + TurnHoldMs;
-            if (_elapsed < turnEnd)
-            {
-                // Stopped, turned back the way he came. The emote is one shot, not once per tick.
-                _villager.faceDirection(Game1.right);
-                if (_villagerEmoted) return;
-                _villagerEmoted = true;
-                _villager.doEmote(Character.questionMarkEmote);
-                return;
-            }
-
-            double away = MathHelper.Clamp((_elapsed - turnEnd) / WalkAwayMs, 0f, 1f);
-            PlaceVillagerAt(VillagerFractionAt(1.0) + VillagerWalkAwayFraction * away);
-            _villager.faceDirection(Game1.left);
-            _villager.Sprite?.AnimateLeft(Game1.currentGameTime);
-        }
-
-        private static void PlaceVillagerAt(double routeFraction)
-        {
-            float t = (float)Math.Clamp(routeFraction, 0.0, 1.0);
-            _villager.Position = new Vector2(
-                MathHelper.Lerp(PanStart.X, PanEnd.X, t) * 64f,
-                MathHelper.Lerp(PanStart.Y, PanEnd.Y, t) * 64f);
-        }
-
-        /// <summary>Gives the borrowed villager back exactly where it was found, regardless of whether
-        /// the pan finished normally or was cut short. Idempotent and safe when nothing was spawned.</summary>
-        private static void TeardownVillager()
-        {
-            if (_villager == null) return;
-            NPC npc = _villager;
-            _villager = null;
-            try
-            {
-                npc.controller = null;
-                npc.Halt();
-                if (_villagerHomeLocation != null && _villagerHomeLocation != _town)
-                {
-                    _town.characters.Remove(npc);
-                    if (!_villagerHomeLocation.characters.Contains(npc))
-                        _villagerHomeLocation.characters.Add(npc);
-                }
-                npc.currentLocation = _villagerHomeLocation ?? npc.currentLocation;
-                npc.Position = _villagerHomePosition;
-                npc.faceDirection(_villagerHomeFacing);
-            }
-            catch (Exception ex)
-            {
-                _monitor?.Log($"RewindPanScene: {ex.GetType().Name} returning the villager: {ex.Message}", LogLevel.Warn);
-            }
-        }
-
         /// <summary>Normal end of the pan: the rewound season/clock/weather/camera are left exactly as
         /// the pan reached them (that IS the beat) for the next part of the sequence to paint over.
-        /// Only the borrowed villager is given back.</summary>
+        /// Nothing of the pan's own is left in the world to take back.</summary>
         private static void Finish()
         {
             if (!_active) return;
             _active = false;
-            TeardownVillager();
             Action onComplete = _onComplete;
             _onComplete = null;
             _onAbort = null;   // exactly one of the two ever runs
@@ -531,7 +400,6 @@ namespace TheLongestYear.Integration
             _active = false;
             _fadeAlpha = 0f;
             _monitor?.Log($"RewindPanScene: forcing teardown ({reason}); restoring season, clock, weather and camera.", LogLevel.Warn);
-            TeardownVillager();
             try
             {
                 if (_town != null)
@@ -540,7 +408,6 @@ namespace TheLongestYear.Integration
                     _town.updateSeasonalTileSheets();
                 }
                 Game1.timeOfDay = _priorTimeOfDay;
-                Game1.dayOfMonth = _priorDayOfMonth;
                 Game1.isDebrisWeather = _priorIsDebrisWeather;
                 Game1.freezeControls = _priorFreezeControls;
                 Game1.viewportFreeze = _priorViewportFreeze;

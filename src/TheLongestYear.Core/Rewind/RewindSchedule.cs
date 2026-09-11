@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace TheLongestYear.Core.Rewind;
@@ -29,42 +29,31 @@ public static class RewindSchedule
         return fractions;
     }
 
-    /// <summary>The date at a point along the route: which season is on screen and what the day
-    /// counter reads. The route is divided evenly between the seasons being unwound, matching
-    /// <see cref="SwapFractions"/> exactly, and inside each segment the day runs from the last day
-    /// of the month down to the first. So a Fall failure is three segments of the same length, a
-    /// Winter failure four, and a Spring failure one whole-route segment that still counts 28 down
-    /// to 1 even though the map never repaints.
+    /// <summary>A sunrise-and-sunset loop: the clock runs BACKWARD from <paramref name="darkTime"/>
+    /// to <paramref name="lightTime"/> over the first half of <paramref name="cycleMs"/>, then
+    /// FORWARD again over the second half, and repeats for as long as the pan lasts. A triangle,
+    /// not a sawtooth.
     ///
-    /// This is the dial the HUD shows, and it is deliberately NOT the same dial as the light
-    /// (<see cref="CycleClockAt"/>): Jeff, 2026-09-11, was explicit that the date must not line up
-    /// with the visual sunset. The date unwinds once, steadily, across the whole scene; the light
-    /// loops dusk to dawn many times over the same stretch.</summary>
-    public static (Season Season, int DayOfMonth) DateAt(double progress, Season failed)
+    /// The sawtooth is what the first version did, and it had no sunrise in it (playtest
+    /// 2026-09-11): running dusk down to dawn and then snapping back to dusk means the world only
+    /// ever fades one way and the other half of every cycle is a hard cut to black. Jeff's fix, in
+    /// his words: "reversing from maybe 10pm for 1 second until it's full daylight, and then advance
+    /// for the next second to fade to dark instead of just flipping to it."
+    ///
+    /// Impressionistic rather than a real calendar: the point is the valley lighting and unlighting
+    /// itself over and over as time comes undone, not a day counter.
+    /// <c>Game1.UpdateGameClock</c> recomputes <c>outdoorLight</c> from <c>Game1.timeOfDay</c> every
+    /// tick, so driving this is the whole light effect.</summary>
+    public static int CycleClockAt(double elapsedMs, double cycleMs, int darkTime, int lightTime)
     {
-        IReadOnlyList<Season> seasons = SeasonsToUnwind(failed);
-        double clamped = Math.Clamp(progress, 0.0, 1.0);
-
-        int index = (int)(clamped * seasons.Count);
-        if (index >= seasons.Count) index = seasons.Count - 1;   // progress exactly 1
-
-        double within = clamped * seasons.Count - index;
-        int day = Calendar.DaysPerMonth - (int)(within * Calendar.DaysPerMonth);
-        return (seasons[index], Math.Clamp(day, 1, Calendar.DaysPerMonth));
-    }
-
-    /// <summary>A dusk-to-dawn loop: the clock runs from <paramref name="startTime"/> down to
-    /// <paramref name="endTime"/> over <paramref name="cycleMs"/>, then snaps back and does it
-    /// again, for as long as the pan lasts. Impressionistic rather than a real calendar (Jeff,
-    /// 2026-09-11): the point is the valley lighting itself over and over as time comes undone, not
-    /// a day counter. <c>Game1.UpdateGameClock</c> recomputes <c>outdoorLight</c> from
-    /// <c>Game1.timeOfDay</c> every tick, so driving this is the whole light effect.</summary>
-    public static int CycleClockAt(double elapsedMs, double cycleMs, int startTime, int endTime)
-    {
-        if (cycleMs <= 0.0) return ClockAt(0.0, startTime, endTime);
+        if (cycleMs <= 0.0) return darkTime;
         double within = elapsedMs % cycleMs;
         if (within < 0.0) within += cycleMs;
-        return ClockAt(within / cycleMs, startTime, endTime);
+
+        double half = cycleMs / 2.0;
+        return within < half
+            ? ClockAt(within / half, darkTime, lightTime)          // sunrise: dark running back to light
+            : ClockAt((within - half) / half, lightTime, darkTime); // sunset: light running on to dark
     }
 
     /// <summary>The clock at a point along the route, running from <paramref name="startTime"/> down
