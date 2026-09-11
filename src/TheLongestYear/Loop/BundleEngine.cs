@@ -69,7 +69,43 @@ namespace TheLongestYear.Loop
     internal sealed class BundleEngine
     {
         private const string VaultRoomName = "Vault";
+
+        /// <summary>The Abandoned Joja Mart's room key in <c>Data/Bundles</c> (it holds exactly one
+        /// bundle, The Missing, which vanilla only offers once the hall is finished and the year has
+        /// turned). Not a TLY room: <see cref="Core.RoomThemeMap"/> rejects it alongside the Vault,
+        /// so it never carries a theme, never counts toward a season gate and never appears in the
+        /// donation catalog.</summary>
+        private const string AbandonedJojaRoomName = "Abandoned Joja Mart";
+
         private const string MoneySlotId = "-1";
+
+        /// <summary>Rooms the engine emits but never re-rolls. Both are outside the loop's economy
+        /// (<see cref="Core.RoomThemeMap"/> rejects both), so their contents stay exactly as vanilla
+        /// authored them.
+        ///
+        /// The Joja room was missing from this list until 0.17.13, which is how The Missing Bundle
+        /// ended up asking for a legendary fish (Nexus bugs 1130863, ChaoticMindset). The read side
+        /// had always excluded the room, but the WRITE side exempted only the Vault by name, so the
+        /// pool that <see cref="VanillaBundlePool.BuildRoomPools"/> builds for every room key in
+        /// <c>Data/Bundles</c> went through <see cref="PoolDomainClassifier"/> like a CC room's. That
+        /// was harmless while an unrecognised bundle kept its vanilla slots, but since spec
+        /// 2026-08-28-obtainable-board-3-pools only a money or empty bundle classifies to
+        /// <see cref="PoolDomain.None"/> -- everything else falls through to its recipe. The Missing
+        /// (Wine, Dinosaur Mayonnaise, Prismatic Shard, Ancient Fruit, Void Salmon, Caviar) has no
+        /// two-thirds majority in any one pool, so it took the recipe path and re-rolled.
+        ///
+        /// These rooms are PASSED THROUGH, not skipped. Dropping their keys would leave a save that
+        /// already received a re-rolled board stuck with it forever: <c>SetBundleData</c> merges and
+        /// upserts but never removes, so a key we stop emitting keeps its last written value (see the
+        /// fixed-key-space note in the class doc). Emitting vanilla's own entry overwrites it.</summary>
+        private static readonly IReadOnlyList<string> PassThroughRooms = new[] { VaultRoomName, AbandonedJojaRoomName };
+
+        /// <summary>Whether <see cref="Generate"/> emits this room's vanilla entry untouched instead
+        /// of re-rolling it. Exposed so the tly_dumpbundles catalogue reports these rooms the way the
+        /// engine actually treats them: that report classifies each candidate on its own, so without
+        /// this it describes the pool a pass-through room WOULD have drawn from and reads as though
+        /// the room still re-rolls.</summary>
+        public static bool IsPassThroughRoom(string room) => PassThroughRooms.Contains(room);
 
         // Per-bundle RNG salt for slot composition (trim + Plan-2 slot filling). spec.Index is
         // vanilla's own absolute bundle index — unique per generation — so each bundle gets an
@@ -205,14 +241,23 @@ namespace TheLongestYear.Loop
             // structurally impossible with vanilla data).
             var claimedIndices = new Dictionary<int, (string Room, string Name)>();
 
-            // Vault passes through UNMODIFIED (single-candidate positions, real indices kept).
-            if (pools.TryGetValue(VaultRoomName, out IReadOnlyList<IReadOnlyList<BundleSpec>> vaultPositions))
+            // The Vault and the Abandoned Joja Mart pass through UNMODIFIED (single-candidate
+            // positions, real indices kept). Candidate 0 is vanilla's own Data/Bundles entry --
+            // BuildRoomPools adds the standard set first and only ever appends widening candidates
+            // after it -- so this writes back exactly what the game authored. The Vault's amounts
+            // are the one thing scaled, by its own difficulty multiplier.
+            foreach (string room in PassThroughRooms)
             {
-                foreach (IReadOnlyList<BundleSpec> candidates in vaultPositions)
+                if (!pools.TryGetValue(room, out IReadOnlyList<IReadOnlyList<BundleSpec>> positions))
+                    continue;
+
+                foreach (IReadOnlyList<BundleSpec> candidates in positions)
                 {
                     if (candidates.Count == 0)
                         continue; // already WARN-logged by BuildRoomPools
-                    BundleSpec spec = VaultAmountScaler.Scale(candidates[0], _tuning.VaultAmountMultiplier);
+                    BundleSpec spec = room == VaultRoomName
+                        ? VaultAmountScaler.Scale(candidates[0], _tuning.VaultAmountMultiplier)
+                        : candidates[0];
                     if (!TryClaimIndex(spec, claimedIndices))
                         continue;
                     allPicks.Add(Uniquify(spec, usedNameCounts));
@@ -230,8 +275,8 @@ namespace TheLongestYear.Loop
             foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry
                      in pools.OrderBy(kv => kv.Key, StringComparer.Ordinal))
             {
-                if (roomEntry.Key == VaultRoomName)
-                    continue;
+                if (PassThroughRooms.Contains(roomEntry.Key))
+                    continue; // already emitted above, unmodified
 
                 IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(roomEntry.Value, seed, roomEntry.Key);
                 foreach (BundleSpec pick in picks)

@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.17.12`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.1`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,24 @@ This is a **beta** (`0.17.12`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.1
+
+**Garlic can be cultivated too, and both Cultivation upgrades are cheaper.**
+
+- **Cultivation: Garlic joins the shrine, and both Cultivation upgrades drop to 3,000 Junimo Points.** The shrine sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
+- **Artichoke is no longer held off an Easy board.** On the Easy item-rarity setting all three of Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the time, in any year, for free.
+
+## What's New in 0.18.0
+
+**The Mod Compatibility Update: bundles no longer ask for things this run cannot reach, and a board that already has one gets repaired.**
+
+- **Bundles no longer ask for things this run cannot reach.** Reported by pitytheviolins: with The Fishmonger installed, a Community Center bundle asked for a dish only Constance sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no way to complete that bundle. The game now traces every item back to where it actually comes from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at least one of those routes is somewhere this run can reach. An item with no known source at all is left alone, so this only ever removes things proven unreachable, never guesses.
+- **A board you already have gets repaired, not just new ones.** If a bundle on your current board is asking for something this run can never reach, it is swapped for something you can actually get the next time you load that save. Anything you already donated stays donated.
+- **The Abandoned Joja Mart's bundle is vanilla again.** The Missing Bundle was being re-rolled by the mod's own board generator, which is how it came to ask for a legendary fish. That room sits outside the loop entirely, so it is now passed through untouched exactly as the Vault always has been, and a save that already picked up a re-rolled version gets the real one back on its next rewind. Reported by ChaoticMindset.
+- **Zoom Level and UI Scale survive the rewind.** Both dials snapped back to the game's defaults every time the Junimos rewound the year, and there was no way to change what those defaults were. The game treats them as belonging to the save rather than to you, so the fresh year was starting them over while every other setting came back on its own. The loop now carries both across the reset. Reported by RiseiJaku.
+
+Coming from 0.17.15 or earlier? See the previous update below, or the full history in [CHANGELOG.md](CHANGELOG.md).
 
 ## What's New in 0.17.12
 

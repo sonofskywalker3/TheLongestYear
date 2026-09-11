@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TheLongestYear.Core.Availability;
 
 namespace TheLongestYear.Core;
 
@@ -71,12 +72,23 @@ public static class ItemPoolBuilder
         BundleGenerationTuning tuning,
         IReadOnlySet<string>? extraExcludedIds = null,
         IReadOnlyDictionary<string, RawFishEntry>? fishRows = null,
-        IReadOnlyDictionary<string, Season>? festivalSeasons = null)
+        IReadOnlyDictionary<string, Season>? festivalSeasons = null,
+        SourceReachability? reachability = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
         // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
         if (extraExcludedIds != null)
             excluded.UnionWith(extraExcludedIds);
+
+        // Provably unreachable items (spec 2026-09-10-source-reachability). Merged HERE so every
+        // pool inherits it: Vets() consults `excluded`, and all thirteen pools go through Vets.
+        // Applies at every difficulty, unlike YearTwoCrops: this is impossibility, not pacing.
+        if (reachability != null)
+        {
+            foreach (string id in AllCandidateIds(crops, objects, forageSpawns, fishSpawns))
+                if (reachability.IsUnreachable(id))
+                    excluded.Add(id);
+        }
 
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
         var (fishPool, crabPotPool) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons);
@@ -927,6 +939,29 @@ public static class ItemPoolBuilder
                 return true;
         }
         return false;
+    }
+
+    /// <summary>Every id that could enter a pool, so the reachability rule is asked about each
+    /// exactly once. Data/Objects is the superset for the category pools; crops and spawns are
+    /// added because a harvest or catch need not have its own Data/Objects row in a mod.</summary>
+    private static IEnumerable<string> AllCandidateIds(
+        IReadOnlyList<RawCropEntry> crops,
+        IReadOnlyDictionary<string, RawObjectEntry> objects,
+        IReadOnlyList<RawSpawnEntry> forageSpawns,
+        IReadOnlyList<RawSpawnEntry> fishSpawns)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string bare in objects.Keys)
+            if (seen.Add(Qualify(bare))) yield return Qualify(bare);
+        foreach (RawCropEntry crop in crops)
+            if (crop?.HarvestItemId != null && seen.Add(Qualify(Unqualify(crop.HarvestItemId))))
+                yield return Qualify(Unqualify(crop.HarvestItemId));
+        foreach (RawSpawnEntry spawn in forageSpawns)
+            if (spawn?.ItemId != null && seen.Add(Qualify(Unqualify(spawn.ItemId))))
+                yield return Qualify(Unqualify(spawn.ItemId));
+        foreach (RawSpawnEntry spawn in fishSpawns)
+            if (spawn?.ItemId != null && seen.Add(Qualify(Unqualify(spawn.ItemId))))
+                yield return Qualify(Unqualify(spawn.ItemId));
     }
 
     private static string Qualify(string bareId) => BundleParsing.NormalizeItemId(bareId);

@@ -17,6 +17,111 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.1 - 2026-09-10
+
+2063 tests.
+
+### Changed
+
+- **Garlic can be cultivated too, and both Cultivation upgrades now cost less.** The shrine sold
+  Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage is guaranteed
+  from the Traveling Cart once in year 1, while Garlic has no year-1 source at all. Cultivation:
+  Garlic joins it, giving Spring Mixed Seeds a 10% chance of Garlic, and both now cost 3,000
+  Junimo Points instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's
+  Special Order, which stays the guaranteed route. Raised by Tottelotta123, who asked why Garlic
+  was on a Spring board when the cart was the only way to get it.
+
+### Fixed
+
+- **Artichoke is no longer held off an Easy board.** On the Easy item-rarity setting the mod kept
+  all three of Pierre's year-two crops off the board until you bought an upgrade, but Artichoke
+  never needed one: planting Mixed Seeds in Fall gives Artichoke Seeds about a quarter of the
+  time, in any year, for free. It is now treated as the ordinary Fall crop it is, and its pacing
+  week moves from 11 to 10 to match when you can actually harvest one.
+
+## 0.18.0 - 2026-09-10 - The Mod Compatibility Update
+
+2059 tests.
+
+### Fixed
+
+- **Bundles no longer ask for things this run cannot reach.** Reported by pitytheviolins:
+  with The Fishmonger installed, a Community Center bundle asked for a dish only Constance
+  sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no
+  way to complete that bundle. The game now traces every item back to where it actually comes
+  from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at
+  least one of those routes is somewhere this run can reach. An item with no known source at
+  all is left alone, so this only ever removes things proven unreachable, never guesses.
+- **A board you already have gets repaired, not just new ones.** If a bundle on your current
+  board is asking for something this run can never reach, it is swapped for something you can
+  actually get the next time you load that save. Anything you already donated stays donated.
+- **Driftwood, Rain Totem and Ostrich Egg were wrongly kept off a board that had The Fishmonger
+  installed, even though all three are freely obtainable.** The check above did not yet know
+  that fishing trash comes off the line in any water from day one, or that a craftable item is
+  reachable by definition, so a mod listing an item like these in an unreachable shop could tip
+  it the wrong way. All three are now confirmed reachable in a live re-run, closing that gap.
+  Found and fixed during live verification against the real reported mod, before this release
+  ever shipped.
+- **The bundle catalogue now says what got kept off the board and why**, instead of silently
+  listing candidates as if nothing had changed. This is a developer/debug tool
+  (`tly_dumpbundles`), not something players see in normal play.
+- **Final review before merge caught three more ways this same check was too strict.** A
+  recipe taught only by mail, an event, or a quest (no shop selling it at all) was being
+  treated as unlearnable instead of unknown; a recipe taught by both an unreachable shop and
+  one this mod can't place (the Traveling Cart, the Night Market, a festival vendor) was
+  outvoted by the one shop that could be placed; and crab-pot catches (Lobster, Crab, Cockle,
+  Mussel, Oyster, Shrimp, Snail, Periwinkle, Crayfish) had no source recorded for them at all,
+  the same gap Driftwood and Rain Totem fell through above. All three now count as reachable,
+  same direction as everything else in this release: never taking real content off a board,
+  only ever putting it back.
+
+### Added
+
+- A developer command (`tly_warpgraph`) for tracing which places a run can and cannot reach,
+  used to build and verify the fix above.
+- A regression test built from the exact case reported: The Fishmonger's 10 crop seeds and 11
+  dishes, all sold only on Ginger Island, are now provably kept off the board. Five of those
+  dishes use entirely ordinary ingredients and are only blocked because their recipe itself
+  can't be learned anywhere reachable, which an ingredient-only check would have missed.
+
+## 0.17.15 - 2026-09-10
+
+2004 tests.
+
+### Fixed
+
+- **The bundle catalogue reports the two untouched rooms honestly.** `tly_dumpbundles`
+  classifies each candidate on its own, so it described the Vault and the Abandoned Joja
+  Mart as re-rolling from a pool when the generator never touches either. Developer
+  diagnostic only, no effect on play.
+
+## 0.17.14 - 2026-09-10
+
+2004 tests.
+
+### Fixed
+
+- **The Abandoned Joja Mart's bundle is vanilla again.** The Missing Bundle was being
+  re-rolled by the mod's own board generator, which is how it came to ask for a legendary
+  fish. That room sits outside the loop entirely: it never carries a season theme, never
+  counts toward a goal and only opens once the hall is finished and the year has turned.
+  It is now passed through untouched, exactly as the Vault always has been, and a save
+  that already picked up a re-rolled version gets the real one back on its next rewind.
+  Reported by ChaoticMindset.
+
+## 0.17.13 - 2026-09-10
+
+2004 tests.
+
+### Fixed
+
+- **Zoom Level and UI Scale survive the rewind.** Both dials snapped back to the game's
+  defaults every time the Junimos rewound the year, and there was no way to change what
+  those defaults were. The game treats zoom and UI scale as belonging to the save rather
+  than to the player, so the fresh year the rewind builds was starting them over while
+  every other setting came back on its own. The loop now carries both across the reset.
+  Reported by RiseiJaku.
+
 ## 0.17.12 - 2026-09-09
 
 2004 tests.

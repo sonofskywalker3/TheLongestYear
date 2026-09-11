@@ -1,0 +1,20 @@
+{
+  "shopId": "VoidWitchCult.TheFishmongerNPC_TheFishmongerSeeds",
+  "shopLocation": "VoidWitchCult.TheFishmonger_Fishmonger_GI_Inside",
+  "warpOut": "IslandSouth",
+  "seeds": ["bloodstainedroseseeds", "freshdillseeds", "fisheyebeansseeds", "halcyonflowerseeds",
+            "spicymustardseeds", "oceanflaxseeds", "petrichorseeds", "saltemmerseeds",
+            "scallureseeds", "sunsetroseseeds"],
+  "crops": ["bloodstainedrose", "freshdill", "fisheyebeans", "halcyonflower", "spicymustard",
+            "oceanflax", "petrichor", "saltemmer", "scallure", "sunsetrose"],
+  "dishesWithModdedIngredients": ["fishdillsauce", "savoryfishballs", "freshdillsauce",
+                                  "Plokkfiskur", "potatoesdillsauce", "spicymustardsauce"],
+  "dishesAllVanillaIngredients": ["bakedredsnappercurry", "crispyfishandchips",
+                                  "mouthwateringfishburger", "fishcroquettesaioli",
+                                  "crispysalmonschnitzel"],
+  "islandFish": ["bicolorpiranha", "redfinhap", "bigfinsquid", "firemouth", "garfish", "matjes",
+                 "moray", "scarletvampiresquid", "stripedtoby", "viperfish", "charcoalbetta",
+                 "fairyflossbetta", "golddustblackmolly", "neontetra", "sheephead", "sunrisebetta",
+                 "sunsetbetta", "glasseyesnapper", "kissingfish", "queentriggerfish",
+                 "stoplightparrotfish"]
+}

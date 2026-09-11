@@ -1,0 +1,304 @@
+# Source reachability: keeping unreachable items off the board
+
+Design spec, 2026-09-10. Target release 0.18 (Jeff).
+
+## The problem
+
+The board generator assumes an item is fair game unless something proves otherwise. Nothing in
+the pipeline asks how an item is actually obtained, so an item that cannot be reached inside a
+loop can be asked for by a bundle, and the season gate behind it becomes unwinnable.
+
+This is not hypothetical. Nexus posts tab, pitytheviolins, 2026-09-10:
+
+> Would you be interested in adding compatibility for The Fishmonger? My CC is asking for a
+> couple items from this mod but none of them can be obtained until Ginger Island.
+
+The mod (Nexus 16326, a Content Patcher pack) was read in full. What it adds and how it lands:
+
+| Content | Count | Reaches the board via | Currently filtered? |
+|---|---|---|---|
+| Fish | 21 | `Data/Locations` on `IslandNorth`/`IslandSouth`/`IslandSouthEast`/`IslandSouthEastCave` | Yes, the `Island` marker catches all of them |
+| `WornOutHat` | 1 | `Data/Locations` fish table on Beach, Sewer, WitchSwamp, BugLand | Yes, Type `Trash`, category -20, never vetted into a pool |
+| Crops | 10 | `Data/Crops`, harvest categories -75 and -80, real season fields | **No** |
+| Cooked dishes | 11 | `Data/Objects` category -7, straight into the `Cooking` pool | **No** |
+
+The crops and dishes are the leak, and they leak for a reason worth stating precisely.
+
+### Why the existing filter had no chance
+
+`ExcludedLocationMarkers` (`Island`, `FableReef`, `CrimsonBadlands`, plus the built-in `BugLand`)
+filters **spawn tables**. It matches a substring against a `Data/Locations` key.
+
+The Fishmonger crops have no `Data/Locations` row at all. Their only source is a shop entry,
+`VoidWitchCult.TheFishmongerNPC_TheFishmongerSeeds`, and shop data is never read by the pool
+builder. There is nothing for a marker to match against, so no marker value could ever have fixed
+this.
+
+Worse, the obvious repair also fails. Tracing the shop to its owner's home map yields
+`VoidWitchCult.TheFishmonger_Fishmonger_GI_Inside`, which does not contain the substring
+`Island`, and Constance's `HomeRegion` is set to `Town`. String matching misses this mod twice.
+
+The mod does say where the shop is, in the one place an author cannot fudge without breaking
+their own mod:
+
+```json
+{ "Action": "EditMap",
+  "Target": "VoidWitchCult.TheFishmonger_Fishmonger_GI_Inside",
+  "AddWarps": [ "4 12 IslandSouth 26 43" ] }
+```
+
+The only door out leads to `IslandSouth`, and the only door in is a tile placed on `IslandSouth`.
+A map's name is a label an author picks freely. Its warps are how players actually reach it.
+
+### What already exists
+
+`TheLongestYear.Core/Availability/` holds fifteen rules, including `ShopAvailability` and
+`CookedDishAvailability`, and the recursive ingredient walk is already there: a dish whose
+ingredient no rule can place scores Extreme and is left unplaced.
+
+The gap is not a missing system. It is that the model's answers never gate pool membership.
+`ItemAvailabilityModel.UnrecognisedEffort = 6` deliberately places an unrecognised item mid-scale
+so it "neither leads nor trails the effort ranking of a bundle it appears in". The item still goes
+on the board. This spec adds a harder verdict alongside the effort scale: not "unknown effort" but
+"provably out of reach, therefore not a candidate".
+
+## Decisions
+
+All four taken by Jeff on 2026-09-10.
+
+1. **Conservative rule.** Only exclude what is provably unreachable. An item we cannot trace stays
+   allowed. Flipping the assumption (prove reachable or be dropped) would silently strip large
+   amounts of legitimate content from packs like SVE.
+2. **Full chain, recipes included.** Several source rules, not one: shops, crop seeds, recipe
+   ingredients, and whether a recipe can be learned at all. Fixing crops alone would leave this
+   mod's eleven dishes leaking and would put us back here.
+3. **Reachability by doors, seeded by the marker list.** The marker list stays as the set of
+   forbidden places; everything reachable only through a forbidden place is out of reach too.
+4. **Repair live boards on load.** A player mid-year is holding a board built by the old rules,
+   and if the impossible ask is blocking their season gate, waiting a year for the next rewind is
+   not a fix.
+
+## Design
+
+### 1. `SourceReachability` (new, Core)
+
+A pure rule answering one question: is this qualified item id provably unreachable this run?
+
+Pure matters here. The test project references only `TheLongestYear.Core`, which is why the
+0.17.14 Joja fix could not be unit-tested and needed an in-game run to verify. Keeping this rule in
+Core means it is covered by the suite.
+
+**Inputs**, as `Raw*` boundary records following the existing `ItemPoolModel` pattern:
+
+- `RawShopListing(ItemId, ShopId, IsRecipe)`: who sells what, from `Data/Shops`. `IsRecipe`
+  separates "sells the item" from "teaches the recipe".
+- `RawShopPlacement(ShopId, LocationName)`: where a shop can be opened.
+- `RawLocationLink(From, To)`: one warp edge.
+- Seed to harvest, from `Data/Crops` (already keyed by seed id, so the seed is in hand).
+- Recipe output to ingredients, from `Data/CookingRecipes`. `Data/CraftingRecipes` stays out of
+  scope as a SOURCE RULE, unchanged: cooking covers the reported case, and this class never tries
+  to prove a craftable item unreachable. Its OUTPUT ids do feed the positive-proof set below
+  (fix round 1, 2026-09-10), which is a different thing: proof that an item is reachable, never
+  proof that one is not.
+- Every id the game spawns, from the forage, fish, crab-pot, monster-drop, geode-drop and
+  fruit-tree tables `GameDataPools` already reads, plus two sources added after a live run against
+  a real third-party pack wrongly condemned Driftwood and Rain Totem: the fishing trash ids
+  (`FishingTrashAvailability`'s range, which has no `Data/Locations` row of its own) and
+  `Data/CraftingRecipes` output ids (positive proof only, per above). Both are universally
+  obtainable items whose real source category had no representation on the reachable side until
+  these were added.
+
+**Output**: the set of qualified ids that are provably unreachable, plus a reason string per id for
+the log.
+
+### 2. The reachability walk
+
+1. Seed the forbidden set from `ExcludedLocationMarkers` plus the built-in markers, matched as
+   today.
+2. Build the warp graph from the live locations at the game boundary.
+3. Flood-fill from the farm, refusing to enter any forbidden node.
+4. Every location the fill does not reach is out of reach, whatever it is called, EXCEPT a
+   location with no warp edges at all, which is unknown rather than unreachable.
+
+**A map with no doors is not proof.** Verified in-game on 2026-09-10: `MovieTheater`,
+`WizardHouseBasement` and `LewisBasement` all load carrying zero warps, because they are entered by
+scripted actions rather than map warps. Condemning a location merely because we cannot see how it
+is entered would be inventing proof we do not have, so a zero-edge location is left reachable.
+
+**Doors that open during the year count as passable.** The bus to the Desert, the Rusty Key to the
+Sewer, the Steel Axe to the Secret Woods: the walk asks whether a map is connected to the world by
+some route other than through a forbidden place, not whether the player can walk there on Spring 1.
+
+This is deliberate and load-bearing. Without it a fresh board would decide the Desert is
+unreachable and strip Cactus Fruit, contradicting the standing ruling in `BundleCatalogBuilder`
+that Desert and Deluxe Coop items are valid targets the player invests in during the run.
+`LocationGating` already handles the *timing* of those places, and this rule must not duplicate or
+contradict it: reachability answers "ever, this run", `LocationGating` answers "from which week".
+
+### 3. The source rules
+
+An item is unreachable when **every** known source of it is unreachable. Any untraceable source
+leaves the item allowed. Sources are alternatives, so one reachable source is enough to keep an
+item on the board.
+
+- **Spawn (positive proof, overrides everything below)**: an item the game spawns somewhere
+  reachable, from the forage, fish, crab-pot, monster-drop, geode-drop or fruit-tree tables, the
+  fishing trash ids, or a `Data/CraftingRecipes` output id, is reachable full stop. Without this
+  rule, "every known source" would silently mean "every source this component happens to model",
+  and a forageable item that a mod also lists in an island shop would be condemned while its
+  perfectly good spawn never got a vote. Fishing trash and crafting outputs joined this list after
+  a live run against a real third-party pack wrongly condemned Driftwood and Rain Totem: both are
+  universally obtainable, and neither has a `Data/Locations` row (trash) or a source rule
+  (crafting is out of scope, see Inputs above), so nothing spoke for either before.
+- **Shop**: an item is bought if some shop lists it for sale. Unreachable if every such shop sits
+  in an unreachable location. **A shop with no discoverable placement keeps the item allowed**: the
+  Traveling Cart, the Night Market and festival vendors are opened from game code and have no
+  placement to find, so treating them as absent would let one island shop condemn an item the cart
+  sells every spring. `Data/Shops` entries carry `IsRecipe`, and a recipe listing teaches
+  a recipe rather than selling the item, so only non-recipe listings count as a source of the item
+  itself.
+- **Crop**: unreachable if EVERY seed that yields it is unreachable. Several seeds can share one
+  harvest, so one reachable seed keeps the crop.
+- **Cooked**: cooking is a source only if **both** the recipe can be learned **and** every required
+  ingredient is reachable. One impossible ingredient is enough to close this route, and so is an
+  unlearnable recipe. Several recipes can produce one object, and one cookable route is enough.
+- **Recipe learnability**: only the LITERAL unlock value `none` counts as "no normal route".
+  Anything else, including an empty or missing field, is treated as learnable. Such a recipe is
+  unlearnable only when every shop teaching it (an `IsRecipe` listing) is unreachable.
+
+  This is the one inference in the design that goes beyond strict proof, and it is safe because it
+  cannot touch vanilla. Verified against the live `Data/CookingRecipes` on 2026-09-10: all 81
+  vanilla recipes use `l` (34), `f` (36), `s` (9), `default` (1) or the literal string `null` (1,
+  Cookies, taught by Evelyn's event). **Not one uses `none`, and not one is empty.** The rule
+  therefore fires only on the mod pattern it was written for.
+
+Recursive, with a visited set as a cycle guard and memoisation per generation. A category ref in a
+recipe ("any milk") is satisfiable by many items, so it is treated as reachable and never
+condemns a dish. Expanding category members is deliberately out of scope: it could only ever make
+the rule condemn MORE, and the conservative direction is to condemn less.
+
+**Why learnability is not optional.** Five of The Fishmonger's eleven dishes (Baked Red Snapper
+Curry, Crispy Fish and Chips, Mouth Watering Fishburger, Fish Croquettes Aioli, Crispy Salmon
+Schnitzel) are cooked entirely from vanilla ingredients. An ingredient-only rule would call all
+five reachable and leave them on the board. Their recipes are sold by Constance behind a four-heart
+condition, with `unlock` set to `none`, so learnability is the only thing that rules them out.
+
+### 4. Applying the verdict
+
+`ItemPoolBuilder.Build` already threads an `excluded` set through all thirteen pools. Merging the
+unreachable ids into that set fixes Crops, Cooking, ArtisanGoods, Metals, ByKind and the rest in
+one move with no per-pool work.
+
+Merged at the same point as `YearTwoCrops.ExcludedFor`, and for the same reason, but applying at
+**every** difficulty step. `YearTwoCrops` is Easy-only because a player can buy the Pierre upgrade
+and reach Garlic. Nothing reaches Ginger Island inside a loop, so difficulty is irrelevant here.
+
+Defaults must not live in `BundleGenerationTuning.ExcludedItemIds`: a saved `config.json` overrides
+serialized list defaults wholesale (Nexus 1122358). This is derived per generation, so the question
+does not arise, but the derived set must never be written back to config.
+
+### 5. Repairing live boards
+
+On save load, re-derive the unreachable set and walk the existing board. For any slot holding an
+unreachable item, swap in a reachable one from the same pool, preserving the bundle's theme, slot
+count and quality asks.
+
+- **Host only.** `SaveLoaded` fires on multiplayer farmhands too, and mutating `NetWorldState`
+  from a peer races the host, so the whole repair is guarded on `Context.IsMainPlayer`.
+- **The Community Center's ingredient cache is refreshed after the write**, via
+  `CommunityCenter.refreshBundlesIngredientsInfo()`.
+
+  The original rationale for this was WRONG, and the correction is worth recording so nobody
+  reinstates the wrong reason. The adversarial review claimed the donation check reads the
+  `bundlesIngredientsInfo` cache, so a stale cache would make the game refuse the new ask. Verified
+  against the 1.6 decompile on 2026-09-10, that is not how it works: `bundlesIngredientsInfo` is
+  read only by `couldThisIngredienteBeUsedInABundle`, whose single caller is `InventoryMenu`
+  setting `GameMenu.bundleItemHovered`. The donation UI, `JunimoNoteMenu`, reads
+  `Game1.netWorldState.Value.BundleData` directly.
+
+  So the real consequence of skipping the refresh is a stale inventory hover glow, cosmetic rather
+  than blocking. The call stays because that glow is still wrong without it and the refresh is
+  cheap, but it is a polish fix, not a correctness one.
+- Slots already donated are left exactly as they are. A player who somehow has the item keeps
+  credit for it.
+- If no suitable replacement exists, the slot is left alone and the failure logged. Never counted
+  as a repair.
+- The swap reuses the existing slot filler so a repaired slot is indistinguishable from a freshly
+  generated one.
+- Repairs are logged per slot and counted in one summary line.
+- If nothing is unreachable, the board is not touched and nothing is written.
+
+### 6. Diagnostics
+
+- One log line per dropped item with its reason ("no reachable shop", "seed unreachable",
+  "ingredient X unreachable").
+- A summary count at generation.
+- `tly_dumpbundles` reports the dropped set, so the next report of this kind is visible rather than
+  inferred. This matters: the stale, gitignored `engine-bundle-catalogue.md` is what hid the Joja
+  re-roll bug for a fortnight.
+
+## Scope
+
+**In:** the reachability walk, the source rules, the pool-builder hook, the load-time board
+repair, diagnostics, unit tests.
+
+**Out:**
+
+- Any per-mod exclusion list. The whole point is that no mod needs naming.
+- Changes to `LocationGating`, `AvailabilityWeeks` or the effort model. Reachability is a separate
+  question from pacing and must not disturb the difficulty work.
+- Ginger Island access inside a loop. Still forbidden, unchanged.
+- Year 2 play after the hall is finished. The board only matters during a loop.
+
+## Testing
+
+Core rules are pure, so the suite covers them directly:
+
+- Warp walk: a map behind a forbidden map is unreachable; a map with a second door to the world is
+  not; a map behind a gate that opens during the year (Desert) stays reachable; cycles terminate.
+- Shop rule: an item in two shops, one reachable, stays allowed; both unreachable, dropped.
+- Crop rule: unreachable seed drops the harvest.
+- Recipe rule: one unreachable ingredient drops the dish; a category ref with one reachable member
+  does not.
+- Learnability rule: a dish with entirely reachable ingredients still drops when its recipe is
+  taught only by an unreachable shop and its unlock is `none`; the same dish stays when the unlock
+  is a skill level, or when a reachable shop teaches it.
+- Conservative default: an item with no traceable source is never dropped.
+- A regression fixture built from the real Fishmonger data (10 crops, 11 dishes, the
+  `IslandSouth` warp) asserting exactly those 21 ids drop and the 21 island fish are unaffected,
+  since the `Island` marker already handles them. The fixture must include the five
+  vanilla-ingredient dishes, which only drop via the learnability rule.
+
+The board repair needs an in-game run: load a save whose board holds an unreachable ask, confirm
+the swap, confirm donated slots survive, confirm a clean board is untouched.
+
+## Risks
+
+1. **Custom locations must exist when the board is built.** They are created on load and generation
+   runs after `loadForNewGame`, so this should hold, but it is the assumption most likely to be
+   wrong and should be verified first, before the rest is built on it.
+2. **The board repair mutates a live save.** Highest-risk piece. Donated slots and quality asks are
+   the things to get wrong.
+3. **Over-exclusion would be invisible and bad.** A bug in the walk could quietly strip real
+   content. The conservative default limits the blast radius, and the diagnostics exist so it shows
+   up in a log rather than as a confused player.
+4. **Shop placement is weaker than it looks for unvisited maps.** A shop is placed either by an
+   `OpenShop` tile action or by its owning NPC's home and current location. The tile scan needs the
+   map's tile data, which is not loaded for a location the player has never visited, so in practice
+   the OWNER path does nearly all the real work. This matches what the pre-flight scan found: the
+   mod that prompted this feature opens its shop by talking to an NPC and adds no tile action at
+   all. The failure mode is an unplaced shop, which under the conservative rule leaves its items
+   allowed, so it fails safe.
+5. **Performance.** One graph walk plus a memoised recursion per generation. Expected to be
+   negligible against the existing generation cost, but worth a timing check on a heavily modded
+   setup.
+6. **A partial source graph is worse than none.** If reading shops, recipes or warps throws, the
+   result would look authoritative while missing exactly the alternative route that keeps an item.
+   Any failure in the reachability inputs disables the rule for that generation and logs a warning,
+   which restores the previous behaviour exactly.
+
+## Verification of the original report
+
+After this ships, a save with The Fishmonger installed should generate a board with none of the ten
+crops, none of the eleven dishes, and all twenty-one island fish still absent (already handled by
+the marker), with no config edits by the player.

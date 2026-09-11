@@ -100,6 +100,8 @@
     "upgrade.jp_boost_4.desc": "All Junimo Point gains increased by 20%.",
     "upgrade.jp_boost_5.name": "Junimo Favor V",
     "upgrade.jp_boost_5.desc": "All Junimo Point gains increased by 25%.",
+    "upgrade.cult_garlic.name": "Cultivation: Garlic",
+    "upgrade.cult_garlic.desc": "Garlic can appear from Mixed Seeds in Spring (10% per seed).",
     "upgrade.cult_red_cabbage.name": "Cultivation: Red Cabbage",
     "upgrade.cult_red_cabbage.desc": "Red Cabbage can appear from Mixed Seeds in Summer (10% per seed).",
     "upgrade.pierre_year2_seeds.name": "Pierre's Special Order",

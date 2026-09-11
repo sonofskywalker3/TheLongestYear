@@ -1,11 +1,47 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-06 (Year One Ending Task 13 docs and runbook on branch year-one-ending; previously 2026-08-29 late night, review fixes 0.16.166, sim diagnostics 0.16.167; two full-year sims on the boost build)
-**Branch:** `master`; 0.16.167 PUSHED and RELEASED; nothing local-only
-**Tests:** 1822 passing, 0 failing
-**Build:** clean; 0.16.167 deployed to the game; game CLOSED at end of session
-**Last public release:** 0.16.167 (2026-08-29 night; GitHub release + Nexus file, version, description and changelog all live)
-**NEXT SESSION (2026-08-29 night):** JP Boosts built (spec + plan in docs/superpowers, 15 rows, three shrine tabs; live-checked over the bridge, `tly_openshrine` opens each tab; Jeff still owes the visual pass and rulings on Night Owl / Backpack Organizer, Fast Friends x1.65 with the book, host-only Boosts tab). Then release notes (README What's New + Nexus description + changelog) and release, Jeff's call. Nothing pushed.
+**Last updated:** 2026-09-10 (master merged into `story` after the 0.18.1 release)
+**Branch:** `story`; master merged in at 0.18.1, everything PUSHED, nothing local-only
+**Tests:** 2175 passing, 0 failing (story + master merged)
+**Build:** clean; 0.18.1 deployed to the game; game CLOSED at end of session
+**Last public release:** 0.18.1 (2026-09-10 night; GitHub release + Nexus file, version, description and changelog all live)
+
+## 2026-09-10 night: 0.18.0 The Mod Compatibility Update, then 0.18.1
+
+**0.18.0** closed the two verification gaps the branch had left open before shipping:
+
+- **Live re-run against the real Fishmonger pack on the final build.** The last code commit
+  (`8592332`, the whole-branch final review) had only been checked against the test suite, never
+  live. Re-ran it: **35 items kept off the board**, identical to the pre-review result, 31
+  Fishmonger ids plus the four vanilla Ginger Island ones, five all-vanilla dishes still held on
+  the unlearnable-recipe reason, and Driftwood, Rain Totem and Ostrich Egg all correctly absent.
+- **Dirty-board repair, which had never been run in game.** Hand-wrote two condemned ids into the
+  throwaway save: `(O)829` in an undonated slot and `(O)836` in one marked donated. On load the
+  undonated one swapped (`'Spring Crops' slot 0: (O)829 -> (O)250`) and the donated one was left
+  alone; `tly_gatecheck` reported no impossible gates; the replacement donated successfully into
+  the repaired slot; and a reload of the clean original read 125 open slots and swapped 0,
+  writing nothing.
+- **Vanilla baseline:** 0 condemned ("Nothing. Every item in every pool has a route this run can
+  reach."), and pool counts byte-identical to the Fishmonger run, so nothing legitimate was lost.
+
+**0.18.1** came out of Tottelotta123's question about Garlic on a Spring board. Checking the game
+data showed the three year-two crops never had matching year-1 routes, and that the shrine was
+selling the wrong one:
+
+- Garlic (476) has no year-1 route at all; Spring's Mixed Seeds roll is `Next(472, 476)`.
+- Red Cabbage (485) is guaranteed from the Traveling Cart in year 1, though this mod's own cart
+  slot cap throttles that back to luck.
+- Artichoke (489) falls out of Fall's `Next(487, 491)` roll at 25% in any year, free. Only the
+  shop listing is YEAR 2 gated, and Mixed Seeds is not a shop.
+
+So `cult_garlic` was added at 3,000 JP, `cult_red_cabbage` re-costed 5,000 to 3,000, Artichoke
+dropped from `YearTwoCrops.ExcludedFor` entirely and its pacing week moved 11 to 10. Verified live:
+both Cultivation rows show at 3,000, no `cult_artichoke`, and buying `cult_garlic` deducted 3,000
+with no errors anywhere in the log.
+
+**Still open:** the Garlic Mixed Seeds substitution itself was not exercised in game (it needs a
+Spring planting); only the catalogue, pricing and purchase path were. The quantity-realism audit
+in TODO.md is untouched.
 
 ## 2026-09-09: Darkness pushback built on branch story (not live-tested, not merged)
 

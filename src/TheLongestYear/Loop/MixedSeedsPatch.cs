@@ -5,11 +5,13 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Obtainability upgrade: inject Red Cabbage Seeds into the Summer Mixed Seeds roll when the
-    /// player owns cult_red_cabbage. 10% substitution chance, applied only in Summer; the
-    /// Year-Two Seeds boost handled by the same patch is not Summer-limited (see below). (The
-    /// Starfruit twin was removed 2026-08-21 — the desert is reachable without RNG.) See
-    /// <see cref="MixedSeedsPatch"/>.
+    /// Obtainability upgrades: inject a year-2 crop's seed into that season's Mixed Seeds roll
+    /// when the player owns the matching Cultivation upgrade (Garlic in Spring via cult_garlic,
+    /// Red Cabbage in Summer via cult_red_cabbage). 10% substitution chance each. There is no
+    /// Fall entry on purpose: vanilla's Fall roll already yields Artichoke Seeds at 25%, so there
+    /// is no RNG to buy off — the same reason the Starfruit twin was removed 2026-08-21 (the
+    /// desert is reachable without RNG). The Year-Two Seeds boost handled by the same patch is
+    /// not season-limited in this way (see below). See <see cref="MixedSeedsPatch"/>.
     ///
     /// Upgrade ownership is read via <see cref="UpgradeChecker"/>, a static Func wired by
     /// ModEntry.OnSaveLoaded to avoid importing MetaStore into the patch.
@@ -62,8 +64,15 @@ namespace TheLongestYear.Loop
     internal static class MixedSeedsPatch
     {
         private const string MixedSeedsId = "770";
-        private const string RedCabbageSeeds = "485";
         private const double SubstitutionChance = 0.10;
+
+        /// <summary>Season -> (upgrade that unlocks it, unqualified seed id it substitutes in).
+        /// Fall is deliberately absent; see the remarks on <see cref="UpgradeChecker"/>.</summary>
+        private static readonly (StardewValley.Season Season, string Upgrade, string SeedId)[] Cultivations =
+        {
+            (StardewValley.Season.Spring, TheLongestYear.Core.YearTwoCrops.GarlicUpgrade, "476"),
+            (StardewValley.Season.Summer, TheLongestYear.Core.YearTwoCrops.RedCabbageUpgrade, "485"),
+        };
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(string itemId, GameLocation location, ref string __result)
@@ -73,11 +82,13 @@ namespace TheLongestYear.Loop
             if (location == null) return;
             if (location is StardewValley.Locations.IslandLocation) return; // vanilla overrides island picks
 
-            if (location.GetSeason() == StardewValley.Season.Summer
-                && UpgradeChecker.HasUpgrade("cult_red_cabbage")
-                && Game1.random.NextDouble() < SubstitutionChance)
+            StardewValley.Season here = location.GetSeason();
+            foreach ((StardewValley.Season s, string upgrade, string seedId) in Cultivations)
             {
-                __result = RedCabbageSeeds;
+                if (s != here) continue;
+                if (!UpgradeChecker.HasUpgrade(upgrade)) break;
+                if (Game1.random.NextDouble() < SubstitutionChance) __result = seedId;
+                break;
             }
 
             if (BoostChecker.YearTwoSeedsActive?.Invoke() == true)

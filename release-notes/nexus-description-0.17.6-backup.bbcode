@@ -1,7 +1,7 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.18.1).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.17.6).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [color=yellow][b]This is the last big engine update.[/b] From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.[/color]
 
@@ -19,27 +19,7 @@ Channel: [url=https://www.youtube.com/@emmalution]youtube.com/@emmalution[/url]
 
 [line]
 
-[size=5][b]What's New in 0.18.1[/b][/size]
-
-[b]Garlic can be cultivated too, and both Cultivation upgrades are cheaper.[/b]
-[list]
-[*][b]Cultivation: Garlic joins the shrine, and both Cultivation upgrades drop to 3,000 Junimo Points.[/b] The shrine sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
-[*][b]Artichoke is no longer held off an Easy board.[/b] On the Easy item-rarity setting all three of Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the time, in any year, for free.
-[/list]
-
-[size=5][b]What's New in 0.18.0[/b][/size]
-
-[b]The Mod Compatibility Update: bundles no longer ask for things this run cannot reach, and a board that already has one gets repaired.[/b]
-[list]
-[*][b]Bundles no longer ask for things this run cannot reach.[/b] Reported by pitytheviolins: with The Fishmonger installed, a Community Center bundle asked for a dish only Constance sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no way to complete that bundle. The game now traces every item back to where it actually comes from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at least one of those routes is somewhere this run can reach. An item with no known source at all is left alone, so this only ever removes things proven unreachable, never guesses.
-[*][b]A board you already have gets repaired, not just new ones.[/b] If a bundle on your current board is asking for something this run can never reach, it is swapped for something you can actually get the next time you load that save. Anything you already donated stays donated.
-[*][b]The Abandoned Joja Mart's bundle is vanilla again.[/b] The Missing Bundle was being re-rolled by the mod's own board generator, which is how it came to ask for a legendary fish. That room sits outside the loop entirely, so it is now passed through untouched exactly as the Vault always has been, and a save that already picked up a re-rolled version gets the real one back on its next rewind. Reported by ChaoticMindset.
-[*][b]Zoom Level and UI Scale survive the rewind.[/b] Both dials snapped back to the game's defaults every time the Junimos rewound the year, and there was no way to change what those defaults were. The game treats them as belonging to the save rather than to you, so the fresh year was starting them over while every other setting came back on its own. The loop now carries both across the reset. Reported by RiseiJaku.
-[/list]
-
-Coming from 0.17.15 or earlier? See the previous update below, or the full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
-
-[size=5][b]What's New in 0.17.12[/b][/size]
+[size=5][b]What's New in 0.17.6[/b][/size]
 
 [b]The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.[/b]
 [list]
@@ -47,12 +27,6 @@ Coming from 0.17.15 or earlier? See the previous update below, or the full histo
 [*][b]Legendary fish are asked for once, plain, and rarely.[/b] Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
 [*][b]Hard and Extreme mean it.[/b] Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
 [*][b]Two new mineral bundles.[/b] Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
-[*][b]0.17.12: the Copper Pan and chained scenes come back every loop.[/b] Same family: Willy's pan scene, and any scene that only unlocks after another scene that replays (the 14-heart chains, Shane's morning-after, Pam's bus follow-up), were stuck as seen from loop 1.
-[*][b]0.17.12: Willy's letter arrives after you keep playing.[/b] A finished Community Center could still be read as unfinished by the mod's own check, which silently blocked the game from sending Willy's back-room letter, so Ginger Island stayed shut. The restored hall is now the authority. Reported by ChaoticMindset.
-[*][b]0.17.12: quest-finishing scenes play again every loop.[/b] Jodi's fish casserole dinner and Marnie's cave carrot thank-you were being treated as already seen from your first loop, so the quest came back each loop but could never be turned in. Reported by ChaoticMindset.
-[*][b]0.17.12: Gunther brings the Rusty Key again every loop.[/b] The museum empties on the rewind and the 60-donation reward re-fired, but Gunther's farm visit that hands the key over never played again, so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by ChaoticMindset.
-[*][b]0.17.8: a must-donate-all bundle's season gate takes any of its items.[/b] The Bundle Log showed only the items pinned to the current season and the gate refused the rest. The pins now decide how many are due; which ones you bring is your call. Reported by ada113.
-[*][b]0.17.8: the Cookbook and Craftbook open between the shrine and the reset.[/b] A book bought at the loop-boundary shrine had nothing to bank by the time it first opened, because the reset had already wiped your recipes. Each book with a free slot now opens right after the shrine. Reported by ada113.
 [*][b]0.17.6: a crops bundle every season.[/b] The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board now. A board could roll Orchard, Preserver's and Home Cook's Feast in their place, which left the Farming theme with nothing to ask for in week 1 but saplings.
 [*][b]0.17.6: one jelly a week.[/b] A weekly theme asks for at most one of Sea Jelly, River Jelly and Cave Jelly. Two of them in the same week meant two slow, separate fishing trips for one theme.
 [*][b]0.17.5: every farm type.[/b] Riverland, Forest, Hilltop, Wilderness, Four Corners, Beach and Meadowlands are all open now; the mod no longer forces Standard. Kept buildings go back to your own spots and the Junimo stash sits by your door on any map. Balance is shared across types, see Limitations.
