@@ -47,11 +47,35 @@ namespace TheLongestYear.UI
         // the shape wins over the floor plan: a symmetric ring round the sleeper, clamped only so
         // nothing lands off the map, standing in the wall where the wall is where the ring goes.
         // What made the first ring fail was the BED, not the walls, and two tiles out clears it.
-        private static readonly Point[] JunimoOffsets =
-        {
-            new Point(2, 0), new Point(1, 2), new Point(-1, 2),
-            new Point(-2, 0), new Point(-1, -2), new Point(1, -2),
-        };
+        // Six points on a ring, at 60 degrees apart, measured in TILES from the ring's centre and
+        // applied as world positions rather than tile indices, so the shape stays a ring instead of
+        // being rounded onto the tile grid into a lopsided blob.
+        //
+        // A CIRCLE, not an ellipse. This was briefly squashed wide and shallow to fit the room,
+        // and it showed: "the light is better now because it doesn't go black in the middle, but
+        // it's still weird because it's like an oval instead of a circle" (Jeff, 2026-09-11). The
+        // room is made to fit the ring instead, by lifting the camera (see CameraLift) so the two
+        // tiles below the bed are not behind the dialogue box.
+        private const float RingRadius = 1.75f;
+        private const int RingPoints = 6;
+
+        /// <summary>How far up the room is nudged for these beats, in pixels.
+        ///
+        /// The farmhouse is small enough to fit on screen whole, so the camera normally centres it
+        /// with black above and below and cannot scroll. That put the room's bottom wall at almost
+        /// exactly the top edge of the dialogue box (212px tall on a 64px margin, so its top lands at
+        /// 804 on a 1080 screen against a room that ends at about 830), and anything standing on or
+        /// below that wall was behind the UI for the whole of every line. Lifting the world into the
+        /// black above it costs nothing and buys the two tiles the ring needs, which is what lets the
+        /// ring be a circle centred on the bed instead of an oval squashed up off the floor.</summary>
+        private const int CameraLift = 160;
+
+        /// <summary>How far outside the clear floor a station may sit. Wall tiles are explicitly fine
+        /// ("I specifically said that I was ok with the junimos on the wall", 2026-09-11) and
+        /// <see cref="OnRenderedWorld"/> now draws the actors over the wall art, so the ring is
+        /// allowed one tile of wall on every side. What it is NOT allowed is the black past the
+        /// building, which is what two of them were standing in.</summary>
+        private const float RingWallAllowance = 1.5f;
 
         private const string JunimoDisplayName = "Junimo";
 
@@ -97,6 +121,9 @@ namespace TheLongestYear.UI
         private bool _farmerAsleep;
         private bool _farmerWasInBed;
         private StardewValley.Objects.Hat _stashedHat;
+        private bool _cameraLifted;
+        private bool _priorViewportFreeze;
+        private int _priorViewportY;
 
         /// <summary>The open speech box, or null when no line is playing. A plain object, never the
         /// active menu (this scene is), which is what lets the scene keep ticking behind it.</summary>
@@ -121,6 +148,7 @@ namespace TheLongestYear.UI
             }
 
             SleepFarmer();
+            LiftCamera();
             SubscribeMenuWatch();
         }
 
@@ -143,6 +171,7 @@ namespace TheLongestYear.UI
         {
             if (_helper == null || _menuWatchSubscribed) return;
             _helper.Events.Display.MenuChanged += OnMenuChanged;
+            _helper.Events.Display.RenderedWorld += OnRenderedWorld;
             _menuWatchSubscribed = true;
         }
 
@@ -150,7 +179,35 @@ namespace TheLongestYear.UI
         {
             if (!_menuWatchSubscribed) return;
             _helper.Events.Display.MenuChanged -= OnMenuChanged;
+            _helper.Events.Display.RenderedWorld -= OnRenderedWorld;
             _menuWatchSubscribed = false;
+        }
+
+        /// <summary>Draws the actors a second time, above the map's Front layer.
+        ///
+        /// WHY THIS EXISTS, and why it is not a workaround. The actors are real characters in the
+        /// location, so the world pass positions and lights them correctly, but that pass draws
+        /// characters BEFORE the Front layer, which is the layer the walls are on. Three of the six
+        /// stations on the starter farmhouse sit on Front tiles (the room grid logged by
+        /// <see cref="RoomGrid"/> reads F at x 11 and on rows 10 and 11), so three Junimos were being
+        /// drawn and then painted over by the wall: "I only see 2 junimos, I guess they're behind the
+        /// wall instead of on-top of it" (2026-09-11). The designer's answer to that was to keep them
+        /// on the wall and put them in front of it, not to move the ring off the wall: "I specifically
+        /// said that I was ok with the junimos on the wall".
+        ///
+        /// SMAPI's RenderedWorld runs after the map's own layers and still in world space, so the
+        /// same <c>draw</c> the world pass would have used lands in the same place, just later. The
+        /// ones that were already visible are drawn twice at identical coordinates; Junimo art is
+        /// pixel art with no partial alpha, so the second pass is pixel-for-pixel what is already
+        /// there and nothing about them changes.</summary>
+        private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        {
+            if (!ReferenceEquals(Game1.activeClickableMenu, this)) return;
+            foreach (Junimo j in _junimos)
+            {
+                try { j.draw(e.SpriteBatch); }
+                catch (Exception) { /* one bad actor must not take the frame down */ }
+            }
         }
 
         private void OnMenuChanged(object sender, MenuChangedEventArgs e)
@@ -176,19 +233,20 @@ namespace TheLongestYear.UI
             GameLocation loc = Game1.currentLocation;
             if (loc == null || Game1.player == null) return;
             Point playerTile = Game1.player.TilePoint;
-            var stations = new List<Point>();
-            foreach (Point offset in JunimoOffsets)
-                stations.Add(ClampToMap(loc, playerTile.X + offset.X, playerTile.Y + offset.Y));
+            Vector2 centre = RingCentre(loc, playerTile);
+            List<Vector2> stations = RingStations(loc, centre);
 
             _monitor?.Log(
-                $"Rewind Junimos: farmer at ({playerTile.X}, {playerTile.Y}) in '{loc.Name}'; stations " +
-                string.Join(", ", stations.ConvertAll(p => $"({p.X}, {p.Y})")) +
+                $"Rewind Junimos: farmer at ({playerTile.X}, {playerTile.Y}) in '{loc.Name}'; ring centred on " +
+                $"({centre.X:0.00}, {centre.Y:0.00}); stations " +
+                string.Join(", ", stations.ConvertAll(p => $"({p.X:0.00}, {p.Y:0.00})")) +
                 $"; walkable floor {WalkableBox(loc, playerTile)}.",
                 LogLevel.Info);
+            _monitor?.Log($"Rewind Junimos: room grid ({RoomGrid(loc, playerTile)}", LogLevel.Info);
 
             for (int i = 0; i < stations.Count; i++)
             {
-                Vector2 worldPos = new Vector2(stations[i].X, stations[i].Y) * 64f;
+                Vector2 worldPos = stations[i] * 64f;
                 Color colour = JunimoPalette.Get(i);
 
                 var junimo = new Junimo(worldPos, -1, temporary: true)
@@ -223,8 +281,93 @@ namespace TheLongestYear.UI
         protected virtual void OnJunimoSpawned(int index, Junimo junimo, Vector2 worldPos, Color colour) { }
 
 
+        /// <summary>Where the ring goes. THE BED, not the farmer (Jeff, 2026-09-11: "Junimos are
+        /// centered around the farmer and not the bed, so it looks wrong"). The farmer lies at one
+        /// end of a bed two tiles wide and three deep, so a ring hung off the farmer's own tile sits
+        /// visibly off to one side of the thing it is supposed to be encircling.
+        ///
+        /// Then clamped so the whole ring lands on the building. The bed is in the corner of the
+        /// room, so a ring centred honestly on it runs off the floor to the right and below; one
+        /// tile of that is fine and wanted (the wall), but two of the six were standing in the black
+        /// past the house. Clamping the CENTRE rather than each station individually is what keeps
+        /// the shape a ring: every point moves together.</summary>
+        private static Vector2 RingCentre(GameLocation loc, Point playerTile)
+        {
+            Vector2 centre = new Vector2(playerTile.X + 0.5f, playerTile.Y + 0.5f);
+            if (loc is StardewValley.Locations.FarmHouse house)
+            {
+                try
+                {
+                    StardewValley.Objects.BedFurniture bed = house.GetPlayerBed();
+                    if (bed != null)
+                    {
+                        Rectangle box = bed.GetBoundingBox();
+                        centre = new Vector2((box.X + box.Width / 2f) / 64f, (box.Y + box.Height / 2f) / 64f);
+                    }
+                }
+                catch (Exception) { /* no bed, or a modded house: the farmer is a fine fallback */ }
+            }
+
+            Rectangle floor = FloorBox(loc, playerTile);
+            if (floor.Width <= 0 || floor.Height <= 0) return centre;
+            float minX = floor.Left - RingWallAllowance + RingRadius;
+            float maxX = floor.Right + RingWallAllowance - RingRadius;
+            float minY = floor.Top - RingWallAllowance + RingRadius;
+            float maxY = floor.Bottom + RingWallAllowance - RingRadius;
+            return new Vector2(
+                maxX < minX ? (minX + maxX) / 2f : MathHelper.Clamp(centre.X, minX, maxX),
+                maxY < minY ? (minY + maxY) / 2f : MathHelper.Clamp(centre.Y, minY, maxY));
+        }
+
+        /// <summary>The six points of the ring, in tiles, starting at the right and going round.
+        /// Offset half a turn of a step so no station lands squarely on the sleeper's own head.</summary>
+        private static List<Vector2> RingStations(GameLocation loc, Vector2 centre)
+        {
+            var stations = new List<Vector2>(RingPoints);
+            for (int i = 0; i < RingPoints; i++)
+            {
+                double angle = Math.PI * 2.0 * i / RingPoints;
+                stations.Add(new Vector2(
+                    centre.X + RingRadius * (float)Math.Cos(angle) - 0.5f,
+                    centre.Y + RingRadius * (float)Math.Sin(angle) - 0.5f));
+            }
+            return stations;
+        }
+
+        /// <summary>The box of CLEAR FLOOR around the sleeper: measured by walking out from the
+        /// sleeper's own tile in each of the four directions and stopping at the first tile that is
+        /// not clear (no Back tile, or a Front tile over it).
+        ///
+        /// RAYS, NOT A BOUNDING BOX OVER EVERY CLEAR TILE, which is what this did first and got
+        /// wrong: the farmhouse's front door sits in an alcove one row BELOW the bottom wall, so a
+        /// single clear tile down there stretched the box a whole row past the room and the ring
+        /// clamped to a centre that was still half off the floor. Walking out from the sleeper stops
+        /// at the wall, which is the room the sleeper is actually in.</summary>
+        private static Rectangle FloorBox(GameLocation loc, Point centre, int reach = 12)
+        {
+            xTile.Layers.Layer back = loc.map?.GetLayer("Back");
+            if (back == null) return Rectangle.Empty;
+            xTile.Layers.Layer front = loc.map?.GetLayer("Front");
+
+            bool Clear(int x, int y)
+                => loc.isTileOnMap(x, y) && Tile(back, x, y) != null && Tile(front, x, y) == null;
+
+            if (!Clear(centre.X, centre.Y)) return Rectangle.Empty;
+            int minX = centre.X, maxX = centre.X, minY = centre.Y, maxY = centre.Y;
+            while (minX - 1 >= centre.X - reach && Clear(minX - 1, centre.Y)) minX--;
+            while (maxX + 1 <= centre.X + reach && Clear(maxX + 1, centre.Y)) maxX++;
+            while (minY - 1 >= centre.Y - reach && Clear(centre.X, minY - 1)) minY--;
+            while (maxY + 1 <= centre.Y + reach && Clear(centre.X, maxY + 1)) maxY++;
+            return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+        }
+
         /// <summary>The room's walkable extent around the sleeper, logged with the stations so the
-        /// ring can be judged against the floor plan it has to fit rather than guessed at.</summary>
+        /// ring can be judged against the floor plan it has to fit rather than guessed at.
+        ///
+        /// Passability alone is NOT enough to site an actor by, which cost a round: it said the
+        /// starter farmhouse was walkable down to y 11 when the floor visibly stops at y 9, because
+        /// the rows past the bottom wall are outside the room but still inside the map and carry no
+        /// collision. <see cref="RoomGrid"/> is the one to read.</summary>
         private static string WalkableBox(GameLocation loc, Point centre)
         {
             int minX = int.MaxValue, maxX = int.MinValue, minY = int.MaxValue, maxY = int.MinValue;
@@ -247,12 +390,52 @@ namespace TheLongestYear.UI
             return minX > maxX ? "none found" : $"x {minX}..{maxX}, y {minY}..{maxY}";
         }
 
-        private static Point ClampToMap(GameLocation loc, int tileX, int tileY)
+        /// <summary>The room as the PLAYER sees it, one character per tile, logged around the
+        /// sleeper so a station that comes out invisible can be explained instead of guessed at.
+        ///
+        /// Three things decide whether an actor standing on a tile is legible, and only the first is
+        /// what <see cref="WalkableBox"/> measures:
+        /// <list type="bullet">
+        /// <item>a Back tile, or the tile is off the room entirely and the actor stands on black;</item>
+        /// <item>no Front tile, which is the layer the game draws AFTER characters, so an actor under
+        /// one is hidden behind the wall art (the designer's "I guess they're behind the wall instead
+        /// of on-top of it");</item>
+        /// <item>passability, which only decides whether it looks like floor or like furniture.</item>
+        /// </list>
+        ///
+        /// Legend: <c>.</c> clear floor, <c>o</c> floor with something impassable on it, <c>F</c> a
+        /// Front tile covers it, <c>#</c> no Back tile (off the room), <c>P</c> the sleeper.</summary>
+        private const char NewLine = '\n';
+
+        private static string RoomGrid(GameLocation loc, Point centre, int reach = 6)
         {
-            int maxX = (loc.map?.Layers?.Count > 0 ? loc.map.Layers[0].LayerWidth : 0) - 1;
-            int maxY = (loc.map?.Layers?.Count > 0 ? loc.map.Layers[0].LayerHeight : 0) - 1;
-            if (maxX < 0 || maxY < 0) return new Point(tileX, tileY);
-            return new Point(Math.Clamp(tileX, 0, maxX), Math.Clamp(tileY, 0, maxY));
+            xTile.Layers.Layer back = loc.map?.GetLayer("Back");
+            xTile.Layers.Layer front = loc.map?.GetLayer("Front");
+            if (back == null) return "no Back layer";
+            var sb = new System.Text.StringBuilder();
+            for (int y = centre.Y - reach; y <= centre.Y + reach; y++)
+            {
+                sb.Append(NewLine).Append("  y").Append(y.ToString().PadLeft(3)).Append(' ');
+                for (int x = centre.X - reach; x <= centre.X + reach; x++)
+                {
+                    if (x == centre.X && y == centre.Y) { sb.Append('P'); continue; }
+                    if (!loc.isTileOnMap(x, y) || Tile(back, x, y) == null) { sb.Append('#'); continue; }
+                    if (Tile(front, x, y) != null) { sb.Append('F'); continue; }
+                    bool passable;
+                    try { passable = loc.isTilePassable(new xTile.Dimensions.Location(x, y), Game1.viewport); }
+                    catch (Exception) { passable = false; }
+                    sb.Append(passable ? '.' : 'o');
+                }
+            }
+            return $"x {centre.X - reach}..{centre.X + reach}" + sb;
+        }
+
+        private static xTile.Tiles.Tile Tile(xTile.Layers.Layer layer, int x, int y)
+        {
+            if (layer == null) return null;
+            if (x < 0 || y < 0 || x >= layer.LayerWidth || y >= layer.LayerHeight) return null;
+            try { return layer.Tiles[x, y]; }
+            catch (Exception) { return null; }
         }
 
         /// <summary>Beat 1: the farmer reads as asleep rather than standing at the top edge of the
@@ -262,6 +445,29 @@ namespace TheLongestYear.UI
         /// whose PauseForSingleAnimation suppresses FarmerRenderer's separate eye pass; the hat comes
         /// off for the duration; and isInBed is set so anything reading it agrees with the picture.
         /// <see cref="WakeFarmer"/> puts all three back.</summary>
+        /// <summary>Nudges the room up the screen, clear of the dialogue box. See
+        /// <see cref="CameraLift"/>. <c>viewportFreeze</c> is what makes it stick: without it the
+        /// engine re-centres a map this small on the very next tick.</summary>
+        private void LiftCamera()
+        {
+            if (_cameraLifted) return;
+            _cameraLifted = true;
+            _priorViewportFreeze = Game1.viewportFreeze;
+            _priorViewportY = Game1.viewport.Y;
+            Game1.viewportFreeze = true;
+            Game1.viewport.Y += CameraLift;
+        }
+
+        /// <summary>Puts the camera back. Runs inside <see cref="TeardownWorldState"/>'s once-only
+        /// guard, so every exit path reaches it exactly once.</summary>
+        private void DropCamera()
+        {
+            if (!_cameraLifted) return;
+            _cameraLifted = false;
+            Game1.viewport.Y = _priorViewportY;
+            Game1.viewportFreeze = _priorViewportFreeze;
+        }
+
         private void SleepFarmer()
         {
             Farmer player = Game1.player;
@@ -337,6 +543,7 @@ namespace TheLongestYear.UI
             _junimos.Clear();
 
             WakeFarmer();
+            DropCamera();
             TeardownSceneExtras();
         }
 
