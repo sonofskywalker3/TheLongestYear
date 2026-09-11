@@ -59,10 +59,20 @@ namespace TheLongestYear.Integration
     ///   (sleeping, shop haggling, gifting). SAFE: not reachable without player control.
     /// - Loop/EventSuppressionPatch.cs (Prefix): Harmony patch on
     ///   GameLocation.checkEventPrecondition, feeding EventGatingPolicy.Decide against
-    ///   EventGatingTables.Default. SAFE FOR NOW: that table is still empty (its own comment: "safe
-    ///   pass-through no-op until wired in"), so Decide cannot suppress anything regardless of the
-    ///   painted date. Re-check this once EventGatingTables.Default is populated, since background
-    ///   locations can still run checkEventPrecondition while the player is menu-frozen.
+    ///   EventGatingTables.Default. CORRECTED (a prior version of this comment wrongly called that
+    ///   table empty; checked EventGating.cs directly): Default now holds one holdUntilSpring5 entry
+    ///   (DemetriusCaveEventId) and one furnace entry, so Decide CAN act on the painted season/day.
+    ///   SAFE anyway, for two independent reasons: (1) checkForEvents (the only caller of
+    ///   checkEventPrecondition) runs as part of a location's normal tick, which RewindPanScene.cs's
+    ///   own class comment notes vanilla gates off while a menu is up ("Game1.UpdateGameClock ...
+    ///   runs unconditionally while no menu or minigame is up"), and this window is menu-dominated
+    ///   throughout (Day28CutsceneMenu, then the choice/pity dialogs, then ShrinePreviewMenu, then
+    ///   the recipe-bank prompts, with TickShrineWatchdog immediately opening the next one); (2) even
+    ///   in a one-frame gap between menus, the Spring-hold rule reading the painted Spring 1 would
+    ///   suppress DemetriusCaveEventId exactly as it should once the real reset actually lands on
+    ///   Spring 1 (this only paints on the FAIL/rewind branch, which really is about to become
+    ///   Spring 1), so even a reachable hit is not a misbehavior here. The furnace rule does not
+    ///   depend on season/day at all. No guard needed.
     /// - Loop/FestivalTimeFlow.cs: gated on Game1.isFestival, which cannot be true during the day-28
     ///   reset window. SAFE.
     /// - Loop/OnboardingMailService.cs (OnDayStarted): checked from SMAPI's DayStarted event, which
@@ -81,9 +91,33 @@ namespace TheLongestYear.Integration
     ///   reconciles everything for real, including Game1.year. This is the goal state, not a risk.
     /// - Loop/WorldStateProbe.cs (Capture): only invoked by the tly_leaktest debug console command
     ///   (ModEntry.cs), never automatically. SAFE: debug-only, not player-visible.
-    /// - ModEntry.cs (TodayDayOfYear, sweep/crab-pot logs, CmdNetState, CmdTv, etc.): every hit lives
-    ///   inside a Cmd* console-command handler, triggered only by a developer typing a tly_ command.
-    ///   SAFE: none fire automatically during the window.
+    /// - ModEntry.cs: two different buckets, not one (a prior version of this comment wrongly lumped
+    ///   them together as "every hit lives inside a Cmd* console-command handler," which is false):
+    ///     - Sweep/crab-pot logs, CmdNetState, CmdTv and the rest of the Cmd* handlers: each hit lives
+    ///       inside a Cmd* console-command method, triggered only by a developer typing a tly_ command.
+    ///       SAFE: none fire automatically during the window.
+    ///     - TodayDayOfYear() (~line 1583) is ALSO wired as three long-lived delegates in
+    ///       ModEntry.OnSaveLoaded, none of them console commands, checked individually below:
+    ///       - BoostChecker.YearTwoSeedsActive (~line 501): consumed by MixedSeedsPatch.Postfix, a
+    ///         Harmony patch on Crop.ResolveSeedId, which only runs from Crop's constructor, i.e. when
+    ///         a seed is actually planted on tilled dirt. That needs the player to walk, select a seed
+    ///         item and use it, all of which need the free player control freezeControls/the modal
+    ///         shrine/choice menus deny during this window. SAFE: not reachable without player control.
+    ///       - BoostChecker.SneakPeekActive (~line 502): consumed by QueenOfSaucePatch.Prefix (see its
+    ///         own entry below), which only runs when the player clicks a TV. SAFE: same reason.
+    ///       - ActiveEffectsProvider.AttachBoosts (~line 707): consumed by
+    ///         ActiveEffectsProvider.BonusStacks/ActiveBonus, which nine Harmony patches read
+    ///         (AllDropsPatch, AnimalDoubleProductPatch, CropGrowthPatch, FishBiteRatePatch,
+    ///         ForageYieldPatch, MachineSpeedPatch, MineDropsPatch, MonsterThemePatches,
+    ///         TerrainBonusPatches). Checked each patch's Harmony target directly: all but two hook a
+    ///         direct player tool/interaction call (performToolAction, DoFunction, checkAction,
+    ///         OutputMachine, pullFishFromWater, takeDamage, monsterDrop, sellToStorePrice), none of
+    ///         which the player can trigger without control. The other two (AnimalDoubleProductPatch's
+    ///         FarmAnimal.dayUpdate, CropGrowthPatch's Crop.newDay) are overnight day-transition hooks,
+    ///         not continuous ticks, and no day transition happens mid-window (the real day transition
+    ///         is what FinalizeReset's PerformReset performs, and that lands the real Spring 1 before
+    ///         these could read anything painted). SAFE: not reachable without player control or a day
+    ///         transition, neither of which the window allows.
     /// - UI/ShrinePreviewMenu.cs (BuildForesight, lines ~141/158/163): reads Game1.dayOfMonth /
     ///   Game1.season DIRECTLY for the Weather Sage forecast seed and the Traveling Cart schedule,
     ///   while the rest of this same class (its own Today property) deliberately reads
