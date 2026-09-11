@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.1`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,13 @@ This is a **beta** (`0.18.0`). It is feature-complete for v1 and stable in testi
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.1
+
+**Garlic can be cultivated too, and both Cultivation upgrades are cheaper.**
+
+- **Cultivation: Garlic joins the shrine, and both Cultivation upgrades drop to 3,000 Junimo Points.** The shrine sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
+- **Artichoke is no longer held off an Easy board.** On the Easy item-rarity setting all three of Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the time, in any year, for free.
 
 ## What's New in 0.18.0
 

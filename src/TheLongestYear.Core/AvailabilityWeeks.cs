@@ -56,7 +56,7 @@ public static class AvailabilityWeeks
             ["(O)268"] = (11, 11),    // Starfruit, Oasis seeds in a garden pot, Garden Pot recipe keep (Summer crop kept through Fall)
             [YearTwoCrops.Garlic] = (4, 2),        // year-two crop: permanent buy, or the Boost from Spring week 2
             [YearTwoCrops.RedCabbage] = (7, 6),    // year-two crop: permanent buy, or the Boost from Summer week 6
-            [YearTwoCrops.Artichoke] = (11, 10),   // year-two crop: permanent buy, or the Boost from Fall week 10
+            [YearTwoCrops.Artichoke] = (10, 10),   // vanilla Fall Mixed Seeds yields Artichoke Seeds at 25%, so a Fall 1 planting harvests in week 10 with nothing bought
         };
 
     /// <summary>Items whose own rule answers too early, pinned by hand. Later floors that beat

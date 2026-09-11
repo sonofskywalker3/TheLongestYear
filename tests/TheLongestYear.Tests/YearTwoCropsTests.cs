@@ -7,19 +7,31 @@ namespace TheLongestYear.Tests;
 
 public class YearTwoCropsTests
 {
+    // Artichoke is deliberately absent from every exclusion below. Vanilla's Fall Mixed Seeds
+    // roll (Crop.getRandomLowGradeCropForThisSeason, Next(487, 491)) already includes Artichoke
+    // Seeds 489 at 25% per seed, in any year, so a year-1 player can grow it without buying
+    // anything. Only the shop listing is YEAR 2 gated.
     [Fact]
-    public void No_upgrades_excludes_all_three_on_easy()
+    public void No_upgrades_excludes_garlic_and_red_cabbage_but_not_artichoke_on_easy()
     {
         var ex = YearTwoCrops.ExcludedFor(_ => false, DifficultyStep.Easy);
-        Assert.Equal(new[] { "(O)248", "(O)266", "(O)274" }, ex.OrderBy(x => x, System.StringComparer.Ordinal));
+        Assert.Equal(new[] { "(O)248", "(O)266" }, ex.OrderBy(x => x, System.StringComparer.Ordinal));
+        Assert.DoesNotContain(YearTwoCrops.Artichoke, ex);
     }
 
     [Fact]
-    public void Red_cabbage_upgrade_frees_only_red_cabbage_on_easy()
+    public void Garlic_cultivation_frees_only_garlic_on_easy()
+    {
+        var ex = YearTwoCrops.ExcludedFor(id => id == YearTwoCrops.GarlicUpgrade, DifficultyStep.Easy);
+        Assert.DoesNotContain("(O)248", ex);
+        Assert.Contains("(O)266", ex);
+    }
+
+    [Fact]
+    public void Red_cabbage_cultivation_frees_only_red_cabbage_on_easy()
     {
         var ex = YearTwoCrops.ExcludedFor(id => id == YearTwoCrops.RedCabbageUpgrade, DifficultyStep.Easy);
         Assert.Contains("(O)248", ex);
-        Assert.Contains("(O)274", ex);
         Assert.DoesNotContain("(O)266", ex);
     }
 
@@ -33,6 +45,24 @@ public class YearTwoCropsTests
         Assert.Contains("(O)266", YearTwoCrops.ExcludedFor(_ => false, DifficultyStep.Easy));
         Assert.Empty(YearTwoCrops.ExcludedFor(_ => false, DifficultyStep.Normal));
     }
+
+    [Fact]
+    public void Both_cultivation_upgrades_exist_cost_the_same_and_undercut_pierre()
+    {
+        UpgradeDefinition garlic = UpgradeCatalog.TryGet(YearTwoCrops.GarlicUpgrade)!;
+        UpgradeDefinition redCabbage = UpgradeCatalog.TryGet(YearTwoCrops.RedCabbageUpgrade)!;
+        UpgradeDefinition pierre = UpgradeCatalog.TryGet(YearTwoCrops.PierreUpgrade)!;
+
+        Assert.Equal(garlic.Cost, redCabbage.Cost);
+        // Both together must stay cheaper than the guaranteed shop route, or the random one is
+        // pointless for anyone who wants more than a single crop.
+        Assert.True(garlic.Cost + redCabbage.Cost < pierre.Cost);
+        Assert.Equal(UpgradeCategory.Obtainability, garlic.Category);
+    }
+
+    [Fact]
+    public void There_is_no_artichoke_cultivation_upgrade()
+        => Assert.Null(UpgradeCatalog.TryGet("cult_artichoke"));
 
     [Fact]
     public void Extra_excluded_ids_keep_crops_out_of_the_pools_on_easy()
