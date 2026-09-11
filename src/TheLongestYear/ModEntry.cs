@@ -394,6 +394,7 @@ namespace TheLongestYear
                 "Usage: tly_stashrod | tly_stashrod check",
                 this.CmdStashRod);
             helper.ConsoleCommands.Add("tly_dumpsprite", "Write Characters/<Name> to test-output/sprite-<Name>.png so its colours can be read (debug). Usage: tly_dumpsprite Morris", this.CmdDumpSprite);
+            Integration.TownRouteProbe.Register(helper, this.Monitor);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
