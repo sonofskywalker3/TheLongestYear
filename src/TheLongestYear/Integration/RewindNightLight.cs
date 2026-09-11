@@ -47,8 +47,21 @@ namespace TheLongestYear.Integration
         /// (<c>indoorLightingNightColor</c>, 150/150/30) and the room stayed far too bright for the
         /// Junimo pools to read against at all (playtest 2026-09-11: "I still can't see the light
         /// until you turn on the cave darkness"). The pools have to be visible from the first
-        /// frame, so the room starts at cave dark rather than arriving there.</summary>
-        public static readonly Color NightAmbient = new Color(230, 200, 90);
+        /// frame, so the room starts at cave dark rather than arriving there.
+        ///
+        /// DEEPER THAN THE MINE'S OWN 230/200/90, and the window is why. That colour leaves most of
+        /// the blue channel alone, and the farmhouse window's art is very nearly white, so it came
+        /// through a "dark" room as a lit blue pane: the brightest thing on screen at two in the
+        /// morning ("the sun is shining in the window, what's going on?", then "the window is still
+        /// white", 2026-09-11). It is not a glow and not a day/night art swap, both of which were
+        /// chased first and ruled out from the game itself: <c>tly_tiles</c> printed byte-identical
+        /// tile indices on every layer at 8am and at midnight, the map has neither a
+        /// <c>NightTiles</c> nor a <c>DayTiles</c> property, and the scene's own heartbeat logs
+        /// <c>lightGlows=0</c> with only its own seven lights in the table. The art is simply bright,
+        /// so the only lever left is how much light the room subtracts, and it has to subtract nearly
+        /// all of it. What pays for that is the Junimo pools, which do not go through the ambient:
+        /// the room is black and they are not.</summary>
+        public static readonly Color NightAmbient = new Color(243, 232, 210);
 
         /// <summary>The darkness at its deepest, past even the deepest mine floor
         /// (MineShaft.cs:688 is 237/212/185). Not a full 255 subtraction, so the room goes very
@@ -80,10 +93,10 @@ namespace TheLongestYear.Integration
         /// <summary>Starts driving the room's lighting. <paramref name="ownedLightIds"/> is held by
         /// reference, not copied, so a scene can keep adding its lights after this call and they are
         /// still recognised as its own.</summary>
-        public static void Begin(ICollection<string> ownedLightIds)
+        public static void Begin(ICollection<string> ownedLightIds, Color? ambient = null)
         {
             _ownedLightIds = ownedLightIds;
-            _ambient = NightAmbient;
+            _ambient = ambient ?? NightAmbient;
             _holding = true;
             _heartbeatMs = 0.0;
             _nightTiles = Game1.currentLocation;
@@ -113,25 +126,35 @@ namespace TheLongestYear.Integration
             _monitor?.Log("RewindNightLight: released the room's lighting back to the engine.", LogLevel.Info);
         }
 
-        /// <summary>The light colour that makes a pool READ as <paramref name="palette"/>. The
-        /// lightmap is subtracted, so a pool's tint is the complement of what its light removes: a
-        /// fully neutral (black) light leaves the room's own colours, and leaning the light toward
-        /// the complement of the palette entry pushes the pool toward the palette entry itself.
-        /// <paramref name="strength"/> keeps that lean gentle; at 1 the pool would be a flat colour
-        /// wash rather than a lit patch of floor.</summary>
+        /// <summary>Vanilla's own lantern colour (Lantern.cs:38 constructs its LightSource with
+        /// exactly this), which is what a pool on a dark mine floor is lit by and so is the look the
+        /// designer asked for. Read it subtractively: no red removed, half the green, all the blue,
+        /// which leaves a warm orange pool in a blue-dark room.
+        ///
+        /// This is the piece the first two passes got wrong. They built a pool colour out of the
+        /// palette complement alone, starting from <c>Color.Black</c>, and black subtracts NOTHING:
+        /// every pool came out at the brightness the world was already drawn at, which is daylight.
+        /// Starting from the lantern instead means a pool is lit the way vanilla lights a cave, and
+        /// the palette only tilts it.</summary>
+        public static readonly Color LanternPool = new Color(0, 131, 255);
+
+        /// <summary>The light colour that makes a pool READ as <paramref name="palette"/>, on top of
+        /// vanilla's lantern. The lightmap is subtracted, so a pool's tint is the complement of what
+        /// its light removes: leaning the light toward the complement of the palette entry pushes the
+        /// pool toward the palette entry itself. <paramref name="strength"/> keeps that lean gentle;
+        /// at 1 the pool would be a flat colour wash rather than a lit patch of floor, and would have
+        /// thrown away the lantern warmth underneath it.</summary>
         public static Color PoolTint(Color palette, float strength)
         {
             var complement = new Color(255 - palette.R, 255 - palette.G, 255 - palette.B);
-            return Color.Lerp(Color.Black, complement, MathHelper.Clamp(strength, 0f, 1f));
+            return Color.Lerp(LanternPool, complement, MathHelper.Clamp(strength, 0f, 1f));
         }
 
         /// <summary>A pool's finished light colour: its tint, held back from full brightness.
         ///
-        /// <paramref name="brightness"/> is the piece the first version was missing. A light source
-        /// that subtracts nothing does not make its pool bright, it makes the pool the brightness
-        /// the world was ALREADY drawn at, which is full daylight; that is why six of them turned a
-        /// cave-dark room into an ordinary afternoon. Interpolating from the ambient instead means a
-        /// pool takes back only part of what the darkness removed: lit, and still night.</summary>
+        /// <paramref name="brightness"/> is how far a pool travels from the surrounding dark toward
+        /// a full lantern. Interpolating from the ambient rather than from nothing means a pool takes
+        /// back only part of what the darkness removed: lit, and still night.</summary>
         public static Color PoolColour(Color palette, float tintStrength, float brightness)
             => Color.Lerp(
                 NightAmbient,
@@ -160,20 +183,23 @@ namespace TheLongestYear.Integration
             {
                 if (night)
                 {
-                    int entries = loc.GetMapPropertySplitBySpaces("NightTiles").Length / 4;
+                    string[] nightTiles = loc.GetMapPropertySplitBySpaces("NightTiles");
+                    string[] dayTiles = loc.GetMapPropertySplitBySpaces("DayTiles");
                     _monitor?.Log(
-                        $"RewindNightLight: swapping in {entries} night tile(s) for '{loc.Name}'.",
+                        $"RewindNightLight: '{loc.Name}' has {nightTiles.Length / 4} night tile(s) and " +
+                        $"{dayTiles.Length / 4} day tile(s). NightTiles=[{string.Join(" ", nightTiles)}] " +
+                        $"DayTiles=[{string.Join(" ", dayTiles)}].",
                         LogLevel.Info);
                     loc.switchOutNightTiles();
                     return;
                 }
 
-                string[] dayTiles = loc.GetMapPropertySplitBySpaces("DayTiles");
-                for (int i = 0; i + 3 < dayTiles.Length; i += 4)
+                string[] restoreDayTiles = loc.GetMapPropertySplitBySpaces("DayTiles");
+                for (int i = 0; i + 3 < restoreDayTiles.Length; i += 4)
                 {
-                    if (!ArgUtility.TryGet(dayTiles, i, out string layerId, out string _)
-                        || !ArgUtility.TryGetPoint(dayTiles, i + 1, out Point position, out string _)
-                        || !ArgUtility.TryGetInt(dayTiles, i + 3, out int tileIndex, out string _))
+                    if (!ArgUtility.TryGet(restoreDayTiles, i, out string layerId, out string _)
+                        || !ArgUtility.TryGetPoint(restoreDayTiles, i + 1, out Point position, out string _)
+                        || !ArgUtility.TryGetInt(restoreDayTiles, i + 3, out int tileIndex, out string _))
                         continue;
                     xTile.Layers.Layer layer = loc.map.GetLayer(layerId);
                     xTile.Tiles.Tile tile = layer?.Tiles[position.X, position.Y];
@@ -199,8 +225,9 @@ namespace TheLongestYear.Integration
             _heartbeatMs = 0.0;
             _monitor?.Log(
                 $"RewindNightLight: drawLighting={Game1.drawLighting}, ambient={Game1.ambientLight}, " +
-                $"lights={Game1.currentLightSources.Count}, fadeToBlack={Game1.fadeToBlackAlpha:0.00}, " +
-                $"timeOfDay={Game1.timeOfDay}.",
+                $"lights={Game1.currentLightSources.Count} [{string.Join(",", Game1.currentLightSources.Keys)}], " +
+                $"lightGlows={Game1.currentLocation?.lightGlows.Count}, " +
+                $"fadeToBlack={Game1.fadeToBlackAlpha:0.00}, timeOfDay={Game1.timeOfDay}.",
                 LogLevel.Trace);
         }
 
@@ -215,10 +242,41 @@ namespace TheLongestYear.Integration
         private static void Paint()
         {
             StripForeignLights();
+            StripLightGlows();
             Game1.ambientLight = _ambient;
             // UpdateOther already recomputed this from the ambient the location put back, so setting
             // the colour alone is not enough: say so directly. See the class comment.
             Game1.drawLighting = true;
+        }
+
+        /// <summary>THE WHITE WINDOW. Not lighting, and not the window's art either: a light glow.
+        ///
+        /// This took three rounds and a tile dump to pin down. The farmhouse window reads white in
+        /// the morning and near-black at midnight, so it looks like a day/night art swap, but the map
+        /// has no <c>NightTiles</c> and no <c>DayTiles</c> property at all, and <c>tly_tiles</c> run
+        /// at 8am and again at midnight printed byte-identical tile indices on every layer. The only
+        /// two things that changed were the ambient and the line <c>lightGlows=1</c> becoming
+        /// <c>lightGlows=0</c>.
+        ///
+        /// So the window tile is ALWAYS the dark pane, and the white is a glow sprite that
+        /// <c>GameLocation.addLightGlows</c> puts over it while the sun is up and that vanilla drops
+        /// at dusk. Glows are drawn with the world, before the lightmap is subtracted, but they are
+        /// drawn bright enough that no ambient this scene can reasonably use will take them down:
+        /// raising the ambient's blue far enough to dim the glow only turned the pane from white to
+        /// a lit blue and took the cave colour out of the rest of the room with it.
+        ///
+        /// Clearing them is what vanilla itself does on the way into a dark hour
+        /// (<c>switchOutNightTiles</c> ends with <c>lightGlows.Clear()</c>). It has to run every
+        /// tick rather than once at Begin, because furniture re-adds its own glows from
+        /// <c>Furniture.updateWhenCurrentLocation</c>, which runs every tick the room is current.
+        /// The morning beat deliberately does NOT do this: a white window is exactly right at 6am,
+        /// and Jeff said so ("The morning is supposed to have a white window, the night one should be
+        /// black").</summary>
+        private static void StripLightGlows()
+        {
+            GameLocation loc = Game1.currentLocation;
+            if (loc == null || loc.lightGlows.Count == 0) return;
+            loc.lightGlows.Clear();
         }
 
         /// <summary>Everything in the light table that is not one of the scene's own goes: the
