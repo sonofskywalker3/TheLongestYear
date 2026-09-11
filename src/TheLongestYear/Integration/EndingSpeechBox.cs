@@ -18,7 +18,12 @@ namespace TheLongestYear.Integration
     {
         private const int BoxWidth = 1200, MinHeight = 212, Pad = 20;
         private const int PortraitSize = 64, PortraitScale = 2, PortraitDrawn = PortraitSize * PortraitScale;
-        private const int TextX = Pad + PortraitDrawn + 28;
+        // The frame sat one Pad from the box edge, which read as leaning against the wall (Jeff,
+        // 2026-09-10). PortraitX is the art's left edge; the frame itself starts FrameEdge px
+        // further left, so this is the inset of the frame plus its own border.
+        private const int FrameEdge = 12;
+        private const int PortraitX = Pad + FrameEdge + 16;
+        private const int TextX = PortraitX + PortraitDrawn + 28;
         private const int BottomMargin = 64;
         private const int CharMs = 22;
         private const int OpenGuardMs = 200;   // ignore the click that opened us
@@ -100,8 +105,9 @@ namespace TheLongestYear.Integration
             drawTextureBox(b, x, y, width, height, Color.White);
             if (_portrait != null)
             {
-                int px = x + Pad, py = y + Pad;
-                drawTextureBox(b, Game1.mouseCursors, new Rectangle(384, 373, 18, 18), px - 12, py - 12, PortraitDrawn + 24, PortraitDrawn + 24, Color.White, 4f, drawShadow: false);
+                // Centred in the box's own height rather than pinned to the top pad.
+                int px = x + PortraitX, py = y + (height - PortraitDrawn) / 2;
+                drawTextureBox(b, Game1.mouseCursors, new Rectangle(384, 373, 18, 18), px - FrameEdge, py - FrameEdge, PortraitDrawn + FrameEdge * 2, PortraitDrawn + FrameEdge * 2, Color.White, 4f, drawShadow: false);
                 b.Draw(_portrait, new Rectangle(px, py, PortraitDrawn, PortraitDrawn), new Rectangle(0, 0, PortraitSize, PortraitSize), Color.White);
             }
             SpriteText.drawString(b, _pages[_page], x + TextX, y + Pad, _shown, _textWidth);
