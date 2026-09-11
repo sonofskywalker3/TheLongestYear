@@ -826,7 +826,7 @@ namespace TheLongestYear.Loop
         {
             _monitor.Log(
                 $"FinalizeReset ({reason}): applying reset (eventUp={Game1.eventUp}, " +
-                $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Game1.season} {Game1.dayOfMonth}).",
+                $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             // Capture a partial-reset failure explicitly. PerformReset changes uniqueIDForThisGame
             // early then does heavy world work; if it threw mid-way the old code swallowed it up the
@@ -840,6 +840,18 @@ namespace TheLongestYear.Loop
             {
                 _monitor.Log($"FinalizeReset ({reason}): PerformReset threw — reset NOT applied: {ex}", LogLevel.Error);
                 throw;
+            }
+            finally
+            {
+                // Let go of the rewind cutscene's cosmetic Spring 1 hold (spec 2026-09-11). It has
+                // been re-writing season/day/timeOfDay every tick since the pan ended so the choice,
+                // the pity dialogs and the shrine all read Spring 1; PerformReset has now set those
+                // for real (WorldResetService sets Game1.timeOfDay = 600 itself), so the handoff is
+                // seamless. In a finally because a hold that is never released freezes the save at
+                // Spring 1 6:00am forever, which must not be the price of a throwing reset.
+                // No-op on every path that never painted (the debug tly_reset entry, the Continue
+                // branch): Release is idempotent.
+                TheLongestYear.Integration.RewindSpringPaint.Release();
             }
             // Re-inject the manifest PerformReset just generated for the new loop -- before
             // DoDayStartSeasonAndHub below, which samples goal slots from _requirements. Null only

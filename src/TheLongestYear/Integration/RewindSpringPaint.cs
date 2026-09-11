@@ -1,6 +1,7 @@
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Rewind;
 
 namespace TheLongestYear.Integration
@@ -83,10 +84,10 @@ namespace TheLongestYear.Integration
     /// - Loop/RunController.cs itself: the BeginNewRun/DoDayStartSeasonAndHub calendar syncs (lines
     ///   ~127, ~147, ~935, ~962) all run AFTER FinalizeReset's real PerformReset, by which point
     ///   Game1's real values already equal the painted ones. DebugSetDay's write is a manual-only
-    ///   console command. SAFE. The "season was {Game1.season} {Game1.dayOfMonth}" log line in
-    ///   FinalizeReset (~line 821) now logs the painted Spring 1 instead of the true pre-reset season
-    ///   on the FAIL path, a minor diagnostic-text inaccuracy for developers only, not a player-facing
-    ///   or gameplay concern, left as-is.
+    ///   console command. SAFE. The "season was ..." log line in FinalizeReset used to read
+    ///   Game1.season/Game1.dayOfMonth and therefore logged the painted Spring 1 on the FAIL path,
+    ///   destroying the line's only purpose; it now reads Run.Season/Run.DayOfMonth (the real loop
+    ///   state, which the paint does not touch) and logs the season that actually failed.
     /// - Loop/WorldResetService.cs (PerformReset): the real reset this paint mirrors and that
     ///   reconciles everything for real, including Game1.year. This is the goal state, not a risk.
     /// - Loop/WorldStateProbe.cs (Capture): only invoked by the tly_leaktest debug console command
@@ -139,15 +140,21 @@ namespace TheLongestYear.Integration
         private static bool _registered;
         private static bool _holding;
 
-        /// <summary>Wires the per-tick hold. Safe to call more than once (later calls just refresh
-        /// the stored monitor); the event subscription itself only happens on the first call. Call
-        /// once from ModEntry.Entry, the same pattern <see cref="RewindPanScene.Register"/> uses.</summary>
+        /// <summary>Wires the per-tick hold and the return-to-title safety net. Safe to call more
+        /// than once (later calls just refresh the stored monitor); the event subscriptions
+        /// themselves only happen on the first call. Call once from ModEntry.Entry, the same
+        /// pattern <see cref="RewindPanScene.Register"/> uses.</summary>
         public static void Register(IMonitor monitor, IModHelper helper)
         {
             _monitor = monitor;
             if (_registered) return;
             _registered = true;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+            // <see cref="_holding"/> is static and outlives the save it was set on. Quitting to the
+            // title mid-sequence (between the pan and FinalizeReset) would otherwise leave it set,
+            // so the next save loaded in the same session inherits the hold. Clear it here, the same
+            // way <see cref="RewindPanScene.Register"/> nets its own static state.
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => Release();
         }
 
         /// <summary>Paints Spring 1 now and starts holding it every tick until <see cref="Release"/>.
@@ -160,15 +167,27 @@ namespace TheLongestYear.Integration
 
         /// <summary>Stops holding the paint once the player takes control and the clock starts. Does
         /// NOT revert the painted values; by the time this is called the real reset has already
-        /// reconciled them (or is about to on the same tick), so there is nothing to restore to.</summary>
+        /// reconciled them (or is about to on the same tick), so there is nothing to restore to.
+        /// Called from <c>RunController.FinalizeReset</c> (in a finally, so a throwing PerformReset
+        /// still lets go) and from the return-to-title net in <see cref="Register"/>. Idempotent.
+        /// WITHOUT this the hold below re-writes timeOfDay = 600 every tick forever: the clock ticks
+        /// to 6:10, gets slammed back, and the player can never sleep or reach day 2.</summary>
         public static void Release()
         {
+            if (!_holding) return;
             _holding = false;
+            _monitor?.Log("RewindSpringPaint: released the Spring 1 hold; the real clock runs again.", LogLevel.Info);
         }
 
         private static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (_holding) Paint();
+            if (!_holding) return;
+            // Dormancy (project rule): _holding is static, so a hold left set on a TLY save would
+            // otherwise follow the session into a vanilla non-TLY save loaded afterwards and freeze
+            // that one too. RunActivation is false there, and false at the title, so this is both the
+            // dormancy guard and a second belt on the ReturnedToTitle net.
+            if (!RunActivation.IsActive) { Release(); return; }
+            Paint();
         }
 
         private static void Paint()
