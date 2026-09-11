@@ -116,8 +116,12 @@ public sealed record RawObjectEntry(
 /// (empty = any season, mirroring CropData.Seasons' empty default). HarvestMaxQuality
 /// mirrors CropData.HarvestMaxQuality: null = uncapped (vanilla default), 0 = the game
 /// clamps the harvest to base quality (e.g. Fiber) so it can never carry a quality ask.</summary>
+/// <remarks><paramref name="SeedItemId"/> is the row's KEY (Data/Crops is keyed by seed id),
+/// which is how a crop's reachability is traced: you cannot grow what you cannot plant.
+/// Optional because hand-built test pools and the curated CropPoolAdditions have no seed.</remarks>
 public sealed record RawCropEntry(
-    string HarvestItemId, IReadOnlyList<Season> Seasons, int? HarvestMaxQuality = null);
+    string HarvestItemId, IReadOnlyList<Season> Seasons, int? HarvestMaxQuality = null,
+    string? SeedItemId = null);
 
 /// <summary>One Data/Locations spawn entry (LocationData.Forage or LocationData.Fish):
 /// Season null = any season unless the Condition string names seasons.
@@ -155,6 +159,25 @@ public sealed record RawFruitTreeEntry(string SaplingItemId, IReadOnlyList<strin
 /// merged with a curated default-mineral list (the vanilla default geode table is code,
 /// not data) and then filtered to exclude gem-category items.</summary>
 public sealed record RawGeodeDropEntry(string ItemId);
+
+/// <summary>One warp edge between two locations, as the world actually connects them.
+/// Direction is recorded but the reachability walk treats edges as two-way: vanilla interiors
+/// frequently declare the door on one side only.</summary>
+public sealed record RawLocationLink(string From, string To);
+
+/// <summary>One Data/Shops stock line. <paramref name="IsRecipe"/> is the shop entry's own
+/// IsRecipe flag: such a line teaches a recipe rather than selling the item, so it is a source of
+/// the KNOWLEDGE, never of the item itself.</summary>
+public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false);
+
+/// <summary>Where a shop can actually be opened. A shop with no known placement leaves everything
+/// it sells allowed, per the conservative rule.</summary>
+public sealed record RawShopPlacement(string ShopId, string LocationName);
+
+/// <summary>One cooking or crafting recipe. <paramref name="Unlock"/> is the raw unlock-conditions
+/// field from Data/CookingRecipes ("default", "s Farming 3", "f Robin 7", "l", or "none").</summary>
+public sealed record RawRecipeEntry(
+    string OutputItemId, IReadOnlyList<string> IngredientItemIds, string Unlock);
 
 /// <summary>One Data/Fish row, reduced to the fields the availability model gates on.
 ///
