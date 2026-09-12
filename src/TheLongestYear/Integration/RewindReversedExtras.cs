@@ -55,8 +55,29 @@ namespace TheLongestYear.Integration
 
         /// <summary>Route lengths to try, in tiles, longest first. The long ones keep an extra
         /// walking backwards for the whole pan at an ordinary pace; the short ones are
-        /// the fallback for a start tile with nothing that far away.</summary>
-        private static readonly int[] RouteTileChoices = { 9, 7, 5, 4 };
+        /// the fallback for a start tile with nothing that far away.
+        ///
+        /// These are back to the long aims after Jeff watched a pan at the short ones: "freaking
+        /// Penny was moving so slow it was crazy because you only let her move like 3 steps"
+        /// (2026-09-11). A nine tile route spread across the band walks at well under a tile a
+        /// second, which reads as a crawl, not a person. The short aims were there to keep a route
+        /// inside a radius of its anchor so the walker stayed in shot the whole time; that
+        /// constraint is gone, because the same feedback gave it up: "I don't care if the extras
+        /// walk into frame or out of frame while it's running, that's fine, I just want to see
+        /// glimpses." Walking out of shot is the price of walking at all, and it is worth it.</summary>
+        private static readonly int[] RouteTileChoices = { 24, 18, 14, 10, 7 };
+
+        /// <summary>An ordinary walking pace, in tiles per second: vanilla's own. The pace is what
+        /// the player actually reads, so it is set here and the route is cut to fit it, rather than
+        /// falling out of however many tiles the pathfinder happened to return.</summary>
+        private const double WalkTilesPerSecond = 3.0;
+
+        /// <summary>How many tiles of route an extra should cover while the camera is on it: the
+        /// walking pace times the seconds its band lasts. Routes longer than this are trimmed so a
+        /// wandering forty tile path does not turn the walk into a sprint; shorter ones are kept and
+        /// simply walked a little slower. Set in <see cref="Spawn"/>, where the pan's duration is
+        /// known.</summary>
+        private static int _paceTiles = 40;
 
         /// <summary>How far off the camera's line an extra starts, so they are scattered around the
         /// square rather than queued along one path.</summary>
@@ -103,6 +124,10 @@ namespace TheLongestYear.Integration
             _town = town;
             Extras.Clear();
             if (town == null) return;
+
+            // The band is the slice of the pan an extra is walking for, so the tiles it should cover
+            // is the pace times that slice's length. Everything downstream trims to this.
+            _paceTiles = Math.Max(4, (int)Math.Round(WalkTilesPerSecond * CameraBand * durationMs / 1000.0));
 
             List<NPC> cast = Shuffle(Cast());
             int wanted = MinCast + Game1.random.Next(MaxCast - MinCast + 1);
@@ -225,13 +250,17 @@ namespace TheLongestYear.Integration
                         start.Value, end.Value, town, PathfinderLimit);
                     if (path == null || path.Count < 4) continue;
                     Point[] route = path.ToArray();
-                    // Longest aim first, so this returns the longest route that still keeps the
-                    // villager near the spot the camera passes. A length floor was tried on top of
-                    // this and taken back out: a floor and a radius together are two constraints
-                    // that fight, and every pairing of the two numbers threw away every route in the
-                    // town, leaving the pan with nobody on the road at all. A short route at the
-                    // right place beats a long one the player never sees.
-                    if (MaxStray(route, start.Value) > AnchorRadiusTiles) continue;
+                    // Trim rather than reject: the pathfinder follows roads, so a route aimed twenty
+                    // tiles away can come back at fifty, and walking fifty tiles in the same band
+                    // would have the villager running. Cutting it to the pace budget keeps the walk
+                    // at walking speed and throws away only the tail, which is off screen anyway.
+                    if (route.Length > _paceTiles + 1)
+                        Array.Resize(ref route, _paceTiles + 1);
+                    // Longest aim first, so this returns the longest route the town will give.
+                    // There is no radius check on it any more: a route was once rejected for
+                    // straying more than eleven tiles from its anchor, which is what forced the
+                    // aims down to single figures and the walk down to a crawl. Glimpses are the
+                    // brief, so a walker who crosses the shot and leaves it is the point.
                     return route;
                 }
                 catch (Exception ex)
@@ -241,37 +270,6 @@ namespace TheLongestYear.Integration
             }
             return null;
         }
-
-        /// <summary>How far <paramref name="route"/> ever gets from <paramref name="anchor"/>, the
-        /// point on the camera's line this extra was placed at. Lower is better: the camera is only
-        /// ever near ONE extra at a time, the one whose anchor it is passing, so the route that keeps
-        /// closest to that spot is the one the player actually sees somebody walking.
-        ///
-        /// Aiming the route along the camera's line is not enough on its own, because the pathfinder
-        /// walks ROADS and the town's roads wander: a route aimed west from Clint's still went up
-        /// through the square and left the villager twenty tiles north of anything the camera was
-        /// pointed at. Measured live before this check, during the winter stretch: camera at (94,81),
-        /// nearest extra at (81,57).
-        ///
-        /// Measuring against the anchor rather than against the straight line between the pan's ends
-        /// is deliberate, and the first attempt got it wrong: a corridor around that line rejected
-        /// every route in the town and the pan ran with no extras at all.</summary>
-        private static double MaxStray(Point[] route, Point anchor)
-        {
-            double worst = 0.0;
-            foreach (Point step in route)
-            {
-                double dx = step.X - anchor.X, dy = step.Y - anchor.Y;
-                double away = Math.Sqrt(dx * dx + dy * dy);
-                if (away > worst) worst = away;
-            }
-            return worst;
-        }
-
-        /// <summary>How far from its anchor a route may stray, in tiles. The camera shows about
-        /// fifteen tiles either side of centre across and only eight up and down, so this is roughly
-        /// "still in shot while the camera is on you".</summary>
-        private const double AnchorRadiusTiles = 11.0;
 
         /// <summary>The nearest tile to <paramref name="wanted"/> a villager could stand on, searched
         /// outward in rings. Null when there is nothing walkable nearby at all.</summary>
