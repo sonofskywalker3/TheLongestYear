@@ -6,6 +6,31 @@ namespace TheLongestYear.Tests;
 
 public class RunStateTests
 {
+    // Nexus report gmastern1, 2026-09-12: slept on a failed Spring 28, the night save wrote
+    // Summer 1, quit before the morning rewind, and the reload rolled the run into Summer.
+    [Fact]
+    public void Pending_day28_branch_survives_a_save_round_trip()
+    {
+        var run = new RunState { PendingDay28 = TheLongestYear.Core.Day28.Day28Branch.Fail };
+        RunState back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(run))!;
+        Assert.Equal(TheLongestYear.Core.Day28.Day28Branch.Fail, back.PendingDay28);
+    }
+
+    [Fact]
+    public void A_pending_day28_outcome_blocks_the_load_time_month_rollover()
+    {
+        var run = new RunState { Season = Season.Spring, DayOfMonth = 28, PendingDay28 = TheLongestYear.Core.Day28.Day28Branch.Fail };
+        Assert.False(run.OwesMonthRolloverOnLoad(Season.Summer));
+    }
+
+    [Fact]
+    public void Without_a_pending_outcome_a_new_calendar_month_still_rolls_over_on_load()
+    {
+        var run = new RunState { Season = Season.Spring, DayOfMonth = 28 };
+        Assert.True(run.OwesMonthRolloverOnLoad(Season.Summer));
+        Assert.False(run.OwesMonthRolloverOnLoad(Season.Spring));
+    }
+
     [Fact]
     public void New_run_state_starts_at_spring_one_week_one()
     {

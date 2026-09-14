@@ -39,7 +39,13 @@ namespace TheLongestYear.Loop
         /// reads this, plays the in-bed Junimo scene, and calls <see cref="OnCutsceneEnded"/> when
         /// it ends. None = no cutscene (normal day). Replaces the old _pendingReset bool: the reset
         /// now runs AFTER the FAIL cutscene's JP shop instead of straight out of OnDayStarted.</summary>
-        private Day28Branch _pendingCutscene = Day28Branch.None;
+        // Backed by the run-state (not a field) so tonight's queued outcome is written by the night
+        // save and survives a quit before the morning scene resolves.
+        private Day28Branch _pendingCutscene
+        {
+            get => Run.PendingDay28;
+            set => Run.PendingDay28 = value;
+        }
 
         /// <summary>Exposed for the driver's per-tick decision.</summary>
         public Day28Branch PendingCutscene => _pendingCutscene;
@@ -123,7 +129,17 @@ namespace TheLongestYear.Loop
             // then re-sample the bonus list for the new season. The effect/quest restore below
             // then operates on the rolled-over (correct) selection state.
             var calendarSeason = (CoreSeason)(int)Game1.season;
-            if (calendarSeason != Run.Season)
+            if (Run.PendingDay28 != Day28Branch.None)
+            {
+                // Quit after the day-28 night save but before its morning scene resolved. Leave the
+                // season and day alone: the driver replays the scene and its continuation decides
+                // (Fail rewinds, Continue rolls over via DoDayStartSeasonAndHub, Win shows the screen).
+                _monitor.Log(
+                    $"Load is in {calendarSeason} with the day-28 {Run.PendingDay28} outcome still pending " +
+                    $"(run-state {Run.Season} {Run.DayOfMonth}). Replaying it instead of rolling the month over.",
+                    LogLevel.Info);
+            }
+            else if (Run.OwesMonthRolloverOnLoad(calendarSeason))
             {
                 _monitor.Log(
                     $"Load is in {calendarSeason} but run-state was saved in {Run.Season} — the quit " +
@@ -142,7 +158,8 @@ namespace TheLongestYear.Loop
                     ApplyEmptyPoolLiftIfNeeded();
                 }
             }
-            Run.DayOfMonth = Game1.dayOfMonth;
+            if (Run.PendingDay28 == Day28Branch.None)
+                Run.DayOfMonth = Game1.dayOfMonth;
 
             // 2026-07-09 slot redesign migration: a mid-week save from an older version has the
             // legacy id-only bonus list but no slot goals. Re-sample once (the week's goals
