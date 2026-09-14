@@ -1,0 +1,233 @@
+[size=6][b]The Longest Year[/b][/size]
+[size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
+
+[color=yellow][b]BETA (0.18.1).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+
+[color=yellow][b]This is the last big engine update.[/b] From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.[/color]
+
+[line]
+
+[size=5][b]See it played[/b][/size]
+
+[b]Emmalution[/b] is playing the whole loop on YouTube, and her edited episodes are the best introduction to the mod there is. Thank you, Emma, for the videos and for the bug reports that came with them.
+
+[list]
+[*][b]Spring:[/b] [url=https://www.youtube.com/watch?v=fU4EVzlD1K8]I must donate to the Community Centre OR RESET![/url]
+[*][b]Summer:[/b] [url=https://www.youtube.com/watch?v=WaAzDjMWmt8]The Junimos challenged me to complete these bundles...[/url]
+[/list]
+Channel: [url=https://www.youtube.com/@emmalution]youtube.com/@emmalution[/url]
+
+[line]
+
+[size=5][b]What's New in 0.18.1[/b][/size]
+
+[b]Garlic can be cultivated too, and both Cultivation upgrades are cheaper.[/b]
+[list]
+[*][b]Cultivation: Garlic joins the shrine, and both Cultivation upgrades drop to 3,000 Junimo Points.[/b] The shrine sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
+[*][b]Artichoke is no longer held off an Easy board.[/b] On the Easy item-rarity setting all three of Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the time, in any year, for free.
+[/list]
+
+[size=5][b]What's New in 0.18.0[/b][/size]
+
+[b]The Mod Compatibility Update: bundles no longer ask for things this run cannot reach, and a board that already has one gets repaired.[/b]
+[list]
+[*][b]Bundles no longer ask for things this run cannot reach.[/b] Reported by pitytheviolins: with The Fishmonger installed, a Community Center bundle asked for a dish only Constance sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no way to complete that bundle. The game now traces every item back to where it actually comes from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at least one of those routes is somewhere this run can reach. An item with no known source at all is left alone, so this only ever removes things proven unreachable, never guesses.
+[*][b]A board you already have gets repaired, not just new ones.[/b] If a bundle on your current board is asking for something this run can never reach, it is swapped for something you can actually get the next time you load that save. Anything you already donated stays donated.
+[*][b]The Abandoned Joja Mart's bundle is vanilla again.[/b] The Missing Bundle was being re-rolled by the mod's own board generator, which is how it came to ask for a legendary fish. That room sits outside the loop entirely, so it is now passed through untouched exactly as the Vault always has been, and a save that already picked up a re-rolled version gets the real one back on its next rewind. Reported by ChaoticMindset.
+[*][b]Zoom Level and UI Scale survive the rewind.[/b] Both dials snapped back to the game's defaults every time the Junimos rewound the year, and there was no way to change what those defaults were. The game treats them as belonging to the save rather than to you, so the fresh year was starting them over while every other setting came back on its own. The loop now carries both across the reset. Reported by RiseiJaku.
+[/list]
+
+Coming from 0.17.15 or earlier? See the previous update below, or the full history in [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md]CHANGELOG.md[/url].
+
+[size=5][b]What's New in 0.17.12[/b][/size]
+
+[b]The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.[/b]
+[list]
+[*][b]Every bundle asks for a share of what a week of going after it actually yields.[/b] Fish, forage, crops, crab pots, monster drops, the mines, animals, machines and raw resources each have a real weekly yield behind them now: fish modelled from the game's own spawn tables at a level-10 fishing pace, forage measured by sweeping every map for three in-game years, crops on 100 tiles, ten crab pots, a full day in the mines. Your Stack size dial then picks a share of it: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, never above 80%. Two Smallmouth Bass is no longer an Extreme ask, and 90 Common Mushrooms is no longer a Spring one.
+[*][b]Legendary fish are asked for once, plain, and rarely.[/b] Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
+[*][b]Hard and Extreme mean it.[/b] Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
+[*][b]Two new mineral bundles.[/b] Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
+[*][b]0.17.12: the Copper Pan and chained scenes come back every loop.[/b] Same family: Willy's pan scene, and any scene that only unlocks after another scene that replays (the 14-heart chains, Shane's morning-after, Pam's bus follow-up), were stuck as seen from loop 1.
+[*][b]0.17.12: Willy's letter arrives after you keep playing.[/b] A finished Community Center could still be read as unfinished by the mod's own check, which silently blocked the game from sending Willy's back-room letter, so Ginger Island stayed shut. The restored hall is now the authority. Reported by ChaoticMindset.
+[*][b]0.17.12: quest-finishing scenes play again every loop.[/b] Jodi's fish casserole dinner and Marnie's cave carrot thank-you were being treated as already seen from your first loop, so the quest came back each loop but could never be turned in. Reported by ChaoticMindset.
+[*][b]0.17.12: Gunther brings the Rusty Key again every loop.[/b] The museum empties on the rewind and the 60-donation reward re-fired, but Gunther's farm visit that hands the key over never played again, so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by ChaoticMindset.
+[*][b]0.17.8: a must-donate-all bundle's season gate takes any of its items.[/b] The Bundle Log showed only the items pinned to the current season and the gate refused the rest. The pins now decide how many are due; which ones you bring is your call. Reported by ada113.
+[*][b]0.17.8: the Cookbook and Craftbook open between the shrine and the reset.[/b] A book bought at the loop-boundary shrine had nothing to bank by the time it first opened, because the reset had already wiped your recipes. Each book with a free slot now opens right after the shrine. Reported by ada113.
+[*][b]0.17.6: a crops bundle every season.[/b] The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board now. A board could roll Orchard, Preserver's and Home Cook's Feast in their place, which left the Farming theme with nothing to ask for in week 1 but saplings.
+[*][b]0.17.6: one jelly a week.[/b] A weekly theme asks for at most one of Sea Jelly, River Jelly and Cave Jelly. Two of them in the same week meant two slow, separate fishing trips for one theme.
+[*][b]0.17.5: every farm type.[/b] Riverland, Forest, Hilltop, Wilderness, Four Corners, Beach and Meadowlands are all open now; the mod no longer forces Standard. Kept buildings go back to your own spots and the Junimo stash sits by your door on any map. Balance is shared across types, see Limitations.
+[*][b]0.17.5: the Skip intro checkbox is back.[/b] Rerolling farms? Tick Skip intro on the character screen and the opening scene is skipped, straight to the theme picker. A note pops up recommending you watch it the first time, since it is the only in-game explanation of the loop. Asked for by gazumbrado.
+[*][b]0.17.5: new book art.[/b] The Cookbook, Craftbook and Bundle Log have proper covers now, drawn by [b]supercam19[/b]. Thank you!
+[*][b]0.17.1: the Dye bundle never asks for a legendary fish.[/b] It picks by colour, and a green Legend or a red Crimsonfish counted. Its season gates were already right.
+[*][b]Fixes from your reports.[/b] Golden Egg (Perfection only) and Son of Crimsonfish (a Mr. Qi quest) can no longer be asked for. A Spring bundle can no longer want 90 Common Mushrooms because Fall Wild Seeds could theoretically grow them. Coffee Bean, Cloth and a few Skull Cavern drops were asking for more than a first loop can produce. Normal now caps a vanilla ask at a stack, so Hard never asks for fewer than Normal.
+[*][b]Thank you to gazumbrado, nyxnyx2234, spenderg and Bumblewyn[/b] for the reports and the reroll logs behind this release.
+[/list]
+
+Coming from 0.15.0 or earlier? 0.16.0 added ten independent [b]Difficulty[/b] dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in the changelog on GitHub.
+
+[line]
+
+[size=5][b]What it is[/b][/size]
+The Longest Year turns Stardew's first year into a roguelite loop. Each season, you must give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned, and the power your offerings have banked, can carry forward. Restore the whole Center inside one year to break the loop for good.
+
+[size=5][b]Features[/b][/size]
+[list]
+[*][b]Seasonal time-loop.[/b] Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
+[*][b]Junimo Points.[/b] Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
+[*][b]The Junimo Shrine.[/b] Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
+[*][b]JP Boosts.[/b] The Junimo statue on your farm sells this-loop edges for JP: tomorrow's rain or a lucky day, a free late night, stacking forage/fish/crop/mine/drop chances, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot, or an elevator stop you have not earned yet. An Active tab shows what is running and a Plan tab shows what each keep still needs.
+[*][b]Weekly themes.[/b] Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
+[*][b]Carryover surfaces.[/b] A Bundle Log book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
+[*][b]A real intro.[/b] Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
+[*][b]A starved Traveling Cart.[/b] Joja has squeezed the merchant's suppliers — the cart carries [b]one item[/b] per visit until you unlock more stalls with the [b]Cart Stall[/b] upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off [font=Courier New]LimitTravelingCartStock[/font].
+[*][b]The town half-remembers.[/b] Villagers you have spent a lot of time with across loops occasionally say something uncanny. Rare, no gameplay effect, and it never explains itself. Toggle in Features.
+[*][b]Break the loop.[/b] Finish the Center in a year to win — then keep playing or start fresh.
+[/list]
+
+[size=5][b]Requirements[/b][/size]
+[list]
+[*]Stardew Valley 1.6+ (PC)
+[*]SMAPI 4.0.0+
+[*]A [b]new save[/b] (any farm type; see the note under Limitations)
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install SMAPI 4.0.0 or newer.
+[*]Unzip into your [font=Courier New]Stardew Valley/Mods[/font] folder.
+[*]Launch through SMAPI and [b]start a new game[/b] on any farm type. Leave [b]Skip intro[/b] off the first time: the mod's own opening plays in place of the vanilla one and explains the loop. Tick it on later farms to go straight to the theme picker.
+[*][b]Community Center Bundles[/b] under [b]New → Advanced Options[/b] defaults to [b]TLY Custom[/b]: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles. Prefer the game's own board (or another bundle mod's)? Pick [b]Normal[/b] or [b]Remixed[/b] there instead — the mod keeps that board and re-rolls it the same way on every reset. ([font=Courier New]BundleSource[/font] in the config/GMCM is the default for new games and switches an existing save at its next reset.)
+[img]https://staticdelivery.nexusmods.com/mods/1303/images/47192/47192-1787355673-935410882.png[/img]
+[/list]
+
+[size=5][b]Limitations (beta)[/b][/size]
+[list]
+[*]PC only — no Android port yet.
+[*]Farm types are balanced as a set, not individually. The bundle asks are sized from Standard farm yields; each other type trades one thing for another (Riverland and Beach: more fish, less field; Forest: more forage; Hilltop: more ore; Wilderness: more monsters; Meadowlands: easier animals). Beach farm's no-sprinklers rule makes its crop bundles a real step harder. Custom farm maps that replace a vanilla slot load fine but are untested for balance.
+[*]A run can only be started from a new game (other saves load normally and are left untouched).
+[*]Intro cutscene and dialogue are a first pass.
+[*]Multiplayer untested.
+[/list]
+
+[size=5][b]Is this a bug?[/b][/size]
+
+A few things get reported often enough to be worth answering up front.
+
+[b]Demetrius never shows up about the cave, I just get a popup asking mushrooms or bats.[/b]
+That is the mod, working as intended. His scene plays once per playthrough; from the second loop on, walking into the farm cave gives you the choice directly instead of replaying a cutscene you have already watched. The mushrooms-or-bats decision is re-offered every loop because the rewind clears it.
+
+[b]The Traveling Cart only has one item.[/b]
+Also intended. Joja is squeezing the merchant's suppliers, and the Cart Stall upgrades at the Junimo Shrine add slots back. If you would rather have the full cart, turn off LimitTravelingCartStock in the config.
+
+[b]I did the Egg Hunt and now Lewis will not let me do it again today.[/b]
+Since 0.14.1, a festival's main event runs once per day. Festivals in this mod do not end your day, so you can walk out and back in - which used to restart the whole festival and let the hunt be repeated for the prize. The stalls, the shop and everyone at the festival still work on a repeat visit. A new loop is a clean slate: as far as the valley is concerned the festival has not happened yet, so you get to do it again.
+
+[b]A bundle is asking for silver or gold on something that cannot have a quality.[/b]
+That was a bug and it is fixed. Quality is only ever asked for on things the game itself gives quality to (crop harvests, rod-caught fish, spawned forage). Existing boards pick the change up at the next reset.
+
+[b]A weekly goal ticked off without me donating anything.[/b]
+Fixed in 0.14.0. Finishing a bundle that only needs some of its listed items used to mark the rest as filled, which credited goals you never handed in. A goal now waits for the real donation.
+
+[b]I bought Keep Bus Unlocked and the Vault bundles are still on the board.[/b]
+Intended. The gift keeps the bus and the desert open from day 1; the Vault bundles are still part of restoring the Center, still have to be paid, and still earn JP. Completing them again does not replay the repair scene. Every Gift of the Junimos works this way.
+
+[b]The skill level I bought at the statue was gone after the rewind.[/b]
+Intended. Crash Course levels are temporary: they last the loop, never reach level 10, and cannot be kept. Only levels you earn open the Keep Level rows on a Fail night.
+
+[b]Elevator Pass says "Enter the mine first", or a weather boost says "Not now".[/b]
+Both intended. The pass extends the elevator from wherever it already reaches, so it needs one trip into the mine first. Rain Dance and Storm Call are refused on day 28 and the day before a festival, because the game forces sunshine on those mornings and the JP would be wasted.
+
+[b]My enchanted sword lost its enchantments in the Junimo Stash.[/b]
+Fixed since 0.16.7. Tools and weapons in the stash keep their enchantments, forged gems, bait and tackle across the rewind.
+
+Anything not on this list, please do report - the bugs tab is read.
+
+[line]
+
+[size=5][b]Difficulty[/b][/size]
+Ten independent difficulty dials live in the mod's settings menu (GMCM) under [b]Difficulty[/b]. There is no overall difficulty setting: turn up only what you want turned up. Every dial has four steps, [b]Easy / Normal / Hard / Extreme[/b], and every one starts on [b]Normal[/b], which is the balance the mod ships with. Changing nothing changes nothing.
+
+[b]Changes take effect on your next loop, not straight away.[/b] The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
+[img]https://staticdelivery.nexusmods.com/mods/1303/images/47192/47192-1787870999-2094236733.png[/img]
+
+[b]What the bundles ask for[/b]
+[list]
+[*][b]Stack size.[/b] How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. One-offs like books and artifacts stay at one. Money bundles are never affected.
+[*][b]Quality asks.[/b] How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
+[*][b]Required slots.[/b] How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
+[*][b]Item rarity.[/b] Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. [b]TLY Custom bundles only[/b] (see below).
+[/list]
+
+[b]What you carry between loops[/b]
+[list]
+[*][b]Junimo Points earned.[/b] Scales every JP award, so progress across loops is faster or slower. The season ramp keeps its shape, so late-season donating is still worth the most.
+[*][b]Shrine prices.[/b] Scales what upgrades cost at the Junimo Shrine.
+[*][b]Starting gold.[/b] Scales the [font=Courier New]StartingMoney[/font] value rather than replacing it. Extreme starts you with nothing.
+[*][b]Starting cart slots.[/b] How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is empty until you buy Cart Stall I.
+[*][b]Hold and pity prices.[/b] Scales the JP price of keeping your board on a Fail night, and of accepting the Junimos' offer to ease a season. The first of each stays free at every step.
+[*][b]Season pity.[/b] How readily the Junimos ease a season you keep failing. Easy helps sooner and more, Hard waits longer and helps less, Extreme never helps. Your failed-season counting keeps running either way, so turning it back up picks up where it left off.
+[/list]
+
+[b]One dial does not work on vanilla boards.[/b] Item rarity applies to [b]TLY Custom[/b] bundles only, because changing which item a vanilla bundle asks for would be changing the bundle. Stack size, quality asks and required slots all work on vanilla Standard and Remixed boards too.
+
+[font=Courier New]tly_difficulty[/font] in the SMAPI console prints what your save is actually running under, including anything you have changed since your last loop. Please attach it to any balance report.
+
+[line]
+
+[size=5][b]Switching bundle source later[/b][/size]
+You are not locked into the board you picked when you started. [b]Bundle source[/b] in the mod's settings menu (GMCM) is one setting with three choices, and you can move an existing save between any of them:
+[list]
+[*][b]TLY Custom[/b] - the mod composes a fresh board every loop from the vanilla and remix pools plus its own authored bundles.
+[*][b]Normal[/b] - the game's own standard bundle layout, re-rolled the same way each loop.
+[*][b]Remixed[/b] - the game's own remixed layout, likewise.
+[/list]
+
+Another bundle mod's board is covered by Normal or Remixed: whatever the game generates is what the mod keeps.
+
+Like the difficulty dials, a switch applies at your [b]next loop[/b], not straight away. The year you are already playing keeps the board it started with.
+
+[b]Keeping your board on a Fail night works on all three.[/b] If you hold, you get the same board back next loop whichever source it came from.
+
+[line]
+
+[size=5][b]Tuning[/b][/size]
+The [b]Features[/b] section of the settings menu turns individual parts of the mod off or tunes them, and changes there apply straight away:
+[img]https://staticdelivery.nexusmods.com/mods/1303/images/47192/47192-1787870999-1916723524.png[/img]
+Everything difficulty-related lives in [font=Courier New]config.json[/font] — JP values, per-season multipliers, completion bonuses, starting gold, and per-bundle quotas. Tweak freely and tell me what felt right. [font=Courier New]LimitTravelingCartStock[/font] (also in GMCM) turns the one-item Traveling Cart cap off if you'd rather have the full vanilla cart. [font=Courier New]BundleSource[/font] (also in GMCM): [font=Courier New]Engine[/font] = the mod's own board every loop (the new-game [b]TLY Custom[/b] choice); [font=Courier New]Vanilla[/font] = keep the game's Standard/Remixed board (or another bundle mod's, e.g. Challenging Community Center Bundles) and re-roll it the same way on each reset. Takes effect at the next reset; the new-game dropdown sets it per save. [font=Courier New]BundleHoldCosts[/font] sets the JP price of keeping the same bundle board on a Fail night by consecutive holds (default 0, 50, 100, 200, 300; reshuffling resets the count). Season pity ([font=Courier New]PityThreshold[/font] 5, [font=Courier New]PityQuotaStep[/font] 0.10, [font=Courier New]PityQuotaFloor[/font] 0.50, [font=Courier New]PityTrimPerStep[/font] 2, [font=Courier New]PityCosts[/font] 0/50/100/200/300, [font=Courier New]PityEnabled[/font]) tunes when and how much the Junimos offer to ease a season you keep failing.
+
+[line]
+
+[size=5][b]Feedback wanted[/b][/size]
+[list]
+[*][b]Difficulty[/b] — are the seasonal minimums fair? Which wall hit hardest?
+[*][b]Pricing[/b] — do JP earnings and shrine costs feel balanced? What did you save for first?
+[*][b]Pacing[/b] — how many loops before it "clicked"? Did carryover make later loops feel stronger?
+[*][b]Bugs[/b] — please attach your [font=Courier New]SMAPI-latest.txt[/font] (from [font=Courier New]Stardew Valley/ErrorLogs/[/font]).
+[/list]
+
+[line]
+
+[size=5][b]Art wanted[/b][/size]
+The mod leans on vanilla sprites for most things. If anyone would enjoy making some custom sprite artwork (the shrine, the stash chest, icons), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+
+[i]Banner art by [b]cwybabiesucks[/b]. Book art by [b]supercam19[/b]. Thank you both![/i]
+
+[line]
+
+[size=5][b]Translations[/b][/size]
+As of 0.11.60, every player-visible string in the mod lives in a JSON file ([font=Courier New]i18n/default.json[/font]) — the mod is fully translatable with no DLL edits or rebuilds. See [url=https://github.com/sonofskywalker3/TheLongestYear/blob/master/docs/TRANSLATING.md]TRANSLATING.md[/url] for how to add a language. If you translate it, let us know (Nexus DM or GitHub issue) and we'll link your work from the mod page.
+
+[line]
+
+[size=4][b]Also by this author[/b][/size]
+[list]
+[*][url=https://www.nexusmods.com/stardewvalley/mods/41869][b]Android Consolizer[/b][/url] — Full console-style controller support for Stardew Valley on Android.
+[*][url=https://www.nexusmods.com/stardewvalley/mods/47146][b]Cart Catalog[/b][/url] — Order from the Traveling Cart's daily stock; items arrive in a package on your porch the next morning.
+[*][url=https://www.nexusmods.com/stardewvalley/mods/42616][b]Nap Time[/b][/url] — Nap in bed to recover energy without ending the day. Configurable rate and wake-up cap. PC + Android.
+[/list]
+
+[line]
+[size=4][b]Source[/b][/size]
+Open source (MIT) — [url=https://github.com/sonofskywalker3/TheLongestYear][b]github.com/sonofskywalker3/TheLongestYear[/b][/url]
+
+[size=3][i]By sonofskywalker3. Deja-vu villager dialogue idea by u/Gribbleby. Thanks to Emmalution for playing it on YouTube and for the feedback that shaped 0.16 and 0.17. Built on SMAPI and HarmonyX. Stardew Valley is a trademark of ConcernedApe.[/i][/size]
