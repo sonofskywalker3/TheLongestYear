@@ -56,6 +56,14 @@ namespace TheLongestYear.UI
         private const float VeinPulsePeriodMs = 2400f;
         private const float VeinPulseDepth = 0.3f;
         private static readonly Color VeinRed = new Color(210, 30, 20);
+
+        // Where the veins start: only on the part of a tentacle that has crossed in past the outer
+        // edge of the fading zone, fading up over a short stretch inside it. Out in the dark they are
+        // plain black ("the tentacles popping in in the darkness with the red already there is
+        // jarring ... only draw the red lines onto them as they cross the outside threshold of the
+        // barrier zone", Jeff, 2026-09-14). As fractions of the lit edge's distance from the bed.
+        private const float VeinThresholdOfEdge = 1.12f;
+        private const float VeinFadeInOfEdge = 0.12f;
         private const float BreathOfEdge = 0.05f;
         private const float MinBreathPeriodMs = 3000f;
         private const float MaxBreathPeriodMs = 5500f;
@@ -114,6 +122,7 @@ namespace TheLongestYear.UI
             public float RadiusUi;
             public float Alpha;
             public float S;
+            public float Distance;   // world pixels from the bed, where the piece is drawn
         }
 
         private readonly Tentacle[] _tentacles = new Tentacle[TentacleCount];
@@ -212,30 +221,39 @@ namespace TheLongestYear.UI
                     float radiusUi = radius * worldToUi;
                     b.Draw(disc, onScreen, null, Color.Black * alpha, 0f, origin, radiusUi * 2f / DiscSize,
                         SpriteEffects.None, 0f);
-                    _pieces.Add(new Piece { OnScreen = onScreen, Across = across, RadiusUi = radiusUi, Alpha = alpha, S = s });
+                    _pieces.Add(new Piece
+                    {
+                        OnScreen = onScreen, Across = across, RadiusUi = radiusUi, Alpha = alpha, S = s,
+                        Distance = Vector2.Distance(world, worldCentre),
+                    });
 
                     s += step;
                     piece++;
                 }
 
-                DrawVeins(b, disc, origin, t, pulse);
+                DrawVeins(b, disc, origin, t, pulse, worldEdge);
             }
         }
 
         /// <summary>The red veins over one tentacle's body, on the same pieces its black was drawn
         /// with: a faint wide glow first, then the thin core, each vein wandering across the body on
-        /// its own wave and fading out toward the tip.</summary>
-        private void DrawVeins(SpriteBatch b, Texture2D disc, Vector2 origin, Tentacle t, float pulse)
+        /// its own wave and fading out toward the tip. Nothing is drawn on a piece still outside the
+        /// fading zone; see VeinThresholdOfEdge.</summary>
+        private void DrawVeins(SpriteBatch b, Texture2D disc, Vector2 origin, Tentacle t, float pulse, float worldEdge)
         {
+            float threshold = worldEdge * VeinThresholdOfEdge;
+            float fadeIn = worldEdge * VeinFadeInOfEdge;
             for (int v = 0; v < VeinCount; v++)
             {
                 float offsetPhase = t.Phase * (v + 1) + v * MathHelper.Pi;
                 foreach (Piece p in _pieces)
                 {
+                    float crossed = MathHelper.Clamp((threshold - p.Distance) / fadeIn, 0f, 1f);
+                    if (crossed <= 0f) continue;
                     float wander = (float)Math.Sin(p.S * VeinWaves * MathHelper.TwoPi + offsetPhase)
                                    * p.RadiusUi * VeinWanderOfRadius;
                     Vector2 at = p.OnScreen + p.Across * wander;
-                    float fade = p.Alpha * pulse * (float)Math.Sqrt(Math.Max(0f, 1f - p.S));
+                    float fade = crossed * p.Alpha * pulse * (float)Math.Sqrt(Math.Max(0f, 1f - p.S));
                     float coreRadius = Math.Max(MinVeinRadiusPx, p.RadiusUi * VeinWidthOfRadius);
                     b.Draw(disc, at, null, VeinRed * (VeinGlowAlpha * fade), 0f, origin,
                         coreRadius * VeinGlowScale * 2f / DiscSize, SpriteEffects.None, 0f);
