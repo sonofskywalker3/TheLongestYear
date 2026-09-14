@@ -101,7 +101,8 @@ public static class VanillaBoardDifficultyPass
 
         fields[IngredientsField] = string.Join(" ", ingredients.Select(ing =>
         {
-            int stack = LegendaryFishRules.ClampStack(ing.ItemRef, StackScaling.ScaleStack(ing.Stack, profile.StackFactor));
+            int stack = UnstackableAsks.ClampStack(ing.ItemRef,
+                LegendaryFishRules.ClampStack(ing.ItemRef, StackScaling.ScaleStack(ing.Stack, profile.StackFactor)));
             int quality = LegendaryFishRules.ClampQuality(ing.ItemRef, RollQuality(ing, profile, tuning, rng, qualityEligibleIds));
             return $"{ing.ItemRef} {stack} {quality}";
         }));

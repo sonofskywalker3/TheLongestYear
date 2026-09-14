@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.1`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.4`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,14 @@ This is a **beta** (`0.18.1`). It is feature-complete for v1 and stable in testi
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.4
+
+**One Difficulty setting for all ten dials, and two fixes from your reports.**
+
+- **One Difficulty setting sets all ten dials.** A new Difficulty option sits at the top of the Difficulty section. Pick Easy, Normal, Hard or Extreme and every dial below it switches to that level, then change any single dial you like. Normal is the default, and a setup you already have is left as it is.
+- **Gil's Trophies never asks for more than one of a trophy.** On Hard and Extreme the Stack size dial was raising a trophy to two, but Gil gives each one only once and hats, the Insect Head and rings never stack, so that slot could never be filled. Every trophy now asks for one, and a board that already has a two on it is fixed the next time you load the save. Reported by ShadowedAciexox.
+- **Quitting after a failed season's last night no longer skips the rewind.** Going to bed on day 28 saves the game already dated to the next season, and the rewind only happened the next morning. Quitting before it played and then reloading carried the run into a season you had not earned. The save now remembers the rewind is owed, and reloading plays it. Reported by gmastern1.
 
 ## What's New in 0.18.1
 
@@ -155,7 +163,7 @@ Anything not on this list, please do report - the bugs tab on Nexus is read.
 
 ## Difficulty
 
-Ten independent difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**. There is no overall difficulty setting: turn up only what you want turned up. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
+Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**, with one overall **Difficulty** option above them. Pick a level there and every dial switches to it, then change any single dial you like. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
 
 **Changes take effect on your next loop, not straight away.** The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
 

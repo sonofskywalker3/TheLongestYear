@@ -26,5 +26,9 @@ namespace TheLongestYear.Integration
         void AddNumberOption(IManifest mod, Func<float> getValue, Action<float> setValue, Func<string> name,
             Func<string> tooltip = null, float? min = null, float? max = null, float? interval = null,
             Func<float, string> formatValue = null, string fieldId = null);
+        /// <summary>Called when the player changes a field's value in the menu, before Save.</summary>
+        void OnFieldChanged(IManifest mod, Action<string, object> onChange);
+        /// <summary>Open (or re-open) this mod's config page, re-reading every getValue.</summary>
+        void OpenModMenu(IManifest mod);
     }
 }
