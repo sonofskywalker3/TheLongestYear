@@ -93,3 +93,26 @@ public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Se
 
 /// <summary>One Data/Objects GeodeDrops entry for a geode item.</summary>
 public sealed record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition);
+
+/// <summary>Everything the builder reads, filled by the glue at save load.</summary>
+public sealed record ObtainabilityInputs
+{
+    public IReadOnlyDictionary<string, ObjInfo> Objects { get; init; } = new Dictionary<string, ObjInfo>();
+    public IReadOnlyDictionary<string, FestivalDates> Festivals { get; init; } = new Dictionary<string, FestivalDates>();
+    public IReadOnlyList<LocationSpawn> Forage { get; init; } = Array.Empty<LocationSpawn>();
+    public IReadOnlyList<LocationSpawn> LocationFish { get; init; } = Array.Empty<LocationSpawn>();
+    public IReadOnlyDictionary<string, FishRow> FishRows { get; init; } = new Dictionary<string, FishRow>();
+    public IReadOnlyList<ArtifactSpotRow> ArtifactSpots { get; init; } = Array.Empty<ArtifactSpotRow>();
+    public IReadOnlyList<GarbageRow> Garbage { get; init; } = Array.Empty<GarbageRow>();
+    public IReadOnlyList<ShopRow> Shops { get; init; } = Array.Empty<ShopRow>();
+    public IReadOnlyList<MonsterDropRow> MonsterDrops { get; init; } = Array.Empty<MonsterDropRow>();
+    public IReadOnlyList<CropRow> Crops { get; init; } = Array.Empty<CropRow>();
+    public IReadOnlyList<FruitTreeRow> FruitTrees { get; init; } = Array.Empty<FruitTreeRow>();
+    public IReadOnlyList<MachineRow> Machines { get; init; } = Array.Empty<MachineRow>();
+    public IReadOnlyList<RecipeRow> Recipes { get; init; } = Array.Empty<RecipeRow>();
+    public IReadOnlyList<AnimalRow> Animals { get; init; } = Array.Empty<AnimalRow>();
+    public IReadOnlyList<PondRow> Ponds { get; init; } = Array.Empty<PondRow>();
+    public IReadOnlyList<TapRow> TapItems { get; init; } = Array.Empty<TapRow>();
+    public IReadOnlyList<GeodeDropRow> GeodeDrops { get; init; } = Array.Empty<GeodeDropRow>();
+    public IReadOnlyCollection<string> GeodesUsingDefaultTable { get; init; } = Array.Empty<string>();
+}
