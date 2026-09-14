@@ -43,3 +43,6 @@ public sealed record GarbageRow(string CanId, string ItemId, string? Condition);
 /// is an id or an item query. A recipe row teaches the recipe for that item. <see cref="TradeItemId"/> is
 /// ShopItemData.TradeItemId: the item is paid for with another item.</summary>
 public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null);
+
+/// <summary>One Data/Monsters drop (field 6 is "id chance id chance ..."). <see cref="ItemId"/> may be a query.</summary>
+public sealed record MonsterDropRow(string Monster, string ItemId, double Chance);
