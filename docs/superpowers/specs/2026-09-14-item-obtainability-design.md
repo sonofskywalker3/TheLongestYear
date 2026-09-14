@@ -41,17 +41,23 @@ ItemObtainability
   Sources           list of ObtainSource
 
 ObtainSource
-  Kind              Forage | ArtifactSpot | Fish | CrabPot | Crop | GreenhouseCrop | Shop | Cart |
-                    Machine | Cooking | Crafting | Animal | FishPond | MineOre | MonsterDrop | Geode |
-                    Tapper | Festival | NightMarket | Trash | FishingTreasure | Other
+  Kind              Forage | ArtifactSpot | Fish | CrabPot | Crop | GreenhouseCrop | FruitTree |
+                    Shop | Cart | Machine | Cooking | Crafting | Animal | FishPond | MineNode |
+                    MonsterDrop | Geode | Tapper | Festival | NightMarket | Trash | GarbageCan |
+                    FishingTreasure | Other
   Weeks             set of weeks 1..16 (a 16-bit mask) in which this source can yield the item
   Reliability       Dependable | Chance
-  Conditions        MinSkill (skill + level), Requires (unlock ids: greenhouse, a building, a
-                    machine or recipe, a shop, the mine floor), RainOnly, FewDays (the source
-                    works on only some days of those weeks, e.g. Night Market Winter 15-17),
-                    YearTwo (never counted in a loop)
-  Detail            short human-readable origin, e.g. "Data/Fish 142, Town river, rain"
+  Conditions        Skill + SkillLevel, Requires (notes: a location, building, machine, recipe,
+                    shop, mine floor, prerequisite query), RainOnly, FewDays (the source works on
+                    only some days of those weeks, e.g. Night Market Winter 15-17), CatchLimit,
+                    YearTwo and GingerIsland (not counted by default), Unresolved (a condition or
+                    query the model could not read; the weeks are a guess, not a fact)
+  Detail            short human-readable origin, e.g. "Fish at Town, time 600-1900"
 ```
+
+`Other` is a source the model knows exists but cannot read (an unsupported item query, a machine's
+output method). Nothing is silently dropped: such sources are listed as diagnostics in the comparison
+report.
 
 **Weeks** are the unit (Jeff chose weekly over seasonal or daily): 16 weeks, the same unit gates,
 goals and pacing already use. A source that works on only a few days of a week sets `FewDays` and
@@ -63,8 +69,25 @@ ponds, mine ores, tappers, festival shops. Chance: Traveling Cart, artifact spot
 drops, trash cans, fishing treasure. Each consuming rule decides which reliabilities it accepts; the
 model never decides fairness.
 
-**Meaning.** A source's weeks mean "can newly be obtained in that week". Whether the player already
-holds one is a separate question for the consuming rule.
+**Meaning: weeks in isolation (Jeff, 2026-09-14).** "We're only tracking when something can be made
+within a specific week in isolation. The whole game allows for saving items, even across loops, but to
+be the most fair (for easy and normal) we need to assume they've saved nothing and make sure they can
+still pivot from our interference, and it should be hard, but not impossible." A source's weeks mean
+"can be obtained in that week by someone who saved nothing". Consequences:
+- A recipe counts only in weeks where every ingredient can be obtained (the intersection).
+- A crop, machine product or tree fruit counts from the day its seed, input or sapling can be obtained
+  plus its growing or processing time, computed day by day. Time passing is allowed; stored items are not.
+- Things built once that keep producing (a fish pond, an animal, a tapper, a learned recipe) count from
+  the first week they can be set up.
+Whether the player already holds an item is a separate question for the consuming rule.
+
+**Item queries.** Game data may list an item as an item query ("RANDOM_ITEMS (O) 2 789",
+"FLAVORED_ITEM Wine ..."). The model expands the queries it understands (RANDOM_ITEMS, FLAVORED_ITEM,
+LOST_BOOK_OR_ITEM, SECRET_NOTE_OR_ITEM) and records the rest as unresolved diagnostics.
+
+**Settling.** Made items are resolved by repeated passes. Every rule only gains weeks when its inputs
+do, and there are finitely many item-week bits, so the passes always settle; a high pass cap only guards
+against a future rule that breaks that property.
 
 ## Queries
 
