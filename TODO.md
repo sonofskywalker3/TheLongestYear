@@ -6,7 +6,17 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### The shrine's foresight is seeded on the old run during a rewind
+### The shrine's foresight is seeded on the old run during a rewind (CHECKED 2026-09-14: not player-reachable)
+**Result, 2026-09-14 (live, throwaway Clone save, Run 164 to 165):** the rewind never opens the
+foresight. `tly_failreset`, every beat skipped, `tly_answer 1` logged `Opened Junimo Shrine` with
+`activeClickableMenu=JunimoShrineMenu`, the upgrade shop, which reads no weather, cart, date or
+`uniqueIDForThisGame` at all. The forecast lives only in `ShrinePreviewMenu` (the farm's planning
+statue, or `tly_openshrine`), which needs player control, and control only returns after
+`FinalizeReset` has re-seeded `uniqueIDForThisGame` and set Spring 1 for real. The seed is right by
+then. The concern below is correct about the code, but no player can see it. Latent only: if the
+rewind ever opens `ShrinePreviewMenu`, make `BuildForesight` read `_run` and run after the reset.
+Leave open as a note; no fix owed.
+
 Found 2026-09-11 while building the rewind cutscene. `UI/ShrinePreviewMenu.cs` reads
 `Game1.dayOfMonth` and `Game1.season` directly in its weather and cart foresight, rather than the
 `_run` state the rest of the class uses. The rewind now paints Spring 1 before the shrine opens, so

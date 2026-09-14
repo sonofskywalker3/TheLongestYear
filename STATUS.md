@@ -1,10 +1,29 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-10 (master merged into `story` after the 0.18.1 release)
-**Branch:** `story`; master merged in at 0.18.1, everything PUSHED, nothing local-only
-**Tests:** 2175 passing, 0 failing (story + master merged)
-**Build:** clean; 0.18.1 deployed to the game; game CLOSED at end of session
-**Last public release:** 0.18.1 (2026-09-10 night; GitHub release + Nexus file, version, description and changelog all live)
+**Last updated:** 2026-09-14 (story: rewind cutscene in Jeff's review loop)
+**Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
+**Tests:** 2161 passing at the 0.18.4 merge
+**Build:** clean; story HEAD deployed to the game; game LEFT RUNNING for Jeff on Spring 28
+**Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+
+## 2026-09-14: rewind cutscene, where it stands (story branch)
+
+Built 2026-09-11 (spec `docs/superpowers/specs/2026-09-11-rewind-cutscene-design.md`, plan and SDD
+ledger `.superpowers/sdd/2026-09-11-rewind-cutscene/progress.md`). Task 8, the live visual pass, is
+Jeff's feedback loop: the ledger's punch list 1 to 22 was worked through on 2026-09-11, then more
+rounds (walker-only extras, season outfits, wind, extras at walking speed). The last of those,
+"extras walk at walking speed even out of shot" (`45ec6ea`), has not been seen by Jeff yet.
+
+- **Pan abort cap:** the re-review's residual (a) was already fixed in `b39acdf` (`MaxPanAborts = 2`,
+  then the driver runs the reset directly). Residual (b) is fixed too (`_active` set before the
+  first world write in `RewindPanScene.Start`).
+- **Shrine foresight during a rewind:** checked live, not player-reachable. See TODO.md.
+- **Live run 2026-09-14 (my automated run, throwaway Clone save `None_448848155`, backed up first):**
+  `tly_failreset`, bedroom, pan and morning beats skipped, hold question showed Jeff's wording,
+  `Hold choice: Reshuffled`, `Opened Junimo Shrine`, `FinalizeReset`, `RewindSpringPaint: released
+  the Spring 1 hold`, `Loop reset complete. Run 165 begins`, planning hub, no ERROR.
+- **Queued for Jeff:** Run 165 on the rotated Clone save, Fishing picked, `tly_setday 28`,
+  `tly_gateneeds` = 17 bundles owed. Sleeping plays the real fail night into the full rewind.
 
 ## 2026-09-10 night: 0.18.0 The Mod Compatibility Update, then 0.18.1
 
