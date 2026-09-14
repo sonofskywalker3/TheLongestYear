@@ -31,6 +31,14 @@ gaps already known:
   code-only sources the existing model knows (Adventure Guild rewards, Moss), the `fishingGame`
   minigame map counted as a real location, `LOCATION_FISH` delegation on farm-variant maps, machine
   output methods (Cask, Seed Maker, Mushroom Log), the Magic Bait rows.
+- **From the final whole-branch review (2026-09-14):** a `DROP_IN` machine (a dehydrator, a cask)
+  keys its output under the input id, so an item becomes a later-week source of itself and widens its
+  own weeks each pass without a new route (`MadeSources.Machines`); rule on it with the start-week
+  change. `ConditionSeasons` sets the island flag on any clause containing "Island" before it reads
+  the negation, so a `!IS_VISITING_ISLAND` style clause would hide a mainland source. The glue's
+  per-section try/catch means a model with a failed section looks complete; before anything reads the
+  model for gameplay, a section failure must refuse to publish it. `LocationSpawn.Chance` is carried
+  but never read (forage and fish are dependable by the spec's table); decide whether that stays.
 - Any later use by board generation must keep existing earliest-week figures identical unless Jeff
   rules otherwise (byte-identical `tly_genbundles` and `tly_gatecheck` across seeds).
 
