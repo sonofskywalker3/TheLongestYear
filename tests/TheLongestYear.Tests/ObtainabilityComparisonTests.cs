@@ -53,6 +53,6 @@ public class ObtainabilityComparisonTests
         Assert.Contains("existing basis: rule b", text);
         Assert.Contains("## Unresolved sources (1)", text);
         Assert.Contains("LOCATION_FISH Beach X", text);
-        Assert.DoesNotContain("—", text);                 // no em dashes
+        Assert.DoesNotContain("\u2014", text);                 // no em dashes
     }
 }
