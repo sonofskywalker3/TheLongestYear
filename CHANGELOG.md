@@ -17,6 +17,31 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.4 - 2026-09-14
+
+2086 tests.
+
+### Added
+
+- **One Difficulty setting sets all ten dials.** A new Difficulty option sits at the top of the
+  Difficulty section of the settings menu. Picking Easy, Normal, Hard or Extreme switches every
+  dial below it to that level, and any single dial can still be changed afterwards. It is a setup
+  shortcut, not a tier: nothing reads it for gameplay. Normal is the default, and an existing
+  config keeps its dials as they are.
+
+### Fixed
+
+- **Gil's Trophies never asks for more than one of a trophy.** On Hard and Extreme the Stack size
+  dial raised a trophy ask from one to two, but Gil gives each trophy only once and hats, the
+  Insect Head and rings never stack, so the slot could never be filled and blocked the season.
+  Anything that never stacks now asks for one at every step, and a board that already has a two
+  on it is lowered the next time the save loads. Reported by ShadowedAciexox.
+- **Quitting after a failed season's last night no longer skips the rewind.** Going to bed on day
+  28 saves the game already dated to the next season, while the day-28 outcome (rewind, next
+  season or win) only lived in memory until the morning scene. Quitting before it played and
+  reloading carried the run into a season that was never earned. The outcome is now saved with
+  the night, so reloading plays the missed scene. Reported by gmastern1.
+
 ## 0.18.1 - 2026-09-10
 
 2063 tests.

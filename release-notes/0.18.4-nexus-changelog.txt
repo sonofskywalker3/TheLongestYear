@@ -1,0 +1,21 @@
+0.18.4 - One Difficulty setting for all ten dials, and two fixes from your reports
+
+Added
+- One Difficulty setting sets all ten dials. A new Difficulty option sits at the top of the
+  Difficulty section. Pick Easy, Normal, Hard or Extreme and every dial below it switches to
+  that level, then change any single dial you like. Normal is the default, and a setup you
+  already have is left as it is.
+
+Fixed
+- Gil's Trophies never asks for more than one of a trophy. On Hard and Extreme the Stack size
+  dial was raising a trophy to two, but Gil gives each one only once and hats, the Insect Head
+  and rings never stack, so that slot could never be filled. Every trophy now asks for one, and
+  a board that already has a two on it is fixed the next time you load the save. Reported by
+  ShadowedAciexox.
+- Quitting after a failed season's last night no longer skips the rewind. Going to bed on day
+  28 saves the game already dated to the next season, and the rewind only happened the next
+  morning. Quitting before it played and then reloading carried the run into a season you had
+  not earned. The save now remembers the rewind is owed, and reloading plays it. Reported by
+  gmastern1.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

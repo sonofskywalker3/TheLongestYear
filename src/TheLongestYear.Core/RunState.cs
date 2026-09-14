@@ -20,6 +20,19 @@ public sealed class RunState
 
     public int DayOfMonth { get; set; } = 1;
 
+    /// <summary>The day-28 outcome the gate queued tonight and the morning has not resolved yet
+    /// (Junimo scene, then rewind / next season / win screen). Persisted because the night save
+    /// already writes the NEXT month's date: a quit before the scene resolves must replay it on
+    /// load, not roll the run into a season the player never earned (Nexus report gmastern1,
+    /// 2026-09-12). Cleared when the scene ends.</summary>
+    public Day28.Day28Branch PendingDay28 { get; set; } = Day28.Day28Branch.None;
+
+    /// <summary>True when a load should run the month rollover itself: the calendar moved on
+    /// since the run-state was saved AND no day-28 outcome is waiting to decide what happens
+    /// instead. A pending Fail rewinds rather than advances, so it must never roll over.</summary>
+    public bool OwesMonthRolloverOnLoad(Season calendarSeason)
+        => PendingDay28 == Day28.Day28Branch.None && calendarSeason != Season;
+
     /// <summary>
     /// LEGACY (pre-slot ledger, 2026-08-29): the old id-only donation ledger. Kept ONLY so saves
     /// from older versions deserialize. Never read and never written by current code; cleared on

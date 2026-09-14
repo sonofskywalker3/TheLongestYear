@@ -29,6 +29,21 @@ public class StackScalingTests
     public void The_Scalar_Rule(int stack, double factor, int expected)
         => Assert.Equal(expected, StackScaling.ScaleStack(stack, factor));
 
+    /// <summary>Nexus bug report, 2026-09-14: Gil's Trophies asked for Skeleton Mask x2 on a Hard
+    /// board. A hat, a weapon and a ring never stack and Gil gives each one once, so any ask above
+    /// one can never be deposited.</summary>
+    [Theory]
+    [InlineData(DifficultyStep.Hard)]
+    [InlineData(DifficultyStep.Extreme)]
+    public void Unstackable_Trophies_Stay_At_One_While_Ordinary_Items_Scale(DifficultyStep step)
+    {
+        var scaled = StackScaling.Apply(
+            Spec("Boiler Room", ("(H)8", 1), ("(W)13", 1), ("(O)522", 1), ("(O)388", 1)),
+            Profile(step));
+
+        Assert.Equal(new[] { 1, 1, 1, 2 }, scaled.Slots.Select(s => s.Stack));
+    }
+
     [Fact]
     public void A_Factor_Of_One_Is_Identity()
         => Assert.Equal(37, StackScaling.ScaleStack(37, 1.0));
