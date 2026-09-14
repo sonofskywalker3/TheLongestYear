@@ -32,7 +32,30 @@ namespace TheLongestYear.UI
         // Reach, as fractions of the lit edge's distance from the bed: rooted out in the dark, the
         // tip just inside the fading edge once fully in, and breathing a little in and out of it.
         private const float RootOut = 1.6f;
-        private const float TipReach = 0.82f;
+        // 0.36 of the way into the light, twice the first pass's 0.18: "they need to reach twice as
+        // far into the circle of the light" (Jeff, 2026-09-14).
+        private const float TipReach = 0.64f;
+
+        // Creeping in: the whole tentacle slides in along its own line at full length rather than
+        // growing out of its root. Growing drew a short fat stub first, which showed as a round base
+        // popping in ("the circular bases are visible when they pop in", Jeff, 2026-09-14). At
+        // Strength 0 the tip sits where the root will end up, out in the dark.
+        private const float CreepTravel = RootOut - TipReach;
+
+        // The veins: thin red strips winding along the body and glowing faintly, so the part of a
+        // tentacle out in the black past the room is still there to see ("lace in some glowing red
+        // strips on the tentacles, like veins running through them and glowing very faintly").
+        private const int VeinCount = 2;
+        private const float VeinWidthOfRadius = 0.22f;
+        private const float MinVeinRadiusPx = 0.9f;
+        private const float VeinWanderOfRadius = 0.45f;
+        private const float VeinWaves = 3.5f;
+        private const float VeinAlpha = 0.35f;
+        private const float VeinGlowAlpha = 0.07f;
+        private const float VeinGlowScale = 3.5f;
+        private const float VeinPulsePeriodMs = 2400f;
+        private const float VeinPulseDepth = 0.3f;
+        private static readonly Color VeinRed = new Color(210, 30, 20);
         private const float BreathOfEdge = 0.05f;
         private const float MinBreathPeriodMs = 3000f;
         private const float MaxBreathPeriodMs = 5500f;
@@ -82,7 +105,19 @@ namespace TheLongestYear.UI
             public float Thickness;
         }
 
+        /// <summary>One drawn disc of a body, kept so the veins can be laid over exactly the same
+        /// pieces once the black is down.</summary>
+        private struct Piece
+        {
+            public Vector2 OnScreen;
+            public Vector2 Across;
+            public float RadiusUi;
+            public float Alpha;
+            public float S;
+        }
+
         private readonly Tentacle[] _tentacles = new Tentacle[TentacleCount];
+        private readonly System.Collections.Generic.List<Piece> _pieces = new System.Collections.Generic.List<Piece>();
         private float _clockMs;
 
         /// <summary>How far in they have crept: 0 is still in the dark (nothing drawn), 1 is fully in.</summary>
@@ -113,9 +148,10 @@ namespace TheLongestYear.UI
         public static float GlowReach(float radius)
             => radius * (Game1.sconceLight?.Width ?? FallbackLightTextureWidth) / 2f * GlowVisibleFraction;
 
-        /// <summary>How far from the bed the roots sit against a lit edge of <paramref name="worldEdge"/>.
-        /// The light has to pass this to break every tentacle up.</summary>
-        public static float RootDistance(float worldEdge) => worldEdge * RootOut;
+        /// <summary>How far from the bed the roots sit right now against a lit edge of
+        /// <paramref name="worldEdge"/>, which is further out while they are still creeping in. The
+        /// light has to pass this to break every tentacle up.</summary>
+        public float RootDistance(float worldEdge) => worldEdge * (RootOut + (1f - Strength) * CreepTravel);
 
         public void Update(float elapsedMs)
         {
@@ -135,13 +171,14 @@ namespace TheLongestYear.UI
             var origin = new Vector2(DiscSize / 2f, DiscSize / 2f);
             float rootDistance = RootDistance(worldEdge);
             float crumbleWidth = worldEdge * CrumbleWidthOfEdge;
+            float pulse = 1f - VeinPulseDepth + VeinPulseDepth * (float)Math.Sin(_clockMs * MathHelper.TwoPi / VeinPulsePeriodMs);
 
             for (int i = 0; i < _tentacles.Length; i++)
             {
                 Tentacle t = _tentacles[i];
+                _pieces.Clear();
                 float breath = BreathOfEdge * (float)Math.Sin(t.Phase + _clockMs * MathHelper.TwoPi / t.BreathPeriodMs);
-                float tipDistance = worldEdge * MathHelper.Lerp(RootOut, TipReach + breath, Strength);
-                float length = rootDistance - tipDistance;
+                float length = worldEdge * (RootOut - (TipReach + breath));
                 if (length <= 1f) continue;
 
                 var dir = new Vector2((float)Math.Cos(t.Angle), (float)Math.Sin(t.Angle));
@@ -172,11 +209,38 @@ namespace TheLongestYear.UI
                     }
 
                     Vector2 onScreen = Utility.ModifyCoordinatesForUIScale(Game1.GlobalToLocal(Game1.viewport, world));
-                    float scale = radius * 2f * worldToUi / DiscSize;
-                    b.Draw(disc, onScreen, null, Color.Black * alpha, 0f, origin, scale, SpriteEffects.None, 0f);
+                    float radiusUi = radius * worldToUi;
+                    b.Draw(disc, onScreen, null, Color.Black * alpha, 0f, origin, radiusUi * 2f / DiscSize,
+                        SpriteEffects.None, 0f);
+                    _pieces.Add(new Piece { OnScreen = onScreen, Across = across, RadiusUi = radiusUi, Alpha = alpha, S = s });
 
                     s += step;
                     piece++;
+                }
+
+                DrawVeins(b, disc, origin, t, pulse);
+            }
+        }
+
+        /// <summary>The red veins over one tentacle's body, on the same pieces its black was drawn
+        /// with: a faint wide glow first, then the thin core, each vein wandering across the body on
+        /// its own wave and fading out toward the tip.</summary>
+        private void DrawVeins(SpriteBatch b, Texture2D disc, Vector2 origin, Tentacle t, float pulse)
+        {
+            for (int v = 0; v < VeinCount; v++)
+            {
+                float offsetPhase = t.Phase * (v + 1) + v * MathHelper.Pi;
+                foreach (Piece p in _pieces)
+                {
+                    float wander = (float)Math.Sin(p.S * VeinWaves * MathHelper.TwoPi + offsetPhase)
+                                   * p.RadiusUi * VeinWanderOfRadius;
+                    Vector2 at = p.OnScreen + p.Across * wander;
+                    float fade = p.Alpha * pulse * (float)Math.Sqrt(Math.Max(0f, 1f - p.S));
+                    float coreRadius = Math.Max(MinVeinRadiusPx, p.RadiusUi * VeinWidthOfRadius);
+                    b.Draw(disc, at, null, VeinRed * (VeinGlowAlpha * fade), 0f, origin,
+                        coreRadius * VeinGlowScale * 2f / DiscSize, SpriteEffects.None, 0f);
+                    b.Draw(disc, at, null, VeinRed * (VeinAlpha * fade), 0f, origin,
+                        coreRadius * 2f / DiscSize, SpriteEffects.None, 0f);
                 }
             }
         }

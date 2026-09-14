@@ -58,9 +58,13 @@ namespace TheLongestYear.UI
         // dialogue box closes instead of on a clock.
         private const float LightsOutHoldMs = 600f;
         private const float JunimosInHoldMs = 1000f;
-        // Beat 6, which runs on its own clock underneath lines 2 to 4 (see EnterPhase). "Make it take
-        // like 5 seconds to go from normal bright to the darkened effect" (Jeff, 2026-09-14).
-        private const float DarknessInMs = 5000f;
+        // Beat 6, in two halves on their own clock underneath the lines (see EnterPhase): the dark
+        // closes in as line 2 appears, then the tentacles creep in once it has. "Do it in 2 phases: a
+        // 3 second fade to black that happens as the second message pops up, then create the
+        // tentacles and have them do their moving in from the outside animation over the next 3
+        // seconds" (Jeff, 2026-09-14).
+        private const float DarknessInMs = 3000f;
+        private const float TentaclesInMs = 3000f;
         private const float WhiteMs = 2200f;
         // Beat 9's lead-in: the Junimo light swells, breaking the tentacles up as it goes, before the
         // white starts ("maybe 1-2 seconds of their light expanding before starting the fade to
@@ -148,6 +152,8 @@ namespace TheLongestYear.UI
         // Beat 6's own clock. It starts with line 2 and runs whether or not a box is open.
         private bool _darknessRunning;
         private float _darknessElapsed;
+        private bool _tentaclesRunning;
+        private float _tentaclesElapsed;
 
         // Where beat 9 starts from: wherever beat 6 had reached, which is short of its end when the
         // last lines are clicked through faster than the darkness closes.
@@ -217,6 +223,7 @@ namespace TheLongestYear.UI
                     break;
                 case Phase.White:
                     _darknessRunning = false;
+                    _tentaclesRunning = false;
                     _whiteFromAmbient = RewindNightLight.Ambient;
                     _whiteFromHearthRadius = _hearthLight?.radius.Value ?? HearthRadiusFloor;
                     _whiteFromJunimoRadius = _junimoLights.Count > 0 ? _junimoLights[0].radius.Value : JunimoLightRadiusClosed;
@@ -336,7 +343,6 @@ namespace TheLongestYear.UI
             float junimoRadius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusClosed, eased);
             foreach (LightSource light in _junimoLights)
                 light.radius.Value = junimoRadius;
-            _tentacles.Strength = eased;
         }
 
         /// <summary>Works out, as beat 9 begins, how big the lights must swell during the lead-in for
@@ -346,7 +352,7 @@ namespace TheLongestYear.UI
         {
             if (_hearthLight == null) return;
             _tentacleEdge = LitEdgeRadius();
-            float clearTo = RewindTentacles.RootDistance(_tentacleEdge) * LeadClearOvershoot;
+            float clearTo = _tentacles.RootDistance(_tentacleEdge) * LeadClearOvershoot;
             float reachPerRadius = RewindTentacles.GlowReach(1f);
             float ringDistance = _junimoLights.Count > 0
                 ? Vector2.Distance(_junimoLights[0].position.Value, _hearthLight.position.Value)
@@ -394,7 +400,18 @@ namespace TheLongestYear.UI
             {
                 _darknessElapsed += elapsedMs;
                 ApplyDarkness(_darknessElapsed / DarknessInMs);
-                if (_darknessElapsed >= DarknessInMs) _darknessRunning = false;
+                if (_darknessElapsed >= DarknessInMs)
+                {
+                    _darknessRunning = false;
+                    _tentaclesRunning = true;
+                    _tentaclesElapsed = 0f;
+                }
+            }
+            else if (_tentaclesRunning)
+            {
+                _tentaclesElapsed += elapsedMs;
+                _tentacles.Strength = Ease(MathHelper.Clamp(_tentaclesElapsed / TentaclesInMs, 0f, 1f));
+                if (_tentaclesElapsed >= TentaclesInMs) _tentaclesRunning = false;
             }
 
             if (ActiveBox != null)
