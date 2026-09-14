@@ -86,10 +86,14 @@ namespace TheLongestYear.Loop
                     // The ward covers crops in the ground, not chests (Jeff, 2026-09-09).
                     int crops = CropsWarded(season) ? 0 : BlightPass.CountFor(season);
                     int spoil = BlightRule.SpoilCount(SpoilagePass.StoredUnits());
+                    // One or the other, never both (Jeff, 2026-09-14). See BlightRule.OneTarget.
+                    (crops, spoil) = BlightRule.OneTarget(crops, spoil, _armedBlightTarget, rng);
                     if (Blight(crops, spoil, rng) > 0)
                         SabotageSchedule.RecordStrike(SabotageKind.Blight, Run, week, dayOfYear);
                 }
             }
+
+            _armedBlightTarget = null;   // a named target is for the one night it was armed for
 
             if (Enabled(SabotageKind.Reversion))
             {
@@ -115,6 +119,10 @@ namespace TheLongestYear.Loop
         /// <summary>Fronts a playtest has armed to strike on the next real night.</summary>
         private readonly HashSet<SabotageKind> _armed = new HashSet<SabotageKind>();
 
+        /// <summary>What tonight's blight must go after, when a playtest named it; null leaves it to
+        /// <see cref="BlightRule.OneTarget"/>'s coin. Cleared after tonight's blight roll.</summary>
+        private BlightTarget? _armedBlightTarget;
+
         /// <summary>Debug: make <paramref name="kind"/> strike on tonight's real roll, so a playtest
         /// sleeps into it exactly as a player would: the night pass, the caps, the strike record, the
         /// morning HUD lines and the first-strike letter are all the real ones. Only the dice are
@@ -124,16 +132,20 @@ namespace TheLongestYear.Loop
         ///
         /// Clears any report still waiting from a forced strike, so the morning shows tonight alone.
         /// In memory only: a relaunch disarms.</summary>
-        public string Arm(SabotageKind kind)
+        public string Arm(SabotageKind kind, BlightTarget? blightTarget = null)
         {
             int cleared = Run.PendingSabotageReports?.Count ?? 0;
             Run.PendingSabotageReports?.Clear();
             _armed.Add(kind);
+            if (kind == SabotageKind.Blight) _armedBlightTarget = blightTarget;
+            string target = kind == SabotageKind.Blight
+                ? $", target {(blightTarget?.ToString() ?? "either (coin flip)")}"
+                : "";
             string closed = SabotageSchedule.IsOpen(kind, Run.Season)
                 ? ""
                 : $" WARNING: {kind} is not open in {Run.Season}, so tonight will not strike.";
             string off = Enabled(kind) ? "" : $" WARNING: {kind} is switched off in the config.";
-            return $"Darkness: {kind} armed for tonight's roll ({Run.Season} {Run.DayOfMonth}); cleared {cleared} waiting report(s).{closed}{off}";
+            return $"Darkness: {kind} armed for tonight's roll ({Run.Season} {Run.DayOfMonth}{target}); cleared {cleared} waiting report(s).{closed}{off}";
         }
 
         /// <summary>True when <paramref name="kind"/> was armed and tonight is a night it could strike
