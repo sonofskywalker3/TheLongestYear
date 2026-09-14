@@ -1,8 +1,9 @@
 namespace TheLongestYear.Core;
 
 /// <summary>The ten configured difficulty modifiers, serialized into
-/// <see cref="GameplayConfig.Difficulty"/>. Each one is independent: there is no overall tier, so
-/// there is no question of what happens when a player edits one dial "under" a preset.
+/// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
+/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
+/// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
 /// Every property defaults to <see cref="DifficultyStep.Normal"/>, and Normal is the mod's
 /// shipping balance, so an untouched config changes nothing.
@@ -16,6 +17,26 @@ namespace TheLongestYear.Core;
 /// setting the player could change.</summary>
 public sealed class DifficultySettings
 {
+    /// <summary>The overall lever: the level last picked for every dial at once. Display and
+    /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
+    public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
+
+    /// <summary>Set the lever and all ten dials to one level.</summary>
+    public void SetAll(DifficultyStep step)
+    {
+        Overall = step;
+        StackSize = step;
+        QualityAsks = step;
+        RequiredSlots = step;
+        ItemRarity = step;
+        JpEarned = step;
+        ShrinePrices = step;
+        StartingGold = step;
+        CartSlots = step;
+        HoldPrices = step;
+        SeasonPity = step;
+    }
+
     // ---- Ask-side: baked into the board when it is generated ----
 
     /// <summary>Scales how much of an item a slot asks for.</summary>
@@ -83,6 +104,7 @@ public sealed class DifficultySettings
     /// object and drift when the player edits GMCM mid-run.</summary>
     public DifficultySettings Clone() => new()
     {
+        Overall = Overall,
         StackSize = StackSize,
         QualityAsks = QualityAsks,
         RequiredSlots = RequiredSlots,
