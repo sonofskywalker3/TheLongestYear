@@ -38,3 +38,8 @@ public sealed record ArtifactSpotRow(string Location, string ItemId, string? Con
 
 /// <summary>One Data/GarbageCans item (from a can's Items, or BeforeAll/AfterAll with CanId "*").</summary>
 public sealed record GarbageRow(string CanId, string ItemId, string? Condition);
+
+/// <summary>One Data/Shops stock row, or one of its RandomItemId entries (<see cref="IsRandom"/>). <see cref="ItemId"/>
+/// is an id or an item query. A recipe row teaches the recipe for that item. <see cref="TradeItemId"/> is
+/// ShopItemData.TradeItemId: the item is paid for with another item.</summary>
+public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null);
