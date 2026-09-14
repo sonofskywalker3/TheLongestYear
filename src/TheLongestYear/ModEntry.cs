@@ -1878,8 +1878,15 @@ namespace TheLongestYear
                         "tamper" or "tampering" => TheLongestYear.Core.Sabotage.SabotageKind.Tampering,
                         _ => null,
                     };
-                    if (kind == null) { this.Monitor.Log("Usage: tly_sabotage arm <blight|revert|tamper>", LogLevel.Warn); break; }
-                    this.Monitor.Log(_sabotage.Arm(kind.Value), LogLevel.Info);
+                    if (kind == null) { this.Monitor.Log("Usage: tly_sabotage arm <blight [crops|chest]|revert|tamper>", LogLevel.Warn); break; }
+                    string targetArg = args.Length > 2 ? args[2].ToLowerInvariant() : "";
+                    TheLongestYear.Core.Sabotage.BlightTarget? blightTarget = targetArg switch
+                    {
+                        "crops" or "crop" => TheLongestYear.Core.Sabotage.BlightTarget.Crops,
+                        "chest" or "chests" => TheLongestYear.Core.Sabotage.BlightTarget.Chests,
+                        _ => null,
+                    };
+                    this.Monitor.Log(_sabotage.Arm(kind.Value, blightTarget), LogLevel.Info);
                     break;
                 }
                 case "circle":

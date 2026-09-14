@@ -4,10 +4,28 @@ using System.Linq;
 
 namespace TheLongestYear.Core.Sabotage;
 
+/// <summary>What a blight night goes after: the crops in the ground, or what is stored in chests.</summary>
+public enum BlightTarget { Crops, Chests }
+
 /// <summary>How many crops blight takes on a night it strikes: a share of the live crops,
 /// clamped so a tiny patch loses one and a big field loses a handful, never the run.</summary>
 public static class BlightRule
 {
+    /// <summary>ONE OR THE OTHER. A blight night used to take crops and chest stock together; "I
+    /// want it to be one or the other, not both" (Jeff, 2026-09-14). Given what each side would
+    /// lose, returns the pair with one of them zeroed: <paramref name="forced"/> when a playtest
+    /// named a target, otherwise whichever side has anything to take, and a coin flip when both
+    /// do.</summary>
+    public static (int Crops, int Spoil) OneTarget(int crops, int spoil, BlightTarget? forced, Random rng)
+    {
+        if (rng is null) throw new ArgumentNullException(nameof(rng));
+        if (forced == BlightTarget.Crops) return (crops, 0);
+        if (forced == BlightTarget.Chests) return (0, spoil);
+        if (crops <= 0) return (0, spoil);
+        if (spoil <= 0) return (crops, 0);
+        return rng.Next(2) == 0 ? (crops, 0) : (0, spoil);
+    }
+
     public static int Count(int liveCrops, Season season)
     {
         if (liveCrops <= 0) return 0;

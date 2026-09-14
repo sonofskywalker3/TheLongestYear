@@ -27,7 +27,7 @@ Every front has its own switch in GMCM so a player who hates it can turn that on
 
 | Front | Seasons | What happens overnight | Counter |
 | --- | --- | --- | --- |
-| Blight | Summer, Fall, Winter | A few live crops on the farm die (vanilla `dead`, drawn withered) and a few perishable units in chests spoil. | Ward of the Fields, one per season, crops in the ground only |
+| Blight | Summer, Fall, Winter | A few live crops on the farm die (vanilla `dead`, drawn withered), OR a few units in chests spoil or go missing: one or the other on any night, never both (Jeff, 2026-09-14; a coin flip when both have something to take, otherwise whichever does). | Ward of the Fields, one per season, crops in the ground only |
 | Reversion | Fall, Winter | One filled slot in an unfinished bundle empties; the item is gone. | the GMCM switch |
 | Tampering | Winter | One unfilled slot in an unfinished bundle asks for a different item. | the GMCM switch |
 
@@ -210,7 +210,7 @@ right: the darkness changed the hall, and the hall is what the player chose to k
   for the crop walk; `Loop/SpoilagePass.cs` for the chest walk (stash excluded); `Integration/CcSlotWriter.TryUnfill`; a tamper writer that calls back into
   `ModEntry` to rebuild catalog and requirements.
 - `RunController.OnDayEnding` calls the night pass on Continue; `OnDayStarted` shows reports.
-- Debug: `tly_sabotage status | blight [crops] [spoil] | revert | tamper | report`, console and file bridge.
+- Debug: `tly_sabotage status | arm <blight [crops|chest]|revert|tamper> | blight [crops] [spoil] | revert | tamper | report | fixture | circle`, console and file bridge. `arm` strikes on tonight's real roll, so a playtest sleeps into the real morning; the others strike at once and skip the night pass.
 - i18n: `hud.sabotage.*`, `upgrade.ward_*.name/.desc`, `upgrade-category.wards`,
   `gmcm.blight.*`, `gmcm.reversion.*`, `gmcm.tampering.*`.
 
