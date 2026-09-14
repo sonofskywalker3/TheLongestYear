@@ -175,6 +175,22 @@ public sealed class ItemAvailabilityModel
     /// <summary>How many ids the effort-only rules placed (Phase 2 of the model).</summary>
     public int DerivedEffortCount => _effortDerived.Count;
 
+    /// <summary>Every id this model has an answer for from its own data: rule-derived, effort-derived,
+    /// or an accepted season or week override. Sorted. Read by the obtainability comparison (spec
+    /// 2026-09-14-item-obtainability), which must see everything this model knows.</summary>
+    public IReadOnlyCollection<string> KnownIds
+    {
+        get
+        {
+            var ids = new SortedSet<string>(StringComparer.Ordinal);
+            ids.UnionWith(_derived.Keys);
+            ids.UnionWith(_effortDerived.Keys);
+            foreach (string id in _seasonOverrides.Keys) if (!_rejectedSeasonOverrides.Contains(id)) ids.Add(id);
+            foreach (string id in _weekOverrides.Keys) if (!_rejectedSeasonOverrides.Contains(id)) ids.Add(id);
+            return ids;
+        }
+    }
+
     public ItemAvailability For(string qualifiedItemId)
     {
         if (qualifiedItemId == null) throw new ArgumentNullException(nameof(qualifiedItemId));
