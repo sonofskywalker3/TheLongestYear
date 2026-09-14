@@ -50,6 +50,13 @@ namespace TheLongestYear
         /// kept for tly_dumpeffort and tly_itemmodel. Null before a save is loaded.</summary>
         private TheLongestYear.Core.Availability.EffortData _effortData;
         private TheLongestYear.Core.ItemPools _enginePools;
+        /// <summary>Phase 1 item obtainability model (spec 2026-09-14): built blind from game data at
+        /// save load. Nothing reads it for gameplay; tly_obtain is its only reader. Null before a save
+        /// is loaded or when the build failed.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityModel _obtainability;
+        /// <summary>Sources the obtainability build could not read (unsupported item queries, machine
+        /// output methods), for tly_obtain compare.</summary>
+        private IReadOnlyList<string> _obtainabilityUnresolved = System.Array.Empty<string>();
         /// <summary>The curated season pins the availability model was last built with, kept so a
         /// difficulty-driven rebuild (<see cref="BuildAvailabilityModelFor"/>) does not need to
         /// re-parse config.json. Null before a save is loaded.</summary>
@@ -336,6 +343,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpavailability", "Write a Markdown listing of every item in every bundle on the LIVE board with the earliest season the engine says it can exist, why, and the season its gate demands it. Usage: tly_dumpavailability [fileName]", this.CmdDumpAvailability);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
+            helper.ConsoleCommands.Add("tly_obtain", "Item obtainability model (phase 1, not used by gameplay). Usage: tly_obtain <itemId> | tly_obtain compare [fileName]", this.CmdObtain);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
@@ -601,6 +609,7 @@ namespace TheLongestYear
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
+            BuildObtainabilityModel();
             this.Monitor.Log(
                 $"Item availability model built from live pools: "
                 + $"{_availability.DerivedCount} id(s) derived, "
@@ -2613,6 +2622,7 @@ namespace TheLongestYear
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_dumpeffort": this.CmdDumpEffort(command, args); break;
+                case "tly_obtain": this.CmdObtain(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_eventstep": this.CmdEventStep(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
@@ -3356,6 +3366,46 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"tly_forageyield: {yields.Count} forage item(s) over {_effortData.ForageRates.Count} map(s). "
                 + "Forage only - fish, bushes and dig spots are not modelled.",
+                LogLevel.Info);
+        }
+
+        private void BuildObtainabilityModel()
+        {
+            try
+            {
+                var timer = System.Diagnostics.Stopwatch.StartNew();
+                var inputs = new TheLongestYear.Loop.GameObtainabilityData(this.Monitor).Build();
+                var build = TheLongestYear.Core.Obtainability.ObtainabilityBuilder.Build(inputs);
+                _obtainability = build.Model;
+                _obtainabilityUnresolved = build.Unresolved;
+                this.Monitor.Log(
+                    $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms, {build.Passes} pass(es), " +
+                    $"{build.Unresolved.Count} unresolved source(s)" + (build.HitPassCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
+                    build.HitPassCap ? LogLevel.Warn : LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                _obtainability = null;
+                _obtainabilityUnresolved = System.Array.Empty<string>();
+                this.Monitor.Log($"Obtainability model: build failed ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+            }
+        }
+
+        /// <summary><c>tly_obtain &lt;itemId&gt;</c>: every source the obtainability model has for one item.</summary>
+        private void CmdObtain(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _obtainability == null)
+            {
+                this.Monitor.Log("Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
+                return;
+            }
+            if (args.Length == 0)
+            {
+                this.Monitor.Log("Usage: tly_obtain <itemId> | tly_obtain compare [fileName]", LogLevel.Info);
+                return;
+            }
+            this.Monitor.Log(
+                TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName),
                 LogLevel.Info);
         }
 
