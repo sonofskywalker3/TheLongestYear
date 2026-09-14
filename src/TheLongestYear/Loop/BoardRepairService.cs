@@ -213,6 +213,44 @@ namespace TheLongestYear.Loop
             return repaired;
         }
 
+        /// <summary>Lowers every ask above one for an item that never stacks (hats, weapons, Gil's
+        /// trophy rings) on the live board, for boards the Stack size dial scaled before
+        /// <see cref="UnstackableAsks"/> existed. Such a slot could never be deposited, so nothing
+        /// donated is affected. Host only, like <see cref="RepairIfNeeded"/>. Returns the number of
+        /// bundles rewritten (Nexus bug report 2026-09-14, Gil's Trophies Skeleton Mask x2).
+        /// The stored copy of the written board (<see cref="MetaState.WrittenBoard"/>) gets the same
+        /// rewrite, or the load-time manifest check would see the repaired live board as foreign.</summary>
+        public static int ClampUnstackableAsks(IMonitor monitor, MetaState state)
+        {
+            if (!Context.IsMainPlayer) return 0;
+            var worldState = Game1.netWorldState?.Value;
+            if (worldState?.BundleData == null) return 0;
+
+            if (state?.WrittenBoard != null)
+                foreach (string key in state.WrittenBoard.Keys.ToList())
+                {
+                    string storedRepaired = UnstackableAsks.RepairBundleValue(state.WrittenBoard[key]);
+                    if (storedRepaired != null)
+                        state.WrittenBoard[key] = storedRepaired;
+                }
+
+            var updates = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> entry in worldState.BundleData)
+            {
+                string repaired = UnstackableAsks.RepairBundleValue(entry.Value);
+                if (repaired == null) continue;
+                updates[entry.Key] = repaired;
+                monitor?.Log(
+                    $"Board repair: '{entry.Key}' asked for more than one of an item that never stacks; lowered to one.",
+                    LogLevel.Info);
+            }
+            if (updates.Count == 0) return 0;
+
+            worldState.SetBundleData(updates);
+            (Game1.getLocationFromName("CommunityCenter") as CommunityCenter)?.refreshBundlesIngredientsInfo();
+            return updates.Count;
+        }
+
         /// <summary>One replacement for one slot, re-drawing when the draw is itself unreachable
         /// (a Recipe part is widened with the bundle's own vanilla items, which never went through
         /// the pool filter). Null means leave the slot alone.</summary>

@@ -556,6 +556,10 @@ namespace TheLongestYear
                     "Rejected season pins (derived floor kept instead): "
                     + string.Join(", ", _availability.RejectedSeasonOverrides),
                     LogLevel.Warn);
+            // An ask above one for a hat, weapon or trophy ring can never be deposited (Nexus bug
+            // report 2026-09-14). Fixed first, so the requirement manifest below reads the repaired
+            // board and matches what the fixed generator re-derives.
+            TheLongestYear.Loop.BoardRepairService.ClampUnstackableAsks(this.Monitor, _meta.State);
             // Repair a board built before the reachability rule existed (spec
             // 2026-09-10-source-reachability, task 9). Runs HERE, above the catalog and the
             // fingerprint, so everything downstream reads the repaired board rather than the one
