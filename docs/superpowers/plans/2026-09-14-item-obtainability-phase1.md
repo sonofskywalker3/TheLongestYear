@@ -4,13 +4,13 @@
 
 **Goal:** Build a blind, runtime item obtainability model (every year-1 source per item, by week, counted in isolation) plus `tly_obtain <item>` and `tly_obtain compare`, with nothing wired into gameplay.
 
-**Architecture:** Pure rules in `src/TheLongestYear.Core/Obtainability/` take plain input records and return an `ObtainabilityModel`. Item ids and item queries are resolved by one `ItemQueries` class; direct sources are computed once; grown and made items (crops, fruit, machines, recipes, ponds, geodes) are resolved by repeated passes until nothing changes; sources the model cannot read become diagnostics, never silent drops. One glue class in the mod project reads the live game data assets at save load. A comparison class outside the blind folder lines the new model up against the existing item model and renders a Markdown report.
+**Architecture:** Pure rules in `src/TheLongestYear.Core/Obtainability/` take plain input records and return an `ObtainabilityModel`. Item ids and item queries are resolved by one `ItemQueries` class; direct sources are computed once; grown, made and bartered items (crops, fruit, machines, recipes, ponds, geodes, trade-item shop rows) are resolved by repeated passes until nothing changes; sources the model cannot read become diagnostics, never silent drops. One glue class in the mod project reads the live game data assets at save load. A comparison class outside the blind folder lines the new model up against the existing item model and renders a Markdown report.
 
 **Tech Stack:** C# net6.0, SMAPI 4 / Stardew Valley 1.6, xunit 2.4.1.
 
 **Spec:** `docs/superpowers/specs/2026-09-14-item-obtainability-design.md`
 
-**Review history:** a first draft was reviewed by Codex on 2026-09-14 and rejected (22 findings, most confirmed against the decompile). This version addresses them: day-level growth and processing, machine trigger/output semantics, item queries and diagnostics, a richer condition reader, the complete fishing treasure table, pond precedence, content equality for conditions, a convergence guard, and a comparison that reads every id the existing model knows.
+**Review history:** a first draft was reviewed by Codex on 2026-09-14 and rejected (22 findings, most confirmed against the decompile). The second draft addressed them: day-level growth and processing, machine trigger/output semantics, item queries and diagnostics, a richer condition reader, the complete fishing treasure table, pond precedence, content equality for conditions, a convergence guard, and a comparison that reads every id the existing model knows. A second Codex pass found finer gaps, fixed in this version: `RandomItemId` replaces `ItemId` and marks its entries as chance, barter shop rows (`TradeItemId`) only count in weeks the trade item is had, festival reward odds, recipes with several outputs and "none" unlocks, `UseFirstValidOutput`, deluxe produce friendship, no synthesized machine triggers, fruit-tree item queries, even/odd and min/max condition forms, the rest of the treasure table, and settling that also compares source counts.
 
 ## Global Constraints
 
@@ -19,26 +19,39 @@
 - **Weeks in isolation (Jeff, 2026-09-14):** assume the player saved nothing. A week counts only if the item can be obtained in it from scratch: recipe ingredients must all be obtainable in the same week; growing and processing time is allowed, stored items are not. Structures that keep producing (fish ponds, animals, tappers, learned recipes) count from the first week they can be set up.
 - **Blind:** these files may not mention (code OR comments, any letter case) any of the words in `ObtainabilityBlindGuardTests.Forbidden` (Task 9), which include `ItemAvailabilityModel`, `ItemAvailability`, `ItemEffort`, `AvailabilityWeeks`, `Core.Availability`, `DefaultItemSeasonPins`, `QuantityBasisTables`, `ItemPoolBuilder`, `GameDataPools`, `GameEffortData`, `LegendaryFishRules`, `LocationGating`, `MineAreas`, `ItemAvailabilityBuilder`, `BundleGenerationTuning`, `EffortData`, `PacingWeek`, `HardWeek`, `SeasonPins`, `UnlockWeeks`, `BasisByDeadline`. Blind files: everything in `src/TheLongestYear.Core/Obtainability/` and `src/TheLongestYear/Loop/GameObtainabilityData.cs`. Allowed Core types: `Season`, `Calendar`, `BundleParsing`.
 - Core has no game references; file-scoped namespaces; `Nullable` is enabled there. Mod project: block-scoped `namespace TheLongestYear.Loop`, `internal sealed class`, Nullable off.
+- New record parameters are optional and trail the existing ones, so earlier tasks' test constructors keep compiling.
 - Files stay under 400 lines. Split rather than grow.
 - No em dashes anywhere (code comments, strings, docs, commit messages).
 - Weeks are 1-16 (Spring week 1 = days 1-7 of Spring; Winter 28 is week 16).
 - Test command: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj -c Release -p:EnableModDeploy=false` (add `--filter "FullyQualifiedName~<ClassName>"` for one class). The suite is 2166 passing before this plan; it must stay green after every task.
 - Mod build without deploying: `dotnet build src/TheLongestYear/TheLongestYear.csproj -c Release -p:EnableModDeploy=false`.
 - Nothing reads the new model for gameplay: no board, gate, goal, pacing, sabotage or save-state change.
-- Decompile references: PC 1.6 at `C:\Users\Jeff\Documents\Projects\Stardee Valoo\decompiled-pc\Stardew Valley\`; GameData types at `C:\Users\Jeff\Documents\Projects\Stardee Valoo\decompiled\decompiled\StardewValley.GameData\`. Every game fact in this plan cites its line; if code you write disagrees with the decompile, the decompile wins and you say so in the commit.
+- Decompile references: PC 1.6 at `C:\Users\Jeff\Documents\Projects\Stardee Valoo\decompiled-pc\Stardew Valley\`; GameData types at `C:\Users\Jeff\Documents\Projects\Stardee Valoo\decompiled-pc\StardewValley.GameData\` (Android copy at `decompiled\decompiled\StardewValley.GameData\`). Every game fact in this plan cites its line; if code you write disagrees with the decompile, the decompile wins and you say so in the commit.
+
+## Known limitations (accepted for phase 1; do not "fix" them in this plan)
+
+These are read loosely on purpose and are listed in the spec. The comparison report is where they show up.
+
+- Machine rule order: the game uses the first rule that applies; the model counts every rule that could.
+- `PerItemCondition` on shop and spawn rows is not read.
+- The fishing treasure raccoon seed depends on the catch season; it is an unresolved diagnostic.
+- A fish pond counts from the week its fish is had; the days to reach a product's population are not counted.
+- Magic Bait rows are flagged, not routed through the bait's own weeks.
+- Fishing depth, `DAY_OF_WEEK` and negated weather forms are not narrowed.
+- A machine trigger that accepts any placed item (no id, no tags) is skipped; an output-collected trigger reads as needing no input.
 
 ## File Structure
 
 | File | Responsibility |
 |---|---|
 | `src/TheLongestYear.Core/Obtainability/WeekMask.cs` | 16-bit week set and helpers |
-| `src/TheLongestYear.Core/Obtainability/ObtainTypes.cs` | `SourceKind`, `Reliability`, `ObtainConditions` (content equality), `ObtainSource` |
+| `src/TheLongestYear.Core/Obtainability/ObtainTypes.cs` | `SourceKind`, `Reliability`, `ObtainConditions` (content equality), `ObtainSource`, `SourcePair` |
 | `src/TheLongestYear.Core/Obtainability/ObtainabilityModel.cs` | `ObtainFilter`, the model and its queries |
 | `src/TheLongestYear.Core/Obtainability/ObtainabilityInputs.cs` | plain input records the glue fills |
 | `src/TheLongestYear.Core/Obtainability/ConditionSeasons.cs` | reads temporal, prerequisite and unknown clauses out of game-state-query strings |
 | `src/TheLongestYear.Core/Obtainability/ItemQueries.cs` | resolves ids and item queries; unresolved ones become diagnostics |
 | `src/TheLongestYear.Core/Obtainability/SpawnSources.cs` | forage, location fish, crab pot, artifact spots, garbage cans, fishing trash |
-| `src/TheLongestYear.Core/Obtainability/ShopSources.cs` | shops, the Traveling Cart, festival shops, Night Market boats, festival rewards |
+| `src/TheLongestYear.Core/Obtainability/ShopSources.cs` | shops, the Traveling Cart, barter rows, festival shops, Night Market boats, festival rewards |
 | `src/TheLongestYear.Core/Obtainability/MineSources.cs` | mine nodes, monster drops, fishing treasure (code-only facts) |
 | `src/TheLongestYear.Core/Obtainability/GrowSources.cs` | crops, greenhouse, Mixed Seeds, fruit trees (day by day) |
 | `src/TheLongestYear.Core/Obtainability/MadeSources.cs` | machines, cooking, crafting, animals, fish ponds, tappers, geode contents |
@@ -61,7 +74,7 @@
 - Test: `tests/TheLongestYear.Tests/ObtainabilityModelTests.cs`
 
 **Interfaces:**
-- Produces: `WeekMask` (`None`, `All`, `Of(int)`, `Range(int,int)`, `FromWeekOnwardOf(int)`, `ForSeason(Season)`, `ForSeasons(IEnumerable<Season>)`, `ForDays(int,int)`, `WeekOfDay(int)`, `Contains(int)`, `IsEmpty`, `Earliest`, `FromWeekOnward()`, `ShiftLater(int)`, `Except(WeekMask)`, `|`, `&`, `ToString()`), `SourceKind` (includes `Other`), `Reliability`, `ObtainConditions` (content equality), `ObtainSource`, `ObtainFilter` (`Any`, `DependableOnly`, `Accepts`), `ObtainabilityModel` (`ItemIds`, `Count`, `Sources(string)`, `Weeks(string, ObtainFilter)`, `IsObtainable(string,int,ObtainFilter)`, `EarliestWeek(string, ObtainFilter)`).
+- Produces: `WeekMask` (`None`, `All`, `Of(int)`, `Range(int,int)`, `FromWeekOnwardOf(int)`, `ForSeason(Season)`, `ForSeasons(IEnumerable<Season>)`, `ForDays(int,int)`, `WeekOfDay(int)`, `Contains(int)`, `IsEmpty`, `Earliest`, `FromWeekOnward()`, `ShiftLater(int)`, `Except(WeekMask)`, `|`, `&`, `ToString()`), `SourceKind` (includes `Other`), `Reliability`, `ObtainConditions` (content equality), `ObtainSource`, `static IEnumerable<ObtainSource> SourcePair.Of(SourceKind kind, WeekMask dependable, WeekMask any, ObtainConditions conditions, string detail)` (used by Tasks 4, 6, 7), `ObtainFilter` (`Any`, `DependableOnly`, `Accepts`), `ObtainabilityModel` (`ItemIds`, `Count`, `Sources(string)`, `Weeks(string, ObtainFilter)`, `IsObtainable(string,int,ObtainFilter)`, `EarliestWeek(string, ObtainFilter)`).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -353,6 +366,21 @@ public sealed record ObtainConditions
 /// needs, and a short origin note for the debug output.</summary>
 public sealed record ObtainSource(
     SourceKind Kind, WeekMask Weeks, Reliability Reliability, ObtainConditions Conditions, string Detail);
+
+/// <summary>Emits one dependable source for the dependable weeks and one chance source for weeks
+/// reachable only by luck, so reliability survives derivation.</summary>
+public static class SourcePair
+{
+    public static IEnumerable<ObtainSource> Of(
+        SourceKind kind, WeekMask dependable, WeekMask any, ObtainConditions conditions, string detail)
+    {
+        if (!dependable.IsEmpty)
+            yield return new ObtainSource(kind, dependable, Reliability.Dependable, conditions, detail);
+        WeekMask luckOnly = any.Except(dependable);
+        if (!luckOnly.IsEmpty)
+            yield return new ObtainSource(kind, luckOnly, Reliability.Chance, conditions, detail);
+    }
+}
 ```
 
 - [ ] **Step 5: Write `ObtainabilityModel.cs`**
@@ -488,7 +516,9 @@ public class ObtainabilityConditionTests
     [InlineData("!SEASON Winter", "1-12")]
     [InlineData("SEASON Spring Fall, !SEASON Fall", "1-4")]
     [InlineData("DAYS_PLAYED 29", "5-16")]
+    [InlineData("DAYS_PLAYED 1 28", "1-4")]
     [InlineData("DAY_OF_MONTH 1 2", "1,5,9,13")]
+    [InlineData("DAY_OF_MONTH even", "1-16")]
     public void Temporal_clauses_narrow_the_weeks(string condition, string expected)
         => Assert.Equal(expected, Read(condition).Weeks.ToString());
 
@@ -506,6 +536,8 @@ public class ObtainabilityConditionTests
         Assert.False(Read("YEAR 1").YearTwo);
         Assert.False(Read("!YEAR 2").YearTwo);
         Assert.Equal(WeekMask.All, Read("!YEAR 2").Weeks);
+        Assert.False(Read("YEAR 1 1").YearTwo);
+        Assert.Equal(WeekMask.All, Read("YEAR 1 1").Weeks);
     }
 
     [Fact]
@@ -534,6 +566,9 @@ public class ObtainabilityConditionTests
         Assert.False(friend.Unresolved);
         ConditionReading modded = Read("SOME_MOD_QUERY 5");
         Assert.True(modded.Unresolved);
+        Assert.True(Read("ITEMX 3").Unresolved);          // a known prefix fragment is not a known query
+        Assert.True(Read("!DAY_OF_MONTH 5").Unresolved);  // negated day lists are not narrowed, so they are flagged
+        Assert.False(Read("ITEM_CONTEXT_TAG Target fish").Unresolved);
         Assert.Equal(WeekMask.All, modded.Weeks);
         Assert.True(Read("ANY \"SEASON Spring\" \"SEASON Fall\"").Unresolved);
         Assert.True(Read("PLAYER_HAS_MAIL Current Island_Resort").IslandHint);
@@ -601,15 +636,23 @@ public static class ConditionSeasons
     private const int YearOne = 1;
     private const string IslandMarker = "Island";
 
-    /// <summary>Query families that gate on the player's progress rather than the calendar. The model
-    /// does not judge them; they become notes.</summary>
-    private static readonly string[] PrerequisitePrefixes =
+    /// <summary>Vanilla queries (GameStateQuery.cs) that gate on the player's progress, the item, the
+    /// location or the clock rather than the calendar. The model does not judge them; they become notes.
+    /// Exact names, so an unknown key that merely starts the same way stays unresolved.</summary>
+    private static readonly HashSet<string> PrerequisiteQueries = new(StringComparer.Ordinal)
     {
-        "PLAYER_", "IS_COMMUNITY_CENTER", "IS_JOJA", "IS_GREEN_RAIN", "IS_HOST", "IS_CUSTOM_FARM_TYPE",
-        "IS_EVENT", "IS_ISLAND", "IS_VISITING_ISLAND", "MINE_LOWEST_LEVEL_REACHED", "BUILDINGS_",
-        "WORLD_STATE", "LOCATION_ACCESSIBLE", "CAN_BUILD", "ITEM_", "FARM_", "HAS_TARGET_LOCATION",
-        "LOCATION_HAS", "LOCATION_IS", "LOCATION_NAME", "LOCATION_CONTEXT", "TIME", "WEATHER_", "ITEM",
+        "IS_COMMUNITY_CENTER_COMPLETE", "IS_JOJA_MART_COMPLETE", "IS_GREEN_RAIN_DAY", "IS_HOST", "IS_CUSTOM_FARM_TYPE",
+        "IS_EVENT", "IS_ISLAND_NORTH_BRIDGE_FIXED", "IS_VISITING_ISLAND", "IS_MULTIPLAYER", "IS_LOST_BOOK_FOUND",
+        "MINE_LOWEST_LEVEL_REACHED", "WORLD_STATE_FIELD", "WORLD_STATE_ID", "LOCATION_ACCESSIBLE",
+        "CAN_BUILD_CABIN", "CAN_BUILD_FOR_CABINS", "FARM_CAVE", "FARM_NAME", "FARM_TYPE", "HAS_TARGET_LOCATION",
+        "LOCATION_CONTEXT", "LOCATION_HAS_CUSTOM_FIELD", "LOCATION_IS_INDOORS", "LOCATION_IS_OUTDOORS",
+        "LOCATION_IS_MINES", "LOCATION_IS_SKULL_CAVE", "LOCATION_NAME", "LOCATION_UNIQUE_NAME", "TIME",
+        "ITEM_CATEGORY", "ITEM_CONTEXT_TAG", "ITEM_EDIBILITY", "ITEM_HAS_EXPLICIT_OBJECT_CATEGORY", "ITEM_ID",
+        "ITEM_ID_PREFIX", "ITEM_NUMERIC_ID", "ITEM_OBJECT_TYPE", "ITEM_PRICE", "ITEM_QUALITY", "ITEM_STACK", "ITEM_TYPE",
     };
+
+    /// <summary>Prefixes of whole query families that are all prerequisites (PLAYER_HEARTS, BUILDINGS_CONSTRUCTED...).</summary>
+    private static readonly string[] PrerequisitePrefixes = { "PLAYER_", "BUILDINGS_" };
 
     private static readonly string[] WetWeather = { "Rain", "Storm", "GreenRain" };
 
@@ -650,16 +693,26 @@ public static class ConditionSeasons
                     fewDays = true;
                     break;
                 case "DAY_OF_MONTH":
-                    clauseWeeks = DaysOfMonth(tokens.Skip(1));
                     fewDays = true;
-                    if (negated) clauseWeeks = null; // "not these days" still leaves every week
+                    if (negated) { other.Add(clause); unresolved = true; break; }
+                    // "even" / "odd" (GameStateQuery.cs 282-289): every week still has such days.
+                    if (tokens.Skip(1).Any(t => t.Equals("even", StringComparison.OrdinalIgnoreCase) || t.Equals("odd", StringComparison.OrdinalIgnoreCase)))
+                        break;
+                    clauseWeeks = DaysOfMonth(tokens.Skip(1));
                     break;
                 case "DAY_OF_WEEK":
                     fewDays = true;
                     break;
                 case "DAYS_PLAYED":
-                    if (!negated && tokens.Length > 1 && int.TryParse(tokens[1], out int minDays))
-                        weeks &= WeekMask.FromWeekOnwardOf(WeekMask.WeekOfDay(Math.Max(1, minDays)));
+                    // "DAYS_PLAYED min [max]" (GameStateQuery.cs 310-322); in a loop, days played is the day of the year.
+                    if (negated) { other.Add(clause); unresolved = true; break; }
+                    if (tokens.Length > 1 && int.TryParse(tokens[1], out int minDays))
+                    {
+                        int maxDays = tokens.Length > 2 && int.TryParse(tokens[2], out int m) ? m : Calendar.DaysPerYear;
+                        weeks &= WeekMask.Range(
+                            WeekMask.WeekOfDay(Math.Max(1, minDays)),
+                            WeekMask.WeekOfDay(Math.Clamp(maxDays, 1, Calendar.DaysPerYear)));
+                    }
                     break;
                 case "IS_PASSIVE_FESTIVAL_OPEN":
                 case "IS_PASSIVE_FESTIVAL_TODAY":
@@ -671,12 +724,14 @@ public static class ConditionSeasons
                     else { other.Add(clause); unresolved = true; }
                     break;
                 case "YEAR":
+                    // "YEAR min [max]" (GameStateQuery.cs 392-404).
                     if (tokens.Length > 1 && int.TryParse(tokens[1], out int minYear))
                     {
-                        bool yearOnePasses = minYear <= YearOne;
+                        int maxYear = tokens.Length > 2 && int.TryParse(tokens[2], out int my) ? my : int.MaxValue;
+                        bool yearOnePasses = minYear <= YearOne && maxYear >= YearOne;
                         if (negated ? yearOnePasses : !yearOnePasses)
                         {
-                            if (negated) weeks = WeekMask.None; else yearTwo = true;
+                            if (negated || maxYear < YearOne) weeks = WeekMask.None; else yearTwo = true;
                         }
                     }
                     break;
@@ -694,7 +749,7 @@ public static class ConditionSeasons
                     break;
                 default:
                     other.Add(clause);
-                    if (!PrerequisitePrefixes.Any(p => key.StartsWith(p, StringComparison.Ordinal)))
+                    if (!PrerequisiteQueries.Contains(key) && !PrerequisitePrefixes.Any(p => key.StartsWith(p, StringComparison.Ordinal)))
                         unresolved = true;
                     break;
             }
@@ -771,7 +826,7 @@ Note: `"DAY_OF_MONTH 1 2"` covers days 1 and 2 of every season, all in each seas
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~ObtainabilityConditionTests"`
-Expected: PASS (7 theory cases, 3 theory cases, 6 facts: 16 tests).
+Expected: PASS (9 theory cases, 3 theory cases, 6 facts: 18 tests).
 
 - [ ] **Step 6: Run the whole suite, commit, push**
 
@@ -802,7 +857,7 @@ into a diagnostics list the comparison report prints.
 - Consumes: Tasks 1-2 (`WeekMask`, `ObtainSource`, `ObtainConditions`, `FestivalDates`, `ConditionSeasons.Read/Apply`).
 - Produces:
   - `record ObjInfo(string QualifiedId, string Name, int Category, int Price, IReadOnlyList<string> ContextTags, bool ExcludeFromRandomSale)`
-  - `record LocationSpawn(string Location, string ItemId, Season? Season, string? Condition, double Chance, int CatchLimit, bool RequireMagicBait, int MinFishingLevel)`
+  - `record LocationSpawn(string Location, string ItemId, Season? Season, string? Condition, double Chance, int CatchLimit, bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false)`
   - `record FishRow(string ItemId, bool IsTrap, string Weather, int MinFishingLevel, string TimeSpans)`
   - `record ArtifactSpotRow(string Location, string ItemId, string? Condition, double Chance)`
   - `record GarbageRow(string CanId, string ItemId, string? Condition)`
@@ -862,6 +917,17 @@ public class ObtainabilityQueryTests
         QueryResult note = ItemQueries.Resolve("SECRET_NOTE_OR_ITEM (O)390", Objects);
         Assert.Contains("(O)390", note.ItemIds);
         Assert.Contains("secret note", note.Note);
+    }
+
+    [Fact]
+    public void Any_text_with_arguments_is_a_query_even_from_a_mod()
+    {
+        Assert.True(ItemQueries.IsQuery("MYMOD_SPECIAL_ITEM 3 4"));
+        Assert.False(ItemQueries.IsQuery("(O)24"));
+        Assert.False(ItemQueries.IsQuery("DeluxeBait"));
+        QueryResult r = ItemQueries.Resolve("MYMOD_SPECIAL_ITEM 3 4", Objects);
+        Assert.True(r.Unresolved);
+        Assert.Empty(r.ItemIds);
     }
 
     [Fact]
@@ -935,6 +1001,26 @@ public class ObtainabilitySpawnTests
     }
 
     [Fact]
+    public void A_random_alternative_is_chance()
+    {
+        var rows = new[] { new LocationSpawn("Forest", "(O)16", Season.Spring, null, 1.0, 0, false, 0, IsRandom: true) };
+        Assert.Equal(Reliability.Chance, SpawnSources.Forage(rows, Objects, Festivals).Single().Source.Reliability);
+    }
+
+    [Fact]
+    public void A_fish_listed_through_a_query_keeps_its_fish_data()
+    {
+        var objects = new Dictionary<string, ObjInfo> { ["(O)142"] = new ObjInfo("(O)142", "Carp", -4, 30, new string[0], false) };
+        var rows = new[] { new LocationSpawn("Mountain", "RANDOM_ITEMS (O) 142 142", Season.Fall, null, 1.0, 0, false, 0) };
+        var fishRows = new Dictionary<string, FishRow> { ["(O)142"] = new FishRow("(O)142", false, "rainy", 3, "600 2600") };
+        var (id, source) = SpawnSources.LocationFish(rows, fishRows, objects, Festivals).Single();
+        Assert.Equal("(O)142", id);
+        Assert.Equal(3, source.Conditions.SkillLevel);
+        Assert.True(source.Conditions.RainOnly);
+        Assert.Equal(Reliability.Chance, source.Reliability);
+    }
+
+    [Fact]
     public void Fish_carry_the_higher_level_weather_time_and_catch_limit()
     {
         var rows = new[] { new LocationSpawn("Forest", "(O)775", Season.Winter, null, 1.0, 1, true, 8) };
@@ -990,10 +1076,11 @@ public sealed record ObjInfo(
 
 /// <summary>One Data/Locations Forage or Fish row. <see cref="ItemId"/> may be an item query.
 /// <see cref="Season"/> null means any season unless <see cref="Condition"/> names one.
-/// <see cref="MinFishingLevel"/> is SpawnFishData.MinFishingLevel (0 for forage).</summary>
+/// <see cref="MinFishingLevel"/> is SpawnFishData.MinFishingLevel (0 for forage). <see cref="IsRandom"/>
+/// marks one entry of a RandomItemId list: the game picks one of them (ItemQueryResolver.cs 804-817).</summary>
 public sealed record LocationSpawn(
     string Location, string ItemId, Season? Season, string? Condition, double Chance, int CatchLimit,
-    bool RequireMagicBait, int MinFishingLevel);
+    bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false);
 
 /// <summary>One Data/Fish row, reduced: field 1 difficulty or "trap", field 5 time spans
 /// ("600 1200 1800 2000"), field 7 weather ("sunny", "rainy", "both"), field 12 minimum level.</summary>
@@ -1045,8 +1132,13 @@ public static class ItemQueries
         ["DriedFruit"] = "(O)DriedFruit", ["DriedMushroom"] = "(O)DriedMushrooms", ["SmokedFish"] = "(O)SmokedFish",
     };
 
+    /// <summary>A known query key, or any text with arguments: item ids never contain spaces, so a
+    /// mod's own query ("MYMOD_ITEM 3") is a query this model does not know, never a fake id.</summary>
     public static bool IsQuery(string itemIdOrQuery)
-        => QueryKeys.Contains(itemIdOrQuery.Split(' ', 2)[0]);
+    {
+        string text = itemIdOrQuery.Trim();
+        return QueryKeys.Contains(text.Split(' ', 2)[0]) || text.Contains(' ');
+    }
 
     public static string? FlavoredBaseId(string preserveType)
         => FlavoredBases.TryGetValue(preserveType, out string? id) ? id : null;
@@ -1189,26 +1281,38 @@ public static class SpawnSources
     {
         foreach (LocationSpawn row in rows)
         {
-            fishRows.TryGetValue(BundleParsing.NormalizeItemId(row.ItemId), out FishRow? fish);
-            string time = fish == null || string.IsNullOrWhiteSpace(fish.TimeSpans) || fish.TimeSpans.Trim() == AllDayTimeSpans
-                ? "" : $", time {TimeText(fish.TimeSpans)}";
-            if (Spawn(row, festivals, SourceKind.Fish, $"Fish at {row.Location}{time}") is not ObtainSource template)
+            if (Spawn(row, festivals, SourceKind.Fish, $"Fish at {row.Location}") is not ObtainSource baseTemplate)
                 continue;
-            int level = Math.Max(row.MinFishingLevel, fish?.MinFishingLevel ?? 0);
-            ObtainConditions c = template.Conditions;
-            template = template with
+            // Resolve first, then look each concrete fish up: a query listing fish must not lose their data.
+            QueryResult resolved = ItemQueries.Resolve(row.ItemId, objects);
+            if (resolved.ItemIds.Count == 0)
             {
-                Conditions = c with
+                foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, baseTemplate))
+                    yield return emitted;
+                continue;
+            }
+            foreach (string id in resolved.ItemIds)
+            {
+                fishRows.TryGetValue(id, out FishRow? fish);
+                string time = fish == null || string.IsNullOrWhiteSpace(fish.TimeSpans) || fish.TimeSpans.Trim() == AllDayTimeSpans
+                    ? "" : $", time {TimeText(fish.TimeSpans)}";
+                int level = Math.Max(row.MinFishingLevel, fish?.MinFishingLevel ?? 0);
+                ObtainConditions c = baseTemplate.Conditions;
+                yield return (id, baseTemplate with
                 {
-                    Skill = level > 0 ? FishingSkill : c.Skill,
-                    SkillLevel = level,
-                    RainOnly = c.RainOnly || string.Equals(fish?.Weather, RainyWeather, StringComparison.OrdinalIgnoreCase),
-                    CatchLimit = row.CatchLimit,
-                    Requires = row.RequireMagicBait ? c.Requires.Append("item:(O)908 Magic Bait").ToList() : c.Requires,
-                },
-            };
-            foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
-                yield return emitted;
+                    Reliability = resolved.Chance ? Reliability.Chance : baseTemplate.Reliability,
+                    Detail = baseTemplate.Detail + time + (resolved.Note.Length == 0 ? "" : $" ({resolved.Note})"),
+                    Conditions = c with
+                    {
+                        Skill = level > 0 ? FishingSkill : c.Skill,
+                        SkillLevel = level,
+                        RainOnly = c.RainOnly || string.Equals(fish?.Weather, RainyWeather, StringComparison.OrdinalIgnoreCase),
+                        CatchLimit = row.CatchLimit,
+                        Unresolved = c.Unresolved || resolved.Unresolved,
+                        Requires = row.RequireMagicBait ? c.Requires.Append("item:(O)908 Magic Bait").ToList() : c.Requires,
+                    },
+                });
+            }
         }
     }
 
@@ -1275,7 +1379,7 @@ public static class SpawnSources
             conditions = conditions with { FewDays = true };
         }
         if (weeks.IsEmpty) return null;
-        Reliability reliability = reading.Chance ? Reliability.Chance : Reliability.Dependable;
+        Reliability reliability = reading.Chance || row.IsRandom ? Reliability.Chance : Reliability.Dependable;
         return new ObtainSource(kind, weeks, reliability, conditions, detail);
     }
 
@@ -1298,7 +1402,9 @@ public static class SpawnSources
 - [ ] **Step 7: Run both to verify they pass**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~ObtainabilityQueryTests|FullyQualifiedName~ObtainabilitySpawnTests"`
-Expected: PASS, 11 tests.
+Expected: PASS, 14 tests.
+
+The fish-through-a-query test: `RANDOM_ITEMS (O) 142 142` expands to Carp only, is a random query (so chance), and the Carp `FishRow` supplies level 3 and rainy weather.
 
 - [ ] **Step 8: Run the whole suite, commit, push**
 
@@ -1318,10 +1424,11 @@ git push origin story
 - Test: `tests/TheLongestYear.Tests/ObtainabilityShopTests.cs`
 
 **Interfaces:**
-- Consumes: Tasks 1-3 (`ConditionSeasons`, `ItemQueries.Emit`, `ObjInfo`, `FestivalDates`).
+- Consumes: Tasks 1-3 (`SourcePair.Of`, `ObtainabilityModel`, `ConditionSeasons`, `ItemQueries.Emit`, `ObjInfo`, `FestivalDates`).
 - Produces:
-  - `record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe)` (ItemId may be an item query)
-  - `static IEnumerable<(string ItemId, ObtainSource Source)> ShopSources.Stock(IEnumerable<ShopRow>, IReadOnlyDictionary<string, ObjInfo>, IReadOnlyDictionary<string, FestivalDates>)`
+  - `record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null)` (ItemId may be an item query)
+  - `static IEnumerable<(string ItemId, ObtainSource Source)> ShopSources.Stock(IEnumerable<ShopRow>, IReadOnlyDictionary<string, ObjInfo>, IReadOnlyDictionary<string, FestivalDates>)` (skips recipe and barter rows)
+  - `static IEnumerable<(string ItemId, ObtainSource Source)> ShopSources.Barter(IEnumerable<ShopRow>, IReadOnlyDictionary<string, ObjInfo>, IReadOnlyDictionary<string, FestivalDates>, ObtainabilityModel snapshot)` (a derived rule: the builder runs it every pass)
   - `static IReadOnlyDictionary<string, WeekMask> ShopSources.RecipeWeeks(IEnumerable<ShopRow>, IReadOnlyDictionary<string, FestivalDates>)` keyed by the taught item's qualified id; year-2, island and unresolved rows never teach
   - `static IEnumerable<(string ItemId, ObtainSource Source)> ShopSources.FestivalRewards(IReadOnlyDictionary<string, FestivalDates>)`
   - `static bool ShopSources.IsIslandShop(string shopId)`
@@ -1434,13 +1541,37 @@ public class ObtainabilityShopTests
     }
 
     [Fact]
-    public void Squid_fest_and_trout_derby_rewards_use_their_festival_dates()
+    public void Squid_fest_and_trout_derby_rewards_use_their_festival_dates_and_their_odds()
     {
         var rewards = ShopSources.FestivalRewards(Festivals).ToList();
         var book = rewards.Single(r => r.ItemId == "(O)Book_Crabbing").Source;
         Assert.Equal(WeekMask.Of(14), book.Weeks);                       // Winter 12-13
         Assert.True(book.Conditions.FewDays);
-        Assert.Contains(rewards, r => r.ItemId == "(O)TentKit" && r.Source.Weeks == WeekMask.Of(7));   // Summer 20-21
+        Assert.Equal(Reliability.Dependable, book.Reliability);
+        var tent = rewards.Single(r => r.ItemId == "(O)TentKit").Source;
+        Assert.Equal(WeekMask.Of(7), tent.Weeks);                        // Summer 20-21
+        Assert.Equal(Reliability.Dependable, tent.Reliability);         // the first tag always gives it
+        Assert.Equal(Reliability.Chance, rewards.Single(r => r.ItemId == "(O)710").Source.Reliability);   // a spin
+        Assert.Contains(rewards, r => r.ItemId == "(O)498" && r.Source.Reliability == Reliability.Chance); // a 50/50
+    }
+
+    [Fact]
+    public void A_random_shop_alternative_is_chance()
+        => Assert.Equal(Reliability.Chance, Stock(new ShopRow("SeedShop", "(O)472", null, false, IsRandom: true)).Single().Source.Reliability);
+
+    [Fact]
+    public void A_barter_row_is_only_had_in_weeks_its_trade_item_is()
+    {
+        var row = new ShopRow("DesertTrade", "(O)Moss", null, false, TradeItemId: "(O)24");
+        Assert.Empty(Stock(row));
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)24"] = new[] { new ObtainSource(SourceKind.Shop, WeekMask.ForSeason(Season.Spring), Reliability.Dependable, ObtainConditions.None, "seeds") },
+        });
+        var (id, source) = ShopSources.Barter(new[] { row }, Objects, Festivals, snapshot).Single();
+        Assert.Equal("(O)Moss", id);
+        Assert.Equal(WeekMask.ForSeason(Season.Spring), source.Weeks);
+        Assert.Contains("trade:(O)24", source.Conditions.Requires);
     }
 }
 ```
@@ -1454,9 +1585,10 @@ Expected: build FAILS, `ShopRow` not found.
 
 ```csharp
 
-/// <summary>One Data/Shops stock row, or one of its RandomItemId entries. <see cref="ItemId"/> is an id or
-/// an item query. A recipe row teaches the recipe for that item.</summary>
-public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe);
+/// <summary>One Data/Shops stock row, or one of its RandomItemId entries (<see cref="IsRandom"/>). <see cref="ItemId"/>
+/// is an id or an item query. A recipe row teaches the recipe for that item. <see cref="TradeItemId"/> is
+/// ShopItemData.TradeItemId: the item is paid for with another item.</summary>
+public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null);
 ```
 
 - [ ] **Step 4: Write `ShopSources.cs`**
@@ -1490,17 +1622,24 @@ public static class ShopSources
         ["Festival_FeastOfTheWinterStar_Pierre"] = "winter25",
     };
 
-    /// <summary>Squid Fest rewards (GameLocation.cs 11458-11499) and Trout Derby rewards (11527-11562).</summary>
-    private static readonly (string Festival, string ItemId)[] RewardTable =
+    /// <summary>Squid Fest rewards (GameLocation.cs 11458-11499: score tiers, with a 50/50 between Winter
+    /// Seeds and Mystery Boxes, and Mystery Boxes plus 265 only once the book is owned) and Trout Derby
+    /// rewards (11524-11562: the first tag always gives a Tent Kit, later tags spin a wheel).</summary>
+    private static readonly (string Festival, string ItemId, Reliability Reliability)[] RewardTable =
     {
-        ("SquidFest", "(O)DeluxeBait"), ("SquidFest", "(O)498"), ("SquidFest", "(O)MysteryBox"),
-        ("SquidFest", "(O)242"), ("SquidFest", "(O)797"), ("SquidFest", "(O)395"),
-        ("SquidFest", "(F)SquidKid_Painting"), ("SquidFest", "(O)Book_Crabbing"), ("SquidFest", "(O)265"),
-        ("SquidFest", "(O)694"), ("SquidFest", "(O)166"), ("SquidFest", "(O)253"), ("SquidFest", "(H)SquidHat"),
-        ("TroutDerby", "(O)TentKit"), ("TroutDerby", "(H)BucketHat"), ("TroutDerby", "(O)710"),
-        ("TroutDerby", "(O)MysteryBox"), ("TroutDerby", "(O)72"), ("TroutDerby", "(F)MountedTrout_Painting"),
-        ("TroutDerby", "(O)DeluxeBait"), ("TroutDerby", "(O)253"), ("TroutDerby", "(O)621"),
-        ("TroutDerby", "(O)688"), ("TroutDerby", "(O)749"),
+        ("SquidFest", "(O)DeluxeBait", Reliability.Dependable), ("SquidFest", "(O)498", Reliability.Chance),
+        ("SquidFest", "(O)MysteryBox", Reliability.Chance), ("SquidFest", "(O)242", Reliability.Dependable),
+        ("SquidFest", "(O)797", Reliability.Dependable), ("SquidFest", "(O)395", Reliability.Dependable),
+        ("SquidFest", "(F)SquidKid_Painting", Reliability.Dependable), ("SquidFest", "(O)Book_Crabbing", Reliability.Dependable),
+        ("SquidFest", "(O)265", Reliability.Chance), ("SquidFest", "(O)694", Reliability.Dependable),
+        ("SquidFest", "(O)166", Reliability.Dependable), ("SquidFest", "(O)253", Reliability.Dependable),
+        ("SquidFest", "(H)SquidHat", Reliability.Dependable),
+        ("TroutDerby", "(O)TentKit", Reliability.Dependable), ("TroutDerby", "(H)BucketHat", Reliability.Chance),
+        ("TroutDerby", "(O)710", Reliability.Chance), ("TroutDerby", "(O)MysteryBox", Reliability.Chance),
+        ("TroutDerby", "(O)72", Reliability.Chance), ("TroutDerby", "(F)MountedTrout_Painting", Reliability.Chance),
+        ("TroutDerby", "(O)DeluxeBait", Reliability.Chance), ("TroutDerby", "(O)253", Reliability.Chance),
+        ("TroutDerby", "(O)621", Reliability.Chance), ("TroutDerby", "(O)688", Reliability.Chance),
+        ("TroutDerby", "(O)749", Reliability.Chance),
     };
 
     public static bool IsIslandShop(string shopId)
@@ -1512,10 +1651,31 @@ public static class ShopSources
     {
         foreach (ShopRow row in rows)
         {
-            if (row.IsRecipe) continue;
+            if (row.IsRecipe || row.TradeItemId != null) continue;
             if (Template(row, festivals) is not ObtainSource template) continue;
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;
+        }
+    }
+
+    /// <summary>Barter rows (ShopItemData.TradeItemId): paid for with another item, so, counting weeks in
+    /// isolation, only had in weeks the trade item can be had.</summary>
+    public static IEnumerable<(string ItemId, ObtainSource Source)> Barter(
+        IEnumerable<ShopRow> rows, IReadOnlyDictionary<string, ObjInfo> objects,
+        IReadOnlyDictionary<string, FestivalDates> festivals, ObtainabilityModel snapshot)
+    {
+        foreach (ShopRow row in rows.Where(r => !r.IsRecipe && r.TradeItemId != null))
+        {
+            if (Template(row, festivals) is not ObtainSource template) continue;
+            string trade = BundleParsing.NormalizeItemId(row.TradeItemId!);
+            WeekMask dep = template.Reliability == Reliability.Dependable
+                ? template.Weeks & snapshot.Weeks(trade, ObtainFilter.DependableOnly)
+                : WeekMask.None;
+            WeekMask any = template.Weeks & snapshot.Weeks(trade, ObtainFilter.Any);
+            ObtainConditions conditions = template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() };
+            foreach (ObtainSource s in SourcePair.Of(template.Kind, dep, any, conditions, template.Detail + " (barter)"))
+                foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, s))
+                    yield return emitted;
         }
     }
 
@@ -1537,11 +1697,11 @@ public static class ShopSources
     public static IEnumerable<(string ItemId, ObtainSource Source)> FestivalRewards(
         IReadOnlyDictionary<string, FestivalDates> festivals)
     {
-        foreach ((string festivalId, string itemId) in RewardTable)
+        foreach ((string festivalId, string itemId, Reliability reliability) in RewardTable)
         {
             if (!festivals.TryGetValue(festivalId, out FestivalDates? festival)) continue;
             yield return (itemId, new ObtainSource(
-                SourceKind.Festival, festival.Weeks, Reliability.Dependable,
+                SourceKind.Festival, festival.Weeks, reliability,
                 ObtainConditions.None with { FewDays = true, Requires = new[] { "festival:" + festivalId } },
                 $"{festivalId} reward"));
         }
@@ -1554,7 +1714,7 @@ public static class ShopSources
         (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced) = Placement(row.ShopId, festivals);
         WeekMask weeks = reading.Weeks & placeWeeks;
         if (weeks.IsEmpty) return null;
-        bool chance = reading.Chance || kind == SourceKind.Cart
+        bool chance = reading.Chance || row.IsRandom || kind == SourceKind.Cart
                       || row.ShopId.EndsWith(TravelingMerchantSuffix, StringComparison.Ordinal);
         ObtainConditions conditions = ConditionSeasons.Apply(
             ObtainConditions.None with
@@ -1588,7 +1748,7 @@ public static class ShopSources
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~ObtainabilityShopTests"`
-Expected: PASS, 7 tests.
+Expected: PASS, 9 tests.
 
 - [ ] **Step 6: Run the whole suite, commit, push**
 
@@ -1670,8 +1830,13 @@ public class ObtainabilityMineTests
     [Fact]
     public void Treasure_is_complete_chance_and_gated_where_the_game_gates_it()
     {
-        var treasure = MineSources.FishingTreasure().ToList();
+        var all = MineSources.FishingTreasure().ToList();
+        Assert.Contains(all, t => t.ItemId.StartsWith(ItemQueries.UnresolvedPrefix) && t.Source.Detail.Contains("raccoon"));
+        var treasure = all.Where(t => !t.ItemId.StartsWith(ItemQueries.UnresolvedPrefix)).ToList();
         Assert.All(treasure, t => Assert.Equal(SourceKind.FishingTreasure, t.Source.Kind));
+        Assert.Contains(treasure, t => t.ItemId == "(O)Book_Roe");
+        Assert.Contains(treasure, t => t.ItemId == "(O)TroutDerbyTag");
+        Assert.Contains(treasure, t => t.ItemId == "(O)812" && t.Source.Conditions.Requires.Contains("book:Book_Roe"));
         Assert.All(treasure, t => Assert.Equal(Reliability.Chance, t.Source.Reliability));
         Assert.Equal(WeekMask.ForSeason(Season.Spring), treasure.Single(t => t.ItemId == "(O)273").Source.Weeks);
         Assert.Contains(treasure, t => t.ItemId == "(O)774" && t.Source.Conditions.Requires.Contains("recipe:Wild Bait"));
@@ -1793,6 +1958,11 @@ public static class MineSources
                 SourceKind.FishingTreasure, weeks, Reliability.Chance,
                 ObtainConditions.None with { Requires = requires, GingerIsland = island }, note));
         }
+        // The golden chest's raccoon seed is chosen by code for the time of year; recorded as a diagnostic.
+        yield return (ItemQueries.UnresolvedPrefix + "golden chest raccoon seed", new ObtainSource(
+            SourceKind.Other, WeekMask.All, Reliability.Chance,
+            ObtainConditions.None with { Requires = new[] { GoldenTreasure }, Unresolved = true },
+            "Utility.getRaccoonSeedForCurrentTimeOfYear, golden chest table (2477)"));
     }
 
     private static (string, string[], bool, string)[] BuildTreasureTable()
@@ -1842,6 +2012,9 @@ public static class MineSources
         Add("(O)928", "case 3 golden egg (2700-2703)", "skill:Fishing 2", "mail:Farm_Eternal");
         for (int i = 0; i < SkillBookCount; i++) Add($"(O)SkillBook_{i}", "case 3 skill book after 3 treasures (2708-2715)", "skill:Fishing 2");
         Add("(O)GoldenBobber", "Desert Festival quest on its third day (2727-2730)", "quest:98765", "festival:DesertFestival");
+        Add("(O)812", "roe from the caught fish, once the Roe book is read (2732-2748)", "book:Book_Roe");
+        Add("(O)Book_Roe", "the roe book, Fishing 5 and more than 2 treasures (2750-2754)", "skill:Fishing 5");
+        Add("(O)TroutDerbyTag", "a trout derby tag caught during the derby (2756-2759)", "festival:TroutDerby");
         return t.ToArray();
     }
 }
@@ -1878,16 +2051,15 @@ These rules read a snapshot model (the previous resolution pass) for the seed's 
 - Test: `tests/TheLongestYear.Tests/ObtainabilityGrowTests.cs`
 
 **Interfaces:**
-- Consumes: `ObtainabilityModel`, `ObtainFilter`, `WeekMask` (Task 1); `ConditionSeasons` (Task 2).
+- Consumes: `ObtainabilityModel`, `ObtainFilter`, `WeekMask`, `SourcePair.Of` (Task 1); `ConditionSeasons` (Task 2); `ObjInfo`, `ItemQueries.Emit` (Task 3).
 - Produces:
   - `record CropRow(string SeedId, string HarvestId, IReadOnlyList<Season> Seasons, int GrowthDays, int RegrowDays)` (`RegrowDays` <= 0 means no regrowth)
-  - `record FruitRow(string ItemId, Season? Season, double Chance, string? Condition)`
+  - `record FruitRow(string ItemId, Season? Season, double Chance, string? Condition, bool IsRandom = false)` (ItemId may be an item query)
   - `record FruitTreeRow(string SaplingId, IReadOnlyList<Season> TreeSeasons, IReadOnlyList<FruitRow> Fruit)`
   - `static WeekMask GrowSources.Harvest(WeekMask seedWeeks, IReadOnlyList<Season> seasons, int growthDays, int regrowDays)`
   - `static WeekMask GrowSources.Greenhouse(WeekMask seedWeeks, int growthDays, int regrowDays)`
   - `static IEnumerable<(string ItemId, ObtainSource Source)> GrowSources.Crops(IEnumerable<CropRow>, ObtainabilityModel snapshot)`
-  - `static IEnumerable<(string ItemId, ObtainSource Source)> GrowSources.FruitTrees(IEnumerable<FruitTreeRow>, ObtainabilityModel snapshot, IReadOnlyDictionary<string, FestivalDates> festivals)`
-  - `static IEnumerable<ObtainSource> SourcePair.Of(SourceKind kind, WeekMask dependable, WeekMask any, ObtainConditions conditions, string detail)` (in `GrowSources.cs`; reused by Task 7)
+  - `static IEnumerable<(string ItemId, ObtainSource Source)> GrowSources.FruitTrees(IEnumerable<FruitTreeRow>, ObtainabilityModel snapshot, IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals)`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1976,7 +2148,7 @@ public class ObtainabilityGrowTests
             new FruitTreeRow("(O)628", new[] { Season.Spring }, new[] { new FruitRow("(O)638", null, 1.0, null) }),
             new FruitTreeRow("(O)69", new[] { Season.Summer }, new[] { new FruitRow("(O)91", null, 0.5, "YEAR 2") }),
         };
-        var all = GrowSources.FruitTrees(rows, snapshot, NoFestivals).ToList();
+        var all = GrowSources.FruitTrees(rows, snapshot, new Dictionary<string, ObjInfo>(), NoFestivals).ToList();
         Assert.Equal("9-12", all.Single(s => s.ItemId == "(O)613" && s.Source.Kind == SourceKind.FruitTree).Source.Weeks.ToString());
         Assert.DoesNotContain(all, s => s.ItemId == "(O)638" && s.Source.Kind == SourceKind.FruitTree);
         Assert.Contains(all, s => s.ItemId == "(O)638" && s.Source.Kind == SourceKind.GreenhouseCrop);
@@ -2000,8 +2172,9 @@ Expected: build FAILS, `GrowSources` not found.
 /// <see cref="RegrowDays"/> is CropData.RegrowDays (-1 or 0 means none), <see cref="Seasons"/> empty means any season.</summary>
 public sealed record CropRow(string SeedId, string HarvestId, IReadOnlyList<Season> Seasons, int GrowthDays, int RegrowDays);
 
-/// <summary>One fruit a tree grows: its own season overrides the tree's; Chance and Condition are FruitTreeFruitData's.</summary>
-public sealed record FruitRow(string ItemId, Season? Season, double Chance, string? Condition);
+/// <summary>One fruit a tree grows: its own season overrides the tree's; Chance and Condition are FruitTreeFruitData's.
+/// <see cref="ItemId"/> may be an item query; <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
+public sealed record FruitRow(string ItemId, Season? Season, double Chance, string? Condition, bool IsRandom = false);
 
 /// <summary>One Data/FruitTrees row, keyed by sapling.</summary>
 public sealed record FruitTreeRow(string SaplingId, IReadOnlyList<Season> TreeSeasons, IReadOnlyList<FruitRow> Fruit);
@@ -2015,21 +2188,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace TheLongestYear.Core.Obtainability;
-
-/// <summary>Emits one dependable source for the dependable weeks and one chance source for weeks
-/// reachable only by luck, so reliability survives derivation.</summary>
-public static class SourcePair
-{
-    public static IEnumerable<ObtainSource> Of(
-        SourceKind kind, WeekMask dependable, WeekMask any, ObtainConditions conditions, string detail)
-    {
-        if (!dependable.IsEmpty)
-            yield return new ObtainSource(kind, dependable, Reliability.Dependable, conditions, detail);
-        WeekMask luckOnly = any.Except(dependable);
-        if (!luckOnly.IsEmpty)
-            yield return new ObtainSource(kind, luckOnly, Reliability.Chance, conditions, detail);
-    }
-}
 
 /// <summary>Crops, greenhouse crops, Mixed Seeds and fruit trees, day by day (see the week-in-isolation
 /// rule in the plan's Task 6).</summary>
@@ -2100,7 +2258,8 @@ public static class GrowSources
     }
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> FruitTrees(
-        IEnumerable<FruitTreeRow> rows, ObtainabilityModel snapshot, IReadOnlyDictionary<string, FestivalDates> festivals)
+        IEnumerable<FruitTreeRow> rows, ObtainabilityModel snapshot, IReadOnlyDictionary<string, ObjInfo> objects,
+        IReadOnlyDictionary<string, FestivalDates> festivals)
     {
         foreach (FruitTreeRow tree in rows)
         {
@@ -2111,16 +2270,18 @@ public static class GrowSources
                 ConditionReading reading = ConditionSeasons.Read(fruit.Condition, festivals);
                 WeekMask season = (fruit.Season is Season s ? WeekMask.ForSeason(s)
                     : tree.TreeSeasons.Count == 0 ? WeekMask.All : WeekMask.ForSeasons(tree.TreeSeasons)) & reading.Weeks;
-                bool luck = fruit.Chance < 1.0 || reading.Chance;
+                bool luck = fruit.Chance < 1.0 || reading.Chance || fruit.IsRandom;
                 ObtainConditions outdoor = ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "item:" + tree.SaplingId } }, reading);
                 foreach (ObtainSource src in SourcePair.Of(SourceKind.FruitTree, luck ? WeekMask.None : depMature & season,
                     anyMature & season, outdoor, $"fruit tree from {tree.SaplingId}"))
-                    yield return (fruit.ItemId, src);
+                    foreach (var emitted in ItemQueries.Emit(fruit.ItemId, objects, src))
+                        yield return emitted;
                 ObtainConditions indoor = ConditionSeasons.Apply(
                     ObtainConditions.None with { Requires = new[] { "item:" + tree.SaplingId, GreenhouseUnlock } }, reading);
                 foreach (ObtainSource src in SourcePair.Of(SourceKind.GreenhouseCrop, luck ? WeekMask.None : depMature & reading.Weeks,
                     anyMature & reading.Weeks, indoor, $"fruit tree in the greenhouse from {tree.SaplingId}"))
-                    yield return (fruit.ItemId, src);
+                    foreach (var emitted in ItemQueries.Emit(fruit.ItemId, objects, src))
+                        yield return emitted;
             }
         }
     }
@@ -2204,16 +2365,16 @@ These rules read a snapshot model (the previous resolution pass).
 - Test: `tests/TheLongestYear.Tests/ObtainabilityMadeTests.cs`
 
 **Interfaces:**
-- Consumes: Task 1; `ConditionSeasons` (Task 2); `ObjInfo`, `ItemQueries` (Task 3); `SourcePair.Of` (Task 6).
+- Consumes: Task 1 (including `SourcePair.Of`); `ConditionSeasons` (Task 2); `ObjInfo`, `ItemQueries` (Task 3).
 - Produces:
-  - `record MachineOutput(string? ItemId, string? Condition, string? OutputMethod)`
-  - `record MachineRow(string MachineId, string? RequiredItemId, IReadOnlyList<string> RequiredTags, string? TriggerCondition, IReadOnlyList<MachineOutput> Outputs, int MinutesUntilReady, int DaysUntilReady)`
-  - `record RecipeRow(string Name, IReadOnlyList<string> Ingredients, string OutputId, string Unlock, bool IsCooking)`
+  - `record MachineOutput(string? ItemId, string? Condition, string? OutputMethod, bool IsRandom = false)`
+  - `record MachineRow(string MachineId, string? RequiredItemId, IReadOnlyList<string> RequiredTags, string? TriggerCondition, IReadOnlyList<MachineOutput> Outputs, int MinutesUntilReady, int DaysUntilReady, bool UseFirstValidOutput = false)`
+  - `record RecipeRow(string Name, IReadOnlyList<string> Ingredients, string OutputId, string Unlock, bool IsCooking, IReadOnlyList<string>? AlternateOutputIds = null)`
   - `record AnimalProduce(string ItemId, string? Condition, int MinimumFriendship)`
-  - `record AnimalRow(string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce)`
-  - `record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition)`
+  - `record AnimalRow(string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce, int DeluxeMinimumFriendship = 200)`
+  - `record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition, bool IsRandom = false)`
   - `record PondRow(string Id, IReadOnlyList<string> RequiredTags, int Precedence, IReadOnlyList<PondProduct> Products)`
-  - `record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition)`
+  - `record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition, bool IsRandom = false)`
   - `record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition)`
   - `static int MadeSources.ProcessingDays(int minutes, int days)`
   - `static WeekMask MadeSources.ShiftByDays(WeekMask inputWeeks, int days)`
@@ -2331,6 +2492,8 @@ public class ObtainabilityMadeTests
             new RecipeRow("Shop Dish", new[] { "(O)24" }, "(O)901", "none", true),
             new RecipeRow("Skill Craft", new[] { "(O)24" }, "(BC)902", "s Farming 3", false),
             new RecipeRow("Split Seasons", new[] { "(O)24", "(O)254" }, "(O)903", "default", true),
+            new RecipeRow("Taught Elsewhere", new[] { "(O)24" }, "(O)904", "none", true),
+            new RecipeRow("Either Output", new[] { "(O)24" }, "(O)905", "default", false, new[] { "(O)906" }),
         };
         var shopWeeks = new Dictionary<string, WeekMask> { ["(O)901"] = WeekMask.Of(3) };
         var list = MadeSources.Recipes(rows, Objects, shopWeeks, snapshot).ToList();
@@ -2343,6 +2506,10 @@ public class ObtainabilityMadeTests
         Assert.Equal("Farming", craft.Conditions.Skill);
         Assert.Equal(3, craft.Conditions.SkillLevel);
         Assert.DoesNotContain(list, x => x.ItemId == "(O)903");   // melon is not obtainable in spring and nothing is stored
+        Assert.False(list.Single(x => x.ItemId == "(O)901").Source.Conditions.Unresolved);   // "none", but a shop teaches it
+        Assert.True(list.Single(x => x.ItemId == "(O)904").Source.Conditions.Unresolved);    // "none" and no shop: taught somewhere unknown
+        Assert.Equal(Reliability.Chance, list.Single(x => x.ItemId == "(O)905").Source.Reliability);
+        Assert.Equal(Reliability.Chance, list.Single(x => x.ItemId == "(O)906").Source.Reliability);
     }
 
     [Fact]
@@ -2397,29 +2564,38 @@ Expected: build FAILS, `MachineRow` not found.
 
 ```csharp
 
-/// <summary>One output of a machine rule: an id or item query, "DROP_IN", or an OutputMethod (code).</summary>
-public sealed record MachineOutput(string? ItemId, string? Condition, string? OutputMethod);
+/// <summary>One output of a machine rule: an id or item query, "DROP_IN", or an OutputMethod (code).
+/// <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
+public sealed record MachineOutput(string? ItemId, string? Condition, string? OutputMethod, bool IsRandom = false);
 
 /// <summary>One Data/Machines output rule x trigger. No required item and no tags means the machine
-/// needs no input (a Bee House, a Mushroom Log). Ready time: DaysUntilReady when 0 or more, else minutes.</summary>
+/// needs no input (a Bee House, a Mushroom Log). Ready time: DaysUntilReady when 0 or more, else minutes.
+/// <see cref="UseFirstValidOutput"/> is MachineOutputRule.UseFirstValidOutput: outputs are tried in order,
+/// not picked at random.</summary>
 public sealed record MachineRow(
     string MachineId, string? RequiredItemId, IReadOnlyList<string> RequiredTags, string? TriggerCondition,
-    IReadOnlyList<MachineOutput> Outputs, int MinutesUntilReady, int DaysUntilReady);
+    IReadOnlyList<MachineOutput> Outputs, int MinutesUntilReady, int DaysUntilReady, bool UseFirstValidOutput = false);
 
 /// <summary>A cooking or crafting recipe. Ingredients are qualified ids or negative category numbers.
-/// <see cref="Unlock"/> is the raw unlock field ("default", "none", "Farming 3", "s Farming 3", "f Robin 7", "l 4").</summary>
-public sealed record RecipeRow(string Name, IReadOnlyList<string> Ingredients, string OutputId, string Unlock, bool IsCooking);
+/// <see cref="Unlock"/> is the raw unlock field ("default", "none", "Farming 3", "s Farming 3", "f Robin 7", "l 4").
+/// <see cref="AlternateOutputIds"/> are the other outputs of a recipe that picks one at random (CraftingRecipe.cs 57, 127-131).</summary>
+public sealed record RecipeRow(
+    string Name, IReadOnlyList<string> Ingredients, string OutputId, string Unlock, bool IsCooking,
+    IReadOnlyList<string>? AlternateOutputIds = null);
 
 public sealed record AnimalProduce(string ItemId, string? Condition, int MinimumFriendship);
 
-public sealed record AnimalRow(string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce);
+/// <summary>One Data/FarmAnimals row. <see cref="DeluxeMinimumFriendship"/> is FarmAnimalData.DeluxeProduceMinimumFriendship.</summary>
+public sealed record AnimalRow(
+    string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce,
+    int DeluxeMinimumFriendship = 200);
 
-public sealed record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition);
+public sealed record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition, bool IsRandom = false);
 
 /// <summary>One Data/FishPondData entry. A fish lives under the matching entry with the lowest Precedence.</summary>
 public sealed record PondRow(string Id, IReadOnlyList<string> RequiredTags, int Precedence, IReadOnlyList<PondProduct> Products);
 
-public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition);
+public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition, bool IsRandom = false);
 
 /// <summary>One Data/Objects GeodeDrops entry for a geode item.</summary>
 public sealed record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition);
@@ -2443,7 +2619,8 @@ public static class MadeSources
     private const string DropIn = "DROP_IN";
     private const string SkillUnlockPrefix = "s";
     private const string GeodeOpener = "shop:Blacksmith";
-    private static readonly string[] NoUnlockWords = { "default", "none", "null", "" };
+    private static readonly string[] KnownFromStartWords = { "default", "" };
+    private static readonly string[] TaughtElsewhereWords = { "none", "null" };
     private static readonly string[] Skills = { "Farming", "Fishing", "Foraging", "Mining", "Combat", "Luck" };
 
     /// <summary>Code-only default geode contents (Utility.cs getTreasureFromGeode 6397-6647).</summary>
@@ -2481,14 +2658,14 @@ public static class MadeSources
             List<string> inputs = noInput ? new List<string>() : Inputs(rule, objects).ToList();
             if (!noInput && inputs.Count == 0) continue;
             int days = ProcessingDays(rule.MinutesUntilReady, rule.DaysUntilReady);
-            bool several = rule.Outputs.Count > 1;
+            bool several = rule.Outputs.Count > 1 && !rule.UseFirstValidOutput;
             string inputText = noInput ? "no input" : rule.RequiredItemId ?? string.Join(" ", rule.RequiredTags);
 
             foreach (MachineOutput output in rule.Outputs)
             {
                 ConditionReading outCond = ConditionSeasons.Read(output.Condition, festivals);
                 WeekMask gate = trigger.Weeks & outCond.Weeks;
-                bool luck = several || trigger.Chance || outCond.Chance;
+                bool luck = several || output.IsRandom || trigger.Chance || outCond.Chance;
                 ObtainConditions conditions = ConditionSeasons.Apply(ConditionSeasons.Apply(
                     ObtainConditions.None with { Requires = new[] { "machine:" + rule.MachineId } }, trigger), outCond);
                 string detail = $"{rule.MachineId} from {inputText}";
@@ -2540,14 +2717,20 @@ public static class MadeSources
                 dep &= d;
                 any &= a;
             }
-            if (recipeShopWeeks.TryGetValue(recipe.OutputId, out WeekMask taught))
+            bool taughtByShop = recipeShopWeeks.TryGetValue(recipe.OutputId, out WeekMask taught);
+            if (taughtByShop)
             {
                 dep &= taught.FromWeekOnward();
                 any &= taught.FromWeekOnward();
             }
+            var outputs = new List<string> { recipe.OutputId };
+            if (recipe.AlternateOutputIds != null) outputs.AddRange(recipe.AlternateOutputIds);
+            if (outputs.Count > 1) dep = WeekMask.None;   // one output picked at random
             SourceKind kind = recipe.IsCooking ? SourceKind.Cooking : SourceKind.Crafting;
-            foreach (ObtainSource s in SourcePair.Of(kind, dep, any, UnlockConditions(recipe), $"recipe {recipe.Name}"))
-                yield return (recipe.OutputId, s);
+            ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
+            foreach (string output in outputs)
+                foreach (ObtainSource s in SourcePair.Of(kind, dep, any, conditions, $"recipe {recipe.Name}"))
+                    yield return (output, s);
         }
     }
 
@@ -2563,11 +2746,14 @@ public static class MadeSources
                 ConditionReading reading = ConditionSeasons.Read(produce.Condition, festivals);
                 if (reading.Weeks.IsEmpty) continue;
                 var extra = new List<string>(requires);
-                if (produce.MinimumFriendship > 0) extra.Add($"friendship:{animal.AnimalId} {produce.MinimumFriendship}");
+                int friendship = Math.Max(produce.MinimumFriendship, deluxe ? animal.DeluxeMinimumFriendship : 0);
+                if (friendship > 0) extra.Add($"friendship:{animal.AnimalId} {friendship}");
                 if (deluxe) extra.Add("deluxe produce");
+                // Several produce entries in one list: the animal produces one of them.
+                bool picked = (deluxe ? animal.DeluxeProduce.Count : animal.Produce.Count) > 1;
                 ObtainConditions conditions = ConditionSeasons.Apply(ObtainConditions.None with { Requires = extra }, reading);
                 yield return (produce.ItemId, new ObtainSource(SourceKind.Animal, reading.Weeks,
-                    reading.Chance ? Reliability.Chance : Reliability.Dependable, conditions, $"{animal.AnimalId} produce"));
+                    reading.Chance || picked ? Reliability.Chance : Reliability.Dependable, conditions, $"{animal.AnimalId} produce"));
             }
         }
     }
@@ -2602,7 +2788,7 @@ public static class MadeSources
             foreach (PondProduct product in pond.Products)
             {
                 ConditionReading reading = ConditionSeasons.Read(product.Condition, festivals);
-                bool luck = product.Chance < 1.0 || reading.Chance;
+                bool luck = product.Chance < 1.0 || reading.Chance || product.IsRandom;
                 ObtainConditions conditions = ConditionSeasons.Apply(ObtainConditions.None with
                 {
                     Requires = new[] { "building:Fish Pond", $"pond population {product.RequiredPopulation}" },
@@ -2624,7 +2810,7 @@ public static class MadeSources
             WeekMask weeks = reading.Weeks & (tap.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All);
             if (weeks.IsEmpty) continue;
             var template = new ObtainSource(SourceKind.Tapper, weeks,
-                tap.Chance < 1.0 || reading.Chance ? Reliability.Chance : Reliability.Dependable,
+                tap.Chance < 1.0 || reading.Chance || tap.IsRandom ? Reliability.Chance : Reliability.Dependable,
                 ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "crafting:Tapper", "tree:" + tap.TreeId } }, reading),
                 $"tapper on tree {tap.TreeId}, {tap.DaysUntilReady} days");
             foreach (var emitted in ItemQueries.Emit(tap.ItemId, objects, template))
@@ -2682,12 +2868,20 @@ public static class MadeSources
             ? !item.ContextTags.Contains(tag.Substring(1))
             : item.ContextTags.Contains(tag));
 
-    private static ObtainConditions UnlockConditions(RecipeRow recipe)
+    private static ObtainConditions UnlockConditions(RecipeRow recipe, bool taughtByShop)
     {
         string[] tokens = recipe.Unlock.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var requires = new List<string> { "recipe:" + recipe.Name };
-        if (tokens.Length == 0 || NoUnlockWords.Contains(tokens[0].ToLowerInvariant()))
+        string first = tokens.Length == 0 ? "" : tokens[0].ToLowerInvariant();
+        if (KnownFromStartWords.Contains(first))
             return ObtainConditions.None with { Requires = requires };
+        if (TaughtElsewhereWords.Contains(first))
+        {
+            // No automatic unlock: a shop, a letter, a friend or an event teaches it. A shop the model
+            // read is enough; otherwise the week the player learns it is unknown.
+            requires.Add(taughtByShop ? "unlock:shop" : "unlock:none (taught some other way)");
+            return ObtainConditions.None with { Requires = requires, Unresolved = !taughtByShop };
+        }
         int start = tokens[0] == SkillUnlockPrefix ? 1 : 0;
         if (tokens.Length > start + 1 && Skills.Contains(tokens[start]) && int.TryParse(tokens[start + 1], out int level))
             return ObtainConditions.None with { Skill = tokens[start], SkillLevel = level, Requires = requires };
@@ -2702,6 +2896,7 @@ Notes for the implementer, checked against the tests:
 - Wine: apple Fall (9-12) and melon Summer (5-8), 10000 minutes is 7 days, so each week moves one later: 6-9 and 10-13, together 6-13. `FLAVORED_ITEM Wine DROP_IN_ID` resolves to `(O)348`.
 - DROP_IN carp in week 9 with one day: days 57-63 come out on days 58-64, weeks 9-10.
 - The pond "Generic" matches carp but has precedence 10; "Carp" has 0 and wins, so only its products appear. Carp in week 5 carries forward: 5-16.
+- Recipes: "Taught Elsewhere" has unlock "none" and no shop row, so it is unresolved; "Either Output" picks (O)905 or (O)906, so both are chance with parsnip's weeks 1-4.
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
@@ -2734,7 +2929,8 @@ git push origin story
 
 Every derived rule only ever gains weeks when its inputs gain weeks (unions, intersections, shifts and
 "from the first week on" are all monotone), and there are finitely many item-week bits, so the passes
-always settle. `MaxPasses` is a guard against a future non-monotone rule, far above any real chain; the
+always settle. Settling compares each item's source count as well as its weeks, so a pass that only adds
+a source (a new chance route in weeks already covered) still gets one more pass. `MaxPasses` is a guard against a future non-monotone rule, far above any real chain; the
 caller logs a warning if it is ever hit.
 
 - [ ] **Step 1: Write the failing tests**
@@ -2904,12 +3100,13 @@ public static class ObtainabilityBuilder
         direct.AddRange(MadeSources.Tappers(inputs.TapItems, o, f));
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
 
-        ObtainabilityModel current = Assemble(direct, out _);
+        ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
         for (int pass = 1; pass <= MaxPasses; pass++)
         {
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
-            all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, f));
+            all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
+            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f));
             all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current));
             all.AddRange(MadeSources.Ponds(inputs.Ponds, o, current, f));
@@ -2917,8 +3114,8 @@ public static class ObtainabilityBuilder
             ObtainabilityModel next = Assemble(all, out List<string> unresolved);
             if (SameWeeks(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
             current = next;
+            lastUnresolved = unresolved;   // from the last full pass, derived sources included
         }
-        Assemble(direct, out List<string> lastUnresolved);
         return new ObtainabilityBuild(current, MaxPasses, true, lastUnresolved);
     }
 
@@ -2944,7 +3141,8 @@ public static class ObtainabilityBuilder
     {
         if (a.Count != b.Count) return false;
         foreach (string id in b.ItemIds)
-            if (a.Weeks(id, ObtainFilter.Any) != b.Weeks(id, ObtainFilter.Any)
+            if (a.Sources(id).Count != b.Sources(id).Count
+                || a.Weeks(id, ObtainFilter.Any) != b.Weeks(id, ObtainFilter.Any)
                 || a.Weeks(id, ObtainFilter.DependableOnly) != b.Weeks(id, ObtainFilter.DependableOnly))
                 return false;
         return true;
@@ -3267,8 +3465,8 @@ namespace TheLongestYear.Loop
                     objects[id] = new ObjInfo(id, o.Name ?? "", o.Category, o.Price, tags, o.ExcludeFromRandomSale);
                     if (o.GeodeDropsDefaultItems) defaultGeodes.Add(id);
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
-                        foreach (string item in Entries(drop?.ItemId, drop?.RandomItemId))
-                            geodeDrops.Add(new GeodeDropRow(id, item, drop.Chance, drop.Condition));
+                        foreach ((string item, _) in Entries(drop?.ItemId, drop?.RandomItemId))
+                            geodeDrops.Add(new GeodeDropRow(id, item, drop.Chance, drop.Condition));   // geode contents are chance already
                 }
             });
 
@@ -3298,14 +3496,14 @@ namespace TheLongestYear.Loop
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
-                        foreach (string item in Entries(f?.ItemId, f?.RandomItemId))
-                            forage.Add(new LocationSpawn(kv.Key, item, MapSeason(f.Season), f.Condition, f.Chance, 0, false, 0));
+                        foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
+                            forage.Add(new LocationSpawn(kv.Key, item, MapSeason(f.Season), f.Condition, f.Chance, 0, false, 0, random));
                     foreach (SpawnFishData f in loc.Fish ?? new List<SpawnFishData>())
-                        foreach (string item in Entries(f?.ItemId, f?.RandomItemId))
+                        foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
                             fish.Add(new LocationSpawn(kv.Key, item, MapSeason(f.Season), f.Condition, f.Chance,
-                                Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel)); // CatchLimit defaults to -1
+                                Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random)); // CatchLimit defaults to -1
                     foreach (ArtifactSpotDropData a in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
-                        foreach (string item in Entries(a?.ItemId, a?.RandomItemId))
+                        foreach ((string item, _) in Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
                             artifactSpots.Add(new ArtifactSpotRow(kv.Key, item, a.Condition, a.Chance));
                 }
             });
@@ -3352,8 +3550,8 @@ namespace TheLongestYear.Loop
                     if (kv.Value == null) continue;
                     var fruit = new List<FruitRow>();
                     foreach (FruitTreeFruitData f in kv.Value.Fruit ?? new List<FruitTreeFruitData>())
-                        foreach (string item in Entries(f?.ItemId, f?.RandomItemId))
-                            fruit.Add(new FruitRow(BundleParsing.NormalizeItemId(item), MapSeason(f.Season), f.Chance, f.Condition));
+                        foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
+                            fruit.Add(new FruitRow(item, MapSeason(f.Season), f.Chance, f.Condition, random));   // may be a query; Core emits it
                     fruitTrees.Add(new FruitTreeRow(BundleParsing.NormalizeItemId(kv.Key), MapSeasons(kv.Value.Seasons), fruit));
                 }
             });
@@ -3362,8 +3560,9 @@ namespace TheLongestYear.Loop
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
                     foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
-                        foreach (string entry in Entries(item?.ItemId, item?.RandomItemId))
-                            shops.Add(new ShopRow(kv.Key, entry, item.Condition, item.IsRecipe));
+                        foreach ((string entry, bool random) in Entries(item?.ItemId, item?.RandomItemId))
+                            shops.Add(new ShopRow(kv.Key, entry, item.Condition, item.IsRecipe, random,
+                                string.IsNullOrWhiteSpace(item.TradeItemId) ? null : item.TradeItemId));
             });
 
             Section("Machines", () =>
@@ -3376,17 +3575,23 @@ namespace TheLongestYear.Loop
                         {
                             if (o == null) continue;
                             if (!string.IsNullOrWhiteSpace(o.OutputMethod)) { outputs.Add(new MachineOutput(null, o.Condition, o.OutputMethod)); continue; }
-                            foreach (string entry in Entries(o.ItemId, o.RandomItemId))
-                                outputs.Add(new MachineOutput(entry, o.Condition, null));
+                            foreach ((string entry, bool random) in Entries(o.ItemId, o.RandomItemId))
+                                outputs.Add(new MachineOutput(entry, o.Condition, null, random));
                         }
                         if (outputs.Count == 0) continue;
-                        var triggers = rule.Triggers ?? new List<MachineOutputTriggerRule>();
-                        if (triggers.Count == 0) triggers = new List<MachineOutputTriggerRule> { new MachineOutputTriggerRule() };
-                        foreach (MachineOutputTriggerRule t in triggers)
+                        // A rule with no triggers never fires; nothing is synthesized for it.
+                        foreach (MachineOutputTriggerRule t in rule.Triggers ?? new List<MachineOutputTriggerRule>())
+                        {
+                            if (t == null || t.Trigger == MachineOutputTrigger.None) continue;
+                            bool noInput = string.IsNullOrEmpty(t.RequiredItemId) && (t.RequiredTags == null || t.RequiredTags.Count == 0);
+                            // "Any item placed in" has no id or tags to read; skipping it keeps it from
+                            // reading as a machine that needs no input (a known limitation).
+                            if (noInput && t.Trigger.HasFlag(MachineOutputTrigger.ItemPlacedInMachine)) continue;
                             machines.Add(new MachineRow(kv.Key,
-                                string.IsNullOrEmpty(t?.RequiredItemId) ? null : t.RequiredItemId,
-                                (IReadOnlyList<string>)(t?.RequiredTags ?? new List<string>()),
-                                t?.Condition, outputs, rule.MinutesUntilReady, rule.DaysUntilReady));
+                                string.IsNullOrEmpty(t.RequiredItemId) ? null : t.RequiredItemId,
+                                (IReadOnlyList<string>)(t.RequiredTags ?? new List<string>()),
+                                t.Condition, outputs, rule.MinutesUntilReady, rule.DaysUntilReady, rule.UseFirstValidOutput));
+                        }
                     }
             });
 
@@ -3409,7 +3614,7 @@ namespace TheLongestYear.Loop
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
                     animals.Add(new AnimalRow(kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
-                        a.PurchasePrice, Produce(a.ProduceItemIds), Produce(a.DeluxeProduceItemIds)));
+                        a.PurchasePrice, Produce(a.ProduceItemIds), Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship));
                 }
             });
 
@@ -3420,8 +3625,8 @@ namespace TheLongestYear.Loop
                     if (pond == null) continue;
                     var products = new List<PondProduct>();
                     foreach (FishPondReward reward in pond.ProducedItems ?? new List<FishPondReward>())
-                        foreach (string item in Entries(reward?.ItemId, reward?.RandomItemId))
-                            products.Add(new PondProduct(item, reward.RequiredPopulation, reward.Chance, reward.Condition));
+                        foreach ((string item, bool random) in Entries(reward?.ItemId, reward?.RandomItemId))
+                            products.Add(new PondProduct(item, reward.RequiredPopulation, reward.Chance, reward.Condition, random));
                     ponds.Add(new PondRow(pond.Id ?? "", (IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), pond.Precedence, products));
                 }
             });
@@ -3430,9 +3635,9 @@ namespace TheLongestYear.Loop
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
                     foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
-                        foreach (string item in Entries(tap?.ItemId, tap?.RandomItemId))
+                        foreach ((string item, bool random) in Entries(tap?.ItemId, tap?.RandomItemId))
                             if (item != PreviousOutputTapId)
-                                taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, MapSeason(tap.Season), tap.Chance, tap.Condition));
+                                taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, MapSeason(tap.Season), tap.Chance, tap.Condition, random));
             });
 
             Section("GarbageCans", () =>
@@ -3441,7 +3646,7 @@ namespace TheLongestYear.Loop
                 void AddAll(string can, List<GarbageCanItemData> items)
                 {
                     foreach (GarbageCanItemData g in items ?? new List<GarbageCanItemData>())
-                        foreach (string item in Entries(g?.ItemId, g?.RandomItemId))
+                        foreach ((string item, _) in Entries(g?.ItemId, g?.RandomItemId))   // garbage is chance already
                             garbage.Add(new GarbageRow(can, item, g.Condition));
                 }
                 AddAll(AnyCan, data?.BeforeAll);
@@ -3477,11 +3682,16 @@ namespace TheLongestYear.Loop
             var ingredients = new List<string>();
             for (int i = 0; i + 1 < ingredientPairs.Length; i += 2)
                 ingredients.Add(int.TryParse(ingredientPairs[i], out int n) && n < 0 ? ingredientPairs[i] : BundleParsing.NormalizeItemId(ingredientPairs[i]));
-            string output = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-            if (string.IsNullOrEmpty(output)) return null;
+            // The output field is "id count id count ..."; with several ids the game picks one at random
+            // each craft (CraftingRecipe.cs 127-131, 192).
+            string[] outputPairs = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries);
             bool bigCraftable = !cooking && string.Equals(fields[CraftingBigCraftableField].Trim(), "true", StringComparison.OrdinalIgnoreCase);
-            string outputId = bigCraftable && !output.StartsWith("(", StringComparison.Ordinal) ? "(BC)" + output : BundleParsing.NormalizeItemId(output);
-            return new RecipeRow(name, ingredients, outputId, fields[unlockField].Trim(), cooking);
+            var outputIds = new List<string>();
+            for (int i = 0; i < outputPairs.Length; i += 2)
+                outputIds.Add(bigCraftable && !outputPairs[i].StartsWith("(", StringComparison.Ordinal) ? "(BC)" + outputPairs[i] : BundleParsing.NormalizeItemId(outputPairs[i]));
+            if (outputIds.Count == 0) return null;
+            return new RecipeRow(name, ingredients, outputIds[0], fields[unlockField].Trim(), cooking,
+                outputIds.Count > 1 ? outputIds.Skip(1).ToList() : null);
         }
 
         private static IReadOnlyList<AnimalProduce> Produce(List<FarmAnimalProduce> produce)
@@ -3489,13 +3699,19 @@ namespace TheLongestYear.Loop
                 .Where(p => !string.IsNullOrEmpty(p?.ItemId))
                 .Select(p => new AnimalProduce(BundleParsing.NormalizeItemId(p.ItemId), p.Condition, p.MinimumFriendship)).ToList();
 
-        /// <summary>The raw ItemId and every RandomItemId of a spawn entry, ids and item queries alike.
-        /// A row with only RandomItemId is still read.</summary>
-        private static IEnumerable<string> Entries(string itemId, List<string> randomItemIds)
+        /// <summary>What a spawn entry can give, ids and item queries alike. A non-empty RandomItemId replaces
+        /// ItemId (ItemQueryResolver.cs 804-817) and one entry is picked, so each is random when there are
+        /// several; otherwise the ItemId is the one fixed result.</summary>
+        private static IEnumerable<(string Id, bool IsRandom)> Entries(string itemId, List<string> randomItemIds)
         {
-            if (!string.IsNullOrWhiteSpace(itemId)) yield return itemId.Trim();
-            foreach (string id in randomItemIds ?? new List<string>())
-                if (!string.IsNullOrWhiteSpace(id)) yield return id.Trim();
+            List<string> random = (randomItemIds ?? new List<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).ToList();
+            if (random.Count > 0)
+            {
+                foreach (string id in random) yield return (id, random.Count > 1);
+                yield break;
+            }
+            if (!string.IsNullOrWhiteSpace(itemId)) yield return (itemId.Trim(), false);
         }
 
         private static string Field(string[] fields, int index) => index < fields.Length ? fields[index] : "";
@@ -3509,7 +3725,7 @@ namespace TheLongestYear.Loop
 }
 ```
 
-If a property above does not compile, open the type under `C:\Users\Jeff\Documents\Projects\Stardee Valoo\decompiled\decompiled\StardewValley.GameData\` and use the name it declares; do not guess. Crop and fruit harvest ids are normalized here because Core emits them directly; everything else goes through `ItemQueries`.
+If a property above does not compile, open the type under `C:\Users\Jeff\Documents\Projects\Stardee Valoo\decompiled\decompiled\StardewValley.GameData\` and use the name it declares; do not guess. Crop ids are normalized here because Core emits them directly; everything else, fruit included, goes through `ItemQueries`. `Entries` follows the game: a non-empty `RandomItemId` list replaces `ItemId`. Machine rules with no triggers are skipped, never given a made-up trigger.
 
 - [ ] **Step 6: Add the two new blind files to the guard**
 

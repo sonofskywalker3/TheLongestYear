@@ -133,6 +133,23 @@ see what it comes up with and compare to what we've already determined."
 - **Nothing wires in.** No board, gate, goal, pacing, sabotage or save state reads the new model, so
   boards are unaffected by construction.
 
+## Known limitations (phase 1)
+
+The model reads these loosely on purpose; the comparison report shows where they matter before
+phase 2 decides whether any needs real handling.
+
+- **Machine rule order.** The game uses the first rule that applies to an input; the model counts
+  every rule that could, so a later rule's outputs can look reachable when an earlier rule always wins.
+- **Per-item conditions.** `PerItemCondition` on shop and spawn rows is not read.
+- **Raccoon seeds.** Fishing treasure's raccoon seed depends on the season it is caught in and is
+  listed as an unresolved source, not a fact.
+- **Fish pond growth.** A pond is counted from the week its fish is had; the days it takes to reach a
+  product's population are not.
+- **Magic Bait.** Rows that need Magic Bait are flagged, not routed through the bait's own weeks.
+- **Fishing depth, `DAY_OF_WEEK`, negated weather.** Not narrowed; they read as "any week".
+- **Machines that take any item.** A trigger with no required item or tags on item placement is
+  skipped; an output-collected trigger reads as needing no input.
+
 ## Testing
 
 - Unit tests in Core on plain records: week masks, crop maturity against season end, season
