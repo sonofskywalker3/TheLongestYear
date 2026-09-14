@@ -6,6 +6,25 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Closing the post-loop shrine freezes the game for about 3 seconds (future patch)
+Jeff, 2026-09-14: closing the rewind's upgrade window hangs for a couple of seconds, "not painful,
+just jarring until you get used to it, because any other window closes instantly." Asked: can the
+work happen in the background, or while the player is still in the upgrade window, then be applied
+on close?
+
+- **Measured from the log:** `FinalizeReset (shrine closed)` at 11:44:32, `Loop reset complete` at
+  11:44:35 (and 11:16:37 to 11:16:40 on another run). The window covers `WorldResetService.PerformReset`
+  (world reset, `loadForNewGame`, board generation) and the forced full save.
+- **Not a plain background thread:** the world reset and the save touch game state that is only safe
+  on the main thread.
+- **Plausible route:** precompute the pure part (the bundle engine's board for the next loop, which
+  depends only on the seed loop, the hold choice already made before the shrine, and the difficulty
+  stamp) while the shrine is open, then apply it on close. Needs a timing breakdown first to see
+  which part actually costs the seconds.
+- **Will grow:** the planned runtime item obtainability model (spec pending, 2026-09-14) adds build
+  work; keep it out of the reset path or cache it per session.
+
+
 ### The shrine's foresight is seeded on the old run during a rewind (CHECKED 2026-09-14: not player-reachable)
 **Result, 2026-09-14 (live, throwaway Clone save, Run 164 to 165):** the rewind never opens the
 foresight. `tly_failreset`, every beat skipped, `tly_answer 1` logged `Opened Junimo Shrine` with
