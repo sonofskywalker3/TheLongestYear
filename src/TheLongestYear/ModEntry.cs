@@ -3404,6 +3404,36 @@ namespace TheLongestYear
                 this.Monitor.Log("Usage: tly_obtain <itemId> | tly_obtain compare [fileName]", LogLevel.Info);
                 return;
             }
+            if (args[0] == "compare")
+            {
+                if (_availability == null || _enginePools == null)
+                {
+                    this.Monitor.Log("tly_obtain compare: the existing item model is not built yet.", LogLevel.Warn);
+                    return;
+                }
+                TheLongestYear.Core.ItemPools pools = _enginePools;
+                IEnumerable<string> poolIds = new[]
+                    {
+                        pools.Crops, pools.Fish, pools.CrabPot, pools.Forage, pools.MonsterDrops, pools.Metals,
+                        pools.ArtisanGoods, pools.Artifacts, pools.Books, pools.Saplings, pools.GeodeMinerals,
+                        pools.Cooking, pools.TapperGoods, pools.WinterOnly,
+                    }
+                    .SelectMany(list => list).Select(item => item.ItemId);
+                var rows = TheLongestYear.Core.ObtainabilityComparison.Compare(
+                    _availability.KnownIds.Concat(poolIds),
+                    id => _availability.IsPlaced(id),
+                    id => { var a = _availability.For(id); return (a.PacingWeek, a.HardWeekOrPacing, a.Basis); },
+                    _obtainability);
+                string report = TheLongestYear.Core.ObtainabilityComparison.Render(
+                    rows, _obtainability, _obtainabilityUnresolved, id => ItemRegistry.GetData(id)?.DisplayName,
+                    this.ModManifest.Version.ToString());
+                string fileName = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : "obtainability-compare.md";
+                string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
+                System.IO.File.WriteAllText(path, report);
+                string counts = string.Join(", ", rows.GroupBy(r => r.Verdict).Select(g => $"{g.Key} {g.Count()}"));
+                this.Monitor.Log($"tly_obtain compare: wrote {path} ({rows.Count} items: {counts}; {_obtainabilityUnresolved.Count} unresolved).", LogLevel.Info);
+                return;
+            }
             this.Monitor.Log(
                 TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName),
                 LogLevel.Info);
