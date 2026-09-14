@@ -1777,9 +1777,19 @@ namespace TheLongestYear
                 return;
             }
 
+            DifficultyLever difficultyLever = null;
             gmcm.Register(this.ModManifest,
-                reset: () => _config = new GameplayConfig(),
-                save: () => this.Helper.WriteConfig(_config));
+                reset: () =>
+                {
+                    difficultyLever?.Clear();
+                    _config = new GameplayConfig();
+                },
+                save: () =>
+                {
+                    difficultyLever?.Clear();
+                    this.Helper.WriteConfig(_config);
+                });
+            difficultyLever = new DifficultyLever(this.Helper, gmcm, this.ModManifest, this.Monitor);
 
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.section"));
             gmcm.AddParagraph(this.ModManifest,
@@ -1878,18 +1888,28 @@ namespace TheLongestYear
                 min: 0, max: 5000, interval: 100);
 
             // ---- Difficulty modifiers (spec 2026-08-26) ----
-            // Ten independent dials, no overall tier. Everything defaults to Normal, which is the
-            // shipping balance, and a change lands at the NEXT reset because WorldResetService
-            // stamps the resolved profile onto the save and every consumer reads that stamp.
+            // Ten independent dials. Everything defaults to Normal, which is the shipping balance,
+            // and a change lands at the NEXT reset because WorldResetService stamps the resolved
+            // profile onto the save and every consumer reads that stamp. The overall lever above
+            // them only sets all ten at once (DifficultyLever); nothing reads it for gameplay.
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.difficulty.section"));
             gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.difficulty.blurb"));
+
+            gmcm.AddTextOption(this.ModManifest,
+                getValue: () => (difficultyLever.Pending ?? _config.Difficulty.Overall).ToString(),
+                setValue: v => _config.Difficulty.Overall = DifficultySteps.Parse(v),
+                name: () => Strings.Get("gmcm.difficulty.overall.name"),
+                tooltip: () => Strings.Get("gmcm.difficulty.overall.tooltip"),
+                allowedValues: DifficultySteps.AllNames,
+                formatAllowedValue: FormatDifficultyStep,
+                fieldId: DifficultyLever.FieldId);
 
             void AddDifficultyOption(
                 Func<DifficultyStep> get, Action<DifficultyStep> set,
                 Func<string> name, Func<string> tooltip)
             {
                 gmcm.AddTextOption(this.ModManifest,
-                    getValue: () => get().ToString(),
+                    getValue: () => (difficultyLever.Pending ?? get()).ToString(),
                     setValue: v => set(DifficultySteps.Parse(v)),
                     name: name,
                     tooltip: tooltip,
