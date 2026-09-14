@@ -80,7 +80,8 @@ namespace TheLongestYear.Loop
             if (Enabled(SabotageKind.Blight))
             {
                 Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear, SabotageKind.Blight);
-                if (SabotageSchedule.StrikesTonight(SabotageKind.Blight, Run, season, day, rng))
+                if (SabotageSchedule.StrikesTonight(SabotageKind.Blight, Run, season, day, rng)
+                    | TakeArmed(SabotageKind.Blight, season, day, week, dayOfYear))
                 {
                     // The ward covers crops in the ground, not chests (Jeff, 2026-09-09).
                     int crops = CropsWarded(season) ? 0 : BlightPass.CountFor(season);
@@ -93,7 +94,8 @@ namespace TheLongestYear.Loop
             if (Enabled(SabotageKind.Reversion))
             {
                 Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear, SabotageKind.Reversion);
-                if (SabotageSchedule.StrikesTonight(SabotageKind.Reversion, Run, season, day, rng)
+                if ((SabotageSchedule.StrikesTonight(SabotageKind.Reversion, Run, season, day, rng)
+                     | TakeArmed(SabotageKind.Reversion, season, day, week, dayOfYear))
                     && Revert(rng))
                     SabotageSchedule.RecordStrike(SabotageKind.Reversion, Run, week, dayOfYear);
             }
@@ -101,10 +103,55 @@ namespace TheLongestYear.Loop
             if (Enabled(SabotageKind.Tampering))
             {
                 Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear, SabotageKind.Tampering);
-                if (SabotageSchedule.StrikesTonight(SabotageKind.Tampering, Run, season, day, rng)
+                if ((SabotageSchedule.StrikesTonight(SabotageKind.Tampering, Run, season, day, rng)
+                     | TakeArmed(SabotageKind.Tampering, season, day, week, dayOfYear))
                     && Tamper(rng, dayOfYear))
                     SabotageSchedule.RecordStrike(SabotageKind.Tampering, Run, week, dayOfYear);
             }
+        }
+
+        // ------------------------------------------------------------------ arming (debug)
+
+        /// <summary>Fronts a playtest has armed to strike on the next real night.</summary>
+        private readonly HashSet<SabotageKind> _armed = new HashSet<SabotageKind>();
+
+        /// <summary>Debug: make <paramref name="kind"/> strike on tonight's real roll, so a playtest
+        /// sleeps into it exactly as a player would: the night pass, the caps, the strike record, the
+        /// morning HUD lines and the first-strike letter are all the real ones. Only the dice are
+        /// skipped. <c>tly_sabotage blight|revert|tamper</c> strike at once instead and skip the night
+        /// pass, which is why a forced blight showed no morning (Jeff, 2026-09-14: "stage me before
+        /// the sleep so that it will happen like I was really playing").
+        ///
+        /// Clears any report still waiting from a forced strike, so the morning shows tonight alone.
+        /// In memory only: a relaunch disarms.</summary>
+        public string Arm(SabotageKind kind)
+        {
+            int cleared = Run.PendingSabotageReports?.Count ?? 0;
+            Run.PendingSabotageReports?.Clear();
+            _armed.Add(kind);
+            string closed = SabotageSchedule.IsOpen(kind, Run.Season)
+                ? ""
+                : $" WARNING: {kind} is not open in {Run.Season}, so tonight will not strike.";
+            string off = Enabled(kind) ? "" : $" WARNING: {kind} is switched off in the config.";
+            return $"Darkness: {kind} armed for tonight's roll ({Run.Season} {Run.DayOfMonth}); cleared {cleared} waiting report(s).{closed}{off}";
+        }
+
+        /// <summary>True when <paramref name="kind"/> was armed and tonight is a night it could strike
+        /// at all (open this season, not a quiet day, under its caps). Consumes the arm either way.
+        /// Called alongside the real roll with a non-short-circuit OR, so the roll's random draw still
+        /// happens and later nights roll exactly as they would have.</summary>
+        private bool TakeArmed(SabotageKind kind, CoreSeason season, int day, int week, int dayOfYear)
+        {
+            if (!_armed.Remove(kind)) return false;
+            bool eligible = SabotageSchedule.IsOpen(kind, season)
+                            && !SabotageSchedule.IsQuietDay(kind, day)
+                            && SabotageSchedule.WithinCaps(kind, Run, week, dayOfYear);
+            _monitor.Log(
+                eligible
+                    ? $"Darkness: {kind} was armed; striking tonight ({season} {day})."
+                    : $"Darkness: {kind} was armed but cannot strike tonight ({season} {day}: closed, quiet or capped).",
+                LogLevel.Info);
+            return eligible;
         }
 
         private bool CropsWarded(CoreSeason season)
