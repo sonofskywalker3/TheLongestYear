@@ -59,8 +59,9 @@ Built and headless-tested 2026-09-09 (see STATUS.md and
 - **Chest loss:** food spoils, anything else goes missing, stash never. Is 3% of stored units
   (1 to 8 a night) right? Should machines' held output count? (It does not today.)
 - **Circle of Warding:** buy at the shrine (Wards tab, 400/800/1600 JP), place it like a rug,
-  indoors and out; chests must be placeable on it; crops and chests on it must be skipped. The
-  sprite is a generated placeholder; swap in the Wizard's floor circle look.
+  indoors and out; chests must be placeable on it; chests on it must be skipped. It protects
+  CHESTS ONLY since `a1cf283` (2026-09-11); crops are the Ward of the Fields' job. The sprite is a
+  generated placeholder; swap in the Wizard's floor circle look.
 - **Ward of the Fields** (250/300/300): buy one, confirm that season's crops are safe and chests
   are not.
 - **Reversion:** from Fall, about weekly, a slot in an unfinished bundle empties. Redoing it pays

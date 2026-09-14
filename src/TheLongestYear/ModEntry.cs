@@ -1888,19 +1888,30 @@ namespace TheLongestYear
                 }
                 case "fixture":
                 {
-                    // Test scaffolding: ten parsnips in the ground and a chest with food and ore,
+                    // Test scaffolding: ten crops in the ground and a chest with food and ore,
                     // on the farm just below the stash, so blight has something to take.
+                    // IN-SEASON seeds: Crop.newDay kills any out-of-season outdoor crop overnight
+                    // (Crop.cs:794), which would take a Summer test's parsnips before the blight
+                    // report could be told apart from it. Winter has no outdoor crop; blight then
+                    // only has the chest.
                     Farm farm = Game1.getFarm();
                     Microsoft.Xna.Framework.Vector2 door = Utility.PointToVector2(farm.GetMainFarmHouseEntry());
+                    string seed = Game1.season switch
+                    {
+                        StardewValley.Season.Spring => "472",   // Parsnip Seeds
+                        StardewValley.Season.Summer => "487",   // Corn Seeds (Summer and Fall)
+                        StardewValley.Season.Fall => "487",
+                        _ => null,
+                    };
                     int planted = 0;
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < 10 && seed != null; i++)
                     {
                         var tile = new Microsoft.Xna.Framework.Vector2(door.X - 6 + i, door.Y + 6);
                         farm.terrainFeatures.Remove(tile);
                         farm.objects.Remove(tile);
                         var dirt = new StardewValley.TerrainFeatures.HoeDirt(1, farm);
                         farm.terrainFeatures.Add(tile, dirt);
-                        dirt.crop = new Crop("472", (int)tile.X, (int)tile.Y, farm);
+                        dirt.crop = new Crop(seed, (int)tile.X, (int)tile.Y, farm);
                         planted++;
                     }
                     var chestTile = new Microsoft.Xna.Framework.Vector2(door.X - 6, door.Y + 8);
@@ -1909,7 +1920,7 @@ namespace TheLongestYear
                     chest.Items.Add(ItemRegistry.Create("(O)24", 20));
                     chest.Items.Add(ItemRegistry.Create("(O)378", 10));
                     farm.objects.Add(chestTile, chest);
-                    this.Monitor.Log($"Sabotage fixture: {planted} parsnips at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore.", LogLevel.Info);
+                    this.Monitor.Log($"Sabotage fixture: {planted} crop(s) of seed {seed ?? "none (Winter)"} at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore.", LogLevel.Info);
                     break;
                 }
                 case "scene":
