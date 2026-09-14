@@ -6,6 +6,34 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Obtainability phase 2: Jeff reads obtainability-compare.md and rules on the disagreements before anything reads the model
+Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model blind and wrote the
+comparison report (`Mods/TheLongestYear/obtainability-compare.md`, gitignored; summary in STATUS.md:
+NewEarlier 302, NewLater 1, OnlyExisting 18, OnlyNew 598, Agree 151, 40 unresolved). Nothing reads
+the model for gameplay yet. Phase 2 is a separate plan, after Jeff has read the report. Rulings and
+gaps already known:
+
+- **Weeks should mean "start week", not "finish week" (Jeff, 2026-09-14).** The question the model
+  must answer: "the hit lands in week N, the player holds nothing and expected nothing; can they
+  start from nothing in week N and still meet it?" Phase 1 credits a week when the item can come
+  out of the ground or the machine in that week, so a Spring seed bought on Spring 28 and planted in
+  the greenhouse credits week 5 even though a player hit in week 5 cannot buy that seed. Phase 2
+  changes the week meaning so a route counts in week N only when it can be begun in week N (the
+  deadline horizon, the season gate, belongs to the consumer).
+- **Per-difficulty, live-inventory picker for darkness hits (Jeff, 2026-09-14).** Run the model
+  against the player's real state after a hit: easy picks something a stretch but possible, normal
+  something difficult but possible, hard something they are not prepared for but could get with
+  luck, extreme rolls about a 10% chance of something genuinely impossible so the wards matter.
+  Belongs in the darkness rework design, the first consumer.
+- **Headline comparison should be dependable-only.** The Traveling Cart's random stock makes almost
+  every item "any week" by luck (158 of the 302 NewEarlier); dependable weeks mostly agree.
+- **Gaps to close:** mine fish (Stonefish, Ice Pip), Tea Leaves (tea bush), Broccoli (seed source),
+  code-only sources the existing model knows (Adventure Guild rewards, Moss), the `fishingGame`
+  minigame map counted as a real location, `LOCATION_FISH` delegation on farm-variant maps, machine
+  output methods (Cask, Seed Maker, Mushroom Log), the Magic Bait rows.
+- Any later use by board generation must keep existing earliest-week figures identical unless Jeff
+  rules otherwise (byte-identical `tly_genbundles` and `tly_gatecheck` across seeds).
+
 ### Closing the post-loop shrine freezes the game for about 3 seconds (future patch)
 Jeff, 2026-09-14: closing the rewind's upgrade window hangs for a couple of seconds, "not painful,
 just jarring until you get used to it, because any other window closes instantly." Asked: can the

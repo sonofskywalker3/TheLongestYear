@@ -1,10 +1,76 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-14 (story: rewind cutscene in Jeff's review loop)
+**Last updated:** 2026-09-14 evening (story: obtainability model phase 1 built blind and compared)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2161 passing at the 0.18.4 merge
-**Build:** clean; story HEAD deployed to the game; game LEFT RUNNING for Jeff on Spring 28
+**Tests:** 2246 passing (2166 at the plan start plus 80 obtainability tests)
+**Build:** clean; story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway Clone save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+
+## 2026-09-14 evening: item obtainability model, phase 1 (blind build plus comparison)
+
+Spec `docs/superpowers/specs/2026-09-14-item-obtainability-design.md`, plan
+`docs/superpowers/plans/2026-09-14-item-obtainability-phase1.md`, 12 tasks, commits `811621c`..`46524b7`
+plus this note. Built with no reference to the existing item model (guard test
+`ObtainabilityBlindGuardTests` enforces it over 14 files). Nothing reads it for gameplay; `tly_obtain <id>`
+and `tly_obtain compare` are its only readers. Pure rules in `src/TheLongestYear.Core/Obtainability/`,
+one glue class `Loop/GameObtainabilityData.cs` reading the live Data assets at save load,
+`Core/ObtainabilityComparison.cs` (not blind) for the report.
+
+**Live build (my automated run, throwaway save `None_449077472`):**
+`Obtainability model: 1086 items in 173 ms, 7 pass(es), 40 unresolved source(s).` No pass cap, no
+`reading Data/... failed` warning.
+
+**Spot checks (all nine pass):**
+- `(O)775` Glacierfish: Fish, weeks 13-16, Fishing 7 (the live Data/Locations row says 7, the plan's
+  note said 6), catch limit 1, needs Forest. Pass.
+- `(O)147` Herring: Fish at Beach weeks 1-4 and 13-16 dependable, never Summer or Fall; Cart chance all
+  year. Pass (the spec's Spring-and-Winter fish).
+- `(O)348` Wine: Machine from the keg, dependable weeks 2-16 (some fruit is dependable in week 1, plus
+  the 7 keg days); ResortBar shop flagged Ginger Island; Cart chance. Pass.
+- `(O)798` Midnight Squid: Submarine week 15 only, few days, dependable; Beach with Magic Bait chance
+  all year (Magic Bait is a known phase 1 limitation). Pass.
+- `(O)414` Crystal Fruit: Winter forage at six locations, 13-16; Cart chance; Dust Spirit drop chance.
+  Pass.
+- `(O)378` Copper Ore: MineNode dependable every week, plus 19 other sources. Pass.
+- `(O)24` Parsnip: Crop 1-4; GreenhouseCrop dependable 1-5 and 15-16 (the Night Market Magic Boat Day
+  1 sells Parsnip Seeds in week 15, checked with `tly_obtain (O)472`); Mixed Seeds chance sources
+  including the Winter greenhouse. Pass.
+- `(O)142` Carp: Mountain and Backwoods 1-12, Sewer, BugLand and Woods all year. Pass.
+- `(O)342` Pickles: Machine from any vegetable, dependable all year. Pass.
+
+**Comparison report:** `C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods\TheLongestYear\obtainability-compare.md`
+(gitignored), 1070 items: **NewEarlier 302, NewLater 1, OnlyExisting 18, OnlyNew 598, Agree 151;
+40 unresolved sources.** The verdict compares the existing hard week with the new any-source week.
+
+**The three biggest disagreement patterns:**
+1. **The Traveling Cart makes almost everything "any week" by luck.** 158 of the 302 NewEarlier items
+   get their week-1 answer from the cart's random stock (chance), and 81 more from a shop row the
+   existing model never counted. Dependable-only weeks mostly agree with the existing hard week (the
+   fish rows above show dependable 5 / 9 / 13 against existing 5 / 9 / 13). Phase 2 should compare
+   dependable-only as the headline, not any-source.
+2. **OnlyNew is out-of-pool inventory.** 598 items the existing model never placed: 319 shop rows
+   (boots, hats, tools, catalogues), 68 crafting outputs, 66 festival shop items, 48 Night Market
+   items. Expected: the existing model only knows bundle-pool items.
+3. **OnlyExisting is code-only or deliberately excluded.** 18 items: Adventure Guild rewards (Hard
+   Hat, Skeleton Mask, Crabshell Ring, Napalm Ring, Insect Head) live in code, not data; Moss and Moss
+   Soup (Moss comes from trees in code); island artifacts and Golden Coconut are flagged Ginger
+   Island and excluded by default; Stonefish and Ice Pip (mine fish) and Tea Leaves (tea bush) and
+   Broccoli (seed source) are real gaps the new model should close. The one NewLater is Ancient
+   Fruit (seed only by chance, so week 5 versus the existing 4).
+
+Also seen: the Stardew Valley Fair's fishing minigame map (`fishingGame`) reads as a normal location
+open all year, so Salmon is "dependable week 1"; phase 2 should drop minigame maps.
+
+**Most common unresolved kinds (40):** `LOCATION_FISH` rows on the farm-variant maps (10, the game
+delegates to another location's fish table), furniture and wallpaper catalogues (`ALL_ITEMS`, 8),
+machine output methods (Cask aging 6, Seed Maker, Mushroom Log, Statue of Endless Fortune, Solar
+Panel), shop code queries (Dish of the Day, tool upgrades, monster slayer rewards, pet adoption,
+movie concessions, items sold by the player), `RANDOM_ARTIFACT_FOR_DIG_SPOT`,
+`RANDOM_BASE_SEASON_ITEM`, and the golden chest raccoon seed.
+
+**Phase 2 (after Jeff reads the report):** see TODO.md "Obtainability phase 2". Two rulings from the
+build are recorded there: weeks should mean "start week" not "finish week", and the per-difficulty
+live-inventory picker for darkness hits.
 
 ## 2026-09-14: rewind cutscene, where it stands (story branch)
 
