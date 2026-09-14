@@ -169,53 +169,6 @@ namespace TheLongestYear.UI
                 _tentacles[i].Angle += _tentacles[i].DriftPerMs * elapsedMs;
         }
 
-        /// <summary><see cref="Draw"/>, kept off the clock box in the corner.
-        ///
-        /// The darkness is the world's lighting, and the world's lighting never covers the interface,
-        /// so the clock sits in a lit box in front of it. The tentacles are drawn over the finished
-        /// frame, interface included, and one reaching past the corner showed its whole rounded back
-        /// against the clock: "I saw the rounded off shape of the backside, which I don't want to see
-        /// at all, it needs to look like it's genuinely pieces of the darkness pushing further from
-        /// the mass" (Jeff, 2026-09-14). Clipping them out of the box puts the clock in front of them
-        /// exactly as it is in front of the dark they come out of.
-        ///
-        /// A scissor can only keep a rectangle, not cut one out, so the screen minus the box is drawn
-        /// as up to three rectangles that do not overlap (below it, left of it, right of it), the same
-        /// End/Begin-with-a-scissor pattern vanilla's QuestLog uses for its list.</summary>
-        public void DrawAroundHud(SpriteBatch b, Vector2 worldCentre, float worldEdge, float dissolveRadius)
-        {
-            StardewValley.Menus.DayTimeMoneyBox clock = Game1.dayTimeMoneyBox;
-            if (!Game1.displayHUD || clock == null)
-            {
-                Draw(b, worldCentre, worldEdge, dissolveRadius);
-                return;
-            }
-
-            int screenW = Game1.uiViewport.Width, screenH = Game1.uiViewport.Height;
-            int clockLeft = clock.xPositionOnScreen;
-            int clockRight = clockLeft + StardewValley.Menus.DayTimeMoneyBox.width;
-            int clockBottom = clock.yPositionOnScreen + StardewValley.Menus.DayTimeMoneyBox.height;
-            Rectangle[] around =
-            {
-                new Rectangle(0, clockBottom, screenW, screenH - clockBottom),
-                new Rectangle(0, 0, clockLeft, clockBottom),
-                new Rectangle(clockRight, 0, screenW - clockRight, clockBottom),
-            };
-
-            Rectangle priorScissor = b.GraphicsDevice.ScissorRectangle;
-            b.End();
-            foreach (Rectangle area in around)
-            {
-                if (area.Width <= 0 || area.Height <= 0) continue;
-                b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, Utility.ScissorEnabled);
-                b.GraphicsDevice.ScissorRectangle = Utility.ConstrainScissorRectToScreen(area);
-                Draw(b, worldCentre, worldEdge, dissolveRadius);
-                b.End();
-            }
-            b.GraphicsDevice.ScissorRectangle = priorScissor;
-            b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
-        }
-
         /// <summary>Draws every tentacle round <paramref name="worldCentre"/> against a lit edge
         /// <paramref name="worldEdge"/> world pixels out. Anything closer to the centre than
         /// <paramref name="dissolveRadius"/> is breaking up; pass 0 for none.</summary>

@@ -465,17 +465,39 @@ namespace TheLongestYear.UI
             return edge;
         }
 
+        /// <summary>The tentacles go down BEHIND every HUD element, not just in front of the world.
+        /// Drawn from the scene's own pass they covered the interface: first the clock ("I saw the
+        /// rounded off shape of the backside"), and once that one corner was clipped out, the energy
+        /// bar ("it needs to be drawn behind ALL onscreen hud elements", Jeff, 2026-09-14). The HUD
+        /// pass puts every one of them on top in a single move, the same way the world's own darkness
+        /// sits behind the interface.</summary>
+        protected override void OnRenderingHud(SpriteBatch b)
+        {
+            DrawTentacles(b);
+            _tentaclesDrawnFrame = FrameStamp();
+        }
+
+        private long _tentaclesDrawnFrame = -1;
+
+        private static long FrameStamp() => Game1.currentGameTime?.TotalGameTime.Ticks ?? 0;
+
+        /// <summary>While the light swells they stay against the edge they had, and the live edge
+        /// breaks them up.</summary>
+        private void DrawTentacles(SpriteBatch b)
+        {
+            if (_hearthLight == null) return;
+            bool swelling = _phase == Phase.White;
+            _tentacles.Draw(b, _hearthLight.position.Value,
+                swelling ? _tentacleEdge : LitEdgeRadius(),
+                swelling ? LitEdgeRadius() : 0f);
+        }
+
         public override void draw(SpriteBatch b)
         {
-            // Under the flash and the speech box, over the lit world. See RewindTentacles. While the
-            // light swells they stay against the edge they had, and the live edge breaks them up.
-            if (_hearthLight != null)
-            {
-                bool swelling = _phase == Phase.White;
-                _tentacles.DrawAroundHud(b, _hearthLight.position.Value,
-                    swelling ? _tentacleEdge : LitEdgeRadius(),
-                    swelling ? LitEdgeRadius() : 0f);
-            }
+            // Normally drawn in the HUD pass (see OnRenderingHud). On a frame with no HUD there is
+            // nothing to sit behind, so they are drawn here instead, under the flash and the box.
+            if (_tentaclesDrawnFrame != FrameStamp())
+                DrawTentacles(b);
             if (_flashAlpha > 0f)
             {
                 int w = Game1.uiViewport.Width, h = Game1.uiViewport.Height;
