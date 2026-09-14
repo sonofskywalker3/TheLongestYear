@@ -57,3 +57,39 @@ public sealed record FruitRow(string ItemId, Season? Season, double Chance, stri
 
 /// <summary>One Data/FruitTrees row, keyed by sapling.</summary>
 public sealed record FruitTreeRow(string SaplingId, IReadOnlyList<Season> TreeSeasons, IReadOnlyList<FruitRow> Fruit);
+
+/// <summary>One output of a machine rule: an id or item query, "DROP_IN", or an OutputMethod (code).
+/// <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
+public sealed record MachineOutput(string? ItemId, string? Condition, string? OutputMethod, bool IsRandom = false);
+
+/// <summary>One Data/Machines output rule x trigger. No required item and no tags means the machine
+/// needs no input (a Bee House, a Mushroom Log). Ready time: DaysUntilReady when 0 or more, else minutes.
+/// <see cref="UseFirstValidOutput"/> is MachineOutputRule.UseFirstValidOutput: outputs are tried in order,
+/// not picked at random.</summary>
+public sealed record MachineRow(
+    string MachineId, string? RequiredItemId, IReadOnlyList<string> RequiredTags, string? TriggerCondition,
+    IReadOnlyList<MachineOutput> Outputs, int MinutesUntilReady, int DaysUntilReady, bool UseFirstValidOutput = false);
+
+/// <summary>A cooking or crafting recipe. Ingredients are qualified ids or negative category numbers.
+/// <see cref="Unlock"/> is the raw unlock field ("default", "none", "Farming 3", "s Farming 3", "f Robin 7", "l 4").
+/// <see cref="AlternateOutputIds"/> are the other outputs of a recipe that picks one at random (CraftingRecipe.cs 57, 127-131).</summary>
+public sealed record RecipeRow(
+    string Name, IReadOnlyList<string> Ingredients, string OutputId, string Unlock, bool IsCooking,
+    IReadOnlyList<string>? AlternateOutputIds = null);
+
+public sealed record AnimalProduce(string ItemId, string? Condition, int MinimumFriendship);
+
+/// <summary>One Data/FarmAnimals row. <see cref="DeluxeMinimumFriendship"/> is FarmAnimalData.DeluxeProduceMinimumFriendship.</summary>
+public sealed record AnimalRow(
+    string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce,
+    int DeluxeMinimumFriendship = 200);
+
+public sealed record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition, bool IsRandom = false);
+
+/// <summary>One Data/FishPondData entry. A fish lives under the matching entry with the lowest Precedence.</summary>
+public sealed record PondRow(string Id, IReadOnlyList<string> RequiredTags, int Precedence, IReadOnlyList<PondProduct> Products);
+
+public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition, bool IsRandom = false);
+
+/// <summary>One Data/Objects GeodeDrops entry for a geode item.</summary>
+public sealed record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition);
