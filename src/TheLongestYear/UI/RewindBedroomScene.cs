@@ -52,13 +52,15 @@ namespace TheLongestYear.UI
     {
         /// <summary>Phase order. Each advances on a timer except a Say phase, which waits for its
         /// dialogue box to close.</summary>
-        private enum Phase { LightsOut, JunimosIn, Say1, Say2, DarknessIn, Say3, Say4, White, Done }
+        private enum Phase { LightsOut, JunimosIn, Say1, Say2, Say3, Say4, White, Done }
 
         // Beat timings. Phases without a listed constant (the four Say phases) advance when their
         // dialogue box closes instead of on a clock.
         private const float LightsOutHoldMs = 600f;
         private const float JunimosInHoldMs = 1000f;
-        private const float DarknessInMs = 2500f;
+        // Beat 6, which runs on its own clock underneath lines 2 to 4 (see EnterPhase). "Make it take
+        // like 5 seconds to go from normal bright to the darkened effect" (Jeff, 2026-09-14).
+        private const float DarknessInMs = 5000f;
         private const float WhiteMs = 2200f;
 
         // Beat 2/6/9's light dials. sconceLight is a small round light, the same texture index used
@@ -73,6 +75,10 @@ namespace TheLongestYear.UI
         // unbroken lit area around the bed, which is what was asked for, but the falloff dies before
         // it reaches the far side of the room.
         private const float JunimoLightRadiusStart = 1.0f;
+        // Where the six pools end up once the darkness has closed: 20% smaller, same brightness
+        // ("lower the junimo light output by an additional 20% in size not brightness", Jeff,
+        // 2026-09-14). This reverses the 2026-09-11 call that the pools never shrink, at his word.
+        private const float JunimoLightRadiusClosed = 0.8f;
 
         // THE HEARTH. One big light on the bed, and the only thing that moves when the darkness
         // closes in.
@@ -133,6 +139,19 @@ namespace TheLongestYear.UI
         private float _phaseElapsed;
         private float _flashAlpha;
 
+        // Beat 6's own clock. It starts with line 2 and runs whether or not a box is open.
+        private bool _darknessRunning;
+        private float _darknessElapsed;
+
+        // Where beat 9 starts from: wherever beat 6 had reached, which is short of its end when the
+        // last lines are clicked through faster than the darkness closes.
+        private Color _whiteFromAmbient = RewindNightLight.NightAmbient;
+        private float _whiteFromHearthRadius = HearthRadiusStart;
+        private float _whiteFromJunimoRadius = JunimoLightRadiusStart;
+        private float _whiteFromFog;
+
+        private readonly RewindEdgeFog _fog = new RewindEdgeFog();
+
         public RewindBedroomScene(CoreSeason failed, Action onComplete)
             : base(onComplete)
         {
@@ -171,6 +190,12 @@ namespace TheLongestYear.UI
                     break;
                 case Phase.Say2:
                     OpenBox(1, Strings.Get("cutscene.rewind.junimo-2"));
+                    // Beat 6 closes in WHILE this line is on screen. It used to be a phase of its
+                    // own between lines 2 and 3, with no box up: "I also don't like that the dialog
+                    // pauses while the fade to black happens, can it fade with the second message on
+                    // screen?" (Jeff, 2026-09-14).
+                    _darknessRunning = true;
+                    _darknessElapsed = 0f;
                     break;
                 case Phase.Say3:
                     OpenBox(2, Strings.Get("cutscene.rewind.junimo-3"));
@@ -178,8 +203,13 @@ namespace TheLongestYear.UI
                 case Phase.Say4:
                     OpenBox(3, Strings.Get("cutscene.rewind.junimo-4"));
                     break;
-                case Phase.DarknessIn:
                 case Phase.White:
+                    _darknessRunning = false;
+                    _whiteFromAmbient = RewindNightLight.Ambient;
+                    _whiteFromHearthRadius = _hearthLight?.radius.Value ?? HearthRadiusFloor;
+                    _whiteFromJunimoRadius = _junimoLights.Count > 0 ? _junimoLights[0].radius.Value : JunimoLightRadiusClosed;
+                    _whiteFromFog = _fog.Strength;
+                    break;
                 case Phase.Done:
                     break;
             }
@@ -272,7 +302,7 @@ namespace TheLongestYear.UI
             switch (_phase)
             {
                 case Phase.Say1: EnterPhase(Phase.Say2); break;
-                case Phase.Say2: EnterPhase(Phase.DarknessIn); break;
+                case Phase.Say2: EnterPhase(Phase.Say3); break;
                 case Phase.Say3: EnterPhase(Phase.Say4); break;
                 case Phase.Say4: EnterPhase(Phase.White); break;
             }
@@ -287,9 +317,14 @@ namespace TheLongestYear.UI
             float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
             RewindNightLight.Ambient = Color.Lerp(
                 RewindNightLight.NightAmbient, RewindNightLight.DeepAmbient, eased);
-            // The hearth alone. The six Junimo pools are deliberately untouched: see HearthRadiusStart.
+            // The hearth carries the closing-in (see HearthRadiusStart); the six Junimo pools lose a
+            // fifth of their size alongside it but none of their brightness (JunimoLightRadiusClosed).
             if (_hearthLight != null)
                 _hearthLight.radius.Value = MathHelper.Lerp(HearthRadiusStart, HearthRadiusFloor, eased);
+            float junimoRadius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusClosed, eased);
+            foreach (LightSource light in _junimoLights)
+                light.radius.Value = junimoRadius;
+            _fog.Strength = eased;
         }
 
         /// <summary>Beat 9: the same dials reversed. The radii grow past the size of the screen and
@@ -300,8 +335,8 @@ namespace TheLongestYear.UI
         private void ApplyWhite(float t)
         {
             float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
-            RewindNightLight.Ambient = Color.Lerp(RewindNightLight.DeepAmbient, Color.Black, eased);
-            float radius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusFlash, eased);
+            RewindNightLight.Ambient = Color.Lerp(_whiteFromAmbient, Color.Black, eased);
+            float radius = MathHelper.Lerp(_whiteFromJunimoRadius, JunimoLightRadiusFlash, eased);
             for (int i = 0; i < _junimoLights.Count; i++)
             {
                 _junimoLights[i].radius.Value = radius;
@@ -309,9 +344,10 @@ namespace TheLongestYear.UI
             }
             if (_hearthLight != null)
             {
-                _hearthLight.radius.Value = MathHelper.Lerp(HearthRadiusFloor, JunimoLightRadiusFlash, eased);
+                _hearthLight.radius.Value = MathHelper.Lerp(_whiteFromHearthRadius, JunimoLightRadiusFlash, eased);
                 _hearthLight.color.Value = Color.Lerp(_hearthBaseColour, Color.Black, eased);
             }
+            _fog.Strength = _whiteFromFog * (1f - eased);
             _flashAlpha = eased;
         }
 
@@ -320,13 +356,22 @@ namespace TheLongestYear.UI
             base.update(time);   // keeps the Junimos bobbing, including once the scene is done
             if (Completed) return;
 
+            float elapsedMs = (float)time.ElapsedGameTime.TotalMilliseconds;
+            _fog.Update(elapsedMs);
+            if (_darknessRunning)
+            {
+                _darknessElapsed += elapsedMs;
+                ApplyDarkness(_darknessElapsed / DarknessInMs);
+                if (_darknessElapsed >= DarknessInMs) _darknessRunning = false;
+            }
+
             if (ActiveBox != null)
             {
                 ActiveBox.update(time);
                 return;
             }
 
-            _phaseElapsed += (float)time.ElapsedGameTime.TotalMilliseconds;
+            _phaseElapsed += elapsedMs;
 
             switch (_phase)
             {
@@ -335,10 +380,6 @@ namespace TheLongestYear.UI
                     break;
                 case Phase.JunimosIn:
                     if (_phaseElapsed >= JunimosInHoldMs) EnterPhase(Phase.Say1);
-                    break;
-                case Phase.DarknessIn:
-                    ApplyDarkness(_phaseElapsed / DarknessInMs);
-                    if (_phaseElapsed >= DarknessInMs) EnterPhase(Phase.Say3);
                     break;
                 case Phase.White:
                     ApplyWhite(_phaseElapsed / WhiteMs);
@@ -362,8 +403,24 @@ namespace TheLongestYear.UI
             base.SkipToEnd();
         }
 
+        /// <summary>How far from the bed the lit area reaches, in world pixels: the farthest any light's
+        /// glow gets, the hearth's own or a Junimo's plus its distance from the bed. Read off the live
+        /// radii every frame, so the cloud follows the light in as the darkness closes.</summary>
+        private float LitEdgeRadius()
+        {
+            Vector2 centre = _hearthLight.position.Value;
+            float edge = RewindEdgeFog.GlowReach(_hearthLight.radius.Value);
+            foreach (LightSource light in _junimoLights)
+                edge = Math.Max(edge,
+                    Vector2.Distance(light.position.Value, centre) + RewindEdgeFog.GlowReach(light.radius.Value));
+            return edge;
+        }
+
         public override void draw(SpriteBatch b)
         {
+            // Under the flash and the speech box, over the lit world. See RewindEdgeFog.
+            if (_hearthLight != null)
+                _fog.Draw(b, _hearthLight.position.Value, LitEdgeRadius());
             if (_flashAlpha > 0f)
             {
                 int w = Game1.uiViewport.Width, h = Game1.uiViewport.Height;

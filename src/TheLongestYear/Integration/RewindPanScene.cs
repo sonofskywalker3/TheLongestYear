@@ -467,19 +467,26 @@ namespace TheLongestYear.Integration
             bool rain = season == CoreSeason.Spring || season == CoreSeason.Summer;
             bool storm = season == CoreSeason.Summer;
             bool snow = season == CoreSeason.Winter;
+            // NO PETALS UNDER RAIN OR SNOW. Game1.updateWeather returns early for a raining or snowing
+            // location before it reaches the debris branch (Game1.cs:6169-6219), but the draw pass
+            // still paints the debris (Game1.cs:13923), so the petals hung frozen in mid-air for the
+            // whole rainy day ("The petals on the screen stopped moving during the rainy day", Jeff,
+            // 2026-09-14). The wind comes back with ClearWeather.
+            bool debris = !rain && !snow;
 
             weather.IsRaining = rain;
             weather.IsLightning = storm;
             weather.IsSnowing = snow;
-            weather.IsDebrisWeather = true;
+            weather.IsDebrisWeather = debris;
             weather.IsGreenRain = false;    // explicitly out, by the designer's call
 
             Game1.isRaining = rain;
             Game1.isLightning = storm;
             Game1.isSnowing = snow;
-            Game1.isDebrisWeather = true;
+            Game1.isDebrisWeather = debris;
             Game1.isGreenRain = false;
 
+            if (!debris) Game1.debrisWeather?.Clear();
             if (rain) Game1.randomizeRainPositions();
             if (season == CoreSeason.Fall) Gale();
         }
@@ -502,6 +509,8 @@ namespace TheLongestYear.Integration
             Game1.isGreenRain = false;
             Game1.isDebrisWeather = true;
             Game1.flashAlpha = 0f;
+            // The petals ApplyWeather cleared for the rain or snow blow back in with the clear sky.
+            if (Game1.debrisWeather == null || Game1.debrisWeather.Count == 0) Gust();
         }
 
         /// <summary>Switches this season's weather on for one day/night cycle and off again. See
