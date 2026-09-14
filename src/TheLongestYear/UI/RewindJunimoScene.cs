@@ -191,6 +191,7 @@ namespace TheLongestYear.UI
             if (_helper == null || _menuWatchSubscribed) return;
             _helper.Events.Display.MenuChanged += OnMenuChanged;
             _helper.Events.Display.RenderedWorld += OnRenderedWorld;
+            _helper.Events.Display.RenderingHud += OnRenderingHudEvent;
             _menuWatchSubscribed = true;
         }
 
@@ -199,6 +200,7 @@ namespace TheLongestYear.UI
             if (!_menuWatchSubscribed) return;
             _helper.Events.Display.MenuChanged -= OnMenuChanged;
             _helper.Events.Display.RenderedWorld -= OnRenderedWorld;
+            _helper.Events.Display.RenderingHud -= OnRenderingHudEvent;
             _menuWatchSubscribed = false;
         }
 
@@ -228,6 +230,18 @@ namespace TheLongestYear.UI
                 catch (Exception) { /* one bad actor must not take the frame down */ }
             }
         }
+
+        private void OnRenderingHudEvent(object sender, RenderingHudEventArgs e)
+        {
+            if (!ReferenceEquals(Game1.activeClickableMenu, this)) return;
+            OnRenderingHud(e.SpriteBatch);
+        }
+
+        /// <summary>Screen-space drawing that has to sit BEHIND the HUD (clock, energy bar and the
+        /// rest): SMAPI's RenderingHud runs after the world and its lighting and before the game draws
+        /// any HUD element over them. Only raised on frames the HUD is drawn at all. Does nothing by
+        /// default.</summary>
+        protected virtual void OnRenderingHud(SpriteBatch b) { }
 
         private void OnMenuChanged(object sender, MenuChangedEventArgs e)
         {
