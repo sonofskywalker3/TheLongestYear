@@ -46,3 +46,14 @@ public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bo
 
 /// <summary>One Data/Monsters drop (field 6 is "id chance id chance ..."). <see cref="ItemId"/> may be a query.</summary>
 public sealed record MonsterDropRow(string Monster, string ItemId, double Chance);
+
+/// <summary>One Data/Crops row: keyed by seed, <see cref="GrowthDays"/> is the sum of DaysInPhase,
+/// <see cref="RegrowDays"/> is CropData.RegrowDays (-1 or 0 means none), <see cref="Seasons"/> empty means any season.</summary>
+public sealed record CropRow(string SeedId, string HarvestId, IReadOnlyList<Season> Seasons, int GrowthDays, int RegrowDays);
+
+/// <summary>One fruit a tree grows: its own season overrides the tree's; Chance and Condition are FruitTreeFruitData's.
+/// <see cref="ItemId"/> may be an item query; <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
+public sealed record FruitRow(string ItemId, Season? Season, double Chance, string? Condition, bool IsRandom = false);
+
+/// <summary>One Data/FruitTrees row, keyed by sapling.</summary>
+public sealed record FruitTreeRow(string SaplingId, IReadOnlyList<Season> TreeSeasons, IReadOnlyList<FruitRow> Fruit);
