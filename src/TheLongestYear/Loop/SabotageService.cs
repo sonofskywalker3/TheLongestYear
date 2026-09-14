@@ -406,8 +406,10 @@ namespace TheLongestYear.Loop
                 {
                     case SabotageKind.Blight:
                         // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
-                        if (report.Count > 0)
-                            Hud(Strings.Get("hud.sabotage.blight", new Dictionary<string, string> { ["count"] = report.Count.ToString() }));
+                        if (report.Count == 1)
+                            Hud(Strings.Get("hud.sabotage.blight.one"));
+                        else if (report.Count > 1)
+                            Hud(Strings.Get("hud.sabotage.blight.other", new Dictionary<string, string> { ["count"] = report.Count.ToString() }));
                         if (report.Spoiled > 0)
                             Hud(Strings.Get("hud.sabotage.spoiled", new Dictionary<string, string> { ["count"] = report.Spoiled.ToString() }));
                         if (report.Missing > 0)
