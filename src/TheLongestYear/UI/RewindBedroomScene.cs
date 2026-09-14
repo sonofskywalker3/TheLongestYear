@@ -62,6 +62,12 @@ namespace TheLongestYear.UI
         // like 5 seconds to go from normal bright to the darkened effect" (Jeff, 2026-09-14).
         private const float DarknessInMs = 5000f;
         private const float WhiteMs = 2200f;
+        // Beat 9's lead-in: the Junimo light swells, breaking the tentacles up as it goes, before the
+        // white starts ("maybe 1-2 seconds of their light expanding before starting the fade to
+        // white", Jeff, 2026-09-14).
+        private const float ExpandLeadMs = 1500f;
+        // How far past the tentacles' roots the lead-in pushes the light, so none survive into the white.
+        private const float LeadClearOvershoot = 1.05f;
 
         // Beat 2/6/9's light dials. sconceLight is a small round light, the same texture index used
         // for ordinary room lights elsewhere in the game.
@@ -148,9 +154,15 @@ namespace TheLongestYear.UI
         private Color _whiteFromAmbient = RewindNightLight.NightAmbient;
         private float _whiteFromHearthRadius = HearthRadiusStart;
         private float _whiteFromJunimoRadius = JunimoLightRadiusStart;
-        private float _whiteFromFog;
+        // Where the lead-in takes the light before the white starts, and the lit edge the tentacles
+        // were drawn against when it began. Frozen so they stay put and break up as the light passes
+        // them, rather than being stretched outward with it ("it was weird seeing the drawing grow as
+        // it moved outward with the expanding light", Jeff, 2026-09-14).
+        private float _leadJunimoRadius = JunimoLightRadiusStart;
+        private float _leadHearthRadius = HearthRadiusStart;
+        private float _tentacleEdge;
 
-        private readonly RewindEdgeFog _fog = new RewindEdgeFog();
+        private readonly RewindTentacles _tentacles = new RewindTentacles();
 
         public RewindBedroomScene(CoreSeason failed, Action onComplete)
             : base(onComplete)
@@ -208,7 +220,7 @@ namespace TheLongestYear.UI
                     _whiteFromAmbient = RewindNightLight.Ambient;
                     _whiteFromHearthRadius = _hearthLight?.radius.Value ?? HearthRadiusFloor;
                     _whiteFromJunimoRadius = _junimoLights.Count > 0 ? _junimoLights[0].radius.Value : JunimoLightRadiusClosed;
-                    _whiteFromFog = _fog.Strength;
+                    PlanLeadIn();
                     break;
                 case Phase.Done:
                     break;
@@ -324,31 +336,51 @@ namespace TheLongestYear.UI
             float junimoRadius = MathHelper.Lerp(JunimoLightRadiusStart, JunimoLightRadiusClosed, eased);
             foreach (LightSource light in _junimoLights)
                 light.radius.Value = junimoRadius;
-            _fog.Strength = eased;
+            _tentacles.Strength = eased;
         }
 
-        /// <summary>Beat 9: the same dials reversed. The radii grow past the size of the screen and
-        /// every light goes fully neutral (black subtracts nothing), which opens the room back to
-        /// full brightness; the ambient follows them down to black so no corner is left dark; and the
-        /// overlay carries the last stretch to white, which subtractive lighting cannot do on its
-        /// own.</summary>
-        private void ApplyWhite(float t)
+        /// <summary>Works out, as beat 9 begins, how big the lights must swell during the lead-in for
+        /// their lit edge to pass every tentacle's root, and freezes the edge the tentacles are drawn
+        /// against.</summary>
+        private void PlanLeadIn()
         {
-            float eased = Ease(MathHelper.Clamp(t, 0f, 1f));
-            RewindNightLight.Ambient = Color.Lerp(_whiteFromAmbient, Color.Black, eased);
-            float radius = MathHelper.Lerp(_whiteFromJunimoRadius, JunimoLightRadiusFlash, eased);
+            if (_hearthLight == null) return;
+            _tentacleEdge = LitEdgeRadius();
+            float clearTo = RewindTentacles.RootDistance(_tentacleEdge) * LeadClearOvershoot;
+            float reachPerRadius = RewindTentacles.GlowReach(1f);
+            float ringDistance = _junimoLights.Count > 0
+                ? Vector2.Distance(_junimoLights[0].position.Value, _hearthLight.position.Value)
+                : 0f;
+            _leadHearthRadius = Math.Max(_whiteFromHearthRadius, clearTo / reachPerRadius);
+            _leadJunimoRadius = Math.Max(_whiteFromJunimoRadius, (clearTo - ringDistance) / reachPerRadius);
+        }
+
+        /// <summary>Beat 9, <paramref name="elapsedMs"/> in. First the lead-in: the lights swell out
+        /// past the tentacles' roots and break them up. Then the white: the radii grow past the size
+        /// of the screen and every light goes fully neutral (black subtracts nothing), which opens the
+        /// room back to full brightness; the ambient follows them down to black so no corner is left
+        /// dark; and the overlay carries the last stretch to white, which subtractive lighting cannot
+        /// do on its own.</summary>
+        private void ApplyWhite(float elapsedMs)
+        {
+            float grow = Ease(MathHelper.Clamp(elapsedMs / ExpandLeadMs, 0f, 1f));
+            float flash = Ease(MathHelper.Clamp((elapsedMs - ExpandLeadMs) / WhiteMs, 0f, 1f));
+            RewindNightLight.Ambient = Color.Lerp(_whiteFromAmbient, Color.Black, flash);
+            float radius = MathHelper.Lerp(
+                MathHelper.Lerp(_whiteFromJunimoRadius, _leadJunimoRadius, grow), JunimoLightRadiusFlash, flash);
             for (int i = 0; i < _junimoLights.Count; i++)
             {
                 _junimoLights[i].radius.Value = radius;
-                _junimoLights[i].color.Value = Color.Lerp(_junimoBaseColours[i], Color.Black, eased);
+                _junimoLights[i].color.Value = Color.Lerp(_junimoBaseColours[i], Color.Black, flash);
             }
             if (_hearthLight != null)
             {
-                _hearthLight.radius.Value = MathHelper.Lerp(_whiteFromHearthRadius, JunimoLightRadiusFlash, eased);
-                _hearthLight.color.Value = Color.Lerp(_hearthBaseColour, Color.Black, eased);
+                _hearthLight.radius.Value = MathHelper.Lerp(
+                    MathHelper.Lerp(_whiteFromHearthRadius, _leadHearthRadius, grow), JunimoLightRadiusFlash, flash);
+                _hearthLight.color.Value = Color.Lerp(_hearthBaseColour, Color.Black, flash);
             }
-            _fog.Strength = _whiteFromFog * (1f - eased);
-            _flashAlpha = eased;
+            _tentacles.Opacity = 1f - flash;
+            _flashAlpha = flash;
         }
 
         public override void update(GameTime time)
@@ -357,7 +389,7 @@ namespace TheLongestYear.UI
             if (Completed) return;
 
             float elapsedMs = (float)time.ElapsedGameTime.TotalMilliseconds;
-            _fog.Update(elapsedMs);
+            _tentacles.Update(elapsedMs);
             if (_darknessRunning)
             {
                 _darknessElapsed += elapsedMs;
@@ -382,8 +414,8 @@ namespace TheLongestYear.UI
                     if (_phaseElapsed >= JunimosInHoldMs) EnterPhase(Phase.Say1);
                     break;
                 case Phase.White:
-                    ApplyWhite(_phaseElapsed / WhiteMs);
-                    if (_phaseElapsed >= WhiteMs) Finish();
+                    ApplyWhite(_phaseElapsed);
+                    if (_phaseElapsed >= ExpandLeadMs + WhiteMs) Finish();
                     break;
                 case Phase.Say1:
                 case Phase.Say2:
@@ -399,28 +431,34 @@ namespace TheLongestYear.UI
         /// opaque white; the pan takes the frame from here.</summary>
         public override void SkipToEnd()
         {
-            ApplyWhite(1f);
+            ApplyWhite(ExpandLeadMs + WhiteMs);
             base.SkipToEnd();
         }
 
         /// <summary>How far from the bed the lit area reaches, in world pixels: the farthest any light's
         /// glow gets, the hearth's own or a Junimo's plus its distance from the bed. Read off the live
-        /// radii every frame, so the cloud follows the light in as the darkness closes.</summary>
+        /// radii every frame, so the tentacles follow the light in as the darkness closes.</summary>
         private float LitEdgeRadius()
         {
             Vector2 centre = _hearthLight.position.Value;
-            float edge = RewindEdgeFog.GlowReach(_hearthLight.radius.Value);
+            float edge = RewindTentacles.GlowReach(_hearthLight.radius.Value);
             foreach (LightSource light in _junimoLights)
                 edge = Math.Max(edge,
-                    Vector2.Distance(light.position.Value, centre) + RewindEdgeFog.GlowReach(light.radius.Value));
+                    Vector2.Distance(light.position.Value, centre) + RewindTentacles.GlowReach(light.radius.Value));
             return edge;
         }
 
         public override void draw(SpriteBatch b)
         {
-            // Under the flash and the speech box, over the lit world. See RewindEdgeFog.
+            // Under the flash and the speech box, over the lit world. See RewindTentacles. While the
+            // light swells they stay against the edge they had, and the live edge breaks them up.
             if (_hearthLight != null)
-                _fog.Draw(b, _hearthLight.position.Value, LitEdgeRadius());
+            {
+                bool swelling = _phase == Phase.White;
+                _tentacles.Draw(b, _hearthLight.position.Value,
+                    swelling ? _tentacleEdge : LitEdgeRadius(),
+                    swelling ? LitEdgeRadius() : 0f);
+            }
             if (_flashAlpha > 0f)
             {
                 int w = Game1.uiViewport.Width, h = Game1.uiViewport.Height;

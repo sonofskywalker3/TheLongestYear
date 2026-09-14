@@ -97,7 +97,28 @@ namespace TheLongestYear.Integration
             public double Phase;       // kept for the placement scatter
             public double DurationMs;  // unused since the walk became camera-driven; see Tick
             public double Anchor;      // where along the camera's line this one stands, 0 at the start
+            public WalkState State;
+            public double Along = 1.0; // 1 is the far end the backwards walk starts from
+            public Vector2 Overrun;    // world pixels walked past Route[0] while still in shot
         }
+
+        private enum WalkState { Waiting, Walking, Gone }
+
+        /// <summary>Routes shorter than this are not used: a walker has to be able to cross the shot
+        /// and leave it, and a short route ends in plain view.</summary>
+        private const int MinRouteTiles = 16;
+
+        /// <summary>How close, in tiles, the camera's view comes to a waiting walker's start before it
+        /// sets off. Far enough that it is already walking when it comes into shot.</summary>
+        private const int StartMarginTiles = 4;
+
+        /// <summary>How far outside the view, in tiles, a finished walker has to be before it is taken
+        /// off the road. A villager sprite stands two tiles tall, so less than that shows a head.</summary>
+        private const int GoneMarginTiles = 2;
+
+        /// <summary>Where a walker who has left the shot is kept until <see cref="Teardown"/> puts it back:
+        /// nowhere any camera is pointed.</summary>
+        private static readonly Vector2 ParkedPosition = new Vector2(-100000f, -100000f);
 
         private static readonly List<Extra> Extras = new List<Extra>();
         private static IMonitor _monitor;
@@ -138,7 +159,7 @@ namespace TheLongestYear.Integration
                 // rather than candidates: a villager who could not be routed must not leave a gap in
                 // the shot where the next one should have been.
                 Point[] route = FindRoute(town, from, to, Extras.Count, wanted);
-                if (route == null || route.Length < 4) continue;
+                if (route == null || route.Length < MinRouteTiles) continue;
 
                 NPC npc = cast[i];
                 var extra = new Extra
@@ -169,7 +190,7 @@ namespace TheLongestYear.Integration
                     // would put this one back on its schedule mid-shot.
                     npc.forceUpdateTimer = 0;
                     Extras.Add(extra);
-                    Place(extra, 0.0);
+                    Place(extra, extra.Along);
                     placed.Add($"{npc.Name} ({route.Length} tiles from ({route[0].X},{route[0].Y}))");
                 }
                 catch (Exception ex)
@@ -420,29 +441,46 @@ namespace TheLongestYear.Integration
         /// pan's own clock, so they walk at a steady pace regardless of what the camera is doing.</summary>
         public static void Tick(float elapsedMs, double cameraFraction, GameTime time)
         {
+            // NEVER STILL IN SHOT. The walk used to be a band of the camera's progress, parked at a
+            // route end before and after it, and "off screen by then" was a hope, not a check: "people
+            // are stopping while still visible sometimes, or standing still until they're visible for
+            // a second or more ... make sure they start moving off screen and continue moving until
+            // they're no longer visible" (Jeff, 2026-09-14). So each walker now waits at its far end
+            // until the view comes within StartMarginTiles of it, walks at an ordinary pace from
+            // there, and is only taken off the road once it is out of sight. Running out of route in
+            // plain view keeps it walking the same way until it is not.
+            double stepTiles = WalkTilesPerSecond * time.ElapsedGameTime.TotalMilliseconds / 1000.0;
             foreach (Extra extra in Extras)
             {
-                if (extra.Npc == null || extra.Route == null) continue;
+                if (extra.Npc == null || extra.Route == null || extra.State == WalkState.Gone) continue;
 
-                // BACKWARDS, AND WHILE THE CAMERA IS ON THEM. Two rounds of feedback are in this
-                // one line. It was a triangle along the route first, walking back and then forward
-                // again because the routes ran out before the shot did: "Just backwards, on a path
-                // long enough that they can go backwards the whole time they're on screen". Pacing
-                // the whole route across the whole pan fixed the turn but not the aim, because the
-                // camera is travelling too: each extra happened to be near it or not. "I've never
-                // seen a villager during the winter section, because they're not walking where the
-                // camera is showing!" (Jeff, 2026-09-11).
-                //
-                // So the walk is driven off the CAMERA's own progress rather than the clock. Each
-                // extra is halfway along its route exactly when the camera reaches the point it was
-                // anchored at, and walks from the far end to the near end across a band of the pan
-                // either side of that. Before and after the band it is parked at an end, which is far
-                // off screen by then. The direction is unchanged: along runs 1 to 0, so they are
-                // always walking backwards, and now they are doing it in shot.
-                double along = Math.Clamp(
-                    0.5 - (cameraFraction - extra.Anchor) / CameraBand, 0.0, 1.0);
-                Place(extra, along);
-                Animate(extra, along, time);
+                if (extra.State == WalkState.Waiting)
+                {
+                    Point start = extra.Route[extra.Route.Length - 1];
+                    if (!Utility.isOnScreen(new Vector2(start.X * 64f, start.Y * 64f), StartMarginTiles * 64)) continue;
+                    extra.State = WalkState.Walking;
+                }
+
+                if (extra.Along > 0.0)
+                {
+                    extra.Along = Math.Max(0.0, extra.Along - stepTiles / (extra.Route.Length - 1));
+                    Place(extra, extra.Along);
+                }
+                else
+                {
+                    var away = new Vector2(extra.Route[0].X - extra.Route[1].X, extra.Route[0].Y - extra.Route[1].Y);
+                    if (away != Vector2.Zero) away.Normalize();
+                    extra.Overrun += away * (float)(stepTiles * 64.0);
+                    Place(extra, 0.0);
+                    extra.Npc.Position += extra.Overrun;
+                    if (!Utility.isOnScreen(extra.Npc.Position, GoneMarginTiles * 64))
+                    {
+                        extra.State = WalkState.Gone;
+                        extra.Npc.Position = ParkedPosition;
+                        continue;
+                    }
+                }
+                Animate(extra, extra.Along, time);
             }
         }
 
