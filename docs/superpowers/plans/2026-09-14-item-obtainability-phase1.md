@@ -20,7 +20,7 @@
 - **Blind:** these files may not mention (code OR comments, any letter case) any of the words in `ObtainabilityBlindGuardTests.Forbidden` (Task 9), which include `ItemAvailabilityModel`, `ItemAvailability`, `ItemEffort`, `AvailabilityWeeks`, `Core.Availability`, `DefaultItemSeasonPins`, `QuantityBasisTables`, `ItemPoolBuilder`, `GameDataPools`, `GameEffortData`, `LegendaryFishRules`, `LocationGating`, `MineAreas`, `ItemAvailabilityBuilder`, `BundleGenerationTuning`, `EffortData`, `PacingWeek`, `HardWeek`, `SeasonPins`, `UnlockWeeks`, `BasisByDeadline`. Blind files: everything in `src/TheLongestYear.Core/Obtainability/` and `src/TheLongestYear/Loop/GameObtainabilityData.cs`. Allowed Core types: `Season`, `Calendar`, `BundleParsing`.
 - Core has no game references; file-scoped namespaces; `Nullable` is enabled there. Mod project: block-scoped `namespace TheLongestYear.Loop`, `internal sealed class`, Nullable off.
 - New record parameters are optional and trail the existing ones, so earlier tasks' test constructors keep compiling.
-- Files stay under 400 lines. Split rather than grow.
+- New files stay under 400 lines; split rather than grow. `ModEntry.cs` is already far past that and is not restructured here: add only the fields, the build call, the two short command methods and the registrations Tasks 10 and 11 show, with all real logic in the new classes.
 - No em dashes anywhere (code comments, strings, docs, commit messages).
 - Weeks are 1-16 (Spring week 1 = days 1-7 of Spring; Winter 28 is week 16).
 - Test command: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj -c Release -p:EnableModDeploy=false` (add `--filter "FullyQualifiedName~<ClassName>"` for one class). The suite is 2166 passing before this plan; it must stay green after every task.
@@ -2482,6 +2482,22 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void First_valid_outputs_are_tried_in_order()
+    {
+        var snapshot = Snapshot(("(O)24", WeekMask.All, Reliability.Dependable));
+        var rows = new[] { new MachineRow("(BC)F", "(O)24", new string[0], null, new[]
+            { new MachineOutput("(O)901", "SEASON Summer", null), new MachineOutput("(O)902", null, null) },
+            0, 0, UseFirstValidOutput: true) };
+        var list = MadeSources.Machines(rows, Objects, snapshot, NoFestivals).ToList();
+        var first = list.Single(x => x.ItemId == "(O)901").Source;
+        Assert.Equal(WeekMask.ForSeason(Season.Summer), first.Weeks);
+        Assert.Equal(Reliability.Dependable, first.Reliability);
+        var second = list.Single(x => x.ItemId == "(O)902").Source;
+        Assert.Equal(WeekMask.All.Except(WeekMask.ForSeason(Season.Summer)), second.Weeks);   // never in summer
+        Assert.Equal(Reliability.Dependable, second.Reliability);
+    }
+
+    [Fact]
     public void A_recipe_needs_every_ingredient_in_the_same_week_and_a_shop_recipe_once_learned()
     {
         var snapshot = Snapshot(("(O)24", WeekMask.ForSeason(Season.Spring), Reliability.Dependable),
@@ -2661,10 +2677,15 @@ public static class MadeSources
             bool several = rule.Outputs.Count > 1 && !rule.UseFirstValidOutput;
             string inputText = noInput ? "no input" : rule.RequiredItemId ?? string.Join(" ", rule.RequiredTags);
 
+            // With UseFirstValidOutput the game takes the first output whose condition passes, so a
+            // later output only happens in weeks no earlier, surely valid output already covers.
+            WeekMask shadowed = WeekMask.None;
             foreach (MachineOutput output in rule.Outputs)
             {
                 ConditionReading outCond = ConditionSeasons.Read(output.Condition, festivals);
-                WeekMask gate = trigger.Weeks & outCond.Weeks;
+                WeekMask gate = (trigger.Weeks & outCond.Weeks).Except(shadowed);
+                if (rule.UseFirstValidOutput && output.OutputMethod == null && !outCond.Chance && !string.IsNullOrWhiteSpace(output.ItemId))
+                    shadowed |= gate;
                 bool luck = several || output.IsRandom || trigger.Chance || outCond.Chance;
                 ObtainConditions conditions = ConditionSeasons.Apply(ConditionSeasons.Apply(
                     ObtainConditions.None with { Requires = new[] { "machine:" + rule.MachineId } }, trigger), outCond);
@@ -2901,7 +2922,7 @@ Notes for the implementer, checked against the tests:
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~ObtainabilityMadeTests"`
-Expected: PASS, 8 tests.
+Expected: PASS, 9 tests.
 
 - [ ] **Step 6: Run the whole suite, commit, push**
 
@@ -3624,9 +3645,10 @@ namespace TheLongestYear.Loop
                 {
                     if (pond == null) continue;
                     var products = new List<PondProduct>();
+                    // FishPondReward has only ItemId, RequiredPopulation, Chance and quantities: no condition, no random list.
                     foreach (FishPondReward reward in pond.ProducedItems ?? new List<FishPondReward>())
-                        foreach ((string item, bool random) in Entries(reward?.ItemId, reward?.RandomItemId))
-                            products.Add(new PondProduct(item, reward.RequiredPopulation, reward.Chance, reward.Condition, random));
+                        if (!string.IsNullOrWhiteSpace(reward?.ItemId))
+                            products.Add(new PondProduct(reward.ItemId.Trim(), reward.RequiredPopulation, reward.Chance, null));
                     ponds.Add(new PondRow(pond.Id ?? "", (IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), pond.Precedence, products));
                 }
             });
