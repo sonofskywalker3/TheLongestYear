@@ -472,7 +472,7 @@ namespace TheLongestYear.UI
             if (_hearthLight != null)
             {
                 bool swelling = _phase == Phase.White;
-                _tentacles.Draw(b, _hearthLight.position.Value,
+                _tentacles.DrawAroundHud(b, _hearthLight.position.Value,
                     swelling ? _tentacleEdge : LitEdgeRadius(),
                     swelling ? LitEdgeRadius() : 0f);
             }
