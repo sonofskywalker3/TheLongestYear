@@ -77,7 +77,9 @@ public static class StackScaling
 
             // A legendary is caught once per loop, so its ask is x1 at every step
             // (LegendaryFishRules): rounding it up to x2 on Hard made it impossible, not harder.
-            int next = LegendaryFishRules.ClampStack(slot.ItemId, ScaleStack(slot.Stack, profile.StackFactor));
+            // The same holds for anything that never stacks (Gil's Trophies, UnstackableAsks).
+            int next = UnstackableAsks.ClampStack(slot.ItemId,
+                LegendaryFishRules.ClampStack(slot.ItemId, ScaleStack(slot.Stack, profile.StackFactor)));
             if (next == slot.Stack)
                 continue;
 
