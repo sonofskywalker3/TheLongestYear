@@ -205,6 +205,38 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void A_shop_taught_recipe_the_tv_also_teaches_keeps_both_routes()
+    {
+        var snapshot = Snapshot(("(O)24", SourceKind.Crop, DayTable.Always, Reliability.Dependable));
+        var rows = new[]
+        {
+            new RecipeRow("Shop And TV Dish", new[] { "(O)24" }, "(O)910", "none", true),
+            new RecipeRow("Shop And TV Level Dish", new[] { "(O)24" }, "(O)911", "l 0", true),
+        };
+        var shopWeeks = new Dictionary<string, WeekMask> { ["(O)910"] = WeekMask.Of(3), ["(O)911"] = WeekMask.Of(3) };
+        var channel = new Dictionary<string, int> { ["Shop And TV Dish"] = 9, ["Shop And TV Level Dish"] = 9 };
+        var all = MadeSources.Recipes(rows, Objects, shopWeeks, snapshot, channel).ToList();
+
+        // The shop's week is a real answer already, so the TV route is added beside it, not over it.
+        var list = all.Where(x => x.ItemId == "(O)910").Select(x => x.Source).ToList();
+        Assert.Equal(2, list.Count);
+        var shop = list.Single(s => s.Conditions.Requires.Contains("unlock:shop"));
+        Assert.Equal(15, shop.Lands.Lands(1));   // week 3 starts on day 15
+        var tv = list.Single(s => s.Conditions.Requires.Contains("unlock:Queen of Sauce episode 9 (Sunday of week 9)"));
+        Assert.Equal(63, tv.Lands.Lands(1));     // day 7 x 9
+        Assert.All(list, s => Assert.Equal(Reliability.Dependable, s.Reliability));
+        Assert.All(list, s => Assert.False(s.Conditions.Unresolved));
+
+        // Same for a farmhouse-level unlock, whose note is the raw unlock rather than "unlock:shop":
+        // it too already carries the shop's week, so the shop route survives.
+        var level = all.Where(x => x.ItemId == "(O)911").Select(x => x.Source).ToList();
+        Assert.Equal(2, level.Count);
+        Assert.Equal(15, level.Single(s => s.Conditions.Requires.Contains("unlock:l 0")).Lands.Lands(1));
+        Assert.Equal(63, level.Single(s => s.Conditions.Requires.Contains("unlock:Queen of Sauce episode 9 (Sunday of week 9)")).Lands.Lands(1));
+        Assert.All(level, s => Assert.False(s.Conditions.Unresolved));
+    }
+
+    [Fact]
     public void Ponds_use_only_the_lowest_precedence_match_and_carry_forward()
     {
         var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.InWeeks(WeekMask.Of(5)), Reliability.Dependable));

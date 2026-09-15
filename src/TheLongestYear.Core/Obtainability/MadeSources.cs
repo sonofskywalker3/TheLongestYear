@@ -163,9 +163,12 @@ public static class MadeSources
             SourceKind kind = recipe.IsCooking ? SourceKind.Cooking : SourceKind.Crafting;
             int episode = TvEpisode(recipe, cookingChannel);
             // A recipe the TV teaches and nothing else does: the TV week is the real answer, so it
-            // replaces the "taught some other way" guess rather than sitting beside it. A skill or
-            // friendship unlock is a route of its own and keeps its source.
-            if (!(episode != NoEpisode && TaughtElsewhere(recipe)))
+            // replaces the "taught some other way" GUESS rather than sitting beside it. Only that
+            // guess is replaced: a shop that teaches the same recipe is already a resolved week, and
+            // a skill or friendship unlock is a route of its own, so both keep their source and gain
+            // the TV one beside it (either route works, and the model takes the earlier).
+            bool replacesTheGuess = episode != NoEpisode && TaughtElsewhere(recipe) && !taughtByShop;
+            if (!replacesTheGuess)
             {
                 ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
                 foreach (string output in outputs)
