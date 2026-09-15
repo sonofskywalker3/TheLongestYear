@@ -25,6 +25,7 @@ namespace TheLongestYear.Loop
         private readonly GameplayConfig _config;
         private readonly Func<IReadOnlyList<BundleRequirement>> _requirements;
         private readonly Func<ItemAvailabilityModel> _availability;
+        private readonly Func<ItemPools> _pools;
         private readonly Func<ObtainabilityModel> _obtainability;
         private readonly Action<string> _rebuildBoard;
         private readonly SabotageMailService _mail;
@@ -39,6 +40,7 @@ namespace TheLongestYear.Loop
             IMonitor monitor, MetaStore store, GameplayConfig config,
             Func<IReadOnlyList<BundleRequirement>> requirements,
             Func<ItemAvailabilityModel> availability,
+            Func<ItemPools> pools,
             Func<ObtainabilityModel> obtainability,
             Action<string> rebuildBoard,
             SabotageMailService mail)
@@ -49,6 +51,7 @@ namespace TheLongestYear.Loop
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _requirements = requirements ?? throw new ArgumentNullException(nameof(requirements));
             _availability = availability ?? throw new ArgumentNullException(nameof(availability));
+            _pools = pools ?? throw new ArgumentNullException(nameof(pools));
             _obtainability = obtainability ?? throw new ArgumentNullException(nameof(obtainability));
             _rebuildBoard = rebuildBoard ?? throw new ArgumentNullException(nameof(rebuildBoard));
         }
@@ -402,8 +405,8 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>The target and replacement a tamper would write, or null when no unfilled slot has
-        /// a fair replacement. <paramref name="fair"/> null means the unmoderated roll: the whole
-        /// catalog, no check.</summary>
+        /// a fair replacement. <paramref name="fair"/> null means the unmoderated roll: every item
+        /// the board's pools hold, no check.</summary>
         private TamperPlan PlanTamper(Random rng, Func<string, bool> fair)
         {
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
@@ -440,24 +443,46 @@ namespace TheLongestYear.Loop
             return null;
         }
 
-        /// <summary>The replacement pool: every catalog item (the board's own universe), with its room
-        /// theme and the existing model's effort for closeness, filtered by <paramref name="fair"/>.</summary>
+        /// <summary>The replacement pool: the board's own universe, which is the live generation
+        /// pools, each under the room theme it feeds, with the existing model's effort for closeness
+        /// and filtered by <paramref name="fair"/> when a rule applies. Not the curated
+        /// CcItemCatalog: that table is deliberately a short list, so tampering drew from a fraction
+        /// of what the board itself can ask for.</summary>
         private IReadOnlyList<TamperCandidate> Candidates(Func<string, bool> fair)
         {
+            ItemPools pools = _pools();
+            if (pools == null)
+            {
+                _monitor.Log("Darkness: the generation pools are not built, so tampering has no replacement pool tonight.", LogLevel.Warn);
+                return Array.Empty<TamperCandidate>();
+            }
             ItemAvailabilityModel availability = _availability();
             var result = new List<TamperCandidate>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            foreach (CcItem item in CcItemCatalog.Items)
+            void Add(IReadOnlyList<PoolItem> pool, Theme theme)
             {
-                string id = BundleParsing.NormalizeItemId(item.Id);
-                if (!seen.Add(id)) continue;
-                if (fair != null && !fair(id)) continue;
-                // Mid scale for an id no rule placed, not 0: a 0 would make every unplaced item the
-                // closest match to a cheap slot and PickReplacement's "five closest" alphabetical.
-                // For() is only called when the id IS placed; it records a lookup miss otherwise.
-                int effort = availability.IsPlaced(id) ? availability.For(id).Effort : ItemAvailabilityModel.UnrecognisedEffort;
-                result.Add(new TamperCandidate(id, item.Theme, effort));
+                foreach (PoolItem item in pool)
+                {
+                    string id = BundleParsing.NormalizeItemId(item.ItemId);
+                    if (!seen.Add(id)) continue;   // an id in two pools keeps its first theme
+                    if (fair != null && !fair(id)) continue;
+                    // Mid scale for an id no rule placed, not 0: a 0 would make every unplaced item the
+                    // closest match to a cheap slot and PickReplacement's "five closest" alphabetical.
+                    // For() is only called when the id IS placed; it records a lookup miss otherwise.
+                    int effort = availability.IsPlaced(id) ? availability.For(id).Effort : ItemAvailabilityModel.UnrecognisedEffort;
+                    result.Add(new TamperCandidate(id, theme, effort));
+                }
             }
+            Add(pools.Crops, Theme.Farming);
+            Add(pools.ArtisanGoods, Theme.Farming);
+            Add(pools.Forage, Theme.Foraging);
+            Add(pools.TapperGoods, Theme.Foraging);
+            Add(pools.Fish, Theme.Fishing);
+            Add(pools.CrabPot, Theme.Fishing);
+            Add(pools.Metals, Theme.Mining);
+            Add(pools.MonsterDrops, Theme.Mining);
+            Add(pools.GeodeMinerals, Theme.Mining);
+            Add(pools.Cooking, Theme.Mixed);
             return result;
         }
 
