@@ -137,11 +137,15 @@ namespace TheLongestYear.Tests;
 public class DarknessDialTests
 {
     [Fact]
-    public void A_fresh_config_has_darkness_on_normal()
+    public void A_fresh_config_reads_darkness_as_normal_until_it_is_set()
     {
+        // The JSON key is absent on a fresh config too, so the property is null and the
+        // accessor derives Normal from nine Normal dials; the first migration pins it.
         var settings = new DifficultySettings();
-        Assert.Equal(DifficultyStep.Normal, settings.Darkness);
+        Assert.Null(settings.Darkness);
         Assert.Equal(DifficultyStep.Normal, settings.DarknessOrLowest);
+        Assert.True(settings.MigrateDarkness());
+        Assert.Equal(DifficultyStep.Normal, settings.Darkness);
     }
 
     [Theory]
@@ -232,8 +236,9 @@ Add `using System;` and `using System.Linq;` at the top. Inside `SetAll`, after 
     /// <summary>How hard the darkness hits from Summer on: blight share and caps, the fairness
     /// picker's level, the unmoderated roll. NULLABLE in the JSON on purpose: a config written
     /// before the dial existed has no key, and <see cref="MigrateDarkness"/> must be able to tell
-    /// that apart from a player who chose Normal. Read through <see cref="DarknessOrLowest"/>.</summary>
-    public DifficultyStep? Darkness { get; set; } = DifficultyStep.Normal;
+    /// that apart from a player who chose Normal. NO initializer: a C# initializer would fill the
+    /// missing key with Normal and hide the old config. Read through <see cref="DarknessOrLowest"/>.</summary>
+    public DifficultyStep? Darkness { get; set; }
 
     /// <summary>The dial as gameplay reads it: the value, or the lowest of the ten when unset.</summary>
     public DifficultyStep DarknessOrLowest => Darkness ?? LowestDial();
@@ -271,7 +276,7 @@ In `src/TheLongestYear.Core/DifficultyProfile.cs`, after `HoldPriceFactor` add:
     /// the resolved value: every darkness number is keyed by it in <c>DarknessLevels</c>. Nullable so
     /// a stamp written before the dial existed reads through <see cref="Darkness"/> as the lowest of
     /// its ten dials, the same migration a config gets.</summary>
-    public DifficultyStep? DarknessStep { get; set; } = DifficultyStep.Normal;
+    public DifficultyStep? DarknessStep { get; set; }
 
     /// <summary>The level gameplay reads.</summary>
     public DifficultyStep Darkness => DarknessStep ?? Steps.LowestDial();
@@ -282,7 +287,7 @@ In `DifficultyResolver.Resolve`, after `HoldPriceFactor = ...,` add `DarknessSte
 - [ ] **Step 5: Run the whole suite**
 
 Run: `dotnet test tests/TheLongestYear.Tests/TheLongestYear.Tests.csproj -c Release -p:EnableModDeploy=false`
-Expected: all pass (2285 + 10 new). If `DifficultyResolverTests` asserts field-by-field equality of a default profile via reflection or JSON, `DarknessStep` defaults to Normal on both sides, so it still holds; if it fails, report before editing.
+Expected: all pass (2285 + 10 new). `DifficultyResolver.Resolve` always writes an explicit `DarknessStep`, so a resolved profile is never null there; if `DifficultyResolverTests` compares a resolved profile against a hand-built `new DifficultyProfile()` field by field, that hand-built one now has a null `DarknessStep`: report it before editing, do not paper over it.
 
 - [ ] **Step 6: Commit and push**
 
