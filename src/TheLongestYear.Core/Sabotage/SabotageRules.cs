@@ -111,9 +111,16 @@ public static class ReversionRule
 
     public static DonatedSlot? Pick(
         SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Random rng)
+        => Pick(ledger, requirements, _ => true, rng);
+
+    /// <summary>Uniform among the candidates whose item passes <paramref name="fair"/> (the
+    /// FairnessRule, spec 2026-09-15 Part B, 1.6). Null when none passes.</summary>
+    public static DonatedSlot? Pick(
+        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Func<string, bool> fair, Random rng)
     {
+        if (fair is null) throw new ArgumentNullException(nameof(fair));
         if (rng is null) throw new ArgumentNullException(nameof(rng));
-        IReadOnlyList<DonatedSlot> candidates = Candidates(ledger, requirements);
+        List<DonatedSlot> candidates = Candidates(ledger, requirements).Where(s => fair(s.ItemId)).ToList();
         return candidates.Count == 0 ? null : candidates[rng.Next(candidates.Count)];
     }
 }

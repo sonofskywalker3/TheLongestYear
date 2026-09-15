@@ -200,6 +200,32 @@ public class ReversionRuleTests
         Assert.Equal(1, ReversionRule.Pick(ledger, new[] { pantry, tank, vault }, new Random(1))!.BundleIndex);
         Assert.Null(ReversionRule.Pick(new SlotLedger(), new[] { pantry, tank, vault }, new Random(1)));
     }
+
+    [Fact]
+    public void A_slot_whose_item_fails_the_fairness_test_is_never_picked()
+    {
+        // Build the same two-slot unfinished bundle the candidate test uses; call the ids A and B.
+        (SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements) = TwoFilledSlotsInOneUnfinishedBundle();
+        string a = ledger.Entries[0].ItemId, b = ledger.Entries[1].ItemId;
+
+        for (int seed = 0; seed < 20; seed++)
+        {
+            DonatedSlot? pick = ReversionRule.Pick(ledger, requirements, id => id == b, new Random(seed));
+            Assert.NotNull(pick);
+            Assert.Equal(b, pick!.ItemId);
+        }
+        Assert.Null(ReversionRule.Pick(ledger, requirements, _ => false, new Random(1)));
+        Assert.NotNull(ReversionRule.Pick(ledger, requirements, new Random(1)));
+    }
+
+    private static (SlotLedger Ledger, IReadOnlyList<BundleRequirement> Requirements) TwoFilledSlotsInOneUnfinishedBundle()
+    {
+        var pantry = Bundle("Spring Crops", Theme.Farming, 1, 3, "(O)24", "(O)188", "(O)190");
+        var ledger = new SlotLedger();
+        ledger.Add(1, 0, "(O)24");
+        ledger.Add(1, 1, "(O)188");
+        return (ledger, new[] { pantry });
+    }
 }
 
 public class TamperRuleTests
