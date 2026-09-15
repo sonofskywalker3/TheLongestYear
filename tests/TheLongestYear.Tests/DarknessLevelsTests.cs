@@ -58,6 +58,14 @@ public class DarknessLevelsTests
         Assert.Equal(3, DarknessLevels.BigCraftableUnits);
     }
 
+    [Theory]
+    [InlineData(1, false, 1)]
+    [InlineData(40, false, 40)]
+    [InlineData(1, true, 3)]
+    [InlineData(2, true, 6)]
+    public void A_big_craftable_weighs_three_units(int stack, bool bigCraftable, int units)
+        => Assert.Equal(units, BlightRule.UnitsOf(stack, bigCraftable));
+
     [Fact]
     public void A_legendary_fish_is_always_one()
         => Assert.Equal(1, TamperRule.MaxCount("(O)163", 40.0));   // Legend

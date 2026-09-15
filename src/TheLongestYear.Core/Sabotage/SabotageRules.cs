@@ -36,6 +36,11 @@ public static class BlightRule
     public static int SpoilCount(int storedUnits, Season season, DifficultyStep level)
         => Take(storedUnits, season, level);
 
+    /// <summary>How many of the night's take one item costs: a stack counts its size, a machine
+    /// (placed or stored) counts <see cref="DarknessLevels.BigCraftableUnits"/> per copy (Jeff, 2026-09-15).</summary>
+    public static int UnitsOf(int stack, bool bigCraftable)
+        => Math.Max(0, stack) * (bigCraftable ? DarknessLevels.BigCraftableUnits : 1);
+
     /// <summary>Decimal digits kept before rounding up: enough to tell 100 * 0.07 = 7 apart from a
     /// real fraction, without a double's binary rounding (7.000000000000001) forcing an extra
     /// unit.</summary>
