@@ -23,7 +23,7 @@ public class BoardInspectionTests
     [Fact]
     public void Object_only_board_is_false_for_bare_and_qualified_ids()
     {
-        var board = Board(("Pantry/0", "24 1 0 (O)188 5 2"), ("Boiler Room/22", "(O)520 1 0 (O)522 1 0"));
+        var board = Board(("Pantry/0", "24 1 0 (O)188 5 2"), ("Boiler Room/22", "(O)382 1 0 (O)378 1 0"));
         Assert.False(BoardInspection.HasNonObjectIngredients(board));
     }
 
@@ -75,5 +75,13 @@ public class BoardInspectionTests
     {
         var board = new Dictionary<string, string> { ["Vault/23"] = "3,125g/O 24 1//4/1//3,125g" };
         Assert.False(BoardInspection.HasNonObjectIngredients(board));
+    }
+
+    [Fact]
+    public void A_ring_ingredient_counts_as_needing_the_donation_patches()
+    {
+        // (O)529 is an Object by id but a Ring at runtime; vanilla's menu will not lift it.
+        var board = new Dictionary<string, string> { ["Bulletin Board/31"] = "Dye/O 421 1/(O)529 1 0 (O)420 3 0/6/2//Dye" };
+        Assert.True(BoardInspection.HasNonObjectIngredients(board));
     }
 }

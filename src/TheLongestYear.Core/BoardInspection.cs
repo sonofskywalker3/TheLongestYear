@@ -28,7 +28,10 @@ public static class BoardInspection
             {
                 if (BundleParsing.IsCategoryRef(ing.ItemRef)) continue;
                 string id = BundleParsing.NormalizeItemId(ing.ItemRef);
-                if (!id.StartsWith(ObjectIdPrefix, StringComparison.Ordinal))
+                // A ring has an (O) id but is not an Object at runtime, so vanilla's donation
+                // menu refuses to lift it: it needs the donation patches like a weapon does.
+                if (!id.StartsWith(ObjectIdPrefix, StringComparison.Ordinal)
+                    || UnstackableAsks.VanillaRingIds.Contains(id))
                     return true;
             }
         }

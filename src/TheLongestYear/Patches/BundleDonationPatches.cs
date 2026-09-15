@@ -117,8 +117,11 @@ namespace TheLongestYear.Patches
                     continue;
                 if (string.IsNullOrEmpty(ing.id))
                     continue; // category-based ingredient (id is null) — out of scope, vanilla objects only
-                if (ing.id.StartsWith(ObjectIdPrefix, StringComparison.Ordinal))
-                    continue; // vanilla's own highlightSmallObjects already covers Objects
+                if (item is StardewValley.Object)
+                    continue; // vanilla's own highlightSmallObjects already covers real Objects
+                // A ring carries an (O) id but its instance is a Ring, not an Object, so vanilla
+                // refuses to lift it (an Amethyst Ring on a Dye bundle, Nexus 2026-09-14). Judge by
+                // the live instance, never by the id prefix.
                 if (ItemRegistry.HasItemId(item, ing.id))
                     return true;
             }
