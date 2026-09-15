@@ -12,6 +12,9 @@ public static class GrowSources
     private const string TeaSaplingId = "(O)251";
     private const string TeaLeavesId = "(O)815";
     private const string GreenhouseUnlock = "mail:ccPantry";   // Farm.cs 1132, GreenhouseBuilding.cs 47
+    /// <summary>Bush.IsSheltered (Bush.cs 196-205) accepts a greenhouse OR an indoor pot, and a pot
+    /// needs no unlock, so the tea bush's sheltered source must not require the pantry bundle.</summary>
+    private const string ShelteredNote = "sheltered (greenhouse or indoor pot)";
     private const int FruitTreeMaturityDays = 28;              // FruitTree.cs 66
     private const int TeaBushAgeDays = 20;                     // Bush.cs 220 (getAge() >= 20)
     private const int TeaBloomFirstDayOfMonth = 22;            // Bush.cs 220 (dayOfMonth >= 22)
@@ -140,7 +143,7 @@ public static class GrowSources
         var outdoor = sapling.Flag(ObtainConditions.None with { Requires = new[] { "item:" + TeaSaplingId } });
         foreach (ObtainSource s in SourcePair.Of(SourceKind.Crop, dep.Delay(TeaBushAgeDays).Then(outdoors), any.Delay(TeaBushAgeDays).Then(outdoors), outdoor, "tea bush, days 22 to 28", setup))
             yield return (TeaLeavesId, s);
-        var indoor = sapling.Flag(ObtainConditions.None with { Requires = new[] { "item:" + TeaSaplingId, GreenhouseUnlock } });
+        var indoor = sapling.Flag(ObtainConditions.None with { Requires = new[] { "item:" + TeaSaplingId, ShelteredNote } });
         foreach (ObtainSource s in SourcePair.Of(SourceKind.GreenhouseCrop, dep.Delay(TeaBushAgeDays).Then(sheltered), any.Delay(TeaBushAgeDays).Then(sheltered), indoor, "sheltered tea bush, days 22 to 28", setup))
             yield return (TeaLeavesId, s);
     }

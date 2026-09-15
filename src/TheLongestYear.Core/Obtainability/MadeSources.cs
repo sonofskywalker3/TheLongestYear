@@ -109,7 +109,10 @@ public static class MadeSources
                     ObtainConditions logConditions = conditions with { Requires = conditions.Requires.Append(MushroomLogTree).ToList() };
                     DayTable table = DayTable.Always.Then(gate).Delay(days);
                     foreach (string mushroom in MushroomLogItems)
-                        foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, table, logConditions, detail))
+                        // The log takes no input, so the shared "from <input>" detail would read "from
+                        // no input"; name the mushroom this source is for instead.
+                        foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, table, logConditions,
+                            $"{rule.MachineId} gives {mushroom}"))
                             yield return (mushroom, s);
                     continue;
                 }
