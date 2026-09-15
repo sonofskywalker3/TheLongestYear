@@ -67,6 +67,6 @@ public class ObtainabilityComparisonTests
         Assert.True(text.IndexOf("## Agree") < onlyNewAt);
         Assert.DoesNotContain("### (O)5", text);                 // no detail block for OnlyNew
         Assert.Contains("## Unresolved sources (1)", text);
-        Assert.DoesNotContain("—", text);
+        Assert.DoesNotContain("\u2014", text);
     }
 }
