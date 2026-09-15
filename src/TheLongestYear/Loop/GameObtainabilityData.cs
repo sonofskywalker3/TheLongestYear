@@ -64,6 +64,7 @@ namespace TheLongestYear.Loop
             var shops = new List<ShopRow>();
             var machines = new List<MachineRow>();
             var recipes = new List<RecipeRow>();
+            var cookingChannel = new Dictionary<string, int>(StringComparer.Ordinal);
             var animals = new List<AnimalRow>();
             var ponds = new List<PondRow>();
             var taps = new List<TapRow>();
@@ -220,6 +221,21 @@ namespace TheLongestYear.Loop
                     if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: true) is RecipeRow r) recipes.Add(r);
             });
 
+            Section("TV/CookingChannel", () =>
+            {
+                // Keyed by episode number as a string; the value's first field is the recipe name, the
+                // same key as Data/CookingRecipes (TV.getWeeklyRecipe 545, DataLoader.Tv_CookingChannel).
+                // A recipe listed twice keeps its earliest episode.
+                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
+                {
+                    if (!int.TryParse(kv.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out int episode)) continue;
+                    string recipe = (kv.Value ?? "").Split('/')[0].Trim();
+                    if (recipe.Length == 0) continue;
+                    if (!cookingChannel.TryGetValue(recipe, out int already) || episode < already)
+                        cookingChannel[recipe] = episode;
+                }
+            });
+
             Section("CraftingRecipes", () =>
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
@@ -308,7 +324,7 @@ namespace TheLongestYear.Loop
                 ArtifactSpots = artifactSpots, Garbage = garbage, Shops = shops, MonsterDrops = monsterDrops,
                 Crops = crops, FruitTrees = fruitTrees, Machines = machines, Recipes = recipes, Animals = animals,
                 Ponds = ponds, TapItems = taps, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
-                Buildings = buildings, SlayerQuests = slayerQuests,
+                Buildings = buildings, SlayerQuests = slayerQuests, CookingChannel = cookingChannel,
             };
         }
 

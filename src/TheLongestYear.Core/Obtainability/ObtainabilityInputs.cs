@@ -133,4 +133,8 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<SlayerQuestRow> SlayerQuests { get; init; } = Array.Empty<SlayerQuestRow>();
     /// <summary>Building name (as animal House / "Fish Pond") to BuildDays.</summary>
     public IReadOnlyDictionary<string, int> Buildings { get; init; } = new Dictionary<string, int>();
+    /// <summary>Data/TV/CookingChannel: cooking recipe name (the Data/CookingRecipes key) to the
+    /// episode number that teaches it. Episode k airs on the Sunday of week k (TV.cs getWeeklyRecipe
+    /// 518: whichWeek = DaysPlayed % 224 / 7), so episodes 1 to 16 are year 1 and 17 to 32 year 2.</summary>
+    public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();
 }

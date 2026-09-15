@@ -57,7 +57,7 @@ public static class ObtainabilityBuilder
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
             all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f, inputs.Crops));
-            all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current));
+            all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
             all.AddRange(MadeSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
             all.AddRange(MadeSources.Geodes(inputs.GeodeDrops, inputs.GeodesUsingDefaultTable, o, current, f));
             ObtainabilityModel next = Assemble(all, out List<string> unresolved);

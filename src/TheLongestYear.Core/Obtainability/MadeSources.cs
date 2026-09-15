@@ -22,6 +22,11 @@ public static class MadeSources
     private static readonly string[] MushroomLogItems = { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" };
     private static readonly string[] KnownFromStartWords = { "default", "" };
     private static readonly string[] TaughtElsewhereWords = { "none", "null" };
+    /// <summary>A cooking recipe unlocked by farmhouse level ("l 0", "l 100") has no automatic unlock
+    /// either: the Queen of Sauce or an event teaches it.</summary>
+    private const string FarmhouseUnlockPrefix = "l";
+    private const int EpisodesInYearOne = Calendar.WeeksPerYear;   // episode k airs in week k
+    private const int NoEpisode = 0;
     private static readonly string[] Skills = { "Farming", "Fishing", "Foraging", "Mining", "Combat", "Luck" };
 
     /// <summary>Code-only default geode contents (Utility.cs getTreasureFromGeode 6397-6647).</summary>
@@ -142,7 +147,8 @@ public static class MadeSources
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> Recipes(
         IEnumerable<RecipeRow> rows, IReadOnlyDictionary<string, ObjInfo> objects,
-        IReadOnlyDictionary<string, WeekMask> recipeShopWeeks, ObtainabilityModel snapshot)
+        IReadOnlyDictionary<string, WeekMask> recipeShopWeeks, ObtainabilityModel snapshot,
+        IReadOnlyDictionary<string, int>? cookingChannel = null)
     {
         foreach (RecipeRow recipe in rows)
         {
@@ -155,12 +161,51 @@ public static class MadeSources
             if (recipe.AlternateOutputIds != null) outputs.AddRange(recipe.AlternateOutputIds);
             bool oneAtRandom = outputs.Count > 1;   // one output picked at random
             SourceKind kind = recipe.IsCooking ? SourceKind.Cooking : SourceKind.Crafting;
-            ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
+            int episode = TvEpisode(recipe, cookingChannel);
+            // A recipe the TV teaches and nothing else does: the TV week is the real answer, so it
+            // replaces the "taught some other way" guess rather than sitting beside it. A skill or
+            // friendship unlock is a route of its own and keeps its source.
+            if (!(episode != NoEpisode && TaughtElsewhere(recipe)))
+            {
+                ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
+                foreach (string output in outputs)
+                    foreach (ObtainSource s in needed.Emit(kind, t => taughtTable == null ? t : t.Latest(taughtTable),
+                        conditions, $"recipe {recipe.Name}", luck: oneAtRandom))
+                        yield return (output, s);
+            }
+            if (episode == NoEpisode) continue;
+            // Episode k airs on the Sunday that is day 7k of year 1 (TV.cs getWeeklyRecipe 518:
+            // whichWeek = DaysPlayed % 224 / 7); episodes past 16 air in year 2, which the default
+            // filters exclude. A Wednesday rerun only repeats an EARLIER episode, so it adds nothing.
+            bool yearTwo = episode > EpisodesInYearOne;
+            int airDay = Calendar.DaysPerWeek * episode;
+            DayTable tvTable = yearTwo ? DayTable.Always : DayTable.Available(day => day >= airDay);
+            ObtainConditions tvConditions = ObtainConditions.None with
+            {
+                Requires = new[] { "recipe:" + recipe.Name, $"unlock:Queen of Sauce episode {episode} (Sunday of week {episode})" },
+                YearTwo = yearTwo,
+            };
             foreach (string output in outputs)
-                foreach (ObtainSource s in needed.Emit(kind, t => taughtTable == null ? t : t.Latest(taughtTable),
-                    conditions, $"recipe {recipe.Name}", luck: oneAtRandom))
+                foreach (ObtainSource s in needed.Emit(kind, t => t.Latest(tvTable), tvConditions,
+                    $"recipe {recipe.Name} taught by the Queen of Sauce", luck: oneAtRandom))
                     yield return (output, s);
         }
+    }
+
+    /// <summary>The Queen of Sauce episode that teaches this cooking recipe, or <see cref="NoEpisode"/>.</summary>
+    private static int TvEpisode(RecipeRow recipe, IReadOnlyDictionary<string, int>? cookingChannel)
+        => recipe.IsCooking && cookingChannel != null && cookingChannel.TryGetValue(recipe.Name, out int episode)
+            ? episode
+            : NoEpisode;
+
+    /// <summary>True when nothing in the recipe row itself unlocks it: a shop, a letter, a friend, an
+    /// event or the TV teaches it.</summary>
+    private static bool TaughtElsewhere(RecipeRow recipe)
+    {
+        string[] tokens = recipe.Unlock.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) return false;
+        string first = tokens[0].ToLowerInvariant();
+        return TaughtElsewhereWords.Contains(first) || first == FarmhouseUnlockPrefix;
     }
 
     /// <summary>Setup steps for one animal produce: the building (its BuildDays, or 0 when unknown),

@@ -42,6 +42,19 @@ public class ObtainabilityBuilderTests
     }
 
     [Fact]
+    public void A_queen_of_sauce_dish_lands_in_its_episode_week_through_the_builder()
+    {
+        ObtainabilityInputs inputs = Farm() with
+        {
+            Recipes = new[] { new RecipeRow("Chocolate Cake", new[] { "(O)24" }, "(O)220", "l 0", true) },
+            CookingChannel = new Dictionary<string, int> { ["Chocolate Cake"] = 14 },
+        };
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        // The parsnip is dependable from day 5; the episode airs day 98, the Sunday of week 14.
+        Assert.Equal(14, build.Model.LandingWeekFromDay1("(O)220", ObtainFilter.DependableOnly with { IncludeUnresolved = false }));
+    }
+
+    [Fact]
     public void A_pond_chain_settles()
     {
         ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
