@@ -55,6 +55,7 @@ namespace TheLongestYear.Loop
 
         public ObtainabilityInputs Build()
         {
+            _failed.Clear();   // Build may be called again on a later save load; last run's failures are not this run's
             var objects = new Dictionary<string, ObjInfo>(StringComparer.Ordinal);
             var geodeDrops = new List<GeodeDropRow>();
             var defaultGeodes = new List<string>();
@@ -124,7 +125,8 @@ namespace TheLongestYear.Loop
                     foreach (SpawnFishData f in loc.Fish ?? new List<SpawnFishData>())
                         foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
                             fish.Add(new LocationSpawn(kv.Key, item, MapSeason(f.Season), f.Condition, f.Chance,
-                                Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random)); // CatchLimit defaults to -1
+                                Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random,
+                                f.CanBeInherited));   // CatchLimit defaults to -1
                     foreach (ArtifactSpotDropData a in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                         foreach ((string item, _) in Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
                             artifactSpots.Add(new ArtifactSpotRow(kv.Key, item, a.Condition, a.Chance));
@@ -286,8 +288,9 @@ namespace TheLongestYear.Loop
                 {
                     BuildingData b = kv.Value;
                     if (b == null) continue;
+                    // Keyed by building id only: BuildingData.Name is a tokenized display string
+                    // ("[LocalizedText ...]"), never an id anything else in the model looks up.
                     buildings[kv.Key] = b.BuildDays;
-                    if (!string.IsNullOrWhiteSpace(b.Name)) buildings[b.Name] = b.BuildDays;
                 }
             });
 
@@ -301,9 +304,9 @@ namespace TheLongestYear.Loop
                 }
             });
 
+            // Nothing is derived from a half-read set of sections: check first, expand after.
+            if (_failed.Count > 0) throw new ObtainabilityReadException(_failed.ToList());
             var expandedFish = SpawnSources.ExpandLocationFish(fish);
-
-            if (_failed.Count > 0) throw new ObtainabilityReadException(_failed);
 
             return new ObtainabilityInputs
             {

@@ -36,28 +36,54 @@ public static class SpawnSources
     /// <summary>Expands every row whose ItemId starts with "LOCATION_FISH &lt;name&gt;" into copies of
     /// &lt;name&gt;'s own rows (recursively, following that location's own delegations too), re-homed to
     /// the delegating location. A row that delegates to a location with no rows of its own contributes
-    /// nothing.</summary>
+    /// nothing.
+    /// <para>The delegating row's own gates still apply: the game checks a Data/Locations fish row's
+    /// Season, MinFishingLevel, RequireMagicBait and Condition and only then resolves its ItemId query,
+    /// which re-checks the same four on the target location's rows (GameLocation.cs 13764-13775,
+    /// ItemQueryResolver.LOCATION_FISH 260). So a copied row carries both rows' gates, and a row the
+    /// target marks as not inheritable is skipped entirely (GameLocation.cs 13764).</para></summary>
     public static IReadOnlyList<LocationSpawn> ExpandLocationFish(IReadOnlyList<LocationSpawn> fish)
     {
         var byLocation = fish.GroupBy(r => r.Location).ToDictionary(g => g.Key, g => g.ToList(), StringComparer.Ordinal);
-        IEnumerable<LocationSpawn> RowsOf(string location, HashSet<string> visited)
+        // "path" is the chain of locations currently being descended, not everything seen at this
+        // location: a location is removed again on the way back up, so a second delegation to the same
+        // target still expands while a real cycle (A to B to A) still stops.
+        IEnumerable<LocationSpawn> RowsOf(string location, HashSet<string> path)
         {
-            if (!visited.Add(location) || !byLocation.TryGetValue(location, out List<LocationSpawn>? rows)) yield break;
+            if (!path.Add(location) || !byLocation.TryGetValue(location, out List<LocationSpawn>? rows)) yield break;
             foreach (LocationSpawn row in rows)
             {
                 string[] parts = row.ItemId.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length >= 2 && parts[0] == LocationFishQuery)
-                    foreach (LocationSpawn inherited in RowsOf(parts[1], visited))
-                        yield return inherited with { Location = location };
+                    foreach (LocationSpawn inherited in RowsOf(parts[1], path))
+                    {
+                        if (!inherited.CanBeInherited) continue;
+                        yield return inherited with
+                        {
+                            Location = location,
+                            Season = inherited.Season ?? row.Season,
+                            Condition = BothConditions(row.Condition, inherited.Condition),
+                            MinFishingLevel = Math.Max(row.MinFishingLevel, inherited.MinFishingLevel),
+                            RequireMagicBait = row.RequireMagicBait || inherited.RequireMagicBait,
+                        };
+                    }
                 else
                     yield return row;
             }
+            path.Remove(location);
         }
         var result = new List<LocationSpawn>();
         foreach (string location in byLocation.Keys)
             result.AddRange(RowsOf(location, new HashSet<string>(StringComparer.Ordinal)));
         return result;
     }
+
+    /// <summary>Both conditions have to hold. A comma is AND between game-state-query clauses
+    /// (GameStateQuery.cs), which is how <see cref="ConditionSeasons.Read"/> reads them too.</summary>
+    private static string? BothConditions(string? outer, string? inner)
+        => string.IsNullOrWhiteSpace(outer) ? inner
+            : string.IsNullOrWhiteSpace(inner) ? outer
+            : outer.Trim() + ", " + inner.Trim();
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> Forage(
         IEnumerable<LocationSpawn> rows, IReadOnlyDictionary<string, ObjInfo> objects,

@@ -8,7 +8,8 @@ namespace TheLongestYear.Core.Obtainability;
 /// the facts are tables; each line cites the PC 1.6 decompile.</summary>
 public static class MineSources
 {
-    private const string SkullCave = "location:SkullCave";
+    internal const string SkullCave = "location:SkullCave";   // shared with CodeSources.GuildRewards
+    internal const string SkullCavernName = "Skull Cavern";      // what MonsterFloor says instead of a floor number
     private const string Treasure = "fishing:treasure chest";
     private const string GoldenTreasure = "fishing:golden treasure chest";
     private const int SkullCavernFloor = 121;
@@ -54,7 +55,7 @@ public static class MineSources
     private static readonly (string ItemId, string[] Requires, bool Island, string Note)[] TreasureTable = BuildTreasureTable();
 
     public static string? MonsterFloor(string monster)
-        => MonsterFloors.TryGetValue(monster, out int floor) ? (floor >= SkullCavernFloor ? "Skull Cavern" : $"floor {floor}") : null;
+        => MonsterFloors.TryGetValue(monster, out int floor) ? (floor >= SkullCavernFloor ? SkullCavernName : $"floor {floor}") : null;
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> Nodes()
     {

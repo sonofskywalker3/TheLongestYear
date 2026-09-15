@@ -79,7 +79,7 @@ public static class CodeSources
             if (string.IsNullOrWhiteSpace(quest.RewardItemId)) continue;
             var requires = new List<string> { $"guild:{quest.Id} {quest.Count} kills ({string.Join(", ", quest.Targets)})" };
             string? floor = quest.Targets.Select(MineSources.MonsterFloor).FirstOrDefault(f => f != null);
-            if (floor != null) requires.Add(floor == "Skull Cavern" ? "location:SkullCave" : "mines:" + floor);
+            if (floor != null) requires.Add(floor == MineSources.SkullCavernName ? MineSources.SkullCave : "mines:" + floor);
             yield return (BundleParsing.NormalizeItemId(quest.RewardItemId), new ObtainSource(SourceKind.Guild, DayTable.Always,
                 Reliability.Dependable, ObtainConditions.None with { Requires = requires }, $"Adventure Guild reward for {quest.Id}"));
         }

@@ -28,7 +28,7 @@ public sealed record ObjInfo(
 /// marks one entry of a RandomItemId list: the game picks one of them (ItemQueryResolver.cs 804-817).</summary>
 public sealed record LocationSpawn(
     string Location, string ItemId, Season? Season, string? Condition, double Chance, int CatchLimit,
-    bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false);
+    bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false, bool CanBeInherited = true);
 
 /// <summary>One Data/Fish row, reduced: field 1 difficulty or "trap", field 5 time spans
 /// ("600 1200 1800 2000"), field 7 weather ("sunny", "rainy", "both"), field 12 minimum level.</summary>
