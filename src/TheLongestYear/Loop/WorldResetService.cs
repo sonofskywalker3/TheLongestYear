@@ -161,7 +161,8 @@ namespace TheLongestYear.Loop
                     $"JP {_meta.Difficulty.Steps.JpEarned}, prices {_meta.Difficulty.Steps.ShrinePrices}, " +
                     $"gold {_meta.Difficulty.Steps.StartingGold} ({_meta.Difficulty.StartingGold}g), " +
                     $"cart {_meta.Difficulty.Steps.CartSlots} ({_meta.Difficulty.StartingCartSlots} slots), " +
-                    $"holds {_meta.Difficulty.Steps.HoldPrices}.",
+                    $"holds {_meta.Difficulty.Steps.HoldPrices}" +
+                    $", darkness {_meta.Difficulty.Darkness}.",
                     LogLevel.Info);
 
             // The availability model's week mode is a function of the same step (item rarity is
