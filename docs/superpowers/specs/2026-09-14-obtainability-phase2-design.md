@@ -168,6 +168,37 @@ of the Day, tool upgrades, pet adoption, movie concessions, items sold by the pl
 - Year 2 and Ginger Island sources stay recorded but never counted by default.
 - Board generation, gates, goals, pacing: untouched.
 
+## Known limitations (phase 2)
+
+What the phase 2 model deliberately does not do. None of these is a bug to file; each is a decision
+or a piece of work Part B can pick up.
+
+- **Fish area is not modelled.** `FishAreaId` on a Data/Locations fish row picks a stretch of water
+  (the Mountain lake's two halves, the Forest river and pond). The model reads every row of a
+  location as if the whole map were one water, so a fish tied to one area reads as available
+  anywhere in that location.
+- **A delegating `LOCATION_FISH` row's `Chance` is not multiplied.** The expansion copies the target
+  location's rows and keeps both rows' gates, but the two chances are not combined. Chance is not
+  read for reliability anywhere in the model, so nothing downstream is wrong today; it would matter
+  only if a consumer started reading odds.
+- **Machine "any item placed in" triggers are skipped.** A trigger with no required id and no
+  required tags has nothing to read, so the glue drops it rather than record a machine that needs no
+  input at all. A machine whose only rule is such a trigger contributes nothing.
+- **Setup days are recorded but never added** (decision 3). Buildings, animals, ponds, saplings and
+  bushes carry their day figures as `SetupStep`s and the blind model assumes they stand, so animal
+  produce and pond produce read earlier than a player starting from nothing could reach them. Part B
+  adds the days the real farm still owes.
+- **Queen of Sauce air weeks are not read.** `Data/TV/CookingChannel` says which week teaches which
+  recipe. The model does not read it: a recipe whose unlock is "none" and that no shop teaches is
+  recorded `Unresolved`, so it lands the same day its ingredients do. That is why 48 dishes read
+  dependable week 1. The comparison now marks these ("new dependable N (unresolved; known-source
+  week M)") and counts them, but whether the model should read the TV schedule, or keep treating the
+  unlock as a condition, is Jeff's ruling and is still open.
+- **A cooking recipe's friendship and skill unlocks are conditions, not delays.** "f Robin 7" or
+  "s Farming 3" is recorded on the source and never turned into a number of weeks, for the same
+  reason the guild kill counts are not: how long a heart or a skill level takes is a judgement for
+  the consumer, not a figure this model invents.
+
 ## Ruling log
 
 Filled in as Jeff rules on the rerun report's remaining disagreements.
