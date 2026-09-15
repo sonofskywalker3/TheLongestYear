@@ -143,7 +143,7 @@ namespace TheLongestYear
             if (migrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
             // Darkness dial (spec 2026-09-15 Part B, 2.3): a config from before the dial sets it,
-            // and the overall lever, to the lowest of the ten existing dials (Jeff, 2026-09-14).
+            // and the overall lever, to the lowest of the nine existing dials (Jeff, 2026-09-14).
             if (_config.Difficulty.MigrateDarkness())
             {
                 migrated = true;

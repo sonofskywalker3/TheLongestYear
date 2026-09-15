@@ -3,8 +3,8 @@ using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>The ten configured difficulty modifiers, serialized into
-/// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
+/// <summary>The configured difficulty modifiers: the nine original dials plus Darkness, serialized
+/// into <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
 /// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
 /// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
@@ -85,10 +85,11 @@ public sealed class DifficultySettings
     /// missing key with Normal and hide the old config. Read through <see cref="DarknessOrLowest"/>.</summary>
     public DifficultyStep? Darkness { get; set; }
 
-    /// <summary>The dial as gameplay reads it: the value, or the lowest of the ten when unset.</summary>
+    /// <summary>The dial as gameplay reads it: the value, or the lowest of the nine when unset.</summary>
     public DifficultyStep DarknessOrLowest => Darkness ?? LowestDial();
 
-    /// <summary>The lowest of the TEN original dials (never the lever, never Darkness itself).</summary>
+    /// <summary>The lowest of the NINE original dials (never the lever, never Darkness itself).
+    /// Nine, not ten: SeasonPity was retired, see the note below this class's properties.</summary>
     public DifficultyStep LowestDial()
         => new[]
         {
@@ -97,7 +98,7 @@ public sealed class DifficultySettings
         }.Min();
 
     /// <summary>Migration (Jeff, 2026-09-14): a config from before the dial sets Darkness AND the
-    /// overall lever to the lowest of the ten existing dials. True when something changed.</summary>
+    /// overall lever to the lowest of the nine existing dials. True when something changed.</summary>
     public bool MigrateDarkness()
     {
         if (Darkness != null) return false;
