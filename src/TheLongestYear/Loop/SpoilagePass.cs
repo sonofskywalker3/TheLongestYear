@@ -62,6 +62,13 @@ namespace TheLongestYear.Loop
             return units;
         }
 
+        /// <summary>Task 7's signature, stubbed: on Extreme the pass reaches tools, weapons, rings,
+        /// boots, hats and machines too. Until Task 7 fills it in the flag is ignored.</summary>
+        public static int StoredUnits(bool everything) => StoredUnits();
+
+        /// <summary>Task 7's signature, stubbed: see <see cref="StoredUnits(bool)"/>.</summary>
+        public static Taken Strike(int count, Random rng, bool everything) => Strike(count, rng);
+
         /// <summary>Take up to <paramref name="count"/> units, each off a stack picked by
         /// <paramref name="rng"/> weighted by stack size.</summary>
         public static Taken Strike(int count, Random rng)

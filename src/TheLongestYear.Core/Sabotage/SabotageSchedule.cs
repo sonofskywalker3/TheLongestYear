@@ -94,18 +94,6 @@ public static class SabotageSchedule
         }
     }
 
-    /// <summary>Transitional: the three-dice roll the rework replaces. Task 6 removes the last
-    /// caller; NightRoll owns the real decision.</summary>
-    [System.Obsolete("Replaced by NightRoll; removed with the SabotageService rewrite.")]
-    public static bool StrikesTonight(SabotageKind kind, RunState run, Season season, int dayOfMonth, Random rng)
-    {
-        if (rng is null) throw new ArgumentNullException(nameof(rng));
-        if (!IsOpen(kind, season) || IsQuietDay(kind, dayOfMonth)) return false;
-        int week = Calendar.WeekOfYear((int)season, dayOfMonth);
-        int day = Calendar.DayOfYear((int)season, dayOfMonth);
-        return WithinCaps(kind, run, week, day) && rng.NextDouble() < NightRoll.SeasonChance(season);
-    }
-
     /// <summary>Record that a front struck, so the caps see it.</summary>
     public static void RecordStrike(SabotageKind kind, RunState run, int weekOfYear, int dayOfYear)
     {
