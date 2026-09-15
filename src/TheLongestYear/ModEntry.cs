@@ -429,6 +429,15 @@ namespace TheLongestYear
                 this.CmdStashRod);
             helper.ConsoleCommands.Add("tly_dumpsprite", "Write Characters/<Name> to test-output/sprite-<Name>.png so its colours can be read (debug). Usage: tly_dumpsprite Morris", this.CmdDumpSprite);
             Integration.TownRouteProbe.Register(helper, this.Monitor);
+            helper.ConsoleCommands.Add("tly_festival",
+                "Debug: 'state' logs the festival clock gates (timer, control sequence, shouldTimePass, tool state); 'contest' starts the ice fishing contest on the current festival.",
+                this.CmdFestival);
+            helper.ConsoleCommands.Add("tly_stashmenu",
+                "Debug: open the Junimo stash and log what the menu carries (context, source item, Chests Anywhere keys).",
+                this.CmdStashMenu);
+            helper.ConsoleCommands.Add("tly_ringtest",
+                "Debug: open the Community Center note and log whether <qualifiedId> (default (O)529) would highlight for pickup. Usage: tly_ringtest [id]",
+                this.CmdRingTest);
 
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
@@ -1585,6 +1594,88 @@ namespace TheLongestYear
 
         /// <summary>Debug: put a fully loaded rod in the stash, or list stashed tools' state. Smoke
         /// scaffolding for the 0.16.1/0.16.2 stash fixes.</summary>
+        /// <summary>Debug: festival clock gates (0.18.5 verification) and a way to start the ice
+        /// fishing contest without talking to Lewis.</summary>
+        private void CmdFestival(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            string mode = args.Length > 0 ? args[0] : "state";
+            Event ev = Game1.CurrentEvent;
+            if (mode == "contest")
+            {
+                if (ev == null || !ev.isFestival) { this.Monitor.Log("tly_festival: no festival running.", LogLevel.Warn); return; }
+                // Vanilla reaches the contest through a switchEvent, which marks the event as past
+                // its header; without the flag the after-contest script re-parses the header and fails.
+                ev.eventSwitched = true;
+                ev.setUpPlayerControlSequence("iceFishing");
+                this.Monitor.Log("tly_festival: ice fishing contest started.", LogLevel.Info);
+                return;
+            }
+            if (mode == "click")
+            {
+                if (Game1.activeClickableMenu is DialogueBox box) { box.receiveLeftClick(0, 0); this.Monitor.Log("tly_festival: clicked the dialogue box.", LogLevel.Info); }
+                else this.Monitor.Log("tly_festival: no dialogue box open.", LogLevel.Info);
+                return;
+            }
+            Farmer p = Game1.player;
+            this.Monitor.Log(
+                $"tly_festival state: time={Game1.timeOfDay} isFestival={Game1.isFestival()} event={(ev == null ? "none" : ev.id)} " +
+                $"timer={(ev?.festivalTimer ?? -1)} control={(ev?.playerControlSequence ?? false)} id={(ev?.playerControlSequenceID ?? "-")} " +
+                $"shouldTimePass={Game1.shouldTimePass()} autoEnd={FestivalTimeFlow.ShouldAutoEnd()} " +
+                $"usingTool={p.UsingTool} tool={(p.CurrentTool?.GetType().Name ?? "none")} temp={(p.TemporaryItem?.Name ?? "none")} canMove={p.CanMove} " +
+                $"eventUp={Game1.eventUp} freeze={Game1.freezeControls} fade={Game1.fadeToBlack}/{Game1.globalFade} dialogue={Game1.dialogueUp} menu={(Game1.activeClickableMenu?.GetType().Name ?? "none")} " +
+                $"farmEvent={(Game1.farmEvent != null)} paused={Game1.paused}/{Game1.isTimePaused} festDay={Utility.isFestivalDay()} where={Game1.whereIsTodaysFest ?? "-"} loc={Game1.currentLocation?.Name}",
+                LogLevel.Info);
+        }
+
+        /// <summary>Debug: open the stash and log what the menu carries (0.18.6 verification).</summary>
+        private void CmdStashMenu(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var chest = _stashService?.FindStashChest();
+            if (chest == null) { this.Monitor.Log("tly_stashmenu: no stash chest.", LogLevel.Warn); return; }
+            if (args.Length > 0 && args[0] == "name")
+            {
+                chest.modData[JunimoStashService.ChestsAnywhereModDataPrefix + "Name"] = args.Length > 1 ? args[1] : "Junimo";
+                this.Monitor.Log("tly_stashmenu: stamped a Chests Anywhere name on the stash.", LogLevel.Info);
+                return;
+            }
+            chest.ShowMenu();
+            var menu = Game1.activeClickableMenu as ItemGrabMenu;
+            string keys = string.Join(",", chest.modData.Keys.Where(k => k.StartsWith("Pathoschild.", StringComparison.Ordinal)).Select(k => k + "=" + chest.modData[k]));
+            this.Monitor.Log(
+                $"tly_stashmenu: menu={(Game1.activeClickableMenu?.GetType().Name ?? "none")} context={(menu?.context == null ? "null" : menu.context.GetType().Name)} " +
+                $"source={(menu?.sourceItem?.GetType().Name ?? "null")} overhaulLoaded={JunimoStashService.StorageOverhaulLoaded} " +
+                $"chestsAnywhere={this.Helper.ModRegistry.IsLoaded("Pathoschild.ChestsAnywhere")} caKeys=[{keys}]",
+                LogLevel.Info);
+        }
+
+        /// <summary>Debug: would the Community Center note let the player pick up this item (0.18.7)?</summary>
+        private void CmdRingTest(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            string id = args.Length > 0 ? args[0] : "(O)529";
+            Item item = ItemRegistry.Create(id, 1);
+            bool vanilla = Utility.highlightSmallObjects(item);
+            var cc = Game1.RequireLocation<StardewValley.Locations.CommunityCenter>("CommunityCenter");
+            for (int area = 0; area <= 5; area++)
+            {
+                var note = new JunimoNoteMenu(area, cc.bundlesDict());
+                Bundle asking = note.bundles.FirstOrDefault(b => b.ingredients.Any(ing => !ing.completed && ing.id == id));
+                if (asking == null) { note.exitThisMenu(false); continue; }
+                Game1.activeClickableMenu = note;
+                AccessTools.Method(typeof(JunimoNoteMenu), "setUpBundleSpecificPage").Invoke(note, new object[] { asking });
+                bool live = note.inventory.highlightMethod(item);
+                this.Monitor.Log(
+                    $"tly_ringtest [{id}] type={item.GetType().Name} bundle={asking.name} (area {area}) vanillaHighlight={vanilla} liveHighlight={live} " +
+                    $"liveBoardHasNonObjectSlots={TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots} enableNonObjectDonations={_config.EnableNonObjectDonations}",
+                    live ? LogLevel.Info : LogLevel.Warn);
+                Game1.exitActiveMenu();
+                return;
+            }
+            this.Monitor.Log($"tly_ringtest [{id}] type={item.GetType().Name} vanillaHighlight={vanilla}: no bundle on the live board asks for it.", LogLevel.Info);
+        }
+
         private void CmdStashRod(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -2706,6 +2797,9 @@ namespace TheLongestYear
                 case "tly_addpet":    this.CmdAddPet(command, args); break;
                 case "tly_fixbridge": this.CmdFixBridge(command, args); break;
                 case "tly_stashrod":  this.CmdStashRod(command, args); break;
+                case "tly_festival":  this.CmdFestival(command, args); break;
+                case "tly_stashmenu": this.CmdStashMenu(command, args); break;
+                case "tly_ringtest":  this.CmdRingTest(command, args); break;
                 default:
                     this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
                     break;
