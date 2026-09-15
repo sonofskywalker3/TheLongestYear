@@ -84,7 +84,9 @@ namespace TheLongestYear.Loop
             if (season == CoreSeason.Spring) { _armed.Clear(); _armedBlightTarget = null; return; }
 
             Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear);
-            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
+            // The snapshot walks every map, so it is built on the first fairness question and never
+            // on a quiet night. It reads no rng, so the night's outcome is unchanged either way.
+            var save = new Lazy<SaveSnapshot>(() => SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace)));
             ObtainabilityModel model = _obtainability();
             var night = new NightPlan(this, season, day, week, dayOfYear, level, save, model, rng);
 
@@ -133,14 +135,14 @@ namespace TheLongestYear.Loop
             private readonly CoreSeason _season;
             private readonly int _day, _week, _dayOfYear;
             private readonly DifficultyStep _level;
-            private readonly SaveSnapshot _save;
+            private readonly Lazy<SaveSnapshot> _save;
             private readonly ObtainabilityModel _model;
             private readonly Random _rng;
             private int? _crops, _stored;
             private DonatedSlot _reversion; private bool _reversionPlanned, _reversionUnmoderated;
             private TamperPlan _tamper; private bool _tamperPlanned, _tamperUnmoderated;
 
-            public NightPlan(SabotageService s, CoreSeason season, int day, int week, int dayOfYear, DifficultyStep level, SaveSnapshot save, ObtainabilityModel model, Random rng)
+            public NightPlan(SabotageService s, CoreSeason season, int day, int week, int dayOfYear, DifficultyStep level, Lazy<SaveSnapshot> save, ObtainabilityModel model, Random rng)
             { _s = s; _season = season; _day = day; _week = week; _dayOfYear = dayOfYear; _level = level; _save = save; _model = model; _rng = rng; }
 
             private RunState Run => _s.Run;
@@ -209,7 +211,7 @@ namespace TheLongestYear.Loop
                 _reversionPlanned = true;
                 _reversionUnmoderated = NightRoll.UnmoderatedFires(_level, Run.UnmoderatedReversionSpent, _rng);
                 int deadline = FairnessRule.ReversionDeadline(_dayOfYear, _level);
-                _reversion = _s.PickReversion(_rng, _reversionUnmoderated ? null : (Func<string, bool>)(id => FairnessRule.Counts(id, _dayOfYear, deadline, _level, _save, _model)));
+                _reversion = _s.PickReversion(_rng, _reversionUnmoderated ? null : (Func<string, bool>)(id => FairnessRule.Counts(id, _dayOfYear, deadline, _level, _save.Value, _model)));
                 if (_reversionUnmoderated) _s._monitor.Log("Darkness: this reversion is the loop's unmoderated one.", LogLevel.Info);
                 return _reversion;
             }
@@ -219,7 +221,7 @@ namespace TheLongestYear.Loop
                 if (_tamperPlanned) return _tamper;
                 _tamperPlanned = true;
                 _tamperUnmoderated = NightRoll.UnmoderatedFires(_level, Run.UnmoderatedTamperSpent, _rng);
-                _tamper = _s.PlanTamper(_rng, _tamperUnmoderated ? null : (Func<string, bool>)(id => FairnessRule.Counts(id, _dayOfYear, FairnessRule.TamperDeadline, _level, _save, _model)));
+                _tamper = _s.PlanTamper(_rng, _tamperUnmoderated ? null : (Func<string, bool>)(id => FairnessRule.Counts(id, _dayOfYear, FairnessRule.TamperDeadline, _level, _save.Value, _model)));
                 if (_tamperUnmoderated) _s._monitor.Log("Darkness: this tamper is the loop's unmoderated one.", LogLevel.Info);
                 return _tamper;
             }
