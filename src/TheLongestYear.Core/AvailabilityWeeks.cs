@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TheLongestYear.Core.Availability;
 
 namespace TheLongestYear.Core;
@@ -214,8 +215,11 @@ public static class AvailabilityWeeks
     /// <summary>Books with a year-1 route (Data/Shops and code, review 2026-08-28). The Bookseller's
     /// eleven story books are YEAR 3 in his stock; the ones here have a free gift box or a shop.
     /// The Alleyway Buffet and Mapping Cave Systems are year 3 at the Bookseller but sit in one-time
-    /// gift boxes (Town behind Joja, the Adventurer's Guild) that respawn every loop because the
-    /// rewind clears mailReceived. Friendship 101 was here at week 5 as a prize-machine book: it is
+    /// gift boxes that respawn every loop because the rewind clears mailReceived. Neither is quick
+    /// (Jeff, 2026-09-15, checked live): the Town box is behind a gold axe and a gold pickaxe, so
+    /// early Fall for a player who goes for it; the Guild box is in the back room, which opens at
+    /// 1,000 monster kills, so Winter. The weeks pin their season gate, and <see cref="LateBookIds"/>
+    /// keeps them off an Easy board. Friendship 101 was here at week 5 as a prize-machine book: it is
     /// the ninth prize, about 25 Help Wanted quests, and the ticket count is wiped each loop, so it
     /// is not a year-1 route (Nexus, 2026-09-14, Hard Book bundle). Everything else is drop-only
     /// and stays out of the Book pool.</summary>
@@ -226,10 +230,17 @@ public static class AvailabilityWeeks
             ["(O)SkillBook_0"] = 3, ["(O)SkillBook_1"] = 3, ["(O)SkillBook_2"] = 3, ["(O)SkillBook_3"] = 3, ["(O)SkillBook_4"] = 3,  // 5,000g and up
             ["(O)Book_Speed"] = 5,            // Way of the Wind pt. 1, 15,000g
             ["(O)PurpleBook"] = 5,            // Book of Stars, 15,000g at 25 percent
-            ["(O)Book_Trash"] = 1,            // gift box in Town
-            ["(O)Book_Marlon"] = 1,           // gift box in the Adventurer's Guild
+            ["(O)Book_Trash"] = 9,            // gift box in Town, behind a gold axe and gold pickaxe
+            ["(O)Book_Marlon"] = 13,          // gift box in the Guild's back room, 1,000 monster kills
             ["(O)Book_Bombs"] = 3,            // the Dwarf, 4,000g
         };
+
+    /// <summary>A book whose year-1 route lands in Fall or later. The Book bundle draws five of
+    /// eleven and Easy asks for two of them, but a slow route can still swallow a slot, so Easy
+    /// leaves these out (<see cref="BookRouteRules"/>).</summary>
+    public static IReadOnlySet<string> LateBookIds { get; } =
+        BookWeeks.Where(kv => kv.Value >= FirstWeekOf(Season.Fall)).Select(kv => kv.Key)
+            .ToHashSet(StringComparer.Ordinal);
 
     /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
     public const int TrapFishWeek = 2;
