@@ -395,6 +395,19 @@ namespace TheLongestYear
             bool wasNewGame = _isNewGame;
             bool isLongestYearSave = _isNewGame || _meta.State.IsLongestYearRun || _meta.LoadedExistingData;
             _isNewGame = false; // consume — only the load right after SaveCreating counts as new
+            // A farm quit before its first night, saved by the game at character creation before
+            // the marker existed: adopt it (Nexus, 2026-09-14). Same policy as a new game.
+            if (!isLongestYearSave && _config.Enabled && Game1.stats != null
+                && RunAdoption.IsUnsavedFirstMorning(
+                    _meta.LoadedExistingData, Game1.stats.DaysPlayed,
+                    (TheLongestYear.Core.Season)(int)Game1.season, Game1.dayOfMonth, Game1.year))
+            {
+                isLongestYearSave = true;
+                this.Monitor.Log(
+                    "This save is a brand-new farm that was quit before its first night, so it never got " +
+                    "the Longest Year marker. Adopting it as a Longest Year run.",
+                    LogLevel.Warn);
+            }
             if (!isLongestYearSave)
             {
                 DeactivateTly();
@@ -669,14 +682,25 @@ namespace TheLongestYear
         }
 
         /// <summary>A brand-new game is being created. If TLY is enabled, this save becomes a Longest
-        /// Year run — remember it so the OnSaveLoaded that follows stamps the per-save marker and
-        /// activates the mod. SaveCreating runs before save data is writable, so the actual stamp
-        /// happens in OnSaveLoaded. Loading an existing save never fires this, which is what keeps TLY
-        /// dormant on non-TLY saves.</summary>
+        /// Year run — remember it so the OnSaveLoaded that follows activates the mod, and put the run
+        /// marker into the save right now. The game writes a new farm's file at character creation and
+        /// SMAPI does not raise Saving for that write, so a marker stamped only in OnSaving never reached
+        /// a farm quit before its first night (Nexus, 2026-09-14). Loading an existing save never fires
+        /// this, which is what keeps TLY dormant on non-TLY saves.</summary>
         private void OnSaveCreating(object sender, SaveCreatingEventArgs e)
         {
-            if (_config.Enabled)
-                _isNewGame = true;
+            if (!_config.Enabled)
+                return;
+            _isNewGame = true;
+            try
+            {
+                _meta.StampNewRunMarker();
+            }
+            catch (System.InvalidOperationException ex)
+            {
+                // Save data not writable yet on this platform: the load-time adoption rule covers it.
+                this.Monitor.Log($"Could not stamp the run marker at save creation ({ex.Message}); a quit before the first night will be adopted on reload instead.", LogLevel.Warn);
+            }
         }
 
         /// <summary>Returning to title means the loaded save is gone — drop the runtime gate so no
