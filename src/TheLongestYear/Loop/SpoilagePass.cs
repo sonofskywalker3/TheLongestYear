@@ -81,7 +81,9 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>Take up to <paramref name="count"/> units, each off an entry picked by
-        /// <paramref name="rng"/> weighted by its units. A machine costs three of the count.</summary>
+        /// <paramref name="rng"/> weighted by its units. A machine costs three of the night's count
+        /// (Jeff's budget rule: a night of 15 loses at most 5 machines) but counts as ONE thing in
+        /// the report, because one keg went missing, not three.</summary>
         public static Taken Strike(int count, Random rng, bool everything)
         {
             if (count <= 0) return new Taken(0, 0);
@@ -101,7 +103,9 @@ namespace TheLongestYear.Loop
                 }
                 int cost = BlightRule.UnitsOf(1, hit.BigCraftable);
                 taken += cost;
-                if (hit.BigCraftable || !BlightRule.IsPerishableCategory(hit.Item.Category)) missing += cost; else spoiled += cost;
+                // The cost is the night's budget; the report counts things, so one item taken is one
+                // thing whether it was a parsnip or a keg.
+                if (hit.BigCraftable || !BlightRule.IsPerishableCategory(hit.Item.Category)) missing += 1; else spoiled += 1;
                 if (hit.Chest != null)
                 {
                     hit.Item.Stack -= 1;
