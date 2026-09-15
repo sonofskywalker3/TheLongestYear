@@ -355,6 +355,9 @@ namespace TheLongestYear
                 "Junimo Stash chest, or print every stashed tool's slots + enchantments. " +
                 "Usage: tly_stashrod | tly_stashrod check",
                 this.CmdStashRod);
+            helper.ConsoleCommands.Add("tly_giftbox",
+                "Debug: report or open a vanilla one-time gift box. Usage: tly_giftbox <Location> <x> <y> [warp|open]",
+                this.CmdGiftBox);
             helper.ConsoleCommands.Add("tly_festival",
                 "Debug: 'state' logs the festival clock gates (timer, control sequence, shouldTimePass, tool state); 'contest' starts the ice fishing contest on the current festival.",
                 this.CmdFestival);
@@ -1324,6 +1327,34 @@ namespace TheLongestYear
 
         /// <summary>Debug: put a fully loaded rod in the stash, or list stashed tools' state. Smoke
         /// scaffolding for the 0.16.1/0.16.2 stash fixes.</summary>
+        /// <summary>Debug: vanilla one-time gift boxes (Book_Trash in Town, Book_Marlon in the Guild).
+        /// 'warp' puts the farmer next to the tile so the location's entry spawns the box; a call with
+        /// no mode reports the box, its contents and the mail flag; 'open' opens it like a click.</summary>
+        private void CmdGiftBox(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 3 || !int.TryParse(args[1], out int x) || !int.TryParse(args[2], out int y))
+            { this.Monitor.Log("Usage: tly_giftbox <Location> <x> <y> [warp|open]", LogLevel.Warn); return; }
+            string mode = args.Length > 3 ? args[3] : "report";
+            GameLocation loc = Game1.getLocationFromName(args[0]);
+            if (loc == null) { this.Monitor.Log($"tly_giftbox: no location '{args[0]}'.", LogLevel.Warn); return; }
+            if (mode == "warp") { Game1.warpFarmer(loc.Name, x, y + 1, 0); this.Monitor.Log($"tly_giftbox: warping to {loc.Name} ({x},{y + 1}).", LogLevel.Info); return; }
+            string flag = loc.Name + "_giftbox_" + x + "_" + y;
+            loc.overlayObjects.TryGetValue(new Microsoft.Xna.Framework.Vector2(x, y), out StardewValley.Object obj);
+            var chest = obj as StardewValley.Objects.Chest;
+            string items = chest == null ? "-" : string.Join(",", chest.Items.Where(i => i != null).Select(i => i.QualifiedItemId));
+            if (mode == "open" && chest != null && chest.giftbox.Value)
+            {
+                chest.checkForAction(Game1.player);
+                this.Monitor.Log($"tly_giftbox: opened the box at {loc.Name} ({x},{y}).", LogLevel.Info);
+            }
+            bool hasBook = Game1.player.Items.Any(i => i != null && items.Contains(i.QualifiedItemId));
+            this.Monitor.Log(
+                $"tly_giftbox {loc.Name} ({x},{y}): box={(chest != null && chest.giftbox.Value)} items=[{items}] mailFlag={Game1.player.mailReceived.Contains(flag)} " +
+                $"guildMember={Game1.player.mailReceived.Contains("guildMember")} playerLoc={Game1.currentLocation?.Name} inventoryHasIt={hasBook}",
+                LogLevel.Info);
+        }
+
         /// <summary>Debug: festival clock gates (0.18.5 verification) and a way to start the ice
         /// fishing contest without talking to Lewis.</summary>
         private void CmdFestival(string command, string[] args)
@@ -2308,6 +2339,7 @@ namespace TheLongestYear
                 case "tly_fixbridge": this.CmdFixBridge(command, args); break;
                 case "tly_stashrod":  this.CmdStashRod(command, args); break;
                 case "tly_festival":  this.CmdFestival(command, args); break;
+                case "tly_giftbox":   this.CmdGiftBox(command, args); break;
                 case "tly_stashmenu": this.CmdStashMenu(command, args); break;
                 case "tly_ringtest":  this.CmdRingTest(command, args); break;
                 default:

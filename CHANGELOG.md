@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.11 - 2026-09-15
+
+2106 tests.
+
+### Changed
+
+- **The two hidden books get the time their routes take.** Both of the books hidden around town
+  take real work to reach, so their bundle deadlines now sit in Fall and Winter rather than
+  Spring, and on Easy the Book bundle never asks for them at all.
+
 ## 0.18.10 - 2026-09-15
 
 2103 tests.
@@ -25,9 +35,8 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **Friendship 101 is no longer in the Book bundle.** It is the ninth prize from the prize ticket
   machine, about 25 Help Wanted quests, and the ticket count starts over every loop, so no one
   reaches it inside a year. On Hard the Book bundle wants four of its five books, so that one book
-  made the season unwinnable. The Alleyway Buffet and Mapping Cave Systems stay: the Bookseller
-  sells them in year 3, but each sits in a free one-time gift box (behind Joja in Town, and in the
-  Adventurer's Guild) that comes back every loop. Reported by FayGabi.
+  made the season unwinnable. The Alleyway Buffet and Mapping Cave Systems stay: those books are actually hidden around
+  town, and can be grabbed each loop under the right conditions. Reported by FayGabi.
 - **A new farm quit before its first night is still a Longest Year run.** The game saves a brand-
   new farm the moment you finish making your character, before this mod has written anything to
   it. Quitting on that first Spring 1 without sleeping and reloading gave you a farm with no
