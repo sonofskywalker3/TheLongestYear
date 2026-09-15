@@ -110,6 +110,50 @@ public class ObtainabilityBuilderTests
     }
 
     [Fact]
+    public void A_derived_item_under_any_filter_answers_from_its_input_read_under_that_same_filter()
+    {
+        // The property Derived.cs exists to keep: for any filter F, the derived item's table under F is
+        // what deriving from the input's own table under F gives. The seed here is plain-unreachable,
+        // year 2 dependable and island dependable a season later, so all three answers differ.
+        var inputs = new ObtainabilityInputs
+        {
+            Objects = new Dictionary<string, ObjInfo>
+            {
+                ["(O)476"] = new ObjInfo("(O)476", "Garlic Seeds", -74, 40, new string[0], false),
+                ["(O)248"] = new ObjInfo("(O)248", "Garlic", -75, 60, new string[0], false),
+            },
+            Shops = new[]
+            {
+                new ShopRow("SeedShop", "(O)476", "YEAR 2, SEASON Spring", false),
+                new ShopRow("IslandTrade", "(O)476", "SEASON Summer", false),
+            },
+            Crops = new[] { new CropRow("(O)476", "(O)248", new[] { Season.Spring, Season.Summer }, 4, 0) },
+        };
+        ObtainabilityModel model = ObtainabilityBuilder.Build(inputs).Model;
+        ObtainFilter crops = ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } };
+
+        foreach (ObtainFilter f in new[]
+        {
+            crops,
+            crops with { IncludeYearTwo = true },
+            crops with { IncludeGingerIsland = true },
+            crops with { IncludeYearTwo = true, IncludeGingerIsland = true },
+        })
+        {
+            ObtainFilter seedFilter = ObtainFilter.DependableOnly with
+            {
+                IncludeYearTwo = f.IncludeYearTwo, IncludeGingerIsland = f.IncludeGingerIsland,
+            };
+            DayTable expected = model.Table("(O)476", seedFilter).Then(GrowSources.PlantTable(new[] { Season.Spring, Season.Summer }, 4));
+            Assert.Equal(expected, model.Table("(O)248", f));
+        }
+
+        Assert.Null(model.Lands("(O)248", 1, crops));                                     // no plain route
+        Assert.Equal(5, model.Lands("(O)248", 1, crops with { IncludeYearTwo = true }));  // Pierre, year 2
+        Assert.Equal(33, model.Lands("(O)248", 1, crops with { IncludeGingerIsland = true }));   // the island shop, Summer
+    }
+
+    [Fact]
     public void Unresolved_queries_go_to_diagnostics_not_the_model()
     {
         var inputs = new ObtainabilityInputs

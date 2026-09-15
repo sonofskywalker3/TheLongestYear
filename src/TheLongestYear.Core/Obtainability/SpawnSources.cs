@@ -120,10 +120,8 @@ public static class SpawnSources
                 });
                 yield break;
             }
-            ObtainConditions conditions = bait.Flag(source.Conditions);
-            DayTable dependable = source.Reliability == Reliability.Dependable ? bait.Dependable.Then(source.Lands) : DayTable.None;
-            foreach (ObtainSource s in SourcePair.Of(
-                source.Kind, dependable, bait.Any.Then(source.Lands), conditions, source.Detail, source.Setup))
+            foreach (ObtainSource s in bait.Emit(source.Kind, t => t.Then(source.Lands), source.Conditions,
+                source.Detail, source.Setup, luck: source.Reliability != Reliability.Dependable))
                 yield return (id, s);
         }
 

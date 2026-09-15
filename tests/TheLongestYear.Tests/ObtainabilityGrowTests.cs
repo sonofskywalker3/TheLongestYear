@@ -76,6 +76,36 @@ public class ObtainabilityGrowTests
     }
 
     [Fact]
+    public void A_year_two_shop_row_beside_a_cart_row_never_reaches_a_default_answer()
+    {
+        // The Garlic shape: Garlic Seeds are dependable at Pierre in YEAR 2 and a chance at the cart
+        // any year. The year 2 row must not feed an answer that excludes year 2, and the cart row must
+        // still give the crop its chance route. Each filter variant of the seed is derived separately.
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)476"] = new[]
+            {
+                new ObtainSource(SourceKind.Shop, Spring, Reliability.Dependable,
+                    ObtainConditions.None with { YearTwo = true }, "shop SeedShop"),
+                new ObtainSource(SourceKind.Cart, DayTable.Always, Reliability.Chance, ObtainConditions.None, "shop Traveler"),
+            },
+        });
+        var rows = new[] { new CropRow("(O)476", "(O)248", new[] { Season.Spring }, 4, 0) };
+        var garlic = new ObtainabilityModel(GrowSources.Crops(rows, snapshot)
+            .GroupBy(x => x.ItemId).ToDictionary(g => g.Key, g => (IReadOnlyList<ObtainSource>)g.Select(x => x.Source).ToList()));
+
+        // Default filter: no dependable route at all, and the chance route is the cart's.
+        Assert.True(garlic.Table("(O)248", ObtainFilter.DependableOnly).IsEmpty);
+        Assert.Equal(5, garlic.Lands("(O)248", 1, ObtainFilter.Any));
+        // Year 2 included: the shop row lands, dependably, and every source that carries it says so.
+        Assert.Equal(5, garlic.Lands("(O)248", 1, ObtainFilter.DependableOnly with { IncludeYearTwo = true }));
+        Assert.All(garlic.Sources("(O)248").Where(x => x.Reliability == Reliability.Dependable),
+            x => Assert.True(x.Conditions.YearTwo));
+        // Island is nothing to do with this seed, so no island-only variant was recorded.
+        Assert.DoesNotContain(garlic.Sources("(O)248"), x => x.Conditions.GingerIsland);
+    }
+
+    [Fact]
     public void Mixed_seeds_give_the_planting_days_pool_and_winter_greenhouse_gives_every_pool()
     {
         var snapshot = Snapshot(("(O)770", SourceKind.Forage, DayTable.Always, Reliability.Chance));

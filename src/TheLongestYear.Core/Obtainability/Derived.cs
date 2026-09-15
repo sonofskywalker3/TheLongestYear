@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,31 +7,22 @@ namespace TheLongestYear.Core.Obtainability;
 /// <summary>How a chained source reads the item it is derived from (a seed, a sapling, a trade item,
 /// a machine input, an ingredient, a pond fish, a geode).
 /// <para>Ginger Island and year 2 sources are recorded but never counted by default (spec
-/// 2026-09-14-obtainability-phase2, non-goals). Reading an input through the default filters would
-/// therefore make an island-only or year-2-only input look like NO input at all, and the derived
-/// source would vanish instead of being recorded with the flag. So every derivation reads its input
-/// with both included and ORs the input's flags onto the derived source's conditions.</para></summary>
+/// 2026-09-14-obtainability-phase2, non-goals). Reading an input through the default filters alone
+/// would lose an island-only or year 2-only input entirely; reading it with both included and then
+/// flagging the result only when EVERY upstream source is flagged is worse still, because a mixed
+/// input (a year 2 shop row beside a chance cart row) would let the year 2 row's landing day into the
+/// default headline. So an input is read under all FOUR filter variants and each variant is derived
+/// separately, carrying its own flags.</para>
+/// <para><b>What this buys, and it is the property the tests pin:</b> for any filter F, the derived
+/// item's table under F is what deriving from the input's own table under F gives. Each variant's
+/// tables come from exactly that filter, the chain applied to them is monotone in the input table,
+/// and a variant's sources are counted only when F includes the variant's flags. A year 2 row can
+/// therefore never reach an answer that excludes year 2.</para></summary>
 public static class Derived
 {
-    public static readonly ObtainFilter AnyFlagged =
-        ObtainFilter.Any with { IncludeGingerIsland = true, IncludeYearTwo = true };
-
-    public static readonly ObtainFilter DependableFlagged =
-        ObtainFilter.DependableOnly with { IncludeGingerIsland = true, IncludeYearTwo = true };
-
-    /// <summary>An input's two tables plus the flags the derived source inherits: the input is island
-    /// gated only when EVERY source it has is island gated, and year 2 only when every one is.</summary>
-    public sealed record Input(DayTable Dependable, DayTable Any, bool GingerIsland, bool YearTwo)
+    /// <summary>One filter variant of an input: its two tables, and the flags that name it.</summary>
+    public sealed record Variant(bool GingerIsland, bool YearTwo, DayTable Dependable, DayTable Any)
     {
-        /// <summary>No source at all: a derivation from this can never land.</summary>
-        public static readonly Input Nothing = new(DayTable.None, DayTable.None, false, false);
-
-        /// <summary>Needs nothing (a machine rule with no input): lands the day it starts.</summary>
-        public static readonly Input Free = new(DayTable.Always, DayTable.Always, false, false);
-
-        public bool IsEmpty => Any.IsEmpty;
-
-        /// <summary>ORs the input's flags onto a derived source's conditions.</summary>
         public ObtainConditions Flag(ObtainConditions conditions)
             => conditions with
             {
@@ -38,32 +30,101 @@ public static class Derived
                 YearTwo = conditions.YearTwo || YearTwo,
             };
 
-        /// <summary>Either input will do (a machine that takes any of several items): the sooner
-        /// landing, and the flag only when both sides carry it.</summary>
+        public bool SameTables(Variant other) => Dependable.Equals(other.Dependable) && Any.Equals(other.Any);
+
+        public bool IsEmpty => Any.IsEmpty && Dependable.IsEmpty;
+    }
+
+    /// <summary>An input read under every filter variant that says something new. The plain variant
+    /// (no island, no year 2) is always first and is the fallback when a variant is missing.</summary>
+    public sealed record Input(IReadOnlyList<Variant> Variants)
+    {
+        private const bool Plain = false;
+
+        public static readonly Input Nothing = Of(DayTable.None);
+
+        /// <summary>Needs nothing (a machine rule with no input): lands the day it starts.</summary>
+        public static readonly Input Free = Of(DayTable.Always);
+
+        private static Input Of(DayTable both) => new(new[] { new Variant(Plain, Plain, both, both) });
+
+        public Variant PlainVariant => Variants[0];
+
+        public bool IsEmpty => Variants.All(v => v.Any.IsEmpty);
+
+        /// <summary>The variant with these exact flags, or the plain one when this input has nothing
+        /// of its own to say about them.</summary>
+        public Variant For(bool gingerIsland, bool yearTwo)
+            => Variants.FirstOrDefault(v => v.GingerIsland == gingerIsland && v.YearTwo == yearTwo) ?? PlainVariant;
+
+        /// <summary>One derived source group per variant: <paramref name="chain"/> is the same
+        /// start-to-landing maths for each, applied to that variant's tables, with its flags ORed onto
+        /// the conditions. <paramref name="luck"/> forces the dependable half away (a random output, a
+        /// chance roll), exactly as the single-table callers used to.</summary>
+        public IEnumerable<ObtainSource> Emit(
+            SourceKind kind, Func<DayTable, DayTable> chain, ObtainConditions conditions, string detail,
+            IReadOnlyList<SetupStep>? setup = null, bool luck = false)
+        {
+            foreach (Variant v in Variants)
+                foreach (ObtainSource source in SourcePair.Of(
+                    kind, luck ? DayTable.None : chain(v.Dependable), chain(v.Any), v.Flag(conditions), detail, setup))
+                    yield return source;
+        }
+
+        /// <summary>Either input will do (a machine that takes any of several items): variant by
+        /// variant, the sooner landing.</summary>
         public Input Either(Input other)
         {
             if (IsEmpty) return other;
             if (other.IsEmpty) return this;
-            return new Input(
-                Dependable.Earliest(other.Dependable), Any.Earliest(other.Any),
-                GingerIsland && other.GingerIsland, YearTwo && other.YearTwo);
+            return Combine(other, (a, b) => (a.Dependable.Earliest(b.Dependable), a.Any.Earliest(b.Any)));
         }
 
-        /// <summary>Both inputs are needed (a recipe's ingredients): the later landing, and the flag
-        /// as soon as either side carries it.</summary>
+        /// <summary>Both inputs are needed (a recipe's ingredients): variant by variant, the later
+        /// landing, never when either side never lands.</summary>
         public Input Both(Input other)
-            => new(Dependable.Latest(other.Dependable), Any.Latest(other.Any),
-                GingerIsland || other.GingerIsland, YearTwo || other.YearTwo);
+            => Combine(other, (a, b) => (a.Dependable.Latest(b.Dependable), a.Any.Latest(b.Any)));
+
+        private Input Combine(Input other, Func<Variant, Variant, (DayTable Dependable, DayTable Any)> f)
+        {
+            var keys = new List<(bool Island, bool YearTwo)> { (false, false) };
+            foreach (Variant v in Variants.Concat(other.Variants))
+                if (!keys.Contains((v.GingerIsland, v.YearTwo))) keys.Add((v.GingerIsland, v.YearTwo));
+            var built = new List<Variant>();
+            foreach ((bool island, bool yearTwo) in keys)
+            {
+                (DayTable dependable, DayTable any) = f(For(island, yearTwo), other.For(island, yearTwo));
+                built.Add(new Variant(island, yearTwo, dependable, any));
+            }
+            return new Input(Trim(built));
+        }
+
+        /// <summary>Drops every variant that says exactly what a lesser variant already said, so an
+        /// input with no island or year 2 sources keeps only its plain variant.</summary>
+        private static IReadOnlyList<Variant> Trim(IReadOnlyList<Variant> all)
+        {
+            var kept = new List<Variant> { all[0] };
+            foreach (Variant v in all.Skip(1))
+                if (!kept.Any(k => LessThan(k, v) && k.SameTables(v)))
+                    kept.Add(v);
+            return kept;
+        }
+
+        /// <summary>A variant is lesser when it needs no flag the other does not need.</summary>
+        private static bool LessThan(Variant lesser, Variant v)
+            => (!lesser.GingerIsland || v.GingerIsland) && (!lesser.YearTwo || v.YearTwo)
+               && (lesser.GingerIsland != v.GingerIsland || lesser.YearTwo != v.YearTwo);
+
+        internal static Input FromVariants(IReadOnlyList<Variant> all) => new(Trim(all));
     }
 
-    /// <summary>One input id read out of the previous pass's model.</summary>
+    /// <summary>One input id read out of the previous pass's model, under all four filter variants.</summary>
     public static Input Of(ObtainabilityModel snapshot, string itemId)
     {
-        List<ObtainSource> sources = snapshot.Sources(itemId).Where(AnyFlagged.Accepts).ToList();
-        if (sources.Count == 0) return Input.Nothing;
-        return new Input(
-            snapshot.Table(itemId, DependableFlagged), snapshot.Table(itemId, AnyFlagged),
-            sources.All(s => s.Conditions.GingerIsland), sources.All(s => s.Conditions.YearTwo));
+        Variant Read(bool island, bool yearTwo) => new(island, yearTwo,
+            snapshot.Table(itemId, ObtainFilter.DependableOnly with { IncludeGingerIsland = island, IncludeYearTwo = yearTwo }),
+            snapshot.Table(itemId, ObtainFilter.Any with { IncludeGingerIsland = island, IncludeYearTwo = yearTwo }));
+        return Input.FromVariants(new[] { Read(false, false), Read(true, false), Read(false, true), Read(true, true) });
     }
 
     /// <summary>The sooner of several inputs (see <see cref="Input.Either"/>).</summary>
