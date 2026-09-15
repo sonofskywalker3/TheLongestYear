@@ -212,8 +212,13 @@ public static class AvailabilityWeeks
         };
 
     /// <summary>Books with a year-1 route (Data/Shops and code, review 2026-08-28). The Bookseller's
-    /// eleven story books are YEAR 3 in his stock; the ones here have a free gift box, a shop, or a
-    /// prize-machine route. Everything else is drop-only and stays out of the Book pool.</summary>
+    /// eleven story books are YEAR 3 in his stock; the ones here have a free gift box or a shop.
+    /// The Alleyway Buffet and Mapping Cave Systems are year 3 at the Bookseller but sit in one-time
+    /// gift boxes (Town behind Joja, the Adventurer's Guild) that respawn every loop because the
+    /// rewind clears mailReceived. Friendship 101 was here at week 5 as a prize-machine book: it is
+    /// the ninth prize, about 25 Help Wanted quests, and the ticket count is wiped each loop, so it
+    /// is not a year-1 route (Nexus, 2026-09-14, Hard Book bundle). Everything else is drop-only
+    /// and stays out of the Book pool.</summary>
     public static readonly IReadOnlyDictionary<string, int> BookWeeks =
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
@@ -224,7 +229,6 @@ public static class AvailabilityWeeks
             ["(O)Book_Trash"] = 1,            // gift box in Town
             ["(O)Book_Marlon"] = 1,           // gift box in the Adventurer's Guild
             ["(O)Book_Bombs"] = 3,            // the Dwarf, 4,000g
-            ["(O)Book_Friendship"] = 5,       // prize ticket machine
         };
 
     /// <summary>Crab pots need Fishing 3 for the recipe (or Willy's shop at 1,500g).</summary>
