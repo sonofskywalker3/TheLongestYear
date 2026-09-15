@@ -1767,6 +1767,17 @@ namespace TheLongestYear
             TheLongestYear.Loop.CartCatalogIntegration.ModLoaded =
                 this.Helper.ModRegistry.IsLoaded(TheLongestYear.Loop.CartCatalogIntegration.ModId);
 
+            // The stash menu dodges Better Chests / Unlimited Storage only when one is installed,
+            // so Chests Anywhere keeps working against it otherwise (see JunimoStashService).
+            foreach (string modId in TheLongestYear.Loop.JunimoStashService.StorageOverhaulModIds)
+            {
+                if (this.Helper.ModRegistry.IsLoaded(modId))
+                {
+                    TheLongestYear.Loop.JunimoStashService.StorageOverhaulLoaded = true;
+                    this.Monitor.Log($"Storage-overhaul mod {modId} detected: the Junimo stash menu opens with a null context and is hidden from Chests Anywhere.", LogLevel.Info);
+                }
+            }
+
             this.ApplyWindowSize();
             this.KeepRunningUnfocused("launch");
 

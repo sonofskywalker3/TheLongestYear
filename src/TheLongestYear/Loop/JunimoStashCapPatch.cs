@@ -299,6 +299,10 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Prefix(Item sourceItem, ref object context)
         {
+            // Only when a storage-overhaul mod is present. Chests Anywhere reads the open chest
+            // from this same context, so nulling it with no overhaul installed just broke its
+            // naming form and chest switching for the stash (Nexus, 2026-09-14).
+            if (!JunimoStashService.StorageOverhaulLoaded) return;
             if (sourceItem is Chest chest
                 && chest.modData?.ContainsKey(JunimoStashService.StashModDataKey) == true)
             {
