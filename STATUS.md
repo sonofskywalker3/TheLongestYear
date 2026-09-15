@@ -1,10 +1,113 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-14 evening (story: obtainability model phase 1 built blind and compared)
+**Last updated:** 2026-09-15 (story: obtainability model phase 2 built, rerun live, report awaiting Jeff's rulings)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2246 passing (2166 at the plan start plus 80 obtainability tests)
-**Build:** clean; story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway Clone save `None_449077472`
+**Tests:** 2275 passing
+**Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+
+## 2026-09-15: item obtainability model, phase 2 (start-day meaning, gap closure, live rerun)
+
+Spec `docs/superpowers/specs/2026-09-14-obtainability-phase2-design.md`, commits `639dd34`..`51ab859`
+(12 commits, tasks 1 to 9) plus this note. Sources now carry a `DayTable` (start day to landing day
+over all 112 days); the model answers `Lands(item, startDay, filter)`; the comparison verdict is the
+dependable landing week from Spring 1 against the existing hard week, with a new `LuckOnly` verdict
+for items only a chance source reaches. `tly_obtain <itemId> [startDay 1-112]` prints every source
+with `lands wkA/wkB/wkC/wkD` (the landing week starting Spring 1, Summer 1, Fall 1, Winter 1).
+`manifest.json` was not bumped: this is a feature branch, the release line owns version bumps.
+
+**Live build (automated run, throwaway save `None_449077472`, launched minimized):**
+
+```
+[00:06:29 INFO  The Longest Year] Obtainability model: 1105 items in 369 ms, 7 pass(es), 21 unresolved source(s).
+```
+
+The model published; no `no model published`, no failed data section. Phase 1 for comparison was
+1086 items, 173 ms, 7 passes, 40 unresolved.
+
+**Spot checks (ten commands, real output; nine pass, one difference, one partial):**
+
+- `(O)24 1` Parsnip: `from day 1 dependable lands week 1, any lands week 1`. Pass.
+- `(O)24 29` Parsnip from Summer 1: `from day 29 dependable lands week 15, any lands week 5`.
+  Difference, not an error. The brief expected "never" for the dependable greenhouse route because
+  the Spring seed is gone. It is week 15 because Parsnip Seeds has a
+  `NightMarket, Dependable, lands wk15/wk15/wk15/wk15` row (the Magic Boat, Winter 15 to 17). Week 1
+  is correctly gone and "any" drops to week 5.
+- `(O)348 1` Wine: `dependable lands week 2, any lands week 1`, via
+  `Machine, Dependable, lands wk2/wk6/wk10/wk14, needs machine:(BC)12`. Pass (week 2 or 3 expected).
+  The Ginger Island ResortBar row is present but correctly not counted in the dependable headline.
+- `(O)158` Stonefish: `Fish, Dependable, lands wk1/wk5/wk9/wk13, Fishing 0, needs mines:floor 1 |
+  Stonefish, floors 1 to 39, 2% + 1% per level point (MineShaft.cs 1151-1157)`. Pass.
+- `(O)815 1` Tea Leaves: `dependable lands week 4`, `Crop, Dependable, lands wk4/wk8/wk12/never,
+  needs item:(O)251, setup tea bush 20d | tea bush, days 22 to 28` plus the sheltered variant
+  landing in all four seasons. Pass.
+- `(O)Moss`: `Forage, Dependable, lands wk1/wk5/wk9/never` (Spring to Fall) and
+  `GreenhouseCrop, Dependable, lands wk1/wk5/wk9/wk13` (all year). Pass.
+- `(H)27` Hard Hat: `Guild, Dependable, lands wk1/wk5/wk9/wk13, needs guild:Duggy 30 kills (Duggy,
+  Magma Duggy); mines:floor 1 | Adventure Guild reward for Duggy`. Pass.
+- `(O)798 1` Midnight Squid: `Fish, Dependable, lands wk15/wk15/wk15/wk15, few days, needs
+  location:Submarine`. The week-15 Submarine half passes. The Magic Bait row the brief expected to
+  survive with a Ginger Island flag is gone entirely, because `(O)908 Magic Bait: no source in the
+  obtainability model.` Partial; recorded as an outlier below.
+- `(O)139 1` Salmon: `dependable lands week 9`, seven `Fish, Dependable, lands wk9/wk9/wk9/never`
+  rows including the five `Farm_*` maps from the `LOCATION_FISH` expansion. No `fishingGame`. Pass.
+- `(O)472 1` Parsnip Seeds: has `Machine, Dependable, lands wk1/wk15/wk15/wk15, needs machine:(BC)25
+  | (BC)25 seed maker from (O)24` plus the 2% Mixed Seeds chance row. Pass.
+- `(O)BroccoliSeeds 1`: `FishingTreasure, Chance, lands wk7/wk7/wk9/never, few days, needs
+  fishing:treasure chest | season seed from a treasure chest (Fall window)`. Week 7 is Summer 15 to
+  28, the day-20 switch to the next season's seed, so the Summer 21 window the brief named. Pass.
+
+**Comparison rerun** (`tly_obtain compare`, written to the gitignored
+`Mods/TheLongestYear/obtainability-compare.md`; a copy of each report is in the gitignored
+`test-output/obtainability-compare-phase1.md` and `-phase2.md`):
+
+| Verdict | Phase 1 | Phase 2 |
+|---|---|---|
+| NewEarlier | 302 | 177 |
+| NewLater | 1 | 5 |
+| LuckOnly | (did not exist) | 137 |
+| OnlyExisting | 18 | 7 |
+| OnlyNew | 598 | 606 |
+| Agree | 151 | 146 |
+| Unresolved sources | 40 | 21 |
+
+NewEarlier fell by 125 because the headline is now dependable-only from Spring 1, so the Traveling
+Cart no longer makes almost everything week 1; the 137 items it used to swallow are the new
+`LuckOnly` verdict. OnlyExisting fell from 18 to 7, and none of the section 2 gaps (Stonefish, Ice
+Pip, Tea Leaves, Broccoli, the guild rewards, Moss, Moss Soup) is still in it. Unresolved halved to
+21, all of them the diagnostics the spec keeps on purpose (catalogue `ALL_ITEMS` queries, Dish of
+the Day, tool upgrades, pet adoption, movie concessions, items sold by the player, the two
+input-less machine output methods).
+
+**326 items need a ruling** (177 NewEarlier, 5 NewLater, 137 LuckOnly, 7 OnlyExisting). The grouped
+list with reasons and item ids is in
+`.superpowers/sdd/2026-09-14-obtainability-phase2/task-10-report.md`. The recurring reasons, largest
+first: the cooking recipe unlock is a condition rather than a delay (48 items); the Desert Festival
+barter stalls read as open in all four seasons when the festival is Spring 15 to 17 only (36); a
+machine is assumed in hand (20); a barn or coop and its animal are assumed to stand, which is spec
+decision 3 working as designed (15); the greenhouse keeps a crop or fruit tree in season (13); a
+guild reward's kill count is a condition, not a timed grind (9).
+
+**Outliers:**
+
+- 115 of the 182 NewEarlier plus NewLater items are 4 or more weeks off the existing hard week. The
+  widest: Mystic Syrup 16 to 2 (the Mystic Tree Seed is the Foraging Mastery reward and the model
+  does not gate on mastery), Chocolate Cake 14 to 1, Squid 13 to 1 (Desert Festival barter), Fried
+  Calamari 13 to 1, Cactus Seeds 13 to 1 (Sandy sells them all year, so the model is probably right
+  and the existing fish-pond basis wrong), Roots Platter 13 to 2, Winter Root 13 to 2 (greenhouse),
+  Napalm Ring 12 to 1, and Treasure Chest 5 to 14, the only wide move in the later direction.
+- No OnlyExisting item is one the spec's section 2 claimed to close. All seven are the two stated
+  non-goals: four Ginger Island items (Golden Coconut, Fossilized Ribs, Snake Skull, Snake
+  Vertebrae) and three year-2 Bookseller books (Friendship 101, Mapping Cave Systems, The Alleyway
+  Buffet).
+- Unresolved is 21, below the 25 threshold.
+- `(O)908 Magic Bait` has no source at all, where section 2 said it should carry Mr Qi's shop row and
+  his crafting recipe, both Ginger Island. Because it has none, the three Beach rows requiring it
+  were dropped instead of island-flagged, which is what moved Midnight Squid, Spook Fish and
+  Blobfish into NewLater.
+
+Nothing reads the model for gameplay. No code or test was touched in the rerun; the two outliers
+above are recorded for Jeff, not fixed.
 
 ## 2026-09-14 evening: item obtainability model, phase 1 (blind build plus comparison)
 

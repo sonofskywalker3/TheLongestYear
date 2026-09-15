@@ -6,39 +6,45 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### Obtainability phase 2: Jeff reads obtainability-compare.md and rules on the disagreements before anything reads the model
-Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model blind and wrote the
-comparison report (`Mods/TheLongestYear/obtainability-compare.md`, gitignored; summary in STATUS.md:
-NewEarlier 302, NewLater 1, OnlyExisting 18, OnlyNew 598, Agree 151, 40 unresolved). Nothing reads
-the model for gameplay yet. Phase 2 is a separate plan, after Jeff has read the report. Rulings and
-gaps already known:
+### Obtainability phase 2: Jeff rules on the rerun report before anything reads the model
+Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model blind. Phase 2
+(2026-09-14 to 15, commits `639dd34`..`51ab859`, spec
+`docs/superpowers/specs/2026-09-14-obtainability-phase2-design.md`) changed the week meaning to
+start-day and closed the gap list. Rerun live on 2026-09-15 on the throwaway save `None_449077472`:
+`Obtainability model: 1105 items in 369 ms, 7 pass(es), 21 unresolved source(s).` Counts now
+NewEarlier 177, NewLater 5, LuckOnly 137, OnlyExisting 7, OnlyNew 606, Agree 146, 21 unresolved
+(phase 1 was 302 / 1 / no LuckOnly / 18 / 598 / 151 / 40). Nothing reads the model for gameplay yet.
 
-- **Weeks should mean "start week", not "finish week" (Jeff, 2026-09-14).** The question the model
-  must answer: "the hit lands in week N, the player holds nothing and expected nothing; can they
-  start from nothing in week N and still meet it?" Phase 1 credits a week when the item can come
-  out of the ground or the machine in that week, so a Spring seed bought on Spring 28 and planted in
-  the greenhouse credits week 5 even though a player hit in week 5 cannot buy that seed. Phase 2
-  changes the week meaning so a route counts in week N only when it can be begun in week N (the
-  deadline horizon, the season gate, belongs to the consumer).
+- **OPEN: Jeff rules on the rerun report: 326 items listed in STATUS** (177 NewEarlier, 5 NewLater,
+  137 LuckOnly, 7 OnlyExisting). The grouped list with a plain-English reason per group and the item
+  ids is in `.superpowers/sdd/2026-09-14-obtainability-phase2/task-10-report.md`; the summary and the
+  outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling log in its own
+  small commit.
+- **Closed in phase 2 (commits `639dd34`..`51ab859`):** the start-week meaning (sources carry a
+  112-slot `DayTable`, every question is "start on this day, when does it land"); mine fish
+  (Stonefish, Ice Pip, Lava Eel); Tea Leaves via the tea bush with its 20-day setup; the season seeds
+  from fishing treasure (Broccoli and the rest); the Adventure Guild rewards read from
+  `Data/MonsterSlayerQuests`; Moss; the `fishingGame` minigame map dropped; `LOCATION_FISH`
+  delegation expanded on the farm-variant maps; the Seed Maker and Mushroom Log output methods (Cask
+  dropped as a non-goal, it only changes quality); the Magic Bait rows routed through the bait;
+  the self-feeding `DROP_IN` machine loop removed by construction (a machine can never make its input
+  land earlier than the input already does); the `ConditionSeasons` island-negation bug; refuse to
+  publish a model when a data section fails; the dependable-only headline comparison.
+- **Two outliers from the rerun, for Jeff, not fixed:** `(O)908` Magic Bait ended up with no source
+  at all rather than island-flagged Qi sources, so the three Beach rows needing it were dropped and
+  Midnight Squid, Spook Fish and Blobfish moved to NewLater. And Parsnip from Summer 1 reads
+  dependable week 15 rather than never, because the Night Market Magic Boat sells Parsnip Seeds on
+  Winter 15 to 17.
+- **`LocationSpawn.Chance` is still carried but never read** (forage and fish stay dependable by the
+  spec's table); decide whether that stays.
+
+Still open from phase 1 (Part B, the first consumer):
+
 - **Per-difficulty, live-inventory picker for darkness hits (Jeff, 2026-09-14).** Run the model
   against the player's real state after a hit: easy picks something a stretch but possible, normal
   something difficult but possible, hard something they are not prepared for but could get with
   luck, extreme rolls about a 10% chance of something genuinely impossible so the wards matter.
   Belongs in the darkness rework design, the first consumer.
-- **Headline comparison should be dependable-only.** The Traveling Cart's random stock makes almost
-  every item "any week" by luck (158 of the 302 NewEarlier); dependable weeks mostly agree.
-- **Gaps to close:** mine fish (Stonefish, Ice Pip), Tea Leaves (tea bush), Broccoli (seed source),
-  code-only sources the existing model knows (Adventure Guild rewards, Moss), the `fishingGame`
-  minigame map counted as a real location, `LOCATION_FISH` delegation on farm-variant maps, machine
-  output methods (Cask, Seed Maker, Mushroom Log), the Magic Bait rows.
-- **From the final whole-branch review (2026-09-14):** a `DROP_IN` machine (a dehydrator, a cask)
-  keys its output under the input id, so an item becomes a later-week source of itself and widens its
-  own weeks each pass without a new route (`MadeSources.Machines`); rule on it with the start-week
-  change. `ConditionSeasons` sets the island flag on any clause containing "Island" before it reads
-  the negation, so a `!IS_VISITING_ISLAND` style clause would hide a mainland source. The glue's
-  per-section try/catch means a model with a failed section looks complete; before anything reads the
-  model for gameplay, a section failure must refuse to publish it. `LocationSpawn.Chance` is carried
-  but never read (forage and fish are dependable by the spec's table); decide whether that stays.
 - Any later use by board generation must keep existing earliest-week figures identical unless Jeff
   rules otherwise (byte-identical `tly_genbundles` and `tly_gatecheck` across seeds).
 
