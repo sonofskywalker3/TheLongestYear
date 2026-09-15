@@ -160,14 +160,27 @@ public static class ShopSources
         string shopId, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
         if (shopId == CartShopId) return (SourceKind.Cart, WeekMask.All, false, false, null);
-        if (!shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal)) return (SourceKind.Shop, WeekMask.All, false, false, null);
+        if (shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal))
+        {
+            string name = shopId.Substring(FestivalShopPrefix.Length).Split('_')[0];
+            SourceKind kind = KindOf(name);
+            if (FestivalShopKeys.TryGetValue(shopId, out string? key) && festivals.TryGetValue(key, out FestivalDates? day))
+                return (kind, day.Weeks, true, false, day);
+            if (festivals.TryGetValue(name, out FestivalDates? passive))
+                return (kind, passive.Weeks, true, false, passive);
+            return (kind, WeekMask.All, true, true, null);
+        }
 
-        string name = shopId.Substring(FestivalShopPrefix.Length).Split('_')[0];
-        SourceKind kind = name == NightMarketId ? SourceKind.NightMarket : SourceKind.Festival;
-        if (FestivalShopKeys.TryGetValue(shopId, out string? key) && festivals.TryGetValue(key, out FestivalDates? day))
-            return (kind, day.Weeks, true, false, day);
-        if (festivals.TryGetValue(name, out FestivalDates? passive))
-            return (kind, passive.Weeks, true, false, passive);
-        return (kind, WeekMask.All, true, true, null);
+        // A festival shop that does not carry the "Festival_" prefix: the Desert Festival stalls are
+        // named "DesertFestival_Pam", "DesertFestival_EggShop" and so on (DesertFestival.cs 777 opens
+        // "DesertFestival_EggShop"). The segment before the first "_" is a Data/PassiveFestivals key
+        // whenever the shop belongs to that festival, so those stalls only open on its exact days.
+        string head = shopId.Split('_')[0];
+        if (head.Length < shopId.Length && festivals.TryGetValue(head, out FestivalDates? own))
+            return (KindOf(head), own.Weeks, true, false, own);
+        return (SourceKind.Shop, WeekMask.All, false, false, null);
     }
+
+    private static SourceKind KindOf(string festivalName)
+        => festivalName == NightMarketId ? SourceKind.NightMarket : SourceKind.Festival;
 }

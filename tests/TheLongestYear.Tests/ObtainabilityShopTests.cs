@@ -67,16 +67,21 @@ public class ObtainabilityShopTests
         Assert.Null(ice.Lands.Lands(93));
         Assert.Equal(Reliability.Chance, ice.Reliability);
 
-        var desert = Stock(new ShopRow("Festival_DesertFestival_Vendor", "(O)Moss", null, false)).Single().Source;
+        // The real Desert Festival stalls carry no "Festival_" prefix (DesertFestival.cs 777 opens
+        // "DesertFestival_EggShop"); the festival name before the first "_" places them all the same.
+        var desert = Stock(new ShopRow("DesertFestival_Pam", "(O)Moss", null, false)).Single().Source;
         Assert.Equal(15, desert.Lands.Lands(1));                                  // Spring 15-17 from the passive festival id
         Assert.Equal(17, desert.Lands.Lands(17));
         Assert.Null(desert.Lands.Lands(18));
+        Assert.Equal(SourceKind.Festival, desert.Kind);
+        Assert.True(desert.Conditions.FewDays);
+        Assert.False(desert.Conditions.Unresolved);
     }
 
     [Fact]
     public void A_sparse_shop_condition_inside_a_festival_window_is_a_true_intersection()
     {
-        var s = Stock(new ShopRow("Festival_DesertFestival_Vendor", "(O)Moss", "DAY_OF_MONTH 16", false)).Single().Source;
+        var s = Stock(new ShopRow("DesertFestival_EggShop", "(O)Moss", "DAY_OF_MONTH 16", false)).Single().Source;
         Assert.Equal(16, s.Lands.Lands(1));      // Spring 16 is the only day both the row and the festival are open
         Assert.Null(s.Lands.Lands(17));
     }
