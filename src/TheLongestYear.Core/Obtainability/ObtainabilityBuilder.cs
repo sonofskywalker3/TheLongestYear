@@ -8,7 +8,9 @@ namespace TheLongestYear.Core.Obtainability;
 public sealed record ObtainabilityBuild(ObtainabilityModel Model, int Passes, bool HitPassCap, IReadOnlyList<string> Unresolved);
 
 /// <summary>Builds the model: direct sources once, then grown and made sources over the previous pass's
-/// model until no item's weeks change (see the plan's Task 8 intro for why this settles).</summary>
+/// model, repeating until no item's landing table changes; a landing day only moves earlier
+/// (Earliest) and there are finitely many day slots, so the loop settles (see the plan's Task 8
+/// intro for why this settles).</summary>
 public static class ObtainabilityBuilder
 {
     public const int MaxPasses = 1000;

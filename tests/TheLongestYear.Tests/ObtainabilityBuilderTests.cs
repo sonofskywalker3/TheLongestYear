@@ -45,7 +45,7 @@ public class ObtainabilityBuilderTests
         Assert.Equal("1-16", build.Model.Table("(O)447", ObtainFilter.Any with { Kinds = new[] { SourceKind.Machine } }).ToString());   // treasure-chest roe is every week
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
+    [Fact]
     public void A_true_dependency_cycle_settles_without_looping()
     {
         var inputs = new ObtainabilityInputs
@@ -64,8 +64,8 @@ public class ObtainabilityBuilderTests
         };
         ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
         Assert.False(build.HitPassCap);
-        Assert.Equal("5-8", build.Model.Table("(O)1", ObtainFilter.Any).ToString());
-        Assert.Equal("5-8", build.Model.Table("(O)2", ObtainFilter.Any).ToString());
+        Assert.Equal("lands wk5/wk5/never/never", build.Model.Table("(O)1", ObtainFilter.Any).ToString());
+        Assert.Equal("lands wk5/wk5/never/never", build.Model.Table("(O)2", ObtainFilter.Any).ToString());
     }
 
     [Fact]
