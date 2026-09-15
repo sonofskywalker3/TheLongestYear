@@ -5,8 +5,8 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>The eleventh dial, Darkness (spec 2026-09-15 Part B, section 2.3): set by the overall
-/// lever with the other ten, stamped like the rest, and migrated to the LOWEST of the ten existing
-/// dials when a config or a stamp predates it.</summary>
+/// lever with the other nine, stamped like the rest, and migrated to the LOWEST of the nine
+/// existing dials when a config or a stamp predates it.</summary>
 public class DarknessDialTests
 {
     [Fact]
@@ -36,7 +36,7 @@ public class DarknessDialTests
         => Assert.Equal(DifficultyStep.Hard, new DifficultySettings { Darkness = DifficultyStep.Hard }.Clone().Darkness);
 
     [Fact]
-    public void Lowest_dial_is_the_minimum_of_the_ten_and_ignores_the_lever_and_darkness()
+    public void Lowest_dial_is_the_minimum_of_the_nine_and_ignores_the_lever_and_darkness()
     {
         var settings = new DifficultySettings { Overall = DifficultyStep.Extreme, Darkness = DifficultyStep.Extreme };
         settings.SetAll(DifficultyStep.Hard);
