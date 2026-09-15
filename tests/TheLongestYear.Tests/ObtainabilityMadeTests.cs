@@ -79,7 +79,8 @@ public class ObtainabilityMadeTests
         Assert.Contains(all, s => s.ItemId == "(O)499" && s.Source.Reliability == Reliability.Chance);
         foreach (string mushroom in new[] { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" })
         {
-            var m = all.Single(s => s.ItemId == mushroom && s.Source.Detail.Contains("MushroomLog")).Source;
+            var m = all.Single(s => s.ItemId == mushroom && s.Source.Kind == SourceKind.Machine
+                && s.Source.Conditions.Requires.Contains("machine:(BC)MushroomLog")).Source;
             Assert.Equal(Reliability.Chance, m.Reliability);
             Assert.Equal(7, m.Lands.Lands(1));
         }

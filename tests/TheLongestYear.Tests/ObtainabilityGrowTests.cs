@@ -134,6 +134,10 @@ public class ObtainabilityGrowTests
         var sheltered = leaves.Single(s => s.Kind == SourceKind.GreenhouseCrop);
         Assert.Equal(106, sheltered.Lands.Lands(65));           // Winter 22
         Assert.Contains(outdoor.Setup, s => s.Name == "tea bush" && s.Days == 20);
+        // Sheltered means a greenhouse OR an indoor pot (Bush.IsSheltered, Bush.cs 196-205), and a pot
+        // needs no unlock, so this source must not demand the pantry bundle.
+        Assert.Contains("sheltered (greenhouse or indoor pot)", sheltered.Conditions.Requires);
+        Assert.DoesNotContain("mail:ccPantry", sheltered.Conditions.Requires);
         Assert.Empty(GrowSources.TeaBush(new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())));
     }
 }
