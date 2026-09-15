@@ -10,6 +10,7 @@ public class ObtainabilityMadeTests
     private static readonly Dictionary<string, FestivalDates> NoFestivals = new();
     private static readonly CropRow[] NoCrops = new CropRow[0];
     private static readonly Dictionary<string, int> NoBuildings = new();
+    private static readonly Dictionary<string, WeekMask> NoShopWeeks = new();
 
     private static ObtainabilityModel Snapshot(params (string Id, SourceKind Kind, DayTable Lands, Reliability R)[] rows)
         => new(rows.GroupBy(r => r.Id).ToDictionary(
@@ -153,6 +154,54 @@ public class ObtainabilityMadeTests
         Assert.True(list.Single(x => x.ItemId == "(O)904").Source.Conditions.Unresolved);    // "none" and no shop: taught somewhere unknown
         Assert.Equal(Reliability.Chance, list.Single(x => x.ItemId == "(O)905").Source.Reliability);
         Assert.Equal(Reliability.Chance, list.Single(x => x.ItemId == "(O)906").Source.Reliability);
+    }
+
+    [Fact]
+    public void A_queen_of_sauce_recipe_lands_on_the_sunday_of_its_episode_week()
+    {
+        var snapshot = Snapshot(("(O)24", SourceKind.Crop, DayTable.Always, Reliability.Dependable));
+        var rows = new[]
+        {
+            new RecipeRow("Chocolate Cake", new[] { "(O)24" }, "(O)220", "l 0", true),
+            new RecipeRow("Year Two Dish", new[] { "(O)24" }, "(O)907", "l 0", true),
+            new RecipeRow("Friend Dish", new[] { "(O)24" }, "(O)908", "f Robin 7", true),
+            new RecipeRow("Off The Air", new[] { "(O)24" }, "(O)909", "none", true),
+        };
+        var channel = new Dictionary<string, int>
+        {
+            ["Chocolate Cake"] = 14, ["Year Two Dish"] = 20, ["Friend Dish"] = 3,
+        };
+        var list = MadeSources.Recipes(rows, Objects, NoShopWeeks, snapshot, channel).ToList();
+
+        // Episode 14 airs on day 98, the Sunday of week 14; the parsnip is there from day 1, so the
+        // TV is the whole wait, and once learned it stays learned (starting on day 99 it lands day 99).
+        var cake = Assert.Single(list.Where(x => x.ItemId == "(O)220")).Source;
+        Assert.Equal(98, cake.Lands.Lands(1));
+        Assert.Equal(14, cake.Lands.LandingWeek(1));
+        Assert.Equal(99, cake.Lands.Lands(99));
+        Assert.Equal(Reliability.Dependable, cake.Reliability);
+        Assert.False(cake.Conditions.Unresolved);
+        Assert.False(cake.Conditions.FewDays);
+        Assert.False(cake.Conditions.YearTwo);
+        Assert.Contains("recipe:Chocolate Cake", cake.Conditions.Requires);
+        Assert.Contains("unlock:Queen of Sauce episode 14 (Sunday of week 14)", cake.Conditions.Requires);
+
+        // Episode 20 airs in year 2: one source, flagged, and the "taught some other way" guess is gone.
+        var yearTwo = Assert.Single(list.Where(x => x.ItemId == "(O)907")).Source;
+        Assert.True(yearTwo.Conditions.YearTwo);
+        Assert.False(yearTwo.Conditions.Unresolved);
+        Assert.Equal(1, yearTwo.Lands.Lands(1));
+
+        // A friendship unlock is a route of its own: it stays, and the TV route is added beside it.
+        var friend = list.Where(x => x.ItemId == "(O)908").Select(x => x.Source).ToList();
+        Assert.Equal(2, friend.Count);
+        Assert.Contains(friend, s => s.Conditions.Requires.Contains("unlock:f Robin 7"));
+        var onAir = friend.Single(s => s.Conditions.Requires.Contains("unlock:Queen of Sauce episode 3 (Sunday of week 3)"));
+        Assert.Equal(21, onAir.Lands.Lands(1));
+
+        // Not in the channel at all: unchanged, still a guess.
+        var offAir = Assert.Single(list.Where(x => x.ItemId == "(O)909")).Source;
+        Assert.True(offAir.Conditions.Unresolved);
     }
 
     [Fact]
