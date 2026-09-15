@@ -191,8 +191,10 @@ namespace TheLongestYear.Loop
                     }
                     case DarknessEvent.Tampering:
                     {
+                        var worldState = Game1.netWorldState?.Value;
+                        if (worldState?.BundleData == null) return false;
                         TamperPlan plan = PlanTamper();
-                        if (plan == null || !_s.WriteTamper(Game1.netWorldState.Value, plan.Target, plan.ItemId, plan.Stack, _dayOfYear)) return false;
+                        if (plan == null || !_s.WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, _dayOfYear)) return false;
                         if (_tamperUnmoderated) Run.UnmoderatedTamperSpent = true;
                         return true;
                     }
@@ -417,7 +419,10 @@ namespace TheLongestYear.Loop
                 string id = BundleParsing.NormalizeItemId(item.Id);
                 if (!seen.Add(id)) continue;
                 if (fair != null && !fair(id)) continue;
-                int effort = availability.IsPlaced(id) ? availability.For(id).Effort : 0;
+                // Mid scale for an id no rule placed, not 0: a 0 would make every unplaced item the
+                // closest match to a cheap slot and PickReplacement's "five closest" alphabetical.
+                // For() is only called when the id IS placed; it records a lookup miss otherwise.
+                int effort = availability.IsPlaced(id) ? availability.For(id).Effort : ItemAvailabilityModel.UnrecognisedEffort;
                 result.Add(new TamperCandidate(id, item.Theme, effort));
             }
             return result;
