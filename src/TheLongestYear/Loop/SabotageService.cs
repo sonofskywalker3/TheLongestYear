@@ -101,7 +101,7 @@ namespace TheLongestYear.Loop
                 Meta.FirstWinterTamperSeen = true;
             if (guaranteedTonight)
             {
-                if (night.CanAct(DarknessEvent.Tampering) && night.Execute(DarknessEvent.Tampering))
+                if (night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true) && night.Execute(DarknessEvent.Tampering))
                 {
                     Run.GuaranteedTamperDone = true;
                     Meta.FirstWinterTamperSeen = true;
@@ -155,7 +155,14 @@ namespace TheLongestYear.Loop
 
             private RunState Run => _s.Run;
 
-            public bool CanAct(DarknessEvent e)
+            /// <summary>Can this event act tonight? The ordinary nightly roll asks this, so it keeps
+            /// the guaranteed Winter tamper's slot reserved through week 1.</summary>
+            public bool CanAct(DarknessEvent e) => CanAct(e, ignoreTamperReservation: false);
+
+            /// <summary>As <see cref="CanAct(DarknessEvent)"/>, but the guaranteed attempt itself and
+            /// a debug arm ask without the reservation, since they ARE the reserved strike or an
+            /// explicit request for one.</summary>
+            public bool CanAct(DarknessEvent e, bool ignoreTamperReservation)
             {
                 switch (e)
                 {
@@ -173,6 +180,14 @@ namespace TheLongestYear.Loop
                         return PlanReversion() != null;
                     case DarknessEvent.Tampering:
                         if (!_s.Enabled(SabotageKind.Tampering) || !SabotageSchedule.IsOpen(SabotageKind.Tampering, _season)) return false;
+                        if (!ignoreTamperReservation && GuaranteedTamperReserved())
+                        {
+                            // Without this, an ordinary Winter roll can spend the week on Tampering,
+                            // and the guaranteed strike then fails the five-day spacing or the
+                            // two-per-Winter cap and week 1 runs out (spec 2.6).
+                            _s._monitor.Log($"Darkness: tampering is held for the guaranteed Winter tamper through week 1 ({_season} {_day}); the ordinary roll may not take it.", LogLevel.Trace);
+                            return false;
+                        }
                         if (SabotageSchedule.IsQuietDay(SabotageKind.Tampering, _day) || !SabotageSchedule.WithinCaps(SabotageKind.Tampering, Run, _week, _dayOfYear)) return false;
                         return PlanTamper() != null;
                     default:
@@ -212,6 +227,11 @@ namespace TheLongestYear.Loop
                         return false;
                 }
             }
+
+            /// <summary>Is tonight's Tampering slot still owed to the guaranteed Winter tamper? True
+            /// through week 1 of a Winter that has not had it yet.</summary>
+            private bool GuaranteedTamperReserved()
+                => _season == CoreSeason.Winter && !Run.GuaranteedTamperDone && _day <= NightRoll.Week1Nights;
 
             private DonatedSlot PlanReversion()
             {
@@ -285,7 +305,9 @@ namespace TheLongestYear.Loop
                         _ => new[] { DarknessEvent.CropBlight, DarknessEvent.ChestBlight },
                     },
                 };
-                DarknessEvent? able = candidates.Cast<DarknessEvent?>().FirstOrDefault(e => night.CanAct(e.Value));
+                // An arm is Jeff asking for this front tonight, so it ignores the guaranteed tamper's
+                // week-1 reservation: the point of arming is to sleep into the strike now.
+                DarknessEvent? able = candidates.Cast<DarknessEvent?>().FirstOrDefault(e => night.CanAct(e.Value, ignoreTamperReservation: true));
                 _monitor.Log(able != null
                     ? $"Darkness: {kind} was armed; striking tonight as {able}."
                     : $"Darkness: {kind} was armed but cannot act tonight (closed, quiet, capped, warded or nothing fair).", LogLevel.Info);
