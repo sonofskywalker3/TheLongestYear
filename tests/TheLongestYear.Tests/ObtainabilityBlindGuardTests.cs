@@ -37,6 +37,7 @@ public class ObtainabilityBlindGuardTests
         "TheLongestYear.Core/Obtainability/SpawnSources.cs",
         "TheLongestYear.Core/Obtainability/ShopSources.cs",
         "TheLongestYear.Core/Obtainability/MineSources.cs",
+        "TheLongestYear.Core/Obtainability/CodeSources.cs",
         "TheLongestYear.Core/Obtainability/GrowSources.cs",
         "TheLongestYear.Core/Obtainability/MadeSources.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityBuilder.cs",

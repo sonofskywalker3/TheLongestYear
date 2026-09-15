@@ -10,7 +10,7 @@ public enum SourceKind
 {
     Forage, ArtifactSpot, Fish, CrabPot, Crop, GreenhouseCrop, FruitTree, Shop, Cart, Machine,
     Cooking, Crafting, Animal, FishPond, MineNode, MonsterDrop, Geode, Tapper, Festival,
-    NightMarket, Trash, GarbageCan, FishingTreasure, Other,
+    NightMarket, Trash, GarbageCan, FishingTreasure, Guild, Other,
 }
 
 /// <summary>Dependable sources yield on purpose (a spawn, a shop row, a machine); chance sources

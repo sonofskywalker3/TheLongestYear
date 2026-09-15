@@ -105,6 +105,10 @@ public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Se
 /// <summary>One Data/Objects GeodeDrops entry for a geode item.</summary>
 public sealed record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition);
 
+/// <summary>One Data/MonsterSlayerQuests row: MonsterSlayerQuestData.Targets, Count and RewardItemId,
+/// handed over at the Adventure Guild once the kill count is reached.</summary>
+public sealed record SlayerQuestRow(string Id, IReadOnlyList<string> Targets, int Count, string RewardItemId);
+
 /// <summary>Everything the builder reads, filled by the glue at save load.</summary>
 public sealed record ObtainabilityInputs
 {
@@ -126,6 +130,7 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<TapRow> TapItems { get; init; } = Array.Empty<TapRow>();
     public IReadOnlyList<GeodeDropRow> GeodeDrops { get; init; } = Array.Empty<GeodeDropRow>();
     public IReadOnlyCollection<string> GeodesUsingDefaultTable { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<SlayerQuestRow> SlayerQuests { get; init; } = Array.Empty<SlayerQuestRow>();
     /// <summary>Building name (as animal House / "Fish Pond") to BuildDays.</summary>
     public IReadOnlyDictionary<string, int> Buildings { get; init; } = new Dictionary<string, int>();
 }
