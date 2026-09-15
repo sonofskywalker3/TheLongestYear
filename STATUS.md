@@ -2,14 +2,14 @@
 
 **Last updated:** 2026-09-15 (story: darkness rework Part B built, live-checked, board output byte-identical)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2377 passing
+**Tests:** 2386 passing
 **Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
 
 ## 2026-09-15: darkness rework Part B built (the obtainability model is wired into the darkness)
 
 Commits `4613d36`..`afdcb72` on `story` plus this docs commit, all committed AND pushed; nothing is
-local-only. 2377 tests passing (2285 at the start of the plan). Spec:
+local-only. 2386 tests passing (2284 at the start of the plan). Spec:
 `docs/superpowers/specs/2026-09-15-darkness-obtainability-wiring-design.md`; the 2026-09-14 rework spec
 is folded into it.
 
@@ -93,8 +93,18 @@ captured on build `9f169b4`) and the same filtered capture from this build (414 
 `git diff --no-index` reported no differences at all, so `tly_genbundles 1|2|3` and `tly_gatecheck`
 generate exactly the boards and gate audit they did before the plan. Board generation, gates, goals
 and pacing never read the obtainability model or the darkness. A static guard test
-(`BoardPathsNeverReadTheModelTests`) now also fails the build if any of the eleven board files so much
-as names `Obtainability`, `FairnessRule`, `SaveSnapshot`, `NightRoll` or `Sabotage`.
+(`BoardPathsNeverReadTheModelTests`) now also fails the build if any of the twelve board files so much
+as names `Obtainability`, `FairnessRule`, `SaveSnapshot`, `NightRoll` or `Sabotage` (prefix match, so
+`SabotageTuning` and `SabotageSchedule` trip it too).
+
+**Whole-branch final review fix wave (commits `369d8d5`..`9f1b83e` plus this docs commit, all pushed):**
+a fish pond route now rules out below Extreme because the model never records the fish and the
+snapshot cannot see a pond's contents; the Extreme chest-blight pool moved into one tested Core
+predicate (`BlightRule.InStoragePool`); a stolen machine counts as one missing thing in the report
+while keeping its three-unit cost against the night's budget; and the rest are tidy-ups (the night's
+save snapshot is built lazily, the snapshot reader logs skipped recipes, the migration line is quiet
+on a fresh config, `BlightRule.OneTarget` and an unused constant are gone, the board guard covers
+`AvailabilityWeeks.cs`, and the nine-dial prose is corrected).
 
 ## 2026-09-15: the Queen of Sauce schedule is read (Jeff's ruling)
 
