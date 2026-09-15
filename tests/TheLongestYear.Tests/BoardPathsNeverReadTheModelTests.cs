@@ -19,7 +19,7 @@ public class BoardPathsNeverReadTheModelTests
         "TheLongestYear.Core/GoalObtainability.cs", "TheLongestYear.Core/BundleDeadlines.cs",
         "TheLongestYear.Core/QuantityAskPass.cs", "TheLongestYear.Core/AuthoredBundleComposer.cs",
         "TheLongestYear.Core/BundleGenerationTuning.cs", "TheLongestYear.Core/BonusItemSampler.cs",
-        "TheLongestYear.Core/BonusSlotSampler.cs",
+        "TheLongestYear.Core/BonusSlotSampler.cs", "TheLongestYear.Core/AvailabilityWeeks.cs",
     };
 
     private static readonly string[] Forbidden = { "Obtainability", "FairnessRule", "SaveSnapshot", "NightRoll", "Sabotage" };
@@ -37,7 +37,9 @@ public class BoardPathsNeverReadTheModelTests
             if (!File.Exists(path)) { hits.Add($"{relative}: missing (update the list)"); continue; }
             string text = File.ReadAllText(path);
             foreach (string word in Forbidden)
-                if (Regex.IsMatch(text, $@"\b{Regex.Escape(word)}\b"))
+                // Prefix match, not a whole word: "Sabotage" has to trip on SabotageTuning and
+                // SabotageSchedule too, or a board file could read the darkness through either.
+                if (Regex.IsMatch(text, $@"\b{Regex.Escape(word)}"))
                     hits.Add($"{relative}: {word}");
         }
         Assert.Empty(hits);
