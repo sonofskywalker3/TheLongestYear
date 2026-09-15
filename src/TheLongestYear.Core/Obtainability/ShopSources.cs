@@ -72,11 +72,21 @@ public static class ShopSources
         {
             if (Template(row, festivals) is not ObtainSource template) continue;
             string trade = BundleParsing.NormalizeItemId(row.TradeItemId!);
+            Derived.Input paid = Derived.Of(snapshot, trade);
+            ObtainConditions conditions = paid.Flag(template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() });
+            if (paid.IsEmpty)
+            {
+                // The trade item has no source at all, so the barter cannot be made. Recorded as a
+                // diagnostic rather than silently dropped, so the drop shows in the unresolved list.
+                yield return (ItemQueries.UnresolvedPrefix + "trade " + trade, new ObtainSource(
+                    SourceKind.Other, DayTable.Always, Reliability.Chance, conditions with { Unresolved = true },
+                    $"{template.Detail} barter for {row.ItemId}: trade item {trade} has no source"));
+                continue;
+            }
             DayTable dep = template.Reliability == Reliability.Dependable
-                ? template.Lands.Latest(snapshot.Table(trade, ObtainFilter.DependableOnly))
+                ? template.Lands.Latest(paid.Dependable)
                 : DayTable.None;
-            DayTable any = template.Lands.Latest(snapshot.Table(trade, ObtainFilter.Any));
-            ObtainConditions conditions = template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() };
+            DayTable any = template.Lands.Latest(paid.Any);
             foreach (ObtainSource s in SourcePair.Of(template.Kind, dep, any, conditions, template.Detail + " (barter)"))
                 foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, s))
                     yield return emitted;

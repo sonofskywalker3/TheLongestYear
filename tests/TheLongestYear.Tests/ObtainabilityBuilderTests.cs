@@ -77,6 +77,39 @@ public class ObtainabilityBuilderTests
     }
 
     [Fact]
+    public void An_island_only_bait_bought_by_barter_still_reaches_the_fish_it_gates()
+    {
+        // Mr Qi's Qi Gem shop sells Magic Bait for a Qi Gem, both island. Every link of the chain is
+        // island flagged and none of it may vanish: the Beach row that needs the bait must still be
+        // in the model, flagged island, rather than dropped for want of an input.
+        var inputs = new ObtainabilityInputs
+        {
+            Objects = new Dictionary<string, ObjInfo>
+            {
+                ["(O)908"] = new ObjInfo("(O)908", "Magic Bait", -21, 20, new string[0], false),
+                ["(O)798"] = new ObjInfo("(O)798", "Midnight Squid", -4, 100, new string[0], false),
+            },
+            Shops = new[]
+            {
+                new ShopRow("IslandTrade", "(O)QiGem", null, false),
+                new ShopRow("QiGemShop", "(O)908", null, false, false, "(O)QiGem"),
+            },
+            LocationFish = new[] { new LocationSpawn("Beach", "(O)798", null, "SEASON Winter", 1.0, 0, true, 0) },
+            FishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") },
+        };
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        var bait = build.Model.Sources("(O)908").ToList();
+        Assert.NotEmpty(bait);
+        Assert.All(bait, b => Assert.True(b.Conditions.GingerIsland));
+        var squid = build.Model.Sources("(O)798").Where(x => x.Kind == SourceKind.Fish).ToList();
+        Assert.NotEmpty(squid);
+        Assert.All(squid, x => Assert.True(x.Conditions.GingerIsland));
+        Assert.All(squid, x => Assert.False(x.Conditions.Unresolved));     // the bait was found, so nothing is guessed
+        Assert.Equal(85, build.Model.Lands("(O)798", 1, ObtainFilter.Any with { IncludeGingerIsland = true }));
+        Assert.Null(build.Model.Lands("(O)798", 1, ObtainFilter.Any));     // island sources are never counted by default
+    }
+
+    [Fact]
     public void Unresolved_queries_go_to_diagnostics_not_the_model()
     {
         var inputs = new ObtainabilityInputs

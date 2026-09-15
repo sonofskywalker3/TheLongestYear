@@ -104,6 +104,38 @@ public class ObtainabilityShopTests
     }
 
     [Fact]
+    public void A_barter_paid_for_with_an_island_only_item_is_recorded_island_flagged_not_dropped()
+    {
+        // Island and year 2 sources are recorded but never counted by default, so reading the trade
+        // item through the default filters would find no input and drop the barter entirely.
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)QiGem"] = new[]
+            {
+                new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable,
+                    ObtainConditions.None with { GingerIsland = true }, "shop QiGemShop"),
+            },
+        });
+        var rows = new[] { new ShopRow("QiGemShop", "(O)908", null, false, false, "(O)QiGem") };
+        var bait = ShopSources.Barter(rows, Objects, Festivals, snapshot).Single();
+        Assert.Equal("(O)908", bait.ItemId);
+        Assert.True(bait.Source.Conditions.GingerIsland);
+        Assert.Contains("trade:(O)QiGem", bait.Source.Conditions.Requires);
+        Assert.Equal(1, bait.Source.Lands.Lands(1));
+    }
+
+    [Fact]
+    public void A_barter_whose_trade_item_has_no_source_is_listed_unresolved()
+    {
+        var rows = new[] { new ShopRow("SeedShop", "(O)472", null, false, false, "(O)NeverMade") };
+        var (id, source) = ShopSources.Barter(rows, Objects, Festivals,
+            new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())).Single();
+        Assert.StartsWith(ItemQueries.UnresolvedPrefix, id);
+        Assert.True(source.Conditions.Unresolved);
+        Assert.Contains("(O)NeverMade", source.Detail);
+    }
+
+    [Fact]
     public void Recipe_rows_teach_rather_than_sell_and_year_two_rows_never_teach()
     {
         var rows = new[]

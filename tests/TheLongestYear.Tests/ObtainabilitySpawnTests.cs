@@ -105,8 +105,15 @@ public class ObtainabilitySpawnTests
         Assert.True(squid.Conditions.GingerIsland);
         Assert.Contains("item:(O)908 Magic Bait", squid.Conditions.Requires);
         Assert.Equal(85, squid.Lands.Lands(1));
-        var none = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), NoFestivals, new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())).ToList();
-        Assert.Empty(none);   // no bait anywhere: the row cannot be fished
+        // No bait source in the model at all: the row is still recorded, flagged island (Magic Bait is
+        // Mr Qi's) and Unresolved, rather than dropped, so the fish never silently vanishes.
+        var none = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), NoFestivals,
+            new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())).ToList();
+        var dropped = none.Single(s => s.ItemId == "(O)798").Source;
+        Assert.True(dropped.Conditions.GingerIsland);
+        Assert.True(dropped.Conditions.Unresolved);
+        Assert.Contains("Magic Bait has no source", dropped.Detail);
+        Assert.Equal(85, dropped.Lands.Lands(1));
     }
 
     [Fact]

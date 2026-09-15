@@ -58,6 +58,24 @@ public class ObtainabilityGrowTests
     }
 
     [Fact]
+    public void A_crop_whose_only_seed_source_is_year_two_is_recorded_year_two_flagged()
+    {
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)472"] = new[]
+            {
+                new ObtainSource(SourceKind.Shop, Spring, Reliability.Dependable,
+                    ObtainConditions.None with { YearTwo = true }, "shop SeedShop"),
+            },
+        });
+        var rows = new[] { new CropRow("(O)472", "(O)24", new[] { Season.Spring }, 4, 0) };
+        var parsnip = GrowSources.Crops(rows, snapshot).Where(s => s.ItemId == "(O)24").Select(s => s.Source).ToList();
+        Assert.NotEmpty(parsnip);                                 // the crop is recorded, not lost
+        Assert.All(parsnip, s => Assert.True(s.Conditions.YearTwo));
+        Assert.Equal(5, parsnip.First(s => s.Kind == SourceKind.Crop).Lands.Lands(1));
+    }
+
+    [Fact]
     public void Mixed_seeds_give_the_planting_days_pool_and_winter_greenhouse_gives_every_pool()
     {
         var snapshot = Snapshot(("(O)770", SourceKind.Forage, DayTable.Always, Reliability.Chance));
