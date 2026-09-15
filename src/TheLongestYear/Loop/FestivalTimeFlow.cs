@@ -4,6 +4,7 @@ using HarmonyLib;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Tools;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -47,9 +48,17 @@ namespace TheLongestYear.Loop
             if (!Game1.isFestival()) return false;
             if (Game1.CurrentEvent == null) return false;
 
+            if (!IsFreeRoam(Game1.CurrentEvent)) return false; // mid-contest or mid-cutscene: hold
             if (!TryGetFestivalEndTime(Game1.CurrentEvent, out int endTime)) return false;
             return Game1.timeOfDay >= endTime;
         }
+
+        /// <summary>The player is wandering the grounds: no Egg Hunt / ice fishing timer is
+        /// counting down and no scripted sequence (Flower Dance, Luau soup, grange judging) has
+        /// taken the controls. Only then does the clock tick and the auto-eject fire. Rule lives
+        /// in Core (<see cref="FestivalPhase"/>) so it is unit-tested.</summary>
+        private static bool IsFreeRoam(Event ev)
+            => FestivalPhase.IsFreeRoam(ev.festivalTimer, ev.playerControlSequence);
 
         /// <summary>Force-end the festival with a HUD message. Idempotent within one festival
         /// thanks to the <see cref="_pendingAutoEnd"/> guard.</summary>
@@ -62,6 +71,15 @@ namespace TheLongestYear.Loop
             // confirmation prompt doesn't linger past auto-eject.
             if (Game1.activeClickableMenu != null)
                 Game1.exitActiveMenu();
+
+            // Belt and braces: never leave the player mid-cast. Vanilla's forceEndFestival does not
+            // finish a fishing cast, and a player ejected that way stayed "holding" the contest rod
+            // on every hotbar slot until they reloaded (Nexus, 2026-09-15). ShouldAutoEnd now waits
+            // for free roam so this should not trigger, but the cost of the guard is nil.
+            if (Game1.player.UsingTool && Game1.player.CurrentTool is FishingRod rod)
+                rod.doneFishing(Game1.player);
+            if (Game1.player.TemporaryItem != null)
+                Game1.player.TemporaryItem = null;
 
             Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.festival-over"), HUDMessage.newQuest_type));
             Game1.CurrentEvent?.forceEndFestival(Game1.player);
@@ -106,6 +124,10 @@ namespace TheLongestYear.Loop
                 if (Game1.eventUp && Game1.CurrentEvent != null && !Game1.CurrentEvent.isFestival)
                 { __result = false; return false; } // pause for non-festival events even mid-festival map
                 if (Game1.activeClickableMenu != null && !(Game1.activeClickableMenu is BobberBar))
+                { __result = false; return false; }
+                // Freeze the clock for the Egg Hunt / ice fishing timers and for scripted sequences
+                // (Flower Dance, Luau soup, grange judging): time only passes while wandering.
+                if (Game1.CurrentEvent != null && !IsFreeRoam(Game1.CurrentEvent))
                 { __result = false; return false; }
                 if (Game1.player == null) { __result = false; return false; } // defensive: no player -> pause
                 if (!Game1.player.CanMove && !Game1.player.UsingTool)
