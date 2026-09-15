@@ -86,6 +86,17 @@ public class ObtainabilityDayTableTests
     }
 
     [Fact]
+    public void A_difference_table_with_a_gap_on_day_1_is_not_empty()
+    {
+        DayTable any = DayTable.Always;
+        DayTable dependable = DayTable.Available(d => d <= 28);   // a Spring-only shop
+        DayTable luckOnly = any.Except(dependable);
+        Assert.Null(luckOnly.Lands(1));      // Spring: the shop lands the same day, luck adds nothing
+        Assert.Equal(29, luckOnly.Lands(29)); // Summer on: luck alone
+        Assert.False(luckOnly.IsEmpty);
+    }
+
+    [Fact]
     public void CanObtain_checks_the_deadline_and_equality_is_by_content()
     {
         DayTable t = DayTable.Available(Summer);

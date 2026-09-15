@@ -54,7 +54,12 @@ public sealed class DayTable : IEquatable<DayTable>
     public int? Lands(int startDay)
         => startDay < FirstDay || startDay > Days || _lands[startDay - 1] == Never ? null : _lands[startDay - 1];
 
-    public bool IsEmpty => _lands[0] == Never;   // monotone: if day 1 never lands, nothing does
+    /// <summary>Tables built from <see cref="Available"/>, <see cref="Exact"/>, <see cref="Delay"/>,
+    /// <see cref="Then"/>, <see cref="Earliest"/> and <see cref="Latest"/> are waiting-closed (if day 1
+    /// never lands, nothing does, since waiting from day 1 reaches every later start); a table from
+    /// <see cref="Except"/> is a per-start difference and can have a gap on an early day with real
+    /// landings later, so this scans the whole table rather than trusting day 1 alone.</summary>
+    public bool IsEmpty => Array.TrueForAll(_lands, b => b == Never);
 
     public int? LandingWeek(int startDay) => Lands(startDay) is int l ? WeekMask.WeekOfDay(l) : null;
 
@@ -72,7 +77,10 @@ public sealed class DayTable : IEquatable<DayTable>
     public DayTable Latest(DayTable other) => Combine(other, (a, b) => a is null || b is null ? null : Math.Max(a.Value, b.Value));
 
     /// <summary>The starts where this table lands and <paramref name="dependable"/> lands later or never:
-    /// what luck alone adds.</summary>
+    /// what luck alone adds. Deliberately not waiting-closed: this is a per-start difference ("what
+    /// luck alone adds on THIS start day"), not a route of its own, so it is never folded over waiting
+    /// the way <see cref="Available"/>/<see cref="Exact"/> are. Folding it would make a Chance source
+    /// claim a landing earlier than the Dependable one it was subtracted from.</summary>
     public DayTable Except(DayTable dependable)
         => Combine(dependable, (a, d) => a is null ? null : d is null || d.Value > a.Value ? a : null);
 

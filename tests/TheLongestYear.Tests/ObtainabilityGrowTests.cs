@@ -9,54 +9,58 @@ public class ObtainabilityGrowTests
 {
     private static readonly Dictionary<string, FestivalDates> NoFestivals = new();
 
-    private static ObtainabilityModel Snapshot(params (string Id, SourceKind Kind, WeekMask Weeks, Reliability R)[] rows)
+    private static ObtainabilityModel Snapshot(params (string Id, SourceKind Kind, DayTable Lands, Reliability R)[] rows)
         => new(rows.GroupBy(r => r.Id).ToDictionary(
             g => g.Key,
-            g => (IReadOnlyList<ObtainSource>)g.Select(r => new ObtainSource(r.Kind, DayTable.InWeeks(r.Weeks), r.R, ObtainConditions.None, "test")).ToList()));
+            g => (IReadOnlyList<ObtainSource>)g.Select(r => new ObtainSource(r.Kind, r.Lands, r.R, ObtainConditions.None, "test")).ToList()));
+
+    private static DayTable Spring => DayTable.InWeeks(WeekMask.ForSeason(Season.Spring));
 
     [Fact]
-    public void A_four_day_spring_crop_harvests_all_spring_but_not_past_it()
-        => Assert.Equal("1-4", GrowSources.Harvest(WeekMask.ForSeason(Season.Spring), new[] { Season.Spring }, 4, 0).ToString());
-
-    [Fact]
-    public void A_regrowing_two_season_crop_keeps_yielding_on_its_interval()
+    public void A_spring_crop_planted_late_in_spring_never_lands_and_the_greenhouse_needs_the_seed_first()
     {
-        var both = new[] { Season.Summer, Season.Fall };
-        Assert.Equal("7-12", GrowSources.Harvest(WeekMask.ForSeasons(both), both, 14, 4).ToString());
-        // Seed only in the first week of summer, regrowing every 21 days: harvests on days 43, 64 and 85 would
-        // be weeks 7 and 10; day 85 is Winter, so it stops.
-        Assert.Equal("7,10", GrowSources.Harvest(WeekMask.Of(5), both, 14, 21).ToString());
+        Assert.Equal(5, GrowSources.PlantTable(new[] { Season.Spring }, 4).Lands(1));
+        Assert.Equal(28, GrowSources.PlantTable(new[] { Season.Spring }, 4).Lands(24));
+        Assert.Null(GrowSources.PlantTable(new[] { Season.Spring }, 4).Lands(25));
+        Assert.Equal(29, GrowSources.GreenhouseTable(4).Lands(25));
+        Assert.Equal(112, GrowSources.GreenhouseTable(4).Lands(108));
+        Assert.Null(GrowSources.GreenhouseTable(4).Lands(109));
     }
 
     [Fact]
-    public void The_greenhouse_needs_seed_on_the_planting_day_and_counts_growth_by_days()
+    public void A_two_season_crop_grows_across_the_season_line()
     {
-        Assert.Equal("1-5", GrowSources.Greenhouse(WeekMask.ForSeason(Season.Spring), 4, 0).ToString());
-        Assert.Equal("1-16", GrowSources.Greenhouse(WeekMask.ForSeason(Season.Spring), 4, 1).ToString());
+        DayTable t = GrowSources.PlantTable(new[] { Season.Summer, Season.Fall }, 14);
+        Assert.Equal(43, t.Lands(1));     // wait for Summer 1, plus 14
+        Assert.Equal(84, t.Lands(70));    // Fall 14 + 14 = Fall 28
+        Assert.Null(t.Lands(71));
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
-    public void Crops_split_dependable_seed_weeks_from_chance_ones()
+    [Fact]
+    public void Crops_chain_from_the_seeds_own_table_and_split_reliability()
     {
         var snapshot = Snapshot(
-            ("(O)472", SourceKind.Shop, WeekMask.ForSeason(Season.Spring), Reliability.Dependable),
-            ("(O)472", SourceKind.Cart, WeekMask.All, Reliability.Chance));
+            ("(O)472", SourceKind.Shop, Spring, Reliability.Dependable),
+            ("(O)472", SourceKind.Cart, DayTable.Always, Reliability.Chance));
         var rows = new[] { new CropRow("(O)472", "(O)24", new[] { Season.Spring }, 4, 0) };
         var sources = GrowSources.Crops(rows, snapshot).Where(s => s.ItemId == "(O)24").Select(s => s.Source).ToList();
-        var outdoor = sources.Where(s => s.Kind == SourceKind.Crop).ToList();
-        Assert.Single(outdoor);
-        Assert.Equal(Reliability.Dependable, outdoor[0].Reliability);
+        var outdoor = sources.Single(s => s.Kind == SourceKind.Crop && s.Reliability == Reliability.Dependable);
+        Assert.Equal(5, outdoor.Lands.Lands(1));
+        Assert.Null(outdoor.Lands.Lands(25));                   // seed on Spring 25 cannot finish; no later seed
+        Assert.DoesNotContain(sources, s => s.Kind == SourceKind.Crop && s.Reliability == Reliability.Chance);   // the cart seed is a Spring seed too: outdoors it adds nothing
         var greenhouse = sources.Where(s => s.Kind == SourceKind.GreenhouseCrop).ToList();
-        Assert.Contains(greenhouse, s => s.Reliability == Reliability.Dependable && s.Lands.ToString() == "1-5");
-        // phase 1 predicate, rewritten in task 4
-        Assert.Contains(greenhouse, s => s.Reliability == Reliability.Chance && s.Lands.ToString().Contains("14"));
+        var dep = greenhouse.Single(s => s.Reliability == Reliability.Dependable);
+        Assert.Equal(32, dep.Lands.Lands(28));                 // seed bought Spring 28, greenhouse, lands Summer 4
+        Assert.Null(dep.Lands.Lands(29));                      // hit in week 5: the seed is gone
+        var luck = greenhouse.Single(s => s.Reliability == Reliability.Chance);
+        Assert.Equal(33, luck.Lands.Lands(29));                // the cart could sell it any day
         Assert.All(greenhouse, s => Assert.Contains("mail:ccPantry", s.Conditions.Requires));
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
+    [Fact]
     public void Mixed_seeds_give_the_planting_days_pool_and_winter_greenhouse_gives_every_pool()
     {
-        var snapshot = Snapshot(("(O)770", SourceKind.Forage, WeekMask.All, Reliability.Chance));
+        var snapshot = Snapshot(("(O)770", SourceKind.Forage, DayTable.Always, Reliability.Chance));
         var rows = new[]
         {
             new CropRow("(O)472", "(O)24", new[] { Season.Spring }, 4, 0),
@@ -64,19 +68,22 @@ public class ObtainabilityGrowTests
             new CropRow("(O)770", "(O)770", new Season[0], 1, 0),
         };
         var parsnip = GrowSources.Crops(rows, snapshot).Where(s => s.ItemId == "(O)24").Select(s => s.Source).ToList();
-        Assert.Contains(parsnip, s => s.Kind == SourceKind.Crop && s.Detail.Contains("Mixed Seeds") && s.Lands.ToString() == "1-4");
+        var outdoor = parsnip.Single(s => s.Kind == SourceKind.Crop && s.Detail.Contains("Mixed Seeds"));
+        Assert.Equal(Reliability.Chance, outdoor.Reliability);
+        Assert.Equal(5, outdoor.Lands.Lands(1));
+        Assert.Null(outdoor.Lands.Lands(25));
         var indoor = parsnip.Single(s => s.Kind == SourceKind.GreenhouseCrop && s.Detail.Contains("Mixed Seeds"));
-        Assert.Equal("1-5,13-16", indoor.Lands.ToString());     // spring pool in spring, every pool in winter, never summer or fall
+        Assert.Equal(89, indoor.Lands.Lands(29));               // Summer 1 hit: the spring pool next comes in Winter (85 + 4)
         Assert.DoesNotContain(GrowSources.Crops(rows, snapshot), s => s.ItemId == "(O)770");
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
-    public void A_fruit_tree_fruits_from_maturity_in_its_season_and_a_spring_sapling_misses_spring()
+    [Fact]
+    public void A_fruit_tree_matures_28_days_after_the_sapling_then_waits_for_its_season()
     {
         var snapshot = Snapshot(
-            ("(O)633", SourceKind.Shop, WeekMask.All, Reliability.Dependable),                         // apple sapling
-            ("(O)628", SourceKind.Shop, WeekMask.ForSeason(Season.Spring), Reliability.Dependable),     // cherry sapling
-            ("(O)69", SourceKind.Shop, WeekMask.All, Reliability.Dependable));                         // banana sapling
+            ("(O)633", SourceKind.Shop, DayTable.Always, Reliability.Dependable),   // apple sapling, Fall fruit
+            ("(O)628", SourceKind.Shop, Spring, Reliability.Dependable),            // cherry sapling, Spring fruit
+            ("(O)69", SourceKind.Shop, DayTable.Always, Reliability.Dependable));   // banana sapling
         var rows = new[]
         {
             new FruitTreeRow("(O)633", new[] { Season.Fall }, new[] { new FruitRow("(O)613", null, 1.0, null) }),
@@ -84,11 +91,31 @@ public class ObtainabilityGrowTests
             new FruitTreeRow("(O)69", new[] { Season.Summer }, new[] { new FruitRow("(O)91", null, 0.5, "YEAR 2") }),
         };
         var all = GrowSources.FruitTrees(rows, snapshot, new Dictionary<string, ObjInfo>(), NoFestivals).ToList();
-        Assert.Equal("9-12", all.Single(s => s.ItemId == "(O)613" && s.Source.Kind == SourceKind.FruitTree).Source.Lands.ToString());
-        Assert.DoesNotContain(all, s => s.ItemId == "(O)638" && s.Source.Kind == SourceKind.FruitTree);
-        Assert.Contains(all, s => s.ItemId == "(O)638" && s.Source.Kind == SourceKind.GreenhouseCrop);
+        var apple = all.Single(s => s.ItemId == "(O)613" && s.Source.Kind == SourceKind.FruitTree).Source;
+        Assert.Equal(57, apple.Lands.Lands(1));                 // mature by day 29, first Fall day 57
+        Assert.Equal(84, apple.Lands.Lands(56));                // planted Summer 28, mature Fall 28
+        Assert.Null(apple.Lands.Lands(57));
+        Assert.Contains(apple.Setup, s => s.Name == "sapling" && s.Days == 28);
+        Assert.DoesNotContain(all, s => s.ItemId == "(O)638" && s.Source.Kind == SourceKind.FruitTree);   // a Spring sapling never fruits outdoors this year
+        var cherryIndoor = all.Single(s => s.ItemId == "(O)638" && s.Source.Kind == SourceKind.GreenhouseCrop).Source;
+        Assert.Equal(29, cherryIndoor.Lands.Lands(1));
         var banana = all.First(s => s.ItemId == "(O)91").Source;
         Assert.Equal(Reliability.Chance, banana.Reliability);
         Assert.True(banana.Conditions.YearTwo);
+    }
+
+    [Fact]
+    public void A_tea_bush_gives_leaves_from_day_22_after_20_days_and_only_sheltered_in_winter()
+    {
+        var snapshot = Snapshot(("(O)251", SourceKind.Crafting, DayTable.Always, Reliability.Dependable));
+        var leaves = GrowSources.TeaBush(snapshot).Where(s => s.ItemId == "(O)815").Select(s => s.Source).ToList();
+        var outdoor = leaves.Single(s => s.Kind == SourceKind.Crop);
+        Assert.Equal(22, outdoor.Lands.Lands(1));               // planted day 1, age 20 on day 21, bloom from day 22
+        Assert.Equal(23, outdoor.Lands.Lands(3));               // planted day 3, age 20 on day 23, and Spring 23 is already past the 22nd
+        Assert.Null(outdoor.Lands.Lands(65));                   // Fall 9: age 20 lands Fall 29 = Winter, outdoors never
+        var sheltered = leaves.Single(s => s.Kind == SourceKind.GreenhouseCrop);
+        Assert.Equal(106, sheltered.Lands.Lands(65));           // Winter 22
+        Assert.Contains(outdoor.Setup, s => s.Name == "tea bush" && s.Days == 20);
+        Assert.Empty(GrowSources.TeaBush(new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())));
     }
 }

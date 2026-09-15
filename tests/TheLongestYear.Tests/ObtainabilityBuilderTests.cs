@@ -27,14 +27,18 @@ public class ObtainabilityBuilderTests
         Ponds = new[] { new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 1, 1.0, null) }) },
     };
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
+    [Fact]
     public void A_chain_resolves_shop_seed_to_crop_to_pickles()
     {
         ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
         Assert.False(build.HitPassCap);
         Assert.True(build.Passes >= 2);
-        Assert.Equal("1-4", build.Model.Table("(O)24", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } }).ToString());
-        Assert.Equal("1-6", build.Model.Table("(O)342", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }).ToString());   // greenhouse parsnip reaches week 5, so pickles reach week 6
+        DayTable parsnip = build.Model.Table("(O)24", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } });
+        Assert.Equal(5, parsnip.Lands(1));
+        Assert.Null(parsnip.Lands(25));
+        // 4000 minutes = 3 days: greenhouse parsnip bought Spring 28 lands Summer 4 (day 32), pickles day 35.
+        Assert.Equal(8, build.Model.Lands("(O)342", 1, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
+        Assert.Equal(35, build.Model.Lands("(O)342", 28, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
     }
 
     [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
