@@ -28,6 +28,7 @@ public class ObtainabilityBlindGuardTests
     private static readonly string[] BlindFiles =
     {
         "TheLongestYear.Core/Obtainability/WeekMask.cs",
+        "TheLongestYear.Core/Obtainability/DayTable.cs",
         "TheLongestYear.Core/Obtainability/ObtainTypes.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityModel.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityInputs.cs",
