@@ -111,6 +111,23 @@ public class FairnessRuleTests
         Assert.True(Counts(DifficultyStep.Easy, Save(), Route(SourceKind.Cooking, requires: new[] { "recipe:Omelet", "unlock:Queen of Sauce episode 4 (Sunday of week 4)" })));
     }
 
+    [Theory]
+    [InlineData(DifficultyStep.Easy)]
+    [InlineData(DifficultyStep.Normal)]
+    [InlineData(DifficultyStep.Hard)]
+    public void A_crafting_requirement_counts_only_when_the_recipe_is_known(DifficultyStep level)
+    {
+        // SpawnSources writes "crafting:Crab Pot" and MadeSources "crafting:Tapper"; before this
+        // branch existed neither prefix was parsed, so both were silently met.
+        ObtainSource route = Route(SourceKind.CrabPot, requires: new[] { "crafting:Crab Pot" });
+        Assert.False(Counts(level, Save(), route));
+        Assert.True(Counts(level, Save(recipes: new[] { "Crab Pot" }), route));
+    }
+
+    [Fact]
+    public void Extreme_ignores_a_crafting_requirement_like_every_other_condition()
+        => Assert.True(Counts(DifficultyStep.Extreme, Save(), Route(SourceKind.CrabPot, requires: new[] { "crafting:Crab Pot" })));
+
     [Fact]
     public void Extreme_ignores_conditions()
         => Assert.True(Counts(DifficultyStep.Extreme, Save(), Route(SourceKind.Cooking, requires: new[] { "recipe:X", "unlock:f Pam 3", "machine:(BC)12", "mail:ccPantry" })));
