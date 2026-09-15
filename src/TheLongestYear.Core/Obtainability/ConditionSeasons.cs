@@ -155,16 +155,23 @@ public static class ConditionSeasons
         return new ConditionReading(weeks, yearTwo, fewDays, chance, rainOnly, unresolved, island, other, days);
     }
 
-    /// <summary>A same-day table for one clause reading: available on a day when it falls within
+    /// <summary>Whether one clause reading is open on <paramref name="day"/>: within
     /// <paramref name="alsoWithin"/> and the reading's own weeks, and, when the reading pins exact
-    /// days, only on those days.</summary>
+    /// days, only on those days. A caller combining this with a further day-range restriction (a
+    /// festival's exact dates) should AND it into the same predicate rather than intersect two
+    /// tables afterward: <see cref="DayTable.Latest"/> is not an intersection, so it can report a
+    /// day where only one side is open.</summary>
+    public static bool IsAvailableOn(ConditionReading reading, WeekMask alsoWithin, int day)
+    {
+        int week = WeekMask.WeekOfDay(day);
+        return alsoWithin.Contains(week) && reading.Weeks.Contains(week)
+               && (reading.DaysOfYear == null || reading.DaysOfYear.Contains(day));
+    }
+
+    /// <summary>A same-day table for one clause reading: available on a day when
+    /// <see cref="IsAvailableOn"/> says so.</summary>
     public static DayTable Availability(ConditionReading reading, WeekMask alsoWithin)
-        => DayTable.Available(day =>
-        {
-            int week = WeekMask.WeekOfDay(day);
-            return alsoWithin.Contains(week) && reading.Weeks.Contains(week)
-                   && (reading.DaysOfYear == null || reading.DaysOfYear.Contains(day));
-        });
+        => DayTable.Available(day => IsAvailableOn(reading, alsoWithin, day));
 
     public static ObtainConditions Apply(ObtainConditions conditions, ConditionReading reading)
         => conditions with

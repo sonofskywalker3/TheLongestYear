@@ -74,6 +74,14 @@ public class ObtainabilityShopTests
     }
 
     [Fact]
+    public void A_sparse_shop_condition_inside_a_festival_window_is_a_true_intersection()
+    {
+        var s = Stock(new ShopRow("Festival_DesertFestival_Vendor", "(O)Moss", "DAY_OF_MONTH 16", false)).Single().Source;
+        Assert.Equal(16, s.Lands.Lands(1));      // Spring 16 is the only day both the row and the festival are open
+        Assert.Null(s.Lands.Lands(17));
+    }
+
+    [Fact]
     public void An_unplaceable_festival_shop_is_unresolved_not_a_fact()
     {
         var s = Stock(new ShopRow("Festival_SomeModFair_Booth", "(O)Moss", null, false)).Single().Source;
