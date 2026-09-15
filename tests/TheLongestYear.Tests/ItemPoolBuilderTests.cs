@@ -620,4 +620,15 @@ public class ItemPoolBuilderTests
         Assert.Contains(pools.WinterOnly, p => p.ItemId == "(O)412");
         Assert.DoesNotContain(pools.WinterOnly, p => p.ItemId == "(O)420");
     }
+
+    [Fact]
+    public void ColourTags_skip_rings_so_one_never_reaches_the_Dye_recipe()
+    {
+        // Vanilla tags the Amethyst Ring color_purple (Nexus, 2026-09-14); a ring cannot be donated.
+        ItemPools pools = BuildPoolsWithObjects(
+            ("529", "Amethyst Ring", cat: 0, tags: new[] { "color_purple", "ring_item" }),
+            ("66", "Amethyst", cat: -2, tags: new[] { "color_purple" }));
+        Assert.Contains(pools.ColourTags["color_purple"], p => p.ItemId == "(O)66");
+        Assert.DoesNotContain(pools.ColourTags["color_purple"], p => p.ItemId == "(O)529");
+    }
 }

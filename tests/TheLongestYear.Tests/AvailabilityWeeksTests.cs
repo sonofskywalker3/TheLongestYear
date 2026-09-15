@@ -150,12 +150,15 @@ public class AvailabilityWeeksTests
     [Theory]
     [InlineData("(O)Book_PriceCatalogue", 2)] [InlineData("(O)SkillBook_0", 3)] [InlineData("(O)SkillBook_2", 3)]
     [InlineData("(O)Book_Speed", 5)] [InlineData("(O)PurpleBook", 5)] [InlineData("(O)Book_Trash", 1)]
-    [InlineData("(O)Book_Marlon", 1)] [InlineData("(O)Book_Bombs", 3)] [InlineData("(O)Book_Friendship", 5)]
+    [InlineData("(O)Book_Marlon", 1)] [InlineData("(O)Book_Bombs", 3)]
     public void Book_weeks(string id, int week) => Assert.Equal(week, AvailabilityWeeks.BookWeeks[id]);
 
     [Fact]
     public void Year_2_and_drop_only_books_are_not_in_the_table()
     {
+        // Friendship 101 is the ninth prize-machine prize and the ticket count resets each loop
+        // (Nexus, 2026-09-14): not a year-1 route.
+        Assert.False(AvailabilityWeeks.BookWeeks.ContainsKey("(O)Book_Friendship"));
         Assert.False(AvailabilityWeeks.BookWeeks.ContainsKey("(O)Book_Void"));
         Assert.False(AvailabilityWeeks.BookWeeks.ContainsKey("(O)Book_AnimalCatalogue"));
         Assert.False(AvailabilityWeeks.BookWeeks.ContainsKey("(O)Book_Diamonds"));
