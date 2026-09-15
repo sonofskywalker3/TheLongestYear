@@ -8,8 +8,12 @@ namespace TheLongestYear.Core;
 
 public enum CompareVerdict { Agree, NewEarlier, NewLater, LuckOnly, OnlyExisting, OnlyNew }
 
+/// <summary><see cref="NewDependableKnown"/> is the dependable landing week counting only sources the
+/// model could actually read: where it differs from <see cref="NewDependable"/>, the headline week rests
+/// on an unresolved source (a recipe whose unlock is "none", say) and is a guess, not a fact.</summary>
 public sealed record CompareRow(
-    string ItemId, int? ExistingPacing, int? ExistingHard, string ExistingBasis, int? NewDependable, int? NewAny, CompareVerdict Verdict);
+    string ItemId, int? ExistingPacing, int? ExistingHard, string ExistingBasis, int? NewDependable,
+    int? NewDependableKnown, int? NewAny, CompareVerdict Verdict);
 
 /// <summary>Lines the blind obtainability model up against the existing item model (spec
 /// 2026-09-14-item-obtainability, phase 1). The existing hard week is a fact ("the first week the item
@@ -23,6 +27,11 @@ public static class ObtainabilityComparison
             CompareVerdict.NewEarlier, CompareVerdict.NewLater, CompareVerdict.LuckOnly,
             CompareVerdict.OnlyExisting, CompareVerdict.OnlyNew, CompareVerdict.Agree,
         };
+
+    /// <summary>Dependable sources the model actually read: an unresolved source is a guess, so the
+    /// report says when the headline week rests on one (the Queen of Sauce dishes, whose unlock is
+    /// "none", are the big block of these).</summary>
+    private static readonly ObtainFilter DependableKnownOnly = ObtainFilter.DependableOnly with { IncludeUnresolved = false };
 
     private static readonly CompareVerdict[] DetailSections =
         { CompareVerdict.NewEarlier, CompareVerdict.NewLater, CompareVerdict.LuckOnly, CompareVerdict.OnlyExisting };
@@ -42,6 +51,7 @@ public static class ObtainabilityComparison
             (int Pacing, int Hard, string Basis)? existing = existingPlaced(id) ? existingWeeks(id) : null;
             int? newAny = model.LandingWeekFromDay1(id, ObtainFilter.Any);
             int? newDep = model.LandingWeekFromDay1(id, ObtainFilter.DependableOnly);
+            int? newDepKnown = model.LandingWeekFromDay1(id, DependableKnownOnly);
             if (existing == null && newAny == null) continue;
             CompareVerdict verdict = existing == null ? CompareVerdict.OnlyNew
                 : newAny == null ? CompareVerdict.OnlyExisting
@@ -49,7 +59,7 @@ public static class ObtainabilityComparison
                 : newDep == existing.Value.Hard ? CompareVerdict.Agree
                 : newDep < existing.Value.Hard ? CompareVerdict.NewEarlier
                 : CompareVerdict.NewLater;
-            rows.Add(new CompareRow(id, existing?.Pacing, existing?.Hard, existing?.Basis ?? "", newDep, newAny, verdict));
+            rows.Add(new CompareRow(id, existing?.Pacing, existing?.Hard, existing?.Basis ?? "", newDep, newDepKnown, newAny, verdict));
         }
         return rows;
     }
@@ -64,6 +74,7 @@ public static class ObtainabilityComparison
         sb.AppendLine("| Verdict | Items |").AppendLine("|---|---|");
         foreach (CompareVerdict v in SectionOrder)
             sb.AppendLine($"| {v} | {rows.Count(r => r.Verdict == v)} |");
+        sb.AppendLine($"| Dependable only through an unresolved source | {rows.Count(OnlyUnresolvedDependable)} |");
         sb.AppendLine($"| Unresolved sources | {unresolved.Count} |");
 
         foreach (CompareVerdict v in DetailSections)
@@ -75,7 +86,10 @@ public static class ObtainabilityComparison
             {
                 sb.AppendLine($"### {r.ItemId} {nameOf(r.ItemId) ?? "?"}");
                 sb.AppendLine($"- existing pacing {Week(r.ExistingPacing)}, hard {Week(r.ExistingHard)}; existing basis: {(r.ExistingBasis.Length == 0 ? "none" : r.ExistingBasis)}");
-                sb.AppendLine($"- new dependable {Week(r.NewDependable)}, any {Week(r.NewAny)}");
+                string dependable = OnlyUnresolvedDependable(r)
+                    ? $"{Week(r.NewDependable)} (unresolved; known-source week {Week(r.NewDependableKnown)})"
+                    : Week(r.NewDependable);
+                sb.AppendLine($"- new dependable {dependable}, any {Week(r.NewAny)}");
                 foreach (ObtainSource s in model.Sources(r.ItemId))
                     sb.AppendLine($"  - {ObtainabilityText.SourceLine(s)}");
             }
@@ -102,6 +116,10 @@ public static class ObtainabilityComparison
         foreach (string u in unresolved) sb.AppendLine($"- {u}");
         return sb.ToString();
     }
+
+    /// <summary>The headline dependable week comes from a source the model could not read.</summary>
+    private static bool OnlyUnresolvedDependable(CompareRow row)
+        => row.NewDependable != null && row.NewDependable != row.NewDependableKnown;
 
     private static string Week(int? week) => week?.ToString() ?? "none";
 }
