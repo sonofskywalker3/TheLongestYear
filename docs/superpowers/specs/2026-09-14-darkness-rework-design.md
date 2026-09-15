@@ -1,7 +1,7 @@
 # Darkness Rework
 
 **Date:** 2026-09-14
-**Status:** decisions settled in chat with Jeff, 2026-09-14; blocked on the item obtainability model
+**Status:** built in Part B, see `2026-09-15-darkness-obtainability-wiring-design.md`
 **Branch:** `story`
 **Replaces the scheduling in:** `2026-09-09-darkness-pushback-design.md` (effects, wards, letters,
 scene and the Circle of Warding stay as that spec and its later rulings describe)

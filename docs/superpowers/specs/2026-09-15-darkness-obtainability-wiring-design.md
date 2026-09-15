@@ -1,7 +1,7 @@
 # Darkness Rework, Part B: Wiring the Obtainability Model
 
 **Date:** 2026-09-15
-**Status:** design approved in brainstorm (Jeff, 2026-09-15); spec pending Jeff's read, then plan
+**Status:** built (commits `4613d36`..`afdcb72`), live-checked 2026-09-15 on the throwaway save; Jeff's played run pending
 **Branch:** `story`
 **Builds on:** `2026-09-14-darkness-rework-design.md` (the approved scheduling, dial, blight numbers,
 guaranteed Winter tamper and stack limits, all unbuilt until now), `2026-09-14-obtainability-phase2-design.md`

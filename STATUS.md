@@ -1,10 +1,100 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-15 (story: the obtainability model now reads the Queen of Sauce TV schedule, rerun live)
+**Last updated:** 2026-09-15 (story: darkness rework Part B built, live-checked, board output byte-identical)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2284 passing
+**Tests:** 2377 passing
 **Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+
+## 2026-09-15: darkness rework Part B built (the obtainability model is wired into the darkness)
+
+Commits `4613d36`..`afdcb72` on `story` plus this docs commit, all committed AND pushed; nothing is
+local-only. 2377 tests passing (2285 at the start of the plan). Spec:
+`docs/superpowers/specs/2026-09-15-darkness-obtainability-wiring-design.md`; the 2026-09-14 rework spec
+is folded into it.
+
+What landed: one darkness roll a night with a decaying chance and one event per strike; the Darkness
+dial in GMCM with config migration to the lowest existing dial; blight numbers by level; the
+guaranteed first-Winter tamper and the stack limits; the fairness picker that asks the obtainability
+model, against the real save, whether a reverted or tampered item can still be got back by the
+deadline through routes the level allows; Extreme chest blight reaching tools, weapons and placed farm
+machines at three units each; and `tly_sabotage fair <itemId> [level]` for reading a verdict.
+
+**Live check (my own automated run, not Jeff's):** I deployed the new build with
+`tools/deploy.ps1 -Minimized`, loaded the throwaway save `None_449077472` with
+`tly_loadsave` (Run 168, Summer day 15), waited for `Run \d+ ready` plus about 45 seconds, and sent
+the readouts over the file bridge. No mouse, no keyboard, no sleeping the game, no played sequence
+(that one is Jeff's). The game was LEFT RUNNING minimized on that save. No exceptions in the log.
+
+```
+[12:58:29 INFO  The Longest Year] Obtainability model: 1113 items in 804 ms, 7 pass(es), 45 unresolved source(s).
+[12:59:43 INFO  The Longest Year] === The Longest Year: difficulty ===
+[12:59:43 INFO  The Longest Year]   In force: the profile STAMPED on this save. Config changes apply at your next loop.
+[12:59:43 INFO  The Longest Year]   Step               configured -> in force
+[12:59:43 INFO  The Longest Year]     stack size         Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     quality asks       Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     required slots     Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     item rarity        Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     JP earned          Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     shrine prices      Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     starting gold      Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     cart slots         Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     hold prices        Normal   -> Normal
+[12:59:43 INFO  The Longest Year]     darkness           Normal   -> Normal
+[12:59:43 INFO  The Longest Year]   Resolved values in force:
+[12:59:43 INFO  The Longest Year]     asks: stack x1, quality x1, required slots 0, rarity bias 1
+[12:59:43 INFO  The Longest Year]     economy: JP x1, shrine prices x1, starting gold 500g, starting cart slots 1, hold prices x1
+[12:59:43 INFO  The Longest Year]   Board source: Engine. Item rarity applies to Engine (TLY Custom) boards only; stack size, quality asks and required slots apply to vanilla boards too.
+[12:59:43 INFO  The Longest Year] Darkness: level Normal; blight=on, reversion=on, tampering=on; model published
+  season Summer day 15: options = CropBlight, ChestBlight; chance tonight 25 %
+  unmoderated this loop: reversion available, tamper available; guaranteed Winter tamper pending (first Winter ever: True)
+  wards owned: ward_circle_1
+  blight week 6 nights 2; last reversion week -1; tamper days []
+  live crops on the farm: 9; units in chests (stash excluded): 30
+[12:59:43 INFO  The Longest Year] Parsnip at Normal, hit day 43:
+reversion (deadline day 112): counts (1 of 6 route(s))
+  - out: chance route | Cart, Chance, lands wk1/wk5/wk9/wk13, needs shop:Traveler | shop Traveler (random items)
+  - out: never lands from day 44 | Crop, Dependable, lands wk1/never/never/never, needs item:(O)472 | grown from (O)472
+  - counts: counts, lands day 103 | GreenhouseCrop, Dependable, lands wk1/wk15/wk15/wk15, needs item:(O)472; mail:ccPantry | greenhouse, from (O)472
+  - out: chance route | GreenhouseCrop, Chance, lands never/wk5/wk9/wk13, needs item:(O)472; mail:ccPantry | greenhouse, from (O)472
+  - out: chance route | Crop, Chance, lands wk1/never/never/never, needs item:(O)770 | Mixed Seeds in Spring
+  - out: chance route | GreenhouseCrop, Chance, lands wk1/wk13/wk13/wk13, needs item:(O)770; mail:ccPantry | Mixed Seeds in the greenhouse (Spring pool)
+tampering (deadline day 112): counts (1 of 6 route(s))
+[12:59:43 INFO  The Longest Year] Legend at Extreme, hit day 43:
+reversion (deadline day 112): does not count (0 of 2 route(s))
+  - out: never lands from day 44 | Fish, Dependable, lands wk1/never/never/never, Fishing 10, catch limit 1, rain only, needs location:Mountain; !PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY | Fish at Mountain, time 600-2000
+  - out: never lands from day 44 | Fish, Dependable, lands wk1/never/never/never, Fishing 10, rain only, needs location:Backwoods | Fish at Backwoods, time 600-2000
+tampering (deadline day 112): does not count (0 of 2 route(s))
+[12:59:43 INFO  The Longest Year] Goat Cheese at Normal, hit day 43:
+reversion (deadline day 112): does not count (0 of 5 route(s))
+  - out: chance route | Cart, Chance, lands wk1/wk5/wk9/wk13, needs shop:Traveler | shop Traveler (random items)
+  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)436
+  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)436
+  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)438
+  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)438
+tampering (deadline day 112): does not count (0 of 5 route(s))
+[12:59:43 WARN  The Longest Year] Unknown level 'hrd'; use easy, normal, hard or extreme.
+[13:01:27 INFO  The Longest Year] Darkness: Tampering armed for tonight's roll (Summer 15, level Normal); cleared 0 waiting report(s). WARNING: Tampering is not open in Summer, so tonight will not strike.
+```
+
+Reading those: Parsnip counts on Normal from Summer 15 only through the greenhouse (the save has
+`ccPantry`), because Pierre's Spring seed row can no longer land this year and every cart or Mixed
+Seeds route is a chance route, which Normal does not allow. Legend has only two dependable
+Spring-rain sources in the model, so from day 44 neither can land again this year; Extreme ignores
+conditions such as Fishing 10 but cannot ignore a landing table that says never, so "does not count"
+is the right answer. Goat Cheese is out on Normal because the Cheese Press `(BC)16` is neither owned
+nor craftable on this save, which is the spec's own Normal rule for a missing machine; no Goat Cheese
+route in the model names `building:Barn` at all, so there were no barn days to add. The bad level
+`hrd` produced the intended Warn, and arming tamper in Summer correctly reported that tampering is
+not open this season.
+
+**Board output is byte-identical.** The Task 0 baseline (`baseline-genbundles.txt`, 414 lines,
+captured on build `9f169b4`) and the same filtered capture from this build (414 lines) diff EMPTY:
+`git diff --no-index` reported no differences at all, so `tly_genbundles 1|2|3` and `tly_gatecheck`
+generate exactly the boards and gate audit they did before the plan. Board generation, gates, goals
+and pacing never read the obtainability model or the darkness. A static guard test
+(`BoardPathsNeverReadTheModelTests`) now also fails the build if any of the eleven board files so much
+as names `Obtainability`, `FairnessRule`, `SaveSnapshot`, `NightRoll` or `Sabotage`.
 
 ## 2026-09-15: the Queen of Sauce schedule is read (Jeff's ruling)
 

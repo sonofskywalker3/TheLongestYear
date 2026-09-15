@@ -58,15 +58,13 @@ fix. Nothing reads the model for gameplay yet.
 - **`LocationSpawn.Chance` is still carried but never read** (forage and fish stay dependable by the
   spec's table); decide whether that stays.
 
-Still open from phase 1 (Part B, the first consumer):
-
-- **Per-difficulty, live-inventory picker for darkness hits (Jeff, 2026-09-14).** Run the model
-  against the player's real state after a hit: easy picks something a stretch but possible, normal
-  something difficult but possible, hard something they are not prepared for but could get with
-  luck, extreme rolls about a 10% chance of something genuinely impossible so the wards matter.
-  Belongs in the darkness rework design, the first consumer.
-- Any later use by board generation must keep existing earliest-week figures identical unless Jeff
-  rules otherwise (byte-identical `tly_genbundles` and `tly_gatecheck` across seeds).
+- **CLOSED (2026-09-15, commits `4613d36`..`afdcb72`): Part B wired the model into the darkness.** The
+  per-difficulty live-inventory picker for darkness hits, and the promise that board generation keeps
+  its existing figures, are both built and live-checked. Spec:
+  `docs/superpowers/specs/2026-09-15-darkness-obtainability-wiring-design.md`. The byte-identical proof
+  passed (the Task 0 baseline and the new capture of `tly_genbundles 1|2|3` plus `tly_gatecheck` diff
+  empty at 414 lines each) and a static guard test keeps the board files from ever naming the model or
+  the darkness.
 
 ### Closing the post-loop shrine freezes the game for about 3 seconds (future patch)
 Jeff, 2026-09-14: closing the rewind's upgrade window hangs for a couple of seconds, "not painful,
@@ -130,6 +128,27 @@ cannot pay: roguelike rather than roguelite, and only at the harder settings.
 
 Built and headless-tested 2026-09-09 (see STATUS.md and
 `docs/superpowers/specs/2026-09-09-darkness-pushback-design.md`). What only a played run can check:
+
+**What changed under it on 2026-09-15 (Part B, commits `4613d36`..`afdcb72`, spec
+`docs/superpowers/specs/2026-09-15-darkness-obtainability-wiring-design.md`).** The three separate
+nightly dice are gone: there is now ONE roll a night, with a chance that decays as the season wears
+on, and it fires ONE event. A Darkness dial (Easy, Normal, Hard, Extreme) sits in GMCM beside the
+other difficulty steps; an old config without the key migrates to the lowest dial already set. The
+fairness picker is the real change: before the darkness empties a donated slot or swaps an item into
+an empty one, it asks the obtainability model whether a player starting from nothing tomorrow could
+get that item back by the deadline, through routes the level allows, checked against the actual farm
+(recipes known, buildings, machines owned anywhere, greenhouse, mine depth, skills). Easy and Normal
+must find a fair pick or the hit goes elsewhere; Hard and Extreme each get one unmoderated hit per
+loop that ignores the model completely. On Extreme, chest blight also reaches tools, weapons and
+placed farm machines, counting three units each. `tly_sabotage fair <itemId> [level]` prints the
+verdict for one item against the current save, route by route, with the reason each route counts or is
+out: that is how to read what the picker will do without waiting for a night.
+
+**Staging recipe for the played run.** `tly_sabotage arm revert` then sleep stages a reversion on
+tonight's roll. For tampering, be on a Winter save (it is Winter only): `tly_sabotage arm tamper` then
+sleep; arming it in any other season reports that tampering is not open and nothing strikes. The
+Darkness dial is part of the difficulty profile STAMPED on the save, so setting it in GMCM does
+nothing until the next loop: set it, then rewind for it to take.
 
 - **On screen:** the morning HUD lines ("X crops were struck down by the darkness overnight",
   "Some of your things have spoiled in the night", "gone missing overnight", "You awaken with a
