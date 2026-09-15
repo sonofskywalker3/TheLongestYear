@@ -1,10 +1,54 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-15 (story: obtainability phase 2 review fixes landed, rerun live, report awaiting Jeff's rulings)
+**Last updated:** 2026-09-15 (story: the obtainability model now reads the Queen of Sauce TV schedule, rerun live)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2282 passing
+**Tests:** 2284 passing
 **Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+
+## 2026-09-15: the Queen of Sauce schedule is read (Jeff's ruling)
+
+Commit `7f6539f` on top of the fix wave, pushed. `Data/TV/CookingChannel` is a glue section of its own
+and hands the model each cooking recipe's episode number. Episode k airs on the Sunday that is day 7k
+of year 1 (TV.cs `getWeeklyRecipe` 518: `whichWeek = DaysPlayed % 224 / 7`), so a dish's TV route is
+its ingredients AND that Sunday; episodes 17 to 32 air in year 2 and are flagged, so the default
+filters leave them out. A Wednesday rerun only repeats an EARLIER episode, so it never adds a week.
+
+A recipe whose unlock is "none", "null" or a farmhouse level ("l 0") has its old "taught some other
+way" guess REPLACED by the TV route; a skill or friendship unlock keeps its own source and gains the
+TV one beside it.
+
+**Live build (automated run, throwaway save `None_449077472`, launched minimized):**
+
+```
+[08:31:18 INFO  The Longest Year] Obtainability model: 1113 items in 794 ms, 7 pass(es), 45 unresolved source(s).
+[08:31:31 INFO  The Longest Year] (O)220 Chocolate Cake: 3 source(s); from day 1 dependable lands week 14, any lands week 1
+  - Cooking, Dependable, lands wk14/wk14/wk14/wk14, needs recipe:Chocolate Cake; unlock:Queen of Sauce episode 14 (Sunday of week 14) | recipe Chocolate Cake taught by the Queen of Sauce
+[08:31:48 INFO  The Longest Year] (O)195 Omelet: 4 source(s); from day 1 dependable lands week 4, any lands week 1
+  - Cooking, Dependable, lands wk4/wk5/wk9/wk13, needs recipe:Omelet; unlock:Queen of Sauce episode 4 (Sunday of week 4) | recipe Omelet taught by the Queen of Sauce
+[08:31:59 INFO  The Longest Year] tly_obtain compare: wrote ...obtainability-compare.md (1078 items: OnlyNew 606, NewEarlier 159, NewLater 16, LuckOnly 145, Agree 145, OnlyExisting 7; 45 unresolved).
+```
+
+| Verdict | Previous run | After the TV schedule |
+|---|---|---|
+| NewEarlier | 173 | 159 |
+| NewLater | 14 | 16 |
+| LuckOnly | 137 | 145 |
+| OnlyExisting | 7 | 7 |
+| OnlyNew | 606 | 606 |
+| Agree | 141 | 145 |
+| Dependable only through an unresolved source | 24 | 24 |
+| Unresolved sources | 45 | 45 |
+
+**Exactly 22 items moved, every one a cooked dish.** Seven wait for their episode and stay
+NewEarlier: Omelet 1 to 4, Baked Fish 1 to 5, Hashbrowns 1 to 3, Pancakes 1 to 3, Farmer's Lunch 1 to
+4, Dish O' The Sea 1 to 3, Maple Bar 2 to 3. Five now AGREE with the
+existing model: Glazed Yams 10 to 11, Chocolate Cake 1 to 14, Plum Pudding 9 to 13, Pumpkin Pie 10 to
+15, Cranberry Candy 10 to 16. Two go NewLater: Maki Roll 1 to 7, Tortilla 7 to 9. Eight fall to
+LuckOnly because their episode is a year 2 one and the default filters exclude it, leaving only the
+cart: Complete Breakfast, Carp Surprise, Roasted Hazelnuts, Fruit Salad, Blackberry Cobbler,
+Bruschetta, Poppyseed Muffin, Shrimp Cocktail. The existing model calls Bruschetta a "year-2 episode"
+too, so that is agreement, not a loss.
 
 ## 2026-09-15: obtainability phase 2, the review fix wave (12 findings, live rerun)
 

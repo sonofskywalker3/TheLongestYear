@@ -2,11 +2,12 @@
 
 **Date:** 2026-09-14
 **Status:** phase 2 built (commits `639dd34`..`51ab859`), review findings fixed (commits
-`ea68649`..`3feb9fe`), rerun report awaiting Jeff's rulings (2026-09-15 live rerun on the throwaway
-save after the fixes: `Obtainability model: 1113 items in 823 ms, 7 pass(es), 45 unresolved
-source(s).`; NewEarlier 173, NewLater 14, LuckOnly 137, OnlyExisting 7, OnlyNew 606, Agree 141, 24
-dependable only through an unresolved source; 331 items listed for ruling in STATUS.md and
-`.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`)
+`ea68649`..`3feb9fe`), Jeff's two rulings taken (`e0e980f`, `7f6539f`: the Queen of Sauce schedule is
+read). Live rerun 2026-09-15 on the throwaway save after the TV commit: `Obtainability model: 1113
+items in 794 ms, 7 pass(es), 45 unresolved source(s).`; NewEarlier 159, NewLater 16, LuckOnly 145,
+OnlyExisting 7, OnlyNew 606, Agree 145, 24 dependable only through an unresolved source (the run
+before it: 173 / 14 / 137 / 7 / 606 / 141). 327 items listed for ruling in STATUS.md and
+`.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`
 **Branch:** `story`
 **Builds on:** `2026-09-14-item-obtainability-design.md` (phase 1, the blind build)
 **Followed by:** Part B, wiring the model into `2026-09-14-darkness-rework-design.md` (its own
@@ -189,12 +190,10 @@ or a piece of work Part B can pick up.
   bushes carry their day figures as `SetupStep`s and the blind model assumes they stand, so animal
   produce and pond produce read earlier than a player starting from nothing could reach them. Part B
   adds the days the real farm still owes.
-- **Queen of Sauce air weeks are not read.** `Data/TV/CookingChannel` says which week teaches which
-  recipe. The model does not read it: a recipe whose unlock is "none" and that no shop teaches is
-  recorded `Unresolved`, so it lands the same day its ingredients do. That is why 48 dishes read
-  dependable week 1. The comparison now marks these ("new dependable N (unresolved; known-source
-  week M)") and counts them, but whether the model should read the TV schedule, or keep treating the
-  unlock as a condition, is Jeff's ruling and is still open.
+- **Queen of Sauce air weeks are read** (Jeff, 2026-09-15): `Data/TV/CookingChannel` gives each
+  cooking recipe its episode, episode k lands on the Sunday that is day 7k of year 1 (TV.cs 518) and
+  episodes past 16 are flagged year 2, so a Wednesday rerun adds nothing (it only repeats an earlier
+  episode).
 - **Island and year 2 inputs are derived per filter variant.** An input is read under all four
   variants (plain, island, year 2, both) and each is derived separately, carrying its own flags, so a
   flagged row never reaches an answer that excludes it. The cost is a few extra sources per flagged
