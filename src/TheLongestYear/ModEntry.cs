@@ -144,7 +144,9 @@ namespace TheLongestYear
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
             // Darkness dial (spec 2026-09-15 Part B, 2.3): a config from before the dial sets it,
             // and the overall lever, to the lowest of the nine existing dials (Jeff, 2026-09-14).
-            if (_config.Difficulty.MigrateDarkness())
+            // The && is the quiet path for a FRESH config: every dial Normal migrates to Normal, which
+            // changes nothing the player would recognise, so it says nothing.
+            if (_config.Difficulty.MigrateDarkness() && !_config.Difficulty.IsAllNormal())
             {
                 migrated = true;
                 this.Monitor.Log($"Migrated config.json: Darkness dial set to {_config.Difficulty.Darkness} (the lowest existing dial).", LogLevel.Info);
