@@ -5,6 +5,7 @@ using System.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData;
+using StardewValley.GameData.Buildings;
 using StardewValley.GameData.Crops;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.FishPonds;
@@ -39,8 +40,16 @@ namespace TheLongestYear.Loop
         private const int CraftingUnlockField = 4;
         private const string PreviousOutputTapId = "PREVIOUS_OUTPUT_ID";
         private const string AnyCan = "*";
+        private const string SeedMakerSuffix = "OutputSeedMaker";
+        private const string MushroomLogSuffix = "OutputMushroomLog";
+        private const string CaskSuffix = "OutputCask";
+
+        /// <summary>Locations that only exist while a minigame runs (the fishing minigame's own scene):
+        /// they are never a real map to spawn or fish in, so they are dropped from the model entirely.</summary>
+        private static readonly HashSet<string> MinigameLocations = new(StringComparer.Ordinal) { "fishingGame" };
 
         private readonly IMonitor _monitor;
+        private readonly List<string> _failed = new();
 
         public GameObtainabilityData(IMonitor monitor) => _monitor = monitor;
 
@@ -64,6 +73,8 @@ namespace TheLongestYear.Loop
             var ponds = new List<PondRow>();
             var taps = new List<TapRow>();
             var garbage = new List<GarbageRow>();
+            var buildings = new Dictionary<string, int>(StringComparer.Ordinal);
+            var slayerQuests = new List<SlayerQuestRow>();
 
             Section("Objects", () =>
             {
@@ -104,6 +115,7 @@ namespace TheLongestYear.Loop
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
+                    if (MinigameLocations.Contains(kv.Key)) continue;
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
@@ -185,7 +197,7 @@ namespace TheLongestYear.Loop
                         foreach (MachineItemOutput o in rule.OutputItem ?? new List<MachineItemOutput>())
                         {
                             if (o == null) continue;
-                            if (!string.IsNullOrWhiteSpace(o.OutputMethod)) { outputs.Add(new MachineOutput(null, o.Condition, o.OutputMethod)); continue; }
+                            if (!string.IsNullOrWhiteSpace(o.OutputMethod)) { outputs.Add(new MachineOutput(null, o.Condition, o.OutputMethod, Method: MethodKind(o.OutputMethod))); continue; }
                             foreach ((string entry, bool random) in Entries(o.ItemId, o.RandomItemId))
                                 outputs.Add(new MachineOutput(entry, o.Condition, null, random));
                         }
@@ -225,7 +237,8 @@ namespace TheLongestYear.Loop
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
                     animals.Add(new AnimalRow(kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
-                        a.PurchasePrice, Produce(a.ProduceItemIds), Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship));
+                        a.PurchasePrice, Produce(a.ProduceItemIds), Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
+                        a.DaysToProduce));
                 }
             });
 
@@ -239,7 +252,7 @@ namespace TheLongestYear.Loop
                     foreach (FishPondReward reward in pond.ProducedItems ?? new List<FishPondReward>())
                         if (!string.IsNullOrWhiteSpace(reward?.ItemId))
                             products.Add(new PondProduct(reward.ItemId.Trim(), reward.RequiredPopulation, reward.Chance, null));
-                    ponds.Add(new PondRow(pond.Id ?? "", (IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), pond.Precedence, products));
+                    ponds.Add(new PondRow(pond.Id ?? "", (IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), pond.Precedence, products, pond.SpawnTime));
                 }
             });
 
@@ -267,12 +280,38 @@ namespace TheLongestYear.Loop
                     AddAll(kv.Key, kv.Value?.Items);
             });
 
+            Section("Buildings", () =>
+            {
+                foreach (var kv in Game1.content.Load<Dictionary<string, BuildingData>>("Data/Buildings"))
+                {
+                    BuildingData b = kv.Value;
+                    if (b == null) continue;
+                    buildings[kv.Key] = b.BuildDays;
+                    if (!string.IsNullOrWhiteSpace(b.Name)) buildings[b.Name] = b.BuildDays;
+                }
+            });
+
+            Section("MonsterSlayerQuests", () =>
+            {
+                foreach (var kv in Game1.content.Load<Dictionary<string, MonsterSlayerQuestData>>("Data/MonsterSlayerQuests"))
+                {
+                    MonsterSlayerQuestData q = kv.Value;
+                    if (q == null) continue;
+                    slayerQuests.Add(new SlayerQuestRow(kv.Key, (IReadOnlyList<string>)(q.Targets ?? new List<string>()), q.Count, q.RewardItemId));
+                }
+            });
+
+            var expandedFish = SpawnSources.ExpandLocationFish(fish);
+
+            if (_failed.Count > 0) throw new ObtainabilityReadException(_failed);
+
             return new ObtainabilityInputs
             {
-                Objects = objects, Festivals = festivals, Forage = forage, LocationFish = fish, FishRows = fishRows,
+                Objects = objects, Festivals = festivals, Forage = forage, LocationFish = expandedFish, FishRows = fishRows,
                 ArtifactSpots = artifactSpots, Garbage = garbage, Shops = shops, MonsterDrops = monsterDrops,
                 Crops = crops, FruitTrees = fruitTrees, Machines = machines, Recipes = recipes, Animals = animals,
                 Ponds = ponds, TapItems = taps, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
+                Buildings = buildings, SlayerQuests = slayerQuests,
             };
         }
 
@@ -281,8 +320,18 @@ namespace TheLongestYear.Loop
             try { read(); }
             catch (Exception ex)
             {
+                _failed.Add($"Data/{asset}");
                 _monitor?.Log($"Obtainability: reading Data/{asset} failed ({ex.GetType().Name}: {ex.Message}); that part of the model is missing.", LogLevel.Warn);
             }
+        }
+
+        private static OutputMethodKind MethodKind(string? method)
+        {
+            if (string.IsNullOrEmpty(method)) return OutputMethodKind.None;
+            if (method.EndsWith(SeedMakerSuffix, StringComparison.Ordinal)) return OutputMethodKind.SeedMaker;
+            if (method.EndsWith(MushroomLogSuffix, StringComparison.Ordinal)) return OutputMethodKind.MushroomLog;
+            if (method.EndsWith(CaskSuffix, StringComparison.Ordinal)) return OutputMethodKind.Cask;
+            return OutputMethodKind.Unknown;
         }
 
         private static RecipeRow Recipe(string name, string row, bool cooking)
