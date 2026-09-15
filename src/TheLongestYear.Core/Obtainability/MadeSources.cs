@@ -4,8 +4,9 @@ using System.Linq;
 
 namespace TheLongestYear.Core.Obtainability;
 
-/// <summary>Machines, cooking and crafting, animals, fish ponds, tappers and geode contents. See the
-/// week-in-isolation rule in the plan's Task 7.</summary>
+/// <summary>Machines, cooking and crafting, animals, fish ponds, tappers and geode contents. Each
+/// landing day is the latest of the inputs' landing days from that start, plus the processing time
+/// (spec 2026-09-14-obtainability-phase2, section 1, "Machines and recipes").</summary>
 public static class MadeSources
 {
     private const int MinutesPerDay = 1440;

@@ -13,6 +13,8 @@ public class ObtainabilityCodeSourcesTests
         var fish = CodeSources.MineFish().ToDictionary(s => s.ItemId, s => s.Source);
         Assert.Equal(new[] { "(O)158", "(O)161", "(O)162" }, fish.Keys.OrderBy(k => k).ToArray());
         Assert.All(fish.Values, s => { Assert.Equal(SourceKind.Fish, s.Kind); Assert.Equal(Reliability.Dependable, s.Reliability); Assert.Equal(1, s.Lands.Lands(1)); });
+        // The roll only grows with fishing level; there is no level gate, so no skill is named.
+        Assert.All(fish.Values, s => { Assert.Null(s.Conditions.Skill); Assert.Equal(0, s.Conditions.SkillLevel); });
         Assert.Contains("mines:floor 1", fish["(O)158"].Conditions.Requires);
         Assert.Contains("mines:floor 40", fish["(O)161"].Conditions.Requires);
         Assert.Contains("mines:floor 80", fish["(O)162"].Conditions.Requires);

@@ -32,7 +32,9 @@ public static class CodeSources
     {
         foreach ((string id, string floor, string note) in MineFishTable)
             yield return (id, new ObtainSource(SourceKind.Fish, DayTable.Always, Reliability.Dependable,
-                ObtainConditions.None with { Skill = "Fishing", SkillLevel = 0, Requires = new[] { floor } }, note));
+                // No skill gate: the roll only grows with fishing level, so naming the skill at level
+                // 0 would print "Fishing 0" as though it were a requirement.
+                ObtainConditions.None with { Requires = new[] { floor } }, note));
     }
 
     /// <summary>Tree.cs 843-846 (moss grows on GrowsMoss trees), 980-984 (no moss in Winter unless the
