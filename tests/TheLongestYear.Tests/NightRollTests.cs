@@ -86,6 +86,18 @@ public class NightRollTests
     }
 
     [Fact]
+    public void A_first_ever_winter_is_a_guaranteed_night_from_winter_1_to_the_end_of_week_1()
+    {
+        // The glue passes "first Winter ever" as the negation of the save's reached-a-Winter flag,
+        // so this is the branch a brand new save takes: Winter 1, and week 1 retries after it.
+        var run = new RunState { Seed = 4242 };
+        Assert.Equal(7, NightRoll.Week1Nights);
+        for (int day = 1; day <= NightRoll.Week1Nights; day++)
+            Assert.True(NightRoll.IsGuaranteedTamperNight(run, firstWinterEver: true, Season.Winter, day));
+        Assert.False(NightRoll.IsGuaranteedTamperNight(run, firstWinterEver: true, Season.Winter, NightRoll.Week1Nights + 1));
+    }
+
+    [Fact]
     public void The_guaranteed_night_retries_until_it_lands_and_never_repeats()
     {
         var run = new RunState { Seed = 7 };

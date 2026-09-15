@@ -13,7 +13,10 @@ public enum DarknessEvent { CropBlight, ChestBlight, Reversion, Tampering }
 public static class NightRoll
 {
     private const int FirstWinterDay = 1;
-    private const int Week1Nights = 7;
+
+    /// <summary>How many nights week 1 of a season has: the window the guaranteed Winter tamper
+    /// lives in, and the day from which a Winter counts as reached (spec 2.6).</summary>
+    public const int Week1Nights = 7;
 
     public static double SeasonChance(Season season) => season switch
     {

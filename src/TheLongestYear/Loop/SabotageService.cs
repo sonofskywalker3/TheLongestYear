@@ -91,7 +91,15 @@ namespace TheLongestYear.Loop
             var night = new NightPlan(this, season, day, week, dayOfYear, level, save, model, rng);
 
             // The guaranteed Winter tamper (spec 2.6) comes first and is the night's whole strike.
-            if (Enabled(SabotageKind.Tampering) && NightRoll.IsGuaranteedTamperNight(Run, Meta.FirstWinterTamperSeen, season, day))
+            // The flag says a Winter has already been reached, so "first Winter ever" is its negation.
+            bool guaranteedTonight = Enabled(SabotageKind.Tampering)
+                && NightRoll.IsGuaranteedTamperNight(Run, !Meta.FirstWinterTamperSeen, season, day);
+            // Tonight's decision is made above with the old flag, so the flag can be set as soon as
+            // week 1 is spent: a first Winter that found no fair target still counts as reached, and
+            // every later Winter rolls the random week-1 date instead of Winter 1.
+            if (season == CoreSeason.Winter && day >= NightRoll.Week1Nights)
+                Meta.FirstWinterTamperSeen = true;
+            if (guaranteedTonight)
             {
                 if (night.CanAct(DarknessEvent.Tampering) && night.Execute(DarknessEvent.Tampering))
                 {
