@@ -105,10 +105,18 @@ public static class ShopSources
         {
             if (!festivals.TryGetValue(festivalId, out FestivalDates? festival)) continue;
             yield return (itemId, new ObtainSource(
-                SourceKind.Festival, DayTable.InWeeks(festival.Weeks), reliability,
+                SourceKind.Festival, FestivalDayTable(festival), reliability,
                 ObtainConditions.None with { FewDays = true, Requires = new[] { "festival:" + festivalId } },
                 $"{festivalId} reward"));
         }
+    }
+
+    /// <summary>The exact days a festival is open, day by day rather than by week.</summary>
+    private static DayTable FestivalDayTable(FestivalDates festival)
+    {
+        int startDoy = Calendar.DayOfYear((int)festival.Season, festival.StartDay);
+        int endDoy = Calendar.DayOfYear((int)festival.Season, festival.EndDay);
+        return DayTable.Available(d => d >= startDoy && d <= endDoy);
     }
 
     /// <summary>The source every item of a row shares, or null when the row can never be stocked in year 1.</summary>
@@ -121,9 +129,12 @@ public static class ShopSources
     private static (WeekMask Weeks, ObtainSource Template)? RawTemplate(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
         ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
-        (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced) = Placement(row.ShopId, festivals);
+        (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced, FestivalDates? festival) = Placement(row.ShopId, festivals);
         WeekMask weeks = reading.Weeks & placeWeeks;
         if (weeks.IsEmpty) return null;
+        DayTable table = ConditionSeasons.Availability(reading, placeWeeks);
+        if (festival != null) table = table.Latest(FestivalDayTable(festival));
+        if (table.IsEmpty) return null;
         bool chance = reading.Chance || row.IsRandom || kind == SourceKind.Cart
                       || row.ShopId.EndsWith(TravelingMerchantSuffix, StringComparison.Ordinal);
         ObtainConditions conditions = ConditionSeasons.Apply(
@@ -135,22 +146,22 @@ public static class ShopSources
                 Unresolved = unplaced,
             },
             reading);
-        var template = new ObtainSource(kind, DayTable.InWeeks(weeks), chance ? Reliability.Chance : Reliability.Dependable, conditions, $"shop {row.ShopId}");
+        var template = new ObtainSource(kind, table, chance ? Reliability.Chance : Reliability.Dependable, conditions, $"shop {row.ShopId}");
         return (weeks, template);
     }
 
-    private static (SourceKind Kind, WeekMask Weeks, bool FewDays, bool Unplaced) Placement(
+    private static (SourceKind Kind, WeekMask Weeks, bool FewDays, bool Unplaced, FestivalDates? Festival) Placement(
         string shopId, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
-        if (shopId == CartShopId) return (SourceKind.Cart, WeekMask.All, false, false);
-        if (!shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal)) return (SourceKind.Shop, WeekMask.All, false, false);
+        if (shopId == CartShopId) return (SourceKind.Cart, WeekMask.All, false, false, null);
+        if (!shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal)) return (SourceKind.Shop, WeekMask.All, false, false, null);
 
         string name = shopId.Substring(FestivalShopPrefix.Length).Split('_')[0];
         SourceKind kind = name == NightMarketId ? SourceKind.NightMarket : SourceKind.Festival;
         if (FestivalShopKeys.TryGetValue(shopId, out string? key) && festivals.TryGetValue(key, out FestivalDates? day))
-            return (kind, day.Weeks, true, false);
+            return (kind, day.Weeks, true, false, day);
         if (festivals.TryGetValue(name, out FestivalDates? passive))
-            return (kind, passive.Weeks, true, false);
-        return (kind, WeekMask.All, true, true);
+            return (kind, passive.Weeks, true, false, passive);
+        return (kind, WeekMask.All, true, true, null);
     }
 }

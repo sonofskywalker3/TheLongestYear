@@ -9,7 +9,7 @@ namespace TheLongestYear.Core.Obtainability;
 /// plus <see cref="Unresolved"/>).</summary>
 public sealed record ConditionReading(
     WeekMask Weeks, bool YearTwo, bool FewDays, bool Chance, bool RainOnly, bool Unresolved, bool IslandHint,
-    IReadOnlyList<string> Other);
+    IReadOnlyList<string> Other, IReadOnlySet<int>? DaysOfYear = null);
 
 public static class ConditionSeasons
 {
@@ -41,6 +41,12 @@ public static class ConditionSeasons
         WeekMask weeks = WeekMask.All;
         bool yearTwo = false, fewDays = false, chance = false, rainOnly = false, unresolved = false, island = false;
         var other = new List<string>();
+        HashSet<int>? days = null;
+        void PinDays(IEnumerable<int> d)
+        {
+            if (days == null) days = new HashSet<int>(d);
+            else days.IntersectWith(d);
+        }
         if (string.IsNullOrWhiteSpace(condition))
             return new ConditionReading(weeks, false, false, false, false, false, false, other);
 
@@ -48,8 +54,8 @@ public static class ConditionSeasons
         {
             string clause = rawClause.Trim();
             if (clause.Length == 0) continue;
-            if (clause.Contains(IslandMarker, StringComparison.Ordinal)) island = true;
             bool negated = clause.StartsWith("!", StringComparison.Ordinal);
+            if (!negated && clause.Contains(IslandMarker, StringComparison.OrdinalIgnoreCase)) island = true;
             string[] tokens = (negated ? clause.Substring(1) : clause).Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string key = tokens[0].ToUpperInvariant();
 
@@ -71,6 +77,7 @@ public static class ConditionSeasons
                 case "SEASON_DAY":
                     clauseWeeks = SeasonDays(tokens);
                     fewDays = true;
+                    if (!negated) PinDays(SeasonDayPins(tokens));
                     break;
                 case "DAY_OF_MONTH":
                     fewDays = true;
@@ -79,6 +86,7 @@ public static class ConditionSeasons
                     if (tokens.Skip(1).Any(t => t.Equals("even", StringComparison.OrdinalIgnoreCase) || t.Equals("odd", StringComparison.OrdinalIgnoreCase)))
                         break;
                     clauseWeeks = DaysOfMonth(tokens.Skip(1));
+                    PinDays(DaysOfMonthPins(tokens.Skip(1)));
                     break;
                 case "DAY_OF_WEEK":
                     fewDays = true;
@@ -89,9 +97,10 @@ public static class ConditionSeasons
                     if (tokens.Length > 1 && int.TryParse(tokens[1], out int minDays))
                     {
                         int maxDays = tokens.Length > 2 && int.TryParse(tokens[2], out int m) ? m : Calendar.DaysPerYear;
-                        weeks &= WeekMask.Range(
-                            WeekMask.WeekOfDay(Math.Max(1, minDays)),
-                            WeekMask.WeekOfDay(Math.Clamp(maxDays, 1, Calendar.DaysPerYear)));
+                        int clampedMin = Math.Max(1, minDays);
+                        int clampedMax = Math.Clamp(maxDays, 1, Calendar.DaysPerYear);
+                        weeks &= WeekMask.Range(WeekMask.WeekOfDay(clampedMin), WeekMask.WeekOfDay(clampedMax));
+                        if (clampedMin <= clampedMax) PinDays(Enumerable.Range(clampedMin, clampedMax - clampedMin + 1));
                     }
                     break;
                 case "IS_PASSIVE_FESTIVAL_OPEN":
@@ -100,6 +109,12 @@ public static class ConditionSeasons
                     {
                         clauseWeeks = festival.Weeks;
                         fewDays = true;
+                        if (!negated)
+                        {
+                            int startDoy = Calendar.DayOfYear((int)festival.Season, festival.StartDay);
+                            int endDoy = Calendar.DayOfYear((int)festival.Season, festival.EndDay);
+                            PinDays(Enumerable.Range(startDoy, endDoy - startDoy + 1));
+                        }
                     }
                     else { other.Add(clause); unresolved = true; }
                     break;
@@ -137,8 +152,19 @@ public static class ConditionSeasons
             if (clauseWeeks is WeekMask w)
                 weeks &= negated ? WeekMask.All.Except(w) : w;
         }
-        return new ConditionReading(weeks, yearTwo, fewDays, chance, rainOnly, unresolved, island, other);
+        return new ConditionReading(weeks, yearTwo, fewDays, chance, rainOnly, unresolved, island, other, days);
     }
+
+    /// <summary>A same-day table for one clause reading: available on a day when it falls within
+    /// <paramref name="alsoWithin"/> and the reading's own weeks, and, when the reading pins exact
+    /// days, only on those days.</summary>
+    public static DayTable Availability(ConditionReading reading, WeekMask alsoWithin)
+        => DayTable.Available(day =>
+        {
+            int week = WeekMask.WeekOfDay(day);
+            return alsoWithin.Contains(week) && reading.Weeks.Contains(week)
+                   && (reading.DaysOfYear == null || reading.DaysOfYear.Contains(day));
+        });
 
     public static ObtainConditions Apply(ObtainConditions conditions, ConditionReading reading)
         => conditions with
@@ -197,5 +223,23 @@ public static class ConditionSeasons
                 for (int season = 0; season < Calendar.MonthsPerYear; season++)
                     mask |= WeekMask.Of(WeekMask.WeekOfDay(Calendar.DayOfYear(season, day)));
         return mask;
+    }
+
+    /// <summary>The exact days "SEASON_DAY season day [season day...]" pins, one per pair.</summary>
+    private static IEnumerable<int> SeasonDayPins(string[] tokens)
+    {
+        for (int i = 1; i + 1 < tokens.Length; i += 2)
+            if (Enum.TryParse(tokens[i], ignoreCase: true, out Season season)
+                && int.TryParse(tokens[i + 1], out int day) && day is >= 1 and <= Calendar.DaysPerMonth)
+                yield return Calendar.DayOfYear((int)season, day);
+    }
+
+    /// <summary>The exact days "DAY_OF_MONTH day [day...]" pins: that day of every season.</summary>
+    private static IEnumerable<int> DaysOfMonthPins(IEnumerable<string> tokens)
+    {
+        foreach (string token in tokens)
+            if (int.TryParse(token, out int day) && day is >= 1 and <= Calendar.DaysPerMonth)
+                for (int season = 0; season < Calendar.MonthsPerYear; season++)
+                    yield return Calendar.DayOfYear(season, day);
     }
 }

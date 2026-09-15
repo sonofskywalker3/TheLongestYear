@@ -11,7 +11,13 @@ public class ObtainabilitySpawnTests
     {
         ["NightMarket"] = new FestivalDates("NightMarket", Season.Winter, 15, 17),
     };
+    private static readonly Dictionary<string, FestivalDates> NoFestivals = new();
     private static readonly Dictionary<string, ObjInfo> Objects = new();
+    private static readonly ObtainabilityModel NoSources = new(new Dictionary<string, IReadOnlyList<ObtainSource>>());
+    private static readonly ObtainabilityModel BaitAvailable = new(new Dictionary<string, IReadOnlyList<ObtainSource>>
+    {
+        ["(O)908"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "shop GeneralStore") },
+    });
 
     [Fact]
     public void Forage_takes_its_season_and_its_location()
@@ -45,8 +51,10 @@ public class ObtainabilitySpawnTests
     {
         var rows = new[] { new LocationSpawn("Submarine", "(O)798", null, null, 1.0, 0, false, 0) };
         var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
-        var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals).Single().Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(15)), source.Lands);
+        var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).Single().Source;
+        Assert.Equal(99, source.Lands.Lands(1));       // Winter 15, the market's first day
+        Assert.Equal(101, source.Lands.Lands(101));    // Winter 17, its last day
+        Assert.Null(source.Lands.Lands(102));
         Assert.True(source.Conditions.FewDays);
     }
 
@@ -63,7 +71,7 @@ public class ObtainabilitySpawnTests
         var objects = new Dictionary<string, ObjInfo> { ["(O)142"] = new ObjInfo("(O)142", "Carp", -4, 30, new string[0], false) };
         var rows = new[] { new LocationSpawn("Mountain", "RANDOM_ITEMS (O) 142 142", Season.Fall, null, 1.0, 0, false, 0) };
         var fishRows = new Dictionary<string, FishRow> { ["(O)142"] = new FishRow("(O)142", false, "rainy", 3, "600 2600") };
-        var (id, source) = SpawnSources.LocationFish(rows, fishRows, objects, Festivals).Single();
+        var (id, source) = SpawnSources.LocationFish(rows, fishRows, objects, Festivals, NoSources).Single();
         Assert.Equal("(O)142", id);
         Assert.Equal(3, source.Conditions.SkillLevel);
         Assert.True(source.Conditions.RainOnly);
@@ -75,7 +83,7 @@ public class ObtainabilitySpawnTests
     {
         var rows = new[] { new LocationSpawn("Forest", "(O)775", Season.Winter, null, 1.0, 1, true, 8) };
         var fishRows = new Dictionary<string, FishRow> { ["(O)775"] = new FishRow("(O)775", false, "rainy", 6, "600 1200 1800 2000") };
-        var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals).Single().Source;
+        var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, BaitAvailable).Single().Source;
         Assert.Equal(SourceKind.Fish, source.Kind);
         Assert.Equal("Fishing", source.Conditions.Skill);
         Assert.Equal(8, source.Conditions.SkillLevel);
@@ -94,6 +102,36 @@ public class ObtainabilitySpawnTests
         Assert.Equal(SourceKind.CrabPot, source.Kind);
         Assert.Equal(DayTable.Always, source.Lands);
         Assert.Contains("crafting:Crab Pot", source.Conditions.Requires);
+    }
+
+    [Fact]
+    public void A_magic_bait_row_routes_through_the_bait_and_inherits_its_island_flag()
+    {
+        var bait = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)908"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable, ObtainConditions.None with { GingerIsland = true }, "shop QiGemShop") },
+        });
+        var rows = new[] { new LocationSpawn("Beach", "(O)798", null, "SEASON Winter", 1.0, 0, true, 0) };
+        var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
+        var squid = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), NoFestivals, bait).Single(s => s.ItemId == "(O)798").Source;
+        Assert.True(squid.Conditions.GingerIsland);
+        Assert.Contains("item:(O)908 Magic Bait", squid.Conditions.Requires);
+        Assert.Equal(85, squid.Lands.Lands(1));
+        var none = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), NoFestivals, new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())).ToList();
+        Assert.Empty(none);   // no bait anywhere: the row cannot be fished
+    }
+
+    [Fact]
+    public void A_night_market_fish_lands_on_the_first_market_day()
+    {
+        var festivals = new Dictionary<string, FestivalDates> { ["NightMarket"] = new FestivalDates("NightMarket", Season.Winter, 15, 17) };
+        var rows = new[] { new LocationSpawn("Submarine", "(O)798", null, null, 1.0, 0, false, 0) };
+        var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
+        var src = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), festivals, NoSources).Single().Source;
+        Assert.Equal(99, src.Lands.Lands(1));
+        Assert.Equal(101, src.Lands.Lands(101));
+        Assert.Null(src.Lands.Lands(102));
+        Assert.True(src.Conditions.FewDays);
     }
 
     [Fact]

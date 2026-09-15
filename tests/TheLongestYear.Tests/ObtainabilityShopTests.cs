@@ -51,20 +51,26 @@ public class ObtainabilityShopTests
     public void Festival_shops_open_on_their_festival_days_from_data()
     {
         var luau = Stock(new ShopRow("Festival_Luau_Pierre", "(O)Moss", null, false)).Single().Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(6)), luau.Lands);                       // Summer 11
+        Assert.Equal(39, luau.Lands.Lands(1));                                    // Summer 11
+        Assert.Null(luau.Lands.Lands(40));
         Assert.Equal(SourceKind.Festival, luau.Kind);
         Assert.True(luau.Conditions.FewDays);
 
         var boat = Stock(new ShopRow("Festival_NightMarket_MagicBoat_Day2", "(O)Moss", null, false)).Single().Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(15)), boat.Lands);
+        Assert.Equal(99, boat.Lands.Lands(1));                                    // Winter 15-17
+        Assert.Equal(101, boat.Lands.Lands(101));
+        Assert.Null(boat.Lands.Lands(102));
         Assert.Equal(SourceKind.NightMarket, boat.Kind);
 
         var ice = Stock(new ShopRow("Festival_FestivalOfIce_TravelingMerchant", "RANDOM_ITEMS (O) 2 789 @isRandomSale", null, false)).Single().Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(14)), ice.Lands);                        // Winter 8
+        Assert.Equal(92, ice.Lands.Lands(1));                                     // Winter 8
+        Assert.Null(ice.Lands.Lands(93));
         Assert.Equal(Reliability.Chance, ice.Reliability);
 
         var desert = Stock(new ShopRow("Festival_DesertFestival_Vendor", "(O)Moss", null, false)).Single().Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(3)), desert.Lands);                      // Spring 15-17 from the passive festival id
+        Assert.Equal(15, desert.Lands.Lands(1));                                  // Spring 15-17 from the passive festival id
+        Assert.Equal(17, desert.Lands.Lands(17));
+        Assert.Null(desert.Lands.Lands(18));
     }
 
     [Fact]
@@ -105,11 +111,15 @@ public class ObtainabilityShopTests
     {
         var rewards = ShopSources.FestivalRewards(Festivals).ToList();
         var book = rewards.Single(r => r.ItemId == "(O)Book_Crabbing").Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(14)), book.Lands);                       // Winter 12-13
+        Assert.Equal(96, book.Lands.Lands(1));                                    // Winter 12-13
+        Assert.Equal(97, book.Lands.Lands(97));
+        Assert.Null(book.Lands.Lands(98));
         Assert.True(book.Conditions.FewDays);
         Assert.Equal(Reliability.Dependable, book.Reliability);
         var tent = rewards.Single(r => r.ItemId == "(O)TentKit").Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.Of(7)), tent.Lands);                        // Summer 20-21
+        Assert.Equal(48, tent.Lands.Lands(1));                                    // Summer 20-21
+        Assert.Equal(49, tent.Lands.Lands(49));
+        Assert.Null(tent.Lands.Lands(50));
         Assert.Equal(Reliability.Dependable, tent.Reliability);         // the first tag always gives it
         Assert.Equal(Reliability.Chance, rewards.Single(r => r.ItemId == "(O)710").Source.Reliability);   // a spin
         Assert.Contains(rewards, r => r.ItemId == "(O)498" && r.Source.Reliability == Reliability.Chance); // a 50/50

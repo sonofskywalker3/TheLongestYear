@@ -90,11 +90,6 @@ public static class MineSources
                 SourceKind.FishingTreasure, DayTable.InWeeks(weeks), Reliability.Chance,
                 ObtainConditions.None with { Requires = requires, GingerIsland = island }, note));
         }
-        // The golden chest's raccoon seed is chosen by code for the time of year; recorded as a diagnostic.
-        yield return (ItemQueries.UnresolvedPrefix + "golden chest raccoon seed", new ObtainSource(
-            SourceKind.Other, DayTable.Always, Reliability.Chance,
-            ObtainConditions.None with { Requires = new[] { GoldenTreasure }, Unresolved = true },
-            "raccoon seed via Utility.getRaccoonSeedForCurrentTimeOfYear, golden chest table (2477)"));
     }
 
     private static (string, string[], bool, string)[] BuildTreasureTable()
