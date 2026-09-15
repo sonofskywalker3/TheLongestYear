@@ -149,8 +149,8 @@ public class AvailabilityWeeksTests
 
     [Theory]
     [InlineData("(O)Book_PriceCatalogue", 2)] [InlineData("(O)SkillBook_0", 3)] [InlineData("(O)SkillBook_2", 3)]
-    [InlineData("(O)Book_Speed", 5)] [InlineData("(O)PurpleBook", 5)] [InlineData("(O)Book_Trash", 1)]
-    [InlineData("(O)Book_Marlon", 1)] [InlineData("(O)Book_Bombs", 3)]
+    [InlineData("(O)Book_Speed", 5)] [InlineData("(O)PurpleBook", 5)] [InlineData("(O)Book_Trash", 9)]
+    [InlineData("(O)Book_Marlon", 13)] [InlineData("(O)Book_Bombs", 3)]
     public void Book_weeks(string id, int week) => Assert.Equal(week, AvailabilityWeeks.BookWeeks[id]);
 
     [Fact]
