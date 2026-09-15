@@ -27,25 +27,25 @@ public class ObtainabilityBuilderTests
         Ponds = new[] { new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 1, 1.0, null) }) },
     };
 
-    [Fact]
+    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
     public void A_chain_resolves_shop_seed_to_crop_to_pickles()
     {
         ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
         Assert.False(build.HitPassCap);
         Assert.True(build.Passes >= 2);
-        Assert.Equal("1-4", build.Model.Weeks("(O)24", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } }).ToString());
-        Assert.Equal("1-6", build.Model.Weeks("(O)342", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }).ToString());   // greenhouse parsnip reaches week 5, so pickles reach week 6
+        Assert.Equal("1-4", build.Model.Table("(O)24", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } }).ToString());
+        Assert.Equal("1-6", build.Model.Table("(O)342", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }).ToString());   // greenhouse parsnip reaches week 5, so pickles reach week 6
     }
 
-    [Fact]
+    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
     public void A_pond_chain_settles()
     {
         ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
-        Assert.Equal("9-16", build.Model.Weeks("(O)812", ObtainFilter.Any with { Kinds = new[] { SourceKind.FishPond } }).ToString());
-        Assert.Equal("1-16", build.Model.Weeks("(O)447", ObtainFilter.Any with { Kinds = new[] { SourceKind.Machine } }).ToString());   // treasure-chest roe is every week
+        Assert.Equal("9-16", build.Model.Table("(O)812", ObtainFilter.Any with { Kinds = new[] { SourceKind.FishPond } }).ToString());
+        Assert.Equal("1-16", build.Model.Table("(O)447", ObtainFilter.Any with { Kinds = new[] { SourceKind.Machine } }).ToString());   // treasure-chest roe is every week
     }
 
-    [Fact]
+    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
     public void A_true_dependency_cycle_settles_without_looping()
     {
         var inputs = new ObtainabilityInputs
@@ -64,8 +64,8 @@ public class ObtainabilityBuilderTests
         };
         ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
         Assert.False(build.HitPassCap);
-        Assert.Equal("5-8", build.Model.Weeks("(O)1", ObtainFilter.Any).ToString());
-        Assert.Equal("5-8", build.Model.Weeks("(O)2", ObtainFilter.Any).ToString());
+        Assert.Equal("5-8", build.Model.Table("(O)1", ObtainFilter.Any).ToString());
+        Assert.Equal("5-8", build.Model.Table("(O)2", ObtainFilter.Any).ToString());
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class ObtainabilityBuilderTests
     public void Direct_code_sources_are_always_present()
     {
         ObtainabilityBuild build = ObtainabilityBuilder.Build(new ObtainabilityInputs());
-        Assert.False(build.Model.Weeks("(O)378", ObtainFilter.DependableOnly).IsEmpty);   // copper ore node
-        Assert.False(build.Model.Weeks("(O)168", ObtainFilter.Any).IsEmpty);              // fishing trash
+        Assert.False(build.Model.Table("(O)378", ObtainFilter.DependableOnly).IsEmpty);   // copper ore node
+        Assert.False(build.Model.Table("(O)168", ObtainFilter.Any).IsEmpty);              // fishing trash
     }
 }

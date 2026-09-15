@@ -60,7 +60,7 @@ public static class MineSources
     {
         foreach ((string id, string where, Reliability reliability, string note) in NodeTable)
             yield return (id, new ObtainSource(
-                SourceKind.MineNode, WeekMask.All, reliability,
+                SourceKind.MineNode, DayTable.Always, reliability,
                 ObtainConditions.None with { Requires = new[] { where } }, note));
     }
 
@@ -73,7 +73,7 @@ public static class MineSources
                 ? (floor >= SkullCavernFloor ? SkullCave : $"mines:floor {floor}")
                 : "monster:" + row.Monster;
             var template = new ObtainSource(
-                SourceKind.MonsterDrop, WeekMask.All, Reliability.Chance,
+                SourceKind.MonsterDrop, DayTable.Always, Reliability.Chance,
                 ObtainConditions.None with { Requires = new[] { requires } },
                 $"{row.Monster} drop, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
@@ -87,12 +87,12 @@ public static class MineSources
         {
             WeekMask weeks = id == "(O)273" ? WeekMask.ForSeason(Season.Spring) : WeekMask.All;
             yield return (id, new ObtainSource(
-                SourceKind.FishingTreasure, weeks, Reliability.Chance,
+                SourceKind.FishingTreasure, DayTable.InWeeks(weeks), Reliability.Chance,
                 ObtainConditions.None with { Requires = requires, GingerIsland = island }, note));
         }
         // The golden chest's raccoon seed is chosen by code for the time of year; recorded as a diagnostic.
         yield return (ItemQueries.UnresolvedPrefix + "golden chest raccoon seed", new ObtainSource(
-            SourceKind.Other, WeekMask.All, Reliability.Chance,
+            SourceKind.Other, DayTable.Always, Reliability.Chance,
             ObtainConditions.None with { Requires = new[] { GoldenTreasure }, Unresolved = true },
             "raccoon seed via Utility.getRaccoonSeedForCurrentTimeOfYear, golden chest table (2477)"));
     }

@@ -72,7 +72,7 @@ public static class MadeSources
                 if (output.OutputMethod != null)
                 {
                     yield return (ItemQueries.UnresolvedPrefix + "machine " + rule.MachineId, new ObtainSource(
-                        SourceKind.Other, WeekMask.All, Reliability.Chance, conditions with { Unresolved = true },
+                        SourceKind.Other, DayTable.Always, Reliability.Chance, conditions with { Unresolved = true },
                         $"{detail}: output method {output.OutputMethod}"));
                     continue;
                 }
@@ -81,21 +81,21 @@ public static class MadeSources
                 {
                     foreach (string input in inputs)
                         foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine,
-                            luck ? WeekMask.None : ShiftByDays(snapshot.Weeks(input, ObtainFilter.DependableOnly), days) & gate,
-                            ShiftByDays(snapshot.Weeks(input, ObtainFilter.Any), days) & gate, conditions, detail))
+                            luck ? DayTable.None : snapshot.Table(input, ObtainFilter.DependableOnly).Delay(days).Then(DayTable.InWeeks(gate)),
+                            snapshot.Table(input, ObtainFilter.Any).Delay(days).Then(DayTable.InWeeks(gate)), conditions, detail))
                             yield return (input, s);
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(output.ItemId)) continue;
 
-                WeekMask dep = noInput ? WeekMask.All : WeekMask.None, any = dep;
+                DayTable dep = noInput ? DayTable.Always : DayTable.None, any = dep;
                 foreach (string input in inputs)
                 {
-                    dep |= snapshot.Weeks(input, ObtainFilter.DependableOnly);
-                    any |= snapshot.Weeks(input, ObtainFilter.Any);
+                    dep = dep.Earliest(snapshot.Table(input, ObtainFilter.DependableOnly));
+                    any = any.Earliest(snapshot.Table(input, ObtainFilter.Any));
                 }
-                dep = luck ? WeekMask.None : ShiftByDays(dep, days) & gate;
-                any = ShiftByDays(any, days) & gate;
+                dep = luck ? DayTable.None : dep.Delay(days).Then(DayTable.InWeeks(gate));
+                any = any.Delay(days).Then(DayTable.InWeeks(gate));
                 foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, dep, any, conditions, detail))
                     foreach (var emitted in ItemQueries.Emit(output.ItemId, objects, s))
                         yield return emitted;
@@ -109,22 +109,23 @@ public static class MadeSources
     {
         foreach (RecipeRow recipe in rows)
         {
-            WeekMask dep = WeekMask.All, any = WeekMask.All;
+            DayTable dep = DayTable.Always, any = DayTable.Always;
             foreach (string ingredient in recipe.Ingredients)
             {
-                (WeekMask d, WeekMask a) = IngredientWeeks(ingredient, objects, snapshot);
-                dep &= d;
-                any &= a;
+                (DayTable d, DayTable a) = IngredientWeeks(ingredient, objects, snapshot);
+                dep = dep.Latest(d);
+                any = any.Latest(a);
             }
             bool taughtByShop = recipeShopWeeks.TryGetValue(recipe.OutputId, out WeekMask taught);
             if (taughtByShop)
             {
-                dep &= taught.FromWeekOnward();
-                any &= taught.FromWeekOnward();
+                DayTable taughtTable = DayTable.InWeeks(taught);
+                dep = dep.Latest(taughtTable);
+                any = any.Latest(taughtTable);
             }
             var outputs = new List<string> { recipe.OutputId };
             if (recipe.AlternateOutputIds != null) outputs.AddRange(recipe.AlternateOutputIds);
-            if (outputs.Count > 1) dep = WeekMask.None;   // one output picked at random
+            if (outputs.Count > 1) dep = DayTable.None;   // one output picked at random
             SourceKind kind = recipe.IsCooking ? SourceKind.Cooking : SourceKind.Crafting;
             ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
             foreach (string output in outputs)
@@ -151,7 +152,7 @@ public static class MadeSources
                 // Several produce entries in one list: the animal produces one of them.
                 bool picked = (deluxe ? animal.DeluxeProduce.Count : animal.Produce.Count) > 1;
                 ObtainConditions conditions = ConditionSeasons.Apply(ObtainConditions.None with { Requires = extra }, reading);
-                yield return (produce.ItemId, new ObtainSource(SourceKind.Animal, reading.Weeks,
+                yield return (produce.ItemId, new ObtainSource(SourceKind.Animal, DayTable.InWeeks(reading.Weeks),
                     reading.Chance || picked ? Reliability.Chance : Reliability.Dependable, conditions, $"{animal.AnimalId} produce"));
             }
         }
@@ -176,14 +177,12 @@ public static class MadeSources
 
         foreach ((PondRow pond, List<ObjInfo> fishes) in fishByPond)
         {
-            WeekMask dep = WeekMask.None, any = WeekMask.None;
+            DayTable dep = DayTable.None, any = DayTable.None;
             foreach (ObjInfo fish in fishes)
             {
-                dep |= snapshot.Weeks(fish.QualifiedId, ObtainFilter.DependableOnly);
-                any |= snapshot.Weeks(fish.QualifiedId, ObtainFilter.Any);
+                dep = dep.Earliest(snapshot.Table(fish.QualifiedId, ObtainFilter.DependableOnly));
+                any = any.Earliest(snapshot.Table(fish.QualifiedId, ObtainFilter.Any));
             }
-            dep = dep.FromWeekOnward();
-            any = any.FromWeekOnward();
             foreach (PondProduct product in pond.Products)
             {
                 ConditionReading reading = ConditionSeasons.Read(product.Condition, festivals);
@@ -192,8 +191,9 @@ public static class MadeSources
                 {
                     Requires = new[] { "building:Fish Pond", $"pond population {product.RequiredPopulation}" },
                 }, reading);
+                DayTable gate = DayTable.InWeeks(reading.Weeks);
                 foreach (ObtainSource s in SourcePair.Of(SourceKind.FishPond,
-                    luck ? WeekMask.None : dep & reading.Weeks, any & reading.Weeks, conditions, $"fish pond {pond.Id}"))
+                    luck ? DayTable.None : dep.Then(gate), any.Then(gate), conditions, $"fish pond {pond.Id}"))
                     foreach (var emitted in ItemQueries.Emit(product.ItemId, objects, s))
                         yield return emitted;
             }
@@ -208,7 +208,7 @@ public static class MadeSources
             ConditionReading reading = ConditionSeasons.Read(tap.Condition, festivals);
             WeekMask weeks = reading.Weeks & (tap.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All);
             if (weeks.IsEmpty) continue;
-            var template = new ObtainSource(SourceKind.Tapper, weeks,
+            var template = new ObtainSource(SourceKind.Tapper, DayTable.InWeeks(weeks),
                 tap.Chance < 1.0 || reading.Chance || tap.IsRandom ? Reliability.Chance : Reliability.Dependable,
                 ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "crafting:Tapper", "tree:" + tap.TreeId } }, reading),
                 $"tapper on tree {tap.TreeId}, {tap.DaysUntilReady} days");
@@ -228,9 +228,9 @@ public static class MadeSources
         foreach ((string geode, string item, string? condition) in drops.Distinct())
         {
             ConditionReading reading = ConditionSeasons.Read(condition, festivals);
-            WeekMask weeks = snapshot.Weeks(geode, ObtainFilter.Any) & reading.Weeks;
-            if (weeks.IsEmpty) continue;
-            var template = new ObtainSource(SourceKind.Geode, weeks, Reliability.Chance,
+            DayTable table = snapshot.Table(geode, ObtainFilter.Any).Then(DayTable.InWeeks(reading.Weeks));
+            if (table.IsEmpty) continue;
+            var template = new ObtainSource(SourceKind.Geode, table, Reliability.Chance,
                 ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "item:" + geode, GeodeOpener } }, reading),
                 $"opened from {geode}");
             foreach (var emitted in ItemQueries.Emit(item, objects, template))
@@ -248,16 +248,16 @@ public static class MadeSources
             .Select(o => o.QualifiedId);
     }
 
-    private static (WeekMask Dependable, WeekMask Any) IngredientWeeks(
+    private static (DayTable Dependable, DayTable Any) IngredientWeeks(
         string ingredient, IReadOnlyDictionary<string, ObjInfo> objects, ObtainabilityModel snapshot)
     {
         if (!int.TryParse(ingredient, out int category) || category >= 0)
-            return (snapshot.Weeks(ingredient, ObtainFilter.DependableOnly), snapshot.Weeks(ingredient, ObtainFilter.Any));
-        WeekMask dep = WeekMask.None, any = WeekMask.None;
+            return (snapshot.Table(ingredient, ObtainFilter.DependableOnly), snapshot.Table(ingredient, ObtainFilter.Any));
+        DayTable dep = DayTable.None, any = DayTable.None;
         foreach (ObjInfo o in objects.Values.Where(o => o.Category == category))
         {
-            dep |= snapshot.Weeks(o.QualifiedId, ObtainFilter.DependableOnly);
-            any |= snapshot.Weeks(o.QualifiedId, ObtainFilter.Any);
+            dep = dep.Earliest(snapshot.Table(o.QualifiedId, ObtainFilter.DependableOnly));
+            any = any.Earliest(snapshot.Table(o.QualifiedId, ObtainFilter.Any));
         }
         return (dep, any);
     }

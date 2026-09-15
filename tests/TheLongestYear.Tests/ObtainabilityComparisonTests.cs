@@ -8,7 +8,7 @@ namespace TheLongestYear.Tests;
 public class ObtainabilityComparisonTests
 {
     private static ObtainSource Source(WeekMask weeks, string detail = "test") =>
-        new(SourceKind.Forage, weeks, Reliability.Dependable, ObtainConditions.None with { Requires = new[] { "location:Town" } }, detail);
+        new(SourceKind.Forage, DayTable.InWeeks(weeks), Reliability.Dependable, ObtainConditions.None with { Requires = new[] { "location:Town" } }, detail);
 
     private static readonly ObtainabilityModel Model = new(new Dictionary<string, IReadOnlyList<ObtainSource>>
     {

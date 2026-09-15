@@ -46,7 +46,7 @@ public static class ObtainabilityBuilder
             all.AddRange(MadeSources.Ponds(inputs.Ponds, o, current, f));
             all.AddRange(MadeSources.Geodes(inputs.GeodeDrops, inputs.GeodesUsingDefaultTable, o, current, f));
             ObtainabilityModel next = Assemble(all, out List<string> unresolved);
-            if (SameWeeks(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
+            if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
             current = next;
             lastUnresolved = unresolved;   // from the last full pass, derived sources included
         }
@@ -71,13 +71,13 @@ public static class ObtainabilityBuilder
             .ToDictionary(g => g.Key, g => (IReadOnlyList<ObtainSource>)g.Select(s => s.Source).ToList(), StringComparer.Ordinal));
     }
 
-    private static bool SameWeeks(ObtainabilityModel a, ObtainabilityModel b)
+    private static bool SameTables(ObtainabilityModel a, ObtainabilityModel b)
     {
         if (a.Count != b.Count) return false;
         foreach (string id in b.ItemIds)
             if (a.Sources(id).Count != b.Sources(id).Count
-                || a.Weeks(id, ObtainFilter.Any) != b.Weeks(id, ObtainFilter.Any)
-                || a.Weeks(id, ObtainFilter.DependableOnly) != b.Weeks(id, ObtainFilter.DependableOnly))
+                || !a.Table(id, ObtainFilter.Any).Equals(b.Table(id, ObtainFilter.Any))
+                || !a.Table(id, ObtainFilter.DependableOnly).Equals(b.Table(id, ObtainFilter.DependableOnly)))
                 return false;
         return true;
     }

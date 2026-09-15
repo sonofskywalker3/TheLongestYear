@@ -72,10 +72,10 @@ public static class ShopSources
         {
             if (Template(row, festivals) is not ObtainSource template) continue;
             string trade = BundleParsing.NormalizeItemId(row.TradeItemId!);
-            WeekMask dep = template.Reliability == Reliability.Dependable
-                ? template.Weeks & snapshot.Weeks(trade, ObtainFilter.DependableOnly)
-                : WeekMask.None;
-            WeekMask any = template.Weeks & snapshot.Weeks(trade, ObtainFilter.Any);
+            DayTable dep = template.Reliability == Reliability.Dependable
+                ? template.Lands.Latest(snapshot.Table(trade, ObtainFilter.DependableOnly))
+                : DayTable.None;
+            DayTable any = template.Lands.Latest(snapshot.Table(trade, ObtainFilter.Any));
             ObtainConditions conditions = template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() };
             foreach (ObtainSource s in SourcePair.Of(template.Kind, dep, any, conditions, template.Detail + " (barter)"))
                 foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, s))
@@ -89,11 +89,11 @@ public static class ShopSources
         var result = new Dictionary<string, WeekMask>(StringComparer.Ordinal);
         foreach (ShopRow row in rows.Where(r => r.IsRecipe))
         {
-            if (Template(row, festivals) is not ObtainSource template) continue;
+            if (RawTemplate(row, festivals) is not (WeekMask weeks, ObtainSource template)) continue;
             ObtainConditions c = template.Conditions;
             if (c.YearTwo || c.GingerIsland || c.Unresolved) continue;
             string id = BundleParsing.NormalizeItemId(row.ItemId);
-            result[id] = result.TryGetValue(id, out WeekMask existing) ? existing | template.Weeks : template.Weeks;
+            result[id] = result.TryGetValue(id, out WeekMask existing) ? existing | weeks : weeks;
         }
         return result;
     }
@@ -105,7 +105,7 @@ public static class ShopSources
         {
             if (!festivals.TryGetValue(festivalId, out FestivalDates? festival)) continue;
             yield return (itemId, new ObtainSource(
-                SourceKind.Festival, festival.Weeks, reliability,
+                SourceKind.Festival, DayTable.InWeeks(festival.Weeks), reliability,
                 ObtainConditions.None with { FewDays = true, Requires = new[] { "festival:" + festivalId } },
                 $"{festivalId} reward"));
         }
@@ -113,6 +113,12 @@ public static class ShopSources
 
     /// <summary>The source every item of a row shares, or null when the row can never be stocked in year 1.</summary>
     private static ObtainSource? Template(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals)
+        => RawTemplate(row, festivals) is (_, ObtainSource template) ? template : null;
+
+    /// <summary>Same as <see cref="Template"/>, but also returns the raw week mask: <see cref="RecipeWeeks"/>
+    /// still speaks in weeks (readers use it as a season mask), so it needs the mask before it is wrapped
+    /// into a same-day table.</summary>
+    private static (WeekMask Weeks, ObtainSource Template)? RawTemplate(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
         ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
         (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced) = Placement(row.ShopId, festivals);
@@ -129,7 +135,8 @@ public static class ShopSources
                 Unresolved = unplaced,
             },
             reading);
-        return new ObtainSource(kind, weeks, chance ? Reliability.Chance : Reliability.Dependable, conditions, $"shop {row.ShopId}");
+        var template = new ObtainSource(kind, DayTable.InWeeks(weeks), chance ? Reliability.Chance : Reliability.Dependable, conditions, $"shop {row.ShopId}");
+        return (weeks, template);
     }
 
     private static (SourceKind Kind, WeekMask Weeks, bool FewDays, bool Unplaced) Placement(
