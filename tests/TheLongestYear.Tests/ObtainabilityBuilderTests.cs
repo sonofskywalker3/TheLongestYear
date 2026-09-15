@@ -41,12 +41,15 @@ public class ObtainabilityBuilderTests
         Assert.Equal(35, build.Model.Lands("(O)342", 28, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
+    [Fact]
     public void A_pond_chain_settles()
     {
         ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
-        Assert.Equal("9-16", build.Model.Table("(O)812", ObtainFilter.Any with { Kinds = new[] { SourceKind.FishPond } }).ToString());
-        Assert.Equal("1-16", build.Model.Table("(O)447", ObtainFilter.Any with { Kinds = new[] { SourceKind.Machine } }).ToString());   // treasure-chest roe is every week
+        // Carp lands in Fall (day 57), population 1, spawn time default 1: the roe lands that same day.
+        Assert.Equal(57, build.Model.Lands("(O)812", 1, ObtainFilter.Any with { Kinds = new[] { SourceKind.FishPond } }));
+        // Roe lands day 57 (dependably, from the pond), then 3 days through the Preserves Jar to Aged
+        // Roe; DependableOnly excludes the separate, much earlier treasure-chest Aged Roe chance source.
+        Assert.Equal(60, build.Model.Lands("(O)447", 1, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
     }
 
     [Fact]
@@ -68,8 +71,9 @@ public class ObtainabilityBuilderTests
         };
         ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
         Assert.False(build.HitPassCap);
-        Assert.Equal("lands wk5/wk5/never/never", build.Model.Table("(O)1", ObtainFilter.Any).ToString());
-        Assert.Equal("lands wk5/wk5/never/never", build.Model.Table("(O)2", ObtainFilter.Any).ToString());
+        // (O)1 forages starting Summer 1 (day 29); both zero-day machines pass that day through unchanged.
+        Assert.Equal(29, build.Model.Lands("(O)1", 1, ObtainFilter.Any));
+        Assert.Equal(29, build.Model.Lands("(O)2", 1, ObtainFilter.Any));
     }
 
     [Fact]

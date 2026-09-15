@@ -58,9 +58,17 @@ public sealed record FruitRow(string ItemId, Season? Season, double Chance, stri
 /// <summary>One Data/FruitTrees row, keyed by sapling.</summary>
 public sealed record FruitTreeRow(string SaplingId, IReadOnlyList<Season> TreeSeasons, IReadOnlyList<FruitRow> Fruit);
 
+/// <summary>Which OutputMethod the model can read past its name: the Object.cs machine helpers the
+/// Seed Maker and Mushroom Log call (Object.OutputSeedMaker 2241-2272, Object.OutputMushroomLog
+/// 2274-2335), and the Cask (StardewValley.Objects/Cask.cs OutputCask 78-140), which changes quality
+/// only and gives no item, so the model drops it silently.</summary>
+public enum OutputMethodKind { None, SeedMaker, MushroomLog, Cask, Unknown }
+
 /// <summary>One output of a machine rule: an id or item query, "DROP_IN", or an OutputMethod (code).
-/// <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
-public sealed record MachineOutput(string? ItemId, string? Condition, string? OutputMethod, bool IsRandom = false);
+/// <see cref="IsRandom"/> marks one entry of a RandomItemId list. <see cref="Method"/> is which
+/// OutputMethod the model can read past its raw name, when <see cref="OutputMethod"/> is set.</summary>
+public sealed record MachineOutput(
+    string? ItemId, string? Condition, string? OutputMethod, bool IsRandom = false, OutputMethodKind Method = OutputMethodKind.None);
 
 /// <summary>One Data/Machines output rule x trigger. No required item and no tags means the machine
 /// needs no input (a Bee House, a Mushroom Log). Ready time: DaysUntilReady when 0 or more, else minutes.
@@ -79,15 +87,18 @@ public sealed record RecipeRow(
 
 public sealed record AnimalProduce(string ItemId, string? Condition, int MinimumFriendship);
 
-/// <summary>One Data/FarmAnimals row. <see cref="DeluxeMinimumFriendship"/> is FarmAnimalData.DeluxeProduceMinimumFriendship.</summary>
+/// <summary>One Data/FarmAnimals row. <see cref="DeluxeMinimumFriendship"/> is FarmAnimalData.DeluxeProduceMinimumFriendship.
+/// <see cref="DaysToProduce"/> is FarmAnimalData.DaysToProduce (default 1; FarmAnimal.dayUpdate 1005 checks
+/// daysSinceLastLay >= DaysToProduce).</summary>
 public sealed record AnimalRow(
     string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce,
-    int DeluxeMinimumFriendship = 200);
+    int DeluxeMinimumFriendship = 200, int DaysToProduce = 1);
 
 public sealed record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition, bool IsRandom = false);
 
-/// <summary>One Data/FishPondData entry. A fish lives under the matching entry with the lowest Precedence.</summary>
-public sealed record PondRow(string Id, IReadOnlyList<string> RequiredTags, int Precedence, IReadOnlyList<PondProduct> Products);
+/// <summary>One Data/FishPondData entry. A fish lives under the matching entry with the lowest Precedence.
+/// <see cref="SpawnTime"/> is FishPondData.SpawnTime: days between one new fish and the next, up to capacity.</summary>
+public sealed record PondRow(string Id, IReadOnlyList<string> RequiredTags, int Precedence, IReadOnlyList<PondProduct> Products, int SpawnTime = 1);
 
 public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition, bool IsRandom = false);
 
@@ -115,4 +126,6 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<TapRow> TapItems { get; init; } = Array.Empty<TapRow>();
     public IReadOnlyList<GeodeDropRow> GeodeDrops { get; init; } = Array.Empty<GeodeDropRow>();
     public IReadOnlyCollection<string> GeodesUsingDefaultTable { get; init; } = Array.Empty<string>();
+    /// <summary>Building name (as animal House / "Fish Pond") to BuildDays.</summary>
+    public IReadOnlyDictionary<string, int> Buildings { get; init; } = new Dictionary<string, int>();
 }

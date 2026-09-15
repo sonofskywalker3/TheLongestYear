@@ -8,11 +8,13 @@ namespace TheLongestYear.Tests;
 public class ObtainabilityMadeTests
 {
     private static readonly Dictionary<string, FestivalDates> NoFestivals = new();
+    private static readonly CropRow[] NoCrops = new CropRow[0];
+    private static readonly Dictionary<string, int> NoBuildings = new();
 
-    private static ObtainabilityModel Snapshot(params (string Id, WeekMask Weeks, Reliability R)[] rows)
+    private static ObtainabilityModel Snapshot(params (string Id, SourceKind Kind, DayTable Lands, Reliability R)[] rows)
         => new(rows.GroupBy(r => r.Id).ToDictionary(
             g => g.Key,
-            g => (IReadOnlyList<ObtainSource>)g.Select(r => new ObtainSource(SourceKind.Forage, DayTable.InWeeks(r.Weeks), r.R, ObtainConditions.None, "test")).ToList()));
+            g => (IReadOnlyList<ObtainSource>)g.Select(r => new ObtainSource(r.Kind, r.Lands, r.R, ObtainConditions.None, "test")).ToList()));
 
     private static readonly Dictionary<string, ObjInfo> Objects = new()
     {
@@ -31,53 +33,67 @@ public class ObtainabilityMadeTests
         Assert.Equal(7, MadeSources.ProcessingDays(10000, -1));
         Assert.Equal(3, MadeSources.ProcessingDays(4000, -1));
         Assert.Equal(2, MadeSources.ProcessingDays(10000, 2));
-        Assert.Equal(WeekMask.Of(4), MadeSources.ShiftByDays(WeekMask.Of(3), 7));
-        Assert.Equal("3-4", MadeSources.ShiftByDays(WeekMask.Of(3), 3).ToString());
-        Assert.Equal(WeekMask.None, MadeSources.ShiftByDays(WeekMask.Of(16), 7));
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
-    public void A_keg_makes_wine_the_week_after_its_fruit()
+    [Fact]
+    public void A_machine_lands_its_input_plus_processing_and_never_makes_its_input_earlier()
     {
-        var snapshot = Snapshot(("(O)613", WeekMask.ForSeason(Season.Fall), Reliability.Dependable),
-                                ("(O)254", WeekMask.ForSeason(Season.Summer), Reliability.Dependable));
-        var rows = new[] { Rule("(BC)12", null, new[] { "category_fruits" }, 10000, -1, new MachineOutput("FLAVORED_ITEM Wine DROP_IN_ID", null, null)) };
-        var wine = MadeSources.Machines(rows, Objects, snapshot, NoFestivals).Single();
-        Assert.Equal("(O)348", wine.ItemId);
-        Assert.Equal("6-13", wine.Source.Lands.ToString());
-        Assert.Contains("machine:(BC)12", wine.Source.Conditions.Requires);
+        var snapshot = Snapshot(("(O)613", SourceKind.FruitTree, DayTable.Available(d => d >= 57), Reliability.Dependable));
+        var rows = new[]
+        {
+            new MachineRow("(BC)12", null, new[] { "category_fruits" }, null, new[] { new MachineOutput("(O)348", null, null) }, 10000, -1),
+            new MachineRow("(BC)Dehydrator", null, new[] { "category_fruits" }, null, new[] { new MachineOutput("DROP_IN", null, null) }, 0, 1),
+        };
+        var all = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops).ToList();
+        var wine = all.Single(s => s.ItemId == "(O)348").Source;
+        Assert.Equal(64, wine.Lands.Lands(1));                  // apple day 57 + 7 days
+        Assert.Null(wine.Lands.Lands(106));
+        var apple = all.Single(s => s.ItemId == "(O)613").Source;   // DROP_IN keyed under the input
+        Assert.Equal(58, apple.Lands.Lands(1));                 // one day later than the apple itself, never earlier
     }
 
     [Fact]
     public void A_trigger_with_an_id_and_tags_needs_both()
     {
-        var snapshot = Snapshot(("(O)613", WeekMask.All, Reliability.Dependable));
+        var snapshot = Snapshot(("(O)613", SourceKind.FruitTree, DayTable.Always, Reliability.Dependable));
         var rows = new[] { Rule("(BC)X", "(O)613", new[] { "category_vegetable" }, 60, -1, new MachineOutput("(O)900", null, null)) };
-        Assert.Empty(MadeSources.Machines(rows, Objects, snapshot, NoFestivals));
+        Assert.Empty(MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops));
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
-    public void Drop_in_outputs_the_input_and_output_methods_are_unresolved()
+    [Fact]
+    public void A_seed_maker_returns_a_crops_seed_and_a_mushroom_log_gives_mushrooms()
     {
-        var snapshot = Snapshot(("(O)142", WeekMask.Of(9), Reliability.Dependable));
-        var dropIn = MadeSources.Machines(new[] { Rule("(BC)Y", null, new[] { "fish_carp" }, 0, 1, new MachineOutput("DROP_IN", null, null)) },
-            Objects, snapshot, NoFestivals).Single();
-        Assert.Equal("(O)142", dropIn.ItemId);
-        Assert.Equal("9-10", dropIn.Source.Lands.ToString());
-
-        var method = MadeSources.Machines(new[] { Rule("(BC)25", null, new[] { "fish_carp" }, 0, 1, new MachineOutput(null, null, "Object.OutputSeedMaker")) },
-            Objects, snapshot, NoFestivals).Single();
-        Assert.StartsWith(ItemQueries.UnresolvedPrefix, method.ItemId);
-        Assert.True(method.Source.Conditions.Unresolved);
+        var snapshot = Snapshot(("(O)24", SourceKind.Crop, DayTable.Available(d => d >= 5), Reliability.Dependable));
+        var crops = new[] { new CropRow("(O)472", "(O)24", new[] { Season.Spring }, 4, 0) };
+        var rows = new[]
+        {
+            new MachineRow("(BC)25", null, new[] { "!seedmaker_banned" }, null, new[] { new MachineOutput(null, null, "OutputSeedMaker", false, OutputMethodKind.SeedMaker) }, 20, -1),
+            new MachineRow("(BC)MushroomLog", null, new string[0], null, new[] { new MachineOutput(null, null, "OutputMushroomLog", false, OutputMethodKind.MushroomLog) }, 0, 6),
+            new MachineRow("(BC)163", "(O)348", new string[0], null, new[] { new MachineOutput(null, null, "OutputCask", false, OutputMethodKind.Cask) }, 0, 14),
+        };
+        var all = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, crops).ToList();
+        var seeds = all.Single(s => s.ItemId == "(O)472" && s.Source.Kind == SourceKind.Machine).Source;
+        Assert.Equal(6, seeds.Lands.Lands(1));                  // parsnip day 5, 20 minutes rounds up to 1 day
+        Assert.Equal(Reliability.Dependable, seeds.Reliability);
+        Assert.Contains(all, s => s.ItemId == "(O)770" && s.Source.Reliability == Reliability.Chance);
+        Assert.Contains(all, s => s.ItemId == "(O)499" && s.Source.Reliability == Reliability.Chance);
+        foreach (string mushroom in new[] { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" })
+        {
+            var m = all.Single(s => s.ItemId == mushroom && s.Source.Detail.Contains("MushroomLog")).Source;
+            Assert.Equal(Reliability.Chance, m.Reliability);
+            Assert.Equal(7, m.Lands.Lands(1));
+        }
+        Assert.DoesNotContain(all, s => s.Source.Detail.Contains("(BC)163"));   // casks change quality only
+        Assert.DoesNotContain(all, s => s.ItemId.StartsWith(ItemQueries.UnresolvedPrefix) && s.Source.Detail.Contains("Cask"));
     }
 
     [Fact]
     public void Output_conditions_narrow_and_several_outputs_are_chance()
     {
-        var snapshot = Snapshot(("(O)24", WeekMask.All, Reliability.Dependable));
+        var snapshot = Snapshot(("(O)24", SourceKind.Crop, DayTable.Always, Reliability.Dependable));
         var rows = new[] { Rule("(BC)Z", "(O)24", new string[0], 0, 0,
             new MachineOutput("(O)901", "SEASON Summer", null), new MachineOutput("(O)902", null, null)) };
-        var list = MadeSources.Machines(rows, Objects, snapshot, NoFestivals).ToList();
+        var list = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops).ToList();
         var summer = list.Single(x => x.ItemId == "(O)901").Source;
         Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Summer)), summer.Lands);
         Assert.All(list, x => Assert.Equal(Reliability.Chance, x.Source.Reliability));
@@ -86,11 +102,11 @@ public class ObtainabilityMadeTests
     [Fact]
     public void First_valid_outputs_are_tried_in_order()
     {
-        var snapshot = Snapshot(("(O)24", WeekMask.All, Reliability.Dependable));
+        var snapshot = Snapshot(("(O)24", SourceKind.Crop, DayTable.Always, Reliability.Dependable));
         var rows = new[] { new MachineRow("(BC)F", "(O)24", new string[0], null, new[]
             { new MachineOutput("(O)901", "SEASON Summer", null), new MachineOutput("(O)902", null, null) },
             0, 0, UseFirstValidOutput: true) };
-        var list = MadeSources.Machines(rows, Objects, snapshot, NoFestivals).ToList();
+        var list = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops).ToList();
         var first = list.Single(x => x.ItemId == "(O)901").Source;
         Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Summer)), first.Lands);
         Assert.Equal(Reliability.Dependable, first.Reliability);
@@ -99,11 +115,12 @@ public class ObtainabilityMadeTests
         Assert.Equal(Reliability.Dependable, second.Reliability);
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
+    [Fact]
     public void A_recipe_needs_every_ingredient_in_the_same_week_and_a_shop_recipe_once_learned()
     {
-        var snapshot = Snapshot(("(O)24", WeekMask.ForSeason(Season.Spring), Reliability.Dependable),
-                                ("(O)613", WeekMask.Range(3, 10), Reliability.Chance));
+        var snapshot = Snapshot(
+            ("(O)24", SourceKind.Crop, DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), Reliability.Dependable),
+            ("(O)613", SourceKind.FruitTree, DayTable.InWeeks(WeekMask.Range(3, 10)), Reliability.Chance));
         var rows = new[]
         {
             new RecipeRow("Test Dish", new[] { "(O)24", "-79" }, "(O)900", "default", true),
@@ -115,36 +132,79 @@ public class ObtainabilityMadeTests
         };
         var shopWeeks = new Dictionary<string, WeekMask> { ["(O)901"] = WeekMask.Of(3) };
         var list = MadeSources.Recipes(rows, Objects, shopWeeks, snapshot).ToList();
+        // Ingredient "-79" is the fruit category: only (O)613 supplies it, and only as a chance
+        // (week 3-10) source, so the dish is never dependable, and it needs day 15 (week 3, the
+        // earliest the fruit is in) before the parsnip alone (day 1) would allow it.
         var dish = list.Single(x => x.ItemId == "(O)900").Source;
-        Assert.Equal("3-4", dish.Lands.ToString());
+        Assert.Equal(15, dish.Lands.Lands(1));
         Assert.Equal(Reliability.Chance, dish.Reliability);
-        Assert.Equal("3-4", list.Single(x => x.ItemId == "(O)901").Source.Lands.ToString());
+        // Learned "none" but a shop teaches it week 3 (day 15): same day 15, and now dependable
+        // because the parsnip alone (dependable) is the only ingredient.
+        var shopDish = list.Single(x => x.ItemId == "(O)901").Source;
+        Assert.Equal(15, shopDish.Lands.Lands(1));
+        Assert.Equal(Reliability.Dependable, shopDish.Reliability);
         var craft = list.Single(x => x.ItemId == "(BC)902").Source;
         Assert.Equal(SourceKind.Crafting, craft.Kind);
         Assert.Equal("Farming", craft.Conditions.Skill);
         Assert.Equal(3, craft.Conditions.SkillLevel);
-        Assert.DoesNotContain(list, x => x.ItemId == "(O)903");   // melon is not obtainable in spring and nothing is stored
+        Assert.DoesNotContain(list, x => x.ItemId == "(O)903");   // melon is not obtainable at all and nothing is stored
         Assert.False(list.Single(x => x.ItemId == "(O)901").Source.Conditions.Unresolved);   // "none", but a shop teaches it
         Assert.True(list.Single(x => x.ItemId == "(O)904").Source.Conditions.Unresolved);    // "none" and no shop: taught somewhere unknown
         Assert.Equal(Reliability.Chance, list.Single(x => x.ItemId == "(O)905").Source.Reliability);
         Assert.Equal(Reliability.Chance, list.Single(x => x.ItemId == "(O)906").Source.Reliability);
     }
 
-    [Fact(Skip = "phase 2 task 4/5 rewrites this to the start-day meaning")]
+    [Fact]
     public void Ponds_use_only_the_lowest_precedence_match_and_carry_forward()
     {
-        var snapshot = Snapshot(("(O)142", WeekMask.Of(5), Reliability.Dependable));
+        var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.InWeeks(WeekMask.Of(5)), Reliability.Dependable));
         var ponds = new[]
         {
             new PondRow("Generic", new[] { "fish_pond" }, 10, new[] { new PondProduct("(O)900", 1, 1.0, null) }),
             new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 1, 0.5, null), new PondProduct("(O)901", 5, 1.0, "SEASON Winter") }),
         };
-        var list = MadeSources.Ponds(ponds, Objects, snapshot, NoFestivals).ToList();
+        var list = MadeSources.Ponds(ponds, Objects, snapshot, NoFestivals, NoBuildings).ToList();
         Assert.DoesNotContain(list, x => x.ItemId == "(O)900");
+        // Fish lands week 5 (day 29); population is already 1, so no further growth is needed, but
+        // the 0.5 chance means it is not dependable.
         var roe = list.Single(x => x.ItemId == "(O)812").Source;
-        Assert.Equal("5-16", roe.Lands.ToString());
+        Assert.Equal(29, roe.Lands.Lands(1));
         Assert.Equal(Reliability.Chance, roe.Reliability);
-        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Winter)), list.Single(x => x.ItemId == "(O)901").Source.Lands);
+        // Population 5 needs 4 more fish at the default 1-day spawn time (day 29 + 4 = day 33), but
+        // it is Winter-only, so it waits for Winter 1 (day 85).
+        var deluxe = list.Single(x => x.ItemId == "(O)901").Source;
+        Assert.Equal(85, deluxe.Lands.Lands(1));
+        Assert.Equal(Reliability.Dependable, deluxe.Reliability);
+    }
+
+    [Fact]
+    public void An_animal_records_its_setup_days_and_lands_after_days_to_produce()
+    {
+        var buildings = new Dictionary<string, int> { ["Coop"] = 3 };
+        var rows = new[]
+        {
+            new AnimalRow("Chicken", "Coop", 800,
+                new[] { new AnimalProduce("(O)176", null, 0) }, new[] { new AnimalProduce("(O)174", null, 0) }, 200, DaysToProduce: 1),
+        };
+        var all = MadeSources.Animals(rows, NoFestivals, buildings).ToList();
+        var egg = all.Single(s => s.ItemId == "(O)176").Source;
+        Assert.Equal(2, egg.Lands.Lands(1));
+        Assert.Contains(egg.Setup, s => s.Name == "building:Coop" && s.Days == 3);
+        Assert.Contains(egg.Setup, s => s.Name == "animal:Chicken" && s.Days == 1);
+        var large = all.Single(s => s.ItemId == "(O)174").Source;
+        Assert.Contains(large.Setup, s => s.Name == "friendship:Chicken 200" && s.Days == 14);
+        Assert.Equal(2, large.Lands.Lands(1));                  // the blind table assumes setup done (spec decision 3)
+    }
+
+    [Fact]
+    public void A_pond_counts_population_growth_from_its_spawn_time()
+    {
+        var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.Always, Reliability.Dependable));
+        var rows = new[] { new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 3, 1.0, null) }, SpawnTime: 4) };
+        var buildings = new Dictionary<string, int> { ["Fish Pond"] = 2 };
+        var roe = MadeSources.Ponds(rows, Objects, snapshot, NoFestivals, buildings).Single(s => s.ItemId == "(O)812").Source;
+        Assert.Equal(9, roe.Lands.Lands(1));                    // fish day 1, two more fish at 4 days each = day 9
+        Assert.Contains(roe.Setup, s => s.Name == "building:Fish Pond" && s.Days == 2);
     }
 
     [Fact]
@@ -155,17 +215,17 @@ public class ObtainabilityMadeTests
             new AnimalRow("White Chicken", "Coop", 800,
                 new[] { new AnimalProduce("(O)176", null, 0) },
                 new[] { new AnimalProduce("(O)174", "SEASON Spring", 200) }),
-        }, NoFestivals).ToList();
-        Assert.Equal(DayTable.Always, animals.Single(a => a.ItemId == "(O)176").Source.Lands);
+        }, NoFestivals, NoBuildings).ToList();
+        Assert.Equal(2, animals.Single(a => a.ItemId == "(O)176").Source.Lands.Lands(1));   // always available, +1 day to produce
         var large = animals.Single(a => a.ItemId == "(O)174").Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), large.Lands);
-        Assert.Contains("friendship:White Chicken 200", large.Conditions.Requires);
+        Assert.Equal(2, large.Lands.Lands(1));   // Spring day 1, +1 day to produce
+        Assert.Contains(large.Setup, s => s.Name == "friendship:White Chicken 200");
 
         var taps = MadeSources.Tappers(new[] { new TapRow("7", "(O)422", 4, Season.Fall, 0.9, null) }, Objects, NoFestivals).Single().Source;
-        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Fall)), taps.Lands);
+        Assert.Equal(61, taps.Lands.Lands(1));   // Fall day 1 (day 57) + 4 days until ready
         Assert.Equal(Reliability.Chance, taps.Reliability);
 
-        var snapshot = Snapshot(("(O)535", WeekMask.Range(2, 3), Reliability.Chance));
+        var snapshot = Snapshot(("(O)535", SourceKind.Geode, DayTable.InWeeks(WeekMask.Range(2, 3)), Reliability.Chance));
         var geode = MadeSources.Geodes(new GeodeDropRow[0], new[] { "(O)535" }, Objects, snapshot, NoFestivals).ToList();
         Assert.Contains(geode, g => g.ItemId == "(O)86" && g.Source.Lands.ToString() == "lands wk2/never/never/never");
         Assert.All(geode, g => Assert.Equal(SourceKind.Geode, g.Source.Kind));
