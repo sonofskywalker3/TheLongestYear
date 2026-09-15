@@ -1,4 +1,7 @@
-﻿namespace TheLongestYear.Core;
+﻿using System;
+using System.Linq;
+
+namespace TheLongestYear.Core;
 
 /// <summary>The ten configured difficulty modifiers, serialized into
 /// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
@@ -34,6 +37,7 @@ public sealed class DifficultySettings
         StartingGold = step;
         CartSlots = step;
         HoldPrices = step;
+        Darkness = step;
     }
 
     // ---- Ask-side: baked into the board when it is generated ----
@@ -72,6 +76,37 @@ public sealed class DifficultySettings
     /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
+    // ---- The darkness (spec 2026-09-15 darkness-obtainability-wiring, section 2.3) ----
+
+    /// <summary>How hard the darkness hits from Summer on: blight share and caps, the fairness
+    /// picker's level, the unmoderated roll. NULLABLE in the JSON on purpose: a config written
+    /// before the dial existed has no key, and <see cref="MigrateDarkness"/> must be able to tell
+    /// that apart from a player who chose Normal. NO initializer: a C# initializer would fill the
+    /// missing key with Normal and hide the old config. Read through <see cref="DarknessOrLowest"/>.</summary>
+    public DifficultyStep? Darkness { get; set; }
+
+    /// <summary>The dial as gameplay reads it: the value, or the lowest of the ten when unset.</summary>
+    public DifficultyStep DarknessOrLowest => Darkness ?? LowestDial();
+
+    /// <summary>The lowest of the TEN original dials (never the lever, never Darkness itself).</summary>
+    public DifficultyStep LowestDial()
+        => new[]
+        {
+            StackSize, QualityAsks, RequiredSlots, ItemRarity, JpEarned, ShrinePrices, StartingGold,
+            CartSlots, HoldPrices,
+        }.Min();
+
+    /// <summary>Migration (Jeff, 2026-09-14): a config from before the dial sets Darkness AND the
+    /// overall lever to the lowest of the ten existing dials. True when something changed.</summary>
+    public bool MigrateDarkness()
+    {
+        if (Darkness != null) return false;
+        DifficultyStep lowest = LowestDial();
+        Darkness = lowest;
+        Overall = lowest;
+        return true;
+    }
+
     // A Mercy section held SeasonPity, the step that scaled how readily the Junimos eased a
     // season the player kept failing. Retired with the rest of season pity, 2026-09-11.
 
@@ -83,7 +118,8 @@ public sealed class DifficultySettings
            && ShrinePrices == DifficultyStep.Normal
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
-           && HoldPrices == DifficultyStep.Normal;
+           && HoldPrices == DifficultyStep.Normal
+           && DarknessOrLowest == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
     /// the Vanilla post-pass, so the default Vanilla path keeps its current zero-write behaviour.
@@ -108,5 +144,6 @@ public sealed class DifficultySettings
         StartingGold = StartingGold,
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
+        Darkness = Darkness,
     };
 }

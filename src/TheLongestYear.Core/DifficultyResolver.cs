@@ -57,6 +57,7 @@ public static class DifficultyResolver
                 Pick(settings.StartingGold, GoldEasy, GoldNormal, GoldHard, GoldExtreme)),
             StartingCartSlots = Pick(settings.CartSlots, CartEasy, CartNormal, CartHard, CartExtreme),
             HoldPriceFactor = Pick(settings.HoldPrices, HoldEasy, HoldNormal, HoldHard, HoldExtreme),
+            DarknessStep = settings.DarknessOrLowest,
             Steps = settings.Clone(),
         };
     }
