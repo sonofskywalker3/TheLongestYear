@@ -3,6 +3,43 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.10 - 2026-09-15
+
+2103 tests.
+
+### Fixed
+
+- **Festival contests and cutscenes stop the clock.** The ice fishing contest and the Egg Hunt run
+  on their own real-time timer, and the Flower Dance, the Luau soup and the grange judging take
+  the controls away. The in-game clock kept running through all of them, so the festival's end
+  could pull you out in the middle of the ice fishing contest and leave you stuck holding the
+  contest rod. Time now only passes while you are walking around the festival, and the end of the
+  festival waits until any contest or scene is over. Reported by amaliekirstine.
+- **Rings stay off the Dye bundle, and a ring a bundle does ask for can be donated.** The game
+  tags the Amethyst Ring purple, so the Dye bundle could ask for it, and the donation menu then
+  refused to pick it up because a ring is not an ordinary item. Rings are kept out of the colour
+  bundles now, a ring on a board you already have can be picked up and donated, and Hard never
+  asks for two of a ring. The setting called Allow donating tools and rings only ever controlled
+  whether Gil's Trophies asks for a weapon or a hat, so it is now called Weapon and hat slots in
+  Gil's Trophies and says what off does. Reported by FayGabi.
+- **Friendship 101 is no longer in the Book bundle.** It is the ninth prize from the prize ticket
+  machine, about 25 Help Wanted quests, and the ticket count starts over every loop, so no one
+  reaches it inside a year. On Hard the Book bundle wants four of its five books, so that one book
+  made the season unwinnable. The Alleyway Buffet and Mapping Cave Systems stay: the Bookseller
+  sells them in year 3, but each sits in a free one-time gift box (behind Joja in Town, and in the
+  Adventurer's Guild) that comes back every loop. Reported by FayGabi.
+- **A new farm quit before its first night is still a Longest Year run.** The game saves a brand-
+  new farm the moment you finish making your character, before this mod has written anything to
+  it. Quitting on that first Spring 1 without sleeping and reloading gave you a farm with no
+  books, no shrine, no Junimo chest and a locked Community Center. The run is now marked in that
+  first save, and a farm you already have in that state is picked up as a run the next time you
+  load it. Reported by FayGabi.
+- **The Junimo stash works with Chests Anywhere.** You can name it, give it a category, and switch
+  to another chest from it. The stash was opened in a way that hid it from Chests Anywhere, to
+  keep Better Chests and Unlimited Storage from resizing it; that now only happens when one of
+  those two mods is installed, and in that case the stash is simply left out of the Chests
+  Anywhere list so you can never get stuck in it. Reported by asteriaths and FayGabi.
+
 ## 0.18.4 - 2026-09-14
 
 2086 tests.
