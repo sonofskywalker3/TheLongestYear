@@ -73,7 +73,7 @@ public static class ShopSources
             if (Template(row, festivals) is not ObtainSource template) continue;
             string trade = BundleParsing.NormalizeItemId(row.TradeItemId!);
             Derived.Input paid = Derived.Of(snapshot, trade);
-            ObtainConditions conditions = paid.Flag(template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() });
+            ObtainConditions conditions = template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() };
             if (paid.IsEmpty)
             {
                 // The trade item has no source at all, so the barter cannot be made. Recorded as a
@@ -83,11 +83,8 @@ public static class ShopSources
                     $"{template.Detail} barter for {row.ItemId}: trade item {trade} has no source"));
                 continue;
             }
-            DayTable dep = template.Reliability == Reliability.Dependable
-                ? template.Lands.Latest(paid.Dependable)
-                : DayTable.None;
-            DayTable any = template.Lands.Latest(paid.Any);
-            foreach (ObtainSource s in SourcePair.Of(template.Kind, dep, any, conditions, template.Detail + " (barter)"))
+            foreach (ObtainSource s in paid.Emit(template.Kind, t => template.Lands.Latest(t), conditions,
+                template.Detail + " (barter)", luck: template.Reliability != Reliability.Dependable))
                 foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, s))
                     yield return emitted;
         }
