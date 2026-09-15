@@ -116,6 +116,38 @@ public class ObtainabilityBuilderTests
     }
 
     [Fact]
+    public void A_delegating_row_keeps_its_own_season_and_condition_on_every_copy()
+    {
+        var rows = new List<LocationSpawn>
+        {
+            new("Town", "(O)138", null, "WEATHER Here Rain", 1.0, 0, false, 3),
+            new("Town", "(O)142", Season.Summer, null, 1.0, 0, false, 0),
+            new("Town", "(O)898", null, null, 1.0, 0, false, 0, CanBeInherited: false),   // legendary-style row
+            // Two delegations to the same target from one location: the second must expand too.
+            new("Forest", "LOCATION_FISH Town BOBBER_X BOBBER_Y WATER_DEPTH", Season.Fall, "SEASON fall", 1.0, 0, true, 5),
+            new("Forest", "LOCATION_FISH Town BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+        };
+        var expanded = SpawnSources.ExpandLocationFish(rows);
+        var forest = expanded.Where(r => r.Location == "Forest").ToList();
+        Assert.Equal(4, forest.Count);                                          // both delegations expanded, two rows each
+        Assert.DoesNotContain(forest, r => r.ItemId == "(O)898");               // a row that cannot be inherited is not copied
+
+        // Through the gated delegation: its season fills a seasonless row, its condition is ANDed on.
+        LocationSpawn gated138 = forest.Single(r => r.ItemId == "(O)138" && r.Condition != null && r.Condition.Contains("SEASON fall"));
+        Assert.Equal(Season.Fall, gated138.Season);
+        Assert.Equal("SEASON fall, WEATHER Here Rain", gated138.Condition);
+        Assert.Equal(5, gated138.MinFishingLevel);                              // the higher of the two levels
+        Assert.True(gated138.RequireMagicBait);                                 // the delegating row's bait gate carries
+        LocationSpawn gated142 = forest.Single(r => r.ItemId == "(O)142" && r.Condition == "SEASON fall");
+        Assert.Equal(Season.Summer, gated142.Season);                           // the copied row's own season wins
+
+        // Through the plain delegation: nothing is added that the copied row did not already say.
+        Assert.Contains(forest, r => r.ItemId == "(O)138" && r.Season == null && r.Condition == "WEATHER Here Rain"
+            && r.MinFishingLevel == 3 && !r.RequireMagicBait);
+        Assert.Contains(forest, r => r.ItemId == "(O)142" && r.Season == Season.Summer && r.Condition == null);
+    }
+
+    [Fact]
     public void A_read_failure_names_its_sections()
     {
         var ex = new ObtainabilityReadException(new[] { "Data/Crops", "Data/Shops" });

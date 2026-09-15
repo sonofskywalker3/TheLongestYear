@@ -55,10 +55,11 @@ public sealed class DayTable : IEquatable<DayTable>
         => startDay < FirstDay || startDay > Days || _lands[startDay - 1] == Never ? null : _lands[startDay - 1];
 
     /// <summary>Tables built from <see cref="Available"/>, <see cref="Exact"/>, <see cref="Delay"/>,
-    /// <see cref="Then"/>, <see cref="Earliest"/> and <see cref="Latest"/> are waiting-closed (if day 1
-    /// never lands, nothing does, since waiting from day 1 reaches every later start); a table from
-    /// <see cref="Except"/> is a per-start difference and can have a gap on an early day with real
-    /// landings later, so this scans the whole table rather than trusting day 1 alone.</summary>
+    /// <see cref="Earliest"/> and <see cref="Latest"/> are waiting-closed, and <see cref="Then"/> is
+    /// waiting-closed exactly when both tables it joins are: if day 1 never lands, nothing does,
+    /// since waiting from day 1 reaches every later start. A table from <see cref="Except"/> is a
+    /// per-start difference and can have a gap on an early day with real landings later, so this scans
+    /// the whole table rather than trusting day 1 alone.</summary>
     public bool IsEmpty => Array.TrueForAll(_lands, b => b == Never);
 
     public int? LandingWeek(int startDay) => Lands(startDay) is int l ? WeekMask.WeekOfDay(l) : null;

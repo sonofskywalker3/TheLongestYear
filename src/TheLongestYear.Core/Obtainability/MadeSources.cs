@@ -50,12 +50,16 @@ public static class MadeSources
             bool several = rule.Outputs.Count > 1 && !rule.UseFirstValidOutput;
             string inputText = noInput ? "no input" : rule.RequiredItemId ?? string.Join(" ", rule.RequiredTags);
 
-            DayTable dep = noInput ? DayTable.Always : DayTable.None, any = dep;
-            foreach (string input in inputs)
+            // Lazy: a rule whose every output is a seed maker, a mushroom log, a DROP_IN or an unknown
+            // output method never asks for these, and folding one table per input is not free.
+            DayTable Feed(ObtainFilter filter)
             {
-                dep = dep.Earliest(snapshot.Table(input, ObtainFilter.DependableOnly));
-                any = any.Earliest(snapshot.Table(input, ObtainFilter.Any));
+                DayTable table = noInput ? DayTable.Always : DayTable.None;
+                foreach (string input in inputs) table = table.Earliest(snapshot.Table(input, filter));
+                return table;
             }
+            var dep = new Lazy<DayTable>(() => Feed(ObtainFilter.DependableOnly));
+            var any = new Lazy<DayTable>(() => Feed(ObtainFilter.Any));
 
             // With UseFirstValidOutput the game takes the first output whose condition passes, so a
             // later output only happens in weeks no earlier, surely valid output already covers.
@@ -87,7 +91,7 @@ public static class MadeSources
                             conditions, $"{rule.MachineId} seed maker from {input}"))
                             yield return (crop.SeedId, s);
                     }
-                    DayTable chanceBase = any.Then(gate).Delay(days);
+                    DayTable chanceBase = any.Value.Then(gate).Delay(days);
                     foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, chanceBase, conditions, "seed maker 2% mixed seeds"))
                         yield return (MixedSeedsId, s);
                     foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, chanceBase, conditions, "seed maker 0.5% ancient seeds"))
@@ -124,8 +128,8 @@ public static class MadeSources
                 }
                 if (string.IsNullOrWhiteSpace(output.ItemId)) continue;
 
-                DayTable outDep = luck ? DayTable.None : dep.Then(gate).Delay(days);
-                DayTable outAny = any.Then(gate).Delay(days);
+                DayTable outDep = luck ? DayTable.None : dep.Value.Then(gate).Delay(days);
+                DayTable outAny = any.Value.Then(gate).Delay(days);
                 foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, outDep, outAny, conditions, detail))
                     foreach (var emitted in ItemQueries.Emit(output.ItemId, objects, s))
                         yield return emitted;

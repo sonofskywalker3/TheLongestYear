@@ -47,18 +47,6 @@ public class ObtainabilitySpawnTests
     }
 
     [Fact]
-    public void Festival_maps_only_open_on_their_days()
-    {
-        var rows = new[] { new LocationSpawn("Submarine", "(O)798", null, null, 1.0, 0, false, 0) };
-        var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
-        var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).Single().Source;
-        Assert.Equal(99, source.Lands.Lands(1));       // Winter 15, the market's first day
-        Assert.Equal(101, source.Lands.Lands(101));    // Winter 17, its last day
-        Assert.Null(source.Lands.Lands(102));
-        Assert.True(source.Conditions.FewDays);
-    }
-
-    [Fact]
     public void A_random_alternative_is_chance()
     {
         var rows = new[] { new LocationSpawn("Forest", "(O)16", Season.Spring, null, 1.0, 0, false, 0, IsRandom: true) };

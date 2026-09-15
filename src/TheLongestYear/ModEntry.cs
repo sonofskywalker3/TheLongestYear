@@ -3399,6 +3399,7 @@ namespace TheLongestYear
             {
                 _obtainability = null;
                 _obtainabilityUnresolved = System.Array.Empty<string>();
+                _obtainabilityFailure = null;   // not a read failure; an older run's section list would be a lie
                 this.Monitor.Log($"Obtainability model: build failed ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
             }
         }
@@ -3409,7 +3410,7 @@ namespace TheLongestYear
             if (!Context.IsWorldReady || _obtainability == null)
             {
                 this.Monitor.Log(_obtainability == null && _obtainabilityFailure != null
-                    ? $"No obtainability model: {_obtainabilityFailure}"
+                    ? _obtainabilityFailure                              // already starts "Obtainability: no model published..."
                     : "Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
                 return;
             }
