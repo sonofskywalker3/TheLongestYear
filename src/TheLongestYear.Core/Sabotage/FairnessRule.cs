@@ -39,6 +39,9 @@ public static class FairnessRule
     private const string PondPopulationPrefix = "pond population";
     private const string MiningSkill = "Mining";
     private const int NoDays = 0;
+    /// <summary>How many derived steps deep the rule follows a route's inputs (a cheese from a cow
+    /// from a barn is two). A chain longer than this rules the route out rather than guessing.</summary>
+    private const int MaxInputDepth = 6;
 
     /// <summary>What a level allows (the columns of the spec's table 1.2).</summary>
     private sealed record Policy(bool AllowChance, bool AllowUnresolved, bool YearTwoTv, bool IgnoreConditions, bool AddDays)
@@ -64,11 +67,18 @@ public static class FairnessRule
         if (save is null) throw new ArgumentNullException(nameof(save));
         if (model is null)
             return new FairnessVerdict(true, Array.Empty<RouteVerdict>(), "no obtainability model: no fairness filter, everything counts");
-        Policy policy = Policy.For(level);
+        var stack = new HashSet<string>(StringComparer.Ordinal) { itemId };
+        return Judge(itemId, hitDay, deadlineDay, Policy.For(level), save, model, stack, 0);
+    }
+
+    private static FairnessVerdict Judge(
+        string itemId, int hitDay, int deadlineDay, Policy policy, SaveSnapshot save, ObtainabilityModel model,
+        HashSet<string> stack, int depth)
+    {
         int startDay = hitDay + 1;
         var routes = new List<RouteVerdict>();
         foreach (ObtainSource source in model.Sources(itemId))
-            routes.Add(JudgeRoute(source, startDay, deadlineDay, policy, save));
+            routes.Add(JudgeRoute(source, hitDay, startDay, deadlineDay, policy, save, model, stack, depth));
         bool counts = routes.Any(r => r.Counts);
         string summary = routes.Count == 0
             ? "no source in the obtainability model"
@@ -76,7 +86,9 @@ public static class FairnessRule
         return new FairnessVerdict(counts, routes, summary);
     }
 
-    private static RouteVerdict JudgeRoute(ObtainSource source, int startDay, int deadlineDay, Policy policy, SaveSnapshot save)
+    private static RouteVerdict JudgeRoute(
+        ObtainSource source, int hitDay, int startDay, int deadlineDay, Policy policy, SaveSnapshot save,
+        ObtainabilityModel model, HashSet<string> stack, int depth)
     {
         ObtainConditions c = source.Conditions;
         if (c.GingerIsland) return Out(source, "Ginger Island route");
@@ -97,6 +109,12 @@ public static class FairnessRule
             string? blocked = Conditions(source, policy, save, ref added);
             if (blocked != null) return Out(source, blocked);
         }
+        // A derived route carries the items it is made from, and the table says only WHEN they land,
+        // not whether this player can get them: a Cheese Press with no cow is not a cheese route.
+        // Extreme ignores conditions but not inputs, because an item made from nothing obtainable is
+        // not obtainable at any level.
+        string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth);
+        if (missing != null) return Out(source, missing);
         // Setup days are added after the landing rather than shifting the start; an accepted approximation.
         int lands = landing.Value + added;
         bool counts = lands <= deadlineDay;
@@ -104,6 +122,38 @@ public static class FairnessRule
             ? (added > NoDays ? $"counts, lands day {lands} (+{added} day(s) of setup)" : $"counts, lands day {lands}")
             : $"lands day {lands}, after the deadline (day {deadlineDay})" + (added > NoDays ? $" with +{added} day(s) of setup" : "");
         return new RouteVerdict(source, counts, added, lands, reason);
+    }
+
+    /// <summary>Judges the route's input groups by the same rule: a group counts when ANY of its
+    /// members counts, and every group must count. Returns the reason the route is out, or null when
+    /// the route needs no item or every group is served. An id already being judged further up the
+    /// chain does not count, so a cycle (X made from Y, Y made from X) terminates.</summary>
+    private static string? MissingInput(
+        ObtainSource source, int hitDay, int deadlineDay, Policy policy, SaveSnapshot save,
+        ObtainabilityModel model, HashSet<string> stack, int depth)
+    {
+        if (source.Inputs.Count == 0) return null;
+        if (depth >= MaxInputDepth) return $"input chain deeper than {MaxInputDepth} steps, not judged";
+        foreach (IReadOnlyList<string> group in source.Inputs)
+        {
+            if (group.Count == 0) continue;
+            bool served = false;
+            foreach (string id in group)
+            {
+                if (!stack.Add(id)) continue;   // already on the stack: not a way in
+                try
+                {
+                    if (Judge(id, hitDay, deadlineDay, policy, save, model, stack, depth + 1).Counts)
+                    {
+                        served = true;
+                        break;
+                    }
+                }
+                finally { stack.Remove(id); }
+            }
+            if (!served) return $"needs {string.Join(" or ", group)}, none obtainable";
+        }
+        return null;
     }
 
     /// <summary>Checks every condition against the save. Returns the reason the route is out, or null
@@ -255,8 +305,13 @@ public static class FairnessRule
         if (verdict is null) throw new ArgumentNullException(nameof(verdict));
         var sb = new StringBuilder(verdict.Summary);
         foreach (RouteVerdict r in verdict.Routes)
+        {
             sb.AppendLine().Append("  - ").Append(r.Counts ? "counts: " : "out: ").Append(r.Reason)
               .Append(" | ").Append(ObtainabilityText.SourceLine(r.Source));
+            if (r.Source.Inputs.Count > 0)
+                sb.Append(" | made from ")
+                  .Append(string.Join(" and ", r.Source.Inputs.Select(g => string.Join(" or ", g))));
+        }
         return sb.ToString();
     }
 }

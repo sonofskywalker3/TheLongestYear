@@ -54,6 +54,21 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void A_machine_source_records_the_item_it_is_made_from()
+    {
+        // The table says WHEN the wine lands, never that it took an apple. A consumer checking a
+        // route against a real save needs the input id to ask the same question of it.
+        var snapshot = Snapshot(("(O)613", SourceKind.FruitTree, DayTable.Available(d => d >= 57), Reliability.Dependable));
+        var rows = new[]
+        {
+            new MachineRow("(BC)12", null, new[] { "category_fruits" }, null, new[] { new MachineOutput("(O)348", null, null) }, 10000, -1),
+        };
+        var wine = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops)
+            .Single(s => s.ItemId == "(O)348").Source;
+        Assert.Equal(new[] { "(O)613" }, Assert.Single(wine.Inputs));
+    }
+
+    [Fact]
     public void A_trigger_with_an_id_and_tags_needs_both()
     {
         var snapshot = Snapshot(("(O)613", SourceKind.FruitTree, DayTable.Always, Reliability.Dependable));

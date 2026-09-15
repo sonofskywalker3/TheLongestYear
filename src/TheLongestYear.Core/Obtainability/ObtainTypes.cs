@@ -72,6 +72,16 @@ public sealed record ObtainSource(
 {
     public IReadOnlyList<SetupStep> Setup { get; init; } = Array.Empty<SetupStep>();
 
+    /// <summary>The items this route is made from, as groups where any member of a group serves (a
+    /// machine taking several inputs) and every group is needed (a recipe's ingredients); empty for
+    /// a route that needs no item. A derived table already holds WHEN an input lands, but not WHAT
+    /// it was, so a consumer that checks a route against a real save needs this to ask the same
+    /// question of the input (a Cheese route needs a cow, not just a Cheese Press).
+    /// <para>Deliberately outside <see cref="Equals(ObtainSource?)"/> and
+    /// <see cref="GetHashCode"/>: two routes that differ only in which input fed them are still one
+    /// route to every existing consumer, and Distinct() keeps merging them as it always has.</para></summary>
+    public IReadOnlyList<IReadOnlyList<string>> Inputs { get; init; } = Array.Empty<IReadOnlyList<string>>();
+
     public bool Equals(ObtainSource? other)
         => other is not null && Kind == other.Kind && Lands.Equals(other.Lands) && Reliability == other.Reliability
            && Conditions.Equals(other.Conditions) && Detail == other.Detail && Setup.SequenceEqual(other.Setup);
