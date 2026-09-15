@@ -45,10 +45,11 @@ namespace TheLongestYear.Loop
                 foreach (KeyValuePair<Vector2, StardewValley.Object> pair in loc.objects.Pairs)
                 {
                     StardewValley.Object obj = pair.Value;
+                    bool onFarm = loc == farm;
                     if (obj is Chest chest)
                     {
                         if (chest.modData.ContainsKey(JunimoStashService.StashModDataKey)) continue;
-                        if (CircleOfWardingService.Covers(circles, loc, chest.TileLocation)) continue;
+                        bool chestWarded = CircleOfWardingService.Covers(circles, loc, chest.TileLocation);
                         var items = chest.Items;
                         for (int i = 0; i < items.Count; i++)
                         {
@@ -56,14 +57,14 @@ namespace TheLongestYear.Loop
                             if (item == null || item.Stack <= 0) continue;
                             bool big = item is StardewValley.Object o && o.bigCraftable.Value;
                             bool plain = item is StardewValley.Object && !big;
-                            if (!everything && !plain) continue;
+                            if (!BlightRule.InStoragePool(plain, big, placedOnMap: false, onFarm, chestWarded, everything)) continue;
                             entries.Add(new Entry { Chest = chest, Slot = i, Item = item, BigCraftable = big });
                         }
                         continue;
                     }
-                    if (!everything || loc != farm) continue;
-                    if (!obj.bigCraftable.Value) continue;
-                    if (CircleOfWardingService.Covers(circles, loc, pair.Key)) continue;
+                    bool placedWarded = CircleOfWardingService.Covers(circles, loc, pair.Key);
+                    bool placedBig = obj.bigCraftable.Value;
+                    if (!BlightRule.InStoragePool(!placedBig, placedBig, placedOnMap: true, onFarm, placedWarded, everything)) continue;
                     entries.Add(new Entry { Item = obj, Location = loc, Tile = pair.Key, BigCraftable = true });
                 }
                 return true;
