@@ -27,6 +27,17 @@ namespace TheLongestYear.Loop
     {
         internal const string StashModDataKey = "tly.junimo.stash";
 
+        /// <summary>True when Better Chests or Unlimited Storage is installed. Set once at game
+        /// launch from <c>Helper.ModRegistry.IsLoaded</c>. Those two transpile the ItemGrabMenu
+        /// constructor and read its <c>context</c>, so the stash menu is opened with a null context
+        /// only while one of them is present. Chests Anywhere identifies the open chest from that
+        /// same context, so nulling it unconditionally broke naming and chest switching there
+        /// (two Nexus reports, 2026-09-14).</summary>
+        public static bool StorageOverhaulLoaded;
+
+        public static readonly string[] StorageOverhaulModIds =
+            { "furyx639.BetterChests", "furyx639.UnlimitedStorage" };
+
         /// <summary>Loads + caches the recolored purple Junimo-chest sprite drawn for the stash.
         /// Set from ModEntry (where the mod helper is available); the draw patch pulls from it.</summary>
         private static System.Func<Texture2D> _loadStashTexture;
@@ -82,12 +93,14 @@ namespace TheLongestYear.Loop
             // problem — the keeper-save reload landed at (67, 18) instead of (67, 17) because
             // the old chest was still at (67, 17) when ResolveTile ran.
             var staleTiles = new List<Vector2>();
+            var carried = new Dictionary<string, string>();
             foreach (var pair in farm.objects.Pairs)
             {
                 if (pair.Value is Chest existing
                     && existing.modData.ContainsKey(StashModDataKey))
                 {
                     staleTiles.Add(pair.Key);
+                    CollectCarriedModData(existing, carried);
                 }
             }
             foreach (Vector2 staleTile in staleTiles)
@@ -121,7 +134,10 @@ namespace TheLongestYear.Loop
             var chest = new Chest(playerChest: true, tile, itemId: "130");
             chest.playerChoiceColor.Value = new Microsoft.Xna.Framework.Color(150, 90, 200);
             chest.modData[StashModDataKey] = "1";
+            foreach (var kv in carried)
+                chest.modData[kv.Key] = kv.Value;
             StampBetterChestsOptOut(chest);
+            StampChestsAnywhereOptOutIfNeeded(chest);
             farm.objects[tile] = chest;
             _placedTile = tile;
 
@@ -149,6 +165,32 @@ namespace TheLongestYear.Loop
         {
             foreach (string option in BetterChestsDisabledOptions)
                 chest.modData[BetterChestsOptionPrefix + option] = BetterChestsDisabledValue;
+        }
+
+        // Chests Anywhere (Pathoschild.ChestsAnywhere) keeps a chest's name, category, sort order
+        // and hidden flag in these modData keys, written by its own Edit form. The stash chest is
+        // rebuilt on every save load and every loop reset, so without carrying them over a name
+        // the player gave it would vanish by the next morning.
+        internal const string ChestsAnywhereModDataPrefix = "Pathoschild.ChestsAnywhere/";
+        private const string ChestsAnywhereIgnoredKey = ChestsAnywhereModDataPrefix + "IsIgnored";
+
+        private static void CollectCarriedModData(Chest from, Dictionary<string, string> into)
+        {
+            foreach (var pair in from.modData.Pairs)
+            {
+                if (pair.Key.StartsWith(ChestsAnywhereModDataPrefix, System.StringComparison.Ordinal))
+                    into[pair.Key] = pair.Value;
+            }
+        }
+
+        // With a storage-overhaul mod present the stash menu opens with a null context (see
+        // JunimoStashMenuContextPatch), which Chests Anywhere cannot attach to: a player who
+        // reached the stash through its list would be stuck there. Hide the stash from its lists
+        // in that case; without an overhaul mod the stash is a first-class Chests Anywhere chest.
+        private static void StampChestsAnywhereOptOutIfNeeded(Chest chest)
+        {
+            if (StorageOverhaulLoaded)
+                chest.modData[ChestsAnywhereIgnoredKey] = "true";
         }
 
         /// <summary>

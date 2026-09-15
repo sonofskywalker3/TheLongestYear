@@ -189,7 +189,10 @@ public static class ItemPoolBuilder
             PoolItem item = MakeItem(id, objects, tuning, seasons, Array.Empty<string>());
             byKind[ItemKindClassifier.From(bare, obj)].Add(item);
 
-            if (obj.ContextTags != null)
+            // The colour index feeds the Dye recipe. Vanilla tags the Amethyst Ring color_purple,
+            // and a ring is not an Object at runtime, so the donation menu cannot lift it; one
+            // landed in a Dye bundle through this index (Nexus, 2026-09-14). Rings stay out.
+            if (!IsRing(obj) && obj.ContextTags != null)
             {
                 foreach (string tag in obj.ContextTags)
                 {
@@ -796,6 +799,13 @@ public static class ItemPoolBuilder
     /// PoolAdditions.VetExceptions id skips the ExcludeFromRandomSale check: those are the
     /// curated mine fish and legendaries, wanted despite the flag (spec 2026-08-28-obtainable-board,
     /// section 3).</summary>
+    private const string RingType = "Ring";
+    private const string RingItemTag = "ring_item";
+
+    private static bool IsRing(RawObjectEntry obj)
+        => string.Equals(obj.Type, RingType, StringComparison.OrdinalIgnoreCase)
+           || (obj.ContextTags != null && obj.ContextTags.Contains(RingItemTag));
+
     private static bool Vets(
         string bareId, string qualifiedId,
         IReadOnlyDictionary<string, RawObjectEntry> objects, HashSet<string> excluded)

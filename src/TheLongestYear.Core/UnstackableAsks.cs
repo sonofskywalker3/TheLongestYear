@@ -13,6 +13,15 @@ namespace TheLongestYear.Core;
 public static class UnstackableAsks
 {
     private const string ObjectQualifier = "(O)";
+
+    /// <summary>Every vanilla ring. Rings are Objects by id but never stack, and a Ring instance is
+    /// not an Object at runtime. Gil's trophy rings are here too, via <see cref="AuthoredBundleCatalog.GilTrophies"/>.
+    /// An Amethyst Ring x2 on a Hard Dye bundle (Nexus, 2026-09-14) is why this list exists.</summary>
+    public static readonly System.Collections.Generic.IReadOnlySet<string> VanillaRingIds = new System.Collections.Generic.HashSet<string>(
+        new[] { "516", "517", "518", "519", "520", "521", "522", "523", "524", "525", "526", "527", "528",
+                "529", "530", "531", "532", "533", "534", "810", "811", "839", "859", "860", "862", "863",
+                "887", "888" }.Select(id => ObjectQualifier + id),
+        StringComparer.Ordinal);
     private const int IngredientFieldIndex = 2;
     private const int TokensPerIngredient = 3;
 
@@ -23,7 +32,8 @@ public static class UnstackableAsks
         if (string.IsNullOrEmpty(itemId) || itemId[0] != '(')
             return false;
         return !itemId.StartsWith(ObjectQualifier, StringComparison.Ordinal)
-               || AuthoredBundleCatalog.GilTrophies.Contains(itemId);
+               || AuthoredBundleCatalog.GilTrophies.Contains(itemId)
+               || VanillaRingIds.Contains(itemId);
     }
 
     /// <summary>One for an unstackable item, the stack unchanged for anything else.</summary>

@@ -40,6 +40,14 @@ namespace TheLongestYear
             Run = _data.ReadSaveData<RunState>(RunDataKey) ?? new RunState();
         }
 
+        /// <summary>Put the run marker into a brand-new save before the game writes it for the first
+        /// time. Call from SaveCreating: the game saves a new farm at character creation and SMAPI does
+        /// not raise Saving for that write, so without this a farm quit before its first night loaded
+        /// as a vanilla save (Nexus, 2026-09-14). Writes a fresh MetaState, never <see cref="State"/>,
+        /// which may still hold the previous save's data at that moment.</summary>
+        public void StampNewRunMarker()
+            => _data.WriteSaveData(MetaDataKey, new MetaState { IsLongestYearRun = true });
+
         /// <summary>Commit banked progress and run-state into the save. Call from the game's Saving event.</summary>
         public void Save()
         {
