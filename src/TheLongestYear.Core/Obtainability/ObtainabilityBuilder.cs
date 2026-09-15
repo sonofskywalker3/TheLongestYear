@@ -8,9 +8,17 @@ namespace TheLongestYear.Core.Obtainability;
 public sealed record ObtainabilityBuild(ObtainabilityModel Model, int Passes, bool HitPassCap, IReadOnlyList<string> Unresolved);
 
 /// <summary>Builds the model: direct sources once, then grown and made sources over the previous pass's
-/// model, repeating until no item's landing table changes; a landing day only moves earlier
-/// (Earliest) and there are finitely many day slots, so the loop settles (see the plan's Task 8
-/// intro for why this settles).</summary>
+/// model, repeating until <see cref="SameTables"/> finds nothing changed (spec
+/// 2026-09-14-obtainability-phase2, section 1, "Chains settle by repeated passes").
+/// <para>What is proved: <see cref="SameTables"/> compares, per item, the Any and DependableOnly
+/// aggregates and the number of sources. Those two aggregates only ever move earlier, because each
+/// pass rebuilds every derived source from a model whose inputs land no later than last pass's, and
+/// an aggregate is the Earliest over them; with 112 day slots and finitely many items, they cannot
+/// keep moving. That is a statement about the aggregates only. An individual Chance table is a
+/// per-start difference (<see cref="DayTable.Except"/>) and can move either way as the dependable
+/// half moves, and the source count can rise or fall with it, so neither is proved to settle.
+/// <see cref="MaxPasses"/> bounds those; a build that hits the cap reports
+/// <see cref="ObtainabilityBuild.HitPassCap"/> rather than claiming it converged.</para></summary>
 public static class ObtainabilityBuilder
 {
     public const int MaxPasses = 1000;

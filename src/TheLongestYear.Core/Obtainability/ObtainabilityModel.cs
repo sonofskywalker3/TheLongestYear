@@ -24,8 +24,9 @@ public sealed record ObtainFilter
            && (IncludeUnresolved || !source.Conditions.Unresolved);
 }
 
-/// <summary>Every year-1 way to obtain every item, by week (spec 2026-09-14-item-obtainability).
-/// Built at runtime from the installed game data; nothing reads it for gameplay in phase 1.</summary>
+/// <summary>Every year-1 way to obtain every item, by start day: for each day the player could start
+/// from nothing, the first day the item lands (spec 2026-09-14-obtainability-phase2, decisions 1 and 2).
+/// Built at runtime from the installed game data; nothing reads it for gameplay yet.</summary>
 public sealed class ObtainabilityModel
 {
     private readonly IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> _sources;
