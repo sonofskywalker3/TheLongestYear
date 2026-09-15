@@ -237,8 +237,9 @@ namespace TheLongestYear.Loop
         /// <summary>Fronts a playtest has armed to strike on the next real night.</summary>
         private readonly HashSet<SabotageKind> _armed = new HashSet<SabotageKind>();
 
-        /// <summary>What tonight's blight must go after, when a playtest named it; null leaves it to
-        /// the night's even split. Cleared after tonight's roll.</summary>
+        /// <summary>What tonight's blight must go after, when a playtest named it; null leaves the
+        /// choice to NightRoll's even split over the season's events. Cleared after tonight's
+        /// roll.</summary>
         private BlightTarget? _armedBlightTarget;
 
         /// <summary>Debug: make <paramref name="kind"/> strike on tonight's real roll, so a playtest
