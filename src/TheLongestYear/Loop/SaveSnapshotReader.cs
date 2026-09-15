@@ -15,7 +15,9 @@ namespace TheLongestYear.Loop
     {
         private static readonly string[] SkillNames = { "Farming", "Fishing", "Foraging", "Mining", "Combat", "Luck" };
 
-        public static SaveSnapshot Read()
+        /// <summary><paramref name="log"/> takes one trace line when a recipe had to be skipped, so a
+        /// content pack with broken recipe data shows up in the log instead of going silent.</summary>
+        public static SaveSnapshot Read(Action<string> log = null)
         {
             Farmer player = Game1.player;
             if (player == null) return SaveSnapshot.Empty;
@@ -27,6 +29,7 @@ namespace TheLongestYear.Loop
             // What the known crafting recipes make, by qualified id, so a missing keg can cost a day
             // of crafting on Normal rather than rule the route out.
             var craftable = new HashSet<string>(StringComparer.Ordinal);
+            int skippedRecipes = 0;
             foreach (string name in player.craftingRecipes.Keys)
             {
                 try
@@ -36,9 +39,13 @@ namespace TheLongestYear.Loop
                 }
                 catch (Exception ex) when (ex is KeyNotFoundException or NullReferenceException or ArgumentException)
                 {
-                    // A content mod's recipe with no item data: skip it, it cannot be a machine we need.
+                    // A content mod's recipe with no item data: skip it, it cannot be a machine we
+                    // need. Counted rather than swallowed, and reported once after the loop.
+                    skippedRecipes++;
                 }
             }
+            if (skippedRecipes > 0)
+                log?.Invoke($"Save snapshot: skipped {skippedRecipes} crafting recipe(s) with no item data.");
 
             var buildings = new HashSet<string>(StringComparer.Ordinal);
             var animals = new HashSet<string>(StringComparer.Ordinal);

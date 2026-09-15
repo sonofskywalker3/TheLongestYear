@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using StardewModdingAPI;
@@ -84,7 +84,7 @@ namespace TheLongestYear.Loop
             if (season == CoreSeason.Spring) { _armed.Clear(); _armedBlightTarget = null; return; }
 
             Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear);
-            SaveSnapshot save = SaveSnapshotReader.Read();
+            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
             ObtainabilityModel model = _obtainability();
             var night = new NightPlan(this, season, day, week, dayOfYear, level, save, model, rng);
 
@@ -321,7 +321,7 @@ namespace TheLongestYear.Loop
         {
             int dayOfYear = Calendar.DayOfYear((int)Run.Season, Run.DayOfMonth);
             int deadline = FairnessRule.ReversionDeadline(dayOfYear, Level);
-            SaveSnapshot save = SaveSnapshotReader.Read();
+            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
             ObtainabilityModel model = _obtainability();
             DonatedSlot pick = PickReversion(rng, id => FairnessRule.Counts(id, dayOfYear, deadline, Level, save, model));
             return pick != null && RevertSlot(pick);
@@ -363,7 +363,7 @@ namespace TheLongestYear.Loop
         {
             var worldState = Game1.netWorldState?.Value;
             if (worldState?.BundleData == null) return false;
-            SaveSnapshot save = SaveSnapshotReader.Read();
+            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
             ObtainabilityModel model = _obtainability();
             TamperPlan plan = PlanTamper(rng, id => FairnessRule.Counts(id, dayOfYear, FairnessRule.TamperDeadline, Level, save, model));
             return plan != null && WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear);
@@ -553,7 +553,7 @@ namespace TheLongestYear.Loop
         {
             DifficultyStep at = level ?? Level;
             int dayOfYear = Calendar.DayOfYear((int)Run.Season, Run.DayOfMonth);
-            SaveSnapshot save = SaveSnapshotReader.Read();
+            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
             ObtainabilityModel model = _obtainability();
             int reversion = FairnessRule.ReversionDeadline(dayOfYear, at);
             FairnessVerdict asReversion = FairnessRule.Judge(itemId, dayOfYear, reversion, at, save, model);
