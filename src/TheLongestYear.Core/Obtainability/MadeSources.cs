@@ -51,15 +51,17 @@ public static class MadeSources
             string inputText = noInput ? "no input" : rule.RequiredItemId ?? string.Join(" ", rule.RequiredTags);
 
             // Lazy: a rule whose every output is a seed maker, a mushroom log, a DROP_IN or an unknown
-            // output method never asks for these, and folding one table per input is not free.
-            DayTable Feed(ObtainFilter filter)
+            // output method never asks for this, and folding one table per input is not free.
+            var inputCache = new Dictionary<string, Derived.Input>(StringComparer.Ordinal);
+            Derived.Input InputOf(string input)
             {
-                DayTable table = noInput ? DayTable.Always : DayTable.None;
-                foreach (string input in inputs) table = table.Earliest(snapshot.Table(input, filter));
-                return table;
+                if (!inputCache.TryGetValue(input, out Derived.Input? read))
+                    inputCache[input] = read = Derived.Of(snapshot, input);
+                return read;
             }
-            var dep = new Lazy<DayTable>(() => Feed(ObtainFilter.DependableOnly));
-            var any = new Lazy<DayTable>(() => Feed(ObtainFilter.Any));
+            var feed = new Lazy<Derived.Input>(() => noInput
+                ? Derived.Input.Free
+                : Derived.Sooner(inputs.Select(InputOf)));
 
             // With UseFirstValidOutput the game takes the first output whose condition passes, so a
             // later output only happens in weeks no earlier, surely valid output already covers.
@@ -85,16 +87,18 @@ public static class MadeSources
                     {
                         CropRow? crop = cropList.FirstOrDefault(c => c.HarvestId == input);
                         if (crop == null) continue;
-                        DayTable inputDep = snapshot.Table(input, ObtainFilter.DependableOnly).Then(gate).Delay(days);
-                        DayTable inputAny = snapshot.Table(input, ObtainFilter.Any).Then(gate).Delay(days);
+                        Derived.Input harvest = InputOf(input);
+                        DayTable inputDep = harvest.Dependable.Then(gate).Delay(days);
+                        DayTable inputAny = harvest.Any.Then(gate).Delay(days);
                         foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, luck ? DayTable.None : inputDep, inputAny,
-                            conditions, $"{rule.MachineId} seed maker from {input}"))
+                            harvest.Flag(conditions), $"{rule.MachineId} seed maker from {input}"))
                             yield return (crop.SeedId, s);
                     }
-                    DayTable chanceBase = any.Value.Then(gate).Delay(days);
-                    foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, chanceBase, conditions, "seed maker 2% mixed seeds"))
+                    DayTable chanceBase = feed.Value.Any.Then(gate).Delay(days);
+                    ObtainConditions seedMakerConditions = feed.Value.Flag(conditions);
+                    foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, chanceBase, seedMakerConditions, "seed maker 2% mixed seeds"))
                         yield return (MixedSeedsId, s);
-                    foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, chanceBase, conditions, "seed maker 0.5% ancient seeds"))
+                    foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, DayTable.None, chanceBase, seedMakerConditions, "seed maker 0.5% ancient seeds"))
                         yield return (AncientSeedsId, s);
                     continue;
                 }
@@ -120,17 +124,20 @@ public static class MadeSources
                 if (output.ItemId == DropIn)
                 {
                     foreach (string input in inputs)
+                    {
+                        Derived.Input dropIn = InputOf(input);
                         foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine,
-                            luck ? DayTable.None : snapshot.Table(input, ObtainFilter.DependableOnly).Then(gate).Delay(days),
-                            snapshot.Table(input, ObtainFilter.Any).Then(gate).Delay(days), conditions, detail))
+                            luck ? DayTable.None : dropIn.Dependable.Then(gate).Delay(days),
+                            dropIn.Any.Then(gate).Delay(days), dropIn.Flag(conditions), detail))
                             yield return (input, s);
+                    }
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(output.ItemId)) continue;
 
-                DayTable outDep = luck ? DayTable.None : dep.Value.Then(gate).Delay(days);
-                DayTable outAny = any.Value.Then(gate).Delay(days);
-                foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, outDep, outAny, conditions, detail))
+                DayTable outDep = luck ? DayTable.None : feed.Value.Dependable.Then(gate).Delay(days);
+                DayTable outAny = feed.Value.Any.Then(gate).Delay(days);
+                foreach (ObtainSource s in SourcePair.Of(SourceKind.Machine, outDep, outAny, feed.Value.Flag(conditions), detail))
                     foreach (var emitted in ItemQueries.Emit(output.ItemId, objects, s))
                         yield return emitted;
             }
@@ -143,13 +150,10 @@ public static class MadeSources
     {
         foreach (RecipeRow recipe in rows)
         {
-            DayTable dep = DayTable.Always, any = DayTable.Always;
+            Derived.Input needed = Derived.Input.Free;
             foreach (string ingredient in recipe.Ingredients)
-            {
-                (DayTable d, DayTable a) = IngredientWeeks(ingredient, objects, snapshot);
-                dep = dep.Latest(d);
-                any = any.Latest(a);
-            }
+                needed = needed.Both(IngredientWeeks(ingredient, objects, snapshot));
+            DayTable dep = needed.Dependable, any = needed.Any;
             bool taughtByShop = recipeShopWeeks.TryGetValue(recipe.OutputId, out WeekMask taught);
             if (taughtByShop)
             {
@@ -161,7 +165,7 @@ public static class MadeSources
             if (recipe.AlternateOutputIds != null) outputs.AddRange(recipe.AlternateOutputIds);
             if (outputs.Count > 1) dep = DayTable.None;   // one output picked at random
             SourceKind kind = recipe.IsCooking ? SourceKind.Cooking : SourceKind.Crafting;
-            ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
+            ObtainConditions conditions = needed.Flag(UnlockConditions(recipe, taughtByShop));
             foreach (string output in outputs)
                 foreach (ObtainSource s in SourcePair.Of(kind, dep, any, conditions, $"recipe {recipe.Name}"))
                     yield return (output, s);
@@ -228,20 +232,16 @@ public static class MadeSources
         var setup = new[] { new SetupStep("building:" + FishPondBuilding, buildings.TryGetValue(FishPondBuilding, out int buildDays) ? buildDays : 0) };
         foreach ((PondRow pond, List<ObjInfo> fishes) in fishByPond)
         {
-            DayTable fishDep = DayTable.None, fishAny = DayTable.None;
-            foreach (ObjInfo fish in fishes)
-            {
-                fishDep = fishDep.Earliest(snapshot.Table(fish.QualifiedId, ObtainFilter.DependableOnly));
-                fishAny = fishAny.Earliest(snapshot.Table(fish.QualifiedId, ObtainFilter.Any));
-            }
+            Derived.Input stock = Derived.Sooner(fishes.Select(fish => Derived.Of(snapshot, fish.QualifiedId)));
+            DayTable fishDep = stock.Dependable, fishAny = stock.Any;
             foreach (PondProduct product in pond.Products)
             {
                 ConditionReading reading = ConditionSeasons.Read(product.Condition, festivals);
                 bool luck = product.Chance < 1.0 || reading.Chance || product.IsRandom;
-                ObtainConditions conditions = ConditionSeasons.Apply(ObtainConditions.None with
+                ObtainConditions conditions = stock.Flag(ConditionSeasons.Apply(ObtainConditions.None with
                 {
                     Requires = new[] { "building:" + FishPondBuilding, $"pond population {product.RequiredPopulation}" },
-                }, reading);
+                }, reading));
                 int growth = Math.Max(0, (product.RequiredPopulation - 1) * pond.SpawnTime);
                 DayTable gate = ConditionSeasons.Availability(reading, WeekMask.All);
                 DayTable dep = luck ? DayTable.None : fishDep.Delay(growth).Then(gate);
@@ -282,10 +282,11 @@ public static class MadeSources
         foreach ((string geode, string item, string? condition) in drops.Distinct())
         {
             ConditionReading reading = ConditionSeasons.Read(condition, festivals);
-            DayTable table = snapshot.Table(geode, ObtainFilter.Any).Then(ConditionSeasons.Availability(reading, WeekMask.All));
+            Derived.Input stone = Derived.Of(snapshot, geode);
+            DayTable table = stone.Any.Then(ConditionSeasons.Availability(reading, WeekMask.All));
             if (table.IsEmpty) continue;
             var template = new ObtainSource(SourceKind.Geode, table, Reliability.Chance,
-                ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "item:" + geode, GeodeOpener } }, reading),
+                stone.Flag(ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "item:" + geode, GeodeOpener } }, reading)),
                 $"opened from {geode}");
             foreach (var emitted in ItemQueries.Emit(item, objects, template))
                 yield return emitted;
@@ -302,18 +303,13 @@ public static class MadeSources
             .Select(o => o.QualifiedId);
     }
 
-    private static (DayTable Dependable, DayTable Any) IngredientWeeks(
+    /// <summary>One ingredient: an item id, or a negative category any item of that category fills.</summary>
+    private static Derived.Input IngredientWeeks(
         string ingredient, IReadOnlyDictionary<string, ObjInfo> objects, ObtainabilityModel snapshot)
     {
         if (!int.TryParse(ingredient, out int category) || category >= 0)
-            return (snapshot.Table(ingredient, ObtainFilter.DependableOnly), snapshot.Table(ingredient, ObtainFilter.Any));
-        DayTable dep = DayTable.None, any = DayTable.None;
-        foreach (ObjInfo o in objects.Values.Where(o => o.Category == category))
-        {
-            dep = dep.Earliest(snapshot.Table(o.QualifiedId, ObtainFilter.DependableOnly));
-            any = any.Earliest(snapshot.Table(o.QualifiedId, ObtainFilter.Any));
-        }
-        return (dep, any);
+            return Derived.Of(snapshot, ingredient);
+        return Derived.Sooner(objects.Values.Where(o => o.Category == category).Select(o => Derived.Of(snapshot, o.QualifiedId)));
     }
 
     private static bool MatchesTags(ObjInfo item, IReadOnlyList<string> tags)

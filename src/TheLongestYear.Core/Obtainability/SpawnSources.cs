@@ -13,9 +13,7 @@ public static class SpawnSources
     private const string AllDayTimeSpans = "600 2600";
     private const string FishingSkill = "Fishing";
     private const string MagicBaitId = "(O)908";
-
-    private static readonly ObtainFilter BaitAnyFilter = ObtainFilter.Any with { IncludeGingerIsland = true };
-    private static readonly ObtainFilter BaitDependableFilter = ObtainFilter.DependableOnly with { IncludeGingerIsland = true };
+    private const string NoBaitNote = " (Magic Bait has no source in the model; recorded as island gated)";
 
     /// <summary>Maps that only exist during a passive festival (BeachNightMarket.cs, Submarine.cs).</summary>
     private static readonly IReadOnlyDictionary<string, string> FestivalOnlyLocations =
@@ -100,23 +98,32 @@ public static class SpawnSources
         IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals,
         ObtainabilityModel snapshot)
     {
-        DayTable bait = snapshot.Table(MagicBaitId, BaitAnyFilter);
-        DayTable baitDep = snapshot.Table(MagicBaitId, BaitDependableFilter);
-        IReadOnlyList<ObtainSource> baitSources = snapshot.Sources(MagicBaitId);
-        bool baitIsland = baitSources.Count > 0 && baitSources.All(s => s.Conditions.GingerIsland);
+        Derived.Input bait = Derived.Of(snapshot, MagicBaitId);
 
         // A row needing bait can only be fished where the bait itself can be had; route the fish's
-        // table through the bait's, and pick up the bait's island flag when every bait source needs it.
-        // A source that is already luck (a random query, a random alternative) has no dependable half
-        // of its own, so it must not borrow the bait's dependable table: that would turn a chance fish
-        // dependable, and would erase the chance half whenever the bait itself is fully dependable.
+        // table through the bait's, and pick up the bait's island and year 2 flags when every bait
+        // source needs them. A source that is already luck (a random query, a random alternative) has
+        // no dependable half of its own, so it must not borrow the bait's dependable table: that would
+        // turn a chance fish dependable, and would erase the chance half whenever the bait itself is
+        // fully dependable.
+        // With no bait source at all the row is still recorded rather than dropped: Magic Bait is Mr
+        // Qi's, so the row is flagged island and Unresolved, and lands on its own days.
         IEnumerable<(string ItemId, ObtainSource Source)> ThroughBait(bool requiresBait, string id, ObtainSource source)
         {
             if (!requiresBait) { yield return (id, source); yield break; }
-            ObtainConditions conditions = source.Conditions with { GingerIsland = source.Conditions.GingerIsland || baitIsland };
-            DayTable dependable = source.Reliability == Reliability.Dependable ? baitDep.Then(source.Lands) : DayTable.None;
+            if (bait.IsEmpty)
+            {
+                yield return (id, source with
+                {
+                    Conditions = source.Conditions with { GingerIsland = true, Unresolved = true },
+                    Detail = source.Detail + NoBaitNote,
+                });
+                yield break;
+            }
+            ObtainConditions conditions = bait.Flag(source.Conditions);
+            DayTable dependable = source.Reliability == Reliability.Dependable ? bait.Dependable.Then(source.Lands) : DayTable.None;
             foreach (ObtainSource s in SourcePair.Of(
-                source.Kind, dependable, bait.Then(source.Lands), conditions, source.Detail, source.Setup))
+                source.Kind, dependable, bait.Any.Then(source.Lands), conditions, source.Detail, source.Setup))
                 yield return (id, s);
         }
 
@@ -124,7 +131,6 @@ public static class SpawnSources
         {
             if (Spawn(row, festivals, SourceKind.Fish, $"Fish at {row.Location}") is not ObtainSource baseTemplate)
                 continue;
-            if (row.RequireMagicBait && bait.IsEmpty) continue;   // no bait anywhere: the row cannot be fished
             // Resolve first, then look each concrete fish up: a query listing fish must not lose their data.
             QueryResult resolved = ItemQueries.Resolve(row.ItemId, objects);
             if (resolved.ItemIds.Count == 0)
