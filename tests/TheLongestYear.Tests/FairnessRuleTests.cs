@@ -373,6 +373,61 @@ public class FairnessRuleTests
     }
 
     [Fact]
+    public void An_inputs_setup_days_push_the_derived_landing()
+    {
+        ObtainSource x = Route(SourceKind.Machine, requires: new[] { "machine:(BC)12" },
+            inputs: new[] { new[] { Ingredient } }, available: d => d >= 110);
+        ObtainSource y = Route(SourceKind.Animal, requires: new[] { "building:Barn" },
+            setup: new[] { new SetupStep("building:Barn", 3), new SetupStep("animal:Cow", 1) },
+            available: d => d >= 108);
+        ObtainabilityModel model = ModelOf((Item, new[] { x }), (Ingredient, new[] { y }));
+        SaveSnapshot machineOnly = Save(machines: new[] { "(BC)12" });
+        SaveSnapshot machineBarnCow = Save(machines: new[] { "(BC)12" }, buildings: new[] { "Barn" }, animals: new[] { "Cow" });
+
+        // Y counts at 108 + 3 + 1 = 112 (right at the deadline). X's own landing (110) plus the
+        // propagated 4 days is 114, past the deadline, so X must not count on the bare farm.
+        Assert.False(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, machineOnly, model));
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, machineOnly, model);
+        Assert.Equal(4, verdict.Routes[0].AddedDays);
+
+        // With the barn and the cow already on the farm, Y needs no setup and X lands on its own day 110.
+        Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, machineBarnCow, model));
+    }
+
+    [Fact]
+    public void Parallel_input_groups_take_the_largest_setup_not_the_sum()
+    {
+        ObtainSource a = Route(SourceKind.Animal, requires: new[] { "building:Coop" },
+            setup: new[] { new SetupStep("building:Coop", 3) });
+        ObtainSource b = Route(SourceKind.Animal, requires: new[] { "building:Barn" },
+            setup: new[] { new SetupStep("building:Barn", 5) });
+        ObtainSource x = Route(SourceKind.Cooking, inputs: new[] { new[] { Ingredient }, new[] { Other } },
+            available: d => d >= 100);
+        ObtainabilityModel model = ModelOf((Item, new[] { x }), (Ingredient, new[] { a }), (Other, new[] { b }));
+        SaveSnapshot save = Save();
+
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, save, model);
+        Assert.Equal(5, verdict.Routes[0].AddedDays);
+        Assert.True(verdict.Counts);   // 100 + 5 = 105 <= 112
+    }
+
+    [Fact]
+    public void The_cheapest_member_of_a_group_sets_its_days()
+    {
+        ObtainSource a = Route(SourceKind.Animal, requires: new[] { "building:Coop" },
+            setup: new[] { new SetupStep("building:Coop", 5) });
+        ObtainSource b = Route(SourceKind.Animal, requires: new[] { "building:Barn" },
+            setup: new[] { new SetupStep("building:Barn", 1) });
+        ObtainSource x = Route(SourceKind.Cooking, inputs: new[] { new[] { Ingredient, Other } },
+            available: d => d >= 100);
+        ObtainabilityModel model = ModelOf((Item, new[] { x }), (Ingredient, new[] { a }), (Other, new[] { b }));
+        SaveSnapshot save = Save();
+
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, save, model);
+        Assert.Equal(1, verdict.Routes[0].AddedDays);
+    }
+
+    [Fact]
     public void Explain_names_every_route_and_the_verdict()
     {
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 40),

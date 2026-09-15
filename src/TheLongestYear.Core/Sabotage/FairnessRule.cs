@@ -113,13 +113,19 @@ public static class FairnessRule
         // not whether this player can get them: a Cheese Press with no cow is not a cheese route.
         // Extreme ignores conditions but not inputs, because an item made from nothing obtainable is
         // not obtainable at any level.
-        string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth);
+        int inputDays = NoDays;
+        string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth, ref inputDays);
         if (missing != null) return Out(source, missing);
+        added += inputDays;
         // Setup days are added after the landing rather than shifting the start; an accepted approximation.
         int lands = landing.Value + added;
         bool counts = lands <= deadlineDay;
         string reason = counts
-            ? (added > NoDays ? $"counts, lands day {lands} (+{added} day(s) of setup)" : $"counts, lands day {lands}")
+            ? (added > NoDays
+                ? (inputDays > NoDays
+                    ? $"counts, lands day {lands} (+{added} day(s) of setup, {inputDays} of them for inputs)"
+                    : $"counts, lands day {lands} (+{added} day(s) of setup)")
+                : $"counts, lands day {lands}")
             : $"lands day {lands}, after the deadline (day {deadlineDay})" + (added > NoDays ? $" with +{added} day(s) of setup" : "");
         return new RouteVerdict(source, counts, added, lands, reason);
     }
@@ -127,32 +133,48 @@ public static class FairnessRule
     /// <summary>Judges the route's input groups by the same rule: a group counts when ANY of its
     /// members counts, and every group must count. Returns the reason the route is out, or null when
     /// the route needs no item or every group is served. An id already being judged further up the
-    /// chain does not count, so a cycle (X made from Y, Y made from X) terminates.</summary>
+    /// chain does not count, so a cycle (X made from Y, Y made from X) terminates.
+    ///
+    /// The blind landing table for a derived item assumes its inputs are already sitting on the farm,
+    /// so an input that still needs its own setup (a missing barn, a missing cow, friendship days) has
+    /// to push the derived route's landing out too. <paramref name="added"/> comes back holding that
+    /// push: for each group it is the smallest AddedDays among the group's counting members (the
+    /// cheapest way to get any one of them), and across groups it is the LARGEST of those, because
+    /// ingredients are gathered in parallel rather than one after another.
+    ///
+    /// Known limitation: when the blind landing table was built from a fast input route that is
+    /// blocked on this farm while a slower alternative counts, the days propagated here are the
+    /// alternative's setup days, not the difference between the two routes' landings, so the answer
+    /// can come out a few days lenient.</summary>
     private static string? MissingInput(
         ObtainSource source, int hitDay, int deadlineDay, Policy policy, SaveSnapshot save,
-        ObtainabilityModel model, HashSet<string> stack, int depth)
+        ObtainabilityModel model, HashSet<string> stack, int depth, ref int added)
     {
         if (source.Inputs.Count == 0) return null;
         if (depth >= MaxInputDepth) return $"input chain deeper than {MaxInputDepth} steps, not judged";
+        int maxGroupDays = NoDays;
         foreach (IReadOnlyList<string> group in source.Inputs)
         {
             if (group.Count == 0) continue;
-            bool served = false;
+            int? bestDays = null;
             foreach (string id in group)
             {
                 if (!stack.Add(id)) continue;   // already on the stack: not a way in
                 try
                 {
-                    if (Judge(id, hitDay, deadlineDay, policy, save, model, stack, depth + 1).Counts)
-                    {
-                        served = true;
-                        break;
-                    }
+                    FairnessVerdict verdict = Judge(id, hitDay, deadlineDay, policy, save, model, stack, depth + 1);
+                    if (!verdict.Counts) continue;
+                    // The member's best counting route: among its routes that count, the one that
+                    // lands earliest, and that route's own AddedDays is what this member costs.
+                    int memberDays = verdict.Routes.Where(r => r.Counts).OrderBy(r => r.LandingDay).First().AddedDays;
+                    if (bestDays is null || memberDays < bestDays.Value) bestDays = memberDays;
                 }
                 finally { stack.Remove(id); }
             }
-            if (!served) return $"needs {string.Join(" or ", group)}, none obtainable";
+            if (bestDays is null) return $"needs {string.Join(" or ", group)}, none obtainable";
+            if (bestDays.Value > maxGroupDays) maxGroupDays = bestDays.Value;
         }
+        added += maxGroupDays;
         return null;
     }
 
