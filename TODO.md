@@ -129,7 +129,7 @@ cannot pay: roguelike rather than roguelite, and only at the harder settings.
 Built and headless-tested 2026-09-09 (see STATUS.md and
 `docs/superpowers/specs/2026-09-09-darkness-pushback-design.md`). What only a played run can check:
 
-**What changed under it on 2026-09-15 (Part B, commits `4613d36`..`afdcb72`, spec
+**What changed under it on 2026-09-15 (Part B, commits `4613d36`..`93b29c4`, spec
 `docs/superpowers/specs/2026-09-15-darkness-obtainability-wiring-design.md`).** The three separate
 nightly dice are gone: there is now ONE roll a night, with a chance that decays as the season wears
 on, and it fires ONE event. A Darkness dial (Easy, Normal, Hard, Extreme) sits in GMCM beside the
@@ -143,6 +143,13 @@ loop that ignores the model completely. On Extreme, chest blight also reaches to
 placed farm machines, counting three units each. `tly_sabotage fair <itemId> [level]` prints the
 verdict for one item against the current save, route by route, with the reason each route counts or is
 out: that is how to read what the picker will do without waiting for a night.
+
+**Three fix waves landed after the first build.** Ordinary tampering is now reserved during Winter
+week 1 until the guaranteed Winter tamper has landed, so a normal tamper roll cannot eat its slot; a
+derived route (grown, crafted or machine-made) carries its own inputs and the fairness rule judges
+those inputs recursively, with an input's setup days pushing the derived route's landing day forward;
+and the tamper replacement pool is the board's own item pools again, not the curated effort catalog, so
+a swap only ever hands the player something the board itself could hand out.
 
 **Staging recipe for the played run.** `tly_sabotage arm revert` then sleep stages a reversion on
 tonight's roll. For tampering, be on a Winter save (it is Winter only): `tly_sabotage arm tamper` then
@@ -179,6 +186,13 @@ nothing until the next loop: set it, then rewind for it to take.
   parsnips and a stocked chest below the stash; `tly_sabotage circle` places a carried circle.
 - **Pre-existing bug fixed on the way:** `EndingArmed` survived a reset (forced every night sunny
   for the whole next loop). Worth a master cherry-pick if a player report matches.
+- **Three things to watch on the played run, after the fix waves:** a tamper swap that looks wildly
+  mispriced or alphabetical (that is the effort default kicking in, meaning no closer-effort candidate
+  passed the fairness rule); a guaranteed Winter tamper firing specifically on the FIRST Winter of a
+  save (the inverted-flag bug meant it used to fire every Winter but the first, so double check it
+  really is Winter 1); and a Cheese or Wine reversion or tamper only landing when the animal or the
+  crop it needs is actually present on the farm (the input-judgement fix means these should now be
+  ruled out correctly when the source is missing, not waved through).
 
 ### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — measure real yields in game, clamp requirement rolls off the measured average
 

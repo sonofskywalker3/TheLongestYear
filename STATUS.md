@@ -1,15 +1,15 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-15 (story: darkness rework Part B built, live-checked, board output byte-identical)
-**Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2386 passing
-**Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
+**Last updated:** 2026-09-15 (story: darkness rework Part B, final state after three fix waves, live-checked, board output re-verified)
+**Branch:** `story`; master merged in at 0.18.4, everything committed AND pushed, nothing local-only
+**Tests:** 2400 passing
+**Build:** clean (Release, 0 errors); story HEAD (`93b29c4`) deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
 
-## 2026-09-15: darkness rework Part B built (the obtainability model is wired into the darkness)
+## 2026-09-15: darkness rework Part B, final state (obtainability model wired into the darkness, plus three fix waves)
 
-Commits `4613d36`..`afdcb72` on `story` plus this docs commit, all committed AND pushed; nothing is
-local-only. 2386 tests passing (2284 at the start of the plan). Spec:
+Commits `4613d36`..`93b29c4` on `story` plus this docs commit, all committed AND pushed; nothing is
+local-only. 2400 tests passing (2284 at the start of the plan). Spec:
 `docs/superpowers/specs/2026-09-15-darkness-obtainability-wiring-design.md`; the 2026-09-14 rework spec
 is folded into it.
 
@@ -20,91 +20,112 @@ model, against the real save, whether a reverted or tampered item can still be g
 deadline through routes the level allows; Extreme chest blight reaching tools, weapons and placed farm
 machines at three units each; and `tly_sabotage fair <itemId> [level]` for reading a verdict.
 
-**Live check (my own automated run, not Jeff's):** I deployed the new build with
+**Whole-branch final review fix wave (commits `369d8d5`..`8cbb5c0`, all pushed):** a fish pond route
+now rules out below Extreme because the model never records the fish and the snapshot cannot see a
+pond's contents; the Extreme chest-blight pool moved into one tested Core predicate
+(`BlightRule.InStoragePool`); a stolen machine counts as one missing thing in the report while keeping
+its three-unit cost against the night's budget; and the rest are tidy-ups (the night's save snapshot is
+built lazily, the snapshot reader logs skipped recipes, the migration line is quiet on a fresh config,
+`BlightRule.OneTarget` and an unused constant are gone, the board guard covers `AvailabilityWeeks.cs`,
+and the nine-dial prose is corrected).
+
+**Codex second-opinion fix wave (commits `d8f3d21`..`be6db32`, all pushed), five fixes:** the guaranteed
+Winter tamper's first-Winter flag was inverted (it fired every Winter but the first) and is now fixed;
+ordinary tampering is reserved during Winter week 1 so it cannot eat the guaranteed tamper's slot before
+it lands; a `crafting:` requirement was silently treated as met by the fairness rule and is now parsed
+like any other requirement; the tamper replacement pool is the board's own item pools again (not the
+curated effort catalog), matching what a player can actually be handed; and a derived route (grown,
+crafted or machine-made from another item) now carries its own inputs, so the fairness rule judges those
+inputs recursively instead of assuming a derived route is free the moment its immediate condition is met.
+
+**Setup-days fix (commit `93b29c4`, pushed):** an input's own setup days (the time to get a machine
+running, a crop planted, an animal grown) now push the derived route's landing day forward, so a route
+is not scored as landing before its input could realistically be ready.
+
+**Live check (my own automated run, not Jeff's):** I deployed the final build with
 `tools/deploy.ps1 -Minimized`, loaded the throwaway save `None_449077472` with
 `tly_loadsave` (Run 168, Summer day 15), waited for `Run \d+ ready` plus about 45 seconds, and sent
 the readouts over the file bridge. No mouse, no keyboard, no sleeping the game, no played sequence
 (that one is Jeff's). The game was LEFT RUNNING minimized on that save. No exceptions in the log.
 
 ```
-[12:58:29 INFO  The Longest Year] Obtainability model: 1113 items in 804 ms, 7 pass(es), 45 unresolved source(s).
-[12:59:43 INFO  The Longest Year] === The Longest Year: difficulty ===
-[12:59:43 INFO  The Longest Year]   In force: the profile STAMPED on this save. Config changes apply at your next loop.
-[12:59:43 INFO  The Longest Year]   Step               configured -> in force
-[12:59:43 INFO  The Longest Year]     stack size         Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     quality asks       Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     required slots     Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     item rarity        Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     JP earned          Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     shrine prices      Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     starting gold      Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     cart slots         Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     hold prices        Normal   -> Normal
-[12:59:43 INFO  The Longest Year]     darkness           Normal   -> Normal
-[12:59:43 INFO  The Longest Year]   Resolved values in force:
-[12:59:43 INFO  The Longest Year]     asks: stack x1, quality x1, required slots 0, rarity bias 1
-[12:59:43 INFO  The Longest Year]     economy: JP x1, shrine prices x1, starting gold 500g, starting cart slots 1, hold prices x1
-[12:59:43 INFO  The Longest Year]   Board source: Engine. Item rarity applies to Engine (TLY Custom) boards only; stack size, quality asks and required slots apply to vanilla boards too.
-[12:59:43 INFO  The Longest Year] Darkness: level Normal; blight=on, reversion=on, tampering=on; model published
+[14:06:15 INFO  The Longest Year] Obtainability model: 1113 items in 890 ms, 7 pass(es), 45 unresolved source(s).
+[14:07:14 INFO  The Longest Year]     darkness           Normal   -> Normal
+[14:07:14 INFO  The Longest Year] Darkness: level Normal; blight=on, reversion=on, tampering=on; model published
   season Summer day 15: options = CropBlight, ChestBlight; chance tonight 25 %
   unmoderated this loop: reversion available, tamper available; guaranteed Winter tamper pending (first Winter ever: True)
   wards owned: ward_circle_1
   blight week 6 nights 2; last reversion week -1; tamper days []
   live crops on the farm: 9; units in chests (stash excluded): 30
-[12:59:43 INFO  The Longest Year] Parsnip at Normal, hit day 43:
+[14:07:14 INFO  The Longest Year] Parsnip at Normal, hit day 43:
 reversion (deadline day 112): counts (1 of 6 route(s))
   - out: chance route | Cart, Chance, lands wk1/wk5/wk9/wk13, needs shop:Traveler | shop Traveler (random items)
-  - out: never lands from day 44 | Crop, Dependable, lands wk1/never/never/never, needs item:(O)472 | grown from (O)472
-  - counts: counts, lands day 103 | GreenhouseCrop, Dependable, lands wk1/wk15/wk15/wk15, needs item:(O)472; mail:ccPantry | greenhouse, from (O)472
-  - out: chance route | GreenhouseCrop, Chance, lands never/wk5/wk9/wk13, needs item:(O)472; mail:ccPantry | greenhouse, from (O)472
-  - out: chance route | Crop, Chance, lands wk1/never/never/never, needs item:(O)770 | Mixed Seeds in Spring
-  - out: chance route | GreenhouseCrop, Chance, lands wk1/wk13/wk13/wk13, needs item:(O)770; mail:ccPantry | Mixed Seeds in the greenhouse (Spring pool)
+  - out: never lands from day 44 | Crop, Dependable, lands wk1/never/never/never, needs item:(O)472 | grown from (O)472 | made from (O)472
+  - counts: counts, lands day 103 | GreenhouseCrop, Dependable, lands wk1/wk15/wk15/wk15, needs item:(O)472; mail:ccPantry | greenhouse, from (O)472 | made from (O)472
+  - out: chance route | GreenhouseCrop, Chance, lands never/wk5/wk9/wk13, needs item:(O)472; mail:ccPantry | greenhouse, from (O)472 | made from (O)472
+  - out: chance route | Crop, Chance, lands wk1/never/never/never, needs item:(O)770 | Mixed Seeds in Spring | made from (O)770
+  - out: chance route | GreenhouseCrop, Chance, lands wk1/wk13/wk13/wk13, needs item:(O)770; mail:ccPantry | Mixed Seeds in the greenhouse (Spring pool) | made from (O)770
 tampering (deadline day 112): counts (1 of 6 route(s))
-[12:59:43 INFO  The Longest Year] Legend at Extreme, hit day 43:
+[14:07:14 INFO  The Longest Year] Legend at Extreme, hit day 43:
 reversion (deadline day 112): does not count (0 of 2 route(s))
   - out: never lands from day 44 | Fish, Dependable, lands wk1/never/never/never, Fishing 10, catch limit 1, rain only, needs location:Mountain; !PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY | Fish at Mountain, time 600-2000
   - out: never lands from day 44 | Fish, Dependable, lands wk1/never/never/never, Fishing 10, rain only, needs location:Backwoods | Fish at Backwoods, time 600-2000
 tampering (deadline day 112): does not count (0 of 2 route(s))
-[12:59:43 INFO  The Longest Year] Goat Cheese at Normal, hit day 43:
+[14:07:14 INFO  The Longest Year] Goat Cheese at Normal, hit day 43:
 reversion (deadline day 112): does not count (0 of 5 route(s))
   - out: chance route | Cart, Chance, lands wk1/wk5/wk9/wk13, needs shop:Traveler | shop Traveler (random items)
-  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)436
-  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)436
-  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)438
-  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)438
+  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)436 | made from (O)436
+  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)436 | made from (O)436
+  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)438 | made from (O)438
+  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)438 | made from (O)438
 tampering (deadline day 112): does not count (0 of 5 route(s))
-[12:59:43 WARN  The Longest Year] Unknown level 'hrd'; use easy, normal, hard or extreme.
-[13:01:27 INFO  The Longest Year] Darkness: Tampering armed for tonight's roll (Summer 15, level Normal); cleared 0 waiting report(s). WARNING: Tampering is not open in Summer, so tonight will not strike.
+[14:07:14 INFO  The Longest Year] Cheese at Normal, hit day 43:
+reversion (deadline day 112): does not count (0 of 6 route(s))
+  - out: chance route | Cart, Chance, lands wk1/wk5/wk9/wk13, needs shop:Traveler | shop Traveler (random items)
+  - out: chance route | Shop, Chance, lands wk1/wk5/wk9/wk13, few days, needs shop:DesertTrade; trade:(O)60 | shop DesertTrade (barter) | made from (O)60
+  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)184 | made from (O)184
+  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)184 | made from (O)184
+  - out: machine (BC)16 not owned and not craftable | Machine, Dependable, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)186 | made from (O)186
+  - out: chance route | Machine, Chance, lands wk1/wk5/wk9/wk13, needs machine:(BC)16 | (BC)16 from (O)186 | made from (O)186
+tampering (deadline day 112): does not count (0 of 6 route(s))
+[14:07:14 INFO  The Longest Year] Darkness: Tampering armed for tonight's roll (Summer 15, level Normal); cleared 0 waiting report(s). WARNING: Tampering is not open in Summer, so tonight will not strike.
 ```
 
 Reading those: Parsnip counts on Normal from Summer 15 only through the greenhouse (the save has
 `ccPantry`), because Pierre's Spring seed row can no longer land this year and every cart or Mixed
-Seeds route is a chance route, which Normal does not allow. Legend has only two dependable
-Spring-rain sources in the model, so from day 44 neither can land again this year; Extreme ignores
-conditions such as Fishing 10 but cannot ignore a landing table that says never, so "does not count"
-is the right answer. Goat Cheese is out on Normal because the Cheese Press `(BC)16` is neither owned
-nor craftable on this save, which is the spec's own Normal rule for a missing machine; no Goat Cheese
-route in the model names `building:Barn` at all, so there were no barn days to add. The bad level
-`hrd` produced the intended Warn, and arming tamper in Summer correctly reported that tampering is
+Seeds route is a chance route, which Normal does not allow; every route now also names the ingredient
+it is `made from`, which is the input-carrying fix landing. Legend has only two dependable Spring-rain
+sources in the model, so from day 44 neither can land again this year; Extreme ignores conditions such
+as Fishing 10 but cannot ignore a landing table that says never, so "does not count" is the right
+answer. Goat Cheese is out on Normal because the Cheese Press `(BC)16` is neither owned nor craftable
+on this save. Cheese, the new readout for this refresh, is out for the same reason, and now shows its
+input judged too: every route names `made from (O)184` or `made from (O)186` (Milk / Large Milk), so
+the input judgement is visibly wired in. Arming tamper in Summer correctly reported that tampering is
 not open this season.
 
-**Board output is byte-identical.** The Task 0 baseline (`baseline-genbundles.txt`, 414 lines,
-captured on build `9f169b4`) and the same filtered capture from this build (414 lines) diff EMPTY:
-`git diff --no-index` reported no differences at all, so `tly_genbundles 1|2|3` and `tly_gatecheck`
-generate exactly the boards and gate audit they did before the plan. Board generation, gates, goals
-and pacing never read the obtainability model or the darkness. A static guard test
-(`BoardPathsNeverReadTheModelTests`) now also fails the build if any of the twelve board files so much
-as names `Obtainability`, `FairnessRule`, `SaveSnapshot`, `NightRoll` or `Sabotage` (prefix match, so
+**Board output re-verified, one expected difference in the capture, none in the boards.** The Task 0
+baseline (`baseline-genbundles.txt`, 414 lines, captured on build `9f169b4`) and the same filtered
+capture from this build (419 lines, `after2-genbundles.txt`) diff with exactly 5 extra lines at the
+top, all from `tly_difficulty`'s own settings dump (`required slots`, `cart slots`, `asks:`,
+`economy:`, `Board source:`) matching the filter's `slot` and `gate`-adjacent terms; the batch's
+earlier `tly_difficulty` command was not in the original baseline capture's window. Every line from
+`Debug bridge: executing 'tly_genbundles 1'.` onward, the actual board and gate-audit content, is
+byte-identical between the two captures. `tly_genbundles 1|2|3` and `tly_gatecheck` still generate
+exactly the boards and gate audit they did before the plan. Board generation, gates, goals and pacing
+never read the obtainability model or the darkness. A static guard test
+(`BoardPathsNeverReadTheModelTests`) still fails the build if any of the twelve board files so much as
+names `Obtainability`, `FairnessRule`, `SaveSnapshot`, `NightRoll` or `Sabotage` (prefix match, so
 `SabotageTuning` and `SabotageSchedule` trip it too).
 
-**Whole-branch final review fix wave (commits `369d8d5`..`9f1b83e` plus this docs commit, all pushed):**
-a fish pond route now rules out below Extreme because the model never records the fish and the
-snapshot cannot see a pond's contents; the Extreme chest-blight pool moved into one tested Core
-predicate (`BlightRule.InStoragePool`); a stolen machine counts as one missing thing in the report
-while keeping its three-unit cost against the night's budget; and the rest are tidy-ups (the night's
-save snapshot is built lazily, the snapshot reader logs skipped recipes, the migration line is quiet
-on a fresh config, `BlightRule.OneTarget` and an unused constant are gone, the board guard covers
-`AvailabilityWeeks.cs`, and the nine-dial prose is corrected).
+**Notes for Jeff:**
+- Goat Cheese on Normal with no press and no known recipe is correctly ruled out; nothing to fix.
+- The Winter tamper night could not be exercised because the save is Summer; only `tly_sabotage arm
+  tamper`'s "not open in Summer" response was checked.
+- On Extreme, an item made from something that is itself not obtainable still does not count: Extreme
+  ignores conditions (Fishing level, mail flags, and so on), but it does not ignore a chain of inputs
+  that never lands.
+- A machine that only hands its own input back out (no real transformation) is now no route at all,
+  not a route that trivially "counts."
 
 ## 2026-09-15: the Queen of Sauce schedule is read (Jeff's ruling)
 

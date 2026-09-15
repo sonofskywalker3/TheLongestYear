@@ -1,7 +1,7 @@
 # Darkness Rework, Part B: Wiring the Obtainability Model
 
 **Date:** 2026-09-15
-**Status:** built (commits `4613d36`..`afdcb72`), live-checked 2026-09-15 on the throwaway save; Jeff's played run pending
+**Status:** built (commits `4613d36`..`93b29c4`), live-checked 2026-09-15 on the throwaway save after the fix waves; Jeff's played run pending
 **Branch:** `story`
 **Builds on:** `2026-09-14-darkness-rework-design.md` (the approved scheduling, dial, blight numbers,
 guaranteed Winter tamper and stack limits, all unbuilt until now), `2026-09-14-obtainability-phase2-design.md`
@@ -144,6 +144,14 @@ purpose of comparing them. If no target has a fair replacement, tampering has no
 **Sneak Peek Boost** is not consulted. The year 2 TV route is by level only (Jeff, 2026-09-15: "count
 it as available always on hard and extreme only"). A Normal player who bought the boost is never asked
 for one of the eight dishes and never has one reverted; that only makes Normal gentler.
+
+**Built as:** a derived route (grown, crafted or machine-made from another item) carries its own
+inputs and is judged recursively, with the input's own setup days propagated into the derived route's
+landing day, the largest such push winning across sibling groups and the smallest winning within a
+group. The case of a fast but currently-blocked input against a slower always-available alternative is
+resolved leniently, by the size of the setup-day difference rather than by a hard cutoff. Fish pond
+routes rule out below Extreme in every case, because pond contents are never modelled in the save
+snapshot.
 
 ## Section 2: the night, the dial and the numbers (the approved rework, unchanged in substance)
 
