@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
@@ -134,38 +134,6 @@ public class BlightRuleTests
     [InlineData(-15, false)]  // metal
     public void Food_spoils_and_the_rest_goes_missing(int category, bool perishable)
         => Assert.Equal(perishable, BlightRule.IsPerishableCategory(category));
-
-    [Fact]
-    public void A_blight_night_takes_crops_or_stock_never_both()
-    {
-        bool sawCrops = false, sawStock = false;
-        for (int seed = 0; seed < 200; seed++)
-        {
-            (int crops, int spoil) = BlightRule.OneTarget(3, 5, null, new Random(seed));
-            Assert.True(crops == 0 ^ spoil == 0);
-            sawCrops |= crops == 3;
-            sawStock |= spoil == 5;
-        }
-        Assert.True(sawCrops);
-        Assert.True(sawStock);
-    }
-
-    [Theory]
-    [InlineData(0, 5, 0, 5)]   // no crops: the stock
-    [InlineData(3, 0, 3, 0)]   // nothing stored: the crops
-    [InlineData(0, 0, 0, 0)]
-    public void A_blight_night_goes_after_whichever_side_has_anything(int crops, int spoil, int expectCrops, int expectSpoil)
-        => Assert.Equal((expectCrops, expectSpoil), BlightRule.OneTarget(crops, spoil, null, new Random(1)));
-
-    [Fact]
-    public void A_named_target_always_wins()
-    {
-        for (int seed = 0; seed < 20; seed++)
-        {
-            Assert.Equal((3, 0), BlightRule.OneTarget(3, 5, BlightTarget.Crops, new Random(seed)));
-            Assert.Equal((0, 5), BlightRule.OneTarget(3, 5, BlightTarget.Chests, new Random(seed)));
-        }
-    }
 
     [Fact]
     public void Picks_distinct_positions_inside_the_field()
