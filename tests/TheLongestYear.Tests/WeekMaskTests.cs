@@ -5,8 +5,8 @@ namespace TheLongestYear.Tests;
 
 /// <summary>WeekMask facts re-homed here (phase 2 task 2 fix round 1) after
 /// ObtainabilityModelTests.cs was wholesale replaced per the phase 2 plan: these still-live WeekMask
-/// behaviours had no other home. ShiftLater and FromWeekOnward are not covered here: those methods
-/// are dead after the DayTable conversion and Task 5 deletes them.</summary>
+/// behaviours had no other home. ShiftLater and the instance FromWeekOnward were dead after the
+/// DayTable conversion and Task 5 deleted them.</summary>
 public class WeekMaskTests
 {
     [Fact]

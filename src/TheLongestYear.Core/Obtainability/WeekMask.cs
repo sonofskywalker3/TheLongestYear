@@ -62,14 +62,6 @@ public readonly record struct WeekMask(ushort Bits)
         }
     }
 
-    /// <summary>Every week from the earliest one on: a thing once had stays had (a fish pond, a
-    /// learned recipe).</summary>
-    public WeekMask FromWeekOnward() => Earliest is int e ? FromWeekOnwardOf(e) : None;
-
-    /// <summary>Moves every week later by <paramref name="weeks"/>; weeks pushed past 16 are gone,
-    /// because a loop ends at Winter 28.</summary>
-    public WeekMask ShiftLater(int weeks) => weeks <= 0 ? this : new((ushort)((Bits << weeks) & AllBits));
-
     public WeekMask Except(WeekMask other) => new((ushort)(Bits & ~other.Bits));
 
     public static WeekMask operator |(WeekMask a, WeekMask b) => new((ushort)(a.Bits | b.Bits));
