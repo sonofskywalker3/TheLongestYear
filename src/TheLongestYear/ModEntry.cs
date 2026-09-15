@@ -1882,7 +1882,16 @@ namespace TheLongestYear
                 case "fair":
                 {
                     if (args.Length < 2) { this.Monitor.Log("Usage: tly_sabotage fair <itemId> [easy|normal|hard|extreme]", LogLevel.Warn); break; }
-                    TheLongestYear.Core.DifficultyStep? at = args.Length > 2 && System.Enum.TryParse(args[2], true, out TheLongestYear.Core.DifficultyStep parsed) ? parsed : null;
+                    TheLongestYear.Core.DifficultyStep? at = null;
+                    if (args.Length > 2)
+                    {
+                        if (!System.Enum.TryParse(args[2], true, out TheLongestYear.Core.DifficultyStep parsed))
+                        {
+                            this.Monitor.Log($"Unknown level '{args[2]}'; use easy, normal, hard or extreme.", LogLevel.Warn);
+                            break;
+                        }
+                        at = parsed;
+                    }
                     this.Monitor.Log(_sabotage.Explain(args[1], at), LogLevel.Info);
                     break;
                 }
