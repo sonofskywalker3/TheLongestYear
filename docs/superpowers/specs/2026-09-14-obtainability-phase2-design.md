@@ -2,11 +2,11 @@
 
 **Date:** 2026-09-14
 **Status:** phase 2 built (commits `639dd34`..`51ab859`), review findings fixed (commits
-`ea68649`..`3feb9fe`), Jeff's two rulings taken (`e0e980f`, `7f6539f`: the Queen of Sauce schedule is
-read). Live rerun 2026-09-15 on the throwaway save after the TV commit: `Obtainability model: 1113
-items in 794 ms, 7 pass(es), 45 unresolved source(s).`; NewEarlier 159, NewLater 16, LuckOnly 145,
-OnlyExisting 7, OnlyNew 606, Agree 145, 24 dependable only through an unresolved source (the run
-before it: 173 / 14 / 137 / 7 / 606 / 141). 327 items listed for ruling in STATUS.md and
+`ea68649`..`3feb9fe`), Jeff's two rulings taken (`e0e980f`, `7f6539f`, `3a5a705`: the Queen of Sauce
+schedule is read). Live rerun 2026-09-15 on the throwaway save after the TV commits: `Obtainability
+model: 1113 items in 799 ms, 7 pass(es), 45 unresolved source(s).`; NewEarlier 160, NewLater 14,
+LuckOnly 145, OnlyExisting 7, OnlyNew 606, Agree 146, 24 dependable only through an unresolved source
+(the run before it: 173 / 14 / 137 / 7 / 606 / 141). 326 items listed for ruling in STATUS.md and
 `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`
 **Branch:** `story`
 **Builds on:** `2026-09-14-item-obtainability-design.md` (phase 1, the blind build)

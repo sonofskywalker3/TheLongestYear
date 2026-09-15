@@ -20,8 +20,8 @@ through an unresolved source, 45 unresolved sources (the run before the fixes wa
 177 / 5 / 137 / 7 / 606 / 146 / 21). Only 34 items moved, every one of them the Desert Festival stall
 fix. Nothing reads the model for gameplay yet.
 
-- **OPEN: Jeff rules on the rerun report: 327 items** (159 NewEarlier, 16 NewLater, 145 LuckOnly,
-  7 OnlyExisting; 331 / 173 / 14 / 137 / 7 before the Queen of Sauce commit). The grouped list with a
+- **OPEN: Jeff rules on the rerun report: 326 items** (160 NewEarlier, 14 NewLater, 145 LuckOnly,
+  7 OnlyExisting; 331 / 173 / 14 / 137 / 7 before the Queen of Sauce commits). The grouped list with a
   plain-English reason per group and the item ids is in
   `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md` sections 4 and 7.4; the
   summary and the outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling
@@ -36,9 +36,10 @@ fix. Nothing reads the model for gameplay yet.
   lands on the Sunday that is day 7k of year 1 (TV.cs 518), episodes past 16 are flagged year 2, and a
   Wednesday rerun only repeats an earlier episode so it adds nothing. A recipe whose unlock is "none",
   "null" or a farmhouse-level unlock ("l 0") has its old "taught some other way" guess replaced by the TV route; a skill or
-  friendship unlock keeps its own source and gains the TV one beside it. Live rerun 2026-09-15: 22
-  dishes moved, counts now NewEarlier 159, NewLater 16, LuckOnly 145, OnlyExisting 7, OnlyNew 606,
-  Agree 145.
+  friendship unlock keeps its own source and gains the TV one beside it, and so does a shop that
+  teaches the same recipe (`3a5a705`: the Saloon teaches seven of the TV recipes). Live rerun
+  2026-09-15: 15 dishes moved, counts now NewEarlier 160, NewLater 14, LuckOnly 145, OnlyExisting 7,
+  OnlyNew 606, Agree 146.
 - **Closed in phase 2 (commits `639dd34`..`51ab859`):** the start-week meaning (sources carry a
   112-slot `DayTable`, every question is "start on this day, when does it land"); mine fish
   (Stonefish, Ice Pip, Lava Eel); Tea Leaves via the tea bush with its 20-day setup; the season seeds

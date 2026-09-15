@@ -8,47 +8,54 @@
 
 ## 2026-09-15: the Queen of Sauce schedule is read (Jeff's ruling)
 
-Commit `7f6539f` on top of the fix wave, pushed. `Data/TV/CookingChannel` is a glue section of its own
+Commits `7f6539f` and `3a5a705` on top of the fix wave, pushed. `Data/TV/CookingChannel` is a glue section of its own
 and hands the model each cooking recipe's episode number. Episode k airs on the Sunday that is day 7k
 of year 1 (TV.cs `getWeeklyRecipe` 518: `whichWeek = DaysPlayed % 224 / 7`), so a dish's TV route is
 its ingredients AND that Sunday; episodes 17 to 32 air in year 2 and are flagged, so the default
 filters leave them out. A Wednesday rerun only repeats an EARLIER episode, so it never adds a week.
 
-A recipe whose unlock is "none", "null" or a farmhouse level ("l 0") has its old "taught some other
-way" guess REPLACED by the TV route; a skill or friendship unlock keeps its own source and gains the
-TV one beside it.
+A recipe whose unlock is "none", "null" or a farmhouse level ("l 0") AND that no shop teaches has its
+old "taught some other way" guess REPLACED by the TV route; only that guess is replaced. A skill
+unlock, a friendship unlock or a shop that teaches the same recipe is a resolved route of its own, so
+it keeps its source and gains the TV one beside it.
 
 **Live build (automated run, throwaway save `None_449077472`, launched minimized):**
 
 ```
-[08:31:18 INFO  The Longest Year] Obtainability model: 1113 items in 794 ms, 7 pass(es), 45 unresolved source(s).
-[08:31:31 INFO  The Longest Year] (O)220 Chocolate Cake: 3 source(s); from day 1 dependable lands week 14, any lands week 1
-  - Cooking, Dependable, lands wk14/wk14/wk14/wk14, needs recipe:Chocolate Cake; unlock:Queen of Sauce episode 14 (Sunday of week 14) | recipe Chocolate Cake taught by the Queen of Sauce
-[08:31:48 INFO  The Longest Year] (O)195 Omelet: 4 source(s); from day 1 dependable lands week 4, any lands week 1
+[08:43:20 INFO  The Longest Year] Obtainability model: 1113 items in 799 ms, 7 pass(es), 45 unresolved source(s).
+[08:43:26 INFO  The Longest Year] (O)195 Omelet: 6 source(s); from day 1 dependable lands week 1, any lands week 1
+  - Cooking, Dependable, lands wk1/wk5/wk9/wk13, needs recipe:Omelet; unlock:l 10 | recipe Omelet
   - Cooking, Dependable, lands wk4/wk5/wk9/wk13, needs recipe:Omelet; unlock:Queen of Sauce episode 4 (Sunday of week 4) | recipe Omelet taught by the Queen of Sauce
-[08:31:59 INFO  The Longest Year] tly_obtain compare: wrote ...obtainability-compare.md (1078 items: OnlyNew 606, NewEarlier 159, NewLater 16, LuckOnly 145, Agree 145, OnlyExisting 7; 45 unresolved).
+[08:43:26 INFO  The Longest Year] (O)220 Chocolate Cake: 3 source(s); from day 1 dependable lands week 14, any lands week 1
+  - Cooking, Dependable, lands wk14/wk14/wk14/wk14, needs recipe:Chocolate Cake; unlock:Queen of Sauce episode 14 (Sunday of week 14) | recipe Chocolate Cake taught by the Queen of Sauce
+[08:43:32 INFO  The Longest Year] tly_obtain compare: wrote ...obtainability-compare.md (1078 items: OnlyNew 606, NewEarlier 160, NewLater 14, LuckOnly 145, Agree 146, OnlyExisting 7; 45 unresolved).
 ```
 
 | Verdict | Previous run | After the TV schedule |
 |---|---|---|
-| NewEarlier | 173 | 159 |
-| NewLater | 14 | 16 |
+| NewEarlier | 173 | 160 |
+| NewLater | 14 | 14 |
 | LuckOnly | 137 | 145 |
 | OnlyExisting | 7 | 7 |
 | OnlyNew | 606 | 606 |
-| Agree | 141 | 145 |
+| Agree | 141 | 146 |
 | Dependable only through an unresolved source | 24 | 24 |
 | Unresolved sources | 45 | 45 |
 
-**Exactly 22 items moved, every one a cooked dish.** Seven wait for their episode and stay
-NewEarlier: Omelet 1 to 4, Baked Fish 1 to 5, Hashbrowns 1 to 3, Pancakes 1 to 3, Farmer's Lunch 1 to
-4, Dish O' The Sea 1 to 3, Maple Bar 2 to 3. Five now AGREE with the
-existing model: Glazed Yams 10 to 11, Chocolate Cake 1 to 14, Plum Pudding 9 to 13, Pumpkin Pie 10 to
-15, Cranberry Candy 10 to 16. Two go NewLater: Maki Roll 1 to 7, Tortilla 7 to 9. Eight fall to
-LuckOnly because their episode is a year 2 one and the default filters exclude it, leaving only the
-cart: Complete Breakfast, Carp Surprise, Roasted Hazelnuts, Fruit Salad, Blackberry Cobbler,
+**Exactly 15 items moved, every one a cooked dish.** Two wait for their episode and stay NewEarlier:
+Baked Fish 1 to 5, Maple Bar 2 to 3. Five now AGREE with the existing model: Glazed Yams 10 to 11,
+Chocolate Cake 1 to 14, Plum Pudding 9 to 13, Pumpkin Pie 10 to 15, Cranberry Candy 10 to 16. Eight
+fall to LuckOnly because their episode is a year 2 one and the default filters exclude it, leaving
+only the cart: Complete Breakfast, Carp Surprise, Roasted Hazelnuts, Fruit Salad, Blackberry Cobbler,
 Bruschetta, Poppyseed Muffin, Shrimp Cocktail. The existing model calls Bruschetta a "year-2 episode"
 too, so that is agreement, not a loss.
+
+A first build of this pushed seven more dishes later than they should be: the TV route was replacing
+the old source whenever the unlock was taught elsewhere, shop or no shop, so the seven recipes the
+Saloon ALSO teaches (Omelet, Pancakes, Maki Roll, Bread, Tortilla, Pizza, Hashbrowns, all farmhouse
+level unlocks) lost their shop route, and Farmer's Lunch and Dish O' The Sea followed their ingredients.
+Fixed in `3a5a705`: the TV route replaces only the unresolved guess, and otherwise sits beside the
+shop route. The numbers above are the fixed build.
 
 ## 2026-09-15: obtainability phase 2, the review fix wave (12 findings, live rerun)
 
