@@ -1,0 +1,254 @@
+using System;
+using System.Collections.Generic;
+using TheLongestYear.Core;
+using TheLongestYear.Core.Obtainability;
+using TheLongestYear.Core.Sabotage;
+using Xunit;
+
+namespace TheLongestYear.Tests;
+
+/// <summary>Spec 2026-09-15 Part B, section 1: every cell of the "which routes count" table,
+/// against a fake model built from hand-made sources.</summary>
+public class FairnessRuleTests
+{
+    private const string Item = "(O)999";
+    private const int Hit = 60;          // Fall 4
+    private const int Deadline = 112;    // Winter 28
+
+    private static ObtainabilityModel Model(params ObtainSource[] sources)
+        => new(new Dictionary<string, IReadOnlyList<ObtainSource>> { [Item] = sources });
+
+    private static ObtainSource Route(
+        SourceKind kind = SourceKind.Forage, Reliability reliability = Reliability.Dependable,
+        Func<int, bool>? available = null, string[]? requires = null, string? skill = null, int skillLevel = 0,
+        bool yearTwo = false, bool island = false, bool unresolved = false, SetupStep[]? setup = null)
+        => new(kind, DayTable.Available(available ?? (_ => true)), reliability,
+            ObtainConditions.None with
+            {
+                Requires = requires ?? Array.Empty<string>(), Skill = skill, SkillLevel = skillLevel,
+                YearTwo = yearTwo, GingerIsland = island, Unresolved = unresolved,
+            }, "test") { Setup = setup ?? Array.Empty<SetupStep>() };
+
+    private static SaveSnapshot Save(
+        string[]? recipes = null, string[]? buildings = null, string[]? machines = null, string[]? craftable = null,
+        string[]? animals = null, string[]? mail = null, int floor = 0, int mining = 0, int fishing = 0,
+        Dictionary<string, int>? friendship = null)
+        => new(
+            new HashSet<string>(recipes ?? Array.Empty<string>()), new HashSet<string>(buildings ?? Array.Empty<string>()),
+            new HashSet<string>(machines ?? Array.Empty<string>()), new HashSet<string>(craftable ?? Array.Empty<string>()),
+            new HashSet<string>(animals ?? Array.Empty<string>()), friendship ?? new Dictionary<string, int>(),
+            new HashSet<string>(mail ?? Array.Empty<string>()), floor,
+            new Dictionary<string, int> { ["Mining"] = mining, ["Fishing"] = fishing });
+
+    private static bool Counts(DifficultyStep level, SaveSnapshot save, params ObtainSource[] sources)
+        => FairnessRule.Counts(Item, Hit, Deadline, level, save, Model(sources));
+
+    [Fact]
+    public void No_model_means_everything_counts()
+        => Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Easy, Save(), null));
+
+    [Fact]
+    public void No_source_at_all_never_counts()
+        => Assert.False(FairnessRule.Counts("(O)1", Hit, Deadline, DifficultyStep.Extreme, Save(), Model()));
+
+    [Theory]
+    [InlineData(DifficultyStep.Easy, false)]
+    [InlineData(DifficultyStep.Normal, false)]
+    [InlineData(DifficultyStep.Hard, false)]
+    [InlineData(DifficultyStep.Extreme, true)]
+    public void A_chance_route_counts_only_on_extreme(DifficultyStep level, bool counts)
+        => Assert.Equal(counts, Counts(level, Save(), Route(SourceKind.Cart, Reliability.Chance)));
+
+    [Theory]
+    [InlineData(DifficultyStep.Normal, false)]
+    [InlineData(DifficultyStep.Extreme, true)]
+    public void An_unresolved_route_counts_only_on_extreme(DifficultyStep level, bool counts)
+        => Assert.Equal(counts, Counts(level, Save(), Route(unresolved: true)));
+
+    [Fact]
+    public void An_island_route_never_counts()
+        => Assert.False(Counts(DifficultyStep.Extreme, Save(), Route(island: true)));
+
+    [Fact]
+    public void A_year_two_route_that_is_not_tv_never_counts()
+        => Assert.False(Counts(DifficultyStep.Extreme, Save(), Route(SourceKind.Shop, yearTwo: true)));
+
+    [Theory]
+    [InlineData(DifficultyStep.Easy, false)]
+    [InlineData(DifficultyStep.Normal, false)]
+    [InlineData(DifficultyStep.Hard, true)]
+    [InlineData(DifficultyStep.Extreme, true)]
+    public void A_year_two_queen_of_sauce_route_counts_on_hard_and_extreme(DifficultyStep level, bool counts)
+        => Assert.Equal(counts, Counts(level, Save(), Route(SourceKind.Cooking, yearTwo: true,
+            requires: new[] { "recipe:Bruschetta", "unlock:Queen of Sauce episode 31 (Sunday of week 31)" })));
+
+    [Fact]
+    public void A_route_landing_after_the_deadline_does_not_count()
+        => Assert.False(Counts(DifficultyStep.Extreme, Save(), Route(available: d => d >= 113)));
+
+    [Fact]
+    public void The_route_starts_the_day_after_the_hit()
+    {
+        Assert.False(FairnessRule.Counts(Item, Hit, Hit, DifficultyStep.Normal, Save(), Model(Route(available: d => d == Hit))));
+        Assert.True(FairnessRule.Counts(Item, Hit, Hit + 1, DifficultyStep.Normal, Save(), Model(Route(available: d => d == Hit + 1))));
+    }
+
+    [Theory]
+    [InlineData(DifficultyStep.Easy)]
+    [InlineData(DifficultyStep.Normal)]
+    [InlineData(DifficultyStep.Hard)]
+    public void A_missing_recipe_with_a_friendship_unlock_rules_the_route_out(DifficultyStep level)
+    {
+        ObtainSource route = Route(SourceKind.Cooking, requires: new[] { "recipe:Cheese Cauliflower", "unlock:f Pam 3" });
+        Assert.False(Counts(level, Save(), route));
+        Assert.True(Counts(level, Save(recipes: new[] { "Cheese Cauliflower" }), route));
+    }
+
+    [Fact]
+    public void A_missing_recipe_the_shop_or_the_tv_teaches_is_priced_by_the_table_not_ruled_out()
+    {
+        Assert.True(Counts(DifficultyStep.Easy, Save(), Route(SourceKind.Cooking, requires: new[] { "recipe:Omelet", "unlock:shop" })));
+        Assert.True(Counts(DifficultyStep.Easy, Save(), Route(SourceKind.Cooking, requires: new[] { "recipe:Omelet", "unlock:Queen of Sauce episode 4 (Sunday of week 4)" })));
+    }
+
+    [Fact]
+    public void Extreme_ignores_conditions()
+        => Assert.True(Counts(DifficultyStep.Extreme, Save(), Route(SourceKind.Cooking, requires: new[] { "recipe:X", "unlock:f Pam 3", "machine:(BC)12", "mail:ccPantry" })));
+
+    [Fact]
+    public void A_missing_machine_rules_out_on_easy_and_costs_a_day_on_normal_when_craftable()
+    {
+        ObtainSource route = Route(SourceKind.Machine, requires: new[] { "machine:(BC)12" }, available: d => d >= Hit + 1);
+        Assert.False(Counts(DifficultyStep.Easy, Save(), route));
+        Assert.False(Counts(DifficultyStep.Normal, Save(), route));
+        Assert.True(Counts(DifficultyStep.Normal, Save(craftable: new[] { "(BC)12" }), route));
+        Assert.True(Counts(DifficultyStep.Easy, Save(machines: new[] { "(BC)12" }), route));
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(craftable: new[] { "(BC)12" }), Model(route));
+        Assert.Equal(SabotageTuning.MachineCraftDays, verdict.Routes[0].AddedDays);
+    }
+
+    [Fact]
+    public void A_missing_building_rules_out_on_easy_and_adds_its_days_on_normal()
+    {
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop", "animal:Chicken" },
+            setup: new[] { new SetupStep("building:Coop", 3), new SetupStep("animal:Chicken", 1) }, available: d => d >= 110);
+        Assert.False(Counts(DifficultyStep.Easy, Save(), route));
+        Assert.True(Counts(DifficultyStep.Easy, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" }), route));
+        // Normal: lands 110 + 3 + 1 = 114, past Winter 28.
+        Assert.False(Counts(DifficultyStep.Normal, Save(), route));
+        // With the coop but no chicken: 110 + 1 = 111.
+        Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }), route));
+    }
+
+    [Fact]
+    public void An_animal_that_is_not_sold_rules_out_unless_owned()
+    {
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Barn", "animal:Ostrich (not sold)" },
+            setup: new[] { new SetupStep("building:Barn", 3), new SetupStep("animal:Ostrich", 1) });
+        Assert.False(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Barn" }), route));
+        Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Barn" }, animals: new[] { "Ostrich" }), route));
+    }
+
+    [Fact]
+    public void Friendship_days_are_added_on_normal_when_the_animal_is_not_there_yet()
+    {
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop", "animal:Chicken" },
+            setup: new[] { new SetupStep("building:Coop", 3), new SetupStep("animal:Chicken", 1), new SetupStep("friendship:Chicken 200", 14) },
+            available: d => d >= 100);
+        Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" },
+            friendship: new Dictionary<string, int> { ["Chicken"] = 500 }), route));               // 100
+        Assert.False(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" },
+            friendship: new Dictionary<string, int> { ["Chicken"] = 0 }), route));                 // 100 + 14 = 114
+        Assert.False(Counts(DifficultyStep.Easy, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" },
+            friendship: new Dictionary<string, int> { ["Chicken"] = 0 }), route));
+    }
+
+    [Fact]
+    public void A_missing_skill_rules_out_on_easy_and_adds_the_table_days_on_normal()
+    {
+        ObtainSource route = Route(SourceKind.Fish, skill: "Fishing", skillLevel: 6, available: d => d >= 100);
+        Assert.False(Counts(DifficultyStep.Easy, Save(fishing: 3), route));
+        Assert.True(Counts(DifficultyStep.Easy, Save(fishing: 6), route));
+        // Normal: 100 + (10 - 3) = 107, in time.
+        Assert.True(Counts(DifficultyStep.Normal, Save(fishing: 3), route));
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(fishing: 3), Model(route));
+        Assert.Equal(7, verdict.Routes[0].AddedDays);
+        // Normal from level 0: 100 + 10 = 110, in time; from level 0 with a later landing, out.
+        Assert.False(Counts(DifficultyStep.Normal, Save(fishing: 0), Route(SourceKind.Fish, skill: "Fishing", skillLevel: 6, available: d => d >= 105)));
+    }
+
+    [Fact]
+    public void A_mine_floor_not_reached_rules_out_on_easy_and_costs_a_day_per_ten_floors_on_normal()
+    {
+        ObtainSource route = Route(SourceKind.MineNode, requires: new[] { "mines:floor 80" }, available: d => d >= 100);
+        Assert.False(Counts(DifficultyStep.Easy, Save(floor: 40), route));
+        Assert.True(Counts(DifficultyStep.Easy, Save(floor: 80), route));
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 40), Model(route));
+        Assert.Equal(4, verdict.Routes[0].AddedDays);
+        Assert.True(verdict.Counts);
+        Assert.Equal(12, FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 0),
+            Model(Route(SourceKind.MineNode, requires: new[] { "mines:floor 120" }))).Routes[0].AddedDays);
+        Assert.Equal(1, FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 39),
+            Model(Route(SourceKind.MineNode, requires: new[] { "mines:floor 40" }))).Routes[0].AddedDays);
+    }
+
+    [Fact]
+    public void Skull_cavern_is_a_condition_never_a_wait()
+    {
+        ObtainSource route = Route(SourceKind.MonsterDrop, requires: new[] { "location:SkullCave" });
+        Assert.False(Counts(DifficultyStep.Easy, Save(mining: 5), route));                                   // desert shut
+        Assert.False(Counts(DifficultyStep.Easy, Save(mail: new[] { "ccVault" }, mining: 1), route));         // no staircase
+        Assert.True(Counts(DifficultyStep.Easy, Save(mail: new[] { "ccVault" }, mining: 2), route));
+        Assert.False(Counts(DifficultyStep.Normal, Save(mining: 10), route));                                 // the bus is never priced
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(mail: new[] { "ccVault" }, mining: 0), Model(route));
+        Assert.True(verdict.Counts);
+        Assert.Equal(2, verdict.Routes[0].AddedDays);   // Mining 2 from 0 = 2 days
+    }
+
+    [Fact]
+    public void The_desert_needs_the_bus()
+    {
+        ObtainSource route = Route(SourceKind.Shop, requires: new[] { "location:Desert" });
+        Assert.False(Counts(DifficultyStep.Normal, Save(), route));
+        Assert.True(Counts(DifficultyStep.Normal, Save(mail: new[] { "ccVault" }), route));
+    }
+
+    [Fact]
+    public void A_mail_flag_is_met_or_not()
+    {
+        ObtainSource route = Route(SourceKind.GreenhouseCrop, requires: new[] { "item:(O)472", "mail:ccPantry" });
+        Assert.False(Counts(DifficultyStep.Normal, Save(), route));
+        Assert.True(Counts(DifficultyStep.Normal, Save(mail: new[] { "ccPantry" }), route));
+    }
+
+    [Fact]
+    public void Conditions_the_table_does_not_name_count_as_met()
+        => Assert.True(Counts(DifficultyStep.Easy, Save(), Route(requires: new[] { "item:(O)472", "guild:Slimes 1000 kills", "pond population 3", "location:Beach", "tapper on tree 1, 7 days" })));
+
+    [Fact]
+    public void One_counting_route_is_enough()
+        => Assert.True(Counts(DifficultyStep.Easy, Save(), Route(SourceKind.Cart, Reliability.Chance), Route(SourceKind.Forage)));
+
+    [Theory]
+    [InlineData(60, DifficultyStep.Easy, 84)]      // Fall 4: the end of Fall
+    [InlineData(60, DifficultyStep.Normal, 112)]
+    [InlineData(90, DifficultyStep.Easy, 112)]     // Winter 6: the end of Winter
+    [InlineData(90, DifficultyStep.Hard, 112)]
+    public void Reversion_deadline_by_level(int hitDay, DifficultyStep level, int deadline)
+        => Assert.Equal(deadline, FairnessRule.ReversionDeadline(hitDay, level));
+
+    [Fact]
+    public void Tamper_deadline_is_winter_28()
+        => Assert.Equal(112, FairnessRule.TamperDeadline);
+
+    [Fact]
+    public void Explain_names_every_route_and_the_verdict()
+    {
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 40),
+            Model(Route(SourceKind.MineNode, requires: new[] { "mines:floor 80" }), Route(SourceKind.Cart, Reliability.Chance)));
+        string text = FairnessRule.Explain(verdict);
+        Assert.Contains("counts", text);
+        Assert.Contains("+4 day", text);
+        Assert.Contains("chance route", text);
+    }
+}
