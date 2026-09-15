@@ -1,0 +1,414 @@
+Debug bridge: executing 'tly_genbundles 1'.
+BundleEngine: legendary allowance for this board: 1.
+BundleEngine: 'Helper's': no stretch item for Summer in its pool.
+BundleEngine: 'Helper's': no stretch item for Fall in its pool.
+BundleEngine: 'Fish Farmer's': no stretch item for Spring in its pool.
+BundleEngine: 'Fish Farmer's': no stretch item for Fall in its pool.
+BundleEngine: 'Night Fishing': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Summer in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no hard item in its pool.
+BundleEngine: 'Treasure Hunter's': no stretch item for Summer in its pool.
+BundleEngine: 'Treasure Hunter's': no stretch item for Fall in its pool.
+BundleEngine: 'Sticky': no stretch item for Spring in its pool.
+BundleEngine: 'Sticky': no stretch item for Fall in its pool.
+BundleEngine: 'Lake Fish': swapped in (O)138 as the hard item (effort 6).
+BundleEngine: 'Lake Fish': no stretch item for Spring in its pool.
+BundleEngine: 'Brewer's': no stretch item for Fall in its pool.
+BundleEngine: 'Forager's': no stretch item for Fall in its pool.
+BundleEngine: 'Specialty Fish': swapped in (O)143 as the hard item (effort 6).
+BundleEngine: 'Exotic Foraging': swapped in (O)709 as the hard item (effort 6).
+BundleEngine: 'Field Research': no stretch item for Fall in its pool.
+BundleEngine: 'Field Research': swapped in (O)386 as the hard item (effort 8).
+tly_genbundles: generated for loop 1 (seed 955951819, mode custom), diagnostics only, nothing written.
+      Abandoned Joja Mart/36 'The Missing' [6 slots, need 5] — vanilla slots
+        slots: Wine (348) x1 q1, Dinosaur Mayonnaise (807) x1, Prismatic Shard (74) x1, Ancient Fruit (454) x5 q2, Void Salmon (795) x1 q2, Caviar (445) x1
+  Boiler Room:
+      Boiler Room/20 'Treasure Hunter's' [6 slots, need 5] — re-rolled from recipe Treasure Hunter's (Gem)
+        slots: Quartz ((O)80) x20, Prismatic Shard ((O)74) x1, Emerald ((O)60) x7, Fire Quartz ((O)82) x8, Diamond ((O)72) x1, Earth Crystal ((O)86) x20
+      Boiler Room/21 'Adventurer's' [4 slots, need 2] — re-rolled from MonsterDrops
+        slots: Bat Wing ((O)767) x39, Solar Essence ((O)768) x34, Slime ((O)766) x44, Void Essence ((O)769) x48
+      Boiler Room/22 'Mineral' [6 slots, need 4] — authored slots
+        slots: Sandstone ((O)568) x2, Helvite ((O)547) x1, Lunarite ((O)551) x1, Soapstone ((O)572) x2, Fairy Stone ((O)577) x2, Malachite ((O)552) x1
+      Bulletin Board/31 'Artifact' [6 slots, need 4] — authored slots
+        slots: Chipped Amphora ((O)100) x1, Strange Doll ((O)127) x1, Dwarf Scroll I ((O)96) x1, Golden Relic ((O)125) x1, Prehistoric Scapula ((O)579) x1, Amphibian Fossil ((O)587) x1
+      Bulletin Board/32 'Book' [5 slots, need 3] — authored slots
+        slots: The Alleyway Buffet ((O)Book_Trash) x1, Combat Quarterly ((O)SkillBook_4) x1, Book Of Stars ((O)PurpleBook) x1, Bait And Bobber ((O)SkillBook_1) x1, Mining Monthly ((O)SkillBook_3) x1
+      Bulletin Board/33 'Forager's' [3 slots, need 2] — re-rolled from recipe Forager's (Forage)
+        slots: Salmonberry ((O)296) x50, Red Mushroom ((O)420) x7, Morel ((O)257) x4
+      Bulletin Board/34 'Helper's' [2 slots, need 2] — re-rolled from recipe Helper's (the bundle's own items)
+        slots: Prize Ticket ((O)PrizeTicket) x1, Mystery Box ((O)MysteryBox) x5
+      Bulletin Board/35 'Field Research' [4 slots, need 4] — re-rolled from recipe Field Research (Forage + Artifact or shell + Fish + Mineral or geode)
+        slots: Iridium Ore ((O)386) x49, Sea Urchin ((O)397) x6, Sea Jelly ((O)SeaJelly) x2, Obsidian ((O)575) x1
+  Crafts Room:
+      Crafts Room/13 'Tapper's' [5 slots, need 4] — authored slots
+        slots: Mystic Syrup ((O)MysticSyrup) x1, Pine Tar ((O)726) x3, Acorn ((O)309) x1, Sap ((O)92) x20, Maple Seed ((O)310) x1
+      Crafts Room/14 'Summer Foraging' [3 slots, need 3] — re-rolled from SeasonalForage(Summer)
+        slots: Rainbow Shell ((O)394) x2 q1, Sweet Pea ((O)402) x36, Fiddlehead Fern ((O)259) x8
+      Crafts Room/15 'Four Seasons Sampler' [6 slots, need 5] — authored slots
+        slots: Leek ((O)20) x24, Oyster ((O)723) x4, Crystal Fruit ((O)414) x23, Clam ((O)372) x12, Crocus ((O)418) x25, Mussel ((O)719) x5
+      Crafts Room/16 'Winter Foraging' [4 slots, need 4] — re-rolled from SeasonalForage(Winter)
+        slots: Winter Root ((O)412) x11, Holly ((O)283) x37, Purple Mushroom ((O)422) x2, Snow Yam ((O)416) x9
+      Crafts Room/17 'Sticky' [1 slots, need 1] — re-rolled from recipe Sticky (Sap or resource)
+        slots: Pine Cone ((O)311) x1
+      Crafts Room/19 'Exotic Foraging' [9 slots, need 5] — re-rolled from recipe Exotic Foraging (Forage or tapper)
+        slots: Chanterelle ((O)281) x7, Blackberry ((O)410) x20, Hazelnut ((O)408) x23, Hardwood ((O)709) x16, Oak Resin ((O)725) x2, Spice Berry ((O)396) x18, Nautilus Shell ((O)392) x3, Wild Plum ((O)406) x10, Cactus Fruit ((O)90) x39
+      Fish Tank/6 'Weatherman's' [5 slots, need 4] — authored slots
+        slots: Goby ((O)Goby) x1, Midnight Carp ((O)269) x5, Salmon ((O)139) x9, Squid ((O)151) x7, Flounder ((O)267) x8
+      Fish Tank/7 'Lake Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Walleye ((O)140) x21 q1, Rainbow Trout ((O)138) x9 q2, Mutant Carp ((O)682) x1, Sturgeon ((O)698) x7
+      Fish Tank/8 'Ocean Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Red Snapper ((O)150) x7, Herring ((O)147) x12, Octopus ((O)149) x3, Albacore ((O)705) x6
+      Fish Tank/9 'Night Fishing' [3 slots, need 3] — re-rolled from Fish
+        slots: Bream ((O)132) x8, Midnight Squid ((O)798) x1, Super Cucumber ((O)155) x4
+      Fish Tank/10 'Specialty Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Catfish ((O)143) x9 q1, Scorpion Carp ((O)165) x5, Anchovy ((O)129) x11, Halibut ((O)708) x11 q2
+      Fish Tank/11 'Master Fisher's' [4 slots, need 2] — re-rolled from Fish
+        slots: Spook Fish ((O)799) x1, Eel ((O)148) x6, Blobfish ((O)800) x1, Sandfish ((O)164) x29
+      Pantry/0 'Spring Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Spring)
+        slots: Green Bean ((O)188) x38, Wild Horseradish ((O)16) x23, Tulip ((O)591) x37, Garlic ((O)248) x34
+      Pantry/1 'Summer Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Summer)
+        slots: Hops ((O)304) x22 q1, Hot Pepper ((O)260) x46, Summer Squash ((O)SummerSquash) x6 q2, Poppy ((O)376) x28
+      Pantry/2 'Fall Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Fall)
+        slots: Eggplant ((O)272) x42, Cranberries ((O)282) x38, Beet ((O)284) x39, Sunflower ((O)421) x41
+      Pantry/3 'Orchard' [5 slots, need 5] — authored slots
+        slots: Apple Sapling ((O)633) x1, Orange Sapling ((O)630) x1, Peach Sapling ((O)631) x1, Apricot Sapling ((O)629) x1, Cherry Sapling ((O)628) x1
+      Pantry/4 'Fish Farmer's' [3 slots, need 2] — re-rolled from recipe Fish Farmer's (Pond goods)
+        slots: Caviar ((O)445) x3, Roe ((O)812) x5, Aged Roe ((O)447) x4
+      Pantry/5 'Brewer's' [5 slots, need 4] — re-rolled from ArtisanGoods
+        slots: Raisins ((O)Raisins) x16, Duck Mayonnaise ((O)307) x9, Cloth ((O)428) x11, Honey ((O)340) x6, Mead ((O)459) x4
+      Vault/23 '3,125g' [1 slots, need 1] — vanilla slots
+      Vault/24 '6,250g' [1 slots, need 1] — vanilla slots
+      Vault/25 '12,500g' [1 slots, need 1] — vanilla slots
+      Vault/26 '31,250g' [1 slots, need 1] — vanilla slots
+      gates Exotic Foraging (Percentage): ramp [1,3,4,5] of X=5
+      gates Four Seasons Sampler (Percentage): ramp [1,3,4,5] of X=5
+      gates Sticky (PerItem): Pine Cone by Winter
+      gates Summer Foraging (Seasonal): all by Summer
+      gates Tapper's (Percentage): ramp [1,2,3,4] of X=4
+      gates Winter Foraging (Seasonal): all by Winter
+      gates Brewer's (Percentage): ramp [1,2,3,4] of X=4
+      gates Fall Crops (Seasonal): all by Fall
+      gates Fish Farmer's (Percentage): ramp [0,1,2,2] of X=2
+      gates Orchard (PerItem): Cherry Sapling by Spring, Apricot Sapling by Spring, Orange Sapling by Summer, Peach Sapling by Fall, Apple Sapling by Winter
+      gates Spring Crops (Seasonal): all by Spring
+      gates Summer Crops (Seasonal): all by Summer
+      gates Lake Fish (PerItem): Sturgeon by Summer, Walleye by Fall, Mutant Carp by Fall, Rainbow Trout by Winter
+      gates Master Fisher's (Percentage): ramp [1,1,2,2] of X=2
+      gates Night Fishing (PerItem): Bream by Summer, Super Cucumber by Winter, Midnight Squid by Winter
+      gates Ocean Fish (PerItem): Herring by Spring, Red Snapper by Fall, Albacore by Fall, Octopus by Winter
+      gates Specialty Fish (PerItem): Anchovy by Spring, Scorpion Carp by Summer, Halibut by Summer, Catfish by Winter
+      gates Weatherman's (Percentage): ramp [1,2,3,4] of X=4
+      gates Adventurer's (Percentage): ramp [1,1,2,2] of X=2
+      gates Mineral (Percentage): ramp [1,2,3,4] of X=4
+      gates Treasure Hunter's (Percentage): ramp [1,3,4,5] of X=5
+      gates Artifact (Percentage): ramp [1,2,3,4] of X=4
+      gates Book (Percentage): ramp [1,2,2,3] of X=3
+      gates Field Research (PerItem): Sea Jelly by Spring, Sea Urchin by Summer, Obsidian by Fall, Iridium Ore by Winter
+      gates Forager's (Percentage): ramp [1,1,2,2] of X=2
+      gates Helper's (PerItem): Mystery Box by Fall, Prize Ticket by Winter
+=== tly_genbundles: season gate audit (demanded / obtainable, by day 28 of each season) ===
+  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter (cheapest first: 2,500g, 5,000g, 10,000g, 25,000g). Owning 'keep_bus_unlocked' satisfies it outright.
+  tly_genbundles RESULT: no impossible gates. 25 tight (demands everything obtainable by then), 0 bundle(s) never gated.
+  tly_genbundles RESULT: 2 stretch line(s), 5 without a hard item, 2 Spring tight.
+tly_genbundles: 31 generated, 26 classified, 5 skipped.
+BundleEngine: legendary allowance for this board: 1.
+BundleEngine: 'Helper's': no stretch item for Summer in its pool.
+BundleEngine: 'Helper's': no stretch item for Fall in its pool.
+BundleEngine: 'Fish Farmer's': no stretch item for Spring in its pool.
+BundleEngine: 'Fish Farmer's': no stretch item for Fall in its pool.
+BundleEngine: 'Night Fishing': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Summer in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no hard item in its pool.
+BundleEngine: 'Treasure Hunter's': no stretch item for Summer in its pool.
+BundleEngine: 'Treasure Hunter's': no stretch item for Fall in its pool.
+BundleEngine: 'Sticky': no stretch item for Spring in its pool.
+BundleEngine: 'Sticky': no stretch item for Fall in its pool.
+BundleEngine: 'Lake Fish': swapped in (O)138 as the hard item (effort 6).
+BundleEngine: 'Lake Fish': no stretch item for Spring in its pool.
+BundleEngine: 'Brewer's': no stretch item for Fall in its pool.
+BundleEngine: 'Forager's': no stretch item for Fall in its pool.
+BundleEngine: 'Specialty Fish': swapped in (O)143 as the hard item (effort 6).
+BundleEngine: 'Exotic Foraging': swapped in (O)709 as the hard item (effort 6).
+BundleEngine: 'Field Research': no stretch item for Fall in its pool.
+BundleEngine: 'Field Research': swapped in (O)386 as the hard item (effort 8).
+tly_genbundles: determinism OK (second generation matched the first byte-for-byte).
+Debug bridge: executing 'tly_genbundles 2'.
+BundleEngine: legendary allowance for this board: 0.
+BundleEngine: 'Fish Farmer's': no stretch item for Fall in its pool.
+BundleEngine: 'Night Fishing': no stretch item for Spring in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Summer in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no hard item in its pool.
+BundleEngine: 'Fall Foraging': only 3 candidates no other bundle asks for (need 4); allowing repeats.
+BundleEngine: 'Construction': no stretch item for Fall in its pool.
+BundleEngine: 'Crab Pot': only 9 candidates no other bundle asks for (need 10); allowing repeats.
+BundleEngine: 'Crab Pot': no stretch item for Summer in its pool.
+BundleEngine: 'Crab Pot': no stretch item for Fall in its pool.
+BundleEngine: 'Crab Pot': no hard item in its pool.
+BundleEngine: 'Winter Star': no stretch item for Spring in its pool.
+BundleEngine: 'Winter Star': no stretch item for Summer in its pool.
+BundleEngine: 'Winter Star': no stretch item for Fall in its pool.
+BundleEngine: 'Winter Star': swapped in (O)239 as the hard item (effort 6).
+BundleEngine: 'Winter Star': no stretch item for Spring in its pool.
+BundleEngine: 'Winter Star': no stretch item for Summer in its pool.
+BundleEngine: 'Lake Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Fodder': no stretch item for Spring in its pool.
+BundleEngine: 'Specialty Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Exotic Foraging': swapped in (O)311 as the hard item (effort 7).
+BundleEngine: 'Dye': no stretch item for Fall in its pool.
+tly_genbundles: generated for loop 2 (seed -1700585448, mode custom), diagnostics only, nothing written.
+      Abandoned Joja Mart/36 'The Missing' [6 slots, need 5] — vanilla slots
+        slots: Wine (348) x1 q1, Dinosaur Mayonnaise (807) x1, Prismatic Shard (74) x1, Ancient Fruit (454) x5 q2, Void Salmon (795) x1 q2, Caviar (445) x1
+  Boiler Room:
+      Boiler Room/20 'Mineral' [6 slots, need 4] — authored slots
+        slots: Celestine ((O)566) x1, Helvite ((O)547) x1, Neptunite ((O)553) x2, Nekoite ((O)555) x2, Mudstone ((O)574) x2, Baryte ((O)540) x1
+      Boiler Room/21 'Jeweler's' [6 slots, need 4] — authored slots
+        slots: Emerald ((O)60) x3, Ruby ((O)64) x4, Diamond ((O)72) x2, Aquamarine ((O)62) x7, Topaz ((O)68) x5, Jade ((O)70) x4
+      Boiler Room/22 'Adventurer's' [4 slots, need 2] — re-rolled from MonsterDrops
+        slots: Void Essence ((O)769) x24, Bug Meat ((O)684) x40, Slime ((O)766) x30, Solar Essence ((O)768) x48
+      Bulletin Board/31 'Fodder' [3 slots, need 3] — re-rolled from recipe Fodder (Fodder)
+        slots: Cranberries ((O)282) x40, Rhubarb ((O)252) x24, Grape ((O)398) x22
+      Bulletin Board/32 'Artifact' [6 slots, need 4] — authored slots
+        slots: Rusty Spur ((O)111) x1, Golden Mask ((O)124) x1, Dinosaur Egg ((O)107) x1, Dried Starfish ((O)116) x1, Dwarf Gadget ((O)122) x1, Golden Relic ((O)125) x1
+      Bulletin Board/33 'Dye' [6 slots, need 6] — re-rolled from recipe Dye (color_red + color_purple + color_yellow + color_white + color_blue + color_green)
+        slots: Tomato ((O)256) x32, Raisins ((O)Raisins) x15, Complete Breakfast ((O)201) x1, Large Milk ((O)186) x6, Qi Bean ((O)890) x1, Fireworks (Green) ((O)895) x1
+      Bulletin Board/34 'Recycler's' [6 slots, need 4] — authored slots
+        slots: Soggy Newspaper ((O)172) x1, Broken CD ((O)171) x1, Cloth ((O)428) x16, Driftwood ((O)169) x1, Trash ((O)168) x1, Broken Glasses ((O)170) x1
+      Bulletin Board/35 'Winter Star' [4 slots, need 2] — re-rolled from recipe Winter Star (Winter)
+        slots: Perch ((O)141) x20, Stuffing ((O)239) x1, Plum Pudding ((O)604) x1, Holly ((O)283) x19
+  Crafts Room:
+      Crafts Room/13 'Spring Foraging' [4 slots, need 4] — re-rolled from SeasonalForage(Spring)
+        slots: Red Mushroom ((O)420) x1 q2, Common Mushroom ((O)404) x4, Daffodil ((O)18) x38, Leek ((O)20) x21
+      Crafts Room/14 'Tapper's' [5 slots, need 4] — authored slots
+        slots: Maple Syrup ((O)724) x4, Maple Seed ((O)310) x1, Moss ((O)Moss) x1, Acorn ((O)309) x1, Mystic Syrup ((O)MysticSyrup) x1
+      Crafts Room/15 'Fall Foraging' [4 slots, need 4] — re-rolled from SeasonalForage(Fall)
+        slots: Common Mushroom ((O)404) x18, Red Mushroom ((O)420) x4, Blackberry ((O)410) x42, Purple Mushroom ((O)422) x2
+      Crafts Room/16 'Four Seasons Sampler' [6 slots, need 5] — authored slots
+        slots: Wild Horseradish ((O)16) x27, Morel ((O)257) x3, Wild Plum ((O)406) x11, Oyster ((O)723) x8, Chanterelle ((O)281) x8, Sweet Pea ((O)402) x22
+      Crafts Room/17 'Construction' [4 slots, need 4] — re-rolled from recipe Construction (Resource)
+        slots: Wood ((O)388) x42, Hardwood ((O)709) x19, Fiber ((O)771) x45, Stone ((O)390) x48
+      Crafts Room/19 'Exotic Foraging' [9 slots, need 5] — re-rolled from recipe Exotic Foraging (Forage or tapper)
+        slots: Oak Resin ((O)725) x5, Pine Cone ((O)311) x1, Spice Berry ((O)396) x23, Cave Carrot ((O)78) x1, Snow Yam ((O)416) x8, Crystal Fruit ((O)414) x31, Rainbow Shell ((O)394) x3, Pine Tar ((O)726) x3, Hazelnut ((O)408) x15
+      Fish Tank/6 'Weatherman's' [5 slots, need 4] — authored slots
+        slots: Goby ((O)Goby) x1, Spook Fish ((O)799) x1, Seaweed ((O)152) x14, Pike ((O)144) x29, Tiger Trout ((O)699) x8
+      Fish Tank/7 'Lake Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Lingcod ((O)707) x7, Rainbow Trout ((O)138) x7 q2, River Jelly ((O)RiverJelly) x5, Woodskip ((O)734) x9
+      Fish Tank/8 'Ocean Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Red Mullet ((O)146) x14, Sea Cucumber ((O)154) x6, Octopus ((O)149) x4 q1, Eel ((O)148) x7 q1
+      Fish Tank/9 'Night Fishing' [3 slots, need 3] — re-rolled from Fish
+        slots: Midnight Squid ((O)798) x1, Midnight Carp ((O)269) x3, Super Cucumber ((O)155) x9
+      Fish Tank/10 'Crab Pot' [10 slots, need 5] — re-rolled from recipe Crab Pot (Crab pot)
+        slots: Snail ((O)721) x7, Crayfish ((O)716) x4, Lobster ((O)715) x2, Mussel ((O)719) x4, Cockle ((O)718) x4, Clam ((O)372) x8, Periwinkle ((O)722) x8, Shrimp ((O)720) x4, Oyster ((O)723) x6, Crab ((O)717) x39
+      Fish Tank/11 'Specialty Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: White Algae ((O)157) x9, Flounder ((O)267) x8, Red Snapper ((O)150) x8, Catfish ((O)143) x8
+      Pantry/0 'Spring Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Spring)
+        slots: Coffee Bean ((O)433) x4, Green Bean ((O)188) x30, Tulip ((O)591) x20, Garlic ((O)248) x41
+      Pantry/1 'Summer Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Summer)
+        slots: Hot Pepper ((O)260) x32, Wheat ((O)262) x50, Blueberry ((O)258) x41, Starfruit ((O)268) x42
+      Pantry/2 'Fall Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Fall)
+        slots: Amaranth ((O)300) x46, Yam ((O)280) x45, Corn ((O)270) x24, Broccoli ((O)Broccoli) x12
+      Pantry/3 'Orchard' [5 slots, need 5] — authored slots
+        slots: Peach Sapling ((O)631) x1, Cherry Sapling ((O)628) x1, Orange Sapling ((O)630) x1, Pomegranate Sapling ((O)632) x1, Apricot Sapling ((O)629) x1
+      Pantry/4 'Fish Farmer's' [3 slots, need 2] — re-rolled from recipe Fish Farmer's (Pond goods)
+        slots: Aged Roe ((O)447) x2, Caviar ((O)445) x1, Squid Ink ((O)814) x30
+      Pantry/5 'Preserver's' [6 slots, need 4] — authored slots
+        stack asks: (O)459 x8, (O)DriedFruit x12, (O)306 x26, (O)DriedMushrooms x14, (O)432 x3, (O)303 x5
+        slots: Mead ((O)459) x8, Dried ((O)DriedFruit) x12, Mayonnaise ((O)306) x26, Dried ((O)DriedMushrooms) x14, Truffle Oil ((O)432) x3, Pale Ale ((O)303) x5
+      Vault/23 '3,125g' [1 slots, need 1] — vanilla slots
+      Vault/24 '6,250g' [1 slots, need 1] — vanilla slots
+      Vault/25 '12,500g' [1 slots, need 1] — vanilla slots
+      Vault/26 '31,250g' [1 slots, need 1] — vanilla slots
+      gates Construction (PerItem): Stone by Spring, Fiber by Summer, Wood by Fall, Hardwood by Winter
+      gates Exotic Foraging (Percentage): ramp [1,3,4,5] of X=5
+      gates Fall Foraging (Seasonal): all by Fall
+      gates Four Seasons Sampler (Percentage): ramp [1,3,4,5] of X=5
+      gates Spring Foraging (Seasonal): all by Spring
+      gates Tapper's (Percentage): ramp [1,2,3,4] of X=4
+      gates Fall Crops (Seasonal): all by Fall
+      gates Fish Farmer's (Percentage): ramp [1,1,2,2] of X=2
+      gates Orchard (PerItem): Cherry Sapling by Spring, Apricot Sapling by Spring, Orange Sapling by Summer, Peach Sapling by Fall, Pomegranate Sapling by Winter
+      gates Preserver's (Percentage): ramp [1,2,3,4] of X=4
+      gates Spring Crops (Seasonal): all by Spring
+      gates Summer Crops (Seasonal): all by Summer
+      gates Crab Pot (Percentage): ramp [1,3,4,5] of X=5
+      gates Lake Fish (PerItem): River Jelly by Spring, Woodskip by Summer, Rainbow Trout by Winter, Lingcod by Winter
+      gates Night Fishing (PerItem): Midnight Carp by Fall, Super Cucumber by Winter, Midnight Squid by Winter
+      gates Ocean Fish (PerItem): Red Mullet by Summer, Eel by Fall, Sea Cucumber by Fall, Octopus by Winter
+      gates Specialty Fish (PerItem): White Algae by Spring, Flounder by Summer, Red Snapper by Fall, Catfish by Winter
+      gates Weatherman's (Percentage): ramp [1,2,3,4] of X=4
+      gates Adventurer's (Percentage): ramp [1,1,2,2] of X=2
+      gates Jeweler's (Percentage): ramp [1,2,3,4] of X=4
+      gates Mineral (Percentage): ramp [1,2,3,4] of X=4
+      gates Artifact (Percentage): ramp [1,2,3,4] of X=4
+      gates Dye (PerItem): Large Milk by Spring, Qi Bean by Spring, Tomato by Summer, Raisins by Fall, Complete Breakfast by Winter, Fireworks (Green) by Winter
+      gates Fodder (PerItem): Grape by Summer, Rhubarb by Fall, Cranberries by Winter
+      gates Recycler's (Percentage): ramp [1,2,3,4] of X=4
+      gates Winter Star (Percentage): ramp [0,0,1,2] of X=2
+=== tly_genbundles: season gate audit (demanded / obtainable, by day 28 of each season) ===
+  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter (cheapest first: 2,500g, 5,000g, 10,000g, 25,000g). Owning 'keep_bus_unlocked' satisfies it outright.
+  tly_genbundles RESULT: no impossible gates. 23 tight (demands everything obtainable by then), 0 bundle(s) never gated.
+  tly_genbundles RESULT: 0 stretch line(s), 8 without a hard item, 2 Spring tight.
+tly_genbundles: 31 generated, 26 classified, 5 skipped.
+BundleEngine: legendary allowance for this board: 0.
+BundleEngine: 'Fish Farmer's': no stretch item for Fall in its pool.
+BundleEngine: 'Night Fishing': no stretch item for Spring in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Summer in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no hard item in its pool.
+BundleEngine: 'Fall Foraging': only 3 candidates no other bundle asks for (need 4); allowing repeats.
+BundleEngine: 'Construction': no stretch item for Fall in its pool.
+BundleEngine: 'Crab Pot': only 9 candidates no other bundle asks for (need 10); allowing repeats.
+BundleEngine: 'Crab Pot': no stretch item for Summer in its pool.
+BundleEngine: 'Crab Pot': no stretch item for Fall in its pool.
+BundleEngine: 'Crab Pot': no hard item in its pool.
+BundleEngine: 'Winter Star': no stretch item for Spring in its pool.
+BundleEngine: 'Winter Star': no stretch item for Summer in its pool.
+BundleEngine: 'Winter Star': no stretch item for Fall in its pool.
+BundleEngine: 'Winter Star': swapped in (O)239 as the hard item (effort 6).
+BundleEngine: 'Winter Star': no stretch item for Spring in its pool.
+BundleEngine: 'Winter Star': no stretch item for Summer in its pool.
+BundleEngine: 'Lake Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Fodder': no stretch item for Spring in its pool.
+BundleEngine: 'Specialty Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Exotic Foraging': swapped in (O)311 as the hard item (effort 7).
+BundleEngine: 'Dye': no stretch item for Fall in its pool.
+tly_genbundles: determinism OK (second generation matched the first byte-for-byte).
+Debug bridge: executing 'tly_genbundles 3'.
+BundleEngine: legendary allowance for this board: 0.
+BundleEngine: 'Helper's': no stretch item for Summer in its pool.
+BundleEngine: 'Helper's': no stretch item for Fall in its pool.
+BundleEngine: 'Night Fishing': no stretch item for Spring in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Summer in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no hard item in its pool.
+BundleEngine: 'Lake Fish': no stretch item for Summer in its pool.
+BundleEngine: 'Lake Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Ocean Fish': swapped in (O)128 as the hard item (effort 10).
+BundleEngine: 'Master Fisher's': no stretch item for Fall in its pool.
+BundleEngine: 'Master Fisher's': swapped in (O)162 as the hard item (effort 6).
+BundleEngine: 'Master Fisher's': no stretch item for Fall in its pool.
+BundleEngine: 'Specialty Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Exotic Foraging': swapped in (O)311 as the hard item (effort 7).
+BundleEngine: 'Field Research': no stretch item for Fall in its pool.
+BundleEngine: 'Dye': no stretch item for Fall in its pool.
+BundleEngine: 'Dye': swapped in (O)242 as the hard item (effort 7).
+BundleEngine: 'Dye': no stretch item for Fall in its pool.
+tly_genbundles: generated for loop 3 (seed 2087435881, mode custom), diagnostics only, nothing written.
+      Abandoned Joja Mart/36 'The Missing' [6 slots, need 5] — vanilla slots
+        slots: Wine (348) x1 q1, Dinosaur Mayonnaise (807) x1, Prismatic Shard (74) x1, Ancient Fruit (454) x5 q2, Void Salmon (795) x1 q2, Caviar (445) x1
+  Boiler Room:
+      Boiler Room/20 'Mineral' [6 slots, need 4] — authored slots
+        slots: Pyrite ((O)559) x2, Sandstone ((O)568) x2, Fire Opal ((O)565) x1, Thunder Egg ((O)558) x2, Opal ((O)564) x2, Fluorapatite ((O)545) x1
+      Boiler Room/21 'Adventurer's' [4 slots, need 2] — re-rolled from MonsterDrops
+        slots: Void Essence ((O)769) x44, Bat Wing ((O)767) x25, Bug Meat ((O)684) x20, Slime ((O)766) x50
+      Boiler Room/22 'Gil's Trophies' [4 slots, need 2] — authored slots
+        slots: Skeleton Mask ((H)8) x1, Vampire Ring ((O)522) x1, Burglar's Ring ((O)526) x1, Insect Head ((W)13) x1
+      Bulletin Board/31 'Forager's' [3 slots, need 2] — re-rolled from recipe Forager's (Forage)
+        slots: Rainbow Shell ((O)394) x3, Morel ((O)257) x3, Wild Plum ((O)406) x14
+      Bulletin Board/32 'Helper's' [2 slots, need 2] — re-rolled from recipe Helper's (the bundle's own items)
+        slots: Mystery Box ((O)MysteryBox) x5, Prize Ticket ((O)PrizeTicket) x1
+      Bulletin Board/33 'Dye' [6 slots, need 6] — re-rolled from recipe Dye (color_red + color_purple + color_yellow + color_white + color_blue + color_green)
+        slots: Cherry Bomb ((O)286) x36, Raisins ((O)Raisins) x11, Perch ((O)141) x14, Dish O' The Sea ((O)242) x1, Herring ((O)147) x11, Duck Feather ((O)444) x2
+      Bulletin Board/34 'Field Research' [4 slots, need 4] — re-rolled from recipe Field Research (Forage + Artifact or shell + Fish + Mineral or geode)
+        slots: Mussel ((O)719) x4 q1, Rare Disc ((O)108) x1, Bullhead ((O)700) x6 q1, Frozen Geode ((O)536) x29
+      Bulletin Board/35 'Chef's' [6 slots, need 6] — re-rolled from recipe Chef's (Cooking + Ingredient)
+        slots: Fiddlehead Risotto ((O)649) x1, Pepper Poppers ((O)215) x1, Bean Hotpot ((O)207) x1, Rice ((O)423) x1, Powdermelon ((O)Powdermelon) x14, Large Egg ((O)174) x7
+  Crafts Room:
+      Crafts Room/13 'Tapper's' [5 slots, need 4] — authored slots
+        slots: Pine Tar ((O)726) x5, Maple Syrup ((O)724) x3, Sap ((O)92) x47, Mystic Syrup ((O)MysticSyrup) x1, Moss ((O)Moss) x1
+      Crafts Room/14 'Summer Foraging' [3 slots, need 3] — re-rolled from SeasonalForage(Summer)
+        slots: Spice Berry ((O)396) x21, Red Mushroom ((O)420) x4, Fiddlehead Fern ((O)259) x13
+      Crafts Room/15 'Fall Foraging' [4 slots, need 4] — re-rolled from SeasonalForage(Fall)
+        slots: Purple Mushroom ((O)422) x3, Blackberry ((O)410) x20, Hazelnut ((O)408) x11, Chanterelle ((O)281) x5
+      Crafts Room/16 'Four Seasons Sampler' [6 slots, need 5] — authored slots
+        slots: Leek ((O)20) x21, Holly ((O)283) x36, Nautilus Shell ((O)392) x3, Sweet Pea ((O)402) x42, Common Mushroom ((O)404) x23, Crocus ((O)418) x34
+      Crafts Room/17 'Construction' [4 slots, need 4] — re-rolled from recipe Construction (Resource)
+        slots: Wood ((O)388) x45, Stone ((O)390) x29, Clay ((O)330) x10, Battery Pack ((O)787) x4
+      Crafts Room/19 'Exotic Foraging' [9 slots, need 5] — re-rolled from recipe Exotic Foraging (Forage or tapper)
+        slots: Pine Cone ((O)311) x1, Cactus Fruit ((O)90) x47, Grape ((O)398) x49, Coconut ((O)88) x8, Cave Carrot ((O)78) x1, Snow Yam ((O)416) x9, Clam ((O)372) x5, Daffodil ((O)18) x33, Crystal Fruit ((O)414) x18
+      Fish Tank/6 'Weatherman's' [5 slots, need 4] — authored slots
+        slots: River Jelly ((O)RiverJelly) x7, Eel ((O)148) x13, Sea Jelly ((O)SeaJelly) x3, Tiger Trout ((O)699) x12, Rainbow Trout ((O)138) x13
+      Fish Tank/7 'Lake Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Catfish ((O)143) x10, Woodskip ((O)734) x13, White Algae ((O)157) x19, Largemouth Bass ((O)136) x9
+      Fish Tank/8 'Ocean Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Flounder ((O)267) x3, Albacore ((O)705) x9, Pufferfish ((O)128) x5, Tuna ((O)130) x8
+      Fish Tank/9 'Night Fishing' [3 slots, need 3] — re-rolled from Fish
+        slots: Midnight Carp ((O)269) x4, Super Cucumber ((O)155) x9, Squid ((O)151) x9 q1
+      Fish Tank/10 'Specialty Fish' [4 slots, need 4] — re-rolled from Fish
+        slots: Seaweed ((O)152) x13, Octopus ((O)149) x3, Ghostfish ((O)156) x19, Carp ((O)142) x21
+      Fish Tank/11 'Master Fisher's' [4 slots, need 2] — re-rolled from Fish
+        slots: Lava Eel ((O)162) x1, Tilapia ((O)701) x9, Midnight Squid ((O)798) x1, Red Snapper ((O)150) x6
+      Pantry/0 'Spring Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Spring)
+        slots: Coffee Bean ((O)433) x7, Parsnip ((O)24) x48, Rhubarb ((O)252) x41, Garlic ((O)248) x48
+      Pantry/1 'Summer Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Summer)
+        slots: Red Cabbage ((O)266) x45, Melon ((O)254) x32, Radish ((O)264) x37, Tomato ((O)256) x22
+      Pantry/2 'Fall Crops' [4 slots, need 4] — re-rolled from SeasonalCrops(Fall)
+        slots: Corn ((O)270) x35, Artichoke ((O)274) x24, Tea Leaves ((O)815) x1, Pumpkin ((O)276) x40
+      Pantry/3 'Home Cook's Feast' [6 slots, need 4] — authored slots
+        slots: Maki Roll ((O)228) x1, Fruit Salad ((O)610) x1, Cookies ((O)223) x1, Algae Soup ((O)456) x1, Triple Shot Espresso ((O)253) x1, Poppyseed Muffin ((O)651) x1
+      Pantry/4 'Orchard' [5 slots, need 5] — authored slots
+        slots: Pomegranate Sapling ((O)632) x1, Cherry Sapling ((O)628) x1, Apple Sapling ((O)633) x1, Peach Sapling ((O)631) x1, Apricot Sapling ((O)629) x1
+      Pantry/5 'Preserver's' [6 slots, need 4] — authored slots
+        slots: Duck Mayonnaise ((O)307) x6, Truffle Oil ((O)432) x1, Beer ((O)346) x8, Dried ((O)DriedFruit) x13, Juice ((O)350) x2, Goat Cheese ((O)426) x8
+      Vault/23 '3,125g' [1 slots, need 1] — vanilla slots
+      Vault/24 '6,250g' [1 slots, need 1] — vanilla slots
+      Vault/25 '12,500g' [1 slots, need 1] — vanilla slots
+      Vault/26 '31,250g' [1 slots, need 1] — vanilla slots
+      gates Construction (PerItem): Clay by Spring, Stone by Spring, Battery Pack by Summer, Wood by Fall
+      gates Exotic Foraging (Percentage): ramp [1,3,4,5] of X=5
+      gates Fall Foraging (Seasonal): all by Fall
+      gates Four Seasons Sampler (Percentage): ramp [1,3,3,5] of X=5
+      gates Summer Foraging (Seasonal): all by Summer
+      gates Tapper's (Percentage): ramp [1,2,3,4] of X=4
+      gates Fall Crops (Seasonal): all by Fall
+      gates Home Cook's Feast (Percentage): ramp [0,2,3,4] of X=4
+      gates Orchard (PerItem): Cherry Sapling by Spring, Apricot Sapling by Spring, Peach Sapling by Summer, Pomegranate Sapling by Fall, Apple Sapling by Winter
+      gates Preserver's (Percentage): ramp [0,2,3,4] of X=4
+      gates Spring Crops (Seasonal): all by Spring
+      gates Summer Crops (Seasonal): all by Summer
+      gates Lake Fish (PerItem): White Algae by Spring, Woodskip by Summer, Largemouth Bass by Fall, Catfish by Winter
+      gates Master Fisher's (Percentage): ramp [1,1,2,2] of X=2
+      gates Night Fishing (PerItem): Midnight Carp by Fall, Squid by Winter, Super Cucumber by Winter
+      gates Ocean Fish (PerItem): Flounder by Spring, Tuna by Summer, Albacore by Fall, Pufferfish by Winter
+      gates Specialty Fish (PerItem): Carp by Spring, Seaweed by Spring, Ghostfish by Fall, Octopus by Winter
+      gates Weatherman's (Percentage): ramp [1,2,3,4] of X=4
+      gates Adventurer's (Percentage): ramp [1,1,2,2] of X=2
+      gates Gil's Trophies (Percentage): ramp [1,1,2,2] of X=2
+      gates Mineral (Percentage): ramp [1,2,3,4] of X=4
+      gates Chef's (PerItem): Large Egg by Spring, Rice by Spring, Bean Hotpot by Fall, Pepper Poppers by Fall, Fiddlehead Risotto by Winter, Powdermelon by Winter
+      gates Dye (PerItem): Herring by Spring, Cherry Bomb by Summer, Duck Feather by Fall, Raisins by Fall, Perch by Winter, Dish O' The Sea by Winter
+      gates Field Research (PerItem): Mussel by Spring, Bullhead by Summer, Rare Disc by Fall, Frozen Geode by Winter
+      gates Forager's (Percentage): ramp [1,1,2,2] of X=2
+      gates Helper's (PerItem): Mystery Box by Fall, Prize Ticket by Winter
+=== tly_genbundles: season gate audit (demanded / obtainable, by day 28 of each season) ===
+  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter (cheapest first: 2,500g, 5,000g, 10,000g, 25,000g). Owning 'keep_bus_unlocked' satisfies it outright.
+  tly_genbundles RESULT: no impossible gates. 30 tight (demands everything obtainable by then), 0 bundle(s) never gated.
+  tly_genbundles RESULT: 1 stretch line(s), 4 without a hard item, 4 Spring tight.
+tly_genbundles: 31 generated, 26 classified, 5 skipped.
+BundleEngine: legendary allowance for this board: 0.
+BundleEngine: 'Helper's': no stretch item for Summer in its pool.
+BundleEngine: 'Helper's': no stretch item for Fall in its pool.
+BundleEngine: 'Night Fishing': no stretch item for Spring in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Summer in its pool.
+BundleEngine: 'Adventurer's': no stretch item for Fall in its pool.
+BundleEngine: 'Adventurer's': no hard item in its pool.
+BundleEngine: 'Lake Fish': no stretch item for Summer in its pool.
+BundleEngine: 'Lake Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Ocean Fish': swapped in (O)128 as the hard item (effort 10).
+BundleEngine: 'Master Fisher's': no stretch item for Fall in its pool.
+BundleEngine: 'Master Fisher's': swapped in (O)162 as the hard item (effort 6).
+BundleEngine: 'Master Fisher's': no stretch item for Fall in its pool.
+BundleEngine: 'Specialty Fish': no stretch item for Fall in its pool.
+BundleEngine: 'Exotic Foraging': swapped in (O)311 as the hard item (effort 7).
+BundleEngine: 'Field Research': no stretch item for Fall in its pool.
+BundleEngine: 'Dye': no stretch item for Fall in its pool.
+BundleEngine: 'Dye': swapped in (O)242 as the hard item (effort 7).
+BundleEngine: 'Dye': no stretch item for Fall in its pool.
+tly_genbundles: determinism OK (second generation matched the first byte-for-byte).
+Debug bridge: executing 'tly_gatecheck'.
+=== tly_gatecheck: season gate audit (demanded / obtainable, by day 28 of each season) ===
+  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter (cheapest first: 2,500g, 5,000g, 10,000g, 25,000g). Owning 'keep_bus_unlocked' satisfies it outright.
+  tly_gatecheck RESULT: no impossible gates. 29 tight (demands everything obtainable by then), 0 bundle(s) never gated.
+  tly_gatecheck RESULT: 0 stretch line(s), 6 without a hard item, 3 Spring tight.
