@@ -1,10 +1,60 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-15 (story: obtainability model phase 2 built, rerun live, report awaiting Jeff's rulings)
+**Last updated:** 2026-09-15 (story: obtainability phase 2 review fixes landed, rerun live, report awaiting Jeff's rulings)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2275 passing
+**Tests:** 2280 passing
 **Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+
+## 2026-09-15: obtainability phase 2, the review fix wave (12 findings, live rerun)
+
+Commits `ea68649`..`d6f54b4` on top of phase 2, one per finding, all pushed. Full report:
+`.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`.
+
+Two of the twelve were real model bugs. **Festival shops with no `Festival_` prefix** (the Desert
+Festival stalls are `DesertFestival_Pam`, `DesertFestival_EggShop`) read as ordinary shops open all
+year; they are now placed on Spring 15 to 17 like any other festival. **Every chained derivation**
+(barter, crops, fruit trees, tea bush, machines, recipes, ponds, geodes) read its input through a
+filter that excludes island and year 2 sources, so such an input produced NO derived source instead of
+a flagged one; a new blind helper `Derived.cs` reads the input with both included and ORs the flags
+onto the derived source. Two silent drops became records: a barter whose trade item has no source at
+all, and a Magic Bait fish row with no bait anywhere. The rest were a report column
+(`NewDependableKnown`, so a dependable week resting on an unresolved source says so), a 389-line file
+split, four comment corrections, the Mushroom Log detail, the tea bush's sheltered note (an indoor pot
+needs no pantry bundle, `Bush.IsSheltered`) and a "Known limitations" section in the spec.
+
+**Live build (automated run, throwaway save `None_449077472`, launched minimized):**
+
+```
+[00:37:25 INFO  The Longest Year] Obtainability model: 1113 items in 347 ms, 6 pass(es), 45 unresolved source(s).
+```
+
+```
+[00:38:20 INFO  The Longest Year] tly_obtain compare: wrote ...obtainability-compare.md (1078 items: OnlyNew 606, NewEarlier 179, NewLater 15, LuckOnly 127, Agree 144, OnlyExisting 7; 45 unresolved).
+```
+
+| Verdict | Previous run | This run |
+|---|---|---|
+| NewEarlier | 177 | 179 |
+| NewLater | 5 | 15 |
+| LuckOnly | 137 | 127 |
+| OnlyExisting | 7 | 7 |
+| OnlyNew | 606 | 606 |
+| Agree | 146 | 144 |
+| Dependable only through an unresolved source | (new row) | 24 |
+| Unresolved sources | 21 | 45 |
+
+Only 44 items moved at all: 22 changed verdict, 22 kept it and changed week, every one listed in the
+report. The 24 new unresolved sources are all barter rows priced in a currency no data asset makes
+(22 Qi Gem, a Golden Walnut, two island trades, one Bookseller trade); none is a year 1 bundle route.
+
+**328 items still need Jeff's ruling** (179 NewEarlier, 15 NewLater, 127 LuckOnly, 7 OnlyExisting),
+grouped with a plain-English reason each in the report's section 4. The biggest blocks are unchanged:
+55 cooked dishes whose recipe unlock is a condition rather than a delay, 26 machine goods, 16 shop
+rows, 15 animal produce. One new question of its own (report 4.5): the island/year 2 flag is ORed on
+only when EVERY source of an input carries it, so a mixed input (Garlic Seeds: a year 2 Pierre row
+plus a cart row plus a seed maker) drops the flag and the year 2 row's week still counts. Leave it, or
+derive per source in a later task.
 
 ## 2026-09-15: item obtainability model, phase 2 (start-day meaning, gap closure, live rerun)
 

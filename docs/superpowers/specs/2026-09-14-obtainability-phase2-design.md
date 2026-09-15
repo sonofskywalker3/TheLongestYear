@@ -1,11 +1,12 @@
 # Item Obtainability Model, Phase 2: Start-Day Meaning and Gap Closure
 
 **Date:** 2026-09-14
-**Status:** phase 2 built (commits `639dd34`..`51ab859`), rerun report awaiting Jeff's rulings
-(2026-09-15 live rerun on the throwaway save: `Obtainability model: 1105 items in 369 ms, 7 pass(es),
-21 unresolved source(s).`; NewEarlier 177, NewLater 5, LuckOnly 137, OnlyExisting 7, OnlyNew 606,
-Agree 146; 326 items listed for ruling in STATUS.md and
-`.superpowers/sdd/2026-09-14-obtainability-phase2/task-10-report.md`)
+**Status:** phase 2 built (commits `639dd34`..`51ab859`), review findings fixed (commits
+`ea68649`..`d6f54b4`), rerun report awaiting Jeff's rulings (2026-09-15 live rerun on the throwaway
+save after the fixes: `Obtainability model: 1113 items in 347 ms, 6 pass(es), 45 unresolved
+source(s).`; NewEarlier 179, NewLater 15, LuckOnly 127, OnlyExisting 7, OnlyNew 606, Agree 144, 24
+dependable only through an unresolved source; 328 items listed for ruling in STATUS.md and
+`.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`)
 **Branch:** `story`
 **Builds on:** `2026-09-14-item-obtainability-design.md` (phase 1, the blind build)
 **Followed by:** Part B, wiring the model into `2026-09-14-darkness-rework-design.md` (its own

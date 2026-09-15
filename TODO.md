@@ -10,16 +10,27 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model blind. Phase 2
 (2026-09-14 to 15, commits `639dd34`..`51ab859`, spec
 `docs/superpowers/specs/2026-09-14-obtainability-phase2-design.md`) changed the week meaning to
-start-day and closed the gap list. Rerun live on 2026-09-15 on the throwaway save `None_449077472`:
-`Obtainability model: 1105 items in 369 ms, 7 pass(es), 21 unresolved source(s).` Counts now
-NewEarlier 177, NewLater 5, LuckOnly 137, OnlyExisting 7, OnlyNew 606, Agree 146, 21 unresolved
-(phase 1 was 302 / 1 / no LuckOnly / 18 / 598 / 151 / 40). Nothing reads the model for gameplay yet.
+start-day and closed the gap list. The whole-branch review's 12 findings were fixed in commits
+`ea68649`..`d6f54b4` (report:
+`.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`) and rerun live on
+2026-09-15 on the throwaway save `None_449077472`:
+`Obtainability model: 1113 items in 347 ms, 6 pass(es), 45 unresolved source(s).` Counts now
+NewEarlier 179, NewLater 15, LuckOnly 127, OnlyExisting 7, OnlyNew 606, Agree 144, 24 dependable only
+through an unresolved source, 45 unresolved sources (the run before the fixes was
+177 / 5 / 137 / 7 / 606 / 146 / 21). Nothing reads the model for gameplay yet.
 
-- **OPEN: Jeff rules on the rerun report: 326 items listed in STATUS** (177 NewEarlier, 5 NewLater,
-  137 LuckOnly, 7 OnlyExisting). The grouped list with a plain-English reason per group and the item
-  ids is in `.superpowers/sdd/2026-09-14-obtainability-phase2/task-10-report.md`; the summary and the
-  outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling log in its own
-  small commit.
+- **OPEN: Jeff rules on the rerun report: 328 items** (179 NewEarlier, 15 NewLater, 127 LuckOnly,
+  7 OnlyExisting). The grouped list with a plain-English reason per group and the item ids is in
+  `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md` section 4; the summary and
+  the outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling log in its
+  own small commit.
+- **OPEN: one question the fix wave raised** (report section 4.5): a derived source is flagged island
+  or year 2 only when EVERY source of its input is, so a mixed input (Garlic Seeds) drops the flag and
+  its year 2 shop row's week still feeds the dependable headline. Leave it, or derive per source in a
+  later task.
+- **OPEN: the Queen of Sauce air weeks** (`Data/TV/CookingChannel`) are still not read; a recipe whose
+  unlock is "none" is recorded Unresolved and lands as soon as its ingredients do. The report now
+  marks and counts those items (24 this run). Read the TV schedule, or keep the unlock as a condition.
 - **Closed in phase 2 (commits `639dd34`..`51ab859`):** the start-week meaning (sources carry a
   112-slot `DayTable`, every question is "start on this day, when does it land"); mine fish
   (Stonefish, Ice Pip, Lava Eel); Tea Leaves via the tea bush with its 20-day setup; the season seeds
