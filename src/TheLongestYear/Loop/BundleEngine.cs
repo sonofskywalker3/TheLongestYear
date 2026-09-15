@@ -209,12 +209,15 @@ namespace TheLongestYear.Loop
             _lastDomains.Clear();
             _lastRecipes.Clear();
             _lastVanillaOnlyRecipes.Clear();
+            var timing = _monitor != null ? new ResetTiming(_monitor, "BundleEngine.Generate") : null;
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds);
+            timing?.Mark("GameDataPools.Build");
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
             // same instance, so the default path is untouched.
             itemPools = Core.RarityBias.Apply(itemPools, _difficulty.RarityBias, _thresholds);
             LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
+            timing?.Mark("RarityBias.Apply");
 
             // Board-level legendary allowance (LegendaryFishRules.BoardAllowance): how many
             // legendaries this whole board may hold at this step. Rolled off its own salt so it
@@ -225,6 +228,7 @@ namespace TheLongestYear.Loop
             _monitor?.Log($"BundleEngine: legendary allowance for this board: {(legendaryAllowance == int.MaxValue ? "open" : legendaryAllowance.ToString())}.", LogLevel.Trace);
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
                 WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, legendaryAllowance);
+            timing?.Mark("BuildRoomPools + WidenWithAuthoredBundles");
 
             var allPicks = new List<BundleSpec>();
             var usedNameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -322,15 +326,20 @@ namespace TheLongestYear.Loop
                 }
             }
 
+            timing?.Mark("pass 1 classify + RecipeFor");
+
             // Pass 2: re-roll, tightest pool first (2026-08-28, no item asked twice across the
             // board). Each fill leaves out everything already asked and adds its own picks, so a
             // bundle with few candidates (Night Fishing) is not the one left holding the repeat
             // fallback because a roomy bundle drew its fish first. Per-pick rng streams are
             // salted on the absolute index, so the fill order does not change them.
-            foreach (PickRecord record in picked
-                         .Where(r => r.Composed == null)
-                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability, r.Recipe))
-                         .ThenBy(r => r.Pick.Index))
+            List<PickRecord> fillOrder = picked
+                .Where(r => r.Composed == null)
+                .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability, r.Recipe))
+                .ThenBy(r => r.Pick.Index)
+                .ToList();
+            timing?.Mark("pass 2 ordering (CandidateCount)");
+            foreach (PickRecord record in fillOrder)
             {
                 BundleSpec pick = record.Pick;
                 if (record.Recipe != null)
@@ -359,6 +368,8 @@ namespace TheLongestYear.Loop
                 record.Composed = composed;
             }
 
+            timing?.Mark("pass 2 fills");
+
             // Pass 3: emit in the original room/position order (name uniquification and the
             // fixed write-key space depend on it).
             foreach (PickRecord record in picked)
@@ -386,6 +397,8 @@ namespace TheLongestYear.Loop
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
 
+            timing?.Mark("pass 3 emit");
+            timing?.Total();
             return new GeneratedBundleSet(allPicks);
         }
 
