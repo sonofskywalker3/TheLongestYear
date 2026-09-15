@@ -142,6 +142,13 @@ namespace TheLongestYear
             }
             if (migrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
+            // Darkness dial (spec 2026-09-15 Part B, 2.3): a config from before the dial sets it,
+            // and the overall lever, to the lowest of the ten existing dials (Jeff, 2026-09-14).
+            if (_config.Difficulty.MigrateDarkness())
+            {
+                migrated = true;
+                this.Monitor.Log($"Migrated config.json: Darkness dial set to {_config.Difficulty.Darkness} (the lowest existing dial).", LogLevel.Info);
+            }
 
             // Always write the config back on Entry so any newly-added fields (Enabled, new
             // tile defaults, future tuning knobs) become visible in config.json for the
@@ -2457,6 +2464,10 @@ namespace TheLongestYear
                 () => _config.Difficulty.HoldPrices, v => _config.Difficulty.HoldPrices = v,
                 () => Strings.Get("gmcm.difficulty.hold-prices.name"),
                 () => Strings.Get("gmcm.difficulty.hold-prices.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.DarknessOrLowest, v => _config.Difficulty.Darkness = v,
+                () => Strings.Get("gmcm.difficulty.darkness.name"),
+                () => Strings.Get("gmcm.difficulty.darkness.tooltip"));
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
 
@@ -4299,6 +4310,7 @@ namespace TheLongestYear
             LogStep("starting gold", configured.StartingGold, live.Steps.StartingGold);
             LogStep("cart slots", configured.CartSlots, live.Steps.CartSlots);
             LogStep("hold prices", configured.HoldPrices, live.Steps.HoldPrices);
+            LogStep("darkness", configured.DarknessOrLowest, live.Darkness);
 
             this.Monitor.Log("  Resolved values in force:", LogLevel.Info);
             this.Monitor.Log(

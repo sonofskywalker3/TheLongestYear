@@ -596,6 +596,8 @@
     "gmcm.difficulty.cart-slots.tooltip": "How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is EMPTY until you buy Cart Stall I. Does nothing if the Traveling Cart limit is turned off.",
     "gmcm.difficulty.hold-prices.name": "Hold prices",
     "gmcm.difficulty.hold-prices.tooltip": "Scales the JP price of keeping your bundle board on a Fail night. The first hold stays free at every step: this makes repeat use expensive, it does not tax your first mistake.",
+    "gmcm.difficulty.darkness.name": "Darkness",
+    "gmcm.difficulty.darkness.tooltip": "How hard the darkness hits from Summer on. Sets how many crops or stored items a blight night takes, and whether the darkness checks that you can still get an item back before it undoes a donation or changes what a bundle asks for. Easy and Normal only take what you can replace in time. Hard and Extreme can take anything once a loop, and on Extreme a blight night can also reach tools and machines. The three switches under Features still turn each front off.",
 
     // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
     "intro.skip-notice": "Skip intro is on. The Longest Year opens with a short scene that explains the loop and what to do first. I recommend watching it the first time you play the mod. Turn Skip intro off to see it.",
