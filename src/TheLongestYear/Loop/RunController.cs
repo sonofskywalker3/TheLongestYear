@@ -761,6 +761,7 @@ namespace TheLongestYear.Loop
                 $"FinalizeReset ({reason}): applying reset (eventUp={Game1.eventUp}, " +
                 $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
+            var timing = new ResetTiming(_monitor, "FinalizeReset");
             // Capture a partial-reset failure explicitly. PerformReset changes uniqueIDForThisGame
             // early then does heavy world work; if it threw mid-way the old code swallowed it up the
             // stack and the game limped on in a half-reset state. Log the full exception, then
@@ -786,6 +787,7 @@ namespace TheLongestYear.Loop
                 // branch): Release is idempotent.
                 TheLongestYear.Integration.RewindSpringPaint.Release();
             }
+            timing.Mark("PerformReset");
             // Re-inject the manifest PerformReset just generated for the new loop -- before
             // DoDayStartSeasonAndHub below, which samples goal slots from _requirements. Null only
             // if PerformReset somehow returned without generating (shouldn't happen post-wiring;
@@ -801,6 +803,7 @@ namespace TheLongestYear.Loop
                     $"FinalizeReset ({reason}): WorldResetService.LastGeneratedRequirements was null — " +
                     "keeping the previous requirement manifest.",
                     LogLevel.Warn);
+            timing.Mark("ReplaceRequirements");
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();
@@ -810,7 +813,10 @@ namespace TheLongestYear.Loop
             // the stale on-disk meta from before the shrine was opened — refunding the JP the player
             // just spent and dropping their purchases (2026-06-01 playtest: "it refunded all my JP").
             _store.Save();
+            timing.Mark("profession drain, BeginNewRun, meta save");
             ForceFullSave();
+            timing.Mark("ForceFullSave");
+            timing.Total();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
             // Re-persist the meta AFTER the hub opened. DoDayStartSeasonAndHub → PresentOffer sets

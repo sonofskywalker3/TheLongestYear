@@ -50,6 +50,10 @@ namespace TheLongestYear.Loop
         /// new canonical folder. Null when there's nothing to clean up.</summary>
         private string _abandonedSaveFolder;
 
+        /// <summary>Per-stage stopwatch for the last <see cref="PerformReset"/> (freeze investigation,
+        /// TODO "Closing the post-loop shrine freezes the game"). Rebuilt at the top of each reset.</summary>
+        private ResetTiming _timing;
+
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
         /// <summary>Derived item model, forwarded to the classifier when the reset regenerates a
@@ -119,7 +123,9 @@ namespace TheLongestYear.Loop
             // One-time safety backup before the first destructive reset (throws if it fails -> reset aborts).
             // Lands inside the mod folder (not in Stardew's Saves dir) so it doesn't appear as a second
             // save on the title screen.
+            _timing = new ResetTiming(_monitor, "PerformReset");
             SaveBackup.BackupOnce(_meta, _monitor, _modDirectory);
+            _timing.Mark("0 backup");
 
             _monitor.Log("In-place reset: starting.", LogLevel.Info);
 
@@ -174,6 +180,7 @@ namespace TheLongestYear.Loop
                 AvailabilityModel = RebuildAvailabilityModel(step);
                 TheLongestYear.Core.WeekMode mode = TheLongestYear.Core.WeekModes.For(step);
                 _monitor.Log($"Availability model rebuilt for {step} ({mode}).", LogLevel.Info);
+                _timing.Mark("0 availability model rebuild");
             }
 
             bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
@@ -281,7 +288,9 @@ namespace TheLongestYear.Loop
             DisplayOptionsCarryover.Snapshot displayOptions = DisplayOptionsCarryover.Capture();
 
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
+            _timing.Mark("0 stamps, snapshots, reseed");
             Game1.game1.loadForNewGame(loadedGame: false);
+            _timing.Mark("1 loadForNewGame");
 
             // 1-display. Put the zoom + UI scale back on the new Options instance. Game1.Update
             // notices the change on its next tick and calls refreshWindowSettings itself.
@@ -416,6 +425,7 @@ namespace TheLongestYear.Loop
             // of the class in one pass instead of reactively.
             ResetNetWorldStateLeftovers();
 
+            _timing.Mark("1a-1d CC bundles, museum, books, netWorldState wipes");
             // 2. Calendar -> Spring 1, year 1, morning. (loadForNewGame leaves dayOfMonth = 0 as a flag.)
             Game1.year = 1;
             Game1.season = StardewValley.Season.Spring;
@@ -482,6 +492,7 @@ namespace TheLongestYear.Loop
             //     while DaysPlayed <= 1. Re-run vanilla's refresh now that DaysPlayed is back to 1.
             Game1.RefreshQuestOfTheDay();
 
+            _timing.Mark("2 calendar, weather, netWorldState sync");
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
@@ -544,6 +555,7 @@ namespace TheLongestYear.Loop
                 Game1.updateCellarAssignments();
             }
 
+            _timing.Mark("3-7 farmer reset, professions, mine, robin, cellar");
             // 8. Pre-build kept buildings on the Farm. Coords are deterministic — we always
             //    use the same tiles so subsequent runs land buildings in the same spots.
             ApplyKeptBuildings(baseline.KeptBuildings);
@@ -568,6 +580,7 @@ namespace TheLongestYear.Loop
             //      otherwise shuts every door to a new pet. See EnableAdoptionIfPetless.
             PetCarryoverService.EnableAdoptionIfPetless(_monitor);
 
+            _timing.Mark("8-10 kept buildings, horse, animals, pet");
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
 
@@ -664,6 +677,7 @@ namespace TheLongestYear.Loop
                     generatedSet, _itemSeasonPins, _bundleQuotas, AvailabilityModel);
             }
 
+            _timing.Mark("11a board generation (engine or vanilla)");
             // 11b. Gifts of the Junimos (kept bus, greenhouse, quarry bridge, boulder, minecarts):
             //      the room's world reward stands from day 1; the bundles stay on the board and are
             //      paid like any other (Jeff, 2026-08-29).
@@ -678,6 +692,7 @@ namespace TheLongestYear.Loop
             _stashService?.PopulateFromMeta();
             _planningShrine?.Place(_stashService?.LastPlacedTile);
 
+            _timing.Mark("11b-13 kept gifts, book quests, stash chest, shrine");
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up
             //     the kitchen if the baseline set it.
@@ -719,6 +734,8 @@ namespace TheLongestYear.Loop
             // Circles of Warding likewise (owned count, spec 2026-09-09).
             ReconcileCircles?.Invoke();
 
+            _timing.Mark("14 player placement, furniture, books, circles");
+            _timing.Total();
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
