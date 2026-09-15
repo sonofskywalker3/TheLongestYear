@@ -12,7 +12,6 @@ public enum DarknessEvent { CropBlight, ChestBlight, Reversion, Tampering }
 /// the glue supplies the run, the calendar and "can this option act tonight"; this decides.</summary>
 public static class NightRoll
 {
-    private const int NoWeek = -1;
     private const int FirstWinterDay = 1;
     private const int Week1Nights = 7;
 
