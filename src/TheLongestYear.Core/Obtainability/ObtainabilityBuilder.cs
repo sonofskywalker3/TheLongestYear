@@ -41,6 +41,7 @@ public static class ObtainabilityBuilder
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
             all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current));
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
+            all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
             all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f));
