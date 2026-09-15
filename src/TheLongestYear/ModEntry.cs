@@ -347,7 +347,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpavailability", "Write a Markdown listing of every item in every bundle on the LIVE board with the earliest season the engine says it can exist, why, and the season its gate demands it. Usage: tly_dumpavailability [fileName]", this.CmdDumpAvailability);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
-            helper.ConsoleCommands.Add("tly_obtain", "Item obtainability model (phase 1, not used by gameplay). Usage: tly_obtain <itemId> | tly_obtain compare [fileName]", this.CmdObtain);
+            helper.ConsoleCommands.Add("tly_obtain", "Item obtainability model (phase 2, not used by gameplay). Usage: tly_obtain <itemId> [startDay 1-112] | tly_obtain compare [fileName]", this.CmdObtain);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
@@ -3415,7 +3415,7 @@ namespace TheLongestYear
             }
             if (args.Length == 0)
             {
-                this.Monitor.Log("Usage: tly_obtain <itemId> | tly_obtain compare [fileName]", LogLevel.Info);
+                this.Monitor.Log("Usage: tly_obtain <itemId> [startDay 1-112] | tly_obtain compare [fileName]", LogLevel.Info);
                 return;
             }
             if (args[0] == "compare")
@@ -3448,8 +3448,17 @@ namespace TheLongestYear
                 this.Monitor.Log($"tly_obtain compare: wrote {path} ({rows.Count} items: {counts}; {_obtainabilityUnresolved.Count} unresolved).", LogLevel.Info);
                 return;
             }
+            int startDay = 1;
+            if (args.Length > 1)
+            {
+                if (!int.TryParse(args[1], out startDay) || startDay < 1 || startDay > TheLongestYear.Core.Obtainability.DayTable.Days)
+                {
+                    this.Monitor.Log($"tly_obtain: startDay must be an integer 1-{TheLongestYear.Core.Obtainability.DayTable.Days}.", LogLevel.Warn);
+                    return;
+                }
+            }
             this.Monitor.Log(
-                TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName),
+                TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName, startDay),
                 LogLevel.Info);
         }
 
