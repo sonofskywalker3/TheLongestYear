@@ -16,7 +16,7 @@
 - **Do not change `manifest.json`'s `Version`** (feature branch; the release line owns bumps).
 - **Push to `origin story` after every commit:** `git push origin story`.
 - **No em dash characters (U+2014) anywhere:** code, comments, strings, docs, commit messages. Use a comma, a colon or "to". Check with `python -c "import sys;print(open(sys.argv[1],encoding='utf-8').read().count('\u2014'))" <file>` before committing.
-- **No `/sdcard/` paths** anywhere (use `/storage/emulated/0/` if an Android path is ever needed; none should be).
+- **Android paths**, if one is ever needed (none should be), always start with `/storage/emulated/0/`; the legacy symlink form is banned everywhere.
 - **The blind guard stays.** `tests/TheLongestYear.Tests/ObtainabilityBlindGuardTests.cs` lists the blind files. Do not edit any file under `src/TheLongestYear.Core/Obtainability/`, nor `src/TheLongestYear/Loop/GameObtainabilityData.cs` or `GameObtainabilityParsing.cs`. Darkness code reads the model through its public API only. `ObtainabilityComparison.cs` stays the only file naming both `ObtainabilityModel` and `ItemAvailabilityModel` for comparison; `SabotageService.cs` may reference both (it reads effort from the old model and fairness from the new one) but never compares them.
 - **Board generation, gates, goals and pacing must not read the model.** Do not touch `ItemPoolBuilder`, `BundleSlotFiller`, `BoardRequirements`, `GateEvaluator`, `GoalObtainability`, `BundleDeadlines`, `QuantityAskPass`, `AuthoredBundleComposer`, `BundleGenerationTuning`, `PacingWeek`, `BonusItemSampler`, `BonusSlotSampler`.
 - **Test command (run from the repo root, must stay green after every task):**
