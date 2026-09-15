@@ -31,6 +31,34 @@ public static class SpawnSources
     public static bool IsIslandLocation(string location)
         => location.StartsWith(IslandPrefix, StringComparison.Ordinal);
 
+    private const string LocationFishQuery = "LOCATION_FISH";
+
+    /// <summary>Expands every row whose ItemId starts with "LOCATION_FISH &lt;name&gt;" into copies of
+    /// &lt;name&gt;'s own rows (recursively, following that location's own delegations too), re-homed to
+    /// the delegating location. A row that delegates to a location with no rows of its own contributes
+    /// nothing.</summary>
+    public static IReadOnlyList<LocationSpawn> ExpandLocationFish(IReadOnlyList<LocationSpawn> fish)
+    {
+        var byLocation = fish.GroupBy(r => r.Location).ToDictionary(g => g.Key, g => g.ToList(), StringComparer.Ordinal);
+        IEnumerable<LocationSpawn> RowsOf(string location, HashSet<string> visited)
+        {
+            if (!visited.Add(location) || !byLocation.TryGetValue(location, out List<LocationSpawn>? rows)) yield break;
+            foreach (LocationSpawn row in rows)
+            {
+                string[] parts = row.ItemId.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2 && parts[0] == LocationFishQuery)
+                    foreach (LocationSpawn inherited in RowsOf(parts[1], visited))
+                        yield return inherited with { Location = location };
+                else
+                    yield return row;
+            }
+        }
+        var result = new List<LocationSpawn>();
+        foreach (string location in byLocation.Keys)
+            result.AddRange(RowsOf(location, new HashSet<string>(StringComparer.Ordinal)));
+        return result;
+    }
+
     public static IEnumerable<(string ItemId, ObtainSource Source)> Forage(
         IEnumerable<LocationSpawn> rows, IReadOnlyDictionary<string, ObjInfo> objects,
         IReadOnlyDictionary<string, FestivalDates> festivals)

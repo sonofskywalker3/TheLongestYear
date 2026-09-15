@@ -57,6 +57,10 @@ namespace TheLongestYear
         /// <summary>Sources the obtainability build could not read (unsupported item queries, machine
         /// output methods), for tly_obtain compare.</summary>
         private IReadOnlyList<string> _obtainabilityUnresolved = System.Array.Empty<string>();
+        /// <summary>The message from an <see cref="TheLongestYear.Core.Obtainability.ObtainabilityReadException"/>
+        /// when the last build refused to publish a model (a data section failed to read). Null when
+        /// the model built cleanly or has not been built yet.</summary>
+        private string _obtainabilityFailure;
         /// <summary>The curated season pins the availability model was last built with, kept so a
         /// difficulty-driven rebuild (<see cref="BuildAvailabilityModelFor"/>) does not need to
         /// re-parse config.json. Null before a save is loaded.</summary>
@@ -3378,10 +3382,18 @@ namespace TheLongestYear
                 var build = TheLongestYear.Core.Obtainability.ObtainabilityBuilder.Build(inputs);
                 _obtainability = build.Model;
                 _obtainabilityUnresolved = build.Unresolved;
+                _obtainabilityFailure = null;
                 this.Monitor.Log(
                     $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms, {build.Passes} pass(es), " +
                     $"{build.Unresolved.Count} unresolved source(s)" + (build.HitPassCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
                     build.HitPassCap ? LogLevel.Warn : LogLevel.Info);
+            }
+            catch (TheLongestYear.Core.Obtainability.ObtainabilityReadException rex)
+            {
+                _obtainability = null;
+                _obtainabilityUnresolved = System.Array.Empty<string>();
+                _obtainabilityFailure = rex.Message;
+                this.Monitor.Log(rex.Message, LogLevel.Warn);
             }
             catch (Exception ex)
             {
@@ -3396,7 +3408,9 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady || _obtainability == null)
             {
-                this.Monitor.Log("Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
+                this.Monitor.Log(_obtainability == null && _obtainabilityFailure != null
+                    ? $"No obtainability model: {_obtainabilityFailure}"
+                    : "Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
                 return;
             }
             if (args.Length == 0)

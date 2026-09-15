@@ -95,4 +95,31 @@ public class ObtainabilityBuilderTests
         Assert.False(build.Model.Table("(O)378", ObtainFilter.DependableOnly).IsEmpty);   // copper ore node
         Assert.False(build.Model.Table("(O)168", ObtainFilter.Any).IsEmpty);              // fishing trash
     }
+
+    [Fact]
+    public void Location_fish_delegation_copies_the_named_locations_rows()
+    {
+        var rows = new List<LocationSpawn>
+        {
+            new("Forest", "(O)142", Season.Fall, null, 1.0, 0, false, 0),
+            new("Forest", "LOCATION_FISH Town BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+            new("Town", "(O)138", Season.Summer, null, 1.0, 0, false, 0),
+            new("Farm_Riverland", "LOCATION_FISH Forest BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+            new("Beach", "LOCATION_FISH Nowhere BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+        };
+        var expanded = SpawnSources.ExpandLocationFish(rows);
+        Assert.DoesNotContain(expanded, r => r.ItemId.StartsWith("LOCATION_FISH"));
+        Assert.Contains(expanded, r => r.Location == "Farm_Riverland" && r.ItemId == "(O)142" && r.Season == Season.Fall);
+        Assert.Contains(expanded, r => r.Location == "Farm_Riverland" && r.ItemId == "(O)138");   // through Forest's own delegation to Town
+        Assert.Contains(expanded, r => r.Location == "Forest" && r.ItemId == "(O)138");
+        Assert.DoesNotContain(expanded, r => r.Location == "Beach");
+    }
+
+    [Fact]
+    public void A_read_failure_names_its_sections()
+    {
+        var ex = new ObtainabilityReadException(new[] { "Data/Crops", "Data/Shops" });
+        Assert.Equal(2, ex.FailedSections.Count);
+        Assert.Contains("Data/Crops", ex.Message);
+    }
 }
