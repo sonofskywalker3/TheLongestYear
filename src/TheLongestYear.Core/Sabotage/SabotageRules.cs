@@ -26,6 +26,23 @@ public static class BlightRule
         return rng.Next(2) == 0 ? (crops, 0) : (0, spoil);
     }
 
+    /// <summary>Is this item in the chest-blight pool (spec 2026-09-15 Part B, section 2.5)? The one
+    /// place that answers it, so the glue's walk over the maps carries no rules of its own.
+    ///
+    /// A warded item is never in: a chest or a machine on a Circle of Warding's tiles is safe, and so
+    /// is the Junimo Stash (the caller excludes the stash before asking). A STORED item (in a chest,
+    /// <paramref name="placedOnMap"/> false) is in the pool on Extreme whatever it is, and below
+    /// Extreme only when it is a plain object stack: tools, weapons, rings, boots, hats and big
+    /// craftables in storage are safe. A PLACED item (standing on a map) joins the pool only on
+    /// Extreme, only as a big craftable, and only on the farm; other maps are exempt, matching crop
+    /// blight's farm-only rule.</summary>
+    public static bool InStoragePool(bool isPlainObject, bool isBigCraftable, bool placedOnMap, bool onFarm, bool warded, bool everything)
+    {
+        if (warded) return false;
+        if (!placedOnMap) return everything || (isPlainObject && !isBigCraftable);
+        return everything && isBigCraftable && onFarm;
+    }
+
     /// <summary>How many crops die on a strike: the level's share of the live crops, at least one,
     /// capped by season and level (spec 2026-09-15 Part B, section 2.4).</summary>
     public static int Count(int liveCrops, Season season, DifficultyStep level)

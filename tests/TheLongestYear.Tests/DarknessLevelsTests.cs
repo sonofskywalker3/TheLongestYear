@@ -89,4 +89,29 @@ public class DarknessLevelsTests
         for (int seed = 0; seed < 20; seed++)
             Assert.Equal(1, TamperRule.Stack(TamperRule.MaxCount("(O)775", 30.0), week, level, new System.Random(seed)));
     }
+
+    /// <summary>Section 2.5's pool, one cell per row. isPlainObject, isBigCraftable, placedOnMap,
+    /// onFarm, warded, everything (Extreme).</summary>
+    [Theory]
+    // A tool in a chest: safe below Extreme, taken on Extreme.
+    [InlineData(false, false, false, true, false, false, false)]
+    [InlineData(false, false, false, true, false, true, true)]
+    // A big craftable kept in a chest: the same.
+    [InlineData(false, true, false, true, false, false, false)]
+    [InlineData(false, true, false, true, false, true, true)]
+    // A plain stack is in the pool at every level.
+    [InlineData(true, false, false, true, false, false, true)]
+    [InlineData(true, false, false, true, false, true, true)]
+    // A warded chest is safe even on Extreme.
+    [InlineData(true, false, false, true, true, true, false)]
+    [InlineData(false, false, false, true, true, true, false)]
+    // A machine placed on the farm: only on Extreme, only there, never on a circle.
+    [InlineData(false, true, true, true, false, true, true)]
+    [InlineData(false, true, true, false, false, true, false)]
+    [InlineData(false, true, true, true, false, false, false)]
+    [InlineData(false, true, true, true, true, true, false)]
+    // A placed plain object (a sprinkler, a fence post) is never in the pool.
+    [InlineData(true, false, true, true, false, true, false)]
+    public void The_storage_pool_by_level(bool plain, bool big, bool placed, bool onFarm, bool warded, bool everything, bool inPool)
+        => Assert.Equal(inPool, BlightRule.InStoragePool(plain, big, placed, onFarm, warded, everything));
 }
