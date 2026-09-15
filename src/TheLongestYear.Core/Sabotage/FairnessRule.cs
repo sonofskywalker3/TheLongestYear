@@ -35,6 +35,7 @@ public static class FairnessRule
     private const string Desert = "location:Desert";
     private const string BusMail = "ccVault";
     private const string FriendshipPrefix = "friendship:";
+    private const string PondPopulationPrefix = "pond population";
     private const string MiningSkill = "Mining";
     private const int NoDays = 0;
 
@@ -185,7 +186,14 @@ public static class FairnessRule
                 if (!save.MailFlags.Contains(BusMail)) return "the desert is not open";
                 continue;
             }
-            // item:, guild:, pond population, tapper on tree, other location: and unlock: notes count as met.
+            if (r.StartsWith(PondPopulationPrefix, StringComparison.Ordinal))
+            {
+                // The model records the pond building and the population it needs, but never the fish
+                // that has to be in it, and the save snapshot cannot see a pond's contents. So a pond
+                // route is unprovable below Extreme and rules out (spec 1.2's "pond" row).
+                return "fish pond contents are not modelled";
+            }
+            // item:, guild:, tapper on tree, other location: and unlock: notes count as met.
             // "skill:<Name> N" strings from MineSources are not parsed: every such source is Chance today.
         }
 

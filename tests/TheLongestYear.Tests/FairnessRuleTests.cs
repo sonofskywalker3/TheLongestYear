@@ -244,7 +244,17 @@ public class FairnessRuleTests
 
     [Fact]
     public void Conditions_the_table_does_not_name_count_as_met()
-        => Assert.True(Counts(DifficultyStep.Easy, Save(), Route(requires: new[] { "item:(O)472", "guild:Slimes 1000 kills", "pond population 3", "location:Beach", "tapper on tree 1, 7 days" })));
+        => Assert.True(Counts(DifficultyStep.Easy, Save(), Route(requires: new[] { "item:(O)472", "guild:Slimes 1000 kills", "location:Beach", "tapper on tree 1, 7 days" })));
+
+    [Fact]
+    public void A_pond_route_never_counts_below_extreme()
+    {
+        string[] requires = { "building:Fish Pond", "pond population 3" };
+        SaveSnapshot withPond = Save(buildings: new[] { "Fish Pond" });
+        Assert.False(Counts(DifficultyStep.Easy, withPond, Route(SourceKind.FishPond, requires: requires)));
+        Assert.False(Counts(DifficultyStep.Normal, withPond, Route(SourceKind.FishPond, requires: requires)));
+        Assert.True(Counts(DifficultyStep.Extreme, withPond, Route(SourceKind.FishPond, requires: requires)));
+    }
 
     [Fact]
     public void One_counting_route_is_enough()
