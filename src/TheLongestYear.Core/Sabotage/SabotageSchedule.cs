@@ -103,7 +103,7 @@ public static class SabotageSchedule
         if (!IsOpen(kind, season) || IsQuietDay(kind, dayOfMonth)) return false;
         int week = Calendar.WeekOfYear((int)season, dayOfMonth);
         int day = Calendar.DayOfYear((int)season, dayOfMonth);
-        return WithinCaps(kind, run, week, day) && rng.NextDouble() < SabotageTuning.NightChanceFall;
+        return WithinCaps(kind, run, week, day) && rng.NextDouble() < NightRoll.SeasonChance(season);
     }
 
     /// <summary>Record that a front struck, so the caps see it.</summary>
@@ -134,6 +134,19 @@ public static class SabotageSchedule
             int hash = runSeed;
             hash = hash * 397 ^ dayOfYear * 7919;
             hash = hash * 397 ^ ((int)kind + 1) * 104729;
+            return new Random(hash);
+        }
+    }
+
+    /// <summary>The single night roll's stream (spec 2026-09-15 Part B): seed and day only, so it is
+    /// distinct from every front's own stream.</summary>
+    public static Random Rng(int runSeed, int dayOfYear)
+    {
+        unchecked
+        {
+            int hash = runSeed;
+            hash = hash * 397 ^ dayOfYear * 7919;
+            hash = hash * 397 ^ 15485863;
             return new Random(hash);
         }
     }
