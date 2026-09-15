@@ -23,6 +23,7 @@ public static class FairnessRule
     public const int TamperDeadline = DayTable.Days;
 
     private const string RecipePrefix = "recipe:";
+    private const string CraftingPrefix = "crafting:";
     private const string UnlockShop = "unlock:shop";
     private const string UnlockTv = "unlock:Queen of Sauce";
     private const string MachinePrefix = "machine:";
@@ -131,6 +132,15 @@ public static class FairnessRule
                 bool skillTaught = c.Skill != null;
                 if (priced || skillTaught) continue;
                 return $"recipe {name} not known";
+            }
+            if (r.StartsWith(CraftingPrefix, StringComparison.Ordinal))
+            {
+                // A crab pot or a tapper the player cannot craft is a missing crafting recipe, which
+                // rules the route out on Easy, Normal and Hard alike (spec 1.2's recipe row). The
+                // snapshot's RecipesKnown holds crafting recipe names as well as cooking ones.
+                string name = r.Substring(CraftingPrefix.Length);
+                if (save.RecipesKnown.Contains(name)) continue;
+                return $"crafting recipe {name} not known";
             }
             if (r.StartsWith(MachinePrefix, StringComparison.Ordinal))
             {
