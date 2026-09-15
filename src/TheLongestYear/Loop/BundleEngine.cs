@@ -546,10 +546,13 @@ namespace TheLongestYear.Loop
                 var authoredRng = new Random(seed ^ (StableAuthoredSalt(def.Name) * AuthoredSaltPrime));
                 // absoluteIndex: 0 is a placeholder -- every position clone below overwrites it
                 // with that position's own absolute index (see doc comment above).
+                Core.DifficultyStep step = Availability?.Step ?? Core.DifficultyStep.Normal;
+                // Easy keeps the slow-route books (gold tools, 1,000 kills) off the Book bundle.
+                var bannedIds = new HashSet<string>(Core.BookRouteRules.BannedFor(step), StringComparer.Ordinal);
+                if (legendaryAllowance == 0) bannedIds.UnionWith(Core.LegendaryFishRules.Ids);
                 BundleSpec composed = AuthoredBundleComposer.Compose(
                     def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng,
-                    Availability?.Step ?? Core.DifficultyStep.Normal,
-                    banned: legendaryAllowance == 0 ? Core.LegendaryFishRules.Ids : null);
+                    step, banned: bannedIds.Count > 0 ? bannedIds : null);
                 if (composed == null)
                 {
                     _monitor?.Log(

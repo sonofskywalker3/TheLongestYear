@@ -1,0 +1,8 @@
+0.18.11 - The two hidden books are gated fairly: Easy never asks for them, and everyone else gets Fall and Winter to find them.
+
+Changed
+- The two hidden books get the time their routes take. Both of the books hidden around town take
+  real work to reach, so their bundle deadlines now sit in Fall and Winter rather than Spring, and
+  on Easy the Book bundle never asks for them at all.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
