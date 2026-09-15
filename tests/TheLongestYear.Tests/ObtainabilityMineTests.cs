@@ -46,7 +46,6 @@ public class ObtainabilityMineTests
     public void Treasure_is_complete_chance_and_gated_where_the_game_gates_it()
     {
         var all = MineSources.FishingTreasure().ToList();
-        Assert.Contains(all, t => t.ItemId.StartsWith(ItemQueries.UnresolvedPrefix) && t.Source.Detail.Contains("raccoon"));
         var treasure = all.Where(t => !t.ItemId.StartsWith(ItemQueries.UnresolvedPrefix)).ToList();
         Assert.All(treasure, t => Assert.Equal(SourceKind.FishingTreasure, t.Source.Kind));
         Assert.Contains(treasure, t => t.ItemId == "(O)Book_Roe");
@@ -62,4 +61,8 @@ public class ObtainabilityMineTests
         Assert.Contains(treasure, t => t.ItemId == "(O)119");
         Assert.Contains(treasure, t => t.ItemId == "(O)StardropTea" && t.Source.Conditions.Requires.Contains("fishing:golden treasure chest"));
     }
+
+    [Fact]
+    public void Fishing_treasure_no_longer_reports_the_raccoon_seed_as_unresolved()
+        => Assert.DoesNotContain(MineSources.FishingTreasure(), s => s.ItemId.StartsWith(ItemQueries.UnresolvedPrefix));
 }

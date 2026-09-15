@@ -12,6 +12,10 @@ public static class SpawnSources
     private const string RainyWeather = "rainy";
     private const string AllDayTimeSpans = "600 2600";
     private const string FishingSkill = "Fishing";
+    private const string MagicBaitId = "(O)908";
+
+    private static readonly ObtainFilter BaitAnyFilter = ObtainFilter.Any with { IncludeGingerIsland = true };
+    private static readonly ObtainFilter BaitDependableFilter = ObtainFilter.DependableOnly with { IncludeGingerIsland = true };
 
     /// <summary>Maps that only exist during a passive festival (BeachNightMarket.cs, Submarine.cs).</summary>
     private static readonly IReadOnlyDictionary<string, string> FestivalOnlyLocations =
@@ -39,18 +43,37 @@ public static class SpawnSources
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> LocationFish(
         IEnumerable<LocationSpawn> rows, IReadOnlyDictionary<string, FishRow> fishRows,
-        IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals)
+        IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals,
+        ObtainabilityModel snapshot)
     {
+        DayTable bait = snapshot.Table(MagicBaitId, BaitAnyFilter);
+        DayTable baitDep = snapshot.Table(MagicBaitId, BaitDependableFilter);
+        IReadOnlyList<ObtainSource> baitSources = snapshot.Sources(MagicBaitId);
+        bool baitIsland = baitSources.Count > 0 && baitSources.All(s => s.Conditions.GingerIsland);
+
+        // A row needing bait can only be fished where the bait itself can be had; route the fish's
+        // table through the bait's, and pick up the bait's island flag when every bait source needs it.
+        IEnumerable<(string ItemId, ObtainSource Source)> ThroughBait(bool requiresBait, string id, ObtainSource source)
+        {
+            if (!requiresBait) { yield return (id, source); yield break; }
+            ObtainConditions conditions = source.Conditions with { GingerIsland = source.Conditions.GingerIsland || baitIsland };
+            foreach (ObtainSource s in SourcePair.Of(
+                source.Kind, baitDep.Then(source.Lands), bait.Then(source.Lands), conditions, source.Detail, source.Setup))
+                yield return (id, s);
+        }
+
         foreach (LocationSpawn row in rows)
         {
             if (Spawn(row, festivals, SourceKind.Fish, $"Fish at {row.Location}") is not ObtainSource baseTemplate)
                 continue;
+            if (row.RequireMagicBait && bait.IsEmpty) continue;   // no bait anywhere: the row cannot be fished
             // Resolve first, then look each concrete fish up: a query listing fish must not lose their data.
             QueryResult resolved = ItemQueries.Resolve(row.ItemId, objects);
             if (resolved.ItemIds.Count == 0)
             {
                 foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, baseTemplate))
-                    yield return emitted;
+                    foreach (var final in ThroughBait(row.RequireMagicBait, emitted.ItemId, emitted.Source))
+                        yield return final;
                 continue;
             }
             foreach (string id in resolved.ItemIds)
@@ -60,7 +83,7 @@ public static class SpawnSources
                     ? "" : $", time {TimeText(fish.TimeSpans)}";
                 int level = Math.Max(row.MinFishingLevel, fish?.MinFishingLevel ?? 0);
                 ObtainConditions c = baseTemplate.Conditions;
-                yield return (id, baseTemplate with
+                ObtainSource finalSource = baseTemplate with
                 {
                     Reliability = resolved.Chance ? Reliability.Chance : baseTemplate.Reliability,
                     Detail = baseTemplate.Detail + time + (resolved.Note.Length == 0 ? "" : $" ({resolved.Note})"),
@@ -73,7 +96,9 @@ public static class SpawnSources
                         Unresolved = c.Unresolved || resolved.Unresolved,
                         Requires = row.RequireMagicBait ? c.Requires.Append("item:(O)908 Magic Bait").ToList() : c.Requires,
                     },
-                });
+                };
+                foreach (var final in ThroughBait(row.RequireMagicBait, id, finalSource))
+                    yield return final;
             }
         }
     }
@@ -96,7 +121,7 @@ public static class SpawnSources
             ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
             if (reading.Weeks.IsEmpty) continue;
             var template = new ObtainSource(
-                SourceKind.ArtifactSpot, DayTable.InWeeks(reading.Weeks), Reliability.Chance,
+                SourceKind.ArtifactSpot, ConditionSeasons.Availability(reading, WeekMask.All), Reliability.Chance,
                 LocationConditions(row.Location, reading),
                 $"artifact spot, {row.Location}, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
@@ -113,7 +138,7 @@ public static class SpawnSources
             ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
             if (reading.Weeks.IsEmpty) continue;
             var template = new ObtainSource(
-                SourceKind.GarbageCan, DayTable.InWeeks(reading.Weeks), Reliability.Chance,
+                SourceKind.GarbageCan, ConditionSeasons.Availability(reading, WeekMask.All), Reliability.Chance,
                 ConditionSeasons.Apply(ObtainConditions.None, reading), $"garbage can {row.CanId}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;
@@ -132,17 +157,20 @@ public static class SpawnSources
         LocationSpawn row, IReadOnlyDictionary<string, FestivalDates> festivals, SourceKind kind, string detail)
     {
         ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
-        WeekMask weeks = reading.Weeks & (row.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All);
+        WeekMask seasonMask = row.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
+        DayTable table = ConditionSeasons.Availability(reading, seasonMask);
         ObtainConditions conditions = LocationConditions(row.Location, reading);
         if (FestivalOnlyLocations.TryGetValue(row.Location, out string? festivalId)
             && festivals.TryGetValue(festivalId, out FestivalDates? festival))
         {
-            weeks &= festival.Weeks;
+            int startDoy = Calendar.DayOfYear((int)festival.Season, festival.StartDay);
+            int endDoy = Calendar.DayOfYear((int)festival.Season, festival.EndDay);
+            table = table.Latest(DayTable.Available(d => d >= startDoy && d <= endDoy));
             conditions = conditions with { FewDays = true };
         }
-        if (weeks.IsEmpty) return null;
+        if (table.IsEmpty) return null;
         Reliability reliability = reading.Chance || row.IsRandom ? Reliability.Chance : Reliability.Dependable;
-        return new ObtainSource(kind, DayTable.InWeeks(weeks), reliability, conditions, detail);
+        return new ObtainSource(kind, table, reliability, conditions, detail);
     }
 
     private static ObtainConditions LocationConditions(string location, ConditionReading reading)

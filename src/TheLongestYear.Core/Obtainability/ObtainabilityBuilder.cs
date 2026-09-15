@@ -22,7 +22,6 @@ public static class ObtainabilityBuilder
         var o = inputs.Objects;
         var direct = new List<(string ItemId, ObtainSource Source)>();
         direct.AddRange(SpawnSources.Forage(inputs.Forage, o, f));
-        direct.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f));
         direct.AddRange(SpawnSources.CrabPot(inputs.FishRows.Values));
         direct.AddRange(SpawnSources.ArtifactSpots(inputs.ArtifactSpots, o, f));
         direct.AddRange(SpawnSources.GarbageCans(inputs.Garbage, o, f));
@@ -40,6 +39,7 @@ public static class ObtainabilityBuilder
         for (int pass = 1; pass <= MaxPasses; pass++)
         {
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
+            all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current));
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
             all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));

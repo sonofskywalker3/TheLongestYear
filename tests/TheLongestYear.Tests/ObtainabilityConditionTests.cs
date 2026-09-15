@@ -10,6 +10,7 @@ public class ObtainabilityConditionTests
     {
         ["NightMarket"] = new FestivalDates("NightMarket", Season.Winter, 15, 17),
     };
+    private static readonly Dictionary<string, FestivalDates> NoFestivals = new();
 
     private static ConditionReading Read(string? condition) => ConditionSeasons.Read(condition, Festivals);
 
@@ -97,6 +98,39 @@ public class ObtainabilityConditionTests
         Assert.True(c.RainOnly);
         Assert.True(c.Unresolved);
         Assert.Equal(new[] { "shop:Sandy", "SOME_MOD_QUERY" }, c.Requires);
+    }
+
+    [Fact]
+    public void A_negated_island_clause_does_not_hint_the_island()
+    {
+        ConditionReading r = ConditionSeasons.Read("!IS_VISITING_ISLAND", NoFestivals);
+        Assert.False(r.IslandHint);
+        Assert.True(ConditionSeasons.Read("IS_VISITING_ISLAND", NoFestivals).IslandHint);
+        Assert.False(ConditionSeasons.Apply(ObtainConditions.None, r).GingerIsland);
+    }
+
+    [Fact]
+    public void Day_pinned_clauses_land_on_those_days_only()
+    {
+        ConditionReading r = ConditionSeasons.Read("SEASON_DAY Winter 15 Winter 16 Winter 17", NoFestivals);
+        Assert.NotNull(r.DaysOfYear);
+        DayTable t = ConditionSeasons.Availability(r, WeekMask.All);
+        Assert.Equal(99, t.Lands(1));      // Winter 15
+        Assert.Equal(101, t.Lands(101));
+        Assert.Null(t.Lands(102));
+        Assert.True(r.FewDays);
+
+        ConditionReading dom = ConditionSeasons.Read("DAY_OF_MONTH 1", NoFestivals);
+        Assert.Equal(29, ConditionSeasons.Availability(dom, WeekMask.All).Lands(2));
+
+        ConditionReading played = ConditionSeasons.Read("DAYS_PLAYED 10 20", NoFestivals);
+        Assert.Equal(10, ConditionSeasons.Availability(played, WeekMask.All).Lands(1));
+        Assert.Null(ConditionSeasons.Availability(played, WeekMask.All).Lands(21));
+
+        ConditionReading season = ConditionSeasons.Read("SEASON Summer", NoFestivals);
+        Assert.Null(season.DaysOfYear);
+        Assert.Equal(29, ConditionSeasons.Availability(season, WeekMask.All).Lands(1));
+        Assert.Null(ConditionSeasons.Availability(season, WeekMask.ForSeason(Season.Fall)).Lands(1));
     }
 
     [Fact]
