@@ -13,7 +13,7 @@ public class ObtainabilityMineTests
         var nodes = MineSources.Nodes().ToList();
         var copper = nodes.Single(n => n.ItemId == "(O)378").Source;
         Assert.Equal(Reliability.Dependable, copper.Reliability);
-        Assert.Equal(WeekMask.All, copper.Weeks);
+        Assert.Equal(DayTable.Always, copper.Lands);
         Assert.Contains("mines:floor 1", copper.Conditions.Requires);
         Assert.Contains("location:SkullCave", nodes.Single(n => n.ItemId == "(O)386").Source.Conditions.Requires);
     }
@@ -53,7 +53,7 @@ public class ObtainabilityMineTests
         Assert.Contains(treasure, t => t.ItemId == "(O)TroutDerbyTag");
         Assert.Contains(treasure, t => t.ItemId == "(O)812" && t.Source.Conditions.Requires.Contains("book:Book_Roe"));
         Assert.All(treasure, t => Assert.Equal(Reliability.Chance, t.Source.Reliability));
-        Assert.Equal(WeekMask.ForSeason(Season.Spring), treasure.Single(t => t.ItemId == "(O)273").Source.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), treasure.Single(t => t.ItemId == "(O)273").Source.Lands);
         Assert.Contains(treasure, t => t.ItemId == "(O)774" && t.Source.Conditions.Requires.Contains("recipe:Wild Bait"));
         Assert.True(treasure.Single(t => t.ItemId == "(O)890").Source.Conditions.GingerIsland);   // Qi beans need Qi's orders
         Assert.Contains(treasure, t => t.ItemId == "(W)14");

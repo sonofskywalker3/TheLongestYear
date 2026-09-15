@@ -34,7 +34,7 @@ public class ObtainabilityShopTests
         Assert.Equal("(O)472", id);
         Assert.Equal(SourceKind.Shop, s.Kind);
         Assert.Equal(Reliability.Dependable, s.Reliability);
-        Assert.Equal(WeekMask.ForSeason(Season.Spring), s.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), s.Lands);
         Assert.Contains("shop:SeedShop", s.Conditions.Requires);
     }
 
@@ -51,20 +51,20 @@ public class ObtainabilityShopTests
     public void Festival_shops_open_on_their_festival_days_from_data()
     {
         var luau = Stock(new ShopRow("Festival_Luau_Pierre", "(O)Moss", null, false)).Single().Source;
-        Assert.Equal(WeekMask.Of(6), luau.Weeks);                       // Summer 11
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(6)), luau.Lands);                       // Summer 11
         Assert.Equal(SourceKind.Festival, luau.Kind);
         Assert.True(luau.Conditions.FewDays);
 
         var boat = Stock(new ShopRow("Festival_NightMarket_MagicBoat_Day2", "(O)Moss", null, false)).Single().Source;
-        Assert.Equal(WeekMask.Of(15), boat.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(15)), boat.Lands);
         Assert.Equal(SourceKind.NightMarket, boat.Kind);
 
         var ice = Stock(new ShopRow("Festival_FestivalOfIce_TravelingMerchant", "RANDOM_ITEMS (O) 2 789 @isRandomSale", null, false)).Single().Source;
-        Assert.Equal(WeekMask.Of(14), ice.Weeks);                        // Winter 8
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(14)), ice.Lands);                        // Winter 8
         Assert.Equal(Reliability.Chance, ice.Reliability);
 
         var desert = Stock(new ShopRow("Festival_DesertFestival_Vendor", "(O)Moss", null, false)).Single().Source;
-        Assert.Equal(WeekMask.Of(3), desert.Weeks);                      // Spring 15-17 from the passive festival id
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(3)), desert.Lands);                      // Spring 15-17 from the passive festival id
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class ObtainabilityShopTests
     {
         var s = Stock(new ShopRow("Festival_SomeModFair_Booth", "(O)Moss", null, false)).Single().Source;
         Assert.True(s.Conditions.Unresolved);
-        Assert.Equal(WeekMask.All, s.Weeks);
+        Assert.Equal(DayTable.Always, s.Lands);
     }
 
     [Fact]
@@ -105,11 +105,11 @@ public class ObtainabilityShopTests
     {
         var rewards = ShopSources.FestivalRewards(Festivals).ToList();
         var book = rewards.Single(r => r.ItemId == "(O)Book_Crabbing").Source;
-        Assert.Equal(WeekMask.Of(14), book.Weeks);                       // Winter 12-13
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(14)), book.Lands);                       // Winter 12-13
         Assert.True(book.Conditions.FewDays);
         Assert.Equal(Reliability.Dependable, book.Reliability);
         var tent = rewards.Single(r => r.ItemId == "(O)TentKit").Source;
-        Assert.Equal(WeekMask.Of(7), tent.Weeks);                        // Summer 20-21
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(7)), tent.Lands);                        // Summer 20-21
         Assert.Equal(Reliability.Dependable, tent.Reliability);         // the first tag always gives it
         Assert.Equal(Reliability.Chance, rewards.Single(r => r.ItemId == "(O)710").Source.Reliability);   // a spin
         Assert.Contains(rewards, r => r.ItemId == "(O)498" && r.Source.Reliability == Reliability.Chance); // a 50/50
@@ -126,11 +126,11 @@ public class ObtainabilityShopTests
         Assert.Empty(Stock(row));
         var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
         {
-            ["(O)24"] = new[] { new ObtainSource(SourceKind.Shop, WeekMask.ForSeason(Season.Spring), Reliability.Dependable, ObtainConditions.None, "seeds") },
+            ["(O)24"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), Reliability.Dependable, ObtainConditions.None, "seeds") },
         });
         var (id, source) = ShopSources.Barter(new[] { row }, Objects, Festivals, snapshot).Single();
         Assert.Equal("(O)Moss", id);
-        Assert.Equal(WeekMask.ForSeason(Season.Spring), source.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), source.Lands);
         Assert.Contains("trade:(O)24", source.Conditions.Requires);
     }
 }

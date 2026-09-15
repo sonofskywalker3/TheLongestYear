@@ -82,7 +82,7 @@ public static class SpawnSources
     {
         foreach (FishRow row in rows.Where(r => r.IsTrap))
             yield return (row.ItemId, new ObtainSource(
-                SourceKind.CrabPot, WeekMask.All, Reliability.Dependable,
+                SourceKind.CrabPot, DayTable.Always, Reliability.Dependable,
                 ObtainConditions.None with { Requires = new[] { "crafting:Crab Pot" } },
                 "Data/Fish trap row"));
     }
@@ -96,7 +96,7 @@ public static class SpawnSources
             ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
             if (reading.Weeks.IsEmpty) continue;
             var template = new ObtainSource(
-                SourceKind.ArtifactSpot, reading.Weeks, Reliability.Chance,
+                SourceKind.ArtifactSpot, DayTable.InWeeks(reading.Weeks), Reliability.Chance,
                 LocationConditions(row.Location, reading),
                 $"artifact spot, {row.Location}, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
@@ -113,7 +113,7 @@ public static class SpawnSources
             ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
             if (reading.Weeks.IsEmpty) continue;
             var template = new ObtainSource(
-                SourceKind.GarbageCan, reading.Weeks, Reliability.Chance,
+                SourceKind.GarbageCan, DayTable.InWeeks(reading.Weeks), Reliability.Chance,
                 ConditionSeasons.Apply(ObtainConditions.None, reading), $"garbage can {row.CanId}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;
@@ -124,7 +124,7 @@ public static class SpawnSources
     {
         foreach (string id in TrashIds)
             yield return (id, new ObtainSource(
-                SourceKind.Trash, WeekMask.All, Reliability.Chance, ObtainConditions.None, "fishing trash"));
+                SourceKind.Trash, DayTable.Always, Reliability.Chance, ObtainConditions.None, "fishing trash"));
     }
 
     /// <summary>The source every item of a spawn row shares, or null when the row can never spawn in year 1.</summary>
@@ -142,7 +142,7 @@ public static class SpawnSources
         }
         if (weeks.IsEmpty) return null;
         Reliability reliability = reading.Chance || row.IsRandom ? Reliability.Chance : Reliability.Dependable;
-        return new ObtainSource(kind, weeks, reliability, conditions, detail);
+        return new ObtainSource(kind, DayTable.InWeeks(weeks), reliability, conditions, detail);
     }
 
     private static ObtainConditions LocationConditions(string location, ConditionReading reading)

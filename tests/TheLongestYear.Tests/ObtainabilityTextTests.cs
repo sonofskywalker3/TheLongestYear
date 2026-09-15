@@ -7,26 +7,23 @@ namespace TheLongestYear.Tests;
 public class ObtainabilityTextTests
 {
     [Fact]
-    public void Describe_lists_every_source_with_its_weeks_and_conditions()
+    public void Describe_prints_every_source_with_its_landing_weeks_from_the_start_day()
     {
         var model = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
         {
-            ["(O)775"] = new[]
+            ["(O)147"] = new[]
             {
-                new ObtainSource(SourceKind.Fish, WeekMask.ForSeason(Season.Winter), Reliability.Dependable,
-                    ObtainConditions.None with { Skill = "Fishing", SkillLevel = 6, CatchLimit = 1, RainOnly = true,
-                                                 Unresolved = true, Requires = new[] { "location:Forest" } }, "Fish at Forest"),
+                new ObtainSource(SourceKind.Fish, DayTable.InWeeks(WeekMask.ForSeason(Season.Winter)), Reliability.Dependable,
+                    ObtainConditions.None with { Skill = "Fishing", SkillLevel = 3, RainOnly = true, Requires = new[] { "location:Beach" } }, "Fish at Beach")
+                { Setup = new[] { new SetupStep("building:Fish Pond", 2) } },
+                new ObtainSource(SourceKind.Cart, DayTable.Always, Reliability.Chance, ObtainConditions.None, "shop Traveler"),
             },
         });
-        string text = ObtainabilityText.Describe("775", model, id => "Glacierfish");
-        Assert.Contains("(O)775 Glacierfish: 1 source(s)", text);
-        Assert.Contains("dependable weeks 13-16", text);
-        Assert.Contains("Fish, Dependable, weeks 13-16", text);
-        Assert.Contains("Fishing 6", text);
-        Assert.Contains("catch limit 1", text);
-        Assert.Contains("rain only", text);
-        Assert.Contains("UNRESOLVED", text);
-        Assert.Contains("location:Forest", text);
-        Assert.Contains("no source", ObtainabilityText.Describe("(O)1", model, id => null));
+        string text = ObtainabilityText.Describe("(O)147", model, _ => "Herring", startDay: 29);
+        Assert.Contains("(O)147 Herring: 2 source(s); from day 29 dependable lands week 13, any lands week 5", text);
+        Assert.Contains("Fish, Dependable, lands wk13/wk13/wk13/wk13, Fishing 3, rain only, needs location:Beach, setup building:Fish Pond 2d | Fish at Beach", text);
+        Assert.Contains("Cart, Chance, lands wk1/wk5/wk9/wk13 | shop Traveler", text);
+        Assert.Contains("no source", ObtainabilityText.Describe("(O)1", model, _ => null));
+        Assert.DoesNotContain("\u2014", text);
     }
 }

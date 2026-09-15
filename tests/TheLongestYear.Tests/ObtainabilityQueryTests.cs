@@ -66,7 +66,7 @@ public class ObtainabilityQueryTests
         QueryResult r = ItemQueries.Resolve("LOCATION_FISH Beach BOBBER_X", Objects);
         Assert.True(r.Unresolved);
         Assert.Empty(r.ItemIds);
-        var template = new ObtainSource(SourceKind.Forage, WeekMask.All, Reliability.Dependable, ObtainConditions.None, "Forage at Beach");
+        var template = new ObtainSource(SourceKind.Forage, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "Forage at Beach");
         var emitted = ItemQueries.Emit("LOCATION_FISH Beach BOBBER_X", Objects, template).Single();
         Assert.StartsWith(ItemQueries.UnresolvedPrefix, emitted.ItemId);
         Assert.Equal(SourceKind.Other, emitted.Source.Kind);

@@ -32,8 +32,8 @@ public static class ObtainabilityComparison
         {
             // Placed is checked first: asking the existing model about an unplaced id records it as unknown.
             (int Pacing, int Hard, string Basis)? existing = existingPlaced(id) ? existingWeeks(id) : null;
-            int? newAny = model.EarliestWeek(id, ObtainFilter.Any);
-            int? newDep = model.EarliestWeek(id, ObtainFilter.DependableOnly);
+            int? newAny = model.LandingWeekFromDay1(id, ObtainFilter.Any);
+            int? newDep = model.LandingWeekFromDay1(id, ObtainFilter.DependableOnly);
             if (existing == null && newAny == null) continue;
             CompareVerdict verdict = existing == null ? CompareVerdict.OnlyNew
                 : newAny == null ? CompareVerdict.OnlyExisting

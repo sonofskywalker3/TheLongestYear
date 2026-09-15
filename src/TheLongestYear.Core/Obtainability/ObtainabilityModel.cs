@@ -50,15 +50,19 @@ public sealed class ObtainabilityModel
             ? list
             : Array.Empty<ObtainSource>();
 
-    public WeekMask Weeks(string itemId, ObtainFilter filter)
+    /// <summary>The earliest landing per start day over every accepted source.</summary>
+    public DayTable Table(string itemId, ObtainFilter filter)
     {
-        WeekMask mask = WeekMask.None;
+        DayTable table = DayTable.None;
         foreach (ObtainSource source in Sources(itemId))
-            if (filter.Accepts(source)) mask |= source.Weeks;
-        return mask;
+            if (filter.Accepts(source)) table = table.Earliest(source.Lands);
+        return table;
     }
 
-    public bool IsObtainable(string itemId, int week, ObtainFilter filter) => Weeks(itemId, filter).Contains(week);
+    public int? Lands(string itemId, int startDay, ObtainFilter filter) => Table(itemId, filter).Lands(startDay);
 
-    public int? EarliestWeek(string itemId, ObtainFilter filter) => Weeks(itemId, filter).Earliest;
+    public bool CanObtain(string itemId, int startDay, int deadlineDay, ObtainFilter filter)
+        => Table(itemId, filter).CanObtain(startDay, deadlineDay);
+
+    public int? LandingWeekFromDay1(string itemId, ObtainFilter filter) => Table(itemId, filter).LandingWeek(1);
 }

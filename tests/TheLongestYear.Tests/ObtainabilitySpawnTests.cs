@@ -20,7 +20,7 @@ public class ObtainabilitySpawnTests
         var (id, source) = SpawnSources.Forage(rows, Objects, Festivals).Single();
         Assert.Equal("(O)16", id);
         Assert.Equal(SourceKind.Forage, source.Kind);
-        Assert.Equal(WeekMask.ForSeason(Season.Spring), source.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), source.Lands);
         Assert.Equal(Reliability.Dependable, source.Reliability);
         Assert.Contains("location:Forest", source.Conditions.Requires);
     }
@@ -36,7 +36,7 @@ public class ObtainabilitySpawnTests
         };
         var sources = SpawnSources.Forage(rows, Objects, Festivals).ToList();
         Assert.Equal(2, sources.Count);                                  // FALSE row yields nothing
-        Assert.Equal(WeekMask.ForSeason(Season.Winter), sources[0].Source.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Winter)), sources[0].Source.Lands);
         Assert.True(sources[1].Source.Conditions.GingerIsland);
     }
 
@@ -46,7 +46,7 @@ public class ObtainabilitySpawnTests
         var rows = new[] { new LocationSpawn("Submarine", "(O)798", null, null, 1.0, 0, false, 0) };
         var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
         var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals).Single().Source;
-        Assert.Equal(WeekMask.Of(15), source.Weeks);
+        Assert.Equal(DayTable.InWeeks(WeekMask.Of(15)), source.Lands);
         Assert.True(source.Conditions.FewDays);
     }
 
@@ -92,7 +92,7 @@ public class ObtainabilitySpawnTests
         var (id, source) = SpawnSources.CrabPot(rows).Single();
         Assert.Equal("(O)717", id);
         Assert.Equal(SourceKind.CrabPot, source.Kind);
-        Assert.Equal(WeekMask.All, source.Weeks);
+        Assert.Equal(DayTable.Always, source.Lands);
         Assert.Contains("crafting:Crab Pot", source.Conditions.Requires);
     }
 

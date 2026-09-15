@@ -32,27 +32,32 @@ public static class GrowSources
     public static WeekMask Greenhouse(WeekMask seedWeeks, int growthDays, int regrowDays)
         => Grow(seedWeeks, growthDays, regrowDays, _ => true);
 
+    /// <summary>A stopgap until Task 4 rewrites crop growth over start days directly: the week set a
+    /// same-day table would have offered starting day 1, so the existing week-based Harvest/Greenhouse
+    /// math keeps working on a snapshot table.</summary>
+    private static WeekMask LandingWeeksOf(DayTable table) => WeekMask.Range(table.LandingWeek(1) ?? 17, 16);
+
     public static IEnumerable<(string ItemId, ObtainSource Source)> Crops(IEnumerable<CropRow> rows, ObtainabilityModel snapshot)
     {
         List<CropRow> all = rows.ToList();
         var bySeed = all.GroupBy(r => r.SeedId).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         foreach (CropRow crop in all.Where(r => r.SeedId != MixedSeedsId))
         {
-            WeekMask dep = snapshot.Weeks(crop.SeedId, ObtainFilter.DependableOnly);
-            WeekMask any = snapshot.Weeks(crop.SeedId, ObtainFilter.Any);
+            WeekMask dep = LandingWeeksOf(snapshot.Table(crop.SeedId, ObtainFilter.DependableOnly));
+            WeekMask any = LandingWeeksOf(snapshot.Table(crop.SeedId, ObtainFilter.Any));
             var outdoor = ObtainConditions.None with { Requires = new[] { "item:" + crop.SeedId } };
             foreach (ObtainSource s in SourcePair.Of(SourceKind.Crop,
-                Harvest(dep, crop.Seasons, crop.GrowthDays, crop.RegrowDays),
-                Harvest(any, crop.Seasons, crop.GrowthDays, crop.RegrowDays), outdoor, $"grown from {crop.SeedId}"))
+                DayTable.InWeeks(Harvest(dep, crop.Seasons, crop.GrowthDays, crop.RegrowDays)),
+                DayTable.InWeeks(Harvest(any, crop.Seasons, crop.GrowthDays, crop.RegrowDays)), outdoor, $"grown from {crop.SeedId}"))
                 yield return (crop.HarvestId, s);
             var indoor = ObtainConditions.None with { Requires = new[] { "item:" + crop.SeedId, GreenhouseUnlock } };
             foreach (ObtainSource s in SourcePair.Of(SourceKind.GreenhouseCrop,
-                Greenhouse(dep, crop.GrowthDays, crop.RegrowDays), Greenhouse(any, crop.GrowthDays, crop.RegrowDays),
+                DayTable.InWeeks(Greenhouse(dep, crop.GrowthDays, crop.RegrowDays)), DayTable.InWeeks(Greenhouse(any, crop.GrowthDays, crop.RegrowDays)),
                 indoor, $"greenhouse, from {crop.SeedId}"))
                 yield return (crop.HarvestId, s);
         }
 
-        WeekMask mixed = snapshot.Weeks(MixedSeedsId, ObtainFilter.Any);
+        WeekMask mixed = LandingWeeksOf(snapshot.Table(MixedSeedsId, ObtainFilter.Any));
         if (mixed.IsEmpty) yield break;
         WeekMask winter = mixed & WeekMask.ForSeason(Season.Winter);
         foreach ((Season season, string[] seeds) in MixedSeedPools)
@@ -62,11 +67,11 @@ public static class GrowSources
                 WeekMask planted = mixed & WeekMask.ForSeason(season);
                 WeekMask outdoorWeeks = Harvest(planted, crop.Seasons, crop.GrowthDays, crop.RegrowDays);
                 if (!outdoorWeeks.IsEmpty)
-                    yield return (crop.HarvestId, new ObtainSource(SourceKind.Crop, outdoorWeeks, Reliability.Chance,
+                    yield return (crop.HarvestId, new ObtainSource(SourceKind.Crop, DayTable.InWeeks(outdoorWeeks), Reliability.Chance,
                         ObtainConditions.None with { Requires = new[] { "item:" + MixedSeedsId } }, $"Mixed Seeds in {season}"));
                 WeekMask indoorWeeks = Greenhouse(planted | winter, crop.GrowthDays, crop.RegrowDays);
                 if (!indoorWeeks.IsEmpty)
-                    yield return (crop.HarvestId, new ObtainSource(SourceKind.GreenhouseCrop, indoorWeeks, Reliability.Chance,
+                    yield return (crop.HarvestId, new ObtainSource(SourceKind.GreenhouseCrop, DayTable.InWeeks(indoorWeeks), Reliability.Chance,
                         ObtainConditions.None with { Requires = new[] { "item:" + MixedSeedsId, GreenhouseUnlock } },
                         $"Mixed Seeds in the greenhouse ({season} pool)"));
             }
@@ -78,8 +83,8 @@ public static class GrowSources
     {
         foreach (FruitTreeRow tree in rows)
         {
-            WeekMask depMature = Mature(snapshot.Weeks(tree.SaplingId, ObtainFilter.DependableOnly));
-            WeekMask anyMature = Mature(snapshot.Weeks(tree.SaplingId, ObtainFilter.Any));
+            WeekMask depMature = Mature(LandingWeeksOf(snapshot.Table(tree.SaplingId, ObtainFilter.DependableOnly)));
+            WeekMask anyMature = Mature(LandingWeeksOf(snapshot.Table(tree.SaplingId, ObtainFilter.Any)));
             foreach (FruitRow fruit in tree.Fruit)
             {
                 ConditionReading reading = ConditionSeasons.Read(fruit.Condition, festivals);
@@ -87,14 +92,14 @@ public static class GrowSources
                     : tree.TreeSeasons.Count == 0 ? WeekMask.All : WeekMask.ForSeasons(tree.TreeSeasons)) & reading.Weeks;
                 bool luck = fruit.Chance < 1.0 || reading.Chance || fruit.IsRandom;
                 ObtainConditions outdoor = ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "item:" + tree.SaplingId } }, reading);
-                foreach (ObtainSource src in SourcePair.Of(SourceKind.FruitTree, luck ? WeekMask.None : depMature & season,
-                    anyMature & season, outdoor, $"fruit tree from {tree.SaplingId}"))
+                foreach (ObtainSource src in SourcePair.Of(SourceKind.FruitTree, luck ? DayTable.None : DayTable.InWeeks(depMature & season),
+                    DayTable.InWeeks(anyMature & season), outdoor, $"fruit tree from {tree.SaplingId}"))
                     foreach (var emitted in ItemQueries.Emit(fruit.ItemId, objects, src))
                         yield return emitted;
                 ObtainConditions indoor = ConditionSeasons.Apply(
                     ObtainConditions.None with { Requires = new[] { "item:" + tree.SaplingId, GreenhouseUnlock } }, reading);
-                foreach (ObtainSource src in SourcePair.Of(SourceKind.GreenhouseCrop, luck ? WeekMask.None : depMature & reading.Weeks,
-                    anyMature & reading.Weeks, indoor, $"fruit tree in the greenhouse from {tree.SaplingId}"))
+                foreach (ObtainSource src in SourcePair.Of(SourceKind.GreenhouseCrop, luck ? DayTable.None : DayTable.InWeeks(depMature & reading.Weeks),
+                    DayTable.InWeeks(anyMature & reading.Weeks), indoor, $"fruit tree in the greenhouse from {tree.SaplingId}"))
                     foreach (var emitted in ItemQueries.Emit(fruit.ItemId, objects, src))
                         yield return emitted;
             }

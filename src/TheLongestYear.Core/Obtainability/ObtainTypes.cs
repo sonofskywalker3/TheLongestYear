@@ -60,22 +60,44 @@ public sealed record ObtainConditions
     }
 }
 
-/// <summary>One way to obtain an item: its kind, the weeks it works, how dependable it is, what it
-/// needs, and a short origin note for the debug output.</summary>
-public sealed record ObtainSource(
-    SourceKind Kind, WeekMask Weeks, Reliability Reliability, ObtainConditions Conditions, string Detail);
+/// <summary>A step the player must do first, with the game's own days figure ("building:Coop" 3,
+/// "animal:Chicken" 1, "sapling" 28). Informational in the blind model (spec decision 3): the
+/// comparison assumes it is done; a consumer adds the days for what the real farm lacks.</summary>
+public sealed record SetupStep(string Name, int Days);
 
-/// <summary>Emits one dependable source for the dependable weeks and one chance source for weeks
-/// reachable only by luck, so reliability survives derivation.</summary>
+/// <summary>One way to obtain an item: its kind, the start-to-landing table, how dependable it is,
+/// what it needs, its setup steps, and a short origin note for the debug output.</summary>
+public sealed record ObtainSource(
+    SourceKind Kind, DayTable Lands, Reliability Reliability, ObtainConditions Conditions, string Detail)
+{
+    public IReadOnlyList<SetupStep> Setup { get; init; } = Array.Empty<SetupStep>();
+
+    public bool Equals(ObtainSource? other)
+        => other is not null && Kind == other.Kind && Lands.Equals(other.Lands) && Reliability == other.Reliability
+           && Conditions.Equals(other.Conditions) && Detail == other.Detail && Setup.SequenceEqual(other.Setup);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Kind); hash.Add(Lands); hash.Add(Reliability); hash.Add(Conditions); hash.Add(Detail);
+        foreach (SetupStep s in Setup) hash.Add(s);
+        return hash.ToHashCode();
+    }
+}
+
+/// <summary>Emits one dependable source and one chance source for the starts luck alone serves,
+/// so reliability survives derivation.</summary>
 public static class SourcePair
 {
     public static IEnumerable<ObtainSource> Of(
-        SourceKind kind, WeekMask dependable, WeekMask any, ObtainConditions conditions, string detail)
+        SourceKind kind, DayTable dependable, DayTable any, ObtainConditions conditions, string detail,
+        IReadOnlyList<SetupStep>? setup = null)
     {
+        IReadOnlyList<SetupStep> steps = setup ?? Array.Empty<SetupStep>();
         if (!dependable.IsEmpty)
-            yield return new ObtainSource(kind, dependable, Reliability.Dependable, conditions, detail);
-        WeekMask luckOnly = any.Except(dependable);
+            yield return new ObtainSource(kind, dependable, Reliability.Dependable, conditions, detail) { Setup = steps };
+        DayTable luckOnly = any.Except(dependable);
         if (!luckOnly.IsEmpty)
-            yield return new ObtainSource(kind, luckOnly, Reliability.Chance, conditions, detail);
+            yield return new ObtainSource(kind, luckOnly, Reliability.Chance, conditions, detail) { Setup = steps };
     }
 }
