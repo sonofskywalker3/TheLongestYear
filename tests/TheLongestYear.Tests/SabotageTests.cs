@@ -23,21 +23,19 @@ public class SabotageScheduleTests
         => Assert.Equal(open, SabotageSchedule.IsOpen(kind, season));
 
     [Fact]
-    public void A_closed_season_never_strikes_even_with_a_willing_die()
+    public void A_closed_season_is_closed()
     {
-        var run = new RunState();
-        Assert.False(SabotageSchedule.StrikesTonight(SabotageKind.Blight, run, Season.Spring, 10, new AlwaysYes()));
-        Assert.False(SabotageSchedule.StrikesTonight(SabotageKind.Tampering, run, Season.Fall, 10, new AlwaysYes()));
+        Assert.False(SabotageSchedule.IsOpen(SabotageKind.Blight, Season.Spring));
+        Assert.False(SabotageSchedule.IsOpen(SabotageKind.Tampering, Season.Fall));
     }
 
     [Fact]
     public void Reversion_and_tampering_keep_quiet_at_the_end_of_a_season()
     {
-        var run = new RunState();
-        Assert.True(SabotageSchedule.StrikesTonight(SabotageKind.Reversion, run, Season.Fall, 24, new AlwaysYes()));
-        Assert.False(SabotageSchedule.StrikesTonight(SabotageKind.Reversion, run, Season.Fall, 25, new AlwaysYes()));
-        Assert.True(SabotageSchedule.StrikesTonight(SabotageKind.Tampering, run, Season.Winter, 20, new AlwaysYes()));
-        Assert.False(SabotageSchedule.StrikesTonight(SabotageKind.Tampering, run, Season.Winter, 21, new AlwaysYes()));
+        Assert.False(SabotageSchedule.IsQuietDay(SabotageKind.Reversion, 24));
+        Assert.True(SabotageSchedule.IsQuietDay(SabotageKind.Reversion, 25));
+        Assert.False(SabotageSchedule.IsQuietDay(SabotageKind.Tampering, 20));
+        Assert.True(SabotageSchedule.IsQuietDay(SabotageKind.Tampering, 21));
     }
 
     [Fact]
@@ -107,35 +105,16 @@ public class SabotageScheduleTests
         Assert.Empty(run.Tampers);
         Assert.Empty(run.PendingSabotageReports);
     }
-
-    private sealed class AlwaysYes : Random
-    {
-        protected override double Sample() => 0.0;
-        public override double NextDouble() => 0.0;
-    }
 }
 
 public class BlightRuleTests
 {
-    [Theory]
-    [InlineData(0, Season.Summer, 0)]
-    [InlineData(1, Season.Summer, 1)]
-    [InlineData(10, Season.Summer, 1)]      // 4% of 10 rounds up to 1
-    [InlineData(100, Season.Summer, 4)]
-    [InlineData(1000, Season.Summer, 6)]    // capped
-    [InlineData(100, Season.Fall, 6)]
-    [InlineData(1000, Season.Fall, 10)]     // capped
-    [InlineData(50, Season.Winter, 3)]
-    public void Count_is_a_share_of_the_field_clamped_to_a_nibble(int crops, Season season, int expected)
-        => Assert.Equal(expected, BlightRule.Count(crops, season));
-
-    [Theory]
-    [InlineData(0, 0)]
-    [InlineData(1, 1)]
-    [InlineData(100, 3)]
-    [InlineData(10000, 8)]   // capped
-    public void Storage_loss_is_a_share_of_stored_units_clamped(int units, int expected)
-        => Assert.Equal(expected, BlightRule.SpoilCount(units));
+    [Fact]
+    public void Count_and_spoil_count_are_now_by_level_and_pinned_in_DarknessLevelsTests()
+    {
+        Assert.Equal(5, BlightRule.Count(100, Season.Summer, DifficultyStep.Normal));
+        Assert.Equal(5, BlightRule.SpoilCount(100, Season.Summer, DifficultyStep.Normal));
+    }
 
     [Theory]
     [InlineData(-75, true)]   // vegetable

@@ -1864,10 +1864,11 @@ namespace TheLongestYear
                     break;
                 case "blight":
                 {
+                    TheLongestYear.Core.DifficultyStep level = _meta.State.EffectiveDifficulty(_config).Darkness;
                     int crops = args.Length > 1 && int.TryParse(args[1], out int c) ? c
-                        : TheLongestYear.Loop.BlightPass.CountFor(_meta.Run.Season);
+                        : TheLongestYear.Loop.BlightPass.CountFor(_meta.Run.Season, level);
                     int spoil = args.Length > 2 && int.TryParse(args[2], out int sp) ? sp
-                        : TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(TheLongestYear.Loop.SpoilagePass.StoredUnits());
+                        : TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(TheLongestYear.Loop.SpoilagePass.StoredUnits(), _meta.Run.Season, level);
                     int taken = _sabotage.Blight(crops, spoil, rng);
                     this.Monitor.Log($"Blight: {taken} thing(s) taken (asked {crops} crops, {spoil} stored). Sleep to see the report.", LogLevel.Info);
                     break;

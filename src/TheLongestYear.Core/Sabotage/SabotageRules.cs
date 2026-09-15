@@ -26,28 +26,28 @@ public static class BlightRule
         return rng.Next(2) == 0 ? (crops, 0) : (0, spoil);
     }
 
-    public static int Count(int liveCrops, Season season)
-    {
-        if (liveCrops <= 0) return 0;
-        (double share, int max) = season switch
-        {
-            Season.Fall => (SabotageTuning.BlightShareFall, SabotageTuning.BlightMaxFall),
-            Season.Winter => (SabotageTuning.BlightShareWinter, SabotageTuning.BlightMaxWinter),
-            _ => (SabotageTuning.BlightShareSummer, SabotageTuning.BlightMaxSummer),
-        };
-        int n = (int)Math.Ceiling(liveCrops * share);
-        n = Math.Max(SabotageTuning.BlightMinPerNight, Math.Min(max, n));
-        return Math.Min(n, liveCrops);
-    }
+    /// <summary>How many crops die on a strike: the level's share of the live crops, at least one,
+    /// capped by season and level (spec 2026-09-15 Part B, section 2.4).</summary>
+    public static int Count(int liveCrops, Season season, DifficultyStep level)
+        => Take(liveCrops, season, level);
 
-    /// <summary>How many stored units are taken on a blight night, from the total the player has
-    /// in chests (the Junimo Stash excluded by the caller).</summary>
-    public static int SpoilCount(int storedUnits)
+    /// <summary>How many stored units go on a chest strike, from the total in unwarded chests (the
+    /// Junimo Stash excluded by the caller). Same share and caps as crops.</summary>
+    public static int SpoilCount(int storedUnits, Season season, DifficultyStep level)
+        => Take(storedUnits, season, level);
+
+    /// <summary>Decimal digits kept before rounding up: enough to tell 100 * 0.07 = 7 apart from a
+    /// real fraction, without a double's binary rounding (7.000000000000001) forcing an extra
+    /// unit.</summary>
+    private const int SharePrecision = 6;
+
+    private static int Take(int have, Season season, DifficultyStep level)
     {
-        if (storedUnits <= 0) return 0;
-        int n = (int)Math.Ceiling(storedUnits * SabotageTuning.SpoilShare);
-        n = Math.Max(SabotageTuning.SpoilMinPerNight, Math.Min(SabotageTuning.SpoilMaxPerNight, n));
-        return Math.Min(n, storedUnits);
+        if (have <= 0) return 0;
+        double raw = Math.Round(have * DarknessLevels.BlightShare(level), SharePrecision);
+        int n = (int)Math.Ceiling(raw);
+        n = Math.Max(SabotageTuning.BlightMinPerNight, Math.Min(DarknessLevels.BlightCap(level, season), n));
+        return Math.Min(n, have);
     }
 
     /// <summary>Vanilla object categories that are food and so "spoil": vegetables, fruit,
@@ -159,6 +159,17 @@ public static class TamperRule
         var held = targets.Where(t => playerHolds(t.ItemId)).ToList();
         var pool = held.Count > 0 ? held : targets.ToList();
         return pool[rng.Next(pool.Count)];
+    }
+
+    /// <summary>The most the hall may ask for: legendary fish are always one (LegendaryFishRules,
+    /// the rule QuantityAskPass already applies and the old tamper path skipped); otherwise the
+    /// board's own ceiling, <see cref="AskBands.Ceiling"/> of the item's basis by Winter 28; 0 when
+    /// the item has no basis, which <see cref="Stack"/> turns into an ask of one.</summary>
+    public static int MaxCount(string itemId, double? basisByWinter)
+    {
+        if (LegendaryFishRules.IsLegendary(itemId)) return 1;
+        if (basisByWinter is not double basis || basis <= 0) return 0;
+        return (int)Math.Ceiling(basis * AskBands.Ceiling);
     }
 
     /// <summary>How many of the replacement the hall asks for (Jeff, 2026-09-09). Start from the

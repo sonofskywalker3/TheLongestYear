@@ -77,6 +77,11 @@ namespace TheLongestYear.Loop
                 $"Darkness: night roll {season} {day}: open={string.Join(",", Enum.GetValues(typeof(SabotageKind)).Cast<SabotageKind>().Where(k => SabotageSchedule.IsOpen(k, season) && Enabled(k)))}, crops={BlightPass.LiveCropTiles().Count}, stored={SpoilagePass.StoredUnits()}.",
                 LogLevel.Trace);
 
+            DifficultyStep level = Meta.EffectiveDifficulty(_config).Darkness;
+
+            // Transitional: StrikesTonight is obsolete (NightRoll in a later task owns the real
+            // decision); the three calls below stay until the night pass is rewritten.
+#pragma warning disable CS0618
             if (Enabled(SabotageKind.Blight))
             {
                 Random rng = SabotageSchedule.Rng(Run.Seed, dayOfYear, SabotageKind.Blight);
@@ -84,8 +89,8 @@ namespace TheLongestYear.Loop
                     | TakeArmed(SabotageKind.Blight, season, day, week, dayOfYear))
                 {
                     // The ward covers crops in the ground, not chests (Jeff, 2026-09-09).
-                    int crops = CropsWarded(season) ? 0 : BlightPass.CountFor(season);
-                    int spoil = BlightRule.SpoilCount(SpoilagePass.StoredUnits());
+                    int crops = CropsWarded(season) ? 0 : BlightPass.CountFor(season, level);
+                    int spoil = BlightRule.SpoilCount(SpoilagePass.StoredUnits(), season, level);
                     // One or the other, never both (Jeff, 2026-09-14). See BlightRule.OneTarget.
                     (crops, spoil) = BlightRule.OneTarget(crops, spoil, _armedBlightTarget, rng);
                     if (Blight(crops, spoil, rng) > 0)
@@ -112,6 +117,7 @@ namespace TheLongestYear.Loop
                     && Tamper(rng, dayOfYear))
                     SabotageSchedule.RecordStrike(SabotageKind.Tampering, Run, week, dayOfYear);
             }
+#pragma warning restore CS0618
         }
 
         // ------------------------------------------------------------------ arming (debug)
