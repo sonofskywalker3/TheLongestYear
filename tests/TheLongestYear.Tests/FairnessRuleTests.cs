@@ -130,7 +130,9 @@ public class FairnessRuleTests
     [Fact]
     public void A_missing_building_rules_out_on_easy_and_adds_its_days_on_normal()
     {
-        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop", "animal:Chicken" },
+        // Real model shape (MadeSources.Animals/AnimalSetup): Requires holds only "building:Coop";
+        // the animal itself and its build-days are Setup steps, not Requires.
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop" },
             setup: new[] { new SetupStep("building:Coop", 3), new SetupStep("animal:Chicken", 1) }, available: d => d >= 110);
         Assert.False(Counts(DifficultyStep.Easy, Save(), route));
         Assert.True(Counts(DifficultyStep.Easy, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" }), route));
@@ -138,6 +140,19 @@ public class FairnessRuleTests
         Assert.False(Counts(DifficultyStep.Normal, Save(), route));
         // With the coop but no chicken: 110 + 1 = 111.
         Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }), route));
+    }
+
+    [Fact]
+    public void A_purchasable_animal_still_costs_a_setup_day_on_normal_even_though_it_is_not_in_requires()
+    {
+        // Regression for fix round 1 finding 2: MadeSources.Animals never puts a purchasable animal
+        // in Requires at all, only in Setup, so the day must be priced off Setup.
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop" },
+            setup: new[] { new SetupStep("building:Coop", 3), new SetupStep("animal:Chicken", 1) }, available: d => d >= 110);
+        Assert.False(Counts(DifficultyStep.Easy, Save(buildings: new[] { "Coop" }), route));
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(buildings: new[] { "Coop" }), Model(route));
+        Assert.True(verdict.Counts);
+        Assert.Equal(1, verdict.Routes[0].AddedDays);
     }
 
     [Fact]
@@ -152,15 +167,17 @@ public class FairnessRuleTests
     [Fact]
     public void Friendship_days_are_added_on_normal_when_the_animal_is_not_there_yet()
     {
-        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop", "animal:Chicken" },
-            setup: new[] { new SetupStep("building:Coop", 3), new SetupStep("animal:Chicken", 1), new SetupStep("friendship:Chicken 200", 14) },
+        // Real model shape: the friendship step names the animal id, which can contain a space
+        // ("White Chicken"), so the count must split at the LAST space (fix round 1 finding 1).
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Coop" },
+            setup: new[] { new SetupStep("building:Coop", 3), new SetupStep("animal:White Chicken", 1), new SetupStep("friendship:White Chicken 200", 14) },
             available: d => d >= 100);
-        Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" },
-            friendship: new Dictionary<string, int> { ["Chicken"] = 500 }), route));               // 100
-        Assert.False(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" },
-            friendship: new Dictionary<string, int> { ["Chicken"] = 0 }), route));                 // 100 + 14 = 114
-        Assert.False(Counts(DifficultyStep.Easy, Save(buildings: new[] { "Coop" }, animals: new[] { "Chicken" },
-            friendship: new Dictionary<string, int> { ["Chicken"] = 0 }), route));
+        Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }, animals: new[] { "White Chicken" },
+            friendship: new Dictionary<string, int> { ["White Chicken"] = 500 }), route));               // 100
+        Assert.False(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Coop" }, animals: new[] { "White Chicken" },
+            friendship: new Dictionary<string, int> { ["White Chicken"] = 0 }), route));                 // 100 + 14 = 114
+        Assert.False(Counts(DifficultyStep.Easy, Save(buildings: new[] { "Coop" }, animals: new[] { "White Chicken" },
+            friendship: new Dictionary<string, int> { ["White Chicken"] = 0 }), route));
     }
 
     [Fact]
@@ -186,6 +203,10 @@ public class FairnessRuleTests
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 40), Model(route));
         Assert.Equal(4, verdict.Routes[0].AddedDays);
         Assert.True(verdict.Counts);
+        // Hard adds days the same as Normal for a condition this table names.
+        FairnessVerdict hard = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Hard, Save(floor: 40), Model(route));
+        Assert.Equal(4, hard.Routes[0].AddedDays);
+        Assert.True(hard.Counts);
         Assert.Equal(12, FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 0),
             Model(Route(SourceKind.MineNode, requires: new[] { "mines:floor 120" }))).Routes[0].AddedDays);
         Assert.Equal(1, FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 39),

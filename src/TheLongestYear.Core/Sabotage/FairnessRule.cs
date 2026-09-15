@@ -95,6 +95,7 @@ public static class FairnessRule
             string? blocked = Conditions(source, policy, save, ref added);
             if (blocked != null) return Out(source, blocked);
         }
+        // Setup days are added after the landing rather than shifting the start; an accepted approximation.
         int lands = landing.Value + added;
         bool counts = lands <= deadlineDay;
         string reason = counts
@@ -109,6 +110,7 @@ public static class FairnessRule
     {
         ObtainConditions c = source.Conditions;
         IReadOnlyList<string> requires = c.Requires;
+        var handledAnimals = new HashSet<string>(StringComparer.Ordinal);
 
         if (c.Skill != null && save.SkillLevel(c.Skill) < c.SkillLevel)
         {
@@ -146,16 +148,14 @@ public static class FairnessRule
                 added += step.Days;
                 continue;
             }
-            if (r.StartsWith(AnimalPrefix, StringComparison.Ordinal))
+            if (r.StartsWith(AnimalPrefix, StringComparison.Ordinal) && r.EndsWith(NotSoldSuffix, StringComparison.Ordinal))
             {
-                bool notSold = r.EndsWith(NotSoldSuffix, StringComparison.Ordinal);
-                string name = notSold ? r.Substring(AnimalPrefix.Length, r.Length - AnimalPrefix.Length - NotSoldSuffix.Length) : r.Substring(AnimalPrefix.Length);
+                // A not-sold animal is a game rule, not a wait: the model only writes this when the
+                // animal cannot be bought, so it rules the route out regardless of level.
+                string name = r.Substring(AnimalPrefix.Length, r.Length - AnimalPrefix.Length - NotSoldSuffix.Length);
+                handledAnimals.Add(name);
                 if (save.AnimalsOwned.Contains(name)) continue;
-                if (notSold) return $"animal {name} not owned and not sold";
-                if (!policy.AddDays) return $"animal {name} not owned";
-                SetupStep? step = source.Setup.FirstOrDefault(s => s.Name == AnimalPrefix + name);
-                added += step?.Days ?? 1;
-                continue;
+                return $"animal {name} not owned and not sold";
             }
             if (r.StartsWith(MailPrefix, StringComparison.Ordinal))
             {
@@ -186,18 +186,32 @@ public static class FairnessRule
                 continue;
             }
             // item:, guild:, pond population, tapper on tree, other location: and unlock: notes count as met.
+            // "skill:<Name> N" strings from MineSources are not parsed: every such source is Chance today.
         }
 
-        // Friendship setup (deluxe animal produce): the days of petting the game needs, when the
-        // animal is not there yet or not friendly enough.
+        // Animal and friendship setup: the game prices these off Setup, not Requires, because a
+        // purchasable animal is never named in Requires at all (spec 2026-09-15 fix round 1).
+        // building:, sapling and tea bush steps are skipped here: buildings are already priced off
+        // Requires above, and sapling/tea bush days are already inside the landing table.
         foreach (SetupStep step in source.Setup)
         {
+            if (step.Name.StartsWith(AnimalPrefix, StringComparison.Ordinal))
+            {
+                string name = step.Name.Substring(AnimalPrefix.Length);
+                if (handledAnimals.Contains(name)) continue;
+                if (save.AnimalsOwned.Contains(name)) continue;
+                if (!policy.AddDays) return $"animal {name} not owned";
+                added += step.Days;
+                continue;
+            }
             if (!step.Name.StartsWith(FriendshipPrefix, StringComparison.Ordinal)) continue;
-            string[] parts = step.Name.Substring(FriendshipPrefix.Length).Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 2 || !int.TryParse(parts[1], out int needed)) continue;
-            int have = save.AnimalFriendship.TryGetValue(parts[0], out int f) ? f : 0;
+            // The animal id can contain spaces ("White Chicken"), so the count is the LAST token.
+            int lastSpace = step.Name.LastIndexOf(' ');
+            if (lastSpace < FriendshipPrefix.Length || !int.TryParse(step.Name.Substring(lastSpace + 1), out int needed)) continue;
+            string animal = step.Name.Substring(FriendshipPrefix.Length, lastSpace - FriendshipPrefix.Length);
+            int have = save.AnimalFriendship.TryGetValue(animal, out int f) ? f : 0;
             if (have >= needed) continue;
-            if (!policy.AddDays) return $"{parts[0]} friendship {needed} needed, has {have}";
+            if (!policy.AddDays) return $"{animal} friendship {needed} needed, has {have}";
             added += step.Days;
         }
         return null;
