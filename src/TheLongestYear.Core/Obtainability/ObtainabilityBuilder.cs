@@ -33,6 +33,10 @@ public static class ObtainabilityBuilder
         direct.AddRange(MineSources.FishingTreasure());
         direct.AddRange(MadeSources.Animals(inputs.Animals, f, inputs.Buildings));
         direct.AddRange(MadeSources.Tappers(inputs.TapItems, o, f));
+        direct.AddRange(CodeSources.MineFish());
+        direct.AddRange(CodeSources.Moss());
+        direct.AddRange(CodeSources.SeasonSeeds());
+        direct.AddRange(CodeSources.GuildRewards(inputs.SlayerQuests));
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
 
         ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
