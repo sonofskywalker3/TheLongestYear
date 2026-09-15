@@ -53,12 +53,16 @@ public static class SpawnSources
 
         // A row needing bait can only be fished where the bait itself can be had; route the fish's
         // table through the bait's, and pick up the bait's island flag when every bait source needs it.
+        // A source that is already luck (a random query, a random alternative) has no dependable half
+        // of its own, so it must not borrow the bait's dependable table: that would turn a chance fish
+        // dependable, and would erase the chance half whenever the bait itself is fully dependable.
         IEnumerable<(string ItemId, ObtainSource Source)> ThroughBait(bool requiresBait, string id, ObtainSource source)
         {
             if (!requiresBait) { yield return (id, source); yield break; }
             ObtainConditions conditions = source.Conditions with { GingerIsland = source.Conditions.GingerIsland || baitIsland };
+            DayTable dependable = source.Reliability == Reliability.Dependable ? baitDep.Then(source.Lands) : DayTable.None;
             foreach (ObtainSource s in SourcePair.Of(
-                source.Kind, baitDep.Then(source.Lands), bait.Then(source.Lands), conditions, source.Detail, source.Setup))
+                source.Kind, dependable, bait.Then(source.Lands), conditions, source.Detail, source.Setup))
                 yield return (id, s);
         }
 
@@ -94,7 +98,7 @@ public static class SpawnSources
                         RainOnly = c.RainOnly || string.Equals(fish?.Weather, RainyWeather, StringComparison.OrdinalIgnoreCase),
                         CatchLimit = row.CatchLimit,
                         Unresolved = c.Unresolved || resolved.Unresolved,
-                        Requires = row.RequireMagicBait ? c.Requires.Append("item:(O)908 Magic Bait").ToList() : c.Requires,
+                        Requires = row.RequireMagicBait ? c.Requires.Append($"item:{MagicBaitId} Magic Bait").ToList() : c.Requires,
                     },
                 };
                 foreach (var final in ThroughBait(row.RequireMagicBait, id, finalSource))
@@ -119,9 +123,10 @@ public static class SpawnSources
         foreach (ArtifactSpotRow row in rows)
         {
             ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
-            if (reading.Weeks.IsEmpty) continue;
+            DayTable table = ConditionSeasons.Availability(reading, WeekMask.All);
+            if (table.IsEmpty) continue;
             var template = new ObtainSource(
-                SourceKind.ArtifactSpot, ConditionSeasons.Availability(reading, WeekMask.All), Reliability.Chance,
+                SourceKind.ArtifactSpot, table, Reliability.Chance,
                 LocationConditions(row.Location, reading),
                 $"artifact spot, {row.Location}, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
@@ -136,9 +141,10 @@ public static class SpawnSources
         foreach (GarbageRow row in rows)
         {
             ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
-            if (reading.Weeks.IsEmpty) continue;
+            DayTable table = ConditionSeasons.Availability(reading, WeekMask.All);
+            if (table.IsEmpty) continue;
             var template = new ObtainSource(
-                SourceKind.GarbageCan, ConditionSeasons.Availability(reading, WeekMask.All), Reliability.Chance,
+                SourceKind.GarbageCan, table, Reliability.Chance,
                 ConditionSeasons.Apply(ObtainConditions.None, reading), $"garbage can {row.CanId}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;
@@ -158,15 +164,22 @@ public static class SpawnSources
     {
         ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
         WeekMask seasonMask = row.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
-        DayTable table = ConditionSeasons.Availability(reading, seasonMask);
         ObtainConditions conditions = LocationConditions(row.Location, reading);
+        DayTable table;
         if (FestivalOnlyLocations.TryGetValue(row.Location, out string? festivalId)
             && festivals.TryGetValue(festivalId, out FestivalDates? festival))
         {
             int startDoy = Calendar.DayOfYear((int)festival.Season, festival.StartDay);
             int endDoy = Calendar.DayOfYear((int)festival.Season, festival.EndDay);
-            table = table.Latest(DayTable.Available(d => d >= startDoy && d <= endDoy));
+            // A true intersection: a day only counts when both the row's own condition and the
+            // festival's exact dates agree, so a sparse condition inside the window is not papered
+            // over by combining two independently-computed tables afterward.
+            table = DayTable.Available(d => d >= startDoy && d <= endDoy && ConditionSeasons.IsAvailableOn(reading, seasonMask, d));
             conditions = conditions with { FewDays = true };
+        }
+        else
+        {
+            table = ConditionSeasons.Availability(reading, seasonMask);
         }
         if (table.IsEmpty) return null;
         Reliability reliability = reading.Chance || row.IsRandom ? Reliability.Chance : Reliability.Dependable;

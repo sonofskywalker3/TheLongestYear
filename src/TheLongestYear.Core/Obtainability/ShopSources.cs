@@ -112,11 +112,13 @@ public static class ShopSources
     }
 
     /// <summary>The exact days a festival is open, day by day rather than by week.</summary>
-    private static DayTable FestivalDayTable(FestivalDates festival)
+    private static DayTable FestivalDayTable(FestivalDates festival) => DayTable.Available(d => IsFestivalDay(festival, d));
+
+    private static bool IsFestivalDay(FestivalDates festival, int day)
     {
         int startDoy = Calendar.DayOfYear((int)festival.Season, festival.StartDay);
         int endDoy = Calendar.DayOfYear((int)festival.Season, festival.EndDay);
-        return DayTable.Available(d => d >= startDoy && d <= endDoy);
+        return day >= startDoy && day <= endDoy;
     }
 
     /// <summary>The source every item of a row shares, or null when the row can never be stocked in year 1.</summary>
@@ -132,8 +134,12 @@ public static class ShopSources
         (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced, FestivalDates? festival) = Placement(row.ShopId, festivals);
         WeekMask weeks = reading.Weeks & placeWeeks;
         if (weeks.IsEmpty) return null;
-        DayTable table = ConditionSeasons.Availability(reading, placeWeeks);
-        if (festival != null) table = table.Latest(FestivalDayTable(festival));
+        // A true intersection when a festival gates the shop: a day only counts when both the row's
+        // own condition and the festival's exact dates agree, computed in one predicate rather than
+        // combining two independently-computed tables afterward (DayTable.Latest is not an AND).
+        DayTable table = festival is FestivalDates f
+            ? DayTable.Available(d => IsFestivalDay(f, d) && ConditionSeasons.IsAvailableOn(reading, placeWeeks, d))
+            : ConditionSeasons.Availability(reading, placeWeeks);
         if (table.IsEmpty) return null;
         bool chance = reading.Chance || row.IsRandom || kind == SourceKind.Cart
                       || row.ShopId.EndsWith(TravelingMerchantSuffix, StringComparison.Ordinal);

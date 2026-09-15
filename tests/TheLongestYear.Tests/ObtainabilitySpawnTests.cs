@@ -122,6 +122,31 @@ public class ObtainabilitySpawnTests
     }
 
     [Fact]
+    public void A_random_magic_bait_row_stays_chance_even_when_the_bait_is_fully_dependable()
+    {
+        var bait = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)908"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "shop QiGemShop") },
+        });
+        var rows = new[] { new LocationSpawn("Beach", "(O)798", null, "SEASON Winter", 1.0, 0, true, 0, IsRandom: true) };
+        var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
+        var sources = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), NoFestivals, bait)
+            .Where(s => s.ItemId == "(O)798").ToList();
+        Assert.NotEmpty(sources);
+        Assert.All(sources, s => Assert.Equal(Reliability.Chance, s.Source.Reliability));
+    }
+
+    [Fact]
+    public void A_sparse_row_condition_inside_a_festival_window_is_a_true_intersection()
+    {
+        var rows = new[] { new LocationSpawn("Submarine", "(O)798", null, "DAY_OF_MONTH 16", 1.0, 0, false, 0) };
+        var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
+        var source = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).Single().Source;
+        Assert.Equal(100, source.Lands.Lands(1));      // Winter 16 is the only day both the row and the market are open
+        Assert.Null(source.Lands.Lands(101));
+    }
+
+    [Fact]
     public void A_night_market_fish_lands_on_the_first_market_day()
     {
         var festivals = new Dictionary<string, FestivalDates> { ["NightMarket"] = new FestivalDates("NightMarket", Season.Winter, 15, 17) };
