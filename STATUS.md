@@ -2,13 +2,13 @@
 
 **Last updated:** 2026-09-15 (story: obtainability phase 2 review fixes landed, rerun live, report awaiting Jeff's rulings)
 **Branch:** `story`; master merged in at 0.18.4, everything PUSHED, nothing local-only
-**Tests:** 2280 passing
+**Tests:** 2282 passing
 **Build:** clean (Release, 0 errors); story HEAD deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
 **Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
 
 ## 2026-09-15: obtainability phase 2, the review fix wave (12 findings, live rerun)
 
-Commits `ea68649`..`d6f54b4` on top of phase 2, one per finding, all pushed. Full report:
+Commits `ea68649`..`3feb9fe` on top of phase 2, one per finding, all pushed. Full report:
 `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`.
 
 Two of the twelve were real model bugs. **Festival shops with no `Festival_` prefix** (the Desert
@@ -23,38 +23,46 @@ all, and a Magic Bait fish row with no bait anywhere. The rest were a report col
 split, four comment corrections, the Mushroom Log detail, the tea bush's sheltered note (an indoor pot
 needs no pantry bundle, `Bush.IsSheltered`) and a "Known limitations" section in the spec.
 
+A second round (`3feb9fe`) replaced the flag rule the first one used. Flagging a derived source only
+when EVERY upstream source carried the flag let a mixed input (Garlic Seeds: a year 2 Pierre row beside
+a chance cart row) drop the flag, so the year 2 row's landing day reached the default headline. An
+input is now read under all four filter variants (plain, island, year 2, both) and each is derived
+separately with its own flags, which pins the property the model needs: for any filter F, the derived
+item's table under F is what deriving from the input's table under F gives. Garlic and Garlic Seeds
+both read `dependable lands never` by default again, with the year 2 route recorded and flagged.
+
 **Live build (automated run, throwaway save `None_449077472`, launched minimized):**
 
 ```
-[00:37:25 INFO  The Longest Year] Obtainability model: 1113 items in 347 ms, 6 pass(es), 45 unresolved source(s).
+[00:50:28 INFO  The Longest Year] Obtainability model: 1113 items in 823 ms, 7 pass(es), 45 unresolved source(s).
 ```
 
 ```
-[00:38:20 INFO  The Longest Year] tly_obtain compare: wrote ...obtainability-compare.md (1078 items: OnlyNew 606, NewEarlier 179, NewLater 15, LuckOnly 127, Agree 144, OnlyExisting 7; 45 unresolved).
+[00:50:53 INFO  The Longest Year] tly_obtain compare: wrote ...obtainability-compare.md (1078 items: OnlyNew 606, NewEarlier 173, NewLater 14, LuckOnly 137, Agree 141, OnlyExisting 7; 45 unresolved).
 ```
 
-| Verdict | Previous run | This run |
+| Verdict | Before the fix wave | Final |
 |---|---|---|
-| NewEarlier | 177 | 179 |
-| NewLater | 5 | 15 |
-| LuckOnly | 137 | 127 |
+| NewEarlier | 177 | 173 |
+| NewLater | 5 | 14 |
+| LuckOnly | 137 | 137 |
 | OnlyExisting | 7 | 7 |
 | OnlyNew | 606 | 606 |
-| Agree | 146 | 144 |
+| Agree | 146 | 141 |
 | Dependable only through an unresolved source | (new row) | 24 |
 | Unresolved sources | 21 | 45 |
 
-Only 44 items moved at all: 22 changed verdict, 22 kept it and changed week, every one listed in the
-report. The 24 new unresolved sources are all barter rows priced in a currency no data asset makes
-(22 Qi Gem, a Golden Walnut, two island trades, one Bookseller trade); none is a year 1 bundle route.
+Only 34 items moved at all, and every one of them is the Desert Festival fix: 22 kept their verdict
+and moved to the real festival week, 8 went Agree to NewLater, 3 NewEarlier to Agree, 1 NewEarlier to
+NewLater. LuckOnly, OnlyExisting and OnlyNew end where they started, which is the point: the island
+and year 2 work changes no default answer, it only stops answers being lost or invented. The 24 new
+unresolved sources are barter rows priced in a currency no data asset makes (22 Qi Gem, a Golden
+Walnut, two island trades, one Bookseller trade); none is a year 1 bundle route.
 
-**328 items still need Jeff's ruling** (179 NewEarlier, 15 NewLater, 127 LuckOnly, 7 OnlyExisting),
-grouped with a plain-English reason each in the report's section 4. The biggest blocks are unchanged:
-55 cooked dishes whose recipe unlock is a condition rather than a delay, 26 machine goods, 16 shop
-rows, 15 animal produce. One new question of its own (report 4.5): the island/year 2 flag is ORed on
-only when EVERY source of an input carries it, so a mixed input (Garlic Seeds: a year 2 Pierre row
-plus a cart row plus a seed maker) drops the flag and the year 2 row's week still counts. Leave it, or
-derive per source in a later task.
+**331 items still need Jeff's ruling** (173 NewEarlier, 14 NewLater, 137 LuckOnly, 7 OnlyExisting),
+grouped with a plain-English reason each in the report's section 4, updated in section 7.4. The
+biggest blocks: 48 cooked dishes whose recipe unlock is a condition rather than a delay, 26 machine
+goods, 16 Desert Festival stall items, 16 shop rows, 15 animal produce.
 
 ## 2026-09-15: item obtainability model, phase 2 (start-day meaning, gap closure, live rerun)
 

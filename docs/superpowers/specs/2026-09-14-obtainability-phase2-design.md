@@ -2,10 +2,10 @@
 
 **Date:** 2026-09-14
 **Status:** phase 2 built (commits `639dd34`..`51ab859`), review findings fixed (commits
-`ea68649`..`d6f54b4`), rerun report awaiting Jeff's rulings (2026-09-15 live rerun on the throwaway
-save after the fixes: `Obtainability model: 1113 items in 347 ms, 6 pass(es), 45 unresolved
-source(s).`; NewEarlier 179, NewLater 15, LuckOnly 127, OnlyExisting 7, OnlyNew 606, Agree 144, 24
-dependable only through an unresolved source; 328 items listed for ruling in STATUS.md and
+`ea68649`..`3feb9fe`), rerun report awaiting Jeff's rulings (2026-09-15 live rerun on the throwaway
+save after the fixes: `Obtainability model: 1113 items in 823 ms, 7 pass(es), 45 unresolved
+source(s).`; NewEarlier 173, NewLater 14, LuckOnly 137, OnlyExisting 7, OnlyNew 606, Agree 141, 24
+dependable only through an unresolved source; 331 items listed for ruling in STATUS.md and
 `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`)
 **Branch:** `story`
 **Builds on:** `2026-09-14-item-obtainability-design.md` (phase 1, the blind build)
@@ -195,6 +195,11 @@ or a piece of work Part B can pick up.
   dependable week 1. The comparison now marks these ("new dependable N (unresolved; known-source
   week M)") and counts them, but whether the model should read the TV schedule, or keep treating the
   unlock as a condition, is Jeff's ruling and is still open.
+- **Island and year 2 inputs are derived per filter variant.** An input is read under all four
+  variants (plain, island, year 2, both) and each is derived separately, carrying its own flags, so a
+  flagged row never reaches an answer that excludes it. The cost is a few extra sources per flagged
+  input in the debug listing; the property it keeps is that for any filter F, a derived item's table
+  under F is what deriving from the input's table under F gives.
 - **A cooking recipe's friendship and skill unlocks are conditions, not delays.** "f Robin 7" or
   "s Farming 3" is recorded on the source and never turned into a number of weeks, for the same
   reason the guild kill counts are not: how long a heart or a skill level takes is a judgement for

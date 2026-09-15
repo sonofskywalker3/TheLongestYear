@@ -11,23 +11,25 @@ Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model
 (2026-09-14 to 15, commits `639dd34`..`51ab859`, spec
 `docs/superpowers/specs/2026-09-14-obtainability-phase2-design.md`) changed the week meaning to
 start-day and closed the gap list. The whole-branch review's 12 findings were fixed in commits
-`ea68649`..`d6f54b4` (report:
+`ea68649`..`3feb9fe` (report:
 `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md`) and rerun live on
 2026-09-15 on the throwaway save `None_449077472`:
-`Obtainability model: 1113 items in 347 ms, 6 pass(es), 45 unresolved source(s).` Counts now
-NewEarlier 179, NewLater 15, LuckOnly 127, OnlyExisting 7, OnlyNew 606, Agree 144, 24 dependable only
+`Obtainability model: 1113 items in 823 ms, 7 pass(es), 45 unresolved source(s).` Counts now
+NewEarlier 173, NewLater 14, LuckOnly 137, OnlyExisting 7, OnlyNew 606, Agree 141, 24 dependable only
 through an unresolved source, 45 unresolved sources (the run before the fixes was
-177 / 5 / 137 / 7 / 606 / 146 / 21). Nothing reads the model for gameplay yet.
+177 / 5 / 137 / 7 / 606 / 146 / 21). Only 34 items moved, every one of them the Desert Festival stall
+fix. Nothing reads the model for gameplay yet.
 
-- **OPEN: Jeff rules on the rerun report: 328 items** (179 NewEarlier, 15 NewLater, 127 LuckOnly,
+- **OPEN: Jeff rules on the rerun report: 331 items** (173 NewEarlier, 14 NewLater, 137 LuckOnly,
   7 OnlyExisting). The grouped list with a plain-English reason per group and the item ids is in
-  `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md` section 4; the summary and
-  the outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling log in its
-  own small commit.
-- **OPEN: one question the fix wave raised** (report section 4.5): a derived source is flagged island
-  or year 2 only when EVERY source of its input is, so a mixed input (Garlic Seeds) drops the flag and
-  its year 2 shop row's week still feeds the dependable headline. Leave it, or derive per source in a
-  later task.
+  `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md` sections 4 and 7.4; the
+  summary and the outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling
+  log in its own small commit.
+- **CLOSED (`3feb9fe`): the mixed-input flag question** the fix wave raised. An input is now read
+  under all four filter variants (plain, island, year 2, both) and each is derived separately with its
+  own flags, so a year 2 or island row can never feed an answer that excludes it. Pinned by a test:
+  for any filter F, the derived item's table under F is what deriving from the input's table under F
+  gives.
 - **OPEN: the Queen of Sauce air weeks** (`Data/TV/CookingChannel`) are still not read; a recipe whose
   unlock is "none" is recorded Unresolved and lands as soon as its ingredients do. The report now
   marks and counts those items (24 this run). Read the TV schedule, or keep the unlock as a condition.
