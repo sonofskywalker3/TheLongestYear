@@ -708,6 +708,7 @@ namespace TheLongestYear
                 this.Monitor, _meta, _config,
                 () => _runController?.Requirements ?? _requirements,
                 () => _availability,
+                () => _enginePools,
                 () => _obtainability,
                 RebuildBoardDerivedState,
                 _sabotageMail);
