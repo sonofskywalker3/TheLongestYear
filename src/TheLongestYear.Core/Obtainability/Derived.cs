@@ -46,6 +46,17 @@ public static class Derived
         /// <summary>Needs nothing (a machine rule with no input): lands the day it starts.</summary>
         public static readonly Input Free = Of(DayTable.Always);
 
+        /// <summary>Which items this input stands for, as groups: any member of a group serves, every
+        /// group is needed. Stamped onto every source <see cref="Emit"/> yields so a consumer can ask
+        /// the same obtainability question of the input as of the output.
+        /// <para><b>Known limitation:</b> <see cref="Either"/> flattens into ONE group, so a
+        /// conjunction nested inside an alternative (either this pair or that pair) becomes a plain
+        /// disjunction of all four ids, which is weaker than the truth: a consumer may accept a route
+        /// because one id of a needed pair is obtainable. No current caller builds that shape
+        /// (Both is only used for a recipe's ingredient list, never under Either), and the loss is on
+        /// the permissive side, so it is recorded rather than modelled.</para></summary>
+        public IReadOnlyList<IReadOnlyList<string>> Groups { get; init; } = Array.Empty<IReadOnlyList<string>>();
+
         private static Input Of(DayTable both) => new(new[] { new Variant(Plain, Plain, both, both) });
 
         public Variant PlainVariant => Variants[0];
@@ -68,24 +79,36 @@ public static class Derived
             foreach (Variant v in Variants)
                 foreach (ObtainSource source in SourcePair.Of(
                     kind, luck ? DayTable.None : chain(v.Dependable), chain(v.Any), v.Flag(conditions), detail, setup))
-                    yield return source;
+                    yield return source with { Inputs = Groups };
         }
 
         /// <summary>Either input will do (a machine that takes any of several items): variant by
-        /// variant, the sooner landing.</summary>
+        /// variant, the sooner landing, and the two sides' ids merged into one group.</summary>
         public Input Either(Input other)
         {
             if (IsEmpty) return other;
             if (other.IsEmpty) return this;
-            return Combine(other, (a, b) => (a.Dependable.Earliest(b.Dependable), a.Any.Earliest(b.Any)));
+            return Combine(other, (a, b) => (a.Dependable.Earliest(b.Dependable), a.Any.Earliest(b.Any)),
+                Merge(Groups, other.Groups));
         }
 
         /// <summary>Both inputs are needed (a recipe's ingredients): variant by variant, the later
-        /// landing, never when either side never lands.</summary>
+        /// landing, never when either side never lands, and both sides' groups kept side by side.</summary>
         public Input Both(Input other)
-            => Combine(other, (a, b) => (a.Dependable.Latest(b.Dependable), a.Any.Latest(b.Any)));
+            => Combine(other, (a, b) => (a.Dependable.Latest(b.Dependable), a.Any.Latest(b.Any)),
+                Groups.Concat(other.Groups).ToList());
 
-        private Input Combine(Input other, Func<Variant, Variant, (DayTable Dependable, DayTable Any)> f)
+        /// <summary>One group holding every id of both sides (see the limitation on <see cref="Groups"/>).</summary>
+        private static IReadOnlyList<IReadOnlyList<string>> Merge(
+            IReadOnlyList<IReadOnlyList<string>> left, IReadOnlyList<IReadOnlyList<string>> right)
+        {
+            var ids = left.Concat(right).SelectMany(g => g).Distinct(StringComparer.Ordinal).ToList();
+            return ids.Count == 0 ? Array.Empty<IReadOnlyList<string>>() : new IReadOnlyList<string>[] { ids };
+        }
+
+        private Input Combine(
+            Input other, Func<Variant, Variant, (DayTable Dependable, DayTable Any)> f,
+            IReadOnlyList<IReadOnlyList<string>> groups)
         {
             var keys = new List<(bool Island, bool YearTwo)> { (false, false) };
             foreach (Variant v in Variants.Concat(other.Variants))
@@ -96,7 +119,7 @@ public static class Derived
                 (DayTable dependable, DayTable any) = f(For(island, yearTwo), other.For(island, yearTwo));
                 built.Add(new Variant(island, yearTwo, dependable, any));
             }
-            return new Input(Trim(built));
+            return new Input(Trim(built)) { Groups = groups };
         }
 
         /// <summary>Drops every variant that says exactly what a lesser variant already said, so an
@@ -115,7 +138,8 @@ public static class Derived
             => (!lesser.GingerIsland || v.GingerIsland) && (!lesser.YearTwo || v.YearTwo)
                && (lesser.GingerIsland != v.GingerIsland || lesser.YearTwo != v.YearTwo);
 
-        internal static Input FromVariants(IReadOnlyList<Variant> all) => new(Trim(all));
+        internal static Input FromVariants(IReadOnlyList<Variant> all, IReadOnlyList<IReadOnlyList<string>> groups)
+            => new(Trim(all)) { Groups = groups };
     }
 
     /// <summary>One input id read out of the previous pass's model, under all four filter variants.</summary>
@@ -124,7 +148,9 @@ public static class Derived
         Variant Read(bool island, bool yearTwo) => new(island, yearTwo,
             snapshot.Table(itemId, ObtainFilter.DependableOnly with { IncludeGingerIsland = island, IncludeYearTwo = yearTwo }),
             snapshot.Table(itemId, ObtainFilter.Any with { IncludeGingerIsland = island, IncludeYearTwo = yearTwo }));
-        return Input.FromVariants(new[] { Read(false, false), Read(true, false), Read(false, true), Read(true, true) });
+        return Input.FromVariants(
+            new[] { Read(false, false), Read(true, false), Read(false, true), Read(true, true) },
+            new IReadOnlyList<string>[] { new[] { itemId } });
     }
 
     /// <summary>The sooner of several inputs (see <see cref="Input.Either"/>).</summary>
