@@ -96,6 +96,11 @@ public class SabotageScheduleTests
         run.Tampers.Add(new TamperRecord { BundleIndex = 1 });
         run.PendingSabotageReports.Add(new SabotageReport { Kind = SabotageKind.Blight, Count = 2 });
         run.EndingArmed = true;
+        run.DarknessChanceWeek = 9;
+        run.DarknessChance = 0.1;
+        run.UnmoderatedReversionSpent = true;
+        run.UnmoderatedTamperSpent = true;
+        run.GuaranteedTamperDone = true;
         run.BeginNewRun(7);
         Assert.False(run.EndingArmed);
         Assert.Equal(-1, run.BlightWeek);
@@ -104,6 +109,11 @@ public class SabotageScheduleTests
         Assert.Empty(run.TamperDays);
         Assert.Empty(run.Tampers);
         Assert.Empty(run.PendingSabotageReports);
+        Assert.Equal(-1, run.DarknessChanceWeek);
+        Assert.Equal(0.0, run.DarknessChance);
+        Assert.False(run.UnmoderatedReversionSpent);
+        Assert.False(run.UnmoderatedTamperSpent);
+        Assert.False(run.GuaranteedTamperDone);
     }
 }
 

@@ -181,6 +181,19 @@ public sealed class RunState
     /// <summary>Morning HUD lines the night pass queued; drained by the next OnDayStarted.</summary>
     public List<Sabotage.SabotageReport> PendingSabotageReports { get; set; } = new();
 
+    // ---- Darkness rework (spec 2026-09-15 Part B) ----
+    /// <summary>Week of the year <see cref="DarknessChance"/> belongs to; -1 until the first roll.</summary>
+    public int DarknessChanceWeek { get; set; } = -1;
+    /// <summary>The week's current strike chance, after this week's decay. Meaningless when
+    /// <see cref="DarknessChanceWeek"/> is not the current week.</summary>
+    public double DarknessChance { get; set; }
+    /// <summary>This loop's one unmoderated reversion has fired (Hard and Extreme).</summary>
+    public bool UnmoderatedReversionSpent { get; set; }
+    /// <summary>This loop's one unmoderated tamper has fired (Hard and Extreme).</summary>
+    public bool UnmoderatedTamperSpent { get; set; }
+    /// <summary>This Winter's guaranteed week-1 tamper has landed.</summary>
+    public bool GuaranteedTamperDone { get; set; }
+
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
     {
@@ -353,5 +366,10 @@ public sealed class RunState
         (TamperDays ??= new()).Clear();
         (Tampers ??= new()).Clear();
         (PendingSabotageReports ??= new()).Clear();
+        DarknessChanceWeek = -1;
+        DarknessChance = 0.0;
+        UnmoderatedReversionSpent = false;
+        UnmoderatedTamperSpent = false;
+        GuaranteedTamperDone = false;
     }
 }
