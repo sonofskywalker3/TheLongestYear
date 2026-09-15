@@ -98,4 +98,14 @@ public class ObtainabilityConditionTests
         Assert.True(c.Unresolved);
         Assert.Equal(new[] { "shop:Sandy", "SOME_MOD_QUERY" }, c.Requires);
     }
+
+    [Fact]
+    public void Conditions_compare_by_content_not_by_list_reference()
+    {
+        var a = ObtainConditions.None with { Requires = new[] { "shop:SeedShop" } };
+        var b = ObtainConditions.None with { Requires = new List<string> { "shop:SeedShop" } };
+        Assert.Equal(a, b);
+        Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        Assert.NotEqual(a, a with { Requires = new[] { "shop:Sandy" } });
+    }
 }

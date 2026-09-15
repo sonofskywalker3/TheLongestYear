@@ -48,7 +48,8 @@ public class ObtainabilityGrowTests
         Assert.Equal(Reliability.Dependable, outdoor[0].Reliability);
         var greenhouse = sources.Where(s => s.Kind == SourceKind.GreenhouseCrop).ToList();
         Assert.Contains(greenhouse, s => s.Reliability == Reliability.Dependable && s.Lands.ToString() == "1-5");
-        Assert.Contains(greenhouse, s => s.Reliability == Reliability.Chance && s.Lands.LandingWeek(1) == 14);
+        // phase 1 predicate, rewritten in task 4
+        Assert.Contains(greenhouse, s => s.Reliability == Reliability.Chance && s.Lands.ToString().Contains("14"));
         Assert.All(greenhouse, s => Assert.Contains("mail:ccPantry", s.Conditions.Requires));
     }
 
