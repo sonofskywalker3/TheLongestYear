@@ -221,9 +221,11 @@ public sealed class MetaState
     /// on this save (SabotageMailService keys). Once per save, whatever the loop.</summary>
     public HashSet<string> SabotageLettersSent { get; set; } = new();
 
-    /// <summary>The save has had its first-ever Winter 1 tamper (spec 2026-09-15 Part B, 2.6): the
-    /// first Winter a save reaches strikes on Winter 1, every later Winter on a random night of
-    /// week 1. Per save, never reset by a loop.</summary>
+    /// <summary>This save has already reached a Winter (spec 2026-09-15 Part B, 2.6): the first
+    /// Winter a save reaches has its guaranteed tamper on Winter 1, every later Winter on a random
+    /// night of week 1. Set the first time a Winter night of day 7 or later runs, or the moment the
+    /// guaranteed tamper lands, whichever comes first, so a first Winter that never found a fair
+    /// target still counts as reached. Per save, never reset by a loop.</summary>
     public bool FirstWinterTamperSeen { get; set; }
 
     /// <summary>Year One Ending: the player chose Keep playing on this version or later. Spring 1 of
