@@ -23,8 +23,10 @@ using CoreSeason = TheLongestYear.Core.Season;
 namespace TheLongestYear.Loop
 {
     /// <summary>Reads the live game data (including other mods' edits) into the obtainability model's
-    /// input records (spec 2026-09-14-item-obtainability). Phase 1 is blind: this class reads Data
-    /// assets only and never consults the mod's own item tables.</summary>
+    /// input records (spec 2026-09-14-item-obtainability). Blind: this class reads Data assets only and
+    /// never consults the mod's own item tables. <see cref="Build"/> is the list of sections, one per
+    /// Data asset; the line-format parsers each section uses live in
+    /// <see cref="GameObtainabilityParsing"/>.</summary>
     internal sealed class GameObtainabilityData
     {
         private const int FishDifficultyField = 1;
@@ -33,16 +35,8 @@ namespace TheLongestYear.Loop
         private const int FishMinLevelField = 12;
         private const string TrapMarker = "trap";
         private const int MonsterDropField = 6;
-        private const int RecipeIngredientsField = 0;
-        private const int RecipeOutputField = 2;
-        private const int CookingUnlockField = 3;
-        private const int CraftingBigCraftableField = 3;
-        private const int CraftingUnlockField = 4;
         private const string PreviousOutputTapId = "PREVIOUS_OUTPUT_ID";
         private const string AnyCan = "*";
-        private const string SeedMakerSuffix = "OutputSeedMaker";
-        private const string MushroomLogSuffix = "OutputMushroomLog";
-        private const string CaskSuffix = "OutputCask";
 
         /// <summary>Locations that only exist while a minigame runs (the fishing minigame's own scene):
         /// they are never a real map to spawn or fish in, so they are dropped from the model entirely.</summary>
@@ -88,7 +82,7 @@ namespace TheLongestYear.Loop
                     objects[id] = new ObjInfo(id, o.Name ?? "", o.Category, o.Price, tags, o.ExcludeFromRandomSale);
                     if (o.GeodeDropsDefaultItems) defaultGeodes.Add(id);
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
-                        foreach ((string item, _) in Entries(drop?.ItemId, drop?.RandomItemId))
+                        foreach ((string item, _) in GameObtainabilityParsing.Entries(drop?.ItemId, drop?.RandomItemId))
                             geodeDrops.Add(new GeodeDropRow(id, item, drop.Chance, drop.Condition));   // geode contents are chance already
                 }
             });
@@ -120,15 +114,15 @@ namespace TheLongestYear.Loop
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
-                        foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
-                            forage.Add(new LocationSpawn(kv.Key, item, MapSeason(f.Season), f.Condition, f.Chance, 0, false, 0, random));
+                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                            forage.Add(new LocationSpawn(kv.Key, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance, 0, false, 0, random));
                     foreach (SpawnFishData f in loc.Fish ?? new List<SpawnFishData>())
-                        foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
-                            fish.Add(new LocationSpawn(kv.Key, item, MapSeason(f.Season), f.Condition, f.Chance,
+                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                            fish.Add(new LocationSpawn(kv.Key, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance,
                                 Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random,
                                 f.CanBeInherited));   // CatchLimit defaults to -1
                     foreach (ArtifactSpotDropData a in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
-                        foreach ((string item, _) in Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
+                        foreach ((string item, _) in GameObtainabilityParsing.Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
                             artifactSpots.Add(new ArtifactSpotRow(kv.Key, item, a.Condition, a.Chance));
                 }
             });
@@ -139,10 +133,10 @@ namespace TheLongestYear.Loop
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     string id = BundleParsing.NormalizeItemId(kv.Key);
-                    bool trap = Field(fields, FishDifficultyField) == TrapMarker;
-                    int level = trap ? 0 : (int.TryParse(Field(fields, FishMinLevelField), out int l) ? l : 0);
-                    fishRows[id] = new FishRow(id, trap, trap ? "" : Field(fields, FishWeatherField), level,
-                        trap ? "" : Field(fields, FishTimeField));
+                    bool trap = GameObtainabilityParsing.Field(fields, FishDifficultyField) == TrapMarker;
+                    int level = trap ? 0 : (int.TryParse(GameObtainabilityParsing.Field(fields, FishMinLevelField), out int l) ? l : 0);
+                    fishRows[id] = new FishRow(id, trap, trap ? "" : GameObtainabilityParsing.Field(fields, FishWeatherField), level,
+                        trap ? "" : GameObtainabilityParsing.Field(fields, FishTimeField));
                 }
             });
 
@@ -150,7 +144,7 @@ namespace TheLongestYear.Loop
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Monsters"))
                 {
-                    string[] pairs = Field((kv.Value ?? "").Split('/'), MonsterDropField).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    string[] pairs = GameObtainabilityParsing.Field((kv.Value ?? "").Split('/'), MonsterDropField).Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     for (int i = 0; i + 1 < pairs.Length; i += 2)
                         if (double.TryParse(pairs[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double chance))
                             monsterDrops.Add(new MonsterDropRow(kv.Key, pairs[i], chance));
@@ -164,7 +158,7 @@ namespace TheLongestYear.Loop
                     CropData c = kv.Value;
                     if (c?.HarvestItemId == null) continue;
                     crops.Add(new CropRow(BundleParsing.NormalizeItemId(kv.Key), BundleParsing.NormalizeItemId(c.HarvestItemId),
-                        MapSeasons(c.Seasons), (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays));
+                        GameObtainabilityParsing.MapSeasons(c.Seasons), (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays));
                 }
             });
 
@@ -175,9 +169,9 @@ namespace TheLongestYear.Loop
                     if (kv.Value == null) continue;
                     var fruit = new List<FruitRow>();
                     foreach (FruitTreeFruitData f in kv.Value.Fruit ?? new List<FruitTreeFruitData>())
-                        foreach ((string item, bool random) in Entries(f?.ItemId, f?.RandomItemId))
-                            fruit.Add(new FruitRow(item, MapSeason(f.Season), f.Chance, f.Condition, random));   // may be a query; Core emits it
-                    fruitTrees.Add(new FruitTreeRow(BundleParsing.NormalizeItemId(kv.Key), MapSeasons(kv.Value.Seasons), fruit));
+                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                            fruit.Add(new FruitRow(item, GameObtainabilityParsing.MapSeason(f.Season), f.Chance, f.Condition, random));   // may be a query; Core emits it
+                    fruitTrees.Add(new FruitTreeRow(BundleParsing.NormalizeItemId(kv.Key), GameObtainabilityParsing.MapSeasons(kv.Value.Seasons), fruit));
                 }
             });
 
@@ -185,7 +179,7 @@ namespace TheLongestYear.Loop
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
                     foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
-                        foreach ((string entry, bool random) in Entries(item?.ItemId, item?.RandomItemId))
+                        foreach ((string entry, bool random) in GameObtainabilityParsing.Entries(item?.ItemId, item?.RandomItemId))
                             shops.Add(new ShopRow(kv.Key, entry, item.Condition, item.IsRecipe, random,
                                 string.IsNullOrWhiteSpace(item.TradeItemId) ? null : item.TradeItemId));
             });
@@ -199,8 +193,8 @@ namespace TheLongestYear.Loop
                         foreach (MachineItemOutput o in rule.OutputItem ?? new List<MachineItemOutput>())
                         {
                             if (o == null) continue;
-                            if (!string.IsNullOrWhiteSpace(o.OutputMethod)) { outputs.Add(new MachineOutput(null, o.Condition, o.OutputMethod, Method: MethodKind(o.OutputMethod))); continue; }
-                            foreach ((string entry, bool random) in Entries(o.ItemId, o.RandomItemId))
+                            if (!string.IsNullOrWhiteSpace(o.OutputMethod)) { outputs.Add(new MachineOutput(null, o.Condition, o.OutputMethod, Method: GameObtainabilityParsing.MethodKind(o.OutputMethod))); continue; }
+                            foreach ((string entry, bool random) in GameObtainabilityParsing.Entries(o.ItemId, o.RandomItemId))
                                 outputs.Add(new MachineOutput(entry, o.Condition, null, random));
                         }
                         if (outputs.Count == 0) continue;
@@ -223,13 +217,13 @@ namespace TheLongestYear.Loop
             Section("CookingRecipes", () =>
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CookingRecipes"))
-                    if (Recipe(kv.Key, kv.Value, cooking: true) is RecipeRow r) recipes.Add(r);
+                    if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: true) is RecipeRow r) recipes.Add(r);
             });
 
             Section("CraftingRecipes", () =>
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
-                    if (Recipe(kv.Key, kv.Value, cooking: false) is RecipeRow r) recipes.Add(r);
+                    if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: false) is RecipeRow r) recipes.Add(r);
             });
 
             Section("FarmAnimals", () =>
@@ -239,7 +233,7 @@ namespace TheLongestYear.Loop
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
                     animals.Add(new AnimalRow(kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
-                        a.PurchasePrice, Produce(a.ProduceItemIds), Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
+                        a.PurchasePrice, GameObtainabilityParsing.Produce(a.ProduceItemIds), GameObtainabilityParsing.Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
                         a.DaysToProduce));
                 }
             });
@@ -262,9 +256,9 @@ namespace TheLongestYear.Loop
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
                     foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
-                        foreach ((string item, bool random) in Entries(tap?.ItemId, tap?.RandomItemId))
+                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(tap?.ItemId, tap?.RandomItemId))
                             if (item != PreviousOutputTapId)
-                                taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, MapSeason(tap.Season), tap.Chance, tap.Condition, random));
+                                taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, GameObtainabilityParsing.MapSeason(tap.Season), tap.Chance, tap.Condition, random));
             });
 
             Section("GarbageCans", () =>
@@ -273,7 +267,7 @@ namespace TheLongestYear.Loop
                 void AddAll(string can, List<GarbageCanItemData> items)
                 {
                     foreach (GarbageCanItemData g in items ?? new List<GarbageCanItemData>())
-                        foreach ((string item, _) in Entries(g?.ItemId, g?.RandomItemId))   // garbage is chance already
+                        foreach ((string item, _) in GameObtainabilityParsing.Entries(g?.ItemId, g?.RandomItemId))   // garbage is chance already
                             garbage.Add(new GarbageRow(can, item, g.Condition));
                 }
                 AddAll(AnyCan, data?.BeforeAll);
@@ -327,63 +321,5 @@ namespace TheLongestYear.Loop
                 _monitor?.Log($"Obtainability: reading Data/{asset} failed ({ex.GetType().Name}: {ex.Message}); that part of the model is missing.", LogLevel.Warn);
             }
         }
-
-        private static OutputMethodKind MethodKind(string? method)
-        {
-            if (string.IsNullOrEmpty(method)) return OutputMethodKind.None;
-            if (method.EndsWith(SeedMakerSuffix, StringComparison.Ordinal)) return OutputMethodKind.SeedMaker;
-            if (method.EndsWith(MushroomLogSuffix, StringComparison.Ordinal)) return OutputMethodKind.MushroomLog;
-            if (method.EndsWith(CaskSuffix, StringComparison.Ordinal)) return OutputMethodKind.Cask;
-            return OutputMethodKind.Unknown;
-        }
-
-        private static RecipeRow Recipe(string name, string row, bool cooking)
-        {
-            string[] fields = (row ?? "").Split('/');
-            int unlockField = cooking ? CookingUnlockField : CraftingUnlockField;
-            if (fields.Length <= unlockField) return null;
-            string[] ingredientPairs = fields[RecipeIngredientsField].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var ingredients = new List<string>();
-            for (int i = 0; i + 1 < ingredientPairs.Length; i += 2)
-                ingredients.Add(int.TryParse(ingredientPairs[i], out int n) && n < 0 ? ingredientPairs[i] : BundleParsing.NormalizeItemId(ingredientPairs[i]));
-            // The output field is "id count id count ..."; with several ids the game picks one at random
-            // each craft (CraftingRecipe.cs 127-131, 192).
-            string[] outputPairs = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            bool bigCraftable = !cooking && string.Equals(fields[CraftingBigCraftableField].Trim(), "true", StringComparison.OrdinalIgnoreCase);
-            var outputIds = new List<string>();
-            for (int i = 0; i < outputPairs.Length; i += 2)
-                outputIds.Add(bigCraftable && !outputPairs[i].StartsWith("(", StringComparison.Ordinal) ? "(BC)" + outputPairs[i] : BundleParsing.NormalizeItemId(outputPairs[i]));
-            if (outputIds.Count == 0) return null;
-            return new RecipeRow(name, ingredients, outputIds[0], fields[unlockField].Trim(), cooking,
-                outputIds.Count > 1 ? outputIds.Skip(1).ToList() : null);
-        }
-
-        private static IReadOnlyList<AnimalProduce> Produce(List<FarmAnimalProduce> produce)
-            => (produce ?? new List<FarmAnimalProduce>())
-                .Where(p => !string.IsNullOrEmpty(p?.ItemId))
-                .Select(p => new AnimalProduce(BundleParsing.NormalizeItemId(p.ItemId), p.Condition, p.MinimumFriendship)).ToList();
-
-        /// <summary>What a spawn entry can give, ids and item queries alike. A non-empty RandomItemId replaces
-        /// ItemId (ItemQueryResolver.cs 804-817) and one entry is picked, so each is random when there are
-        /// several; otherwise the ItemId is the one fixed result.</summary>
-        private static IEnumerable<(string Id, bool IsRandom)> Entries(string itemId, List<string> randomItemIds)
-        {
-            List<string> random = (randomItemIds ?? new List<string>())
-                .Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).ToList();
-            if (random.Count > 0)
-            {
-                foreach (string id in random) yield return (id, random.Count > 1);
-                yield break;
-            }
-            if (!string.IsNullOrWhiteSpace(itemId)) yield return (itemId.Trim(), false);
-        }
-
-        private static string Field(string[] fields, int index) => index < fields.Length ? fields[index] : "";
-
-        private static CoreSeason? MapSeason(StardewValley.Season? season)
-            => season is StardewValley.Season s ? (CoreSeason)(int)s : null;
-
-        private static IReadOnlyList<CoreSeason> MapSeasons(List<StardewValley.Season> seasons)
-            => (seasons ?? new List<StardewValley.Season>()).Select(s => (CoreSeason)(int)s).Distinct().ToList();
     }
 }

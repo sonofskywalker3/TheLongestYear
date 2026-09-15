@@ -45,6 +45,7 @@ public class ObtainabilityBlindGuardTests
         "TheLongestYear.Core/Obtainability/ObtainabilityText.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityReadException.cs",
         "TheLongestYear/Loop/GameObtainabilityData.cs",
+        "TheLongestYear/Loop/GameObtainabilityParsing.cs",
     };
 
     private static string PathOf(string relative) => Path.Combine(SrcRoot, relative.Replace('/', Path.DirectorySeparatorChar));
