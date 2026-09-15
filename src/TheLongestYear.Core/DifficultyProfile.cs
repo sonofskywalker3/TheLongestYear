@@ -55,6 +55,15 @@ public sealed class DifficultyProfile
     /// <summary>Multiplier on the hold price curve.</summary>
     public double HoldPriceFactor { get; set; } = 1.0;
 
+    /// <summary>The Darkness dial this loop runs under (spec 2026-09-15 Part B). The step itself is
+    /// the resolved value: every darkness number is keyed by it in <c>DarknessLevels</c>. Nullable so
+    /// a stamp written before the dial existed reads through <see cref="Darkness"/> as the lowest of
+    /// its ten dials, the same migration a config gets.</summary>
+    public DifficultyStep? DarknessStep { get; set; }
+
+    /// <summary>The level gameplay reads.</summary>
+    public DifficultyStep Darkness => DarknessStep ?? Steps.LowestDial();
+
     /// <summary>The steps this profile was resolved from. Diagnostics and the two "all normal"
     /// fast paths only; never the source of a balance number.</summary>
     public DifficultySettings Steps { get; set; } = new();
