@@ -12,31 +12,14 @@ public static class SabotageTuning
     // Blight: crops on the farm die and perishables in chests spoil in the night. Summer, Fall
     // and Winter (Jeff, 2026-09-09: Winter blight is wanted; Winter fields are near empty so the
     // chests carry it).
-    public const double BlightChanceSummer = 0.25;
-    public const double BlightChanceFall = 0.35;
-    public const double BlightChanceWinter = 0.35;
-    public const double BlightShareSummer = 0.04;
-    public const double BlightShareFall = 0.06;
-    public const double BlightShareWinter = 0.06;
     public const int BlightMinPerNight = 1;
-    public const int BlightMaxSummer = 6;
-    public const int BlightMaxFall = 10;
-    public const int BlightMaxWinter = 10;
     public const int BlightNightsPerWeek = 2;
-    /// <summary>Storage loss on a blight night: this share of every unit the player has in
-    /// chests, clamped. Food spoils, anything else goes missing. The Junimo Stash is never touched.</summary>
-    public const double SpoilShare = 0.03;
-    public const int SpoilMinPerNight = 1;
-    public const int SpoilMaxPerNight = 8;
 
     // Reversion: one filled slot in an unfinished bundle empties. Fall and Winter.
-    public const double ReversionChanceFall = 0.20;
-    public const double ReversionChanceWinter = 0.30;
     /// <summary>First quiet day of a season: no reversion from here to day 28, so a redo has time.</summary>
     public const int ReversionQuietFromDay = 25;
 
     // Tampering: an unfilled slot asks for a different item. Winter only, unavoidable.
-    public const double TamperChance = 0.15;
     public const int TamperPerSeason = 2;
     public const int TamperMinDaysApart = 5;
     /// <summary>First quiet day: no tampering from here to Winter 28.</summary>
@@ -49,6 +32,24 @@ public static class SabotageTuning
     /// 0 to 10%, Normal 10 to 20%, Hard 20 to 30%, Extreme 30 to 40%. A scramble, never a
     /// trade-down to something trivial.</summary>
     public const double TamperSliceWidth = 0.10;
+
+    // The one nightly roll (spec 2026-09-15 Part B, section 2.1; Jeff's numbers 2026-09-14).
+    public const double NightChanceSummer = 0.25;
+    public const double NightChanceFall = 0.35;
+    public const double NightChanceWinter = 0.35;
+    /// <summary>Each strike lowers the week's chance by this much until the week resets.</summary>
+    public const double NightChanceDecay = 0.05;
+
+    // The gap tables the fairness picker adds on Normal and Hard (spec section 1.3; Jeff's first
+    // draft, 2026-09-15). Index = skill level; days for a player deliberately working the skill.
+    public static readonly int[] SkillDaysToLevel = { 0, 1, 2, 3, 5, 7, 10, 14, 19, 25, 32 };
+    /// <summary>Regular mine: one day per this many floors below the deepest reached ("call it 10
+    /// floors per day, we want it to be a stretch").</summary>
+    public const int MineFloorsPerDay = 10;
+    /// <summary>A missing machine the player can craft costs this many days on Normal.</summary>
+    public const int MachineCraftDays = 1;
+    /// <summary>Skull Cavern is a condition, not a wait: Staircases need this Mining level.</summary>
+    public const int StaircaseMiningLevel = 2;
 }
 
 /// <summary>Which fronts are open, whether tonight rolls, and the per-week and per-season caps.
@@ -61,17 +62,6 @@ public static class SabotageSchedule
         SabotageKind.Reversion => season == Season.Fall || season == Season.Winter,
         SabotageKind.Tampering => season == Season.Winter,
         _ => false,
-    };
-
-    public static double NightlyChance(SabotageKind kind, Season season) => (kind, season) switch
-    {
-        (SabotageKind.Blight, Season.Summer) => SabotageTuning.BlightChanceSummer,
-        (SabotageKind.Blight, Season.Fall) => SabotageTuning.BlightChanceFall,
-        (SabotageKind.Blight, Season.Winter) => SabotageTuning.BlightChanceWinter,
-        (SabotageKind.Reversion, Season.Fall) => SabotageTuning.ReversionChanceFall,
-        (SabotageKind.Reversion, Season.Winter) => SabotageTuning.ReversionChanceWinter,
-        (SabotageKind.Tampering, Season.Winter) => SabotageTuning.TamperChance,
-        _ => 0.0,
     };
 
     /// <summary>A front's quiet stretch at the end of a season. Day 28 itself is never rolled by
@@ -104,16 +94,16 @@ public static class SabotageSchedule
         }
     }
 
-    /// <summary>One decision: open, not quiet, under the caps, and the dice say yes.</summary>
+    /// <summary>Transitional: the three-dice roll the rework replaces. Task 6 removes the last
+    /// caller; NightRoll owns the real decision.</summary>
+    [System.Obsolete("Replaced by NightRoll; removed with the SabotageService rewrite.")]
     public static bool StrikesTonight(SabotageKind kind, RunState run, Season season, int dayOfMonth, Random rng)
     {
         if (rng is null) throw new ArgumentNullException(nameof(rng));
-        if (!IsOpen(kind, season)) return false;
-        if (IsQuietDay(kind, dayOfMonth)) return false;
+        if (!IsOpen(kind, season) || IsQuietDay(kind, dayOfMonth)) return false;
         int week = Calendar.WeekOfYear((int)season, dayOfMonth);
         int day = Calendar.DayOfYear((int)season, dayOfMonth);
-        if (!WithinCaps(kind, run, week, day)) return false;
-        return rng.NextDouble() < NightlyChance(kind, season);
+        return WithinCaps(kind, run, week, day) && rng.NextDouble() < SabotageTuning.NightChanceFall;
     }
 
     /// <summary>Record that a front struck, so the caps see it.</summary>

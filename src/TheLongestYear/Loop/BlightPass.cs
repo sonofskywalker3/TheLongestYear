@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.TerrainFeatures;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Sabotage;
 using CoreSeason = TheLongestYear.Core.Season;
 
@@ -53,6 +54,6 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>The nightly roll for one season: how many to kill, or 0 when nothing dies.</summary>
-        public static int CountFor(CoreSeason season) => BlightRule.Count(LiveCropTiles().Count, season);
+        public static int CountFor(CoreSeason season, DifficultyStep level) => BlightRule.Count(LiveCropTiles().Count, season, level);
     }
 }
