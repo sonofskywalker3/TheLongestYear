@@ -662,7 +662,9 @@ namespace TheLongestYear.Loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
                 GeneratedBundleSet generatedSet = engine.Generate(seed);
+                _timing.Mark("11a engine.Generate");
                 engine.WriteToWorld(generatedSet, _monitor);
+                _timing.Mark("11a engine.WriteToWorld");
                 // Persist exactly what was written (and the derived pins it was classified under)
                 // so later loads verify the live board against this instead of re-deriving from
                 // the seed; see MetaState.WrittenBoard.
@@ -675,6 +677,7 @@ namespace TheLongestYear.Loop
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
                 LastGeneratedRequirements = engine.BuildRequirements(
                     generatedSet, _itemSeasonPins, _bundleQuotas, AvailabilityModel);
+                _timing.Mark("11a engine.BuildRequirements");
             }
 
             _timing.Mark("11a board generation (engine or vanilla)");
