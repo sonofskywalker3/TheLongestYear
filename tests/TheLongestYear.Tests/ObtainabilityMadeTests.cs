@@ -309,7 +309,7 @@ public class ObtainabilityMadeTests
             new PondRow("Generic", new[] { "fish_pond" }, 10, new[] { new PondProduct("(O)900", 1, 1.0, null) }),
             new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 1, 0.5, null), new PondProduct("(O)901", 5, 1.0, "SEASON Winter") }),
         };
-        var list = MadeSources.Ponds(ponds, Objects, snapshot, NoFestivals, NoBuildings).ToList();
+        var list = LivestockSources.Ponds(ponds, Objects, snapshot, NoFestivals, NoBuildings).ToList();
         Assert.DoesNotContain(list, x => x.ItemId == "(O)900");
         // Fish lands week 5 (day 29); population is already 1, so no further growth is needed, but
         // the 0.5 chance means it is not dependable.
@@ -332,7 +332,7 @@ public class ObtainabilityMadeTests
             new AnimalRow("Chicken", "Coop", 800,
                 new[] { new AnimalProduce("(O)176", null, 0) }, new[] { new AnimalProduce("(O)174", null, 0) }, 200, DaysToProduce: 1),
         };
-        var all = MadeSources.Animals(rows, NoFestivals, buildings).ToList();
+        var all = LivestockSources.Animals(rows, NoFestivals, buildings).ToList();
         var egg = all.Single(s => s.ItemId == "(O)176").Source;
         Assert.Equal(2, egg.Lands.Lands(1));
         Assert.Contains(egg.Setup, s => s.Name == "building:Coop" && s.Days == 3);
@@ -347,7 +347,7 @@ public class ObtainabilityMadeTests
     {
         var cow = new AnimalRow("White Cow", "Barn", 750, new[] { new AnimalProduce("(O)184", null, 0) },
             new AnimalProduce[0], DaysToMature: 5);
-        SetupStep step = MadeSources.AnimalSetup(cow, new Dictionary<string, int>(), 0).Single(s => s.Name == "animal:White Cow");
+        SetupStep step = LivestockSources.AnimalSetup(cow, new Dictionary<string, int>(), 0).Single(s => s.Name == "animal:White Cow");
         Assert.Equal(5, step.Days);
     }
 
@@ -356,7 +356,7 @@ public class ObtainabilityMadeTests
     {
         var dino = new AnimalRow("Dinosaur", "Coop", -1, new[] { new AnimalProduce("(O)107", null, 0) },
             new AnimalProduce[0], DaysToProduce: 7, DaysToMature: 0, IncubationDays: 13);
-        ObtainSource egg = MadeSources.Animals(new[] { dino }, NoFestivals, NoBuildings).Single().Source;
+        ObtainSource egg = LivestockSources.Animals(new[] { dino }, NoFestivals, NoBuildings).Single().Source;
         Assert.True(egg.Conditions.OwnedOnly);
         Assert.Equal(13, egg.Setup.Single(s => s.Name == "animal:Dinosaur").Days);
     }
@@ -412,7 +412,7 @@ public class ObtainabilityMadeTests
     {
         var brown = new AnimalRow("Brown Cow", "Barn", -1, new[] { new AnimalProduce("(O)184", null, 0) },
             new AnimalProduce[0], SoldAsAlternate: true);
-        ObtainSource milk = MadeSources.Animals(new[] { brown }, NoFestivals, NoBuildings).Single().Source;
+        ObtainSource milk = LivestockSources.Animals(new[] { brown }, NoFestivals, NoBuildings).Single().Source;
         Assert.False(milk.Conditions.OwnedOnly);
         Assert.DoesNotContain(milk.Conditions.Requires, r => r.EndsWith("(not sold)"));
     }
@@ -423,7 +423,7 @@ public class ObtainabilityMadeTests
         var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.Always, Reliability.Dependable));
         var rows = new[] { new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 3, 1.0, null) }, SpawnTime: 4) };
         var buildings = new Dictionary<string, int> { ["Fish Pond"] = 2 };
-        var roe = MadeSources.Ponds(rows, Objects, snapshot, NoFestivals, buildings).Single(s => s.ItemId == "(O)812").Source;
+        var roe = LivestockSources.Ponds(rows, Objects, snapshot, NoFestivals, buildings).Single(s => s.ItemId == "(O)812").Source;
         Assert.Equal(9, roe.Lands.Lands(1));                    // fish day 1, two more fish at 4 days each = day 9
         Assert.Contains(roe.Setup, s => s.Name == "building:Fish Pond" && s.Days == 2);
     }
@@ -431,7 +431,7 @@ public class ObtainabilityMadeTests
     [Fact]
     public void Animals_tappers_and_geodes_respect_their_conditions()
     {
-        var animals = MadeSources.Animals(new[]
+        var animals = LivestockSources.Animals(new[]
         {
             new AnimalRow("White Chicken", "Coop", 800,
                 new[] { new AnimalProduce("(O)176", null, 0) },
@@ -442,7 +442,7 @@ public class ObtainabilityMadeTests
         Assert.Equal(2, large.Lands.Lands(1));   // Spring day 1, +1 day to produce
         Assert.Contains(large.Setup, s => s.Name == "friendship:White Chicken 200");
 
-        var taps = MadeSources.Tappers(new[] { new TapRow("7", "(O)422", 4, Season.Fall, 0.9, null) }, Objects, NoFestivals).Single().Source;
+        var taps = LivestockSources.Tappers(new[] { new TapRow("7", "(O)422", 4, Season.Fall, 0.9, null) }, Objects, NoFestivals).Single().Source;
         Assert.Equal(61, taps.Lands.Lands(1));   // Fall day 1 (day 57) + 4 days until ready
         Assert.Equal(Reliability.Chance, taps.Reliability);
 
