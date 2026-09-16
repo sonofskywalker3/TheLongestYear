@@ -473,6 +473,15 @@ rounds (walker-only extras, season outfits, wind, extras at walking speed). The 
   the Spring 1 hold`, `Loop reset complete. Run 165 begins`, planning hub, no ERROR.
 - **Queued for Jeff:** Run 165 on the rotated Clone save, Fishing picked, `tly_setday 28`,
   `tly_gateneeds` = 17 bundles owed. Sleeping plays the real fail night into the full rewind.
+## 2026-09-16 evening: 0.18.16 released (0.18.12 setting + measured mine and monster bases)
+
+One release carrying 0.18.12 through 0.18.16: the once-per-loop setting, `tly_minesweep`, and
+the mine and monster basis changes from the measured sweep (crab pots confirmed the model, mines
+corrected Coal, Quartz, the gems and single-monster drops). Docs: README and Nexus description
+What's New 0.18.16 content-identical, changelog note in `release-notes/`, live description backed
+up to `release-notes/nexus-description-0.18.11-backup.bbcode`. Verified live on the public page:
+What's New 0.18.16 at the top, the new setting in the Difficulty section, file 0.18.16 in Main
+files, changelog entry 0.18.16 under Documents.
 
 ## 2026-09-16: 0.18.12, once-per-loop items ask for one (setting), live-checked
 

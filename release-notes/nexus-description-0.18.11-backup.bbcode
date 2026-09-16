@@ -1,7 +1,7 @@
 [size=6][b]The Longest Year[/b][/size]
 [size=4][i]Restore the Community Center within a single year — or the Junimos rewind the seasons and you begin again, a little stronger.[/i][/size]
 
-[color=yellow][b]BETA (0.18.16).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
+[color=yellow][b]BETA (0.18.11).[/b] Feature-complete and stable in testing. What it needs now is your feedback on difficulty, pricing, and pacing — see the bottom of this page.[/color]
 
 [color=yellow][b]This is the last big engine update.[/b] From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.[/color]
 
@@ -18,14 +18,6 @@
 Channel: [url=https://www.youtube.com/@emmalution]youtube.com/@emmalution[/url]
 
 [line]
-
-[size=5][b]What's New in 0.18.16[/b][/size]
-
-[b]Once-per-loop items always ask for one, and the mine and monster asks now follow what the mines really give.[/b]
-[list]
-[*][b]Once-per-loop items ask for one, as a setting.[/b] Some items a loop can only give once: the five legendary fish, the two books hidden around town and the Golden Pumpkin from the Spirit's Eve maze. The Stack size dial used to turn their ask into two on Hard and Extreme, which no one can ever fill. A new Difficulty setting, on by default, holds every one of them at one whatever the dial says; off, they scale like everything else. A board already asking for two is lowered on load. Thanks to FayGabi for the report.
-[*][b]Mine and monster asks follow measured yields.[/b] Every mine floor from 1 to 120 and the first 40 Skull Cavern floors were generated on seven different days, every stone broken, every geode cracked and every monster killed through the game's own drop code, and the result counted. The ore, geode and crystal numbers behind the asks were already right. Four were not: Coal asks go up, since a week of mining gives three to four times what the old number said, Quartz asks come down by more than half, and Topaz, Jade, Aquamarine, Emerald and Ruby asks come down by about half. Drops that only one uncommon monster gives (Squid Ink, Crab Cakes, Cloth, Refined Quartz, the bars, the algae) are now capped at twice what clearing floors actually yields, instead of assuming a whole week spent hunting that one monster.
-[/list]
 
 [size=5][b]What's New in 0.18.11[/b][/size]
 
@@ -187,8 +179,7 @@ Ten difficulty dials live in the mod's settings menu (GMCM) under [b]Difficulty[
 
 [b]What the bundles ask for[/b]
 [list]
-[*][b]Stack size.[/b] How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. Artifacts stay at one. Money bundles are never affected.
-[*][b]Once-per-loop items ask for one.[/b] On by default. The five legendary fish, the two books hidden around town and the Golden Pumpkin can only be had once in a loop, so a bundle never asks for more than one of them whatever Stack size says. Off, they scale like everything else. Takes effect at the next reset.
+[*][b]Stack size.[/b] How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. One-offs like books and artifacts stay at one. Money bundles are never affected.
 [*][b]Quality asks.[/b] How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
 [*][b]Required slots.[/b] How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
 [*][b]Item rarity.[/b] Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. [b]TLY Custom bundles only[/b] (see below).

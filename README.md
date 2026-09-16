@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.11`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.16`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,13 @@ This is a **beta** (`0.18.11`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.16
+
+**Once-per-loop items always ask for one, and the mine and monster asks now follow what the mines really give.**
+
+- **Once-per-loop items ask for one, as a setting.** Some items a loop can only give once: the five legendary fish, the two books hidden around town and the Golden Pumpkin from the Spirit's Eve maze. The Stack size dial used to turn their ask into two on Hard and Extreme, which no one can ever fill. A new Difficulty setting, on by default, holds every one of them at one whatever the dial says; off, they scale like everything else. A board already asking for two is lowered on load. Thanks to FayGabi for the report.
+- **Mine and monster asks follow measured yields.** Every mine floor from 1 to 120 and the first 40 Skull Cavern floors were generated on seven different days, every stone broken, every geode cracked and every monster killed through the game's own drop code, and the result counted. The ore, geode and crystal numbers behind the asks were already right. Four were not: Coal asks go up, since a week of mining gives three to four times what the old number said, Quartz asks come down by more than half, and Topaz, Jade, Aquamarine, Emerald and Ruby asks come down by about half. Drops that only one uncommon monster gives (Squid Ink, Crab Cakes, Cloth, Refined Quartz, the bars, the algae) are now capped at twice what clearing floors actually yields, instead of assuming a whole week spent hunting that one monster.
 
 ## What's New in 0.18.11
 
@@ -187,7 +194,8 @@ Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**
 
 **What the bundles ask for**
 
-- **Stack size.** How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. One-offs like books and artifacts stay at one. Money bundles are never affected.
+- **Stack size.** How many of an item a slot asks for, as a share of what a week of going after it actually yields: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, and never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield behind that number, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. Artifacts stay at one. Money bundles are never affected.
+- **Once-per-loop items ask for one.** On by default. The five legendary fish, the two books hidden around town and the Golden Pumpkin can only be had once in a loop, so a bundle never asks for more than one of them whatever Stack size says. Off, they scale like everything else. Takes effect at the next reset.
 - **Quality asks.** How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
 - **Required slots.** How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
 - **Item rarity.** Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. **TLY Custom bundles only** (see below).
