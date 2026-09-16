@@ -174,6 +174,7 @@ namespace TheLongestYear.Integration
             // transition has already rolled the global forward to the NEXT season by the time this
             // driver runs. The bedroom needs the season that failed, both to paint the failed night
             // over the HUD and to hand the pan its starting point (see OnRewindBedroomComplete).
+            RewindSkip.Arm();
             Game1.activeClickableMenu = new RewindBedroomScene(rc.CurrentSeason, OnRewindBedroomComplete);
             _openedMenu = Game1.activeClickableMenu;
             _opened = true;
@@ -242,6 +243,7 @@ namespace TheLongestYear.Integration
                 // The bedroom hid the mod's HUD for the sequence and nothing is going to reach the
                 // blackout that would normally give it back, so hand it over here.
                 RewindBlackout.Release("the pan gave up");
+                RewindSkip.Stop();
                 _runController?.Invoke()?.OnCutsceneEnded();
                 return;
             }
@@ -329,7 +331,11 @@ namespace TheLongestYear.Integration
 
             _pendingMorningBeat = false;
             _morningDeferLogged = false;
-            Action onComplete = () => _runController?.Invoke()?.OnCutsceneEnded();
+            Action onComplete = () =>
+            {
+                RewindSkip.MarkSeen();
+                _runController?.Invoke()?.OnCutsceneEnded();
+            };
             var scene = new RewindMorningScene(onComplete);
             Game1.activeClickableMenu = scene;
             _openedMenu = scene;

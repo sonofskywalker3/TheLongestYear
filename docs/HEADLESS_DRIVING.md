@@ -104,6 +104,16 @@ Checks before a release: whole flow once on Standard; scenes 1 and 6 once on Mea
 with N > 0; every crowd member present on the steps; both branches of the choice; the wall on
 Spring 1 year 2 of a keep-playing save; a loop-again reset leaves the shrine dark.
 
+## The rewind (Fail night)
+
+`tly_failreset` queues it (close the planning hub first with `tly_select`). `tly_skipscene` finishes
+one beat per call (bedroom, Town pan, morning); `tly_skipscene all` presses the player's skip button,
+which is offered from a save's second rewind (or any save with a finished loop) and runs to the
+keep-or-release question. Answer with `tly_answer`, close the shrine with `tly_dismiss`. The pan's
+walkers log as `RewindReversedExtras: <name> (<n> tiles, (x,y) back to (x,y))`; the second point is
+always a door or the map edge. Right after a reset nobody has a schedule yet, so a rewind queued
+before sleeping plays with no walkers.
+
 ## Season turns
 
 `tly_seasonturn <summer|fall|winter>` replays the porch scene alone (no continuation) from
