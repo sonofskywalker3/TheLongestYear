@@ -65,6 +65,19 @@ public class ObtainabilityMineTests
     }
 
     [Fact]
+    public void A_common_drop_from_an_unplaced_monster_stays_chance_but_a_placed_one_is_dependable()
+    {
+        var rows = new[]
+        {
+            new MonsterDropRow("Magma Duggy", "(O)829", 0.5),
+            new MonsterDropRow("Skeleton", "(O)881", 0.5),
+        };
+        var drops = MineSources.MonsterDrops(rows, new Dictionary<string, ObjInfo>()).ToDictionary(d => d.ItemId, d => d.Source);
+        Assert.Equal(Reliability.Chance, drops["(O)829"].Reliability);        // Magma Duggy has no known floor
+        Assert.Equal(Reliability.Dependable, drops["(O)881"].Reliability);    // Skeleton is floor 70
+    }
+
+    [Fact]
     public void Treasure_is_complete_chance_and_gated_where_the_game_gates_it()
     {
         var all = MineSources.FishingTreasure().ToList();
