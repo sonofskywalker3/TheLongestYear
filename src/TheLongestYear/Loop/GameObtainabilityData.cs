@@ -246,12 +246,17 @@ namespace TheLongestYear.Loop
             {
                 var animalData = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
                 // An id sold through another animal's AlternatePurchaseTypes (Brown Chicken through
-                // White Chicken, Brown Cow through White Cow: PurchaseAnimalsMenu.cs 477-484).
+                // White Chicken, Brown Cow through White Cow: PurchaseAnimalsMenu.cs 477-484). Only a
+                // sold base animal's alternates count: the menu only ever reads this field off an
+                // animal that is itself in the purchase menu.
                 var soldAsAlternate = new HashSet<string>(StringComparer.Ordinal);
                 foreach (FarmAnimalData other in animalData.Values)
-                    foreach (AlternatePurchaseAnimals alt in other?.AlternatePurchaseTypes ?? new List<AlternatePurchaseAnimals>())
+                {
+                    if (other == null || other.PurchasePrice <= 0) continue;
+                    foreach (AlternatePurchaseAnimals alt in other.AlternatePurchaseTypes ?? new List<AlternatePurchaseAnimals>())
                         foreach (string id in alt.AnimalIds ?? new List<string>())
                             soldAsAlternate.Add(id);
+                }
 
                 foreach (var kv in animalData)
                 {

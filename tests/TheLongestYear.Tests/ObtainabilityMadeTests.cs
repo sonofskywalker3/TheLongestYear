@@ -335,6 +335,52 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void A_machine_fed_only_an_owned_only_input_emits_an_owned_only_dependable_source()
+    {
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)24"] = new ObtainSource[]
+            {
+                new(SourceKind.Animal, DayTable.Available(d => d >= 5), Reliability.Dependable,
+                    ObtainConditions.None with { OwnedOnly = true }, "owned egg"),
+            },
+        });
+        var rows = new[]
+        {
+            new MachineRow("(BC)Mayo", null, new[] { "category_vegetable" }, null, new[] { new MachineOutput("(O)999", null, null) }, 0, 2),
+        };
+        ObtainSource mayo = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops).Single(s => s.ItemId == "(O)999").Source;
+        Assert.Equal(Reliability.Dependable, mayo.Reliability);
+        Assert.True(mayo.Conditions.OwnedOnly);
+        Assert.False(ObtainFilter.DependableOnly.Accepts(mayo));
+        Assert.True((ObtainFilter.DependableOnly with { IncludeOwnedOnly = true }).Accepts(mayo));
+    }
+
+    [Fact]
+    public void A_machine_fed_an_owned_only_input_beside_an_ordinary_one_keeps_a_plain_dependable_source()
+    {
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)24"] = new ObtainSource[]
+            {
+                new(SourceKind.Crop, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "ordinary"),
+                new(SourceKind.Animal, DayTable.Always, Reliability.Dependable, ObtainConditions.None with { OwnedOnly = true }, "owned"),
+            },
+        });
+        var rows = new[]
+        {
+            new MachineRow("(BC)Mayo", null, new[] { "category_vegetable" }, null, new[] { new MachineOutput("(O)999", null, null) }, 0, 2),
+        };
+        var mayo = MadeSources.Machines(rows, Objects, snapshot, NoFestivals, NoCrops)
+            .Where(s => s.ItemId == "(O)999").Select(s => s.Source).ToList();
+        // Both the ordinary and the owned-only source land the same day, so the owned-only variant
+        // is trimmed (its table says nothing the plain variant did not already say) and only the
+        // plain, unflagged Dependable source survives.
+        Assert.Single(mayo);
+        Assert.False(mayo[0].Conditions.OwnedOnly);
+    }
+
+    [Fact]
     public void An_alternate_purchase_is_sold()
     {
         var brown = new AnimalRow("Brown Cow", "Barn", -1, new[] { new AnimalProduce("(O)184", null, 0) },
