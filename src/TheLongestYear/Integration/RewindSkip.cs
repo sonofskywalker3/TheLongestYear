@@ -17,6 +17,9 @@ namespace TheLongestYear.Integration
     /// existing skip entry points, under black, until the morning beat has handed over to the
     /// keep-or-release question. Only the scenes are skipped, never the question or the shrine.
     ///
+    /// The button stays hidden until the player presses anything; the lines advance by themselves,
+    /// so a press is free to mean "let me skip".
+    ///
     /// Offered per <see cref="RewindSkipRule"/>: <see cref="Arm"/> reads it when the bedroom opens,
     /// and <see cref="MarkSeen"/> records the showing when the morning beat ends.</summary>
     internal static class RewindSkip
@@ -38,6 +41,7 @@ namespace TheLongestYear.Integration
         private static bool _registered;
         private static bool _armed;
         private static bool _skipping;
+        private static bool _revealed;
         private static int _idleTicks;
 
         public static void Register(IMonitor monitor, IModHelper helper, MetaStore meta)
@@ -59,6 +63,7 @@ namespace TheLongestYear.Integration
             var state = _meta?.State;
             _armed = state != null && RewindSkipRule.IsSkippable(state.SeasonTurnsSeen, state.CompletedResets);
             _skipping = false;
+            _revealed = false;
             _monitor?.Log($"RewindSkip: skip {(_armed ? "offered" : "not offered (first rewind on this save)")}.", LogLevel.Trace);
         }
 
@@ -74,6 +79,7 @@ namespace TheLongestYear.Integration
         {
             _armed = false;
             _skipping = false;
+            _revealed = false;
             _idleTicks = 0;
         }
 
@@ -81,7 +87,7 @@ namespace TheLongestYear.Integration
             => Game1.activeClickableMenu is RewindJunimoScene || RewindPanScene.IsActive;
 
         private static bool ButtonShown()
-            => _armed && !_skipping && !Game1.options.SnappyMenus && BeatOnScreen();
+            => _armed && _revealed && !_skipping && !Game1.options.SnappyMenus && BeatOnScreen();
 
         private static Rectangle Bounds()
         {
@@ -99,7 +105,13 @@ namespace TheLongestYear.Integration
             bool clicked = e.Button == SButton.MouseLeft && ButtonShown()
                            && Bounds().Contains(Game1.getMouseX(), Game1.getMouseY());
             bool back = e.Button == SButton.ControllerBack;
-            if (!clicked && !back) return;
+            if (!clicked && !back)
+            {
+                // Hidden until the player does something (Jeff, 2026-09-16). The press still reaches
+                // the scene, so a click on the text turns the page as well.
+                _revealed = true;
+                return;
+            }
 
             _helper.Input.Suppress(e.Button);
             Begin(back ? "Back button" : "skip button");

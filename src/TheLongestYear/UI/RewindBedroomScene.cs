@@ -178,9 +178,8 @@ namespace TheLongestYear.UI
             // failed night over it before anything else is on screen.
             RewindNightPaint.Apply(failed);
             RewindNightLight.Begin(_junimoLightIds);
-            // The mod's JP box is not part of a dream. Vanilla's clock and date ARE, for this beat
-            // (the failed night is what the paint above is for), and they hide themselves for the
-            // pan, which freezes controls. RewindBlackout owns both from the morning beat on.
+            // No HUD for the whole rewind (RewindBlackout.SuppressHud). The paint above still sets
+            // the failed night, which the clock-driven light reads.
             RewindBlackout.SuppressHud();
             EnterPhase(Phase.LightsOut);
         }
@@ -313,7 +312,7 @@ namespace TheLongestYear.UI
             var pages = new List<string>();
             foreach (string line in lines)
                 pages.Add(line.Replace("@", playerName));
-            ActiveBox = new EndingSpeechBox(PortraitFor(SpeakerOrder[speaker % SpeakerOrder.Length]), pages);
+            ActiveBox = new EndingSpeechBox(PortraitFor(SpeakerOrder[speaker % SpeakerOrder.Length]), pages) { AutoAdvance = true };
         }
 
         protected override void OnBoxClosed()
@@ -416,7 +415,8 @@ namespace TheLongestYear.UI
 
             if (ActiveBox != null)
             {
-                ActiveBox.update(time);
+                // Through ForwardToBox: an auto-advancing box can close itself on this tick.
+                ForwardToBox(box => box.update(time));
                 return;
             }
 

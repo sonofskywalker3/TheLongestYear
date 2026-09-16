@@ -60,6 +60,7 @@ namespace TheLongestYear.Integration
         private static float _fade;
         private static bool _hudSuppressed;
         private static bool _displayHudWasOn;
+        private static bool _vanillaHudHeld;
 
         /// <summary>True while the mod's own HUD should stay off screen. Read by ModEntry's JP box.</summary>
         public static bool HudSuppressed => _hudSuppressed;
@@ -76,11 +77,32 @@ namespace TheLongestYear.Integration
             helper.Events.GameLoop.ReturnedToTitle += (_, _) => Release("returned to title");
         }
 
-        /// <summary>Hides the mod's JP box for the rest of the sequence. Called as the bedroom
-        /// opens; the black window below takes vanilla's HUD as well when it starts.</summary>
+        /// <summary>Hides the whole HUD, the mod's JP box and vanilla's clock, date and energy bar,
+        /// for the rest of the sequence. Called as the bedroom opens. The bedroom used to keep vanilla's
+        /// HUD for the failed night's date, but the energy bar sat over the skip button and the date
+        /// cannot wind back during the pan anyway (Jeff, 2026-09-16: "we should probably just hide the
+        /// hud").</summary>
         public static void SuppressHud()
         {
             _hudSuppressed = true;
+            HoldVanillaHud();
+        }
+
+        /// <summary>Switches vanilla's HUD off, remembering whether it was on. Once per sequence, so a
+        /// re-armed bedroom or the black window cannot record "off" as the value to give back.</summary>
+        private static void HoldVanillaHud()
+        {
+            if (_vanillaHudHeld) return;
+            _vanillaHudHeld = true;
+            _displayHudWasOn = Game1.displayHUD;
+            Game1.displayHUD = false;
+        }
+
+        private static void GiveBackVanillaHud()
+        {
+            if (!_vanillaHudHeld) return;
+            _vanillaHudHeld = false;
+            Game1.displayHUD = _displayHudWasOn;
         }
 
         /// <summary>Takes the screen at full black. Called by the morning beat once its own fade-out
@@ -94,8 +116,7 @@ namespace TheLongestYear.Integration
             _held = 0f;
             _fade = 1f;
             _hudSuppressed = true;
-            _displayHudWasOn = Game1.displayHUD;
-            Game1.displayHUD = false;
+            HoldVanillaHud();
             _monitor?.Log("RewindBlackout: holding black until the player has the morning.", LogLevel.Info);
         }
 
@@ -106,7 +127,7 @@ namespace TheLongestYear.Integration
             if (_state == State.Idle && !_hudSuppressed) return;
             if (_state != State.Idle)
                 _monitor?.Log($"RewindBlackout: released ({reason}).", LogLevel.Info);
-            if (_state == State.Black) Game1.displayHUD = _displayHudWasOn;
+            GiveBackVanillaHud();
             _state = State.Idle;
             _fade = 0f;
             _hudSuppressed = false;
@@ -144,7 +165,7 @@ namespace TheLongestYear.Integration
 
         private static void StartFadingIn()
         {
-            Game1.displayHUD = _displayHudWasOn;
+            GiveBackVanillaHud();
             _state = State.FadingIn;
             _fade = 1f;
         }
