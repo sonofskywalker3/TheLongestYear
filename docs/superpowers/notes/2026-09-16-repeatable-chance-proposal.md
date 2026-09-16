@@ -1,5 +1,10 @@
 # Repeatable chance: proposal for Jeff (no model change yet)
 
+> **Superseded in part (2026-09-16).** Bone Fragment is no longer promoted through Lava Lurk: only
+> drops from monsters placed on a mine floor count as repeatable (commit 181ef6c). And mine items now
+> land after the days it takes to reach their floor (the mine-depth ruling), so not every promoted
+> item lands in week 1.
+
 Your ruling: "a chance route the player can retry many times a day with a decent chance each try
 counts as dependable." This note is the threshold and the item list to sign off on before Task 2
 touches any code. Nothing in the model changed for this note; it's checked against the decompile
