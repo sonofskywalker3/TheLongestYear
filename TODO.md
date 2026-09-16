@@ -2080,7 +2080,8 @@ Two distinct cutscene pieces:
 1. **Animated loop (reset) cutscene.** What we have now is *OK but static* — the
    user wants it **animated, not a still frame**. This is the transition the
    player sees when a loop resets (Winter 28 → next Spring 1). Make it feel like
-   the year actually rewinding rather than a placeholder card. Still open.
+   the year actually rewinding rather than a placeholder card. BUILT on `story` (spec
+   2026-09-11, polished 2026-09-16: real walker routes, skip button, auto-advance, no HUD; Jeff: "I love it").
 
 2. **Real ending / victory cutscene: SHIPPED** (branch `year-one-ending`, not yet merged or
    released). Design spec: `docs/superpowers/specs/2026-09-06-year-one-ending-design.md`. Finishing

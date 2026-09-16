@@ -1,10 +1,30 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-15 (story: darkness rework Part B, final state after three fix waves, live-checked, board output re-verified)
-**Branch:** `story`; master merged in at 0.18.4, everything committed AND pushed, nothing local-only
-**Tests:** 2400 passing
-**Build:** clean (Release, 0 errors); story HEAD (`93b29c4`) deployed to the game; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449077472`
-**Last public release:** 0.18.4 (2026-09-14; overall Difficulty lever)
+**Last updated:** 2026-09-16 (story: shrine-close freeze fixed; rewind walkers, skip button, auto-advance, no HUD)
+**Branch:** `story`; everything committed AND pushed, nothing local-only
+**Tests:** 2445 passing
+**Build:** clean (Release, 0 errors); story HEAD `8ded0a9` deployed; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449242173`, set to Spring 28 with 19 bundles owed (sleep plays the rewind)
+**Last public release:** 0.18.11
+
+## 2026-09-16: shrine-close freeze, rewind polish (Jeff approved: "I love it")
+
+- **Freeze on closing the post-loop shrine: fixed.** The board build made 487 calls to the game's
+  fuzzy item search, each rebuilding the item-name table (`BuildRoomPools: 2013 ms`).
+  `FuzzyNameIndex` builds it once (`877b759`); seeded boards identical before and after. The
+  obtainability model is reused when its inputs hash the same (`d5ad6e4`). `FinalizeReset total`
+  2872 ms to about 0.3-1 s (303 ms on Jeff's run); the rest is mostly the game's own save. Timing
+  marks kept at Trace. Details in TODO.md.
+- **Rewind walkers use real schedule routes** (`9243a0c`, `ScheduleLegs`): a Town leg of the
+  villager's own day, played backwards, always ending at the door or map edge it entered by. Fixes
+  Emily walking up a cliff (the old straight-line walk past a route's end).
+- **Skip button for the whole rewind** (`b742d5a`, `RewindSkip`, `RewindSkipRule`): vanilla's
+  graphic, bottom right, from a save's second rewind (or any save with a finished loop); click or
+  controller Back skips to the keep-or-release question. `tly_skipscene all` presses it.
+- **Lines advance by themselves, button hidden until a press, no HUD** (`9f315ba`, `8ded0a9`):
+  1.35 s plus 0.18 s a word per page, no next-page chevron on those boxes, whole HUD off from the
+  first bedroom frame until the black lifts.
+- **Item 2 of the session brief (new rewind design round) was not needed:** TODO's "OK but static"
+  note predates the built rewind; Jeff's feedback this session was the design round.
 
 ## 2026-09-15: darkness rework Part B, final state (obtainability model wired into the darkness, plus three fix waves)
 
