@@ -242,4 +242,43 @@ public class FairnessRuleMineDepthTests
             Model(Route(SourceKind.MonsterDrop, requires: new[] { "location:SkullCave" }, available: d => d >= 70)));
         Assert.Equal(70, verdict.Routes[0].LandingDay);
     }
+
+    // Task 11 (2026-09-16, "Skull Cavern needs the mines cleared"): the cavern's door needs the mines
+    // cleared (deepest reached floor 120) alongside the Staircase check, priced the same way an unreached
+    // mine floor is.
+    private static ObtainSource SkullCavernRoute() => Route(SourceKind.MonsterDrop, requires: new[] { "location:SkullCave" });
+
+    [Fact]
+    public void A_skull_cavern_route_counts_with_no_added_days_once_the_mines_are_cleared()
+    {
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal,
+            Save(mail: new[] { "ccVault" }, mining: 2, floor: 120), Model(SkullCavernRoute()));
+        AssertBest(verdict, true, Hit + 1, 0);
+    }
+
+    [Fact]
+    public void A_skull_cavern_route_adds_the_mine_gap_on_normal_when_the_mines_are_not_cleared()
+    {
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal,
+            Save(mail: new[] { "ccVault" }, mining: 2, floor: 100), Model(SkullCavernRoute()));
+        AssertBest(verdict, true, Hit + 1 + FairnessRule.MineGapDays(100, MineDepth.MinesBottomFloor), FairnessRule.MineGapDays(100, MineDepth.MinesBottomFloor));
+    }
+
+    [Fact]
+    public void A_skull_cavern_route_rules_out_on_easy_when_the_mines_are_not_cleared()
+    {
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Easy,
+            Save(mail: new[] { "ccVault" }, mining: 2, floor: 100), Model(SkullCavernRoute()));
+        Assert.False(verdict.Counts);
+        Assert.Contains("mines are not cleared", verdict.Routes[0].Reason);
+    }
+
+    [Fact]
+    public void A_skull_cavern_route_still_rules_out_with_no_bus_whatever_the_depth()
+    {
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal,
+            Save(mining: 2, floor: 120), Model(SkullCavernRoute()));
+        Assert.False(verdict.Counts);
+        Assert.Contains("desert is not open", verdict.Routes[0].Reason);
+    }
 }

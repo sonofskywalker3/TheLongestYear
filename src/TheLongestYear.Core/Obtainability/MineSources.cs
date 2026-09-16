@@ -8,11 +8,11 @@ namespace TheLongestYear.Core.Obtainability;
 /// the facts are tables; each line cites the PC 1.6 decompile.</summary>
 public static class MineSources
 {
-    internal const string SkullCave = "location:SkullCave";   // shared with CodeSources.GuildRewards
+    internal const string SkullCave = MineDepth.SkullCavernRequirement;   // shared with CodeSources.GuildRewards
     internal const string SkullCavernName = "Skull Cavern";      // what MonsterFloor says instead of a floor number
     private const string Treasure = "fishing:treasure chest";
     private const string GoldenTreasure = "fishing:golden treasure chest";
-    private const int SkullCavernFloor = 121;
+    private const int SkullCavernFloor = MineDepth.SkullCavernFloor;
     private const int SkillBookCount = 5;
 
     /// <summary>A drop at least this likely per kill counts as dependable, but only for a monster with a

@@ -22,6 +22,7 @@ public class ObtainabilityMineDepthTests
     [InlineData(40, 3)]
     [InlineData(80, 7)]
     [InlineData(120, 11)]
+    [InlineData(121, 12)]
     public void Days_to_reach_a_floor_from_nothing(int floor, int days)
         => Assert.Equal(days, MineDepth.DaysToReach(floor));
 
@@ -33,7 +34,10 @@ public class ObtainabilityMineDepthTests
     public void The_floor_is_the_deepest_mine_floor_named()
     {
         Assert.Equal(80, MineDepth.FloorOf(ObtainConditions.None with { Requires = new[] { "mines:floor 40", "mines:floor 80", "shop:Sandy" } }));
-        Assert.Null(MineDepth.FloorOf(ObtainConditions.None with { Requires = new[] { "location:SkullCave" } }));
+        // Task 11 (2026-09-16, "Skull Cavern needs the mines cleared"): a location:SkullCave requirement
+        // now prices as floor 121, one past the mine's bottom.
+        Assert.Equal(121, MineDepth.FloorOf(ObtainConditions.None with { Requires = new[] { "location:SkullCave" } }));
+        Assert.Equal(121, MineDepth.FloorOf(ObtainConditions.None with { Requires = new[] { "mines:floor 80", "location:SkullCave" } }));
         Assert.Null(MineDepth.FloorOf(ObtainConditions.None));
     }
 
@@ -57,6 +61,16 @@ public class ObtainabilityMineDepthTests
         ObtainabilityModel model = ObtainabilityBuilder.Build(new ObtainabilityInputs()).Model;
         Assert.Equal(1, model.Lands(CopperOre, 1, Nodes));
         Assert.Equal(40, model.Lands(CopperOre, 40, Nodes));
+    }
+
+    [Fact]
+    public void A_skull_cavern_route_lands_on_day_13_and_keeps_its_undelayed_table()
+    {
+        ObtainSource source = MineDepth.WithTravel(new ObtainSource(
+            SourceKind.MineNode, DayTable.Always, Reliability.Dependable,
+            ObtainConditions.None with { Requires = new[] { "location:SkullCave" } }, "test"));
+        Assert.Equal(13, source.Lands.Lands(1));
+        Assert.Equal(1, source.UndelayedLands!.Lands(1));
     }
 
     [Fact]

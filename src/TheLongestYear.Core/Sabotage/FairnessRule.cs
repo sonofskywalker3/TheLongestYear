@@ -32,7 +32,7 @@ public static class FairnessRule
     private const string NotSoldSuffix = " (not sold)";
     private const string MailPrefix = "mail:";
     private const string MineFloorPrefix = MineDepth.FloorPrefix;
-    private const string SkullCavern = "location:SkullCave";
+    private const string SkullCavern = MineDepth.SkullCavernRequirement;
     private const string Desert = "location:Desert";
     private const string BusMail = "ccVault";
     private const string ShopPrefix = "shop:";
@@ -271,11 +271,22 @@ public static class FairnessRule
             }
             if (r == SkullCavern)
             {
+                // The cavern's door only opens once the mines are cleared (the Skull Key, MineShaft.cs
+                // 2188-2196), so a save that has not reached the bottom is priced or ruled out the same
+                // way an unreached mine floor is, alongside the Staircase check below (Jeff's ruling
+                // 2026-09-16, "Skull Cavern needs the mines cleared").
                 if (!save.MailFlags.Contains(BusMail)) return "Skull Cavern: the desert is not open";
+                bool minesCleared = save.DeepestMineFloor >= MineDepth.MinesBottomFloor;
                 int mining = save.SkillLevel(MiningSkill);
-                if (mining >= SabotageTuning.StaircaseMiningLevel) continue;
-                if (!policy.AddDays) return $"Skull Cavern: Staircases need Mining {SabotageTuning.StaircaseMiningLevel}, has {mining}";
-                added += SkillGapDays(mining, SabotageTuning.StaircaseMiningLevel);
+                bool staircase = mining >= SabotageTuning.StaircaseMiningLevel;
+                if (minesCleared && staircase) continue;
+                if (!policy.AddDays)
+                {
+                    if (!minesCleared) return $"Skull Cavern: the mines are not cleared (deepest {save.DeepestMineFloor})";
+                    return $"Skull Cavern: Staircases need Mining {SabotageTuning.StaircaseMiningLevel}, has {mining}";
+                }
+                if (!staircase) added += SkillGapDays(mining, SabotageTuning.StaircaseMiningLevel);
+                if (!minesCleared) added += MineGapDays(save.DeepestMineFloor, MineDepth.MinesBottomFloor);
                 continue;
             }
             if (r == Desert)
