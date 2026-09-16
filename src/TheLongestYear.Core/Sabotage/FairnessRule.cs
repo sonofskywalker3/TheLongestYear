@@ -7,14 +7,7 @@ using TheLongestYear.Core.Obtainability;
 namespace TheLongestYear.Core.Sabotage;
 
 /// <summary>One route's verdict for the debug readout.</summary>
-public sealed record RouteVerdict(ObtainSource Source, bool Counts, int AddedDays, int? LandingDay, string Reason)
-{
-    /// <summary>Days of from-nothing mine travel the route's own table carries (the builder's
-    /// <see cref="MineDepth"/> wait, directly or through its inputs) that the rule took back out,
-    /// because the real save's depth is priced by <see cref="AddedDays"/> instead.
-    /// <see cref="LandingDay"/> is the table's landing plus <see cref="AddedDays"/> minus this.</summary>
-    public int TravelDays { get; init; }
-}
+public sealed record RouteVerdict(ObtainSource Source, bool Counts, int AddedDays, int? LandingDay, string Reason);
 
 /// <summary>Whether an item counts as obtainable for a darkness hit, with every route's reason.</summary>
 public sealed record FairnessVerdict(bool Counts, IReadOnlyList<RouteVerdict> Routes, string Summary);
@@ -118,7 +111,10 @@ public static class FairnessRule
         }
         if (source.Reliability == Reliability.Chance && !policy.AllowChance) return Out(source, "chance route");
         if (c.Unresolved && !policy.AllowUnresolved) return Out(source, "unresolved route (a guess)");
-        int? landing = source.Lands.Lands(startDay);
+        // A direct mine route is judged on its table from before the builder added the from-nothing
+        // travel: the save's real depth is priced below instead (a reached floor free, an unreached one
+        // MineGapDays, out on Easy), and the delayed table has lost every landing pushed past day 112.
+        int? landing = (source.UndelayedLands ?? source.Lands).Lands(startDay);
         if (landing is null) return Out(source, $"never lands from day {startDay}");
 
         int added = NoDays;
@@ -136,15 +132,13 @@ public static class FairnessRule
         string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth, ref inputDays, ref inputTravel);
         if (missing != null) return Out(source, missing);
         added += inputDays;
-        // The model's table already holds the days it takes to reach a mine floor from nothing (its own
-        // floor on a direct route, its inputs' floors on a made one), while the save's real depth is
-        // priced above (a reached floor free, an unreached one MineGapDays, out on Easy). Take the
-        // from-nothing wait back out so it is not charged twice. This sits outside the conditions
-        // check on purpose: Extreme ignores the floor, so it must not pay the from-nothing wait
-        // either. The travel can never take the landing before the start day (the table's landing is
-        // the undelayed landing plus the travel, and an undelayed landing is never before its start),
-        // so the clamp only guards a hand-built table that names a floor without carrying its wait.
-        int travel = Math.Min(MineDepth.DaysBuiltIn(source) + inputTravel, landing.Value - startDay);
+        // A made route's table inherits its inputs' from-nothing mine travel, while each input's real
+        // depth is already in inputDays. Take the inherited wait back out so it is not charged twice.
+        // This sits outside the conditions check on purpose: Extreme ignores the floor, so it must not
+        // pay the from-nothing wait either. The travel can never take the landing before the start day
+        // (the table's landing is the reached-floor landing plus the travel, and that is never before
+        // its start), so the clamp only guards a hand-built table that does not carry the wait.
+        int travel = Math.Min(inputTravel, landing.Value - startDay);
         // Setup days are added after the landing rather than shifting the start; an accepted approximation.
         int lands = landing.Value + added - travel;
         bool counts = lands <= deadlineDay;
@@ -155,7 +149,7 @@ public static class FairnessRule
                     : $"counts, lands day {lands} (+{added} day(s) of setup)")
                 : $"counts, lands day {lands}")
             : $"lands day {lands}, after the deadline (day {deadlineDay})" + (added > NoDays ? $" with +{added} day(s) of setup" : "");
-        return new RouteVerdict(source, counts, added, lands, reason) { TravelDays = travel };
+        return new RouteVerdict(source, counts, added, lands, reason);
     }
 
     /// <summary>Judges the route's input groups by the same rule: a group counts when ANY of its
@@ -177,8 +171,8 @@ public static class FairnessRule
     ///
     /// <paramref name="travel"/> comes back holding how much later the inputs land in the model than
     /// they would with every mine floor already reached: for each group, the earliest table landing
-    /// among its counting members' best routes (N) and the same less that route's
-    /// <see cref="RouteVerdict.TravelDays"/> (O); across groups, the latest N minus the latest O,
+    /// among its counting members' best routes (N, from the route's model table) and their landings
+    /// before setup days (O, the landing with every floor reached); across groups, the latest N minus the latest O,
     /// because a made route's table waits for its latest group. That is exactly the wait the made
     /// route's own table inherited whenever its chain passes an input's landing straight through (a
     /// machine's processing days, a recipe's ingredients). Known limitation: a chain that rounds the
@@ -212,9 +206,11 @@ public static class FairnessRule
                     RouteVerdict best = verdict.Routes.Where(r => r.Counts).OrderBy(r => r.LandingDay).First();
                     int memberDays = best.AddedDays;
                     if (bestDays is null || memberDays < bestDays.Value) bestDays = memberDays;
-                    // A counting route always lands from the start day, so its table does too.
-                    int inModel = best.Source.Lands.Lands(startDay)!.Value;
-                    int reached = inModel - best.TravelDays;
+                    // O: the landing before setup days. N: the model's own table, which for a direct
+                    // mine route is the delayed one; when that never lands (past day 112) nothing is
+                    // known to take back, so N = O.
+                    int reached = best.LandingDay!.Value - best.AddedDays;
+                    int inModel = best.Source.Lands.Lands(startDay) ?? reached;
                     if (groupInModel is null || inModel < groupInModel.Value) groupInModel = inModel;
                     if (groupReached is null || reached < groupReached.Value) groupReached = reached;
                 }

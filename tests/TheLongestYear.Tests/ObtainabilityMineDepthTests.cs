@@ -45,6 +45,10 @@ public class ObtainabilityMineDepthTests
         Assert.Equal(12, model.Lands(GoldOre, 5, Nodes));
         // From Winter 22 nobody reaches floor 80 by the end of the year.
         Assert.Null(model.Lands(GoldOre, 106, Nodes));
+        // The table from before the delay is kept for a consumer that knows the real depth.
+        ObtainSource gold = Assert.Single(model.Sources(GoldOre), s => s.Kind == SourceKind.MineNode);
+        Assert.Equal(106, gold.UndelayedLands!.Lands(106));
+        Assert.Null(Assert.Single(model.Sources(CopperOre), s => s.Kind == SourceKind.MineNode).UndelayedLands);
     }
 
     [Fact]

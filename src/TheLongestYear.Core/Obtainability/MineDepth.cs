@@ -5,9 +5,15 @@ namespace TheLongestYear.Core.Obtainability;
 /// <summary>How long a mine floor takes to reach from nothing (Jeff's ruling 2026-09-16, "Mine depth in
 /// the landing week"): 10 floors a day, and floors 1 to 10 are cleared on the day the player starts, so
 /// a route needing floor N lands <see cref="DaysToReach"/> days after its start day.
-/// <para>The builder builds the wait into every direct route's table once (<see cref="DaysBuiltIn"/>),
-/// and a route made from a mine item inherits it through its input's table. A consumer that knows the
-/// player's real depth reads <see cref="DaysBuiltIn"/> to take the from-nothing wait back out.</para></summary>
+/// <para>The builder builds the wait into every direct route's table once (<see cref="WithTravel"/>),
+/// keeping the table it had before in <see cref="ObtainSource.UndelayedLands"/>, and a route made from
+/// a mine item inherits the wait through its input's table. A consumer that knows the player's real
+/// depth judges a direct route on its undelayed table, which is exact. For a made route it can only
+/// take back the wait its inputs carried: that is exact for chains that pass an input's landing
+/// straight through (a machine's processing days, a recipe's ingredients) and approximate, by a few
+/// days either way, through a chain that rounds to a later window (a weekly or seasonal gate). A made
+/// route also loses its landings past the end of the year with its inputs', which can only make a
+/// consumer skip it, never charge more.</para></summary>
 public static class MineDepth
 {
     public const int FloorsPerDay = 10;
@@ -48,6 +54,6 @@ public static class MineDepth
     public static ObtainSource WithTravel(ObtainSource source)
     {
         int days = DaysBuiltIn(source);
-        return days == NoDays ? source : source with { Lands = source.Lands.Delay(days) };
+        return days == NoDays ? source : source with { Lands = source.Lands.Delay(days), UndelayedLands = source.Lands };
     }
 }
