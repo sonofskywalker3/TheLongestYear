@@ -15,6 +15,17 @@ already knows an item is once-per-loop (catch limits, the legendary rules) and s
 option would cover.
 
 
+### NEXT ON STORY: repeatable-chance review for ordinary fish and machine output (Jeff, 2026-09-16)
+The 2026-09-16 repeatable-chance ruling (a chance route you can retry many times a day with a decent
+chance each try counts as dependable) deliberately left two families out, to be judged separately:
+- **Ordinary fish catches** (SourceKind Fish, Chance). Per-fish, not one rule: Carp and Green Algae
+  come out around 17 to 19 a day for a level 10 angler, Legend and Mutant Carp under one a day.
+  Use `docs/fish-catch-rates-2026-09-04.md` (or wherever that note lives) for the per-fish numbers.
+- **Machine output** (SourceKind Machine, Chance: mostly the crystalarium and the recycling machine).
+  Tries a day depend on what the player feeds in, not on a fixed action.
+Proposal note for the first pass: `docs/superpowers/notes/2026-09-16-repeatable-chance-proposal.md`.
+Bring Jeff a threshold and an item list for each before changing the model.
+
 ### Obtainability phase 2: Jeff rules on the rerun report before anything reads the model
 Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model blind. Phase 2
 (2026-09-14 to 15, commits `639dd34`..`51ab859`, spec
