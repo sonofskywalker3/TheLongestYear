@@ -11,6 +11,7 @@ public static class CodeSources
     private const string GreenhouseUnlock = "mail:ccPantry";
     private const int SpringSwitchDay = 23;   // Utility.cs 254: Spring switches after day 23
     private const int OtherSwitchDay = 20;    // Utility.cs 254: other seasons after day 20
+    private const string QiGemShop = "shop:QiGemShop";   // Game1.cs 246: shop_qiGemShop = "QiGemShop"
 
     /// <summary>MineShaft.getFish 1148-1172: area 0 and 10 give Stonefish, 40 Ice Pip, 80 Lava Eel, on a
     /// per-cast chance that grows with fishing level and depth. Any season, any weather.</summary>
@@ -88,13 +89,13 @@ public static class CodeSources
     }
 
     /// <summary>Magic Bait: Mr. Qi's (QiGemShop barter, his island recipe), so a Ginger Island item and
-    /// out of scope (Jeff's ruling 2026-09-16), not an unresolved one. QiGemShop stocks (O)908 per the
-    /// Data/Shops export ("patch export/Data_Shops.json", QiGemShop entry, item (O)908, MinStack 20)
-    /// and StardewValley/Utility.cs's QiGemShop setup in the decompile.</summary>
+    /// out of scope (Jeff's ruling 2026-09-16), not an unresolved one. The shop id is Game1.cs 246
+    /// ("shop_qiGemShop = "QiGemShop"" in the decompile); it stocks (O)908 per the Data/Shops export
+    /// ("patch export/Data_Shops.json", QiGemShop entry, item (O)908, MinStack 20).</summary>
     public static IEnumerable<(string ItemId, ObtainSource Source)> MagicBait()
     {
         yield return ("(O)908", new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable,
-            ObtainConditions.None with { GingerIsland = true, Requires = new[] { "shop:QiGemShop" } },
+            ObtainConditions.None with { GingerIsland = true, Requires = new[] { QiGemShop } },
             "Mr. Qi's magic bait (island)"));
     }
 }
