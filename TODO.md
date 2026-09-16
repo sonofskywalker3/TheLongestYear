@@ -229,50 +229,6 @@ have deleted Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp outright.
 
 **Reply to spenderg still owed** once this ships (draft goes to Jeff in chat first).
 
-### Reviewed 2026-09-16: the two 30 Aug design questions
-
-- **RayAndRain, 29 Aug (chef bundle never a checkpoint or a weekly challenge in four loops).**
-  Checked 2026-09-16: the weekly challenge is not drawn per bundle, the player picks one of two
-  theme cards a week (`SelectionService.OfferForWeek`, eight themes since 0.16.167, weighted by how
-  many goals each theme could ask for). Chef's lives in the Bulletin Board room, which is the Mixed
-  theme, and cooked dishes are also the Kitchen theme, so it can turn up either way; on the
-  0.16.1xx builds he played it was one card in five and the Bulletin room's weight is low because
-  its bundles are short. The season gate takes any N of Y bundles, so a chef bundle is never
-  required at a checkpoint by design. Awaiting Jeff's ruling: leave it, or give the Bulletin room a
-  floor weight so Mixed is offered at least once a season.
-- **gazumbrado, 29 Aug (double XP at 100 JP too cheap): DONE 0.16.168, 2026-08-30.** The XP chain
-  is quarter steps now (+25% a tier, four tiers, 1,000 JP for the last), doubling is where it
-  ends, not where it starts (`XpMultiplierRules.cs`).
-
-### DONE 0.16.168 (2026-08-30): Mystic Syrup pinned to week 16 in `AvailabilityWeeks.LateFloors` (the seed is the Foraging Mastery reward). Original note kept below.
-
-#### Original: Mystic Tree tap timing likely wrong — no Ginger Island gate at all (found 2026-08-30)
-
-While checking Nijah's mention of Mystic Syrup (she stated it as a fact, not a complaint — no bug
-alleged there), found a real gap one level down. `TapperAvailability.cs`
-(`src/TheLongestYear.Core/Availability/TapperAvailability.cs`) derives every tapped item's earliest
-week purely from `AvailabilityWeeks.MachineLevelWeek(Foraging 4) + tap.Days / 7`, reading every row of
-`Data/WildTrees` `TapItems` uniformly — Oak, Maple, Pine, **and the Mystic Tree** (`Tree.mysticTree`,
-id `"13"`) all get the same treatment. That's correct for Oak/Maple/Pine, which stand on the map from
-day 1. It is very likely wrong for the Mystic Tree, which (unlike the others) needs a **Mystic Tree
-Seed** — a late-game item — planted and grown before there's anything to tap.
-
-Confirmed nothing corrects for this:
-- `LocationGating.cs`'s `GatedMarkers` table (Desert, SkullCave, Sewer, WitchSwamp/WitchHut, Secret
-  Woods) has no Ginger Island / Volcano Dungeon entry, and `TapperAvailability.Derive` never consults
-  `LocationGating` regardless.
-- `AvailabilityWeeks.LateFloors` — the existing manual-override table for exactly this situation
-  (generic derivation is wrong, pin it by hand; used today for Winter Root and Snow Yam,
-  `AvailabilityWeeks.cs` ~line 64) — has no entry for Mystic Syrup or the Mystic Tree Seed.
-
-So today Mystic Syrup's earliest week is whatever the generic Foraging-4-plus-wait-days formula
-produces (early-to-mid run), with nothing standing in for Ginger Island access or seed-to-tree growth
-time. Needs: confirm how a Mystic Tree Seed is actually obtained and how late that realistically is
-in a one-year loop (may not be reachable at all in some loops — same class of problem as the Desert/
-Vault gate), then either add a `LateFloors` pin or extend `TapperAvailability`/`LocationGating` to
-special-case it. Diagnostic-first per usual — confirm the seed source and Ginger Island's reachability
-window before picking a week.
-
 ### BUILT 2026-08-29 (0.16.164, local): "Gifts of the Junimos", keep the CC room rewards. Five rows in their own category (greenhouse put back where the player moved it, quarry bridge, boulder, minecarts, bus), reach = that room completed this loop, ladder 1,000 to 5,000 (`GiftLadder`), completion mail restored at reset only. Correction to the original note: the Crafts Room reward is the QUARRY bridge (Mountain), not the beach bridge. Original brief below.
 
 #### Original brief
@@ -2280,6 +2236,50 @@ own board), and does it turn season pity off the way the Hard step does.
 
 
 ## Resolved / closed
+
+### CLOSED 2026-09-16 (Jeff ruled; DO NOT RE-RAISE): the three 30 Aug leftovers
+
+- **RayAndRain, 29 Aug (chef bundle never a checkpoint or a weekly challenge in four loops).**
+  Checked 2026-09-16: the weekly challenge is not drawn per bundle, the player picks one of two
+  theme cards a week (`SelectionService.OfferForWeek`, eight themes since 0.16.167, weighted by how
+  many goals each theme could ask for). Chef's lives in the Bulletin Board room, which is the Mixed
+  theme, and cooked dishes are also the Kitchen theme, so it can turn up either way; on the
+  0.16.1xx builds he played it was one card in five and the Bulletin room's weight is low because
+  its bundles are short. The season gate takes any N of Y bundles, so a chef bundle is never
+  required at a checkpoint by design. **Jeff ruled 2026-09-16: leave it alone, closed.** No floor weight for the Bulletin room; the
+  Kitchen theme already covers cooked dishes. Do not bring this up again.
+- **gazumbrado, 29 Aug (double XP at 100 JP too cheap): DONE 0.16.168, 2026-08-30, confirmed closed by Jeff 2026-09-16.** The XP chain
+  is quarter steps now (+25% a tier, four tiers, 1,000 JP for the last), doubling is where it
+  ends, not where it starts (`XpMultiplierRules.cs`).
+- **Mystic Syrup tap timing: DONE 0.16.168, 2026-08-30, confirmed closed by Jeff 2026-09-16.** Pinned to week 16 in `AvailabilityWeeks.LateFloors` (the seed is the Foraging Mastery reward). Original note below for history only.
+
+#### (history only) Original: Mystic Tree tap timing likely wrong — no Ginger Island gate at all (found 2026-08-30)
+
+While checking Nijah's mention of Mystic Syrup (she stated it as a fact, not a complaint — no bug
+alleged there), found a real gap one level down. `TapperAvailability.cs`
+(`src/TheLongestYear.Core/Availability/TapperAvailability.cs`) derives every tapped item's earliest
+week purely from `AvailabilityWeeks.MachineLevelWeek(Foraging 4) + tap.Days / 7`, reading every row of
+`Data/WildTrees` `TapItems` uniformly — Oak, Maple, Pine, **and the Mystic Tree** (`Tree.mysticTree`,
+id `"13"`) all get the same treatment. That's correct for Oak/Maple/Pine, which stand on the map from
+day 1. It is very likely wrong for the Mystic Tree, which (unlike the others) needs a **Mystic Tree
+Seed** — a late-game item — planted and grown before there's anything to tap.
+
+Confirmed nothing corrects for this:
+- `LocationGating.cs`'s `GatedMarkers` table (Desert, SkullCave, Sewer, WitchSwamp/WitchHut, Secret
+  Woods) has no Ginger Island / Volcano Dungeon entry, and `TapperAvailability.Derive` never consults
+  `LocationGating` regardless.
+- `AvailabilityWeeks.LateFloors` — the existing manual-override table for exactly this situation
+  (generic derivation is wrong, pin it by hand; used today for Winter Root and Snow Yam,
+  `AvailabilityWeeks.cs` ~line 64) — has no entry for Mystic Syrup or the Mystic Tree Seed.
+
+So today Mystic Syrup's earliest week is whatever the generic Foraging-4-plus-wait-days formula
+produces (early-to-mid run), with nothing standing in for Ginger Island access or seed-to-tree growth
+time. Needs: confirm how a Mystic Tree Seed is actually obtained and how late that realistically is
+in a one-year loop (may not be reachable at all in some loops — same class of problem as the Desert/
+Vault gate), then either add a `LateFloors` pin or extend `TapperAvailability`/`LocationGating` to
+special-case it. Diagnostic-first per usual — confirm the seed source and Ginger Island's reachability
+window before picking a week.
+
 
 - **Vault/money gate invisible + unpayable** — fixed 2026-06-06 (v0.9.8–0.9.16, master).
   Spec `docs/superpowers/specs/2026-06-06-vault-payment-gate-design.md`, plan
