@@ -223,14 +223,15 @@ public static class MadeSources
     }
 
     /// <summary>Setup steps for one animal produce: the building (its BuildDays, or 0 when unknown),
-    /// the animal itself (bought today, produces from tomorrow), and, past 0 friendship, the days of
-    /// petting it takes to reach it (FarmAnimal.cs 733: petting adds 15 a day).</summary>
+    /// the animal itself (bought or hatched today, growing up and, for a hatched one, incubating
+    /// first, then producing from the day after), and, past 0 friendship, the days of petting it
+    /// takes to reach it (FarmAnimal.cs 733: petting adds 15 a day).</summary>
     public static IReadOnlyList<SetupStep> AnimalSetup(AnimalRow animal, IReadOnlyDictionary<string, int> buildings, int friendship)
     {
         var steps = new List<SetupStep>
         {
             new("building:" + animal.House, buildings.TryGetValue(animal.House, out int buildDays) ? buildDays : 0),
-            new("animal:" + animal.AnimalId, 1),
+            new("animal:" + animal.AnimalId, Math.Max(1, animal.IncubationDays + animal.DaysToMature)),
         };
         if (friendship > 0)
             steps.Add(new($"friendship:{animal.AnimalId} {friendship}", (int)Math.Ceiling(friendship / (double)FriendshipPerPetting)));
@@ -242,8 +243,9 @@ public static class MadeSources
     {
         foreach (AnimalRow animal in rows)
         {
+            bool sold = animal.PurchasePrice > 0 || animal.SoldAsAlternate;
             var requires = new List<string> { "building:" + animal.House };
-            if (animal.PurchasePrice <= 0) requires.Add("animal:" + animal.AnimalId + " (not sold)");
+            if (!sold) requires.Add("animal:" + animal.AnimalId + " (not sold)");
             foreach ((AnimalProduce produce, bool deluxe) in animal.Produce.Select(p => (p, false)).Concat(animal.DeluxeProduce.Select(p => (p, true))))
             {
                 ConditionReading reading = ConditionSeasons.Read(produce.Condition, festivals);
@@ -253,7 +255,8 @@ public static class MadeSources
                 if (deluxe) extra.Add("deluxe produce");
                 // Several produce entries in one list: the animal produces one of them.
                 bool picked = (deluxe ? animal.DeluxeProduce.Count : animal.Produce.Count) > 1;
-                ObtainConditions conditions = ConditionSeasons.Apply(ObtainConditions.None with { Requires = extra }, reading);
+                ObtainConditions conditions = ConditionSeasons.Apply(
+                    ObtainConditions.None with { Requires = extra, OwnedOnly = !sold }, reading);
                 DayTable table = ConditionSeasons.Availability(reading, WeekMask.All).Delay(animal.DaysToProduce);
                 yield return (produce.ItemId, new ObtainSource(SourceKind.Animal, table,
                     reading.Chance || picked ? Reliability.Chance : Reliability.Dependable, conditions, $"{animal.AnimalId} produce")

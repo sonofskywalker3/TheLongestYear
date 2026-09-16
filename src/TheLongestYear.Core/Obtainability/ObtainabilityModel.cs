@@ -15,13 +15,15 @@ public sealed record ObtainFilter
     public bool IncludeYearTwo { get; init; }
     public bool IncludeGingerIsland { get; init; }
     public bool IncludeUnresolved { get; init; } = true;
+    public bool IncludeOwnedOnly { get; init; }
 
     public bool Accepts(ObtainSource source)
         => (Reliabilities == null || Reliabilities.Contains(source.Reliability))
            && (Kinds == null || Kinds.Contains(source.Kind))
            && (IncludeYearTwo || !source.Conditions.YearTwo)
            && (IncludeGingerIsland || !source.Conditions.GingerIsland)
-           && (IncludeUnresolved || !source.Conditions.Unresolved);
+           && (IncludeUnresolved || !source.Conditions.Unresolved)
+           && (IncludeOwnedOnly || !source.Conditions.OwnedOnly);
 }
 
 /// <summary>Every year-1 way to obtain every item, by start day: for each day the player could start

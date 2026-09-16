@@ -316,6 +316,35 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void A_bought_animal_waits_out_growing_up()
+    {
+        var cow = new AnimalRow("White Cow", "Barn", 750, new[] { new AnimalProduce("(O)184", null, 0) },
+            new AnimalProduce[0], DaysToMature: 5);
+        SetupStep step = MadeSources.AnimalSetup(cow, new Dictionary<string, int>(), 0).Single(s => s.Name == "animal:White Cow");
+        Assert.Equal(5, step.Days);
+    }
+
+    [Fact]
+    public void A_hatched_only_animal_is_owned_only_and_waits_for_incubation_and_growing_up()
+    {
+        var dino = new AnimalRow("Dinosaur", "Coop", -1, new[] { new AnimalProduce("(O)107", null, 0) },
+            new AnimalProduce[0], DaysToProduce: 7, DaysToMature: 0, IncubationDays: 13);
+        ObtainSource egg = MadeSources.Animals(new[] { dino }, NoFestivals, NoBuildings).Single().Source;
+        Assert.True(egg.Conditions.OwnedOnly);
+        Assert.Equal(13, egg.Setup.Single(s => s.Name == "animal:Dinosaur").Days);
+    }
+
+    [Fact]
+    public void An_alternate_purchase_is_sold()
+    {
+        var brown = new AnimalRow("Brown Cow", "Barn", -1, new[] { new AnimalProduce("(O)184", null, 0) },
+            new AnimalProduce[0], SoldAsAlternate: true);
+        ObtainSource milk = MadeSources.Animals(new[] { brown }, NoFestivals, NoBuildings).Single().Source;
+        Assert.False(milk.Conditions.OwnedOnly);
+        Assert.DoesNotContain(milk.Conditions.Requires, r => r.EndsWith("(not sold)"));
+    }
+
+    [Fact]
     public void A_pond_counts_population_growth_from_its_spawn_time()
     {
         var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.Always, Reliability.Dependable));

@@ -23,6 +23,15 @@ public class ObtainabilityModelTests
     });
 
     [Fact]
+    public void Owned_only_sources_are_left_out_unless_asked_for()
+    {
+        var owned = new ObtainSource(SourceKind.Animal, DayTable.Always, Reliability.Dependable,
+            ObtainConditions.None with { OwnedOnly = true }, "dino");
+        Assert.False(ObtainFilter.DependableOnly.Accepts(owned));
+        Assert.True((ObtainFilter.DependableOnly with { IncludeOwnedOnly = true }).Accepts(owned));
+    }
+
+    [Fact]
     public void Ids_are_normalized_on_the_way_in_and_out()
     {
         var model = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>> { ["24"] = new[] { Src(SourceKind.Crop, DayTable.Always, Reliability.Dependable) } });

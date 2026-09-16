@@ -36,12 +36,16 @@ public sealed record ObtainConditions
     public int CatchLimit { get; init; }
     /// <summary>A condition or query the model could not read; the weeks are a guess, not a fact.</summary>
     public bool Unresolved { get; init; }
+    /// <summary>The route needs something the player already owns and cannot get dependably from
+    /// nothing: a not-sold animal.</summary>
+    public bool OwnedOnly { get; init; }
 
     public bool Equals(ObtainConditions? other)
         => other is not null
            && Skill == other.Skill && SkillLevel == other.SkillLevel
            && RainOnly == other.RainOnly && FewDays == other.FewDays && YearTwo == other.YearTwo
            && GingerIsland == other.GingerIsland && CatchLimit == other.CatchLimit && Unresolved == other.Unresolved
+           && OwnedOnly == other.OwnedOnly
            && Requires.SequenceEqual(other.Requires);
 
     public override int GetHashCode()
@@ -55,6 +59,7 @@ public sealed record ObtainConditions
         hash.Add(GingerIsland);
         hash.Add(CatchLimit);
         hash.Add(Unresolved);
+        hash.Add(OwnedOnly);
         foreach (string r in Requires) hash.Add(r);
         return hash.ToHashCode();
     }
