@@ -274,6 +274,33 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void The_any_wild_seed_ingredient_reads_the_four_seed_packets()
+    {
+        var rows = new[]
+        {
+            new RecipeRow("Tea Sapling", new[] { "-777", "(O)771" }, "(O)251", "null", IsCooking: false),
+        };
+        var objects = new Dictionary<string, ObjInfo> { ["(O)771"] = new("(O)771", "Fiber", -16, 1, new List<string>(), false) };
+        // Spring, summer and winter seeds are in the model too (Pierre sells each in its own season),
+        // just not landing as soon as fall's: only fall seeds and the fiber need to be at day 1 for
+        // the recipe itself to land day 1, but all four ids still belong in the merged group.
+        var laterSeed = new ObtainSource(SourceKind.Shop, DayTable.Available(d => d >= 50), Reliability.Dependable, ObtainConditions.None, "seasonal seeds");
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)495"] = new[] { laterSeed },
+            ["(O)496"] = new[] { laterSeed },
+            ["(O)497"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "fall seeds") },
+            ["(O)498"] = new[] { laterSeed },
+            ["(O)771"] = new[] { new ObtainSource(SourceKind.Forage, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "weeds") },
+        });
+        var made = MadeSources.Recipes(rows, objects, new Dictionary<string, WeekMask>(), snapshot).ToList();
+        ObtainSource tea = made.First(m => m.ItemId == "(O)251").Source;
+        Assert.Equal(1, tea.Lands.Lands(1));
+        Assert.Equal(Reliability.Dependable, tea.Reliability);
+        Assert.Contains(tea.Inputs, group => new[] { "(O)495", "(O)496", "(O)497", "(O)498" }.All(group.Contains) && group.Count == 4);
+    }
+
+    [Fact]
     public void Ponds_use_only_the_lowest_precedence_match_and_carry_forward()
     {
         var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.InWeeks(WeekMask.Of(5)), Reliability.Dependable));
