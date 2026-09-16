@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Pathfinding;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Integration
 {
@@ -31,60 +33,29 @@ namespace TheLongestYear.Integration
     /// normal and its abnormal end.</summary>
     internal static class RewindReversedExtras
     {
-        /// <summary>How many to put on the road. Enough to read as traffic, few enough that the shot
-        /// is still a shot of the town rather than of a crowd.</summary>
         /// <summary>How many villagers a rewind puts on the road, inclusive. Three or four: enough to
         /// read as traffic, few enough that none of them becomes the thing you watch.</summary>
         private const int MinCast = 3, MaxCast = 4;
 
-        /// <summary>How much of the camera's travel an extra takes to walk its whole route. Wider is
-        /// slower and keeps them in shot longer; narrower makes them hurry through. At this value a
-        /// route of the lengths the pathfinder returns here walks at about three tiles a second,
-        /// which is vanilla's own pace.</summary>
-        private const double CameraBand = 0.55;
+        /// <summary>The search limit vanilla gives a schedule route (NPC.pathfindToNextScheduleLocation).</summary>
+        private const int PathfinderLimit = 30000;
 
-        /// <summary>How long a route to ask the pathfinder for, in tiles, and how far it may search
-        /// before giving up. The pace is not set here any more: each extra covers its own route once
-        /// across the pan's whole duration (see Tick), so the route length IS the speed, and asking
-        /// for roughly this many tiles is what keeps that speed an ordinary walk.</summary>
-        // Long enough that a person walking at an ordinary pace is still walking when the pan ends.
-        // At the old fourteen the pathfinder returned routes of about thirty to forty-five tiles,
-        // which is a little over fifteen seconds of walking in a shot of twenty-five, and the extras
-        // spent the back half of every pan walking the way they had come.
-        private const int PathfinderLimit = 900;
+        /// <summary>The map whose schedule legs the pan plays.</summary>
+        private const string TownName = "Town";
 
-        /// <summary>Route lengths to try, in tiles, longest first. The long ones keep an extra
-        /// walking backwards for the whole pan at an ordinary pace; the short ones are
-        /// the fallback for a start tile with nothing that far away.
-        ///
-        /// These are back to the long aims after Jeff watched a pan at the short ones: "freaking
-        /// Penny was moving so slow it was crazy because you only let her move like 3 steps"
-        /// (2026-09-11). A nine tile route spread across the band walks at well under a tile a
-        /// second, which reads as a crawl, not a person. The short aims were there to keep a route
-        /// inside a radius of its anchor so the walker stayed in shot the whole time; that
-        /// constraint is gone, because the same feedback gave it up: "I don't care if the extras
-        /// walk into frame or out of frame while it's running, that's fine, I just want to see
-        /// glimpses." Walking out of shot is the price of walking at all, and it is worth it.</summary>
-        private static readonly int[] RouteTileChoices = { 24, 18, 14, 10, 7 };
+        /// <summary>How close, in tiles, a villager's real route has to come to the camera's line to be
+        /// used: about half the view's height, so the walker is in shot as the camera passes.</summary>
+        private const double CameraReachTiles = 6.0;
 
-        /// <summary>An ordinary walking pace, in tiles per second: vanilla's own. The pace is what
-        /// the player actually reads, so it is set here and the route is cut to fit it, rather than
-        /// falling out of however many tiles the pathfinder happened to return.</summary>
+        /// <summary>Tiles of route kept beyond the point nearest the camera's line. The backwards walk
+        /// starts there, just out of shot, so the walker is already moving when the camera arrives.</summary>
+        private const int LeadTiles = 10;
+
+        /// <summary>Shorter routes are not used: a walker should be seen walking, not appear and vanish.</summary>
+        private const int MinRouteTiles = 6;
+
+        /// <summary>An ordinary walking pace, in tiles per second: vanilla's own.</summary>
         private const double WalkTilesPerSecond = 3.0;
-
-        /// <summary>How many tiles of route an extra should cover while the camera is on it: the
-        /// walking pace times the seconds its band lasts. Routes longer than this are trimmed so a
-        /// wandering forty tile path does not turn the walk into a sprint; shorter ones are kept and
-        /// simply walked a little slower. Set in <see cref="Spawn"/>, where the pan's duration is
-        /// known.</summary>
-        private static int _paceTiles = 40;
-
-        /// <summary>How far off the camera's line an extra starts, so they are scattered around the
-        /// square rather than queued along one path.</summary>
-        private static readonly Point[] Scatter =
-        {
-            new Point(0, -4), new Point(3, 3), new Point(-4, 2), new Point(2, -5), new Point(-2, 5),
-        };
 
         private sealed class Extra
         {
@@ -93,75 +64,59 @@ namespace TheLongestYear.Integration
             public Vector2 HomePosition;
             public int HomeFacing;
             public int HomeForceUpdateTimer;
-            public Point[] Route;      // forward order: Route[0] is where a normal walk would start
-            public double Phase;       // kept for the placement scatter
-            public double DurationMs;  // unused since the walk became camera-driven; see Tick
-            public double Anchor;      // where along the camera's line this one stands, 0 at the start
+            public Point[] Route;      // forward order: Route[0] is the door or map edge the villager came in by
             public WalkState State;
             public double Along = 1.0; // 1 is the far end the backwards walk starts from
-            public Vector2 Overrun;    // world pixels walked past Route[0] while still in shot
         }
 
         private enum WalkState { Waiting, Walking, Gone }
-
-        /// <summary>Routes shorter than this are not used: a walker has to be able to cross the shot
-        /// and leave it, and a short route ends in plain view.</summary>
-        private const int MinRouteTiles = 16;
 
         /// <summary>How close, in tiles, the camera's view comes to a waiting walker's start before it
         /// sets off. Far enough that it is already walking when it comes into shot.</summary>
         private const int StartMarginTiles = 4;
 
-        /// <summary>How far outside the view, in tiles, a finished walker has to be before it is taken
-        /// off the road. A villager sprite stands two tiles tall, so less than that shows a head.</summary>
-        private const int GoneMarginTiles = 2;
-
-        /// <summary>Where a walker who has left the shot is kept until <see cref="Teardown"/> puts it back:
-        /// nowhere any camera is pointed.</summary>
+        /// <summary>Where a walker who has gone through its door is kept until <see cref="Teardown"/>
+        /// puts it back: nowhere any camera is pointed.</summary>
         private static readonly Vector2 ParkedPosition = new Vector2(-100000f, -100000f);
 
         private static readonly List<Extra> Extras = new List<Extra>();
         private static IMonitor _monitor;
         private static GameLocation _town;
 
-        /// <summary>Borrows a few villagers and puts them on routes through the square. Safe to call
-        /// when there are none to borrow, or when no route can be found: the pan runs on its other
-        /// dials alone.
+        /// <summary>Borrows a few villagers and walks each one backwards along a real part of today's
+        /// schedule that crosses the camera's line. Safe to call when there are none to borrow, or
+        /// when no route qualifies: the pan runs on its other dials alone.
         ///
-        /// A DIFFERENT FEW EVERY TIME. This used to take the first five villagers the game happened
-        /// to enumerate, which is a stable order, so every rewind in a run showed Evelyn, George,
-        /// Alex, Emily and Haley walking the same ground: "watching the same exact people run through
-        /// their paths backwards every reset is going to get tedious" (Jeff, 2026-09-11). The whole
-        /// eligible cast is shuffled now and walked in that order until enough of them have a route,
-        /// so anyone in town can turn up and the ones who do are different each rewind.
+        /// REAL SCHEDULE ROUTES. Earlier builds made routes up: two walkable tiles near the camera's
+        /// line and the pathfinder between them, then a straight walk off past the end while still in
+        /// shot, which is how Emily walked backwards up a cliff (Jeff, 2026-09-16: "can you not just
+        /// use their normal paths they're assigned by the game?"). Each route now is one of the
+        /// villager's own Town legs for the day (<see cref="ScheduleLegs"/>), pathed exactly as
+        /// vanilla paths it, and only legs that start at a door or the map's edge are used. Played
+        /// backwards, every walk ends there, and the walker goes through it the way villagers do.
         ///
-        /// Shuffling first, rather than pathfinding for all thirty-odd villagers and then choosing,
-        /// is deliberate: it gives the same variety for the cost of the three or four routes that are
-        /// actually used, and this runs on the frame the white flash hands over to the pan, which is
-        /// not a frame to spend a hundred pathfinder searches on.</summary>
-        public static void Spawn(IMonitor monitor, GameLocation town, Point from, Point to, float durationMs)
+        /// A DIFFERENT FEW EVERY TIME. The eligible cast is shuffled and walked in that order until
+        /// enough of them have a route (Jeff, 2026-09-11: the same people every reset is tedious).
+        /// Shuffling first keeps the pathfinder work on the handover frame to the villagers used.</summary>
+        public static void Spawn(IMonitor monitor, GameLocation town, Point from, Point to)
         {
             _monitor = monitor;
             _town = town;
             Extras.Clear();
             if (town == null) return;
 
-            // The band is the slice of the pan an extra is walking for, so the tiles it should cover
-            // is the pace times that slice's length. Everything downstream trims to this.
-            _paceTiles = Math.Max(4, (int)Math.Round(WalkTilesPerSecond * CameraBand * durationMs / 1000.0));
-
+            var timer = System.Diagnostics.Stopwatch.StartNew();
             List<NPC> cast = Shuffle(Cast());
             int wanted = MinCast + Game1.random.Next(MaxCast - MinCast + 1);
             var placed = new List<string>();
+            int searched = 0;
             for (int i = 0; i < cast.Count && Extras.Count < wanted; i++)
             {
-                // The anchor spreads the walks along the camera's line, so it counts placements
-                // rather than candidates: a villager who could not be routed must not leave a gap in
-                // the shot where the next one should have been.
-                Point[] route = FindRoute(town, from, to, Extras.Count, wanted);
-                if (route == null || route.Length < MinRouteTiles) continue;
-
                 NPC npc = cast[i];
+                searched++;
+                Point[] route = RealRoute(npc, town, from, to);
+                if (route == null) continue;
+
                 var extra = new Extra
                 {
                     Npc = npc,
@@ -170,9 +125,6 @@ namespace TheLongestYear.Integration
                     HomeFacing = npc.FacingDirection,
                     HomeForceUpdateTimer = npc.forceUpdateTimer,
                     Route = route,
-                    Phase = i / (double)Math.Max(1, cast.Count),
-                    DurationMs = durationMs,
-                    Anchor = AnchorFraction(Extras.Count, wanted),
                 };
 
                 try
@@ -191,7 +143,8 @@ namespace TheLongestYear.Integration
                     npc.forceUpdateTimer = 0;
                     Extras.Add(extra);
                     Place(extra, extra.Along);
-                    placed.Add($"{npc.Name} ({route.Length} tiles from ({route[0].X},{route[0].Y}))");
+                    Point back = route[0], start = route[route.Length - 1];
+                    placed.Add($"{npc.Name} ({route.Length} tiles, ({start.X},{start.Y}) back to ({back.X},{back.Y}))");
                 }
                 catch (Exception ex)
                 {
@@ -200,127 +153,72 @@ namespace TheLongestYear.Integration
             }
 
             _monitor?.Log(
-                placed.Count > 0
-                    ? $"RewindReversedExtras: {string.Join("; ", placed)}, all walking their routes backwards."
-                    : "RewindReversedExtras: no walkable route found near the camera line; the pan runs without extras.",
+                (placed.Count > 0
+                    ? $"RewindReversedExtras: {string.Join("; ", placed)}, all walking their schedule routes backwards"
+                    : "RewindReversedExtras: no villager's schedule crosses the camera line; the pan runs without extras")
+                + $" ({searched} searched in {timer.ElapsedMilliseconds} ms).",
                 LogLevel.Info);
         }
 
-        /// <summary>A real walkable route through the square for extra <paramref name="index"/>.
-        /// Both ends are sampled off the camera's line, scattered, and then snapped to somewhere the
-        /// pathfinder will actually accept, so the result follows the roads and bridges the town has
-        /// rather than the straight line the camera takes.</summary>
-        /// <summary>Where along the camera's line extra <paramref name="index"/> of
-        /// <paramref name="count"/> stands, 0 at the start of the pan and 1 at the end. The same
-        /// fraction <see cref="FindRoute"/> anchors the route at, kept so <see cref="Tick"/> can walk
-        /// them when the camera is actually looking at them.
-        ///
-        /// Spread across <see cref="AnchorFirst"/> to <see cref="AnchorLast"/> rather than evenly
-        /// over the whole line, and the first season is why. The camera's travel is eased, so it
-        /// covers the first fifth of the line over the first quarter or so of the running time: an
-        /// extra sitting at the midpoint of the first of four even slots is not reached until after
-        /// the season it belongs to has already been swapped away.</summary>
-        private static double AnchorFraction(int index, int count)
+        /// <summary>One of <paramref name="npc"/>'s real Town legs for today, cut to the stretch the
+        /// camera sees, in forward order; or null when none qualifies.</summary>
+        private static Point[] RealRoute(NPC npc, GameLocation town, Point from, Point to)
         {
-            if (count <= 1) return (AnchorFirst + AnchorLast) / 2.0;
-            return AnchorFirst + (AnchorLast - AnchorFirst) * index / (count - 1.0);
-        }
-
-        private const double AnchorFirst = 0.10, AnchorLast = 0.90;
-
-        private static Point[] FindRoute(GameLocation town, Point from, Point to, int index, int count)
-        {
-            double alongLine = AnchorFraction(index, count);
-            Point scatter = Scatter[index % Scatter.Length];
-            var anchor = new Point(
-                (int)Math.Round(from.X + (to.X - from.X) * alongLine) + scatter.X,
-                (int)Math.Round(from.Y + (to.Y - from.Y) * alongLine) + scatter.Y);
-
-            Point? start = NearestWalkable(town, anchor);
-            if (start == null) return null;
-
-            // Aim along the camera's line so the walks read as traffic heading the way the shot is
-            // going, then let the pathfinder work out how a person actually gets there.
-            // Longest first, then settle for less. Asking only for the long route dropped the cast
-            // from five to two, because most start tiles have nothing walkable that far along the
-            // camera's line; a shorter route walked slower is much better than an extra that never
-            // appears.
-            foreach (int reach in RouteTileChoices)
+            List<ScheduleLegs.Leg> legs;
+            try
             {
-                // PROPORTIONAL to the camera's line, not Math.Sign on each axis. Sign aimed every
-                // route at 45 degrees, and the camera's line is nothing like 45 degrees: it runs
-                // (94,81) to (0,54), which is about three and a half across for every one down. So a
-                // twenty tile route aimed by sign went twenty DOWN as well as twenty across and
-                // walked the villager clean off the line the camera travels. Measured live: during
-                // the winter stretch the camera sat at (94,81) with the nearest extra 43 tiles away,
-                // which is well off screen. "I've never seen a villager during the winter section,
-                // because they're not walking where the camera is showing!" (Jeff, 2026-09-11).
-                double spanX = to.X - from.X;
-                double spanY = to.Y - from.Y;
-                double span = Math.Sqrt(spanX * spanX + spanY * spanY);
-                if (span < 1.0) continue;
-                int dx = (int)Math.Round(reach * spanX / span);
-                int dy = (int)Math.Round(reach * spanY / span);
-                Point? end = NearestWalkable(town, new Point(start.Value.X + dx, start.Value.Y + dy))
-                             ?? NearestWalkable(town, new Point(start.Value.X - dx, start.Value.Y - dy));
-                if (end == null || end.Value == start.Value) continue;
+                var stops = new List<ScheduleLegs.Stop>();
+                foreach (KeyValuePair<int, SchedulePathDescription> entry in npc.Schedule.OrderBy(e => e.Key))
+                    stops.Add(new ScheduleLegs.Stop(entry.Value.targetLocationName, (entry.Value.targetTile.X, entry.Value.targetTile.Y)));
+                Vector2 home = npc.DefaultPosition / 64f;
+                legs = ScheduleLegs.In(
+                    TownName, npc.DefaultMap, ((int)home.X, (int)home.Y), stops,
+                    (a, b) => WarpPathfindingCache.GetLocationRoute(a, b, npc.Gender),
+                    (map, next) => WarpTo(map, next, npc),
+                    (map, warp) => WarpTarget(map, warp, npc));
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"RewindReversedExtras: could not read {npc.Name}'s schedule: {ex.Message}", LogLevel.Trace);
+                return null;
+            }
 
+            foreach (ScheduleLegs.Leg leg in Shuffle(legs.Where(l => l.EntersMap).ToList()))
+            {
                 try
                 {
                     Stack<Point> path = PathFindController.findPathForNPCSchedules(
-                        start.Value, end.Value, town, PathfinderLimit);
-                    if (path == null || path.Count < 4) continue;
-                    Point[] route = path.ToArray();
-                    // Trim rather than reject: the pathfinder follows roads, so a route aimed twenty
-                    // tiles away can come back at fifty, and walking fifty tiles in the same band
-                    // would have the villager running. Cutting it to the pace budget keeps the walk
-                    // at walking speed and throws away only the tail, which is off screen anyway.
-                    if (route.Length > _paceTiles + 1)
-                        Array.Resize(ref route, _paceTiles + 1);
-                    // Longest aim first, so this returns the longest route the town will give.
-                    // There is no radius check on it any more: a route was once rejected for
-                    // straying more than eleven tiles from its anchor, which is what forced the
-                    // aims down to single figures and the walk down to a crawl. Glimpses are the
-                    // brief, so a walker who crosses the shot and leaves it is the point.
-                    return route;
+                        new Point(leg.From.X, leg.From.Y), new Point(leg.To.X, leg.To.Y), town, PathfinderLimit);
+                    if (path == null || path.Count < MinRouteTiles) continue;
+                    List<(int X, int Y)> kept = ScheduleLegs.ForCamera(
+                        path.Select(p => (p.X, p.Y)).ToList(), (from.X, from.Y), (to.X, to.Y),
+                        CameraReachTiles, LeadTiles, MinRouteTiles);
+                    if (kept != null)
+                        return kept.Select(t => new Point(t.X, t.Y)).ToArray();
                 }
                 catch (Exception ex)
                 {
-                    _monitor?.Log($"RewindReversedExtras: pathfinder refused a route: {ex.Message}", LogLevel.Trace);
+                    _monitor?.Log($"RewindReversedExtras: pathfinder refused {npc.Name}'s route: {ex.Message}", LogLevel.Trace);
                 }
             }
             return null;
         }
 
-        /// <summary>The nearest tile to <paramref name="wanted"/> a villager could stand on, searched
-        /// outward in rings. Null when there is nothing walkable nearby at all.</summary>
-        private static Point? NearestWalkable(GameLocation town, Point wanted)
+        private static (int X, int Y)? WarpTo(string map, string next, NPC npc)
         {
-            for (int ring = 0; ring <= 6; ring++)
-            {
-                for (int dx = -ring; dx <= ring; dx++)
-                {
-                    for (int dy = -ring; dy <= ring; dy++)
-                    {
-                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != ring) continue;
-                        var tile = new Point(wanted.X + dx, wanted.Y + dy);
-                        if (!town.isTileOnMap(tile.X, tile.Y)) continue;
-                        try
-                        {
-                            if (town.isTilePassable(new xTile.Dimensions.Location(tile.X, tile.Y), Game1.viewport)
-                                && !town.isWaterTile(tile.X, tile.Y))
-                                return tile;
-                        }
-                        catch (Exception) { }
-                    }
-                }
-            }
-            return null;
+            Point warp = Game1.getLocationFromName(map)?.getWarpPointTo(next, npc) ?? Point.Zero;
+            return warp == Point.Zero ? null : (warp.X, warp.Y);
+        }
+
+        private static (int X, int Y) WarpTarget(string map, (int X, int Y) warp, NPC npc)
+        {
+            Point target = Game1.getLocationFromName(map)?.getWarpPointTarget(new Point(warp.X, warp.Y), npc) ?? Point.Zero;
+            return (target.X, target.Y);
         }
 
         /// <summary>A copy of <paramref name="cast"/> in a random order (Fisher-Yates, on the game's
         /// own random so a run is still reproducible from its seed).</summary>
-        private static List<NPC> Shuffle(List<NPC> cast)
+        private static List<T> Shuffle<T>(List<T> cast)
         {
             for (int i = cast.Count - 1; i > 0; i--)
             {
@@ -447,8 +345,8 @@ namespace TheLongestYear.Integration
             // a second or more ... make sure they start moving off screen and continue moving until
             // they're no longer visible" (Jeff, 2026-09-14). So each walker now waits at its far end
             // until the view comes within StartMarginTiles of it, walks at an ordinary pace from
-            // there, and is only taken off the road once it is out of sight. Running out of route in
-            // plain view keeps it walking the same way until it is not.
+            // there, and leaves the road when it reaches the door or map edge its route came in by
+            // (2026-09-16: walking on in a straight line past the route's end took Emily up a cliff).
             double stepTiles = WalkTilesPerSecond * time.ElapsedGameTime.TotalMilliseconds / 1000.0;
             foreach (Extra extra in Extras)
             {
@@ -461,25 +359,15 @@ namespace TheLongestYear.Integration
                     extra.State = WalkState.Walking;
                 }
 
-                if (extra.Along > 0.0)
+                extra.Along = Math.Max(0.0, extra.Along - stepTiles / (extra.Route.Length - 1));
+                if (extra.Along <= 0.0)
                 {
-                    extra.Along = Math.Max(0.0, extra.Along - stepTiles / (extra.Route.Length - 1));
-                    Place(extra, extra.Along);
+                    // Back at the door or map edge it came in by: through it, as villagers go.
+                    extra.State = WalkState.Gone;
+                    extra.Npc.Position = ParkedPosition;
+                    continue;
                 }
-                else
-                {
-                    var away = new Vector2(extra.Route[0].X - extra.Route[1].X, extra.Route[0].Y - extra.Route[1].Y);
-                    if (away != Vector2.Zero) away.Normalize();
-                    extra.Overrun += away * (float)(stepTiles * 64.0);
-                    Place(extra, 0.0);
-                    extra.Npc.Position += extra.Overrun;
-                    if (!Utility.isOnScreen(extra.Npc.Position, GoneMarginTiles * 64))
-                    {
-                        extra.State = WalkState.Gone;
-                        extra.Npc.Position = ParkedPosition;
-                        continue;
-                    }
-                }
+                Place(extra, extra.Along);
                 Animate(extra, extra.Along, time);
             }
         }
