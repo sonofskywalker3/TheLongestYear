@@ -482,6 +482,129 @@ public class FairnessRuleTests
         Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, fixedBridge, model));
     }
 
+    // Task 2b (2026-09-16): the model now delays a mine route by the days it takes to get there from
+    // nothing. The values below were captured from the rule BEFORE that change, with undelayed tables,
+    // and the rule must give exactly the same verdicts, landing days and setup days for the tables the
+    // builder emits now.
+    private const int DeepFloor = 80;
+    private const int TightDeadline = 66;
+    private static readonly int FloorDelay = MineDepth.DaysToReach(DeepFloor);
+
+    private static ObtainSource MineRoute(DayTable lands)
+        => new(SourceKind.MineNode, lands, Reliability.Dependable,
+            ObtainConditions.None with { Requires = new[] { MineDepth.FloorPrefix + DeepFloor } }, "test");
+
+    private static ObtainSource MachineRoute(DayTable lands, string input)
+        => new(SourceKind.Machine, lands, Reliability.Dependable, ObtainConditions.None, "test")
+        {
+            Inputs = new IReadOnlyList<string>[] { new[] { input } },
+        };
+
+    public static TheoryData<DifficultyStep, int, int, bool, int?, int> MineDepthBefore() => Before(derived: false);
+
+    /// <summary>The same table for a route made from the mine item, which differs in one cell: with
+    /// the tight deadline and no floor reached, the input itself is late, so the made route is out
+    /// with no landing rather than late.</summary>
+    public static TheoryData<DifficultyStep, int, int, bool, int?, int> MadeFromMineBefore() => Before(derived: true);
+
+    private static TheoryData<DifficultyStep, int, int, bool, int?, int> Before(bool derived)
+    {
+        var data = new TheoryData<DifficultyStep, int, int, bool, int?, int>();
+        foreach (DifficultyStep level in new[] { DifficultyStep.Normal, DifficultyStep.Hard })
+        {
+            data.Add(level, 0, Deadline, true, 69, 8);
+            data.Add(level, 40, Deadline, true, 65, 4);
+            data.Add(level, 80, Deadline, true, 61, 0);
+            data.Add(level, 100, Deadline, true, 61, 0);
+            if (derived) data.Add(level, 0, TightDeadline, false, null, 0);
+            else data.Add(level, 0, TightDeadline, false, 69, 8);
+            data.Add(level, 40, TightDeadline, true, 65, 4);
+        }
+        data.Add(DifficultyStep.Easy, 0, Deadline, false, null, 0);
+        data.Add(DifficultyStep.Easy, 40, Deadline, false, null, 0);
+        data.Add(DifficultyStep.Easy, 80, Deadline, true, 61, 0);
+        data.Add(DifficultyStep.Easy, 100, Deadline, true, 61, 0);
+        data.Add(DifficultyStep.Extreme, 0, Deadline, true, 61, 0);
+        data.Add(DifficultyStep.Extreme, 100, TightDeadline, true, 61, 0);
+        return data;
+    }
+
+    private static void AssertBest(FairnessVerdict verdict, bool counts, int? landing, int added)
+    {
+        Assert.Equal(counts, verdict.Counts);
+        RouteVerdict route = Assert.Single(verdict.Routes);
+        Assert.Equal(landing, route.LandingDay);
+        Assert.Equal(added, route.AddedDays);
+    }
+
+    [Theory]
+    [MemberData(nameof(MineDepthBefore))]
+    public void A_delayed_mine_route_keeps_its_verdict_at_every_depth(
+        DifficultyStep level, int deepest, int deadline, bool counts, int? landing, int added)
+    {
+        var model = Model(MineRoute(DayTable.Always.Delay(FloorDelay)));
+        AssertBest(FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model), counts, landing, added);
+    }
+
+    [Theory]
+    [MemberData(nameof(MadeFromMineBefore))]
+    public void A_route_made_from_a_delayed_mine_item_keeps_its_verdict_at_every_depth(
+        DifficultyStep level, int deepest, int deadline, bool counts, int? landing, int added)
+    {
+        var model = ModelOf(
+            (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
+            (Ingredient, new[] { MineRoute(DayTable.Always.Delay(FloorDelay)) }));
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model);
+        // Easy with the floor unreached: the machine is out because its input is, as before.
+        if (!counts && landing is null) Assert.StartsWith("needs " + Ingredient, verdict.Routes[0].Reason);
+        AssertBest(verdict, counts, landing, added);
+    }
+
+    [Theory]
+    [MemberData(nameof(MadeFromMineBefore))]
+    public void A_two_step_chain_on_a_delayed_mine_item_keeps_its_verdict_at_every_depth(
+        DifficultyStep level, int deepest, int deadline, bool counts, int? landing, int added)
+    {
+        var model = ModelOf(
+            (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Other) }),
+            (Other, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
+            (Ingredient, new[] { MineRoute(DayTable.Always.Delay(FloorDelay)) }));
+        AssertBest(FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model), counts, landing, added);
+    }
+
+    // A recipe needing the mine item AND a second item waits for the later of the two, so how much of
+    // the mine wait it inherits depends on which one is later. Values captured before the change.
+    [Theory]
+    [InlineData(64, 40, true, 68, 4)]    // second item early: the recipe inherits 4 of the 7 days
+    [InlineData(70, 40, true, 74, 4)]    // second item late: the recipe inherits none
+    [InlineData(64, 100, true, 64, 0)]
+    [InlineData(70, 100, true, 70, 0)]
+    [InlineData(64, 0, true, 72, 8)]
+    public void A_recipe_with_a_delayed_mine_ingredient_keeps_its_verdict(
+        int secondLands, int deepest, bool counts, int? landing, int added)
+    {
+        DayTable mine = DayTable.Always.Delay(FloorDelay);
+        DayTable second = DayTable.Available(d => d >= secondLands);
+        var recipe = new ObtainSource(SourceKind.Cooking, mine.Latest(second), Reliability.Dependable, ObtainConditions.None, "test")
+        {
+            Inputs = new IReadOnlyList<string>[] { new[] { Ingredient }, new[] { Other } },
+        };
+        var model = ModelOf(
+            (Item, new[] { recipe }),
+            (Ingredient, new[] { MineRoute(mine) }),
+            (Other, new[] { Route(available: d => d >= secondLands) }));
+        AssertBest(FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: deepest), model), counts, landing, added);
+    }
+
+    [Fact]
+    public void A_route_with_no_floor_and_no_mine_input_takes_nothing_back_out()
+    {
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Extreme, Save(),
+            Model(Route(SourceKind.MonsterDrop, requires: new[] { "location:SkullCave" }, available: d => d >= 70)));
+        Assert.Equal(70, verdict.Routes[0].LandingDay);
+        Assert.Equal(0, verdict.Routes[0].TravelDays);
+    }
+
     [Fact]
     public void Explain_names_every_route_and_the_verdict()
     {

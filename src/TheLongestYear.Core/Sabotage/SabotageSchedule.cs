@@ -1,4 +1,5 @@
 using System;
+using TheLongestYear.Core.Obtainability;
 
 namespace TheLongestYear.Core.Sabotage;
 
@@ -45,7 +46,7 @@ public static class SabotageTuning
     public static readonly int[] SkillDaysToLevel = { 0, 1, 2, 3, 5, 7, 10, 14, 19, 25, 32 };
     /// <summary>Regular mine: one day per this many floors below the deepest reached ("call it 10
     /// floors per day, we want it to be a stretch").</summary>
-    public const int MineFloorsPerDay = 10;
+    public const int MineFloorsPerDay = MineDepth.FloorsPerDay;
     /// <summary>A missing machine the player can craft costs this many days on Normal.</summary>
     public const int MachineCraftDays = 1;
     /// <summary>Skull Cavern is a condition, not a wait: Staircases need this Mining level.</summary>

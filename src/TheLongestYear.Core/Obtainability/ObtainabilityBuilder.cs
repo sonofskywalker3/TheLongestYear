@@ -47,6 +47,11 @@ public static class ObtainabilityBuilder
         direct.AddRange(CodeSources.GuildRewards(inputs.SlayerQuests));
         direct.AddRange(CodeSources.MagicBait());
         direct.AddRange(WorldSources.All());
+        // Mine depth goes into the landing day here, once, and only here: a direct route needing floor N
+        // lands the days it takes to get there from nothing later (ruling 2026-09-16), and everything
+        // made from it inherits that through its input's table, so no derived pass adds it again.
+        for (int i = 0; i < direct.Count; i++)
+            direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
 
         ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
