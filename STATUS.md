@@ -1,10 +1,36 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 (story: shrine-close freeze fixed; rewind walkers, skip button, auto-advance, no HUD)
+**Last updated:** 2026-09-16 evening (story: obtainability rulings applied; parked here while Jeff does bug fixes on master)
 **Branch:** `story`; everything committed AND pushed, nothing local-only
-**Tests:** 2445 passing
-**Build:** clean (Release, 0 errors); story HEAD `8ded0a9` deployed; game LEFT RUNNING minimized from my automated run on the throwaway save `None_449242173`, set to Spring 28 with 19 bundles owed (sleep plays the rewind)
+**Tests:** 2589 passing
+**Build:** clean (Release, 0 errors); story HEAD deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449242947` (Run 181)
 **Last public release:** 0.18.11
+
+## 2026-09-16 (afternoon): Jeff's obtainability rulings, built and live-checked
+
+Plan `docs/superpowers/plans/2026-09-16-obtainability-rulings.md`, rulings in the phase 2 spec's ruling
+log (2026-09-16 rows), commits `3104409`..`8d19e53` plus this docs commit. What changed: see TODO.md,
+"Obtainability phase 2", first bullet.
+
+Live checks (my automated run, throwaway save `None_449242947`):
+
+```
+Obtainability model: 1114 items in 3429 ms (read 24 ms), 7 pass(es), 45 unresolved source(s).
+tly_obtain compare: ... (1077 items: OnlyNew 606, NewEarlier 172, NewLater 9, LuckOnly 119, Agree 164, OnlyExisting 7; 45 unresolved).
+travelcheck: 267360 comparison(s) over 1114 item(s), 0 mismatch(es); built in 6656 ms, done in 877552 ms.
+```
+
+- **Darkness verdicts unchanged by the mine-depth work:** `tly_sabotage travelcheck` built the model
+  with and without mine travel and compared every item at 6 start days, 4 depths plus a bus save,
+  4 levels and both deadlines: 0 mismatches.
+- **Open, not run yet:** `tly_sabotage travelcheck save` on a developed farm (the empty-farm run only
+  tests made routes fully on Extreme). About 15 minutes; run it before the darkness live test.
+- **Cost to watch:** a fairness judgement averages about 3 ms on the real model (877 s over 267,360);
+  the model build on load went from about 1.5 s to 3.4 s (the reset reload reuses the cached build).
+- **Accepted limits:** Ostrich Egg has no year 1 route (ostrich not sold, incubator is an island
+  recipe); the Raccoon shop gate ignores the fed-raccoon condition; Blue Chicken counts as sold with
+  White Chicken (same eggs).
+- **Next on story:** the fish and machine repeatable-chance review (TODO), then Jeff's darkness live test.
 
 ## 2026-09-16: shrine-close freeze, rewind polish (Jeff approved: "I love it")
 

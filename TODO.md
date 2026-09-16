@@ -40,12 +40,21 @@ through an unresolved source, 45 unresolved sources (the run before the fixes wa
 177 / 5 / 137 / 7 / 606 / 146 / 21). Only 34 items moved, every one of them the Desert Festival stall
 fix. Nothing reads the model for gameplay yet.
 
-- **OPEN: Jeff rules on the rerun report: 326 items** (160 NewEarlier, 14 NewLater, 145 LuckOnly,
-  7 OnlyExisting; 331 / 173 / 14 / 137 / 7 before the Queen of Sauce commits). The grouped list with a
-  plain-English reason per group and the item ids is in
-  `.superpowers/sdd/2026-09-14-obtainability-phase2/final-fixes-report.md` sections 4 and 7.4; the
-  summary and the outliers are in the STATUS.md top section. Each ruling goes into the spec's ruling
-  log in its own small commit.
+- **CLOSED 2026-09-16: Jeff ruled on the whole rerun report.** Every row is in the spec's ruling log
+  (2026-09-16 rows); plan `docs/superpowers/plans/2026-09-16-obtainability-rulings.md`, commits
+  `3104409`..`8d19e53` on `story`. Built: repeatable chance routes (mine stones except diamond,
+  drops of 25% or better from placed mine monsters, fishing trash); weeds, trees, bushes, tilling and
+  mine floor finds; beach tide pools behind the bridge; Tea Sapling (Caroline 2 hearts) and Wild Bait
+  (Linus 4 hearts) plus the any-wild-seed ingredient; Mystery Box from the Qi plane; animals grow up
+  first and not-sold animals are owned-only; desert shops and the Raccoon shop gated in the darkness;
+  Magic Bait an island item; mine routes land after the days it takes to reach their floor (10 a day),
+  with the darkness judging every route on its undelayed table so its verdicts are unchanged at every
+  save depth (`tly_sabotage travelcheck` compares the two across the whole model).
+  Final live rerun (2026-09-16, throwaway save): OnlyNew 606, NewEarlier 172, NewLater 9, LuckOnly 119,
+  Agree 164, OnlyExisting 7, 45 unresolved; 42 items moved (Tea Leaves week 8 to 4, Fire Quartz luck to
+  week 2, Dinosaur Egg week 2 to luck, the rest in the session's before and after list). Model build
+  on load is now about 3.4 s (was 1.5 s); the reset reload reuses the cached build.
+- **NEXT (queued above): fish and machine output** get their own repeatable-chance review.
 - **CLOSED (`3feb9fe`): the mixed-input flag question** the fix wave raised. An input is now read
   under all four filter variants (plain, island, year 2, both) and each is derived separately with its
   own flags, so a year 2 or island row can never feed an answer that excludes it. Pinned by a test:
