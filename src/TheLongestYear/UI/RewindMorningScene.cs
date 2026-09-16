@@ -55,7 +55,7 @@ namespace TheLongestYear.UI
 
             string playerName = Game1.player?.Name ?? string.Empty;
             string line = Strings.Get("cutscene.rewind.morning").Replace("@", playerName);
-            ActiveBox = new EndingSpeechBox(PortraitFor(ClosingSpeaker), new List<string> { line });
+            ActiveBox = new EndingSpeechBox(PortraitFor(ClosingSpeaker), new List<string> { line }) { AutoAdvance = true };
         }
 
         /// <summary>The only line of the beat has finished, so the beat starts fading out. It does
@@ -92,7 +92,7 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            ActiveBox?.update(time);
+            ForwardToBox(box => box.update(time));   // an auto-advancing box can close itself here
         }
 
         public override void draw(SpriteBatch b)

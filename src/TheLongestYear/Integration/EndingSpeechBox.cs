@@ -27,6 +27,8 @@ namespace TheLongestYear.Integration
         private const int BottomMargin = 64;
         private const int CharMs = 22;
         private const int OpenGuardMs = 200;   // ignore the click that opened us
+        // Auto-advance reading time once a page is fully typed: a base plus a share per word.
+        private const int HoldBaseMs = 1500, HoldPerWordMs = 200;
 
         private readonly Texture2D _portrait;
         private readonly List<string> _pages;
@@ -35,6 +37,12 @@ namespace TheLongestYear.Integration
         private int _shown;
         private float _charTimer;
         private float _age;
+        private float _heldMs;
+
+        /// <summary>Turns the page by itself once the reader has had time to read it (the rewind,
+        /// Jeff 2026-09-16, so a click can mean "show me the skip button"). A click still turns it
+        /// early. Off for the ending, whose event script waits on the player.</summary>
+        public bool AutoAdvance { get; init; }
 
         public EndingSpeechBox(Texture2D portrait, List<string> pages)
         {
@@ -64,6 +72,7 @@ namespace TheLongestYear.Integration
             {
                 _page++;
                 _shown = 0;
+                _heldMs = 0f;
                 Resize();
                 return;
             }
@@ -90,7 +99,13 @@ namespace TheLongestYear.Integration
         {
             base.update(time);
             _age += time.ElapsedGameTime.Milliseconds;
-            if (PageDone) return;
+            if (PageDone)
+            {
+                if (!AutoAdvance) return;
+                _heldMs += time.ElapsedGameTime.Milliseconds;
+                if (_heldMs >= HoldMs(_pages[_page])) Advance();
+                return;
+            }
             _charTimer += time.ElapsedGameTime.Milliseconds;
             while (_charTimer >= CharMs && !PageDone)
             {
@@ -98,6 +113,9 @@ namespace TheLongestYear.Integration
                 _shown++;
             }
         }
+
+        private static int HoldMs(string page)
+            => HoldBaseMs + HoldPerWordMs * page.Split(' ', System.StringSplitOptions.RemoveEmptyEntries).Length;
 
         public override void draw(SpriteBatch b)
         {
