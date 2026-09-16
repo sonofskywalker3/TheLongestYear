@@ -6,6 +6,15 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### NEXT MASTER SESSION: option for the quantity multiplier to skip unique items (Jeff, 2026-09-16)
+Add a config option (GMCM too) so the Stack size / quantity multiplier leaves every unique item
+alone: anything a player can only get once per loop (limit 1 per loop, e.g. a legendary fish, a
+one-time reward) stays at 1 however high the multiplier is. Build it on `master` (a bug-fix and
+balance release), then merge `master` into `story` as usual. Before building: find how the board
+already knows an item is once-per-loop (catch limits, the legendary rules) and say which items the
+option would cover.
+
+
 ### Obtainability phase 2: Jeff rules on the rerun report before anything reads the model
 Phase 1 (2026-09-14, story branch, commits `811621c`..`46524b7`) built the model blind. Phase 2
 (2026-09-14 to 15, commits `639dd34`..`51ab859`, spec
