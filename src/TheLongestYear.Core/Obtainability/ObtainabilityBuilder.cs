@@ -10,13 +10,14 @@ public sealed record ObtainabilityBuild(ObtainabilityModel Model, int Passes, bo
 /// <summary>Builds the model: direct sources once, then grown and made sources over the previous pass's
 /// model, repeating until <see cref="SameTables"/> finds nothing changed (spec
 /// 2026-09-14-obtainability-phase2, section 1, "Chains settle by repeated passes").
-/// <para>What is proved: <see cref="SameTables"/> compares, per item, the Any and DependableOnly
-/// aggregates and the number of sources. Those two aggregates only ever move earlier, because each
-/// pass rebuilds every derived source from a model whose inputs land no later than last pass's, and
-/// an aggregate is the Earliest over them; with 112 day slots and finitely many items, they cannot
+/// <para>What is proved: <see cref="SameTables"/> compares, per item, the whole source list (a source's
+/// equality covers its table and its undelayed table), so a change seen only under an island, year 2
+/// or owned-only filter keeps the passes going. The filter aggregates only ever move earlier, because
+/// each pass rebuilds every derived source from a model whose inputs land no later than last pass's,
+/// and an aggregate is the Earliest over them; with 112 day slots and finitely many items, they cannot
 /// keep moving. That is a statement about the aggregates only. An individual Chance table is a
 /// per-start difference (<see cref="DayTable.Except"/>) and can move either way as the dependable
-/// half moves, and the source count can rise or fall with it, so neither is proved to settle.
+/// half moves, and the source list can change with it, so it is not proved to settle.
 /// <see cref="MaxPasses"/> bounds those; a build that hits the cap reports
 /// <see cref="ObtainabilityBuild.HitPassCap"/> rather than claiming it converged.</para></summary>
 public static class ObtainabilityBuilder
@@ -97,9 +98,7 @@ public static class ObtainabilityBuilder
     {
         if (a.Count != b.Count) return false;
         foreach (string id in b.ItemIds)
-            if (a.Sources(id).Count != b.Sources(id).Count
-                || !a.Table(id, ObtainFilter.Any).Equals(b.Table(id, ObtainFilter.Any))
-                || !a.Table(id, ObtainFilter.DependableOnly).Equals(b.Table(id, ObtainFilter.DependableOnly)))
+            if (!a.Sources(id).SequenceEqual(b.Sources(id)))
                 return false;
         return true;
     }

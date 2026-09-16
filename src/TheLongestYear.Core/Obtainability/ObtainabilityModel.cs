@@ -62,6 +62,16 @@ public sealed class ObtainabilityModel
         return table;
     }
 
+    /// <summary>The same Earliest over each accepted source's table with no mine travel
+    /// (<see cref="ObtainSource.Undelayed"/>).</summary>
+    public DayTable UndelayedTable(string itemId, ObtainFilter filter)
+    {
+        DayTable table = DayTable.None;
+        foreach (ObtainSource source in Sources(itemId))
+            if (filter.Accepts(source)) table = table.Earliest(source.Undelayed);
+        return table;
+    }
+
     public int? Lands(string itemId, int startDay, ObtainFilter filter) => Table(itemId, filter).Lands(startDay);
 
     public bool CanObtain(string itemId, int startDay, int deadlineDay, ObtainFilter filter)

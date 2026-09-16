@@ -19,11 +19,29 @@ namespace TheLongestYear.Core.Obtainability;
 /// tables come from exactly that filter, the chain applied to them is monotone in the input table,
 /// and a variant's sources are counted only when F includes the variant's flags. A year 2 row, or an
 /// owned-only row (a not-sold animal's produce), can therefore never reach an answer that excludes
-/// it.</para></summary>
+/// it.</para>
+/// <para><b>Undelayed tables.</b> Every variant also carries the input's tables from before the mine
+/// travel (<see cref="MineDepth"/>): the same Earliest, read over each source's
+/// <see cref="ObtainSource.UndelayedLands"/> where it has one. The chain is applied to both, so a
+/// derived source's <see cref="ObtainSource.UndelayedLands"/> is exactly what the model would have
+/// said for it with no travel anywhere, and the same property holds for the undelayed side.</para></summary>
 public static class Derived
 {
-    /// <summary>One filter variant of an input: its two tables, and the flags that name it.</summary>
-    public sealed record Variant(bool GingerIsland, bool YearTwo, bool OwnedOnly, DayTable Dependable, DayTable Any)
+    /// <summary>A dependable table and an any table, read the same way.</summary>
+    public sealed record Tables(DayTable Dependable, DayTable Any)
+    {
+        public static readonly Tables None = new(DayTable.None, DayTable.None);
+
+        public bool IsEmpty => Any.IsEmpty && Dependable.IsEmpty;
+
+        public Tables Earliest(Tables other) => new(Dependable.Earliest(other.Dependable), Any.Earliest(other.Any));
+
+        public Tables Latest(Tables other) => new(Dependable.Latest(other.Dependable), Any.Latest(other.Any));
+    }
+
+    /// <summary>One filter variant of an input: its tables with and without the mine travel, and the
+    /// flags that name it.</summary>
+    public sealed record Variant(bool GingerIsland, bool YearTwo, bool OwnedOnly, Tables Delayed, Tables Undelayed)
     {
         public ObtainConditions Flag(ObtainConditions conditions)
             => conditions with
@@ -33,13 +51,30 @@ public static class Derived
                 OwnedOnly = conditions.OwnedOnly || OwnedOnly,
             };
 
-        public bool SameTables(Variant other) => Dependable.Equals(other.Dependable) && Any.Equals(other.Any);
+        public bool SameTables(Variant other) => Delayed.Equals(other.Delayed) && Undelayed.Equals(other.Undelayed);
 
-        public bool IsEmpty => Any.IsEmpty && Dependable.IsEmpty;
+        public bool IsEmpty => Delayed.IsEmpty && Undelayed.IsEmpty;
+
+        /// <summary>True when this variant needs no flag <paramref name="other"/> does not need.</summary>
+        public bool Within(Variant other) => Within(other.GingerIsland, other.YearTwo, other.OwnedOnly);
+
+        public bool Within(bool gingerIsland, bool yearTwo, bool ownedOnly)
+            => (!GingerIsland || gingerIsland) && (!YearTwo || yearTwo) && (!OwnedOnly || ownedOnly);
+
+        public bool Named(bool gingerIsland, bool yearTwo, bool ownedOnly)
+            => GingerIsland == gingerIsland && YearTwo == yearTwo && OwnedOnly == ownedOnly;
     }
 
+    /// <summary>Every flag combination, lesser before greater (a variant's flags are a bit subset of
+    /// any later one's only if they come first), which <see cref="Input"/>'s trim relies on.</summary>
+    private static readonly (bool Island, bool YearTwo, bool OwnedOnly)[] AllFlags =
+    {
+        (false, false, false), (false, false, true), (false, true, false), (false, true, true),
+        (true, false, false), (true, false, true), (true, true, false), (true, true, true),
+    };
+
     /// <summary>An input read under every filter variant that says something new. The plain variant
-    /// (no island, no year 2) is always first and is the fallback when a variant is missing.</summary>
+    /// (no island, no year 2, not owned-only) is always first.</summary>
     public sealed record Input(IReadOnlyList<Variant> Variants)
     {
         private const bool Plain = false;
@@ -60,29 +95,49 @@ public static class Derived
         /// the permissive side, so it is recorded rather than modelled.</para></summary>
         public IReadOnlyList<IReadOnlyList<string>> Groups { get; init; } = Array.Empty<IReadOnlyList<string>>();
 
-        private static Input Of(DayTable both) => new(new[] { new Variant(Plain, Plain, Plain, both, both) });
+        private static Input Of(DayTable both)
+        {
+            var tables = new Tables(both, both);
+            return new(new[] { new Variant(Plain, Plain, Plain, tables, tables) });
+        }
 
         public Variant PlainVariant => Variants[0];
 
-        public bool IsEmpty => Variants.All(v => v.Any.IsEmpty);
+        public bool IsEmpty => Variants.All(v => v.Delayed.Any.IsEmpty && v.Undelayed.Any.IsEmpty);
 
-        /// <summary>The variant with these exact flags, or the plain one when this input has nothing
-        /// of its own to say about them.</summary>
+        /// <summary>The input under exactly these flags. A combination the trim dropped said nothing a
+        /// lesser one had not, so it is rebuilt as the Earliest over every kept variant whose flags it
+        /// includes: a filter with more flags counts every source a lesser one does, so each of those is
+        /// no sooner than the dropped variant, and the one it was dropped for equals it.</summary>
         public Variant For(bool gingerIsland, bool yearTwo, bool ownedOnly)
-            => Variants.FirstOrDefault(v => v.GingerIsland == gingerIsland && v.YearTwo == yearTwo && v.OwnedOnly == ownedOnly)
-               ?? PlainVariant;
+        {
+            Variant? exact = Variants.FirstOrDefault(v => v.Named(gingerIsland, yearTwo, ownedOnly));
+            if (exact != null) return exact;
+            Tables delayed = Tables.None;
+            Tables undelayed = Tables.None;
+            foreach (Variant v in Variants.Where(v => v.Within(gingerIsland, yearTwo, ownedOnly)))
+            {
+                delayed = delayed.Earliest(v.Delayed);
+                undelayed = undelayed.Earliest(v.Undelayed);
+            }
+            return new Variant(gingerIsland, yearTwo, ownedOnly, delayed, undelayed);
+        }
 
         /// <summary>One derived source group per variant: <paramref name="chain"/> is the same
-        /// start-to-landing maths for each, applied to that variant's tables, with its flags ORed onto
-        /// the conditions. <paramref name="luck"/> forces the dependable half away (a random output, a
-        /// chance roll), exactly as the single-table callers used to.</summary>
+        /// start-to-landing maths for each, applied to that variant's tables (with and without the mine
+        /// travel), with its flags ORed onto the conditions. <paramref name="luck"/> forces the
+        /// dependable half away (a random output, a chance roll), exactly as the single-table callers
+        /// used to.</summary>
         public IEnumerable<ObtainSource> Emit(
             SourceKind kind, Func<DayTable, DayTable> chain, ObtainConditions conditions, string detail,
             IReadOnlyList<SetupStep>? setup = null, bool luck = false)
         {
             foreach (Variant v in Variants)
                 foreach (ObtainSource source in SourcePair.Of(
-                    kind, luck ? DayTable.None : chain(v.Dependable), chain(v.Any), v.Flag(conditions), detail, setup))
+                    kind,
+                    luck ? DayTable.None : chain(v.Delayed.Dependable), chain(v.Delayed.Any),
+                    luck ? DayTable.None : chain(v.Undelayed.Dependable), chain(v.Undelayed.Any),
+                    v.Flag(conditions), detail, setup))
                     yield return source with { Inputs = Groups };
         }
 
@@ -92,15 +147,13 @@ public static class Derived
         {
             if (IsEmpty) return other;
             if (other.IsEmpty) return this;
-            return Combine(other, (a, b) => (a.Dependable.Earliest(b.Dependable), a.Any.Earliest(b.Any)),
-                Merge(Groups, other.Groups));
+            return Combine(other, (a, b) => a.Earliest(b), Merge(Groups, other.Groups));
         }
 
         /// <summary>Both inputs are needed (a recipe's ingredients): variant by variant, the later
         /// landing, never when either side never lands, and both sides' groups kept side by side.</summary>
         public Input Both(Input other)
-            => Combine(other, (a, b) => (a.Dependable.Latest(b.Dependable), a.Any.Latest(b.Any)),
-                Groups.Concat(other.Groups).ToList());
+            => Combine(other, (a, b) => a.Latest(b), Groups.Concat(other.Groups).ToList());
 
         /// <summary>One group holding every id of both sides (see the limitation on <see cref="Groups"/>).</summary>
         private static IReadOnlyList<IReadOnlyList<string>> Merge(
@@ -110,18 +163,18 @@ public static class Derived
             return ids.Count == 0 ? Array.Empty<IReadOnlyList<string>>() : new IReadOnlyList<string>[] { ids };
         }
 
+        /// <summary>Combines the two sides under every flag combination, not only the ones either side
+        /// kept: an island-only side joined with a year 2-only side says something new under island
+        /// plus year 2 that neither says alone. The trim drops what adds nothing.</summary>
         private Input Combine(
-            Input other, Func<Variant, Variant, (DayTable Dependable, DayTable Any)> f,
-            IReadOnlyList<IReadOnlyList<string>> groups)
+            Input other, Func<Tables, Tables, Tables> f, IReadOnlyList<IReadOnlyList<string>> groups)
         {
-            var keys = new List<(bool Island, bool YearTwo, bool OwnedOnly)> { (false, false, false) };
-            foreach (Variant v in Variants.Concat(other.Variants))
-                if (!keys.Contains((v.GingerIsland, v.YearTwo, v.OwnedOnly))) keys.Add((v.GingerIsland, v.YearTwo, v.OwnedOnly));
             var built = new List<Variant>();
-            foreach ((bool island, bool yearTwo, bool ownedOnly) in keys)
+            foreach ((bool island, bool yearTwo, bool ownedOnly) in AllFlags)
             {
-                (DayTable dependable, DayTable any) = f(For(island, yearTwo, ownedOnly), other.For(island, yearTwo, ownedOnly));
-                built.Add(new Variant(island, yearTwo, ownedOnly, dependable, any));
+                Variant a = For(island, yearTwo, ownedOnly);
+                Variant b = other.For(island, yearTwo, ownedOnly);
+                built.Add(new Variant(island, yearTwo, ownedOnly, f(a.Delayed, b.Delayed), f(a.Undelayed, b.Undelayed)));
             }
             return new Input(Trim(built)) { Groups = groups };
         }
@@ -132,38 +185,35 @@ public static class Derived
         {
             var kept = new List<Variant> { all[0] };
             foreach (Variant v in all.Skip(1))
-                if (!kept.Any(k => LessThan(k, v) && k.SameTables(v)))
+                if (!kept.Any(k => k.Within(v) && k.SameTables(v)))
                     kept.Add(v);
             return kept;
         }
-
-        /// <summary>A variant is lesser when it needs no flag the other does not need.</summary>
-        private static bool LessThan(Variant lesser, Variant v)
-            => (!lesser.GingerIsland || v.GingerIsland) && (!lesser.YearTwo || v.YearTwo) && (!lesser.OwnedOnly || v.OwnedOnly)
-               && (lesser.GingerIsland != v.GingerIsland || lesser.YearTwo != v.YearTwo || lesser.OwnedOnly != v.OwnedOnly);
 
         internal static Input FromVariants(IReadOnlyList<Variant> all, IReadOnlyList<IReadOnlyList<string>> groups)
             => new(Trim(all)) { Groups = groups };
     }
 
     /// <summary>One input id read out of the previous pass's model, under all eight filter variants
-    /// (island x year 2 x owned-only).</summary>
+    /// (island x year 2 x owned-only), with and without the mine travel.</summary>
     public static Input Of(ObtainabilityModel snapshot, string itemId)
     {
-        Variant Read(bool island, bool yearTwo, bool owned) => new(island, yearTwo, owned,
-            snapshot.Table(itemId, ObtainFilter.DependableOnly with
-            {
-                IncludeGingerIsland = island, IncludeYearTwo = yearTwo, IncludeOwnedOnly = owned,
-            }),
-            snapshot.Table(itemId, ObtainFilter.Any with
-            {
-                IncludeGingerIsland = island, IncludeYearTwo = yearTwo, IncludeOwnedOnly = owned,
-            }));
+        if (snapshot is null) throw new ArgumentNullException(nameof(snapshot));
         var variants = new List<Variant>();
-        foreach (bool island in new[] { false, true })
-            foreach (bool yearTwo in new[] { false, true })
-                foreach (bool owned in new[] { false, true })
-                    variants.Add(Read(island, yearTwo, owned));
+        foreach ((bool island, bool yearTwo, bool owned) in AllFlags)
+        {
+            ObtainFilter dependable = ObtainFilter.DependableOnly with
+            {
+                IncludeGingerIsland = island, IncludeYearTwo = yearTwo, IncludeOwnedOnly = owned,
+            };
+            ObtainFilter any = ObtainFilter.Any with
+            {
+                IncludeGingerIsland = island, IncludeYearTwo = yearTwo, IncludeOwnedOnly = owned,
+            };
+            variants.Add(new Variant(island, yearTwo, owned,
+                new Tables(snapshot.Table(itemId, dependable), snapshot.Table(itemId, any)),
+                new Tables(snapshot.UndelayedTable(itemId, dependable), snapshot.UndelayedTable(itemId, any))));
+        }
         return Input.FromVariants(variants, new IReadOnlyList<string>[] { new[] { itemId } });
     }
 

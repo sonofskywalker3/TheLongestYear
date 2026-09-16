@@ -485,7 +485,7 @@ public class FairnessRuleTests
     // Task 2b (2026-09-16): the model now delays a mine route by the days it takes to get there from
     // nothing. The values below were captured from the rule BEFORE that change, with undelayed tables,
     // and the rule must give exactly the same verdicts, landing days and setup days for the tables the
-    // builder emits now.
+    // builder emits now: a delayed table beside the undelayed one, on direct and made routes alike.
     private const int DeepFloor = 80;
     private const int TightDeadline = 66;
     private static readonly int FloorDelay = MineDepth.DaysToReach(DeepFloor);
@@ -496,11 +496,17 @@ public class FairnessRuleTests
         => MineDepth.WithTravel(new(SourceKind.MineNode, DayTable.Always, Reliability.Dependable,
             ObtainConditions.None with { Requires = new[] { MineDepth.FloorPrefix + DeepFloor } }, "test"));
 
-    private static ObtainSource MachineRoute(DayTable lands, string input)
+    /// <summary>A machine route as the builder emits it: its delayed table, and the same chain applied
+    /// to its input's undelayed table.</summary>
+    private static ObtainSource MachineRoute(DayTable lands, DayTable undelayed, string input)
         => new(SourceKind.Machine, lands, Reliability.Dependable, ObtainConditions.None, "test")
         {
             Inputs = new IReadOnlyList<string>[] { new[] { input } },
+            UndelayedLands = undelayed.Equals(lands) ? null : undelayed,
         };
+
+    private static ObtainSource MachineOnMine(string input)
+        => MachineRoute(DayTable.Always.Delay(FloorDelay), DayTable.Always, input);
 
     public static TheoryData<DifficultyStep, int, int, bool, int?, int> MineDepthBefore() => Before(derived: false);
 
@@ -588,20 +594,39 @@ public class FairnessRuleTests
     }
 
     [Fact]
-    public void A_route_made_from_a_mine_item_is_skipped_once_its_table_runs_past_the_year()
+    public void A_route_made_from_a_mine_item_still_counts_once_its_delayed_table_runs_past_the_year()
     {
-        // Known limitation: a made route's own table is the delayed one, so from start day
-        // 113 - travel it never lands, and the rule skips it even for a save deep enough to have
-        // counted it before (the pre-2b rule counted this, landing day 109). It can only make the
-        // darkness skip an item, never charge the player unfairly.
+        // The made route's delayed table never lands from start day 113 - travel, but it is judged on
+        // its undelayed table, so a save deep enough counts it on the pre-2b day (109).
         var model = ModelOf(
-            (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
+            (Item, new[] { MachineOnMine(Ingredient) }),
             (Ingredient, new[] { MineRoute() }));
-        FairnessVerdict late = FairnessRule.Judge(Item, WinterWeek4Hit, Deadline, DifficultyStep.Normal, Save(floor: 100), model);
-        AssertBest(late, false, null, 0);
-        Assert.StartsWith("never lands", late.Routes[0].Reason);
-        // A week earlier the made table still lands (day 112) and the inherited travel comes back out.
+        AssertBest(FairnessRule.Judge(Item, WinterWeek4Hit, Deadline, DifficultyStep.Normal, Save(floor: 100), model), true, 109, 0);
         AssertBest(FairnessRule.Judge(Item, WinterWeek3Hit, Deadline, DifficultyStep.Normal, Save(floor: 100), model), true, 105, 0);
+    }
+
+    [Fact]
+    public void A_recipe_taught_after_its_mine_ingredient_lands_on_the_teaching_day()
+    {
+        // A floor 80 ingredient, a recipe the TV teaches on day 63, a start on day 20, a save at floor
+        // 100: the pre-2b rule said day 63. Taking the travel back out of the gated table must not
+        // move the landing before the episode (the credit approach said day 56).
+        const int TaughtDay = 63;
+        const int HitBeforeStart = 19;
+        ObtainSource mine = MineRoute();
+        var snapshot = ModelOf((Ingredient, new[] { mine }));
+        DayTable tv = DayTable.Available(d => d >= TaughtDay);
+        ObtainConditions tvConditions = ObtainConditions.None with
+        {
+            Requires = new[] { "recipe:Test", "unlock:Queen of Sauce episode 9 (Sunday of week 9)" },
+        };
+        ObtainSource[] recipe = Derived.Input.Free.Both(Derived.Of(snapshot, Ingredient))
+            .Emit(SourceKind.Cooking, t => t.Latest(tv), tvConditions, "test").ToArray();
+        var model = ModelOf((Item, recipe), (Ingredient, new[] { mine }));
+        foreach (DifficultyStep level in new[] { DifficultyStep.Normal, DifficultyStep.Hard, DifficultyStep.Extreme })
+            AssertBest(FairnessRule.Judge(Item, HitBeforeStart, Deadline, level, Save(floor: 100), model), true, TaughtDay, 0);
+        // Floor 40: the ingredient still needs 4 days, and those are added after the episode.
+        AssertBest(FairnessRule.Judge(Item, HitBeforeStart, Deadline, DifficultyStep.Normal, Save(floor: 40), model), true, TaughtDay + 4, 4);
     }
 
     [Theory]
@@ -610,7 +635,7 @@ public class FairnessRuleTests
         DifficultyStep level, int deepest, int deadline, bool counts, int? landing, int added)
     {
         var model = ModelOf(
-            (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
+            (Item, new[] { MachineOnMine(Ingredient) }),
             (Ingredient, new[] { MineRoute() }));
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model);
         // Easy with the floor unreached: the machine is out because its input is, as before.
@@ -624,14 +649,14 @@ public class FairnessRuleTests
         DifficultyStep level, int deepest, int deadline, bool counts, int? landing, int added)
     {
         var model = ModelOf(
-            (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Other) }),
-            (Other, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
+            (Item, new[] { MachineOnMine(Other) }),
+            (Other, new[] { MachineOnMine(Ingredient) }),
             (Ingredient, new[] { MineRoute() }));
         AssertBest(FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model), counts, landing, added);
     }
 
-    // A recipe needing the mine item AND a second item waits for the later of the two, so how much of
-    // the mine wait it inherits depends on which one is later. Values captured before the change.
+    // A recipe needing the mine item AND a second item waits for the later of the two. Values captured
+    // before the change.
     [Theory]
     [InlineData(64, 40, true, 68, 4)]    // second item early: the recipe inherits 4 of the 7 days
     [InlineData(70, 40, true, 74, 4)]    // second item late: the recipe inherits none
@@ -646,6 +671,7 @@ public class FairnessRuleTests
         var recipe = new ObtainSource(SourceKind.Cooking, mine.Latest(second), Reliability.Dependable, ObtainConditions.None, "test")
         {
             Inputs = new IReadOnlyList<string>[] { new[] { Ingredient }, new[] { Other } },
+            UndelayedLands = DayTable.Always.Latest(second),
         };
         var model = ModelOf(
             (Item, new[] { recipe }),
@@ -654,9 +680,9 @@ public class FairnessRuleTests
         AssertBest(FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: deepest), model), counts, landing, added);
     }
 
-    // An input with two routes: the machine's table was built from the input's COMBINED table, so the
-    // wait it inherited is the combined table's, whichever route this save can use. Values from the
-    // pre-2b rule (83f8c3b), where the combined table was day 61 and the machine day 64.
+    // An input with two routes: the machine's tables were built from the input's COMBINED tables,
+    // whichever route this save can use. Values from the pre-2b rule (83f8c3b), where the combined
+    // table was day 61 and the machine day 64.
     private const int MachineDays = 3;
 
     [Theory]
@@ -673,7 +699,8 @@ public class FairnessRuleTests
             mine = mine with { Conditions = mine.Conditions with { Requires = mine.Conditions.Requires.Append(Unusable).ToList() } };
         ObtainSource other = Route(available: d => d >= otherLands, requires: mineBlocked ? null : new[] { Unusable });
         var model = ModelOf(
-            (Item, new[] { MachineRoute(mine.Lands.Earliest(other.Lands).Delay(MachineDays), Ingredient) }),
+            (Item, new[] { MachineRoute(mine.Lands.Earliest(other.Lands).Delay(MachineDays),
+                mine.Undelayed.Earliest(other.Undelayed).Delay(MachineDays), Ingredient) }),
             (Ingredient, new[] { mine, other }));
         AssertBest(FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: deepest), model), true, landing, added);
     }

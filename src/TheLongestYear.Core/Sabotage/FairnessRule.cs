@@ -111,10 +111,11 @@ public static class FairnessRule
         }
         if (source.Reliability == Reliability.Chance && !policy.AllowChance) return Out(source, "chance route");
         if (c.Unresolved && !policy.AllowUnresolved) return Out(source, "unresolved route (a guess)");
-        // A direct mine route is judged on its table from before the builder added the from-nothing
-        // travel: the save's real depth is priced below instead (a reached floor free, an unreached one
-        // MineGapDays, out on Easy), and the delayed table has lost every landing pushed past day 112.
-        int? landing = (source.UndelayedLands ?? source.Lands).Lands(startDay);
+        // Every route is judged on its table with no mine travel in it (the builder keeps it beside
+        // the delayed one, for direct and made routes alike): the save's real depth is priced below
+        // instead (a reached floor free, an unreached one MineGapDays, out on Easy; a made route's
+        // inputs through inputDays), and the delayed table has lost every landing pushed past day 112.
+        int? landing = source.Undelayed.Lands(startDay);
         if (landing is null) return Out(source, $"never lands from day {startDay}");
 
         int added = NoDays;
@@ -131,17 +132,8 @@ public static class FairnessRule
         string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth, ref inputDays);
         if (missing != null) return Out(source, missing);
         added += inputDays;
-        // A made route's table inherits its inputs' from-nothing mine travel (MineTravelCredit reads it
-        // off the inputs' combined tables, as the builder did), while each input's real depth is already
-        // in inputDays. Take the inherited wait back out so it is not charged twice. This sits outside
-        // the conditions check on purpose: Extreme ignores the floor, so it must not pay the from-nothing
-        // wait either. The clamp keeps the landing from going before the start day; with built tables
-        // it never binds, because a combined landing rebuilt without travel is never before its start.
-        int travel = source.Inputs.Count == 0
-            ? NoDays
-            : Math.Min(MineTravelCredit.Inherited(source, startDay, model), landing.Value - startDay);
         // Setup days are added after the landing rather than shifting the start; an accepted approximation.
-        int lands = landing.Value + added - travel;
+        int lands = landing.Value + added;
         bool counts = lands <= deadlineDay;
         string reason = counts
             ? (added > NoDays
