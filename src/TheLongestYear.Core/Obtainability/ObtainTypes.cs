@@ -87,24 +87,31 @@ public sealed record ObtainSource(
     /// route to every existing consumer, and Distinct() keeps merging them as it always has.</para></summary>
     public IReadOnlyList<IReadOnlyList<string>> Inputs { get; init; } = Array.Empty<IReadOnlyList<string>>();
 
-    /// <summary>The table as it was before the builder added the days it takes to reach this route's
-    /// mine floor from nothing (<see cref="MineDepth"/>); null when no such days were added. A
-    /// consumer that knows the player's real depth judges the route on this table, because the delayed
-    /// one loses every landing pushed past the end of the year.
-    /// <para>Outside <see cref="Equals(ObtainSource?)"/> and <see cref="GetHashCode"/>, like
-    /// <see cref="Inputs"/>: <see cref="Lands"/> already tells two routes apart. Distinct() keeps the
-    /// first of two equal delayed sources, whose undelayed tables could differ only past day 112 (no
-    /// such pair exists in today's data).</para></summary>
+    /// <summary>The table as it would be with no mine travel anywhere (<see cref="MineDepth"/>): on a
+    /// direct route, the table before the builder added the days it takes to reach its floor from
+    /// nothing; on a made route, the chain applied to its inputs' undelayed tables. Null when it equals
+    /// <see cref="Lands"/>. A consumer that knows the player's real depth judges the route on this table,
+    /// because the delayed one loses every landing pushed past the end of the year, and a made route
+    /// can exist with an empty <see cref="Lands"/> for that reason alone.
+    /// <para>Part of <see cref="Equals(ObtainSource?)"/>, compared as <c>UndelayedLands ?? Lands</c>, so
+    /// Distinct() never merges two routes that only this table tells apart.</para>
+    /// <para><b>Careful:</b> a future <c>source with { Lands = ... }</c> keeps the old undelayed table,
+    /// which is then stale; clear it (or set it) in the same expression.</para></summary>
     public DayTable? UndelayedLands { get; init; }
 
     public bool Equals(ObtainSource? other)
         => other is not null && Kind == other.Kind && Lands.Equals(other.Lands) && Reliability == other.Reliability
-           && Conditions.Equals(other.Conditions) && Detail == other.Detail && Setup.SequenceEqual(other.Setup);
+           && Conditions.Equals(other.Conditions) && Detail == other.Detail && Setup.SequenceEqual(other.Setup)
+           && Undelayed.Equals(other.Undelayed);
+
+    /// <summary>The table with no mine travel: <see cref="UndelayedLands"/>, or <see cref="Lands"/> when
+    /// none was kept.</summary>
+    public DayTable Undelayed => UndelayedLands ?? Lands;
 
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        hash.Add(Kind); hash.Add(Lands); hash.Add(Reliability); hash.Add(Conditions); hash.Add(Detail);
+        hash.Add(Kind); hash.Add(Lands); hash.Add(Reliability); hash.Add(Conditions); hash.Add(Detail); hash.Add(Undelayed);
         foreach (SetupStep s in Setup) hash.Add(s);
         return hash.ToHashCode();
     }
@@ -117,12 +124,28 @@ public static class SourcePair
     public static IEnumerable<ObtainSource> Of(
         SourceKind kind, DayTable dependable, DayTable any, ObtainConditions conditions, string detail,
         IReadOnlyList<SetupStep>? setup = null)
+        => Of(kind, dependable, any, dependable, any, conditions, detail, setup);
+
+    /// <summary>The same split, done on the tables with and without the mine travel side by side. A
+    /// half is emitted when either of its tables lands, so a route whose delayed table ran past the end
+    /// of the year is still there for a consumer that judges the undelayed one.</summary>
+    public static IEnumerable<ObtainSource> Of(
+        SourceKind kind, DayTable dependable, DayTable any, DayTable undelayedDependable, DayTable undelayedAny,
+        ObtainConditions conditions, string detail, IReadOnlyList<SetupStep>? setup = null)
     {
         IReadOnlyList<SetupStep> steps = setup ?? Array.Empty<SetupStep>();
-        if (!dependable.IsEmpty)
-            yield return new ObtainSource(kind, dependable, Reliability.Dependable, conditions, detail) { Setup = steps };
+        ObtainSource Make(DayTable lands, DayTable undelayed, Reliability reliability)
+            => new(kind, lands, reliability, conditions, detail)
+            {
+                Setup = steps,
+                UndelayedLands = undelayed.Equals(lands) ? null : undelayed,
+            };
+
+        if (!dependable.IsEmpty || !undelayedDependable.IsEmpty)
+            yield return Make(dependable, undelayedDependable, Reliability.Dependable);
         DayTable luckOnly = any.Except(dependable);
-        if (!luckOnly.IsEmpty)
-            yield return new ObtainSource(kind, luckOnly, Reliability.Chance, conditions, detail) { Setup = steps };
+        DayTable undelayedLuckOnly = undelayedAny.Except(undelayedDependable);
+        if (!luckOnly.IsEmpty || !undelayedLuckOnly.IsEmpty)
+            yield return Make(luckOnly, undelayedLuckOnly, Reliability.Chance);
     }
 }

@@ -7,14 +7,14 @@ namespace TheLongestYear.Core.Obtainability;
 /// a route needing floor N lands <see cref="DaysToReach"/> days after its start day.
 /// <para>The builder builds the wait into every direct route's table once (<see cref="WithTravel"/>),
 /// keeping the table it had before in <see cref="ObtainSource.UndelayedLands"/>, and a route made from
-/// a mine item inherits the wait through its input's table. A consumer that knows the player's real
-/// depth judges a direct route on its undelayed table, which is exact. For a made route it can only
-/// take back the wait its table inherited, read off each input's combined table (every route of the
-/// input, as the made table was built): that is exact for chains that pass an input's landing straight
-/// through (a machine's processing days, a recipe's ingredients), however many routes an input has, and
-/// approximate, by a few days either way, through a chain that rounds to a later window (a weekly or
-/// seasonal gate). A made route also loses its landings past the end of the year with its inputs',
-/// which can only make a consumer skip it.</para></summary>
+/// a mine item inherits the wait through its input's table. Every derived source also carries an
+/// undelayed table of its own: <see cref="Derived"/> reads each input twice, once over the routes'
+/// tables and once over their undelayed tables, and applies the same chain to both (a machine's days, a
+/// recipe's other ingredients, a TV episode or a shop week). So a made route's undelayed table is
+/// exactly the table the model would give it with no travel anywhere, gates included, and a consumer
+/// that knows the player's real depth judges every route, direct or made, on its undelayed table and
+/// prices the depth itself. A made route whose delayed table ran past the end of the year is still
+/// emitted when its undelayed table lands.</para></summary>
 public static class MineDepth
 {
     public const int FloorsPerDay = 10;
@@ -43,7 +43,7 @@ public static class MineDepth
     /// floor on a route made from no item (a direct route), and none on a route made from items, whose
     /// wait arrives through its inputs' tables instead. Every direct source has no inputs and every
     /// derived source that could name a floor has at least one, so this one test is what the builder
-    /// applies and what a consumer takes back out.</summary>
+    /// applies.</summary>
     public static int DaysBuiltIn(ObtainSource source)
     {
         if (source is null) throw new ArgumentNullException(nameof(source));
