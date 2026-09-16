@@ -6,6 +6,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### NEXT ON MASTER, release before the story update (Jeff, 2026-09-16): Cookbook and Craftbook slots work like the stash
+Today the two recipe books start with 0 slots and their tiers give 5, 10, 20 (`UpgradeCatalog.CookbookSlotCount`
+/ `CraftbookSlotCount`, 150 / 350 / 700 JP). The Junimo Stash starts at 4 and each tier adds 4 (4 / 8 / 12 / 16,
+`MetaState.StashSlotCount`). Jeff: a book handed over with no pages "doesn't fit"; redo the books like the
+stash: **4 free slots from day 1, each tier adds 4.** Raised while designing the story opening (the Junimos
+hand you the three books in the new farm scene and explain them), but it ships on master first, as its
+own release. Open call for Jeff before building, recommendation first:
+1. Three tiers at 4 / 8 / 12 / 16 and grandfather the overflow: recipes already banked stay banked and usable,
+   the book only refuses new ones while over the cap. Matches the stash exactly. (Recommended.)
+2. Four tiers, 4 / 8 / 12 / 16 / 20, new top price to tune.
+3. Three tiers at 4 / 8 / 14 / 20, keeps the ceiling but breaks the "each level adds four" rule.
+Either way: GMCM and shop descriptions (`upgrade.cookbook_N.desc`, `upgrade.craftbook_N.desc`) say the
+new totals, the Bundle Log is unchanged, prices stay unless Jeff says otherwise, and the story branch
+merges master in afterwards so the opening scene can rely on the free slots.
+
 ### Sweep 2026-09-16 (Nexus bugs + posts, Reddit x4, GitHub x4): nothing waiting on a reply
 
 Everything reported between 0.18.1 and 0.18.11 was fixed and answered by Jeff on 15 Sep (see
