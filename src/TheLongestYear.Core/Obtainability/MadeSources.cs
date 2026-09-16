@@ -20,6 +20,10 @@ public static class MadeSources
     private const int FriendshipPerPetting = 15;   // FarmAnimal.cs 733
     private const string FishPondBuilding = "Fish Pond";
     private static readonly string[] MushroomLogItems = { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" };
+    /// <summary>Recipe ingredient code for "any wild seed packet" (CraftingRecipe.cs 16, matched at 209):
+    /// Spring, Summer, Fall or Winter Seeds.</summary>
+    private const string AnyWildSeed = "-777";
+    private static readonly string[] WildSeedIds = { "(O)495", "(O)496", "(O)497", "(O)498" };
     private static readonly string[] KnownFromStartWords = { "default", "" };
     private static readonly string[] TaughtElsewhereWords = { "none", "null" };
     /// <summary>A cooking recipe unlocked by farmhouse level ("l 0", "l 100") has no automatic unlock
@@ -359,6 +363,8 @@ public static class MadeSources
     private static Derived.Input IngredientWeeks(
         string ingredient, IReadOnlyDictionary<string, ObjInfo> objects, ObtainabilityModel snapshot)
     {
+        if (ingredient == AnyWildSeed)
+            return Derived.Sooner(WildSeedIds.Select(id => Derived.Of(snapshot, id)));
         if (!int.TryParse(ingredient, out int category) || category >= 0)
             return Derived.Of(snapshot, ingredient);
         return Derived.Sooner(objects.Values.Where(o => o.Category == category).Select(o => Derived.Of(snapshot, o.QualifiedId)));
