@@ -252,6 +252,28 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void Tea_sapling_and_wild_bait_are_taught_by_friendship_not_unresolved()
+    {
+        var rows = new[]
+        {
+            new RecipeRow("Tea Sapling", new[] { "(O)771" }, "(O)251", "null", IsCooking: false),
+            new RecipeRow("Wild Bait", new[] { "(O)771" }, "(O)774", "null", IsCooking: false),
+        };
+        var objects = new Dictionary<string, ObjInfo> { ["(O)771"] = new("(O)771", "Fiber", -16, 1, new List<string>(), false) };
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)771"] = new[] { new ObtainSource(SourceKind.Forage, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "weeds") },
+        });
+        var made = MadeSources.Recipes(rows, objects, new Dictionary<string, WeekMask>(), snapshot).ToList();
+        ObtainSource tea = made.First(m => m.ItemId == "(O)251").Source;
+        ObtainSource bait = made.First(m => m.ItemId == "(O)774").Source;
+        Assert.False(tea.Conditions.Unresolved);
+        Assert.Contains("unlock:f Caroline 2", tea.Conditions.Requires);
+        Assert.False(bait.Conditions.Unresolved);
+        Assert.Contains("unlock:f Linus 4", bait.Conditions.Requires);
+    }
+
+    [Fact]
     public void Ponds_use_only_the_lowest_precedence_match_and_carry_forward()
     {
         var snapshot = Snapshot(("(O)142", SourceKind.Fish, DayTable.InWeeks(WeekMask.Of(5)), Reliability.Dependable));

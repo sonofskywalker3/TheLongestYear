@@ -201,10 +201,21 @@ public static class MadeSources
             ? episode
             : NoEpisode;
 
+    /// <summary>Recipes whose Data/CraftingRecipes unlock is "null" but which an event or letter
+    /// teaches on a friendship level (Jeff's ruling 2026-09-16). Tea Sapling: the Sunroom opens at
+    /// Caroline 2 hearts (GameLocation.cs 8863-8871) and its event mails CarolineTea. Wild Bait: Linus's
+    /// event 26 needs 4 hearts and adds the recipe (Event.cs 10463-10465).</summary>
+    private static readonly IReadOnlyDictionary<string, string> EventTaughtUnlocks = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Tea Sapling"] = "f Caroline 2",
+        ["Wild Bait"] = "f Linus 4",
+    };
+
     /// <summary>True when nothing in the recipe row itself unlocks it: a shop, a letter, a friend, an
     /// event or the TV teaches it.</summary>
     private static bool TaughtElsewhere(RecipeRow recipe)
     {
+        if (EventTaughtUnlocks.ContainsKey(recipe.Name)) return false;
         string[] tokens = recipe.Unlock.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length == 0) return false;
         string first = tokens[0].ToLowerInvariant();
@@ -357,6 +368,8 @@ public static class MadeSources
 
     private static ObtainConditions UnlockConditions(RecipeRow recipe, bool taughtByShop)
     {
+        if (EventTaughtUnlocks.TryGetValue(recipe.Name, out string? taughtBy))
+            return ObtainConditions.None with { Requires = new[] { "recipe:" + recipe.Name, "unlock:" + taughtBy } };
         string[] tokens = recipe.Unlock.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var requires = new List<string> { "recipe:" + recipe.Name };
         string first = tokens.Length == 0 ? "" : tokens[0].ToLowerInvariant();
