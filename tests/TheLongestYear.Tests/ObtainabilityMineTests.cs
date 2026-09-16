@@ -19,11 +19,32 @@ public class ObtainabilityMineTests
     }
 
     [Fact]
-    public void Gems_and_geodes_from_stones_are_chance()
+    public void The_diamond_node_stays_chance()
+        => Assert.Equal(Reliability.Chance, MineSources.Nodes().Single(n => n.ItemId == "(O)72").Source.Reliability);
+
+    [Fact]
+    public void A_common_monster_drop_is_dependable_and_a_rare_one_is_chance()
     {
-        var nodes = MineSources.Nodes().ToList();
-        Assert.Equal(Reliability.Chance, nodes.Single(n => n.ItemId == "(O)72").Source.Reliability);  // diamond
-        Assert.Equal(Reliability.Chance, nodes.Single(n => n.ItemId == "(O)536").Source.Reliability); // frozen geode
+        var rows = new[]
+        {
+            new MonsterDropRow("Grub", "(O)684", 0.6),
+            new MonsterDropRow("Grub", "(O)717", 0.1),
+        };
+        var objects = new Dictionary<string, ObjInfo>
+        {
+            ["(O)684"] = new("(O)684", "Bug Meat", -28, 8, new List<string>(), false),
+            ["(O)717"] = new("(O)717", "Crab", -4, 100, new List<string>(), false),
+        };
+        var drops = MineSources.MonsterDrops(rows, objects).ToDictionary(d => d.ItemId, d => d.Source);
+        Assert.Equal(Reliability.Dependable, drops["(O)684"].Reliability);
+        Assert.Equal(Reliability.Chance, drops["(O)717"].Reliability);
+    }
+
+    [Fact]
+    public void Geodes_from_stones_are_dependable()
+    {
+        var nodes = MineSources.Nodes().Where(n => n.ItemId == "(O)535").Select(n => n.Source).ToList();
+        Assert.Contains(nodes, s => s.Reliability == Reliability.Dependable);
     }
 
     [Fact]
@@ -35,7 +56,8 @@ public class ObtainabilityMineTests
             new MonsterDropRow("Some Modded Beast", "(O)766", 0.1),
         };
         var list = MineSources.MonsterDrops(rows, new Dictionary<string, ObjInfo>()).ToList();
-        Assert.All(list, x => Assert.Equal(Reliability.Chance, x.Source.Reliability));
+        Assert.Equal(Reliability.Dependable, list[0].Source.Reliability);  // 0.5 >= RepeatableDropChance
+        Assert.Equal(Reliability.Chance, list[1].Source.Reliability);     // 0.1 < RepeatableDropChance
         Assert.Contains("mines:floor 40", list[0].Source.Conditions.Requires);
         Assert.Contains("monster:Some Modded Beast", list[1].Source.Conditions.Requires);
         Assert.Equal("floor 1", MineSources.MonsterFloor("Green Slime"));

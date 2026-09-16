@@ -15,6 +15,11 @@ public static class MineSources
     private const int SkullCavernFloor = 121;
     private const int SkillBookCount = 5;
 
+    /// <summary>A drop at least this likely per kill counts as dependable: mine monsters can be killed
+    /// dozens of times a day (Jeff's ruling 2026-09-16, repeatable chance). Each item on a monster's drop
+    /// list rolls its own independent chance against Game1.random (Monster.cs parseMonsterInfo 428-434).</summary>
+    public const double RepeatableDropChance = 0.25;
+
     /// <summary>What breaking stones yields, and from which floor (MineShaft.cs createLitterObject
     /// 4321-4658, getMineArea 3757-3827, gem nodes 3962-3975, geodes from stones 3642-3663, coal 3665-3673).</summary>
     private static readonly (string ItemId, string Where, Reliability Reliability, string Note)[] NodeTable =
@@ -23,18 +28,18 @@ public static class MineSources
         ("(O)380", "mines:floor 40", Reliability.Dependable, "iron node 290 (4428)"),
         ("(O)384", "mines:floor 80", Reliability.Dependable, "gold node 764 (4466)"),
         ("(O)386", SkullCave, Reliability.Dependable, "iridium node 765 (4549-4601)"),
-        ("(O)382", "mines:floor 1", Reliability.Chance, "coal from stones, 5% then 25% (3665-3673)"),
-        ("(O)66", "mines:floor 1", Reliability.Chance, "amethyst node 8 (3966)"),
-        ("(O)68", "mines:floor 1", Reliability.Chance, "topaz node 10 (3966)"),
-        ("(O)70", "mines:floor 40", Reliability.Chance, "jade node 6 (3970)"),
-        ("(O)62", "mines:floor 40", Reliability.Chance, "aquamarine node 14 (3970)"),
-        ("(O)64", "mines:floor 80", Reliability.Chance, "ruby node 4 (3975)"),
-        ("(O)60", "mines:floor 80", Reliability.Chance, "emerald node 12 (3975)"),
+        ("(O)382", "mines:floor 1", Reliability.Dependable, "coal from stones, 5% then 25% (3665-3673), repeatable (ruling 2026-09-16)"),
+        ("(O)66", "mines:floor 1", Reliability.Dependable, "amethyst node 8 (3966), repeatable (ruling 2026-09-16)"),
+        ("(O)68", "mines:floor 1", Reliability.Dependable, "topaz node 10 (3966), repeatable (ruling 2026-09-16)"),
+        ("(O)70", "mines:floor 40", Reliability.Dependable, "jade node 6 (3970), repeatable (ruling 2026-09-16)"),
+        ("(O)62", "mines:floor 40", Reliability.Dependable, "aquamarine node 14 (3970), repeatable (ruling 2026-09-16)"),
+        ("(O)64", "mines:floor 80", Reliability.Dependable, "ruby node 4 (3975), repeatable (ruling 2026-09-16)"),
+        ("(O)60", "mines:floor 80", Reliability.Dependable, "emerald node 12 (3975), repeatable (ruling 2026-09-16)"),
         ("(O)72", "mines:floor 51", Reliability.Chance, "diamond node 2 above floor 50 (4607)"),
-        ("(O)535", "mines:floor 1", Reliability.Chance, "geode from stones, floors 1-39 (3642)"),
-        ("(O)536", "mines:floor 40", Reliability.Chance, "frozen geode from stones (3650)"),
-        ("(O)537", "mines:floor 80", Reliability.Chance, "magma geode from stones (3655)"),
-        ("(O)749", "mines:floor 21", Reliability.Chance, "omni geode above floor 20 and Skull Cavern (3660)"),
+        ("(O)535", "mines:floor 1", Reliability.Dependable, "geode from stones, floors 1-39 (3642), repeatable (ruling 2026-09-16)"),
+        ("(O)536", "mines:floor 40", Reliability.Dependable, "frozen geode from stones (3650), repeatable (ruling 2026-09-16)"),
+        ("(O)537", "mines:floor 80", Reliability.Dependable, "magma geode from stones (3655), repeatable (ruling 2026-09-16)"),
+        ("(O)749", "mines:floor 21", Reliability.Dependable, "omni geode above floor 20 and Skull Cavern (3660), repeatable (ruling 2026-09-16)"),
     };
 
     /// <summary>First floor each mine monster spawns on (MineShaft.cs getMonsterForThisLevel 3999-4318).
@@ -74,7 +79,8 @@ public static class MineSources
                 ? (floor >= SkullCavernFloor ? SkullCave : $"mines:floor {floor}")
                 : "monster:" + row.Monster;
             var template = new ObtainSource(
-                SourceKind.MonsterDrop, DayTable.Always, Reliability.Chance,
+                SourceKind.MonsterDrop, DayTable.Always,
+                row.Chance >= RepeatableDropChance ? Reliability.Dependable : Reliability.Chance,
                 ObtainConditions.None with { Requires = new[] { requires } },
                 $"{row.Monster} drop, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))

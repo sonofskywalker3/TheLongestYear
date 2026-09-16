@@ -213,7 +213,8 @@ public static class SpawnSources
     {
         foreach (string id in TrashIds)
             yield return (id, new ObtainSource(
-                SourceKind.Trash, DayTable.Always, Reliability.Chance, ObtainConditions.None, "fishing trash"));
+                SourceKind.Trash, DayTable.Always, Reliability.Dependable, ObtainConditions.None,
+                "fishing trash, repeatable (ruling 2026-09-16)"));
     }
 
     /// <summary>The source every item of a spawn row shares, or null when the row can never spawn in year 1.</summary>
