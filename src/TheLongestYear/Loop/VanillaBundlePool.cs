@@ -4,6 +4,7 @@ using System.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Bundles;
+using StardewValley.ItemTypeDefinitions;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -54,6 +55,7 @@ namespace TheLongestYear.Loop
     {
         private const string DataBundlesAssetName = "Data/Bundles";
         private const string DataRandomBundlesAssetName = "Data/RandomBundles";
+        private const string StoneQualifiedId = "(O)390";
 
         private const int QualityNormal = 0;
         private const int QualitySilver = 1;
@@ -63,6 +65,9 @@ namespace TheLongestYear.Loop
                                                // consistency with QualityTags/BundleRequirement.
 
         private readonly IMonitor _monitor;
+
+        /// <summary>The item-name table for the build in progress; see <see cref="BuildItemNameIndex"/>.</summary>
+        private FuzzyNameIndex _names;
 
         public VanillaBundlePool(IMonitor monitor)
         {
@@ -75,6 +80,7 @@ namespace TheLongestYear.Loop
         {
             Dictionary<string, string> standard = Game1.content.Load<Dictionary<string, string>>(DataBundlesAssetName);
             List<RandomBundleData> random = Game1.content.Load<List<RandomBundleData>>(DataRandomBundlesAssetName);
+            _names = BuildItemNameIndex();
 
             // room -> (original absolute index -> that position's growing candidate list), ordered
             // ascending by absolute index so position order matches vanilla's own room ordering.
@@ -118,6 +124,7 @@ namespace TheLongestYear.Loop
                 }
             }
 
+            _names = null; // rebuilt per call: item data can change between builds
             var result = new Dictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, SortedDictionary<int, List<BundleSpec>>> roomEntry in perRoom)
             {
@@ -340,7 +347,36 @@ namespace TheLongestYear.Loop
             return data;
         }
 
-        private static string ResolveItemId(string itemText, int stack)
+        /// <summary>The name table <c>Utility.fuzzyItemSearch</c> builds on every call, built once
+        /// per pool build instead (internal names, first id per name, Stone forced to (O)390). The
+        /// per-call rebuild cost about 4 ms a lookup, 487 lookups a build: the two-second freeze on
+        /// closing the post-loop shrine (log, 2026-09-16).</summary>
+        private static FuzzyNameIndex BuildItemNameIndex()
+        {
+            var items = new Dictionary<string, string>();
+            foreach (IItemDataDefinition itemType in ItemRegistry.ItemTypes)
+            {
+                foreach (string itemId in itemType.GetAllIds())
+                {
+                    string itemName = itemType.GetData(itemId).InternalName;
+                    if (!items.ContainsKey(itemName))
+                        items[itemName] = itemType.Identifier + itemId;
+                }
+            }
+            ParsedItemData stoneData = ItemRegistry.GetData(StoneQualifiedId);
+            if (stoneData != null)
+                items[stoneData.InternalName] = StoneQualifiedId;
+            return new FuzzyNameIndex(items);
+        }
+
+        /// <summary><c>Utility.fuzzyItemSearch</c> against the prebuilt table.</summary>
+        private Item FuzzyItemSearch(string query, int stack)
+        {
+            string qualifiedId = (_names ??= BuildItemNameIndex()).Find(query);
+            return qualifiedId != null ? ItemRegistry.Create(qualifiedId, stack) : null;
+        }
+
+        private string ResolveItemId(string itemText, int stack)
         {
             if (string.IsNullOrEmpty(itemText))
                 return null;
@@ -367,7 +403,7 @@ namespace TheLongestYear.Loop
 
             try
             {
-                Item item = Utility.fuzzyItemSearch(itemText, stack);
+                Item item = FuzzyItemSearch(itemText, stack);
                 return item?.ItemId;
             }
             catch (Exception)
@@ -376,7 +412,7 @@ namespace TheLongestYear.Loop
             }
         }
 
-        private static string ResolveReward(string rawReward)
+        private string ResolveReward(string rawReward)
         {
             if (string.IsNullOrEmpty(rawReward) || !char.IsDigit(rawReward[0]))
                 return rawReward ?? "";
@@ -388,7 +424,7 @@ namespace TheLongestYear.Loop
                     return rawReward;
 
                 string query = string.Join(" ", parts.Skip(1));
-                Item item = Utility.fuzzyItemSearch(query, stackCount);
+                Item item = FuzzyItemSearch(query, stackCount);
                 if (item == null)
                     return rawReward;
 
