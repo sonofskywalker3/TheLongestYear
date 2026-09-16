@@ -39,6 +39,13 @@ public static class FairnessRule
     /// <summary>Shops that stand in the Calico Desert (Data/Shops ids), reached only once the bus runs.</summary>
     private static readonly IReadOnlySet<string> DesertShops = new HashSet<string>(StringComparer.Ordinal) { "Sandy", "DesertTrade", "Casino" };
     private const string DesertFestivalShopPrefix = "DesertFestival_";
+    /// <summary>Shops that only exist once a mail flag is set. Raccoon: Mrs. Raccoon's shop appears after
+    /// the raccoons move in (Forest.cs 517, Raccoon.cs 70); the fed-raccoon condition on top of it
+    /// (Forest.cs 523) is not modelled.</summary>
+    private static readonly IReadOnlyDictionary<string, string> ShopMailGates = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Raccoon"] = "raccoonMovedIn",
+    };
     private const string FriendshipPrefix = "friendship:";
     private const string PondPopulationPrefix = "pond population";
     private const string MiningSkill = "Mining";
@@ -277,6 +284,8 @@ public static class FairnessRule
                 string shop = r.Substring(ShopPrefix.Length);
                 bool inDesert = DesertShops.Contains(shop) || shop.StartsWith(DesertFestivalShopPrefix, StringComparison.Ordinal);
                 if (inDesert && !save.MailFlags.Contains(BusMail)) return $"{shop} is in the desert, which is not open";
+                if (ShopMailGates.TryGetValue(shop, out string? gate) && !save.MailFlags.Contains(gate))
+                    return $"{shop} shop is not open (needs {gate})";
                 continue;
             }
             if (r.StartsWith(PondPopulationPrefix, StringComparison.Ordinal))
