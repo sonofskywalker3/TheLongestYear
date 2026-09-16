@@ -173,6 +173,7 @@ namespace TheLongestYear
             // and immediately go stale, and never release).
             UI.RewindJunimoScene.Register(this.Monitor, helper);
             Integration.RewindPanScene.Register(this.Monitor, helper, _meta, _config);
+            Integration.RewindSkip.Register(this.Monitor, helper, _meta);
             Integration.RewindSpringPaint.Register(this.Monitor, helper);
             Integration.RewindNightPaint.Register(this.Monitor, helper);
             Integration.RewindNightLight.Register(this.Monitor, helper);
@@ -339,7 +340,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
-            helper.ConsoleCommands.Add("tly_skipscene", "Finish whichever day-28 scene is on screen as if clicked through: the CONTINUE card, either rewind Junimo beat, or the rewind Town pan. One beat per call (debug/automation).", this.CmdSkipScene);
+            helper.ConsoleCommands.Add("tly_skipscene", "Finish whichever day-28 scene is on screen as if clicked through: the CONTINUE card, either rewind Junimo beat, or the rewind Town pan. One beat per call; 'all' presses the rewind's skip button (debug/automation).", this.CmdSkipScene);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             helper.ConsoleCommands.Add("tly_runstate", "Print the current run state.", this.CmdRunState);
             helper.ConsoleCommands.Add("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
@@ -2869,6 +2870,15 @@ namespace TheLongestYear
             {
                 scene.SkipToEnd();
                 this.Monitor.Log("tly_skipscene: finished the day-28 scene.", LogLevel.Info);
+                return;
+            }
+            // "all": the player's whole-rewind skip, exactly as the skip button starts it.
+            if (args.Length > 0 && string.Equals(args[0], "all", StringComparison.OrdinalIgnoreCase))
+            {
+                bool started = TheLongestYear.Integration.RewindSkip.TrySkip("tly_skipscene all");
+                this.Monitor.Log(started
+                    ? "tly_skipscene all: skipping the rest of the rewind."
+                    : "tly_skipscene all: no skippable rewind on screen (first rewind on this save, or no beat running).", LogLevel.Info);
                 return;
             }
             // The FAIL branch's rewind sequence, which the card no longer covers. Three separate

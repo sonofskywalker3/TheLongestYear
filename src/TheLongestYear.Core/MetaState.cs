@@ -213,8 +213,9 @@ public sealed class MetaState
     /// skips the event and goes straight to the shrine and the choice.</summary>
     public bool EndingSeen { get; set; }
 
-    /// <summary>Season turns whose Junimo scene has played at least once on this save
-    /// (SeasonTurn.SeenName values). A seen turn is skippable next time.</summary>
+    /// <summary>Junimo scenes that have played at least once on this save: the season turns
+    /// (SeasonTurn.SeenName values) and the rewind (Rewind.RewindSkipRule.SeenName). A seen scene is
+    /// skippable next time.</summary>
     public HashSet<string> SeasonTurnsSeen { get; set; } = new();
 
     /// <summary>Darkness pushback (spec 2026-09-09): the first-strike letters already delivered
