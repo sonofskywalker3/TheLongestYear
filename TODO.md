@@ -6,6 +6,32 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### NEXT ON STORY (remote-safe): the expanded opening, the 10-beat opening montage. NOT SPECCED, NOT PLANNED, NOT BUILT (surfaced 2026-09-16)
+The last story-scope item with no plan and no code. It lives only in section 5.1 of
+`docs/superpowers/specs/2026-06-06-tly1-story-and-cutscenes-design.md` (deathbed prologue and Joja
+cubicle reused from vanilla; the assignment; bus stop and Robin's town tour with Junimo glimpses; Robin
+walks you to the farm; Lewis says the farm was yours all along, open the letter; the deed snaps the
+darkness; Lewis names the CC and calls it hopeless; the Junimos explain the heart and the loop; Morris at
+the CC door starts the one-year clock and flashes red eyes). It folds in the current porch and Junimo
+intro (`IntroEventInjector` / `IntroSequenceDriver`, plan 2026-05-30). Jeff, 2026-09-16, asked why it was
+not on the list: it had no TODO entry, which is why it was invisible. Needs a brainstorm and its own
+design spec before a plan. Things the spec must reconcile:
+- The June outline's Morris "there's no way you can stop it" beat predates the ending's narrative lock
+  (2026-09-06): Morris is not gloating, he gives a company update; the red eyes land on a throwaway
+  line and only the player and the Junimos react. The opening's Morris has to be the same man.
+- "Intro rework: foreshadow grandpa as the previous keeper" (carried from the ending spec, section 9).
+- The Lewis day-1 intro's black bar on the right of the screen (below, 2026-06-10): design it out, do
+  not fix in place.
+- All text through the game-writing skill. Headless check via `tools/farmtype-intro.ps1`.
+
+### Decisions recorded 2026-09-16 (Jeff, remote)
+- Geode rule: the three artifacts that ride along (Dwarvish Helm, Ancient Drum, Dwarf Gadget) stay. Fine.
+- The two obtainability outliers (Magic Bait with no source; Parsnip dependable week 15 via the Night
+  Market boat) stay as they are. Fine.
+- "The rewind costs JP" is NOT a story item and should not be raised for story again: it belongs with the
+  bundles-per-room option (balance, master).
+- Year 2 is NOT on the story branch. The ending plants the threads and the Spring 1 wall stands in.
+
 ### DONE on master as 0.18.12 (2026-09-16, `OncePerLoopAsks`, setting `OncePerLoopAsksOne`; live check and release still pending): option for the quantity multiplier to skip unique items (Jeff, 2026-09-16)
 Add a config option (GMCM too) so the Stack size / quantity multiplier leaves every unique item
 alone: anything a player can only get once per loop (limit 1 per loop, e.g. a legendary fish, a
@@ -181,7 +207,7 @@ the foresight is computed for the right date but still seeded on the pre-reset r
   cart foresight for a run that is about to stop existing.
 
 
-### IDEA (not designed): the rewind costs JP, and going broke ends the run
+### IDEA (not designed; NOT story, Jeff 2026-09-16: belongs with the bundles-per-room option on master): the rewind costs JP, and going broke ends the run
 Jeff, 2026-09-10, raised while speccing the rewind cutscene. Today a failed season gate always
 rewinds. Instead, charge Junimo Points for the rewind and end the run outright when the player
 cannot pay: roguelike rather than roguelite, and only at the harder settings.

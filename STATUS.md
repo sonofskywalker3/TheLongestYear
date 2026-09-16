@@ -22,7 +22,9 @@
   Frozen Geode or Magma Geode list is dependable 11 days after the geode lands; omni, trove and
   Prismatic Shard stay Chance. Live rerun: LuckOnly 128 to 84, NewLater 9 to 53 (41 minerals plus
   Dwarvish Helm, Ancient Drum, Dwarf Gadget, which share those lists; flagged). Model build 3479 ms.
-- **Next on story: Jeff's darkness live test** (TODO "Darkness pushback: Jeff's live test").
+- **Next on story while Jeff is remote: the expanded opening** (the 10-beat opening montage, story spec
+  section 5.1; no plan, no code yet; new TODO entry at the top of Open). Brainstorm and spec first.
+  The darkness live test waits until Jeff is home.
 - **Fish and machine repeatable-chance review** (the note, written first):
   `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`. Waiting on Jeff's two
   answers (fish: demote 6 species + 3 legendaries, legendaries only, or nothing; machines: leave alone
