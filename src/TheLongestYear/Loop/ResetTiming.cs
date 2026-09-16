@@ -7,7 +7,8 @@ namespace TheLongestYear.Loop
     /// Stage stopwatch for the loop reset path. Added for the "closing the post-loop shrine freezes
     /// the game for about 3 seconds" investigation (TODO, Jeff 2026-09-14): every stage of
     /// <c>WorldResetService.PerformReset</c> and <c>RunController.FinalizeReset</c> logs how long it
-    /// took, so the freeze can be attributed from the SMAPI log instead of guessed at.
+    /// took, so the freeze can be attributed from the SMAPI log instead of guessed at. Kept at Trace
+    /// after the fix (2026-09-16): the forced save is now the largest stage and may need it again.
     /// </summary>
     internal sealed class ResetTiming
     {
@@ -25,14 +26,14 @@ namespace TheLongestYear.Loop
         /// <summary>Logs the time since the previous mark (or construction) under <paramref name="stage"/>.</summary>
         public void Mark(string stage)
         {
-            _monitor.Log($"Reset timing [{_scope}] {stage}: {_stage.ElapsedMilliseconds} ms", LogLevel.Info);
+            _monitor.Log($"Reset timing [{_scope}] {stage}: {_stage.ElapsedMilliseconds} ms", LogLevel.Trace);
             _stage.Restart();
         }
 
         /// <summary>Logs the total elapsed time since construction.</summary>
         public void Total()
         {
-            _monitor.Log($"Reset timing [{_scope}] total: {_total.ElapsedMilliseconds} ms", LogLevel.Info);
+            _monitor.Log($"Reset timing [{_scope}] total: {_total.ElapsedMilliseconds} ms", LogLevel.Trace);
         }
     }
 }

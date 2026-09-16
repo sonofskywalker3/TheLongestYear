@@ -66,7 +66,18 @@ fix. Nothing reads the model for gameplay yet.
   empty at 414 lines each) and a static guard test keeps the board files from ever naming the model or
   the darkness.
 
-### Closing the post-loop shrine freezes the game for about 3 seconds (future patch)
+### Closing the post-loop shrine freezes the game for about 3 seconds (FIXED on story 2026-09-16, about 1 s left)
+**Result, 2026-09-16 (live, my automated run, throwaway Rodger save):** the board was the freeze,
+and inside it one stage: `BuildRoomPools: 2013 ms`, from 487 `Utility.fuzzyItemSearch` calls that
+each rebuilt the whole item-name table. `FuzzyNameIndex` builds it once per pool build
+(`877b759`); `tly_genbundles 5` and `9` print identical boards before and after. The model rebuild
+on the deferred reload is now cached on a hash of its inputs (`d5ad6e4`). Before and after:
+`BundleEngine.Generate total` 2047 ms to 24 ms; `FinalizeReset total` 2872 ms to 909-992 ms;
+`Obtainability model` after the reset 781 ms to 4 ms ("unchanged data, reused"). What is left is
+mostly `ForceFullSave` (46 to 564 ms between runs, the game's own save, stays on the main thread)
+and `PerformReset`'s world work (about 330 ms). No background precompute was needed. Timing marks
+kept at Trace. Jeff to feel it in a real rewind.
+
 Jeff, 2026-09-14: closing the rewind's upgrade window hangs for a couple of seconds, "not painful,
 just jarring until you get used to it, because any other window closes instantly." Asked: can the
 work happen in the background, or while the player is still in the upgrade window, then be applied
