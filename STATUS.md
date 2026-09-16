@@ -1,9 +1,27 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 morning (socials sweep after the 0.18.4 to 0.18.11 round)
+**Last updated:** 2026-09-16 midday (0.18.12 built on master, NOT released, NOT live-checked yet)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2106 passing, 0 failing (as of 0.18.11)
+**Tests:** 2131 passing, 0 failing (as of 0.18.12)
+**Build:** Release clean, 0 errors; 0.18.12 NOT deployed to the game
 **Last public release:** 0.18.11 (2026-09-15; GitHub release + Nexus file, version, description and changelog all live)
+
+## 2026-09-16 midday: 0.18.12, once-per-loop items ask for one (setting), awaiting live check
+
+Jeff's own note from the story branch: an option so the Stack size dial skips unique items.
+Diagnostic first: the 724 objects the pools can draw from were checked against the exported game
+data (every repeatable route subtracted), and only three groups are once per loop: the five
+legendary fish (catch limit), the two gift-box books (bookseller restocks them from year 3) and
+the Golden Pumpkin (maze chest; luck-only extras). Every other book restocks; weapons, hats and
+rings stay under the unconditional never-stacks rule; rarecrows never reach a board.
+
+Built: `OncePerLoopAsks` (Core), `GameplayConfig.OncePerLoopAsksOne` (default on, GMCM
+Difficulty, stamped into the `DifficultyProfile`), the legendary stack clamp moved under it,
+applied in `StackScaling`, the vanilla-board pass, the slot repair and the load-time clamp.
+Unit-tested end to end (25 new tests). **Still owed:** a headless live run on the throwaway
+save (deploy minimized, Hard, `tly_genbundles` with the setting on then off, read the log),
+which needs Jeff's yes for the relaunch. Release docs (README and Nexus What's New) are written
+at release time.
 
 ## 2026-09-16: sweep after 0.18.4, 0.18.10 and 0.18.11
 
