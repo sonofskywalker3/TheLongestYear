@@ -654,6 +654,30 @@ public class FairnessRuleTests
         AssertBest(FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: deepest), model), counts, landing, added);
     }
 
+    // An input with two routes: the machine's table was built from the input's COMBINED table, so the
+    // wait it inherited is the combined table's, whichever route this save can use. Values from the
+    // pre-2b rule (83f8c3b), where the combined table was day 61 and the machine day 64.
+    private const int MachineDays = 3;
+
+    [Theory]
+    [InlineData(false, 64, 100, 64, 0)]   // the other route lands first after the delay, but this save cannot use it
+    [InlineData(false, 64, 40, 68, 4)]
+    [InlineData(true, 63, 100, 64, 0)]    // the mine route is the one this save cannot use
+    [InlineData(true, 63, 40, 64, 0)]
+    public void A_machine_on_a_two_route_input_keeps_its_verdict(
+        bool mineBlocked, int otherLands, int deepest, int landing, int added)
+    {
+        const string Unusable = "mail:neverSent";
+        ObtainSource mine = MineRoute();
+        if (mineBlocked)
+            mine = mine with { Conditions = mine.Conditions with { Requires = mine.Conditions.Requires.Append(Unusable).ToList() } };
+        ObtainSource other = Route(available: d => d >= otherLands, requires: mineBlocked ? null : new[] { Unusable });
+        var model = ModelOf(
+            (Item, new[] { MachineRoute(mine.Lands.Earliest(other.Lands).Delay(MachineDays), Ingredient) }),
+            (Ingredient, new[] { mine, other }));
+        AssertBest(FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: deepest), model), true, landing, added);
+    }
+
     [Fact]
     public void A_route_with_no_floor_and_no_mine_input_lands_on_its_own_table()
     {

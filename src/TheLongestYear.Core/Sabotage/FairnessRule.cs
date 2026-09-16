@@ -128,17 +128,18 @@ public static class FairnessRule
         // Extreme ignores conditions but not inputs, because an item made from nothing obtainable is
         // not obtainable at any level.
         int inputDays = NoDays;
-        int inputTravel = NoDays;
-        string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth, ref inputDays, ref inputTravel);
+        string? missing = MissingInput(source, hitDay, deadlineDay, policy, save, model, stack, depth, ref inputDays);
         if (missing != null) return Out(source, missing);
         added += inputDays;
-        // A made route's table inherits its inputs' from-nothing mine travel, while each input's real
-        // depth is already in inputDays. Take the inherited wait back out so it is not charged twice.
-        // This sits outside the conditions check on purpose: Extreme ignores the floor, so it must not
-        // pay the from-nothing wait either. The travel can never take the landing before the start day
-        // (the table's landing is the reached-floor landing plus the travel, and that is never before
-        // its start), so the clamp only guards a hand-built table that does not carry the wait.
-        int travel = Math.Min(inputTravel, landing.Value - startDay);
+        // A made route's table inherits its inputs' from-nothing mine travel (MineTravelCredit reads it
+        // off the inputs' combined tables, as the builder did), while each input's real depth is already
+        // in inputDays. Take the inherited wait back out so it is not charged twice. This sits outside
+        // the conditions check on purpose: Extreme ignores the floor, so it must not pay the from-nothing
+        // wait either. The clamp keeps the landing from going before the start day; with built tables
+        // it never binds, because a combined landing rebuilt without travel is never before its start.
+        int travel = source.Inputs.Count == 0
+            ? NoDays
+            : Math.Min(MineTravelCredit.Inherited(source, startDay, model), landing.Value - startDay);
         // Setup days are added after the landing rather than shifting the start; an accepted approximation.
         int lands = landing.Value + added - travel;
         bool counts = lands <= deadlineDay;
@@ -167,33 +168,18 @@ public static class FairnessRule
     /// Known limitation: when the blind landing table was built from a fast input route that is
     /// blocked on this farm while a slower alternative counts, the days propagated here are the
     /// alternative's setup days, not the difference between the two routes' landings, so the answer
-    /// can come out a few days lenient.
-    ///
-    /// <paramref name="travel"/> comes back holding how much later the inputs land in the model than
-    /// they would with every mine floor already reached: for each group, the earliest table landing
-    /// among its counting members' best routes (N, from the route's model table) and their landings
-    /// before setup days (O, the landing with every floor reached); across groups, the latest N minus the latest O,
-    /// because a made route's table waits for its latest group. That is exactly the wait the made
-    /// route's own table inherited whenever its chain passes an input's landing straight through (a
-    /// machine's processing days, a recipe's ingredients). Known limitation: a chain that rounds the
-    /// landing to a later window (a weekly shop, a season) can inherit more or less than that, so the
-    /// answer there can be a few days off in either direction.</summary>
+    /// can come out a few days lenient.</summary>
     private static string? MissingInput(
         ObtainSource source, int hitDay, int deadlineDay, Policy policy, SaveSnapshot save,
-        ObtainabilityModel model, HashSet<string> stack, int depth, ref int added, ref int travel)
+        ObtainabilityModel model, HashSet<string> stack, int depth, ref int added)
     {
         if (source.Inputs.Count == 0) return null;
         if (depth >= MaxInputDepth) return $"input chain deeper than {MaxInputDepth} steps, not judged";
-        int startDay = hitDay + 1;
         int maxGroupDays = NoDays;
-        int? latestInModel = null;
-        int? latestReached = null;
         foreach (IReadOnlyList<string> group in source.Inputs)
         {
             if (group.Count == 0) continue;
             int? bestDays = null;
-            int? groupInModel = null;
-            int? groupReached = null;
             foreach (string id in group)
             {
                 if (!stack.Add(id)) continue;   // already on the stack: not a way in
@@ -203,26 +189,15 @@ public static class FairnessRule
                     if (!verdict.Counts) continue;
                     // The member's best counting route: among its routes that count, the one that
                     // lands earliest, and that route's own AddedDays is what this member costs.
-                    RouteVerdict best = verdict.Routes.Where(r => r.Counts).OrderBy(r => r.LandingDay).First();
-                    int memberDays = best.AddedDays;
+                    int memberDays = verdict.Routes.Where(r => r.Counts).OrderBy(r => r.LandingDay).First().AddedDays;
                     if (bestDays is null || memberDays < bestDays.Value) bestDays = memberDays;
-                    // O: the landing before setup days. N: the model's own table, which for a direct
-                    // mine route is the delayed one; when that never lands (past day 112) nothing is
-                    // known to take back, so N = O.
-                    int reached = best.LandingDay!.Value - best.AddedDays;
-                    int inModel = best.Source.Lands.Lands(startDay) ?? reached;
-                    if (groupInModel is null || inModel < groupInModel.Value) groupInModel = inModel;
-                    if (groupReached is null || reached < groupReached.Value) groupReached = reached;
                 }
                 finally { stack.Remove(id); }
             }
             if (bestDays is null) return $"needs {string.Join(" or ", group)}, none obtainable";
             if (bestDays.Value > maxGroupDays) maxGroupDays = bestDays.Value;
-            if (latestInModel is null || groupInModel!.Value > latestInModel.Value) latestInModel = groupInModel;
-            if (latestReached is null || groupReached!.Value > latestReached.Value) latestReached = groupReached;
         }
         added += maxGroupDays;
-        if (latestInModel is int n && latestReached is int o && n > o) travel += n - o;
         return null;
     }
 

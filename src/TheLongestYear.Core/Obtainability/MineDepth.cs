@@ -9,11 +9,12 @@ namespace TheLongestYear.Core.Obtainability;
 /// keeping the table it had before in <see cref="ObtainSource.UndelayedLands"/>, and a route made from
 /// a mine item inherits the wait through its input's table. A consumer that knows the player's real
 /// depth judges a direct route on its undelayed table, which is exact. For a made route it can only
-/// take back the wait its inputs carried: that is exact for chains that pass an input's landing
-/// straight through (a machine's processing days, a recipe's ingredients) and approximate, by a few
-/// days either way, through a chain that rounds to a later window (a weekly or seasonal gate). A made
-/// route also loses its landings past the end of the year with its inputs', which can only make a
-/// consumer skip it, never charge more.</para></summary>
+/// take back the wait its table inherited, read off each input's combined table (every route of the
+/// input, as the made table was built): that is exact for chains that pass an input's landing straight
+/// through (a machine's processing days, a recipe's ingredients), however many routes an input has, and
+/// approximate, by a few days either way, through a chain that rounds to a later window (a weekly or
+/// seasonal gate). A made route also loses its landings past the end of the year with its inputs',
+/// which can only make a consumer skip it.</para></summary>
 public static class MineDepth
 {
     public const int FloorsPerDay = 10;
