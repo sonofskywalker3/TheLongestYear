@@ -15,14 +15,33 @@ already knows an item is once-per-loop (catch limits, the legendary rules) and s
 option would cover.
 
 
-### NEXT ON STORY, FIRST: run `tly_sabotage travelcheck save` on a developed farm (2026-09-16)
-The empty-farm run passed (267,360 comparisons, 0 mismatches) but only tests made routes fully on
-Extreme. Run the save mode (about 15 minutes, my automated run, a throwaway save that has machines,
-recipes and some mine depth) and redeploy first so it includes the Skull Cavern change (`25fd01a`).
-Any mismatch is a bug in the mine-depth work. Then the fish and machine review below, then Jeff's
-darkness live test.
+### DONE 2026-09-16 evening: `tly_sabotage travelcheck save` on a developed farm passed
+Story HEAD (`a600440`, includes the Skull Cavern change `25fd01a`) redeployed; my automated run on
+the throwaway save `None_449262005` (Run 183), developed first with debug commands: White Chicken
+and White Cow in the existing Coop and Barn, 12 crafting recipes (Keg, Preserves Jar, Furnace,
+Cheese Press, Mayonnaise Machine, Bee House, Tapper, Loom, Charcoal Kiln, Crystalarium, Recycling
+Machine, Seed Maker), 5 cooking recipes, Furnace, Keg, Preserves Jar, Cheese Press, Crystalarium
+and Recycling Machine in the pack, `ccVault` and `ccBoilerRoom` mail, skills raised (about level 6
+farming, mining, fishing, level 4 foraging and combat), mine floor 65 reached. Result:
+`travelcheck: 267360 comparison(s) over 1114 item(s), 0 mismatch(es); built in 6585 ms, done in
+902037 ms.` `tly_sabotage fair` on the same save confirmed the snapshot saw the machines (Furnace,
+Recycling Machine and Cheese Press routes count; Heavy Furnace reads "not owned"). Lesson: the game
+clock runs during the 15 minutes, the farmer passed out on the porch and the queued level-ups sat
+on a LevelUpMenu until `tly_dismiss` cleared them; next time `debug time 600` plus a sleep first, or
+warp indoors.
 
-### NEXT ON STORY: repeatable-chance review for ordinary fish and machine output (Jeff, 2026-09-16)
+### NEXT ON STORY, AWAITING JEFF'S RULING: repeatable-chance review for ordinary fish and machine output (Jeff, 2026-09-16)
+**Review written 2026-09-16 evening:** `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`.
+Findings: every ordinary species is already Dependable in the model (only trash, farm-water Wood
+and Coral, and the Magic Bait trio are Chance), so the fish question is which rare species to
+DEMOTE. Proposed line: at least 2 expected catches on a full dedicated day at the best spot (catch-
+rate note, 20h column); under it Legend, Mutant Carp, Octopus, Pufferfish, Sea Jelly, Cave Jelly,
+plus Crimsonfish, Angler and Glacierfish by the one-off argument. Machines: of the 111 Machine
+Chance rows all but a handful are inherited from a chance input (the crystalarium is a pure copy);
+the machines that roll their own output (Recycling Machine, Bone Mill, Slime Egg-Press, Wood Chipper,
+Mushroom Cave, Seed Maker, Mushroom Log) only ever change Blue, Red and Purple Slime Egg, so the
+recommendation is to leave machines alone. Original brief below.
+
 The 2026-09-16 repeatable-chance ruling (a chance route you can retry many times a day with a decent
 chance each try counts as dependable) deliberately left two families out, to be judged separately:
 - **Ordinary fish catches** (SourceKind Fish, Chance). Per-fish, not one rule: Carp and Green Algae

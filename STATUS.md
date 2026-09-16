@@ -1,10 +1,25 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 evening (story: obtainability rulings applied; parked here while Jeff does bug fixes on master)
+**Last updated:** 2026-09-16 evening, later (story: developed-farm travelcheck passed; fish and machine repeatable-chance review written, awaiting Jeff)
 **Branch:** `story`; everything committed AND pushed, nothing local-only
 **Tests:** 2595 passing
-**Build:** clean (Release, 0 errors); story HEAD deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449242947` (Run 181)
+**Build:** clean (Release, 0 errors); story HEAD `a600440` deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449262005` (Run 183, developed with debug commands for the travelcheck)
 **Last public release:** 0.18.11
+
+## 2026-09-16 (evening): developed-farm travelcheck passed; fish and machine review for Jeff
+
+- **`tly_sabotage travelcheck save` on a developed farm: 0 mismatches.** Story HEAD redeployed, my
+  automated run, throwaway save `None_449262005` developed first (animals, 12 crafting and 5 cooking
+  recipes, 6 machines in the pack, bus mail, skills, mine floor 65). Log:
+  `travelcheck: 267360 comparison(s) over 1114 item(s), 0 mismatch(es); built in 6585 ms, done in 902037 ms.`
+  The darkness's verdicts are the same with and without mine travel on made routes too. Details in
+  TODO.md.
+- **Fish and machine repeatable-chance review written**, not applied:
+  `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`. Waiting on Jeff's two
+  answers (fish: demote 6 species + 3 legendaries, legendaries only, or nothing; machines: leave alone
+  or promote Blue Slime Egg).
+- **Next on story after his ruling:** apply it (small change in `SpawnSources` fish rows and, if
+  chosen, `MadeSources`), rerun `tly_obtain compare`, then Jeff's darkness live test.
 
 ## 2026-09-16 (afternoon): Jeff's obtainability rulings, built and live-checked
 
