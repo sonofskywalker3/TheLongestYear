@@ -86,13 +86,15 @@ public class ObtainabilitySpawnTests
     {
         var rows = new[]
         {
-            new LocationSpawn("Backwoods", "(O)163", Season.Spring, null, 1.0, 1, false, 10),    // Legend, catch limit 1
+            new LocationSpawn("Mountain", "(O)163", Season.Spring, null, 1.0, 1, false, 10),     // Legend, catch limit 1
+            new LocationSpawn("Backwoods", "(O)163", Season.Spring, null, 1.0, -1, false, 10),   // Legend's second row, no limit on the row
             new LocationSpawn("Beach", "(O)149", Season.Summer, null, 1.0, 0, false, 0),         // Octopus, 1.2 a day
             new LocationSpawn("Beach", "(O)129", Season.Spring, null, 1.0, 0, false, 0),         // Anchovy
         };
         var fishRows = new Dictionary<string, FishRow>();
-        var byId = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).ToDictionary(s => s.ItemId, s => s.Source);
-        Assert.Equal(Reliability.Chance, byId["(O)163"].Reliability);
+        var all = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).ToList();
+        Assert.All(all.Where(s => s.ItemId == "(O)163"), s => Assert.Equal(Reliability.Chance, s.Source.Reliability));
+        var byId = all.Where(s => s.ItemId != "(O)163").ToDictionary(s => s.ItemId, s => s.Source);
         Assert.Equal(Reliability.Chance, byId["(O)149"].Reliability);
         Assert.Equal(Reliability.Dependable, byId["(O)129"].Reliability);
     }

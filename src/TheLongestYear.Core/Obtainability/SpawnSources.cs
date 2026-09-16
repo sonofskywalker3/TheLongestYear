@@ -28,6 +28,12 @@ public static class SpawnSources
     /// One try in the whole year is not a repeatable try, so the row is Chance (ruling 2026-09-16).</summary>
     private const int OnceAYearCatchLimit = 1;
 
+    /// <summary>The five legendaries by id as well: Legend has a second Data/Locations row (Backwoods,
+    /// spring, no catch limit on the row) that the catch-limit rule alone would read as dependable.
+    /// Legend, Crimsonfish, Angler, Glacierfish, Mutant Carp.</summary>
+    private static readonly HashSet<string> LegendaryIds = new(StringComparer.Ordinal)
+        { "(O)163", "(O)159", "(O)160", "(O)775", "(O)682" };
+
     /// <summary>Species a full day at their best spot lands under 2 expected catches (about an 86%
     /// chance of at least one), so a catch is a lottery ticket rather than a dependable route: Octopus
     /// 1.2, Pufferfish 1.5, Sea Jelly 1.1 to 1.4, Cave Jelly 1.9 a day for a level 10 angler with bait
@@ -160,7 +166,7 @@ public static class SpawnSources
                 ObtainConditions c = baseTemplate.Conditions;
                 ObtainSource finalSource = baseTemplate with
                 {
-                    Reliability = resolved.Chance || row.CatchLimit == OnceAYearCatchLimit || RareCatchIds.Contains(id)
+                    Reliability = resolved.Chance || row.CatchLimit == OnceAYearCatchLimit || LegendaryIds.Contains(id) || RareCatchIds.Contains(id)
                         ? Reliability.Chance : baseTemplate.Reliability,
                     Detail = baseTemplate.Detail + time + (resolved.Note.Length == 0 ? "" : $" ({resolved.Note})"),
                     Conditions = c with
