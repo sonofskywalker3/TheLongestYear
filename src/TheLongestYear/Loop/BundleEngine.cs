@@ -226,9 +226,11 @@ namespace TheLongestYear.Loop
             int legendaryAllowance = Core.LegendaryFishRules.BoardAllowance(
                 Availability?.Step ?? Core.DifficultyStep.Normal, new Random(seed ^ LegendarySalt));
             _monitor?.Log($"BundleEngine: legendary allowance for this board: {(legendaryAllowance == int.MaxValue ? "open" : legendaryAllowance.ToString())}.", LogLevel.Trace);
+            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools = _pool.BuildRoomPools();
+            timing?.Mark("BuildRoomPools");
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
-                WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, legendaryAllowance);
-            timing?.Mark("BuildRoomPools + WidenWithAuthoredBundles");
+                WidenWithAuthoredBundles(roomPools, itemPools, seed, legendaryAllowance);
+            timing?.Mark("WidenWithAuthoredBundles");
 
             var allPicks = new List<BundleSpec>();
             var usedNameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
