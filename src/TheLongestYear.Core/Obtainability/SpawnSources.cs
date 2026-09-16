@@ -23,6 +23,19 @@ public static class SpawnSources
             ["BeachNightMarket"] = "NightMarket",
         };
 
+    /// <summary>A Data/Locations fish row with this catch limit is a one-off (the five legendaries,
+    /// GameLocation.cs CheckGenericFishRequirements reads CatchLimit against the player's caught list).
+    /// One try in the whole year is not a repeatable try, so the row is Chance (ruling 2026-09-16).</summary>
+    private const int OnceAYearCatchLimit = 1;
+
+    /// <summary>Species a full day at their best spot lands under 2 expected catches (about an 86%
+    /// chance of at least one), so a catch is a lottery ticket rather than a dependable route: Octopus
+    /// 1.2, Pufferfish 1.5, Sea Jelly 1.1 to 1.4, Cave Jelly 1.9 a day for a level 10 angler with bait
+    /// (docs/superpowers/notes/fish-catch-rates-2026-09-04.md; ruling 2026-09-16). Every other species
+    /// clears 2.0 on its best day and stays dependable.</summary>
+    private static readonly HashSet<string> RareCatchIds = new(StringComparer.Ordinal)
+        { "(O)149", "(O)128", "(O)SeaJelly", "(O)CaveJelly" };
+
     /// <summary>Fishing trash (FishingRod.cs 495; MineShaft.cs 1193-1197): caught when nothing bites.</summary>
     private static readonly string[] TrashIds = { "(O)167", "(O)168", "(O)169", "(O)170", "(O)171", "(O)172" };
 
@@ -147,7 +160,8 @@ public static class SpawnSources
                 ObtainConditions c = baseTemplate.Conditions;
                 ObtainSource finalSource = baseTemplate with
                 {
-                    Reliability = resolved.Chance ? Reliability.Chance : baseTemplate.Reliability,
+                    Reliability = resolved.Chance || row.CatchLimit == OnceAYearCatchLimit || RareCatchIds.Contains(id)
+                        ? Reliability.Chance : baseTemplate.Reliability,
                     Detail = baseTemplate.Detail + time + (resolved.Note.Length == 0 ? "" : $" ({resolved.Note})"),
                     Conditions = c with
                     {

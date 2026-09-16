@@ -82,6 +82,22 @@ public class ObtainabilitySpawnTests
     }
 
     [Fact]
+    public void A_once_a_year_catch_and_a_rare_species_are_chance_but_an_ordinary_fish_is_dependable()
+    {
+        var rows = new[]
+        {
+            new LocationSpawn("Backwoods", "(O)163", Season.Spring, null, 1.0, 1, false, 10),    // Legend, catch limit 1
+            new LocationSpawn("Beach", "(O)149", Season.Summer, null, 1.0, 0, false, 0),         // Octopus, 1.2 a day
+            new LocationSpawn("Beach", "(O)129", Season.Spring, null, 1.0, 0, false, 0),         // Anchovy
+        };
+        var fishRows = new Dictionary<string, FishRow>();
+        var byId = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).ToDictionary(s => s.ItemId, s => s.Source);
+        Assert.Equal(Reliability.Chance, byId["(O)163"].Reliability);
+        Assert.Equal(Reliability.Chance, byId["(O)149"].Reliability);
+        Assert.Equal(Reliability.Dependable, byId["(O)129"].Reliability);
+    }
+
+    [Fact]
     public void Trap_fish_come_from_crab_pots_all_year()
     {
         var rows = new[] { new FishRow("(O)717", true, "", 0, ""), new FishRow("(O)142", false, "sunny", 0, "600 2600") };
