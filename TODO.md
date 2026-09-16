@@ -421,13 +421,13 @@ is NOT at risk on access grounds after all: Summer is weeks 5-8, entirely after 
 counts and to skip maps a loop cannot reach. The daily log names item counts only, not maps, so the
 existing CSV cannot be attributed after the fact (the earlier note in this file said otherwise).
 
-**D. RUN 2026-09-16, MODEL CONFIRMED (my automated run over the bridge, 22 Spring days, 40 pots; `docs/superpowers/notes/crabpot-sweep-2026-09-16.md`). Every fresh-water row within 8% of the hand table, ocean rows within ten-pot noise. Recommendation: no change to the bases; Cockle/Mussel/Oyster/Clam are already banded through the crab basis, so the "unclamped" note here was stale. Awaiting Jeff's confirm to close. Was:** command built (v0.16.173), never run. `tly_crabpots place 10` then a daily
+**D. RUN 2026-09-16, MODEL CONFIRMED (my automated run over the bridge, 22 Spring days, 40 pots; `docs/superpowers/notes/crabpot-sweep-2026-09-16.md`). Every fresh-water row within 8% of the hand table, ocean rows within ten-pot noise. Recommendation: no change to the bases; Cockle/Mussel/Oyster/Clam are already banded through the crab basis, so the "unclamped" note here was stale. **CLOSED and DECIDED by Jeff 2026-09-16: the crab pot bases stay as they are. Do not re-raise.** Was:** command built (v0.16.173), never run. `tly_crabpots place 10` then a daily
 `tly_crabpots` for a season, then `report`. Zones Beach/Forest/Town/Mountain; the catch table splits
 ocean vs fresh (`CrabPot.DayUpdate`). Jeff: pots do not change with the season, so one season can be
 extrapolated. This is what unblocks **Cockle, Mussel, Oyster and Clam**, which are currently
 unclamped because the forage sweep only sees a fraction of their real supply.
 
-**E. NOT RUNNABLE UNATTENDED (checked 2026-09-16 when Jeff asked for it).** The spot check as
+**E. FISH HALF DECIDED by Jeff 2026-09-16: the probability model (fish-sim casts per day x catch chances) stands; his skill and attention are deliberately NOT in the equation. No real-rod check, ever. MINE HALF DONE 2026-09-16: `tly_minesweep` built (0.18.13, 0.18.14) and run over floors 1 to 160, monsters included; results and a recommended table change in `docs/superpowers/notes/minesweep-2026-09-16.md`. Headline: Coal 3.5x UNDER in the Mines table, Quartz and the six gems 2 to 4x OVER, monster drops from a single uncommon monster 3 to 25x OVER. AWAITING JEFF'S RULING on the recommended numbers; no table changed yet. Original note kept below.** The spot check as
 written needs a real rod and a real pickaxe: the fishing minigame and mine swings are player
 input, and the headless bridge has no tool for either (`tly_sweepforage` and `tly_crabpots` exist
 because forage and pots are passive). Options, Jeff's call: (a) Jeff fishes a couple of fish on a
