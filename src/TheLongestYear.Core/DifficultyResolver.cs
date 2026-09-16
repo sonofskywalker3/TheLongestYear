@@ -59,6 +59,7 @@ public static class DifficultyResolver
             },
             RequireAllSlots = settings.RequiredSlots == DifficultyStep.Extreme,
             RarityBias = Pick(settings.ItemRarity, RarityEasy, RarityNormal, RarityHard, RarityExtreme),
+            OncePerLoopAsksOne = config.OncePerLoopAsksOne,
 
             JpEarnedFactor = Pick(settings.JpEarned, JpEasy, JpNormal, JpHard, JpExtreme),
             ShrinePriceFactor = Pick(settings.ShrinePrices, PriceEasy, PriceNormal, PriceHard, PriceExtreme),

@@ -75,11 +75,12 @@ public static class StackScaling
             if (bandedSlots != null && bandedSlots.Contains(i))
                 continue;
 
-            // A legendary is caught once per loop, so its ask is x1 at every step
-            // (LegendaryFishRules): rounding it up to x2 on Hard made it impossible, not harder.
-            // The same holds for anything that never stacks (Gil's Trophies, UnstackableAsks).
+            // A once-per-loop item (a legendary, a gift-box book, the Golden Pumpkin) asks for one
+            // at every step while the setting is on (OncePerLoopAsks): rounding it up to x2 on Hard
+            // made it impossible, not harder. Anything that never stacks (Gil's Trophies, rings:
+            // UnstackableAsks) is held at one unconditionally.
             int next = UnstackableAsks.ClampStack(slot.ItemId,
-                LegendaryFishRules.ClampStack(slot.ItemId, ScaleStack(slot.Stack, profile.StackFactor)));
+                OncePerLoopAsks.ClampStack(slot.ItemId, ScaleStack(slot.Stack, profile.StackFactor), profile.OncePerLoopAsksOne));
             if (next == slot.Stack)
                 continue;
 
