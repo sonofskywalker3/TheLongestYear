@@ -451,4 +451,31 @@ public class ObtainabilityMadeTests
         Assert.Contains(geode, g => g.ItemId == "(O)86" && g.Source.Lands.ToString() == "lands wk2/never/never/never");
         Assert.All(geode, g => Assert.Equal(SourceKind.Geode, g.Source.Kind));
     }
+
+    [Fact]
+    public void A_mineral_from_a_repeatable_geode_is_dependable_after_the_cracking_days_but_omni_trove_and_conditioned_rows_stay_chance()
+    {
+        // Geodes dependable from day 1 (mine stones), omni geodes and troves too, for the comparison.
+        var snapshot = Snapshot(
+            ("(O)535", SourceKind.MineNode, DayTable.Always, Reliability.Dependable),
+            ("(O)749", SourceKind.MineNode, DayTable.Always, Reliability.Dependable),
+            ("(O)275", SourceKind.Shop, DayTable.Always, Reliability.Dependable));
+        var rows = new[]
+        {
+            new GeodeDropRow("(O)535", "(O)538", 1.0, null),                                   // Alamite from a Geode
+            new GeodeDropRow("(O)749", "(O)538", 1.0, null),                                   // Alamite from an Omni Geode
+            new GeodeDropRow("(O)749", "(O)74", 0.008, "PLAYER_STAT Current GeodesCracked 16"), // Prismatic Shard
+            new GeodeDropRow("(O)275", "(O)101", 1.0, null),                                   // Arrowhead from a trove
+        };
+        var sources = MadeSources.Geodes(rows, new string[0], Objects, snapshot, NoFestivals).ToList();
+
+        var alamite = sources.Where(s => s.ItemId == "(O)538").Select(s => s.Source).ToList();
+        var dependable = Assert.Single(alamite, s => s.Reliability == Reliability.Dependable);
+        Assert.Equal(1 + MadeSources.CrackDays, dependable.Lands.Lands(1));
+        Assert.Contains("item:(O)535", dependable.Conditions.Requires);
+        Assert.Contains(alamite, s => s.Reliability == Reliability.Chance && s.Lands.Lands(1) == 1);   // a lucky first crack
+        Assert.DoesNotContain(alamite, s => s.Reliability == Reliability.Dependable && s.Conditions.Requires.Contains("item:(O)749"));
+
+        Assert.All(sources.Where(s => s.ItemId == "(O)74" || s.ItemId == "(O)101"), s => Assert.Equal(Reliability.Chance, s.Source.Reliability));
+    }
 }
