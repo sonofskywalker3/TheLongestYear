@@ -214,14 +214,17 @@ public class FairnessRuleTests
     }
 
     [Fact]
-    public void Skull_cavern_is_a_condition_never_a_wait()
+    public void Skull_cavern_is_a_condition_never_a_wait_below_extreme_once_the_mines_are_cleared()
     {
+        // Task 11 (2026-09-16, "Skull Cavern needs the mines cleared"): the Staircase check is unchanged,
+        // isolated here with the mines already cleared (floor 120); the depth check itself is covered in
+        // FairnessRuleMineDepthTests.cs.
         ObtainSource route = Route(SourceKind.MonsterDrop, requires: new[] { "location:SkullCave" });
-        Assert.False(Counts(DifficultyStep.Easy, Save(mining: 5), route));                                   // desert shut
-        Assert.False(Counts(DifficultyStep.Easy, Save(mail: new[] { "ccVault" }, mining: 1), route));         // no staircase
-        Assert.True(Counts(DifficultyStep.Easy, Save(mail: new[] { "ccVault" }, mining: 2), route));
-        Assert.False(Counts(DifficultyStep.Normal, Save(mining: 10), route));                                 // the bus is never priced
-        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(mail: new[] { "ccVault" }, mining: 0), Model(route));
+        Assert.False(Counts(DifficultyStep.Easy, Save(mining: 5, floor: 120), route));                                   // desert shut
+        Assert.False(Counts(DifficultyStep.Easy, Save(mail: new[] { "ccVault" }, mining: 1, floor: 120), route));        // no staircase
+        Assert.True(Counts(DifficultyStep.Easy, Save(mail: new[] { "ccVault" }, mining: 2, floor: 120), route));
+        Assert.False(Counts(DifficultyStep.Normal, Save(mining: 10, floor: 120), route));                                // the bus is never priced
+        FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(mail: new[] { "ccVault" }, mining: 0, floor: 120), Model(route));
         Assert.True(verdict.Counts);
         Assert.Equal(2, verdict.Routes[0].AddedDays);   // Mining 2 from 0 = 2 days
     }
