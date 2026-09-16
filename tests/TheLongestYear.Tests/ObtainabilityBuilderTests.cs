@@ -167,6 +167,39 @@ public class ObtainabilityBuilderTests
     }
 
     [Fact]
+    public void A_derived_item_honours_the_owned_only_flag_the_same_way_as_island_and_year_two()
+    {
+        // Mirrors the invariant above for the third Derived variant flag added for the animal
+        // ruling (2026-09-16, controller fix round): an owned-only source (a not-sold animal's
+        // produce) must thread through a derived route the same way an island or year 2 source
+        // does, rather than silently vanishing under the default filters.
+        var plain = new ObtainSource(SourceKind.Crop, DayTable.Available(d => d >= 10), Reliability.Dependable, ObtainConditions.None, "plain");
+        var island = new ObtainSource(SourceKind.Crop, DayTable.Available(d => d >= 20), Reliability.Dependable, ObtainConditions.None with { GingerIsland = true }, "island");
+        var yearTwo = new ObtainSource(SourceKind.Crop, DayTable.Available(d => d >= 30), Reliability.Dependable, ObtainConditions.None with { YearTwo = true }, "year2");
+        var owned = new ObtainSource(SourceKind.Animal, DayTable.Available(d => d >= 5), Reliability.Dependable, ObtainConditions.None with { OwnedOnly = true }, "owned");
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)1"] = new[] { plain, island, yearTwo, owned },
+        });
+
+        Derived.Input input = Derived.Of(snapshot, "(O)1");
+        var derived = input.Emit(SourceKind.Machine, t => t.Delay(1), ObtainConditions.None, "derived").ToList();
+        var model = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>> { ["(O)2"] = derived });
+
+        foreach (bool includeIsland in new[] { false, true })
+            foreach (bool includeYearTwo in new[] { false, true })
+                foreach (bool includeOwned in new[] { false, true })
+                {
+                    ObtainFilter filter = ObtainFilter.DependableOnly with
+                    {
+                        IncludeGingerIsland = includeIsland, IncludeYearTwo = includeYearTwo, IncludeOwnedOnly = includeOwned,
+                    };
+                    DayTable expected = snapshot.Table("(O)1", filter).Delay(1);
+                    Assert.Equal(expected, model.Table("(O)2", filter));
+                }
+    }
+
+    [Fact]
     public void Unresolved_queries_go_to_diagnostics_not_the_model()
     {
         var inputs = new ObtainabilityInputs
