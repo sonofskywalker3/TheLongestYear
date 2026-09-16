@@ -246,8 +246,9 @@ nothing until the next loop: set it, then rewind for it to take.
 Everything reported between 0.18.1 and 0.18.11 was fixed and answered by Jeff on 15 Sep (see
 CHANGELOG 0.18.4, 0.18.10, 0.18.11). What is left over from the round, newest first:
 
-- **FEATURE REQUEST, Jeff said yes and promised credit (ThirteenRedCats, Nexus post 16 Sep):
-  a difficulty dial for the NUMBER of bundles per board.** Normal = the standard count, Easy = one or
+- **FUTURE FEATURE, parked by Jeff 2026-09-16 ("if I'm looking for something to add"). He said yes
+  on Nexus and promised credit (ThirteenRedCats, Nexus post 16 Sep): a difficulty dial for the
+  NUMBER of bundles per board.** Normal = the standard count, Easy = one or
   two fewer per board, Hard = one or two more, Extreme = every possible bundle. Jeff's reply: "if the
   graphical side of things isn't hard-coded I think I could do that". Needs a spec: how the CC room
   UI lays out a non-standard bundle count, how the season gate's "any N of Y" counts interact with
@@ -463,15 +464,24 @@ have deleted Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp outright.
 
 **Reply to spenderg still owed** once this ships (draft goes to Jeff in chat first).
 
-### Unanswered Nexus posts, both design questions rather than bugs (checked 30 Aug)
+### Reviewed 2026-09-16: the two 30 Aug design questions
 
-- **RayAndRain, 29 Aug:** in four loops the chef bundle never appeared as a checkpoint or a weekly
-  challenge, and asked whether that is by design. Loved the mod otherwise. Worth checking whether
-  the chef bundle can be drawn for either at all.
-- **gazumbrado, 29 Aug:** double XP at 100 JP is too cheap. Bought every one and had Fishing,
-  Foraging and Mining at level 5 by day 4 of a new save. A pricing question for the boost ladder.
+- **RayAndRain, 29 Aug (chef bundle never a checkpoint or a weekly challenge in four loops).**
+  Checked 2026-09-16: the weekly challenge is not drawn per bundle, the player picks one of two
+  theme cards a week (`SelectionService.OfferForWeek`, eight themes since 0.16.167, weighted by how
+  many goals each theme could ask for). Chef's lives in the Bulletin Board room, which is the Mixed
+  theme, and cooked dishes are also the Kitchen theme, so it can turn up either way; on the
+  0.16.1xx builds he played it was one card in five and the Bulletin room's weight is low because
+  its bundles are short. The season gate takes any N of Y bundles, so a chef bundle is never
+  required at a checkpoint by design. Awaiting Jeff's ruling: leave it, or give the Bulletin room a
+  floor weight so Mixed is offered at least once a season.
+- **gazumbrado, 29 Aug (double XP at 100 JP too cheap): DONE 0.16.168, 2026-08-30.** The XP chain
+  is quarter steps now (+25% a tier, four tiers, 1,000 JP for the last), doubling is where it
+  ends, not where it starts (`XpMultiplierRules.cs`).
 
-### NEW (found 2026-08-30 while checking Nijah's report, not something she reported): Mystic Tree tap timing likely wrong — no Ginger Island gate at all
+### DONE 0.16.168 (2026-08-30): Mystic Syrup pinned to week 16 in `AvailabilityWeeks.LateFloors` (the seed is the Foraging Mastery reward). Original note kept below.
+
+#### Original: Mystic Tree tap timing likely wrong — no Ginger Island gate at all (found 2026-08-30)
 
 While checking Nijah's mention of Mystic Syrup (she stated it as a fact, not a complaint — no bug
 alleged there), found a real gap one level down. `TapperAvailability.cs`
