@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-16 evening (story: obtainability rulings applied; parked here while Jeff does bug fixes on master)
 **Branch:** `story`; everything committed AND pushed, nothing local-only
-**Tests:** 2589 passing
+**Tests:** 2595 passing
 **Build:** clean (Release, 0 errors); story HEAD deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449242947` (Run 181)
 **Last public release:** 0.18.11
 
@@ -27,9 +27,13 @@ travelcheck: 267360 comparison(s) over 1114 item(s), 0 mismatch(es); built in 66
   tests made routes fully on Extreme). About 15 minutes; run it before the darkness live test.
 - **Cost to watch:** a fairness judgement averages about 3 ms on the real model (877 s over 267,360);
   the model build on load went from about 1.5 s to 3.4 s (the reset reload reuses the cached build).
-- **Accepted limits:** Ostrich Egg has no year 1 route (ostrich not sold, incubator is an island
-  recipe); the Raccoon shop gate ignores the fed-raccoon condition; Blue Chicken counts as sold with
-  White Chicken (same eggs).
+- **Skull Cavern (Jeff, same day, commit `25fd01a`):** every Skull Cavern route lands from day 13 at
+  the earliest (mines cleared at 10 floors a day, Skull Key at floor 120, MineShaft.cs 2188-2196), and
+  the darkness also needs the save at floor 120 (Easy rules the route out, Normal and Hard add the days).
+- **Closed as out of scope (Jeff):** Ostrich Egg has no year 1 route (ostrich not sold, incubator is an
+  island recipe), like every other Ginger Island item.
+- **Accepted limits:** the Raccoon shop gate ignores the fed-raccoon condition; Blue Chicken counts as
+  sold with White Chicken (same eggs).
 - **Next on story:** the fish and machine repeatable-chance review (TODO), then Jeff's darkness live test.
 
 ## 2026-09-16: shrine-close freeze, rewind polish (Jeff approved: "I love it")
