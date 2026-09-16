@@ -4,6 +4,7 @@ using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.GameData.Buildings;
 using StardewValley.Locations;
+using StardewValley.Network;
 using StardewValley.Objects;
 using TheLongestYear.Core.Sabotage;
 
@@ -14,6 +15,7 @@ namespace TheLongestYear.Loop
     internal static class SaveSnapshotReader
     {
         private static readonly string[] SkillNames = { "Farming", "Fishing", "Foraging", "Mining", "Combat", "Luck" };
+        private const string BeachBridgeFixed = "beachBridgeFixed";
 
         /// <summary><paramref name="log"/> takes one trace line when a recipe had to be skipped, so a
         /// content pack with broken recipe data shows up in the log instead of going silent.</summary>
@@ -88,6 +90,9 @@ namespace TheLongestYear.Loop
             var mail = new HashSet<string>(StringComparer.Ordinal);
             foreach (string flag in player.mailReceived) mail.Add(flag);
             foreach (string flag in Game1.MasterPlayer.mailReceived) mail.Add(flag);
+
+            // The beach bridge is world state, not mail; the fairness rule reads both as one flag set.
+            if (NetWorldState.checkAnywhereForWorldStateID(BeachBridgeFixed)) mail.Add(BeachBridgeFixed);
 
             var skills = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 0; i < SkillNames.Length; i++) skills[SkillNames[i]] = player.GetSkillLevel(i);
