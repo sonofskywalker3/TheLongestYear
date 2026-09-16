@@ -71,3 +71,15 @@ monsters a floor, so 240 to 410 kills a week spread over the band's whole roster
    24, Solar Essence to 90, Algae to 28, Winter Root to 20.
 3. Re-run with geodes cracked (a `crack` mode that opens every geode through the game's
    geode roll) before touching the gem and crystal rows if Jeff wants that precision.
+
+## Applied (Jeff, 2026-09-16, 0.18.16)
+
+Jeff ruled "apply the recommended numbers to both tables" the same day.
+- `QuantityBasisTables.Mines`: Coal 99, Quartz 35, Amethyst 9, Topaz / Jade / Aquamarine / Emerald /
+  Ruby 7, Frozen Tear 27. Every other row unchanged.
+- `QuantityBasisTables.MonsterDropCaps` (new hand table) sits over the generated `MonsterDrops`:
+  every single-monster drop the sweep saw is capped at twice its measured floor-clearing supply,
+  rounded up, floor 2. The ask pass reads `MonsterDropsMeasured`. Rows the sweep never saw (a
+  monster deeper than Skull Cavern 40, or dangerous-mines only) keep the generated number.
+- The raw per-floor data is `mine-sweep-results-2026-09-16.csv` next to this note (the seven-day
+  cracked run, 15,632 rows), so any other floors-a-day assumption can be regenerated without a rerun.

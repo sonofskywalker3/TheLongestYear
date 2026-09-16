@@ -116,29 +116,37 @@ public static class QuantityBasisTables
     /// items on 0.25% of clear tiles, three quarters Quartz and the rest the area's crystal
     /// (getRandomItemForThisLevel); gem nodes on 0.15% + level/24000 of tiles, one of six gems by
     /// band; a Diamond node on 0.025% + level/120000 of stones past floor 50. Quartz adds the Stone
-    /// Golem drop from the same floors. Jeff 2026-09-04: "quartz is much more common".</summary>
+    /// Golem drop from the same floors. Jeff 2026-09-04: "quartz is much more common".
+    ///
+    /// MEASURED 2026-09-16 (tly_minesweep, floors 1 to 160, seven day counters, every stone broken,
+    /// every geode cracked, bare farmer; docs/superpowers/notes/minesweep-2026-09-16.md): the stone
+    /// count, the ore, the geodes and the crystals came out where the model put them, and four rows
+    /// did not. Jeff applied the measured numbers the same day; those rows say so.</summary>
     public static readonly IReadOnlyDictionary<string, double> Mines = new Dictionary<string, double>(StringComparer.Ordinal)
     {
         ["(O)378"] = 99,   // Copper Ore, 435 a week on floors 1-39
         ["(O)380"] = 99,   // Iron Ore, 398 on 40-79
         ["(O)384"] = 99,   // Gold Ore, 398 on 80-119
         ["(O)386"] = 70,   // Iridium Ore, Skull Cavern, judgement 10 a day (Iridium Bat gives more)
-        ["(O)382"] = 86,   // Coal, mines only (Dust Sprites give more)
+        ["(O)382"] = 99,   // Coal: MEASURED 312 to 335 a week in every band (coal nodes plus the plain-stone roll); the model's 86 was 3.5x low
         ["(O)390"] = 99,   // Stone
         ["(O)535"] = 92,   // Geode, floors 1-39
         ["(O)536"] = 92,   // Frozen Geode, 40-79
         ["(O)537"] = 92,   // Magma Geode, 80-119
         ["(O)749"] = 21,   // Omni Geode
-        ["(O)80"] = 80,    // Quartz: 39 floor items + 42 from Stone Golems
+        ["(O)80"] = 35,    // Quartz: MEASURED 27 to 34 a week (floor items, Stone Golems, geodes); the model's 80 was 2.5x high
         ["(O)86"] = 18,    // Earth Crystal: 13 floor items + 5 from Geodes
-        ["(O)84"] = 18,    // Frozen Tear
+        ["(O)84"] = 27,    // Frozen Tear: MEASURED 27 a week on floors 41 to 80 once geodes are cracked
         ["(O)82"] = 18,    // Fire Quartz
-        ["(O)66"] = 14,    // Amethyst, gem nodes
-        ["(O)68"] = 14,    // Topaz
-        ["(O)62"] = 14,    // Aquamarine
-        ["(O)70"] = 14,    // Jade
-        ["(O)60"] = 14,    // Emerald
-        ["(O)64"] = 14,    // Ruby
+        // Gems: MEASURED 4 to 9 a week in the gem's best band, geodes cracked. The model's gem-node
+        // rate (0.15% of tiles + level/24000) was 2 to 3x what the generator places; a geode is
+        // mostly ore, stone, clay and the area crystal, so cracking barely moves these.
+        ["(O)66"] = 9,     // Amethyst, gem nodes plus Green Slimes (measured 9)
+        ["(O)68"] = 7,     // Topaz (measured 7)
+        ["(O)62"] = 7,     // Aquamarine (measured 6)
+        ["(O)70"] = 7,     // Jade (measured 7)
+        ["(O)60"] = 7,     // Emerald (measured 8)
+        ["(O)64"] = 7,     // Ruby (measured 6)
         ["(O)72"] = 3,     // Diamond
     };
 
@@ -249,6 +257,58 @@ public static class QuantityBasisTables
         ["(O)412"] = 33.6,   // Winter Root: Frost Jelly, 33.6 expected
         ["(O)280"] = 12.6,   // Yam: Duggy, 12.6 expected
     };
+
+    /// <summary>MEASURED caps over <see cref="MonsterDrops"/> (Jeff, 2026-09-16). The generated table
+    /// assumes 420 kills a week of the ONE best monster for each drop. tly_minesweep (floors 1 to
+    /// 160, seven day counters, every monster on every floor killed through the game's own drop
+    /// code, bare farmer) measured what clearing floors actually yields: 3.4 to 5.9 monsters a
+    /// floor, so 240 to 410 kills a week spread over a band's whole roster. The common drops every
+    /// monster gives (Slime, Bug Meat, Bat Wing, the essences) came out near the table; a drop that
+    /// only one uncommon monster gives came out 3 to 25x under it. Jeff's rule: a single-monster
+    /// drop is capped at TWICE the measured floor-clearing supply, rounded up, floor 2, so a player
+    /// who does camp that monster gets credit without an ask nobody clearing floors can meet. Rows
+    /// the sweep never saw at all (a monster deeper than Skull Cavern 40, or dangerous-mines only)
+    /// are left to the generated table. Numbers: docs/superpowers/notes/minesweep-2026-09-16.md.
+    /// Hand table; <see cref="MonsterDropsMeasured"/> is what the ask pass reads.</summary>
+    public static readonly IReadOnlyDictionary<string, double> MonsterDropCaps = new Dictionary<string, double>(StringComparer.Ordinal)
+    {
+        ["(O)114"] = 2,    // Ancient Seed: Grubs, measured 0.8 a week
+        ["(O)287"] = 20,   // Bomb: Lava Crabs, measured 10
+        ["(O)881"] = 84,   // Bone Fragment: Skeletons, measured 42
+        ["(O)286"] = 34,   // Cherry Bomb: Rock Crabs, measured 17
+        ["(O)428"] = 20,   // Cloth: Mummies, measured 10
+        ["(O)334"] = 8,    // Copper Bar: Metal Heads, measured 4
+        ["(O)732"] = 9,    // Crab Cakes: Iridium Crabs, measured 4
+        ["(O)717"] = 15,   // Crab: Lava Crabs, measured 7
+        ["(O)414"] = 5,    // Crystal Fruit: Dust Spirits, measured 2
+        ["(O)98"] = 4,     // Dwarf Scroll III: Frost Jellies, measured 2
+        ["(O)86"] = 38,    // Earth Crystal: Duggies plus geodes, measured 19
+        ["(O)156"] = 2,    // Ghostfish: Ghosts, measured 0.6
+        ["(O)336"] = 3,    // Gold Bar: Squid Kids, measured 1.4
+        ["(O)153"] = 24,   // Green Algae: Green Slimes, measured 12
+        ["(O)335"] = 3,    // Iron Bar: Metal Heads, measured 1.4
+        ["(O)288"] = 2,    // Mega Bomb: Squid Kids, measured 0.3
+        ["(O)243"] = 4,    // Miner's Treat: Mummies, measured 2
+        ["(O)338"] = 2,    // Refined Quartz: Ghosts, measured 1
+        ["(O)273"] = 15,   // Rice Shoot: Grubs, measured 7.5
+        ["(O)226"] = 6,    // Spicy Eel: Serpents, measured 3
+        ["(O)814"] = 5,    // Squid Ink: Squid Kids, measured 2
+        ["(O)203"] = 4,    // Strange Bun: Shadow Brutes and Shamans, measured 2
+        ["(O)157"] = 22,   // White Algae: Sludges, measured 11
+        ["(O)412"] = 25,   // Winter Root: Frost Jellies, measured 12
+    };
+
+    /// <summary>The generated <see cref="MonsterDrops"/> with <see cref="MonsterDropCaps"/> applied:
+    /// the smaller of the two wherever a cap exists.</summary>
+    public static readonly IReadOnlyDictionary<string, double> MonsterDropsMeasured = Capped(MonsterDrops, MonsterDropCaps);
+
+    private static IReadOnlyDictionary<string, double> Capped(IReadOnlyDictionary<string, double> table, IReadOnlyDictionary<string, double> caps)
+    {
+        var result = new Dictionary<string, double>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, double> row in table)
+            result[row.Key] = caps.TryGetValue(row.Key, out double cap) ? Math.Min(row.Value, cap) : row.Value;
+        return result;
+    }
 
     /// <summary>Minerals (Data/Objects category -12), Jeff 2026-09-04: base 4; easier to hunt than a
     /// specific artifact. Gems stay single.</summary>

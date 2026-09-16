@@ -3,6 +3,28 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.16 - 2026-09-16
+
+2131 tests.
+
+### Changed
+
+- **Mine and monster asks follow measured yields.** A new debug sweep generated every mine floor
+  from 1 to 120 and the first 40 Skull Cavern floors on seven different days, broke every stone,
+  cracked every geode and killed every monster through the game's own drop code with a bare
+  farmer, and counted what landed. The ore, geode and crystal numbers the balance already used
+  came out right. Four did not, and now match the measurement: Coal asks go up (a week of mining
+  yields three to four times what the old number said), Quartz asks come down by more than half,
+  and Topaz, Jade, Aquamarine, Emerald and Ruby asks come down by about half. Monster drops that
+  only one uncommon monster gives (Squid Ink, Crab Cakes, Cloth, Refined Quartz, the bars, the
+  algae and a few others) are now capped at twice what clearing floors actually yields, instead of
+  assuming a whole week spent hunting that one monster.
+
+### Debug
+
+- `tly_minesweep <from> <to> [samples] [crack]` (0.18.13 to 0.18.15): the measurement above,
+  headless, nothing persisted.
+
 ## 0.18.12 - 2026-09-16
 
 2131 tests.
