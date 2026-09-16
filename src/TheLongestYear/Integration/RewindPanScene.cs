@@ -281,7 +281,7 @@ namespace TheLongestYear.Integration
             ClearWeather();
             Gust();
 
-            RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd, PanDurationMs);
+            RewindReversedExtras.Spawn(_monitor, _town, PanStart, PanEnd);
             RewindReversedExtras.RefreshAppearance();
         }
 
