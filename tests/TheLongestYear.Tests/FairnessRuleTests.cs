@@ -294,6 +294,15 @@ public class FairnessRuleTests
     }
 
     [Fact]
+    public void The_raccoon_shop_needs_the_raccoons_moved_in()
+    {
+        var model = Model(Route(kind: SourceKind.Shop, requires: new[] { "shop:Raccoon" }));
+        Assert.False(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, SaveSnapshot.Empty, model));
+        SaveSnapshot movedIn = SaveSnapshot.Empty with { MailFlags = new HashSet<string> { "raccoonMovedIn" } };
+        Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, movedIn, model));
+    }
+
+    [Fact]
     public void A_mail_flag_is_met_or_not()
     {
         ObtainSource route = Route(SourceKind.GreenhouseCrop, requires: new[] { "item:(O)472", "mail:ccPantry" });
