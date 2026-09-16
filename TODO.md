@@ -30,17 +30,19 @@ clock runs during the 15 minutes, the farmer passed out on the porch and the que
 on a LevelUpMenu until `tly_dismiss` cleared them; next time `debug time 600` plus a sleep first, or
 warp indoors.
 
-### NEXT ON STORY, AWAITING JEFF'S RULING: repeatable-chance review for ordinary fish and machine output (Jeff, 2026-09-16)
-**Review written 2026-09-16 evening:** `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`.
-Findings: every ordinary species is already Dependable in the model (only trash, farm-water Wood
-and Coral, and the Magic Bait trio are Chance), so the fish question is which rare species to
-DEMOTE. Proposed line: at least 2 expected catches on a full dedicated day at the best spot (catch-
-rate note, 20h column); under it Legend, Mutant Carp, Octopus, Pufferfish, Sea Jelly, Cave Jelly,
-plus Crimsonfish, Angler and Glacierfish by the one-off argument. Machines: of the 111 Machine
-Chance rows all but a handful are inherited from a chance input (the crystalarium is a pure copy);
-the machines that roll their own output (Recycling Machine, Bone Mill, Slime Egg-Press, Wood Chipper,
-Mushroom Cave, Seed Maker, Mushroom Log) only ever change Blue, Red and Purple Slime Egg, so the
-recommendation is to leave machines alone. Original brief below.
+### DONE 2026-09-16 evening (fish) / OPEN (geodes): repeatable-chance review for ordinary fish and machine output
+Note: `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`. Jeff took both
+recommendations. **Fish applied** (`c4d570d`, `89dd396`): catch-limit-1 rows, the five legendaries by
+id (Legend has a Backwoods row with no catch limit), and Octopus, Pufferfish, Sea Jelly, Cave Jelly
+are Chance; live rerun moved exactly those nine species to LuckOnly (LuckOnly 119 to 128, Agree 164
+to 157, NewEarlier 172 to 170), nothing else. **Machines left alone.**
+**OPEN, AWAITING JEFF: geode cracking.** Jeff asked why only the egg press mattered when the geode
+crushers, bone mill and recycling machine all roll. Answer: the bone mill and recycler change nothing
+(every output already dependable elsewhere), but geode cracking is its own `Geode` family that the
+morning filed under KEEP while geodes were still chance; now that geodes are repeatable, 39 minerals
+are LuckOnly through it alone (about 20% a day for a named mineral, 91% over 11 days). Proposal in the
+note's section 3: dependable with an 11-day delay after the geode's own landing, own geode type
+only; omni, Artifact Trove and Prismatic Shard rows stay Chance. Original brief below.
 
 The 2026-09-16 repeatable-chance ruling (a chance route you can retry many times a day with a decent
 chance each try counts as dependable) deliberately left two families out, to be judged separately:

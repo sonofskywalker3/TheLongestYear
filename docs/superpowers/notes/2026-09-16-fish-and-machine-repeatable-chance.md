@@ -1,4 +1,12 @@
-# Repeatable chance, second pass: ordinary fish and machine output (for Jeff, no model change yet)
+# Repeatable chance, second pass: ordinary fish and machine output
+
+> **Applied 2026-09-16 evening (Jeff took both recommendations).** Fish: commits `c4d570d` and
+> `89dd396` on `story` (`SpawnSources`: catch limit 1, the five legendaries by id, and Octopus,
+> Pufferfish, Sea Jelly, Cave Jelly are Chance). Live rerun on the throwaway save: 1077 items,
+> OnlyNew 606, NewEarlier 170, NewLater 9, LuckOnly 128, Agree 157, OnlyExisting 7; exactly the nine
+> species moved to LuckOnly (Mutant Carp and Cave Jelly from NewEarlier, the other seven from
+> Agree), nothing else changed. Machines: left alone. Section 3 below answers Jeff's follow-up on
+> the geode crackers, the bone mill and the recycling machine; the geode question is still open.
 
 The 2026-09-16 ruling ("a chance route you can retry many times a day with a decent chance each
 try counts as dependable") left two families to be judged on their own. This note is the threshold
@@ -137,3 +145,65 @@ too, which promotes Blue Slime Egg and nothing else.
 1. Fish: the 2-per-day line (6 species + the other 3 legendaries), legendaries only, or no change.
    And whether the three mine fish join the demotion.
 2. Machines: leave alone (recommended), or apply the 25% rule (Blue Slime Egg only).
+
+## 3. Jeff's follow-up: "geode crackers, bone mill, recycling machine all roll their output"
+
+They do, and the note above says so. The claim was narrower: **ruling on those rolls changes no
+item's answer**, because everything they can roll already has a dependable route somewhere else.
+From the fresh report:
+
+- Recycling Machine: Coal, Stone (Agree week 1), Iron Ore (Blacksmith, iron nodes), Wood
+  (Carpenter, driftwood through the same machine), Cloth (Loom from Wool), Torch (crafting),
+  Refined Quartz (Furnace). All dependable already.
+- Bone Mill: all four fertilizers have a crafting recipe route (Farming 3, 8, 9; Foraging 7) and
+  Pierre or Sandy sell three of them. All dependable already.
+- Slime Egg-Press was the only machine whose roll is the *sole* route to something (the three
+  coloured eggs). Left alone per the recommendation.
+
+**Geode cracking is different, and I under-called it.** In the model it is not a "Machine" at all
+but its own family, `Geode` (Clint or the Geode Crusher, same table), and the morning's proposal
+filed it under KEEP as "opened once per geode item you have, not a repeatable try". That was true
+in the morning, when geodes themselves were Chance. The same ruling then made geodes dependable
+(2.2% of mine stones, repeatable), so cracking is now a pipeline you can feed every mining day.
+It matters: **47 LuckOnly items have no route at all except a geode** (39 minerals, Alamite to Star
+Shards, whose only other row is the crystalarium copying a mineral you don't have; the other 8 are
+Artifact Trove items, which are a separate case since a trove is one omni geode traded at the
+desert, not a repeatable try).
+
+### The numbers (Utility.cs getTreasureFromGeode 6397-6647, Data/Objects GeodeDrops)
+
+| Geode | Named-mineral odds per geode | Why |
+|---|---|---|
+| Geode (O)535 | 3.1% | half the time the common branch (stone, clay, ore, coal, Earth Crystal); otherwise 1 of 16 |
+| Frozen Geode (O)536 | 3.3% | same shape, 1 of 15 |
+| Magma Geode (O)537 | 3.8% | same shape, 1 of 13 |
+| Omni Geode (O)749 | 1.1% | same shape, 1 of 44 |
+
+Geodes a day: about 2.2% of stones give the floor's geode type and 0.5% an omni geode, so a
+300-stone mining day is roughly 6 to 7 of the local geode plus 1 or 2 omni, plus Duggy drops.
+Cracking costs 25g each at Clint on any day he is open.
+
+For one named mineral from its own geode type that gives about **20% a day**, **79% over a week,
+91% over 11 days, 99.8% over a season**. So it fails the per-day line every other family was judged
+on, but it is solidly dependable on the deadline scale the darkness actually uses (season end on
+Easy, Winter 28 on Normal and above, day 112 for tampering).
+
+### Which way the consequence points
+
+A LuckOnly mineral is one the darkness will **not** take from a slot on Easy or Normal (no fair
+route back). Promoting geode contents makes the 39 minerals takeable, on the theory that you can
+re-crack one within a couple of weeks. So this is not a "player loses out" bug either way; it is
+whether the darkness may touch minerals at all.
+
+### Proposal
+
+Treat a named mineral from cracking as **dependable, landing 11 days after its geode's own route
+lands** (the day the 90% line is crossed), using the same delay mechanism the mine-depth ruling
+added. Omni-only odds (1.1%) would need about 30 days, so a mineral only counts through its own
+geode type, and the omni row stays Chance. Artifact Trove rows stay Chance (not repeatable).
+Prismatic Shard stays Chance (0.4% per omni geode, and only after 16 cracked).
+
+Alternative: leave geode contents as Chance. The 39 minerals stay LuckOnly and the darkness never
+touches them.
+
+**I need your call on this one before touching it.**
