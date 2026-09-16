@@ -63,4 +63,12 @@ public class ObtainabilityWorldSourcesTests
     [Fact]
     public void Sea_urchin_follows_the_same_two_routes()
         => Assert.Equal(2, WorldSources.All().Count(s => s.ItemId == "(O)397"));
+
+    [Fact]
+    public void Mystery_boxes_are_dependable_from_day_51()
+    {
+        ObtainSource box = WorldSources.All().Single(s => s.ItemId == "(O)MysteryBox").Source;
+        Assert.Equal(Reliability.Dependable, box.Reliability);
+        Assert.Equal(51, box.Lands.Lands(1));
+    }
 }
