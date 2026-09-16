@@ -15,6 +15,13 @@ already knows an item is once-per-loop (catch limits, the legendary rules) and s
 option would cover.
 
 
+### NEXT ON STORY, FIRST: run `tly_sabotage travelcheck save` on a developed farm (2026-09-16)
+The empty-farm run passed (267,360 comparisons, 0 mismatches) but only tests made routes fully on
+Extreme. Run the save mode (about 15 minutes, my automated run, a throwaway save that has machines,
+recipes and some mine depth) and redeploy first so it includes the Skull Cavern change (`25fd01a`).
+Any mismatch is a bug in the mine-depth work. Then the fish and machine review below, then Jeff's
+darkness live test.
+
 ### NEXT ON STORY: repeatable-chance review for ordinary fish and machine output (Jeff, 2026-09-16)
 The 2026-09-16 repeatable-chance ruling (a chance route you can retry many times a day with a decent
 chance each try counts as dependable) deliberately left two families out, to be judged separately:
