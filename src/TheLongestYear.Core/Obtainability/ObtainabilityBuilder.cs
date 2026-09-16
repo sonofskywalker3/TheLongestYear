@@ -45,6 +45,7 @@ public static class ObtainabilityBuilder
         direct.AddRange(CodeSources.Moss());
         direct.AddRange(CodeSources.SeasonSeeds());
         direct.AddRange(CodeSources.GuildRewards(inputs.SlayerQuests));
+        direct.AddRange(CodeSources.MagicBait());
         direct.AddRange(WorldSources.All());
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
 

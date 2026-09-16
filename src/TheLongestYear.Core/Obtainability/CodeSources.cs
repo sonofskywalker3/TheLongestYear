@@ -86,4 +86,15 @@ public static class CodeSources
                 Reliability.Dependable, ObtainConditions.None with { Requires = requires }, $"Adventure Guild reward for {quest.Id}"));
         }
     }
+
+    /// <summary>Magic Bait: Mr. Qi's (QiGemShop barter, his island recipe), so a Ginger Island item and
+    /// out of scope (Jeff's ruling 2026-09-16), not an unresolved one. QiGemShop stocks (O)908 per the
+    /// Data/Shops export ("patch export/Data_Shops.json", QiGemShop entry, item (O)908, MinStack 20)
+    /// and StardewValley/Utility.cs's QiGemShop setup in the decompile.</summary>
+    public static IEnumerable<(string ItemId, ObtainSource Source)> MagicBait()
+    {
+        yield return ("(O)908", new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable,
+            ObtainConditions.None with { GingerIsland = true, Requires = new[] { "shop:QiGemShop" } },
+            "Mr. Qi's magic bait (island)"));
+    }
 }

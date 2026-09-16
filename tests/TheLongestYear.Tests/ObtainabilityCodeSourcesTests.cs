@@ -58,4 +58,12 @@ public class ObtainabilityCodeSourcesTests
         Assert.Contains("guild:Duggies 30 kills (Duggy)", hat.Conditions.Requires);
         Assert.Contains("mines:floor 1", hat.Conditions.Requires);   // MineSources.MonsterFloor for the first target
     }
+
+    [Fact]
+    public void Magic_bait_is_an_island_item()
+    {
+        ObtainSource bait = CodeSources.MagicBait().Single().Source;
+        Assert.True(bait.Conditions.GingerIsland);
+        Assert.False(bait.Conditions.Unresolved);
+    }
 }
