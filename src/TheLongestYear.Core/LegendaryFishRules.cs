@@ -12,7 +12,8 @@ namespace TheLongestYear.Core;
 /// <item>A legendary is asked for ONCE. The game lets it be caught once per loop
 /// (CatchLimit 1; <see cref="CaughtFishReset"/> clears that on the rewind), so a stack of two is
 /// not hard, it is impossible. The stack-size modifier rounds a plain x1 up to x2 on Hard, which is
-/// exactly how every report above was produced.</item>
+/// exactly how every report above was produced. Since 0.18.12 the stack clamp lives in
+/// <see cref="OncePerLoopAsks"/> with the other once-per-loop items, under one setting.</item>
 /// <item>A legendary is asked for at BASE quality, never silver or gold. One cast, one chance.</item>
 /// <item>A bundle holds at most one legendary on Easy and Normal, two on Hard, four on Extreme,
 /// and never two from the same season: a Hard bundle may want Legend and Crimsonfish (Spring and
@@ -72,10 +73,6 @@ public static class LegendaryFishRules
 
     /// <summary>Share of Normal boards that may hold a legendary at all.</summary>
     public const double NormalBoardChance = 0.25;
-
-    /// <summary>Every legendary asks for one, whatever the stack roll or the stack-size dial says.</summary>
-    public static int ClampStack(string itemId, int stack)
-        => IsLegendary(itemId) ? 1 : stack;
 
     /// <summary>Every legendary asks for base quality, whatever the quality roll or dial says.</summary>
     public static int ClampQuality(string itemId, int quality)

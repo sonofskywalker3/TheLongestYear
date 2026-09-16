@@ -244,6 +244,14 @@ public sealed class GameplayConfig
     /// clean - the rewind means the festival has not happened yet.</summary>
     public bool FestivalMainEventOncePerDay { get; set; } = true;
 
+    /// <summary>Once-per-loop items always ask for one (Jeff, 2026-09-16). The five legendary
+    /// fish, the two gift-box books and the Golden Pumpkin can only be had once in a loop, so a
+    /// slot asking for two of them is impossible rather than hard. On, they stay at one at every
+    /// Stack size step; off, the dial scales them like anything else. Stamped into the loop's
+    /// difficulty profile at reset like the dials; a board already carrying such an ask is
+    /// lowered on load while this is on. See <see cref="OncePerLoopAsks"/>. GMCM "Difficulty".</summary>
+    public bool OncePerLoopAsksOne { get; set; } = true;
+
     /// <summary>Deja-vu dialogue (spec 2026-08-27): villagers you have dealt with a lot across loops
     /// occasionally half-remember you. No mechanical effect. GMCM "Features".</summary>
     public bool EnableDejaVuDialogue { get; set; } = true;

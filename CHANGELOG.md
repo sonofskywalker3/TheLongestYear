@@ -3,6 +3,21 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.12 - 2026-09-16
+
+2131 tests.
+
+### Added
+
+- **Once-per-loop items ask for one, as a setting.** Some items a loop can only give once: the
+  five legendary fish, the two books hidden around town (The Alleyway Buffet and Mapping Cave
+  Systems) and the Golden Pumpkin from the Spirit's Eve maze. The Stack size dial used to turn
+  their ask into two on Hard and Extreme, which no one can ever fill. A new Difficulty setting,
+  on by default, holds every one of them at one whatever the dial says; off, they scale like
+  everything else. A board already asking for two is lowered on load while the setting is on.
+  The list was checked against the game data: every other book restocks, and weapons, hats and
+  rings are already held at one by their own rule. Reported by FayGabi.
+
 ## 0.18.11 - 2026-09-15
 
 2106 tests.
