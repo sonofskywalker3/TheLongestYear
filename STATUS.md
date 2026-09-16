@@ -474,6 +474,15 @@ rounds (walker-only extras, season outfits, wind, extras at walking speed). The 
 - **Queued for Jeff:** Run 165 on the rotated Clone save, Fishing picked, `tly_setday 28`,
   `tly_gateneeds` = 17 bundles owed. Sleeping plays the real fail night into the full rewind.
 
+## 2026-09-16: sweep after 0.18.4, 0.18.10 and 0.18.11
+
+Four fixes went out on 14 and 15 Sep, all from Nexus reports (Gil's Trophies stack ask, day-28
+quit skipping the rewind, festival clock during contests, rings in the Dye bundle, Friendship 101
+in the Book bundle, new-farm first-night quit, Chests Anywhere stash, hidden-book deadlines). Jeff
+answered every thread himself. The 16 Sep sweep found nothing waiting on a reply; the one new
+item is ThirteenRedCats's bundles-per-board difficulty dial, which Jeff said yes to. Details and
+the watch list are at the top of `TODO.md`.
+
 ## 2026-09-10 night: 0.18.0 The Mod Compatibility Update, then 0.18.1
 
 **0.18.0** closed the two verification gaps the branch had left open before shipping:
