@@ -1,7 +1,7 @@
 # The Expanded Opening (design)
 
-Date: 2026-09-16. Branch: `story`. Status: section 1 approved by Jeff in the brainstorm; sections 2 to 5
-are the proposal awaiting his review.
+Date: 2026-09-16. Branch: `story`. Status: APPROVED by Jeff (sections 1 and 2, 2026-09-16); ready for the
+implementation plan.
 
 Replaces section 5.1 ("Opening montage") of `2026-06-06-tly1-story-and-cutscenes-design.md`. That
 outline's premise (Joja sent you to sell a farm you did not know was yours) is dropped: vanilla's letter
@@ -71,7 +71,7 @@ already built on this branch (`2026-09-07-year-one-ending-script.md`, the shrine
 message, the candle). Year 2 opens with the farmer asking the Junimos what he meant (recorded in
 `docs/story-ideas.md`; Year 2 is not on this branch).
 
-## 2. How it is built (proposal)
+## 2. How it is built (approved)
 
 ### 2.1 Let vanilla play
 
