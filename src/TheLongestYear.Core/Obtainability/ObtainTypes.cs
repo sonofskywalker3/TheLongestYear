@@ -87,6 +87,14 @@ public sealed record ObtainSource(
     /// route to every existing consumer, and Distinct() keeps merging them as it always has.</para></summary>
     public IReadOnlyList<IReadOnlyList<string>> Inputs { get; init; } = Array.Empty<IReadOnlyList<string>>();
 
+    /// <summary>The table as it was before the builder added the days it takes to reach this route's
+    /// mine floor from nothing (<see cref="MineDepth"/>); null when no such days were added. A
+    /// consumer that knows the player's real depth judges the route on this table, because the delayed
+    /// one loses every landing pushed past the end of the year.
+    /// <para>Outside <see cref="Equals(ObtainSource?)"/> and <see cref="GetHashCode"/>, like
+    /// <see cref="Inputs"/>: <see cref="Lands"/> already tells two routes apart.</para></summary>
+    public DayTable? UndelayedLands { get; init; }
+
     public bool Equals(ObtainSource? other)
         => other is not null && Kind == other.Kind && Lands.Equals(other.Lands) && Reliability == other.Reliability
            && Conditions.Equals(other.Conditions) && Detail == other.Detail && Setup.SequenceEqual(other.Setup);

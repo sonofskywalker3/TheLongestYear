@@ -490,9 +490,11 @@ public class FairnessRuleTests
     private const int TightDeadline = 66;
     private static readonly int FloorDelay = MineDepth.DaysToReach(DeepFloor);
 
-    private static ObtainSource MineRoute(DayTable lands)
-        => new(SourceKind.MineNode, lands, Reliability.Dependable,
-            ObtainConditions.None with { Requires = new[] { MineDepth.FloorPrefix + DeepFloor } }, "test");
+    /// <summary>The floor 80 route exactly as the builder emits it: its table delayed by the travel,
+    /// the undelayed one kept.</summary>
+    private static ObtainSource MineRoute()
+        => MineDepth.WithTravel(new(SourceKind.MineNode, DayTable.Always, Reliability.Dependable,
+            ObtainConditions.None with { Requires = new[] { MineDepth.FloorPrefix + DeepFloor } }, "test"));
 
     private static ObtainSource MachineRoute(DayTable lands, string input)
         => new(SourceKind.Machine, lands, Reliability.Dependable, ObtainConditions.None, "test")
@@ -542,8 +544,64 @@ public class FairnessRuleTests
     public void A_delayed_mine_route_keeps_its_verdict_at_every_depth(
         DifficultyStep level, int deepest, int deadline, bool counts, int? landing, int added)
     {
-        var model = Model(MineRoute(DayTable.Always.Delay(FloorDelay)));
+        var model = Model(MineRoute());
         AssertBest(FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model), counts, landing, added);
+    }
+
+    // Late Winter: the delayed table never lands past day 112, but the rule judges a direct route on
+    // its undelayed table, so a deep save still counts it. Values from the pre-2b rule (83f8c3b).
+    [Theory]
+    [MemberData(nameof(LateWinterBefore))]
+    public void A_delayed_mine_route_keeps_its_verdict_in_late_winter(
+        int hit, DifficultyStep level, int deepest, bool counts, int? landing, int added)
+    {
+        var model = Model(MineRoute());
+        AssertBest(FairnessRule.Judge(Item, hit, Deadline, level, Save(floor: deepest), model), counts, landing, added);
+    }
+
+    private const int WinterWeek3Hit = 104;
+    private const int WinterWeek4Hit = 108;
+
+    public static TheoryData<int, DifficultyStep, int, bool, int?, int> LateWinterBefore()
+    {
+        var data = new TheoryData<int, DifficultyStep, int, bool, int?, int>();
+        foreach (DifficultyStep level in new[] { DifficultyStep.Normal, DifficultyStep.Hard })
+        {
+            data.Add(WinterWeek3Hit, level, 0, false, 113, 8);
+            data.Add(WinterWeek3Hit, level, 40, true, 109, 4);
+            data.Add(WinterWeek3Hit, level, 80, true, 105, 0);
+            data.Add(WinterWeek3Hit, level, 100, true, 105, 0);
+            data.Add(WinterWeek4Hit, level, 0, false, 117, 8);
+            data.Add(WinterWeek4Hit, level, 40, false, 113, 4);
+            data.Add(WinterWeek4Hit, level, 80, true, 109, 0);
+            data.Add(WinterWeek4Hit, level, 100, true, 109, 0);
+        }
+        foreach (int hit in new[] { WinterWeek3Hit, WinterWeek4Hit })
+        {
+            data.Add(hit, DifficultyStep.Easy, 0, false, null, 0);
+            data.Add(hit, DifficultyStep.Easy, 40, false, null, 0);
+            data.Add(hit, DifficultyStep.Easy, 80, true, hit + 1, 0);
+            data.Add(hit, DifficultyStep.Easy, 100, true, hit + 1, 0);
+            data.Add(hit, DifficultyStep.Extreme, 0, true, hit + 1, 0);
+        }
+        return data;
+    }
+
+    [Fact]
+    public void A_route_made_from_a_mine_item_is_skipped_once_its_table_runs_past_the_year()
+    {
+        // Known limitation: a made route's own table is the delayed one, so from start day
+        // 113 - travel it never lands, and the rule skips it even for a save deep enough to have
+        // counted it before (the pre-2b rule counted this, landing day 109). It can only make the
+        // darkness skip an item, never charge the player unfairly.
+        var model = ModelOf(
+            (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
+            (Ingredient, new[] { MineRoute() }));
+        FairnessVerdict late = FairnessRule.Judge(Item, WinterWeek4Hit, Deadline, DifficultyStep.Normal, Save(floor: 100), model);
+        AssertBest(late, false, null, 0);
+        Assert.StartsWith("never lands", late.Routes[0].Reason);
+        // A week earlier the made table still lands (day 112) and the inherited travel comes back out.
+        AssertBest(FairnessRule.Judge(Item, WinterWeek3Hit, Deadline, DifficultyStep.Normal, Save(floor: 100), model), true, 105, 0);
     }
 
     [Theory]
@@ -553,7 +611,7 @@ public class FairnessRuleTests
     {
         var model = ModelOf(
             (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
-            (Ingredient, new[] { MineRoute(DayTable.Always.Delay(FloorDelay)) }));
+            (Ingredient, new[] { MineRoute() }));
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model);
         // Easy with the floor unreached: the machine is out because its input is, as before.
         if (!counts && landing is null) Assert.StartsWith("needs " + Ingredient, verdict.Routes[0].Reason);
@@ -568,7 +626,7 @@ public class FairnessRuleTests
         var model = ModelOf(
             (Item, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Other) }),
             (Other, new[] { MachineRoute(DayTable.Always.Delay(FloorDelay), Ingredient) }),
-            (Ingredient, new[] { MineRoute(DayTable.Always.Delay(FloorDelay)) }));
+            (Ingredient, new[] { MineRoute() }));
         AssertBest(FairnessRule.Judge(Item, Hit, deadline, level, Save(floor: deepest), model), counts, landing, added);
     }
 
@@ -591,18 +649,17 @@ public class FairnessRuleTests
         };
         var model = ModelOf(
             (Item, new[] { recipe }),
-            (Ingredient, new[] { MineRoute(mine) }),
+            (Ingredient, new[] { MineRoute() }),
             (Other, new[] { Route(available: d => d >= secondLands) }));
         AssertBest(FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: deepest), model), counts, landing, added);
     }
 
     [Fact]
-    public void A_route_with_no_floor_and_no_mine_input_takes_nothing_back_out()
+    public void A_route_with_no_floor_and_no_mine_input_lands_on_its_own_table()
     {
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Extreme, Save(),
             Model(Route(SourceKind.MonsterDrop, requires: new[] { "location:SkullCave" }, available: d => d >= 70)));
         Assert.Equal(70, verdict.Routes[0].LandingDay);
-        Assert.Equal(0, verdict.Routes[0].TravelDays);
     }
 
     [Fact]
