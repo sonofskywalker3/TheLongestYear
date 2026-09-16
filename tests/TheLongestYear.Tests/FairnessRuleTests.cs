@@ -273,6 +273,26 @@ public class FairnessRuleTests
         Assert.True(Counts(DifficultyStep.Normal, Save(mail: new[] { "ccVault" }), route));
     }
 
+    [Theory]
+    [InlineData("shop:DesertFestival_Vincent")]
+    [InlineData("shop:DesertTrade")]
+    [InlineData("shop:Sandy")]
+    [InlineData("shop:Casino")]
+    public void A_desert_shop_needs_the_bus(string shop)
+    {
+        var model = Model(Route(kind: SourceKind.Shop, requires: new[] { shop }));
+        Assert.False(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, SaveSnapshot.Empty, model));
+        SaveSnapshot bus = SaveSnapshot.Empty with { MailFlags = new HashSet<string> { "ccVault" } };
+        Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, bus, model));
+    }
+
+    [Fact]
+    public void A_town_shop_needs_nothing()
+    {
+        var model = Model(Route(kind: SourceKind.Shop, requires: new[] { "shop:SeedShop" }));
+        Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, SaveSnapshot.Empty, model));
+    }
+
     [Fact]
     public void A_mail_flag_is_met_or_not()
     {
