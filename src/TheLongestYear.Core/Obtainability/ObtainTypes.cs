@@ -92,7 +92,9 @@ public sealed record ObtainSource(
     /// consumer that knows the player's real depth judges the route on this table, because the delayed
     /// one loses every landing pushed past the end of the year.
     /// <para>Outside <see cref="Equals(ObtainSource?)"/> and <see cref="GetHashCode"/>, like
-    /// <see cref="Inputs"/>: <see cref="Lands"/> already tells two routes apart.</para></summary>
+    /// <see cref="Inputs"/>: <see cref="Lands"/> already tells two routes apart. Distinct() keeps the
+    /// first of two equal delayed sources, whose undelayed tables could differ only past day 112 (no
+    /// such pair exists in today's data).</para></summary>
     public DayTable? UndelayedLands { get; init; }
 
     public bool Equals(ObtainSource? other)
