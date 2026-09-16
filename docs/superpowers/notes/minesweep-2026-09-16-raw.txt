@@ -1,0 +1,195 @@
+floor-samples: 444; bands: {'1-40': 108, '41-80': 108, '81-120': 108, 'Skull': 120}
+
+=== Floors 1-40: 108 floor-samples, stones/floor mean 61.1 median 59, monsters/floor mean 4.78
+  nodes per floor: Copper node 2.54, Amethyst node 0.09, Topaz node 0.06, Gem node (mixed) 0.01
+  monsters per floor: Green Slime 1.51, Bug 1.00, Grub 0.79, Stone Golem 0.67, Rock Crab 0.31, Duggy 0.30, Bat
+  drop                       per floor per week@70 Mines tbl Monster tbl
+  Stone                          34.82      2437.7        99        99.0
+  Copper Ore                      7.18       502.3        99        84.0
+  Coal                            4.28       299.4        86        99.0
+  Slime                           1.36        95.3         -        99.0
+  Geode                           1.25        87.5        92        99.0
+  Bug Meat                        1.23        86.2         -        99.0
+  Quartz                          0.57        40.2        80        42.0
+  Torch                           0.40        27.9         -           -
+  Sap                             0.35        24.6         -        99.0
+  Wood                            0.28        19.4         -           -
+  Green Algae                     0.20        14.3         -        42.0
+  Earth Crystal                   0.18        12.3        18        42.0
+  Cherry Bomb                     0.17        11.7         -        99.0
+  Amethyst                        0.17        11.7        14         6.3
+  Iron Ore                        0.16        11.0        99        84.0
+  Cave Carrot                     0.14         9.7         -           -
+  Bat Wing                        0.12         8.4         -        99.0
+  Omni Geode                      0.11         7.8        21        99.0
+  Rice Shoot                      0.09         6.5         -        42.0
+  Topaz                           0.07         5.2        14           -
+  Carrot Seeds                    0.07         5.2         -           -
+  Basic Retaining Soil            0.07         5.2         -           -
+  Mixed Seeds                     0.06         4.5         -           -
+  Crab                            0.06         3.9         -        99.0
+  Hardwood                        0.05         3.2         -           -
+  Dwarf Scroll IV                 0.04         2.6         -           -
+  White Algae                     0.03         1.9         -        42.0
+  Red Mushroom                    0.02         1.3         -           -
+  (F)1393                         0.01         0.6         -           -
+  Emerald                         0.01         0.6        14           -
+  (F)1399                         0.01         0.6         -           -
+  Yam                             0.01         0.6         -        12.6
+  Stardew Valley Almanac          0.01         0.6         -           -
+  Combat Quarterly                0.01         0.6         -           -
+  Bait And Bobber                 0.01         0.6         -           -
+  Ancient Seed                    0.01         0.6         -         2.1
+
+=== Floors 41-80: 108 floor-samples, stones/floor mean 56.9 median 55, monsters/floor mean 5.90
+  nodes per floor: Iron node 2.00, Copper node 0.09, Diamond node 0.06, Jade node 0.06, Topaz node 0.04, Aquam
+  monsters per floor: Dust Spirit 2.57, Frost Jelly 1.70, Frost Bat 0.82, Skeleton 0.51, Ghost 0.28, Big Slime
+  drop                       per floor per week@70 Mines tbl Monster tbl
+  Stone                          26.71      1869.9        99        99.0
+  Iron Ore                        5.81       406.4        99        84.0
+  Coal                            4.79       335.1        86        99.0
+  Frozen Geode                    1.39        97.2        92           -
+  Slime                           1.33        93.3         -        99.0
+  Bat Wing                        1.20        84.3         -        99.0
+  Copper Ore                      1.16        81.0        99        84.0
+  Sap                             0.85        59.6         -        99.0
+  Bone Fragment                   0.63        44.1         -        99.0
+  Torch                           0.42        29.2         -           -
+  Quartz                          0.34        24.0        80        42.0
+  Solar Essence                   0.29        20.1         -        99.0
+  Omni Geode                      0.25        17.5        21        99.0
+  Frozen Tear                     0.22        15.6        18         8.4
+  Wood                            0.19        13.0         -           -
+  Gold Ore                        0.19        13.0        99           -
+  Winter Root                     0.14         9.7         -        33.6
+  Jade                            0.12         8.4        14         8.4
+  Cave Carrot                     0.11         7.8         -           -
+  Crystal Fruit                   0.09         6.5         -         8.4
+  Mixed Seeds                     0.07         5.2         -           -
+  Carrot Seeds                    0.07         5.2         -           -
+  Quality Retaining Soil          0.07         5.2         -           -
+  Dwarf Scroll III                0.06         4.5         -         6.3
+  Aquamarine                      0.06         3.9        14           -
+  Diamond                         0.06         3.9         3         4.2
+  Refined Quartz                  0.05         3.2         -        33.6
+  Topaz                           0.04         2.6        14           -
+  Ghostfish                       0.04         2.6         -        33.6
+  Amethyst                        0.04         2.6        14         6.3
+  Hardwood                        0.02         1.3         -           -
+  Stardew Valley Almanac          0.02         1.3         -           -
+  Dwarf Scroll II                 0.02         1.3         -         2.1
+  Prehistoric Scapula             0.02         1.3         -         2.1
+  (W)5                            0.02         1.3         -           -
+  Gold Coin                       0.02         1.3         -           -
+  (S)1184                         0.01         0.6         -           -
+  Bomb                            0.01         0.6         -        99.0
+  (F)1376                         0.01         0.6         -           -
+  Emerald                         0.01         0.6        14           -
+  (S)1150                         0.01         0.6         -           -
+  Mining Monthly                  0.01         0.6         -           -
+  Coffee Bean                     0.01         0.6         -         4.2
+
+=== Floors 81-120: 108 floor-samples, stones/floor mean 63.1 median 58, monsters/floor mean 4.28
+  nodes per floor: Gold node 2.03, Copper node 0.17, Jade node 0.07, Aquamarine node 0.06, Diamond node 0.05, 
+  monsters per floor: Sludge 2.04, Shadow Brute 0.57, Shadow Shaman 0.53, Metal Head 0.46, Lava Crab 0.36, Squ
+  drop                       per floor per week@70 Mines tbl Monster tbl
+  Stone                          35.36      2475.3        99        99.0
+  Gold Ore                        5.92       414.2        99           -
+  Coal                            4.74       331.9        86        99.0
+  Slime                           1.59       111.5         -        99.0
+  Magma Geode                     1.31        92.0        92           -
+  Sap                             1.02        71.3         -        99.0
+  Void Essence                    0.95        66.8         -        99.0
+  Iron Ore                        0.71        49.9        99        84.0
+  Copper Ore                      0.57        40.2        99        84.0
+  Solar Essence                   0.40        27.9         -        99.0
+  Quartz                          0.35        24.6        80        42.0
+  Red Mushroom                    0.34        24.0         -           -
+  Omni Geode                      0.30        20.7        21        99.0
+  Wood                            0.25        17.5         -           -
+  Bone Fragment                   0.25        17.5         -        99.0
+  Torch                           0.23        16.2         -           -
+  Bat Wing                        0.20        14.3         -        99.0
+  Bomb                            0.16        11.0         -        99.0
+  White Algae                     0.16        11.0         -        42.0
+  Crab                            0.14         9.7         -        99.0
+  Cave Carrot                     0.10         7.1         -           -
+  Fire Quartz                     0.10         7.1        18           -
+  Squid Ink                       0.07         5.2         -        84.0
+  Jade                            0.07         5.2        14         8.4
+  Emerald                         0.06         4.5        14           -
+  Aquamarine                      0.06         4.5        14           -
+  Purple Mushroom                 0.06         4.5         -           -
+  Diamond                         0.06         3.9         3         4.2
+  Amethyst                        0.06         3.9        14         6.3
+  Hardwood                        0.05         3.2         -           -
+  Ruby                            0.05         3.2        14           -
+  Dwarf Scroll III                0.05         3.2         -         6.3
+  Copper Bar                      0.04         2.6         -        16.8
+  Topaz                           0.04         2.6        14           -
+  Strange Bun                     0.03         1.9         -        16.8
+  Carrot Seeds                    0.02         1.3         -           -
+  Rare Disc                       0.01         0.6         -           -
+  (F)1395                         0.01         0.6         -           -
+  (S)1208                         0.01         0.6         -           -
+  Mega Bomb                       0.01         0.6         -        21.0
+  Iron Bar                        0.01         0.6         -         8.4
+
+=== Floors Skull: 120 floor-samples, stones/floor mean 61.2 median 60, monsters/floor mean 3.40
+  nodes per floor: Iron node 1.24, Copper node 1.06, Gold node 0.92, Iridium node 0.15, Topaz node 0.12, Aquam
+  monsters per floor: Bug 0.76, Big Slime 0.74, Mummy 0.59, Serpent 0.46, Sludge 0.33, Pepper Rex 0.15, Carbon
+  drop                       per floor per week@70 Mines tbl Monster tbl
+  Stone                          33.82      2367.2        99        99.0
+  Coal                            4.52       316.2        86        99.0
+  Gold Ore                        4.09       286.4        99           -
+  Iron Ore                        3.31       231.6        99        84.0
+  Copper Ore                      2.70       189.0        99        84.0
+  Slime                           2.03       142.3         -        99.0
+  Omni Geode                      1.48       103.2        21        99.0
+  Solar Essence                   0.65        45.5         -        99.0
+  Iridium Ore                     0.63        44.3        70        99.0
+  Bug Meat                        0.58        40.8         -        99.0
+  Bone Fragment                   0.57        40.2         -        99.0
+  Void Essence                    0.54        37.9         -        99.0
+  Wood                            0.49        34.4         -           -
+  Torch                           0.49        34.4         -           -
+  Quartz                          0.38        26.8        80        42.0
+  Cave Carrot                     0.19        13.4         -           -
+  Sap                             0.19        13.4         -        99.0
+  Cloth                           0.17        12.2         -        35.0
+  Topaz                           0.13         9.3        14           -
+  Aquamarine                      0.12         8.2        14           -
+  Hardwood                        0.11         7.6         -           -
+  Bat Wing                        0.11         7.6         -        99.0
+  Diamond                         0.10         7.0         3         4.2
+  Prehistoric Rib                 0.10         7.0         -           -
+  Fire Quartz                     0.09         6.4        18           -
+  Bomb                            0.09         6.4         -        99.0
+  Carrot Seeds                    0.08         5.8         -           -
+  Amethyst                        0.07         5.2        14         6.3
+  Emerald                         0.07         5.2        14           -
+  Magma Geode                     0.07         4.7        92           -
+  Jade                            0.06         4.1        14         8.4
+  Earth Crystal                   0.06         4.1        18        42.0
+  Bug Steak                       0.04         2.9         -           -
+  Spicy Eel                       0.04         2.9         -         8.4
+  Crab Cakes                      0.04         2.9         -        70.0
+  Ruby                            0.04         2.9        14           -
+  Red Mushroom                    0.04         2.9         -           -
+  White Algae                     0.03         2.3         -        42.0
+  Dinosaur Egg                    0.03         2.3         -           -
+  Fiddlehead Fern                 0.03         2.3         -           -
+  Frozen Tear                     0.03         1.8        18         8.4
+  Prehistoric Vertebra            0.03         1.8         -           -
+  Purple Mushroom                 0.03         1.8         -           -
+  Miner's Treat                   0.02         1.2         -         5.6
+  Rabbit's Foot                   0.02         1.2         -           -
+  Warp Totem: Farm                0.02         1.2         -           -
+  Pink Cake                       0.01         0.6         -           -
+  (H)87                           0.01         0.6         -           -
+  Iridium Bar                     0.01         0.6         -           -
+  Energy Tonic                    0.01         0.6         -         7.0
+  Battery Pack                    0.01         0.6         -         7.0
+  Red Cabbage Seeds               0.01         0.6         -           -
+  Bait And Bobber                 0.01         0.6         -           -
+  Prismatic Shard                 0.01         0.6         -           -

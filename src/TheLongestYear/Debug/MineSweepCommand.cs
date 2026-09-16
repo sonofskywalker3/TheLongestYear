@@ -44,10 +44,13 @@ namespace TheLongestYear.DebugCommands
         private const int TopItemsInSummary = 30;
         private const string ResultsFile = "mine-sweep-results.csv";
         private const string BurglarRingId = "526";
+        private const int MiningSkill = 3;   // Farmer.experiencePoints index
         private const string StoneKind = "stone";
         private const string NodeKind = "node";
         private const string MonsterKind = "monster";
         private const string DropKind = "drop";
+        private const string LooseKind = "loose";
+        private const string ContainerKind = "container";
 
         /// <summary>Stone ids that are ore, gem, geode or special nodes rather than plain rock,
         /// so the summary can count nodes per floor by type (decompile: createLitterObject,
@@ -100,6 +103,12 @@ namespace TheLongestYear.DebugCommands
             double savedDailyLuck = who.team.sharedDailyLuck.Value;
             List<int> savedProfessions = who.professions.ToList();
             uint savedDays = Game1.stats.DaysPlayed;
+            // Breaking a stone through the game's path grants Mining XP, and Farmer.gainExperience
+            // raises the level the same instant (only the level-up screen waits for the night). Left
+            // alone, a "bare" farmer is level 10 a few floors in. So the XP and the queued level-ups
+            // are put back afterwards, and the level is re-zeroed before every floor.
+            int savedMiningXp = who.experiencePoints[MiningSkill];
+            int savedNewLevels = who.newLevels.Count;
 
             var perFloor = new List<(int Sample, int Floor, Tally Tally)>();
             try
@@ -114,6 +123,7 @@ namespace TheLongestYear.DebugCommands
                     Game1.stats.DaysPlayed = savedDays + (uint)(sample * DaysBetweenSamples);
                     for (int floor = from; floor <= to; floor++)
                     {
+                        who.miningLevel.Value = 0;
                         Tally tally = SweepFloor(floor, who);
                         perFloor.Add((sample, floor, tally));
                     }
@@ -123,6 +133,8 @@ namespace TheLongestYear.DebugCommands
             {
                 Game1.stats.DaysPlayed = savedDays;
                 who.miningLevel.Value = savedMining;
+                who.experiencePoints[MiningSkill] = savedMiningXp;
+                while (who.newLevels.Count > savedNewLevels) who.newLevels.RemoveAt(who.newLevels.Count - 1);
                 who.luckLevel.Value = savedLuck;
                 who.team.sharedDailyLuck.Value = savedDailyLuck;
                 who.professions.Clear();
@@ -143,19 +155,37 @@ namespace TheLongestYear.DebugCommands
             var tally = new Tally();
             mine.debris.Clear();
 
-            // Stones and nodes, before anything is broken.
+            // Stones and nodes, before anything is broken. Barrels and crates release their contents
+            // as debris; anything else lying on the floor (Quartz, the area crystals, the odd
+            // Cave Carrot) is a loose item the player would pick up, so it counts as a drop.
             var stones = new List<(Vector2 Tile, string Id)>();
+            var containers = new List<StardewValley.Objects.BreakableContainer>();
             foreach (KeyValuePair<Vector2, StardewValley.Object> pair in mine.Objects.Pairs.ToList())
             {
                 StardewValley.Object obj = pair.Value;
-                if (obj == null || !obj.IsBreakableStone()) continue;
-                stones.Add((pair.Key, obj.ItemId));
-                tally.Add(StoneKind);
-                if (NodeNames.TryGetValue(obj.ItemId, out string node))
-                    tally.Add(NodeKind + ":" + node);
+                if (obj == null) continue;
+                if (obj.IsBreakableStone())
+                {
+                    stones.Add((pair.Key, obj.ItemId));
+                    tally.Add(StoneKind);
+                    if (NodeNames.TryGetValue(obj.ItemId, out string node))
+                        tally.Add(NodeKind + ":" + node);
+                }
+                else if (obj is StardewValley.Objects.BreakableContainer container)
+                {
+                    containers.Add(container);
+                    tally.Add(ContainerKind);
+                }
+                else if (!obj.IsWeeds() && !obj.IsTwig() && obj.Category != StardewValley.Object.junkCategory && obj.bigCraftable.Value == false)
+                {
+                    tally.Add(DropKind + ":" + obj.QualifiedItemId, Math.Max(1, obj.Stack));
+                    tally.Add(LooseKind + ":" + obj.QualifiedItemId, Math.Max(1, obj.Stack));
+                }
             }
             foreach ((Vector2 tile, string id) in stones)
                 mine.OnStoneDestroyed(id, (int)tile.X, (int)tile.Y, who);
+            foreach (StardewValley.Objects.BreakableContainer container in containers)
+                container.releaseContents(who);
 
             // Monsters: their drop list was rolled when the floor spawned them (Monster.parseMonsterInfo).
             foreach (Monster monster in mine.characters.OfType<Monster>().ToList())
@@ -217,7 +247,7 @@ namespace TheLongestYear.DebugCommands
                 int median = stonesPerFloor.Count == 0 ? 0 : stonesPerFloor[stonesPerFloor.Count / 2];
                 int monsters = sum.Counts.Where(k => k.Key.StartsWith(MonsterKind + ":", StringComparison.Ordinal)).Sum(k => k.Value);
 
-                monitor.Log($"  Floors {lo}-{hi} ({floors} floor-samples): stones mean {Mean(StoneKind):F1} median {median}, monsters mean {(double)monsters / floors:F1}", LogLevel.Info);
+                monitor.Log($"  Floors {lo}-{hi} ({floors} floor-samples): stones mean {Mean(StoneKind):F1} median {median}, barrels and crates mean {Mean(ContainerKind):F2}, monsters mean {(double)monsters / floors:F1}", LogLevel.Info);
                 foreach (KeyValuePair<string, int> kv in sum.Counts.Where(k => k.Key.StartsWith(NodeKind + ":", StringComparison.Ordinal)).OrderByDescending(k => k.Value))
                     monitor.Log($"    {kv.Key[(NodeKind.Length + 1)..],-22} {(double)kv.Value / floors,6:F2} per floor", LogLevel.Info);
                 foreach (KeyValuePair<string, int> kv in sum.Counts.Where(k => k.Key.StartsWith(MonsterKind + ":", StringComparison.Ordinal)).OrderByDescending(k => k.Value))

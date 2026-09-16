@@ -192,7 +192,7 @@ ocean vs fresh (`CrabPot.DayUpdate`). Jeff: pots do not change with the season, 
 extrapolated. This is what unblocks **Cockle, Mussel, Oyster and Clam**, which are currently
 unclamped because the forage sweep only sees a fraction of their real supply.
 
-**E. FISH HALF DECIDED by Jeff 2026-09-16: the probability model (fish-sim casts per day x catch chances) stands; his skill and attention are deliberately NOT in the equation. No real-rod check, ever. MINE HALF: build a headless floor-smashing measurement command (see the 2026-09-16 mine-measure note once written). Original note kept below.** The spot check as
+**E. FISH HALF DECIDED by Jeff 2026-09-16: the probability model (fish-sim casts per day x catch chances) stands; his skill and attention are deliberately NOT in the equation. No real-rod check, ever. MINE HALF DONE 2026-09-16: `tly_minesweep` built (0.18.13, 0.18.14) and run over floors 1 to 160, monsters included; results and a recommended table change in `docs/superpowers/notes/minesweep-2026-09-16.md`. Headline: Coal 3.5x UNDER in the Mines table, Quartz and the six gems 2 to 4x OVER, monster drops from a single uncommon monster 3 to 25x OVER. AWAITING JEFF'S RULING on the recommended numbers; no table changed yet. Original note kept below.** The spot check as
 written needs a real rod and a real pickaxe: the fishing minigame and mine swings are player
 input, and the headless bridge has no tool for either (`tly_sweepforage` and `tly_crabpots` exist
 because forage and pots are passive). Options, Jeff's call: (a) Jeff fishes a couple of fish on a
