@@ -77,11 +77,14 @@ namespace TheLongestYear.Loop
         private readonly BundleGenerationTuning _tuning;
         private readonly ItemAvailabilityModel _availability;
         private readonly int _seed;
+        private readonly bool _oncePerLoopAsksOne;
 
         public BoardRepairService(
             IMonitor monitor, SourceReachability reachability, ItemPools pools,
-            BundleGenerationTuning tuning, ItemAvailabilityModel availability, int seed)
+            BundleGenerationTuning tuning, ItemAvailabilityModel availability, int seed,
+            bool oncePerLoopAsksOne = true)
         {
+            _oncePerLoopAsksOne = oncePerLoopAsksOne;
             _monitor = monitor;
             _reachability = reachability;
             _pools = pools;
@@ -169,7 +172,7 @@ namespace TheLongestYear.Loop
                         continue;
                     }
 
-                    int stack = LegendaryFishRules.ClampStack(pick.ItemId, slot.Stack);
+                    int stack = OncePerLoopAsks.ClampStack(pick.ItemId, slot.Stack, _oncePerLoopAsksOne);
                     int quality = LegendaryFishRules.ClampQuality(pick.ItemId, KeepQuality(pick.ItemId, slot.Quality));
                     slots[i] = new BundleIngredient(pick.ItemId, stack, quality);
 
@@ -219,17 +222,28 @@ namespace TheLongestYear.Loop
         /// donated is affected. Host only, like <see cref="RepairIfNeeded"/>. Returns the number of
         /// bundles rewritten (Nexus bug report 2026-09-14, Gil's Trophies Skeleton Mask x2).
         /// The stored copy of the written board (<see cref="MetaState.WrittenBoard"/>) gets the same
-        /// rewrite, or the load-time manifest check would see the repaired live board as foreign.</summary>
-        public static int ClampUnstackableAsks(IMonitor monitor, MetaState state)
+        /// rewrite, or the load-time manifest check would see the repaired live board as foreign.
+        /// <para>With <paramref name="oncePerLoopAsksOne"/> on, the same pass lowers every ask above
+        /// one for a once-per-loop item (<see cref="OncePerLoopAsks"/>: legendaries, the gift-box
+        /// books, the Golden Pumpkin), for boards written before 0.18.12 or while the setting was
+        /// off. Off never raises anything back.</para></summary>
+        public static int ClampUnstackableAsks(IMonitor monitor, MetaState state, bool oncePerLoopAsksOne = true)
         {
             if (!Context.IsMainPlayer) return 0;
             var worldState = Game1.netWorldState?.Value;
             if (worldState?.BundleData == null) return 0;
 
+            string Repair(string value)
+            {
+                string repaired = UnstackableAsks.RepairBundleValue(value);
+                if (!oncePerLoopAsksOne) return repaired;
+                return OncePerLoopAsks.RepairBundleValue(repaired ?? value) ?? repaired;
+            }
+
             if (state?.WrittenBoard != null)
                 foreach (string key in state.WrittenBoard.Keys.ToList())
                 {
-                    string storedRepaired = UnstackableAsks.RepairBundleValue(state.WrittenBoard[key]);
+                    string storedRepaired = Repair(state.WrittenBoard[key]);
                     if (storedRepaired != null)
                         state.WrittenBoard[key] = storedRepaired;
                 }
@@ -237,11 +251,11 @@ namespace TheLongestYear.Loop
             var updates = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, string> entry in worldState.BundleData)
             {
-                string repaired = UnstackableAsks.RepairBundleValue(entry.Value);
+                string repaired = Repair(entry.Value);
                 if (repaired == null) continue;
                 updates[entry.Key] = repaired;
                 monitor?.Log(
-                    $"Board repair: '{entry.Key}' asked for more than one of an item that never stacks; lowered to one.",
+                    $"Board repair: '{entry.Key}' asked for more than one of an item that never stacks or that a loop gives only once; lowered to one.",
                     LogLevel.Info);
             }
             if (updates.Count == 0) return 0;

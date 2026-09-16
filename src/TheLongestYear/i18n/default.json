@@ -580,6 +580,8 @@
     "gmcm.difficulty.step.extreme": "Extreme",
     "gmcm.difficulty.stack-size.name": "Stack size",
     "gmcm.difficulty.stack-size.tooltip": "How many of an item a bundle slot asks for, as a share of what a week of going after it actually yields: Easy 10-30%, Normal 20-50%, Hard 50-65%, Extreme 65-80%, never above 80%. Fish, forage, crops, crab pots, monster drops, the mines, animals and machines each have their own yield, and a yield is capped at one stack of 99 (Slime, Bat Wings and the like), so an Extreme ask of 80 is a stack, not a share. One-offs like books and artifacts stay at one. Money bundles are never affected. Works on TLY Custom and on vanilla boards.",
+    "gmcm.difficulty.once-per-loop.name": "Once-per-loop items ask for one",
+    "gmcm.difficulty.once-per-loop.tooltip": "Some items a loop can only give once: the five legendary fish, the two books hidden around town (The Alleyway Buffet, Mapping Cave Systems) and the Golden Pumpkin from the Spirit's Eve maze. On, a bundle never asks for more than one of them, whatever Stack size says. Off, they scale like everything else, and a Hard or Extreme board can ask for two of something you can only get once. Takes effect at the next reset; a board already asking for two is lowered on load while this is on.",
     "gmcm.difficulty.quality-asks.name": "Quality asks",
     "gmcm.difficulty.quality-asks.tooltip": "How often a slot wants a silver or gold star, which means fertiliser, skill levels and better fishing. Items the game never gives a star to are still never asked for at quality, at any step. Works on TLY Custom and on vanilla boards.",
     "gmcm.difficulty.required-slots.name": "Required slots",

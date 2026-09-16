@@ -37,6 +37,11 @@ public sealed class DifficultyProfile
     /// <summary>Pool weight bias toward harder items. Engine board only.</summary>
     public double RarityBias { get; set; } = 1.0;
 
+    /// <summary>Once-per-loop items (<see cref="OncePerLoopAsks"/>) hold their ask at one whatever
+    /// <see cref="StackFactor"/> says. Resolved from <see cref="GameplayConfig.OncePerLoopAsksOne"/>;
+    /// a profile stamped before the setting existed reads as on.</summary>
+    public bool OncePerLoopAsksOne { get; set; } = true;
+
     // ---- Economy (read live from the stamp) ----
 
     /// <summary>Multiplier on every Junimo Point award.</summary>

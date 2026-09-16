@@ -6,7 +6,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### NEXT MASTER SESSION: option for the quantity multiplier to skip unique items (Jeff, 2026-09-16)
+### DONE on master as 0.18.12 (2026-09-16, `OncePerLoopAsks`, setting `OncePerLoopAsksOne`; live check and release still pending): option for the quantity multiplier to skip unique items (Jeff, 2026-09-16)
 Add a config option (GMCM too) so the Stack size / quantity multiplier leaves every unique item
 alone: anything a player can only get once per loop (limit 1 per loop, e.g. a legendary fish, a
 one-time reward) stays at 1 however high the multiplier is. Build it on `master` (a bug-fix and

@@ -14,8 +14,8 @@ namespace TheLongestYear.Core;
 ///
 /// A slot is banded when the item has a basis in a season the slot's deadline can reach; the
 /// deadline comes from the caller (BundleSlotFiller.DeadlineFor, the same answer the classifier
-/// will give). A gold ask keeps three quarters. Legendaries are pinned to one by
-/// <see cref="LegendaryFishRules"/> before anything else. Returns the same reference when no slot
+/// will give). A gold ask keeps three quarters. Legendaries are skipped here and held
+/// to one by <see cref="OncePerLoopAsks"/> in the stack pass. Returns the same reference when no slot
 /// changed.</summary>
 public static class QuantityAskPass
 {

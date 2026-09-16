@@ -474,6 +474,23 @@ rounds (walker-only extras, season outfits, wind, extras at walking speed). The 
 - **Queued for Jeff:** Run 165 on the rotated Clone save, Fishing picked, `tly_setday 28`,
   `tly_gateneeds` = 17 bundles owed. Sleeping plays the real fail night into the full rewind.
 
+## 2026-09-16 midday: 0.18.12, once-per-loop items ask for one (setting), awaiting live check
+
+Jeff's own note from the story branch: an option so the Stack size dial skips unique items.
+Diagnostic first: the 724 objects the pools can draw from were checked against the exported game
+data (every repeatable route subtracted), and only three groups are once per loop: the five
+legendary fish (catch limit), the two gift-box books (bookseller restocks them from year 3) and
+the Golden Pumpkin (maze chest; luck-only extras). Every other book restocks; weapons, hats and
+rings stay under the unconditional never-stacks rule; rarecrows never reach a board.
+
+Built: `OncePerLoopAsks` (Core), `GameplayConfig.OncePerLoopAsksOne` (default on, GMCM
+Difficulty, stamped into the `DifficultyProfile`), the legendary stack clamp moved under it,
+applied in `StackScaling`, the vanilla-board pass, the slot repair and the load-time clamp.
+Unit-tested end to end (25 new tests). **Still owed:** a headless live run on the throwaway
+save (deploy minimized, Hard, `tly_genbundles` with the setting on then off, read the log),
+which needs Jeff's yes for the relaunch. Release docs (README and Nexus What's New) are written
+at release time.
+
 ## 2026-09-16: sweep after 0.18.4, 0.18.10 and 0.18.11
 
 Four fixes went out on 14 and 15 Sep, all from Nexus reports (Gil's Trophies stack ask, day-28
