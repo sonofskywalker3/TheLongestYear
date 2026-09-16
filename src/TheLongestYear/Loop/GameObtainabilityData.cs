@@ -244,13 +244,29 @@ namespace TheLongestYear.Loop
 
             Section("FarmAnimals", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals"))
+                var animalData = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                // An id sold through another animal's AlternatePurchaseTypes (Brown Chicken through
+                // White Chicken, Brown Cow through White Cow: PurchaseAnimalsMenu.cs 477-484).
+                var soldAsAlternate = new HashSet<string>(StringComparer.Ordinal);
+                foreach (FarmAnimalData other in animalData.Values)
+                    foreach (AlternatePurchaseAnimals alt in other?.AlternatePurchaseTypes ?? new List<AlternatePurchaseAnimals>())
+                        foreach (string id in alt.AnimalIds ?? new List<string>())
+                            soldAsAlternate.Add(id);
+
+                foreach (var kv in animalData)
                 {
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
+                    bool sold = a.PurchasePrice > 0 || soldAsAlternate.Contains(kv.Key);
+                    // The incubator's default when the row leaves IncubationTime unset (Object.cs 2235):
+                    // overrideMinutesUntilReady = animalData.IncubationTime > 0 ? animalData.IncubationTime : 9000.
+                    const int DefaultIncubationMinutes = 9000;
+                    int incubationDays = a.EggItemIds is { Count: > 0 } && !sold
+                        ? (int)Math.Ceiling((a.IncubationTime > 0 ? a.IncubationTime : DefaultIncubationMinutes) / 1440.0)
+                        : 0;
                     animals.Add(new AnimalRow(kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
                         a.PurchasePrice, GameObtainabilityParsing.Produce(a.ProduceItemIds), GameObtainabilityParsing.Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
-                        a.DaysToProduce));
+                        a.DaysToProduce, a.DaysToMature, incubationDays, soldAsAlternate.Contains(kv.Key)));
                 }
             });
 

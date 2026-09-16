@@ -194,6 +194,16 @@ public class FairnessRuleTests
     }
 
     [Fact]
+    public void An_owned_only_route_counts_when_the_animal_is_owned_and_not_otherwise()
+    {
+        ObtainSource route = Route(SourceKind.Animal, requires: new[] { "building:Barn", "animal:Dinosaur (not sold)" },
+            setup: new[] { new SetupStep("building:Barn", 3), new SetupStep("animal:Dinosaur", 13) });
+        route = route with { Conditions = route.Conditions with { OwnedOnly = true } };
+        Assert.True(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Barn" }, animals: new[] { "Dinosaur" }), route));
+        Assert.False(Counts(DifficultyStep.Normal, Save(buildings: new[] { "Barn" }), route));
+    }
+
+    [Fact]
     public void Friendship_days_are_added_on_normal_when_the_animal_is_not_there_yet()
     {
         // Real model shape: the friendship step names the animal id, which can contain a space

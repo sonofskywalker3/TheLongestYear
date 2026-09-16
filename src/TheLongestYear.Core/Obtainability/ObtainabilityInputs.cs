@@ -89,10 +89,15 @@ public sealed record AnimalProduce(string ItemId, string? Condition, int Minimum
 
 /// <summary>One Data/FarmAnimals row. <see cref="DeluxeMinimumFriendship"/> is FarmAnimalData.DeluxeProduceMinimumFriendship.
 /// <see cref="DaysToProduce"/> is FarmAnimalData.DaysToProduce (default 1; FarmAnimal.dayUpdate 1005 checks
-/// daysSinceLastLay >= DaysToProduce).</summary>
+/// daysSinceLastLay >= DaysToProduce). <see cref="DaysToMature"/> is FarmAnimalData.DaysToMature: every
+/// animal waits this long after arriving before it grows up. <see cref="IncubationDays"/> is the egg's
+/// incubation time in days, for an animal that only hatches (0 when it is bought grown, or sold).
+/// <see cref="SoldAsAlternate"/> is true when another animal's AlternatePurchaseTypes lists this id
+/// (PurchaseAnimalsMenu.cs 477-484), so it is sold even though its own PurchasePrice is -1.</summary>
 public sealed record AnimalRow(
     string AnimalId, string House, int PurchasePrice, IReadOnlyList<AnimalProduce> Produce, IReadOnlyList<AnimalProduce> DeluxeProduce,
-    int DeluxeMinimumFriendship = 200, int DaysToProduce = 1);
+    int DeluxeMinimumFriendship = 200, int DaysToProduce = 1,
+    int DaysToMature = 0, int IncubationDays = 0, bool SoldAsAlternate = false);
 
 public sealed record PondProduct(string ItemId, int RequiredPopulation, double Chance, string? Condition, bool IsRandom = false);
 
