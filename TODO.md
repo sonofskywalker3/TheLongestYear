@@ -6,6 +6,37 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Sweep 2026-09-16 (Nexus bugs + posts, Reddit x4, GitHub x4): nothing waiting on a reply
+
+Everything reported between 0.18.1 and 0.18.11 was fixed and answered by Jeff on 15 Sep (see
+CHANGELOG 0.18.4, 0.18.10, 0.18.11). What is left over from the round, newest first:
+
+- **FEATURE REQUEST, Jeff said yes and promised credit (ThirteenRedCats, Nexus post 16 Sep):
+  a difficulty dial for the NUMBER of bundles per board.** Normal = the standard count, Easy = one or
+  two fewer per board, Hard = one or two more, Extreme = every possible bundle. Jeff's reply: "if the
+  graphical side of things isn't hard-coded I think I could do that". Needs a spec: how the CC room
+  UI lays out a non-standard bundle count, how the season gate's "any N of Y" counts interact with
+  a shorter or longer board, and what "all possible bundles" means for a room whose pool is bigger
+  than its slots. Credit ThirteenRedCats in the changelog when it ships.
+- **DESIGN FEEDBACK, no reply owed (FayGabi, 16 Sep):** still holds that a forced loop by design is
+  wrong: "I am okay with restarting if it is a skill or planning issue, but not if it's by design"
+  (the Hard Book bundle case). Jeff answered that the story update is adding balance and safeguards
+  so Easy and Normal can always satisfy every requirement. Log this as the player voice behind the
+  "every ask must have a route on the difficulty it rolls at" rule; Hard and Extreme remain allowed
+  to be lean.
+- **WATCH (erhatch731, Nexus post 16 Sep):** Qi Fruit turned up in a randomised bundle. Jeff asked
+  for the mod version (Qi Fruit has been vetted since 0.12.16, so an old build is the likely story).
+  No reply yet. If the version is 0.18.x, that is a real leak in the exclusion list and needs a repro.
+- **CLOSED, not ours (Beasley, 15 to 16 Sep):** mines opened to floor 100 on a fresh save. Reporter
+  retested with TLY alone and it was a leftover from another mod. Nothing to do.
+- **DOC DRIFT, fixed this sweep:** README beta banner said 0.18.4 while the Nexus banner said
+  0.18.11. STATUS.md was last written at 0.18.1.
+
+Other channels: Android Consolizer bug 1127706 (can't install 4.0.2) is still Needs more info with
+Jeff's 9 Sep question as the last word; its posts tab has nothing newer than the Estallking request
+already logged below. Cart Catalog and Nap Time are silent. All four Reddit threads and all four
+GitHub repos have nothing new since 8 Sep.
+
 ### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — measure real yields in game, clamp requirement rolls off the measured average
 
 #### RULING (Jeff, 2026-08-30) — the numbers and the bands

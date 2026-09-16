@@ -1,10 +1,18 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-10 night (0.18.0 and 0.18.1 both released)
+**Last updated:** 2026-09-16 morning (socials sweep after the 0.18.4 to 0.18.11 round)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2063 passing, 0 failing
-**Build:** clean; 0.18.1 deployed to the game; game CLOSED at end of session
-**Last public release:** 0.18.1 (2026-09-10 night; GitHub release + Nexus file, version, description and changelog all live)
+**Tests:** 2106 passing, 0 failing (as of 0.18.11)
+**Last public release:** 0.18.11 (2026-09-15; GitHub release + Nexus file, version, description and changelog all live)
+
+## 2026-09-16: sweep after 0.18.4, 0.18.10 and 0.18.11
+
+Four fixes went out on 14 and 15 Sep, all from Nexus reports (Gil's Trophies stack ask, day-28
+quit skipping the rewind, festival clock during contests, rings in the Dye bundle, Friendship 101
+in the Book bundle, new-farm first-night quit, Chests Anywhere stash, hidden-book deadlines). Jeff
+answered every thread himself. The 16 Sep sweep found nothing waiting on a reply; the one new
+item is ThirteenRedCats's bundles-per-board difficulty dial, which Jeff said yes to. Details and
+the watch list are at the top of `TODO.md`.
 
 ## 2026-09-10 night: 0.18.0 The Mod Compatibility Update, then 0.18.1
 
