@@ -15,9 +15,12 @@ public static class MineSources
     private const int SkullCavernFloor = 121;
     private const int SkillBookCount = 5;
 
-    /// <summary>A drop at least this likely per kill counts as dependable: mine monsters can be killed
-    /// dozens of times a day (Jeff's ruling 2026-09-16, repeatable chance). Each item on a monster's drop
-    /// list rolls its own independent chance against Game1.random (Monster.cs parseMonsterInfo 428-434).</summary>
+    /// <summary>A drop at least this likely per kill counts as dependable, but only for a monster with a
+    /// known floor in <see cref="MonsterFloors"/>: mine monsters can be killed dozens of times a day
+    /// (Jeff's ruling 2026-09-16, repeatable chance), but a monster this model can't place (Ginger Island
+    /// volcano monsters and other unplaced monsters) has no reachable farming spot, so its drop stays
+    /// Chance whatever its roll (fix round 1, 2026-09-16). Each item on a monster's drop list rolls its
+    /// own independent chance against Game1.random (Monster.cs parseMonsterInfo 428-434).</summary>
     public const double RepeatableDropChance = 0.25;
 
     /// <summary>What breaking stones yields, and from which floor (MineShaft.cs createLitterObject
@@ -75,12 +78,13 @@ public static class MineSources
     {
         foreach (MonsterDropRow row in rows)
         {
-            string requires = MonsterFloors.TryGetValue(row.Monster, out int floor)
+            bool placed = MonsterFloors.TryGetValue(row.Monster, out int floor);
+            string requires = placed
                 ? (floor >= SkullCavernFloor ? SkullCave : $"mines:floor {floor}")
                 : "monster:" + row.Monster;
             var template = new ObtainSource(
                 SourceKind.MonsterDrop, DayTable.Always,
-                row.Chance >= RepeatableDropChance ? Reliability.Dependable : Reliability.Chance,
+                placed && row.Chance >= RepeatableDropChance ? Reliability.Dependable : Reliability.Chance,
                 ObtainConditions.None with { Requires = new[] { requires } },
                 $"{row.Monster} drop, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
