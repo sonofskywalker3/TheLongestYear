@@ -41,6 +41,21 @@ public static class MadeSources
     };
     private static readonly string[] OtherGeodeDefault = { "(O)390", "(O)330", "(O)82", "(O)378", "(O)380", "(O)382", "(O)384", "(O)386" };
 
+    /// <summary>The three geode types the mines hand out by the handful (Geode, Frozen Geode, Magma
+    /// Geode: about 2.2% of stones on their floors, MineShaft.cs 3642-3650). A named mineral from one
+    /// of them is about a 3.1% to 3.8% roll per crack (Utility.cs getTreasureFromGeode 6586-6647: half
+    /// the cracks take the common branch, the rest pick one of 13 to 16 minerals), and a mining day
+    /// cracks 6 or 7 of them, so it is about 20% a day and crosses 90% after
+    /// <see cref="CrackDays"/> days. Omni Geode (1 of 44, 1.1% a crack) and Artifact Trove (one trove
+    /// per omni geode traded, not a repeatable try) are not in this set and stay Chance
+    /// (ruling 2026-09-16).</summary>
+    private static readonly HashSet<string> RepeatableGeodeIds = new(StringComparer.Ordinal)
+        { "(O)535", "(O)536", "(O)537" };
+
+    /// <summary>Days of cracking after which a named mineral from a repeatable geode has landed with
+    /// about 90% probability (1 - 0.8^11); the dependable half lands this many days after the geode.</summary>
+    public const int CrackDays = 11;
+
     public static int ProcessingDays(int minutes, int days)
         => days >= 0 ? days : (int)Math.Ceiling(Math.Max(0, minutes) / (double)MinutesPerDay);
 
@@ -229,22 +244,34 @@ public static class MadeSources
         IEnumerable<GeodeDropRow> rows, IReadOnlyCollection<string> geodesUsingDefaultTable,
         IReadOnlyDictionary<string, ObjInfo> objects, ObtainabilityModel snapshot, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
-        var drops = rows.Select(r => (r.GeodeId, r.ItemId, r.Condition)).ToList();
+        // The geode's own mineral list (Data/Objects GeodeDrops) is the repeatable part; the shared
+        // common branch (stone, clay, ore, coal, the floor's crystal) is added from the code table
+        // below with Repeatable false, so it stays a plain roll.
+        var drops = rows.Select(r => (r.GeodeId, r.ItemId, r.Condition, Repeatable: RepeatableGeodeIds.Contains(r.GeodeId))).ToList();
         foreach (string geode in geodesUsingDefaultTable)
             foreach (string id in DefaultGeodeTable.TryGetValue(geode, out string[]? table) ? table : OtherGeodeDefault)
-                drops.Add((geode, id, null));
-        foreach ((string geode, string item, string? condition) in drops.Distinct())
+                drops.Add((geode, id, null, false));
+        foreach ((string geode, string item, string? condition, bool repeatable) in drops.Distinct())
         {
             ConditionReading reading = ConditionSeasons.Read(condition, festivals);
             Derived.Input stone = Derived.Of(snapshot, geode);
             DayTable open = ConditionSeasons.Availability(reading, WeekMask.All);
             ObtainConditions conditions = ConditionSeasons.Apply(
                 ObtainConditions.None with { Requires = new[] { "item:" + geode, GeodeOpener } }, reading);
-            // Geode contents are always a roll, so every variant is emitted as chance only.
+            // Every crack is a roll, so the lucky half lands the day the geode does.
             foreach (ObtainSource template in stone.Emit(SourceKind.Geode, t => t.Then(open), conditions,
                 $"opened from {geode}", luck: true))
                 foreach (var emitted in ItemQueries.Emit(item, objects, template))
                     yield return emitted;
+            // A named mineral from a repeatable geode is also dependable, CrackDays after the geode's
+            // own dependable landing (ruling 2026-09-16). A row with a condition of its own (the
+            // Prismatic Shard after 16 cracks) is not a plain pick from the list and stays a roll.
+            if (!repeatable || condition != null) continue;
+            foreach (ObtainSource template in stone.Emit(SourceKind.Geode, t => t.Then(open).Delay(CrackDays), conditions,
+                $"opened from {geode}, cracked over {CrackDays} days"))
+                if (template.Reliability == Reliability.Dependable)
+                    foreach (var emitted in ItemQueries.Emit(item, objects, template))
+                        yield return emitted;
         }
     }
 
