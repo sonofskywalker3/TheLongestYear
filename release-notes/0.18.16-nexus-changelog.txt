@@ -1,0 +1,9 @@
+0.18.16 - Once-per-loop items always ask for one, and the mine and monster asks now follow what the mines really give.
+
+Added
+- Once-per-loop items ask for one, as a setting. Some items a loop can only give once: the five legendary fish, the two books hidden around town and the Golden Pumpkin from the Spirit's Eve maze. The Stack size dial used to turn their ask into two on Hard and Extreme, which no one can ever fill. A new Difficulty setting, on by default, holds every one of them at one whatever the dial says; off, they scale like everything else. A board already asking for two is lowered on load. Thanks to FayGabi for the report.
+
+Changed
+- Mine and monster asks follow measured yields. Every mine floor from 1 to 120 and the first 40 Skull Cavern floors were generated on seven different days, every stone broken, every geode cracked and every monster killed through the game's own drop code, and the result counted. The ore, geode and crystal numbers behind the asks were already right. Four were not: Coal asks go up, since a week of mining gives three to four times what the old number said, Quartz asks come down by more than half, and Topaz, Jade, Aquamarine, Emerald and Ruby asks come down by about half. Drops that only one uncommon monster gives (Squid Ink, Crab Cakes, Cloth, Refined Quartz, the bars, the algae) are now capped at twice what clearing floors actually yields, instead of assuming a whole week spent hunting that one monster.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
