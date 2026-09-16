@@ -10,6 +10,7 @@ public static class WorldSources
     private const int SpringSalmonberryFirst = 15, SpringSalmonberryLast = 18;   // Bush.cs 229-235
     private const int FallBlackberryFirst = 8, FallBlackberryLast = 11;          // Bush.cs 236-241
     private const int SummerTideFirst = 12, SummerTideLast = 14;                 // Beach.cs 112-125
+    private const int QiPlaneLatestDay = 51;                                     // Utility.cs 6385, 4409-4413
     private const string BeachBridge = "mail:beachBridgeFixed";                  // Beach.cs 734-736
 
     private static readonly (string ItemId, SourceKind Kind, Reliability Reliability, string Requires, string Note)[] AnyDay =
@@ -56,6 +57,12 @@ public static class WorldSources
             yield return (id, Make(SourceKind.Forage, summerTide, Reliability.Dependable, "location:Beach",
                 "washed up anywhere on the beach, Summer 12 to 14 (Beach.cs 112-125)"));
         }
+
+        // Utility.cs 6385: no box before the Qi plane; Utility.cs 4409-4413: the plane flies after the 6th
+        // Help Wanted quest or once 50 days have passed. The quest route is earlier but not modelled.
+        yield return ("(O)MysteryBox", Make(SourceKind.Forage, DayTable.Available(day => day >= QiPlaneLatestDay),
+            Reliability.Dependable, "trees, fishing, crates, panning or tilling",
+            "mystery box finds after the Qi plane, repeatable (Tree.cs 696, FishingRod.cs 2458, BreakableContainer.cs 249, Pan.cs 230, GameLocation.cs 4392)"));
     }
 
     private static DayTable Window(Season season, int firstDay, int lastDay)
