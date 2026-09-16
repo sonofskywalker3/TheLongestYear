@@ -37,6 +37,10 @@ namespace TheLongestYear.Loop
         private const int MonsterDropField = 6;
         private const string PreviousOutputTapId = "PREVIOUS_OUTPUT_ID";
         private const string AnyCan = "*";
+        private const double MinutesPerDay = 1440.0;
+        /// <summary>The incubator's default when an animal row leaves IncubationTime unset (Object.cs 2235):
+        /// overrideMinutesUntilReady = animalData.IncubationTime > 0 ? animalData.IncubationTime : 9000.</summary>
+        private const int DefaultIncubationMinutes = 9000;
 
         /// <summary>Locations that only exist while a minigame runs (the fishing minigame's own scene):
         /// they are never a real map to spawn or fish in, so they are dropped from the model entirely.</summary>
@@ -248,7 +252,9 @@ namespace TheLongestYear.Loop
                 // An id sold through another animal's AlternatePurchaseTypes (Brown Chicken through
                 // White Chicken, Brown Cow through White Cow: PurchaseAnimalsMenu.cs 477-484). Only a
                 // sold base animal's alternates count: the menu only ever reads this field off an
-                // animal that is itself in the purchase menu.
+                // animal that is itself in the purchase menu. AlternatePurchaseAnimals.Condition is not
+                // read, so an alternate behind a condition counts as sold anyway (the Blue Chicken, which
+                // needs Shane's event): harmless, since it lays the same eggs as the White Chicken.
                 var soldAsAlternate = new HashSet<string>(StringComparer.Ordinal);
                 foreach (FarmAnimalData other in animalData.Values)
                 {
@@ -263,11 +269,8 @@ namespace TheLongestYear.Loop
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
                     bool sold = a.PurchasePrice > 0 || soldAsAlternate.Contains(kv.Key);
-                    // The incubator's default when the row leaves IncubationTime unset (Object.cs 2235):
-                    // overrideMinutesUntilReady = animalData.IncubationTime > 0 ? animalData.IncubationTime : 9000.
-                    const int DefaultIncubationMinutes = 9000;
                     int incubationDays = a.EggItemIds is { Count: > 0 } && !sold
-                        ? (int)Math.Ceiling((a.IncubationTime > 0 ? a.IncubationTime : DefaultIncubationMinutes) / 1440.0)
+                        ? (int)Math.Ceiling((a.IncubationTime > 0 ? a.IncubationTime : DefaultIncubationMinutes) / MinutesPerDay)
                         : 0;
                     animals.Add(new AnimalRow(kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
                         a.PurchasePrice, GameObtainabilityParsing.Produce(a.ProduceItemIds), GameObtainabilityParsing.Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
