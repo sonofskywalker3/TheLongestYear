@@ -43,8 +43,8 @@ public static class ObtainabilityBuilder
         direct.AddRange(MineSources.Nodes());
         direct.AddRange(MineSources.MonsterDrops(inputs.MonsterDrops, o));
         direct.AddRange(MineSources.FishingTreasure());
-        direct.AddRange(MadeSources.Animals(inputs.Animals, f, inputs.Buildings));
-        direct.AddRange(MadeSources.Tappers(inputs.TapItems, o, f));
+        direct.AddRange(LivestockSources.Animals(inputs.Animals, f, inputs.Buildings));
+        direct.AddRange(LivestockSources.Tappers(inputs.TapItems, o, f));
         direct.AddRange(CodeSources.MineFish());
         direct.AddRange(CodeSources.Moss());
         direct.AddRange(CodeSources.SeasonSeeds());
@@ -70,7 +70,7 @@ public static class ObtainabilityBuilder
             all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f, inputs.Crops));
             all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
-            all.AddRange(MadeSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
+            all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
             all.AddRange(MadeSources.Geodes(inputs.GeodeDrops, inputs.GeodesUsingDefaultTable, o, current, f));
             ObtainabilityModel next = Assemble(all, out List<string> unresolved);
             if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
