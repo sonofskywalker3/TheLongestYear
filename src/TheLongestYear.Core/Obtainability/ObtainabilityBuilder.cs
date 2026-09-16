@@ -24,7 +24,10 @@ public static class ObtainabilityBuilder
 {
     public const int MaxPasses = 1000;
 
-    public static ObtainabilityBuild Build(ObtainabilityInputs inputs)
+    /// <param name="mineTravel">Whether a direct mine route lands after the days it takes to reach its
+    /// floor (the ruling, and the default). Off only for the debug check that the fairness rule gives the
+    /// same answers either way.</param>
+    public static ObtainabilityBuild Build(ObtainabilityInputs inputs, bool mineTravel = true)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         var f = inputs.Festivals;
@@ -51,8 +54,9 @@ public static class ObtainabilityBuilder
         // Mine depth goes into the landing day here, once, and only here: a direct route needing floor N
         // lands the days it takes to get there from nothing later (ruling 2026-09-16), and everything
         // made from it inherits that through its input's table, so no derived pass adds it again.
-        for (int i = 0; i < direct.Count; i++)
-            direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
+        if (mineTravel)
+            for (int i = 0; i < direct.Count; i++)
+                direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
 
         ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
