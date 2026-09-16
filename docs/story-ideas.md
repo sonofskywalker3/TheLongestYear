@@ -40,15 +40,17 @@ credited to **u/Gribbleby**. Related: the v1 [1.0.0] déjà-vu plan in `TODO.md`
 
 <!-- New ideas below. Append as we go. -->
 
-## Grandpa's revelation and the Year 2 opener  [Year 2] · status: RECORDED (Jeff, 2026-09-16), NOT ON THE STORY BRANCH
+## The Year 2 opener: the farmer asks the Junimos what grandpa meant  [Year 2] · status: RECORDED (Jeff, 2026-09-16), NOT ON THE STORY BRANCH
 
-**Idea:** The opening (spec `2026-09-16-expanded-opening-design.md`) drops only three hints about
+**Context:** The opening (spec `2026-09-16-expanded-opening-design.md`) drops only three hints about
 grandpa: his deathbed warning about the emptiness, the letter's paragraph about the unfinished hall,
 and Robin remembering him holding the town together. Later story beats add a few more. The Junimos
-never mention him in year one. **The true revelation comes from grandpa's spirit at the shrine on the
-first pass**: he was the Junimos' keeper, he saved the hall once, the darkness wore him down before he
-finished. **Year 2 opens with the farmer asking the Junimos what grandfather meant.**
+never mention him in year one. **The revelation is already built:** grandpa's spirit at his shrine in
+the Year One Ending (`2026-09-07-year-one-ending-script.md`: the shrine pan, his message, the candle).
 
-**Ties to:** the ending spec's narrative lock (grandpa was the previous keeper; vanilla's four candles
-are his unfinished work; Year 2 and 3 Perfection finish his evaluation), and Morris's arc (unwitting
-pawn in the opening, willing thrall by the end; his fall is what the mid-year scenes show).
+**Idea:** Year 2 opens with the farmer asking the Junimos what grandfather meant, and the Junimos
+answering what the opening withheld (he was their keeper, he saved the hall once, the darkness wore
+him down before he finished; vanilla's four candles are his unfinished work).
+
+**Ties to:** the ending spec's narrative lock, and Morris's arc (unwitting pawn in the opening, willing
+thrall by the end; his fall is what the mid-year scenes show).

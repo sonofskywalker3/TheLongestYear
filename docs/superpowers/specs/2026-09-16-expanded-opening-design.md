@@ -66,8 +66,9 @@ do. The opening plays him straight. Any glimpse of the darkness on him comes fro
 this one.
 
 **Grandpa (Jeff, 2026-09-16):** the opening drops three hints (deathbed, letter, Robin) and no more.
-Later story beats add a few. The revelation belongs to grandpa's spirit at the shrine on the first
-pass, and Year 2 opens with the farmer asking the Junimos what he meant (recorded in
+Later story beats add a few. The revelation is grandpa's spirit at his shrine in the Year One Ending,
+already built on this branch (`2026-09-07-year-one-ending-script.md`, the shrine pan, grandpa's
+message, the candle). Year 2 opens with the farmer asking the Junimos what he meant (recorded in
 `docs/story-ideas.md`; Year 2 is not on this branch).
 
 ## 2. How it is built (proposal)
@@ -141,7 +142,7 @@ story update. The opening's text assumes it; the merge of master into story brin
 
 ### 2.7 Out of scope
 
-Mid-year hint scenes, Morris's fall, the grave revelation, the Year 2 opener, a custom-drawn cinematic,
+Mid-year hint scenes, Morris's fall, the Year 2 opener, a custom-drawn cinematic,
 any change to vanilla's pictures or music, multiplayer farmhands (the opening is host-side, as today).
 
 ## 3. Writing rules
@@ -178,5 +179,6 @@ All lines through the game-writing skill in Jeff's register; drafts to Jeff befo
 ## 5. Open items carried elsewhere
 
 - Mid-year hint scenes and Morris's fall: future story spec.
-- The grave revelation and the Year 2 opening question: `docs/story-ideas.md`, Year 2.
+- The Year 2 opening question (the farmer asks the Junimos what grandpa meant): `docs/story-ideas.md`.
+  The revelation itself is built: the ending's shrine scene.
 - Cookbook and Craftbook slots: master TODO (release first).
