@@ -6,7 +6,7 @@
 > OnlyNew 606, NewEarlier 170, NewLater 9, LuckOnly 128, Agree 157, OnlyExisting 7; exactly the nine
 > species moved to LuckOnly (Mutant Carp and Cave Jelly from NewEarlier, the other seven from
 > Agree), nothing else changed. Machines: left alone. Section 3 below answers Jeff's follow-up on
-> the geode crackers, the bone mill and the recycling machine; the geode question is still open.
+> the geode crackers, the bone mill and the recycling machine; the geode ruling (11-day delay) is applied too, see the end of section 3.
 
 The 2026-09-16 ruling ("a chance route you can retry many times a day with a decent chance each
 try counts as dependable") left two families to be judged on their own. This note is the threshold
@@ -206,4 +206,16 @@ Prismatic Shard stays Chance (0.4% per omni geode, and only after 16 cracked).
 Alternative: leave geode contents as Chance. The 39 minerals stay LuckOnly and the darkness never
 touches them.
 
-**I need your call on this one before touching it.**
+**Applied 2026-09-16 (Jeff: "go with the 11 day delay"), commit `6c38c9e`.** `MadeSources.Geodes`
+emits, for every GeodeDrops row of Geode, Frozen Geode or Magma Geode with no condition of its own, a
+second, dependable route landing `CrackDays` (11) after the geode's own dependable landing; the lucky
+half still lands with the geode. Omni Geode, Artifact Trove, the default common branch and the
+Prismatic Shard row stay Chance. Live rerun on the throwaway save: LuckOnly 128 to 84, NewLater 9 to
+53, everything else unchanged. 44 items moved, all LuckOnly to NewLater: the 41 minerals (Alamite to
+Star Shards, Dolomite and Limestone included) and **three artifacts that sit in the same geode lists
+with the same odds: Dwarvish Helm (Geode), Ancient Drum (Frozen Geode), Dwarf Gadget (Magma Geode)**.
+The ruling said "mineral"; these three ride along because the rule is "a plain pick from the geode's
+own list", and the odds are identical. Say so if they should be carved out. Dependable weeks are 2 for
+the Geode list (floor 1 geodes, day 1 + 11) and 3 for the Frozen and Magma lists (their floors take 4
+to 8 days to reach first). Spot check, `tly_sabotage fair (O)538 normal`: the new route "counts, lands
+day 36" for a hit on day 24 (24 + 1 + 11); every other Alamite route is out as chance or circular.

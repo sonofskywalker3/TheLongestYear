@@ -1,9 +1,9 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 evening, later (story: developed-farm travelcheck passed; rare-fish demotion applied and live-checked; geode cracking question open for Jeff)
+**Last updated:** 2026-09-16 evening, later (story: developed-farm travelcheck passed; rare-fish demotion and the 11-day geode rule applied and live-checked; next is Jeff's darkness live test)
 **Branch:** `story`; everything committed AND pushed, nothing local-only
-**Tests:** 2621 passing
-**Build:** clean (Release, 0 errors); story HEAD `89dd396` deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449262005` (Run 183, developed with debug commands for the travelcheck)
+**Tests:** 2622 passing
+**Build:** clean (Release, 0 errors); story HEAD `6c38c9e` deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449262005` (Run 183, developed with debug commands for the travelcheck)
 **Last public release:** 0.18.11
 
 ## 2026-09-16 (evening): developed-farm travelcheck passed; fish and machine review for Jeff
@@ -18,8 +18,11 @@
   legendaries and Octopus, Pufferfish, Sea Jelly, Cave Jelly are Chance. Live rerun: LuckOnly 119 to
   128, Agree 164 to 157, NewEarlier 172 to 170, exactly the nine species, nothing else. Machines left
   alone.
-- **Open for Jeff: geode cracking** (note section 3). 39 minerals are LuckOnly through geodes alone
-  now that geodes are repeatable; proposal is dependable with an 11-day delay.
+- **Geode rule applied** (`6c38c9e`, Jeff: "go with the 11 day delay"): a plain pick from the Geode,
+  Frozen Geode or Magma Geode list is dependable 11 days after the geode lands; omni, trove and
+  Prismatic Shard stay Chance. Live rerun: LuckOnly 128 to 84, NewLater 9 to 53 (41 minerals plus
+  Dwarvish Helm, Ancient Drum, Dwarf Gadget, which share those lists; flagged). Model build 3479 ms.
+- **Next on story: Jeff's darkness live test** (TODO "Darkness pushback: Jeff's live test").
 - **Fish and machine repeatable-chance review** (the note, written first):
   `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`. Waiting on Jeff's two
   answers (fish: demote 6 species + 3 legendaries, legendaries only, or nothing; machines: leave alone

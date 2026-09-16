@@ -30,13 +30,17 @@ clock runs during the 15 minutes, the farmer passed out on the porch and the que
 on a LevelUpMenu until `tly_dismiss` cleared them; next time `debug time 600` plus a sleep first, or
 warp indoors.
 
-### DONE 2026-09-16 evening (fish) / OPEN (geodes): repeatable-chance review for ordinary fish and machine output
+### DONE 2026-09-16 evening: repeatable-chance review for ordinary fish and machine output (fish demoted, geode minerals dependable after 11 days)
 Note: `docs/superpowers/notes/2026-09-16-fish-and-machine-repeatable-chance.md`. Jeff took both
 recommendations. **Fish applied** (`c4d570d`, `89dd396`): catch-limit-1 rows, the five legendaries by
 id (Legend has a Backwoods row with no catch limit), and Octopus, Pufferfish, Sea Jelly, Cave Jelly
 are Chance; live rerun moved exactly those nine species to LuckOnly (LuckOnly 119 to 128, Agree 164
 to 157, NewEarlier 172 to 170), nothing else. **Machines left alone.**
-**OPEN, AWAITING JEFF: geode cracking.** Jeff asked why only the egg press mattered when the geode
+**Geode cracking APPLIED (`6c38c9e`, Jeff: "go with the 11 day delay"):** a plain pick from the Geode,
+Frozen Geode or Magma Geode list is dependable 11 days after the geode's own landing; omni, trove,
+common branch and Prismatic Shard stay Chance. Live rerun: LuckOnly 128 to 84, NewLater 9 to 53; the 41
+minerals plus Dwarvish Helm, Ancient Drum and Dwarf Gadget (same lists, same odds; flagged to Jeff).
+Background: Jeff asked why only the egg press mattered when the geode
 crushers, bone mill and recycling machine all roll. Answer: the bone mill and recycler change nothing
 (every output already dependable elsewhere), but geode cracking is its own `Geode` family that the
 morning filed under KEEP while geodes were still chance; now that geodes are repeatable, 39 minerals
