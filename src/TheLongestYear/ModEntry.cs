@@ -54,6 +54,9 @@ namespace TheLongestYear
         /// save load. Nothing reads it for gameplay; tly_obtain is its only reader. Null before a save
         /// is loaded or when the build failed.</summary>
         private TheLongestYear.Core.Obtainability.ObtainabilityModel _obtainability;
+        /// <summary>Session cache: a save load whose game data is unchanged (the reload after a loop
+        /// reset) reuses the last build instead of paying for it again.</summary>
+        private readonly TheLongestYear.Core.Obtainability.ObtainabilityCache _obtainabilityCache = new();
         /// <summary>Sources the obtainability build could not read (unsupported item queries, machine
         /// output methods), for tly_obtain compare.</summary>
         private IReadOnlyList<string> _obtainabilityUnresolved = System.Array.Empty<string>();
@@ -3571,12 +3574,13 @@ namespace TheLongestYear
             {
                 var timer = System.Diagnostics.Stopwatch.StartNew();
                 var inputs = new TheLongestYear.Loop.GameObtainabilityData(this.Monitor).Build();
-                var build = TheLongestYear.Core.Obtainability.ObtainabilityBuilder.Build(inputs);
+                long readMs = timer.ElapsedMilliseconds;
+                var build = _obtainabilityCache.Get(inputs, out bool reused);
                 _obtainability = build.Model;
                 _obtainabilityUnresolved = build.Unresolved;
                 _obtainabilityFailure = null;
                 this.Monitor.Log(
-                    $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms, {build.Passes} pass(es), " +
+                    $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms (read {readMs} ms{(reused ? ", unchanged data, reused" : "")}), {build.Passes} pass(es), " +
                     $"{build.Unresolved.Count} unresolved source(s)" + (build.HitPassCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
                     build.HitPassCap ? LogLevel.Warn : LogLevel.Info);
             }
