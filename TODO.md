@@ -362,8 +362,8 @@ don't apologize for or reference it in the reply, she only mentioned it in passi
 ### RELEASED 0.17.0 "The Reasonable Quantities Update" and 0.17.1 (Dye never draws a legendary) (2026-09-05, all three Nexus fields set via Chrome)
 
 Open after the release, from the Codex review and the sweeps (test-output/boards-2026-09-04-*.md):
-- Vanilla-board path (BundleSource Vanilla) still uses the plain multiplier; only Engine boards are
-  banded. Deliberate for now.
+- Vanilla-board path (BundleSource Vanilla) uses the plain multiplier; only Engine boards are
+  banded. **SETTLED by Jeff 2026-09-16: this is how it should be. Do not bring it up again.**
 - Spot-check the modelled fish, crab pot and mine bases with a real rod / pots / pickaxe on the
   throwaway save before trusting them further (the forage table is the only MEASURED one).
 - Winter Foraging has a five-item pool, so its items land on every board; Summer/Fall pools are
@@ -377,7 +377,7 @@ Every domain now rolls basis x band by step (`AskBands`, `QuantityAskPass`, base
 spot check of the modelled crab pot numbers, E as an in-game spot check of the modelled fish
 numbers. Everything else in this block is superseded.
 
-### OPEN follow-ups to the quantity clamp (2026-08-30) — pick ONE, they are independent
+### Follow-ups to the quantity clamp (2026-08-30), triaged by Jeff 2026-09-16: A and B PARKED, Morel CLOSED, D RUN 2026-09-16, E needs a tool
 
 Shipped so far: `ForageAskLimits` (v0.16.172), wild-seed exemption (v0.16.174), desert gating
 (v0.16.175). Measured data: `docs/superpowers/notes/forage-sweep-results.csv` (3 full-year runs,
@@ -385,7 +385,7 @@ loops 120/121/122). Tools: `tly_sweepforage`, `tly_crabpots`, `tly_forageyield`.
 Method that must be reused for any "is this really possible?" question: **measure it in the game,
 do not model it.** An expected-value pass was wrong by 2.3x and Jeff rightly rejected it.
 
-**A. Curated season-pin table (Jeff, 2026-08-30).** Season pins today come from `DerivePins`
+**A. PARKED by Jeff 2026-09-16 ("put a and b off"); do not schedule unless he asks. Curated season-pin table (Jeff, 2026-08-30).** Season pins today come from `DerivePins`
 (`ItemPoolBuilder.cs:823`), which pins to the EARLIEST season an item is obtainable. Jeff wants pins
 by where an item is *best* sourced, not merely where it is possible. Build a curated override table
 (same shape as `BuiltInSeasonalForageAdditions`, `ItemPoolBuilder.cs:47`) and seed it with:
@@ -393,7 +393,7 @@ by where an item is *best* sourced, not merely where it is possible. Build a cur
 - **Fiddlehead Fern → Summer.** It only belongs in the Summer gate and Summer themes; its stray
   Spring/Fall/Winter sweep counts (0.3-1.3) are noise and must not let it into those pools.
 
-**B. Moss and Fiddlehead ceilings (Jeff, 2026-08-30, do with or after A).**
+**B. PARKED by Jeff 2026-09-16 with A. Moss and Fiddlehead ceilings (Jeff, 2026-08-30, do with or after A).**
 - **Moss: NO cap.** One Green Rain yields hundreds. Add to the never-capped path alongside
   `WildSeedGrowable` (or generalise that into an "unbounded supply" set). Moss never appeared in the
   forage sweep at all - it comes off trees, not ground spawns - so there is no measured number and
@@ -412,7 +412,7 @@ it 17-19 a season. Jeff's ruling: Purple Mushroom capped at 5 (mines' mushroom f
 farmable), the other mushrooms halved. Shipped as `AskCeilingRulings` plus island-halved rows.
 Full write-up: `docs/superpowers/notes/forage-sweep-caveats.md`.
 
-**Still open from C:** **Morel `(O)257`** is Woods-only and Spring-only, and `LocationGating` puts
+**CLOSED by Jeff 2026-09-16 ("drop morel": leave the ceiling of 9 as it is, no change, do not re-raise). Was:** **Morel `(O)257`** is Woods-only and Spring-only, and `LocationGating` puts
 the Steel Axe at week 4 of a four-week Spring, so its ceiling of 9 assumes four times the access a
 loop gets. Either drop it from Spring asks or cut the ceiling to about a quarter. Fiddlehead Fern
 is NOT at risk on access grounds after all: Summer is weeks 5-8, entirely after the gate.
@@ -421,13 +421,20 @@ is NOT at risk on access grounds after all: Summer is weeks 5-8, entirely after 
 counts and to skip maps a loop cannot reach. The daily log names item counts only, not maps, so the
 existing CSV cannot be attributed after the fact (the earlier note in this file said otherwise).
 
-**D. Crab pots — command built (v0.16.173), never run.** `tly_crabpots place 10` then a daily
+**D. RUN 2026-09-16, MODEL CONFIRMED (my automated run over the bridge, 22 Spring days, 40 pots; `docs/superpowers/notes/crabpot-sweep-2026-09-16.md`). Every fresh-water row within 8% of the hand table, ocean rows within ten-pot noise. Recommendation: no change to the bases; Cockle/Mussel/Oyster/Clam are already banded through the crab basis, so the "unclamped" note here was stale. Awaiting Jeff's confirm to close. Was:** command built (v0.16.173), never run. `tly_crabpots place 10` then a daily
 `tly_crabpots` for a season, then `report`. Zones Beach/Forest/Town/Mountain; the catch table splits
 ocean vs fresh (`CrabPot.DayUpdate`). Jeff: pots do not change with the season, so one season can be
 extrapolated. This is what unblocks **Cockle, Mussel, Oyster and Clam**, which are currently
 unclamped because the forage sweep only sees a fraction of their real supply.
 
-**E. Fish — MODELLED FIRST PASS SHIPPED 0.16.181 (2026-09-04).** `FishAskBasis` + `AskBands` +
+**E. NOT RUNNABLE UNATTENDED (checked 2026-09-16 when Jeff asked for it).** The spot check as
+written needs a real rod and a real pickaxe: the fishing minigame and mine swings are player
+input, and the headless bridge has no tool for either (`tly_sweepforage` and `tly_crabpots` exist
+because forage and pots are passive). Options, Jeff's call: (a) Jeff fishes a couple of fish on a
+couple of days and reports counts; (b) build `tly_minecount` (generate N mine floors at a depth,
+count ore and gem nodes, no swinging needed) for the mine half, which IS headless-able; (c) accept
+the fish-sim model as is. Until one is picked this stays open but is not a session task.
+Original: **E. Fish — MODELLED FIRST PASS SHIPPED 0.16.181 (2026-09-04).** `FishAskBasis` + `AskBands` +
 `FishAskPass`: basis = best-10h-day catches x 7 from `tools/fish-sim` (replays the game's fish
 pick over the real tables; write-up in `docs/superpowers/notes/fish-catch-rates-2026-09-04.md`),
 bands by step, gold at 75%. Jeff accepted the model as the first pass; the two questions below
@@ -471,7 +478,7 @@ have deleted Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp outright.
 Jeff, after seeing the shrine tabs: powers to keep the OTHER room-completion rewards across loops, the way `keep_bus_unlocked` (Vault, 1500 JP) already keeps the bus. One row each under a **"Gifts of the Junimos"** header (its own shrine category): Greenhouse (Pantry), the beach bridge (Crafts Room), the quarry boulder (Fish Tank), the minecarts (Boiler Room), the bus (Vault, the existing row moves here). NOT the Bulletin Board (its friendship boost is not a world reward). **Pricing rule: every Gift bought raises the price of the others, from 1,000 JP up to 5,000** (first 1,000, second 2,000, ... fifth 5,000; `keep_bus_unlocked` joins the ladder at whatever step it is bought). Same shape as the bus fix: restore the vanilla completion mail (`ccPantry`, `ccCraftsRoom`, `ccFishTank`, `ccBoilerRoom`, `ccVault`) after the reset and nothing else, so the bundles stay on the board and still pay. Open: whether the existing 1,500 bus price is grandfathered for owners; the Greenhouse also needs the building (`Farm.greenhouseUnlocked` / the greenhouse map override, check `Farm.MakeMapModifications`). Not on the TODO before today.
 
 
-### TOP PRIORITY (Jeff, 2026-08-29): fix EVERY open bug below before the next release. Nothing else first.
+### ALL FIVE FIXED and released in 0.16.167 (see each item). Was: TOP PRIORITY (Jeff, 2026-08-29): fix EVERY open bug below before the next release.
 
 Ordered by player cost. Each one has its root cause and fix shape written up in the section named.
 Per change: patch bump, one commit, tests green, live check on the throwaway save over the bridge
@@ -794,7 +801,7 @@ Open design points for the brainstorm: pricing bands (a Skull Key or a Stardrop 
 Bear's Knowledge), whether Stardrops are one row each or a tiered chain, and whether the Skull Key
 keep should also unlock the Skull Cavern door tile state.
 
-### SVE board audit (found 2026-08-27 during the 0.16.17 release smoke)
+### PARKED (Jeff 2026-09-16: "SVE can wait"): SVE board audit (found 2026-08-27 during the 0.16.17 release smoke). The manifest-mismatch half was fixed in 0.16.158; only the ExcludedLocationMarkers ruling is left.
 
 Smoked once with Stardew Valley Expanded enabled on the throwaway save (`tly_reset` + `tly_genbundles`):
 pools grew (crops 43 -> 47, fish 52 -> 54, saplings 6 -> 9, tapper 1 -> 10, cooking 78 -> 92, artisan
@@ -808,7 +815,7 @@ decide whether the manifest check should tolerate it, and check which SVE areas 
 and Crimson Badlands should join `ExcludedLocationMarkers`. Do not tell anyone SVE is "supported"
 until this has a ruling.
 
-### BRAINSTORMED 2026-08-27 late, SPEC APPROVED, NOT PLANNED: activity themes (Spelunking, Artisan, Kitchen)
+### SHIPPED 0.16.167 (2026-08-29). Was: BRAINSTORMED 2026-08-27 late, SPEC APPROVED, NOT PLANNED: activity themes (Spelunking, Artisan, Kitchen)
 
 Spec `docs/superpowers/specs/2026-08-27-activity-themes-design.md`. Three activity themes whose goals
 match by item kind anywhere on the board (not by room), cross-over liabilities among the three, one
@@ -1516,7 +1523,7 @@ via release.ps1); Advanced Options screenshot uploaded to the gallery 2026-07-13
 (release-notes/advanced-options-remixed.png); Fluxwb replied on the posts tab pointing at
 docs/TRANSLATING.md — awaiting their updated zh translation to credit + link. -->
 
-### 🐞 INVESTIGATE — 5th sweep (2026-07-09): Nexus posts 06-10 → 07-05 + xsansara log
+### ALL RESOLVED (every item below is marked fixed or verified). Was: 🐞 INVESTIGATE — 5th sweep (2026-07-09): Nexus posts 06-10 → 07-05 + xsansara log
 *Full forum sweep 2026-07-09 (`forum-sweeps/2026-07-09-21-47_*`). Reddit: 4 new comments, all
 praise/flavor — nothing actionable. Nexus bugs tab: no new bugs. All the new material is Nexus
 POSTS. xsansara's awaited SMAPI log delivered
@@ -1825,7 +1832,7 @@ mushrooms / fruit bats / decide-later on cave entry whenever unchosen (applies v
 Lewis CC (191393) stays suppressed. ✅ PLAYTEST CONFIRMED 2026-07-13: post-reset cave entry showed
 the picker, user: "nice cave picker, worked well" — wording approved.
 
-### 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-08)
+### ALL RESOLVED or ruled (SVE items parked with the SVE audit above). Was: 🐞 INVESTIGATE — beta bug/UX reports (re-scrape 2026-06-08)
 *Third scrape (Reddit 53 / Nexus 19). Concrete things to investigate, highest-value first.
 New 2026-06-08 reports are tagged **[3rd scrape]**:*
 
@@ -1912,7 +1919,7 @@ resets leaked theme effects), `ForceFullSave`, and the real day-start flow — s
 faithful stand-in for a real reset. `ApplyKeepPlaying` intentionally NOT routed (not a reset; shares
 only the persist + day-start tail). Original notes below:
 
-### 🔧 Tech debt — consolidate the three reset paths (found 2026-06-09)
+### DONE v0.11.2 (2026-06-10, RunController.FinalizeReset). Was: 🔧 Tech debt — consolidate the three reset paths (found 2026-06-09)
 There are **three** near-identical "reset world → BeginNewRun → persist → present week-1 offer"
 sequences, each maintained by hand:
 - `RunController.ContinueAfterResetSpend` — the real loop reset (fail-day-28 / win→new-loop / `tly_failreset`).
