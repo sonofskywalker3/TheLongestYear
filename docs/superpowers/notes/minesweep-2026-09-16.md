@@ -60,14 +60,40 @@ monsters a floor, so 240 to 410 kills a week spread over the band's whole roster
   "420 kills of that one monster" assumption is 3 to 25x what clearing floors yields. Whether a
   player is expected to farm one monster is a design call, not a measurement.
 
+## Second run, 2026-09-16 afternoon: seven sample days, every geode cracked
+
+Jeff asked for more days and for geode contents. `tly_minesweep <from> <to> 7 crack` (0.18.15):
+seven day counters a week apart, and every Geode, Frozen Geode, Magma Geode and Omni Geode that
+dropped was opened through `Utility.getTreasureFromGeode`, stepping the geodes-cracked counter
+per geode and restoring it. 1,036 floor-samples. Raw tables: `minesweep-2026-09-16-cracked-raw.txt`.
+The Skull Cavern band is still its floors 1 to 40 (mine levels 121 to 160); the cavern has no
+bottom and 40 is a day's reach without stacked staircases, Jeff can name a deeper cut.
+
+Rows that moved once geode contents were in, per week at 70 floors, drops plus geode contents:
+
+| Item | Uncracked | Cracked | Table | Reading |
+|---|---|---|---|---|
+| Earth Crystal (1-40) | 12 | 19 | 18 | holds |
+| Frozen Tear (41-80) | 16 | 27 | 18 | a little low |
+| Fire Quartz (81-120) | 7 | 15 | 18 | holds |
+| Iridium Ore (Skull 1-40) | 44 | 67 | 70 | holds |
+| Amethyst (best band) | 12 | 9 | 14 | still high |
+| Topaz / Jade / Aquamarine / Emerald / Ruby (best band) | 3 to 8 | 4 to 8 | 14 | still 2 to 3x high |
+| Quartz | 24 to 40 | 27 to 34 | 80 | still 2.5x high |
+| Coal | 300 to 335 | 312 to 335 | 86 | still 3.5x low |
+| Diamond | 4 to 7 | 2 to 6 | 3 | holds |
+
+Geodes barely move the gems: a geode is mostly ore, stone, clay and the area crystal. The
+crystal rows are fine once geodes count. The monster rows are unchanged from the first run.
+
 ## Recommendation (Jeff's call, nothing changed yet)
 
-1. Mines table: Coal to 99 (cap). Quartz to 35. The six gems (Amethyst, Topaz, Jade,
-   Aquamarine, Emerald, Ruby) to 7, Fire Quartz to 8. Everything else stays.
-2. Monster table: keep the single-monster assumption for the common drops, but cap any drop
-   that comes from one monster at 2x the measured floor-clearing supply (rounded up), so a
-   player who does farm it gets credit without an ask nobody clearing floors can meet. That
-   moves Squid Ink to about 10, Crab Cakes to 6, Refined Quartz to 6, Copper Bar to 6, Cloth to
-   24, Solar Essence to 90, Algae to 28, Winter Root to 20.
-3. Re-run with geodes cracked (a `crack` mode that opens every geode through the game's
-   geode roll) before touching the gem and crystal rows if Jeff wants that precision.
+1. Mines table: Coal to 99 (cap). Quartz to 35. Topaz, Jade, Aquamarine, Emerald and Ruby to 7;
+   Amethyst to 9. Frozen Tear to 27 if he wants it exact. Everything else stays, including
+   Iridium Ore at 70 and the three crystals.
+2. Monster table: keep the single-monster assumption for the common drops, but cap any drop that
+   comes from one monster at 2x the measured floor-clearing supply (rounded up): Squid Ink about
+   10, Crab Cakes 6, Refined Quartz 6, Copper Bar 6, Cloth 24, Solar Essence 90, Algae 28, Winter
+   Root 20.
+3. The 70 floors a week that turns per-floor into per-week is the 4 Sep model's lever, not a
+   measurement; the per-floor CSV regenerates any other assumption without a rerun.

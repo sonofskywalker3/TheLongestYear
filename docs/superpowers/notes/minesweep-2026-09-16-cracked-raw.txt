@@ -1,0 +1,291 @@
+floor-samples: 1036; bands: {'1-40': 252, '41-80': 252, '81-120': 252, 'Skull': 280}
+
+=== Floors 1-40: 252 floor-samples, stones/floor mean 62.0 median 60, monsters/floor mean 4.99
+  nodes per floor: Copper node 2.30, Topaz node 0.08, Amethyst node 0.06, Gem node (mixed) 0.02
+  monsters per floor: Green Slime 1.52, Grub 1.10, Bug 0.98, Stone Golem 0.53, Rock Crab 0.41, Duggy 0.31, Bat 0
+  geode contents per floor: Copper Ore 0.98, Stone 0.63, Coal 0.30, Clay 0.09, Earth Crystal 0.09, Slate 0.07, P
+  drop (+geode contents)     per floor per week@70 Mines tbl Monster tbl
+  Stone                          36.29      2540.3        99        99.0
+  Copper Ore                      8.01       560.8        99        84.0
+  Coal                            4.62       323.3        86        99.0
+  Bug Meat                        1.37        95.8         -        99.0
+  Geode                           1.26        88.1        92        99.0
+  Slime                           1.23        86.4         -        99.0
+  Torch                           0.52        36.7         -           -
+  Quartz                          0.47        32.8        80        42.0
+  Sap                             0.30        20.8         -        99.0
+  Earth Crystal                   0.27        18.6        18        42.0
+  Cherry Bomb                     0.24        16.9         -        99.0
+  Green Algae                     0.17        11.9         -        42.0
+  Wood                            0.15        10.8         -           -
+  Amethyst                        0.13         9.2        14         6.3
+  Iron Ore                        0.13         9.2        99        84.0
+  Rice Shoot                      0.11         7.5         -        42.0
+  Topaz                           0.10         7.2        14           -
+  Omni Geode                      0.10         7.2        21        99.0
+  Bat Wing                        0.10         6.9         -        99.0
+  Cave Carrot                     0.10         6.7         -           -
+  Clay                            0.09         6.4         -           -
+  Crab                            0.07         4.7         -        99.0
+  Slate                           0.07         4.7         -           -
+  Carrot Seeds                    0.06         4.2         -           -
+  Petrified Slime                 0.06         4.2         -           -
+  White Algae                     0.06         4.2         -        42.0
+  Granite                         0.05         3.3         -           -
+  Mudstone                        0.04         3.1         -           -
+  Calcite                         0.04         3.1         -           -
+  Jamborite                       0.04         3.1         -           -
+  Mixed Seeds                     0.04         3.1         -           -
+  Orpiment                        0.04         3.1         -           -
+  Limestone                       0.04         3.1         -           -
+  Malachite                       0.04         2.8         -           -
+  Thunder Egg                     0.04         2.8         -           -
+  Celestine                       0.04         2.5         -           -
+  Alamite                         0.04         2.5         -           -
+  Nekoite                         0.04         2.5         -           -
+  Basic Retaining Soil            0.03         1.9         -           -
+  Sandstone                       0.03         1.9         -           -
+  Jagoite                         0.03         1.9         -           -
+  Red Mushroom                    0.03         1.9         -           -
+  Iridium Ore                     0.02         1.7        70        99.0
+  Dwarvish Helm                   0.02         1.4         -           -
+  Hardwood                        0.02         1.1         -           -
+  Dwarf Scroll I                  0.02         1.1         -         2.1
+  Gold Ore                        0.01         0.8        99           -
+  Ancient Seed                    0.01         0.8         -         2.1
+  Jade                            0.01         0.6        14         8.4
+  Monster Compendium              0.01         0.6         -           -
+  Ruby                            0.01         0.6        14           -
+  Fire Quartz                     0.01         0.6        18           -
+
+=== Floors 41-80: 252 floor-samples, stones/floor mean 54.5 median 52, monsters/floor mean 5.53
+  nodes per floor: Iron node 1.83, Copper node 0.16, Amethyst node 0.06, Topaz node 0.04, Jade node 0.04, Aquama
+  monsters per floor: Dust Spirit 2.44, Frost Jelly 1.67, Frost Bat 0.65, Skeleton 0.55, Ghost 0.21, Big Slime 0
+  geode contents per floor: Stone 0.72, Iron Ore 0.59, Copper Ore 0.56, Coal 0.17, Frozen Tear 0.11, Clay 0.10, 
+  drop (+geode contents)     per floor per week@70 Mines tbl Monster tbl
+  Stone                          25.96      1817.5        99        99.0
+  Iron Ore                        5.86       410.0        99        84.0
+  Coal                            4.46       312.2        86        99.0
+  Copper Ore                      1.45       101.7        99        84.0
+  Slime                           1.31        91.7         -        99.0
+  Frozen Geode                    1.23        86.4        92           -
+  Bat Wing                        0.93        65.0         -        99.0
+  Sap                             0.85        59.2         -        99.0
+  Bone Fragment                   0.60        41.9         -        99.0
+  Quartz                          0.48        33.9        80        42.0
+  Frozen Tear                     0.38        26.7        18         8.4
+  Torch                           0.33        23.3         -           -
+  Omni Geode                      0.32        22.5        21        99.0
+  Solar Essence                   0.23        16.4         -        99.0
+  Gold Ore                        0.23        15.8        99           -
+  Winter Root                     0.17        12.2         -        33.6
+  Wood                            0.17        11.7         -           -
+  Cave Carrot                     0.13         8.9         -           -
+  Clay                            0.10         7.2         -           -
+  Jade                            0.10         6.9        14         8.4
+  Ocean Stone                     0.07         4.7         -           -
+  Amethyst                        0.06         4.4        14         6.3
+  Fluorapatite                    0.06         4.4         -           -
+  Fairy Stone                     0.06         4.2         -           -
+  Topaz                           0.06         3.9        14           -
+  Quality Retaining Soil          0.06         3.9         -           -
+  Hardwood                        0.06         3.9         -           -
+  Carrot Seeds                    0.06         3.9         -           -
+  Esperite                        0.06         3.9         -           -
+  Marble                          0.05         3.6         -           -
+  Aerinite                        0.05         3.6         -           -
+  Ghost Crystal                   0.05         3.3         -           -
+  Pyrite                          0.05         3.3         -           -
+  Aquamarine                      0.04         3.1        14           -
+  Lunarite                        0.04         3.1         -           -
+  Kyanite                         0.04         3.1         -           -
+  Mixed Seeds                     0.04         2.5         -           -
+  Hematite                        0.04         2.5         -           -
+  Soapstone                       0.04         2.5         -           -
+  Dwarf Scroll II                 0.03         2.2         -         2.1
+  Opal                            0.03         2.2         -           -
+  Crystal Fruit                   0.03         2.2         -         8.4
+  Ancient Drum                    0.03         2.2         -           -
+  Coffee Bean                     0.03         2.2         -         4.2
+  Dwarf Scroll III                0.03         1.9         -         6.3
+  Diamond                         0.03         1.9         3         4.2
+  Iridium Ore                     0.02         1.4        70        99.0
+  Geminite                        0.02         1.4         -           -
+  Bomb                            0.02         1.4         -        99.0
+  Mudstone                        0.01         0.8         -           -
+  Calcite                         0.01         0.6         -           -
+  Obsidian                        0.01         0.6         -           -
+  (W)5                            0.01         0.6         -           -
+  Limestone                       0.01         0.6         -           -
+  Ghostfish                       0.01         0.6         -        33.6
+  Fire Opal                       0.01         0.6         -           -
+  Refined Quartz                  0.01         0.6         -        33.6
+  Orpiment                        0.01         0.6         -           -
+  Fire Quartz                     0.00         0.3        18           -
+  Emerald                         0.00         0.3        14           -
+
+=== Floors 81-120: 252 floor-samples, stones/floor mean 60.2 median 58, monsters/floor mean 3.96
+  nodes per floor: Gold node 2.44, Copper node 0.08, Amethyst node 0.07, Topaz node 0.06, Emerald node 0.06, Dia
+  monsters per floor: Sludge 1.64, Shadow Brute 0.64, Metal Head 0.48, Shadow Shaman 0.45, Lava Crab 0.39, Lava 
+  geode contents per floor: Stone 0.74, Copper Ore 0.49, Iron Ore 0.38, Gold Ore 0.21, Iridium Ore 0.16, Clay 0.
+  drop (+geode contents)     per floor per week@70 Mines tbl Monster tbl
+  Stone                          34.57      2420.0        99        99.0
+  Gold Ore                        6.63       464.4        99           -
+  Coal                            4.75       332.5        86        99.0
+  Slime                           1.36        95.3         -        99.0
+  Magma Geode                     1.27        89.2        92           -
+  Iron Ore                        1.08        75.8        99        84.0
+  Void Essence                    1.00        69.7         -        99.0
+  Copper Ore                      0.95        66.4        99        84.0
+  Sap                             0.85        59.7         -        99.0
+  Torch                           0.51        35.6         -           -
+  Solar Essence                   0.40        27.8         -        99.0
+  Quartz                          0.38        26.9        80        42.0
+  Red Mushroom                    0.33        23.1         -           -
+  Omni Geode                      0.31        21.9        21        99.0
+  Bat Wing                        0.28        19.7         -        99.0
+  Fire Quartz                     0.21        14.7        18           -
+  Wood                            0.18        12.8         -           -
+  Iridium Ore                     0.16        11.1        70        99.0
+  White Algae                     0.15        10.6         -        42.0
+  Bomb                            0.14        10.0         -        99.0
+  Cave Carrot                     0.14        10.0         -           -
+  Bone Fragment                   0.13         9.4         -        99.0
+  Clay                            0.11         7.5         -           -
+  Crab                            0.10         7.2         -        99.0
+  Purple Mushroom                 0.10         7.2         -           -
+  Tigerseye                       0.09         6.1         -           -
+  Emerald                         0.08         5.3        14           -
+  Amethyst                        0.08         5.3        14         6.3
+  Obsidian                        0.07         4.7         -           -
+  Topaz                           0.07         4.7        14           -
+  Lemon Stone                     0.07         4.7         -           -
+  Basalt                          0.06         4.4         -           -
+  Star Shards                     0.06         4.4         -           -
+  Diamond                         0.06         4.4         3         4.2
+  Hardwood                        0.06         4.4         -           -
+  Bixite                          0.06         4.2         -           -
+  Dolomite                        0.06         3.9         -           -
+  Copper Bar                      0.05         3.6         -        16.8
+  Baryte                          0.05         3.6         -           -
+  Ruby                            0.05         3.6        14           -
+  Jasper                          0.05         3.3         -           -
+  Helvite                         0.04         3.1         -           -
+  Neptunite                       0.04         3.1         -           -
+  Fire Opal                       0.04         2.8         -           -
+  Squid Ink                       0.03         2.2         -        84.0
+  Dwarf Scroll III                0.03         1.9         -         6.3
+  Aquamarine                      0.03         1.9        14           -
+  Strange Bun                     0.03         1.9         -        16.8
+  Carrot Seeds                    0.03         1.9         -           -
+  Dwarf Gadget                    0.02         1.7         -           -
+  Gold Bar                        0.02         1.4         -        21.0
+  Limestone                       0.02         1.4         -           -
+  Iron Bar                        0.02         1.4         -         8.4
+  Warp Totem: Farm                0.02         1.1         -           -
+  Jade                            0.02         1.1        14         8.4
+  (F)1369                         0.01         0.6         -           -
+  Petrified Slime                 0.01         0.6         -           -
+  Ocean Stone                     0.01         0.6         -           -
+  Pyrite                          0.01         0.6         -           -
+  Earth Crystal                   0.00         0.3        18        42.0
+  Mega Bomb                       0.00         0.3         -        21.0
+
+=== Floors Skull: 280 floor-samples, stones/floor mean 66.5 median 65, monsters/floor mean 3.87
+  nodes per floor: Copper node 1.21, Iron node 1.20, Gold node 0.74, Iridium node 0.19, Amethyst node 0.12, Topa
+  monsters per floor: Bug 0.84, Big Slime 0.74, Mummy 0.63, Serpent 0.52, Sludge 0.50, Lava Bat 0.20, Carbon Gho
+  geode contents per floor: Stone 0.79, Copper Ore 0.50, Iron Ore 0.41, Gold Ore 0.23, Iridium Ore 0.18, Coal 0.
+  drop (+geode contents)     per floor per week@70 Mines tbl Monster tbl
+  Stone                          37.11      2597.8        99        99.0
+  Coal                            4.79       335.0        86        99.0
+  Gold Ore                        3.94       275.8        99           -
+  Iron Ore                        3.54       247.5        99        84.0
+  Copper Ore                      3.37       235.8        99        84.0
+  Slime                           2.05       143.2         -        99.0
+  Omni Geode                      1.66       116.2        21        99.0
+  Iridium Ore                     0.95        66.8        70        99.0
+  Solar Essence                   0.74        51.5         -        99.0
+  Bug Meat                        0.66        46.5         -        99.0
+  Void Essence                    0.57        40.2         -        99.0
+  Quartz                          0.45        31.5        80        42.0
+  Torch                           0.34        23.8         -           -
+  Bone Fragment                   0.33        23.2         -        99.0
+  Wood                            0.32        22.2         -           -
+  Bat Wing                        0.30        21.2         -        99.0
+  Sap                             0.24        17.0         -        99.0
+  Cloth                           0.14         9.8         -        35.0
+  Cave Carrot                     0.14         9.8         -           -
+  Amethyst                        0.13         9.0        14         6.3
+  Fire Quartz                     0.12         8.8        18           -
+  Emerald                         0.11         8.0        14           -
+  Clay                            0.11         7.8         -           -
+  Topaz                           0.10         6.8        14           -
+  Ruby                            0.09         6.5        14           -
+  Aquamarine                      0.09         6.0        14           -
+  Diamond                         0.08         5.8         3         4.2
+  Bomb                            0.07         5.0         -        99.0
+  Magma Geode                     0.07         5.0        92           -
+  Bug Steak                       0.07         5.0         -           -
+  White Algae                     0.07         4.8         -        42.0
+  Earth Crystal                   0.06         4.5        18        42.0
+  Carrot Seeds                    0.06         4.5         -           -
+  Frozen Tear                     0.06         4.2        18         8.4
+  Crab Cakes                      0.06         4.2         -        70.0
+  Hardwood                        0.06         4.0         -           -
+  Prehistoric Vertebra            0.05         3.8         -           -
+  Red Mushroom                    0.05         3.5         -           -
+  Spicy Eel                       0.04         3.0         -         8.4
+  Jade                            0.04         3.0        14         8.4
+  Sandstone                       0.04         2.8         -           -
+  Prehistoric Tibia               0.04         2.8         -           -
+  Warp Totem: Farm                0.04         2.8         -           -
+  Purple Mushroom                 0.04         2.5         -           -
+  Prehistoric Rib                 0.04         2.5         -           -
+  Tigerseye                       0.03         2.2         -           -
+  Fluorapatite                    0.03         2.2         -           -
+  Basalt                          0.03         2.2         -           -
+  Marble                          0.03         2.2         -           -
+  Opal                            0.03         2.0         -           -
+  Ocean Stone                     0.03         2.0         -           -
+  Dolomite                        0.03         2.0         -           -
+  Jagoite                         0.03         2.0         -           -
+  Limestone                       0.03         2.0         -           -
+  Miner's Treat                   0.03         1.8         -         5.6
+  Mudstone                        0.03         1.8         -           -
+  Malachite                       0.03         1.8         -           -
+  Nekoite                         0.03         1.8         -           -
+  Obsidian                        0.03         1.8         -           -
+  Aerinite                        0.03         1.8         -           -
+  Granite                         0.02         1.5         -           -
+  Soapstone                       0.02         1.5         -           -
+  Jamborite                       0.02         1.5         -           -
+  Jasper                          0.02         1.5         -           -
+  Dwarvish Helm                   0.02         1.5         -           -
+  Thunder Egg                     0.02         1.5         -           -
+  Dinosaur Egg                    0.02         1.5         -           -
+  Fiddlehead Fern                 0.02         1.5         -           -
+  Slate                           0.02         1.5         -           -
+  Pyrite                          0.02         1.5         -           -
+  Esperite                        0.02         1.2         -           -
+  Petrified Slime                 0.02         1.2         -           -
+  Ancient Drum                    0.02         1.2         -           -
+  Baryte                          0.02         1.2         -           -
+  Lemon Stone                     0.02         1.2         -           -
+  Fire Opal                       0.02         1.2         -           -
+  Refined Quartz                  0.01         1.0         -        33.6
+  Lunarite                        0.01         1.0         -           -
+  Alamite                         0.01         1.0         -           -
+  Calcite                         0.01         1.0         -           -
+  Prismatic Shard                 0.01         1.0         -           -
+  Celestine                       0.01         1.0         -           -
+  Neptunite                       0.01         1.0         -           -
+  Ghost Crystal                   0.01         1.0         -           -
+  Star Shards                     0.01         1.0         -           -
+  Helvite                         0.01         1.0         -           -
+  Hematite                        0.01         0.8         -           -
+  Bixite                          0.01         0.8         -           -
+  Dwarf Gadget                    0.01         0.8         -           -
+  Kyanite                         0.01         0.8         -           -
+  Orpiment                        0.01         0.8         -           -
+  Iridium Bar                     0.01         0.5         -           -
+  Dwarf Scroll III                0.00         0.2         -         6.3
