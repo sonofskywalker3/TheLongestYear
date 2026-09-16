@@ -9,6 +9,8 @@ public static class WorldSources
 {
     private const int SpringSalmonberryFirst = 15, SpringSalmonberryLast = 18;   // Bush.cs 229-235
     private const int FallBlackberryFirst = 8, FallBlackberryLast = 11;          // Bush.cs 236-241
+    private const int SummerTideFirst = 12, SummerTideLast = 14;                 // Beach.cs 112-125
+    private const string BeachBridge = "mail:beachBridgeFixed";                  // Beach.cs 734-736
 
     private static readonly (string ItemId, SourceKind Kind, Reliability Reliability, string Requires, string Note)[] AnyDay =
     {
@@ -42,6 +44,18 @@ public static class WorldSources
         foreach (string id in new[] { "(O)412", "(O)416" })
             yield return (id, Make(SourceKind.Forage, winter, Reliability.Dependable, "tilling:outdoors off the farm",
                 "winter root or snow yam from tilling off the farm in Winter, 8% a tile (GameLocation.cs 14212-14214)"));
+
+        // Beach.cs 81-94: the east tide pools grow at least one coral (80%) or sea urchin (20%) a day,
+        // past the bridge (world state beachBridgeFixed, Beach.cs 734-736). Beach.cs 112-125: on Summer 12
+        // to 14 they also wash up anywhere on the beach.
+        DayTable summerTide = Window(Season.Summer, SummerTideFirst, SummerTideLast);
+        foreach (string id in new[] { "(O)393", "(O)397" })
+        {
+            yield return (id, Make(SourceKind.Forage, DayTable.Always, Reliability.Dependable, BeachBridge,
+                "tide pools past the beach bridge (Beach.cs 81-94)"));
+            yield return (id, Make(SourceKind.Forage, summerTide, Reliability.Dependable, "location:Beach",
+                "washed up anywhere on the beach, Summer 12 to 14 (Beach.cs 112-125)"));
+        }
     }
 
     private static DayTable Window(Season season, int firstDay, int lastDay)

@@ -435,6 +435,15 @@ public class FairnessRuleTests
     }
 
     [Fact]
+    public void A_tide_pool_route_needs_the_bridge()
+    {
+        var model = Model(Route(requires: new[] { "mail:beachBridgeFixed" }));
+        Assert.False(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, SaveSnapshot.Empty, model));
+        SaveSnapshot fixedBridge = SaveSnapshot.Empty with { MailFlags = new HashSet<string> { "beachBridgeFixed" } };
+        Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, fixedBridge, model));
+    }
+
+    [Fact]
     public void Explain_names_every_route_and_the_verdict()
     {
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 40),

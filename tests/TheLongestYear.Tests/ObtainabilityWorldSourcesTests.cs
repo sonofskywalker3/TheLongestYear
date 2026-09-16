@@ -48,4 +48,19 @@ public class ObtainabilityWorldSourcesTests
     [Fact]
     public void Quartz_lands_from_day_1_in_the_mines()
         => Assert.Equal(1, One("(O)80", SourceKind.MineNode).Lands.Lands(1));
+
+    [Fact]
+    public void Coral_is_daily_past_the_bridge_and_anywhere_on_summer_12_to_14()
+    {
+        var coral = WorldSources.All().Where(s => s.ItemId == "(O)393").Select(s => s.Source).ToList();
+        ObtainSource pools = coral.Single(s => s.Conditions.Requires.Contains("mail:beachBridgeFixed"));
+        Assert.Equal(1, pools.Lands.Lands(1));
+        ObtainSource summer = coral.Single(s => !s.Conditions.Requires.Contains("mail:beachBridgeFixed"));
+        Assert.Equal(40, summer.Lands.Lands(1));   // Summer 12 = day 28 + 12
+        Assert.All(coral, s => Assert.Equal(Reliability.Dependable, s.Reliability));
+    }
+
+    [Fact]
+    public void Sea_urchin_follows_the_same_two_routes()
+        => Assert.Equal(2, WorldSources.All().Count(s => s.ItemId == "(O)397"));
 }
