@@ -35,7 +35,7 @@ namespace TheLongestYear.DebugCommands
             "Measure real mine floor contents and drops, headless: generate every floor in the range, " +
             "break every stone and kill every monster through the game's own drop code with a bare farmer " +
             "(no skill, no luck, no professions), tally the debris. Nothing persisted. " +
-            "Usage: tly_minesweep <fromFloor> <toFloor> [samples=5]  (121+ = Skull Cavern)";
+            "Usage: tly_minesweep <fromFloor> <toFloor> [samples=5] [crack]  (121+ = Skull Cavern; crack = open every geode that dropped through the game's geode roll)";
 
         private const int DefaultSamples = 5;
         private const int MaxFloorsPerRun = 200;
@@ -49,6 +49,9 @@ namespace TheLongestYear.DebugCommands
         private const string NodeKind = "node";
         private const string MonsterKind = "monster";
         private const string DropKind = "drop";
+        private const string GeodeKind = "geode";
+        private const string CrackFlag = "crack";
+        private static readonly string[] GeodeIds = { "(O)535", "(O)536", "(O)537", "(O)749" };
         private const string LooseKind = "loose";
         private const string ContainerKind = "container";
 
@@ -92,6 +95,7 @@ namespace TheLongestYear.DebugCommands
                 return;
             }
             int samples = args.Length > 2 && int.TryParse(args[2], out int s) && s > 0 ? s : DefaultSamples;
+            bool crack = args.Any(a => a.Equals(CrackFlag, StringComparison.OrdinalIgnoreCase));
 
             Farmer who = Game1.player;
             if (who.isWearingRing(BurglarRingId))
@@ -109,6 +113,9 @@ namespace TheLongestYear.DebugCommands
             // are put back afterwards, and the level is re-zeroed before every floor.
             int savedMiningXp = who.experiencePoints[MiningSkill];
             int savedNewLevels = who.newLevels.Count;
+            // A geode's contents are rolled off the geodes-cracked counter (Utility.getTreasureFromGeode),
+            // so the counter steps once per geode opened here and is put back afterwards.
+            uint savedGeodesCracked = Game1.stats.GeodesCracked;
 
             var perFloor = new List<(int Sample, int Floor, Tally Tally)>();
             try
@@ -125,6 +132,7 @@ namespace TheLongestYear.DebugCommands
                     {
                         who.miningLevel.Value = 0;
                         Tally tally = SweepFloor(floor, who);
+                        if (crack) CrackGeodes(tally);
                         perFloor.Add((sample, floor, tally));
                     }
                 }
@@ -132,6 +140,7 @@ namespace TheLongestYear.DebugCommands
             finally
             {
                 Game1.stats.DaysPlayed = savedDays;
+                Game1.stats.GeodesCracked = savedGeodesCracked;
                 who.miningLevel.Value = savedMining;
                 who.experiencePoints[MiningSkill] = savedMiningXp;
                 while (who.newLevels.Count > savedNewLevels) who.newLevels.RemoveAt(who.newLevels.Count - 1);
@@ -208,6 +217,23 @@ namespace TheLongestYear.DebugCommands
             return tally;
         }
 
+        /// <summary>Open every geode the floor dropped through the game's own roll; contents tally
+        /// under the geode kind so the raw drop rows stay comparable to an uncracked run.</summary>
+        private static void CrackGeodes(Tally tally)
+        {
+            foreach (string geodeId in GeodeIds)
+            {
+                if (!tally.Counts.TryGetValue(DropKind + ":" + geodeId, out int n)) continue;
+                for (int i = 0; i < n; i++)
+                {
+                    Game1.stats.GeodesCracked++;
+                    Item treasure = Utility.getTreasureFromGeode(ItemRegistry.Create(geodeId));
+                    if (treasure != null)
+                        tally.Add(GeodeKind + ":" + treasure.QualifiedItemId, Math.Max(1, treasure.Stack));
+                }
+            }
+        }
+
         private static string QualifyObject(string id)
             => id.StartsWith("(", StringComparison.Ordinal) ? id : "(O)" + id;
 
@@ -252,6 +278,8 @@ namespace TheLongestYear.DebugCommands
                     monitor.Log($"    {kv.Key[(NodeKind.Length + 1)..],-22} {(double)kv.Value / floors,6:F2} per floor", LogLevel.Info);
                 foreach (KeyValuePair<string, int> kv in sum.Counts.Where(k => k.Key.StartsWith(MonsterKind + ":", StringComparison.Ordinal)).OrderByDescending(k => k.Value))
                     monitor.Log($"    {kv.Key[(MonsterKind.Length + 1)..],-22} {(double)kv.Value / floors,6:F2} per floor", LogLevel.Info);
+                foreach (KeyValuePair<string, int> kv in sum.Counts.Where(k => k.Key.StartsWith(GeodeKind + ":", StringComparison.Ordinal)).OrderByDescending(k => k.Value).Take(TopItemsInSummary))
+                    monitor.Log($"    geode -> {ItemRegistry.GetDataOrErrorItem(kv.Key[(GeodeKind.Length + 1)..]).DisplayName,-24} {(double)kv.Value / floors,7:F2} per floor", LogLevel.Info);
                 monitor.Log("    Drops per floor:", LogLevel.Info);
                 foreach (KeyValuePair<string, int> kv in sum.Counts.Where(k => k.Key.StartsWith(DropKind + ":", StringComparison.Ordinal)).OrderByDescending(k => k.Value).Take(TopItemsInSummary))
                 {
