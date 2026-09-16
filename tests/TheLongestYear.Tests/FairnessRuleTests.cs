@@ -428,6 +428,13 @@ public class FairnessRuleTests
     }
 
     [Fact]
+    public void Everyday_world_requirements_count_as_met()
+    {
+        var model = Model(Route(requires: new[] { "weeds:any" }));
+        Assert.True(FairnessRule.Counts(Item, Hit, Deadline, DifficultyStep.Normal, SaveSnapshot.Empty, model));
+    }
+
+    [Fact]
     public void Explain_names_every_route_and_the_verdict()
     {
         FairnessVerdict verdict = FairnessRule.Judge(Item, Hit, Deadline, DifficultyStep.Normal, Save(floor: 40),
