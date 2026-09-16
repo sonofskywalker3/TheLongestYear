@@ -77,6 +77,14 @@ public class QuantityBasisTablesTests
         Assert.False(QuantityBasisTables.MonsterDrops.ContainsKey("(O)848"));  // Cinder Shard: volcano only
         Assert.False(QuantityBasisTables.MonsterDrops.ContainsKey("(O)74"));   // Prismatic Shard: Skeleton Warrior is dangerous-mines only
         Assert.InRange(QuantityBasisTables.MonsterDrops["(O)428"], 30, 40);    // Cloth: Mummies at a third rate
+        // Measured 2026-09-16 (tly_minesweep): a single-monster drop is capped at twice what clearing
+        // floors yields. Cloth 20, Squid Ink 5, Crab Cakes 9; Slime and Bug Meat keep the cap.
+        Assert.Equal(20, QuantityBasisTables.MonsterDropsMeasured["(O)428"]);
+        Assert.Equal(5, QuantityBasisTables.MonsterDropsMeasured["(O)814"]);
+        Assert.Equal(9, QuantityBasisTables.MonsterDropsMeasured["(O)732"]);
+        Assert.Equal(99, QuantityBasisTables.MonsterDropsMeasured[Slime]);
+        Assert.Equal(QuantityBasisTables.MonsterDrops["(O)684"], QuantityBasisTables.MonsterDropsMeasured["(O)684"]);
+        Assert.All(QuantityBasisTables.MonsterDropCaps.Keys, id => Assert.True(QuantityBasisTables.MonsterDrops.ContainsKey(id), id));
         Assert.Equal(20, QuantityBasisTables.Crops["(O)433"]);                 // Coffee Bean: supply-limited
         Assert.InRange(Roll(Slime, DifficultyStep.Hard), 50, 65);
     }
@@ -89,9 +97,12 @@ public class QuantityBasisTablesTests
         Assert.False(QuantityBasisTables.Minerals.ContainsKey(Quartz));
         Assert.InRange(Roll(Esperite, DifficultyStep.Extreme), 3, 4);
         Assert.InRange(Roll(Esperite, DifficultyStep.Easy), 1, 2);
-        // Quartz: 80 a week (floor items plus Stone Golems), Jeff: "quartz is much more common".
-        Assert.Equal(80, QuantityBasisTables.Mines[Quartz]);
-        Assert.InRange(Roll(Quartz, DifficultyStep.Extreme), 52, 64);
+        // Quartz: measured 27 to 34 a week (tly_minesweep 2026-09-16), table 35. Coal measured 300+, cap.
+        Assert.Equal(35, QuantityBasisTables.Mines[Quartz]);
+        Assert.InRange(Roll(Quartz, DifficultyStep.Extreme), 23, 29);
+        Assert.Equal(99, QuantityBasisTables.Mines["(O)382"]);
+        Assert.Equal(7, QuantityBasisTables.Mines["(O)64"]);      // Ruby, measured 6
+        Assert.Equal(9, QuantityBasisTables.Mines["(O)66"]);      // Amethyst, measured 9
         Assert.Equal(3, QuantityBasisTables.Mines[Diamond]);
         Assert.Equal(99, QuantityBasisTables.Mines["(O)378"]);   // Copper Ore
         Assert.Equal(80, QuantityBasisTables.Stations["(O)334"]); // Copper Bar, ore- and coal-limited
@@ -112,10 +123,10 @@ public class QuantityBasisTablesTests
         // Codex review, 2026-09-04: fish-first / forage-second precedence had Crab at its 5 pot
         // catches while Lava Crabs drop it at 25%, and Cactus Fruit at its measured forage while the
         // Oasis sells the seed.
-        Assert.Equal(QuantityBasisTables.MonsterDrops["(O)717"], QuantityAskPass.BasisByDeadline("(O)717", null));   // Crab
+        Assert.Equal(QuantityBasisTables.MonsterDropsMeasured["(O)717"], QuantityAskPass.BasisByDeadline("(O)717", null));   // Crab, measured cap 15
         Assert.Equal(99, QuantityAskPass.BasisByDeadline("(O)90", null));                                            // Cactus Fruit: crop 99 beats forage
         // Green Algae: caught (fish table) and dropped by Slimes; the bigger of the two.
-        Assert.Equal(Math.Max(FishAskBasis.BasisByDeadline("(O)153", null)!.Value, QuantityBasisTables.MonsterDrops["(O)153"]), QuantityAskPass.BasisByDeadline("(O)153", null));
+        Assert.Equal(Math.Max(FishAskBasis.BasisByDeadline("(O)153", null)!.Value, QuantityBasisTables.MonsterDropsMeasured["(O)153"]), QuantityAskPass.BasisByDeadline("(O)153", null));
     }
 
     [Fact]
