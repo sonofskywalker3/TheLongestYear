@@ -2070,10 +2070,9 @@ let it slip.*** Scope to cover:
 *Captured 2026-06-05. User-flagged as the priority once bug fixes are clear —
 the next feature upgrade, not a polish afterthought.*
 
-**Still owed before release (built on branch `year-one-ending`, not merged):** Jeff's review of
-the lines file (`docs/superpowers/specs/2026-09-06-year-one-ending-lines.md`); the live runbook
-pass (`docs/HEADLESS_DRIVING.md` § The Year One Ending); the release notes (README What's New +
-Nexus description and changelog).
+**Year One Ending: SIGNED OFF by Jeff (2026-09-16)**, pending the full `story` branch review before
+the merge to master. Still owed at release: the release notes (README What's New + Nexus description
+and changelog).
 
 Two distinct cutscene pieces:
 
