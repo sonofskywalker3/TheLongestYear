@@ -88,7 +88,7 @@ public static class QuantityAskPass
             double gathered = (forage ?? 0) + (pot ?? 0);
             if (best == null || gathered > best) best = gathered;
         }
-        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
+        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDropsMeasured, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
         return best;
     }
