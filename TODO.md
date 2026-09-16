@@ -20,7 +20,7 @@ The 2026-09-16 repeatable-chance ruling (a chance route you can retry many times
 chance each try counts as dependable) deliberately left two families out, to be judged separately:
 - **Ordinary fish catches** (SourceKind Fish, Chance). Per-fish, not one rule: Carp and Green Algae
   come out around 17 to 19 a day for a level 10 angler, Legend and Mutant Carp under one a day.
-  Use `docs/fish-catch-rates-2026-09-04.md` (or wherever that note lives) for the per-fish numbers.
+  Use `docs/superpowers/notes/fish-catch-rates-2026-09-04.md` for the per-fish numbers.
 - **Machine output** (SourceKind Machine, Chance: mostly the crystalarium and the recycling machine).
   Tries a day depend on what the player feeds in, not on a fixed action.
 Proposal note for the first pass: `docs/superpowers/notes/2026-09-16-repeatable-chance-proposal.md`.
