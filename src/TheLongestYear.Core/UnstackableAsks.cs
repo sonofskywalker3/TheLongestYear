@@ -22,8 +22,6 @@ public static class UnstackableAsks
                 "529", "530", "531", "532", "533", "534", "810", "811", "839", "859", "860", "862", "863",
                 "887", "888" }.Select(id => ObjectQualifier + id),
         StringComparer.Ordinal);
-    private const int IngredientFieldIndex = 2;
-    private const int TokensPerIngredient = 3;
 
     /// <summary>True for any qualified non-Object item ((H) hats, (W) weapons and the like) and for
     /// Gil's trophy rings, which are Objects that still never stack.</summary>
@@ -44,32 +42,5 @@ public static class UnstackableAsks
     /// unstackable ask above one comes back as one, every other field survives byte for byte.
     /// Null when nothing needed changing.</summary>
     public static string? RepairBundleValue(string value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return null;
-        string[] fields = value.Split('/');
-        if (fields.Length <= IngredientFieldIndex)
-            return null;
-
-        string[] tokens = fields[IngredientFieldIndex].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length < TokensPerIngredient || tokens.Length % TokensPerIngredient != 0)
-            return null;
-
-        bool changed = false;
-        for (int i = 0; i < tokens.Length; i += TokensPerIngredient)
-        {
-            if (!int.TryParse(tokens[i + 1], out int stack))
-                continue;
-            int clamped = ClampStack(tokens[i], stack);
-            if (clamped == stack)
-                continue;
-            tokens[i + 1] = clamped.ToString();
-            changed = true;
-        }
-        if (!changed)
-            return null;
-
-        fields[IngredientFieldIndex] = string.Join(" ", tokens);
-        return string.Join("/", fields);
-    }
+        => BundleAskRewrite.LowerAsks(value, ClampStack);
 }

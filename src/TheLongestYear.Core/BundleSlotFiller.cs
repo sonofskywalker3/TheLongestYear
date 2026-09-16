@@ -196,13 +196,13 @@ public static class BundleSlotFiller
             if (vanillaSlots.TryGetValue(item.ItemId, out BundleSlotSpec? kept))
             {
                 slots.Add(new BundleSlotSpec(item.ItemId,
-                    LegendaryFishRules.ClampStack(item.ItemId, kept.Stack),
+                    kept.Stack,
                     LegendaryFishRules.ClampQuality(item.ItemId, kept.Quality)));
                 continue;
             }
             slots.Add(new BundleSlotSpec(
                 item.ItemId,
-                LegendaryFishRules.ClampStack(item.ItemId, RollStack(rollDomain, item, tuning, rng)),
+                RollStack(rollDomain, item, tuning, rng),
                 LegendaryFishRules.ClampQuality(item.ItemId, RollQuality(rollDomain, item, pools, tuning, rng))));
         }
 

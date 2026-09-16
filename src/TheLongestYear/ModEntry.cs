@@ -667,7 +667,8 @@ namespace TheLongestYear
             // An ask above one for a hat, weapon or trophy ring can never be deposited (Nexus bug
             // report 2026-09-14). Fixed first, so the requirement manifest below reads the repaired
             // board and matches what the fixed generator re-derives.
-            TheLongestYear.Loop.BoardRepairService.ClampUnstackableAsks(this.Monitor, _meta.State);
+            bool oncePerLoopAsksOne = _meta.State.Difficulty?.OncePerLoopAsksOne ?? _config.OncePerLoopAsksOne;
+            TheLongestYear.Loop.BoardRepairService.ClampUnstackableAsks(this.Monitor, _meta.State, oncePerLoopAsksOne);
             // Repair a board built before the reachability rule existed (spec
             // 2026-09-10-source-reachability, task 9). Runs HERE, above the catalog and the
             // fingerprint, so everything downstream reads the repaired board rather than the one
@@ -675,7 +676,7 @@ namespace TheLongestYear
             // no-op on a clean board.
             int repaired = new TheLongestYear.Loop.BoardRepairService(
                 this.Monitor, enginePoolReader.LastReachability, enginePools,
-                _config.PoolTuning, _availability, _meta.Run.Seed).RepairIfNeeded();
+                _config.PoolTuning, _availability, _meta.Run.Seed, oncePerLoopAsksOne).RepairIfNeeded();
             if (repaired > 0)
                 this.Monitor.Log(
                     $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",
@@ -2599,6 +2600,11 @@ namespace TheLongestYear
                 () => _config.Difficulty.StackSize, v => _config.Difficulty.StackSize = v,
                 () => Strings.Get("gmcm.difficulty.stack-size.name"),
                 () => Strings.Get("gmcm.difficulty.stack-size.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.OncePerLoopAsksOne,
+                setValue: v => _config.OncePerLoopAsksOne = v,
+                name: () => Strings.Get("gmcm.difficulty.once-per-loop.name"),
+                tooltip: () => Strings.Get("gmcm.difficulty.once-per-loop.tooltip"));
             AddDifficultyOption(
                 () => _config.Difficulty.QualityAsks, v => _config.Difficulty.QualityAsks = v,
                 () => Strings.Get("gmcm.difficulty.quality-asks.name"),
