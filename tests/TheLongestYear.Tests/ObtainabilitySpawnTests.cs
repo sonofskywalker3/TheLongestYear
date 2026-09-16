@@ -117,6 +117,20 @@ public class ObtainabilitySpawnTests
     }
 
     [Fact]
+    public void A_magic_bait_row_routes_through_the_real_bait_source_and_is_resolved_not_unresolved()
+    {
+        var bait = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)908"] = CodeSources.MagicBait().Select(s => s.Source).ToList(),
+        });
+        var rows = new[] { new LocationSpawn("Beach", "(O)798", null, "SEASON Winter", 1.0, 0, true, 0) };
+        var fishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") };
+        var squid = SpawnSources.LocationFish(rows, fishRows, new Dictionary<string, ObjInfo>(), NoFestivals, bait).Single(s => s.ItemId == "(O)798").Source;
+        Assert.True(squid.Conditions.GingerIsland);
+        Assert.False(squid.Conditions.Unresolved);
+    }
+
+    [Fact]
     public void A_random_magic_bait_row_stays_chance_even_when_the_bait_is_fully_dependable()
     {
         var bait = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
