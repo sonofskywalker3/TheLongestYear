@@ -178,4 +178,8 @@ public class ObtainabilitySpawnTests
         Assert.Equal(new[] { "(O)167", "(O)168", "(O)169", "(O)170", "(O)171", "(O)172" },
             SpawnSources.FishingTrash().Select(t => t.ItemId).ToArray());
     }
+
+    [Fact]
+    public void Fishing_trash_is_dependable()
+        => Assert.All(SpawnSources.FishingTrash(), t => Assert.Equal(Reliability.Dependable, t.Source.Reliability));
 }
