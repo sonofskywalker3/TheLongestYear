@@ -28,7 +28,8 @@ namespace TheLongestYear.Integration
         private const int CharMs = 22;
         private const int OpenGuardMs = 200;   // ignore the click that opened us
         // Auto-advance reading time once a page is fully typed: a base plus a share per word.
-        private const int HoldBaseMs = 1500, HoldPerWordMs = 200;
+        // 10% quicker than the first 1500 + 200 (Jeff, 2026-09-16).
+        private const int HoldBaseMs = 1350, HoldPerWordMs = 180;
 
         private readonly Texture2D _portrait;
         private readonly List<string> _pages;
@@ -129,7 +130,8 @@ namespace TheLongestYear.Integration
                 b.Draw(_portrait, new Rectangle(px, py, PortraitDrawn, PortraitDrawn), new Rectangle(0, 0, PortraitSize, PortraitSize), Color.White);
             }
             SpriteText.drawString(b, _pages[_page], x + TextX, y + Pad, _shown, _textWidth);
-            if (PageDone)
+            // No chevron on a box that turns its own pages: it invites a click (Jeff, 2026-09-16).
+            if (PageDone && !AutoAdvance)
             {
                 // The little "next" chevron the game uses, bottom right.
                 b.Draw(Game1.mouseCursors, new Vector2(x + width - 44, y + height - 44 + (float)System.Math.Sin(_age / 150f) * 3f),
