@@ -474,7 +474,7 @@ rounds (walker-only extras, season outfits, wind, extras at walking speed). The 
 - **Queued for Jeff:** Run 165 on the rotated Clone save, Fishing picked, `tly_setday 28`,
   `tly_gateneeds` = 17 bundles owed. Sleeping plays the real fail night into the full rewind.
 
-## 2026-09-16 midday: 0.18.12, once-per-loop items ask for one (setting), awaiting live check
+## 2026-09-16: 0.18.12, once-per-loop items ask for one (setting), live-checked
 
 Jeff's own note from the story branch: an option so the Stack size dial skips unique items.
 Diagnostic first: the 724 objects the pools can draw from were checked against the exported game
@@ -486,10 +486,18 @@ rings stay under the unconditional never-stacks rule; rarecrows never reach a bo
 Built: `OncePerLoopAsks` (Core), `GameplayConfig.OncePerLoopAsksOne` (default on, GMCM
 Difficulty, stamped into the `DifficultyProfile`), the legendary stack clamp moved under it,
 applied in `StackScaling`, the vanilla-board pass, the slot repair and the load-time clamp.
-Unit-tested end to end (25 new tests). **Still owed:** a headless live run on the throwaway
-save (deploy minimized, Hard, `tly_genbundles` with the setting on then off, read the log),
-which needs Jeff's yes for the relaunch. Release docs (README and Nexus What's New) are written
-at release time.
+Unit-tested end to end (25 new tests).
+
+**Live check (my automated run, headless bridge, throwaway save `None_449260636`, Stack size
+Hard, seed loops 300 to 307 rolled with `tly_genbundles` twice on the same save):**
+- Setting ON: Glacierfish x1, Mutant Carp x1, The Alleyway Buffet x1, Mapping Cave Systems x1,
+  while the restocking skill books on the same Book bundle scaled to x2.
+- Setting OFF (config flipped, relaunched, reset re-stamped the profile): the same four slots
+  read x2. Zero errors in either log. Config put back to Normal with the setting on; game closed.
+- Not exercised live: the Golden Pumpkin (no rolled board drew it) and the load-time lowering of
+  a board already at x2 (unit-tested; same path as the 0.18.3 trophy repair, which was checked live).
+
+Release docs (README and Nexus What's New) are written at release time; the release is Jeff's call.
 
 ## 2026-09-16: sweep after 0.18.4, 0.18.10 and 0.18.11
 
