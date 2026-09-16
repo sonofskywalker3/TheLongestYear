@@ -1,10 +1,20 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 afternoon (0.18.12 built and LIVE-CHECKED on master, NOT released)
+**Last updated:** 2026-09-16 evening (0.18.16 RELEASED: GitHub release + Nexus file, version, description and changelog all live)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2131 passing, 0 failing (as of 0.18.12)
-**Build:** Release clean, 0 errors; 0.18.12 deployed to the game; game CLOSED at end of the check
-**Last public release:** 0.18.11 (2026-09-15; GitHub release + Nexus file, version, description and changelog all live)
+**Tests:** 2131 passing, 0 failing (as of 0.18.16)
+**Build:** Release clean, 0 errors; 0.18.16 deployed to the game; game CLOSED
+**Last public release:** 0.18.16 (2026-09-16 evening; GitHub release v0.18.16 + Nexus file, version, description and changelog all live, all agent-driven through Chrome). A mislabelled v0.18.14 release went up first because two manifest bumps never reached the file; it was deleted with its tag and re-released as 0.18.16 within a minute, and Nexus archived the 0.18.14 file.
+
+## 2026-09-16 evening: 0.18.16 released (0.18.12 setting + measured mine and monster bases)
+
+One release carrying 0.18.12 through 0.18.16: the once-per-loop setting, `tly_minesweep`, and
+the mine and monster basis changes from the measured sweep (crab pots confirmed the model, mines
+corrected Coal, Quartz, the gems and single-monster drops). Docs: README and Nexus description
+What's New 0.18.16 content-identical, changelog note in `release-notes/`, live description backed
+up to `release-notes/nexus-description-0.18.11-backup.bbcode`. Verified live on the public page:
+What's New 0.18.16 at the top, the new setting in the Difficulty section, file 0.18.16 in Main
+files, changelog entry 0.18.16 under Documents.
 
 ## 2026-09-16: 0.18.12, once-per-loop items ask for one (setting), live-checked
 
