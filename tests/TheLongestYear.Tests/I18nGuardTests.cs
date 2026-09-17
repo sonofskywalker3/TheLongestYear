@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Ending;
+using TheLongestYear.Core.Intro;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -325,6 +326,13 @@ public class I18nGuardTests
     /// and break the intro or the ending outright. <c>EndingEventInjector.Text</c> sanitises both at
     /// runtime for translations we do not control; this guard keeps our own English source clean, and
     /// covers <c>IntroEventInjector</c>, which still interpolates raw values.</summary>
+    [Fact]
+    public void The_letter_keeps_vanillas_name_and_farm_tokens()
+    {
+        foreach (string key in new[] { "opening.letter-m", "opening.letter-f" })
+            Assert.True(OpeningStrings.PlaceholdersMatch("Dear {0}, {1} Farm", _fixture.Map[key]), key);
+    }
+
     [Fact]
     public void NoEventKeyValue_ContainsAScriptBreakingCharacter()
     {
