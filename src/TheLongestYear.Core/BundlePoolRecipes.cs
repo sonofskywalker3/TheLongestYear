@@ -141,26 +141,26 @@ public static class BundlePoolRecipes
             ["Field Research"] = _ => new[]
             {
                 new PoolPart((p, _) => p.Forage, 1, "Forage"),
-                new PoolPart((p, _) => Union(Bucket(p, ItemKind.Artifact), p.Artifacts, Fixed(p, ShellForage)), 1, "Artifact or shell"),
+                new PoolPart((p, m) => Union(Bucket(p, ItemKind.Artifact, m), p.Artifacts, Fixed(p, ShellForage)), 1, "Artifact or shell"),
                 new PoolPart((p, _) => p.Fish, 1, "Fish"),
-                new PoolPart((p, _) => Union(Bucket(p, ItemKind.Mineral), p.GeodeMinerals), 1, "Mineral or geode"),
+                new PoolPart((p, m) => Union(Bucket(p, ItemKind.Mineral, m), p.GeodeMinerals), 1, "Mineral or geode"),
             },
             ["Wild Medicine"] = _ => One(MedicineSource, "Mushroom"),
             ["Chef's"] = ids => new[]
             {
                 new PoolPart((p, m) => Placeable(p.Cooking, m), Math.Max(1, ids.Count / 2), "Cooking"),
-                new PoolPart((p, _) => Union(p.Crops, p.Forage, Bucket(p, ItemKind.Egg), Bucket(p, ItemKind.Milk),
-                    Bucket(p, ItemKind.AnimalProduct), Fixed(p, ChefStaples)), RestOfTheSlots, "Ingredient"),
+                new PoolPart((p, m) => Union(p.Crops, p.Forage, Bucket(p, ItemKind.Egg, m), Bucket(p, ItemKind.Milk, m),
+                    Bucket(p, ItemKind.AnimalProduct, m), Fixed(p, ChefStaples)), RestOfTheSlots, "Ingredient"),
             },
             ["Winter Star"] = _ => One((p, _) => p.WinterOnly, "Winter"),
             ["The Missing"] = _ => One(MissingSource, "Extreme"),
             ["Children's"] = _ => One((p, m) => Placeable(Fixed(p, SweetDishes.Concat(Berries).Concat(Dolls)), m), "Sweets and toys"),
             ["Enchanter's"] = _ => One(EnchanterSource, "Totem or essence"),
             ["Fish Farmer's"] = _ => One((p, _) => Fixed(p, PondGoods), "Pond goods"),
-            ["Animal"] = _ => One((p, _) => Union(
-                Bucket(p, ItemKind.Egg), Bucket(p, ItemKind.Milk), Bucket(p, ItemKind.AnimalProduct)), "Animal product"),
-            ["Artisan"] = _ => One((p, _) => Union(p.ArtisanGoods, Bucket(p, ItemKind.ArtisanGood)), "Artisan good"),
-            ["Adventurer's"] = _ => One((p, _) => Union(p.MonsterDrops, Bucket(p, ItemKind.MonsterLoot)), "Monster loot"),
+            ["Animal"] = _ => One((p, m) => Union(
+                Bucket(p, ItemKind.Egg, m), Bucket(p, ItemKind.Milk, m), Bucket(p, ItemKind.AnimalProduct, m)), "Animal product"),
+            ["Artisan"] = _ => One((p, m) => Union(p.ArtisanGoods, Bucket(p, ItemKind.ArtisanGood, m)), "Artisan good"),
+            ["Adventurer's"] = _ => One((p, m) => Union(p.MonsterDrops, Bucket(p, ItemKind.MonsterLoot, m)), "Monster loot"),
             ["Forager's"] = _ => One((p, _) => p.Forage, "Forage"),
             ["Gil's Trophies"] = _ => One(Kind(ItemKind.Trophy), "Trophy"),
             ["Recycler's"] = _ => One((p, _) => Fixed(p, Trash), "Trash"),
@@ -173,7 +173,7 @@ public static class BundlePoolRecipes
             ["Crab Pot"] = _ => One(CrabPotSource, "Crab pot"),
             ["Exotic Foraging"] = _ => One((p, _) => Union(p.Forage, p.TapperGoods), "Forage or tapper"),
             ["Rare Crops"] = _ => One(RareCropSource, "Rare crop"),
-            ["Sticky"] = _ => One((p, _) => Union(Bucket(p, ItemKind.Resource), p.TapperGoods), "Sap or resource"),
+            ["Sticky"] = _ => One((p, m) => Union(Bucket(p, ItemKind.Resource, m), p.TapperGoods), "Sap or resource"),
         };
 
     /// <summary>The recipe this bundle re-rolls from. Named recipe first, else the majority
@@ -259,15 +259,22 @@ public static class BundlePoolRecipes
 
     /// <summary>Dye draws by colour from every object, which is how it reached for Legend and
     /// Crimsonfish on the 2026-09-04 sweep. Jeff: a colour bundle never asks for a legendary.</summary>
+    /// <summary>Dye draws by colour from every vetted object, so it is the one recipe that sees
+    /// ids no curated pool would offer. The availability model is the gate: an id nothing places
+    /// in year 1 (the Queen of Sauce Cookbook, 100 walnuts; a Kent dish; a perfection egg) is out,
+    /// whatever class it is (Jeff, 2026-09-17: "fix ALL classes the same way").</summary>
     private static IReadOnlyList<PoolPart> DyeParts()
         => DyeColourTags.Select(tag => new PoolPart(
-            (p, _) => p.ColourTags.TryGetValue(tag, out IReadOnlyList<PoolItem>? list)
-                ? list.Where(i => !LegendaryFishRules.IsLegendary(i.ItemId)).ToList()
+            (p, m) => p.ColourTags.TryGetValue(tag, out IReadOnlyList<PoolItem>? list)
+                ? Placeable(list.Where(i => !LegendaryFishRules.IsLegendary(i.ItemId)).ToList(), m)
                 : Array.Empty<PoolItem>(),
             1, tag)).ToList();
 
+    /// <summary>A by-kind bucket, model-gated like Dye: the buckets come from the same walk of
+    /// every object. Trophies are the exception (<see cref="TrophyKind"/>): hats and weapons have
+    /// no availability row, and the list is already the fixed year-1 set.</summary>
     private static Func<ItemPools, ItemAvailabilityModel?, IReadOnlyList<PoolItem>> Kind(ItemKind kind)
-        => (p, _) => Bucket(p, kind);
+        => (p, m) => Bucket(p, kind, m);
 
     /// <summary>Fodder: the grains and Hay, plus every fruit. The fruit half is the fruit category
     /// as it appears in the crop pool, joined with the fruit a Data/FruitTrees tree grows: tree
@@ -338,6 +345,12 @@ public static class BundlePoolRecipes
 
     private static IReadOnlyList<PoolItem> Bucket(ItemPools pools, ItemKind kind)
         => pools.ByKind.TryGetValue(kind, out IReadOnlyList<PoolItem>? list) ? list : Array.Empty<PoolItem>();
+
+    private const ItemKind TrophyKind = ItemKind.Trophy;
+
+    /// <summary>The bucket with every id the model cannot place dropped (see <see cref="DyeParts"/>).</summary>
+    private static IReadOnlyList<PoolItem> Bucket(ItemPools pools, ItemKind kind, ItemAvailabilityModel? model)
+        => kind == TrophyKind ? Bucket(pools, kind) : Placeable(Bucket(pools, kind), model);
 
     /// <summary>The listed ids, as they exist in this save's pools. An id no pool knows is left
     /// out: it failed vetting, or a mod removed it.</summary>

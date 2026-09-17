@@ -331,4 +331,50 @@ public class BundlePoolRecipesTests
         PoolRecipe b = BundlePoolRecipes.For("Dye", Array.Empty<string>(), pools, null);
         Assert.Equal(a.Parts.Select(p => p.Label), b.Parts.Select(p => p.Label));
     }
+
+    /// <summary>Jeff, 2026-09-17, after the Queen of Sauce Cookbook reached a Dye bundle: fix every
+    /// class the same way. Dye and the by-kind buckets walk every object, so an id nothing places
+    /// in year 1 (a walnut book, a Kent dish, a perfection egg) must be dropped by the model, not
+    /// banned one id at a time.</summary>
+    [Fact]
+    public void Dye_colour_parts_drop_ids_the_model_cannot_place()
+    {
+        ItemPools pools = new()
+        {
+            ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>>(StringComparer.Ordinal)
+            {
+                ["color_blue"] = new[] { Item("(O)372"), Item("(O)Book_QueenOfSauce") },
+            },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)372"] = new(Season.Spring, 2, "test", EarliestWeek: 1, HardWeek: 1),
+        });
+        PoolRecipe r = BundlePoolRecipes.For("Dye", Array.Empty<string>(), pools, model);
+        PoolPart blue = r.Parts.Single(p => p.Label == "color_blue");
+        Assert.Equal(new[] { "(O)372" }, blue.Source(pools, model).Select(p => p.ItemId));
+        // No model: nothing to check, the list passes through.
+        Assert.Equal(2, blue.Source(pools, null).Count);
+    }
+
+    [Fact]
+    public void Kind_bucket_parts_drop_ids_the_model_cannot_place_but_trophies_pass()
+    {
+        ItemPools pools = new()
+        {
+            ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
+            {
+                [ItemKind.Egg] = new[] { Item("(O)176"), Item("(O)928") },   // Golden Egg needs Perfection
+                [ItemKind.Trophy] = new[] { Item("(H)8"), Item("(W)13") },  // hats and weapons have no model row
+            },
+        };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)176"] = new(Season.Spring, 2, "test", EarliestWeek: 1, HardWeek: 1),
+        });
+        PoolRecipe animal = BundlePoolRecipes.For("Animal", Array.Empty<string>(), pools, model);
+        Assert.Equal(new[] { "(O)176" }, animal.Parts[0].Source(pools, model).Select(p => p.ItemId));
+        PoolRecipe gil = BundlePoolRecipes.For("Gil's Trophies", Array.Empty<string>(), pools, model);
+        Assert.Equal(2, gil.Parts[0].Source(pools, model).Count);
+    }
 }
