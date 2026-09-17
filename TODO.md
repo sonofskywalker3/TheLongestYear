@@ -20,23 +20,23 @@ own release. Open call for Jeff before building, recommendation first:
 Either way: GMCM and shop descriptions (`upgrade.cookbook_N.desc`, `upgrade.craftbook_N.desc`) say the
 new totals, the Bundle Log is unchanged, prices stay unless Jeff says otherwise, and the story branch
 merges master in afterwards so the opening scene can rely on the free slots.
-### NEXT ON STORY (remote-safe): the expanded opening, the 10-beat opening montage. NOT SPECCED, NOT PLANNED, NOT BUILT (surfaced 2026-09-16)
-The last story-scope item with no plan and no code. It lives only in section 5.1 of
-`docs/superpowers/specs/2026-06-06-tly1-story-and-cutscenes-design.md` (deathbed prologue and Joja
-cubicle reused from vanilla; the assignment; bus stop and Robin's town tour with Junimo glimpses; Robin
-walks you to the farm; Lewis says the farm was yours all along, open the letter; the deed snaps the
-darkness; Lewis names the CC and calls it hopeless; the Junimos explain the heart and the loop; Morris at
-the CC door starts the one-year clock and flashes red eyes). It folds in the current porch and Junimo
-intro (`IntroEventInjector` / `IntroSequenceDriver`, plan 2026-05-30). Jeff, 2026-09-16, asked why it was
-not on the list: it had no TODO entry, which is why it was invisible. Needs a brainstorm and its own
-design spec before a plan. Things the spec must reconcile:
-- The June outline's Morris "there's no way you can stop it" beat predates the ending's narrative lock
-  (2026-09-06): Morris is not gloating, he gives a company update; the red eyes land on a throwaway
-  line and only the player and the Junimos react. The opening's Morris has to be the same man.
-- "Intro rework: foreshadow grandpa as the previous keeper" (carried from the ending spec, section 9).
-- The Lewis day-1 intro's black bar on the right of the screen (below, 2026-06-10): design it out, do
-  not fix in place.
-- All text through the game-writing skill. Headless check via `tools/farmtype-intro.ps1`.
+### BUILT on story 2026-09-17: the expanded opening (vanilla deathbed and letter with our words, one arrival event from the bus stop to the farm tour)
+Spec (approved 2026-09-16): `docs/superpowers/specs/2026-09-16-expanded-opening-design.md` (sections 1 and 2).
+Plan: `docs/superpowers/plans/2026-09-16-expanded-opening.md` (note: the plan text shows the earlier farmer-ask design from Task 4; the built script has the farmer ask with the question emote, no spoken line, per Jeff 2026-09-17).
+Built 2026-09-16 to 2026-09-17, commits `9828c78`, `46d1528`, `df0798e`, `45ed46e`, `5f32152`, `e48845d`, `7acc574`, `ce8d89f`, `5f5bb0f`, `30271ea`, `cacc401`, `149fe1e`.
+
+**Headless results 2026-09-17** (controller's automated run, throwaway farms, deleted afterwards):
+- **Standard arrival: PASS** (event from cmd[5] at BusStop, Morris at cmd[18], Community Center reached at cmd[96], stash placed before the event, hub opened 10:27:04, no ERROR)
+- **Meadowlands arrival: PASS** (hub 10:31:57, no ERROR)
+- **Standard Skip intro: PASS** (skipped line logged, hub 10:32:30, no arrival event, no ERROR)
+
+**Parked:** `tly_replayintro` stalls at the first changeLocation when the event is hand-started (the natural day-0 path passes it); a `tly_reset` after a stalled replay strands that save; watch the opening on a fresh `tly_newgame <type> arrival` farm instead (documented in HEADLESS_DRIVING.md and the command description).
+
+**Still owed before the story release:** Jeff's own pass on a real new farm with Skip intro off, once with a female farmer for the letter variant. Dependency: the tour lines say each book starts with four free slots, which is the Cookbook and Craftbook slot rework on master's TODO (release first, then merge master into story).
+
+**Morris arc note** (from the June outline): Morris "there's no way you can stop it" beat predates the ending's narrative lock (2026-09-06); Morris is not gloating, he gives a company update; the red eyes land on a throwaway line and only the player and the Junimos react. The opening's Morris is the same man.
+
+**Grandpa hint** (from the ending spec, section 9): "Intro rework: foreshadow grandpa as the previous keeper" is built into the letter rewrite.
 
 ### Decisions recorded 2026-09-16 (Jeff, remote)
 - Geode rule: the three artifacts that ride along (Dwarvish Helm, Ancient Drum, Dwarf Gadget) stay. Fine.

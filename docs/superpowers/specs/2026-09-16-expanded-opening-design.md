@@ -1,7 +1,6 @@
 # The Expanded Opening (design)
 
-Date: 2026-09-16. Branch: `story`. Status: APPROVED by Jeff (sections 1 and 2, 2026-09-16); ready for the
-implementation plan.
+Date: 2026-09-16. Branch: `story`. Status: APPROVED by Jeff (sections 1 and 2, 2026-09-16); BUILT on story 2026-09-17 and headless-checked; Jeff's own pass on a new farm still owed.
 
 Replaces section 5.1 ("Opening montage") of `2026-06-06-tly1-story-and-cutscenes-design.md`. That
 outline's premise (Joja sent you to sell a farm you did not know was yours) is dropped: vanilla's letter

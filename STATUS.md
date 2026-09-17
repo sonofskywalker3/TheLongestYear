@@ -1,10 +1,30 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 evening, later (story: developed-farm travelcheck passed; rare-fish demotion and the 11-day geode rule applied and live-checked; next is Jeff's darkness live test)
+**Last updated:** 2026-09-17, story: expanded opening built and headless-checked
 **Branch:** `story`; everything committed AND pushed, nothing local-only
-**Tests:** 2622 passing
-**Build:** clean (Release, 0 errors); story HEAD `6c38c9e` deployed to the game; the game was LEFT RUNNING minimized from my automated run on the throwaway save `None_449262005` (Run 183, developed with debug commands for the travelcheck)
+**Tests:** 2631 passing
+**Build:** clean; deployed cacc401; game not running
 **Last public release:** 0.18.11
+
+## 2026-09-17: the expanded opening built and headless-checked
+
+Spec (approved 2026-09-16): `docs/superpowers/specs/2026-09-16-expanded-opening-design.md` (sections 1 and 2).
+Plan: `docs/superpowers/plans/2026-09-16-expanded-opening.md`.
+Built on story 2026-09-16 to 2026-09-17 (commits `9828c78`, `46d1528`, `df0798e`, `45ed46e`, `5f32152`, `e48845d`, `7acc574`, `ce8d89f`, `5f5bb0f`, `30271ea`, `cacc401`, `149fe1e`); 2631 tests passing, 0 build errors.
+
+**Headless results 2026-09-17** (controller's automated run, throwaway farms, deleted afterwards):
+
+| Scenario | Result |
+|---|---|
+| Standard arrival | PASS (event from cmd[5] at BusStop, Morris at cmd[18], Community Center reached at cmd[96], stash placed before the event, hub opened 10:27:04, no ERROR) |
+| Meadowlands arrival | PASS (hub 10:31:57, no ERROR) |
+| Standard Skip intro | PASS (skipped line logged, hub 10:32:30, no arrival event, no ERROR) |
+
+**Still owed before the story release:** Jeff's own pass on a real new farm with Skip intro off, once with a female farmer for the letter variant. Dependency: the tour lines say each book starts with four free slots; the Cookbook and Craftbook slot rework on master's TODO must release first, then merge into story.
+
+**Parked:** `tly_replayintro` stalls at the first changeLocation when the event is hand-started; the natural day-0 path passes it. After a stalled replay, `tly_reset` strands that save. Watch the opening on a fresh `tly_newgame <type> arrival` farm (documented in HEADLESS_DRIVING.md and the command description).
+
+**Deployed build:** cacc401 (the last commit deployed); 149fe1e changed only debug text and a flag guard and is not deployed. Game not running now.
 
 ## 2026-09-16 (evening): developed-farm travelcheck passed; fish and machine review for Jeff
 
