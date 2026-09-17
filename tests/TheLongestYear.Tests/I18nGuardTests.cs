@@ -43,6 +43,11 @@ public class I18nGuardTests
     /// distinctive prefix instead of whitelisting the family wholesale.</summary>
     private static readonly Regex EggColorKeyLiteral = new(@"""(?<key>egg-color\.[a-z0-9\-]+)""", RegexOptions.Compiled);
 
+    /// <summary>OpeningStrings.Replacements maps vanilla string ids to <c>"opening.grandpa-1-m"</c> and the
+    /// like; the values are resolved through a Func at the editor, so LiteralKey never sees them at a
+    /// Strings.Get call. Catch the family by its distinctive prefix, as EggColorKeyLiteral does.</summary>
+    private static readonly Regex OpeningStringsKeyLiteral = new(@"""(?<key>opening\.[a-z0-9\-]+)""", RegexOptions.Compiled);
+
     /// <summary>EndingEventInjector routes every script line through its local <c>EventText()</c>
     /// sanitiser instead of calling <see cref="Strings.Get"/> directly (a translated '"' or '/' would
     /// break the '/'-joined event script), so <see cref="LiteralKey"/> cannot see those keys at the
@@ -55,7 +60,10 @@ public class I18nGuardTests
     /// "event.turn." (SeasonTurn.KeyPrefix).</summary>
     private static readonly Regex SeasonTurnKey = new(@"KeyPrefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
 
-    /// <summary>OpeningScript.LineKeys builds its keys as <c>Prefix + "robin-1"</c>; the prefix is "event.opening.".</summary>
+    /// <summary>OpeningScript.LineKeys builds its keys as <c>Prefix + "robin-1"</c>; the prefix is "event.opening.".
+    /// The leading negative lookbehind is required: without it, a bare "Prefix" match also fires inside
+    /// SeasonTurn.cs's <c>KeyPrefix + "winter-2"</c> and OpeningStrings.cs's <c>VanillaPrefix + "12026"</c>
+    /// (both end in the substring "Prefix"), producing bogus event.opening.* keys.</summary>
     private static readonly Regex OpeningKey = new(@"(?<![A-Za-z])Prefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
 
     private static IEnumerable<string> AllSourceFiles()
@@ -72,6 +80,7 @@ public class I18nGuardTests
         }
         foreach (Match m in I18nToken.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EggColorKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
+        foreach (Match m in OpeningStringsKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EventTextKey.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in SeasonTurnKey.Matches(text)) into.Add(TheLongestYear.Core.SeasonTurn.KeyPrefix + m.Groups["key"].Value);
         foreach (Match m in OpeningKey.Matches(text)) into.Add("event.opening." + m.Groups["key"].Value);
