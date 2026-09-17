@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,30 +26,36 @@ public static class UpgradeCatalog
     public static UpgradeDefinition? TryGet(string id)
         => id != null && _byId.TryGetValue(id, out UpgradeDefinition? u) ? u : null;
 
-    /// <summary>
-    /// Total cooking recipe slots granted by the highest owned Cookbook tier.
-    /// Tier 0 = no Cookbook purchased = 0 slots. Tier 1 = 5, Tier 2 = 10, Tier 3 = 20.
-    /// The highest tier wins — owning II gives 10 slots, not 5+10=15.
-    /// </summary>
-    public static int CookbookSlotCount(int highestOwnedTier) => highestOwnedTier switch
-    {
-        1 => 5,
-        2 => 10,
-        3 => 20,
-        _ => 0
-    };
+    /// <summary>Free recipe slots every book has from day one, before any tier is bought.
+    /// Same ladder as the Junimo Stash (<c>MetaState.StashSlotCount</c>, 4 + 4 per tier):
+    /// Jeff, 2026-09-16, a book handed over with no pages "doesn't fit".</summary>
+    public const int BookBaseSlots = 4;
+
+    /// <summary>Slots each owned Cookbook / Craftbook tier adds on top of the free ones.</summary>
+    public const int BookSlotsPerTier = 4;
+
+    /// <summary>Highest Cookbook / Craftbook tier the shrine sells.</summary>
+    public const int BookMaxTier = 3;
 
     /// <summary>
-    /// Total crafting recipe slots granted by the highest owned Craftbook tier.
-    /// Same slot counts as <see cref="CookbookSlotCount"/> — mirrors Cookbook by design.
+    /// Total cooking recipe slots for the highest owned Cookbook tier: 4 free, then 8 / 12 / 16
+    /// for tiers 1 / 2 / 3. The highest tier wins (owning II gives 12, not 8 + 12).
+    /// Before 0.18.17 the ladder was 0 / 5 / 10 / 20; a book already holding more than the new
+    /// cap keeps its recipes (see <c>RecipeBanking.IsOverCap</c>).
     /// </summary>
-    public static int CraftbookSlotCount(int highestOwnedTier) => highestOwnedTier switch
+    public static int CookbookSlotCount(int highestOwnedTier) => BookSlotCount(highestOwnedTier);
+
+    /// <summary>
+    /// Total crafting recipe slots for the highest owned Craftbook tier.
+    /// Same ladder as <see cref="CookbookSlotCount"/>, the two books mirror each other by design.
+    /// </summary>
+    public static int CraftbookSlotCount(int highestOwnedTier) => BookSlotCount(highestOwnedTier);
+
+    private static int BookSlotCount(int highestOwnedTier)
     {
-        1 => 5,
-        2 => 10,
-        3 => 20,
-        _ => 0
-    };
+        int tier = Math.Clamp(highestOwnedTier, 0, BookMaxTier);
+        return BookBaseSlots + tier * BookSlotsPerTier;
+    }
 
     private static IReadOnlyList<UpgradeDefinition> Build()
     {

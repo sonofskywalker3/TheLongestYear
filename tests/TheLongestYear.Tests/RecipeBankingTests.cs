@@ -24,7 +24,7 @@ public class RecipeBankingTests
     {
         Assert.True(RecipeBanking.ShouldOfferAtReset(slotCount: 5, bankedCount: 0, bankableCount: 3));
         Assert.True(RecipeBanking.ShouldOfferAtReset(slotCount: 5, bankedCount: 4, bankableCount: 1));
-        Assert.False(RecipeBanking.ShouldOfferAtReset(slotCount: 0, bankedCount: 0, bankableCount: 3));   // book not bought
+        Assert.False(RecipeBanking.ShouldOfferAtReset(slotCount: 12, bankedCount: 20, bankableCount: 3));  // over the cap (pre-0.18.17 tier 3 held 20)
         Assert.False(RecipeBanking.ShouldOfferAtReset(slotCount: 5, bankedCount: 5, bankableCount: 3));   // full
         Assert.False(RecipeBanking.ShouldOfferAtReset(slotCount: 5, bankedCount: 0, bankableCount: 0));   // only starters known
     }

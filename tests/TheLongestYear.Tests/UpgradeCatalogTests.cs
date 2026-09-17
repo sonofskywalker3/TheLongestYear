@@ -246,26 +246,39 @@ public class UpgradeCatalogTests
     }
 
     [Fact]
-    public void CookbookSlotCount_returns_5_10_20_for_tiers_1_2_3()
+    public void CookbookSlotCount_is_4_free_plus_4_per_tier()
     {
-        Assert.Equal(5,  UpgradeCatalog.CookbookSlotCount(1));
-        Assert.Equal(10, UpgradeCatalog.CookbookSlotCount(2));
-        Assert.Equal(20, UpgradeCatalog.CookbookSlotCount(3));
+        Assert.Equal(4,  UpgradeCatalog.CookbookSlotCount(0));
+        Assert.Equal(8,  UpgradeCatalog.CookbookSlotCount(1));
+        Assert.Equal(12, UpgradeCatalog.CookbookSlotCount(2));
+        Assert.Equal(16, UpgradeCatalog.CookbookSlotCount(3));
     }
 
     [Fact]
-    public void CraftbookSlotCount_returns_5_10_20_for_tiers_1_2_3()
+    public void CraftbookSlotCount_is_4_free_plus_4_per_tier()
     {
-        Assert.Equal(5,  UpgradeCatalog.CraftbookSlotCount(1));
-        Assert.Equal(10, UpgradeCatalog.CraftbookSlotCount(2));
-        Assert.Equal(20, UpgradeCatalog.CraftbookSlotCount(3));
+        Assert.Equal(4,  UpgradeCatalog.CraftbookSlotCount(0));
+        Assert.Equal(8,  UpgradeCatalog.CraftbookSlotCount(1));
+        Assert.Equal(12, UpgradeCatalog.CraftbookSlotCount(2));
+        Assert.Equal(16, UpgradeCatalog.CraftbookSlotCount(3));
     }
 
     [Fact]
-    public void CookbookSlotCount_returns_zero_for_tier_zero()
+    public void BookSlotCount_matches_the_stash_ladder()
     {
-        Assert.Equal(0, UpgradeCatalog.CookbookSlotCount(0));
-        Assert.Equal(0, UpgradeCatalog.CraftbookSlotCount(0));
+        var s = new MetaState();
+        Assert.Equal(s.StashSlotCount, UpgradeCatalog.CookbookSlotCount(0));
+        s.OwnedUpgrades.Add("stash_3");
+        Assert.Equal(s.StashSlotCount, UpgradeCatalog.CookbookSlotCount(3));
+        Assert.Equal(s.StashSlotCount, UpgradeCatalog.CraftbookSlotCount(3));
+    }
+
+    [Fact]
+    public void BookSlotCount_clamps_out_of_range_tiers()
+    {
+        Assert.Equal(4,  UpgradeCatalog.CookbookSlotCount(-1));
+        Assert.Equal(16, UpgradeCatalog.CookbookSlotCount(9));
+        Assert.Equal(16, UpgradeCatalog.CraftbookSlotCount(9));
     }
 
     [Fact]
