@@ -21,6 +21,7 @@ namespace TheLongestYear.Integration
 
         private bool _finished;
         private int _cooldownUntilTick;
+        private string _loggedEventId;
 
         public IntroSequenceDriver(IMonitor monitor, MetaStore meta, GameplayConfig config)
         {
@@ -78,6 +79,13 @@ namespace TheLongestYear.Integration
                     break;
 
                 case IntroAction.WaitForOpening:
+                    if (Game1.CurrentEvent != null && Game1.CurrentEvent.id != _loggedEventId)
+                    {
+                        _loggedEventId = Game1.CurrentEvent.id;
+                        _monitor.Log($"Opening: arrival event running ({_loggedEventId}).", LogLevel.Info);
+                    }
+                    break;
+
                 case IntroAction.Waiting:
                 case IntroAction.None:
                 default:
