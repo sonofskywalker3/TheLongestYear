@@ -211,6 +211,31 @@ namespace TheLongestYear
             _bookFurniture = new BookFurniture(this.Monitor, helper);
             // View-only planning shrine — registers its furniture + auto-places near the stash.
             _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
+            // Finding 1 fallback (2026-09-16 expanded-opening review): OnSaveCreating turned out to
+            // fire too late for a brand-new game started through tly_newgame (and, by the same
+            // save-write timing, a real new game too) — it lands right alongside OnSaveLoaded, AFTER
+            // the tour has already spoken about the stash and shrine. Give the script its own event
+            // command instead: tlyPlaceGifts, inserted right after the tour's "changeLocation Farm",
+            // does the same two placement calls at the one moment guaranteed to be before the tour's
+            // dialogue. OnSaveCreating's own attempt (ModEntry.OnSaveCreating) is left in place as a
+            // harmless, idempotent belt-and-braces call for whichever path fires first.
+            StardewValley.Event.RegisterCommand("tlyPlaceGifts", (evt, args, context) =>
+            {
+                try
+                {
+                    var openingStash = new JunimoStashService(this.Monitor, _meta.State, _config);
+                    openingStash.PlaceChest();
+                    _planningShrine.Place(openingStash.LastPlacedTile);
+                    this.Monitor.Log("Opening: placed the stash and shrine for the tour.", LogLevel.Info);
+                }
+                catch (Exception ex)
+                {
+                    this.Monitor.Log(
+                        $"tlyPlaceGifts: could not place the stash/shrine ({ex.GetType().Name}: {ex.Message}); OnSaveLoaded will place them after the tour instead.",
+                        LogLevel.Warn);
+                }
+                evt.CurrentCommand++;
+            });
             // First-loop Spring-1 onboarding letter. Constructed at Entry so AssetRequested is
             // hooked before the first asset load (same reason as _introInjector above).
             _onboardingMail = new TheLongestYear.Loop.OnboardingMailService(this.Monitor, _meta);
