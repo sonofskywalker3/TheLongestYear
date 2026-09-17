@@ -426,8 +426,10 @@ namespace TheLongestYear
                 this.CmdWipeMeta);
             helper.ConsoleCommands.Add("tly_replayintro",
                 "Replay the opening: clears the intro flags, then starts the arrival event directly at the bus stop " +
-                "(warps there first and asks to be run again if not already there — the vanilla dayOfMonth==0 " +
-                "precondition can't be re-triggered by warping alone).",
+                "(warps there first and asks to be run again if not already there, since the vanilla dayOfMonth==0 " +
+                "precondition can't be re-triggered by warping alone). Debug only: not reliable past the bus stop, " +
+                "and a tly_reset after a stalled replay strands the save. Use a fresh tly_newgame <type> arrival " +
+                "farm to watch the whole opening.",
                 this.CmdReplayIntro);
             helper.ConsoleCommands.Add("tly_addpet",
                 "Debug: add a pet to the Farm, or list every pet with its location and bowl. " +
@@ -1132,6 +1134,11 @@ namespace TheLongestYear
             }
             bool skipIntro = args.Skip(1).Any(a => a.Equals("skipintro", StringComparison.OrdinalIgnoreCase));
             bool arrival = args.Skip(1).Any(a => a.Equals("arrival", StringComparison.OrdinalIgnoreCase));
+            if (skipIntro && arrival)
+            {
+                this.Monitor.Log("tly_newgame: skipintro and arrival cannot be combined.", LogLevel.Warn);
+                return;
+            }
             string name = args.Skip(1).FirstOrDefault(a =>
                 !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)
                 && !a.Equals("arrival", StringComparison.OrdinalIgnoreCase)) ?? "Rodger";
@@ -1398,7 +1405,7 @@ namespace TheLongestYear
         {
             // Context.IsWorldReady stays false for the whole pre-Day-1 window (SMAPI holds it off
             // while Game1.dayOfMonth == 0, precisely so mods don't act on a "new-game intro not
-            // finished yet" world) — but that's exactly the window the arrival event (60367/u 0)
+            // finished yet" world). That is exactly the window the arrival event (60367/u 0)
             // runs in. Gating this on IsWorldReady made tly_newgame <type> arrival + tly_eventstep
             // deadlock: the event can't be stepped until the world is ready, and the world isn't
             // ready until the event's "end beginGame" runs. Allow stepping whenever an event is
@@ -1847,9 +1854,10 @@ namespace TheLongestYear
         }
 
         /// <summary>Debug: replay the opening's arrival event. The vanilla key's own precondition
-        /// (dayOfMonth == 0) never recurs on a loaded save, so warping alone can't re-fire it — this
+        /// (dayOfMonth == 0) never recurs on a loaded save, so warping alone can't re-fire it: this
         /// starts the same script directly, the way <see cref="Integration.EndingEventDriver"/>
-        /// starts the ending. Warps to the bus stop first if not already there.</summary>
+        /// starts the ending. Warps to the bus stop first if not already there. Debug only, and not
+        /// reliable past the bus stop; see the console description for the caveats.</summary>
         private void CmdReplayIntro(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }

@@ -73,29 +73,33 @@ opening on a type (sending `arrival` when `-SkipIntro` isn't passed). With `-Ski
 character-creation checkbox's bed shortcut straight to the planning hub with no arrival event; the
 result table's `NoEvent` should read `ok`. Without it, `arrival` warps straight to the bus stop at
 `Game1.dayOfMonth == 0` and the arrival event (vanilla's `60367`, replaced with the mod's own
-script) starts immediately — step it with `tly_eventstep` (it clicks an open dialogue box on) until
-`Opened planning hub (week 1` appears. **The event runs before `Run N ready`, not after**: SMAPI
+script) starts immediately. Step it with `tly_eventstep` (it clicks an open dialogue box on) until
+`Opened planning hub (week 1` appears. **The event runs before `Run N ready`, not after.** SMAPI
 holds `Context.IsWorldReady` false for the whole `dayOfMonth == 0` window on purpose ("wait until
 new-game intro finishes"), and the mod's own `Run N ready` / Junimo Stash / planning shrine lines
-come from its `SaveLoaded` handler, which SMAPI only raises once `IsWorldReady` flips true — which
+come from its `SaveLoaded` handler, which SMAPI only raises once `IsWorldReady` flips true: that
 only happens once the event's `end beginGame` moves `dayOfMonth` off 0. `tly_eventstep` itself no
 longer requires `Context.IsWorldReady`; it only needs a location's `currentEvent` to be set, so it
 can still step the event during this pre-Day-1 window (previously it bailed with "Load a save
 first." here, deadlocking headless testing of `arrival` entirely). Every mod-side driver
 (`IntroSequenceDriver` included) is gated on `RunActivation.IsActive`, which is set by
-`OnSaveLoaded` and so is equally false for the whole pre-Day-1 window — nothing the mod itself logs
+`OnSaveLoaded` and so is equally false for the whole pre-Day-1 window: nothing the mod itself logs
 can mark "the event started", so `farmtype-intro.ps1` treats the first real `tly_eventstep` `cmd[N]`
 line (as opposed to `no event`) as the start. Both exit to title when done. Delete the `<type>_<id>`
 save folders afterwards.
 
 `tly_replayintro` clears the intro flags, then starts the arrival event directly instead of relying
 on the vanilla precondition: the event's vanilla key is `60367/u 0`, and precondition `u` is
-`DayOfMonth`, so it only fires while `Game1.dayOfMonth == 0` — a state that exists only during the
+`DayOfMonth`, so it only fires while `Game1.dayOfMonth == 0`, a state that exists only during the
 pre-Day-1 setup, which warping alone can't reproduce on an already-loaded save. If the farmer isn't
 already at the bus stop, `tly_replayintro` warps there and logs asking to be run again; run it a
 second time once there and it calls `Game1.currentLocation.startEvent(...)` with the same script
 `OpeningEventInjector` would inject, the way `tly_ending` starts the ending event directly. The
-event ends with a new day, the same as the real arrival does.
+event ends with a new day, the same as the real arrival does. **It is not reliable past the bus
+stop**: the hand-started event loses its location request at the first `changeLocation`, so it can
+stall partway through instead of finishing. A `tly_reset` run after a stalled replay strands that
+save (no event, no hub, forever); the reliable way to watch the whole opening is a fresh
+`tly_newgame <type> arrival` farm, not a replay.
 
 ## The Year One Ending
 
