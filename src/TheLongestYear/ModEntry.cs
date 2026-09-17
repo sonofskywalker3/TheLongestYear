@@ -363,7 +363,7 @@ namespace TheLongestYear
                 "Debug: report or open a vanilla one-time gift box. Usage: tly_giftbox <Location> <x> <y> [warp|open]",
                 this.CmdGiftBox);
             helper.ConsoleCommands.Add("tly_festival",
-                "Debug: 'state' logs the festival clock gates (timer, control sequence, shouldTimePass, tool state); 'contest' starts the ice fishing contest on the current festival.",
+                "Debug: 'state' logs the festival clock gates (timer, control sequence, shouldTimePass, tool state); 'contest' starts the ice fishing contest on the current festival; 'mainevent' answers the host's start question with yes (exercises the once-per-day block and its leave offer).",
                 this.CmdFestival);
             helper.ConsoleCommands.Add("tly_stashmenu",
                 "Debug: open the Junimo stash and log what the menu carries (context, source item, Chests Anywhere keys).",
@@ -1375,6 +1375,18 @@ namespace TheLongestYear
                 ev.eventSwitched = true;
                 ev.setUpPlayerControlSequence("iceFishing");
                 this.Monitor.Log("tly_festival: ice fishing contest started.", LogLevel.Info);
+                return;
+            }
+            if (mode == "mainevent")
+            {
+                // Answer the host's "start the main event?" question with yes, without the click on the
+                // host: the same Event.answerDialogueQuestion the host's dialogue goes through, so the
+                // once-per-day block (and its leave offer) is exercised headlessly.
+                if (ev == null || !ev.isFestival) { this.Monitor.Log("tly_festival: no festival running.", LogLevel.Warn); return; }
+                NPC host = HarmonyLib.AccessTools.Field(typeof(Event), "festivalHost")?.GetValue(ev) as NPC
+                    ?? Game1.getCharacterFromName("Lewis");
+                this.Monitor.Log($"tly_festival: answering the host ({host?.Name ?? "none"}) with yes.", LogLevel.Info);
+                ev.answerDialogueQuestion(host, "yes");
                 return;
             }
             if (mode == "click")
