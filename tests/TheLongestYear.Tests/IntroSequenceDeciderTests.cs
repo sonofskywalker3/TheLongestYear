@@ -27,8 +27,8 @@ public class IntroSequenceDeciderTests
     }
 
     [Fact]
-    public void Fresh_no_flags_starts_intro()
-        => Assert.Equal(IntroAction.StartIntro, IntroSequenceDecider.Next(Fresh()));
+    public void Fresh_no_flags_waits_for_the_opening_to_plant_the_flag()
+        => Assert.Equal(IntroAction.WaitForOpening, IntroSequenceDecider.Next(Fresh()));
 
     [Fact]
     public void Event_active_waits()
