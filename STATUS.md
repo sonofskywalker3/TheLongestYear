@@ -12,8 +12,7 @@ One release carrying 0.18.17 through 0.18.28. Docs: README and Nexus description
 0.18.28 content-identical, changelog note in `release-notes/`, live description backed up to
 `release-notes/nexus-description-0.18.16-backup.bbcode`. Verified live on the public page: version
 0.18.28, What's New 0.18.28 at the top, changelog entry 0.18.28 under Documents. Replied to
-asteriaths on the Nexus posts tab (fixed in 0.18.28). SilviaVA follow-up reply still owed (draft
-shown to Jeff, not posted).
+asteriaths and SilviaVA on the Nexus posts tab (fixed in 0.18.28, out now).
 
 ## 2026-09-17 afternoon: 0.18.26 model gate on Dye and by-kind pools, 0.18.27 festival repeat-visit exit
 
