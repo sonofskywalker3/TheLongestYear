@@ -1,15 +1,15 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-17 midday (0.18.21 on master, pushed, NOT released: book slots follow the stash ladder)
+**Last updated:** 2026-09-17 midday (0.18.23 on master, pushed, NOT released: book slots follow the stash ladder, plus tier IV)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2133 passing, 0 failing (as of 0.18.21)
-**Build:** Release clean, 0 errors; 0.18.20 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
-**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.21 are on master and ready to release once Jeff says so; release notes not yet written.
+**Tests:** 2135 passing, 0 failing (as of 0.18.23)
+**Build:** Release clean, 0 errors; 0.18.22 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
+**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.23 are on master and ready to release once Jeff says so; release notes not yet written.
 
-## 2026-09-17: 0.18.17 to 0.18.21, Cookbook and Craftbook slots work like the stash (ready to release)
+## 2026-09-17: 0.18.17 to 0.18.23, Cookbook and Craftbook slots work like the stash, plus tier IV (ready to release)
 
-Jeff's option 1 from the TODO entry. The books start with 4 free slots and each tier adds 4
-(4 / 8 / 12 / 16, was 0 / 5 / 10 / 20); prices unchanged. Recipes banked over the new cap are
+Jeff's option 1 from the TODO entry, then the fourth tier at 1200 JP. The books start with 4 free
+slots and each tier adds 4 (4 / 8 / 12 / 16 / 20, was 0 / 5 / 10 / 20); tiers I to III keep their prices. Recipes banked over the new cap are
 grandfathered: they stay banked, usable and visible, the book shows a one-line notice and refuses
 new entries until it is back under the cap. Descriptions say the new totals. Live-checked
 headless on the Rodger save (rotated to `None_449337302`): every tier read the new count with 20
