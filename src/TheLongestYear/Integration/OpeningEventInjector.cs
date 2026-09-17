@@ -34,8 +34,9 @@ namespace TheLongestYear.Integration
             }, AssetEditPriority.Late);
         }
 
-        /// <summary>Same sanitiser as the ending: a translated '"' or '/' would break the script.</summary>
-        private static string EventText(string key)
+        /// <summary>Same sanitiser as the ending: a translated '"' or '/' would break the script.
+        /// Internal so <c>tly_replayintro</c> can build the same script to start the event directly.</summary>
+        internal static string EventText(string key)
         {
             string value = Strings.Get(key);
             return string.IsNullOrEmpty(value) ? value : value.Replace('"', '\'').Replace('/', ',');
