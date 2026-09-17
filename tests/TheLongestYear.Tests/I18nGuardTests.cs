@@ -104,7 +104,7 @@ public class I18nGuardTests
             "event.opening.morris-bus-1", "event.opening.robin-walk-1", "event.opening.robin-walk-2",
             "event.opening.lewis-1", "event.opening.morris-farm-1", "event.opening.morris-farm-2",
             "event.opening.morris-farm-3", "event.opening.lewis-2", "event.opening.morris-farm-4",
-            "event.opening.farmer-ask", "event.opening.lewis-3", "event.opening.lewis-hall-1",
+            "event.opening.morris-farm-5", "event.opening.lewis-3", "event.opening.lewis-hall-1",
             "event.opening.lewis-hall-2", "event.opening.junimo-1", "event.opening.junimo-2",
             "event.opening.junimo-3", "event.opening.junimo-4", "event.opening.junimo-5",
             "event.opening.junimo-6", "event.opening.junimo-7", "event.opening.junimo-8",

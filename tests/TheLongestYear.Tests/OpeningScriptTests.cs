@@ -47,6 +47,15 @@ public class OpeningScriptTests
         Assert.DoesNotContain("/skippable/", script);
     }
 
+    [Fact]
+    public void The_farmer_never_speaks_and_asks_with_the_question_emote()
+    {
+        string script = OpeningScript.Build(Text, "flag");
+        Assert.DoesNotContain("message ", script);
+        Assert.Contains("/emote farmer 8/", script);
+        Assert.DoesNotContain("farmer-ask", script);
+    }
+
     private static int CountOf(string haystack, string needle)
         => (haystack.Length - haystack.Replace(needle, "").Length) / needle.Length;
 }
