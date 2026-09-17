@@ -62,9 +62,34 @@ SaveLoaded path as a real new game, TLY Custom bundles). `tly_totitle` exits to 
 saving so the next run can start. `tly_buildings` lists every farm building with its tile.
 `tools/farmtype-cycle.ps1 -FarmType <type> [-SkipIntro]` is the whole keep-and-rewind check (new
 game, `debug clearfarm`, coop + barn + silo via `debug build` on the first legal tiles, the three
-keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmtype-intro.ps1`
-plays the opening on a type, prints the farmer's porch tile and ends the event with `debug ee`.
+keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmtype-intro.ps1
+-FarmType <type> [-SkipIntro]` plays the whole opening on a type. With `-SkipIntro` it takes the
+character-creation checkbox's bed shortcut straight to the planning hub with no arrival event; the
+result table's `NoEvent` should read `ok`. Without it, the deathbed and cubicle are a vanilla
+minigame (`GrandpaStory`) that logs nothing of its own; the first mod lines appear when the bus
+ride loads the save (`Run N ready`, then the Junimo Stash and planning shrine placements), then the
+arrival event, which is vanilla's `60367` replaced with the mod's own script — step it with
+`tly_eventstep` (it clicks an open dialogue box on) until `Opened planning hub (week 1` appears.
 Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
+
+**Known gap: the no-`-SkipIntro` path is not headless-capable today.** `GrandpaStory`'s scene 6
+sets `mouseActive = true` and waits for a real `receiveLeftClick` on Grandpa's letter
+(`GrandpaStory.cs`); nothing before that point is time-gated past it, and no `tly_*` or vanilla
+`debug` command exists to click it. A headless `tly_newgame <type>` (no `skipintro`) hangs there
+indefinitely — every `tly_eventstep` after it logs `Load a save first.` because `loadForNewGame`
+is never reached. Confirmed live 2026-09-17: 8+ minutes with no progress past
+`EnsureManifestInitialized() finished`. Recovering needs `deploy.ps1 -Minimized` (its
+`Stop-Process` closes the stuck game) or the desktop; there is no bridge-only way out. Do not spend
+time re-testing this path headless until a bridge command exists to fire that click.
+
+`tly_replayintro` clears the intro flags and warps to the bus stop, but the arrival event's vanilla
+key is `60367/u 0` — precondition `u` is `DayOfMonth`, so it only fires while
+`Game1.dayOfMonth == 0`, a state that exists only during the pre-Day-1 setup before `NewDay` runs.
+On an already-loaded save `Game1.dayOfMonth` is 1 or higher, so the event does not re-fire from
+`tly_replayintro` alone or after a follow-up `tly_reset`; confirmed live 2026-09-17,
+`tly_eventstep` logged `no event.` both times. Treat `tly_replayintro` as a flag-clearing helper for
+a save that has never advanced past the pre-game setup, not a way to replay the cutscene on a
+running save.
 
 ## The Year One Ending
 
