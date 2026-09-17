@@ -3,6 +3,27 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.28 - 2026-09-17
+
+2138 tests.
+
+### Added
+
+- **Cookbook and Craftbook start with four free slots.** Each book used to start empty until you bought its first tier. Now both hold four recipes from day one, each tier adds four (8, 12, 16), and a new fourth tier at 1200 JP takes them to 20. The first three tiers cost what they did. If your book already holds more than its new limit, every recipe stays banked and usable; the book only refuses new entries until you are back under the limit. (0.18.17 to 0.18.23; the grandfathering is `RecipeBanking.VisibleRows` /
+  `IsOverCap` / `CanBank`, the ladder `UpgradeCatalog.BookBaseSlots` + `BookSlotsPerTier`.)
+
+### Fixed
+
+- **Dye and the other pools cannot ask for what a year cannot reach.** The Dye bundle asked for the Queen of Sauce Cookbook, which needs 100 golden walnuts. The colour pools behind Dye, and the pools behind the gem, resource, egg, milk, artifact, mineral, artisan and monster loot asks, now drop anything the mod cannot place inside a year, instead of one item being banned at a time. Reported by SilviaVA. (0.18.24 banned the books outside `AvailabilityWeeks.BookWeeks` from the
+  colour index; 0.18.26 routed Dye and every by-kind bucket through the `Placeable` filter.)
+- **A second visit to a festival lets you leave.** Going back into the Flower Dance on the same day left you stuck: the dance only runs once a day, and that clearing has no way out. When a festival's main event has already happened, the host now offers to let you leave instead. Reported by asteriaths. Vanilla has no persistent "already danced" flag: the partner is cleared every
+  morning and the rewind clears friendship. (0.18.27)
+
+### Debug
+
+- `tly_bankrecipes <cook|craft> <n>` sets a book to an exact fill; `tly_festival mainevent`
+  answers the festival host's start question with yes.
+
 ## 0.18.16 - 2026-09-16
 
 2131 tests.
