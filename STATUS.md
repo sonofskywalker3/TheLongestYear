@@ -2,9 +2,24 @@
 
 **Last updated:** 2026-09-17, story: expanded opening built and headless-checked
 **Branch:** `story`; everything committed AND pushed, nothing local-only
-**Tests:** 2631 passing
-**Build:** clean; deployed cacc401; game not running
+**Tests:** 2632 passing
+**Build:** clean; deployed 39f16b1 (the fix wave build that ran the headless check; e47b8a4 is a comment-only commit); game not running
 **Last public release:** 0.18.11
+
+## 2026-09-17 (later): whole-branch review fixes for the opening
+
+- The final review found the tour naming a stash and statue that were placed only after the event
+  ended (OnSaveLoaded fires after `end beginGame`). Fixed with a `tlyPlaceGifts` event command right
+  after the tour's `changeLocation Farm` (commits b2f958e..e47b8a4); headless standard arrival: placement
+  11:24:25, first tour line 11:24:39, stash line 11:24:44, hub 11:25:29.
+- Also fixed: Robin warped off before the hall; the tour reuses the Community Center Junimo (no
+  duplicate actor name); dead cooldown code in the driver removed; Morris's exit move blocking; the
+  Skip intro notice reworded; an update-path fallback plants the cc-seen flag when the arrival was
+  already seen. Tests 2632.
+- **Parked for cleanup:** an abandoned early placement call in `OnSaveCreating` is still there and logs
+  the same "Opening: placed the stash and shrine for the tour." line as the real fix, so the line
+  appears twice on a new farm. Remove it.
+- **Open for Jeff:** nobody states Winter 28 in the opening after his Morris rewrite.
 
 ## 2026-09-17: the expanded opening built and headless-checked
 

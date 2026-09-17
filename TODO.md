@@ -20,7 +20,7 @@ own release. Open call for Jeff before building, recommendation first:
 Either way: GMCM and shop descriptions (`upgrade.cookbook_N.desc`, `upgrade.craftbook_N.desc`) say the
 new totals, the Bundle Log is unchanged, prices stay unless Jeff says otherwise, and the story branch
 merges master in afterwards so the opening scene can rely on the free slots.
-### BUILT on story 2026-09-17: the expanded opening (vanilla deathbed and letter with our words, one arrival event from the bus stop to the farm tour)
+### BUILT on story 2026-09-17 (final-review fixes b2f958e..e47b8a4 in; one cleanup parked: the duplicate OnSaveCreating placement call; Winter 28 line open for Jeff): the expanded opening (vanilla deathbed and letter with our words, one arrival event from the bus stop to the farm tour)
 Spec (approved 2026-09-16): `docs/superpowers/specs/2026-09-16-expanded-opening-design.md` (sections 1 and 2).
 Plan: `docs/superpowers/plans/2026-09-16-expanded-opening.md` (note: the plan text shows the earlier farmer-ask design from Task 4; the built script has the farmer ask with the question emote, no spoken line, per Jeff 2026-09-17).
 Built 2026-09-16 to 2026-09-17, commits `9828c78`, `46d1528`, `df0798e`, `45ed46e`, `5f32152`, `e48845d`, `7acc574`, `ce8d89f`, `5f5bb0f`, `30271ea`, `cacc401`, `149fe1e`.
