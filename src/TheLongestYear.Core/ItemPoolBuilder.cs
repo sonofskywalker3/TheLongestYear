@@ -192,7 +192,10 @@ public static class ItemPoolBuilder
             // The colour index feeds the Dye recipe. Vanilla tags the Amethyst Ring color_purple,
             // and a ring is not an Object at runtime, so the donation menu cannot lift it; one
             // landed in a Dye bundle through this index (Nexus, 2026-09-14). Rings stay out.
-            if (!IsRing(obj) && obj.ContextTags != null)
+            // Books too, unless the Book pool would offer them: every book carries a colour tag,
+            // and the Queen of Sauce Cookbook (color_blue, 100 golden walnuts) reached a Dye
+            // bundle this way (SilviaVA, Nexus, 2026-09-17).
+            if (!IsRing(obj) && !IsBookWithoutYearOneRoute(id, obj) && obj.ContextTags != null)
             {
                 foreach (string tag in obj.ContextTags)
                 {
@@ -801,6 +804,11 @@ public static class ItemPoolBuilder
     /// section 3).</summary>
     private const string RingType = "Ring";
     private const string RingItemTag = "ring_item";
+
+    /// <summary>A book the Book pool would not offer: drop-only, Volcano, walnut-gated or year 2
+    /// (<see cref="AvailabilityWeeks.BookWeeks"/> is the year-1 list).</summary>
+    private static bool IsBookWithoutYearOneRoute(string qualifiedId, RawObjectEntry obj)
+        => BookCategories.Contains(obj.Category) && !AvailabilityWeeks.BookWeeks.ContainsKey(qualifiedId);
 
     private static bool IsRing(RawObjectEntry obj)
         => string.Equals(obj.Type, RingType, StringComparison.OrdinalIgnoreCase)
