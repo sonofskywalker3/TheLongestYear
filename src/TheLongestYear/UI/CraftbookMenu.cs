@@ -68,7 +68,7 @@ namespace TheLongestYear.UI
             _monitor = monitor;
             _meta    = meta;
             _subtitle = subtitle;
-            int tier = meta.HighestKeptTier("craftbook_", maxTier: 3);
+            int tier = meta.HighestKeptTier("craftbook_", maxTier: UpgradeCatalog.BookMaxTier);
             _slotCount = UpgradeCatalog.CraftbookSlotCount(tier);
             _monitor.Log(
                 $"CraftbookMenu: tier={tier}, slots={_slotCount}, banked={meta.CraftbookRecipes.Count}, " +
