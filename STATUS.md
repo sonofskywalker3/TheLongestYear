@@ -1,10 +1,21 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-16 evening (0.18.16 RELEASED: GitHub release + Nexus file, version, description and changelog all live)
+**Last updated:** 2026-09-17 midday (0.18.21 on master, pushed, NOT released: book slots follow the stash ladder)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2131 passing, 0 failing (as of 0.18.16)
-**Build:** Release clean, 0 errors; 0.18.16 deployed to the game; game CLOSED
-**Last public release:** 0.18.16 (2026-09-16 evening; GitHub release v0.18.16 + Nexus file, version, description and changelog all live, all agent-driven through Chrome). A mislabelled v0.18.14 release went up first because two manifest bumps never reached the file; it was deleted with its tag and re-released as 0.18.16 within a minute, and Nexus archived the 0.18.14 file.
+**Tests:** 2133 passing, 0 failing (as of 0.18.21)
+**Build:** Release clean, 0 errors; 0.18.20 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
+**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.21 are on master and ready to release once Jeff says so; release notes not yet written.
+
+## 2026-09-17: 0.18.17 to 0.18.21, Cookbook and Craftbook slots work like the stash (ready to release)
+
+Jeff's option 1 from the TODO entry. The books start with 4 free slots and each tier adds 4
+(4 / 8 / 12 / 16, was 0 / 5 / 10 / 20); prices unchanged. Recipes banked over the new cap are
+grandfathered: they stay banked, usable and visible, the book shows a one-line notice and refuses
+new entries until it is back under the cap. Descriptions say the new totals. Live-checked
+headless on the Rodger save (rotated to `None_449337302`): every tier read the new count with 20
+banked, a fail-night reset skipped the over-cap offer and re-granted all 20, the books reopened on
+the new run still over cap. Details and the before/after table in `TODO.md`. Not released, Nexus
+untouched, not merged into `story`.
 
 ## 2026-09-16 evening: 0.18.16 released (0.18.12 setting + measured mine and monster bases)
 

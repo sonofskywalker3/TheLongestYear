@@ -6,7 +6,31 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### NEXT ON MASTER, release before the story update (Jeff, 2026-09-16): Cookbook and Craftbook slots work like the stash
+### BUILT 0.18.17 to 0.18.21 (2026-09-17, on master, pushed, NOT released): Cookbook and Craftbook slots work like the stash
+Jeff picked option 1 (three tiers, grandfather the overflow). Was: NEXT ON MASTER, release before the story update.
+`UpgradeCatalog.CookbookSlotCount` / `CraftbookSlotCount` are now 4 + tier * 4 (`BookBaseSlots`,
+`BookSlotsPerTier`, tier clamped 0..3), mirroring `MetaState.StashSlotCount`:
+
+| Tier owned | Before | After |
+|---|---|---|
+| none | 0 | 4 |
+| I (150 JP) | 5 | 8 |
+| II (350 JP) | 10 | 12 |
+| III (700 JP) | 20 | 16 |
+
+Grandfathering (`RecipeBanking.VisibleRows` / `IsOverCap` / `CanBank`): a book holding more than its
+cap keeps every recipe, the menu shows the overflow rows (removable), a one-line notice sits under
+the title (`menu.books.over-cap`), a new entry is refused with the same line, and the loop-boundary
+offer skips the book. The reset re-grants every banked recipe regardless of the cap (unchanged).
+Shrine and GMCM descriptions (`upgrade.cookbook_N.desc`, `upgrade.craftbook_N.desc`) say the new
+totals; prices and the Bundle Log unchanged. New debug command `tly_bankrecipes <cook|craft> <n>`.
+Live-checked headless on the Rodger save (now `None_449337302`): tiers 1/2/3 read 8/12/16 with 20
+banked, a fail-night reset skipped the offer (`Cookbook not offered before the reset: slots=16,
+banked=20`) and re-granted all 20 (`cookRecipes=20 banked (total 20)`), and the books reopened on
+the new run still over cap. Release notes (README What's New, Nexus description, changelog note)
+still to write at release time. Afterwards the story branch merges master in so the opening scene
+can rely on the free slots. Original brief below.
+
 Today the two recipe books start with 0 slots and their tiers give 5, 10, 20 (`UpgradeCatalog.CookbookSlotCount`
 / `CraftbookSlotCount`, 150 / 350 / 700 JP). The Junimo Stash starts at 4 and each tier adds 4 (4 / 8 / 12 / 16,
 `MetaState.StashSlotCount`). Jeff: a book handed over with no pages "doesn't fit"; redo the books like the
