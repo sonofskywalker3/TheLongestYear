@@ -6,18 +6,10 @@ using TheLongestYear.Core.Intro;
 namespace TheLongestYear.Integration
 {
     /// <summary>
-    /// v1.1 narrative intro content + cross-run bookkeeping. The intro is a SINGLE event the
-    /// <see cref="IntroSequenceDriver"/> starts once on the first morning of a fresh run. Rather
-    /// than warping the player around from the mod (which fights the engine), the event plays the
-    /// porch (Lewis) scene, then uses the vanilla in-event <c>changeLocation</c> command to move
-    /// itself + the player + the camera into the Community Center for the Junimo scene — exactly
-    /// how vanilla stages multi-location cutscenes. When it ends, the engine returns the player to
-    /// where it started (the farmhouse) and the driver opens the theme picker.
-    ///
-    /// Gating: the event adds <see cref="IntroEventKeys.CcSeenMail"/> at the end;
-    /// <see cref="MarkIntroSeenIfApplicable"/> (from <c>ModEntry.OnSaving</c>) promotes that to the
-    /// cross-run <c>MetaState.HasSeenIntro</c>, which survives resets and suppresses the intro on
-    /// every later loop. <c>tly_replayintro</c> clears it to retest.
+    /// Cross-run bookkeeping for the opening: promotes the cc-seen flag to MetaState.HasSeenIntro
+    /// at first save, plants the legacy done flag on later loops, and clears everything for
+    /// tly_replayintro. The opening itself is vanilla's chain with OpeningStringsEditor and
+    /// OpeningEventInjector.
     /// </summary>
     internal sealed class IntroEventInjector
     {
@@ -74,95 +66,5 @@ namespace TheLongestYear.Integration
                 LogLevel.Warn);
         }
 
-        // ---- Event script ------------------------------------------------------------------
-
-        /// <summary>The combined intro event script (the value half of a Data/Events entry — no key
-        /// or preconditions, since the driver starts it explicitly). Scene 1 is the farm porch with
-        /// Lewis; <c>changeLocation CommunityCenter</c> carries the scene into the CC for the Junimo;
-        /// it ends by setting the cc-seen flag. No blocking <c>move</c> commands (a blocked move
-        /// hangs the event); actors are placed with <c>warp</c>/<c>addTemporaryActor</c> instead.</summary>
-        internal static string BuildIntroEvent() => string.Join("/", new[]
-        {
-            "none",                                  // music
-            "8 8",                                   // initial viewport (farmhouse) — changeLocation follows at once
-            "farmer 8 8 2",                          // farmer in the farmhouse; repositioned per-scene below
-            // NOT skippable: the opening intro carries the only explanation of the loop, and a skip
-            // bypasses the end command that sets the cc-seen flag — leaving CcSeen false so the
-            // driver re-fires the event, closing+reopening the dialog forever (2026-06-01 playtest).
-            // Omitting "skippable" makes the event play through to its addMailReceived/"end".
-            // Players who want to skip use the character-creation Skip intro checkbox instead
-            // (SkipIntroChoicePatch), which plants the cc-seen flag before the driver runs.
-
-            // ---- Scene 1: the farm porch (Lewis) ----
-            "changeLocation Farm",
-            // Porch tiles are written for the Standard farm (door at (64,15)). The game shifts
-            // every Farm event by the farmhouse's offset from that door (Farm.ResetForEvent sets
-            // eventPositionTileOffset), so these land in front of the house on every farm type;
-            // deriving them from the door here would apply the shift twice (2026-09-06, Meadowlands).
-            "warp farmer 66 18 true",
-            "addTemporaryActor Lewis 16 32 68 18 3 true Character",
-            "viewport 66 18 true",
-            "faceDirection farmer 1",
-            "pause 1000",
-            // Every speak payload below is a raw Strings.Get. English is safe (I18nGuardTests
-            // asserts no event.* value contains '"' or '/', either of which would unbalance the
-            // quotes or split the '/'-joined script), and community translations are covered the
-            // moment this file adopts EndingEventInjector.EventText, which sanitises both characters.
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-1")}\"",
-            "pause 200",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-2")}\"",
-            "pause 200",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-3")}\"",
-            "pause 200",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-4")}\"",
-            "pause 400",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-5")}\"",
-            "pause 200",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-6")}\"",
-            "pause 300",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-7")}\"",
-            "playSound coin",
-            "pause 800",
-            $"speak Lewis \"{Strings.Get("event.intro.lewis-8")}\"",
-            "pause 600",
-
-            // ---- Scene 2: the Community Center (Junimo) ----
-            "changeLocation CommunityCenter",
-            "warp farmer 32 16 true",
-            "addTemporaryActor Junimo 16 16 32 11 2 false character Junimo",
-            "viewport 32 14 true",
-            "faceDirection farmer 0",
-            "pause 800",
-            "playSound junimoMeep1",
-            "pause 400",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-1")}\"",
-            "pause 200",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-2")}\"",
-            "pause 200",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-3")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-4")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-5")}\"",
-            "pause 400",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-6")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-7")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-8")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-9")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-9b")}\"",
-            "pause 300",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-10")}\"",
-            "pause 800",
-            $"speak Junimo \"{Strings.Get("event.intro.junimo-11")}\"",
-            "pause 600",
-            "playSound junimoMeep1",
-            "pause 1000",
-            $"addMailReceived {IntroEventKeys.CcSeenMail}",
-            "end"
-        });
     }
 }

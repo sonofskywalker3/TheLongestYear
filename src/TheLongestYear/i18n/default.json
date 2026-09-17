@@ -601,28 +601,7 @@
     "gmcm.difficulty.darkness.name": "Darkness",
     "gmcm.difficulty.darkness.tooltip": "How hard the darkness hits from Summer on. Sets how many crops or stored items a blight night takes, and whether the darkness checks that you can still get an item back before it undoes a donation or changes what a bundle asks for. Easy and Normal only take what you can replace in time. Hard and Extreme can take anything once a loop, and on Extreme a blight night can also reach tools and machines. The three switches under Features still turn each front off.",
 
-    // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
     "intro.skip-notice": "Skip intro is on. The Longest Year opens with a short scene that explains the loop and what to do first. I recommend watching it the first time you play the mod. Turn Skip intro off to see it.",
-    "event.intro.lewis-1": "Hi there, @. Welcome to the valley.#$b#I'm Lewis, mayor of Pelican Town. I came up to greet you and your new farm.$h",
-    "event.intro.lewis-2": "I wanted to be the first to say it... but I'm afraid I have to apologize for the timing.$s",
-    "event.intro.lewis-3": "Joja Corporation rolled out a 'revitalization initiative' this spring. They've already filed permits to demolish our old Community Center. They're calling it an 'eyesore.'$a",
-    "event.intro.lewis-4": "Deadline is Winter 28. If nothing changes by then, it'll be a Joja warehouse by next year.$s",
-    "event.intro.lewis-5": "If only there was a way for us to repair the old Community Center.$s#$b#It's a registered historical landmark, you know. The state will protect it, but only if it's restored to full working condition before that deadline.$h",
-    "event.intro.lewis-6": "Truth be told, nobody's got the time or the skill to take it on. Folks have their own troubles, and that old place needs more than goodwill.$s",
-    "event.intro.lewis-7": "Here, take the key to the front door. If you ever want to see the old place before they tear it down, it's worth a look.$h",
-    "event.intro.lewis-8": "Good luck out there, @. Pelican Town's rooting for you.$h",
-    "event.intro.junimo-1": "Hello, @. We are the Junimos, the spirits of this land.#$b#Few people can see us anymore.$h",
-    "event.intro.junimo-2": "Long ago the people of this valley worked the land together and shared what it gave them.#$b#This hall was the heart of that.$h",
-    "event.intro.junimo-3": "Then they grew busy. They chased money and forgot one another.#$b#The hall went quiet, and we went to sleep.$s",
-    "event.intro.junimo-4": "Lately we feel a stirring. The people miss what they gave up.#$b#That woke us. So did you.$h",
-    "event.intro.junimo-5": "We can make the land strong again, but not alone.#$b#Work the soil. Bring the town back together.#$b#As they share the land's bounty again, our power returns and this hall is restored.$h",
-    "event.intro.junimo-6": "But the seasons bind you, @. Each one asks its share.#$b#Bring enough to this hall before a season turns.#$b#Fall short, and the year unwinds to spring and you begin again.$s",
-    "event.intro.junimo-7": "Even at a good pace, one year is too short.#$b#You will not finish on this first turning.$s",
-    "event.intro.junimo-8": "When the year unwinds, everything returns: the fields, the buildings, even the people you have come to know.#$b#What you gathered is lost.$s",
-    "event.intro.junimo-9": "But what you have learned need not be lost.#$b#Your offerings become our power, and we will spend it to help you keep some of what you gained.#$b#Each beginning will be a little kinder than the last.$h",
-    "event.intro.junimo-9b": "Some of what a season asks may look out of reach. That is no mistake.#$b#Gather what you can and keep the rest for later.#$b#When the year unwinds, we can even hold the town's wishes steady, so the next spring asks the same of you.$h",
-    "event.intro.junimo-10": "We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Will you work the land with us, @?$h",
-    "event.intro.junimo-11": "Then go. Spring is yours.$h",
 
     // -- the expanded opening (deathbed, letter, arrival event) ------------------
     "opening.grandpa-1-m": "...and for my very special grandson:",
@@ -827,5 +806,5 @@
     "dejavu.willy.1.1": "Ye've got the look of an old deckhand o' mine. Can't be, though.",
     "dejavu.willy.2.1": "I trust ye like I've known ye for years, friend.",
     "dejavu.wizard.1.1": "Curious. Your aura carries echoes. Have we met elsewhere?",
-    "dejavu.wizard.2.1": "I sense an old bond between us. Older than it should be.",
+    "dejavu.wizard.2.1": "I sense an old bond between us. Older than it should be."
 }
