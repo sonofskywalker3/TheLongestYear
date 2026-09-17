@@ -20,7 +20,11 @@ namespace TheLongestYear.Integration
         private System.Func<MenuLauncher> _launcher;
 
         private bool _finished;
-        private int _cooldownUntilTick;
+
+        // Vanilla's own arrival event id (without the "/u 0" precondition suffix), as it lands in
+        // player.eventsSeen once the event finishes. Used only by the WaitForOpening fallback below.
+        private const string VanillaArrivalEventId = "60367";
+        private bool _plantedMissingCcSeenFlag;
 
         public IntroSequenceDriver(IMonitor monitor, MetaStore meta, GameplayConfig config)
         {
@@ -52,7 +56,6 @@ namespace TheLongestYear.Integration
             // Only act on a settled frame — never during the load fade (acting then fights the
             // game's own player placement).
             if (Game1.fadeToBlackAlpha > 0f) return;
-            if (Game1.ticks < _cooldownUntilTick) return;
 
             var p = Game1.player;
             if (p == null) return;
@@ -78,13 +81,28 @@ namespace TheLongestYear.Integration
                     break;
 
                 case IntroAction.WaitForOpening:
+                    // Glue-level fallback, not a decider change: on a save from an older build (or
+                    // one where the arrival somehow got skipped) the event already ran and is in
+                    // player.eventsSeen, but the cc-seen flag it plants was never carried over, so
+                    // the decider would otherwise wait for an event that will never happen again.
+                    // Plant the flag once so the next tick's WaitForOpening resolves to OpenPicker.
+                    if (!_plantedMissingCcSeenFlag
+                        && Context.IsWorldReady && Game1.dayOfMonth >= 1
+                        && p.eventsSeen.Contains(VanillaArrivalEventId))
+                    {
+                        p.mailReceived.Add(IntroEventKeys.CcSeenMail);
+                        _plantedMissingCcSeenFlag = true;
+                        _monitor.Log(
+                            "Opening: arrival already seen but the cc-seen flag is missing; planting it so the picker opens.",
+                            LogLevel.Warn);
+                    }
+                    break;
+
                 case IntroAction.Waiting:
                 case IntroAction.None:
                 default:
                     break;
             }
         }
-
-        private void Bump() => _cooldownUntilTick = Game1.ticks + 30; // ~0.5s at 60fps
     }
 }
