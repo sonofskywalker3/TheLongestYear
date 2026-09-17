@@ -1148,13 +1148,24 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}.", LogLevel.Info);
             if (Game1.activeClickableMenu is TitleMenu)
                 TitleMenu.subMenu = null;
-            Game1.game1.loadForNewGame();
-            Game1.saveOnNewDay = true;
-            Game1.player.eventsSeen.Add("60367");
-            Game1.player.currentLocation = Utility.getHomeOfFarmer(Game1.player);
-            Game1.player.Position = new Microsoft.Xna.Framework.Vector2(9f, 9f) * 64f;
-            Game1.player.isInBed.Value = true;
-            Game1.NewDay(0f);
+            if (skipIntro)
+            {
+                // Mirrors TitleMenu.createdNewCharacter(true): bed, Spring 1, arrival marked seen.
+                Game1.game1.loadForNewGame();
+                Game1.saveOnNewDay = true;
+                Game1.player.eventsSeen.Add("60367");
+                Game1.player.currentLocation = Utility.getHomeOfFarmer(Game1.player);
+                Game1.player.Position = new Microsoft.Xna.Framework.Vector2(9f, 9f) * 64f;
+                Game1.player.isInBed.Value = true;
+                Game1.NewDay(0f);
+                Game1.exitActiveMenu();
+                Game1.setGameMode(3);
+                return;
+            }
+            // Mirrors TitleMenu.update's transition for createdNewCharacter(false): the deathbed and
+            // cubicle minigame, which hands off to the bus ride, which calls loadForNewGame itself
+            // (GrandpaStory.cs 105/119, Intro.cs 416) and lands the player at the bus stop for 60367.
+            Game1.currentMinigame = new StardewValley.Minigames.GrandpaStory();
             Game1.exitActiveMenu();
             Game1.setGameMode(3);
         }

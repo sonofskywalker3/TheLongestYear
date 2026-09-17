@@ -5,12 +5,7 @@ using TheLongestYear.Core.Intro;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>Records the character-creation "Skip intro" checkbox for The Longest Year and
-    /// keeps the VANILLA bus-ride intro skipped either way. <c>TitleMenu.createdNewCharacter</c>
-    /// is the one place the checkbox value is committed, so a prefix reads it into
-    /// <see cref="Choice"/> (consumed by the new-game load, which plants the cc-seen flag) and
-    /// forces the argument to true: TLY's own Lewis to Junimo cutscene replaces the vanilla intro,
-    /// and letting both play would greet the player twice.</summary>
+    /// <summary>Records the character-creation Skip intro checkbox and lets vanilla act on it. Off: GrandpaStory, the bus and the arrival event (replaced by OpeningEventInjector) play. On: vanilla's skip path, which marks 60367 seen and wakes the player in bed; OnSaveLoaded plants the cc-seen flag so the driver opens the picker.</summary>
     [HarmonyPatch(typeof(TitleMenu), nameof(TitleMenu.createdNewCharacter))]
     internal static class SkipIntroChoicePatch
     {
@@ -26,10 +21,11 @@ namespace TheLongestYear.Loop
             Choice.Record(skipIntro);
             Monitor?.Log(
                 skipIntro
-                    ? "SkipIntroChoice: player ticked Skip intro; the opening cutscene will be skipped on this farm."
-                    : "SkipIntroChoice: Skip intro left off; the opening cutscene will play.",
+                    ? "SkipIntroChoice: player ticked Skip intro; vanilla skips to bed and the theme picker opens on Spring 1."
+                    : "SkipIntroChoice: Skip intro left off; the opening plays (deathbed, cubicle, bus, arrival).",
                 LogLevel.Info);
-            skipIntro = true; // the vanilla bus ride never plays under TLY
+            // The value is left as the player set it: the vanilla chain now carries our opening
+            // (spec 2026-09-16-expanded-opening-design.md, section 2.1).
         }
     }
 }
