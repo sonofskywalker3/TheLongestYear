@@ -6,6 +6,29 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### FIXED 0.18.27 (2026-09-17, on master, pushed, NOT released): a repeat festival visit trapped the player (asteriaths, Nexus post 17 Sep)
+Jeff: "figure out the already danced flag, clear it if we're not, and if they don't dance with anyone they need to
+be able to leave." Findings from the PC decompile: vanilla has NO persistent "already danced" flag. The partner
+lives in `Farmer.dancePartner`, set when an NPC accepts (spouse, or 4 hearts and not married, +250 friendship)
+and cleared every morning in `Farmer.dayupdate`; `NPC.HasPartnerForDance` only checks other online farmers.
+Across loops nothing lingers, and the rewind clears `friendshipData` anyway, so a next-loop dance needs the
+hearts again by design. The report was a SAME-DAY re-entry: the mod keeps festivals re-entrant (festival
+time flows), the partner is still set for the day so every datable NPC gives the "you already have a partner"
+line, the once-per-day block stops the host restarting the dance, and the Flower Dance clearing has no
+walkable edge, so the only exit was the auto-end at the festival's closing time. Fix: the blocked host prompt
+now asks "Leave the festival?" and Yes ends it the way the host would (every festival, not just the dance).
+The partner is deliberately NOT cleared on re-entry: clearing it would let the player re-ask for +250
+friendship on every re-entry. Say the word if you want it cleared anyway (with the bonus guarded).
+Debug: `tly_festival mainevent` answers the host headlessly. Live-checked on the Rodger save: dance played, re-entered, "offering to leave" logged, Yes ended the festival, player back on the Farm.
+
+### FIXED 0.18.26 (2026-09-17, on master, pushed, NOT released): every class of unplaceable item kept out of Dye and the by-kind buckets
+Jeff: "why not fix ALL classes for the dye bundle the same way?" Dye and the by-kind buckets (Gem, Resource,
+Egg, Milk, AnimalProduct, Artifact, Mineral, ArtisanGood, MonsterLoot) walk every vetted object, so each leak
+(Extended Family fish, island dishes, Golden Egg, the walnut book) was being banned one id at a time. Both now
+go through the existing `Placeable` filter (`model.IsPlaced`) that Chef's and Children's already used; trophies
+exempt (hats and weapons have no model row). The id bans stay as belt and braces. Live: five boards rolled
+deterministically on 0.18.26, `tly_gatecheck` no impossible gates.
+
 ### FIXED 0.18.24 (2026-09-17, on master, pushed, NOT released): Dye asked for the Queen of Sauce Cookbook (SilviaVA, Nexus post 17 Sep)
 Jeff replied on the 17th promising a patch. Cause: the Book pool is filtered to `AvailabilityWeeks.BookWeeks`
 (year-1 routes), but the colour index that feeds the Dye recipe walked every vetted object, and every book
@@ -16,10 +39,8 @@ the builder; the real Data/Objects export (patch export, 2026-09-17) confirms ev
 -102 or -103, so the guard covers all of them. Reply to SilviaVA once it ships.
 
 ### Sweep 2026-09-17 (Nexus bugs + posts x4 mods, Reddit x4, GitHub x4): one new post, no bugs-tab reports
-- **asteriaths, TLY Nexus post 17 Sep, NO REPLY YET:** went to the Flower Dance a second time, could not dance
-  with Shane again, had no other partner at 4 hearts, and found no way to leave the festival early (used a
-  no-clip mod to get out). Needs a look: does the rewind leave "already danced" state behind, or did the
-  hearts rewind below four; and whether the Flower Dance should offer an early exit like the other festivals.
+- **asteriaths, TLY Nexus post 17 Sep, NO REPLY YET:** went to the Flower Dance a second time the same day,
+  could not dance with Shane again and found no way out (no-clipped). Fixed in 0.18.27, see above; reply owed.
 - FayGabi (17 Sep) thanked Jeff for his answer; nothing owed. Everything else was answered by Jeff on the 16th
   and 17th. Other mods: nothing new. Reddit: nothing since 14 Sep. GitHub: no issues on any repo.
 

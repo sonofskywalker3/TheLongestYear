@@ -1,10 +1,19 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-17 early afternoon (0.18.25 on master, pushed, NOT released: book slots ladder + tier IV, Dye book leak fixed)
+**Last updated:** 2026-09-17 afternoon (0.18.28 on master, pushed, NOT released: book slots + tier IV, Dye and by-kind pools model-gated, festival repeat-visit exit)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2136 passing, 0 failing (as of 0.18.25)
-**Build:** Release clean, 0 errors; 0.18.24 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
-**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.25 are on master and ready to release once Jeff says so; release notes not yet written.
+**Tests:** 2138 passing, 0 failing (as of 0.18.28)
+**Build:** Release clean, 0 errors; 0.18.27 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
+**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.28 are on master and ready to release once Jeff says so; release notes not yet written.
+
+## 2026-09-17 afternoon: 0.18.26 model gate on Dye and by-kind pools, 0.18.27 festival repeat-visit exit
+
+Jeff asked why only books were fixed for Dye: now every id the availability model cannot place is
+dropped from Dye and from every by-kind bucket (trophies exempt), through the Placeable filter Chef's
+already used. Five boards rolled clean on 0.18.26, no impossible gates. Then the asteriaths Flower
+Dance post: no persistent danced flag exists (partner clears daily, rewind clears friendship); the
+trap was a same-day re-entry with the host blocked and no map edge. The blocked host prompt now
+offers to leave. Details in `TODO.md`. Both owed a reply once released.
 
 ## 2026-09-17 early afternoon: 0.18.24, Dye never asks for a book the Book pool would not offer
 
