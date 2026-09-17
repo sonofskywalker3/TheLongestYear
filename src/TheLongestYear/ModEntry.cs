@@ -825,6 +825,32 @@ namespace TheLongestYear
                 // Save data not writable yet on this platform: the load-time adoption rule covers it.
                 this.Monitor.Log($"Could not stamp the run marker at save creation ({ex.Message}); a quit before the first night will be adopted on reload instead.", LogLevel.Warn);
             }
+
+            // Finding 1 (2026-09-16 expanded-opening review): the arrival event's Community Center
+            // tour talks about the stash chest and the planning shrine, but until now neither was
+            // placed until OnSaveLoaded, which fires only after the event's own "end beginGame",
+            // seconds after the tour line. Place them here, right after the run marker, so both
+            // exist on the Farm before the tour (and the event itself) ever starts. This uses
+            // MetaState's just-constructed defaults (nothing has been banked yet on a brand-new
+            // save) rather than the real _stashService field, which isn't built until OnSaveLoaded.
+            // OnSaveLoaded keeps its own PlaceChest/Place calls: they sweep this early placement and
+            // re-place idempotently once the save's real MetaState (slot caps, banked items) is
+            // loaded, so nothing here needs to be exactly right, only present in time for the tour.
+            try
+            {
+                var openingStash = new JunimoStashService(this.Monitor, _meta.State, _config);
+                openingStash.PlaceChest();
+                _planningShrine.Place(openingStash.LastPlacedTile);
+                this.Monitor.Log("Opening: placed the stash and shrine for the tour.", LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                // Never let the tour's furniture placement break new-game creation: OnSaveLoaded's
+                // own placement (after the event) is the fallback, just later than we'd like.
+                this.Monitor.Log(
+                    $"Opening: could not place the stash/shrine at save creation ({ex.GetType().Name}: {ex.Message}); OnSaveLoaded will place them after the tour instead.",
+                    LogLevel.Warn);
+            }
         }
 
         /// <summary>Returning to title means the loaded save is gone — drop the runtime gate so no
