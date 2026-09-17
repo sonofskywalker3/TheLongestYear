@@ -8,15 +8,9 @@ using TheLongestYear.UI;
 namespace TheLongestYear.Integration
 {
     /// <summary>
-    /// Plays the day-1 intro on a fresh run the vanilla way: it starts ONE event
-    /// (<see cref="IntroEventInjector.BuildIntroEvent"/>) once the world is settled, and that event
-    /// moves itself from the farm porch to the Community Center via the in-event
-    /// <c>changeLocation</c> command. No mod-side <c>warpFarmer</c> and no per-tick loop — the
-    /// earlier version warped the player every tick and fought the engine's own placement, which
-    /// never stuck and re-fired (the "disco" flicker).
-    ///
-    /// When the event ends it has set the cc-seen flag; the driver then opens the theme picker.
-    /// Decision logic is the pure <see cref="IntroSequenceDecider"/>; this is the Game1 glue.
+    /// Opens the theme picker on the first morning of a fresh run once the cc-seen flag is present.
+    /// The flag is planted by the arrival event's end (OpeningEventInjector) or by OnSaveLoaded when
+    /// Skip intro was ticked. This class never starts an event.
     /// </summary>
     internal sealed class IntroSequenceDriver
     {
@@ -26,7 +20,6 @@ namespace TheLongestYear.Integration
         private System.Func<MenuLauncher> _launcher;
 
         private bool _finished;
-        private bool _introStartedThisMorning;
         private int _cooldownUntilTick;
 
         public IntroSequenceDriver(IMonitor monitor, MetaStore meta, GameplayConfig config)
@@ -48,10 +41,7 @@ namespace TheLongestYear.Integration
             if (!RunActivation.IsActive) return; // dormant on non-TLY saves — no intro
             // Re-arm for a (possibly replayed) fresh morning.
             if (IntroGate.IsFreshIntroMorning(_meta.State.HasSeenIntro, _meta.Run.Season, _meta.Run.DayOfMonth))
-            {
                 _finished = false;
-                _introStartedThisMorning = false;
-            }
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -78,29 +68,6 @@ namespace TheLongestYear.Integration
 
             switch (IntroSequenceDecider.Next(snap))
             {
-                case IntroAction.StartIntro:
-                    var loc = Game1.currentLocation;
-                    if (loc != null && Game1.activeClickableMenu == null)
-                    {
-                        if (_introStartedThisMorning)
-                        {
-                            // We already started the intro this morning, yet the decider is asking
-                            // to start it again — meaning the event ended WITHOUT setting the cc-seen
-                            // flag (an interrupted/edge-case end; the event itself isn't skippable, and the
-                            // character-creation Skip intro checkbox plants the flag before we get here). Force the flag so we proceed to the picker
-                            // instead of re-firing forever (the 2026-06-01 dialog-loop guard).
-                            _monitor.Log("Intro: event ended without the cc-seen flag — forcing it to avoid a re-fire loop.", LogLevel.Warn);
-                            p.mailReceived.Add(IntroEventKeys.CcSeenMail);
-                            Bump();
-                            break;
-                        }
-                        _monitor.Log("Intro: starting the Lewis -> Junimo cutscene.", LogLevel.Info);
-                        loc.startEvent(new Event(IntroEventInjector.BuildIntroEvent(), null, IntroEventKeys.IntroEventId));
-                        _introStartedThisMorning = true;
-                        Bump();
-                    }
-                    break;
-
                 case IntroAction.OpenPicker:
                     if (Game1.activeClickableMenu == null)
                     {
@@ -110,6 +77,7 @@ namespace TheLongestYear.Integration
                     }
                     break;
 
+                case IntroAction.WaitForOpening:
                 case IntroAction.Waiting:
                 case IntroAction.None:
                 default:

@@ -55,6 +55,9 @@ public class I18nGuardTests
     /// "event.turn." (SeasonTurn.KeyPrefix).</summary>
     private static readonly Regex SeasonTurnKey = new(@"KeyPrefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
 
+    /// <summary>OpeningScript.LineKeys builds its keys as <c>Prefix + "robin-1"</c>; the prefix is "event.opening.".</summary>
+    private static readonly Regex OpeningKey = new(@"(?<![A-Za-z])Prefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
+
     private static IEnumerable<string> AllSourceFiles()
         => Directory.EnumerateFiles(SrcRoot, "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
@@ -71,6 +74,7 @@ public class I18nGuardTests
         foreach (Match m in EggColorKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EventTextKey.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in SeasonTurnKey.Matches(text)) into.Add(TheLongestYear.Core.SeasonTurn.KeyPrefix + m.Groups["key"].Value);
+        foreach (Match m in OpeningKey.Matches(text)) into.Add("event.opening." + m.Groups["key"].Value);
     }
 
     /// <summary>
@@ -94,24 +98,6 @@ public class I18nGuardTests
         var keys = new HashSet<string>();
         foreach (string file in AllSourceFiles())
             AddLiteralMatches(File.ReadAllText(file), keys);
-
-        // referenced by OpeningStrings / OpeningScript (Tasks 3 and 5 of the 2026-09-16 opening plan)
-        var unopened = new[] {
-            "opening.grandpa-1-m", "opening.grandpa-1-f", "opening.grandpa-2", "opening.grandpa-3",
-            "opening.grandpa-4", "opening.grandpa-5", "opening.grandpa-6", "opening.grandpa-7-m",
-            "opening.grandpa-7-f", "opening.grandpa-8", "opening.letter-m", "opening.letter-f",
-            "event.opening.robin-1", "event.opening.robin-2", "event.opening.robin-3",
-            "event.opening.morris-bus-1", "event.opening.robin-walk-1", "event.opening.robin-walk-2",
-            "event.opening.lewis-1", "event.opening.morris-farm-1", "event.opening.morris-farm-2",
-            "event.opening.morris-farm-3", "event.opening.lewis-2", "event.opening.morris-farm-4",
-            "event.opening.morris-farm-5", "event.opening.lewis-3", "event.opening.lewis-hall-1",
-            "event.opening.lewis-hall-2", "event.opening.junimo-1", "event.opening.junimo-2",
-            "event.opening.junimo-3", "event.opening.junimo-4", "event.opening.junimo-5",
-            "event.opening.junimo-6", "event.opening.junimo-7", "event.opening.junimo-8",
-            "event.opening.tour-1", "event.opening.tour-2", "event.opening.tour-3",
-            "event.opening.tour-4", "event.opening.tour-5", "event.opening.tour-6",
-        };
-        keys.UnionWith(unopened);
 
         var recorded = new HashSet<string>();
         try

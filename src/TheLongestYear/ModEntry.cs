@@ -76,6 +76,7 @@ namespace TheLongestYear
         private WeeklyThemeQuestService _questService;
         private IntroEventInjector _introInjector;
         private OpeningStringsEditor _openingStrings;
+        private OpeningEventInjector _openingEvent;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
         private Integration.SeasonTurnDriver _seasonTurnDriver;
@@ -218,6 +219,8 @@ namespace TheLongestYear
             // Strings/StringsFromCSFiles load already carries it; the minigame reads it before any save exists.
             _openingStrings = new OpeningStringsEditor(this.Monitor, () => _config.Enabled);
             helper.Events.Content.AssetRequested += _openingStrings.OnAssetRequested;
+            _openingEvent = new OpeningEventInjector(this.Monitor, () => _config.Enabled);
+            helper.Events.Content.AssetRequested += _openingEvent.OnAssetRequested;
             // Darkness pushback first-strike letters (Linus, Shane, Lewis): same Data/Mail hook.
             _sabotageMail = new TheLongestYear.Loop.SabotageMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _sabotageMail.OnAssetRequested;
@@ -422,8 +425,7 @@ namespace TheLongestYear
                 "(some services cache the MetaState reference). DESTRUCTIVE.",
                 this.CmdWipeMeta);
             helper.ConsoleCommands.Add("tly_replayintro",
-                "Clear MetaState.HasSeenIntro + per-run intro mail flags so the day-1 Lewis+Junimo " +
-                "intro chain re-fires on the next Spring 1. Pair with tly_reset to test immediately.",
+                "Replay the opening: clears the intro flags and warps to the bus stop so the arrival event fires again.",
                 this.CmdReplayIntro);
             helper.ConsoleCommands.Add("tly_addpet",
                 "Debug: add a pet to the Farm, or list every pet with its location and bowl. " +
@@ -1821,6 +1823,9 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _introInjector?.ClearIntroState();
+            this.Helper.GameContent.InvalidateCache(Integration.OpeningEventInjector.AssetName);
+            Game1.warpFarmer("BusStop", 22, 11, false);
+            this.Monitor.Log("tly_replayintro: flags cleared, warping to the bus stop; the opening's arrival event fires on arrival.", LogLevel.Info);
         }
 
         /// <summary>Debug: open the planning shrine on a tab, the same construction the statue's

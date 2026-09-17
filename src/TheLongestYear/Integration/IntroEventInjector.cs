@@ -66,6 +66,7 @@ namespace TheLongestYear.Integration
                 Game1.player.mailReceived.Remove(IntroEventKeys.CcSeenMail);
                 Game1.player.mailReceived.Remove(IntroEventKeys.IntroDoneMail);
                 Game1.player.eventsSeen.Remove(IntroEventKeys.IntroEventId);
+                Game1.player.eventsSeen.Remove("60367");
             }
             _monitor.Log(
                 "IntroEventInjector: cleared HasSeenIntro + intro mail/eventsSeen entries. " +
