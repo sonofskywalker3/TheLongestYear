@@ -56,40 +56,46 @@ hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).
 
 ## Farm-type runs
 
-`tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]`
+`tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [name]`
 starts a farm of that type from the title screen with no character screen (same SaveCreating /
-SaveLoaded path as a real new game, TLY Custom bundles). `tly_totitle` exits to the title without
-saving so the next run can start. `tly_buildings` lists every farm building with its tile.
-`tools/farmtype-cycle.ps1 -FarmType <type> [-SkipIntro]` is the whole keep-and-rewind check (new
-game, `debug clearfarm`, coop + barn + silo via `debug build` on the first legal tiles, the three
-keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmtype-intro.ps1
--FarmType <type> [-SkipIntro]` plays the whole opening on a type. With `-SkipIntro` it takes the
+SaveLoaded path as a real new game, TLY Custom bundles). With no argument it plays the true vanilla
+chain (deathbed, cubicle minigame, bus ride) for a human at the keyboard; the deathbed and cubicle
+are vanilla scenes that need a real click partway through (`GrandpaStory`'s scene 6 waits on a
+`receiveLeftClick` on Grandpa's letter, with no bridge equivalent) and are not the mod's to test.
+`arrival` enters at the bus ride's own handoff instead (`Game1.game1.loadForNewGame()` then
+`Game1.warpFarmer("BusStop", 22, 11, false)`, mirroring `Intro.cs` 416/517) so the arrival event can
+be exercised headless. `tly_totitle` exits to the title without saving so the next run can start.
+`tly_buildings` lists every farm building with its tile. `tools/farmtype-cycle.ps1 -FarmType <type>
+[-SkipIntro]` is the whole keep-and-rewind check (new game, `debug clearfarm`, coop + barn + silo
+via `debug build` on the first legal tiles, the three keeps, `tly_reset`, PASS when all three come
+back on their tiles); `tools/farmtype-intro.ps1 -FarmType <type> [-SkipIntro]` plays the whole
+opening on a type (sending `arrival` when `-SkipIntro` isn't passed). With `-SkipIntro` it takes the
 character-creation checkbox's bed shortcut straight to the planning hub with no arrival event; the
-result table's `NoEvent` should read `ok`. Without it, the deathbed and cubicle are a vanilla
-minigame (`GrandpaStory`) that logs nothing of its own; the first mod lines appear when the bus
-ride loads the save (`Run N ready`, then the Junimo Stash and planning shrine placements), then the
-arrival event, which is vanilla's `60367` replaced with the mod's own script — step it with
-`tly_eventstep` (it clicks an open dialogue box on) until `Opened planning hub (week 1` appears.
-Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
+result table's `NoEvent` should read `ok`. Without it, `arrival` warps straight to the bus stop at
+`Game1.dayOfMonth == 0` and the arrival event (vanilla's `60367`, replaced with the mod's own
+script) starts immediately — step it with `tly_eventstep` (it clicks an open dialogue box on) until
+`Opened planning hub (week 1` appears. **The event runs before `Run N ready`, not after**: SMAPI
+holds `Context.IsWorldReady` false for the whole `dayOfMonth == 0` window on purpose ("wait until
+new-game intro finishes"), and the mod's own `Run N ready` / Junimo Stash / planning shrine lines
+come from its `SaveLoaded` handler, which SMAPI only raises once `IsWorldReady` flips true — which
+only happens once the event's `end beginGame` moves `dayOfMonth` off 0. `tly_eventstep` itself no
+longer requires `Context.IsWorldReady`; it only needs a location's `currentEvent` to be set, so it
+can still step the event during this pre-Day-1 window (previously it bailed with "Load a save
+first." here, deadlocking headless testing of `arrival` entirely). Every mod-side driver
+(`IntroSequenceDriver` included) is gated on `RunActivation.IsActive`, which is set by
+`OnSaveLoaded` and so is equally false for the whole pre-Day-1 window — nothing the mod itself logs
+can mark "the event started", so `farmtype-intro.ps1` treats the first real `tly_eventstep` `cmd[N]`
+line (as opposed to `no event`) as the start. Both exit to title when done. Delete the `<type>_<id>`
+save folders afterwards.
 
-**Known gap: the no-`-SkipIntro` path is not headless-capable today.** `GrandpaStory`'s scene 6
-sets `mouseActive = true` and waits for a real `receiveLeftClick` on Grandpa's letter
-(`GrandpaStory.cs`); nothing before that point is time-gated past it, and no `tly_*` or vanilla
-`debug` command exists to click it. A headless `tly_newgame <type>` (no `skipintro`) hangs there
-indefinitely — every `tly_eventstep` after it logs `Load a save first.` because `loadForNewGame`
-is never reached. Confirmed live 2026-09-17: 8+ minutes with no progress past
-`EnsureManifestInitialized() finished`. Recovering needs `deploy.ps1 -Minimized` (its
-`Stop-Process` closes the stuck game) or the desktop; there is no bridge-only way out. Do not spend
-time re-testing this path headless until a bridge command exists to fire that click.
-
-`tly_replayintro` clears the intro flags and warps to the bus stop, but the arrival event's vanilla
-key is `60367/u 0` — precondition `u` is `DayOfMonth`, so it only fires while
-`Game1.dayOfMonth == 0`, a state that exists only during the pre-Day-1 setup before `NewDay` runs.
-On an already-loaded save `Game1.dayOfMonth` is 1 or higher, so the event does not re-fire from
-`tly_replayintro` alone or after a follow-up `tly_reset`; confirmed live 2026-09-17,
-`tly_eventstep` logged `no event.` both times. Treat `tly_replayintro` as a flag-clearing helper for
-a save that has never advanced past the pre-game setup, not a way to replay the cutscene on a
-running save.
+`tly_replayintro` clears the intro flags, then starts the arrival event directly instead of relying
+on the vanilla precondition: the event's vanilla key is `60367/u 0`, and precondition `u` is
+`DayOfMonth`, so it only fires while `Game1.dayOfMonth == 0` — a state that exists only during the
+pre-Day-1 setup, which warping alone can't reproduce on an already-loaded save. If the farmer isn't
+already at the bus stop, `tly_replayintro` warps there and logs asking to be run again; run it a
+second time once there and it calls `Game1.currentLocation.startEvent(...)` with the same script
+`OpeningEventInjector` would inject, the way `tly_ending` starts the ending event directly. The
+event ends with a new day, the same as the real arrival does.
 
 ## The Year One Ending
 

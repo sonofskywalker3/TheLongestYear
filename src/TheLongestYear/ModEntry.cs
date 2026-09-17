@@ -329,7 +329,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
             helper.ConsoleCommands.Add("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
             helper.ConsoleCommands.Add("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
-            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", this.CmdNewGame);
+            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [name]", this.CmdNewGame);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
@@ -425,7 +425,9 @@ namespace TheLongestYear
                 "(some services cache the MetaState reference). DESTRUCTIVE.",
                 this.CmdWipeMeta);
             helper.ConsoleCommands.Add("tly_replayintro",
-                "Replay the opening: clears the intro flags and warps to the bus stop so the arrival event fires again.",
+                "Replay the opening: clears the intro flags, then starts the arrival event directly at the bus stop " +
+                "(warps there first and asks to be run again if not already there — the vanilla dayOfMonth==0 " +
+                "precondition can't be re-triggered by warping alone).",
                 this.CmdReplayIntro);
             helper.ConsoleCommands.Add("tly_addpet",
                 "Debug: add a pet to the Farm, or list every pet with its location and bowl. " +
@@ -1111,7 +1113,11 @@ namespace TheLongestYear
         /// <summary>Title-screen only. Mirrors what the character screen + TitleMenu.createdNewCharacter
         /// do for a "Skip intro" new game, so an unattended run can start a farm of any type. Goes
         /// through the same SaveCreating/SaveLoaded path as a real new game, so TLY activates and
-        /// the Advanced Options bundle choice defaults to TLY Custom.</summary>
+        /// the Advanced Options bundle choice defaults to TLY Custom. With no argument it plays the
+        /// true vanilla chain (deathbed, cubicle minigame, bus ride) for a human at the keyboard;
+        /// `arrival` skips straight to the bus ride's own handoff so the arrival event can be
+        /// exercised headless, since the deathbed/cubicle minigame needs a real click and isn't the
+        /// mod's to test.</summary>
         private void CmdNewGame(string command, string[] args)
         {
             if (Context.IsWorldReady)
@@ -1121,11 +1127,14 @@ namespace TheLongestYear
             }
             if (args.Length < 1 || !NewGameFarmTypes.TryGetValue(args[0], out int farmType))
             {
-                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", LogLevel.Info);
+                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [name]", LogLevel.Info);
                 return;
             }
             bool skipIntro = args.Skip(1).Any(a => a.Equals("skipintro", StringComparison.OrdinalIgnoreCase));
-            string name = args.Skip(1).FirstOrDefault(a => !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)) ?? "Rodger";
+            bool arrival = args.Skip(1).Any(a => a.Equals("arrival", StringComparison.OrdinalIgnoreCase));
+            string name = args.Skip(1).FirstOrDefault(a =>
+                !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)
+                && !a.Equals("arrival", StringComparison.OrdinalIgnoreCase)) ?? "Rodger";
 
             Game1.resetPlayer();
             Game1.player.Name = name;
@@ -1152,7 +1161,7 @@ namespace TheLongestYear
             // What the character screen's OK does with Skip intro on (TitleMenu.createdNewCharacter),
             // routed through our own prefix so the checkbox choice is recorded the same way.
             Loop.SkipIntroChoicePatch.Choice.Record(skipIntro);
-            this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}.", LogLevel.Info);
+            this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}, arrival={arrival}.", LogLevel.Info);
             if (Game1.activeClickableMenu is TitleMenu)
                 TitleMenu.subMenu = null;
             if (skipIntro)
@@ -1165,6 +1174,17 @@ namespace TheLongestYear
                 Game1.player.Position = new Microsoft.Xna.Framework.Vector2(9f, 9f) * 64f;
                 Game1.player.isInBed.Value = true;
                 Game1.NewDay(0f);
+                Game1.exitActiveMenu();
+                Game1.setGameMode(3);
+                return;
+            }
+            if (arrival)
+            {
+                // Mirrors the bus ride's handoff (Intro.cs 416, 517): the save loads, the farmer lands at the
+                // bus stop on day 0, and the arrival event fires on its own precondition.
+                Game1.game1.loadForNewGame();
+                Game1.saveOnNewDay = true;
+                Game1.warpFarmer("BusStop", 22, 11, false);
                 Game1.exitActiveMenu();
                 Game1.setGameMode(3);
                 return;
@@ -1376,7 +1396,14 @@ namespace TheLongestYear
         /// prints the current command and every actor's tile so a blocked `move` is visible.</summary>
         private void CmdEventStep(string command, string[] args)
         {
-            if (!Context.IsWorldReady)
+            // Context.IsWorldReady stays false for the whole pre-Day-1 window (SMAPI holds it off
+            // while Game1.dayOfMonth == 0, precisely so mods don't act on a "new-game intro not
+            // finished yet" world) — but that's exactly the window the arrival event (60367/u 0)
+            // runs in. Gating this on IsWorldReady made tly_newgame <type> arrival + tly_eventstep
+            // deadlock: the event can't be stepped until the world is ready, and the world isn't
+            // ready until the event's "end beginGame" runs. Allow stepping whenever an event is
+            // actually running, even pre-Day-1.
+            if (!Context.IsWorldReady && Game1.currentLocation?.currentEvent == null)
             {
                 this.Monitor.Log("Load a save first.", LogLevel.Warn);
                 return;
@@ -1819,13 +1846,24 @@ namespace TheLongestYear
                 LogLevel.Warn);
         }
 
+        /// <summary>Debug: replay the opening's arrival event. The vanilla key's own precondition
+        /// (dayOfMonth == 0) never recurs on a loaded save, so warping alone can't re-fire it — this
+        /// starts the same script directly, the way <see cref="Integration.EndingEventDriver"/>
+        /// starts the ending. Warps to the bus stop first if not already there.</summary>
         private void CmdReplayIntro(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _introInjector?.ClearIntroState();
-            this.Helper.GameContent.InvalidateCache(Integration.OpeningEventInjector.AssetName);
-            Game1.warpFarmer("BusStop", 22, 11, false);
-            this.Monitor.Log("tly_replayintro: flags cleared, warping to the bus stop; the opening's arrival event fires on arrival.", LogLevel.Info);
+            if (Game1.currentLocation?.Name != "BusStop")
+            {
+                Game1.warpFarmer("BusStop", 22, 11, false);
+                this.Monitor.Log("tly_replayintro: flags cleared, warped to the bus stop; run tly_replayintro again to start the opening.", LogLevel.Info);
+                return;
+            }
+            Game1.currentLocation.startEvent(new Event(
+                TheLongestYear.Core.Intro.OpeningScript.Build(Integration.OpeningEventInjector.EventText, TheLongestYear.Core.Intro.IntroEventKeys.CcSeenMail),
+                null, "60367"));
+            this.Monitor.Log("tly_replayintro: starting the opening's arrival event at the bus stop (it ends with a new day, as the real one does).", LogLevel.Info);
         }
 
         /// <summary>Debug: open the planning shrine on a tab, the same construction the statue's
