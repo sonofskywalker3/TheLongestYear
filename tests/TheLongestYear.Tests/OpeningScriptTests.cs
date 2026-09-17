@@ -3,6 +3,8 @@ using System.Linq;
 using TheLongestYear.Core.Intro;
 using Xunit;
 
+namespace TheLongestYear.Tests;
+
 public class OpeningScriptTests
 {
     private static string Text(string key) => $"[{key}]";
@@ -34,6 +36,8 @@ public class OpeningScriptTests
         int tour = Array.LastIndexOf(commands, "changeLocation Farm");
         Assert.Contains(commands.Take(hall), c => c == "warp Morris -100 -100");
         Assert.DoesNotContain(commands.Skip(hall), c => c.Contains("Morris"));
+        Assert.Contains(commands.Take(hall), c => c == "warp Robin -100 -100");
+        Assert.DoesNotContain(commands.Skip(hall), c => c.Contains("Robin"));
         Assert.Contains(commands.Skip(hall).Take(tour - hall), c => c == "warp Lewis -100 -100");
         Assert.DoesNotContain(commands.Skip(tour), c => c.Contains("Lewis"));
     }
@@ -54,6 +58,20 @@ public class OpeningScriptTests
         Assert.DoesNotContain("message ", script);
         Assert.Contains("/emote farmer 8/", script);
         Assert.DoesNotContain("farmer-ask", script);
+    }
+
+    [Fact]
+    public void No_two_addTemporaryActor_commands_share_an_override_name()
+    {
+        // Event.getActorByName returns the FIRST actor with a given name; a second
+        // addTemporaryActor reusing a name would silently animate the stale actor instead of the
+        // new one (the tour's Junimo warp-reuse fix relies on this staying unique).
+        string[] commands = OpeningScript.Build(Text, "flag").Split('/');
+        var overrideNames = commands
+            .Where(c => c.StartsWith("addTemporaryActor ", StringComparison.Ordinal))
+            .Select(c => c.Split(' ')[^1])
+            .ToList();
+        Assert.Equal(overrideNames.Distinct().Count(), overrideNames.Count);
     }
 
     private static int CountOf(string haystack, string needle)
