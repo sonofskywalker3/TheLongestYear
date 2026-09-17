@@ -601,7 +601,7 @@
     "gmcm.difficulty.darkness.name": "Darkness",
     "gmcm.difficulty.darkness.tooltip": "How hard the darkness hits from Summer on. Sets how many crops or stored items a blight night takes, and whether the darkness checks that you can still get an item back before it undoes a donation or changes what a bundle asks for. Easy and Normal only take what you can replace in time. Hard and Extreme can take anything once a loop, and on Extreme a blight night can also reach tools and machines. The three switches under Features still turn each front off.",
 
-    "intro.skip-notice": "Skip intro is on. The Longest Year opens with a short scene that explains the loop and what to do first. I recommend watching it the first time you play the mod. Turn Skip intro off to see it.",
+    "intro.skip-notice": "Skip intro is on. The Longest Year opens with the story of how you came to the valley and what the Junimos need from you. Watch it the first time you play. Turn Skip intro off to see it.",
 
     // -- the expanded opening (deathbed, letter, arrival event) ------------------
     "opening.grandpa-1-m": "...and for my very special grandson:",
