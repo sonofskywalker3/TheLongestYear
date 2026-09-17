@@ -315,11 +315,11 @@ public class I18nGuardTests
         Assert.True(problems.Count == 0, "Token round-trip guard failures:\n" + string.Join("\n", problems));
     }
 
-    /// <summary>Event-script safety: an event is one string whose commands are joined with '/', and a
-    /// <c>speak</c> / <c>message</c> payload is wrapped in double quotes. An <c>event.</c> value
-    /// containing either character would split the script into bogus commands or unbalance the quotes
-    /// and break the ending outright. <c>EndingEventInjector.Text</c> sanitises both at runtime for
-    /// translations we do not control; this guard keeps our own English source clean.</summary>
+    /// <summary>The opening's letter keys must keep vanilla's own {0}/{1} (name/farm) placeholders so
+    /// the substituted text still reads correctly. This checks only the mod's own side of the swap
+    /// (our default.json values against vanilla's placeholder shape); vanilla's own string is not on
+    /// the test path here, since OpeningStrings.Apply is what actually writes into vanilla's data at
+    /// runtime, and that is covered separately by OpeningStringsTests.</summary>
     [Fact]
     public void The_letter_keeps_vanillas_name_and_farm_tokens()
     {
@@ -327,6 +327,11 @@ public class I18nGuardTests
             Assert.True(OpeningStrings.PlaceholdersMatch("Dear {0}, {1} Farm", _fixture.Map[key]), key);
     }
 
+    /// <summary>Event-script safety: an event is one string whose commands are joined with '/', and a
+    /// <c>speak</c> / <c>message</c> payload is wrapped in double quotes. An <c>event.</c> value
+    /// containing either character would split the script into bogus commands or unbalance the quotes
+    /// and break the ending outright. <c>EndingEventInjector.Text</c> sanitises both at runtime for
+    /// translations we do not control; this guard keeps our own English source clean.</summary>
     [Fact]
     public void NoEventKeyValue_ContainsAScriptBreakingCharacter()
     {
