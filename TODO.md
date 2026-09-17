@@ -6,6 +6,23 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### FIXED 0.18.24 (2026-09-17, on master, pushed, NOT released): Dye asked for the Queen of Sauce Cookbook (SilviaVA, Nexus post 17 Sep)
+Jeff replied on the 17th promising a patch. Cause: the Book pool is filtered to `AvailabilityWeeks.BookWeeks`
+(year-1 routes), but the colour index that feeds the Dye recipe walked every vetted object, and every book
+carries a colour tag, so the walnut-gated, Volcano, year-2 and drop-only books came back in through Dye
+(Queen of Sauce Cookbook is color_blue, 100 golden walnuts). `ItemPoolBuilder` now skips any book outside
+`BookWeeks` when building the colour index, the same guard shape as the ring skip from 14 Sep. Unit test on
+the builder; the real Data/Objects export (patch export, 2026-09-17) confirms every book row is category
+-102 or -103, so the guard covers all of them. Reply to SilviaVA once it ships.
+
+### Sweep 2026-09-17 (Nexus bugs + posts x4 mods, Reddit x4, GitHub x4): one new post, no bugs-tab reports
+- **asteriaths, TLY Nexus post 17 Sep, NO REPLY YET:** went to the Flower Dance a second time, could not dance
+  with Shane again, had no other partner at 4 hearts, and found no way to leave the festival early (used a
+  no-clip mod to get out). Needs a look: does the rewind leave "already danced" state behind, or did the
+  hearts rewind below four; and whether the Flower Dance should offer an early exit like the other festivals.
+- FayGabi (17 Sep) thanked Jeff for his answer; nothing owed. Everything else was answered by Jeff on the 16th
+  and 17th. Other mods: nothing new. Reddit: nothing since 14 Sep. GitHub: no issues on any repo.
+
 ### BUILT 0.18.17 to 0.18.23 (2026-09-17, on master, pushed, NOT released): Cookbook and Craftbook slots work like the stash
 Jeff picked option 1 first (three tiers, grandfather the overflow), then added the fourth tier from option 2 at 1200 JP
 (2026-09-17 midday), so the ceiling is back at 20. Was: NEXT ON MASTER, release before the story update.

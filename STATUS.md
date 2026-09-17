@@ -1,10 +1,18 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-17 midday (0.18.23 on master, pushed, NOT released: book slots follow the stash ladder, plus tier IV)
+**Last updated:** 2026-09-17 early afternoon (0.18.25 on master, pushed, NOT released: book slots ladder + tier IV, Dye book leak fixed)
 **Branch:** `master`; everything PUSHED, nothing local-only
-**Tests:** 2135 passing, 0 failing (as of 0.18.23)
-**Build:** Release clean, 0 errors; 0.18.22 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
-**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.23 are on master and ready to release once Jeff says so; release notes not yet written.
+**Tests:** 2136 passing, 0 failing (as of 0.18.25)
+**Build:** Release clean, 0 errors; 0.18.24 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
+**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.25 are on master and ready to release once Jeff says so; release notes not yet written.
+
+## 2026-09-17 early afternoon: 0.18.24, Dye never asks for a book the Book pool would not offer
+
+Socials sweep found the one Jeff had promised on the 17th (SilviaVA, Nexus post): a Dye bundle asked
+for the Queen of Sauce Cookbook, a 100-walnut book. The colour index behind Dye walked every object
+while the Book pool is filtered to the year-1 routes; the index now skips books outside that list.
+Unit-tested; the real Data/Objects export confirms the guard reaches every book. One new unanswered
+post (asteriaths, Flower Dance second visit, no early exit) is logged in `TODO.md` for Jeff.
 
 ## 2026-09-17: 0.18.17 to 0.18.23, Cookbook and Craftbook slots work like the stash, plus tier IV (ready to release)
 
