@@ -318,9 +318,8 @@ public class I18nGuardTests
     /// <summary>Event-script safety: an event is one string whose commands are joined with '/', and a
     /// <c>speak</c> / <c>message</c> payload is wrapped in double quotes. An <c>event.</c> value
     /// containing either character would split the script into bogus commands or unbalance the quotes
-    /// and break the intro or the ending outright. <c>EndingEventInjector.Text</c> sanitises both at
-    /// runtime for translations we do not control; this guard keeps our own English source clean, and
-    /// covers <c>IntroEventInjector</c>, which still interpolates raw values.</summary>
+    /// and break the ending outright. <c>EndingEventInjector.Text</c> sanitises both at runtime for
+    /// translations we do not control; this guard keeps our own English source clean.</summary>
     [Fact]
     public void The_letter_keeps_vanillas_name_and_farm_tokens()
     {
