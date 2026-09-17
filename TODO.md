@@ -36,11 +36,11 @@ carries a colour tag, so the walnut-gated, Volcano, year-2 and drop-only books c
 (Queen of Sauce Cookbook is color_blue, 100 golden walnuts). `ItemPoolBuilder` now skips any book outside
 `BookWeeks` when building the colour index, the same guard shape as the ring skip from 14 Sep. Unit test on
 the builder; the real Data/Objects export (patch export, 2026-09-17) confirms every book row is category
--102 or -103, so the guard covers all of them. Reply to SilviaVA once it ships.
+-102 or -103, so the guard covers all of them. Released in 0.18.28; a follow-up reply to SilviaVA is drafted, waiting on Jeff.
 
 ### Sweep 2026-09-17 (Nexus bugs + posts x4 mods, Reddit x4, GitHub x4): one new post, no bugs-tab reports
 - **asteriaths, TLY Nexus post 17 Sep, NO REPLY YET:** went to the Flower Dance a second time the same day,
-  could not dance with Shane again and found no way out (no-clipped). Fixed in 0.18.27, see above; reply owed.
+  could not dance with Shane again and found no way out (no-clipped). Fixed in 0.18.27, released in 0.18.28, replied 17 Sep.
 - FayGabi (17 Sep) thanked Jeff for his answer; nothing owed. Everything else was answered by Jeff on the 16th
   and 17th. Other mods: nothing new. Reddit: nothing since 14 Sep. GitHub: no issues on any repo.
 

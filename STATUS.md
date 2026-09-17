@@ -1,10 +1,19 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-17 afternoon (0.18.28 on master, pushed, NOT released: book slots + tier IV, Dye and by-kind pools model-gated, festival repeat-visit exit)
+**Last updated:** 2026-09-17 afternoon (0.18.28 RELEASED: GitHub release + Nexus file, version, description and changelog all live)
 **Branch:** `master`; everything PUSHED, nothing local-only
 **Tests:** 2138 passing, 0 failing (as of 0.18.28)
-**Build:** Release clean, 0 errors; 0.18.27 deployed to the game; game left at the TITLE screen (automated run, throwaway save)
-**Last public release:** 0.18.16 (2026-09-16 evening). 0.18.17 to 0.18.28 are on master and ready to release once Jeff says so; release notes not yet written.
+**Build:** Release clean, 0 errors; 0.18.28 built for release; game CLOSED
+**Last public release:** 0.18.28 (2026-09-17 afternoon; GitHub release v0.18.28 + Nexus file, version, description and changelog all live, all agent-driven through Chrome)
+
+## 2026-09-17 afternoon: 0.18.28 released (book slots + tier IV, model-gated pools, festival repeat-visit exit)
+
+One release carrying 0.18.17 through 0.18.28. Docs: README and Nexus description What's New
+0.18.28 content-identical, changelog note in `release-notes/`, live description backed up to
+`release-notes/nexus-description-0.18.16-backup.bbcode`. Verified live on the public page: version
+0.18.28, What's New 0.18.28 at the top, changelog entry 0.18.28 under Documents. Replied to
+asteriaths on the Nexus posts tab (fixed in 0.18.28). SilviaVA follow-up reply still owed (draft
+shown to Jeff, not posted).
 
 ## 2026-09-17 afternoon: 0.18.26 model gate on Dye and by-kind pools, 0.18.27 festival repeat-visit exit
 
