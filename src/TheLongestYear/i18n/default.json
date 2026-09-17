@@ -9,7 +9,7 @@
 
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
-    "dialog.festival.already-done": "You have already taken part in this today.",
+    "dialog.festival.already-done": "You have already taken part in this today. Leave the festival?",
     "hud.theme-complete": "Weekly theme complete! Drawback lifted.",
     "hud.goal-paid": "Goal done! +{{jp}} JP ({{done}}/{{total}})",
     "hud.nothing-to-donate": "Themed donations completed - drawback lifted.",
