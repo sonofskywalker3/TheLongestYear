@@ -34,12 +34,13 @@ public static class UpgradeCatalog
     /// <summary>Slots each owned Cookbook / Craftbook tier adds on top of the free ones.</summary>
     public const int BookSlotsPerTier = 4;
 
-    /// <summary>Highest Cookbook / Craftbook tier the shrine sells.</summary>
-    public const int BookMaxTier = 3;
+    /// <summary>Highest Cookbook / Craftbook tier the shrine sells. Tier 4 (Jeff, 2026-09-17,
+    /// 1200 JP) puts the ceiling back at the 20 slots tier 3 used to give.</summary>
+    public const int BookMaxTier = 4;
 
     /// <summary>
-    /// Total cooking recipe slots for the highest owned Cookbook tier: 4 free, then 8 / 12 / 16
-    /// for tiers 1 / 2 / 3. The highest tier wins (owning II gives 12, not 8 + 12).
+    /// Total cooking recipe slots for the highest owned Cookbook tier: 4 free, then 8 / 12 / 16 / 20
+    /// for tiers 1 / 2 / 3 / 4. The highest tier wins (owning II gives 12, not 8 + 12).
     /// Before 0.18.17 the ladder was 0 / 5 / 10 / 20; a book already holding more than the new
     /// cap keeps its recipes (see <c>RecipeBanking.IsOverCap</c>).
     /// </summary>
@@ -94,9 +95,11 @@ public static class UpgradeCatalog
         new UpgradeDefinition("cookbook_1", UpgradeCategory.Carryover, 150),
         new UpgradeDefinition("cookbook_2", UpgradeCategory.Carryover, 350, "cookbook_1"),
         new UpgradeDefinition("cookbook_3", UpgradeCategory.Carryover, 700, "cookbook_2"),
+        new UpgradeDefinition("cookbook_4", UpgradeCategory.Carryover, 1200, "cookbook_3"),
         new UpgradeDefinition("craftbook_1", UpgradeCategory.Carryover, 150),
         new UpgradeDefinition("craftbook_2", UpgradeCategory.Carryover, 350, "craftbook_1"),
         new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, 700, "craftbook_2"),
+        new UpgradeDefinition("craftbook_4", UpgradeCategory.Carryover, 1200, "craftbook_3"),
 
         // Efficiency. Keep Horse is pure carry-over (HorseCarryoverService), so it is only worth
         // offering once this run has a stable to carry (TODO 2026-08-28: 450 JP for nothing

@@ -68,7 +68,7 @@ namespace TheLongestYear.UI
             _monitor = monitor;
             _meta    = meta;
             _subtitle = subtitle;
-            int tier = meta.HighestKeptTier("cookbook_", maxTier: 3);
+            int tier = meta.HighestKeptTier("cookbook_", maxTier: UpgradeCatalog.BookMaxTier);
             _slotCount = UpgradeCatalog.CookbookSlotCount(tier);
             _monitor.Log(
                 $"CookbookMenu: tier={tier}, slots={_slotCount}, banked={meta.CookbookRecipes.Count}, " +

@@ -231,9 +231,11 @@ public class UpgradeCatalogTests
     [InlineData("cookbook_1", "Cookbook I",   UpgradeCategory.Carryover, 150, null)]
     [InlineData("cookbook_2", "Cookbook II",  UpgradeCategory.Carryover, 350, "cookbook_1")]
     [InlineData("cookbook_3", "Cookbook III", UpgradeCategory.Carryover, 700, "cookbook_2")]
+    [InlineData("cookbook_4", "Cookbook IV",  UpgradeCategory.Carryover, 1200, "cookbook_3")]
     [InlineData("craftbook_1", "Craftbook I",   UpgradeCategory.Carryover, 150, null)]
     [InlineData("craftbook_2", "Craftbook II",  UpgradeCategory.Carryover, 350, "craftbook_1")]
     [InlineData("craftbook_3", "Craftbook III", UpgradeCategory.Carryover, 700, "craftbook_2")]
+    [InlineData("craftbook_4", "Craftbook IV",  UpgradeCategory.Carryover, 1200, "craftbook_3")]
     public void Cookbook_craftbook_entries_have_correct_id_name_category_cost_prereq(
         string id, string name, UpgradeCategory category, long cost, string? prereqId)
     {
@@ -252,6 +254,7 @@ public class UpgradeCatalogTests
         Assert.Equal(8,  UpgradeCatalog.CookbookSlotCount(1));
         Assert.Equal(12, UpgradeCatalog.CookbookSlotCount(2));
         Assert.Equal(16, UpgradeCatalog.CookbookSlotCount(3));
+        Assert.Equal(20, UpgradeCatalog.CookbookSlotCount(4));
     }
 
     [Fact]
@@ -261,24 +264,27 @@ public class UpgradeCatalogTests
         Assert.Equal(8,  UpgradeCatalog.CraftbookSlotCount(1));
         Assert.Equal(12, UpgradeCatalog.CraftbookSlotCount(2));
         Assert.Equal(16, UpgradeCatalog.CraftbookSlotCount(3));
+        Assert.Equal(20, UpgradeCatalog.CraftbookSlotCount(4));
     }
 
     [Fact]
-    public void BookSlotCount_matches_the_stash_ladder()
+    public void BookSlotCount_matches_the_stash_ladder_then_adds_a_fourth_tier()
     {
         var s = new MetaState();
         Assert.Equal(s.StashSlotCount, UpgradeCatalog.CookbookSlotCount(0));
         s.OwnedUpgrades.Add("stash_3");
         Assert.Equal(s.StashSlotCount, UpgradeCatalog.CookbookSlotCount(3));
         Assert.Equal(s.StashSlotCount, UpgradeCatalog.CraftbookSlotCount(3));
+        Assert.Equal(4, UpgradeCatalog.BookMaxTier);
+        Assert.Equal(s.StashSlotCount + UpgradeCatalog.BookSlotsPerTier, UpgradeCatalog.CookbookSlotCount(UpgradeCatalog.BookMaxTier));
     }
 
     [Fact]
     public void BookSlotCount_clamps_out_of_range_tiers()
     {
         Assert.Equal(4,  UpgradeCatalog.CookbookSlotCount(-1));
-        Assert.Equal(16, UpgradeCatalog.CookbookSlotCount(9));
-        Assert.Equal(16, UpgradeCatalog.CraftbookSlotCount(9));
+        Assert.Equal(20, UpgradeCatalog.CookbookSlotCount(9));
+        Assert.Equal(20, UpgradeCatalog.CraftbookSlotCount(9));
     }
 
     [Fact]
