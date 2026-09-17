@@ -75,6 +75,7 @@ namespace TheLongestYear
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
         private IntroEventInjector _introInjector;
+        private OpeningStringsEditor _openingStrings;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
         private Integration.SeasonTurnDriver _seasonTurnDriver;
@@ -213,6 +214,10 @@ namespace TheLongestYear
             // hooked before the first asset load (same reason as _introInjector above).
             _onboardingMail = new TheLongestYear.Loop.OnboardingMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _onboardingMail.OnAssetRequested;
+            // The opening's deathbed and letter text (spec 2026-09-16). Hooked at Entry so the very first
+            // Strings/StringsFromCSFiles load already carries it; the minigame reads it before any save exists.
+            _openingStrings = new OpeningStringsEditor(this.Monitor, () => _config.Enabled);
+            helper.Events.Content.AssetRequested += _openingStrings.OnAssetRequested;
             // Darkness pushback first-strike letters (Linus, Shane, Lewis): same Data/Mail hook.
             _sabotageMail = new TheLongestYear.Loop.SabotageMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _sabotageMail.OnAssetRequested;
