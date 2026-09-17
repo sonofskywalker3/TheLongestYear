@@ -213,7 +213,7 @@ namespace TheLongestYear
             _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
             // Finding 1 fallback (2026-09-16 expanded-opening review): OnSaveCreating turned out to
             // fire too late for a brand-new game started through tly_newgame (and, by the same
-            // save-write timing, a real new game too) — it lands right alongside OnSaveLoaded, AFTER
+            // save-write timing, a real new game too), landing right alongside OnSaveLoaded, AFTER
             // the tour has already spoken about the stash and shrine. Give the script its own event
             // command instead: tlyPlaceGifts, inserted right after the tour's "changeLocation Farm",
             // does the same two placement calls at the one moment guaranteed to be before the tour's
