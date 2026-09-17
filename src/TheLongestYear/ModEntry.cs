@@ -313,6 +313,8 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.MineSweepCommand.Name, TheLongestYear.DebugCommands.MineSweepCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, a));
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.BankRecipesDebugCommand.Name, TheLongestYear.DebugCommands.BankRecipesDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters and the Fail-night offer. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails> | tly_pity accept|decline (after tly_hold keep|reshuffle, before tly_reset).", this.CmdPity);
@@ -2338,6 +2340,7 @@ namespace TheLongestYear
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
+                case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
