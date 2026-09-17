@@ -94,6 +94,24 @@ public class I18nGuardTests
         foreach (string file in AllSourceFiles())
             AddLiteralMatches(File.ReadAllText(file), keys);
 
+        // referenced by OpeningStrings / OpeningScript (Tasks 3 and 5 of the 2026-09-16 opening plan)
+        var unopened = new[] {
+            "opening.grandpa-1-m", "opening.grandpa-1-f", "opening.grandpa-2", "opening.grandpa-3",
+            "opening.grandpa-4", "opening.grandpa-5", "opening.grandpa-6", "opening.grandpa-7-m",
+            "opening.grandpa-7-f", "opening.grandpa-8", "opening.letter-m", "opening.letter-f",
+            "event.opening.robin-1", "event.opening.robin-2", "event.opening.robin-3",
+            "event.opening.morris-bus-1", "event.opening.robin-walk-1", "event.opening.robin-walk-2",
+            "event.opening.lewis-1", "event.opening.morris-farm-1", "event.opening.morris-farm-2",
+            "event.opening.morris-farm-3", "event.opening.lewis-2", "event.opening.morris-farm-4",
+            "event.opening.farmer-ask", "event.opening.lewis-3", "event.opening.lewis-hall-1",
+            "event.opening.lewis-hall-2", "event.opening.junimo-1", "event.opening.junimo-2",
+            "event.opening.junimo-3", "event.opening.junimo-4", "event.opening.junimo-5",
+            "event.opening.junimo-6", "event.opening.junimo-7", "event.opening.junimo-8",
+            "event.opening.tour-1", "event.opening.tour-2", "event.opening.tour-3",
+            "event.opening.tour-4", "event.opening.tour-5", "event.opening.tour-6",
+        };
+        keys.UnionWith(unopened);
+
         var recorded = new HashSet<string>();
         try
         {

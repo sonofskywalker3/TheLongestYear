@@ -1,4 +1,4 @@
-﻿{
+{
     // ============================================================================
     // The Longest Year: English source of truth.
     // TRANSLATORS: copy this file to <locale>.json (e.g. zh.json), translate the
@@ -623,6 +623,50 @@
     "event.intro.junimo-9b": "Some of what a season asks may look out of reach. That is no mistake.#$b#Gather what you can and keep the rest for later.#$b#When the year unwinds, we can even hold the town's wishes steady, so the next spring asks the same of you.$h",
     "event.intro.junimo-10": "We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Will you work the land with us, @?$h",
     "event.intro.junimo-11": "Then go. Spring is yours.$h",
+
+    // -- the expanded opening (deathbed, letter, arrival event) ------------------
+    "opening.grandpa-1-m": "...and for my very special grandson:",
+    "opening.grandpa-1-f": "...and for my very special granddaughter:",
+    "opening.grandpa-2": "I want you to have this sealed envelope.",
+    "opening.grandpa-3": "No, no. Don't open it yet. Have patience.",
+    "opening.grandpa-4": "Now, listen close.",
+    "opening.grandpa-5": "There will come a day when you feel crushed by the weight of your life.",
+    "opening.grandpa-6": "An emptiness will grow in you and take the light out of you. I know it well. I fought it most of my life.",
+    "opening.grandpa-7-m": "When that happens, my boy, you'll be ready for this gift.",
+    "opening.grandpa-7-f": "When that happens, my dear, you'll be ready for this gift.",
+    "opening.grandpa-8": "Now, let Grandpa rest.",
+    "opening.letter-m": "Dear {0},^^If you're reading this, you must be in dire need of a change.^^The same thing happened to me, long ago. I'd lost sight of what mattered most in life... real connections with other people and nature. So I dropped everything and moved to the place I truly belong.^^^I've enclosed the deed to that place... my pride and joy: {1} Farm. It's located in Stardew Valley, on the southern coast. It's the perfect place to start your new life.^^Lastly, the old community center meant a great deal to me. I tried to restore it, but I wasn't strong enough. But I think you are...^^This was my most precious gift of all, and now it's yours. I know you'll honor the family name, my boy. Good luck.^^Love, Grandpa^^P.S. If Lewis is still alive say hi to the old guy for me, will ya?",
+    "opening.letter-f": "Dear {0},^^If you're reading this, you must be in dire need of a change.^^The same thing happened to me, long ago. I'd lost sight of what mattered most in life... real connections with other people and nature. So I dropped everything and moved to the place I truly belong.^^^I've enclosed the deed to that place... my pride and joy: {1} Farm. It's located in Stardew Valley, on the southern coast. It's the perfect place to start your new life.^^Lastly, the old community center meant a great deal to me. I tried to restore it, but I wasn't strong enough. But I think you are...^^This was my most precious gift of all, and now it's yours. I know you'll honor the family name, my dear. Good luck.^^Love, Grandpa^^P.S. If Lewis is still alive say hi to the old guy for me, will ya?",
+    "event.opening.robin-1": "Hello! You must be @. I'm Robin, the local carpenter. Mayor Lewis sent me to bring you up to the farm.",
+    "event.opening.robin-2": "I knew your grandfather. Everyone loved him, and he helped a bunch of individuals become a community. It hasn't been the same since he passed.",
+    "event.opening.robin-3": "Up at the farm, as it happens. You can follow us.",
+    "event.opening.morris-bus-1": "Excuse me. Morris, Joja Corporation. Where would I find the mayor?",
+    "event.opening.robin-walk-1": "This is %farm farm. It's overgrown, but the soil is good.",
+    "event.opening.robin-walk-2": "And here we are, your new home.",
+    "event.opening.lewis-1": "Welcome, @! I'm Lewis, Mayor of Pelican Town. Everyone's been asking about you.",
+    "event.opening.morris-farm-1": "Mayor Lewis. Morris, Joja Corporation. I'll be brief.",
+    "event.opening.morris-farm-2": "The Community Center is a registered landmark, and it has been left to rot. Joja holds an option to buy it. The option closes on Winter 28 unless the building is restored before then.",
+    "event.opening.morris-farm-3": "I've been assigned to manage the local JojaMart and see the contract through. You'll find me there.",
+    "event.opening.lewis-2": "Restored with what? Nobody in this town has that kind of money, and you know it.",
+    "event.opening.morris-farm-4": "That isn't my concern. @, I read your file on the way up. You walked out on a good position. The door is open when you're done here. I expect I'll see you.",
+    "event.opening.farmer-ask": "Grandpa's letter mentioned the old community center. Could I see it?",
+    "event.opening.lewis-3": "The Community Center? Sure. Come on, I'll walk you over. It's not much to look at anymore.",
+    "event.opening.lewis-hall-1": "There it is. It used to be where everyone met. Now it's a mess, and nobody has the time or the money to fix it.",
+    "event.opening.lewis-hall-2": "Here, take the key. Look around if you like. I have to get back. Good luck, @.",
+    "event.opening.junimo-1": "Hello, @. We are the Junimos, the spirits of this land.#$b#Few people can see us anymore.$h",
+    "event.opening.junimo-2": "Long ago the people of this valley worked the land together and shared what it gave them.#$b#This hall was the heart of that.$h",
+    "event.opening.junimo-3": "Then they grew busy. They chased money and forgot one another.#$b#The hall went quiet, and we went to sleep.$s",
+    "event.opening.junimo-4": "We can make the land strong again, but not alone.#$b#Work the soil. Bring the town back together.#$b#As they share the land's bounty again, our power returns and this hall is restored.$h",
+    "event.opening.junimo-5": "But the seasons bind you, @. Each one asks its share.#$b#Bring enough to this hall before a season turns.#$b#Fall short, and the year unwinds to spring and you begin again.$s",
+    "event.opening.junimo-6": "Even at a good pace, one year is too short.#$b#You will not finish on this first turning.#$b#When the year unwinds, everything returns: the fields, the buildings, even the people you have come to know. What you gathered is lost.$s",
+    "event.opening.junimo-7": "But what you have learned need not be lost.#$b#Your offerings become our power, and we will spend it to help you keep some of what you gained.#$b#Some of what a season asks may look out of reach. Gather what you can and keep the rest for later.$h",
+    "event.opening.junimo-8": "We will turn the year as many times as it takes. There is no shame in beginning again.#$b#Now go home, @. We will meet you there.$h",
+    "event.opening.tour-1": "This chest is your stash. What you put in it survives the unwind.#$b#It holds four things for now. We can make it bigger.$h",
+    "event.opening.tour-2": "This statue shows the weather and the cart ahead of time, and what each season will ask.#$b#Come here when you plan.$h",
+    "event.opening.tour-3": "This is your cookbook. Write a recipe in it and you keep it through the unwind.#$b#It has four pages for now.$h",
+    "event.opening.tour-4": "This is your craft book. It works the same way, for the things you build.#$b#Four pages for now.$h",
+    "event.opening.tour-5": "This is your bundle log. It shows every bundle and what each one still needs.#$b#Keep it with you.$h",
+    "event.opening.tour-6": "One more thing. Each week the town needs something most.#$b#Choose it, and bring that first. Choose now, @.$h",
 
     // -- year one ending: the crack (spec 2026-09-06 section 6) -----------------------
     "event.ending.crack.open": "Something is going on here that I don't understand.",
