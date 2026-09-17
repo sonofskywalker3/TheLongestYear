@@ -176,6 +176,11 @@ public static class OpeningScript
 
             // ---- Farm again: the tour on the porch (Standard-farm tiles, offset per farm type) ----
             "changeLocation Farm",
+            // Place the stash chest and planning shrine now, before the tour speaks about them
+            // (finding 1, 2026-09-16 review): OnSaveCreating fires too late on a brand-new game
+            // to guarantee this, so the script places them itself via this custom command
+            // (ModEntry.Entry registers "tlyPlaceGifts", mirroring EndingEventCommands's pattern).
+            "tlyPlaceGifts",
             "warp farmer 66 18 true",
             "faceDirection farmer 1",
             "warp Junimo 67 18",
