@@ -1,0 +1,215 @@
+using System;
+using System.Collections.Generic;
+
+namespace TheLongestYear.Core.Intro;
+
+/// <summary>The arrival event (spec 2026-09-16-expanded-opening-design.md, sections 1 and 2.3): one
+/// script under vanilla's own key that carries itself from the bus stop through the farmhouse, the
+/// Community Center and back to the porch, and ends the way vanilla's arrival ends (end beginGame:
+/// Event.cs 4637 puts the farmer to bed and starts Spring 1). Pure: <paramref name="text"/> supplies
+/// every spoken line already sanitised for the script (no '"' or '/').</summary>
+public static class OpeningScript
+{
+    public const string VanillaKey = "60367/u 0";
+    public static readonly string[] LocationOrder = { "BusStop", "Farm", "CommunityCenter", "Farm" };
+    private const string Off = "-100 -100";
+    private const string Prefix = "event.opening.";
+
+    /// <summary>Every line key the script speaks, in order.</summary>
+    public static readonly string[] LineKeys =
+    {
+        Prefix + "robin-1", Prefix + "robin-2", Prefix + "morris-bus-1", Prefix + "robin-3",
+        Prefix + "robin-walk-1", Prefix + "robin-walk-2",
+        Prefix + "lewis-1", Prefix + "morris-farm-1", Prefix + "morris-farm-2", Prefix + "morris-farm-3",
+        Prefix + "lewis-2", Prefix + "morris-farm-4", Prefix + "farmer-ask", Prefix + "lewis-3",
+        Prefix + "lewis-hall-1", Prefix + "lewis-hall-2",
+        Prefix + "junimo-1", Prefix + "junimo-2", Prefix + "junimo-3", Prefix + "junimo-4",
+        Prefix + "junimo-5", Prefix + "junimo-6", Prefix + "junimo-7", Prefix + "junimo-8",
+        Prefix + "tour-1", Prefix + "tour-2", Prefix + "tour-3", Prefix + "tour-4", Prefix + "tour-5", Prefix + "tour-6",
+    };
+
+    public static string Build(Func<string, string> text, string ccSeenMail)
+    {
+        string Say(string who, string key) => $"speak {who} \"{text(Prefix + key)}\"";
+        string Note(string key) => $"message \"{text(Prefix + key)}\"";   // the farmer's own line, no portrait
+
+        var s = new List<string>
+        {
+            // ---- Bus stop (vanilla 60367 opening, Morris added) ----
+            "none",
+            "-1000 -1000",
+            "farmer 22 10 2 Robin 22 13 0 Lewis -100 -100 2",
+            "pause 500",
+            "playSound busDoorOpen",
+            "pause 5000",
+            "viewport 23 10 clamp true",
+            "move farmer 0 2 2",
+            "playMusic SettlingIn",
+            Say("Robin", "robin-1"),
+            "pause 300",
+            Say("Robin", "robin-2"),
+            "pause 400",
+            "playSound busDoorOpen",
+            "addTemporaryActor Morris 16 32 22 8 2 true Character",
+            "move Morris 0 1 2",
+            "pause 400",
+            "faceDirection Robin 0",
+            Say("Morris", "morris-bus-1"),
+            "pause 300",
+            "faceDirection Robin 2",
+            Say("Robin", "robin-3"),
+            "pause 400",
+            "viewport move 0 2 800",
+            "move Robin 0 5 2 true",
+            "pause 800",
+            "move farmer 0 4 2 true",
+            "fade",
+            "speed farmer 2",
+            "viewport -200 -200",
+
+            // ---- Farm: the walk (vanilla tiles, Morris one tile behind) ----
+            "changeLocation Farm",
+            "halt",
+            "warp Robin 78 17",
+            "faceDirection Robin 3",
+            "warp farmer 79 17",
+            "faceDirection farmer 3",
+            "warp Morris 80 17",
+            "faceDirection Morris 3",
+            "viewport 70 16 clamp",
+            "viewport move -1 0 4000",
+            "move Robin -8 0 3 farmer -8 0 3 Morris -8 0 3",
+            "pause 700",
+            "faceDirection Robin 2",
+            Say("Robin", "robin-walk-1"),
+            "pause 500",
+            "move Robin -7 0 0 farmer -7 0 0 Morris -7 0 0",
+            "pause 400",
+            "faceDirection Robin 0",
+            Say("Robin", "robin-walk-2"),
+            "pause 300",
+            "faceDirection farmer 0",
+            "pause 500",
+
+            // ---- Farmhouse door: Lewis, then Morris's business ----
+            "playSound doorClose",
+            "warp Lewis 64 15",
+            "pause 1500",
+            "move Lewis 0 1 2",
+            "move Lewis 1 0 2",
+            "move Lewis 0 1 3",
+            "faceDirection farmer 1",
+            "faceDirection Robin 1",
+            "pause 600",
+            Say("Lewis", "lewis-1"),
+            "pause 400",
+            "faceDirection Lewis 1",
+            "faceDirection Morris 3",
+            Say("Morris", "morris-farm-1"),
+            "pause 200",
+            Say("Morris", "morris-farm-2"),
+            "pause 200",
+            Say("Morris", "morris-farm-3"),
+            "pause 400",
+            "jump Lewis",
+            Say("Lewis", "lewis-2"),
+            "pause 500",
+            "faceDirection Morris 2",
+            "faceDirection farmer 1",
+            Say("Morris", "morris-farm-4"),
+            "pause 400",
+            "move Morris 12 0 1 true",
+            "pause 1500",
+            $"warp Morris {Off}",
+            "faceDirection farmer 3",
+            "faceDirection Lewis 1",
+            "pause 600",
+            Note("farmer-ask"),
+            "pause 300",
+            Say("Lewis", "lewis-3"),
+            "pause 600",
+            "globalFade",
+            $"viewport {Off}",
+
+            // ---- Community Center: Lewis's piece, then the Junimos ----
+            "changeLocation CommunityCenter",
+            "warp farmer 32 16 true",
+            "warp Lewis 30 16",
+            "faceDirection Lewis 1",
+            "faceDirection farmer 3",
+            "viewport 32 14 true",
+            "pause 800",
+            Say("Lewis", "lewis-hall-1"),
+            "playSound coin",
+            "pause 300",
+            Say("Lewis", "lewis-hall-2"),
+            "pause 600",
+            "playSound doorClose",
+            $"warp Lewis {Off}",
+            "faceDirection farmer 0",
+            "pause 800",
+            "addTemporaryActor Junimo 16 16 32 11 2 false character Junimo",
+            "playSound junimoMeep1",
+            "pause 400",
+            Say("Junimo", "junimo-1"),
+            "pause 200",
+            Say("Junimo", "junimo-2"),
+            "pause 200",
+            Say("Junimo", "junimo-3"),
+            "pause 300",
+            Say("Junimo", "junimo-4"),
+            "pause 300",
+            Say("Junimo", "junimo-5"),
+            "pause 300",
+            Say("Junimo", "junimo-6"),
+            "pause 300",
+            Say("Junimo", "junimo-7"),
+            "pause 600",
+            Say("Junimo", "junimo-8"),
+            "pause 600",
+            "playSound junimoMeep1",
+            "globalFade",
+            $"viewport {Off}",
+
+            // ---- Farm again: the tour on the porch (Standard-farm tiles, offset per farm type) ----
+            "changeLocation Farm",
+            "warp farmer 66 18 true",
+            "faceDirection farmer 1",
+            "addTemporaryActor Junimo 16 16 67 18 0 false character Junimo",
+            "addTemporaryActor Junimo 16 16 62 18 0 false character Junimo2",
+            "viewport 66 18 true",
+            "pause 800",
+            "playSound junimoMeep1",
+            "jump Junimo",
+            Say("Junimo", "tour-1"),
+            "pause 300",
+            "faceDirection farmer 3",
+            "jump Junimo2",
+            Say("Junimo", "tour-2"),
+            "pause 300",
+            "faceDirection farmer 1",
+            "playSound coin",
+            Say("Junimo", "tour-3"),
+            "pause 200",
+            "playSound coin",
+            Say("Junimo", "tour-4"),
+            "pause 200",
+            "playSound coin",
+            Say("Junimo", "tour-5"),
+            "pause 400",
+            Say("Junimo", "tour-6"),
+            "pause 600",
+            "playSound junimoMeep1",
+            "pause 800",
+            "globalFade",
+            $"viewport {Off}",
+            "playMusic none",
+            "pause 1500",
+            "playSound rooster",
+            "pause 800",
+            $"addMailReceived {ccSeenMail}",
+            "end beginGame",
+        };
+        return string.Join("/", s);
+    }
+}
