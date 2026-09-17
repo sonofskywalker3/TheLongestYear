@@ -19,7 +19,7 @@
 - **Parked for cleanup:** an abandoned early placement call in `OnSaveCreating` is still there and logs
   the same "Opening: placed the stash and shrine for the tour." line as the real fix, so the line
   appears twice on a new farm. Remove it.
-- **Open for Jeff:** nobody states Winter 28 in the opening after his Morris rewrite.
+- Deadline line settled 2026-09-17: Lewis reads it off the contract (restore it before Spring 1 of next year).
 
 ## 2026-09-17: the expanded opening built and headless-checked
 
