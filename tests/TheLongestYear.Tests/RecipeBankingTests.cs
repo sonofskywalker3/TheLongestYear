@@ -36,4 +36,19 @@ public class RecipeBankingTests
         Assert.Throws<ArgumentNullException>(() => RecipeBanking.Bankable(new[] { "A" }, null!, IsStarter));
         Assert.Throws<ArgumentNullException>(() => RecipeBanking.Bankable(new[] { "A" }, new List<string>(), null!));
     }
+
+    /// <summary>0.18.17 lowered tier 3 from 20 slots to 16. A book already holding more than its
+    /// cap keeps every recipe: the rows still show and can be removed, the book only refuses new
+    /// entries until it is back under the cap.</summary>
+    [Fact]
+    public void Overflow_stays_visible_and_blocks_new_entries()
+    {
+        Assert.Equal(20, RecipeBanking.VisibleRows(slotCount: 16, bankedCount: 20));
+        Assert.Equal(16, RecipeBanking.VisibleRows(slotCount: 16, bankedCount: 3));
+        Assert.True(RecipeBanking.IsOverCap(slotCount: 16, bankedCount: 20));
+        Assert.False(RecipeBanking.IsOverCap(slotCount: 16, bankedCount: 16));
+        Assert.False(RecipeBanking.CanBank(slotCount: 16, bankedCount: 20));
+        Assert.False(RecipeBanking.CanBank(slotCount: 16, bankedCount: 16));
+        Assert.True(RecipeBanking.CanBank(slotCount: 16, bankedCount: 15));
+    }
 }

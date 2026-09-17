@@ -14,7 +14,10 @@ namespace TheLongestYear.UI
     /// Slot-grid menu for managing banked cooking recipes in <see cref="MetaState.CookbookRecipes"/>.
     /// Opened when the player interacts with the Cookbook world object (kitchen counter patch).
     ///
-    /// Slot count = <see cref="UpgradeCatalog.CookbookSlotCount"/> of the highest owned Cookbook tier.
+    /// Slot count = <see cref="UpgradeCatalog.CookbookSlotCount"/> of the highest owned Cookbook tier
+    /// (4 free, 4 per tier). A book holding more than its cap (0.18.17 lowered tier 3 from 20 to
+    /// 16) keeps every recipe: the overflow rows stay visible and removable, and the book refuses
+    /// new entries until it is back under the cap (<see cref="RecipeBanking"/>).
     /// Empty slot click → inline recipe picker (currently-known, unslotted recipes only).
     /// Filled slot click → confirm-removal dialog.
     /// On dismiss, <c>MetaState.DismissedIndicators</c> gets "tly.cookbook" so the one-time
@@ -38,7 +41,15 @@ namespace TheLongestYear.UI
         /// <summary>Optional line under the title, set by the loop-boundary offer ("bank what you
         /// want to keep before the reset"). Null when opened from the book itself.</summary>
         private readonly string _subtitle;
-        private int HeaderHeight => _subtitle == null ? 80 : 120;
+
+        /// <summary>The line under the title: the loop-boundary subtitle when given, else the
+        /// over-cap notice while the book holds more recipes than it has slots, else nothing.</summary>
+        private string Notice => _subtitle
+            ?? (RecipeBanking.IsOverCap(_slotCount, _meta.CookbookRecipes.Count) ? Strings.Get("menu.books.over-cap") : null);
+        private int HeaderHeight => Notice == null ? 80 : 120;
+
+        /// <summary>Rows drawn: every slot plus any grandfathered overflow.</summary>
+        private int RowCount => RecipeBanking.VisibleRows(_slotCount, _meta.CookbookRecipes.Count);
 
         // Sub-mode: when non-null we are in "pick a recipe to fill slot _pendingSlot".
         private int _pendingSlot = -1;
@@ -59,6 +70,10 @@ namespace TheLongestYear.UI
             _subtitle = subtitle;
             int tier = meta.HighestKeptTier("cookbook_", maxTier: 3);
             _slotCount = UpgradeCatalog.CookbookSlotCount(tier);
+            _monitor.Log(
+                $"CookbookMenu: tier={tier}, slots={_slotCount}, banked={meta.CookbookRecipes.Count}, " +
+                $"overCap={RecipeBanking.IsOverCap(_slotCount, meta.CookbookRecipes.Count)}.",
+                LogLevel.Info);
             RecomputeLayout();
             if (Game1.options.snappyMenus && Game1.options.gamepadControls)
                 this.snapToDefaultClickableComponent();
@@ -148,7 +163,7 @@ namespace TheLongestYear.UI
             {
                 if (!_rowSlots[i].containsPoint(x, y)) continue;
                 int slotIndex = _scroll + i;
-                if (slotIndex >= _slotCount) break;
+                if (slotIndex >= RowCount) break;
 
                 if (slotIndex < _meta.CookbookRecipes.Count)
                     PromptRemove(slotIndex);
@@ -195,6 +210,15 @@ namespace TheLongestYear.UI
         private void BankRecipe(string recipeId)
         {
             if (_meta.CookbookRecipes.Contains(recipeId)) return;  // guard
+            if (!RecipeBanking.CanBank(_slotCount, _meta.CookbookRecipes.Count))
+            {
+                // No free slot (full, or over the cap after a tier ladder change): refuse.
+                _monitor.Log($"CookbookMenu: refused '{recipeId}', slots={_slotCount}, banked={_meta.CookbookRecipes.Count}.", LogLevel.Info);
+                Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.books.over-cap"), HUDMessage.newQuest_type));
+                _pickerList  = null;
+                _pendingSlot = -1;
+                return;
+            }
             _meta.CookbookRecipes.Add(recipeId);
             Game1.playSound("smallSelect");
             _monitor.Log($"CookbookMenu: banked recipe '{recipeId}'.", LogLevel.Trace);
@@ -213,6 +237,7 @@ namespace TheLongestYear.UI
                     _meta.CookbookRecipes.RemoveAt(slotIndex);
                     Game1.playSound("trashcan");
                     _monitor.Log($"CookbookMenu: removed recipe '{recipeId}' from slot {slotIndex}.", LogLevel.Trace);
+                    RecomputeLayout();   // the over-cap notice may have just cleared
                     Game1.activeClickableMenu = this;
                 },
                 _ => Game1.activeClickableMenu = this);
@@ -242,7 +267,7 @@ namespace TheLongestYear.UI
                 _pickerScroll = Math.Max(0, Math.Min(Math.Max(0, _pickerList.Count - _rowsPerPage), _pickerScroll));
                 return;
             }
-            int maxStart = Math.Max(0, _slotCount - _rowsPerPage);
+            int maxStart = Math.Max(0, RowCount - _rowsPerPage);
             _scroll = Math.Max(0, Math.Min(maxStart, _scroll));
         }
 
@@ -275,10 +300,11 @@ namespace TheLongestYear.UI
                     });
             StardewValley.BellsAndWhistles.SpriteText.drawStringHorizontallyCenteredAt(
                 b, title, xPositionOnScreen + width / 2, yPositionOnScreen + 24);
-            if (_subtitle != null)
+            string notice = Notice;
+            if (notice != null)
             {
-                Vector2 size = Game1.smallFont.MeasureString(_subtitle);
-                Utility.drawTextWithShadow(b, _subtitle, Game1.smallFont,
+                Vector2 size = Game1.smallFont.MeasureString(notice);
+                Utility.drawTextWithShadow(b, notice, Game1.smallFont,
                     new Vector2(xPositionOnScreen + (width - size.X) / 2, yPositionOnScreen + 84),
                     Game1.textColor);
             }
@@ -290,7 +316,7 @@ namespace TheLongestYear.UI
 
             _scrollUp.draw(b, _scroll > 0 || (_pickerList != null && _pickerScroll > 0) ? Color.White : Color.Gray, 1f);
 
-            int totalRows = _pickerList != null ? _pickerList.Count : _slotCount;
+            int totalRows = _pickerList != null ? _pickerList.Count : RowCount;
             int scrollStart = _pickerList != null ? _pickerScroll : _scroll;
             _scrollDown.draw(b, (scrollStart + _rowsPerPage) < totalRows ? Color.White : Color.Gray, 1f);
 
@@ -304,7 +330,7 @@ namespace TheLongestYear.UI
             for (int i = 0; i < _rowSlots.Count; i++)
             {
                 int slotIndex = _scroll + i;
-                if (slotIndex >= _slotCount) break;
+                if (slotIndex >= RowCount) break;
 
                 ClickableComponent slot = _rowSlots[i];
                 bool filled = slotIndex < _meta.CookbookRecipes.Count;
