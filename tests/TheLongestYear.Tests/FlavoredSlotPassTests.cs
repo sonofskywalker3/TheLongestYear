@@ -90,6 +90,28 @@ public class FlavoredSlotPassTests
         Assert.True(flavors.ContainsKey(1));
     }
 
+    /// <summary>Found by running the game, 2026-09-21: a board asked for 18 Smoked Midnight Squid,
+    /// a Night Market fish, because an input with no supply row fell back to the machine's own
+    /// throughput. An input we cannot size the ask from is no longer named at all.</summary>
+    [Fact]
+    public void An_input_with_no_supply_row_is_never_named()
+    {
+        // (O)9998 is a fruit nothing has a quantity basis for; it is the ONLY candidate here.
+        var pools = new ItemPools
+        {
+            Crops = new List<PoolItem> { Fruit("(O)9998") },
+            FruitTreeFruitIds = new HashSet<string>(),
+        };
+        BundleSpec before = Spec(new BundleSlotSpec(FlavoredSlotRules.DriedFruit, 18, 0));
+        BundleSpec after = FlavoredSlotPass.Apply(
+            before, seed: 7, new DifficultyProfile(), pools,
+            _ => 1,                      // placed in week 1, so reachability is not what excludes it
+            _ => Season.Winter,
+            out IReadOnlyDictionary<int, string> flavors);
+        Assert.Empty(flavors);
+        Assert.Same(before, after);
+    }
+
     [Fact]
     public void The_persisted_key_is_bundle_then_slot()
         => Assert.Equal("3:1", FlavoredSlotPass.KeyFor(3, 1));

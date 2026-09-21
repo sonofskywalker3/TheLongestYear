@@ -71,12 +71,33 @@ public class FlavoredSlotRulesTests
     }
 
     [Fact]
-    public void A_fish_slot_offers_fish_and_a_mushroom_slot_mushrooms()
+    public void A_fish_slot_offers_fish()
     {
         Assert.Contains(Sardine, Candidates(FlavoredSlotRules.SmokedFish, 16));
-        Assert.Contains(Morel, Candidates(FlavoredSlotRules.DriedMushrooms, 16));
         Assert.DoesNotContain(Sardine, Candidates(FlavoredSlotRules.DriedFruit, 16));
     }
+
+    /// <summary>Found by running the game, 2026-09-21. A flavored slot must be written as
+    /// vanilla's PreserveType enum name, because that is what the FLAVORED_ITEM query parses. The
+    /// name for dried mushrooms is "DriedMushroom", singular, while the object id is
+    /// "DriedMushrooms", plural, so no single id works for both the flavor and the icon. Mushrooms
+    /// therefore stay an "any" slot.</summary>
+    [Fact]
+    public void Dried_mushrooms_are_not_a_flavored_slot()
+    {
+        Assert.False(FlavoredSlotRules.IsFlavored(FlavoredSlotRules.DriedMushrooms));
+        Assert.True(FlavoredSlotRules.IsFlavored(FlavoredSlotRules.DriedFruit));
+        Assert.True(FlavoredSlotRules.IsFlavored(FlavoredSlotRules.SmokedFish));
+    }
+
+    /// <summary>A qualified id fails the enum parse, which made the menu throw and the slot
+    /// accept nothing. The written id is the bare name.</summary>
+    [Theory]
+    [InlineData("(O)DriedFruit", "DriedFruit")]
+    [InlineData("(O)SmokedFish", "SmokedFish")]
+    [InlineData("(O)24", "(O)24")]
+    public void A_flavored_slot_is_written_as_its_preserve_type_name(string baseId, string written)
+        => Assert.Equal(written, FlavoredSlotRules.WrittenIdFor(baseId));
 
     [Fact]
     public void An_unplaced_item_is_not_offered()
