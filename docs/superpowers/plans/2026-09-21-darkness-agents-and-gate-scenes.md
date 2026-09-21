@@ -428,7 +428,7 @@ public HashSet<string> StrikeScenesSeen { get; set; } = new();
 
 ### Task 5: Pick at day end, apply once
 
-> **Amended 2026-09-21 (Jeff): one chest per strike.** `SpoilagePass.Plan` picks ONE target with a single roll weighted by units (each chest is a target, each placed machine is a target) and takes only from it: up to `count` units from that chest, or that one machine. `PendingStrike` gains `TargetChest` and `TargetLocation`. The `Plan` code block below shows the older spread version; the single-target rule wins.
+> **Amended 2026-09-21 (Jeff): one chest per strike, machines as before.** `SpoilagePass.Plan` keeps the unit-by-unit weighted loop, but the first chest a roll lands on becomes the night's chest and every other chest leaves the pool; machines stay in the pool. `PendingStrike` gains `TargetChest` and `SceneTarget` (the first chest hit, else the first machine hit). The `Plan` code block below lacks the one-chest constraint; this note wins.
 
 The heart of the plan. Today `NightPlan.Execute` picks and applies in one call. After this task the night pass produces a `PendingStrike` whose damage lands exactly once: in the scene, or at once when no scene will play.
 
@@ -963,7 +963,7 @@ Linus is a scene-drawn sprite (`AnimatedSprite` on `Characters\Linus`), never th
 
 ### Task 8: The thief
 
-> **Amended 2026-09-21 (Jeff): one chest per strike.** `PickChest(strike)` is `strike.TargetChest` when `strike.TargetLocation` is the Farm, a FarmHouse, a Cellar or a Shed, else null. There is no worst-hit chest to choose: every hit is in the one chest. Ignore the GroupBy version below and the note about units vanishing elsewhere.
+> **Amended 2026-09-21 (Jeff): one chest per strike, machines as before.** The scene is staged at `strike.SceneTarget` (the night's chest, else one machine taken) when its `Location` is the Farm, a FarmHouse, a Cellar or a Shed, else no scene. For a machine target the Brute walks to the machine, a beat, and it vanishes with everything else at `ApplyStrike()` (no lid). `PickChest` below becomes `SceneTargetOnFarm(strike) : SpoilagePass.Hit`; ignore the GroupBy version.
 
 **Files:** Modify `src/TheLongestYear/Scenes/ThiefScene.cs`.
 
