@@ -304,6 +304,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
+            helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
             helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the config's BundleSource so the next reset honours it.", this.CmdBundleSource);
             helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
@@ -1460,6 +1461,77 @@ namespace TheLongestYear
                 LogLevel.Info);
         }
 
+        /// <summary>Debug: what fruit, mushroom or fish does each flavored slot of the live board
+        /// name (plan 2026-09-21-flavored-bundle-slots)? Read-only.
+        ///
+        /// Constructs the note menu exactly as <see cref="CmdRingTest"/> does, because a Bundle only
+        /// exists while a JunimoNoteMenu does, and the Bundle constructor is what
+        /// FlavoredSlotPatch hooks. So this proves the patch actually fired on the live board,
+        /// not merely that the map was stamped.</summary>
+        private void CmdFlavors(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            IReadOnlyDictionary<string, string> map = _meta.State.WrittenBoardFlavors;
+            this.Monitor.Log(
+                $"tly_flavors: stamped map = {(map == null ? "(null: a board written before 0.18.33, or Vanilla mode)" : map.Count + " slot(s)")}.",
+                LogLevel.Info);
+            if (map != null)
+                foreach (KeyValuePair<string, string> entry in map.OrderBy(e => e.Key, StringComparer.Ordinal))
+                    this.Monitor.Log($"  stamped {entry.Key} -> {entry.Value}", LogLevel.Info);
+
+            var cc = Game1.RequireLocation<StardewValley.Locations.CommunityCenter>("CommunityCenter");
+            int flavored = 0, bare = 0;
+            for (int area = 0; area <= 5; area++)
+            {
+                var note = new JunimoNoteMenu(area, cc.bundlesDict());
+                foreach (Bundle b in note.bundles)
+                {
+                    for (int i = 0; i < b.ingredients.Count; i++)
+                    {
+                        StardewValley.Menus.BundleIngredientDescription ing = b.ingredients[i];
+                        if (ing.id == null || !TheLongestYear.Core.FlavoredSlotRules.IsFlavored(ing.id)) continue;
+
+                        string name;
+                        if (ing.preservesId != null)
+                        {
+                            flavored++;
+                            // Null when the id is not a PreserveType name, which is exactly the
+                            // bug this command caught on 2026-09-21. Say so rather than throwing.
+                            Item made = Utility.CreateFlavoredItem(ing.id, ing.preservesId, ing.quality, ing.stack);
+                            name = made?.DisplayName ?? "(FLAVOR DID NOT RESOLVE)";
+                        }
+                        else
+                        {
+                            bare++;
+                            name = ItemRegistry.GetDataOrErrorItem(TheLongestYear.Core.BundleParsing.NormalizeItemId(ing.id)).DisplayName;
+                        }
+                        // Prove the MATCH half too, not just the name: the right flavor must be
+                        // accepted and a different one refused. Bundle.IsValidItemForThisIngredient
+                        // Description is the exact check the note runs on a donation.
+                        string accepts = "";
+                        if (ing.preservesId != null)
+                        {
+                            Item right = Utility.CreateFlavoredItem(ing.id, ing.preservesId, 0, 1);
+                            string otherId = ing.preservesId == "145" ? "132" : "145";
+                            Item wrong = Utility.CreateFlavoredItem(ing.id, otherId, 0, 1);
+                            Item plain = ItemRegistry.Create(TheLongestYear.Core.BundleParsing.NormalizeItemId(ing.id), 1);
+                            accepts =
+                                $" | accepts right={(right != null && b.IsValidItemForThisIngredientDescription(right, ing))}" +
+                                $" wrong={(wrong != null && b.IsValidItemForThisIngredientDescription(wrong, ing))}" +
+                                $" unflavored={(plain != null && b.IsValidItemForThisIngredientDescription(plain, ing))}";
+                        }
+                        this.Monitor.Log(
+                            $"  live area {area} bundle {b.bundleIndex} '{b.name}' slot {i}: id={ing.id} preservesId={ing.preservesId ?? "(none)"} " +
+                            $"stack={ing.stack} reads as \"{name}\"{accepts}",
+                            ing.preservesId != null ? LogLevel.Info : LogLevel.Warn);
+                    }
+                }
+                note.exitThisMenu(false);
+            }
+            this.Monitor.Log($"tly_flavors: {flavored} flavored slot(s), {bare} still bare.", flavored > 0 ? LogLevel.Info : LogLevel.Warn);
+        }
+
         /// <summary>Debug: would the Community Center note let the player pick up this item (0.18.7)?</summary>
         private void CmdRingTest(string command, string[] args)
         {
@@ -2366,6 +2438,7 @@ namespace TheLongestYear
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
+                case "tly_flavors": this.CmdFlavors(command, args); break;
                 case "tly_bundlesource": this.CmdBundleSource(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;

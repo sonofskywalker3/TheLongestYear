@@ -58,26 +58,35 @@ public static class FlavoredSlotPass
                 ? AvailabilityWeeks.LastWeekOf(due)
                 : Calendar.WeeksPerYear;
 
-            IReadOnlyList<string> candidates = FlavoredSlotRules.CandidatesFor(baseId, pools, weekOf, deadlineWeek);
-            // Nothing reachable in time: leave the slot flavorless rather than name something the
-            // player cannot get. It keeps its "Any ..." label and its throughput-based stack.
-            if (FlavoredSlotRules.Pick(seed, spec.Index, i, candidates) is not string input) continue;
+            // Only name an input whose weekly supply we can actually size the ask from. Without
+            // this the fallback was the machine's own throughput, the most generous number there
+            // is, and a board asked for 18 Smoked Midnight Squid: a Night Market fish, and that
+            // festival lasts three days (found by running the game, 2026-09-21).
+            var sizeable = new List<string>();
+            var bases = new Dictionary<string, double>(StringComparer.Ordinal);
+            foreach (string candidate in FlavoredSlotRules.CandidatesFor(baseId, pools, weekOf, deadlineWeek))
+            {
+                if (QuantityAskPass.BasisByDeadline(candidate, deadlineFor(candidate)) is not double b) continue;
+                sizeable.Add(candidate);
+                bases[candidate] = b;
+            }
+
+            // Nothing reachable and sizeable: leave the slot flavorless rather than name something
+            // the player cannot get. It keeps its "Any ..." label and its throughput-based stack.
+            if (FlavoredSlotRules.Pick(seed, spec.Index, i, sizeable) is not string input) continue;
 
             chosen ??= new Dictionary<int, string>();
             chosen[i] = input;
 
-            double? inputBasis = QuantityAskPass.BasisByDeadline(input, deadlineFor(input));
-            // An input with no supply row of its own (a modded fruit) keeps the machine basis
-            // rather than falling to 1: the ask stays honest about the machine's limit.
-            double basis = FlavoredSlotRules.BasisFor(
-                baseId, inputBasis ?? FlavoredSlotRules.StationThroughput * FlavoredSlotRules.InputRatioFor(baseId));
+            double basis = FlavoredSlotRules.BasisFor(baseId, bases[input]);
 
             var rng = new Random(seed ^ (spec.Index * StackSalt) ^ (i + 1));
             int stack = AskBands.Roll(basis, profile, rng);
-            if (stack == slot.Stack) continue;
+            // The id is rewritten even when the stack happens to come out the same: a flavored
+            // slot MUST be written as vanilla's PreserveType name or the flavor cannot resolve.
 
             rewritten ??= spec.Slots.ToList();
-            rewritten[i] = slot with { Stack = stack };
+            rewritten[i] = slot with { ItemId = FlavoredSlotRules.WrittenIdFor(baseId), Stack = stack };
         }
 
         flavors = chosen ?? (IReadOnlyDictionary<int, string>)EmptyFlavors;

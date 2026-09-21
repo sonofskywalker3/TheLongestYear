@@ -54,13 +54,43 @@ public static class FlavoredSlotRules
     /// another.</summary>
     private const int FlavorSaltPrime = 0x5C2F;
 
+    /// <summary>The goods a slot may name an input for, and what one costs to make.
+    ///
+    /// Dried Mushrooms is deliberately NOT here, though the Dehydrator makes it the same way.
+    /// A flavored slot has to carry vanilla's PreserveType NAME as its ingredient id (see
+    /// <see cref="PreserveTypeNames"/>), and that name is "DriedMushroom", singular, while the
+    /// object's own id is "DriedMushrooms", plural. An id that is one or the other breaks either
+    /// the flavor lookup or the icon lookup, so mushrooms keep the "any" slot and its 0.18.32
+    /// label (verified in game, 2026-09-21).</summary>
     private static readonly IReadOnlyDictionary<string, int> Ratios =
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
             [DriedFruit] = DehydratorInputRatio,
-            [DriedMushrooms] = DehydratorInputRatio,
             [SmokedFish] = SmokerInputRatio,
         };
+
+    /// <summary>The id a flavored slot must be WRITTEN as in the bundle data.
+    ///
+    /// Vanilla resolves a flavored ingredient with the query <c>FLAVORED_ITEM &lt;type&gt;
+    /// &lt;ingredient&gt;</c>, and parses that first argument as a <c>Object.PreserveType</c> enum
+    /// name, not as an item id (ItemQueryResolver.cs:133). A qualified "(O)DriedFruit" therefore
+    /// fails to parse: the menu builds a null item and throws on its display name, and
+    /// Bundle.IsValidItemForThisIngredientDescription rejects every item the player offers. The
+    /// bare name parses as the enum AND still resolves as an object id for the icon, so it is the
+    /// one spelling that satisfies both (found by running the game, 2026-09-21).</summary>
+    private static readonly IReadOnlyDictionary<string, string> PreserveTypeNames =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [DriedFruit] = "DriedFruit",
+            [SmokedFish] = "SmokedFish",
+        };
+
+    /// <summary>How a flavored slot's own id is written into the bundle data: vanilla's
+    /// PreserveType name, unqualified. Anything else comes back unchanged.</summary>
+    public static string WrittenIdFor(string baseItemId)
+        => PreserveTypeNames.TryGetValue(BundleParsing.NormalizeItemId(baseItemId ?? ""), out string? name)
+            ? name
+            : baseItemId;
 
     /// <summary>True when this id is a good whose slot should name its input.</summary>
     public static bool IsFlavored(string? baseItemId)
