@@ -89,7 +89,7 @@ namespace TheLongestYear.Integration
             return string.Join("/", s);
         }
 
-        internal static string Build(SeasonTurnKind kind, int doorX, int doorY, bool skippable)
+        internal static string Build(SeasonTurnKind kind, int doorX, int doorY, bool skippable, bool rewound)
         {
             int count = SeasonTurn.JunimoCount(kind);
             int stepY = doorY + StepDown;
@@ -116,7 +116,7 @@ namespace TheLongestYear.Integration
             s.Add("playSound junimoMeep1");
             s.Add("pause 700");
 
-            IReadOnlyList<(int Junimo, string Key)> lines = SeasonTurn.Lines(kind);
+            IReadOnlyList<(int Junimo, string Key)> lines = SeasonTurn.Lines(kind, rewound);
             for (int i = 0; i < lines.Count; i++)
             {
                 var (who, key) = lines[i];
@@ -124,7 +124,6 @@ namespace TheLongestYear.Integration
                 // holds a dim purple glow under its second line with a low sound.
                 if (kind == SeasonTurnKind.Fall && i == 1) s.Add("stopMusic");
                 if (kind == SeasonTurnKind.Winter && i == 1) { s.Add("glow 60 0 90 true"); s.Add("playSound shadowDie"); }
-                if (kind == SeasonTurnKind.Winter && i == lines.Count - 1) s.Add("stopGlowing");
                 s.Add($"jump {Junimo(who)} 6");
                 s.Add($"{EndingEventCommands.SayName} {Junimo(who)} \"{EventText(key)}\"");
                 s.Add("pause 250");
@@ -135,6 +134,7 @@ namespace TheLongestYear.Integration
             s.Add("playSound junimoMeep1");
             s.Add("pause 600");
             s.Add($"{EndingEventCommands.FadeOutName} 1200");
+            if (kind == SeasonTurnKind.Winter) s.Add("stopGlowing");
             s.Add($"addMailReceived {SeasonTurnEventKeys.SeenMail}");
             s.Add("end");
             return string.Join("/", s);
