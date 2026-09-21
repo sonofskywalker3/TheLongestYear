@@ -28,7 +28,6 @@ namespace TheLongestYear.Loop
         private readonly Func<ItemPools> _pools;
         private readonly Func<ObtainabilityModel> _obtainability;
         private readonly Action<string> _rebuildBoard;
-        private readonly SabotageMailService _mail;
         /// <summary>Starts the board-changed porch scene; set by ModEntry (the season-turn driver).</summary>
         public Action<string, string, Action> StartTamperScene { get; set; }
 
@@ -42,10 +41,8 @@ namespace TheLongestYear.Loop
             Func<ItemAvailabilityModel> availability,
             Func<ItemPools> pools,
             Func<ObtainabilityModel> obtainability,
-            Action<string> rebuildBoard,
-            SabotageMailService mail)
+            Action<string> rebuildBoard)
         {
-            _mail = mail;
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -578,7 +575,6 @@ namespace TheLongestYear.Loop
             bool hallSaid = false;
             foreach (SabotageReport report in reports)
             {
-                _mail?.SendFirstStrikeLetter(report.Kind);
                 switch (report.Kind)
                 {
                     case SabotageKind.Blight:

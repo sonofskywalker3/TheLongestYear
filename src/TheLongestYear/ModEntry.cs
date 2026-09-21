@@ -31,7 +31,6 @@ namespace TheLongestYear
         private BoostPurchaseService _boostPurchases;
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
         private TheLongestYear.Loop.SabotageService _sabotage;
-        private TheLongestYear.Loop.SabotageMailService _sabotageMail;
         private TheLongestYear.Loop.CircleOfWardingService _circles;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
@@ -252,9 +251,6 @@ namespace TheLongestYear
             helper.Events.Content.AssetRequested += _openingStrings.OnAssetRequested;
             _openingEvent = new OpeningEventInjector(this.Monitor, () => _config.Enabled);
             helper.Events.Content.AssetRequested += _openingEvent.OnAssetRequested;
-            // Darkness pushback first-strike letters (Linus, Shane, Lewis): same Data/Mail hook.
-            _sabotageMail = new TheLongestYear.Loop.SabotageMailService(this.Monitor, _meta);
-            helper.Events.Content.AssetRequested += _sabotageMail.OnAssetRequested;
             // Circle of Warding furniture (Data/Furniture row + texture), granted per loop below.
             _circles = new TheLongestYear.Loop.CircleOfWardingService(this.Monitor, _meta, helper);
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
@@ -797,8 +793,7 @@ namespace TheLongestYear
                 () => _availability,
                 () => _enginePools,
                 () => _obtainability,
-                RebuildBoardDerivedState,
-                _sabotageMail);
+                RebuildBoardDerivedState);
             _sabotage.StartTamperScene = (oldName, newName, done) => _seasonTurnDriver.StartTamperWhenSettled(oldName, newName, done);
             _runController.AttachSabotage(_sabotage);
             _runController.OnRunLoaded();

@@ -232,8 +232,8 @@ public sealed class MetaState
     /// skippable next time.</summary>
     public HashSet<string> SeasonTurnsSeen { get; set; } = new();
 
-    /// <summary>Darkness pushback (spec 2026-09-09): the first-strike letters already delivered
-    /// on this save (SabotageMailService keys). Once per save, whatever the loop.</summary>
+    /// <summary>Unused since 2026-09-21 (the first-strike letters were replaced by the overnight
+    /// scenes). Kept so a save written before then still loads.</summary>
     public HashSet<string> SabotageLettersSent { get; set; } = new();
 
     /// <summary>This save has already reached a Winter (spec 2026-09-15 Part B, 2.6): the first
