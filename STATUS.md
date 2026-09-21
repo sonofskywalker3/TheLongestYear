@@ -322,7 +322,9 @@ keep at the Junimo Shrine, 750 JP, `Obtainability` category, granted back after 
 book keeps. Two in-loop Boosts, bought at the farm's planning shrine (`ShrinePreviewMenu` gains a
 Boosts section): Year-Two Seeds, 75 JP, makes Mixed Seeds roll the season's year-2 crop at 5 percent
 for the current week; Sneak Peek, 100 JP, makes the Queen of Sauce air the year-2 episode for the
-season (it grants both the year-1 and the year-2 recipe, so no year-1 recipe is lost). Year-2 crops
+season (it grants both the year-1 and the year-2 recipe, so no year-1 recipe is lost). Superseded at
+0.18.31: the Boost takes over Wednesday's rerun slot instead and airs one episode, the year-2 pair of
+the Sunday just gone, because granting two recipes off one Sunday viewing read as a bug to players. Year-2 crops
 carry hard weeks 2 / 6 / 10 and pacing weeks Garlic 4, Red Cabbage 7, Artichoke 11.
 
 **Plan 5, diagnostics and sims (0.16.126 to 0.16.133, interleaved with plan 4's fix wave at 0.16.128).** `tly_playseason quarter <k>` donates the

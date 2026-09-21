@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
@@ -32,6 +33,48 @@ public class RecipeTimingTests
     public void A_year_2_episode_stays_out_of_year_1_on_easy()
         => Assert.Null(CookedDishAvailability.RecipeWeek(
             new RawCookingRecipe("Blackberry Cobbler", new string[0], "(O)611", "l 100"), Data(), DifficultyStep.Easy));
+
+    // --- The Wednesday preview window (Jeff, 2026-09-21) -----------------------------------
+    // Sneak Peek airs year-2 episodes in the Wednesday rerun slot, showing the episode of the
+    // Sunday just gone. These three pin the consequence: weeks 1 to 15 have such a Wednesday,
+    // week 16 does not, so episode 32 has no route and its dish is banned from the pools.
+
+    private static EffortData LastEpisodeData() => new()
+    {
+        CookingChannel = new Dictionary<string, int> { ["Bruschetta"] = 31, ["Shrimp Cocktail"] = 32 },
+        RecipePrices = new Dictionary<string, int>(),
+    };
+
+    [Fact]
+    public void The_last_reachable_year_2_episode_is_placed_at_its_wednesday_week()
+        => Assert.Equal(15, CookedDishAvailability.RecipeWeek(
+            new RawCookingRecipe("Bruschetta", new string[0], "(O)618", "l 100"), LastEpisodeData(), DifficultyStep.Normal));
+
+    [Fact]
+    public void Episode_32_has_no_route_because_no_wednesday_follows_winter_28()
+        => Assert.Null(CookedDishAvailability.RecipeWeek(
+            new RawCookingRecipe("Shrimp Cocktail", new string[0], "(O)733", "l 100"), LastEpisodeData(), DifficultyStep.Normal));
+
+    [Fact]
+    public void Shrimp_cocktail_is_banned_from_the_pools()
+        => Assert.Contains("(O)733", ItemPoolBuilder.BuiltInExcludedItemIds);
+
+    /// <summary>The arithmetic the patch relies on, stated once: a Wednesday is day 3, 10, 17 or
+    /// 24 of a season, the game's week index is DaysPlayed / 7, and vanilla hides the channel for
+    /// the first week of play. Weeks 1 to 15 each get a Wednesday; week 16 never does.</summary>
+    [Fact]
+    public void Wednesdays_cover_every_week_but_the_last()
+    {
+        var weeks = new SortedSet<int>();
+        for (int day = 1; day <= Calendar.DaysPerYear; day++)
+        {
+            if (day % 7 != 3) continue;      // Wednesday: day 1 of a season is a Monday.
+            if (day <= 7) continue;          // Vanilla: no rerun channel before DaysPlayed > 7.
+            weeks.Add(day / 7);
+        }
+        Assert.Equal(Enumerable.Range(1, AvailabilityWeeks.YearTwoLastReachableEpisode - AvailabilityWeeks.YearOneEpisodes), weeks);
+        Assert.DoesNotContain(16, weeks);
+    }
 
     [Fact]
     public void A_saloon_recipe_uses_its_price_even_when_its_episode_is_year_2()
