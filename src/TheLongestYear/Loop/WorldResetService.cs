@@ -603,6 +603,7 @@ namespace TheLongestYear.Loop
                 _meta.BundlesGeneratedForReset = -1;
                 _meta.WrittenBoard = null;
                 _meta.WrittenBoardSeasonPins = null;
+                _meta.WrittenBoardFlavors = null;
                 LastGeneratedRequirements = null;
                 if (heldVanillaBoard != null)
                 {
@@ -641,6 +642,9 @@ namespace TheLongestYear.Loop
                 // the seed; see MetaState.WrittenBoard.
                 _meta.WrittenBoard = new Dictionary<string, string>(generatedSet.ToBundleData());
                 _meta.WrittenBoardSeasonPins = TheLongestYear.Core.BoardRequirements.PinsToStored(engine.LastDerivedSeasonPins);
+                // The fruit/mushroom/fish each flavored slot names. Stamped with the board it
+                // belongs to, so a board written before 0.18.33 keeps a null map and no flavors.
+                _meta.WrittenBoardFlavors = new Dictionary<string, string>(generatedSet.Flavors);
                 SeasonEase ease = SeasonPity.CurrentQuotaEase(_meta, _config);
                 _monitor.Log(
                     $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}, " +

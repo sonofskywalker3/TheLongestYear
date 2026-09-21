@@ -495,6 +495,10 @@ namespace TheLongestYear
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
             BoostChecker.SneakPeekActive = () => TheLongestYear.Core.BoostState.SneakPeekActive(_meta.Run, TodayDayOfYear());
+            // The fruit/mushroom/fish each flavored bundle slot names, for the live board only.
+            // Null map (a pre-0.18.33 board, or Vanilla board mode) means no flavors are applied.
+            TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider =
+                () => (IReadOnlyDictionary<string, string>)_meta.State.WrittenBoardFlavors;
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
             CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
@@ -762,6 +766,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.BoostChecker.SneakPeekActive = null;
+            TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider = null;
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = null;
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = null;
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = null;
@@ -5079,6 +5084,9 @@ namespace TheLongestYear
                 state.BundlesGeneratedForReset = 0;
                 state.WrittenBoard = new Dictionary<string, string>(set.ToBundleData());
                 state.WrittenBoardSeasonPins = TheLongestYear.Core.BoardRequirements.PinsToStored(engine.LastDerivedSeasonPins);
+                // See WorldResetService: the flavored slots' inputs belong to the board that was
+                // just written, so they are stamped with it.
+                state.WrittenBoardFlavors = new Dictionary<string, string>(set.Flavors);
                 var requirements = engine.BuildRequirements(
                     set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
                 this.Monitor.Log(
