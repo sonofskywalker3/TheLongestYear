@@ -34,6 +34,11 @@ namespace TheLongestYear
         private TheLongestYear.Loop.CircleOfWardingService _circles;
         /// <summary>Debug only: plays one overnight strike scene mid-day (tly_sabotage scene crows).</summary>
         private TheLongestYear.Scenes.ScenePreview _scenePreview;
+
+        /// <summary>True once <c>tly_newgame</c> has made a farm in this session, so the save now
+        /// loaded is a throwaway. <c>tly_sabotage fixture</c> rewrites the ground it stands on and
+        /// will not do that to a save it did not create.</summary>
+        private bool _saveMadeThisSession;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -394,7 +399,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture [scarecrow] [rows] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [confirm] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -904,7 +909,11 @@ namespace TheLongestYear
         /// <summary>Returning to title means the loaded save is gone — drop the runtime gate so no
         /// stale state leaks into the next save the player loads.</summary>
         private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
-            => DeactivateTly();
+        {
+            // Whatever loads next may be a real save, so the fixture guard has to earn its yes again.
+            _saveMadeThisSession = false;
+            DeactivateTly();
+        }
 
         /// <summary>Put TLY fully to sleep: clear the master runtime gate and null every static
         /// provider so no Harmony patch, HUD draw, or tick handler does anything until a TLY save
@@ -1254,6 +1263,8 @@ namespace TheLongestYear
             // What the character screen's OK does with Skip intro on (TitleMenu.createdNewCharacter),
             // routed through our own prefix so the checkbox choice is recorded the same way.
             Loop.SkipIntroChoicePatch.Choice.Record(skipIntro);
+            // This session made the farm, so it is a throwaway and the test fixtures may dig it up.
+            _saveMadeThisSession = true;
             this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}, arrival={arrival}.", LogLevel.Info);
             if (Game1.activeClickableMenu is TitleMenu)
                 TitleMenu.subMenu = null;
@@ -2402,6 +2413,19 @@ namespace TheLongestYear
                 }
                 case "fixture":
                 {
+                    // Test scaffolding, and it REWRITES the ground in front of the farmhouse: it
+                    // hoes over whatever is there, plants seeds and drops a chest. That is fine on a
+                    // throwaway farm and ruinous on a real one, so it refuses to run unless this
+                    // session made the save itself. A TLY save cannot be told apart by name:
+                    // tly_newgame calls the farm after its farm TYPE ("standard", "riverland" and so
+                    // on), which is exactly what a real game would be called too. So the second way
+                    // in is the explicit word, and the message says so.
+                    bool confirmed = args.Any(a => a.Equals("confirm", StringComparison.OrdinalIgnoreCase));
+                    if (!_saveMadeThisSession && !confirmed)
+                    {
+                        this.Monitor.Log("tly_sabotage fixture digs up the ground in front of the farmhouse and drops a chest on it. This save was not created by tly_newgame in this session, and a throwaway farm cannot be told apart from a real one by name. Add the word 'confirm' if you really mean this save.", LogLevel.Warn);
+                        break;
+                    }
                     // Test scaffolding: ten crops in the ground and a chest with food and ore,
                     // on the farm just below the stash, so blight has something to take.
                     // IN-SEASON seeds: Crop.newDay kills any out-of-season outdoor crop overnight
@@ -2417,13 +2441,23 @@ namespace TheLongestYear
                         StardewValley.Season.Fall => "487",
                         _ => null,
                     };
-                    // An optional row count makes the patch a block instead of a line. The night's
-                    // blight count is a SHARE of the farm's live crops, so ten crops only ever loses
-                    // one, and the overnight scene then has a single crow in it. Twelve rows is 120
-                    // crops, which loses about six and gives the crows scene a flock to stage.
+                    // "rows=<n>" makes the patch a block instead of a line. The night's blight count
+                    // is a SHARE of the farm's live crops, so ten crops only ever loses one and the
+                    // overnight scene then has a single crow in it. Five rows is fifty crops, which
+                    // loses a handful and gives the crows scene a flock to stage. It is named rather
+                    // than "any number among the arguments", which silently swallowed a typo.
+                    const int MaxFixtureRows = 5;
                     int rows = 1;
                     foreach (string a in args)
-                        if (int.TryParse(a, out int parsedRows) && parsedRows > 0) rows = System.Math.Min(parsedRows, 20);
+                    {
+                        if (!a.StartsWith("rows=", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!int.TryParse(a.Substring("rows=".Length), out int parsedRows) || parsedRows < 1)
+                        {
+                            this.Monitor.Log($"tly_sabotage fixture: '{a}' is not a row count. Use rows=<1..{MaxFixtureRows}>.", LogLevel.Warn);
+                            parsedRows = 1;
+                        }
+                        rows = System.Math.Min(parsedRows, MaxFixtureRows);
+                    }
                     int planted = 0;
                     for (int row = 0; row < rows && seed != null; row++)
                     for (int i = 0; i < 10; i++)
@@ -2436,8 +2470,11 @@ namespace TheLongestYear
                         dirt.crop = new Crop(seed, (int)tile.X, (int)tile.Y, farm);
                         planted++;
                     }
-                    var chestTile = new Microsoft.Xna.Framework.Vector2(door.X - 6, door.Y + 8);
+                    // Beside the block, never inside it: a chest standing on a planted tile would be
+                    // dug up by the next fixture and confuses a crop count with a chest count.
+                    var chestTile = new Microsoft.Xna.Framework.Vector2(door.X + 5, door.Y + 6);
                     farm.objects.Remove(chestTile);
+                    farm.terrainFeatures.Remove(chestTile);
                     var chest = new StardewValley.Objects.Chest(true, chestTile);
                     chest.Items.Add(ItemRegistry.Create("(O)24", 20));
                     chest.Items.Add(ItemRegistry.Create("(O)378", 10));
@@ -2461,13 +2498,16 @@ namespace TheLongestYear
                 case "scene" when args.Length > 1 && args[1].ToLowerInvariant() == "crows":
                     this.PlayCrowsScenePreview(rng);
                     break;
+                case "scene" when args.Length > 1 && args[1].ToLowerInvariant() == "thief":
+                    this.PlayThiefScenePreview(rng);
+                    break;
                 case "scene":
                     _seasonTurnDriver.StartTamperWhenSettled(
                         args.Length > 1 ? args[1] : "Parsnip", args.Length > 2 ? args[2] : "Crystal Fruit",
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture [scarecrow] [rows] | circle", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [confirm] | circle", LogLevel.Info);
                     break;
             }
         }
@@ -2500,6 +2540,44 @@ namespace TheLongestYear
                     : $"tly_sabotage scene crows: no crops on the farm, so the scene plays against {tiles.Count} stand-in tile(s) and nothing dies.",
                 LogLevel.Info);
             var scene = new TheLongestYear.Scenes.CrowsScene(strike, skippable: true, this.Monitor, _ => { });
+            _scenePreview.Play(scene);
+        }
+
+        /// <summary>tly_sabotage scene thief: watch the chest blight scene now, without sleeping.
+        ///
+        /// There is no stand-in here, unlike the crows. A thief with nothing to steal is not a
+        /// scene, so with nothing stored it says so and does nothing. With something stored it makes
+        /// a REAL fresh pick and those units really go at the scene's own beat, exactly as they
+        /// would overnight, warded chests excluded by the pick itself.</summary>
+        private void PlayThiefScenePreview(System.Random rng)
+        {
+            _scenePreview ??= new TheLongestYear.Scenes.ScenePreview(this.Helper, this.Monitor);
+            if (_scenePreview.Playing) { this.Monitor.Log("A strike scene is already playing.", LogLevel.Warn); return; }
+
+            TheLongestYear.Core.DifficultyStep level = _meta.State.EffectiveDifficulty(_config).Darkness;
+            bool everything = TheLongestYear.Core.Sabotage.DarknessLevels.StorageReachesEverything(level);
+            int units = TheLongestYear.Loop.SpoilagePass.StoredUnits(everything);
+            int want = Math.Max(1, TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(units, _meta.Run.Season, level));
+            List<TheLongestYear.Loop.SpoilagePass.Hit> hits = units > 0
+                ? TheLongestYear.Loop.SpoilagePass.Plan(want, rng, everything)
+                : new List<TheLongestYear.Loop.SpoilagePass.Hit>();
+            if (hits.Count == 0)
+            {
+                this.Monitor.Log("tly_sabotage scene thief: nothing stored, no thief.", LogLevel.Info);
+                return;
+            }
+
+            var strike = new TheLongestYear.Loop.PendingStrike(
+                TheLongestYear.Core.Sabotage.DarknessEvent.ChestBlight,
+                () => TheLongestYear.Loop.SpoilagePass.Apply(hits).Total > 0)
+            { Hits = hits };
+            if (TheLongestYear.Scenes.ThiefScene.SceneTargetOnFarm(strike) == null)
+            {
+                this.Monitor.Log("tly_sabotage scene thief: tonight's pick is off the farm's own maps, so there is nothing to film. Put something in a chest on the farm, in a shed, in the cellar or in the farmhouse.", LogLevel.Warn);
+                return;
+            }
+            this.Monitor.Log($"tly_sabotage scene thief: {hits.Count} unit(s) picked from {units} stored, and they really go when the lid opens.", LogLevel.Info);
+            var scene = new TheLongestYear.Scenes.ThiefScene(strike, skippable: true, this.Monitor, _ => { });
             _scenePreview.Play(scene);
         }
 

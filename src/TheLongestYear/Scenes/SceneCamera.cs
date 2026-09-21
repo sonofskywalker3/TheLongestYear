@@ -77,7 +77,11 @@ namespace TheLongestYear.Scenes
         /// <summary>Take the view to this map and centre it on this tile, at night. The first call
         /// remembers what it is replacing. A later call while the camera is still held only moves
         /// it, so a scene can follow something without losing the way home.</summary>
-        public static void CutTo(GameLocation where, Vector2 tile)
+        /// <param name="showFarmer">Keep drawing the farmer. False for every outdoor scene, the way
+        /// the witch and the fairy do it. True for a scene set in the farmhouse, where he is lying
+        /// in the bed the camera is pointed at and hiding him would empty it (spec 2026-09-21, the
+        /// thief).</param>
+        public static void CutTo(GameLocation where, Vector2 tile, bool showFarmer = false)
         {
             if (where == null) throw new ArgumentNullException(nameof(where));
             if (!_active)
@@ -105,7 +109,7 @@ namespace TheLongestYear.Scenes
             Game1.fadeClear();
             Game1.nonWarpFade = true;
             Game1.viewportFreeze = true;
-            Game1.displayFarmer = false;
+            Game1.displayFarmer = showFarmer;
             HoldNight();
             CenterOn(where, tile);
         }
