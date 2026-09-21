@@ -211,6 +211,26 @@ namespace TheLongestYear
             FarmEventSuppressionPatch.SuppressTonight =
                 () => _runController?.PendingCutscene == TheLongestYear.Core.Day28.Day28Branch.Fail;
             FarmEventSuppressionPatch.Monitor = this.Monitor;
+            // The overnight slot (spec 2026-09-21): tonight's strike scene takes it from a random
+            // vanilla event, and anything scripted keeps it while the strike lands at once instead.
+            // _sabotage is built on save load, so resolve it lazily the way the driver above does.
+            StrikeScenePatch.Monitor = this.Monitor;
+            StrikeScenePatch.FailNight = () => FarmEventSuppressionPatch.SuppressTonight?.Invoke() == true;
+            StrikeScenePatch.ApplyNow = why => _sabotage?.ApplyPendingIfAny(why);
+            StrikeScenePatch.SceneFor = () =>
+            {
+                PendingStrike strike = _sabotage?.Pending;
+                if (strike == null || strike.Applied) return null;
+                bool skippable = TheLongestYear.Core.Sabotage.StrikeScenes.IsSkippable(
+                    strike.Event, _meta.State.StrikeScenesSeen ??= new());
+                return TheLongestYear.Scenes.StrikeSceneFactory.Create(
+                    strike, skippable, this.Monitor,
+                    onFinished: () =>
+                    {
+                        TheLongestYear.Core.Sabotage.StrikeScenes.MarkPlayed(strike.Event, _meta.Run, _meta.State);
+                        // Task 12 adds the witness hook here.
+                    });
+            };
             WeatherScheduleWriterPatch.Monitor = this.Monitor;
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
             _bookFurniture = new BookFurniture(this.Monitor, helper);
@@ -795,6 +815,8 @@ namespace TheLongestYear
                 () => _obtainability,
                 RebuildBoardDerivedState);
             _sabotage.StartTamperScene = (oldName, newName, done) => _seasonTurnDriver.StartTamperWhenSettled(oldName, newName, done);
+            // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
+            _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
             _runController.AttachSabotage(_sabotage);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
