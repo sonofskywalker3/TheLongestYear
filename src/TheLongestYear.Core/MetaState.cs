@@ -81,6 +81,20 @@ public sealed class MetaState
     /// <summary>See <see cref="WrittenBoard"/>: item id -> <see cref="Season"/> as int.</summary>
     public Dictionary<string, int>? WrittenBoardSeasonPins { get; set; }
 
+    /// <summary>The input each flavored slot of <see cref="WrittenBoard"/> names:
+    /// <c>"bundleIndex:slotIndex" -> qualified item id</c>, so a Dried Fruit slot asks for dried
+    /// APPLES rather than "any dried fruit" (plan 2026-09-21-flavored-bundle-slots).
+    ///
+    /// Stored rather than re-derived, for the same reason <see cref="WrittenBoard"/> is: a data
+    /// mod that shifts the item pools would otherwise change which fruit a slot names underneath
+    /// a run in progress.
+    ///
+    /// Null on every board written before 0.18.33, and that is what keeps this off boards already
+    /// in flight. Their stacks were rolled for "any dried fruit" off the machine's throughput, and
+    /// pinning a fruit onto one of those would turn 18 Dried Fruit into 90 apples. A null map
+    /// means no flavors, and those slots keep the "Any Dried Fruit" label from 0.18.32.</summary>
+    public Dictionary<string, string>? WrittenBoardFlavors { get; set; }
+
     /// <summary>How many times in a row the player has held the board at a Fail night. Drives
     /// the hold price (first hold free). Reset to 0 whenever they let the board reshuffle.</summary>
     public int ConsecutiveHolds { get; set; }

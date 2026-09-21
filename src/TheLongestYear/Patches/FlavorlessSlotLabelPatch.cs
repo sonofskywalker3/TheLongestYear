@@ -21,6 +21,10 @@ namespace TheLongestYear.Patches
     /// Hover text only. The component's item, icon and matching are untouched, so nothing about
     /// what the slot accepts changes — and if a future game version does start giving these slots
     /// a real flavor, <see cref="Relabel"/> leaves any name that is not one of the three alone.
+    ///
+    /// Since 0.18.33 this is the FALLBACK, not the normal case: a board generated from that
+    /// version on names the fruit outright (<see cref="FlavoredSlotPatch"/>), and only a board
+    /// written before it still has an "any" slot to label.
     /// </summary>
     [HarmonyPatch(typeof(JunimoNoteMenu))]
     internal static class FlavorlessSlotLabelPatch
@@ -47,6 +51,11 @@ namespace TheLongestYear.Patches
                 string itemId = slot?.item?.ItemId;
                 if (itemId == null) continue;
                 if (FlavorlessBundleSlots.LabelKeyFor(itemId) is not string key) continue;
+                // A slot that HAS a flavor already reads "Dried Apples" and means it
+                // (FlavoredSlotPatch). Its item still carries the base id "DriedFruit", so match
+                // on the flavor itself, or this would relabel a specific ask as "Any Dried Fruit".
+                if (slot.item is StardewValley.Object flavored && flavored.preservedParentSheetIndex.Value != null)
+                    continue;
                 slot.hoverText = Strings.Get(key);
             }
         }

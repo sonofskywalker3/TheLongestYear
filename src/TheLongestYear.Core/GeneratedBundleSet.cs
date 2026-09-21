@@ -15,7 +15,21 @@ public sealed class GeneratedBundleSet
 {
     public IReadOnlyList<BundleSpec> Bundles { get; }
 
-    public GeneratedBundleSet(IReadOnlyList<BundleSpec> bundles) => Bundles = bundles;
+    /// <summary>The input each flavored slot names, keyed <see cref="FlavoredSlotPass.KeyFor"/>
+    /// ("bundleIndex:slotIndex") to a qualified item id. Empty when no slot on the board is a
+    /// Dried Fruit, Dried Mushrooms or Smoked Fish ask.
+    ///
+    /// This rides ALONGSIDE the bundle data rather than inside it: vanilla's ingredients are
+    /// (id, stack, quality) triples with nowhere to put a flavor, and putting one there would
+    /// break the byte-for-byte manifest check. The mod persists this map next to
+    /// MetaState.WrittenBoard and sets it on the live bundle at load.</summary>
+    public IReadOnlyDictionary<string, string> Flavors { get; }
+
+    public GeneratedBundleSet(IReadOnlyList<BundleSpec> bundles, IReadOnlyDictionary<string, string>? flavors = null)
+    {
+        Bundles = bundles;
+        Flavors = flavors ?? new Dictionary<string, string>();
+    }
 
     public IReadOnlyDictionary<string, string> ToBundleData() =>
         Bundles.ToDictionary(BundleDataWriter.Key, BundleDataWriter.Value);

@@ -1,6 +1,6 @@
 # Flavored bundle slots (Dried Fruit, Dried Mushrooms, Smoked Fish)
 
-**Status:** planned, not started. Jeff's rulings 2026-09-21 are recorded inline.
+**Status:** built in 0.18.33, not yet verified in game. Jeff's rulings 2026-09-21 are recorded inline.
 
 ## The problem
 
@@ -88,9 +88,13 @@ cart" is a coin flip on cart stock, which is no basis for a mandatory slot. (Con
    other draws.
 3. **Quantity**: teach `QuantityAskPass` the flavored basis above, so the stack is rolled for the
    fruit actually chosen.
-4. **Stamp**: `MetaState.FlavoredSlots` written at board write time; generation and re-derivation
-   both read the stamp, so old boards reproduce byte for byte under the old rules and keep matching
-   the manifest check.
+4. **Stamp**: ~~`MetaState.FlavoredSlots`~~ **changed during build.** The load path prefers the
+   STORED board (`MetaState.WrittenBoard`) over seed re-derivation, and stores it precisely because
+   re-derivation proved fragile under data mods. The flavors follow the same rule: they are
+   persisted as `MetaState.WrittenBoardFlavors` ("bundleIndex:slotIndex" -> item id), written beside
+   the board and cleared with it. A null map IS the stamp, so a pre-0.18.33 board gets no flavors
+   and no separate bool is needed. This also removes the risk of a data mod changing which fruit a
+   slot names mid-run.
 5. **Runtime**: Harmony postfix setting `ingredients[i].preservesId` on the constructed `Bundle`, so
    display AND matching both follow. Replaces the hover-text patch for flavored boards; the
    0.18.32 "Any ..." label stays as the fallback for pre-stamp boards.
