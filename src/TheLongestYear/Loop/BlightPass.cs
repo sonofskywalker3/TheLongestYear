@@ -58,6 +58,13 @@ namespace TheLongestYear.Loop
                     && tf is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value)
                 {
                     dirt.crop.Kill();
+                    // Kill only flips the flag; the withered sprite comes from Crop.sourceRect,
+                    // which is cached and only rebuilt by updateDrawMath. Vanilla gets away with it
+                    // because it always kills inside Crop.newDay, which calls updateDrawMath a few
+                    // lines later (Crop.cs:922). The overnight scene kills while the player is
+                    // LOOKING at the row, so without this the crops stay green until the next time
+                    // something else touches them (screenshots, 2026-09-21).
+                    dirt.crop.updateDrawMath(tile);
                     killed++;
                 }
             }
