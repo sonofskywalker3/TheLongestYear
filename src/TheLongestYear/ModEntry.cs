@@ -1554,9 +1554,26 @@ namespace TheLongestYear
                                 $" wrong={(wrong != null && b.IsValidItemForThisIngredientDescription(wrong, ing))}" +
                                 $" unflavored={(plain != null && b.IsValidItemForThisIngredientDescription(plain, ing))}";
                         }
+                        // Does the slot get an icon in the required-items list? Vanilla only
+                        // builds one when the ingredient id resolves as an object, and a flavored
+                        // slot carries a PreserveType name instead. Reported per slot so a missing
+                        // icon shows up in the log instead of needing a screenshot.
+                        string icon = "";
+                        try
+                        {
+                            Game1.activeClickableMenu = note;
+                            AccessTools.Method(typeof(JunimoNoteMenu), "setUpBundleSpecificPage")
+                                .Invoke(note, new object[] { b });
+                            bool hasIcon = note.ingredientList != null
+                                && note.ingredientList.Any(c => c != null && c.myID == 1000 + i);
+                            icon = $" | icon={hasIcon}";
+                        }
+                        catch (System.Exception ex) { icon = $" | icon=THREW {ex.InnerException?.GetType().Name ?? ex.GetType().Name}"; }
+                        finally { Game1.activeClickableMenu = null; }
+
                         this.Monitor.Log(
                             $"  live area {area} bundle {b.bundleIndex} '{b.name}' slot {i}: id={ing.id} preservesId={ing.preservesId ?? "(none)"} " +
-                            $"stack={ing.stack} reads as \"{name}\"{accepts}",
+                            $"stack={ing.stack} reads as \"{name}\"{accepts}{icon}",
                             ing.preservesId != null ? LogLevel.Info : LogLevel.Warn);
                     }
                 }
@@ -3733,7 +3750,15 @@ namespace TheLongestYear
                     return req.ItemSeasonPins.Count(kv => (int)kv.Value <= (int)season);
 
                 case BundleKind.Percentage:
-                    return req.CumulativeRequiredBySeason[(int)season];
+                    // Capped by the slot count, the same way SeasonNeed.For caps it. The ramp is
+                    // clamped at build time (GeneratedBundleSet.ClampRampForObtainability), so
+                    // this is the second layer rather than the fix: it keeps the audit honest
+                    // about a ramp that arrives over-deep from anywhere else, which is what
+                    // Nexus 1137357 looked like from the player's side (a gate demanding 9 of an
+                    // 8-slot bundle, unfillable however green the bundle went).
+                    return req.NumberOfSlots > 0
+                        ? Math.Min(req.CumulativeRequiredBySeason[(int)season], req.NumberOfSlots)
+                        : req.CumulativeRequiredBySeason[(int)season];
 
                 default:
                     return 0;
