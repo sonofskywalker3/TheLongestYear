@@ -86,10 +86,21 @@ public static class QuantityBasisTables
         ["(O)614"] = 20,   // Green Tea, 10 tea bushes
         // Oil Maker (Farming 8, gold bar): truffle-limited.
         ["(O)432"] = 5,    // Truffle Oil
-        // Dehydrator / Fish Smoker (bought, cheap): 5 machines, one a day each.
-        ["(O)DriedFruit"] = 35,
-        ["(O)DriedMushrooms"] = 35,
-        ["(O)Raisins"] = 35,
+        // Dehydrator / Fish Smoker (bought, cheap): 5 machines, one a day each, so 35 RUNS a week.
+        //
+        // A run is not a unit, though, and for the Dehydrator that is the whole difference: it
+        // eats FIVE fruit or mushrooms per dried good (Data/Machines), so 35 of them would need
+        // 175 inputs in a week. Nothing forages or grows at that rate, so the inputs are the real
+        // ceiling, not the machines. A good week of mushrooms is the cave emptied daily plus what
+        // the woods give, on the order of 35, which is 7 dried (Jeff, 2026-09-21, after a board
+        // asked for 13 Dried Mushrooms, i.e. 65 mushrooms).
+        //
+        // The Fish Smoker is one fish in, one out, so 35 runs really is 35 units and its row is
+        // unchanged. A flavored slot never reads these numbers at all: it sizes the ask from the
+        // fruit or fish it names (FlavoredSlotRules.BasisFor). These are the "any" slots' rows.
+        ["(O)DriedFruit"] = 7,
+        ["(O)DriedMushrooms"] = 7,
+        ["(O)Raisins"] = 7,
         ["(O)SmokedFish"] = 35,
         // Roe: Fish Pond, one pond of a common fish.
         ["(O)812"] = 10,   // Roe
