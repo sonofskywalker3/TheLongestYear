@@ -56,10 +56,6 @@ public class I18nGuardTests
     /// mistaken for a key reference.</summary>
     private static readonly Regex EventTextKey = new(@"EventText\(\s*""(?<key>[a-z0-9.\-]+)""", RegexOptions.Compiled);
 
-    /// <summary>SeasonTurn.Lines builds its keys as <c>KeyPrefix + "summer-1"</c>; the prefix is
-    /// "event.turn." (SeasonTurn.KeyPrefix).</summary>
-    private static readonly Regex SeasonTurnKey = new(@"KeyPrefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
-
     /// <summary>OpeningScript.LineKeys builds its keys as <c>Prefix + "robin-1"</c>; the prefix is "event.opening.".
     /// The leading negative lookbehind is required: without it, a bare "Prefix" match also fires inside
     /// SeasonTurn.cs's <c>KeyPrefix + "winter-2"</c> and OpeningStrings.cs's <c>VanillaPrefix + "12026"</c>
@@ -82,7 +78,6 @@ public class I18nGuardTests
         foreach (Match m in EggColorKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in OpeningStringsKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EventTextKey.Matches(text)) into.Add(m.Groups["key"].Value);
-        foreach (Match m in SeasonTurnKey.Matches(text)) into.Add(TheLongestYear.Core.SeasonTurn.KeyPrefix + m.Groups["key"].Value);
         foreach (Match m in OpeningKey.Matches(text)) into.Add("event.opening." + m.Groups["key"].Value);
     }
 
@@ -165,6 +160,12 @@ public class I18nGuardTests
             // bundle-slot.* keys are looked up by item id (FlavorlessBundleSlots) and only ever
             // reach Strings.Get through a variable, so walk the rule's own key set.
             foreach (string key in FlavorlessBundleSlots.AllLabelKeys)
+                _ = Strings.Get(key);
+            // event.turn.* keys: the Summer closer picks its key with a ternary inside the
+            // KeyPrefix concatenation (KeyPrefix + (rewound ? "summer-3-again" : "summer-3")),
+            // so the literal-scanning regex above can never see either half. Walk the exhaustive
+            // key list instead.
+            foreach (string key in SeasonTurn.AllLineKeys)
                 _ = Strings.Get(key);
         }
         finally

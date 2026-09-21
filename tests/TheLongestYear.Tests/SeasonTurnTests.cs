@@ -26,15 +26,47 @@ public class SeasonTurnTests
         => Assert.Equal(expected, SeasonTurn.JunimoCount(kind));
 
     [Theory]
-    [InlineData(SeasonTurnKind.Summer)]
-    [InlineData(SeasonTurnKind.Fall)]
-    [InlineData(SeasonTurnKind.Winter)]
-    public void Lines_OnlyNameJunimosWhoArePresent(SeasonTurnKind kind)
+    [InlineData(SeasonTurnKind.Summer, false)]
+    [InlineData(SeasonTurnKind.Summer, true)]
+    [InlineData(SeasonTurnKind.Fall, false)]
+    [InlineData(SeasonTurnKind.Fall, true)]
+    [InlineData(SeasonTurnKind.Winter, false)]
+    [InlineData(SeasonTurnKind.Winter, true)]
+    public void Lines_OnlyNameJunimosWhoArePresent(SeasonTurnKind kind, bool rewound)
     {
-        var lines = SeasonTurn.Lines(kind);
+        var lines = SeasonTurn.Lines(kind, rewound);
         Assert.NotEmpty(lines);
         Assert.All(lines, l => Assert.InRange(l.Junimo, 0, SeasonTurn.JunimoCount(kind) - 1));
         Assert.All(lines, l => Assert.StartsWith("event.turn." + kind.ToString().ToLowerInvariant() + "-", l.Key));
+    }
+
+    [Fact]
+    public void Summer_closer_is_the_plain_one_on_a_save_never_rewound()
+        => Assert.Equal("event.turn.summer-3", SeasonTurn.Lines(SeasonTurnKind.Summer, rewound: false)[2].Key);
+
+    [Fact]
+    public void Summer_closer_changes_once_the_save_has_been_rewound()
+        => Assert.Equal("event.turn.summer-3-again", SeasonTurn.Lines(SeasonTurnKind.Summer, rewound: true)[2].Key);
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Fall_has_three_lines_one_per_junimo(bool rewound)
+    {
+        var lines = SeasonTurn.Lines(SeasonTurnKind.Fall, rewound);
+        Assert.Equal(new[] { 0, 1, 2 }, lines.Select(l => l.Junimo).ToArray());
+        Assert.Equal("event.turn.fall-3", lines[2].Key);
+    }
+
+    [Fact]
+    public void Winter_keeps_four_lines_and_ignores_the_rewound_flag()
+        => Assert.Equal(SeasonTurn.Lines(SeasonTurnKind.Winter, false), SeasonTurn.Lines(SeasonTurnKind.Winter, true));
+
+    [Fact]
+    public void AllLineKeys_covers_both_summer_closers_and_drops_fall_4()
+    {
+        Assert.Contains("event.turn.summer-3-again", SeasonTurn.AllLineKeys);
+        Assert.DoesNotContain("event.turn.fall-4", SeasonTurn.AllLineKeys);
     }
 
     [Fact]

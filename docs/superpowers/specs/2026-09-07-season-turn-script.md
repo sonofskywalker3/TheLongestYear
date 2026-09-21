@@ -1,5 +1,7 @@
 # Season Turn Beats: the shooting script
 
+Lines superseded by `2026-09-21-darkness-agents-and-gate-scenes-design.md`.
+
 Status: for Jeff's editing, alongside `2026-09-07-year-one-ending-script.md`. The lines are in
 `2026-09-06-year-one-ending-lines.md` (section "Season turns") and in i18n; this file is the
 staging. The code that plays it is `SeasonTurnEventInjector.Build`; who says what is the table in
@@ -49,7 +51,7 @@ After the scene the run controller opens the week-1 planning hub, as it did afte
 | --- | --- | --- |
 | Summer to Fall | before line 2 | `stopMusic` |
 | Fall to Winter | before line 2 | held dim purple glow (`glow 60 0 90 true`) and `shadowDie` |
-| Fall to Winter | before the last line | `stopGlowing` |
+| Fall to Winter | under the fade-out | `stopGlowing` |
 
 ## Things to eyeball live
 

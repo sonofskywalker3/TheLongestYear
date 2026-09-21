@@ -39,8 +39,9 @@ namespace TheLongestYear.Integration
             if (loc == null || Game1.eventUp || loc.currentEvent != null) return false;
             Microsoft.Xna.Framework.Point door = Game1.getFarm().GetMainFarmHouseEntry();
             bool skippable = SeasonTurn.IsSkippable(kind, _meta.State.SeasonTurnsSeen);
-            _monitor.Log($"Season turn: starting {kind} (junimos={SeasonTurn.JunimoCount(kind)}, skippable={skippable}, door={door.X},{door.Y}, in {loc.Name}).", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, door.X, door.Y, skippable), null, SeasonTurnEventKeys.EventId));
+            bool rewound = _meta.State.CompletedResets > 0;
+            _monitor.Log($"Season turn: starting {kind} (junimos={SeasonTurn.JunimoCount(kind)}, skippable={skippable}, rewound={rewound}, door={door.X},{door.Y}, in {loc.Name}).", LogLevel.Info);
+            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, door.X, door.Y, skippable, rewound), null, SeasonTurnEventKeys.EventId));
             _meta.State.SeasonTurnsSeen.Add(SeasonTurn.SeenName(kind));
             _onComplete = onComplete;
             _running = true;
