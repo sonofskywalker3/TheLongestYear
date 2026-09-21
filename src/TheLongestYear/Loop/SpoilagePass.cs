@@ -107,7 +107,7 @@ namespace TheLongestYear.Loop
             if (count <= 0) return hits;
             List<Entry> entries = Entries(everything);
             // The rule lives in Core so it can be tested without a game: it draws the units and
-            // enforces the one-chest constraint; this side only says which chest each entry is in.
+            // enforces the one-chest constraint. This side only says which chest each entry is in.
             var pool = new List<TakeCandidate>(entries.Count);
             var chests = new List<Chest>();
             foreach (Entry e in entries)
@@ -117,7 +117,7 @@ namespace TheLongestYear.Loop
             return hits;
         }
 
-        /// <summary>A placed machine belongs to no chest; the planner reads a negative owner as
+        /// <summary>A placed machine belongs to no chest. The planner reads a negative owner as
         /// "machine" and never locks the night onto it.</summary>
         private const int MachineOwnerId = -1;
 

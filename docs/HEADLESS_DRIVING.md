@@ -158,6 +158,28 @@ two during the location change, so wait for two in a row before calling the scen
 path: `tly_playseason quarter 4` (the gate would pass), `tly_setday 28`, `debug sleep`; the log
 shows `Season turn: starting Summer`, then `scene finished`, then `Opened planning hub`.
 
+## The night order at day end (verified 2026-09-21, PC 1.6 decompile)
+
+Read this before hooking anything into the overnight flow. The order is:
+
+1. **SMAPI raises `GameLoop.DayEnding`.** `Game1.newDayAfterFade` (Game1.cs:7259) wraps its whole
+   new-day work in `hooks.OnGame1_NewDayAfterFade(...)`, and SMAPI's SModHooks override
+   (`BeforeNewDayAfterFade`) raises DayEnding before calling the game's delegate. So DayEnding fires
+   before the `_newDayAfterFade()` enumerator has run a single line.
+2. **`RunController.OnDayEnding` runs `SabotageService.RunNight`**, which PICKS tonight's strike and
+   parks it in `SabotageService.Pending` (spec 2026-09-21).
+3. **`Utility.pickFarmEvent()`** (Game1.cs:8122), deep inside `_newDayAfterFade()`. Anything patched
+   on it therefore finds `Pending` already set.
+4. **The farm event plays**, if one was picked (`farmEvent.setUp()`, Game1.cs:8138).
+5. **`showEndOfNightStuff()` → `SaveGameMenu`.** `_newDayAfterFade` only calls it directly when
+   `farmEvent == null` (Game1.cs:8185); with a farm event it runs from the event's completion
+   callback instead (Game1.cs:3834), so **the save is deferred until the event ends**.
+6. **SMAPI raises `Saving`**, where `ModEntry.OnSaving` calls `_sabotage.ApplyPendingIfAny("saving")`.
+
+The practical consequence: a pending strike is always applied before the night's save, whether its
+scene played, another overnight event won the slot, or nothing happened at all. Nothing pending ever
+crosses a save boundary.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),
