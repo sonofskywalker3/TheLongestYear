@@ -190,9 +190,32 @@ public class BlightRuleTests
         IReadOnlyList<int> taken = BlightRule.PlanTake(pool, 15, new Random(9));
         Assert.Contains(taken, i => pool[i].Machine);
         Assert.Equal(taken.Count, taken.Distinct().Count());
-        // Budget: one unit for the stack plus three per machine, never past the night's count.
-        int units = taken.Sum(i => BlightRule.UnitsOf(1, pool[i].BigCraftable));
-        Assert.InRange(units, 1, 15 + DarknessLevels.BigCraftableUnits - 1);
+        // The pool holds one unit plus four machines at three units each, and the night wanted 15,
+        // so everything in it goes and nothing more.
+        Assert.Equal(5, taken.Count);
+        Assert.Equal(13, taken.Sum(i => BlightRule.UnitsOf(1, pool[i].BigCraftable)));
+    }
+
+    /// <summary>Counts how many times the draw rolls, so "one roll per unit" can be asserted.</summary>
+    private sealed class CountingRandom : Random
+    {
+        public int Rolls { get; private set; }
+        public CountingRandom(int seed) : base(seed) { }
+        public override int Next(int maxValue)
+        {
+            Rolls++;
+            return base.Next(maxValue);
+        }
+    }
+
+    [Fact]
+    public void The_draw_spends_exactly_one_roll_per_unit_taken()
+    {
+        var pool = new List<TakeCandidate> { Stack(0, 6), Stack(0, 6), Stack(1, 6), Keg() };
+        var rng = new CountingRandom(5);
+        IReadOnlyList<int> taken = BlightRule.PlanTake(pool, 7, rng);
+        Assert.NotEmpty(taken);
+        Assert.Equal(taken.Count, rng.Rolls);
     }
 
     [Fact]

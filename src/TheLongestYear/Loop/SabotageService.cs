@@ -89,28 +89,66 @@ namespace TheLongestYear.Loop
         public bool ApplyPendingIfAny(string why)
         {
             PendingStrike p = Pending;
-            _monitor.Log($"Darkness: ApplyPendingIfAny({why}) at tick {Game1.ticks}; pending={(p == null ? "none" : p.Event.ToString())}.", LogLevel.Trace);
             if (p == null) return false;
             Pending = null;
             if (p.Applied) return false;
-            _monitor.Log($"Darkness: applying tonight's {p.Event} without its scene ({why}).", LogLevel.Trace);
+            _monitor.Log($"Darkness: applying tonight's {p.Event} without its scene ({why}) at tick {Game1.ticks}.", LogLevel.Trace);
             p.Apply();
             return true;
         }
 
-        /// <summary>Pick tonight's strike, record it, and either leave it waiting for its scene or
-        /// land it now. The one path every strike goes through.</summary>
-        private bool Strike(NightPlan night, DarknessEvent e, int week, CoreSeason season, int dayOfYear)
+        /// <summary>Was the guaranteed Winter tamper the strike picked tonight? Cleared at the top of
+        /// every night pass, so it only ever describes tonight.</summary>
+        private bool _guaranteedTamperTonight;
+
+        /// <summary>Told once a strike has run, whatever came of it, from every apply path: the
+        /// immediate one, the nets, and a scene calling Apply itself. A strike that found nothing to
+        /// do when it came to it does not count toward the every-loop guarantee, so its name comes
+        /// back off the run's list and the kind is still owed. The week's chance drop and the cap
+        /// slot stay spent: the night is over either way.</summary>
+        private void OnStrikeApplied(PendingStrike strike)
         {
-            PendingStrike strike = night.Prepare(e);
-            if (strike == null) return false;
+            if (strike.Landed) return;
+            (Run.StruckEvents ??= new()).Remove(strike.Event.ToString());
+            _monitor.Log($"Darkness: tonight's {strike.Event} found nothing to do when it came to it, so the kind is still owed this loop.", LogLevel.Info);
+            if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
+            {
+                Run.GuaranteedTamperDone = false;
+                _monitor.Log("Darkness: the guaranteed Winter tamper did not land, so it retries tomorrow.", LogLevel.Info);
+            }
+        }
+
+        /// <summary>Pick tonight's strike, record it, and either leave it waiting for its scene or
+        /// land it now. The one path every strike goes through. Null when the event found nothing
+        /// to take.</summary>
+        private PendingStrike Strike(NightPlan night, DarknessEvent e, int week, CoreSeason season, int dayOfYear)
+        {
+            PendingStrike strike = night.Prepare(e, OnStrikeApplied);
+            if (strike == null) return null;
             NightRoll.RecordStrike(Run, week, season);
             SabotageSchedule.RecordStrike(KindOf(e), Run, week, dayOfYear);
             (Run.StruckEvents ??= new()).Add(e.ToString());
+            ApplyPendingIfAny("replaced by a new strike");
             Pending = strike;
-            if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()) || !SceneCanPlay(strike))
-                ApplyPendingIfAny("no scene due");
-            return true;
+            string reason = SceneReasonToSkip(e, strike);
+            if (reason != null) ApplyPendingIfAny(reason);
+            return strike;
+        }
+
+        /// <summary>Why tonight's scene will not play, or null when it will. A scene test that
+        /// throws must not strand the night, so it counts as "cannot play".</summary>
+        private string SceneReasonToSkip(DarknessEvent e, PendingStrike strike)
+        {
+            if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new())) return "no scene due";
+            try
+            {
+                return SceneCanPlay(strike) ? null : "its scene cannot play";
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Darkness: the scene test for {e} threw, so tonight's strike lands without it. {ex}", LogLevel.Error);
+                return "its scene test threw";
+            }
         }
 
         /// <summary>One roll for tonight. Effects land before the save; reports queue for the morning.</summary>
@@ -118,6 +156,7 @@ namespace TheLongestYear.Loop
         {
             // A strike left over from a night whose scene never played cannot be carried forward.
             ApplyPendingIfAny("a new night began");
+            _guaranteedTamperTonight = false;
             if (!RunActivation.IsActive || !HostCanAct()) return;
             CoreSeason season = Run.Season;
             int day = Run.DayOfMonth;
@@ -144,8 +183,13 @@ namespace TheLongestYear.Loop
                 Meta.FirstWinterTamperSeen = true;
             if (guaranteedTonight)
             {
-                if (night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true)
-                    && Strike(night, DarknessEvent.Tampering, week, season, dayOfYear))
+                _guaranteedTamperTonight = true;
+                PendingStrike tamper = night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true)
+                    ? Strike(night, DarknessEvent.Tampering, week, season, dayOfYear)
+                    : null;
+                // Either it is still waiting for its scene, or it has already landed. A write that
+                // failed the moment it ran leaves the flags alone and falls through to tomorrow.
+                if (tamper != null && (!tamper.Applied || tamper.Landed))
                 {
                     Run.GuaranteedTamperDone = true;
                     Meta.FirstWinterTamperSeen = true;
@@ -153,7 +197,8 @@ namespace TheLongestYear.Loop
                     _armed.Clear(); _armedBlightTarget = null;
                     return;
                 }
-                _monitor.Log($"Darkness: guaranteed Winter tamper had no fair target on Winter {day}; retrying tomorrow.", LogLevel.Info);
+                _guaranteedTamperTonight = false;
+                _monitor.Log($"Darkness: guaranteed Winter tamper had no fair target on Winter {day}, retrying tomorrow.", LogLevel.Info);
             }
 
             double chance = NightRoll.ChanceTonight(Run, week, season);
@@ -172,7 +217,7 @@ namespace TheLongestYear.Loop
                 if (owed != null)
                 {
                     forced = owed;
-                    _monitor.Log($"Darkness: {owed} has not struck this loop by {season} {day}; forced tonight.", LogLevel.Info);
+                    _monitor.Log($"Darkness: {owed} has not struck this loop by {season} {day}, so it is forced tonight.", LogLevel.Info);
                 }
             }
 
@@ -184,9 +229,10 @@ namespace TheLongestYear.Loop
                 _monitor.Log("Darkness: nothing could act tonight; no strike and the chance does not drop.", LogLevel.Trace);
                 return;
             }
-            if (!Strike(night, pick.Value, week, season, dayOfYear))
+            if (Strike(night, pick.Value, week, season, dayOfYear) == null)
                 _monitor.Log($"Darkness: {pick} was picked but took nothing.", LogLevel.Trace);
-            _monitor.Log($"Darkness: night pass done at tick {Game1.ticks}; pending={(Pending == null ? "none" : Pending.Event.ToString())}.", LogLevel.Trace);
+            else if (Pending != null)
+                _monitor.Log($"Darkness: night pass done at tick {Game1.ticks}, leaving {Pending.Event} waiting for its scene.", LogLevel.Trace);
         }
 
         /// <summary>Everything one night needs, computed lazily so a plan is built once and reused
@@ -253,7 +299,7 @@ namespace TheLongestYear.Loop
             /// means it found nothing to take, the old Execute's false. The returned strike carries
             /// the effect as a closure, so the damage lands when its scene reaches the beat, or at
             /// once when no scene plays.</summary>
-            public PendingStrike Prepare(DarknessEvent e)
+            public PendingStrike Prepare(DarknessEvent e, Action<PendingStrike> onApplied)
             {
                 switch (e)
                 {
@@ -261,7 +307,7 @@ namespace TheLongestYear.Loop
                     {
                         List<Vector2> tiles = BlightPass.Pick(BlightRule.Count(_crops ?? BlightPass.LiveCropTiles().Count, _season, _level), _rng);
                         if (tiles.Count == 0) return null;
-                        return new PendingStrike(e, () => _s.ReportBlight(BlightPass.Kill(tiles), default)) { CropTiles = tiles };
+                        return new PendingStrike(e, () => _s.ReportBlight(BlightPass.Kill(tiles), default) > 0, onApplied) { CropTiles = tiles };
                     }
                     case DarknessEvent.ChestBlight:
                     {
@@ -269,7 +315,7 @@ namespace TheLongestYear.Loop
                         int units = _stored ?? SpoilagePass.StoredUnits(everything);
                         List<SpoilagePass.Hit> hits = SpoilagePass.Plan(BlightRule.SpoilCount(units, _season, _level), _rng, everything);
                         if (hits.Count == 0) return null;
-                        return new PendingStrike(e, () => _s.ReportBlight(0, SpoilagePass.Apply(hits))) { Hits = hits };
+                        return new PendingStrike(e, () => _s.ReportBlight(0, SpoilagePass.Apply(hits)) > 0, onApplied) { Hits = hits };
                     }
                     case DarknessEvent.Reversion:
                     {
@@ -278,8 +324,10 @@ namespace TheLongestYear.Loop
                         bool unmoderated = _reversionUnmoderated;
                         return new PendingStrike(e, () =>
                         {
-                            if (_s.RevertSlot(pick) && unmoderated) Run.UnmoderatedReversionSpent = true;
-                        });
+                            if (!_s.RevertSlot(pick)) return false;
+                            if (unmoderated) Run.UnmoderatedReversionSpent = true;
+                            return true;
+                        }, onApplied);
                     }
                     case DarknessEvent.Tampering:
                     {
@@ -291,9 +339,10 @@ namespace TheLongestYear.Loop
                         int dayOfYear = _dayOfYear;
                         return new PendingStrike(e, () =>
                         {
-                            if (_s.WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear) && unmoderated)
-                                Run.UnmoderatedTamperSpent = true;
-                        });
+                            if (!_s.WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear)) return false;
+                            if (unmoderated) Run.UnmoderatedTamperSpent = true;
+                            return true;
+                        }, onApplied);
                     }
                     default:
                         return null;

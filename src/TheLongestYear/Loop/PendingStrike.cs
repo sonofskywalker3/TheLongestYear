@@ -8,9 +8,9 @@ using TheLongestYear.Core.Sabotage;
 namespace TheLongestYear.Loop
 {
     /// <summary>Tonight's strike, picked at day end and not yet applied (spec 2026-09-21). The
-    /// overnight scene applies it at its beat; with no scene it is applied at once. Apply runs
-    /// its effect once however often it is called. In memory only: a strike is always applied
-    /// before the night's save.</summary>
+    /// overnight scene applies it at its beat. With no scene it is applied at once. Apply runs
+    /// its effect once however often it is called, and tells its owner whether the effect landed.
+    /// In memory only: a strike is always applied before the night's save.</summary>
     internal sealed class PendingStrike
     {
         public DarknessEvent Event { get; }
@@ -41,19 +41,33 @@ namespace TheLongestYear.Loop
 
         public bool Applied { get; private set; }
 
-        private readonly Action _effect;
+        /// <summary>Did the effect actually land? False until <see cref="Apply"/> has run, and false
+        /// afterwards when it found nothing to do (a slot the board would not open, a tamper the
+        /// world state refused, a blight that took nothing).</summary>
+        public bool Landed { get; private set; }
 
-        public PendingStrike(DarknessEvent e, Action effect)
+        private readonly Func<bool> _effect;
+        private readonly Action<PendingStrike> _onApplied;
+
+        /// <param name="effect">What the strike does. True when it landed.</param>
+        /// <param name="onApplied">Told once, inside <see cref="Apply"/>, whatever the outcome. This
+        /// is where the run's bookkeeping is corrected, so it runs on every apply path: the
+        /// immediate one, the nets, and a scene calling <see cref="Apply"/> itself.</param>
+        public PendingStrike(DarknessEvent e, Func<bool> effect, Action<PendingStrike> onApplied = null)
         {
             Event = e;
             _effect = effect ?? throw new ArgumentNullException(nameof(effect));
+            _onApplied = onApplied;
         }
 
-        public void Apply()
+        /// <summary>Do it, at most once. Returns whether the effect landed.</summary>
+        public bool Apply()
         {
-            if (Applied) return;
+            if (Applied) return Landed;
             Applied = true;
-            _effect();
+            Landed = _effect();
+            _onApplied?.Invoke(this);
+            return Landed;
         }
     }
 }
