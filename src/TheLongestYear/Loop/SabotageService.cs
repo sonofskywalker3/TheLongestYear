@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Objects;
@@ -14,8 +15,10 @@ namespace TheLongestYear.Loop
     /// <summary>The darkness (spec 2026-09-09 pushback; rework 2026-09-14; Part B wiring
     /// 2026-09-15): ONE roll a night with a decaying weekly chance, one event per strike split
     /// evenly among what the season offers, and reversion and tampering that consult the
-    /// obtainability model against the real save by Darkness level. Blight kills crops (BlightPass)
-    /// or takes stored units (SpoilagePass); reversion opens a filled slot; tampering rewrites an
+    /// obtainability model against the real save by Darkness level. Since 2026-09-21 the night pass
+    /// PICKS at day end and the damage lands exactly once afterwards: in the overnight scene, or at
+    /// once when no scene will play (<see cref="Pending"/>). Blight kills crops (BlightPass)
+    /// or empties one chest (SpoilagePass); reversion opens a filled slot; tampering rewrites an
     /// unfilled slot's item and asks ModEntry to rebuild the catalog and requirements. Host only,
     /// single player or master, never on a day 28 or the win night (RunController decides that).</summary>
     internal sealed class SabotageService
@@ -72,9 +75,49 @@ namespace TheLongestYear.Loop
 
         // ------------------------------------------------------------------ the night pass
 
+        /// <summary>Tonight's strike, picked but not yet applied, waiting for its scene. Null when
+        /// none is waiting.</summary>
+        public PendingStrike Pending { get; private set; }
+
+        /// <summary>Set by ModEntry once the overnight scenes exist (Task 6). Until then no scene
+        /// can play, so every strike lands at once exactly as it did before the split.</summary>
+        public Func<PendingStrike, bool> SceneCanPlay { get; set; } = _ => false;
+
+        /// <summary>Land a waiting strike now. The net under every path that does not play the
+        /// scene: no scene due, another overnight event won the slot, the scene threw, the save
+        /// began.</summary>
+        public bool ApplyPendingIfAny(string why)
+        {
+            PendingStrike p = Pending;
+            _monitor.Log($"Darkness: ApplyPendingIfAny({why}) at tick {Game1.ticks}; pending={(p == null ? "none" : p.Event.ToString())}.", LogLevel.Trace);
+            if (p == null) return false;
+            Pending = null;
+            if (p.Applied) return false;
+            _monitor.Log($"Darkness: applying tonight's {p.Event} without its scene ({why}).", LogLevel.Trace);
+            p.Apply();
+            return true;
+        }
+
+        /// <summary>Pick tonight's strike, record it, and either leave it waiting for its scene or
+        /// land it now. The one path every strike goes through.</summary>
+        private bool Strike(NightPlan night, DarknessEvent e, int week, CoreSeason season, int dayOfYear)
+        {
+            PendingStrike strike = night.Prepare(e);
+            if (strike == null) return false;
+            NightRoll.RecordStrike(Run, week, season);
+            SabotageSchedule.RecordStrike(KindOf(e), Run, week, dayOfYear);
+            (Run.StruckEvents ??= new()).Add(e.ToString());
+            Pending = strike;
+            if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()) || !SceneCanPlay(strike))
+                ApplyPendingIfAny("no scene due");
+            return true;
+        }
+
         /// <summary>One roll for tonight. Effects land before the save; reports queue for the morning.</summary>
         public void RunNight()
         {
+            // A strike left over from a night whose scene never played cannot be carried forward.
+            ApplyPendingIfAny("a new night began");
             if (!RunActivation.IsActive || !HostCanAct()) return;
             CoreSeason season = Run.Season;
             int day = Run.DayOfMonth;
@@ -101,12 +144,11 @@ namespace TheLongestYear.Loop
                 Meta.FirstWinterTamperSeen = true;
             if (guaranteedTonight)
             {
-                if (night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true) && night.Execute(DarknessEvent.Tampering))
+                if (night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true)
+                    && Strike(night, DarknessEvent.Tampering, week, season, dayOfYear))
                 {
                     Run.GuaranteedTamperDone = true;
                     Meta.FirstWinterTamperSeen = true;
-                    NightRoll.RecordStrike(Run, week, season);
-                    SabotageSchedule.RecordStrike(SabotageKind.Tampering, Run, week, dayOfYear);
                     _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {day}.", LogLevel.Info);
                     _armed.Clear(); _armedBlightTarget = null;
                     return;
@@ -118,6 +160,22 @@ namespace TheLongestYear.Loop
             bool dice = rng.NextDouble() < chance;
             DarknessEvent? forced = TakeArmed(night);
             _monitor.Log($"Darkness: night roll {season} {day} at {chance:P0}: {(dice ? "strike" : "quiet")}{(forced != null ? $", armed {forced}" : "")}; level {level}.", LogLevel.Trace);
+
+            // The every-loop guarantee (spec 2026-09-21): a kind that has not struck this loop by
+            // day 15 of its debut season is forced on the first night it can act, even on a quiet
+            // roll. An arm takes precedence: that is Jeff asking for a front by hand.
+            if (forced == null)
+            {
+                // Asked only when nothing was armed: CanAct can plan a reversion, which spends rng,
+                // and an armed night must roll exactly as it did before the guarantee existed.
+                DarknessEvent? owed = StrikeGuarantee.ForcedTonight(season, day, Run.StruckEvents ??= new(), night.CanAct);
+                if (owed != null)
+                {
+                    forced = owed;
+                    _monitor.Log($"Darkness: {owed} has not struck this loop by {season} {day}; forced tonight.", LogLevel.Info);
+                }
+            }
+
             if (!dice && forced == null) return;
 
             DarknessEvent? pick = forced ?? NightRoll.Pick(NightRoll.Options(season), night.CanAct, rng);
@@ -126,13 +184,9 @@ namespace TheLongestYear.Loop
                 _monitor.Log("Darkness: nothing could act tonight; no strike and the chance does not drop.", LogLevel.Trace);
                 return;
             }
-            if (!night.Execute(pick.Value))
-            {
+            if (!Strike(night, pick.Value, week, season, dayOfYear))
                 _monitor.Log($"Darkness: {pick} was picked but took nothing.", LogLevel.Trace);
-                return;
-            }
-            NightRoll.RecordStrike(Run, week, season);
-            SabotageSchedule.RecordStrike(KindOf(pick.Value), Run, week, dayOfYear);
+            _monitor.Log($"Darkness: night pass done at tick {Game1.ticks}; pending={(Pending == null ? "none" : Pending.Event.ToString())}.", LogLevel.Trace);
         }
 
         /// <summary>Everything one night needs, computed lazily so a plan is built once and reused
@@ -195,36 +249,54 @@ namespace TheLongestYear.Loop
                 }
             }
 
-            public bool Execute(DarknessEvent e)
+            /// <summary>Pick what this event does tonight without doing it (spec 2026-09-21). Null
+            /// means it found nothing to take, the old Execute's false. The returned strike carries
+            /// the effect as a closure, so the damage lands when its scene reaches the beat, or at
+            /// once when no scene plays.</summary>
+            public PendingStrike Prepare(DarknessEvent e)
             {
                 switch (e)
                 {
                     case DarknessEvent.CropBlight:
-                        return _s.Blight(BlightRule.Count(_crops ?? BlightPass.LiveCropTiles().Count, _season, _level), 0, _rng) > 0;
+                    {
+                        List<Vector2> tiles = BlightPass.Pick(BlightRule.Count(_crops ?? BlightPass.LiveCropTiles().Count, _season, _level), _rng);
+                        if (tiles.Count == 0) return null;
+                        return new PendingStrike(e, () => _s.ReportBlight(BlightPass.Kill(tiles), default)) { CropTiles = tiles };
+                    }
                     case DarknessEvent.ChestBlight:
                     {
                         bool everything = DarknessLevels.StorageReachesEverything(_level);
                         int units = _stored ?? SpoilagePass.StoredUnits(everything);
-                        return _s.Blight(0, BlightRule.SpoilCount(units, _season, _level), _rng) > 0;
+                        List<SpoilagePass.Hit> hits = SpoilagePass.Plan(BlightRule.SpoilCount(units, _season, _level), _rng, everything);
+                        if (hits.Count == 0) return null;
+                        return new PendingStrike(e, () => _s.ReportBlight(0, SpoilagePass.Apply(hits))) { Hits = hits };
                     }
                     case DarknessEvent.Reversion:
                     {
                         DonatedSlot pick = PlanReversion();
-                        if (pick == null || !_s.RevertSlot(pick)) return false;
-                        if (_reversionUnmoderated) Run.UnmoderatedReversionSpent = true;
-                        return true;
+                        if (pick == null) return null;
+                        bool unmoderated = _reversionUnmoderated;
+                        return new PendingStrike(e, () =>
+                        {
+                            if (_s.RevertSlot(pick) && unmoderated) Run.UnmoderatedReversionSpent = true;
+                        });
                     }
                     case DarknessEvent.Tampering:
                     {
                         var worldState = Game1.netWorldState?.Value;
-                        if (worldState?.BundleData == null) return false;
+                        if (worldState?.BundleData == null) return null;
                         TamperPlan plan = PlanTamper();
-                        if (plan == null || !_s.WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, _dayOfYear)) return false;
-                        if (_tamperUnmoderated) Run.UnmoderatedTamperSpent = true;
-                        return true;
+                        if (plan == null) return null;
+                        bool unmoderated = _tamperUnmoderated;
+                        int dayOfYear = _dayOfYear;
+                        return new PendingStrike(e, () =>
+                        {
+                            if (_s.WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear) && unmoderated)
+                                Run.UnmoderatedTamperSpent = true;
+                        });
                     }
                     default:
-                        return false;
+                        return null;
                 }
             }
 
@@ -327,12 +399,16 @@ namespace TheLongestYear.Loop
         // ------------------------------------------------------------------ blight
 
         /// <summary>Kill <paramref name="crops"/> crops and take <paramref name="spoil"/> stored units
-        /// now, then queue the report. Returns how many things were taken in all. Also the debug
-        /// entry point (<c>tly_sabotage blight [crops] [spoil]</c>).</summary>
+        /// now, then queue the report. Returns how many things were taken in all. The debug
+        /// entry point (<c>tly_sabotage blight [crops] [spoil]</c>), which strikes at once and never
+        /// goes through <see cref="Pending"/>.</summary>
         public int Blight(int crops, int spoil, Random rng)
+            => ReportBlight(BlightPass.Strike(crops, rng), SpoilagePass.Strike(spoil, rng, DarknessLevels.StorageReachesEverything(Level)));
+
+        /// <summary>Queue the morning report for what a blight took, and log it. Returns how many
+        /// things were taken in all, 0 when nothing was.</summary>
+        private int ReportBlight(int killed, SpoilagePass.Taken taken)
         {
-            int killed = BlightPass.Strike(crops, rng);
-            SpoilagePass.Taken taken = SpoilagePass.Strike(spoil, rng, DarknessLevels.StorageReachesEverything(Level));
             if (killed <= 0 && taken.Total <= 0)
             {
                 _monitor.Log("Darkness: blight rolled but found nothing to strike or take.", LogLevel.Trace);
@@ -550,6 +626,9 @@ namespace TheLongestYear.Loop
         /// <paramref name="continueWith"/> will run after it; false when the caller continues now.</summary>
         public bool ShowMorning(Action continueWith)
         {
+            // The morning cannot report what has not happened: a strike whose scene never played
+            // lands here at the latest.
+            ApplyPendingIfAny("morning");
             if (!RunActivation.IsActive) return false;
             SabotageReport tamper = Run.PendingSabotageReports?.Find(r => r.Kind == SabotageKind.Tampering);
             if (tamper == null || StartTamperScene == null)

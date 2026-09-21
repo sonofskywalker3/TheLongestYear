@@ -929,6 +929,10 @@ namespace TheLongestYear
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
         private void OnSaving(object sender, SavingEventArgs e)
         {
+            // A strike picked tonight must land before the night's save, whatever became of its
+            // scene: nothing pending ever crosses a save boundary.
+            _sabotage?.ApplyPendingIfAny("saving");
+
             // If this save opened without TLY setup (disabled in config),
             // _meta.Load() never ran and State/Run are empty defaults — persisting them would wipe
             // the player's banked progression. Skip the save entirely in that case.
