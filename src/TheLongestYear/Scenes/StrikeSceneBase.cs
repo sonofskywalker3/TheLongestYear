@@ -99,10 +99,26 @@ namespace TheLongestYear.Scenes
         /// <summary>The scene's beats. Called once, after <see cref="Stage"/> said yes.</summary>
         protected abstract void Build(Timeline t);
 
+        /// <summary>Move whatever the scene is animating, once a tick, after this tick's cues have
+        /// fired. <paramref name="elapsedMs"/> is <see cref="ElapsedMs"/>, passed in so a subclass
+        /// cannot read it at the wrong moment.
+        ///
+        /// It exists so per-tick movement runs INSIDE the base's own try/catch. A subclass that
+        /// moved things from its own <c>tickUpdate</c> override would throw straight past the
+        /// failure path, and the scene would stop without <see cref="Cleanup"/> ever running: a
+        /// frozen night camera, no HUD and frozen controls.</summary>
+        protected virtual void Advance(int elapsedMs) { }
+
         /// <summary>Paint at the world layer.</summary>
         protected virtual void Paint(SpriteBatch b) { }
 
-        /// <summary>Paint above everything, including the fade.</summary>
+        /// <summary>Paint above everything, including any menu.
+        ///
+        /// MIND THE BATCH. Vanilla calls this from Game1.cs:13409, after DrawMenu has closed its
+        /// own, so on the real overnight path there is NO open SpriteBatch and the first Draw call
+        /// throws. An override has to Begin and End one itself. <see cref="Paint"/> has no such
+        /// problem: Game1.cs:13698 wraps it in a Begin and an End. Tasks 8 to 10 should paint in
+        /// <see cref="Paint"/> unless they really must cover a menu.</summary>
         protected virtual void PaintAbove(SpriteBatch b) { }
 
         /// <summary>Put back whatever the scene borrowed from <c>Game1</c>: the camera, the clock,
@@ -174,6 +190,7 @@ namespace TheLongestYear.Scenes
                     End(EndedFinished, shown: true);
                     return true;
                 }
+                Advance(ElapsedMs);
                 return false;
             }
             catch (Exception ex)
@@ -202,6 +219,16 @@ namespace TheLongestYear.Scenes
         /// <summary>The last net. Vanilla calls this the moment the event ends, so even a scene that
         /// somehow left without ending itself lands its strike here.</summary>
         public override void makeChangesToLocation() => ApplyStrike();
+
+        /// <summary>Stop a scene from outside, because whoever was driving it cannot carry on. It
+        /// goes through the same single ending as every other path, so the strike still lands and
+        /// <see cref="Cleanup"/> still runs. Does nothing once the scene has ended.</summary>
+        public void Abort(string why)
+        {
+            if (_ended) return;
+            Monitor.Log($"Darkness: the {GetType().Name} scene was stopped from outside ({why}).", LogLevel.Warn);
+            End(EndedFailed, shown: _staged);
+        }
 
         /// <summary>A fresh press, never a button held down from before the scene began.</summary>
         private bool SkipPressed()

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -394,7 +394,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture [scarecrow] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture [scarecrow] [rows] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -2417,10 +2417,18 @@ namespace TheLongestYear
                         StardewValley.Season.Fall => "487",
                         _ => null,
                     };
+                    // An optional row count makes the patch a block instead of a line. The night's
+                    // blight count is a SHARE of the farm's live crops, so ten crops only ever loses
+                    // one, and the overnight scene then has a single crow in it. Twelve rows is 120
+                    // crops, which loses about six and gives the crows scene a flock to stage.
+                    int rows = 1;
+                    foreach (string a in args)
+                        if (int.TryParse(a, out int parsedRows) && parsedRows > 0) rows = System.Math.Min(parsedRows, 20);
                     int planted = 0;
-                    for (int i = 0; i < 10 && seed != null; i++)
+                    for (int row = 0; row < rows && seed != null; row++)
+                    for (int i = 0; i < 10; i++)
                     {
-                        var tile = new Microsoft.Xna.Framework.Vector2(door.X - 6 + i, door.Y + 6);
+                        var tile = new Microsoft.Xna.Framework.Vector2(door.X - 6 + i, door.Y + 6 + row);
                         farm.terrainFeatures.Remove(tile);
                         farm.objects.Remove(tile);
                         var dirt = new StardewValley.TerrainFeatures.HoeDirt(1, farm);
@@ -2459,7 +2467,7 @@ namespace TheLongestYear
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture [scarecrow] | circle", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture [scarecrow] [rows] | circle", LogLevel.Info);
                     break;
             }
         }
@@ -2488,7 +2496,7 @@ namespace TheLongestYear
             { CropTiles = tiles };
             this.Monitor.Log(
                 real
-                    ? $"tly_sabotage scene crows: {tiles.Count} live crop(s) picked; they really die at the peck."
+                    ? $"tly_sabotage scene crows: {tiles.Count} live crop(s) picked, and they really die at the peck."
                     : $"tly_sabotage scene crows: no crops on the farm, so the scene plays against {tiles.Count} stand-in tile(s) and nothing dies.",
                 LogLevel.Info);
             var scene = new TheLongestYear.Scenes.CrowsScene(strike, skippable: true, this.Monitor, _ => { });
