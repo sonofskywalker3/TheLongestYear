@@ -82,6 +82,13 @@ Keep the morning popup messages. The darkness works through agents until Winter:
 Only in Winter can the dark act directly: nature is subdued by the cold, the snow and the lack of
 sun. The scenes play silent; no Junimo explains a strike afterwards.
 
+**When a scene plays** (Jeff): the first strike of each kind, each loop. In full the first time
+ever on a save, skippable after that. Later strikes of that kind in the loop are popup only.
+
+**The thief is a Shadow Brute, one of Krobus's people** (Jeff, option B). Krobus is not in the
+scene. He becomes an in-season story beat, and his vanilla beats need going over and changing as
+needed (Jeff). First candidate for the in-season beats spec.
+
 **Every assault happens at least once, every loop** (Jeff). A guarantee, not a rising chance: a
 kind that has not struck by the last week of the season it first appears in is forced on its first
 eligible night of that week (crows and thief in Summer, hall shadows in Fall; tampering keeps its
