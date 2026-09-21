@@ -174,11 +174,15 @@ sleeping farm.
   chest could be on (**mine**: a chest off the farm plays no scene; the strike applies at once and
   the scene waits for a chest on the farm. The thief walking into the mines or the desert is not
   worth staging).
-- Which chest: chest blight does not pick one chest. It takes units one at a time across every
-  unwarded chest and placed machine on every map, weighted by how much each holds (found in the
-  code while planning, 2026-09-21). The scene shows the chest that loses the most that night
-  among chests on the farm's own maps, and every unit everywhere goes at the same beat. If every
-  hit is a machine or is off the farm, no scene plays and the thief waits for his next strike.
+- **One chest per strike (Jeff, 2026-09-21; a rule change).** Chest blight used to take units one
+  at a time across every unwarded chest and placed machine on every map. Now a strike picks ONE
+  target with a single roll weighted by how much each holds, and takes only from it: up to the
+  night's count from that chest, never more than the chest has. What the player sees is the whole
+  strike, and where the Circles of Warding go is a sharper choice. On the levels where placed
+  machines are at stake, a machine is a target too, and a machine target is that one machine.
+- The scene plays at that chest when it is on the farm's own maps (the Farm, a shed, the cellar,
+  the farmhouse). A chest anywhere else, or a machine target, gets no scene; the thief waits for
+  his next strike.
 - A Shadow Brute walks in from the nearest door or map edge to the chest. The lid opens with the
   vanilla animation and sound. Beat. Apply: the units vanish.
 - The Brute turns, looks toward the camera for half a second, eyes red, and runs out the way it

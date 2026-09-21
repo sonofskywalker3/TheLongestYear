@@ -428,6 +428,8 @@ public HashSet<string> StrikeScenesSeen { get; set; } = new();
 
 ### Task 5: Pick at day end, apply once
 
+> **Amended 2026-09-21 (Jeff): one chest per strike.** `SpoilagePass.Plan` picks ONE target with a single roll weighted by units (each chest is a target, each placed machine is a target) and takes only from it: up to `count` units from that chest, or that one machine. `PendingStrike` gains `TargetChest` and `TargetLocation`. The `Plan` code block below shows the older spread version; the single-target rule wins.
+
 The heart of the plan. Today `NightPlan.Execute` picks and applies in one call. After this task the night pass produces a `PendingStrike` whose damage lands exactly once: in the scene, or at once when no scene will play.
 
 **Files:**
@@ -960,6 +962,8 @@ Linus is a scene-drawn sprite (`AnimatedSprite` on `Characters\Linus`), never th
 ---
 
 ### Task 8: The thief
+
+> **Amended 2026-09-21 (Jeff): one chest per strike.** `PickChest(strike)` is `strike.TargetChest` when `strike.TargetLocation` is the Farm, a FarmHouse, a Cellar or a Shed, else null. There is no worst-hit chest to choose: every hit is in the one chest. Ignore the GroupBy version below and the note about units vanishing elsewhere.
 
 **Files:** Modify `src/TheLongestYear/Scenes/ThiefScene.cs`.
 
