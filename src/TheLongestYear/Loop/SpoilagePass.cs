@@ -7,13 +7,15 @@ using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>The blight front reaching into storage (Jeff, 2026-09-09): units vanish from the
-    /// player's chests in the night, one at a time off random stacks. Food spoils; anything else
-    /// goes missing. Every chest on every map counts except the Junimo Stash and chests on a Circle
-    /// of Warding. Below Extreme only plain objects are taken (never tools, weapons or big
+    /// <summary>The blight front reaching into storage (Jeff, 2026-09-09): units vanish in the
+    /// night, one at a time off random stacks. A night raids ONE chest (Jeff, 2026-09-21): the first
+    /// chest a roll lands in is the night's chest, and the rest are safe until tomorrow. Placed
+    /// machines are not chests and stay in the draw throughout. Food spoils; anything else goes
+    /// missing. Every chest on every map is in the draw except the Junimo Stash and chests on a
+    /// Circle of Warding. Below Extreme only plain objects are taken (never tools, weapons or big
     /// craftables). On Extreme (<paramref name="everything"/>, spec 2026-09-15 Part B, 2.5) anything
-    /// in an unwarded chest can go, and machines placed on the FARM map join the pool at three
-    /// units each; a machine on a circle's tiles is protected like a chest there.</summary>
+    /// in an unwarded chest can go, and machines placed on the FARM map join the pool at three units
+    /// each; a machine on a circle's tiles is protected like a chest there.</summary>
     internal static class SpoilagePass
     {
         private sealed class Entry
@@ -21,10 +23,23 @@ namespace TheLongestYear.Loop
             public Chest Chest;          // null for a placed machine
             public int Slot;
             public Item Item;
-            public GameLocation Location; // placed machine only
-            public Vector2 Tile;          // placed machine only
+            public GameLocation Location; // the chest's or the machine's map
+            public Vector2 Tile;          // the chest's or the machine's tile
             public bool BigCraftable;
             public int Units => BlightRule.UnitsOf(Item.Stack, BigCraftable);
+        }
+
+        /// <summary>One unit the darkness takes tonight, chosen by <see cref="Plan"/> and removed by
+        /// <see cref="Apply"/>. The scene reads it to show where the loss landed (spec 2026-09-21).</summary>
+        public sealed class Hit
+        {
+            public Chest Chest;            // null for a placed machine
+            public int Slot;
+            public Item Item;
+            public GameLocation Location;  // the chest's or the machine's map
+            public Vector2 Tile;
+            public bool Machine;
+            public bool Perishable;
         }
 
         public readonly struct Taken
@@ -58,7 +73,7 @@ namespace TheLongestYear.Loop
                             bool big = item is StardewValley.Object o && o.bigCraftable.Value;
                             bool plain = item is StardewValley.Object && !big;
                             if (!BlightRule.InStoragePool(plain, big, placedOnMap: false, onFarm, chestWarded, everything)) continue;
-                            entries.Add(new Entry { Chest = chest, Slot = i, Item = item, BigCraftable = big });
+                            entries.Add(new Entry { Chest = chest, Slot = i, Item = item, Location = loc, Tile = pair.Key, BigCraftable = big });
                         }
                         continue;
                     }
@@ -80,45 +95,81 @@ namespace TheLongestYear.Loop
             return units;
         }
 
-        /// <summary>Take up to <paramref name="count"/> units, each off an entry picked by
+        /// <summary>Choose up to <paramref name="count"/> units to take, each off an entry picked by
         /// <paramref name="rng"/> weighted by its units. A machine costs three of the night's count
         /// (Jeff's budget rule: a night of 15 loses at most 5 machines) but counts as ONE thing in
-        /// the report, because one keg went missing, not three.</summary>
-        public static Taken Strike(int count, Random rng, bool everything)
+        /// the report, because one keg went missing, not three. The night has ONE chest (Jeff,
+        /// 2026-09-21): once a roll lands in a chest, every other chest leaves the pool, though
+        /// machines stay in it. Reads only: nothing is removed until <see cref="Apply"/> runs.</summary>
+        public static List<Hit> Plan(int count, Random rng, bool everything)
         {
-            if (count <= 0) return new Taken(0, 0);
+            var hits = new List<Hit>();
+            if (count <= 0) return hits;
             List<Entry> entries = Entries(everything);
-            int spoiled = 0, missing = 0, taken = 0;
-            while (taken < count && entries.Count > 0)
+            // The rule lives in Core so it can be tested without a game: it draws the units and
+            // enforces the one-chest constraint; this side only says which chest each entry is in.
+            var pool = new List<TakeCandidate>(entries.Count);
+            var chests = new List<Chest>();
+            foreach (Entry e in entries)
+                pool.Add(new TakeCandidate(OwnerIdOf(e.Chest, chests), e.Units, e.BigCraftable));
+            foreach (int index in BlightRule.PlanTake(pool, count, rng))
+                hits.Add(HitFor(entries[index]));
+            return hits;
+        }
+
+        /// <summary>A placed machine belongs to no chest; the planner reads a negative owner as
+        /// "machine" and never locks the night onto it.</summary>
+        private const int MachineOwnerId = -1;
+
+        /// <summary>Which chest an entry sits in, as an index into <paramref name="chests"/> (a
+        /// chest met for the first time is appended).</summary>
+        private static int OwnerIdOf(Chest chest, List<Chest> chests)
+        {
+            if (chest == null) return MachineOwnerId;
+            for (int i = 0; i < chests.Count; i++)
+                if (ReferenceEquals(chests[i], chest)) return i;
+            chests.Add(chest);
+            return chests.Count - 1;
+        }
+
+        private static Hit HitFor(Entry e) => new Hit
+        {
+            Chest = e.Chest,
+            Slot = e.Slot,
+            Item = e.Item,
+            Location = e.Location,
+            Tile = e.Tile,
+            Machine = e.Chest == null,
+            Perishable = !e.BigCraftable && BlightRule.IsPerishableCategory(e.Item.Category),
+        };
+
+        /// <summary>Do the removals. An item that has already gone (stack spent, machine moved) is
+        /// passed over, so a double call cannot take twice from a stack that the plan emptied.</summary>
+        public static Taken Apply(List<Hit> hits)
+        {
+            int spoiled = 0, missing = 0;
+            foreach (Hit h in hits)
             {
-                int total = 0;
-                foreach (Entry e in entries) total += e.Units;
-                if (total <= 0) break;
-                int roll = rng.Next(total);
-                Entry hit = entries[0];
-                foreach (Entry e in entries)
-                {
-                    roll -= e.Units;
-                    if (roll < 0) { hit = e; break; }
-                }
-                int cost = BlightRule.UnitsOf(1, hit.BigCraftable);
-                taken += cost;
-                // The cost is the night's budget; the report counts things, so one item taken is one
-                // thing whether it was a parsnip or a keg.
-                if (hit.BigCraftable || !BlightRule.IsPerishableCategory(hit.Item.Category)) missing += 1; else spoiled += 1;
-                if (hit.Chest != null)
-                {
-                    hit.Item.Stack -= 1;
-                    if (hit.Item.Stack <= 0) { hit.Chest.Items[hit.Slot] = null; entries.Remove(hit); }
-                }
-                else
+                if (h.Machine)
                 {
                     // A placed machine vanishes with whatever it held (spec 2.5).
-                    hit.Location.objects.Remove(hit.Tile);
-                    entries.Remove(hit);
+                    if (h.Location.objects.TryGetValue(h.Tile, out StardewValley.Object o) && ReferenceEquals(o, h.Item))
+                    {
+                        h.Location.objects.Remove(h.Tile);
+                        missing++;
+                    }
+                    continue;
                 }
+                if (h.Item.Stack <= 0 || h.Slot >= h.Chest.Items.Count || !ReferenceEquals(h.Chest.Items[h.Slot], h.Item)) continue;
+                h.Item.Stack -= 1;
+                if (h.Item.Stack <= 0) h.Chest.Items[h.Slot] = null;
+                if (h.Perishable) spoiled++; else missing++;
             }
             return new Taken(spoiled, missing);
         }
+
+        /// <summary>Plan and apply in one call: the debug entry point, and the shape the night pass
+        /// had before the pick and the apply were split.</summary>
+        public static Taken Strike(int count, Random rng, bool everything) => Apply(Plan(count, rng, everything));
     }
 }

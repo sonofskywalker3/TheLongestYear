@@ -33,17 +33,28 @@ namespace TheLongestYear.Loop
             return tiles;
         }
 
-        /// <summary>Kill up to <paramref name="count"/> crops chosen by <paramref name="rng"/>.
-        /// Returns how many actually died.</summary>
-        public static int Strike(int count, Random rng)
+        /// <summary>Which crops die tonight, chosen by <paramref name="rng"/>. Reads only, so the
+        /// pick can be made at day end and the killing left to the scene (spec 2026-09-21).</summary>
+        public static List<Vector2> Pick(int count, Random rng)
         {
             List<Vector2> tiles = LiveCropTiles();
-            if (tiles.Count == 0 || count <= 0) return 0;
-            Farm farm = Game1.getFarm();
-            int killed = 0;
+            var picked = new List<Vector2>();
+            if (tiles.Count == 0 || count <= 0) return picked;
             foreach (int index in BlightRule.PickIndexes(tiles.Count, count, rng))
+                picked.Add(tiles[index]);
+            return picked;
+        }
+
+        /// <summary>Kill the crops on these tiles. A tile whose crop is gone or already dead is
+        /// passed over, so calling it twice is harmless. Returns how many died.</summary>
+        public static int Kill(IEnumerable<Vector2> tiles)
+        {
+            Farm farm = Game1.getFarm();
+            if (farm == null) return 0;
+            int killed = 0;
+            foreach (Vector2 tile in tiles)
             {
-                if (farm.terrainFeatures.TryGetValue(tiles[index], out TerrainFeature tf)
+                if (farm.terrainFeatures.TryGetValue(tile, out TerrainFeature tf)
                     && tf is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value)
                 {
                     dirt.crop.Kill();
@@ -52,6 +63,10 @@ namespace TheLongestYear.Loop
             }
             return killed;
         }
+
+        /// <summary>Pick and kill in one call: the debug entry point, and the shape the night pass
+        /// had before the pick and the apply were split.</summary>
+        public static int Strike(int count, Random rng) => Kill(Pick(count, rng));
 
         /// <summary>The nightly roll for one season: how many to kill, or 0 when nothing dies.</summary>
         public static int CountFor(CoreSeason season, DifficultyStep level) => BlightRule.Count(LiveCropTiles().Count, season, level);

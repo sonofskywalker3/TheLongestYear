@@ -148,6 +148,68 @@ public class BlightRuleTests
         Assert.All(picked, i => Assert.InRange(i, 0, 19));
         Assert.Equal(3, BlightRule.PickIndexes(3, 6, new Random(1)).Count);
     }
+
+    private const int Machine = -1;
+
+    private static TakeCandidate Stack(int chest, int units) => new TakeCandidate(chest, units, bigCraftable: false);
+    private static TakeCandidate Keg() => new TakeCandidate(Machine, DarknessLevels.BigCraftableUnits, bigCraftable: true);
+
+    [Fact]
+    public void A_night_takes_from_one_chest_only()
+    {
+        var pool = new List<TakeCandidate>
+        {
+            Stack(0, 20), Stack(0, 20),
+            Stack(1, 20), Stack(1, 20),
+            Stack(2, 20), Stack(2, 20),
+        };
+        for (int seed = 0; seed < 50; seed++)
+        {
+            IReadOnlyList<int> taken = BlightRule.PlanTake(pool, 10, new Random(seed));
+            Assert.Equal(10, taken.Count);
+            Assert.Single(taken.Select(i => pool[i].OwnerId).Distinct());
+        }
+    }
+
+    [Fact]
+    public void The_take_is_capped_by_what_that_chest_holds()
+    {
+        // One chest with three units in it and nothing else: a night of 15 can take only three.
+        var pool = new List<TakeCandidate> { Stack(0, 3) };
+        Assert.Equal(3, BlightRule.PlanTake(pool, 15, new Random(4)).Count);
+        Assert.Empty(BlightRule.PlanTake(pool, 0, new Random(4)));
+        Assert.Empty(BlightRule.PlanTake(new List<TakeCandidate>(), 15, new Random(4)));
+    }
+
+    [Fact]
+    public void Machines_stay_in_the_pool_after_the_chest_is_chosen()
+    {
+        // One small chest and plenty of machines: the night spends the rest of its count on them,
+        // and each machine can be taken only once.
+        var pool = new List<TakeCandidate> { Stack(0, 1), Keg(), Keg(), Keg(), Keg() };
+        IReadOnlyList<int> taken = BlightRule.PlanTake(pool, 15, new Random(9));
+        Assert.Contains(taken, i => pool[i].Machine);
+        Assert.Equal(taken.Count, taken.Distinct().Count());
+        // Budget: one unit for the stack plus three per machine, never past the night's count.
+        int units = taken.Sum(i => BlightRule.UnitsOf(1, pool[i].BigCraftable));
+        Assert.InRange(units, 1, 15 + DarknessLevels.BigCraftableUnits - 1);
+    }
+
+    [Fact]
+    public void Machines_alone_leave_no_chest_locked_and_a_stack_can_be_taken_from_twice()
+    {
+        Assert.All(BlightRule.PlanTake(new List<TakeCandidate> { Keg(), Keg() }, 15, new Random(2)),
+            i => Assert.True(i is 0 or 1));
+        IReadOnlyList<int> taken = BlightRule.PlanTake(new List<TakeCandidate> { Stack(0, 5) }, 3, new Random(2));
+        Assert.Equal(new[] { 0, 0, 0 }, taken);
+    }
+
+    [Fact]
+    public void One_roll_per_unit_so_a_re_slept_night_rolls_the_same()
+    {
+        var pool = new List<TakeCandidate> { Stack(0, 6), Stack(1, 6), Keg() };
+        Assert.Equal(BlightRule.PlanTake(pool, 5, new Random(21)), BlightRule.PlanTake(pool, 5, new Random(21)));
+    }
 }
 
 public class ReversionRuleTests
