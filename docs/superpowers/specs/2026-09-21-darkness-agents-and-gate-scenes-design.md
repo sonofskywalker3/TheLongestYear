@@ -174,6 +174,11 @@ sleeping farm.
   chest could be on (**mine**: a chest off the farm plays no scene; the strike applies at once and
   the scene waits for a chest on the farm. The thief walking into the mines or the desert is not
   worth staging).
+- Which chest: chest blight does not pick one chest. It takes units one at a time across every
+  unwarded chest and placed machine on every map, weighted by how much each holds (found in the
+  code while planning, 2026-09-21). The scene shows the chest that loses the most that night
+  among chests on the farm's own maps, and every unit everywhere goes at the same beat. If every
+  hit is a machine or is off the farm, no scene plays and the thief waits for his next strike.
 - A Shadow Brute walks in from the nearest door or map edge to the chest. The lid opens with the
   vanilla animation and sound. Beat. Apply: the units vanish.
 - The Brute turns, looks toward the camera for half a second, eyes red, and runs out the way it
