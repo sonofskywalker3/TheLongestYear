@@ -232,6 +232,10 @@ public sealed class MetaState
     /// skippable next time.</summary>
     public HashSet<string> SeasonTurnsSeen { get; set; } = new();
 
+    /// <summary>Strike scenes (DarknessEvent names) that have ever played on this save. A seen scene
+    /// can be skipped (spec 2026-09-21).</summary>
+    public HashSet<string> StrikeScenesSeen { get; set; } = new();
+
     /// <summary>Unused since 2026-09-21 (the first-strike letters were replaced by the overnight
     /// scenes). Kept so a save written before then still loads.</summary>
     public HashSet<string> SabotageLettersSent { get; set; } = new();

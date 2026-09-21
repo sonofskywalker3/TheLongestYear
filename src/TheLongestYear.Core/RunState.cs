@@ -196,6 +196,9 @@ public sealed class RunState
     /// <summary>Names of the DarknessEvent values that have struck this loop (spec 2026-09-21: the
     /// guarantee and the once-per-loop scenes both read it).</summary>
     public HashSet<string> StruckEvents { get; set; } = new();
+    /// <summary>DarknessEvent names whose overnight strike scene has already played this loop
+    /// (spec 2026-09-21): a kind's scene is due only the first time it strikes in a loop.</summary>
+    public HashSet<string> StrikeScenesPlayed { get; set; } = new();
 
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
@@ -375,5 +378,6 @@ public sealed class RunState
         UnmoderatedTamperSpent = false;
         GuaranteedTamperDone = false;
         (StruckEvents ??= new()).Clear();
+        (StrikeScenesPlayed ??= new()).Clear();
     }
 }
