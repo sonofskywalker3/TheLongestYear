@@ -49,7 +49,7 @@ rule 11).
 | Orange | It grows stronger as well. As the days grow shorter, it will reach further. |
 | Turquoise | You must continue. We will hold back what we can, but the work is yours alone. |
 
-## Fall to Winter gate scene: new lines (2026-09-21; line 3 wording and "war" are my picks, Jeff to confirm)
+## Fall to Winter gate scene: new lines (2026-09-21; Jeff picked line 3; "war" over "fight" is my pick, his to confirm)
 
 Four lines, the same every loop.
 
@@ -57,7 +57,7 @@ Four lines, the same every loop.
 | --- | --- |
 | Green | This is the last season, @. If it is to end, it ends here. |
 | Orange | The agents of the enemy will not stop, but with the cold and dark of Winter, it may attack directly. |
-| Turquoise | It will corrupt whatever it can. You must mend what it breaks. |
+| Turquoise | It will corrupt whatever it can. To go on, you must mend what it breaks. |
 | Green | If you win here, this cycle will be broken. But I fear our war will continue. |
 
 Jeff's version of line 3: "It will corrupt whatever it can, but you must mend what is broken to
