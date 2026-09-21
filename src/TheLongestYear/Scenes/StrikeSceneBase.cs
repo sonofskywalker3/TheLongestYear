@@ -17,8 +17,14 @@ namespace TheLongestYear.Scenes
     ///
     /// It derives from vanilla's own <see cref="BaseFarmEvent"/>, so it is a farm event of exactly the
     /// shape the witch and the fairy are, NetFields included. Vanilla restores the HUD, the controls,
-    /// the viewport and the farmer after any farm event ends (Game1.cs:3804 and 3826), so the scene
-    /// sets those the way WitchEvent and FairyEvent do and never puts them back itself.</summary>
+    /// the viewport and the farmer after any farm event ends (Game1.cs:3804 and 3826), and the scene
+    /// sets those the way WitchEvent and FairyEvent do.
+    ///
+    /// It does NOT lean on that restore, though. <see cref="Cleanup"/> runs on every ending, and the
+    /// HUD and control flags are put back beside it, because two paths reach an ending where vanilla
+    /// never cleans up after it: a <see cref="Stage"/> that says no (vanilla nulls the event and
+    /// walks away) and the debug command, which plays a scene in the middle of an ordinary day with
+    /// no farm-event machinery running at all.</summary>
     internal abstract class StrikeSceneBase : BaseFarmEvent
     {
         /// <summary>How long a click is ignored at the start, so the button that put the farmer to
@@ -67,6 +73,10 @@ namespace TheLongestYear.Scenes
         private bool _staged;
         /// <summary>Starts true so a button already held when the scene begins is not a fresh press.</summary>
         private bool _skipHeldLastTick = true;
+        /// <summary>True once the HUD and control flags have been taken, with what they were.</summary>
+        private bool _flagsTaken;
+        private bool _priorDisplayHud;
+        private bool _priorFreezeControls;
 
         /// <summary>Milliseconds since the scene's first tick.</summary>
         protected int ElapsedMs { get; private set; }
@@ -94,6 +104,12 @@ namespace TheLongestYear.Scenes
 
         /// <summary>Paint above everything, including the fade.</summary>
         protected virtual void PaintAbove(SpriteBatch b) { }
+
+        /// <summary>Put back whatever the scene borrowed from <c>Game1</c>: the camera, the clock,
+        /// the lighting, any light source it added. Called exactly once on EVERY ending, inside its
+        /// own try/catch, including a skip, a failure, and a scene that never staged. A scene that
+        /// changes nothing global does not need it.</summary>
+        protected virtual void Cleanup() { }
 
         /// <summary>Land tonight's damage. Safe to call more than once and from anywhere: the strike
         /// itself runs its effect at most once, and a strike that throws is logged and swallowed so it
@@ -123,6 +139,9 @@ namespace TheLongestYear.Scenes
                 }
                 Build(_timeline);
                 _timeline.Cues.Sort((a, b) => a.AtMs.CompareTo(b.AtMs));
+                _priorDisplayHud = Game1.displayHUD;
+                _priorFreezeControls = Game1.freezeControls;
+                _flagsTaken = true;
                 Game1.displayHUD = false;
                 Game1.freezeControls = true;
                 _staged = true;
@@ -202,6 +221,22 @@ namespace TheLongestYear.Scenes
         {
             if (_ended) return;
             _ended = true;
+            // The world goes back to how it was BEFORE the damage lands, so a strike that throws
+            // cannot leave the player holding a frozen night camera.
+            try
+            {
+                if (_flagsTaken)
+                {
+                    Game1.displayHUD = _priorDisplayHud;
+                    Game1.freezeControls = _priorFreezeControls;
+                    _flagsTaken = false;
+                }
+                Cleanup();
+            }
+            catch (Exception ex)
+            {
+                Monitor.Log($"Darkness: the {GetType().Name} scene could not put the world back. {ex}", LogLevel.Error);
+            }
             ApplyStrike();
             Monitor.Log($"Darkness: the {GetType().Name} scene ended ({how}) at tick {Game1.ticks}.", LogLevel.Trace);
             try

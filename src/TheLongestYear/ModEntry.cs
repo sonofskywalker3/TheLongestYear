@@ -32,6 +32,8 @@ namespace TheLongestYear
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
         private TheLongestYear.Loop.SabotageService _sabotage;
         private TheLongestYear.Loop.CircleOfWardingService _circles;
+        /// <summary>Debug only: plays one overnight strike scene mid-day (tly_sabotage scene crows).</summary>
+        private TheLongestYear.Scenes.ScenePreview _scenePreview;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -392,7 +394,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene [old] [new] | fixture | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -2435,15 +2437,68 @@ namespace TheLongestYear
                     this.Monitor.Log($"Sabotage fixture: {planted} crop(s) of seed {seed ?? "none (Winter)"} at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore.", LogLevel.Info);
                     break;
                 }
+                case "scene" when args.Length > 1 && args[1].ToLowerInvariant() == "crows":
+                    this.PlayCrowsScenePreview(rng);
+                    break;
                 case "scene":
                     _seasonTurnDriver.StartTamperWhenSettled(
                         args.Length > 1 ? args[1] : "Parsnip", args.Length > 2 ? args[2] : "Crystal Fruit",
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene [old] [new] | fixture | circle", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene [old] [new] | fixture | circle", LogLevel.Info);
                     break;
             }
+        }
+
+        /// <summary>tly_sabotage scene crows: watch the crop blight scene now, without sleeping.
+        ///
+        /// It plays against a REAL fresh pick when the farm has crops, and those crops really die at
+        /// the scene's own beat, the same as they would overnight. With no crops to take it plays
+        /// against a harmless stand-in (the tiles around the farmer, with an effect that does
+        /// nothing) so the staging, the camera and Linus can still be watched.</summary>
+        private void PlayCrowsScenePreview(System.Random rng)
+        {
+            _scenePreview ??= new TheLongestYear.Scenes.ScenePreview(this.Helper, this.Monitor);
+            if (_scenePreview.Playing) { this.Monitor.Log("A strike scene is already playing.", LogLevel.Warn); return; }
+
+            TheLongestYear.Core.DifficultyStep level = _meta.State.EffectiveDifficulty(_config).Darkness;
+            int want = Math.Max(TheLongestYear.Scenes.CrowsScene.PreviewCrops, TheLongestYear.Loop.BlightPass.CountFor(_meta.Run.Season, level));
+            List<Microsoft.Xna.Framework.Vector2> tiles = TheLongestYear.Loop.BlightPass.Pick(want, rng);
+            bool real = tiles.Count > 0;
+            if (!real) tiles = StandInCropTiles();
+            if (tiles.Count == 0) { this.Monitor.Log("Nowhere on the farm to stage the crows.", LogLevel.Warn); return; }
+
+            var strike = new TheLongestYear.Loop.PendingStrike(
+                TheLongestYear.Core.Sabotage.DarknessEvent.CropBlight,
+                () => real && TheLongestYear.Loop.BlightPass.Kill(tiles) > 0)
+            { CropTiles = tiles };
+            this.Monitor.Log(
+                real
+                    ? $"tly_sabotage scene crows: {tiles.Count} live crop(s) picked; they really die at the peck."
+                    : $"tly_sabotage scene crows: no crops on the farm, so the scene plays against {tiles.Count} stand-in tile(s) and nothing dies.",
+                LogLevel.Info);
+            var scene = new TheLongestYear.Scenes.CrowsScene(strike, skippable: true, this.Monitor, _ => { });
+            _scenePreview.Play(scene);
+        }
+
+        /// <summary>Tiles to stage the crows on when the farm has no crops at all: the ring around
+        /// the farmer if he is standing on the farm, else the ring below the farmhouse door.</summary>
+        private static List<Microsoft.Xna.Framework.Vector2> StandInCropTiles()
+        {
+            Farm farm = Game1.getFarm();
+            var tiles = new List<Microsoft.Xna.Framework.Vector2>();
+            if (farm == null) return tiles;
+            Microsoft.Xna.Framework.Vector2 centre = Game1.currentLocation is Farm
+                ? Game1.player.Tile
+                : Utility.PointToVector2(farm.GetMainFarmHouseEntry()) + new Microsoft.Xna.Framework.Vector2(0, 3);
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    var tile = new Microsoft.Xna.Framework.Vector2(centre.X + dx, centre.Y + dy);
+                    if (farm.isTileOnMap(tile)) tiles.Add(tile);
+                }
+            return tiles;
         }
 
         /// <summary>After the darkness rewrites a bundle on the live board (and in the stored
