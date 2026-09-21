@@ -304,6 +304,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
+            helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
             helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
             helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the config's BundleSource so the next reset honours it.", this.CmdBundleSource);
             helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
@@ -1461,6 +1462,38 @@ namespace TheLongestYear
                 LogLevel.Info);
         }
 
+        /// <summary>Debug: what does each mushroom (and a fruit or two) actually dry into? Answers
+        /// whether a dried mushroom is one generic item or one per mushroom, and whether vanilla's
+        /// PreserveType name "DriedMushroom" resolves as an item id for the icon lookup, which is
+        /// what decided that mushrooms could not be a flavored slot in 0.18.34. Read-only.</summary>
+        private void CmdDriedProbe(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            foreach (string id in new[] { "DriedMushroom", "DriedMushrooms", "DriedFruit", "SmokedFish" })
+            {
+                var meta = ItemRegistry.GetMetadata(id);
+                this.Monitor.Log(
+                    $"tly_driedprobe: id '{id}' -> metadata {(meta == null ? "(null)" : meta.QualifiedItemId + " type=" + meta.TypeIdentifier)}",
+                    meta == null ? LogLevel.Warn : LogLevel.Info);
+            }
+
+            // One entry per edible mushroom, plus two fruits as a control.
+            foreach (string preserve in new[] { "257", "281", "404", "420", "422", "258", "613" })
+            {
+                string baseName = preserve == "258" || preserve == "613" ? "DriedFruit" : "DriedMushroom";
+                Item made = Utility.CreateFlavoredItem(baseName, preserve, 0, 1);
+                string source = ItemRegistry.GetDataOrErrorItem("(O)" + preserve).DisplayName;
+                if (made is StardewValley.Object obj)
+                    this.Monitor.Log(
+                        $"  {source} ({preserve}) + {baseName} -> \"{made.DisplayName}\" qualifiedId={made.QualifiedItemId} " +
+                        $"spriteIndex={ItemRegistry.GetDataOrErrorItem(made.QualifiedItemId).SpriteIndex} preserved={obj.preservedParentSheetIndex.Value}",
+                        LogLevel.Info);
+                else
+                    this.Monitor.Log($"  {source} ({preserve}) + {baseName} -> (did not resolve)", LogLevel.Warn);
+            }
+        }
+
         /// <summary>Debug: what fruit, mushroom or fish does each flavored slot of the live board
         /// name (plan 2026-09-21-flavored-bundle-slots)? Read-only.
         ///
@@ -2438,6 +2471,7 @@ namespace TheLongestYear
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
+                case "tly_driedprobe": this.CmdDriedProbe(command, args); break;
                 case "tly_flavors": this.CmdFlavors(command, args); break;
                 case "tly_bundlesource": this.CmdBundleSource(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
