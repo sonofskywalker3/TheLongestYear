@@ -137,11 +137,8 @@ namespace TheLongestYear.Scenes
             [CrowBaseFrame + 10] = new Point(7, 17),
         };
 
-        /// <summary>The soft red glow around the eye, built once: a small radial falloff so the eye
-        /// reads as a light rather than as the hard red square the first pass drew.</summary>
-        private static Texture2D _eyeGlow;
-        private const int EyeGlowPixels = 16;
-        /// <summary>How wide the glow is drawn, in sheet pixels, so it scales with the bird.</summary>
+        /// <summary>How wide the glow is drawn, in sheet pixels, so it scales with the bird. The
+        /// glow itself lives in <see cref="SceneGlow"/>, shared with the thief.</summary>
         private const float EyeGlowSheetPixels = 9f;
 
         // ---------------------------------------------------------------- state
@@ -502,60 +499,13 @@ namespace TheLongestYear.Scenes
         /// <summary>A glowing red eye: a soft radial pool, then two sheet pixels of solid red in the
         /// middle of it, at the eye's real place in this frame. Neither is tinted by the night, which
         /// is the point of it.</summary>
-        private void PaintEye(SpriteBatch b, SceneCrow crow, Vector2 corner)
+        private static void PaintEye(SpriteBatch b, SceneCrow crow, Vector2 corner)
         {
             if (!EyeOffsets.TryGetValue(crow.Frame, out Point eye)) return;
             float x = crow.Flip ? (CrowSpriteSize - EyeDotPixels - eye.X) * DrawScale : eye.X * DrawScale;
-            var dot = new Rectangle(
-                (int)(corner.X + x),
-                (int)(corner.Y + eye.Y * DrawScale),
-                (int)(EyeDotPixels * DrawScale),
-                (int)(EyeDotPixels * DrawScale));
-            Texture2D glow = EyeGlow();
-            if (glow != null)
-            {
-                float side = EyeGlowSheetPixels * DrawScale;
-                b.Draw(
-                    glow,
-                    new Rectangle(
-                        (int)(dot.X + dot.Width / 2f - side / 2f),
-                        (int)(dot.Y + dot.Height / 2f - side / 2f),
-                        (int)side,
-                        (int)side),
-                    Color.Red);
-            }
-            b.Draw(Game1.staminaRect, dot, Color.Red);
-        }
-
-        /// <summary>A small radial falloff texture, made once and kept for the session. Alpha falls
-        /// off with the square of the distance from the middle, which reads as a glow rather than as
-        /// a disc with an edge.</summary>
-        private static Texture2D EyeGlow()
-        {
-            if (_eyeGlow != null) return _eyeGlow;
-            try
-            {
-                var pixels = new Color[EyeGlowPixels * EyeGlowPixels];
-                float middle = (EyeGlowPixels - 1) / 2f;
-                for (int y = 0; y < EyeGlowPixels; y++)
-                {
-                    for (int x = 0; x < EyeGlowPixels; x++)
-                    {
-                        float dx = (x - middle) / middle;
-                        float dy = (y - middle) / middle;
-                        float reach = 1f - Math.Min(1f, (float)Math.Sqrt(dx * dx + dy * dy));
-                        pixels[y * EyeGlowPixels + x] = Color.White * (reach * reach);
-                    }
-                }
-                var made = new Texture2D(Game1.graphics.GraphicsDevice, EyeGlowPixels, EyeGlowPixels);
-                made.SetData(pixels);
-                _eyeGlow = made;
-            }
-            catch (Exception)
-            {
-                _eyeGlow = null;
-            }
-            return _eyeGlow;
+            float core = EyeDotPixels * DrawScale;
+            var centre = new Vector2(corner.X + x + core / 2f, corner.Y + eye.Y * DrawScale + core / 2f);
+            SceneGlow.Draw(b, centre, EyeGlowSheetPixels * DrawScale, core, Color.Red);
         }
 
         /// <summary>The fade in and the fade out, drawn LAST in the world layer rather than from
