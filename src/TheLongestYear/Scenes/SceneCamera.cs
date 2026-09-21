@@ -30,9 +30,13 @@ namespace TheLongestYear.Scenes
         /// <summary>The clock the scene plays at. Past truly-dark, short of the pass-out hour.</summary>
         public const int NightClock = 2400;
 
-        /// <summary>How far <c>UpdateGameClock</c> darkens the outdoors once it is truly dark: the
-        /// cap of its own ramp, so this is the same colour the game would land on by itself.</summary>
-        private const float NightDarkness = 0.93f;
+        /// <summary>The night a scene plays in. This is <c>WitchEvent</c>'s own value
+        /// (WitchEvent.cs:82), not the darker colour the clock's own ramp lands on at 2am: the
+        /// engine subtracts the lightmap from the world, and the full 2am ramp takes the farm so far
+        /// down that a row of crops cannot be told from bare soil. Vanilla picked a lighter night
+        /// for its own farm events for exactly that reason. Caught on the first screenshot pass,
+        /// 2026-09-21.</summary>
+        private static readonly Color NightAmbient = new Color(200, 190, 40);
 
         private const int TileSize = 64;
 
@@ -75,10 +79,22 @@ namespace TheLongestYear.Scenes
             Game1.nonWarpFade = true;
             Game1.viewportFreeze = true;
             Game1.displayFarmer = false;
-            Game1.timeOfDay = NightClock;
-            Game1.outdoorLight = Game1.eveningColor * NightDarkness;
-            Game1.ambientLight = Game1.outdoorLight;
+            HoldNight();
             CenterOn(where, tile);
+        }
+
+        /// <summary>Write the night again. The engine recomputes <see cref="Game1.outdoorLight"/>
+        /// from the clock and then copies it into <see cref="Game1.ambientLight"/> on every tick the
+        /// player is on the map (<c>GameLocation._updateAmbientLighting</c>), so a scene that wants
+        /// its own light has to say so every tick. That is the same per-tick write
+        /// <c>RewindNightLight</c> makes, and for the same reason.</summary>
+        public static void HoldNight()
+        {
+            if (!_active) return;
+            Game1.timeOfDay = NightClock;
+            Game1.ambientLight = NightAmbient;
+            Game1.outdoorLight = NightAmbient;
+            Game1.drawLighting = true;
         }
 
         /// <summary>Put the viewport's middle on this tile, clamped so the frame never runs off the

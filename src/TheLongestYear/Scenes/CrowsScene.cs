@@ -73,6 +73,9 @@ namespace TheLongestYear.Scenes
         /// ground before the scene gives up on him.</summary>
         private const int LinusRowSearch = 8;
         private const int LinusWalkTiles = 2;
+        /// <summary>How far inside the frame edge he starts. Three and not one: at one tile in he
+        /// read as a figure pinned in the corner against the fence line (screenshots, 2026-09-21).</summary>
+        private const int LinusEntryInset = 3;
 
         // ---------------------------------------------------------------- the crow sheet
 
@@ -94,12 +97,13 @@ namespace TheLongestYear.Scenes
         /// the offset <c>Critter.draw</c> uses (Critter.cs:69).</summary>
         private static readonly Vector2 CrowDrawOffset = new Vector2(-64f, -128f);
 
-        private const string EyeLightIdPrefix = "TLY.CrowEye.";
-        /// <summary>The lightmap is subtracted from the world, so a light's colour is the colour it
-        /// REMOVES. Taking green and blue away leaves red, which is why a red glow is cyan here.</summary>
-        private static readonly Color EyeLight = Color.Cyan;
-        private const float EyeLightRadius = 0.3f;
-        /// <summary>The eye pixel itself, in sheet pixels, drawn on top of the bird.</summary>
+        /// <summary>The eye pixel itself, in sheet pixels, drawn on top of the bird.
+        ///
+        /// It is PAINTED and not a <c>LightSource</c>. The spec asked for a small red light per crow
+        /// as well; it was built, screenshotted and cut (2026-09-21). Even at the smallest radius the
+        /// sconce texture is about a hundred pixels across, so six of them turned the row of birds
+        /// into one orange bonfire and hid the crows the scene is about. The painted dot with its
+        /// soft square reads at normal zoom on its own, which is what the eyes were for.</summary>
         private const int EyeDotPixels = 2;
 
         /// <summary>Where the eye sits inside each crow frame, found once by reading the sheet.</summary>
@@ -123,7 +127,6 @@ namespace TheLongestYear.Scenes
             public bool Visible;
             /// <summary>On the ground: between its landing and the lift-off.</summary>
             public bool Perched;
-            public string LightId;
         }
 
         private Farm _farm;
@@ -132,7 +135,7 @@ namespace TheLongestYear.Scenes
         private SceneActor _linus;
         private Vector2 _linusEntry;
         private int _linusInward;
-        private bool _lightsOn;
+        private bool _linusInFrame;
 
         public CrowsScene(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
             : base(strike, skippable, monitor, onFinished) { }
@@ -188,7 +191,6 @@ namespace TheLongestYear.Scenes
                 Start = new Vector2(landing.X, Game1.viewport.Y - TileSize * 2),
                 EnterAtMs = Math.Max(0, enterAtMs),
                 Flip = tile.X < _focus.X,
-                LightId = EyeLightIdPrefix + Guid.NewGuid().ToString("N"),
             };
             crow.LandAtMs = crow.EnterAtMs + GlideMs;
             crow.Position = crow.Start;
@@ -228,13 +230,13 @@ namespace TheLongestYear.Scenes
         private void StageLinus()
         {
             Rectangle frame = SceneCamera.FrameInTiles();
-            if (frame.Width < LinusWalkTiles + 3 || frame.Height < 3) return;
+            if (frame.Width < LinusWalkTiles + LinusEntryInset * 2 || frame.Height < 3) return;
             int mapWidth = _farm.map.Layers[0].LayerWidth;
             bool leftFirst = frame.Left <= mapWidth - frame.Right;
             foreach (bool fromLeft in leftFirst ? new[] { true, false } : new[] { false, true })
             {
                 int inward = fromLeft ? 1 : -1;
-                int entryX = fromLeft ? frame.Left + 1 : frame.Right - 2;
+                int entryX = fromLeft ? frame.Left + LinusEntryInset : frame.Right - LinusEntryInset - 1;
                 for (int shift = 0; shift <= LinusRowSearch; shift++)
                 {
                     foreach (int row in shift == 0 ? new[] { (int)_focus.Y } : new[] { (int)_focus.Y + shift, (int)_focus.Y - shift })
@@ -293,26 +295,8 @@ namespace TheLongestYear.Scenes
         protected override void Build(Timeline t)
         {
             t.At(CrowsEnterMs, () => Game1.playSound("crow", -600));
-            t.At(PeckMs, LightTheEyes);
             t.At(StrikeMs, ApplyStrike);
-            t.At(LiftOffMs, DouseTheEyes);
             t.EndAt(SceneEndMs);
-        }
-
-        /// <summary>The eyes catch at the peck, one small red pool a crow. They are lights rather
-        /// than only painted dots so the field around each bird reddens as well.</summary>
-        private void LightTheEyes()
-        {
-            _lightsOn = true;
-            foreach (SceneCrow crow in _crows)
-                Game1.currentLightSources[crow.LightId] =
-                    new LightSource(crow.LightId, LightSource.sconceLight, crow.Landing + new Vector2(0f, -48f), EyeLightRadius, EyeLight);
-        }
-
-        private void DouseTheEyes()
-        {
-            _lightsOn = false;
-            foreach (SceneCrow crow in _crows) Game1.currentLightSources.Remove(crow.LightId);
         }
 
         /// <inheritdoc />
@@ -322,6 +306,7 @@ namespace TheLongestYear.Scenes
             // pump the clock, the location and the rest by hand (WitchEvent.tickUpdate). The debug
             // command plays the scene during an ordinary update, where the game is already doing all
             // of this, so the pump only runs when this really is tonight's farm event.
+            SceneCamera.HoldNight();
             if (ReferenceEquals(Game1.farmEvent, this))
             {
                 try
@@ -386,7 +371,11 @@ namespace TheLongestYear.Scenes
 
         private void MoveLinus(int elapsed)
         {
-            if (_linus == null || elapsed < LinusEnterMs) return;
+            if (_linus == null) return;
+            // He is not there until he walks in: without this he stands at his entry tile from the
+            // scene's first frame, which reads as a bystander who was always watching.
+            _linusInFrame = elapsed >= LinusEnterMs;
+            if (!_linusInFrame) return;
             float tilesIn;
             if (elapsed < LinusSeesMs)
             {
@@ -451,7 +440,7 @@ namespace TheLongestYear.Scenes
                 crow.Sprite.draw(b, corner, 0.9f, 0, 0, Color.White, crow.Flip, DrawScale);
                 PaintEye(b, crow, corner);
             }
-            _linus?.Draw(b, Color.White);
+            if (_linusInFrame) _linus?.Draw(b, Color.White);
         }
 
         /// <summary>Two sheet pixels of red where the bird's eye is, with a softer square around it
@@ -532,10 +521,6 @@ namespace TheLongestYear.Scenes
         // ---------------------------------------------------------------- putting it back
 
         /// <inheritdoc />
-        protected override void Cleanup()
-        {
-            if (_lightsOn || _crows.Count > 0) DouseTheEyes();
-            SceneCamera.Restore();
-        }
+        protected override void Cleanup() => SceneCamera.Restore();
     }
 }
