@@ -101,6 +101,7 @@ public class SabotageScheduleTests
         run.UnmoderatedReversionSpent = true;
         run.UnmoderatedTamperSpent = true;
         run.GuaranteedTamperDone = true;
+        run.StruckEvents.Add("CropBlight");
         run.BeginNewRun(7);
         Assert.False(run.EndingArmed);
         Assert.Equal(-1, run.BlightWeek);
@@ -114,6 +115,7 @@ public class SabotageScheduleTests
         Assert.False(run.UnmoderatedReversionSpent);
         Assert.False(run.UnmoderatedTamperSpent);
         Assert.False(run.GuaranteedTamperDone);
+        Assert.Empty(run.StruckEvents);
     }
 }
 
