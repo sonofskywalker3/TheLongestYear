@@ -521,10 +521,6 @@
     "win.loop-line.many": "It took {{count}} loops.",
 
     // -- onboarding mail / furniture display names ---------------------------------
-    "mail.darkness.blight.title": "From Linus",
-    "mail.darkness.blight.body": "As I was walking last night I saw some of your crops just shrivel up and die. It was the weirdest thing.^^  - Linus",
-    "mail.darkness.reversion.title": "From Shane",
-    "mail.darkness.reversion.body": "When I left the bar last night I could swear I saw something moving in the old Community Center. I'd had a few drinks, but I've never felt the shivers like that sight gave me.^^I hope you get it fixed up soon.^^  - Shane",
     "mail.intro.title": "The Longest Year",
     "mail.intro.body": "Welcome to The Longest Year!^^You're stuck looping Year 1 until you finish the Community Center. Each loop you spend Junimo Points (JP) on permanent upgrades.^^Two things that trip everyone up:^1) You earn a LOT more JP the deeper into the year you get, so don't feel behind early.^2) DON'T rush to complete bundles! Hold an item until its weekly theme comes up, then donate it - you bank a 1.5x JP bonus AND clear that week's downside. Rushing donations wastes both.^^Also: festivals give your day back on purpose. You can leave and come back, and leaving early keeps your clock - returning 'early' is intended, not a bug.^^Good luck. The Junimos are counting on you.",
     "furniture.cookbook": "The Longest Year Cookbook",
