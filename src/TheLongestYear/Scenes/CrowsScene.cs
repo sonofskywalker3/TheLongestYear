@@ -11,7 +11,7 @@ namespace TheLongestYear.Scenes
         private const int StrikeAtMs = 1500;
         private const int SceneEndMs = 2500;
 
-        public CrowsScene(PendingStrike strike, bool skippable, IMonitor monitor, Action onFinished)
+        public CrowsScene(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
             : base(strike, skippable, monitor, onFinished) { }
 
         protected override bool Stage() => true;

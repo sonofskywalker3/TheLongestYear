@@ -756,8 +756,8 @@ namespace TheLongestYear.Loop
                 $"  wards owned: {string.Join(", ", WardIds.All.Where(Meta.HasUpgrade).DefaultIfEmpty("none"))}",
                 $"  blight week {Run.BlightWeek} nights {Run.BlightNightsThisWeek}; last reversion week {Run.LastReversionWeek}; tamper days [{string.Join(",", Run.TamperDays)}]",
                 $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; units in chests (stash excluded): {SpoilagePass.StoredUnits(DarknessLevels.StorageReachesEverything(Level))}",
-                $"  Scenes played this loop: {string.Join(", ", (Run.StrikeScenesPlayed ??= new()).DefaultIfEmpty("none"))}",
-                $"  Scenes seen on save: {string.Join(", ", (Meta.StrikeScenesSeen ??= new()).DefaultIfEmpty("none"))}",
+                $"  Scenes played this loop: {string.Join(", ", (Run.StrikeScenesPlayed ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
+                $"  Scenes seen on save: {string.Join(", ", (Meta.StrikeScenesSeen ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
             };
             foreach (TamperRecord t in Run.Tampers)
                 lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {Strings.ItemName(t.OldItemId)} -> {t.Stack} {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");

@@ -225,8 +225,9 @@ namespace TheLongestYear
                     strike.Event, _meta.State.StrikeScenesSeen ??= new());
                 return TheLongestYear.Scenes.StrikeSceneFactory.Create(
                     strike, skippable, this.Monitor,
-                    onFinished: () =>
+                    onFinished: shown =>
                     {
+                        if (!shown) return;
                         TheLongestYear.Core.Sabotage.StrikeScenes.MarkPlayed(strike.Event, _meta.Run, _meta.State);
                         // Task 12 adds the witness hook here.
                     });
