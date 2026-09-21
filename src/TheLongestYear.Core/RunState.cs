@@ -193,6 +193,9 @@ public sealed class RunState
     public bool UnmoderatedTamperSpent { get; set; }
     /// <summary>This Winter's guaranteed week-1 tamper has landed.</summary>
     public bool GuaranteedTamperDone { get; set; }
+    /// <summary>Names of the DarknessEvent values that have struck this loop (spec 2026-09-21: the
+    /// guarantee and the once-per-loop scenes both read it).</summary>
+    public HashSet<string> StruckEvents { get; set; } = new();
 
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
@@ -371,5 +374,6 @@ public sealed class RunState
         UnmoderatedReversionSpent = false;
         UnmoderatedTamperSpent = false;
         GuaranteedTamperDone = false;
+        (StruckEvents ??= new()).Clear();
     }
 }
