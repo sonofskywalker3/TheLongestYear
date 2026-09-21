@@ -13,7 +13,7 @@ namespace TheLongestYear.Scenes
         private const int StrikeAtMs = 1500;
         private const int SceneEndMs = 2500;
 
-        public ThiefScene(PendingStrike strike, bool skippable, IMonitor monitor, Action onFinished)
+        public ThiefScene(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
             : base(strike, skippable, monitor, onFinished) { }
 
         /// <summary>Where the thief is staged: the night's chest, else the first machine it takes,

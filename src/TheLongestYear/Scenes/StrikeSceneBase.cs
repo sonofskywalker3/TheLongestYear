@@ -58,17 +58,23 @@ namespace TheLongestYear.Scenes
         protected readonly IMonitor Monitor;
 
         private readonly bool _skippable;
-        private readonly Action _onFinished;
+        private readonly Action<bool> _onFinished;
         private readonly Timeline _timeline = new();
         private int _next;
         private bool _ended;
+        /// <summary>True once the scene is staged and running, so an ending knows whether the player
+        /// was ever shown anything.</summary>
+        private bool _staged;
         /// <summary>Starts true so a button already held when the scene begins is not a fresh press.</summary>
         private bool _skipHeldLastTick = true;
 
         /// <summary>Milliseconds since the scene's first tick.</summary>
         protected int ElapsedMs { get; private set; }
 
-        protected StrikeSceneBase(PendingStrike strike, bool skippable, IMonitor monitor, Action onFinished)
+        /// <param name="onFinished">Told once, however the scene ended. True when the scene was
+        /// actually shown (it finished, was skipped, or failed after it had been staged), false when
+        /// it never got that far.</param>
+        protected StrikeSceneBase(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
         {
             Strike = strike ?? throw new ArgumentNullException(nameof(strike));
             Monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
@@ -112,13 +118,14 @@ namespace TheLongestYear.Scenes
                 if (!Stage())
                 {
                     Monitor.Log($"Darkness: the {GetType().Name} scene found nothing to play against, so tonight's {Strike.Event} lands with no scene.", LogLevel.Info);
-                    End(EndedNotStaged, markPlayed: false);
+                    End(EndedNotStaged, shown: false);
                     return true;
                 }
                 Build(_timeline);
                 _timeline.Cues.Sort((a, b) => a.AtMs.CompareTo(b.AtMs));
                 Game1.displayHUD = false;
                 Game1.freezeControls = true;
+                _staged = true;
                 Monitor.Log($"Darkness: the {GetType().Name} scene takes tonight's overnight slot for {Strike.Event} ({(_skippable ? "skippable" : "not skippable")}).", LogLevel.Info);
                 return false;
             }
@@ -138,14 +145,14 @@ namespace TheLongestYear.Scenes
                 ElapsedMs += time.ElapsedGameTime.Milliseconds;
                 if (SkipPressed())
                 {
-                    End(EndedSkipped);
+                    End(EndedSkipped, shown: true);
                     return true;
                 }
                 while (_next < _timeline.Cues.Count && _timeline.Cues[_next].AtMs <= ElapsedMs)
                     _timeline.Cues[_next++].Do();
                 if (ElapsedMs >= _timeline.EndMs)
                 {
-                    End(EndedFinished);
+                    End(EndedFinished, shown: true);
                     return true;
                 }
                 return false;
@@ -188,30 +195,29 @@ namespace TheLongestYear.Scenes
             return fresh;
         }
 
-        /// <summary>Applies the strike, tells the run the scene played, and logs how it went. Runs
-        /// once whatever the ending was. A scene that never got as far as staging is the one ending
-        /// that does not count as played: the player has still not seen it.</summary>
-        private void End(string how, bool markPlayed = true)
+        /// <summary>Applies the strike, tells the owner how it went, and logs it. Runs once whatever
+        /// the ending was. <paramref name="shown"/> is false only for a scene that never got as far
+        /// as being staged: the player has still not seen that one.</summary>
+        private void End(string how, bool shown)
         {
             if (_ended) return;
             _ended = true;
             ApplyStrike();
             Monitor.Log($"Darkness: the {GetType().Name} scene ended ({how}) at tick {Game1.ticks}.", LogLevel.Trace);
-            if (!markPlayed) return;
             try
             {
-                _onFinished?.Invoke();
+                _onFinished?.Invoke(shown);
             }
             catch (Exception ex)
             {
-                Monitor.Log($"Darkness: the {GetType().Name} scene could not record that it played. {ex}", LogLevel.Error);
+                Monitor.Log($"Darkness: the {GetType().Name} scene could not record how it ended. {ex}", LogLevel.Error);
             }
         }
 
         private void Fail(Exception ex)
         {
             Monitor.Log($"Darkness: the {GetType().Name} scene failed and was ended. The strike still lands. {ex}", LogLevel.Error);
-            End(EndedFailed);
+            End(EndedFailed, shown: _staged);
         }
     }
 }

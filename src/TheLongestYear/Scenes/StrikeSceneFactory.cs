@@ -26,7 +26,7 @@ namespace TheLongestYear.Scenes
         }
 
         /// <summary>Tonight's scene, or null when the kind has none.</summary>
-        public static FarmEvent Create(PendingStrike strike, bool skippable, IMonitor monitor, Action onFinished)
+        public static FarmEvent Create(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
         {
             if (strike == null) return null;
             return strike.Event switch
