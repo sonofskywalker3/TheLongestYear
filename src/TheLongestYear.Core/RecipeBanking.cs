@@ -35,4 +35,16 @@ public static class RecipeBanking
     /// only knows the starter recipes gets no interruption.</summary>
     public static bool ShouldOfferAtReset(int slotCount, int bankedCount, int bankableCount)
         => slotCount > bankedCount && bankableCount > 0;
+
+    /// <summary>Rows the book menu shows: every slot, plus every banked recipe past the cap.
+    /// 0.18.17 lowered tier 3 from 20 slots to 16, and a book that already held more keeps
+    /// them (grandfathered, like the stash): they stay visible, usable and removable.</summary>
+    public static int VisibleRows(int slotCount, int bankedCount) => Math.Max(slotCount, bankedCount);
+
+    /// <summary>True when the book holds more recipes than it has slots.</summary>
+    public static bool IsOverCap(int slotCount, int bankedCount) => bankedCount > slotCount;
+
+    /// <summary>True when the book still has a free slot for a new entry. A full or over-cap
+    /// book refuses new recipes until one is removed.</summary>
+    public static bool CanBank(int slotCount, int bankedCount) => bankedCount < slotCount;
 }

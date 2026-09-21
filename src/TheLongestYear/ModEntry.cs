@@ -88,6 +88,12 @@ namespace TheLongestYear
         private Integration.MorrisDarkSprite _morrisDark;
         private Integration.MorrisDarkPortrait _morrisDarkPortrait;
         private Integration.JunimoPortrait _junimoPortrait;
+        private TheLongestYear.Loop.SneakPeekChannelService _sneakPeekChannel;
+
+        /// <summary>Whether the Sneak Peek Boost was active at the last cache check. The Wednesday
+        /// channel label is an asset edit, so it has to be invalidated when the Boost starts (the
+        /// purchase path does that directly) and when it expires at the season roll (this does).</summary>
+        private bool _sneakPeekLabelActive;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -264,6 +270,9 @@ namespace TheLongestYear
             // dialogue box retried the failed portrait load every frame (live run 2026-09-06).
             _junimoPortrait = new Integration.JunimoPortrait(this.Monitor);
             helper.Events.Content.AssetRequested += _junimoPortrait.OnAssetRequested;
+            // Sneak Peek: relabel the Wednesday TV channel while the Boost has taken the rerun slot.
+            _sneakPeekChannel = new TheLongestYear.Loop.SneakPeekChannelService(this.Monitor);
+            helper.Events.Content.AssetRequested += _sneakPeekChannel.OnAssetRequested;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -402,6 +411,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
+            helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
+            helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
             helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the config's BundleSource so the next reset honours it.", this.CmdBundleSource);
             helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
@@ -420,6 +431,8 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.MineSweepCommand.Name, TheLongestYear.DebugCommands.MineSweepCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, a));
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.BankRecipesDebugCommand.Name, TheLongestYear.DebugCommands.BankRecipesDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
@@ -475,7 +488,7 @@ namespace TheLongestYear
                 "Debug: report or open a vanilla one-time gift box. Usage: tly_giftbox <Location> <x> <y> [warp|open]",
                 this.CmdGiftBox);
             helper.ConsoleCommands.Add("tly_festival",
-                "Debug: 'state' logs the festival clock gates (timer, control sequence, shouldTimePass, tool state); 'contest' starts the ice fishing contest on the current festival.",
+                "Debug: 'state' logs the festival clock gates (timer, control sequence, shouldTimePass, tool state); 'contest' starts the ice fishing contest on the current festival; 'mainevent' answers the host's start question with yes (exercises the once-per-day block and its leave offer).",
                 this.CmdFestival);
             helper.ConsoleCommands.Add("tly_stashmenu",
                 "Debug: open the Junimo stash and log what the menu carries (context, source item, Chests Anywhere keys).",
@@ -601,6 +614,10 @@ namespace TheLongestYear
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
             BoostChecker.SneakPeekActive = () => TheLongestYear.Core.BoostState.SneakPeekActive(_meta.Run, TodayDayOfYear());
+            // The fruit/mushroom/fish each flavored bundle slot names, for the live board only.
+            // Null map (a pre-0.18.33 board, or Vanilla board mode) means no flavors are applied.
+            TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider =
+                () => (IReadOnlyDictionary<string, string>)_meta.State.WrittenBoardFlavors;
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
             CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
@@ -611,6 +628,8 @@ namespace TheLongestYear
             TheLongestYear.Loop.CommunityCenterCompletePatch.ResetLogGuards();
             // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            // Same for the Sneak Peek channel label: the Boost is per save and per season.
+            this.RefreshSneakPeekChannelLabel();
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
             // unlock-granting cutscene (recipe/mail/quest) so a mod's teach/unlock scene re-fires each
             // loop, merged with the vanilla furnace/cave ids. FarmerReset consults it at reset time.
@@ -808,7 +827,16 @@ namespace TheLongestYear
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);
             _boostPurchases = new BoostPurchaseService(this.Monitor, _meta, _boostEffects);
-            _planningShrine.AttachBoosts(() => _meta.Run, (id, skill) => _boostPurchases.TryBuy(id, skill));
+            _planningShrine.AttachBoosts(() => _meta.Run, (id, skill) =>
+            {
+                BoostPurchase.Result result = _boostPurchases.TryBuy(id, skill);
+                // Sneak Peek takes over the Wednesday channel the moment it is bought, so the
+                // label has to be re-edited now, not at the next day roll: the player can walk
+                // home and switch the TV on the same afternoon.
+                if (result == BoostPurchase.Result.Success && id == BoostId.SneakPeek)
+                    this.RefreshSneakPeekChannelLabel();
+                return result;
+            });
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
@@ -875,6 +903,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.BoostChecker.SneakPeekActive = null;
+            TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider = null;
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = null;
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = null;
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = null;
@@ -886,6 +915,13 @@ namespace TheLongestYear
             _boardBuilder = null;
             _boardFingerprint = null;
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            // BoostChecker is null from here, so the channel edit no longer applies: drop the
+            // relabelled string so a non-TLY save never shows a TLY channel name.
+            if (_sneakPeekLabelActive)
+            {
+                _sneakPeekLabelActive = false;
+                this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
+            }
             DonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
@@ -1727,6 +1763,18 @@ namespace TheLongestYear
                 this.Monitor.Log("tly_festival: ice fishing contest started.", LogLevel.Info);
                 return;
             }
+            if (mode == "mainevent")
+            {
+                // Answer the host's "start the main event?" question with yes, without the click on the
+                // host: the same Event.answerDialogueQuestion the host's dialogue goes through, so the
+                // once-per-day block (and its leave offer) is exercised headlessly.
+                if (ev == null || !ev.isFestival) { this.Monitor.Log("tly_festival: no festival running.", LogLevel.Warn); return; }
+                NPC host = HarmonyLib.AccessTools.Field(typeof(Event), "festivalHost")?.GetValue(ev) as NPC
+                    ?? Game1.getCharacterFromName("Lewis");
+                this.Monitor.Log($"tly_festival: answering the host ({host?.Name ?? "none"}) with yes.", LogLevel.Info);
+                ev.answerDialogueQuestion(host, "yes");
+                return;
+            }
             if (mode == "click")
             {
                 if (Game1.activeClickableMenu is DialogueBox box) { box.receiveLeftClick(0, 0); this.Monitor.Log("tly_festival: clicked the dialogue box.", LogLevel.Info); }
@@ -1764,6 +1812,138 @@ namespace TheLongestYear
                 $"source={(menu?.sourceItem?.GetType().Name ?? "null")} overhaulLoaded={JunimoStashService.StorageOverhaulLoaded} " +
                 $"chestsAnywhere={this.Helper.ModRegistry.IsLoaded("Pathoschild.ChestsAnywhere")} caKeys=[{keys}]",
                 LogLevel.Info);
+        }
+
+        /// <summary>Debug: what does each mushroom (and a fruit or two) actually dry into? Answers
+        /// whether a dried mushroom is one generic item or one per mushroom, and whether vanilla's
+        /// PreserveType name "DriedMushroom" resolves as an item id for the icon lookup, which is
+        /// what decided that mushrooms could not be a flavored slot in 0.18.34. Read-only.</summary>
+        private void CmdDriedProbe(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            foreach (string id in new[] { "DriedMushroom", "DriedMushrooms", "DriedFruit", "SmokedFish" })
+            {
+                var meta = ItemRegistry.GetMetadata(id);
+                this.Monitor.Log(
+                    $"tly_driedprobe: id '{id}' -> metadata {(meta == null ? "(null)" : meta.QualifiedItemId + " type=" + meta.TypeIdentifier)}",
+                    meta == null ? LogLevel.Warn : LogLevel.Info);
+            }
+
+            // One entry per edible mushroom, plus two fruits as a control.
+            foreach (string preserve in new[] { "257", "281", "404", "420", "422", "258", "613" })
+            {
+                string baseName = preserve == "258" || preserve == "613" ? "DriedFruit" : "DriedMushroom";
+                Item made = Utility.CreateFlavoredItem(baseName, preserve, 0, 1);
+                string source = ItemRegistry.GetDataOrErrorItem("(O)" + preserve).DisplayName;
+                if (made is StardewValley.Object obj)
+                    this.Monitor.Log(
+                        $"  {source} ({preserve}) + {baseName} -> \"{made.DisplayName}\" qualifiedId={made.QualifiedItemId} " +
+                        $"spriteIndex={ItemRegistry.GetDataOrErrorItem(made.QualifiedItemId).SpriteIndex} preserved={obj.preservedParentSheetIndex.Value}",
+                        LogLevel.Info);
+                else
+                    this.Monitor.Log($"  {source} ({preserve}) + {baseName} -> (did not resolve)", LogLevel.Warn);
+            }
+        }
+
+        /// <summary>Debug: what fruit, mushroom or fish does each flavored slot of the live board
+        /// name (plan 2026-09-21-flavored-bundle-slots)? Read-only.
+        ///
+        /// Constructs the note menu exactly as <see cref="CmdRingTest"/> does, because a Bundle only
+        /// exists while a JunimoNoteMenu does, and the Bundle constructor is what
+        /// FlavoredSlotPatch hooks. So this proves the patch actually fired on the live board,
+        /// not merely that the map was stamped.</summary>
+        private void CmdFlavors(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            IReadOnlyDictionary<string, string> map = _meta.State.WrittenBoardFlavors;
+            this.Monitor.Log(
+                $"tly_flavors: stamped map = {(map == null ? "(null: a board written before 0.18.33, or Vanilla mode)" : map.Count + " slot(s)")}.",
+                LogLevel.Info);
+            if (map != null)
+                foreach (KeyValuePair<string, string> entry in map.OrderBy(e => e.Key, StringComparer.Ordinal))
+                    this.Monitor.Log($"  stamped {entry.Key} -> {entry.Value}", LogLevel.Info);
+
+            var cc = Game1.RequireLocation<StardewValley.Locations.CommunityCenter>("CommunityCenter");
+            int flavored = 0, bare = 0;
+            for (int area = 0; area <= 5; area++)
+            {
+                var note = new JunimoNoteMenu(area, cc.bundlesDict());
+                foreach (Bundle b in note.bundles)
+                {
+                    for (int i = 0; i < b.ingredients.Count; i++)
+                    {
+                        StardewValley.Menus.BundleIngredientDescription ing = b.ingredients[i];
+                        // Both kinds: a slot that names its input, and a slot that stays "any" and
+                        // relies on the label instead. The label is the only thing the player has
+                        // to go on for the second kind, so it has to be readable here too.
+                        if (ing.id == null) continue;
+                        if (!TheLongestYear.Core.FlavoredSlotRules.IsFlavored(ing.id)
+                            && TheLongestYear.Core.FlavorlessBundleSlots.LabelKeyFor(ing.id) == null) continue;
+
+                        string name;
+                        if (ing.preservesId != null)
+                        {
+                            flavored++;
+                            // Null when the id is not a PreserveType name, which is exactly the
+                            // bug this command caught on 2026-09-21. Say so rather than throwing.
+                            Item made = Utility.CreateFlavoredItem(ing.id, ing.preservesId, ing.quality, ing.stack);
+                            name = made?.DisplayName ?? "(FLAVOR DID NOT RESOLVE)";
+                        }
+                        else
+                        {
+                            bare++;
+                            name = ItemRegistry.GetDataOrErrorItem(TheLongestYear.Core.BundleParsing.NormalizeItemId(ing.id)).DisplayName;
+                        }
+                        // Prove the MATCH half too, not just the name: the right flavor must be
+                        // accepted and a different one refused. Bundle.IsValidItemForThisIngredient
+                        // Description is the exact check the note runs on a donation.
+                        string accepts = "";
+                        if (ing.preservesId != null)
+                        {
+                            Item right = Utility.CreateFlavoredItem(ing.id, ing.preservesId, 0, 1);
+                            string otherId = ing.preservesId == "145" ? "132" : "145";
+                            Item wrong = Utility.CreateFlavoredItem(ing.id, otherId, 0, 1);
+                            Item plain = ItemRegistry.Create(TheLongestYear.Core.BundleParsing.NormalizeItemId(ing.id), 1);
+                            accepts =
+                                $" | accepts right={(right != null && b.IsValidItemForThisIngredientDescription(right, ing))}" +
+                                $" wrong={(wrong != null && b.IsValidItemForThisIngredientDescription(wrong, ing))}" +
+                                $" unflavored={(plain != null && b.IsValidItemForThisIngredientDescription(plain, ing))}";
+                        }
+                        // Does the slot get an icon in the required-items list? Vanilla only
+                        // builds one when the ingredient id resolves as an object, and a flavored
+                        // slot carries a PreserveType name instead. Reported per slot so a missing
+                        // icon shows up in the log instead of needing a screenshot.
+                        string icon = "";
+                        try
+                        {
+                            Game1.activeClickableMenu = note;
+                            // setUpBundleSpecificPage APPENDS to ingredientList without clearing
+                            // it (only gameWindowSizeChanged clears), so without this the lookup
+                            // by myID finds the previous bundle's component and reports its hover.
+                            note.ingredientList?.Clear();
+                            AccessTools.Method(typeof(JunimoNoteMenu), "setUpBundleSpecificPage")
+                                .Invoke(note, new object[] { b });
+                            ClickableTextureComponent comp = note.ingredientList?
+                                .FirstOrDefault(c => c != null && c.myID == 1000 + i);
+                            // hoverText is what the player actually reads on the slot, so this is
+                            // the only honest check of the "Any Dried Fruit" label for a bare slot
+                            // and of the flavored name for a named one.
+                            icon = $" | icon={comp != null} hover=\"{comp?.hoverText ?? "(no component)"}\"";
+                        }
+                        catch (System.Exception ex) { icon = $" | icon=THREW {ex.InnerException?.GetType().Name ?? ex.GetType().Name}"; }
+                        finally { Game1.activeClickableMenu = null; }
+
+                        this.Monitor.Log(
+                            $"  live area {area} bundle {b.bundleIndex} '{b.name}' slot {i}: id={ing.id} preservesId={ing.preservesId ?? "(none)"} " +
+                            $"stack={ing.stack} reads as \"{name}\"{accepts}{icon}",
+                            ing.preservesId != null ? LogLevel.Info : LogLevel.Warn);
+                    }
+                }
+                note.exitThisMenu(false);
+            }
+            this.Monitor.Log($"tly_flavors: {flavored} flavored slot(s), {bare} still bare.", flavored > 0 ? LogLevel.Info : LogLevel.Warn);
         }
 
         /// <summary>Debug: would the Community Center note let the player pick up this item (0.18.7)?</summary>
@@ -2769,6 +2949,20 @@ namespace TheLongestYear
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
+            // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
+            // being a rerun, so the label has to go back with it.
+            this.RefreshSneakPeekChannelLabel();
+        }
+
+        /// <summary>Re-run the Wednesday channel-label edit if the Sneak Peek Boost has started or
+        /// ended since the last check. Invalidating an asset forces a reload, so this only pays
+        /// that cost on the two days a season when the answer actually changes.</summary>
+        private void RefreshSneakPeekChannelLabel()
+        {
+            bool active = TheLongestYear.Loop.BoostChecker.SneakPeekActive?.Invoke() == true;
+            if (active == _sneakPeekLabelActive) return;
+            _sneakPeekLabelActive = active;
+            this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
         }
 
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
@@ -2895,6 +3089,8 @@ namespace TheLongestYear
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
+                case "tly_driedprobe": this.CmdDriedProbe(command, args); break;
+                case "tly_flavors": this.CmdFlavors(command, args); break;
                 case "tly_bundlesource": this.CmdBundleSource(command, args); break;
                 case "tly_openshop": this.CmdOpenShop(command, args); break;
                 case "tly_listupgrades": this.CmdListUpgrades(command, args); break;
@@ -2928,6 +3124,7 @@ namespace TheLongestYear
                 case "tly_eventstep": this.CmdEventStep(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
+                case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
@@ -4267,7 +4464,15 @@ namespace TheLongestYear
                     return req.ItemSeasonPins.Count(kv => (int)kv.Value <= (int)season);
 
                 case BundleKind.Percentage:
-                    return req.CumulativeRequiredBySeason[(int)season];
+                    // Capped by the slot count, the same way SeasonNeed.For caps it. The ramp is
+                    // clamped at build time (GeneratedBundleSet.ClampRampForObtainability), so
+                    // this is the second layer rather than the fix: it keeps the audit honest
+                    // about a ramp that arrives over-deep from anywhere else, which is what
+                    // Nexus 1137357 looked like from the player's side (a gate demanding 9 of an
+                    // 8-slot bundle, unfillable however green the bundle went).
+                    return req.NumberOfSlots > 0
+                        ? Math.Min(req.CumulativeRequiredBySeason[(int)season], req.NumberOfSlots)
+                        : req.CumulativeRequiredBySeason[(int)season];
 
                 default:
                     return 0;
@@ -5672,6 +5877,9 @@ namespace TheLongestYear
                 state.BundlesGeneratedForReset = 0;
                 state.WrittenBoard = new Dictionary<string, string>(set.ToBundleData());
                 state.WrittenBoardSeasonPins = TheLongestYear.Core.BoardRequirements.PinsToStored(engine.LastDerivedSeasonPins);
+                // See WorldResetService: the flavored slots' inputs belong to the board that was
+                // just written, so they are stamped with it.
+                state.WrittenBoardFlavors = new Dictionary<string, string>(set.Flavors);
                 var requirements = engine.BuildRequirements(
                     set, itemSeasonPins, bundleQuotas, availability: _availability);
                 this.Monitor.Log(

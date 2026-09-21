@@ -162,6 +162,10 @@ public class I18nGuardTests
             // event.ending.scene.* is resolved by event id through EndingLine.SceneTable, never a literal.
             foreach (string sceneKey in EndingLine.SceneTable.Values)
                 _ = Strings.Get(sceneKey);
+            // bundle-slot.* keys are looked up by item id (FlavorlessBundleSlots) and only ever
+            // reach Strings.Get through a variable, so walk the rule's own key set.
+            foreach (string key in FlavorlessBundleSlots.AllLabelKeys)
+                _ = Strings.Get(key);
         }
         finally
         {

@@ -9,7 +9,7 @@
 
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
-    "dialog.festival.already-done": "You have already taken part in this today.",
+    "dialog.festival.already-done": "You have already taken part in this today. Leave the festival?",
     "hud.theme-complete": "Weekly theme complete! Drawback lifted.",
     "hud.goal-paid": "Goal done! +{{jp}} JP ({{done}}/{{total}})",
     "hud.nothing-to-donate": "Themed donations completed - drawback lifted.",
@@ -61,17 +61,21 @@
     "upgrade.starter_gold_5.name": "Seed Money V",
     "upgrade.starter_gold_5.desc": "Start each loop with +25,000g.",
     "upgrade.cookbook_1.name": "Cookbook I",
-    "upgrade.cookbook_1.desc": "Bank up to 5 cooking recipes between loops.",
+    "upgrade.cookbook_1.desc": "Expand the Cookbook from 4 to 8 cooking recipe slots.",
     "upgrade.cookbook_2.name": "Cookbook II",
-    "upgrade.cookbook_2.desc": "Bank up to 10 cooking recipes between loops.",
+    "upgrade.cookbook_2.desc": "Expand the Cookbook from 8 to 12 cooking recipe slots.",
     "upgrade.cookbook_3.name": "Cookbook III",
-    "upgrade.cookbook_3.desc": "Bank up to 20 cooking recipes between loops.",
+    "upgrade.cookbook_3.desc": "Expand the Cookbook from 12 to 16 cooking recipe slots.",
+    "upgrade.cookbook_4.name": "Cookbook IV",
+    "upgrade.cookbook_4.desc": "Expand the Cookbook from 16 to 20 cooking recipe slots.",
     "upgrade.craftbook_1.name": "Craftbook I",
-    "upgrade.craftbook_1.desc": "Bank up to 5 crafting recipes between loops.",
+    "upgrade.craftbook_1.desc": "Expand the Craftbook from 4 to 8 crafting recipe slots.",
     "upgrade.craftbook_2.name": "Craftbook II",
-    "upgrade.craftbook_2.desc": "Bank up to 10 crafting recipes between loops.",
+    "upgrade.craftbook_2.desc": "Expand the Craftbook from 8 to 12 crafting recipe slots.",
     "upgrade.craftbook_3.name": "Craftbook III",
-    "upgrade.craftbook_3.desc": "Bank up to 20 crafting recipes between loops.",
+    "upgrade.craftbook_3.desc": "Expand the Craftbook from 12 to 16 crafting recipe slots.",
+    "upgrade.craftbook_4.name": "Craftbook IV",
+    "upgrade.craftbook_4.desc": "Expand the Craftbook from 16 to 20 crafting recipe slots.",
     "upgrade.early_horse.name": "Keep Horse",
     "upgrade.early_horse.desc": "Keep your stable and horse across loops (build it once, where you want it).",
     "upgrade.shop_discount_1.name": "Shop Discount I",
@@ -439,7 +443,18 @@
     "boost.year_two_seeds.name": "Year-Two Seeds",
     "boost.year_two_seeds.desc": "This week, Mixed Seeds you plant have a 5% chance to grow the season's year-two crop: Garlic in Spring, Red Cabbage in Summer, Artichoke in Fall.",
     "boost.sneak_peek.name": "Sneak Peek",
-    "boost.sneak_peek.desc": "This season, the Queen of Sauce airs next year's episode each Sunday, so its recipes are yours a year early.",
+    "boost.sneak_peek.desc": "This season, the Queen of Sauce replaces Wednesday's rerun with next year's version of Sunday's episode. Its recipe is yours a year early, but you go without reruns until the season ends.",
+
+    // Replaces the vanilla Wednesday channel name ("The Queen Of Sauce (Re-run)") while Sneak
+    // Peek is active, because that slot is airing a year-2 episode instead of a rerun.
+    "tv.sneak-peek-channel": "The Queen Of Sauce (Sneak Peek)",
+
+    // Bundle slots for flavored goods. Vanilla names them "Dried" and "Smoked" on their own,
+    // because the bundle cannot say which fruit or fish (see FlavorlessBundleSlots). Any of them
+    // is accepted, so the label says that.
+    "bundle-slot.any-dried-fruit": "Any Dried Fruit",
+    "bundle-slot.any-dried-mushrooms": "Any Dried Mushrooms",
+    "bundle-slot.any-smoked-fish": "Any Smoked Fish",
 
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",
@@ -495,6 +510,7 @@
     "menu.books.no-new": "No new recipes to add. Learn more recipes first.",
     "menu.books.choose": "Choose a recipe to bank:",
     "menu.books.bank-before-reset": "Last chance to change saved recipes",
+    "menu.books.over-cap": "This book holds more recipes than it has slots. Remove one before banking another.",
     "menu.cookbook.title": "Cookbook: {{used}} / {{total}} slots",
     "menu.craftbook.title": "Craftbook: {{used}} / {{total}} slots",
     "menu.books.empty-slot": "[empty, click to add]",

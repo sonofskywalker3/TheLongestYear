@@ -55,6 +55,41 @@ public class GeneratedBundleSetTests
         Assert.Equal(new[] { 1, 2, 2, 3 }, ramp);
     }
 
+    /// <summary>Nexus 1137357 (ozzy2540, 2026-09-21, SVE + Challenging Community Center Bundles on
+    /// Hard): "it say I need all 9 spring crops but there is only eight slots... everything was
+    /// green but it still said I failed."
+    ///
+    /// A pick-X-of-Y bundle can only ever take X donations, so no season may demand more than X.
+    /// The clamp capped the ramp by how many INGREDIENTS were obtainable by each season, which for
+    /// a pick-8-of-9 bundle is 9, and left a quota of 9 standing against 8 fillable slots. The
+    /// gate then asked for a ninth donation the board had nowhere to put, so a fully green bundle
+    /// still failed the season. The bundle quotas are keyed by name, so any board whose bundle
+    /// shares a vanilla name with a different slot count can land here.</summary>
+    [Fact]
+    public void ClampRamp_NeverDemandsMoreSlotsThanTheBundleHas()
+    {
+        var ingredients = new[] { "(O)1", "(O)2", "(O)3", "(O)4", "(O)5", "(O)6", "(O)7", "(O)8", "(O)9" };
+        int[] ramp = GeneratedBundleSet.ClampRampForObtainability(
+            cumulativeRamp: new[] { 9, 9, 9, 9 },
+            ingredients: ingredients,
+            numberOfSlots: 8,
+            pins: new Dictionary<string, Season>());
+        Assert.All(ramp, n => Assert.True(n <= 8, $"a season demanded {n} of an 8-slot bundle"));
+        Assert.Equal(8, ramp[3]);   // completion is still required
+    }
+
+    /// <summary>The cap is the slot count, not a blanket trim: a bundle whose ingredients are all
+    /// obtainable and whose ramp already fits keeps every step it had.</summary>
+    [Fact]
+    public void ClampRamp_LeavesARampThatAlreadyFits()
+        => Assert.Equal(
+            new[] { 1, 2, 3, 4 },
+            GeneratedBundleSet.ClampRampForObtainability(
+                new[] { 1, 2, 3, 4 },
+                new[] { "(O)1", "(O)2", "(O)3", "(O)4" },
+                numberOfSlots: 4,
+                pins: new Dictionary<string, Season>()));
+
     /// <summary>A stretch line is the whole reason a season's ramp has a bump there: the item is
     /// pinned later than the season, and the line says the gate may reach it anyway. The clamp
     /// reads the pin table, so without the stretch lines it flattens exactly the bump the stretch

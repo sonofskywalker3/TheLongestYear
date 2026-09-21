@@ -21,6 +21,21 @@ public static class AvailabilityWeeks
     /// <summary>Year 2 covers episodes 17 to 32 (the Sneak Peek Boost route: spec
     /// 2026-08-28-obtainable-board-4-boosts).</summary>
     public const int YearTwoEpisodesLast = 32;
+
+    /// <summary>The last year-2 episode the Sneak Peek Boost can actually air, which is NOT
+    /// <see cref="YearTwoEpisodesLast"/>.
+    ///
+    /// Since 0.18.31 the Boost airs the year-2 episode on WEDNESDAY, replacing the rerun, and it
+    /// airs the episode of the Sunday that just passed (Jeff, 2026-09-21: a preview a week ahead of
+    /// the wiki's air date would mislead anyone looking the schedule up). Wednesdays are days
+    /// 3/10/17/24 of a season, so the week index <c>DaysPlayed / 7</c> on a Wednesday is always the
+    /// preceding Sunday's week: the year's Wednesdays cover weeks 1 to 15, and week 16's episode
+    /// (Winter 28's Sunday, episode 32) has no Wednesday after it inside the one-year run.
+    ///
+    /// Episode 32 is therefore unreachable and its dish (Shrimp Cocktail, (O)733) is banned in
+    /// <c>ItemPoolBuilder.BuiltInExcludedItemIds</c>. Keep the two in step: widening this bound
+    /// without lifting that ban would place a dish no board can deliver.</summary>
+    public const int YearTwoLastReachableEpisode = 31;
     /// <summary>A dish the Saloon or a Cookout Kit can supply without a kitchen.</summary>
     public const int ShopDishWeek = 3;
     public const int PondDelayWeeks = 4;

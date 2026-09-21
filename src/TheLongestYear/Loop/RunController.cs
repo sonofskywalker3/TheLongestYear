@@ -707,8 +707,8 @@ namespace TheLongestYear.Loop
 
             string bookName = isCooking ? "Cookbook" : "Craftbook";
             int slots = isCooking
-                ? UpgradeCatalog.CookbookSlotCount(meta.HighestKeptTier("cookbook_", maxTier: 3))
-                : UpgradeCatalog.CraftbookSlotCount(meta.HighestKeptTier("craftbook_", maxTier: 3));
+                ? UpgradeCatalog.CookbookSlotCount(meta.HighestKeptTier("cookbook_", maxTier: UpgradeCatalog.BookMaxTier))
+                : UpgradeCatalog.CraftbookSlotCount(meta.HighestKeptTier("craftbook_", maxTier: UpgradeCatalog.BookMaxTier));
             List<string> banked = isCooking ? meta.CookbookRecipes : meta.CraftbookRecipes;
             int bankable = isCooking
                 ? RecipeBanking.Bankable(player.cookingRecipes.Keys, banked, RecipeDefaults.IsDefaultCooking).Count
