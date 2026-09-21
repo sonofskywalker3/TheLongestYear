@@ -64,6 +64,12 @@ namespace TheLongestYear
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
+        private TheLongestYear.Loop.SneakPeekChannelService _sneakPeekChannel;
+
+        /// <summary>Whether the Sneak Peek Boost was active at the last cache check. The Wednesday
+        /// channel label is an asset edit, so it has to be invalidated when the Boost starts (the
+        /// purchase path does that directly) and when it expires at the season roll (this does).</summary>
+        private bool _sneakPeekLabelActive;
 
         // Debug command-file bridge: lets the developer trigger tly_ actions by writing lines into a file
         // in the mod folder, so PC in-game testing needs no console typing (the mod polls + executes them).
@@ -163,6 +169,9 @@ namespace TheLongestYear
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
+            // Sneak Peek: relabel the Wednesday TV channel while the Boost has taken the rerun slot.
+            _sneakPeekChannel = new TheLongestYear.Loop.SneakPeekChannelService(this.Monitor);
+            helper.Events.Content.AssetRequested += _sneakPeekChannel.OnAssetRequested;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
@@ -496,6 +505,8 @@ namespace TheLongestYear
             TheLongestYear.Loop.CommunityCenterCompletePatch.ResetLogGuards();
             // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            // Same for the Sneak Peek channel label: the Boost is per save and per season.
+            this.RefreshSneakPeekChannelLabel();
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
             // unlock-granting cutscene (recipe/mail/quest) so a mod's teach/unlock scene re-fires each
             // loop, merged with the vanilla furnace/cave ids. FarmerReset consults it at reset time.
@@ -677,7 +688,16 @@ namespace TheLongestYear
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);
             _boostPurchases = new BoostPurchaseService(this.Monitor, _meta, _boostEffects);
-            _planningShrine.AttachBoosts(() => _meta.Run, (id, skill) => _boostPurchases.TryBuy(id, skill));
+            _planningShrine.AttachBoosts(() => _meta.Run, (id, skill) =>
+            {
+                BoostPurchase.Result result = _boostPurchases.TryBuy(id, skill);
+                // Sneak Peek takes over the Wednesday channel the moment it is bought, so the
+                // label has to be re-edited now, not at the next day roll: the player can walk
+                // home and switch the TV on the same afternoon.
+                if (result == BoostPurchase.Result.Success && id == BoostId.SneakPeek)
+                    this.RefreshSneakPeekChannelLabel();
+                return result;
+            });
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
@@ -753,6 +773,13 @@ namespace TheLongestYear
             _boardBuilder = null;
             _boardFingerprint = null;
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            // BoostChecker is null from here, so the channel edit no longer applies: drop the
+            // relabelled string so a non-TLY save never shows a TLY channel name.
+            if (_sneakPeekLabelActive)
+            {
+                _sneakPeekLabelActive = false;
+                this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
+            }
             DonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
@@ -2201,6 +2228,20 @@ namespace TheLongestYear
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
+            // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
+            // being a rerun, so the label has to go back with it.
+            this.RefreshSneakPeekChannelLabel();
+        }
+
+        /// <summary>Re-run the Wednesday channel-label edit if the Sneak Peek Boost has started or
+        /// ended since the last check. Invalidating an asset forces a reload, so this only pays
+        /// that cost on the two days a season when the answer actually changes.</summary>
+        private void RefreshSneakPeekChannelLabel()
+        {
+            bool active = TheLongestYear.Loop.BoostChecker.SneakPeekActive?.Invoke() == true;
+            if (active == _sneakPeekLabelActive) return;
+            _sneakPeekLabelActive = active;
+            this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
         }
 
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)

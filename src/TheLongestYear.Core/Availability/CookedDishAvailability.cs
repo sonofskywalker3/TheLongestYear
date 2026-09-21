@@ -109,10 +109,12 @@ public static class CookedDishAvailability
     /// NPC N" takes the hearts table, again against the price week. "s Skill N" the level week.
     /// "default" is week 1. "null" is Cookies (event 19).
     ///
-    /// A year-2 episode (17 to 32) has no year-1 shelf date of its own, but the Sneak Peek Boost
-    /// (spec 2026-08-28-obtainable-board-4-boosts) lets a player watch it early: on Normal and
-    /// above it is placed at week `episode - 16` (the same week its year-1 counterpart would air);
-    /// on Easy, without the Boost route, it stays unplaced.</summary>
+    /// A year-2 episode has no year-1 shelf date of its own, but the Sneak Peek Boost (spec
+    /// 2026-08-28-obtainable-board-4-boosts) lets a player watch it early: on Normal and above it
+    /// is placed at week `episode - 16`, which since 0.18.31 is the week whose WEDNESDAY airs it
+    /// (the Boost replaced the rerun; see <see cref="AvailabilityWeeks.YearTwoLastReachableEpisode"/>).
+    /// On Easy, without the Boost route, it stays unplaced — and so does episode 32, which no
+    /// Wednesday in the run can reach.</summary>
     public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
         => ComputeRecipeWeek(recipe, data, step).Week;
 
@@ -148,7 +150,8 @@ public static class CookedDishAvailability
             int? tvWeek = episode != null && episode.Value <= AvailabilityWeeks.YearOneEpisodes ? episode : null;
             bool yearTwoRoute = false;
             if (tvWeek == null && step != DifficultyStep.Easy && episode != null
-                && episode.Value > AvailabilityWeeks.YearOneEpisodes && episode.Value <= AvailabilityWeeks.YearTwoEpisodesLast)
+                && episode.Value > AvailabilityWeeks.YearOneEpisodes
+                && episode.Value <= AvailabilityWeeks.YearTwoLastReachableEpisode)
             {
                 tvWeek = episode.Value - AvailabilityWeeks.YearOneEpisodes;
                 yearTwoRoute = true;

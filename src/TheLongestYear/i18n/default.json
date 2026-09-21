@@ -426,7 +426,11 @@
     "boost.year_two_seeds.name": "Year-Two Seeds",
     "boost.year_two_seeds.desc": "This week, Mixed Seeds you plant have a 5% chance to grow the season's year-two crop: Garlic in Spring, Red Cabbage in Summer, Artichoke in Fall.",
     "boost.sneak_peek.name": "Sneak Peek",
-    "boost.sneak_peek.desc": "This season, the Queen of Sauce airs next year's episode each Sunday, so its recipes are yours a year early.",
+    "boost.sneak_peek.desc": "This season, the Queen of Sauce replaces Wednesday's rerun with next year's version of Sunday's episode. Its recipe is yours a year early, but you go without reruns until the season ends.",
+
+    // Replaces the vanilla Wednesday channel name ("The Queen Of Sauce (Re-run)") while Sneak
+    // Peek is active, because that slot is airing a year-2 episode instead of a rerun.
+    "tv.sneak-peek-channel": "The Queen Of Sauce (Sneak Peek)",
 
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",

@@ -757,6 +757,12 @@ public static class ItemPoolBuilder
         "(O)900", // Legend II
         "(O)901", // Radioactive Carp
         "(O)902", // Glacierfish Jr.
+        "(O)733", // Shrimp Cocktail   — Queen of Sauce episode 32 (week 16, the year-2 pair of Winter
+                  //                     28's Sunday). The Sneak Peek Boost airs year-2 episodes on
+                  //                     Wednesday, and there is no Wednesday after Winter 28 inside the
+                  //                     run, so no route reaches it (Jeff, 2026-09-21). It is a vanilla
+                  //                     Chef's Bundle item, so the ban is what keeps the recipe's own
+                  //                     bundle from re-offering it — see AvailabilityWeeks.YearTwoLastReachableEpisode.
         "(O)928", // Golden Egg        — Golden Chickens need Perfection (or Qi's Walnut Room shop), so a
                   //                     one-year loop can never see one. Category Egg (-5) and, unlike Void
                   //                     Egg and Ostrich Egg, NOT flagged ExcludeFromRandomSale, so the vet let
