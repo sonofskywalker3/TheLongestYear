@@ -37,10 +37,51 @@ blight can land on the night of Summer 1.
 The closing line changes once the save has been rewound at least once (my proposal, Jeff picked
 the wording; the cost is only true after a loss).
 
+## Summer to Fall gate scene: new lines (locked 2026-09-21)
+
+Three Junimos, one line each, the same every loop (Jeff did not want a changed closer here).
+The old orange line is cut: no character tells the player what he just watched (game-writing
+rule 11).
+
+| Who | Line |
+| --- | --- |
+| Green | You have been working hard. We are growing stronger. |
+| Orange | It grows stronger as well. As the days grow shorter, it will reach further. |
+| Turquoise | You must continue. We will hold back what we can, but the work is yours alone. |
+
+## Fall to Winter gate scene: new lines (2026-09-21; line 3 wording and "war" are my picks, Jeff to confirm)
+
+Four lines, the same every loop.
+
+| Who | Line |
+| --- | --- |
+| Green | This is the last season, @. If it is to end, it ends here. |
+| Orange | The agents of the enemy will not stop, but with the cold and dark of Winter, it may attack directly. |
+| Turquoise | It will corrupt whatever it can. You must mend what it breaks. |
+| Green | If you win here, this cycle will be broken. But I fear our war will continue. |
+
+Jeff's version of line 3: "It will corrupt whatever it can, but you must mend what is broken to
+win." (shortened because line 4 opens on "If you win here").
+
 ## Darkness strikes (Jeff, 2026-09-21)
 
-Remove the three first-strike villager letters. The first strike shows an overnight cutscene, like
-the fairy or the witch. Keep the morning popup messages.
+Remove the three first-strike villager letters. Overnight cutscenes in the fairy and witch slot.
+Keep the morning popup messages. The darkness works through agents until Winter:
+
+| Strike | Agent | Overnight scene |
+| --- | --- | --- |
+| Crop blight | Crows with glowing red eyes | They eat the crops that die, not fazed by the scarecrows. |
+| Chest blight | A shadow man from the mines | He opens the chest that was picked, then runs away. |
+| Reversion | Shadows | Shadows moving inside the Community Center. |
+| Tampering (Winter only) | The darkness itself | The map view with a dark cloud flowing over it. From that night on every affected item has a dark aura. |
+
+Only in Winter can the dark act directly: nature is subdued by the cold, the snow and the lack of
+sun. The scenes play silent; no Junimo explains a strike afterwards.
+
+**Every assault happens at least once, every loop** (Jeff). A guarantee, not a rising chance: a
+kind that has not struck by the last week of the season it first appears in is forced on its first
+eligible night of that week (crows and thief in Summer, hall shadows in Fall; tampering keeps its
+Winter 1 rule). Open: what the thief guarantee does when nothing is stored.
 
 ## Problems flagged in the gate scenes (mine, for the review)
 
