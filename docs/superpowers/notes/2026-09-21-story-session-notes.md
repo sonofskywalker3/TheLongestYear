@@ -60,6 +60,10 @@ Four lines, the same every loop.
 | Turquoise | It will corrupt whatever it can. To go on, you must mend what it breaks. |
 | Green | If you win here, this cycle will be broken. But I fear our war will continue. |
 
+Staging (Jeff, after watching it 2026-09-21): the purple glow must not release before the scene
+ends. It comes up before line 2 and holds through the last line into the fade-out. The Summer and
+Fall staging "looks fine".
+
 Jeff's version of line 3: "It will corrupt whatever it can, but you must mend what is broken to
 win." (shortened because line 4 opens on "If you win here").
 
