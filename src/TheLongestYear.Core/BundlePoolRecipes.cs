@@ -68,7 +68,12 @@ public static class BundlePoolRecipes
     /// the greens category; PoolItem carries no context tags, so the vanilla mushroom ids stand in
     /// for the tag half and the greens category does the rest (a modded mushroom in that category
     /// still counts).</summary>
-    private static readonly string[] EdibleMushrooms = { "(O)257", "(O)281", "(O)404", "(O)420", "(O)422" };
+    /// <summary>Public because <see cref="FlavoredSlotRules"/> names the same mushrooms: the
+    /// Dehydrator's trigger is the edible_mushroom tag, which is what this list stands in for.
+    /// One list, so a Wild Medicine ask and a Dried Mushrooms ask can never disagree.</summary>
+    public static readonly string[] EdibleMushroomIds = { "(O)257", "(O)281", "(O)404", "(O)420", "(O)422" };
+
+    private static readonly string[] EdibleMushrooms = EdibleMushroomIds;
 
     /// <summary>Field Research's beach half: the shell and sea forage that sits beside artifacts
     /// in vanilla's own Field Research bundle.</summary>
