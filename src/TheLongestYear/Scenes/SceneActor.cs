@@ -15,11 +15,25 @@ namespace TheLongestYear.Scenes
     /// scene. A scene-drawn actor is a texture and a frame number. It owns nothing, it is gone when
     /// the scene ends, and it cannot leave a villager standing in a field at 6am.
     ///
-    /// FRAMES. A character sheet is laid out four frames per direction, in the order the engine's own
-    /// <c>AnimatedSprite.AnimateDown/Right/Up/Left</c> use (AnimatedSprite.cs:351 to 441): frames 0
-    /// to 3 face down, 4 to 7 right, 8 to 11 up, 12 to 15 left. Frame 0 of a block is the standing
-    /// pose, so a standing actor is just the block's first frame. <c>AnimatedSprite.GetSourceRect</c>
-    /// does the rest, whatever the sheet's width.</summary>
+    /// FRAMES, and why they are FRAME INDEXES and not sheet rows. Every character in the game
+    /// animates through <c>Character.animateInFacingDirection</c> (Character.cs:1597), which calls
+    /// <c>AnimatedSprite.AnimateUp/Right/Down/Left</c>. Those walk fixed blocks of
+    /// <c>framesPerAnimation</c> frames, which is 4 for everything except a Big Slime
+    /// (AnimatedSprite.cs:31 and 351 to 441): frames 0 to 3 face down, 4 to 7 right, 8 to 11 up,
+    /// 12 to 15 left, and frame 0 of a block is the standing pose. That is a FRAME INDEX rule, not a
+    /// row rule, and <c>AnimatedSprite.GetSourceRect</c> turns an index into a rectangle using the
+    /// sheet's own width, so it holds at any width.
+    ///
+    /// <c>AnimatedSprite.faceDirection</c> does compute a row from <c>textureWidth / SpriteWidth</c>
+    /// instead, and it maps the directions differently again. It is NOT the one to copy: the only
+    /// callers are Horse, Pet, Bug and the profile menu, whose sheets put one direction per row.
+    /// Characters use <c>faceDirectionStandard</c> (direction times 4), which agrees with the block
+    /// rule above.
+    ///
+    /// The two happen to agree anyway for every sheet this mod draws, because they are all four
+    /// columns wide: verified by dumping them out of the running game, Linus 64x224, Shadow Brute
+    /// 64x256, Shane 64x416, all 16 px columns. So a monster sheet is laid out exactly like a
+    /// villager's here, and only the sprite HEIGHT differs (Linus and Shane 32, Shadow Brute 24).</summary>
     internal sealed class SceneActor
     {
         public const int FacingDown = 0;
@@ -31,7 +45,7 @@ namespace TheLongestYear.Scenes
         private const int TileSize = 64;
         private const float DrawScale = 4f;
 
-        /// <summary>How long one walking frame is held. Vanilla's default sprite interval is 175 ms;
+        /// <summary>How long one walking frame is held. Vanilla's default sprite interval is 175 ms and
         /// a scene walker reads better a little quicker.</summary>
         private const int StepMs = 150;
 
@@ -66,6 +80,16 @@ namespace TheLongestYear.Scenes
             int step = Walking ? Math.Abs(elapsedMs / StepMs) % FramesPerDirection : 0;
             _sprite.currentFrame = Facing * FramesPerDirection + step;
             _sprite.UpdateSourceRect();
+        }
+
+        /// <summary>The sheet as the engine sees it, for the log. Tasks 8 and 9 draw a Shadow Brute
+        /// and Shane through this class, and a sheet that is not four columns of the expected size
+        /// would put every facing in the wrong place, so it is worth one Trace line.</summary>
+        public string Describe()
+        {
+            Texture2D sheet = _sprite?.Texture;
+            if (sheet == null) return "no texture";
+            return $"{sheet.Width}x{sheet.Height}, {_sprite.SpriteWidth}x{_sprite.SpriteHeight} frames, {sheet.Width / Math.Max(1, _sprite.SpriteWidth)} column(s)";
         }
 
         /// <summary>Face whichever way <paramref name="target"/> lies, preferring left and right:

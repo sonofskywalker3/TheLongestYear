@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using StardewValley.Events;
 
 namespace TheLongestYear.Scenes
 {
@@ -25,7 +24,7 @@ namespace TheLongestYear.Scenes
     {
         private readonly IModHelper _helper;
         private readonly IMonitor _monitor;
-        private FarmEvent _playing;
+        private StrikeSceneBase _playing;
 
         public ScenePreview(IModHelper helper, IMonitor monitor)
         {
@@ -38,12 +37,12 @@ namespace TheLongestYear.Scenes
 
         /// <summary>Start one. False when another is already running or the scene called itself
         /// off, in which case nothing was shown and nothing was left behind.</summary>
-        public bool Play(FarmEvent scene)
+        public bool Play(StrikeSceneBase scene)
         {
             if (scene == null) throw new ArgumentNullException(nameof(scene));
             if (_playing != null)
             {
-                _monitor.Log("A strike scene is already playing; let it finish.", LogLevel.Warn);
+                _monitor.Log("A strike scene is already playing. Let it finish.", LogLevel.Warn);
                 return false;
             }
             if (scene.setUp())
@@ -60,8 +59,9 @@ namespace TheLongestYear.Scenes
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            FarmEvent scene = _playing;
+            StrikeSceneBase scene = _playing;
             if (scene == null) return;
+            if (!Context.IsWorldReady) { Stop("the world went away"); return; }
             bool done;
             try
             {
@@ -69,10 +69,10 @@ namespace TheLongestYear.Scenes
             }
             catch (Exception ex)
             {
-                _monitor.Log($"The strike scene preview threw and was stopped. {ex}", LogLevel.Error);
+                _monitor.Log($"The strike scene preview threw. The scene is being stopped properly so the camera comes back. {ex}", LogLevel.Error);
                 done = true;
             }
-            if (done) Stop();
+            if (done) Stop("the scene finished");
         }
 
         private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
@@ -87,9 +87,15 @@ namespace TheLongestYear.Scenes
             catch (Exception ex) { _monitor.Log($"The strike scene preview could not draw over the frame. {ex}", LogLevel.Error); }
         }
 
-        private void Stop()
+        /// <summary>Unhook, and make sure the scene itself has ENDED. A preview that simply stopped
+        /// calling tickUpdate would leave the scene mid-run with the night camera held, the HUD off
+        /// and the controls frozen, because Cleanup only runs from the scene's own ending. Abort is
+        /// a no-op when the scene ended on its own.</summary>
+        private void Stop(string why)
         {
+            StrikeSceneBase scene = _playing;
             _playing = null;
+            scene?.Abort(why);
             _helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
             _helper.Events.Display.RenderedWorld -= OnRenderedWorld;
             _helper.Events.Display.Rendered -= OnRendered;

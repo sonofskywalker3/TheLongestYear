@@ -38,6 +38,22 @@ namespace TheLongestYear.Scenes
         /// 2026-09-21.</summary>
         private static readonly Color NightAmbient = new Color(200, 190, 40);
 
+        /// <summary>What the scene's night does to a white surface, and so the tint a scene must put
+        /// on anything it draws ITSELF.
+        ///
+        /// A farm event draws after the lightmap has been composited (Game1.cs:13697), so a sprite a
+        /// scene paints is never lit and comes out looking like a daylight sticker on a night frame.
+        /// The lightmap is subtracted with ColorSourceBlend SourceColor and ReverseSubtract
+        /// (Game1.lightingBlend), so a world pixel loses ambient squared, and a white one lands on
+        /// 255 minus ambient squared. Measured off a screenshot pair to be sure of it: the mailbox
+        /// reads (255,250,228) by day and (98,108,222) inside this scene, against a predicted
+        /// (98,113,249). A SpriteBatch tint multiplies rather than subtracts, so it cannot be exact
+        /// for mid tones, but it puts white exactly where the lightmap would and never clips.</summary>
+        public static Color NightTint { get; } = new Color(
+            255 - NightAmbient.R * NightAmbient.R / 255,
+            255 - NightAmbient.G * NightAmbient.G / 255,
+            255 - NightAmbient.B * NightAmbient.B / 255);
+
         private const int TileSize = 64;
 
         private static bool _active;
@@ -50,12 +66,16 @@ namespace TheLongestYear.Scenes
         private static bool _priorViewportFreeze;
         private static bool _priorDisplayFarmer;
         private static bool _priorNonWarpFade;
+        private static bool _priorFadeToBlack;
+        private static bool _priorFadeIn;
+        private static float _priorFadeAlpha;
+        private static int _priorGameTimeInterval;
 
         /// <summary>Is a scene holding the camera right now?</summary>
         public static bool Active => _active;
 
         /// <summary>Take the view to this map and centre it on this tile, at night. The first call
-        /// remembers what it is replacing; a later call while the camera is still held only moves
+        /// remembers what it is replacing. A later call while the camera is still held only moves
         /// it, so a scene can follow something without losing the way home.</summary>
         public static void CutTo(GameLocation where, Vector2 tile)
         {
@@ -71,6 +91,13 @@ namespace TheLongestYear.Scenes
                 _priorViewportFreeze = Game1.viewportFreeze;
                 _priorDisplayFarmer = Game1.displayFarmer;
                 _priorNonWarpFade = Game1.nonWarpFade;
+                // fadeClear() below wipes all three of these, so they are remembered with the rest.
+                _priorFadeToBlack = Game1.fadeToBlack;
+                _priorFadeIn = Game1.fadeIn;
+                _priorFadeAlpha = Game1.fadeToBlackAlpha;
+                // The clock is held at NightClock for the whole scene, so whatever part of a ten
+                // minute tick had already gone by must come back with it.
+                _priorGameTimeInterval = Game1.gameTimeInterval;
                 _active = true;
             }
             Game1.currentLocation = where;
@@ -119,6 +146,10 @@ namespace TheLongestYear.Scenes
             Game1.viewportFreeze = _priorViewportFreeze;
             Game1.displayFarmer = _priorDisplayFarmer;
             Game1.nonWarpFade = _priorNonWarpFade;
+            Game1.fadeToBlack = _priorFadeToBlack;
+            Game1.fadeIn = _priorFadeIn;
+            Game1.fadeToBlackAlpha = _priorFadeAlpha;
+            Game1.gameTimeInterval = _priorGameTimeInterval;
             Game1.viewport.X = _priorViewportX;
             Game1.viewport.Y = _priorViewportY;
             GameLocation back = Game1.player?.currentLocation ?? _priorLocation;
@@ -126,7 +157,7 @@ namespace TheLongestYear.Scenes
             if (back == null) return;
             Game1.currentLocation = back;
             // Puts the map's own light sources and local state back the way entering it would. On
-            // the overnight path vanilla warps the farmer a moment later and does it again; that
+            // the overnight path vanilla warps the farmer a moment later and does it again, which
             // costs nothing, and without it the debug preview would keep the night's lamp lights.
             try { back.resetForPlayerEntry(); }
             catch (Exception) { /* a map that will not reset is still better than a held camera. */ }

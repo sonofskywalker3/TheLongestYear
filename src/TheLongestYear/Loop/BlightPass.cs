@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewValley;
@@ -58,7 +58,7 @@ namespace TheLongestYear.Loop
                     && tf is HoeDirt dirt && dirt.crop != null && !dirt.crop.dead.Value)
                 {
                     dirt.crop.Kill();
-                    // Kill only flips the flag; the withered sprite comes from Crop.sourceRect,
+                    // Kill only flips the flag. The withered sprite comes from Crop.sourceRect,
                     // which is cached and only rebuilt by updateDrawMath. Vanilla gets away with it
                     // because it always kills inside Crop.newDay, which calls updateDrawMath a few
                     // lines later (Crop.cs:922). The overnight scene kills while the player is

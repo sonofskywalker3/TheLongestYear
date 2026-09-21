@@ -38,7 +38,7 @@ namespace TheLongestYear.Scenes
         private const int CrowsEnterMs = 600;
         private const int CrowGapMs = 120;
         /// <summary>How long a crow is in the air on its way down. The spec asks for 3.5 tiles a
-        /// second; a crow entering above the frame has ten or more tiles to fall, which would still
+        /// second, but a crow entering above the frame has ten or more tiles to fall and would still
         /// have it gliding when Linus arrives, so the glide is a fixed length instead and the speed
         /// falls out of it (about four tiles a second on a normal window).</summary>
         private const int GlideMs = 1600;
@@ -46,6 +46,10 @@ namespace TheLongestYear.Scenes
         private const int LinusEnterMs = 2600;
         private const int LinusSeesMs = 3600;
         private const int LinusShakeMs = 300;
+        /// <summary>How far the recoil shoves him, in SCREEN pixels. The spec says 2 px, and this is
+        /// that 2 px measured the way the sprite is: two pixels of the sheet at the game's 4x draw
+        /// scale. Two screen pixels is half a sheet pixel and did not show at all.</summary>
+        private const float LinusShakePixels = 8f;
         private const int LinusStepsBackMs = 4200;
         private const int LinusStepBackLengthMs = 400;
         private const int PeckMs = 4600;
@@ -97,17 +101,48 @@ namespace TheLongestYear.Scenes
         /// the offset <c>Critter.draw</c> uses (Critter.cs:69).</summary>
         private static readonly Vector2 CrowDrawOffset = new Vector2(-64f, -128f);
 
-        /// <summary>The eye pixel itself, in sheet pixels, drawn on top of the bird.
+        /// <summary>The eye, in sheet pixels, drawn on top of the bird.
         ///
         /// It is PAINTED and not a <c>LightSource</c>. The spec asked for a small red light per crow
-        /// as well; it was built, screenshotted and cut (2026-09-21). Even at the smallest radius the
+        /// as well. It was built, screenshotted and cut (2026-09-21): even at the smallest radius the
         /// sconce texture is about a hundred pixels across, so six of them turned the row of birds
-        /// into one orange bonfire and hid the crows the scene is about. The painted dot with its
-        /// soft square reads at normal zoom on its own, which is what the eyes were for.</summary>
+        /// into one orange bonfire and hid the crows the scene is about.</summary>
         private const int EyeDotPixels = 2;
 
-        /// <summary>Where the eye sits inside each crow frame, found once by reading the sheet.</summary>
-        private static readonly Dictionary<int, Point> EyeOffsets = new();
+        /// <summary>WHERE THE EYE IS, PER FRAME, HAND AUTHORED OFF THE REAL SHEET.
+        ///
+        /// <c>TileSheets\critters</c> was dumped out of the running game (320x640, ten 32 px columns)
+        /// and read pixel by pixel. The crow's eye is the only magenta pixel on the bird, so there is
+        /// no guessing involved: these are its exact offsets inside each 32x32 frame, top left of the
+        /// two pixel eye.
+        ///
+        /// The first pass looked the eye up at runtime as the brightest opaque pixel in the TOP HALF
+        /// of the frame. That was wrong in two ways the screenshots showed: it is not stable frame to
+        /// frame, and on the two pecking frames the bird's head is down at y 24 and 25, outside the
+        /// half it searched, so the dot landed somewhere on the body instead.
+        ///
+        /// Frame 19 is the sleeping pose and its eye is shut, so it has no entry and the scene never
+        /// draws it.</summary>
+        private static readonly Dictionary<int, Point> EyeOffsets = new()
+        {
+            [CrowBaseFrame + 0] = new Point(11, 17),   // standing
+            [CrowBaseFrame + 1] = new Point(10, 17),   // head dipping
+            [CrowBaseFrame + 2] = new Point(8, 19),
+            [CrowBaseFrame + 3] = new Point(8, 24),    // head down
+            [CrowBaseFrame + 4] = new Point(8, 25),    // the peck itself
+            [CrowBaseFrame + 6] = new Point(7, 19),    // the five flap frames
+            [CrowBaseFrame + 7] = new Point(7, 19),
+            [CrowBaseFrame + 8] = new Point(7, 18),
+            [CrowBaseFrame + 9] = new Point(7, 17),
+            [CrowBaseFrame + 10] = new Point(7, 17),
+        };
+
+        /// <summary>The soft red glow around the eye, built once: a small radial falloff so the eye
+        /// reads as a light rather than as the hard red square the first pass drew.</summary>
+        private static Texture2D _eyeGlow;
+        private const int EyeGlowPixels = 16;
+        /// <summary>How wide the glow is drawn, in sheet pixels, so it scales with the bird.</summary>
+        private const float EyeGlowSheetPixels = 9f;
 
         // ---------------------------------------------------------------- state
 
@@ -127,7 +162,14 @@ namespace TheLongestYear.Scenes
             public bool Visible;
             /// <summary>On the ground: between its landing and the lift-off.</summary>
             public bool Perched;
+            /// <summary>Pixels a millisecond upward once it lifts off, and sideways as it goes.</summary>
+            public float RiseRate;
+            public float DriftRate;
         }
+
+        /// <summary>Only ever used to make the birds leave unalike. It takes no part in what dies,
+        /// which was decided by the strike's own seeded roll long before the scene was built.</summary>
+        private readonly Random _spread = new Random();
 
         private Farm _farm;
         private Vector2 _focus;
@@ -174,7 +216,7 @@ namespace TheLongestYear.Scenes
 
             StageLinus();
             Monitor.Log(
-                $"Darkness: the crows are staged on {_crows.Count} bird(s) at ({_focus.X},{_focus.Y}); "
+                $"Darkness: the crows are staged on {_crows.Count} bird(s) at ({_focus.X},{_focus.Y}), "
                 + $"scarecrow {(scarecrow.HasValue ? "in frame" : "none in range")}, Linus {(_linus != null ? "walking in" : "left out, nowhere clear to stand")}.",
                 LogLevel.Trace);
             return true;
@@ -192,6 +234,10 @@ namespace TheLongestYear.Scenes
                 EnterAtMs = Math.Max(0, enterAtMs),
                 Flip = tile.X < _focus.X,
             };
+            // The scene is silent and every crow leaves on the same beat, so the only thing keeping
+            // the lift-off from looking like one object is that no two birds climb alike.
+            crow.RiseRate = 0.5f + _spread.Next(0, 5) * 0.05f;
+            crow.DriftRate = (tile.X < _focus.X ? -1f : 1f) * (0.2f + _spread.Next(0, 5) * 0.06f);
             crow.LandAtMs = crow.EnterAtMs + GlideMs;
             crow.Position = crow.Start;
             return crow;
@@ -254,6 +300,7 @@ namespace TheLongestYear.Scenes
                             Monitor.Log($"Darkness: the crows scene could not load Linus, so it plays without him. {ex}", LogLevel.Warn);
                             return;
                         }
+                        Monitor.Log($"Darkness: the crows scene draws Linus from a sheet of {_linus.Describe()}.", LogLevel.Trace);
                         _linus.Position = _linusEntry * TileSize;
                         _linus.Facing = fromLeft ? SceneActor.FacingRight : SceneActor.FacingLeft;
                         return;
@@ -270,7 +317,7 @@ namespace TheLongestYear.Scenes
         }
 
         /// <summary>Somewhere a person could plausibly be standing: on the map, walkable, dry, and
-        /// with nothing in the way. Grass and laid flooring are fine to walk on; every other terrain
+        /// with nothing in the way. Grass and laid flooring are fine to walk on. Every other terrain
         /// feature is refused, which is what keeps him off the crops, and off the ones about to die
         /// in particular.</summary>
         private bool ClearToStandOn(int x, int y)
@@ -306,7 +353,6 @@ namespace TheLongestYear.Scenes
             // pump the clock, the location and the rest by hand (WitchEvent.tickUpdate). The debug
             // command plays the scene during an ordinary update, where the game is already doing all
             // of this, so the pump only runs when this really is tonight's farm event.
-            SceneCamera.HoldNight();
             if (ReferenceEquals(Game1.farmEvent, this))
             {
                 try
@@ -321,12 +367,19 @@ namespace TheLongestYear.Scenes
                     Monitor.Log($"Darkness: the crows scene could not pump the farm this tick. {ex}", LogLevel.Trace);
                 }
             }
-            bool done = base.tickUpdate(time);
-            if (!done) MoveEverything(ElapsedMs);
-            return done;
+            // AFTER the pump, never before it. UpdateGameClock recomputes outdoorLight from the
+            // clock and UpdateWhenCurrentLocation then copies that into ambientLight, so holding the
+            // night first meant the pump threw it away again on the overnight path and the farm came
+            // out at the full 2am dark, two shades under what the preview showed. Caught by the
+            // first REAL overnight screenshots, 2026-09-21: the preview could never show it, because
+            // there the engine's own update has already run by the time the scene ticks.
+            SceneCamera.HoldNight();
+            return base.tickUpdate(time);
         }
 
-        private void MoveEverything(int elapsed)
+        /// <summary>Moving the birds and Linus runs through the base's hook, not out of the override
+        /// above, so a throw here goes down the base's failure path and the camera always comes back.</summary>
+        protected override void Advance(int elapsed)
         {
             foreach (SceneCrow crow in _crows) MoveCrow(crow, elapsed);
             MoveLinus(elapsed);
@@ -354,8 +407,10 @@ namespace TheLongestYear.Scenes
             }
             else
             {
-                float risen = (elapsed - LiftOffMs) * 0.6f;
-                crow.Position = crow.Landing + new Vector2((crow.Flip ? 1f : -1f) * risen * 0.35f, -risen);
+                // Each bird has its own rise and its own sideways drift, so they open out instead of
+                // going up as one clump.
+                float risen = (elapsed - LiftOffMs) * crow.RiseRate;
+                crow.Position = crow.Landing + new Vector2(crow.DriftRate * risen, -risen);
                 crow.Frame = FlapFrame(elapsed);
             }
         }
@@ -409,7 +464,7 @@ namespace TheLongestYear.Scenes
             _linus.Position = new Vector2((_linusEntry.X + tilesIn * _linusInward) * TileSize, _linusEntry.Y * TileSize);
             // The recoil: a shudder on the spot the moment he takes the birds in.
             bool shaking = elapsed >= LinusSeesMs && elapsed < LinusSeesMs + LinusShakeMs;
-            _linus.Shake = shaking ? (elapsed / 50 % 2 == 0 ? -6f : 6f) : 0f;
+            _linus.Shake = shaking ? (elapsed / 50 % 2 == 0 ? -LinusShakePixels : LinusShakePixels) : 0f;
             _linus.Animate(elapsed);
         }
 
@@ -430,81 +485,96 @@ namespace TheLongestYear.Scenes
                         Game1.shadowTexture,
                         SceneCamera.ToScreen(crow.Position + new Vector2(0f, -4f)),
                         Game1.shadowTexture.Bounds,
-                        Color.White * 0.5f,
+                        SceneCamera.NightTint * 0.5f,
                         0f,
                         new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y),
                         3f,
                         SpriteEffects.None,
                         0.898f);
                 }
-                crow.Sprite.draw(b, corner, 0.9f, 0, 0, Color.White, crow.Flip, DrawScale);
+                crow.Sprite.draw(b, corner, 0.9f, 0, 0, SceneCamera.NightTint, crow.Flip, DrawScale);
                 PaintEye(b, crow, corner);
             }
-            if (_linusInFrame) _linus?.Draw(b, Color.White);
+            if (_linusInFrame) _linus?.Draw(b, SceneCamera.NightTint);
+            PaintFade(b);
         }
 
-        /// <summary>Two sheet pixels of red where the bird's eye is, with a softer square around it
-        /// so the glow reads at normal zoom without hiding the head.</summary>
+        /// <summary>A glowing red eye: a soft radial pool, then two sheet pixels of solid red in the
+        /// middle of it, at the eye's real place in this frame. Neither is tinted by the night, which
+        /// is the point of it.</summary>
         private void PaintEye(SpriteBatch b, SceneCrow crow, Vector2 corner)
         {
-            Point eye = EyeOffset(crow.Sprite, crow.Frame);
-            if (eye.X < 0) return;
+            if (!EyeOffsets.TryGetValue(crow.Frame, out Point eye)) return;
             float x = crow.Flip ? (CrowSpriteSize - EyeDotPixels - eye.X) * DrawScale : eye.X * DrawScale;
             var dot = new Rectangle(
                 (int)(corner.X + x),
                 (int)(corner.Y + eye.Y * DrawScale),
                 (int)(EyeDotPixels * DrawScale),
                 (int)(EyeDotPixels * DrawScale));
-            var glow = new Rectangle(dot.X - dot.Width, dot.Y - dot.Height, dot.Width * 3, dot.Height * 3);
-            b.Draw(Game1.staminaRect, glow, Color.Red * 0.35f);
+            Texture2D glow = EyeGlow();
+            if (glow != null)
+            {
+                float side = EyeGlowSheetPixels * DrawScale;
+                b.Draw(
+                    glow,
+                    new Rectangle(
+                        (int)(dot.X + dot.Width / 2f - side / 2f),
+                        (int)(dot.Y + dot.Height / 2f - side / 2f),
+                        (int)side,
+                        (int)side),
+                    Color.Red);
+            }
             b.Draw(Game1.staminaRect, dot, Color.Red);
         }
 
-        /// <summary>Where the eye sits in one crow frame, read off the real sheet once: the brightest
-        /// opaque pixel in the top half of the frame, which on the crow is the eye. A frame that
-        /// cannot be read gets no dot rather than a dot in the wrong place.</summary>
-        private static Point EyeOffset(AnimatedSprite sprite, int frame)
+        /// <summary>A small radial falloff texture, made once and kept for the session. Alpha falls
+        /// off with the square of the distance from the middle, which reads as a glow rather than as
+        /// a disc with an edge.</summary>
+        private static Texture2D EyeGlow()
         {
-            if (EyeOffsets.TryGetValue(frame, out Point cached)) return cached;
-            var found = new Point(-1, -1);
+            if (_eyeGlow != null) return _eyeGlow;
             try
             {
-                Texture2D sheet = sprite?.Texture;
-                if (sheet != null)
+                var pixels = new Color[EyeGlowPixels * EyeGlowPixels];
+                float middle = (EyeGlowPixels - 1) / 2f;
+                for (int y = 0; y < EyeGlowPixels; y++)
                 {
-                    Rectangle source = AnimatedSprite.GetSourceRect(sheet.Width, CrowSpriteSize, CrowSpriteSize, frame);
-                    var pixels = new Color[CrowSpriteSize * CrowSpriteSize];
-                    sheet.GetData(0, source, pixels, 0, pixels.Length);
-                    int brightest = -1;
-                    for (int y = 0; y < CrowSpriteSize / 2; y++)
+                    for (int x = 0; x < EyeGlowPixels; x++)
                     {
-                        for (int x = 0; x < CrowSpriteSize; x++)
-                        {
-                            Color pixel = pixels[y * CrowSpriteSize + x];
-                            if (pixel.A < 200) continue;
-                            int brightness = pixel.R + pixel.G + pixel.B;
-                            if (brightness <= brightest) continue;
-                            brightest = brightness;
-                            found = new Point(x, y);
-                        }
+                        float dx = (x - middle) / middle;
+                        float dy = (y - middle) / middle;
+                        float reach = 1f - Math.Min(1f, (float)Math.Sqrt(dx * dx + dy * dy));
+                        pixels[y * EyeGlowPixels + x] = Color.White * (reach * reach);
                     }
                 }
+                var made = new Texture2D(Game1.graphics.GraphicsDevice, EyeGlowPixels, EyeGlowPixels);
+                made.SetData(pixels);
+                _eyeGlow = made;
             }
             catch (Exception)
             {
-                found = new Point(-1, -1);
+                _eyeGlow = null;
             }
-            EyeOffsets[frame] = found;
-            return found;
+            return _eyeGlow;
         }
 
-        /// <inheritdoc />
-        protected override void PaintAbove(SpriteBatch b)
+        /// <summary>The fade in and the fade out, drawn LAST in the world layer rather than from
+        /// <see cref="StrikeSceneBase.PaintAbove"/>.
+        ///
+        /// It started life in PaintAbove and that threw on the real overnight path, which the debug
+        /// preview could never have shown: vanilla calls <c>farmEvent.drawAboveEverything</c> at
+        /// Game1.cs:13409, AFTER DrawMenu has ended its batch, so there is no open SpriteBatch there
+        /// and the first Draw call threw "Begin has not yet been called" (caught live, 2026-09-21).
+        /// <c>farmEvent.draw</c> at Game1.cs:13698 is wrapped in its own Begin and End, so the world
+        /// layer is the one place a scene can paint without opening a batch of its own. The HUD is
+        /// off for the whole scene and no menu is up, so nothing needs covering above it anyway, and
+        /// drawing the fade here makes the preview and the real night identical.</summary>
+        private void PaintFade(SpriteBatch b)
         {
             float black = BlackAt(ElapsedMs);
             if (black <= 0f) return;
-            // drawAboveEverything runs in the zoomed backbuffer, the debug preview draws in UI space:
-            // cover whichever is bigger, since over-covering a full-screen black costs nothing.
+            // The world layer draws in the zoomed backbuffer, the debug preview in UI space. Cover
+            // whichever is bigger, since over-covering a full screen black costs nothing.
             Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
             int width = Math.Max(screen.Width, Game1.uiViewport.Width);
             int height = Math.Max(screen.Height, Game1.uiViewport.Height);
