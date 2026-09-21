@@ -1523,7 +1523,12 @@ namespace TheLongestYear
                     for (int i = 0; i < b.ingredients.Count; i++)
                     {
                         StardewValley.Menus.BundleIngredientDescription ing = b.ingredients[i];
-                        if (ing.id == null || !TheLongestYear.Core.FlavoredSlotRules.IsFlavored(ing.id)) continue;
+                        // Both kinds: a slot that names its input, and a slot that stays "any" and
+                        // relies on the label instead. The label is the only thing the player has
+                        // to go on for the second kind, so it has to be readable here too.
+                        if (ing.id == null) continue;
+                        if (!TheLongestYear.Core.FlavoredSlotRules.IsFlavored(ing.id)
+                            && TheLongestYear.Core.FlavorlessBundleSlots.LabelKeyFor(ing.id) == null) continue;
 
                         string name;
                         if (ing.preservesId != null)
@@ -1562,11 +1567,18 @@ namespace TheLongestYear
                         try
                         {
                             Game1.activeClickableMenu = note;
+                            // setUpBundleSpecificPage APPENDS to ingredientList without clearing
+                            // it (only gameWindowSizeChanged clears), so without this the lookup
+                            // by myID finds the previous bundle's component and reports its hover.
+                            note.ingredientList?.Clear();
                             AccessTools.Method(typeof(JunimoNoteMenu), "setUpBundleSpecificPage")
                                 .Invoke(note, new object[] { b });
-                            bool hasIcon = note.ingredientList != null
-                                && note.ingredientList.Any(c => c != null && c.myID == 1000 + i);
-                            icon = $" | icon={hasIcon}";
+                            ClickableTextureComponent comp = note.ingredientList?
+                                .FirstOrDefault(c => c != null && c.myID == 1000 + i);
+                            // hoverText is what the player actually reads on the slot, so this is
+                            // the only honest check of the "Any Dried Fruit" label for a bare slot
+                            // and of the flavored name for a named one.
+                            icon = $" | icon={comp != null} hover=\"{comp?.hoverText ?? "(no component)"}\"";
                         }
                         catch (System.Exception ex) { icon = $" | icon=THREW {ex.InnerException?.GetType().Name ?? ex.GetType().Name}"; }
                         finally { Game1.activeClickableMenu = null; }

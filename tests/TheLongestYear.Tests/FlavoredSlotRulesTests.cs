@@ -167,6 +167,19 @@ public class FlavoredSlotRulesTests
         => Assert.Equal(FlavoredSlotRules.StationThroughput,
             FlavoredSlotRules.BasisFor(FlavoredSlotRules.DriedFruit, inputBasis: 1000));
 
+    /// <summary>Jeff, 2026-09-21, after a live board asked for 13 Dried Mushrooms (65 mushrooms):
+    /// an "any" dried slot is sized by what the machines can RUN, and a dehydrator run eats five
+    /// inputs, so counting runs as units overstates it fivefold. The smoker is one for one and
+    /// keeps its row.</summary>
+    [Fact]
+    public void An_any_dried_slot_is_not_sized_by_machine_runs_alone()
+    {
+        Assert.Equal(7, QuantityBasisTables.Stations["(O)DriedMushrooms"]);
+        Assert.Equal(7, QuantityBasisTables.Stations["(O)DriedFruit"]);
+        Assert.Equal(7, QuantityBasisTables.Stations["(O)Raisins"]);
+        Assert.Equal(35, QuantityBasisTables.Stations["(O)SmokedFish"]);
+    }
+
     [Fact]
     public void A_basis_never_falls_below_one()
         => Assert.Equal(1, FlavoredSlotRules.BasisFor(FlavoredSlotRules.DriedFruit, inputBasis: 2));
