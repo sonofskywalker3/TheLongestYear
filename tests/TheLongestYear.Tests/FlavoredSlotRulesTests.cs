@@ -82,6 +82,12 @@ public class FlavoredSlotRulesTests
     /// name for dried mushrooms is "DriedMushroom", singular, while the object id is
     /// "DriedMushrooms", plural, so no single id works for both the flavor and the icon. Mushrooms
     /// therefore stay an "any" slot.</summary>
+    /// <summary>Tried in game 2026-09-21. Naming a mushroom would be worth it (each dries to a
+    /// different NAME), but the flavored id must be the PreserveType name "DriedMushroom", which
+    /// resolves to no item: BundleCatalogBuilder logged "ItemRegistry returned null for
+    /// '(O)DriedMushroom' ... excluding from catalog", dropping the slot out of TLY's own
+    /// catalogue on top of vanilla skipping its icon. Fruit and fish are unaffected because their
+    /// PreserveType name and object id are the same string.</summary>
     [Fact]
     public void Dried_mushrooms_are_not_a_flavored_slot()
     {

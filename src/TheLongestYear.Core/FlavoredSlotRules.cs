@@ -56,12 +56,20 @@ public static class FlavoredSlotRules
 
     /// <summary>The goods a slot may name an input for, and what one costs to make.
     ///
-    /// Dried Mushrooms is deliberately NOT here, though the Dehydrator makes it the same way.
-    /// A flavored slot has to carry vanilla's PreserveType NAME as its ingredient id (see
-    /// <see cref="PreserveTypeNames"/>), and that name is "DriedMushroom", singular, while the
-    /// object's own id is "DriedMushrooms", plural. An id that is one or the other breaks either
-    /// the flavor lookup or the icon lookup, so mushrooms keep the "any" slot and its 0.18.32
-    /// label (verified in game, 2026-09-21).</summary>
+    /// Dried Mushrooms is NOT here, and the reason is worth keeping. Naming one would be worth it:
+    /// every mushroom dries to the same item and the same sprite but a DIFFERENT NAME ("Dried
+    /// Morels", "Dried Red Mushrooms"), confirmed in game by tly_driedprobe. The blocker is the
+    /// id. A flavored slot must be written as vanilla's PreserveType name, and for mushrooms that
+    /// is "DriedMushroom", singular, while the object is "DriedMushrooms", plural.
+    ///
+    /// Tried it in game on 2026-09-21 and the singular breaks more than the icon:
+    ///   BundleCatalogBuilder: ItemRegistry returned null for '(O)DriedMushroom'
+    ///   (bundle 'Artisan', room 'Pantry') -- excluding from catalog.
+    /// The slot drops out of TLY's own catalog, so the bundle is no longer classified, on top of
+    /// vanilla skipping its icon because the id resolves to no object. Supporting it means
+    /// teaching the catalog, the icon path and the name lookups to alias the singular to the
+    /// plural. Fruit and fish need none of that, because their PreserveType name and object id
+    /// are the same string.</summary>
     private static readonly IReadOnlyDictionary<string, int> Ratios =
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
