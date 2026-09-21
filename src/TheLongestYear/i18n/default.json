@@ -432,6 +432,13 @@
     // Peek is active, because that slot is airing a year-2 episode instead of a rerun.
     "tv.sneak-peek-channel": "The Queen Of Sauce (Sneak Peek)",
 
+    // Bundle slots for flavored goods. Vanilla names them "Dried" and "Smoked" on their own,
+    // because the bundle cannot say which fruit or fish (see FlavorlessBundleSlots). Any of them
+    // is accepted, so the label says that.
+    "bundle-slot.any-dried-fruit": "Any Dried Fruit",
+    "bundle-slot.any-dried-mushrooms": "Any Dried Mushrooms",
+    "bundle-slot.any-smoked-fish": "Any Smoked Fish",
+
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",

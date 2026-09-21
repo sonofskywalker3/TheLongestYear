@@ -122,6 +122,10 @@ public class I18nGuardTests
                 _ = ReachText.Describe(def.RunReachRequirement);
             foreach (string metric in new[] { "rod", "backpack", "mastery", "book", "mail", "event", "stardrop_mines", "scythe", "house", "pet", "shortcuts", "bus", "room" })
                 _ = Strings.Get("reach." + metric);
+            // bundle-slot.* keys are looked up by item id (FlavorlessBundleSlots) and only ever
+            // reach Strings.Get through a variable, so walk the rule's own key set.
+            foreach (string key in FlavorlessBundleSlots.AllLabelKeys)
+                _ = Strings.Get(key);
         }
         finally
         {
