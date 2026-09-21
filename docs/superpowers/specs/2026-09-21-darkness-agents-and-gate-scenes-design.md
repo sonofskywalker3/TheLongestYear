@@ -107,9 +107,11 @@ A guarantee, not a rising chance (a rising chance bunches strikes late in the se
 pile-on the rework removed).
 
 Each kind has a debut season: crow blight and chest blight in Summer, reversion in Fall. If a kind
-has not struck by the start of week 4 of its debut season, its first eligible night in week 4 is
-forced (**mine**: week 4, days 22 onward; reversion's quiet days from 25 leave it days 22 to 24).
-A forced strike is that week's strike like any other: the chance drops 5 points and the weekly caps
+has not struck by the start of week 3 of its debut season, it is forced in the first half of week
+3 (Jeff: it gives the player more time to pivot). The night of day 15 is the first forced night.
+If the kind cannot act that night (see below), or two kinds are owed and only one event can strike
+a night, the force carries to the next night it can act (**mine**), so crows and thief both owed
+land on days 15 and 16. A forced strike is that week's strike like any other: the chance drops 5 points and the weekly caps
 count it. Tampering keeps its own rule (Winter 1 the first time, a random night of week 1 after).
 
 A guarantee never overrides a rule that says the kind cannot act:
@@ -236,7 +238,7 @@ save, and pending witness lines.
 
 ## Testing
 
-- Core: the guarantee (each debut season, the week-4 force, every can't-act exemption, the chance
+- Core: the guarantee (each debut season, the week-3 force (day 15, carrying forward), every can't-act exemption, the chance
   drop and caps counting a forced strike), the scene-due rule (first per loop, skippable after
   first per save), the pick and apply split being idempotent, the witness window and the `{{when}}`
   switch, the Summer closer by rewound flag.
