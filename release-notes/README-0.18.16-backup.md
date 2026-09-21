@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.37`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.16`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,23 +24,6 @@ This is a **beta** (`0.18.37`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.37
-
-**A season you had finished could still fail, dried fruit and smoked fish now name what they want, and Sneak Peek moves to Wednesday.**
-
-- **Sneak Peek airs on Wednesday.** It used to air next year's episode on Sunday and quietly teach you that week's own recipe alongside it, so the television named one dish and gave you two. It now takes over Wednesday's rerun and shows next year's version of the episode that aired on Sunday, so the two are separate and you can see which one you are getting. You give up the reruns for the season you buy it in. Winter 28's episode has no Wednesday after it, so Shrimp Cocktail is no longer asked for by any bundle.
-- **A season you had finished could still fail.** A bundle can only hold as many items as it has slots, but a season's goal could ask for more than that. The bundle went green, the goal still counted you short, and the season failed with nothing you could do about it. Boards from other bundle mods were hit hardest, because a bundle there can share a vanilla bundle's name while having fewer slots. A save already in progress repairs itself the next time you load it. Reported by ozzy2540.
-- **Dried fruit and smoked fish now name the fruit and the fish.** These slots only read "Dried" or "Smoked", and nothing in game would tell you which one was wanted, not even Lookup Anything. A dried fruit slot now asks for a named fruit, Dried Apples for instance, and takes only that one. Smoked fish works the same way. Dried mushrooms still take any mushroom, and now say "Any Dried Mushrooms" instead of just "Dried". Reported by ShadowedAciexox.
-- **The dried and smoked asks come down.** A dehydrator eats five fruit or five mushrooms for every dried one it makes, which the old numbers never counted, so a slot could ask for thirteen dried mushrooms and mean sixty-five mushrooms. These asks are now sized by what you have to gather rather than by how fast the machines run.
-
-## What's New in 0.18.28
-
-**The Cookbook and Craftbook come with four free slots, a fourth tier takes them to 20, and the bundles can no longer ask for anything a year cannot reach.**
-
-- **Cookbook and Craftbook start with four free slots.** Each book used to start empty until you bought its first tier. Now both hold four recipes from day one, each tier adds four (8, 12, 16), and a new fourth tier at 1200 JP takes them to 20. The first three tiers cost what they did. If your book already holds more than its new limit, every recipe stays banked and usable; the book only refuses new entries until you are back under the limit.
-- **Dye and the other pools cannot ask for what a year cannot reach.** The Dye bundle asked for the Queen of Sauce Cookbook, which needs 100 golden walnuts. The colour pools behind Dye, and the pools behind the gem, resource, egg, milk, artifact, mineral, artisan and monster loot asks, now drop anything the mod cannot place inside a year, instead of one item being banned at a time. Reported by SilviaVA.
-- **A second visit to a festival lets you leave.** Going back into the Flower Dance on the same day left you stuck: the dance only runs once a day, and that clearing has no way out. When a festival's main event has already happened, the host now offers to let you leave instead. Reported by asteriaths.
 
 ## What's New in 0.18.16
 
@@ -266,7 +249,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `PityThreshold` / `PityQuotaStep` / `PityQuotaFloor` / `PityTrimPerStep` / `PityCosts` | 5 / 0.10 / 0.50 / 2 / `[0, 50, 100, 200, 300]` | Season pity: fails at one season before the Junimos offer help; quota cut per extra fail on a kept board and its floor; hardest items trimmed per extra fail on a reshuffle; JP price of accepting, by consecutive accepts. `PityEnabled` turns the offer off (fails are still counted) |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
-Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 / 1200 JP). Feedback on these is welcome.
+Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 JP). Feedback on these is welcome.
 
 ## Limitations (beta)
 

@@ -39,6 +39,24 @@ namespace TheLongestYear.Loop
         /// <summary>Vanilla's answer key for "yes, start it" (Event.cs:11824).</summary>
         private const string YesKey = "yes";
 
+        /// <summary>The key vanilla's yes/no responses give the Yes button (GameLocation.createYesNoResponses).</summary>
+        private const string LeaveYesKey = "Yes";
+
+        private static void OfferToLeave(Event festival)
+        {
+            GameLocation location = Game1.currentLocation;
+            if (location == null) { Game1.drawObjectDialogue(Strings.Get("dialog.festival.already-done")); return; }
+            location.createQuestionDialogue(
+                Strings.Get("dialog.festival.already-done"),
+                location.createYesNoResponses(),
+                (Farmer who, string answer) =>
+                {
+                    if (!string.Equals(answer, LeaveYesKey, StringComparison.Ordinal)) return;
+                    Monitor?.Log($"Festival '{festival.id}': player chose to leave after the blocked main event.", LogLevel.Info);
+                    festival.forceEndFestival(who);
+                });
+        }
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static bool Prefix(Event __instance, string answerKey)
@@ -59,11 +77,15 @@ namespace TheLongestYear.Loop
 
             if (FestivalMainEvent.AlreadyPlayed(run, festivalId, today))
             {
-                // Say why, or it reads as the host being broken.
-                Game1.drawObjectDialogue(Strings.Get("dialog.festival.already-done"));
+                // Say why, or it reads as the host being broken, and offer the way out: the host's
+                // prompt is the only exit some festival maps have (the Flower Dance clearing has no
+                // walkable edge), so a blocked repeat visit was a trap until the auto-end fired
+                // (asteriaths, Nexus post 2026-09-17, no-clipped out). Yes ends the festival the
+                // same way the host would have.
                 Monitor?.Log(
-                    $"Festival main event blocked: '{festivalId}' already ran today (day {today}).",
+                    $"Festival main event blocked: '{festivalId}' already ran today (day {today}); offering to leave.",
                     LogLevel.Info);
+                OfferToLeave(__instance);
                 return false;   // skip vanilla — no second run
             }
 

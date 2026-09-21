@@ -1,10 +1,52 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-17, story: expanded opening built and headless-checked
-**Branch:** `story`; everything committed AND pushed, nothing local-only
-**Tests:** 2632 passing
-**Build:** clean; deployed 39f16b1 (the fix wave build that ran the headless check; e47b8a4 is a comment-only commit); game not running
-**Last public release:** 0.18.11
+**Last updated:** 2026-09-21, story: master 0.18.37 merged in
+**Branch:** `story`; merge committed and pushed
+**Tests:** 2683 passing
+**Build:** clean, 0 errors; not deployed for a live run; game not running
+**Last public release:** 0.18.37 (master)
+
+## 2026-09-21: master 0.18.17 to 0.18.37 merged into story
+
+Book slot ladder and tier IV, the Dye and by-kind model gate, the festival repeat-visit exit, Sneak
+Peek on Wednesday, flavored and dried bundle slots, the season-gate slot cap. The opening's dependency
+(each book starts with four free slots) is now on the branch. Manifest version left at 0.18.15.
+
+## 2026-09-17 afternoon: 0.18.28 released (book slots + tier IV, model-gated pools, festival repeat-visit exit)
+
+One release carrying 0.18.17 through 0.18.28. Docs: README and Nexus description What's New
+0.18.28 content-identical, changelog note in `release-notes/`, live description backed up to
+`release-notes/nexus-description-0.18.16-backup.bbcode`. Verified live on the public page: version
+0.18.28, What's New 0.18.28 at the top, changelog entry 0.18.28 under Documents. Replied to
+asteriaths and SilviaVA on the Nexus posts tab (fixed in 0.18.28, out now).
+
+## 2026-09-17 afternoon: 0.18.26 model gate on Dye and by-kind pools, 0.18.27 festival repeat-visit exit
+
+Jeff asked why only books were fixed for Dye: now every id the availability model cannot place is
+dropped from Dye and from every by-kind bucket (trophies exempt), through the Placeable filter Chef's
+already used. Five boards rolled clean on 0.18.26, no impossible gates. Then the asteriaths Flower
+Dance post: no persistent danced flag exists (partner clears daily, rewind clears friendship); the
+trap was a same-day re-entry with the host blocked and no map edge. The blocked host prompt now
+offers to leave. Details in `TODO.md`. Both owed a reply once released.
+
+## 2026-09-17 early afternoon: 0.18.24, Dye never asks for a book the Book pool would not offer
+
+Socials sweep found the one Jeff had promised on the 17th (SilviaVA, Nexus post): a Dye bundle asked
+for the Queen of Sauce Cookbook, a 100-walnut book. The colour index behind Dye walked every object
+while the Book pool is filtered to the year-1 routes; the index now skips books outside that list.
+Unit-tested; the real Data/Objects export confirms the guard reaches every book. One new unanswered
+post (asteriaths, Flower Dance second visit, no early exit) is logged in `TODO.md` for Jeff.
+
+## 2026-09-17: 0.18.17 to 0.18.23, Cookbook and Craftbook slots work like the stash, plus tier IV (ready to release)
+
+Jeff's option 1 from the TODO entry, then the fourth tier at 1200 JP. The books start with 4 free
+slots and each tier adds 4 (4 / 8 / 12 / 16 / 20, was 0 / 5 / 10 / 20); tiers I to III keep their prices. Recipes banked over the new cap are
+grandfathered: they stay banked, usable and visible, the book shows a one-line notice and refuses
+new entries until it is back under the cap. Descriptions say the new totals. Live-checked
+headless on the Rodger save (rotated to `None_449337302`): every tier read the new count with 20
+banked, a fail-night reset skipped the over-cap offer and re-granted all 20, the books reopened on
+the new run still over cap. Details and the before/after table in `TODO.md`. Not released, Nexus
+untouched, not merged into `story`.
 
 ## 2026-09-17 (later): whole-branch review fixes for the opening
 
@@ -949,7 +991,9 @@ keep at the Junimo Shrine, 750 JP, `Obtainability` category, granted back after 
 book keeps. Two in-loop Boosts, bought at the farm's planning shrine (`ShrinePreviewMenu` gains a
 Boosts section): Year-Two Seeds, 75 JP, makes Mixed Seeds roll the season's year-2 crop at 5 percent
 for the current week; Sneak Peek, 100 JP, makes the Queen of Sauce air the year-2 episode for the
-season (it grants both the year-1 and the year-2 recipe, so no year-1 recipe is lost). Year-2 crops
+season (it grants both the year-1 and the year-2 recipe, so no year-1 recipe is lost). Superseded at
+0.18.31: the Boost takes over Wednesday's rerun slot instead and airs one episode, the year-2 pair of
+the Sunday just gone, because granting two recipes off one Sunday viewing read as a bug to players. Year-2 crops
 carry hard weeks 2 / 6 / 10 and pacing weeks Garlic 4, Red Cabbage 7, Artichoke 11.
 
 **Plan 5, diagnostics and sims (0.16.126 to 0.16.133, interleaved with plan 4's fix wave at 0.16.128).** `tly_playseason quarter <k>` donates the

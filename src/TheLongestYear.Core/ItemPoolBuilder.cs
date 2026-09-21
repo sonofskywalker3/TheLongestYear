@@ -192,7 +192,10 @@ public static class ItemPoolBuilder
             // The colour index feeds the Dye recipe. Vanilla tags the Amethyst Ring color_purple,
             // and a ring is not an Object at runtime, so the donation menu cannot lift it; one
             // landed in a Dye bundle through this index (Nexus, 2026-09-14). Rings stay out.
-            if (!IsRing(obj) && obj.ContextTags != null)
+            // Books too, unless the Book pool would offer them: every book carries a colour tag,
+            // and the Queen of Sauce Cookbook (color_blue, 100 golden walnuts) reached a Dye
+            // bundle this way (SilviaVA, Nexus, 2026-09-17).
+            if (!IsRing(obj) && !IsBookWithoutYearOneRoute(id, obj) && obj.ContextTags != null)
             {
                 foreach (string tag in obj.ContextTags)
                 {
@@ -754,6 +757,12 @@ public static class ItemPoolBuilder
         "(O)900", // Legend II
         "(O)901", // Radioactive Carp
         "(O)902", // Glacierfish Jr.
+        "(O)733", // Shrimp Cocktail   — Queen of Sauce episode 32 (week 16, the year-2 pair of Winter
+                  //                     28's Sunday). The Sneak Peek Boost airs year-2 episodes on
+                  //                     Wednesday, and there is no Wednesday after Winter 28 inside the
+                  //                     run, so no route reaches it (Jeff, 2026-09-21). It is a vanilla
+                  //                     Chef's Bundle item, so the ban is what keeps the recipe's own
+                  //                     bundle from re-offering it — see AvailabilityWeeks.YearTwoLastReachableEpisode.
         "(O)928", // Golden Egg        — Golden Chickens need Perfection (or Qi's Walnut Room shop), so a
                   //                     one-year loop can never see one. Category Egg (-5) and, unlike Void
                   //                     Egg and Ostrich Egg, NOT flagged ExcludeFromRandomSale, so the vet let
@@ -801,6 +810,11 @@ public static class ItemPoolBuilder
     /// section 3).</summary>
     private const string RingType = "Ring";
     private const string RingItemTag = "ring_item";
+
+    /// <summary>A book the Book pool would not offer: drop-only, Volcano, walnut-gated or year 2
+    /// (<see cref="AvailabilityWeeks.BookWeeks"/> is the year-1 list).</summary>
+    private static bool IsBookWithoutYearOneRoute(string qualifiedId, RawObjectEntry obj)
+        => BookCategories.Contains(obj.Category) && !AvailabilityWeeks.BookWeeks.ContainsKey(qualifiedId);
 
     private static bool IsRing(RawObjectEntry obj)
         => string.Equals(obj.Type, RingType, StringComparison.OrdinalIgnoreCase)

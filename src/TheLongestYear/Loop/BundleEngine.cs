@@ -233,6 +233,9 @@ namespace TheLongestYear.Loop
             timing?.Mark("WidenWithAuthoredBundles");
 
             var allPicks = new List<BundleSpec>();
+            // "bundleIndex:slotIndex" -> the input a flavored slot names. Persisted beside the
+            // board, never written into the bundle string (GeneratedBundleSet.Flavors).
+            var flavors = new Dictionary<string, string>();
             var usedNameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
             // Absolute index -> the (room, name) that already claimed it, for the defensive
             // duplicate-index check below (see class doc: every candidate already carries
@@ -396,12 +399,23 @@ namespace TheLongestYear.Loop
                     id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability), fishRng,
                     out IReadOnlySet<int> bandedSlots);
                 composed = Core.StackScaling.Apply(composed, _difficulty, bandedSlots);
+                // Name the fruit, mushroom or fish on any flavored slot, and re-roll that slot's
+                // stack against what the named input actually yields. AFTER StackScaling: the
+                // quantity pass banded these ids off the machine's 35-a-week throughput, which is
+                // the wrong basis once one fruit is named (plan 2026-09-21-flavored-bundle-slots).
+                composed = Core.FlavoredSlotPass.Apply(
+                    composed, seed, _difficulty, itemPools,
+                    id => Availability?.IsPlaced(id) == true ? Availability.For(id).Week : (int?)null,
+                    id => BundleSlotFiller.DeadlineFor(composed, record.Match, composed.Slots, id, Availability),
+                    out IReadOnlyDictionary<int, string> slotFlavors);
+                foreach (KeyValuePair<int, string> flavor in slotFlavors)
+                    flavors[Core.FlavoredSlotPass.KeyFor(composed.Index, flavor.Key)] = flavor.Value;
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
 
             timing?.Mark("pass 3 emit");
             timing?.Total();
-            return new GeneratedBundleSet(allPicks);
+            return new GeneratedBundleSet(allPicks, flavors);
         }
 
         /// <summary>One non-Vault pick between the passes of <see cref="Generate"/>: Composed is

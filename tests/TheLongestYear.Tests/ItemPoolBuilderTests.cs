@@ -631,4 +631,21 @@ public class ItemPoolBuilderTests
         Assert.Contains(pools.ColourTags["color_purple"], p => p.ItemId == "(O)66");
         Assert.DoesNotContain(pools.ColourTags["color_purple"], p => p.ItemId == "(O)529");
     }
+
+    [Fact]
+    public void ColourTags_skip_books_without_a_year_one_route_so_Dye_never_asks_for_one()
+    {
+        // The Queen of Sauce Cookbook is color_blue and needs 100 golden walnuts (SilviaVA, Nexus,
+        // 2026-09-17). The Book pool already keeps drop-only and post-year-1 books out; the colour
+        // index walked every object and let them straight back in through Dye.
+        ItemPools pools = BuildPoolsWithObjects(
+            ("Book_QueenOfSauce", "Queen Of Sauce Cookbook", cat: -102, tags: new[] { "color_blue", "book_item" }),
+            ("Book_PriceCatalogue", "Price Catalogue", cat: -102, tags: new[] { "color_gold", "book_item" }),
+            ("SkillBook_1", "Bait And Bobber", cat: -103, tags: new[] { "color_blue", "book_item" }),
+            ("372", "Clam", cat: -23, tags: new[] { "color_blue" }));
+        Assert.Contains(pools.ColourTags["color_blue"], p => p.ItemId == "(O)372");
+        Assert.Contains(pools.ColourTags["color_blue"], p => p.ItemId == "(O)SkillBook_1");
+        Assert.Contains(pools.ColourTags["color_gold"], p => p.ItemId == "(O)Book_PriceCatalogue");
+        Assert.DoesNotContain(pools.ColourTags["color_blue"], p => p.ItemId == "(O)Book_QueenOfSauce");
+    }
 }
