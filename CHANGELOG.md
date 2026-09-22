@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.38 - 2026-09-22
+
+2182 tests.
+
+### Fixed
+
+- **Mine carts and barrels refill when the year rewinds.** A new year in Stardew refills the coal carts and resets the barrels and crates in the mines, but a rewind never counted as a new year, so once you had emptied them they stayed empty for every loop after. The rewind now refills them the way a new year does. Treasure chests still only open once. Contributed by supercam19.
+
 ## 0.18.37 - 2026-09-21
 
 2182 tests.
