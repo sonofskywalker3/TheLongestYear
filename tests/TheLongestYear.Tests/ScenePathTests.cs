@@ -95,6 +95,26 @@ public class ScenePathTests
     }
 
     [Fact]
+    public void The_walk_never_crosses_the_target_even_when_its_tile_is_passable()
+    {
+        // The only way from (0,0) to the far side is straight through (2,0), which is the target.
+        // The walk must stop beside it rather than treat it as a corridor.
+        bool[,] grid = Grid(
+            "#####",
+            ".....",
+            "#####");
+        IReadOnlyList<(int X, int Y)> walk = ScenePath.WalkTo(grid, (2, 1), Starts((4, 1)), 20, 8);
+        Assert.DoesNotContain((2, 1), walk);
+        Assert.Equal((4, 1), walk[0]);
+        Assert.Equal((3, 1), walk[walk.Count - 1]);
+        // And the tiles on the far side are unreachable, so a way in over there is ignored.
+        IReadOnlyList<(int X, int Y)> farSide = ScenePath.WalkTo(grid, (2, 1), Starts((0, 1)), 20, 8);
+        Assert.Equal((0, 1), farSide[0]);
+        Assert.Equal((1, 1), farSide[farSide.Count - 1]);
+        Assert.DoesNotContain((2, 1), farSide);
+    }
+
+    [Fact]
     public void The_same_room_always_gives_the_same_walk()
     {
         bool[,] grid = Grid(

@@ -912,6 +912,9 @@ namespace TheLongestYear
         {
             // Whatever loads next may be a real save, so the fixture guard has to earn its yes again.
             _saveMadeThisSession = false;
+            // A scene always puts its chest lid back, but a save left mid-scene would keep a dead
+            // Chest alive in a static for the rest of the session.
+            TheLongestYear.Scenes.SceneChestLid.Forget();
             DeactivateTly();
         }
 
@@ -2464,16 +2467,19 @@ namespace TheLongestYear
                     // than "any number among the arguments", which silently swallowed a typo.
                     const int MaxFixtureRows = 5;
                     int rows = 1;
+                    bool badRows = false;
                     foreach (string a in args)
                     {
                         if (!a.StartsWith("rows=", StringComparison.OrdinalIgnoreCase)) continue;
                         if (!int.TryParse(a.Substring("rows=".Length), out int parsedRows) || parsedRows < 1)
                         {
-                            this.Monitor.Log($"tly_sabotage fixture: '{a}' is not a row count. Use rows=<1..{MaxFixtureRows}>.", LogLevel.Warn);
-                            parsedRows = 1;
+                            this.Monitor.Log($"tly_sabotage fixture: '{a}' is not a row count. Use rows=<1..{MaxFixtureRows}>. Nothing was planted.", LogLevel.Warn);
+                            badRows = true;
+                            break;
                         }
                         rows = System.Math.Min(parsedRows, MaxFixtureRows);
                     }
+                    if (badRows) break;
                     int planted = 0;
                     for (int row = 0; row < rows && seed != null; row++)
                     for (int i = 0; i < 10; i++)
@@ -2498,7 +2504,7 @@ namespace TheLongestYear
                     // "fixture scarecrow" also stands one at the head of the row, for the crows
                     // scene: it needs something within twelve tiles of the crops that scares birds.
                     string scarecrowAt = "none";
-                    if (args.Length > 1 && args[1].ToLowerInvariant() == "scarecrow")
+                    if (args.Any(a => a.Equals("scarecrow", StringComparison.OrdinalIgnoreCase)))
                     {
                         var scarecrowTile = new Microsoft.Xna.Framework.Vector2(door.X - 8, door.Y + 6);
                         farm.objects.Remove(scarecrowTile);

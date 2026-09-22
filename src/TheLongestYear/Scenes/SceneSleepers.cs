@@ -5,6 +5,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Locations;
+using StardewValley.Pathfinding;
 
 namespace TheLongestYear.Scenes
 {
@@ -38,6 +39,22 @@ namespace TheLongestYear.Scenes
         /// is in bed.</summary>
         private const int EyesShut = 1;
 
+        /// <summary>Everything the pose touches on one villager.
+        ///
+        /// <see cref="Controller"/> is the one that matters and it is the one that was missing: the
+        /// pose clears it, and on the mid-day preview a spouse or child part way along a schedule
+        /// route would have lost that route for good.
+        ///
+        /// The rest is what <c>NPC.Halt</c> clears (NPC.cs, over <c>Character.Halt</c>):
+        /// <c>speed</c> to 2, <c>addedSpeed</c> to 0, <c>shouldPlaySpousePatioAnimation</c> to
+        /// false, and the sprite's animation, which is already recorded. Its other three,
+        /// <c>moveUp</c>/<c>moveDown</c>/<c>moveLeft</c>/<c>moveRight</c>, are <c>protected</c> on
+        /// <c>Character</c> and cannot be read from here. They are not state worth keeping: they are
+        /// this tick's "which way am I pressing", written afresh every tick by
+        /// <c>PathFindController.update</c> from the controller that IS restored.
+        /// <c>isPlayingSleepingAnimation</c> and <c>isCharging</c> are private too;
+        /// <c>NPC.update</c> reconciles the first against <c>isSleeping</c> (NPC.cs:3144), which is
+        /// recorded, and the second is blocked-path state that clears itself.</summary>
         private sealed class PosedNpc
         {
             public NPC Who;
@@ -48,6 +65,10 @@ namespace TheLongestYear.Scenes
             public List<FarmerSprite.AnimationFrame> Animation;
             public int Frame;
             public bool Loop;
+            public PathFindController Controller;
+            public int Speed;
+            public float AddedSpeed;
+            public bool SpousePatioAnimation;
         }
 
         private readonly List<PosedNpc> _posed = new();
@@ -55,6 +76,7 @@ namespace TheLongestYear.Scenes
         private Vector2 _farmerPosition;
         private int _farmerFacing;
         private int _farmerEyes;
+        private int _farmerBlinkTimer;
         private bool _farmerInBed;
         private string _described = "nobody";
 
@@ -91,10 +113,11 @@ namespace TheLongestYear.Scenes
             Farmer who = Game1.player;
             if (who == null) return false;
             Point bed = house.GetPlayerBedSpot();
-            if (bed.X <= 0 && bed.Y <= 0) return false;
+            if (bed.X <= 0 || bed.Y <= 0) return false;
             _farmerPosition = who.Position;
             _farmerFacing = who.FacingDirection;
             _farmerEyes = who.currentEyes;
+            _farmerBlinkTimer = who.blinkTimer;
             _farmerInBed = who.isInBed.Value;
             _posedFarmer = true;
             who.Position = new Vector2(bed.X, bed.Y) * 64f;
@@ -152,6 +175,10 @@ namespace TheLongestYear.Scenes
                 Animation = who.Sprite.CurrentAnimation,
                 Frame = who.Sprite.currentFrame,
                 Loop = who.Sprite.loop,
+                Controller = who.controller,
+                Speed = who.speed,
+                AddedSpeed = who.addedSpeed,
+                SpousePatioAnimation = who.shouldPlaySpousePatioAnimation.Value,
             });
             who.controller = null;
             who.Halt();
@@ -186,6 +213,10 @@ namespace TheLongestYear.Scenes
                     posed.Who.Sprite.currentFrame = posed.Frame;
                     posed.Who.Sprite.loop = posed.Loop;
                     posed.Who.Sprite.UpdateSourceRect();
+                    posed.Who.controller = posed.Controller;
+                    posed.Who.speed = posed.Speed;
+                    posed.Who.addedSpeed = posed.AddedSpeed;
+                    posed.Who.shouldPlaySpousePatioAnimation.Value = posed.SpousePatioAnimation;
                 }
                 catch (Exception) { /* one villager left mid-pose is better than a held camera. */ }
             }
@@ -199,6 +230,7 @@ namespace TheLongestYear.Scenes
                 who.Position = _farmerPosition;
                 who.faceDirection(_farmerFacing);
                 who.currentEyes = _farmerEyes;
+                who.blinkTimer = _farmerBlinkTimer;
                 who.isInBed.Value = _farmerInBed;
             }
             catch (Exception) { /* same. */ }

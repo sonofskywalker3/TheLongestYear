@@ -37,6 +37,11 @@ namespace TheLongestYear.Scenes
         /// drawn. The screenshots showed a chest that never opened while the log said frame 135.
         /// The same duplicate update is invisible for the scene's night only because the clock is
         /// frozen and the ambient and outdoor colours are set to the same value.</summary>
+        /// <summary>Let go of whatever lid was being driven. A scene always restores its own, but a
+        /// save that is left while a scene is up would otherwise keep a dead <see cref="Chest"/>
+        /// alive in a static for the rest of the session. Called on return to title.</summary>
+        public static void Forget() => _holder = null;
+
         public static void ReapplyAfterFix(Chest chest)
         {
             SceneChestLid driving = _holder;
