@@ -399,7 +399,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [confirm] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -2426,6 +2426,22 @@ namespace TheLongestYear
                         this.Monitor.Log("tly_sabotage fixture digs up the ground in front of the farmhouse and drops a chest on it. This save was not created by tly_newgame in this session, and a throwaway farm cannot be told apart from a real one by name. Add the word 'confirm' if you really mean this save.", LogLevel.Warn);
                         break;
                     }
+                    // "fixture here" is the chest on its own, beside the farmer, wherever he is
+                    // standing. The thief scene plays in a shed, a cellar and the farmhouse as well
+                    // as on the farm, and there is no vanilla debug command that puts a chest down.
+                    if (args.Any(a => a.Equals("here", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        GameLocation here = Game1.currentLocation;
+                        Microsoft.Xna.Framework.Vector2 spot = ClearTileNear(here, Game1.player.Tile);
+                        if (spot.X < 0) { this.Monitor.Log("tly_sabotage fixture here: no clear tile beside the farmer to stand a chest on.", LogLevel.Warn); break; }
+                        here.objects.Remove(spot);
+                        var stash = new StardewValley.Objects.Chest(true, spot);
+                        stash.Items.Add(ItemRegistry.Create("(O)24", 20));
+                        stash.Items.Add(ItemRegistry.Create("(O)378", 10));
+                        here.objects.Add(spot, stash);
+                        this.Monitor.Log($"Sabotage fixture: chest at ({spot.X},{spot.Y}) on {here.NameOrUniqueName} with 20 Parsnip + 10 Copper Ore.", LogLevel.Info);
+                        break;
+                    }
                     // Test scaffolding: ten crops in the ground and a chest with food and ore,
                     // on the farm just below the stash, so blight has something to take.
                     // IN-SEASON seeds: Crop.newDay kills any out-of-season outdoor crop overnight
@@ -2507,7 +2523,7 @@ namespace TheLongestYear
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [confirm] | circle", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle", LogLevel.Info);
                     break;
             }
         }
@@ -2541,6 +2557,24 @@ namespace TheLongestYear
                 LogLevel.Info);
             var scene = new TheLongestYear.Scenes.CrowsScene(strike, skippable: true, this.Monitor, _ => { });
             _scenePreview.Play(scene);
+        }
+
+        /// <summary>The nearest tile to <paramref name="from"/> that a chest can be stood on, for
+        /// <c>tly_sabotage fixture here</c>. Searches outward in rings and gives up at four tiles,
+        /// returning (-1,-1).</summary>
+        private static Microsoft.Xna.Framework.Vector2 ClearTileNear(GameLocation where, Microsoft.Xna.Framework.Vector2 from)
+        {
+            const int Reach = 4;
+            for (int ring = 0; ring <= Reach; ring++)
+                for (int dx = -ring; dx <= ring; dx++)
+                    for (int dy = -ring; dy <= ring; dy++)
+                    {
+                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != ring) continue;
+                        int x = (int)from.X + dx, y = (int)from.Y + dy;
+                        if (TheLongestYear.Scenes.SceneGround.CanStandOn(where, x, y))
+                            return new Microsoft.Xna.Framework.Vector2(x, y);
+                    }
+            return new Microsoft.Xna.Framework.Vector2(-1, -1);
         }
 
         /// <summary>tly_sabotage scene thief: watch the chest blight scene now, without sleeping.
