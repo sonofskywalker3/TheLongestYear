@@ -36,17 +36,32 @@ namespace TheLongestYear.Scenes
         /// <summary>Where a figure <paramref name="tilesIn"/> tiles along the walk is, in world
         /// pixels (the top left corner of the tile it is standing on).
         ///
-        /// It is deliberately NOT clamped to the walk. A figure running out of frame carries on
-        /// past the first tile in the same direction as the first leg, which is what puts him off
-        /// the edge of the shot rather than stopping him dead on it.</summary>
+        /// It is deliberately NOT clamped at the near end. A figure who runs out of the shot carries
+        /// on past the first tile along the walk's OVERALL direction, end to start, which is the way
+        /// he came. Following the first leg alone instead would send him along whatever the last
+        /// step happened to be, and a walk whose first step is sideways would leave him running
+        /// across the bottom of the frame for the rest of the scene (caught on the hall's first
+        /// overnight frames, 2026-09-21).</summary>
         public Vector2 At(float tilesIn)
         {
             if (Steps == 0) return new Vector2(_tiles[0].X, _tiles[0].Y) * TileSize;
+            if (tilesIn < 0f) return PastTheStart(-tilesIn);
             int leg = Math.Max(0, Math.Min(Steps - 1, (int)Math.Floor(tilesIn)));
             float across = tilesIn - leg;
             var from = new Vector2(_tiles[leg].X, _tiles[leg].Y);
             var to = new Vector2(_tiles[leg + 1].X, _tiles[leg + 1].Y);
             return (from + (to - from) * across) * TileSize;
+        }
+
+        /// <summary>Where a figure is <paramref name="tiles"/> tiles beyond the start of the walk,
+        /// carrying on away from its end.</summary>
+        private Vector2 PastTheStart(float tiles)
+        {
+            var start = new Vector2(Start.X, Start.Y);
+            Vector2 away = start - new Vector2(End.X, End.Y);
+            if (away == Vector2.Zero) return start * TileSize;
+            away.Normalize();
+            return (start + away * tiles) * TileSize;
         }
 
         /// <summary>Which way a figure on this leg of the walk is facing, as a

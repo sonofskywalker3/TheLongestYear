@@ -39,8 +39,11 @@ namespace TheLongestYear.Scenes
         /// <summary>The jump of shock, and the beat the slot comes undone on.</summary>
         private const int JumpAtMs = 3300;
         private const int JumpLengthMs = 300;
-        /// <summary>How far off the ground the jump takes him, in screen pixels.</summary>
-        private const float JumpHeightPixels = 16f;
+        /// <summary>How far off the ground the jump takes him, in SCREEN pixels. The brief asked for
+        /// sixteen, which is four pixels of his sheet at the game's 4x draw scale, and on the first
+        /// overnight frames that was not readable at all against a figure sixteen sheet pixels wide.
+        /// Twenty eight is seven sheet pixels, which reads as a start without reading as a leap.</summary>
+        private const float JumpHeightPixels = 28f;
         /// <summary>When he starts backing away, and how long the two tiles take.</summary>
         private const int BackAwayAtMs = 3800;
         private const int BackAwayMs = 800;
@@ -48,9 +51,6 @@ namespace TheLongestYear.Scenes
         /// <summary>When he turns and runs, and how fast.</summary>
         private const int RunOutAtMs = 4600;
         private const int RunMsPerTile = 150;
-        /// <summary>How far past the start of his walk he keeps running, so he leaves the frame
-        /// rather than stopping dead on the edge of it.</summary>
-        private const int RunPastTiles = 4;
         /// <summary>The hold on the windows with nobody in the shot.</summary>
         private const int HoldAtMs = 5400;
         private const int FadeOutAtMs = 6200;
@@ -72,15 +72,21 @@ namespace TheLongestYear.Scenes
         /// the path below it share the frame.</summary>
         private const int CameraAboveFootTiles = 3;
 
-        /// <summary>The front windows, in PIXELS relative to the top left corner of
-        /// <see cref="HallTiles"/>. Measured off the facade in the running game at zoom 1, not
-        /// guessed: see the task 9 report for the frame they were read from.</summary>
+        /// <summary>The glass of the front windows, in PIXELS relative to the top left corner of
+        /// <see cref="HallTiles"/>.
+        ///
+        /// MEASURED, NOT GUESSED, AND THERE ARE TWO OF THEM. The task asked for four to six, but the
+        /// abandoned Community Center has exactly two windows on its front, one either side of the
+        /// door, each with its shutters open on a boarded pane. They were read off a frame of this
+        /// very scene at zoom 1 with the viewport at (2400,644) (see the task 9 report), and Town's
+        /// own map has no <c>WindowLight</c> property on the building at all, so there was nothing
+        /// in the map data to take them from. They are deliberately a little inside the glass rather
+        /// than flush with the frame, because a pane that overshoots by a pixel reads as a glowing
+        /// wall.</summary>
         private static readonly Rectangle[] FrontWindows =
         {
-            new Rectangle(64, 320, 64, 64),
-            new Rectangle(192, 320, 64, 64),
-            new Rectangle(448, 320, 64, 64),
-            new Rectangle(576, 320, 64, 64),
+            new Rectangle(118, 414, 60, 92),
+            new Rectangle(590, 414, 60, 92),
         };
 
         // ---------------------------------------------------------------- Shane
@@ -175,8 +181,10 @@ namespace TheLongestYear.Scenes
         private IReadOnlyList<(int X, int Y)> PlanWalk()
         {
             bool[,] ground = SceneGround.PassableGrid(_town);
+            // An empty list is deliberately still handed over: the search's own fallback then puts
+            // him AlreadyInFrameTiles from the door instead, which is the "stage him in view and
+            // skip the walk in" the spec asks for when the frame has no way into it.
             IReadOnlyList<(int X, int Y)> ways = WaysIntoTheFrame();
-            if (ways.Count == 0) return Array.Empty<(int X, int Y)>();
             IReadOnlyList<(int X, int Y)> walk = ScenePath.WalkTo(
                 ground,
                 ((int)HallDoorTile.X, (int)HallDoorTile.Y),
@@ -186,17 +194,22 @@ namespace TheLongestYear.Scenes
             return walk.Count == 0 ? walk : ScenePath.Trim(walk, MaxWalkTiles);
         }
 
-        /// <summary>The tiles along the bottom of the frame, no further east than the door, in the
-        /// order the search should prefer them: nearest the middle of the shot first, so he comes up
-        /// the path rather than in at the very corner when both are open.</summary>
+        /// <summary>How far WEST of the door a way into the frame has to be. Without it the search
+        /// finds the tile directly below the door and he walks in from straight off the bottom of
+        /// the shot, which is nobody's way home: the Saloon is south and west of the hall, so he
+        /// should come up the path at an angle (seen on the first overnight frames, 2026-09-21).</summary>
+        private const int SaloonSideTiles = 4;
+
+        /// <summary>The tiles along the bottom of the frame, west of the door by at least
+        /// <see cref="SaloonSideTiles"/>. The search takes the nearest of them that can be reached,
+        /// so the walk is the shortest one that still comes in from the Saloon side.</summary>
         private IReadOnlyList<(int X, int Y)> WaysIntoTheFrame()
         {
             Rectangle frame = SceneCamera.FrameInTiles();
             var ways = new List<(int X, int Y)>();
             if (frame.Width <= 0 || frame.Height <= 0) return ways;
             int row = frame.Bottom - 1;
-            int east = (int)HallDoorTile.X;
-            for (int x = east; x >= frame.Left + 1; x--)
+            for (int x = (int)HallDoorTile.X - SaloonSideTiles; x >= frame.Left + 1; x--)
                 if (SceneGround.CanStandOn(_town, x, row))
                     ways.Add((x, row));
             return ways;
@@ -294,7 +307,9 @@ namespace TheLongestYear.Scenes
                 walking = true;
                 backwards = true;
             }
-            tilesIn = Math.Max(-RunPastTiles, Math.Min(_steps, tilesIn));
+            // Clamped only at the far end. Running out, he carries on past the start of the walk
+            // and off the edge of the shot, which is what SceneWalk.At is built to answer.
+            tilesIn = Math.Min(_steps, tilesIn);
 
             _shane.Position = _walk.At(tilesIn);
             _shane.Walking = walking;
@@ -322,15 +337,11 @@ namespace TheLongestYear.Scenes
             if (ShaneIsInTheShot()) _shane.Draw(b, SceneCamera.NightTint);
         }
 
-        /// <summary>He is drawn from his cue until the moment he is off the near end of his walk.
-        /// Standing him at his entry tile from the first frame would read as a man who had been
-        /// watching the hall all along.</summary>
-        private bool ShaneIsInTheShot()
-        {
-            if (_shane == null || ElapsedMs < WalkInAtMs) return false;
-            int offFrameAt = RunOutAtMs + (int)((_steps - BackAwayTiles + RunPastTiles) * (long)RunMsPerTile);
-            return ElapsedMs < offFrameAt;
-        }
+        /// <summary>He is drawn from his cue onward and never before it. Standing him at his entry
+        /// tile from the first frame would read as a man who had been watching the hall all along.
+        /// There is no far end to test: he runs clean off the shot and keeps going, so the frame
+        /// simply stops containing him.</summary>
+        private bool ShaneIsInTheShot() => _shane != null && ElapsedMs >= WalkInAtMs;
 
         // ---------------------------------------------------------------- putting it back
 
