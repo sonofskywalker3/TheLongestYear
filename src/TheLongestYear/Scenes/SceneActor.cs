@@ -65,6 +65,11 @@ namespace TheLongestYear.Scenes
         /// <summary>Shoved sideways in screen pixels, for a shudder that is not a step.</summary>
         public float Shake;
 
+        /// <summary>Lifted off the ground in screen pixels, for a jump. The shadow stays where the
+        /// feet were, which is what makes the lift read as a jump rather than as a figure sliding
+        /// up the screen.</summary>
+        public float Lift;
+
         /// <param name="textureName">A character sheet, for example <c>Characters\Linus</c>.</param>
         public SceneActor(string textureName, int spriteWidth = 16, int spriteHeight = 32)
         {
@@ -108,7 +113,7 @@ namespace TheLongestYear.Scenes
             // The sheet is taller than a tile, so the sprite's top-left sits that much above the
             // tile it stands on and his feet land on the tile itself.
             float lift = _spriteHeight * DrawScale - TileSize;
-            Vector2 screen = SceneCamera.ToScreen(Position + new Vector2(Shake, -lift));
+            Vector2 screen = SceneCamera.ToScreen(Position + new Vector2(Shake, -lift - Lift));
             if (Game1.shadowTexture != null)
             {
                 b.Draw(

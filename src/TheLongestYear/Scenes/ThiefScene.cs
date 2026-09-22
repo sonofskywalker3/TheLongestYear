@@ -112,7 +112,7 @@ namespace TheLongestYear.Scenes
         private SceneSleepers _sleepers;
         /// <summary>The walk in, the tile he starts on first and the tile beside the target last.
         /// The way out is this, backwards.</summary>
-        private IReadOnlyList<(int X, int Y)> _walk = Array.Empty<(int X, int Y)>();
+        private SceneWalk _walk;
         private int _steps;
         private int _arriveMs;
         private int _lidOpenMs;
@@ -152,13 +152,14 @@ namespace TheLongestYear.Scenes
             _targetTile = _target.Tile;
             if (_where?.map == null) return false;
 
-            _walk = PlanWalk();
-            if (_walk.Count == 0)
+            IReadOnlyList<(int X, int Y)> walk = PlanWalk();
+            if (walk.Count == 0)
             {
                 Monitor.Log($"Darkness: the thief has nowhere to stand beside the target at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, so the take lands with no scene.", LogLevel.Info);
                 return false;
             }
-            _steps = _walk.Count - 1;
+            _walk = new SceneWalk(walk);
+            _steps = _walk.Steps;
             BuildClock();
 
             try
@@ -170,7 +171,7 @@ namespace TheLongestYear.Scenes
                 Monitor.Log($"Darkness: the thief scene could not load the Shadow Brute, so the take lands with no scene. {ex}", LogLevel.Warn);
                 return false;
             }
-            _brute.Position = new Vector2(_walk[0].X, _walk[0].Y) * TileSize;
+            _brute.Position = _walk.At(0f);
             _brute.Face(SceneCamera.TileCentre(_targetTile));
 
             var house = _where as FarmHouse;
@@ -184,7 +185,7 @@ namespace TheLongestYear.Scenes
 
             Monitor.Log(
                 $"Darkness: the thief is staged on {(_target.Machine ? "a machine" : "a chest")} at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, "
-                + $"walking {_steps} tile(s) in from ({_walk[0].X},{_walk[0].Y}), lid {(_lid == null ? "none" : _lid.Available ? "driven" : "unreadable")}, "
+                + $"walking {_steps} tile(s) in from ({_walk.Start.X},{_walk.Start.Y}), lid {(_lid == null ? "none" : _lid.Available ? "driven" : "unreadable")}, "
                 + $"asleep in bed: {(_sleepers == null ? "not a house" : _sleepers.Describe())}. He is drawn from a sheet of {_brute.Describe()}.",
                 LogLevel.Trace);
             return true;
@@ -321,7 +322,7 @@ namespace TheLongestYear.Scenes
                 walking = true;
             }
             tilesIn = Math.Max(0f, Math.Min(_steps, tilesIn));
-            _brute.Position = AlongWalk(tilesIn);
+            _brute.Position = _walk.At(tilesIn);
             _brute.Walking = walking;
 
             // He looks at the camera for the length of the beat, and that is the only time the eyes
@@ -329,35 +330,9 @@ namespace TheLongestYear.Scenes
             _looking = elapsed >= _lookMs && elapsed < _leaveMs;
             if (_looking) _brute.Facing = SceneActor.FacingDown;
             else if (elapsed >= _arriveMs && elapsed < _leaveMs) _brute.Face(SceneCamera.TileCentre(_targetTile));
-            else _brute.Facing = StepFacing(tilesIn, elapsed >= _leaveMs);
+            // Leaving, he faces the way he is going, which is the walk read backwards.
+            else _brute.Facing = _walk.FacingAt(tilesIn, backwards: elapsed >= _leaveMs);
             _brute.Animate(elapsed);
-        }
-
-        /// <summary>Where he is this instant, in world pixels, <paramref name="tilesIn"/> tiles
-        /// along the walk.</summary>
-        private Vector2 AlongWalk(float tilesIn)
-        {
-            if (_steps == 0) return new Vector2(_walk[0].X, _walk[0].Y) * TileSize;
-            int leg = Math.Max(0, Math.Min(_steps - 1, (int)tilesIn));
-            float across = Math.Max(0f, Math.Min(1f, tilesIn - leg));
-            var from = new Vector2(_walk[leg].X, _walk[leg].Y);
-            var to = new Vector2(_walk[leg + 1].X, _walk[leg + 1].Y);
-            return Vector2.Lerp(from, to, across) * TileSize;
-        }
-
-        /// <summary>Which way he is facing for the leg he is on. Leaving, he faces the way he is
-        /// going, which is the walk read backwards.</summary>
-        private int StepFacing(float tilesIn, bool leaving)
-        {
-            if (_steps == 0) return SceneActor.FacingDown;
-            int leg = Math.Max(0, Math.Min(_steps - 1, (int)tilesIn));
-            (int X, int Y) from = _walk[leg];
-            (int X, int Y) to = _walk[leg + 1];
-            int dx = leaving ? from.X - to.X : to.X - from.X;
-            int dy = leaving ? from.Y - to.Y : to.Y - from.Y;
-            if (dx != 0) return dx > 0 ? SceneActor.FacingRight : SceneActor.FacingLeft;
-            if (dy != 0) return dy > 0 ? SceneActor.FacingDown : SceneActor.FacingUp;
-            return SceneActor.FacingDown;
         }
 
         // ---------------------------------------------------------------- painting
