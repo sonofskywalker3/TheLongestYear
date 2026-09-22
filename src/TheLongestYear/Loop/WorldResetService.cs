@@ -506,6 +506,7 @@ namespace TheLongestYear.Loop
             //    Pin all THREE fields to the kept floor exactly (no Math.Max — that would leak the
             //    in-run peak back in).
             MineShaft.clearActiveMines();
+            MineShaft.yearUpdate();
             int keptFloor = baseline.MineElevatorFloor;
             Game1.netWorldState.Value.LowestMineLevel = keptFloor;
             Game1.netWorldState.Value.LowestMineLevelForOrder = keptFloor > 0 ? keptFloor : -1;
