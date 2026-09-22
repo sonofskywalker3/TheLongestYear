@@ -399,7 +399,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -2523,13 +2523,16 @@ namespace TheLongestYear
                 case "scene" when args.Length > 1 && args[1].ToLowerInvariant() == "thief":
                     this.PlayThiefScenePreview(rng);
                     break;
+                case "scene" when args.Length > 1 && args[1].ToLowerInvariant() == "hall":
+                    this.PlayHallScenePreview(rng);
+                    break;
                 case "scene":
                     _seasonTurnDriver.StartTamperWhenSettled(
                         args.Length > 1 ? args[1] : "Parsnip", args.Length > 2 ? args[2] : "Crystal Fruit",
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info));
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle", LogLevel.Info);
                     break;
             }
         }
@@ -2618,6 +2621,32 @@ namespace TheLongestYear
             }
             this.Monitor.Log($"tly_sabotage scene thief: {hits.Count} unit(s) picked from {units} stored, and they really go when the lid opens.", LogLevel.Info);
             var scene = new TheLongestYear.Scenes.ThiefScene(strike, skippable: true, this.Monitor, _ => { });
+            _scenePreview.Play(scene);
+        }
+
+        /// <summary>tly_sabotage scene hall: watch the reversion scene now, without sleeping.
+        ///
+        /// With a slot the fairness rule will let the darkness take, the pick is REAL and that slot
+        /// really comes undone at the jump, exactly as it would overnight. With no candidate the
+        /// scene still plays, against an effect that does nothing, because the Community Center
+        /// front, the firelight and Shane are worth watching whether or not there is anything on the
+        /// board to lose. The log says which of the two it was.</summary>
+        private void PlayHallScenePreview(System.Random rng)
+        {
+            _scenePreview ??= new TheLongestYear.Scenes.ScenePreview(this.Helper, this.Monitor);
+            if (_scenePreview.Playing) { this.Monitor.Log("A strike scene is already playing.", LogLevel.Warn); return; }
+
+            TheLongestYear.Loop.PendingStrike strike = _sabotage.PrepareRevert(rng);
+            if (strike == null)
+            {
+                this.Monitor.Log("tly_sabotage scene hall: no slot may fairly come undone tonight, so the scene plays and nothing is taken.", LogLevel.Info);
+                strike = new TheLongestYear.Loop.PendingStrike(TheLongestYear.Core.Sabotage.DarknessEvent.Reversion, () => false);
+            }
+            else
+            {
+                this.Monitor.Log("tly_sabotage scene hall: a real slot is picked, and it really comes undone at the jump.", LogLevel.Info);
+            }
+            var scene = new TheLongestYear.Scenes.HallScene(strike, skippable: true, this.Monitor, _ => { });
             _scenePreview.Play(scene);
         }
 

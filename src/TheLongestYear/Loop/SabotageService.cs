@@ -484,6 +484,22 @@ namespace TheLongestYear.Loop
             return pick != null && RevertSlot(pick);
         }
 
+        /// <summary>Debug entry point (<c>tly_sabotage scene hall</c>): a fair pick at the current
+        /// level, parked rather than opened, so the scene itself lands it at its own beat exactly as
+        /// the overnight path would. Null when nothing may fairly be taken tonight, and then the
+        /// caller decides whether to watch the scene against a no-op instead.</summary>
+        public PendingStrike PrepareRevert(Random rng)
+        {
+            int dayOfYear = Calendar.DayOfYear((int)Run.Season, Run.DayOfMonth);
+            int deadline = FairnessRule.ReversionDeadline(dayOfYear, Level);
+            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
+            ObtainabilityModel model = _obtainability();
+            DonatedSlot pick = PickReversion(rng, id => FairnessRule.Counts(id, dayOfYear, deadline, Level, save, model));
+            if (pick == null) return null;
+            _monitor.Log($"Darkness: {Strings.ItemName(pick.ItemId)} is the slot the hall scene will open (slot {pick.BundleIndex}/{pick.IngredientIndex}).", LogLevel.Info);
+            return new PendingStrike(DarknessEvent.Reversion, () => RevertSlot(pick));
+        }
+
         private DonatedSlot PickReversion(Random rng, Func<string, bool> fair)
         {
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);

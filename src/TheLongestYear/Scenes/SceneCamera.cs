@@ -54,7 +54,9 @@ namespace TheLongestYear.Scenes
             255 - NightAmbient.G * NightAmbient.G / 255,
             255 - NightAmbient.B * NightAmbient.B / 255);
 
-        private const int TileSize = 64;
+        /// <summary>One tile, in world pixels. Shared because every scene that measures anything
+        /// against the map needs it.</summary>
+        public const int TileSize = 64;
 
         private static bool _active;
         private static GameLocation _priorLocation;
