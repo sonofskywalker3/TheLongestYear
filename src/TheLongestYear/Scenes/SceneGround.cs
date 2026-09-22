@@ -38,7 +38,8 @@ namespace TheLongestYear.Scenes
         /// <see cref="TheLongestYear.Core.Sabotage.ScenePath"/>.</summary>
         public static bool[,] PassableGrid(GameLocation where)
         {
-            if (where?.map == null) throw new ArgumentNullException(nameof(where));
+            if (where == null) throw new ArgumentNullException(nameof(where));
+            if (where.map == null) throw new ArgumentException($"{where.NameOrUniqueName} has no map loaded, so there is no ground to walk on.", nameof(where));
             int width = where.map.Layers[0].LayerWidth;
             int height = where.map.Layers[0].LayerHeight;
             var grid = new bool[width, height];

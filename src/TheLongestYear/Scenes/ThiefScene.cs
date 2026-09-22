@@ -238,7 +238,9 @@ namespace TheLongestYear.Scenes
         {
             if (house == null) return _targetTile;
             Point bed = house.GetPlayerBedSpot();
-            if (bed.X <= 0 && bed.Y <= 0) return _targetTile;
+            // Same sentinel test as SceneSleepers: (-1000,-1000) and Point.Zero both mean "no such
+            // spot", and either coordinate being non-positive is enough to say so.
+            if (bed.X <= 0 || bed.Y <= 0) return _targetTile;
             var bedTile = new Vector2(bed.X, bed.Y);
             if (Vector2.Distance(bedTile, _targetTile) > BedInFrameTiles) return _targetTile;
             return new Vector2(
@@ -251,6 +253,7 @@ namespace TheLongestYear.Scenes
         /// <inheritdoc />
         protected override void Build(Timeline t)
         {
+            Fade(FadeInMs, _fadeOutMs, FadeOutLengthMs);
             t.At(WalkStartMs, () => Game1.playSound("shadowpeep", -800));
             if (_lid != null)
             {
@@ -265,33 +268,8 @@ namespace TheLongestYear.Scenes
             t.EndAt(_endMs);
         }
 
-        /// <inheritdoc />
-        public override bool tickUpdate(GameTime time)
-        {
-            // Nothing in the world updates itself during a farm event: vanilla's own night events
-            // pump the clock, the location and the rest by hand (WitchEvent.tickUpdate). The debug
-            // preview plays the scene during an ordinary update, where the game is already doing all
-            // of this, so the pump only runs when this really is tonight's farm event.
-            if (ReferenceEquals(Game1.farmEvent, this))
-            {
-                try
-                {
-                    Game1.UpdateGameClock(time);
-                    _where.UpdateWhenCurrentLocation(time);
-                    _where.updateEvenIfFarmerIsntHere(time);
-                    Game1.UpdateOther(time);
-                }
-                catch (Exception ex)
-                {
-                    Monitor.Log($"Darkness: the thief scene could not pump {_where?.NameOrUniqueName} this tick. {ex}", LogLevel.Trace);
-                }
-            }
-            // AFTER the pump, never before it: the pump recomputes the outdoor light from the clock
-            // and copies it into the ambient light, so holding the night first means the pump throws
-            // it away again (Task 7, caught on the first real overnight screenshots).
-            SceneCamera.HoldNight();
-            return base.tickUpdate(time);
-        }
+        /// <summary>The base pumps this map for the scene on the real overnight path.</summary>
+        protected override GameLocation SceneLocation => _where;
 
         /// <summary>Moving him runs through the base's hook, so a throw here goes down the base's
         /// failure path and the camera, the lid and the household all come back.</summary>
@@ -389,7 +367,6 @@ namespace TheLongestYear.Scenes
         {
             _brute?.Draw(b, SceneCamera.NightTint);
             if (_looking) PaintEyes(b);
-            PaintFade(b);
         }
 
         /// <summary>Two red points where his eyes are. The glow is shared with the crows and is
@@ -411,26 +388,6 @@ namespace TheLongestYear.Scenes
                     corner.Y + (eye.Y + 0.5f) * DrawScale);
                 SceneGlow.Draw(b, centre, EyeGlowSheetPixels * DrawScale, EyeCoreSheetPixels * DrawScale, Color.Red);
             }
-        }
-
-        /// <summary>The fade in and the fade out, drawn LAST in the world layer and never from
-        /// <see cref="StrikeSceneBase.PaintAbove"/>, which has no open SpriteBatch on the real
-        /// overnight path. See the same method on the crows for the whole story.</summary>
-        private void PaintFade(SpriteBatch b)
-        {
-            float black = BlackAt(ElapsedMs);
-            if (black <= 0f) return;
-            Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
-            int width = Math.Max(screen.Width, Game1.uiViewport.Width);
-            int height = Math.Max(screen.Height, Game1.uiViewport.Height);
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, width, height), Color.Black * black);
-        }
-
-        private float BlackAt(int elapsed)
-        {
-            if (elapsed < FadeInMs) return 1f - elapsed / (float)FadeInMs;
-            if (elapsed >= _fadeOutMs) return Math.Min(1f, (elapsed - _fadeOutMs) / (float)FadeOutLengthMs);
-            return 0f;
         }
 
         // ---------------------------------------------------------------- putting it back

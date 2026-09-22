@@ -48,12 +48,17 @@ public static class ScenePath
         var parent = new Dictionary<(int X, int Y), (int X, int Y)>();
         var queue = new Queue<(int X, int Y)>();
 
+        // The target's own tile is never walked on, whatever the grid says. A caller's grid answers
+        // "may he stand here", and a chest or a machine tile can come back true for reasons of its
+        // own, but a walk that goes straight over the thing being robbed is not a walk.
+        bool Walkable((int X, int Y) tile)
+            => tile != target && InBounds(tile, width, height) && passable[tile.X, tile.Y];
+
         // The seeds are the tiles beside the target, in a fixed order so an equally good walk is
         // always the same walk.
         foreach ((int X, int Y) beside in Neighbours(target))
         {
-            if (!InBounds(beside, width, height) || !passable[beside.X, beside.Y]) continue;
-            if (distance.ContainsKey(beside)) continue;
+            if (!Walkable(beside) || distance.ContainsKey(beside)) continue;
             distance[beside] = 0;
             queue.Enqueue(beside);
         }
@@ -65,8 +70,7 @@ public static class ScenePath
             int next = distance[at] + 1;
             foreach ((int X, int Y) step in Neighbours(at))
             {
-                if (!InBounds(step, width, height) || !passable[step.X, step.Y]) continue;
-                if (distance.ContainsKey(step)) continue;
+                if (!Walkable(step) || distance.ContainsKey(step)) continue;
                 distance[step] = next;
                 parent[step] = at;
                 queue.Enqueue(step);

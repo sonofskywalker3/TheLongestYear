@@ -338,41 +338,14 @@ namespace TheLongestYear.Scenes
         /// <inheritdoc />
         protected override void Build(Timeline t)
         {
+            Fade(FadeInMs, FadeOutMs, FadeOutLengthMs);
             t.At(CrowsEnterMs, () => Game1.playSound("crow", -600));
             t.At(StrikeMs, ApplyStrike);
             t.EndAt(SceneEndMs);
         }
 
-        /// <inheritdoc />
-        public override bool tickUpdate(GameTime time)
-        {
-            // Nothing in the world updates itself during a farm event: vanilla's own night events
-            // pump the clock, the location and the rest by hand (WitchEvent.tickUpdate). The debug
-            // command plays the scene during an ordinary update, where the game is already doing all
-            // of this, so the pump only runs when this really is tonight's farm event.
-            if (ReferenceEquals(Game1.farmEvent, this))
-            {
-                try
-                {
-                    Game1.UpdateGameClock(time);
-                    _farm.UpdateWhenCurrentLocation(time);
-                    _farm.updateEvenIfFarmerIsntHere(time);
-                    Game1.UpdateOther(time);
-                }
-                catch (Exception ex)
-                {
-                    Monitor.Log($"Darkness: the crows scene could not pump the farm this tick. {ex}", LogLevel.Trace);
-                }
-            }
-            // AFTER the pump, never before it. UpdateGameClock recomputes outdoorLight from the
-            // clock and UpdateWhenCurrentLocation then copies that into ambientLight, so holding the
-            // night first meant the pump threw it away again on the overnight path and the farm came
-            // out at the full 2am dark, two shades under what the preview showed. Caught by the
-            // first REAL overnight screenshots, 2026-09-21: the preview could never show it, because
-            // there the engine's own update has already run by the time the scene ticks.
-            SceneCamera.HoldNight();
-            return base.tickUpdate(time);
-        }
+        /// <summary>The base pumps this map for the scene on the real overnight path.</summary>
+        protected override GameLocation SceneLocation => _farm;
 
         /// <summary>Moving the birds and Linus runs through the base's hook, not out of the override
         /// above, so a throw here goes down the base's failure path and the camera always comes back.</summary>
@@ -493,7 +466,6 @@ namespace TheLongestYear.Scenes
                 PaintEye(b, crow, corner);
             }
             if (_linusInFrame) _linus?.Draw(b, SceneCamera.NightTint);
-            PaintFade(b);
         }
 
         /// <summary>A glowing red eye: a soft radial pool, then two sheet pixels of solid red in the
@@ -506,36 +478,6 @@ namespace TheLongestYear.Scenes
             float core = EyeDotPixels * DrawScale;
             var centre = new Vector2(corner.X + x + core / 2f, corner.Y + eye.Y * DrawScale + core / 2f);
             SceneGlow.Draw(b, centre, EyeGlowSheetPixels * DrawScale, core, Color.Red);
-        }
-
-        /// <summary>The fade in and the fade out, drawn LAST in the world layer rather than from
-        /// <see cref="StrikeSceneBase.PaintAbove"/>.
-        ///
-        /// It started life in PaintAbove and that threw on the real overnight path, which the debug
-        /// preview could never have shown: vanilla calls <c>farmEvent.drawAboveEverything</c> at
-        /// Game1.cs:13409, AFTER DrawMenu has ended its batch, so there is no open SpriteBatch there
-        /// and the first Draw call threw "Begin has not yet been called" (caught live, 2026-09-21).
-        /// <c>farmEvent.draw</c> at Game1.cs:13698 is wrapped in its own Begin and End, so the world
-        /// layer is the one place a scene can paint without opening a batch of its own. The HUD is
-        /// off for the whole scene and no menu is up, so nothing needs covering above it anyway, and
-        /// drawing the fade here makes the preview and the real night identical.</summary>
-        private void PaintFade(SpriteBatch b)
-        {
-            float black = BlackAt(ElapsedMs);
-            if (black <= 0f) return;
-            // The world layer draws in the zoomed backbuffer, the debug preview in UI space. Cover
-            // whichever is bigger, since over-covering a full screen black costs nothing.
-            Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
-            int width = Math.Max(screen.Width, Game1.uiViewport.Width);
-            int height = Math.Max(screen.Height, Game1.uiViewport.Height);
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, width, height), Color.Black * black);
-        }
-
-        private static float BlackAt(int elapsed)
-        {
-            if (elapsed < FadeInMs) return 1f - elapsed / (float)FadeInMs;
-            if (elapsed >= FadeOutMs) return Math.Min(1f, (elapsed - FadeOutMs) / (float)FadeOutLengthMs);
-            return 0f;
         }
 
         // ---------------------------------------------------------------- putting it back

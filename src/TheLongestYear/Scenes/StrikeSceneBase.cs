@@ -78,6 +78,10 @@ namespace TheLongestYear.Scenes
         private bool _priorDisplayHud;
         private bool _priorFreezeControls;
 
+        private int _fadeInMs;
+        private int _fadeOutAtMs = int.MaxValue;
+        private int _fadeOutLengthMs;
+
         /// <summary>Milliseconds since the scene's first tick.</summary>
         protected int ElapsedMs { get; private set; }
 
@@ -95,6 +99,26 @@ namespace TheLongestYear.Scenes
         /// <summary>Where the scene plays and what it needs. Return false to call the scene off: the
         /// strike still lands, the night still goes on.</summary>
         protected abstract bool Stage();
+
+        /// <summary>The map the scene is showing, so the base can pump it. Null (the default) means
+        /// the scene does not need the world ticked at all. Set from <see cref="Stage"/>.</summary>
+        protected virtual GameLocation SceneLocation => null;
+
+        /// <summary>Declare the scene's fade in and fade out, and the base paints them itself at the
+        /// end of every <see cref="draw"/>. A scene that never calls this has no fade.
+        ///
+        /// It lives here and not in each scene because the fade has to be painted in the WORLD
+        /// layer, and that is not obvious: vanilla calls <c>drawAboveEverything</c> from
+        /// Game1.cs:13409, after DrawMenu has closed its batch, so there is no open SpriteBatch
+        /// there and the first Draw call throws (caught live, 2026-09-21). <c>farmEvent.draw</c> at
+        /// Game1.cs:13698 is wrapped in its own Begin and End, so the world layer is the one place a
+        /// scene can paint without opening a batch of its own.</summary>
+        protected void Fade(int fadeInMs, int fadeOutAtMs, int fadeOutLengthMs)
+        {
+            _fadeInMs = Math.Max(0, fadeInMs);
+            _fadeOutAtMs = fadeOutAtMs;
+            _fadeOutLengthMs = Math.Max(1, fadeOutLengthMs);
+        }
 
         /// <summary>The scene's beats. Called once, after <see cref="Stage"/> said yes.</summary>
         protected abstract void Build(Timeline t);
@@ -177,6 +201,7 @@ namespace TheLongestYear.Scenes
             if (_ended) return true;
             try
             {
+                PumpWorld(time);
                 ElapsedMs += time.ElapsedGameTime.Milliseconds;
                 if (SkipPressed())
                 {
@@ -200,12 +225,75 @@ namespace TheLongestYear.Scenes
             }
         }
 
+        /// <summary>Tick the world by hand, the way vanilla's own night events do
+        /// (<c>WitchEvent.tickUpdate</c>), and then write the scene's night again.
+        ///
+        /// ONLY ON THE REAL OVERNIGHT PATH. The debug preview plays the scene during an ordinary
+        /// update, where the engine is already doing all of this, so the pump would do it twice.
+        ///
+        /// THE NIGHT IS WRITTEN AFTER, NEVER BEFORE. <c>UpdateGameClock</c> recomputes the outdoor
+        /// light from the clock and <c>UpdateWhenCurrentLocation</c> copies that into the ambient
+        /// light, so holding the night first meant the pump threw it away again and the farm came
+        /// out at the full 2am dark (caught by the first real overnight screenshots, 2026-09-21).
+        ///
+        /// A CAVEAT FOR ANY NEW SCENE. Vanilla runs its OWN <c>UpdateCharacters</c>,
+        /// <c>UpdateLocations</c> and <c>UpdateOther</c> after this event's tick as well
+        /// (Game1.cs:3799 falls through to Game1.cs:3842), so this pump is a duplicate on the
+        /// overnight path and, more to the point, anything a scene writes from
+        /// <see cref="Advance"/> that the location's own update also writes will be overwritten
+        /// before the frame is drawn. That is why the thief's chest lid needs a Harmony postfix
+        /// rather than a per-tick write. The night survives only because the clock is frozen under
+        /// <c>freezeControls</c> and both light colours are set to the same value.</summary>
+        private void PumpWorld(GameTime time)
+        {
+            GameLocation where = SceneLocation;
+            if (where != null && ReferenceEquals(Game1.farmEvent, this))
+            {
+                try
+                {
+                    Game1.UpdateGameClock(time);
+                    where.UpdateWhenCurrentLocation(time);
+                    where.updateEvenIfFarmerIsntHere(time);
+                    Game1.UpdateOther(time);
+                }
+                catch (Exception ex)
+                {
+                    Monitor.Log($"Darkness: the {GetType().Name} scene could not pump {where.NameOrUniqueName} this tick. {ex}", LogLevel.Trace);
+                }
+            }
+            SceneCamera.HoldNight();
+        }
+
         /// <inheritdoc />
         public override void draw(SpriteBatch b)
         {
             if (_ended) return;
-            try { Paint(b); }
+            try
+            {
+                Paint(b);
+                PaintFade(b);
+            }
             catch (Exception ex) { Fail(ex); }
+        }
+
+        /// <summary>The declared fade, painted last in the world layer.</summary>
+        private void PaintFade(SpriteBatch b)
+        {
+            float black = BlackAt(ElapsedMs);
+            if (black <= 0f || Game1.fadeToBlackRect == null) return;
+            // The world layer draws in the zoomed backbuffer, the debug preview in UI space. Cover
+            // whichever is bigger, since over-covering a full screen black costs nothing.
+            Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
+            int width = Math.Max(screen.Width, Game1.uiViewport.Width);
+            int height = Math.Max(screen.Height, Game1.uiViewport.Height);
+            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, width, height), Color.Black * black);
+        }
+
+        private float BlackAt(int elapsed)
+        {
+            if (elapsed < _fadeInMs) return 1f - elapsed / (float)_fadeInMs;
+            if (elapsed >= _fadeOutAtMs) return Math.Min(1f, (elapsed - _fadeOutAtMs) / (float)_fadeOutLengthMs);
+            return 0f;
         }
 
         /// <inheritdoc />
