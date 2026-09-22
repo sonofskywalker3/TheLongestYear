@@ -53,6 +53,8 @@ namespace TheLongestYear.Scenes
         private const int TurnAfterCloseMs = 300;
         /// <summary>How long he holds the look.</summary>
         private const int LookMs = 500;
+        /// <summary>How long one frame of the lid's own opening animation is held.</summary>
+        private const int LidStepMs = 80;
         private const int FadeOutLengthMs = 800;
         /// <summary>A breath of black after he is gone.</summary>
         private const int TailMs = 200;
@@ -87,9 +89,16 @@ namespace TheLongestYear.Scenes
         private const int BruteSpriteWidth = 16;
         private const int BruteSpriteHeight = 32;
 
-        /// <summary>Where his eyes are in the down-facing standing frame, in sheet pixels from the
-        /// frame's top left, and how wide each one is drawn.</summary>
-        private static readonly Point[] BruteEyes = { new Point(5, 7), new Point(9, 7) };
+        /// <summary>Where his eyes are in the down-facing standing frame: the single sheet pixel
+        /// each one occupies, measured from the frame's top left.
+        ///
+        /// Read off the game's own rendering rather than guessed, the way the crows' eye table was.
+        /// The first pass put them at y 7 and the screenshot showed the glow sitting on his forehead
+        /// with his real eyes two pixels below it. Measured from that same frame pair: the glow
+        /// cores landed at screen x 1236 and 1252 with the sprite's left edge at 1216 and its top at
+        /// 380, and the sprite's own eye pixels are at screen (1236,424) and (1256,424), which is
+        /// sheet (5,11) and (10,11).</summary>
+        private static readonly Point[] BruteEyes = { new Point(5, 11), new Point(10, 11) };
         private const float EyeCoreSheetPixels = 2f;
         private const float EyeGlowSheetPixels = 7f;
 
@@ -182,18 +191,33 @@ namespace TheLongestYear.Scenes
         }
 
         /// <summary>The walk in, through the passable-tile search in Core. Indoors the ways in are
-        /// the door warps, outdoors the map's own edge and its gates as well.</summary>
+        /// the door warps, outdoors the map's own edge and its gates as well.
+        ///
+        /// HE COMES IN FROM THE SIDE IF HE POSSIBLY CAN, and that is not a taste call.
+        /// <c>Chest.draw</c> paints the lid a whole tile ABOVE the chest's own tile (Chest.cs:1252,
+        /// <c>(draw_y - 1f) * 64f</c>), so a figure standing on the tile above the chest covers the
+        /// lid completely and the one beat the scene exists for cannot be seen. The first live run
+        /// did exactly that. So the tile above is taken out of the ground first, then the tile below
+        /// as well, and only a target hemmed in on both sides is approached from above.</summary>
         private IReadOnlyList<(int X, int Y)> PlanWalk()
         {
-            bool[,] ground = SceneGround.PassableGrid(_where);
+            int x = (int)_targetTile.X, y = (int)_targetTile.Y;
             IReadOnlyList<(int X, int Y)> ways = SceneGround.WaysIn(_where);
-            IReadOnlyList<(int X, int Y)> walk = ScenePath.WalkTo(
-                ground,
-                ((int)_targetTile.X, (int)_targetTile.Y),
-                ways,
-                MaxWayInTiles,
-                AlreadyInsideTiles);
-            return ScenePath.Trim(walk, MaxWalkTiles);
+            foreach ((int X, int Y)[] keepClear in new[]
+            {
+                new[] { (x, y - 1), (x, y + 1) },
+                new[] { (x, y - 1) },
+                Array.Empty<(int X, int Y)>(),
+            })
+            {
+                bool[,] ground = SceneGround.PassableGrid(_where);
+                foreach ((int X, int Y) block in keepClear)
+                    if (block.X >= 0 && block.Y >= 0 && block.X < ground.GetLength(0) && block.Y < ground.GetLength(1))
+                        ground[block.X, block.Y] = false;
+                IReadOnlyList<(int X, int Y)> walk = ScenePath.WalkTo(ground, (x, y), ways, MaxWayInTiles, AlreadyInsideTiles);
+                if (walk.Count > 0) return ScenePath.Trim(walk, MaxWalkTiles);
+            }
+            return Array.Empty<(int X, int Y)>();
         }
 
         private void BuildClock()
@@ -230,8 +254,12 @@ namespace TheLongestYear.Scenes
             t.At(WalkStartMs, () => Game1.playSound("shadowpeep", -800));
             if (_lid != null)
             {
-                t.At(_lidOpenMs, () => { _lid.Open(); Game1.playSound("openChest"); });
-                t.At(_lidCloseMs, () => { _lid.Close(); Game1.playSound("doorCreakReverse"); });
+                t.At(_lidOpenMs, () =>
+                {
+                    Game1.playSound("openChest");
+                    Monitor.Log($"Darkness: the thief opens the lid, {_lid.Describe()}, up to frame {_lid.OpenFrame}.", LogLevel.Trace);
+                });
+                t.At(_lidCloseMs, () => Game1.playSound("doorCreakReverse"));
             }
             t.At(_takeMs, ApplyStrike);
             t.EndAt(_endMs);
@@ -272,8 +300,21 @@ namespace TheLongestYear.Scenes
             // Same reason as the night above: Chest.fixLidFrame runs at the top of the chest's own
             // update and snaps an unlocked chest shut, so the wanted frame is written again here,
             // after the pump.
+            MoveLid(elapsed);
             _lid?.Hold();
             MoveBrute(elapsed);
+        }
+
+        /// <summary>Walk the lid through its own frames rather than snapping it, which is what the
+        /// chest's update does when a player opens one (Chest.cs:1102, one frame every five ticks).
+        /// Shut before the cue, opening across <see cref="LidStepMs"/> a frame, held open until the
+        /// take is over, then shut again.</summary>
+        private void MoveLid(int elapsed)
+        {
+            if (_lid == null || !_lid.Available) return;
+            if (elapsed < _lidOpenMs || elapsed >= _lidCloseMs) { _lid.ShowFrame(_lid.ShutFrame); return; }
+            int open = Math.Min(_lid.OpenFrame, _lid.ShutFrame + (elapsed - _lidOpenMs) / LidStepMs);
+            _lid.ShowFrame(open);
         }
 
         private void MoveBrute(int elapsed)
@@ -363,9 +404,11 @@ namespace TheLongestYear.Scenes
             Vector2 corner = SceneCamera.ToScreen(_brute.Position + new Vector2(0f, -lift));
             foreach (Point eye in BruteEyes)
             {
+                // The middle of the eye's own pixel, so the core sits ON the eye however wide it is
+                // drawn.
                 var centre = new Vector2(
-                    corner.X + (eye.X + EyeCoreSheetPixels / 2f) * DrawScale,
-                    corner.Y + (eye.Y + EyeCoreSheetPixels / 2f) * DrawScale);
+                    corner.X + (eye.X + 0.5f) * DrawScale,
+                    corner.Y + (eye.Y + 0.5f) * DrawScale);
                 SceneGlow.Draw(b, centre, EyeGlowSheetPixels * DrawScale, EyeCoreSheetPixels * DrawScale, Color.Red);
             }
         }
