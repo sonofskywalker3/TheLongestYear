@@ -22,7 +22,8 @@ namespace TheLongestYear.Integration
     /// mouse is OVER while its list is open, firing the change on hover, not on click. Re-opening on
     /// that first change rebuilt the page mid-hover: the list opens with Easy under the cursor, so
     /// the lever could only ever step between Easy and Normal and never reach Hard or Extreme
-    /// (goblinslayer66666, Nexus bug 1138128, 0.18.38).
+    /// (goblinslayer66666, Nexus bug 1138128, 0.18.38). The refresh also keeps the page's scroll
+    /// position; a fresh page starts at the top, a long way above the Difficulty section.
     /// </summary>
     internal sealed class DifficultyLever
     {
@@ -31,6 +32,12 @@ namespace TheLongestYear.Integration
         private const string GmcmAssemblyName = "GenericModConfigMenu";
         private const string GmcmDropdownTypeName = "SpaceShared.UI.Dropdown";
         private const string ActiveDropdownFieldName = "ActiveDropdown";
+        private const string SpecificModConfigMenuTypeName = "SpecificModConfigMenu";
+        private const string TableFieldName = "Table";
+        private const string ScrollbarPropertyName = "Scrollbar";
+        private const string TopRowPropertyName = "TopRow";
+        private const string MaxTopRowPropertyName = "MaxTopRow";
+        private const BindingFlags InstanceMembers = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         private readonly IGenericModConfigMenuApi _gmcm;
         private readonly IManifest _manifest;
@@ -80,7 +87,10 @@ namespace TheLongestYear.Integration
                 _reopenNextTick = false;
                 try
                 {
+                    int? topRow = GetPageTopRow();
                     _gmcm.OpenModMenu(_manifest);
+                    if (topRow.HasValue)
+                        SetPageTopRow(topRow.Value);
                 }
                 catch (Exception ex) when (ex is InvalidOperationException or NullReferenceException)
                 {
@@ -112,6 +122,39 @@ namespace TheLongestYear.Integration
                     _monitor.Log("Difficulty lever: watching GMCM's dropdown state; the page refreshes once the list closes.", LogLevel.Trace);
             }
             return _activeDropdownField?.GetValue(null) != null;
+        }
+
+        /// <summary>The open config page's scroll position (GMCM's private <c>Table</c> field, then
+        /// <c>Table.Scrollbar.TopRow</c>), so the refresh can land where the player was instead of
+        /// at the top of the page. Null when the page or GMCM's internals are not found.</summary>
+        private static int? GetPageTopRow()
+        {
+            object scrollbar = GetPageScrollbar();
+            return scrollbar?.GetType().GetProperty(TopRowPropertyName, InstanceMembers)?.GetValue(scrollbar) as int?;
+        }
+
+        /// <summary>Scrolls the freshly opened page to <paramref name="row"/>, clamped to its last
+        /// row. Sets <c>TopRow</c> directly: GMCM's own <c>ScrollTo</c> plays a sound.</summary>
+        private void SetPageTopRow(int row)
+        {
+            object scrollbar = GetPageScrollbar();
+            Type type = scrollbar?.GetType();
+            PropertyInfo topRow = type?.GetProperty(TopRowPropertyName, InstanceMembers);
+            if (topRow?.GetValue(scrollbar) is not int || type.GetProperty(MaxTopRowPropertyName, InstanceMembers)?.GetValue(scrollbar) is not int maxTopRow)
+            {
+                _monitor.Log("Difficulty lever: could not keep the page's scroll position; GMCM's page layout was not found.", LogLevel.Trace);
+                return;
+            }
+            topRow.SetValue(scrollbar, Math.Clamp(row, 0, maxTopRow));
+        }
+
+        private static object GetPageScrollbar()
+        {
+            IClickableMenu page = Game1.activeClickableMenu is TitleMenu ? TitleMenu.subMenu : Game1.activeClickableMenu;
+            if (page?.GetType().Name != SpecificModConfigMenuTypeName)
+                return null;
+            object table = page.GetType().GetField(TableFieldName, InstanceMembers)?.GetValue(page);
+            return table?.GetType().GetProperty(ScrollbarPropertyName, InstanceMembers)?.GetValue(table);
         }
 
         private static bool IsConfigMenuOpen()
