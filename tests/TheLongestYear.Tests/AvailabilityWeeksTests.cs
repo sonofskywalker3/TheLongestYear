@@ -77,6 +77,7 @@ public class AvailabilityWeeksTests
     [InlineData("(O)284", 10, 10)]  // Beet, Oasis week 9 plus 6 days
     [InlineData("(O)252", 11, 11)]  // Rhubarb, Oasis seeds in a garden pot
     [InlineData("(O)268", 11, 11)]  // Starfruit
+    [InlineData("(O)90", 11, 11)]   // Cactus Fruit, Oasis Cactus Seeds grown indoors
     [InlineData("(O)248", 4, 2)]    // Garlic, year-two crop: buy at 4, Boost route at 2
     [InlineData("(O)266", 7, 6)]    // Red Cabbage, year-two crop
     [InlineData("(O)274", 10, 10)]  // Artichoke: free from vanilla Fall Mixed Seeds, no buy needed

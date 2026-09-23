@@ -16,6 +16,29 @@ aims to follow [Semantic Versioning](https://semver.org/).
 ### Debug
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
+
+## 0.18.43 - 2026-09-23
+
+2183 tests.
+
+### Fixed
+
+- **The Difficulty setting can reach Hard and Extreme.** Moving the mouse over the list counted as picking, so the page redrew the moment the list opened and only Easy and Normal could ever be chosen. It now waits for your click, and the page stays where you were instead of jumping back to the top. Reported by goblinslayer66666.
+- **Marlon no longer sells back last loop's items.** The rewind never cleared the list of things you dropped when you passed out, so the Adventurer's Guild could hand back an item from a previous loop. The rewind now empties it. Reported by Mycatisinapiano1528.
+- **Cactus Fruit waits for the desert.** It could land on a board as a crop from Spring, because Cactus Seeds were missing from the list of seeds that wait for Sandy's shop. It now shows up from Fall, like the desert's other forage, or from mid-Summer on Hard. Reported by Mycatisinapiano1528.
+
+### Changed
+
+- **Four config labels no longer run under their controls.** They are now Better Start gift every loop, Replay mod unlock cutscenes, Gear slots in Gil's Trophies, and Item rarity (TLY Custom only). The tooltips are unchanged.
+
+## 0.18.38 - 2026-09-22
+
+2182 tests.
+
+### Fixed
+
+- **Mine carts and barrels refill when the year rewinds.** A new year in Stardew refills the coal carts and resets the barrels and crates in the mines, but a rewind never counted as a new year, so once you had emptied them they stayed empty for every loop after. The rewind now refills them the way a new year does. Treasure chests still only open once. Contributed by supercam19.
+
 ## 0.18.37 - 2026-09-21
 
 2182 tests.
