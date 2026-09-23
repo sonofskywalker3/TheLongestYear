@@ -266,7 +266,7 @@ No ERROR line and no Harmony `failed to apply` line in any run.
 |---|---|
 | `hall-1-fade-in-glow-up.png` | About a second in. Town at night in the rain, HUD gone, the whole Community Center front in frame with the path, steps and flowerbeds below it. Both windows are lit warm orange inside their frames. Nobody on the path yet, which is right before his 1500 ms cue. |
 | `hall-2-shane-stopped-facing-the-hall.png` | Shane standing on the stone tile below the front door, back to the camera, facing up at the building. Both windows lit. Rain streaks across the frame. |
-| `hall-3-the-jump.png` | The same spot at the jump. He is plainly off the ground, his feet clear of the stones with his shadow on them below. A silhouette is crossing the LEFT window as a dark block on its left half. This is the frame the slot came undone on. |
+| `hall-3-the-jump.png` | The same spot at the jump beat. CORRECTED in fix round 1: the lift is not plainly visible in this full frame, and his feet sit about where they stood in hall-2, so this frame does not by itself show the jump. A silhouette is crossing the LEFT window as a dark block on its left half. This is the frame the slot came undone on. The jump is shown by `fix1-3-the-jump.png` and `fix1-4-jump-crop-2x.png`. |
 | `hall-4-running-out.png` | He has turned to face the camera and is running away down the path, several tiles below where he stopped, near the bottom of the frame. The windows still burn behind him. |
 | `hall-5-hold-on-the-windows.png` | Nobody in the shot. Just the dark facade, the two lit windows, and a silhouette sitting across the left one. This is the beat the scene ends on. |
 | `hall-6-next-morning.png` | Sun. 14, 6:00 am. The whole HUD is back (toolbar, clock, date, gold, JP, energy), daylight, the farmer waking in his own bed, and the popup "You awaken with a feeling that something is wrong at the Community Center." |
@@ -373,3 +373,123 @@ Four things only a picture could have told me. The second commit is exactly thes
   That is the intended shape (the hold on the windows is the last beat) but it is worth saying out
   loud.
 - **Winter is untested**, see above.
+
+
+## Fix round 1
+
+Finished by a fresh implementer after the round 1 implementer died mid-round. Its partial edits
+were committed as `a6ec9f1` and I verified them rather than trusting them. On top of the review's
+findings, **Jeff changed three requirements on 2026-09-23** after seeing the scene (relayed by the
+coordinator), and they are folded into this round: smaller shadows that read as men, dimmer light,
+and Shane walking PAST the hall on the town's real paths instead of up to it.
+
+### Review findings
+
+| Finding | Status | Where |
+|---|---|---|
+| IMPORTANT 1: the 5-tile Trim cancelled the Saloon-side walk in, so Shane came straight up the door column | ADDRESSED, then superseded by Jeff's route change. `a6ec9f1` did remove the Trim, but on screen he still popped into view mid-frame at (48,24), three rows above the bottom edge. I first moved his way in onto the row the bottom edge cuts (he came in over the bottom left from (48,26), 9 tiles, seen live), then Jeff's change replaced the whole walk. He now enters from the dirt road at the bottom right, crosses the front of the hall and leaves down the dirt path at the bottom left, so the door column is never his line. | `src/TheLongestYear/Scenes/HallWalker.cs:163` (`PlanWayIn`), `:185` (`PlanWayOut`) |
+| IMPORTANT 2: `PrepareRevert` duplicated `Revert`'s fairness setup | ADDRESSED. Both now call one private `PickFairReversion(rng)`, which owns the day of year, the deadline, the save snapshot and the obtainability model. | `src/TheLongestYear/Loop/SabotageService.cs:477`, `:487`, `:498` |
+| MINOR: FrontWindows measured off the abandoned art, no guard for a restored CC | ADDRESSED. `a6ec9f1` added `HallFacade.IsRestored` but only LOGGED it, and the panes were lit regardless. It is now read before anything is lit, and a restored or Joja front gets no panes and no lights (the scene plays on the dark front). Not exercised live: every test farm has an abandoned CC. | `src/TheLongestYear/Scenes/HallScene.cs:85` |
+| MINOR: 1-texel sliver in the window paint | ADDRESSED. The panes were 2 pixels off the art's 4 pixel texel grid on every side (118,414 60x92), so half a texel of the dark frame was lit round each pane. Measured off the old `hall-8` frame pixel by pixel: the dark border column at screen x 724 to 727 was lit from 726. Now (120,416 56x88), the whole texels of glass. The silhouettes are snapped to the texel grid as well, so their cut edge never lands mid-texel either. Verified on the new frames: the border texels (screen x 724 to 727, y 472 to 475, y 564 to 567) are unlit on all four pixels. | `src/TheLongestYear/Scenes/HallFacade.cs:52`, `src/TheLongestYear/Scenes/SceneWindowGlow.cs:170` |
+| MINOR: HallScene near 400 lines | ADDRESSED. `a6ec9f1` split `HallFacade` out. Shane now lives in his own `HallWalker` too. HallScene 154 lines, HallWalker 300, SceneWindowGlow 237. | `src/TheLongestYear/Scenes/HallWalker.cs` |
+| MINOR: the hall-3 description overstated the jump | ADDRESSED. The row in the table above is corrected in place. | this file |
+
+### Jeff's changes, 2026-09-23
+
+1. **Shadows too big, should read as a man.** The stretched 88 pixel `shadowTexture` blob is gone.
+   Each shape is now a 7 by 18 texel mask (`SceneWindow.Silhouette`: head, neck, shoulders, body)
+   drawn at the game's 4 pixels a texel, so 28 by 72 world pixels against a 56 by 88 pane, the head
+   5 texels below the top of the glass and the legs hidden by the sill. It bobs one texel a step
+   (`SceneWindow.StrideBob`), the three out of step. Built once as a texture on the first painted
+   frame and disposed in `Cleanup`. A device that will not build it logs a warning and the glass
+   burns with nobody crossing it. `src/TheLongestYear.Core/Sabotage/SceneWindow.cs:52`,
+   `src/TheLongestYear/Scenes/SceneWindowGlow.cs` (`Silhouette()`).
+2. **Light too bright.** Glow alpha 0.55 plus or minus 0.15 is now 0.35 plus or minus 0.10
+   (`SceneWindow.cs:23`), and each `LightSource` colour is scaled to 60 percent
+   (`SceneWindowGlow.cs:37`). On the same pixel of the left pane the fill went from (177,75,20) to
+   (150,72,13).
+3. **Shane walks past, on real paths.** `HallWalker` routes both halves with
+   `PathFindController.findPathForNPCSchedules` over Town (the schedule pathing, which prefers
+   stone, wood and dirt), and `SceneRoute` (new, in Core, tested) cuts each route to the part in
+   shot plus three tiles outside it. The ends were read off Town's own Back layer `Type` property
+   (exported with `patch export Maps/Town`): he comes along the dirt road from (66,29), up the dirt
+   connector onto the cobbles, stops at (52,23) three tiles below the door, jumps, backs away to
+   (52,25) still facing the hall, then goes west to join the dirt path at (40,23) and down it toward
+   (40,32), the way to the square and the road to Marnie's, and out of the bottom left of the frame.
+   The camera did not need to move.
+   **Tried first and dropped:** real routes from the Saloon door (45,70) to the Forest exit
+   (-1,89). Neither goes near the hall, so he came up and went down the same column under the door,
+   which reads as visiting, not passing.
+   **Pace:** a long way in starts earlier (under the fade) rather than being hurried, at 250 ms a
+   tile. Tonight's way in is 7 tiles from 1250 ms. The way out is 19 tiles at 75 ms a tile, so he
+   clears the frame at about 5900 ms, not the brief's 5400, and the hold on the empty windows is
+   about 300 ms before the fade. The brief's "runs out the way he came" is now "hurries on toward
+   home". Plan Task 9 and spec Scene 3 are updated to say all of this.
+
+### Tests
+
+TDD for the pure parts: the new tests in `SceneWindowTests` (dimmer flicker bounds, the mask's
+shape, texel snapping, the stride bob) and `SceneRouteTests` (6 tests) were written first. RED was
+a compile failure (`error CS0103: The name 'SceneRoute' does not exist in the current context`),
+GREEN after the code.
+
+```
+> dotnet build -c Debug --nologo -v q
+    0 Error(s)
+> dotnet test --nologo -v q
+Passed!  - Failed: 0, Passed: 2769, Skipped: 0, Total: 2769, Duration: 1 s - TheLongestYear.Tests.dll (net6.0)
+```
+
+2753 before this round's new tests, so 16 new.
+
+### Live check (automated run, mine)
+
+`tools/deploy.ps1 -Minimized`, `tools/bridge.ps1`, `tools/send-smapi-command.ps1` only, with the
+PrintWindow burst restoring the window WITHOUT focus as in the earlier rounds. No mouse, no
+keyboard. Six launches of mine, each on a fresh `tly_newgame standard skipintro` farm
+(`standard_449850260`, `_449850478`, `_449850660`, `_449851243`, `_449851441`, `_449851573`), all
+six deleted afterwards, game closed, `git checkout -- test-output/log-archive` run.
+`tly_sabotage scene hall` each time, as the mid-day preview. A day 1 farm has no donated slot, so
+the scene played against the no-op effect. No ERROR and no Harmony failure in any log.
+
+Final staging line:
+
+```
+Darkness: the hall is staged on the Community Center front at (47,11) to (58,20) in Town, facade
+abandoned, 2 window(s) in world pixels (3128,1120 56x88) (3600,1120 56x88), 2 light(s), Shane walks
+in 7 tile(s) from (54,28) at 250 ms a tile from 1250 ms, stops on the path at (52,23), backs away
+to (52,25), hurries off toward home 19 tile(s) to (40,28) at 75 ms a tile, drawn from a sheet of
+64x416, 16x32 frames, 4 column(s). Town's map declares no WindowLight on the hall.
+```
+
+Screenshots, untracked (gitignored), in
+`C:\Users\Jeff\Documents\Projects\Stardee Valoo\TheLongestYear\test-output\scenes\hall\`. The
+capture clock runs about 860 ms behind the scene clock (fixed off the jump frame). I looked at
+every one.
+
+| File | What it shows |
+|---|---|
+| `fix1-1-in-from-the-road-bottom-right.png` | Shane coming up into the frame at its bottom edge, right of the door, on the dirt connector from the road. Both windows lit, a silhouette in the left one. |
+| `fix1-2-up-the-path-onto-the-cobbles.png` | Him below the cobbles, walking up to his stop. |
+| `fix1-3-the-jump.png` | The jump frame, on the path three tiles below the door, back to the camera. |
+| `fix1-4-jump-crop-2x.png` | Six consecutive frames at his stop, 2x. The second is visibly lifted against its neighbours (about 28 screen pixels), then he stands, then backs down the path still facing up. |
+| `fix1-5-carrying-on-west-past-the-hall.png` | After the fright he is walking west across the lawn in front of the hall toward the dirt path at the left. |
+| `fix1-6-down-the-dirt-path-toward-home.png` | Him on the left dirt path heading down and out of the bottom left of the frame. |
+| `fix1-7-hold-on-the-windows.png` | Nobody in the shot, the two lit windows. |
+| `fix1-8-silhouettes-4x.png` | The left window at 4x in three frames: a black man's silhouette (head, neck, shoulders, body) against the glow, cut exactly at the glass. |
+| `fix1-9-dimmer-glow-on-the-texel-grid-4x.png` | Both panes at 4x: the dimmer fill stops on whole texels, the dark frame round it unlit on every side. |
+
+### Still open, plainly
+
+- **A restored Community Center was not seen live.** The guard is a read of mail flags before
+  anything is lit, not a picture.
+- **Zoom 75 percent** was closed by the review from the decompile, not by a screenshot. Nothing in
+  this round changes how the panes are placed.
+- **The with-candidate branch of `tly_sabotage scene hall`** was not exercised (day 1 farms have no
+  donated slots). It shares `PickFairReversion` with `tly_sabotage revert` now.
+- **The paces are brisk.** 250 ms a tile walking in is about twice vanilla's stroll, and 75 ms a
+  tile leaving is a hard run. That is what seven seconds allows for walking past rather than up to
+  the hall. Jeff may want the scene longer.
+- **The six `standard_4497*` farms the original report said were deleted are back** in the saves
+  folder, all recreated at 06:47 on 2026-09-22, which looks like Steam Cloud restoring them. I did
+  not touch them. Mine from this round may come back the same way.

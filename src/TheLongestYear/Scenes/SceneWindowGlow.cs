@@ -27,14 +27,21 @@ namespace TheLongestYear.Scenes
     /// THE SHAPES NEVER LEAVE THE GLASS. Each one is cut down to the pane it is crossing by
     /// <see cref="SceneWindow.Clip"/>, which takes the matching slice of the texture rather than
     /// touching the device's scissor rectangle. See that class for why.</summary>
-    internal sealed class SceneWindowGlow
+    internal sealed class SceneWindowGlow : IDisposable
     {
         /// <summary>Firelight, as the player sees it on the glass.</summary>
         private static readonly Color Firelight = new Color(255, 140, 40);
 
+        /// <summary>How strong a window's pool of light is, as a share of full firelight. Jeff
+        /// found the first version too bright (2026-09-23).</summary>
+        private const float LightStrength = 0.6f;
+
         /// <summary>The same firelight as the lightmap wants it: the complement, because the
-        /// lightmap is subtracted.</summary>
-        private static readonly Color FirelightSubtracted = new Color(255 - Firelight.R, 255 - Firelight.G, 255 - Firelight.B);
+        /// lightmap is subtracted, scaled down to <see cref="LightStrength"/>.</summary>
+        private static readonly Color FirelightSubtracted = new Color(
+            (int)((255 - Firelight.R) * LightStrength),
+            (int)((255 - Firelight.G) * LightStrength),
+            (int)((255 - Firelight.B) * LightStrength));
 
         /// <summary>How far one window's light reaches, in the light texture's own units. One is
         /// about a two tile pool, which is a window and not a bonfire.</summary>
@@ -49,10 +56,16 @@ namespace TheLongestYear.Scenes
         /// Prefixed so a light left behind by a crash is obviously the mod's.</summary>
         private const string LightIdPrefix = "TLY_SceneWindow_";
 
-        /// <summary>How wide a silhouette is in world pixels, and how far above and below the pane
-        /// it reaches before it is cut back to it.</summary>
-        private const int ShapeWidth = 88;
-        private const int ShapeOverhang = 6;
+        /// <summary>The game's art is drawn four pixels to a texel, and so is the silhouette.</summary>
+        private const int Texel = 4;
+
+        /// <summary>The silhouette in world pixels.</summary>
+        private static readonly int ShapeWidth = SceneWindow.SilhouetteWidth * Texel;
+        private static readonly int ShapeHeight = SceneWindow.SilhouetteHeight * Texel;
+
+        /// <summary>How far below the top of the pane the top of his head is, in texels, when he is
+        /// not mid-stride. His body then runs on below the sill, which hides his legs.</summary>
+        private const int HeadBelowPaneTexels = 5;
 
         /// <summary>How black a silhouette is against the firelight. Not fully black: a shape in
         /// front of a fire still catches a little of it round the edges.</summary>
@@ -68,12 +81,23 @@ namespace TheLongestYear.Scenes
         private readonly int _spanLeft;
         private readonly int _spanWidth;
 
+        /// <summary>Where a warning goes when the silhouette cannot be built.</summary>
+        private readonly Action<string> _warn;
+
+        /// <summary>The silhouette, built from <see cref="SceneWindow.Silhouette"/> the first time a
+        /// frame is painted, because a texture needs the graphics device.</summary>
+        private Texture2D _silhouette;
+        private bool _silhouetteFailed;
+
         /// <param name="originTile">The top left tile of the building the panes are measured from.</param>
         /// <param name="tileRelativePanes">Each pane in PIXELS, relative to the top left corner of
         /// <paramref name="originTile"/>.</param>
-        public SceneWindowGlow(Vector2 originTile, IReadOnlyList<Rectangle> tileRelativePanes)
+        /// <param name="warn">Where to say so when the silhouette cannot be built, and the windows
+        /// then burn with nobody crossing them.</param>
+        public SceneWindowGlow(Vector2 originTile, IReadOnlyList<Rectangle> tileRelativePanes, Action<string> warn = null)
         {
             if (tileRelativePanes == null) throw new ArgumentNullException(nameof(tileRelativePanes));
+            _warn = warn;
             var origin = new Point((int)originTile.X * SceneCamera.TileSize, (int)originTile.Y * SceneCamera.TileSize);
             int left = int.MaxValue, right = int.MinValue;
             foreach (Rectangle pane in tileRelativePanes)
@@ -138,15 +162,17 @@ namespace TheLongestYear.Scenes
 
         private void PaintShapes(SpriteBatch b, int elapsedMs)
         {
-            Texture2D shape = Game1.shadowTexture;
+            Texture2D shape = Silhouette();
             if (shape == null || _spanWidth <= 0) return;
             for (int s = 0; s < SceneWindow.ShapeCount; s++)
             {
-                int x = SceneWindow.SlideX(elapsedMs, s, _spanLeft, _spanWidth, ShapeWidth);
+                // On the texel grid, like the window art, so the cut edge never falls mid-texel.
+                int x = SceneWindow.SnapToTexel(SceneWindow.SlideX(elapsedMs, s, _spanLeft, _spanWidth, ShapeWidth), Texel);
+                int lift = SceneWindow.StrideBob(elapsedMs, s) * Texel;
                 foreach (Rectangle pane in _panes)
                 {
                     bool hit = SceneWindow.Clip(
-                        x, pane.Y - ShapeOverhang, ShapeWidth, pane.Height + ShapeOverhang * 2,
+                        x, pane.Y + HeadBelowPaneTexels * Texel - lift, ShapeWidth, ShapeHeight,
                         pane.X, pane.Y, pane.Width, pane.Height,
                         shape.Width, shape.Height,
                         out SceneWindow.ClippedDraw cut);
@@ -158,6 +184,37 @@ namespace TheLongestYear.Scenes
                         Color.Black * ShapeDarkness);
                 }
             }
+        }
+
+        /// <summary>The silhouette texture, built once from the mask. Null, with one warning, when
+        /// the device will not give one, and the glass then burns with nobody crossing it.</summary>
+        private Texture2D Silhouette()
+        {
+            if (_silhouette != null || _silhouetteFailed) return _silhouette;
+            try
+            {
+                int w = SceneWindow.SilhouetteWidth, h = SceneWindow.SilhouetteHeight;
+                var data = new Color[w * h];
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                        data[y * w + x] = SceneWindow.Silhouette[y][x] == '#' ? Color.White : Color.Transparent;
+                _silhouette = new Texture2D(Game1.graphics.GraphicsDevice, w, h);
+                _silhouette.SetData(data);
+            }
+            catch (Exception ex)
+            {
+                _silhouetteFailed = true;
+                _silhouette = null;
+                _warn?.Invoke($"the window silhouette could not be built, so the windows burn with nobody crossing them ({ex.GetType().Name}: {ex.Message})");
+            }
+            return _silhouette;
+        }
+
+        /// <summary>Let go of the silhouette texture. Safe to call twice.</summary>
+        public void Dispose()
+        {
+            _silhouette?.Dispose();
+            _silhouette = null;
         }
 
         /// <summary>A world rectangle where it lands on the screen.</summary>

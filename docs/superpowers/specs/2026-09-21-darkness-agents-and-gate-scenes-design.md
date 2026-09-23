@@ -195,11 +195,25 @@ sleeping farm.
 
 ### Scene 3: the hall (reversion), about 7 seconds
 
-- The Community Center from outside (Town), at night. The windows glow like firelight; shadows
-  cross them.
+- The Community Center from outside (Town), at night. The windows glow like firelight, and the
+  silhouettes of men cross them.
 - Shane walks in from the saloon side, stops dead, a small jump, backs away, runs.
 - Apply at the jump. The glow holds a beat. Fade.
 - The player learns nothing about which room or slot. The popup and the board tell the rest.
+
+**Changed by Jeff on 2026-09-23, after seeing the first version.** These override the lines above
+where they differ.
+
+- The shadows were too big. Each one reads as a man's silhouette: head, shoulders and body, roughly
+  human proportioned for the window, and smaller than before.
+- The light was too bright. Both the painted glow on the glass and the pools of light it casts
+  are turned down.
+- Shane is not going into or up to the Community Center. It is night and he is walking past it to
+  clear his head before he heads home. He walks the town's real paths (the game's own pathfinding
+  over Town, not a hand-drawn line) along the front of the hall, notices it, and the stop, the
+  jump and the backing away all happen on the path, not at the door. Then he carries on toward
+  home, the direction of Marnie's ranch, and out of the frame. The camera may move if the facade
+  and his path past it need it to share the frame.
 
 ### Scene 4: the cloud (tampering, Winter), about 10 seconds
 

@@ -1040,6 +1040,22 @@ Read first: the Town map's Community Center building tiles (front door at Town (
 
 - [ ] **Step 6: Commit and push.** `git commit -m "scenes: shadows in the hall"`
 
+**Changed by Jeff on 2026-09-23, after seeing the first version.** These override Steps 2 and 3
+where they differ.
+
+- The shadows are a man's silhouette each (head, shoulders, body, sized for the window), smaller
+  than the stretched shadow texture was. Built as a small texel mask on the game's four pixel grid
+  (`SceneWindow.Silhouette`), with a one texel walking bob.
+- The light is dimmer: the glow alpha is `0.35 + 0.10 * sin(ElapsedMs / 180.0 + i)` and the
+  `LightSource` colour is scaled to 60 percent.
+- Shane is walking past the hall to clear his head, not going to it. His routes come from the
+  game's schedule pathfinder (`PathFindController.findPathForNPCSchedules`) over Town: in along
+  the dirt road below the hall and up the short dirt path onto the cobbles, a stop on the path
+  three tiles below the door, the jump, the two tiles backing away, then on west and down the dirt
+  path toward the square and the road to Marnie's, out of the frame. Each route is cut to the part
+  in shot plus three tiles out of it (`SceneRoute`). "Runs out the way he came" at 4600 becomes
+  "hurries on toward home".
+
 ---
 
 ### Task 10: The cloud
