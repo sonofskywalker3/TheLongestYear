@@ -476,11 +476,7 @@ namespace TheLongestYear.Loop
         /// <summary>Debug entry point (<c>tly_sabotage revert</c>): a fair pick at the current level, opened now.</summary>
         public bool Revert(Random rng)
         {
-            int dayOfYear = Calendar.DayOfYear((int)Run.Season, Run.DayOfMonth);
-            int deadline = FairnessRule.ReversionDeadline(dayOfYear, Level);
-            SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
-            ObtainabilityModel model = _obtainability();
-            DonatedSlot pick = PickReversion(rng, id => FairnessRule.Counts(id, dayOfYear, deadline, Level, save, model));
+            DonatedSlot pick = PickFairReversion(rng);
             return pick != null && RevertSlot(pick);
         }
 
@@ -490,14 +486,22 @@ namespace TheLongestYear.Loop
         /// caller decides whether to watch the scene against a no-op instead.</summary>
         public PendingStrike PrepareRevert(Random rng)
         {
+            DonatedSlot pick = PickFairReversion(rng);
+            if (pick == null) return null;
+            _monitor.Log($"Darkness: {Strings.ItemName(pick.ItemId)} is the slot the hall scene will open (slot {pick.BundleIndex}/{pick.IngredientIndex}).", LogLevel.Info);
+            return new PendingStrike(DarknessEvent.Reversion, () => RevertSlot(pick));
+        }
+
+        /// <summary>The fair reversion pick both debug entry points share: today's day of the year,
+        /// the reversion deadline at the current level, and the save and obtainability model the
+        /// fairness rule reads. Null when nothing may fairly come undone.</summary>
+        private DonatedSlot PickFairReversion(Random rng)
+        {
             int dayOfYear = Calendar.DayOfYear((int)Run.Season, Run.DayOfMonth);
             int deadline = FairnessRule.ReversionDeadline(dayOfYear, Level);
             SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
             ObtainabilityModel model = _obtainability();
-            DonatedSlot pick = PickReversion(rng, id => FairnessRule.Counts(id, dayOfYear, deadline, Level, save, model));
-            if (pick == null) return null;
-            _monitor.Log($"Darkness: {Strings.ItemName(pick.ItemId)} is the slot the hall scene will open (slot {pick.BundleIndex}/{pick.IngredientIndex}).", LogLevel.Info);
-            return new PendingStrike(DarknessEvent.Reversion, () => RevertSlot(pick));
+            return PickReversion(rng, id => FairnessRule.Counts(id, dayOfYear, deadline, Level, save, model));
         }
 
         private DonatedSlot PickReversion(Random rng, Func<string, bool> fair)

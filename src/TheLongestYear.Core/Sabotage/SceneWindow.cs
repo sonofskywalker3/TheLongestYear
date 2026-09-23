@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace TheLongestYear.Core.Sabotage
 {
@@ -17,11 +18,12 @@ namespace TheLongestYear.Core.Sabotage
     /// with no device state touched at all.</summary>
     public static class SceneWindow
     {
-        /// <summary>The steady part of the firelight's alpha.</summary>
-        private const float GlowAlpha = 0.55f;
+        /// <summary>The steady part of the firelight's alpha. The brief said 0.55, and Jeff found it
+        /// too bright on seeing it (2026-09-23), so it is turned down.</summary>
+        private const float GlowAlpha = 0.35f;
 
         /// <summary>How far the flicker swings either side of <see cref="GlowAlpha"/>.</summary>
-        private const float GlowSwing = 0.15f;
+        private const float GlowSwing = 0.10f;
 
         /// <summary>The flicker's period, in milliseconds of the scene's own clock.</summary>
         private const double FlickerPeriodMs = 180.0;
@@ -36,6 +38,60 @@ namespace TheLongestYear.Core.Sabotage
 
         /// <summary>How many silhouettes there are to ask about.</summary>
         public static int ShapeCount => ShapeSpeeds.Length;
+
+        /// <summary>How long one step of a silhouette's walk is, in milliseconds, and how far apart
+        /// the three are in their stride so they do not bob together.</summary>
+        private const int StrideMs = 260;
+        private static readonly int[] StridePhasesMs = { 0, 110, 190 };
+
+        /// <summary>A man seen through the glass, one character per texel, <c>#</c> filled and
+        /// <c>.</c> clear (Jeff, 2026-09-23: the shapes were too big and read as blobs, and should
+        /// read as a man's silhouette). A head, a neck, shoulders and a body, drawn at the game's own
+        /// four pixels a texel so it sits on the same grid as the window art. The legs are left to
+        /// the sill, which hides them.</summary>
+        public static readonly IReadOnlyList<string> Silhouette = new[]
+        {
+            "..###..",
+            ".#####.",
+            ".#####.",
+            "..###..",
+            "...#...",
+            ".#####.",
+            "#######",
+            "#######",
+            "#######",
+            "#######",
+            ".#####.",
+            ".#####.",
+            ".#####.",
+            ".#####.",
+            ".#####.",
+            ".#####.",
+            ".#####.",
+            ".#####.",
+        };
+
+        /// <summary>The silhouette's size in texels.</summary>
+        public static int SilhouetteWidth => Silhouette[0].Length;
+        public static int SilhouetteHeight => Silhouette.Count;
+
+        /// <summary>A position pulled down onto the texel grid, so a shape moves a whole texel at a
+        /// time like everything else in the game's art and its cut edge never lands mid-texel.</summary>
+        public static int SnapToTexel(int pixels, int texel)
+        {
+            if (texel <= 0) throw new ArgumentOutOfRangeException(nameof(texel));
+            int remainder = pixels % texel;
+            return remainder < 0 ? pixels - remainder - texel : pixels - remainder;
+        }
+
+        /// <summary>How many texels a walking silhouette is lifted this instant: nothing and one,
+        /// step by step, which is the rise and fall of a man walking.</summary>
+        public static int StrideBob(int elapsedMs, int shapeIndex)
+        {
+            if (shapeIndex < 0 || shapeIndex >= StridePhasesMs.Length) throw new ArgumentOutOfRangeException(nameof(shapeIndex));
+            int at = Math.Max(0, elapsedMs) + StridePhasesMs[shapeIndex];
+            return (at / StrideMs) % 2;
+        }
 
         /// <summary>The firelight's alpha for one window this instant. Each window is given its own
         /// offset so the row of them does not pulse in step.</summary>

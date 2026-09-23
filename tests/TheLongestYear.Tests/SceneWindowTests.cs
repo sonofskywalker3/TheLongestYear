@@ -19,7 +19,8 @@ public class SceneWindowTests
             for (int window = 0; window < 6; window++)
             {
                 float alpha = SceneWindow.Flicker(ms, window);
-                Assert.InRange(alpha, 0.40f, 0.70f);
+                // Jeff, 2026-09-23: the light was too bright. The glow is 0.35 plus or minus 0.10.
+                Assert.InRange(alpha, 0.25f, 0.45f);
             }
         }
     }
@@ -180,5 +181,70 @@ public class SceneWindowTests
         Assert.False(SceneWindow.Clip(0, 0, 20, 20, 0, 0, 100, 0, 16, 8, out _));
         Assert.False(SceneWindow.Clip(0, 0, 20, 20, 0, 0, 100, 100, 0, 8, out _));
         Assert.False(SceneWindow.Clip(0, 0, 20, 20, 0, 0, 100, 100, 16, 0, out _));
+    }
+
+    // ------------------------------------------------------------------ the silhouette (Jeff, 2026-09-23)
+
+    [Fact]
+    public void The_silhouette_mask_is_a_rectangle_of_filled_and_empty_texels()
+    {
+        Assert.NotEmpty(SceneWindow.Silhouette);
+        int width = SceneWindow.Silhouette[0].Length;
+        foreach (string row in SceneWindow.Silhouette)
+        {
+            Assert.Equal(width, row.Length);
+            Assert.Matches("^[#.]+$", row);
+        }
+        Assert.Equal(width, SceneWindow.SilhouetteWidth);
+        Assert.Equal(SceneWindow.Silhouette.Count, SceneWindow.SilhouetteHeight);
+    }
+
+    [Fact]
+    public void The_silhouette_has_a_head_narrower_than_its_shoulders_and_a_neck_between()
+    {
+        static int Filled(string row) => row.Split('#').Length - 1;
+        int head = Filled(SceneWindow.Silhouette[1]);
+        int shoulders = 0;
+        int neck = int.MaxValue;
+        for (int y = 0; y < SceneWindow.Silhouette.Count; y++)
+        {
+            shoulders = Math.Max(shoulders, Filled(SceneWindow.Silhouette[y]));
+            if (y > 1 && y < 6) neck = Math.Min(neck, Filled(SceneWindow.Silhouette[y]));
+        }
+        Assert.True(head < shoulders, "the head should be narrower than the shoulders");
+        Assert.True(neck < head, "a neck should pinch in below the head");
+        // A man is several heads tall, not a blob as wide as he is high.
+        Assert.True(SceneWindow.SilhouetteHeight >= 2 * SceneWindow.SilhouetteWidth);
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(3, 0)]
+    [InlineData(4, 4)]
+    [InlineData(7, 4)]
+    [InlineData(-1, -4)]
+    [InlineData(-4, -4)]
+    [InlineData(-5, -8)]
+    public void A_position_snaps_down_to_the_texel_grid(int pixels, int snapped)
+    {
+        Assert.Equal(snapped, SceneWindow.SnapToTexel(pixels, 4));
+    }
+
+    [Fact]
+    public void A_walking_silhouette_bobs_by_one_texel_and_the_three_do_not_bob_in_step()
+    {
+        bool[] seenUp = new bool[SceneWindow.ShapeCount];
+        for (int ms = 0; ms < 4000; ms += 10)
+            for (int s = 0; s < SceneWindow.ShapeCount; s++)
+            {
+                int bob = SceneWindow.StrideBob(ms, s);
+                Assert.InRange(bob, 0, 1);
+                if (bob == 1) seenUp[s] = true;
+            }
+        Assert.All(seenUp, Assert.True);
+        bool allSame = true;
+        for (int ms = 0; ms < 4000; ms += 10)
+            if (SceneWindow.StrideBob(ms, 0) != SceneWindow.StrideBob(ms, 1)) allSame = false;
+        Assert.False(allSame);
     }
 }

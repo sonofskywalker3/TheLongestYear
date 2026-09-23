@@ -40,12 +40,17 @@ namespace TheLongestYear.Scenes
         /// nothing in the map data to take them from. They sit a little inside the glass rather than
         /// flush with the frame, because a pane that overshoots by a pixel reads as a glowing wall.
         ///
+        /// ON THE TEXEL GRID. The art is drawn at 4x, so every edge sits on a multiple of four
+        /// pixels from the building's corner. The first measurement (118,414 60x92) was two pixels
+        /// off that grid on every side, which left half a texel of the dark frame lit round each
+        /// pane (review, 2026-09-21). These are pulled in to the whole texels of glass.
+        ///
         /// THEY ARE THE ABANDONED FACADE'S. A restored or Joja-bought Community Center is different
         /// art, so <see cref="IsRestored"/> exists to say so before anything is lit.</summary>
         public static readonly IReadOnlyList<Rectangle> FrontWindows = new[]
         {
-            new Rectangle(118, 414, 60, 92),
-            new Rectangle(590, 414, 60, 92),
+            new Rectangle(120, 416, 56, 88),
+            new Rectangle(592, 416, 56, 88),
         };
 
         /// <summary>Has the building's front changed out from under the measurements? True once the
