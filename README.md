@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.38`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.43`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,15 @@ This is a **beta** (`0.18.38`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.43
+
+**The Difficulty setting reaches Hard and Extreme again, Marlon stops selling back last loop's items, and Cactus Fruit waits for the desert.**
+
+- **The Difficulty setting can reach Hard and Extreme.** Moving the mouse over the list counted as picking, so the page redrew the moment the list opened and only Easy and Normal could ever be chosen. It now waits for your click, and the page stays where you were instead of jumping back to the top. Reported by goblinslayer66666.
+- **Marlon no longer sells back last loop's items.** The rewind never cleared the list of things you dropped when you passed out, so the Adventurer's Guild could hand back an item from a previous loop. The rewind now empties it. Reported by Mycatisinapiano1528.
+- **Cactus Fruit waits for the desert.** It could land on a board as a crop from Spring, because Cactus Seeds were missing from the list of seeds that wait for Sandy's shop. It now shows up from Fall, like the desert's other forage, or from mid-Summer on Hard. Reported by Mycatisinapiano1528.
+- **Four config labels no longer run under their controls.** They are now Better Start gift every loop, Replay mod unlock cutscenes, Gear slots in Gil's Trophies, and Item rarity (TLY Custom only). The tooltips are unchanged.
 
 ## What's New in 0.18.38
 

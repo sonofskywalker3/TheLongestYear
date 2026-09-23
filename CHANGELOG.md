@@ -3,6 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.43 - 2026-09-23
+
+2183 tests.
+
+### Fixed
+
+- **The Difficulty setting can reach Hard and Extreme.** Moving the mouse over the list counted as picking, so the page redrew the moment the list opened and only Easy and Normal could ever be chosen. It now waits for your click, and the page stays where you were instead of jumping back to the top. Reported by goblinslayer66666.
+- **Marlon no longer sells back last loop's items.** The rewind never cleared the list of things you dropped when you passed out, so the Adventurer's Guild could hand back an item from a previous loop. The rewind now empties it. Reported by Mycatisinapiano1528.
+- **Cactus Fruit waits for the desert.** It could land on a board as a crop from Spring, because Cactus Seeds were missing from the list of seeds that wait for Sandy's shop. It now shows up from Fall, like the desert's other forage, or from mid-Summer on Hard. Reported by Mycatisinapiano1528.
+
+### Changed
+
+- **Four config labels no longer run under their controls.** They are now Better Start gift every loop, Replay mod unlock cutscenes, Gear slots in Gil's Trophies, and Item rarity (TLY Custom only). The tooltips are unchanged.
+
 ## 0.18.38 - 2026-09-22
 
 2182 tests.
