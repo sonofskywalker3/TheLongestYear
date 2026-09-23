@@ -45,9 +45,9 @@ namespace TheLongestYear.Scenes
         private const int TileSize = 64;
         private const float DrawScale = 4f;
 
-        /// <summary>How long one walking frame is held. Vanilla's default sprite interval is 175 ms and
-        /// a scene walker reads better a little quicker.</summary>
-        private const int StepMs = 150;
+        /// <summary>How long one walking frame is held, by default. Vanilla's default sprite interval
+        /// is 175 ms and a scene walker reads better a little quicker.</summary>
+        private const int DefaultStepMs = 150;
 
         private readonly AnimatedSprite _sprite;
         private readonly int _spriteHeight;
@@ -70,6 +70,11 @@ namespace TheLongestYear.Scenes
         /// up the screen.</summary>
         public float Lift;
 
+        /// <summary>How long one walking frame is held. A scene that moves an actor faster than the
+        /// default pace should shorten this to match, or the feet slide: two frames a tile is what
+        /// reads as walking, whatever the tiles a second.</summary>
+        public int StepMs = DefaultStepMs;
+
         /// <param name="textureName">A character sheet, for example <c>Characters\Linus</c>.</param>
         public SceneActor(string textureName, int spriteWidth = 16, int spriteHeight = 32)
         {
@@ -82,7 +87,7 @@ namespace TheLongestYear.Scenes
         /// clock, so the walk cycle runs at the same rate however the game is ticking.</summary>
         public void Animate(int elapsedMs)
         {
-            int step = Walking ? Math.Abs(elapsedMs / StepMs) % FramesPerDirection : 0;
+            int step = Walking ? Math.Abs(elapsedMs / Math.Max(1, StepMs)) % FramesPerDirection : 0;
             _sprite.currentFrame = Facing * FramesPerDirection + step;
             _sprite.UpdateSourceRect();
         }
