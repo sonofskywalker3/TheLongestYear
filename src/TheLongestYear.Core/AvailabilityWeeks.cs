@@ -70,6 +70,7 @@ public static class AvailabilityWeeks
             ["(O)284"] = (10, 10),    // Beet, Oasis week 9 plus 6 days
             ["(O)252"] = (11, 11),    // Rhubarb, Oasis seeds in a garden pot, Garden Pot recipe keep
             ["(O)268"] = (11, 11),    // Starfruit, Oasis seeds in a garden pot, Garden Pot recipe keep (Summer crop kept through Fall)
+            ["(O)90"] = (11, 11),     // Cactus Fruit, Oasis Cactus Seeds plus 12 days indoors; without this row the crop read as Spring week 2 and a loop-3 Quality Crops bundle asked 21 gold (Mycatisinapiano1528). Desert forage still gives it from week 9
             [YearTwoCrops.Garlic] = (4, 2),        // year-two crop: permanent buy, or the Boost from Spring week 2
             [YearTwoCrops.RedCabbage] = (7, 6),    // year-two crop: permanent buy, or the Boost from Summer week 6
             [YearTwoCrops.Artichoke] = (10, 10),   // vanilla Fall Mixed Seeds yields Artichoke Seeds at 25%, so a Fall 1 planting harvests in week 10 with nothing bought

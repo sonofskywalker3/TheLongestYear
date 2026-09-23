@@ -64,6 +64,12 @@ namespace TheLongestYear.Loop
             p.toolBeingUpgraded.Value = null;
             p.daysLeftForToolUpgrade.Value = 0;
 
+            // Marlon's item recovery reads Farmer.itemsLostLastDeath, which vanilla only clears on
+            // the NEXT pass-out. Left alone, the Adventurer's Guild sells last loop's dropped loot
+            // back in the new one, carrying an item across the reset (Mycatisinapiano1528, Nexus
+            // posts, 0.18.38).
+            p.itemsLostLastDeath.Clear();
+
             // Worn equipment — the STAT-BEARING slots (boots/rings/trinkets) live in their own
             // slots, not p.Items, so the inventory wipe above misses them (2026-07-09 reset-leak
             // audit, Dusklight7: worn rings survived every loop). Farmer.Equip(null, slot) routes
