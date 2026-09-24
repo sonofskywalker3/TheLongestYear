@@ -20,18 +20,18 @@ pays out (JP for what was donated so far, or nothing), whether it counts as a fa
 prices, whether it is also offered after "Keep playing", and a confirm step so nobody throws away a run by
 accident.
 
-### FIXED 0.18.44 to 0.18.46 (2026-09-24, on master, pushed, NOT released): tanky24u's three reports (Nexus bugs, 23 Sep)
-- **0.18.44, boosted crops harvestable while looking unripe.** Growth Spurt, the Farming bonus and Green Thumb
-  added their extra day after vanilla's nightly checks, so a wild seed crop they finished skipped its switch to
-  forage and sat pickable at a random half-grown sprite. The extra day now lands before vanilla's tick. Green
-  Thumb also stopped turning ready regrowing crops unready for a day. Not checked in game.
-- **0.18.45, Pufferfish due after Summer.** Not Ginger Island (the mod never counts the island): a Summer-only
-  fish with high effort slid to a Winter deadline, the any-N gates let Summer and Fall pass, and Winter failed.
-  Deadlines are now capped at the item's last spawn season (Jeff: "so they're not playing through 2 extra
-  seasons for an inevitable fail"). Specialty Fish then needs 3 by Summer.
-- **0.18.46, Artichoke odds question.** Year-Two Seeds is now Spring and Summer only (Jeff: vanilla Fall Mixed
-  Seeds already give Artichoke 25%, so it needs no boost).
-Replies wait until these ship (bug-reply-after-fix).
+### RELEASED 0.18.47 and 0.18.50 (2026-09-24), all three replied and marked Fixed: tanky24u's reports (Nexus bugs, 23 Sep)
+- **Boosted crops harvestable while looking unripe (fixed 0.18.44, shipped 0.18.47).** Growth Spurt, the Farming
+  bonus and Green Thumb added their extra day after vanilla's nightly checks, so a wild seed crop they finished
+  skipped its switch to forage. The extra day now lands before vanilla's tick. Live-checked with `tly_cropprobe`
+  (400 Spring Seeds: old code 34/60/46/7 stuck crops on mornings 4 to 7, fixed code none).
+- **Pufferfish due after Summer (shipped 0.18.50).** Not Ginger Island (the mod never counts the island): a
+  Summer-only fish could be due at Winter. First fixed with a last-season deadline cap (0.18.45, crops added then
+  removed in 0.18.48/0.18.49), then Jeff replaced the cap with the Spring/Summer/Fall Returns boosts: a one-week
+  Junimo Shrine boost per passed season that adds that season's fish and forage (legendaries included). Rain
+  Dance now sells in Winter for rain fish. Live-checked with `tly_spawnprobe`.
+- **Artichoke odds question (0.18.46, shipped 0.18.47).** Year-Two Seeds is Spring and Summer only. 0.18.46
+  edited the wrong description (Pierre's year-2 seeds upgrade); both texts corrected in 0.18.50.
 
 ### FIXED 0.18.27 (2026-09-17, on master, pushed, NOT released): a repeat festival visit trapped the player (asteriaths, Nexus post 17 Sep)
 Jeff: "figure out the already danced flag, clear it if we're not, and if they don't dance with anyone they need to
