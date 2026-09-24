@@ -275,6 +275,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug). An optional seed loop pins the board the new run generates (same number tly_genbundles takes), so two runs can be played on the same board. Usage: tly_reset [seedLoop]", this.ForceReset);
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
+            helper.ConsoleCommands.Add("tly_restart", "Debug: press the Junimo Shrine's Restart the year button. Opens the same yes/no (tly_answer 0 = Yes, 1 = No); refuses and logs why when the button would be hidden.", this.CmdRestart);
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
@@ -1868,6 +1869,13 @@ namespace TheLongestYear
             _runController?.DebugForceFailReset();
         }
 
+        /// <summary>Debug: the shrine's Restart the year button without the mouse.</summary>
+        private void CmdRestart(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _runController?.AskVoluntaryRestart();
+        }
+
         /// <summary>Debug: open the basic win screen → JP shrine → keep-playing choice, the real
         /// win-path flow. See <see cref="RunController.DebugForceWin"/>.</summary>
 
@@ -2455,6 +2463,7 @@ namespace TheLongestYear
                 case "tly_failreset":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
+                case "tly_restart": this.CmdRestart(command, args); break;
                 case "tly_day28continue":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceContinueCutscene(); break;
