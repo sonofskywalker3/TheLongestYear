@@ -49,6 +49,18 @@ namespace TheLongestYear.UI
             _buyBoost = buyBoost;
         }
 
+        /// <summary>Open the Junimo Shrine view exactly as acting on the statue does, with the same
+        /// attached hooks. Also used to return to it when the player answers No to Restart the
+        /// year. Returns false (and opens nothing) when no save state is attached.</summary>
+        internal static bool OpenMenu()
+        {
+            MetaState state = _state?.Invoke();
+            if (state == null) return false;
+            Game1.activeClickableMenu = new ShrinePreviewMenu(
+                state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
+            return true;
+        }
+
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
             if (e.NameWithoutLocale.IsEquivalentTo(ShrineTextureAsset))
@@ -132,8 +144,7 @@ namespace TheLongestYear.UI
                     }
                 }
 
-                Game1.activeClickableMenu = new ShrinePreviewMenu(
-                    state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
+                OpenMenu();
                 __result = true;
                 return false;
             }

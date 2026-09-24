@@ -30,6 +30,8 @@
     "dialog.hold.keep": "Keep these bundles ({{cost}} JP)",
     "dialog.hold.reshuffle": "Let time reshuffle them",
     "dialog.hold.not-enough-jp": "The Junimos need {{cost}} JP to hold the town's wishes. You have {{have}}.",
+    // Jeff's line (voluntary restart confirm, 2026-09-24).
+    "dialog.restart.prompt": "Are you sure? This resets all progress, just like a failed season.",
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
     "dialog.mines.uneasy-1": "The mines feel uneasy this week. The elevator and lower ladders will not respond.",
     "dialog.mines.uneasy-2": "The mines feel uneasy this week. The entrance has been closed off.",
