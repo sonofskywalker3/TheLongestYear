@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Newtonsoft.Json;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Day28;
 
@@ -84,7 +84,7 @@ public class VoluntaryRestartTests
     public void A_pending_restart_survives_a_save_round_trip()
     {
         var run = new RunState { PendingDay28 = Day28Branch.Restart };
-        RunState back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(run))!;
+        RunState back = JsonConvert.DeserializeObject<RunState>(JsonConvert.SerializeObject(run))!;
         Assert.Equal(Day28Branch.Restart, back.PendingDay28);
     }
 

@@ -111,6 +111,11 @@ namespace TheLongestYear.Integration
                 // Fail scene's end would run. If the day never ended (the sleep did not take), this
                 // runs the chain mid-day instead; RunController.EndDayNow logs that case.
                 if (Game1.showingEndOfNightStuff) return;
+                // Hardening: never start the chain before this morning's DayStarted has run and
+                // early-returned. OnCutsceneEnded clears the pending branch, so a DayStarted that
+                // arrived after it would run the normal day-start flow (planning hub, day sync)
+                // in the middle of the chain.
+                if (!rc.DayStartedWhileBranchPending) return;
                 _monitor.Log("Voluntary restart: no Junimo scene; starting hold -> upgrade menu -> banking -> reset.", LogLevel.Info);
                 rc.OnCutsceneEnded();
                 return;

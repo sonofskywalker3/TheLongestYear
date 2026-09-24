@@ -29,6 +29,15 @@ namespace TheLongestYear.Loop
         /// <summary>Why the shrine's Restart the year button is hidden right now (None = shown).</summary>
         public RestartBlock VoluntaryRestartBlock() => VoluntaryRestart.BlockedBy(RestartSituationNow());
 
+        /// <summary>True once SMAPI's DayStarted has run (and early-returned) while a day-28 branch
+        /// is pending. The Day28CutsceneDriver's Restart branch waits for it, so the chain never
+        /// starts before this morning's DayStarted: had it, OnCutsceneEnded would clear the pending
+        /// branch first and a late DayStarted would run DoDayStartSeasonAndHub mid-chain. Set in
+        /// <see cref="OnDayStarted"/>; cleared when the chain starts and on the next day end.</summary>
+        public bool DayStartedWhileBranchPending => _dayStartedWhileBranchPending;
+
+        private bool _dayStartedWhileBranchPending;
+
         public bool IsVoluntaryRestartOffered() => VoluntaryRestartBlock() == RestartBlock.None;
 
         /// <summary>The button's action (and <c>tly_restart</c>): ask the vanilla yes/no question.
@@ -55,15 +64,35 @@ namespace TheLongestYear.Loop
                     BeginVoluntaryRestart();
                     return;
                 }
-                // No: back to the shrine view the button was pressed from. Opening a menu from a
-                // question answer is what vanilla does too: the DialogueBox only closes itself while
-                // it is still the active menu, so the shrine replaces it cleanly.
-                if (TheLongestYear.UI.PlanningShrineService.OpenMenu())
-                    _monitor.Log("Voluntary restart: the player chose No. Nothing changed; back to the Junimo Shrine.", LogLevel.Info);
-                else
-                    _monitor.Log("Voluntary restart: the player chose No. Nothing changed; the shrine could not reopen (no save state attached).", LogLevel.Warn);
+                // No: back to the shrine view the button was pressed from, but NOT from inside this
+                // callback. Answering with Escape, N or the controller's B goes through
+                // DialogueBox.receiveKeyPress, which (unlike the click path) never clears
+                // Game1.dialogueUp; only the box's outro does, via closeDialogue, and that runs only
+                // while the box is still the active menu. Replacing the box here would skip it and
+                // leave dialogueUp stuck true (no pause menu, journal, inventory or tools).
+                // TickRestartDeclined opens the shrine once the outro has closed the box.
+                _restartDeclinedShrinePending = true;
+                _monitor.Log("Voluntary restart: the player chose No. Nothing changed; the Junimo Shrine reopens once the question closes.", LogLevel.Info);
             });
             _monitor.Log("Voluntary restart: confirm opened.", LogLevel.Info);
+        }
+
+        /// <summary>Set by the question's No answer; drained by <see cref="TickRestartDeclined"/>.</summary>
+        private bool _restartDeclinedShrinePending;
+
+        /// <summary>Polled every tick (from <see cref="TickShrineWatchdog"/>). Reopens the Junimo
+        /// Shrine after a No, once the question box's outro has closed it: no menu up and
+        /// <c>Game1.dialogueUp</c> cleared (closeDialogue resets it and CanMove on every input
+        /// path). Same deferral shape as <see cref="DeferShrineThenContinue"/>.</summary>
+        private void TickRestartDeclined()
+        {
+            if (!_restartDeclinedShrinePending) return;
+            if (Game1.activeClickableMenu != null || Game1.dialogueUp || Game1.eventUp) return;
+            _restartDeclinedShrinePending = false;
+            if (TheLongestYear.UI.PlanningShrineService.OpenMenu())
+                _monitor.Log("Voluntary restart: back to the Junimo Shrine after No.", LogLevel.Info);
+            else
+                _monitor.Log("Voluntary restart: the shrine could not reopen after No (no save state attached).", LogLevel.Warn);
         }
 
         /// <summary>Yes: queue the Restart branch and end the day. Runs inside the question's
@@ -83,9 +112,14 @@ namespace TheLongestYear.Loop
                 $"(run {Run.RunNumber}, {_store.State.JunimoPoints} JP banked). Ending the day now.",
                 LogLevel.Info);
             // Same call, same tick: the Day28CutsceneDriver runs a pending Restart on its next clear
-            // tick with no "the day has ended" guard, so Game1.newDay must already be true by then.
+            // tick once DayStarted has run (DayStartedWhileBranchPending), so Game1.newDay must
+            // already be true by then or the flag must be set here for the mid-day fallback.
             _pendingCutscene = Day28Branch.Restart;
+            _dayStartedWhileBranchPending = false;
             EndDayNow();
+            // The sleep did not take: no night, so no DayStarted will come to release the driver.
+            if (!Game1.newDay)
+                _dayStartedWhileBranchPending = true;
         }
 
         /// <summary>Put the host to sleep where they stand, with vanilla's own <c>debug sleep</c>
@@ -102,13 +136,19 @@ namespace TheLongestYear.Loop
             player.sleptInTemporaryBed.Value = true;
             here.answerDialogueAction("Sleep_Yes", null);
 
-            // doSleep recorded the statue as the sleep spot. Point it at the real bed so a quit
-            // after tonight's save reloads the player in the farmhouse (SaveGame load reads it).
+            // doSleep recorded the statue as the sleep spot. Point it at the real bed: the morning's
+            // BedFurniture.ApplyWakeUpPosition (called from Game1._newDayAfterFade) reads
+            // lastSleepLocation/lastSleepPoint while sleptInTemporaryBed is set, so the player wakes
+            // in the farmhouse bed on the live morning, and a quit after tonight's save reloads
+            // there too (SaveGame load reads the same fields). mostRecentBed is the bed that save load
+            // and the send-home-to-bed events use, so it points at the same bed.
             FarmHouse home = Utility.getHomeOfFarmer(player);
             if (home != null)
             {
+                Microsoft.Xna.Framework.Point bed = home.GetPlayerBedSpot();
                 player.lastSleepLocation.Value = home.NameOrUniqueName;
-                player.lastSleepPoint.Value = home.GetPlayerBedSpot();
+                player.lastSleepPoint.Value = bed;
+                player.mostRecentBed = Utility.PointToVector2(bed) * 64f;
             }
 
             if (Game1.newDay)

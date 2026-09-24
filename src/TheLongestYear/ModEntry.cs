@@ -1925,7 +1925,10 @@ namespace TheLongestYear
                 box.transitioning = false;
                 box.selectedResponse = n;
                 box.receiveLeftClick(0, 0, false);
-                if (object.ReferenceEquals(Game1.activeClickableMenu, box))
+                // A taken answer starts the box's outro (transitioning) and it closes itself a few
+                // frames later; callbacks that open a menu afterwards (the voluntary restart's No)
+                // wait for that close. Only a box still up and not closing ignored the click.
+                if (object.ReferenceEquals(Game1.activeClickableMenu, box) && !box.transitioning)
                     this.Monitor.Log("tly_answer: the box did not close; send it again", LogLevel.Warn);
                 else
                     this.Monitor.Log($"tly_answer: chose response {n} (\"{text}\").", LogLevel.Info);
