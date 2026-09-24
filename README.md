@@ -92,7 +92,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 **Garlic can be cultivated too, and both Cultivation upgrades are cheaper.**
 
-- **Cultivation: Garlic joins the shrine, and both Cultivation upgrades drop to 3,000 Junimo Points.** The shrine sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
+- **Cultivation: Garlic joins the upgrade menu, and both Cultivation upgrades drop to 3,000 Junimo Points.** The upgrade menu sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
 - **Artichoke is no longer held off an Easy board.** On the Easy item-rarity setting all three of Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the time, in any year, for free.
 
 ## What's New in 0.18.0
@@ -119,7 +119,7 @@ Coming from 0.17.15 or earlier? See the previous update below, or the full histo
 - **0.17.12: quest-finishing scenes play again every loop.** Jodi's fish casserole dinner and Marnie's cave carrot thank-you were being treated as already seen from your first loop, so the quest came back each loop but could never be turned in. Reported by ChaoticMindset.
 - **0.17.12: Gunther brings the Rusty Key again every loop.** The museum empties on the rewind and the 60-donation reward re-fired, but Gunther's farm visit that hands the key over never played again, so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by ChaoticMindset.
 - **0.17.8: a must-donate-all bundle's season gate takes any of its items.** The Bundle Log showed only the items pinned to the current season and the gate refused the rest. The pins now decide how many are due; which ones you bring is your call. Reported by ada113.
-- **0.17.8: the Cookbook and Craftbook open between the shrine and the reset.** A book bought at the loop-boundary shrine had nothing to bank by the time it first opened, because the reset had already wiped your recipes. Each book with a free slot now opens right after the shrine. Reported by ada113.
+- **0.17.8: the Cookbook and Craftbook open between the upgrade menu and the reset.** A book bought in the upgrade menu had nothing to bank by the time it first opened, because the reset had already wiped your recipes. Each book with a free slot now opens right after the upgrade menu. Reported by ada113.
 - **0.17.6: a crops bundle every season.** The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board now. A board could roll Orchard, Preserver's and Home Cook's Feast in their place, which left the Farming theme with nothing to ask for in week 1 but saplings.
 - **0.17.6: one jelly a week.** A weekly theme asks for at most one of Sea Jelly, River Jelly and Cave Jelly. Two of them in the same week meant two slow, separate fishing trips for one theme.
 - **0.17.5: every farm type.** Riverland, Forest, Hilltop, Wilderness, Four Corners, Beach and Meadowlands are all open now; the mod no longer forces Standard. Kept buildings go back to your own spots and the Junimo stash sits by your door on any map. Balance is shared across types, see Limitations.
@@ -137,7 +137,7 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 
 - **Seasonal time-loop.** Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
 - **Junimo Points.** Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
-- **The Junimo Shrine.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
+- **Junimo Upgrades.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
 - **JP Boosts.** The Junimo statue on your farm sells this-loop edges for JP: tomorrow's rain or a lucky day, a free late night, stacking forage/fish/crop/mine/drop chances, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot, or an elevator stop you have not earned yet. An Active tab shows what is running and a Plan tab shows what each keep still needs.
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
 - **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
@@ -167,9 +167,9 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 - **The intro.** On a fresh game, Lewis greets you on the porch, then a Junimo explains the loop. You wake on Spring 1 and pick your first **weekly theme**.
 - **Weekly themes.** Each week you choose one of two offered themes. Room themes (Foraging, Farming, Fishing, Mining) take goals from their Community Center room; Spelunking, Artisan and Kitchen take goals by item kind from anywhere on the board, and Mixed takes anything. Goals follow what the season gate demands first; the weekly JP bonus is paid goal by goal and the drawback lifts when every goal is done. The planning hub opens at the start of each week.
 - **Seasonal goals.** The **Bundle Log** book (click to open) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
-- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the shrine they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.) After five fails at the same season, the Junimos also offer to ease that season's gate for a JP price on the same curve.
+- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the upgrade menu opens, they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.) After five fails at the same season, the Junimos also offer to ease that season's gate for a JP price on the same curve.
 - **Junimo Points (JP).** Donations earn JP, scaled by rarity and by how late in the year you give (later seasons are worth much more). JP banks across loops.
-- **The Junimo Shrine.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, and more.
+- **Junimo Upgrades.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, and more.
 - **JP Boosts.** The Junimo statue on the farm sells this-loop edges for JP any day (weather, luck, a free late night, stacking bonuses, a temporary skill level, an elevator stop) and shows what is running on its Active tab.
 - **Carryover surfaces on the farm.** A **Cookbook** (kitchen) and **Craftbook** (table) let you bank recipes to keep; a **Junimo Stash** chest preserves a few items across resets.
 - **Winning.** Restore the entire Community Center within a year to break the loop. You can then choose to keep playing that run or start a fresh loop.
@@ -184,7 +184,7 @@ That is the mod, working as intended. His scene plays once per playthrough; from
 
 **The Traveling Cart only has one item.**
 
-Also intended. Joja is squeezing the merchant's suppliers, and the Cart Stall upgrades at the Junimo Shrine add slots back. If you would rather have the full cart, turn off LimitTravelingCartStock in the config.
+Also intended. Joja is squeezing the merchant's suppliers, and the Cart Stall upgrades in the upgrade menu add slots back. If you would rather have the full cart, turn off LimitTravelingCartStock in the config.
 
 **I did the Egg Hunt and now Lewis will not let me do it again today.**
 
@@ -235,7 +235,7 @@ Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**
 **What you carry between loops**
 
 - **Junimo Points earned.** Scales every JP award, so progress across loops is faster or slower. The season ramp keeps its shape, so late-season donating is still worth the most.
-- **Shrine prices.** Scales what upgrades cost at the Junimo Shrine.
+- **Upgrade prices.** Scales what upgrades cost in the upgrade menu.
 - **Starting gold.** Scales the `StartingMoney` value rather than replacing it. Extreme starts you with nothing.
 - **Starting cart slots.** How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is empty until you buy Cart Stall I.
 - **Hold and pity prices.** Scales the JP price of keeping your board on a Fail night, and of accepting the Junimos' offer to ease a season. The first of each stays free at every step.
@@ -281,7 +281,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `PityThreshold` / `PityQuotaStep` / `PityQuotaFloor` / `PityTrimPerStep` / `PityCosts` | 5 / 0.10 / 0.50 / 2 / `[0, 50, 100, 200, 300]` | Season pity: fails at one season before the Junimos offer help; quota cut per extra fail on a kept board and its floor; hardest items trimmed per extra fail on a reshuffle; JP price of accepting, by consecutive accepts. `PityEnabled` turns the offer off (fails are still counted) |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
-Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 / 1200 JP). Feedback on these is welcome.
+Upgrade prices are defined in the upgrade catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 / 1200 JP). Feedback on these is welcome.
 
 ## Limitations (beta)
 
@@ -296,7 +296,7 @@ Upgrade prices are defined in the shrine catalog (e.g. Cookbook/Craftbook tiers 
 What helps most right now:
 
 1. **Difficulty** — do the seasonal minimums feel fair? Too punishing, too easy? Which season wall hit hardest?
-2. **Pricing** — are JP earnings and shrine upgrade costs well-balanced? What did you save for first, and did it feel worth it?
+2. **Pricing** — are JP earnings and upgrade costs well-balanced? What did you save for first, and did it feel worth it?
 3. **Pacing** — how many loops before the run "clicked"? Did the carryover make later loops feel meaningfully stronger?
 4. **Bugs / crashes** — include your `SMAPI-latest.txt` (`Stardew Valley/ErrorLogs/`).
 
