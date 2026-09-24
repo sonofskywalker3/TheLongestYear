@@ -303,6 +303,8 @@ namespace TheLongestYear.Loop
                 // JP shop + reset (Fail) or roll into the next season (Continue). Suppress the
                 // normal season-sync/hub flow until the scene resolves — same shape as the old
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
+                // Releases the driver's Restart branch (DayStartedWhileBranchPending).
+                _dayStartedWhileBranchPending = true;
                 return;
             }
 
@@ -492,6 +494,7 @@ namespace TheLongestYear.Loop
         /// a reset. JP stays banked for the next shrine visit.</summary>
         public void TickShrineWatchdog()
         {
+            TickRestartDeclined();
             if (_holdReaskPending && Game1.activeClickableMenu == null)
             {
                 _holdReaskPending = false;
@@ -524,6 +527,7 @@ namespace TheLongestYear.Loop
         {
             Day28Branch branch = _pendingCutscene;
             _pendingCutscene = Day28Branch.None;
+            _dayStartedWhileBranchPending = false;
 
             switch (branch)
             {
@@ -881,6 +885,8 @@ namespace TheLongestYear.Loop
         {
             // Kitchen bonus: tonight's FarmAnimal.dayUpdate writes new records; yesterday's are done.
             (Run.DoubleProduceToday ??= new System.Collections.Generic.List<DoubleProduceRecord>()).Clear();
+            // A new night: this morning's DayStarted mark (RunController.Restart.cs) no longer counts.
+            _dayStartedWhileBranchPending = false;
             // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
             TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
