@@ -1,6 +1,6 @@
 # Voluntary Restart Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A **Restart the year** button on the Junimo Shrine (the farm statue) that, after a yes/no confirm, ends the day at once and runs the Fail-night chain with the Junimo scene removed: bundle hold question, upgrade menu, Cookbook/Craftbook banking, reset to Spring 1 of the next loop.
 
@@ -64,7 +64,7 @@ Read from the PC 1.6 decompile (`decompiled-pc/Stardew Valley`):
 | `src/TheLongestYear/Integration/Day28CutsceneDriver.cs` | **Modify.** No scene for `Restart`; call the continuation directly. |
 | `src/TheLongestYear/Loop/FarmEventSuppressionPatch.cs` | **Modify.** Doc comment only. |
 | `src/TheLongestYear/ModEntry.cs` | **Modify.** FarmEvent suppression uses `IsRewind`; `tly_restart` command; restart hooks for the shrine and `tly_openshrine`. |
-| `src/TheLongestYear/UI/PlanningShrineService.cs` | **Modify.** `AttachRestart` static hooks, passed into the menu. |
+| `src/TheLongestYear/UI/PlanningShrineService.cs` | **Modify.** `OpenMenu` (the statue's open path as one method, reused when the player answers No); `AttachRestart` static hooks, passed into the menu. |
 | `src/TheLongestYear/UI/ShrinePreviewMenu.cs` | **Modify.** The button at the right end of the tab strip. |
 | `src/TheLongestYear/i18n/default.json` | **Modify.** `dialog.restart.prompt`, `shrine.restart.button` (DRAFT). |
 | `src/TheLongestYear/manifest.json` | **Modify.** PATCH bump per code commit. |
@@ -125,8 +125,7 @@ namespace TheLongestYear.Tests;
 public class VoluntaryRestartTests
 {
     private static readonly RestartSituation OrdinaryDay = new(
-        DayOfMonth: 12, IsFestivalDay: false, EventUp: false,
-        IsMainPlayer: true, IsMultiplayer: false, ResetRunning: false);
+        DayOfMonth: 12, EventUp: false, ResetRunning: false);
 
     [Fact]
     public void Shown_on_an_ordinary_day()
@@ -146,10 +145,6 @@ public class VoluntaryRestartTests
         => Assert.Equal(RestartBlock.SeasonEndDay, VoluntaryRestart.BlockedBy(OrdinaryDay with { DayOfMonth = 28 }));
 
     [Fact]
-    public void Hidden_on_a_festival_day()
-        => Assert.Equal(RestartBlock.FestivalDay, VoluntaryRestart.BlockedBy(OrdinaryDay with { IsFestivalDay = true }));
-
-    [Fact]
     public void Hidden_during_an_event_or_cutscene()
         => Assert.Equal(RestartBlock.EventUp, VoluntaryRestart.BlockedBy(OrdinaryDay with { EventUp = true }));
 
@@ -158,24 +153,11 @@ public class VoluntaryRestartTests
         => Assert.Equal(RestartBlock.ResetRunning, VoluntaryRestart.BlockedBy(OrdinaryDay with { ResetRunning = true }));
 
     [Fact]
-    public void Hidden_for_a_farmhand()
-        => Assert.Equal(RestartBlock.NotHost, VoluntaryRestart.BlockedBy(OrdinaryDay with { IsMainPlayer = false }));
-
-    [Fact]
-    public void Hidden_in_multiplayer()
-        => Assert.Equal(RestartBlock.Multiplayer, VoluntaryRestart.BlockedBy(OrdinaryDay with { IsMultiplayer = true }));
-
-    [Fact]
     public void A_running_reset_is_reported_before_every_other_reason()
     {
-        RestartSituation all = new(28, true, true, false, true, true);
+        RestartSituation all = new(DayOfMonth: 28, EventUp: true, ResetRunning: true);
         Assert.Equal(RestartBlock.ResetRunning, VoluntaryRestart.BlockedBy(all));
     }
-
-    [Fact]
-    public void Day_28_is_reported_before_a_festival()
-        => Assert.Equal(RestartBlock.SeasonEndDay,
-            VoluntaryRestart.BlockedBy(OrdinaryDay with { DayOfMonth = 28, IsFestivalDay = true }));
 
     [Fact]
     public void Restart_after_keep_playing_clears_the_won_run_flag()
@@ -270,26 +252,17 @@ namespace TheLongestYear.Core.Day28
         None,
         /// <summary>A Fail, Win or Restart chain is already queued or mid-way, or the game is already ending the day.</summary>
         ResetRunning,
-        /// <summary>Only the host owns the loop.</summary>
-        NotHost,
-        /// <summary>A vanilla sleep in multiplayer waits on every farmer, and the reset is untested there.</summary>
-        Multiplayer,
-        /// <summary>An event, cutscene, festival or overnight farm event is playing.</summary>
+        /// <summary>An event, cutscene, festival in progress or overnight farm event is playing.</summary>
         EventUp,
         /// <summary>Day 28: the real gate owns tonight (Fail, Continue or Win).</summary>
         SeasonEndDay,
-        /// <summary>A festival is scheduled today (spec: hidden during festivals).</summary>
-        FestivalDay,
     }
 
     /// <summary>The world facts the button depends on, read by the mod when the shrine opens and
     /// again when the player confirms.</summary>
     public readonly record struct RestartSituation(
         int DayOfMonth,
-        bool IsFestivalDay,
         bool EventUp,
-        bool IsMainPlayer,
-        bool IsMultiplayer,
         bool ResetRunning);
 
     /// <summary>Voluntary restart at the Junimo Shrine (spec 2026-09-24-voluntary-restart-design).
@@ -299,11 +272,8 @@ namespace TheLongestYear.Core.Day28
         public static RestartBlock BlockedBy(RestartSituation s)
         {
             if (s.ResetRunning) return RestartBlock.ResetRunning;
-            if (!s.IsMainPlayer) return RestartBlock.NotHost;
-            if (s.IsMultiplayer) return RestartBlock.Multiplayer;
             if (s.EventUp) return RestartBlock.EventUp;
             if (Calendar.IsMonthEnd(s.DayOfMonth)) return RestartBlock.SeasonEndDay;
-            if (s.IsFestivalDay) return RestartBlock.FestivalDay;
             return RestartBlock.None;
         }
 
@@ -332,11 +302,11 @@ namespace TheLongestYear.Core.Day28
 ```
 dotnet test --filter "FullyQualifiedName~VoluntaryRestartTests"
 ```
-Expected: 21 passed (14 facts plus 2 + 5 theory cases). Then the full suite:
+Expected: 17 passed (10 facts plus 2 + 5 theory cases). Then the full suite:
 ```
 dotnet test
 ```
-Expected: baseline + 21, all passing.
+Expected: baseline + 17, all passing.
 
 - [ ] **Step 6: Build the mod** (the enum change must not break the `switch` in `OnCutsceneEnded`, which has a `default`)
 
@@ -548,6 +518,7 @@ git push
 
 **Files:**
 - Create: `src/TheLongestYear/Loop/RunController.Restart.cs`
+- Modify: `src/TheLongestYear/UI/PlanningShrineService.cs` (`OpenMenu`)
 - Modify: `src/TheLongestYear/i18n/default.json`
 - Modify: `src/TheLongestYear/ModEntry.cs` (console command, bridge case, handler)
 - Modify: `src/TheLongestYear/manifest.json` (0.18.54 -> 0.18.55)
@@ -561,7 +532,37 @@ In `src/TheLongestYear/i18n/default.json`, directly after the `"dialog.hold.not-
 ```
 The Yes/No answers are vanilla's own (`GameLocation.createYesNoResponses`), already translated by the game.
 
-- [ ] **Step 2: Create the partial**
+- [ ] **Step 2: The shrine's open path as one method**
+
+Choosing No returns the player to the Junimo Shrine view, so the restart code must open it exactly as the statue does. In `src/TheLongestYear/UI/PlanningShrineService.cs`, after `AttachBoosts`, add:
+```csharp
+
+        /// <summary>Open the Junimo Shrine view exactly as acting on the statue does, with the same
+        /// attached hooks. Also used to return to it when the player answers No to Restart the
+        /// year. Returns false (and opens nothing) when no save state is attached.</summary>
+        internal static bool OpenMenu()
+        {
+            MetaState state = _state?.Invoke();
+            if (state == null) return false;
+            Game1.activeClickableMenu = new ShrinePreviewMenu(
+                state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
+            return true;
+        }
+```
+and in `ShrineActionPatch.Prefix` replace:
+```csharp
+                Game1.activeClickableMenu = new ShrinePreviewMenu(
+                    state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
+                __result = true;
+```
+with:
+```csharp
+                OpenMenu();
+                __result = true;
+```
+(`state` was already checked non-null above, so `OpenMenu` always opens here. The intro-quest code stays in the prefix: it belongs to a real statue click only.)
+
+- [ ] **Step 3: Create the partial**
 
 Create `src/TheLongestYear/Loop/RunController.Restart.cs`:
 
@@ -591,10 +592,7 @@ namespace TheLongestYear.Loop
 
         private RestartSituation RestartSituationNow() => new(
             DayOfMonth: Game1.dayOfMonth,
-            IsFestivalDay: Utility.isFestivalDay(),
             EventUp: Game1.eventUp || Game1.CurrentEvent != null || Game1.farmEvent != null || Game1.isFestival(),
-            IsMainPlayer: Context.IsMainPlayer,
-            IsMultiplayer: Context.IsMultiplayer,
             ResetRunning: IsRewindChainRunning || Game1.newDay);
 
         /// <summary>Why the shrine's Restart the year button is hidden right now (None = shown).</summary>
@@ -603,7 +601,8 @@ namespace TheLongestYear.Loop
         public bool IsVoluntaryRestartOffered() => VoluntaryRestartBlock() == RestartBlock.None;
 
         /// <summary>The button's action (and <c>tly_restart</c>): ask the vanilla yes/no question.
-        /// No closes the box and changes nothing.</summary>
+        /// No changes nothing and returns the player to the Junimo Shrine view, opened the same way
+        /// the statue opens it (<see cref="TheLongestYear.UI.PlanningShrineService.OpenMenu"/>).</summary>
         public void AskVoluntaryRestart()
         {
             RestartBlock block = VoluntaryRestartBlock();
@@ -625,7 +624,13 @@ namespace TheLongestYear.Loop
                     BeginVoluntaryRestart();
                     return;
                 }
-                _monitor.Log("Voluntary restart: the player chose No. Nothing changed.", LogLevel.Info);
+                // No: back to the shrine view the button was pressed from. Opening a menu from a
+                // question answer is what vanilla does too: the DialogueBox only closes itself while
+                // it is still the active menu, so the shrine replaces it cleanly.
+                if (TheLongestYear.UI.PlanningShrineService.OpenMenu())
+                    _monitor.Log("Voluntary restart: the player chose No. Nothing changed; back to the Junimo Shrine.", LogLevel.Info);
+                else
+                    _monitor.Log("Voluntary restart: the player chose No. Nothing changed; the shrine could not reopen (no save state attached).", LogLevel.Warn);
             });
             _monitor.Log("Voluntary restart: confirm opened.", LogLevel.Info);
         }
@@ -687,7 +692,7 @@ namespace TheLongestYear.Loop
 
 Note: `_pendingCutscene`, `_shrineOpenPending`, `_menuWatch`, `_holdReaskPending`, `_monitor`, `_store` and `Run` are private members of the main file; a partial shares them.
 
-- [ ] **Step 3: `tly_restart` (console and bridge)**
+- [ ] **Step 4: `tly_restart` (console and bridge)**
 
 In `src/TheLongestYear/ModEntry.cs`, after the `tly_failreset` registration (line ~276), add:
 ```csharp
@@ -707,7 +712,7 @@ Next to `CmdFailReset`, add:
         }
 ```
 
-- [ ] **Step 4: Build and test**
+- [ ] **Step 5: Build and test**
 
 ```
 dotnet build "C:\Users\Jeff\Documents\Projects\Stardee Valoo\TheLongestYear\src\TheLongestYear\TheLongestYear.csproj" -p:EnableModDeploy=false
@@ -716,13 +721,13 @@ dotnet test
 ```
 Expected: `Build succeeded`; all tests pass, including `I18nGuardTests` (the new key is referenced by `Strings.Get("dialog.restart.prompt")`).
 
-- [ ] **Step 5: Bump and commit**
+- [ ] **Step 6: Bump and commit**
 
 `manifest.json`: `0.18.54` -> `0.18.55`.
 ```
 cd "C:\Users\Jeff\Documents\Projects\Stardee Valoo\TheLongestYear"
-git add src/TheLongestYear/Loop/RunController.Restart.cs src/TheLongestYear/i18n/default.json src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json
-git commit -m "v0.18.55: voluntary restart confirm ends the day at once; tly_restart debug command
+git add src/TheLongestYear/Loop/RunController.Restart.cs src/TheLongestYear/UI/PlanningShrineService.cs src/TheLongestYear/i18n/default.json src/TheLongestYear/ModEntry.cs src/TheLongestYear/manifest.json
+git commit -m "v0.18.55: voluntary restart confirm ends the day at once (No returns to the shrine); tly_restart debug command
 
 Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01MLy6J9QCsqjg9XvYFmm4UG"
@@ -854,7 +859,8 @@ with:
 Add after `ActivateRow`:
 ```csharp
         /// <summary>Close the shrine and hand over to the mod's yes/no. The question box would
-        /// replace this menu anyway; closing first keeps the hand-off clean.</summary>
+        /// replace this menu anyway; closing first keeps the hand-off clean. Answering No reopens
+        /// the shrine (RunController.AskVoluntaryRestart).</summary>
         private void RequestRestart()
         {
             Game1.playSound("smallSelect");
@@ -906,17 +912,18 @@ after `AttachBoosts` add:
             _requestRestart = request;
         }
 ```
-and in `ShrineActionPatch.Prefix` replace:
+and in `OpenMenu` (Task 3) replace:
 ```csharp
-                Game1.activeClickableMenu = new ShrinePreviewMenu(
-                    state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
+            Game1.activeClickableMenu = new ShrinePreviewMenu(
+                state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
 ```
 with:
 ```csharp
-                Game1.activeClickableMenu = new ShrinePreviewMenu(
-                    state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost,
-                    _restartOffered, _requestRestart);
+            Game1.activeClickableMenu = new ShrinePreviewMenu(
+                state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost,
+                _restartOffered, _requestRestart);
 ```
+(Both the statue click and the No answer go through `OpenMenu`, so a reopened shrine shows the button again.)
 
 - [ ] **Step 8: ModEntry wiring**
 
@@ -1006,9 +1013,9 @@ If Rodger is not in Spring: `tly_reset`, wait `Opened planning hub`, `tly_select
 
 For each step below take `n = count` before sending and wait with `-FromLine n`.
 
-- [ ] **Step 4: No does nothing**
+- [ ] **Step 4: No returns to the shrine and changes nothing**
 
-Send `tly_runstate` and note run N, day, JP banked. Send `tly_openshrine`; expect `tly_openshrine: restart button shown.`; send `tly_dismiss`. Send `tly_restart`; wait `Voluntary restart: confirm opened.` Send `tly_answer 1`; wait `the player chose No. Nothing changed.` Send `tly_runstate`: run, day and JP identical.
+Send `tly_runstate` and note run N, day, JP banked. Send `tly_openshrine`; expect `tly_openshrine: restart button shown.`; send `tly_dismiss`. Send `tly_restart`; wait `Voluntary restart: confirm opened.` Send `tly_answer 1`; wait `the player chose No. Nothing changed; back to the Junimo Shrine.` (a Warn `could not reopen` fails this step). The shrine is open again: send `tly_dismiss` and expect `tly_dismiss: ShrinePreviewMenu closed.` Send `tly_runstate`: run, day and JP identical.
 
 - [ ] **Step 5: Yes, reshuffle, full chain**
 
@@ -1029,9 +1036,9 @@ Pick the week-1 theme (`tly_select <theme>` once `Opened planning hub`). `tly_se
 
 `tly_setday 12`. Send `tly_win`; wait `opening the Win Junimo scene`; `tly_skipscene`; `Opened Junimo Shrine`; `tly_dismiss`; on the win question `tly_answer 1`; expect `VictoryAcknowledged set`. `tly_runstate` shows `victoryAcknowledged=True`. Restart as in Step 5 (reshuffle); expect `the won-run flag is cleared, so the next loop can be won again`. After `Loop reset complete`, `tly_runstate` shows `victoryAcknowledged=False`.
 
-- [ ] **Step 8: Hidden on a festival day and on day 28**
+- [ ] **Step 8: Hidden on day 28**
 
-Use the current season's festival day (Spring 13, Summer 11, Fall 16, Winter 8). `tly_setday 13`; `tly_openshrine`: `restart button hidden (FestivalDay)`; `tly_dismiss`; `tly_restart`: `not offered right now (FestivalDay)`. `tly_setday 28`; same two checks with `SeasonEndDay`. `tly_setday 12` afterwards.
+`tly_setday 28`; `tly_openshrine`: `restart button hidden (SeasonEndDay)`; `tly_dismiss`; `tly_restart`: `not offered right now (SeasonEndDay)`. `tly_setday 12` afterwards.
 
 - [ ] **Step 9: The real Fail night still works** (regression)
 
@@ -1064,7 +1071,7 @@ README and `docs/nexus-description.bbcode` must say the same thing (house style)
 
 **Start the year over whenever you like, from the Junimo Shrine.**
 
-- **Restart the year.** The Junimo Shrine on your farm has a new Restart the year button. It works like a failed season without the Junimo scene: the day ends right away, you choose whether to keep your bundles, spend JP in Junimo Upgrades, bank recipes, and wake on Spring 1 of the next loop. Your JP carries over as usual, and a restart counts as a loop, so holding the same board again still costs more each time in a row. The button is hidden on festival days, on the last day of a season, and during events. Suggested by tanky24u.
+- **Restart the year.** The Junimo Shrine on your farm has a new Restart the year button. It works like a failed season without the Junimo scene: the day ends right away, you choose whether to keep your bundles, spend JP in Junimo Upgrades, bank recipes, and wake on Spring 1 of the next loop. Your JP carries over as usual, and a restart counts as a loop, so holding the same board again still costs more each time in a row. The button is hidden on the last day of a season and while an event or festival is playing. Suggested by tanky24u.
 - **It works after Keep playing too.** If you won and kept playing, a restart starts a fresh loop that can be won again.
 
 ```
@@ -1077,7 +1084,7 @@ README and `docs/nexus-description.bbcode` must say the same thing (house style)
 [b]Start the year over whenever you like, from the Junimo Shrine.[/b]
 
 [list]
-[*][b]Restart the year.[/b] The Junimo Shrine on your farm has a new Restart the year button. It works like a failed season without the Junimo scene: the day ends right away, you choose whether to keep your bundles, spend JP in Junimo Upgrades, bank recipes, and wake on Spring 1 of the next loop. Your JP carries over as usual, and a restart counts as a loop, so holding the same board again still costs more each time in a row. The button is hidden on festival days, on the last day of a season, and during events. Suggested by tanky24u.
+[*][b]Restart the year.[/b] The Junimo Shrine on your farm has a new Restart the year button. It works like a failed season without the Junimo scene: the day ends right away, you choose whether to keep your bundles, spend JP in Junimo Upgrades, bank recipes, and wake on Spring 1 of the next loop. Your JP carries over as usual, and a restart counts as a loop, so holding the same board again still costs more each time in a row. The button is hidden on the last day of a season and while an event or festival is playing. Suggested by tanky24u.
 [*][b]It works after Keep playing too.[/b] If you won and kept playing, a restart starts a fresh loop that can be won again.
 [/list]
 
@@ -1094,7 +1101,7 @@ README and `docs/nexus-description.bbcode` must say the same thing (house style)
 
 ### Added
 
-- **Restart the year at the Junimo Shrine.** A button on the statue's planning view asks a yes/no, then ends the day at once and runs the Fail-night chain with the Junimo scene removed: keep-or-reshuffle question, Junimo Upgrades, Cookbook and Craftbook banking, reset to Spring 1. Nothing is paid out; JP is already banked. It counts as a loop for the loop number and for consecutive hold prices. Hidden on festival days, on day 28 (the real gate owns that night), during events, while another reset is running, and in multiplayer. After Keep playing it clears the won-run flag so the next loop can be won. Suggested by tanky24u (Nexus posts, 2026-09-23).
+- **Restart the year at the Junimo Shrine.** A button on the statue's planning view asks a yes/no, then ends the day at once and runs the Fail-night chain with the Junimo scene removed: keep-or-reshuffle question, Junimo Upgrades, Cookbook and Craftbook banking, reset to Spring 1. Nothing is paid out; JP is already banked. It counts as a loop for the loop number and for consecutive hold prices. Hidden on day 28 (the real gate owns that night), while an event, cutscene or festival is playing, and while another reset is running. Choosing No returns to the shrine. After Keep playing it clears the won-run flag so the next loop can be won. Suggested by tanky24u (Nexus posts, 2026-09-23).
 - **`tly_restart`** debug command: presses the button headlessly (answer with `tly_answer 0` / `1`).
 ```
 
@@ -1114,7 +1121,7 @@ The live Nexus page is not touched here; that needs Jeff's yes and the Claude-in
 
 ## Self-Review
 
-- Spec coverage: button and confirm (Tasks 3, 4); hold, upgrade menu, banking, reset reused unchanged (Task 2 `StartRewindChain`); no payout (gate skipped, nothing awarded); counts as a fail (`FinalizeReset`, same hold curve); won-run flag (Task 2); hidden during festivals, events, day 28, reset in progress (Task 1 rule, Task 3 snapshot); timing via the morning path with the mid-day fallback visible (Tasks 2, 3, 5); Testing section (Task 1 unit tests, Task 5 live).
+- Spec coverage: button and confirm (Tasks 3, 4); hold, upgrade menu, banking, reset reused unchanged (Task 2 `StartRewindChain`); no payout (gate skipped, nothing awarded); counts as a fail (`FinalizeReset`, same hold curve); won-run flag (Task 2); No returns to the shrine (Task 3 `OpenMenu`); hidden during events (a festival in progress included), on day 28 and while a reset is running (Task 1 rule, Task 3 snapshot); no festival-day or multiplayer rule (Jeff, 2026-09-24); timing via the morning path with the mid-day fallback visible (Tasks 2, 3, 5); Testing section (Task 1 unit tests, Task 5 live).
 - Spec drift found while planning: the spec says the hold question "is skipped on a Vanilla board, exactly as on a fail night", but `BundleHold.IsOfferable` now returns true for every bundle source (Jeff's ruling 2026-08-27), so the question is asked on every board. This plan keeps exact Fail-night parity by reusing the same code, so a restart asks it wherever a Fail night does.
 - Placeholder scan: the only placeholders are the two DRAFT strings (by design, Task 6) and `<ver>` / `<date>` / `<count>` in Task 7, which depend on earlier results.
 - Type consistency: `RestartSituation`, `RestartBlock`, `VoluntaryRestart.BlockedBy/IsOffered/ClearWonRun/IsRewind`, `RunController.IsRewindChainRunning/VoluntaryRestartBlock/IsVoluntaryRestartOffered/AskVoluntaryRestart` are used with the same names everywhere.

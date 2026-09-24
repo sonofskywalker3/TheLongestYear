@@ -19,8 +19,8 @@ went badly.
 1. The player opens the Junimo Shrine. The planning/buffs view has a new **Restart the year** button.
    The final wording goes through the game-writing skill.
 2. Clicking it opens a vanilla yes/no box. Jeff's draft: "Are you sure? This resets all progress, just
-   like a failed season." (Final wording also goes through game-writing.) Choosing No closes the box
-   and changes nothing.
+   like a failed season." (Final wording also goes through game-writing.) Choosing No changes
+   nothing and returns the player to the Junimo Shrine view.
 3. Choosing Yes runs the fail-night chain with the cutscene removed:
    - the **bundle hold question** (keep this board / let time reshuffle it), with the same prices and
      the same rules as a fail night. It is skipped on a Vanilla board, exactly as on a fail night;
@@ -38,8 +38,10 @@ went badly.
 - **After "Keep playing":** also offered. It behaves like choosing "Start a new loop" on the win screen:
   it clears the won-run flag (`VictoryAcknowledged`) so the next loop can be won again. On the `story`
   branch it also clears `Year2WallArmed`. This will be resolved when master is merged into story.
-- **When the button is hidden:** during festivals, events and cutscenes, on the day-28 night itself (the
-  real fail or continue night owns that slot), and whenever another reset chain is already running.
+- **When the button is hidden:** during events and cutscenes (a festival in progress counts), on the
+  day-28 night itself (the real fail or continue night owns that slot), and whenever another reset
+  chain is already running. Festival days and multiplayer get no special rule (Jeff, 2026-09-24):
+  multiplayer is untested for the whole mod, and the restart is no different.
 
 ## Timing (implementation note, to settle in the plan)
 
@@ -57,11 +59,11 @@ a live test on the Rodger throwaway save proves that it is clean.
 
 ## Testing
 
-- Core: a pure rule that decides whether the button is shown (dates, festival and event flags, won-run
-  flag, reset in progress), with unit tests.
+- Core: a pure rule that decides whether the button is shown (day of month, event flag, reset in
+  progress), plus the won-run flag clear, with unit tests.
 - Live, on the Rodger throwaway save, loaded through `tly_loadsave`:
-  - restart in the middle of Spring: No does nothing; Yes runs hold -> menu -> banking -> Spring 1, JP
+  - restart in the middle of Spring: No changes nothing and returns to the shrine; Yes runs hold -> menu -> banking -> Spring 1, JP
     is kept, and the loop number goes up;
   - Keep on the hold question carries the board over;
   - restart after `tly_win` and Keep playing: the flag is cleared, and the next loop can be won;
-  - the button is hidden during a festival and on day 28.
+  - the button is hidden on day 28.
