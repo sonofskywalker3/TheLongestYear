@@ -719,6 +719,9 @@ namespace TheLongestYear
                     this.RefreshSneakPeekChannelLabel();
                 return result;
             });
+            _planningShrine.AttachRestart(
+                () => _runController?.IsVoluntaryRestartOffered() == true,
+                () => _runController?.AskVoluntaryRestart());
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
@@ -1742,10 +1745,18 @@ namespace TheLongestYear
             }
             var menu = new TheLongestYear.UI.ShrinePreviewMenu(
                 _meta.State, _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor, _meta.Run,
-                (id, skill) => _boostPurchases.TryBuy(id, skill));
+                (id, skill) => _boostPurchases.TryBuy(id, skill),
+                () => _runController?.IsVoluntaryRestartOffered() == true,
+                () => _runController?.AskVoluntaryRestart());
             menu.ShowTab(tab);
             Game1.activeClickableMenu = menu;
             this.Monitor.Log($"tly_openshrine: shrine opened on the {tab} tab.", LogLevel.Info);
+            var block = _runController?.VoluntaryRestartBlock() ?? TheLongestYear.Core.Day28.RestartBlock.ResetRunning;
+            this.Monitor.Log(
+                block == TheLongestYear.Core.Day28.RestartBlock.None
+                    ? "tly_openshrine: restart button shown."
+                    : $"tly_openshrine: restart button hidden ({block}).",
+                LogLevel.Info);
         }
 
         /// <summary>Debug: close whatever menu is up without the mouse. A LevelUpMenu needs its OK

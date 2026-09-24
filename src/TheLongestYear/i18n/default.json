@@ -358,6 +358,8 @@
     "shrine.tab.active": "Active",
     "shrine.tab.boosts": "Boosts",
     "shrine.tab.plan": "Plan",
+    // Jeff's name for the button (voluntary restart, 2026-09-24).
+    "shrine.restart.button": "Restart the year",
     "shrine.active.running": "Running boosts",
     "shrine.active.none": "Nothing running. The Boosts tab sells this-loop edges for JP.",
     "shrine.active.tonight": "expires tonight",
