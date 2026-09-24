@@ -11,6 +11,9 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
   "yes, push").
 - Retake `release-notes/settings-difficulty.png` (still shows the Season pity dial, ten dials).
 - README intro still says beta 0.18.50; set it and the What's New heading to the released version.
+- README and Nexus description have drifted outside What's New: the README's "How it works" section has no
+  bbcode match, and its fail-night line still says holds are TLY Custom boards only (the bbcode says
+  otherwise, and `BundleHold.IsOfferable` now allows every board). Bring them back to identical.
 
 ### IDEA (Jeff, 2026-09-24): voluntary restart option on the Junimo Shrine
 Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
