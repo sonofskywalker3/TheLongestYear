@@ -64,6 +64,7 @@ namespace TheLongestYear
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
+        private TheLongestYear.Loop.PastSeasonSpawnsService _pastSeasonSpawns;
         private TheLongestYear.Loop.SneakPeekChannelService _sneakPeekChannel;
 
         /// <summary>Whether the Sneak Peek Boost was active at the last cache check. The Wednesday
@@ -169,6 +170,9 @@ namespace TheLongestYear
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
+            // Spring/Summer/Fall Returns: Data/Locations copies of a past season's fish and forage.
+            _pastSeasonSpawns = new TheLongestYear.Loop.PastSeasonSpawnsService(this.Monitor, helper);
+            helper.Events.Content.AssetRequested += _pastSeasonSpawns.OnAssetRequested;
             // Sneak Peek: relabel the Wednesday TV channel while the Boost has taken the rerun slot.
             _sneakPeekChannel = new TheLongestYear.Loop.SneakPeekChannelService(this.Monitor);
             helper.Events.Content.AssetRequested += _sneakPeekChannel.OnAssetRequested;
@@ -324,6 +328,8 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, a));
+            helper.ConsoleCommands.Add("tly_spawnprobe", TheLongestYear.DebugCommands.SpawnProbeCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.MineSweepCommand.Name, TheLongestYear.DebugCommands.MineSweepCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.BankRecipesDebugCommand.Name, TheLongestYear.DebugCommands.BankRecipesDebugCommand.Description,
@@ -498,6 +504,8 @@ namespace TheLongestYear
             _introInjector?.ApplyMailFlagsForRun();
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
+            TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = day => TheLongestYear.Core.PastSeasonBoosts.Active(_meta.Run, day);
+            _pastSeasonSpawns.Refresh(TodayDayOfYear());
             BoostChecker.SneakPeekActive = () => TheLongestYear.Core.BoostState.SneakPeekActive(_meta.Run, TodayDayOfYear());
             // The fruit/mushroom/fish each flavored bundle slot names, for the live board only.
             // Null map (a pre-0.18.33 board, or Vanilla board mode) means no flavors are applied.
@@ -696,6 +704,10 @@ namespace TheLongestYear
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);
             _boostPurchases = new BoostPurchaseService(this.Monitor, _meta, _boostEffects);
+            _boostPurchases.Bought = id =>
+            {
+                if (TheLongestYear.Core.PastSeasonBoosts.SeasonOf(id) != null) _pastSeasonSpawns.Refresh(TodayDayOfYear());
+            };
             _planningShrine.AttachBoosts(() => _meta.Run, (id, skill) =>
             {
                 BoostPurchase.Result result = _boostPurchases.TryBuy(id, skill);
@@ -769,6 +781,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
+            TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = null;
             TheLongestYear.Loop.BoostChecker.SneakPeekActive = null;
             TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider = null;
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = null;
@@ -2369,6 +2382,7 @@ namespace TheLongestYear
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
+            _pastSeasonSpawns?.Refresh(TodayDayOfYear());
             // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
             // being a rerun, so the label has to go back with it.
             this.RefreshSneakPeekChannelLabel();
@@ -2389,6 +2403,8 @@ namespace TheLongestYear
         {
             if (!RunActivation.IsActive) return;
             _runController?.OnDayEnding(sender, e);
+            // Vanilla spawns tomorrow's forage overnight, before DayStarted: prepare for tomorrow now.
+            _pastSeasonSpawns?.Refresh(TodayDayOfYear() + 1);
         }
 
 
@@ -2516,6 +2532,7 @@ namespace TheLongestYear
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
                 case "tly_cropprobe": TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, args); break;
+                case "tly_spawnprobe": TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, args); break;
                 case "tly_minesweep": TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, args); break;
                 case "tly_dejavu": this.CmdDejaVu(command, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
@@ -79,26 +78,7 @@ public static class ItemAvailabilityBuilder
             }
         }
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step,
-            LatestSeasons(pools));
-    }
-
-    /// <summary>Last season per item, for items whose window closes before Winter: fish, crab-pot
-    /// and forage spawn seasons. Crops are deliberately left out (Jeff, 2026-09-24: "crops can be
-    /// grown any season, we can't adjust fish availability"), so a crop keeps its spread deadline.
-    /// An item in more than one pool takes the latest of them. Items with a Winter or year-round
-    /// season are left out; the model reads a missing id as Winter.</summary>
-    internal static Dictionary<string, Season> LatestSeasons(ItemPools pools)
-    {
-        var last = new Dictionary<string, Season>(StringComparer.Ordinal);
-        void Take(string id, Season season)
-        {
-            if (!last.TryGetValue(id, out Season current) || season > current) last[id] = season;
-        }
-        foreach (KeyValuePair<string, IReadOnlySet<Season>> entry in SpawnSeasonMap.FromPools(pools))
-            Take(entry.Key, entry.Value.Max());
-        return last.Where(kv => kv.Value < Season.Winter)
-            .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

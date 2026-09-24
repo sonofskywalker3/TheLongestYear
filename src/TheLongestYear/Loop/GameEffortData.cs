@@ -98,7 +98,7 @@ namespace TheLongestYear.Loop
                             artifactSpots.Add(new RawArtifactSpot(kv.Key, id, spot.Chance));
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, excludedLocationMarkers))
                         continue;
-                    foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
+                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !TheLongestYear.Core.PastSeasonSpawn.IsCopy(r?.Id)))
                         foreach (string id in SpawnIds(f?.ItemId, f?.RandomItemId))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key, f.Chance));
 

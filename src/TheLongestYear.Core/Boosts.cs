@@ -12,6 +12,7 @@ public enum BoostId
 {
     RainDance, StormCall, FortunesFavor, SecondWind,
     Overgrowth, FeedingFrenzy, GrowthSpurt, RichVeins, Windfall, DoubleTrouble, FullSteam, DoubleYolk, QuickFeet, YearTwoSeeds,
+    SpringReturns, SummerReturns, FallReturns,
     Haggler, FastFriends, IronLungs, SneakPeek,
     CrashCourse, ElevatorPass,
 }
@@ -44,6 +45,9 @@ public static class BoostCatalog
         Row(BoostId.DoubleYolk,    50,  BoostDuration.Week,    "double_yolk",    "animal_double_product"),
         Row(BoostId.QuickFeet,     40,  BoostDuration.Week,    "quick_feet"),
         Row(BoostId.YearTwoSeeds,  75,  BoostDuration.Week,    "year_two_seeds"),
+        Row(BoostId.SpringReturns, 100, BoostDuration.Week,    "spring_returns"),
+        Row(BoostId.SummerReturns, 100, BoostDuration.Week,    "summer_returns"),
+        Row(BoostId.FallReturns,   100, BoostDuration.Week,    "fall_returns"),
         Row(BoostId.Haggler,       120, BoostDuration.Season,  "haggler"),
         Row(BoostId.FastFriends,   150, BoostDuration.Season,  "fast_friends"),
         Row(BoostId.IronLungs,     90,  BoostDuration.Season,  "iron_lungs"),
@@ -129,9 +133,15 @@ public static class BoostPurchase
     {
         // Vanilla forces Sun on day 1 of a month and on festival mornings (getWeatherModificationsForDate),
         // so a weather buy for those mornings would spend JP for nothing: refuse on day 28 too.
-        BoostId.RainDance or BoostId.StormCall
+        // Rain Dance works in Winter (Jeff, 2026-09-24): it is how a player gets a past season's rain
+        // fish under a *Returns boost, a JP cost for a missed fish rather than a wall. Snow is not rain.
+        BoostId.RainDance
+            => !ctx.TomorrowIsFestival && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
+        BoostId.StormCall
             => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival
                && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
+        BoostId.SpringReturns or BoostId.SummerReturns or BoostId.FallReturns
+            => PastSeasonBoosts.Available(id, ctx.Season),
         BoostId.YearTwoSeeds => YearTwoSeeds.SeedIdFor(ctx.Season) != null,
         BoostId.CrashCourse => BoostPricing.CrashCourseAvailable(run, ctx),
         BoostId.ElevatorPass => BoostPricing.ElevatorPassAvailable(ctx.MineFloor),
