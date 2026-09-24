@@ -94,10 +94,10 @@ namespace TheLongestYear.Loop
                         continue;
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
-                    foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
+                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id)))
                         foreach (string id in SpawnItemIds(f.ItemId, f.RandomItemId))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
-                    foreach (SpawnFishData f in loc.Fish ?? new List<SpawnFishData>())
+                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id)))
                         foreach (string id in SpawnItemIds(f.ItemId, f.RandomItemId))
                             fish.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
                 }

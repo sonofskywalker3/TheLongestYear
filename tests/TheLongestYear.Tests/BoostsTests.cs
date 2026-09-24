@@ -17,6 +17,7 @@ public class BoostsTests
         {
             "RainDance", "StormCall", "FortunesFavor", "SecondWind",
             "Overgrowth", "FeedingFrenzy", "GrowthSpurt", "RichVeins", "Windfall", "DoubleTrouble", "FullSteam", "DoubleYolk", "QuickFeet", "YearTwoSeeds",
+            "SpringReturns", "SummerReturns", "FallReturns",
             "Haggler", "FastFriends", "IronLungs", "SneakPeek",
             "CrashCourse", "ElevatorPass",
         }, ids);
@@ -74,14 +75,24 @@ public class BoostsTests
     }
 
     [Fact]
-    public void Weather_rows_refuse_in_winter_and_before_a_festival()
+    public void Storm_call_refuses_in_winter_and_weather_rows_before_a_festival()
     {
         var run = new RunState();
-        Assert.Equal(BoostPurchase.Result.NotAvailable, BoostPurchase.TryBuy(Meta(), run, BoostId.RainDance, BoostContext.Simple(90)));   // Winter
+        Assert.Equal(BoostPurchase.Result.NotAvailable, BoostPurchase.TryBuy(Meta(), run, BoostId.StormCall, BoostContext.Simple(90)));   // Winter
         var festival = new BoostContext(12, TomorrowIsFestival: true, new[] { 0, 0, 0, 0, 0 }, 0);
         Assert.Equal(BoostPurchase.Result.NotAvailable, BoostPurchase.TryBuy(Meta(), run, BoostId.StormCall, festival));
         Assert.Equal(BoostPurchase.Result.Success, BoostPurchase.TryBuy(Meta(), run, BoostId.RainDance, BoostContext.Simple(12)));
         Assert.Equal(13, run.WeatherOverrideDay);
+        Assert.Equal("Rain", run.WeatherOverride);
+    }
+
+    /// <summary>Jeff, 2026-09-24: Rain Dance works in Winter, so a past season's rain fish is a JP
+    /// cost under a *Returns boost rather than a wall.</summary>
+    [Fact]
+    public void Rain_dance_can_be_bought_in_winter()
+    {
+        var run = new RunState();
+        Assert.Equal(BoostPurchase.Result.Success, BoostPurchase.TryBuy(Meta(), run, BoostId.RainDance, BoostContext.Simple(90)));
         Assert.Equal("Rain", run.WeatherOverride);
     }
 

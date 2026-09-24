@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.47`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.50`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,15 @@ This is a **beta** (`0.18.47`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.50
+
+**Missed a fish or forage item in its season? Buy the season back for a week.**
+
+- **Spring Returns, Summer Returns and Fall Returns.** Three new one-week boosts at the Junimo Shrine, 100 JP each. Each is sold once its season has passed this loop: Spring Returns from Summer on, Summer Returns from Fall on, Fall Returns in Winter. While one runs, that season's fish bite and its forage turns up again, on top of the current season's. Time of day, weather and fishing spots still apply, and the legendary fish are included, still once per loop.
+- **Seasonal items are back on their normal deadlines.** 0.18.47 made a seasonal fish or forage item due by the last season it could be found. The Returns boosts replace that: a Summer-only fish can be due at Winter again, and if you missed it, Summer Returns brings it back. Reported by tanky24u.
+- **Rain Dance works in Winter.** A past season's rain fish can be caught in Winter with Rain Dance and a Returns boost. Snow still does not count as rain. Storm Call is still not sold in Winter.
+- **Two descriptions swapped a line.** 0.18.47 took Artichoke out of the wrong description. Year-Two Seeds now lists only Garlic and Red Cabbage, and Pierre's year-2 seeds upgrade lists Artichoke again, which he does stock.
 
 ## What's New in 0.18.47
 
