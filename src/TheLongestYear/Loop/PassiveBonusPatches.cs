@@ -85,45 +85,30 @@ namespace TheLongestYear.Loop
     /// </summary>
 
     /// <summary>Green Thumb (green_thumb_1..5): on every watered crop, X% chance per day to
-    /// advance growth by one extra tick. Layered as a separate postfix on Crop.newDay so it
-    /// runs after <see cref="CropGrowthPatch"/> — when both fire on the same crop on the same
-    /// day, the crop gains 2 extra ticks (one from theme, one from passive). That's the
-    /// intended "everything compounds" behaviour, not a bug.</summary>
+    /// advance growth by one extra tick. A separate prefix on Crop.newDay from
+    /// <see cref="CropGrowthPatch"/>; when both fire on the same crop on the same day, the crop
+    /// gains 2 extra ticks (one from theme, one from passive). That's the intended "everything
+    /// compounds" behaviour, not a bug. A prefix, not a postfix, for the same reason as
+    /// CropGrowthPatch: vanilla's end-of-night checks must see the extra tick (wild seeds).
+    /// Skips fully grown (regrowing) crops: a tick there counted the harvest cooldown UP and
+    /// made a ready crop unready for a day.</summary>
     [HarmonyPatch(typeof(Crop), nameof(Crop.newDay))]
     internal static class GreenThumbPatch
     {
         // ReSharper disable once InconsistentNaming — Harmony convention.
-        private static void Postfix(Crop __instance, int state)
+        private static void Prefix(Crop __instance, int state)
         {
             if (__instance == null) return;
-            if (state != 1) return;  // unwatered — vanilla skipped growth
+            if (state != 1) return;  // unwatered — vanilla skips growth
             if (__instance.dead.Value) return;
-            if (__instance.fullyGrown.Value && __instance.dayOfCurrentPhase.Value > 0) return;
+            if (__instance.fullyGrown.Value) return;
 
             int tier = UpgradeChecker.GetTier("green_thumb", 5);
             if (tier == 0) return;
             double chance = tier * 0.05;
             if (Game1.random.NextDouble() >= chance) return;
 
-            AdvanceOneTick(__instance);
-        }
-
-        /// <summary>Bump the crop forward exactly one day, advancing to the next phase if the
-        /// current one finishes. Mirrors the in-line logic from CropGrowthPatch.Postfix; kept
-        /// separate so the two patches stay independent.</summary>
-        private static void AdvanceOneTick(Crop crop)
-        {
-            if (crop.phaseDays.Count == 0) return;
-            int maxForPhase = crop.phaseDays[System.Math.Min(
-                crop.phaseDays.Count - 1, crop.currentPhase.Value)];
-            crop.dayOfCurrentPhase.Value = System.Math.Min(
-                crop.dayOfCurrentPhase.Value + 1, maxForPhase);
-            if (crop.dayOfCurrentPhase.Value >= maxForPhase
-                && crop.currentPhase.Value < crop.phaseDays.Count - 1)
-            {
-                crop.currentPhase.Value++;
-                crop.dayOfCurrentPhase.Value = 0;
-            }
+            CropGrowthPatch.AdvanceOneTick(__instance);
         }
     }
 
