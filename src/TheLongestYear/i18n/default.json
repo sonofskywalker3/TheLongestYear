@@ -99,7 +99,7 @@
     "upgrade.keep_garden_pot.name": "Keep: Garden Pot recipe",
     "upgrade.keep_garden_pot.desc": "The Garden Pot recipe is in your crafting book from day 1 of every loop (10 Stone, 1 Clay, 1 Refined Quartz). Any crop grows in a pot indoors in any season.",
     "upgrade.fortune_rare_fish.name": "Fortune: Rare Fish",
-    "upgrade.fortune_rare_fish.desc": "Rare fish catch chance increased by 25%.",
+    "upgrade.fortune_rare_fish.desc": "Your rod always works as if it has a Curiosity Lure.",
     "upgrade.green_thumb_1.name": "Green Thumb I",
     "upgrade.green_thumb_1.desc": "Each watered crop has a 5% chance per day to gain an extra day of growth.",
     "upgrade.green_thumb_2.name": "Green Thumb II",
