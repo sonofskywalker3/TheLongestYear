@@ -6,6 +6,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### NEXT RELEASE CHECKLIST (Jeff: "make sure you do", 2026-09-24)
+- Push the live Nexus description from `docs/nexus-description.bbcode` (season pity removed; needs Jeff's
+  "yes, push").
+- Retake `release-notes/settings-difficulty.png` (still shows the Season pity dial, ten dials).
+- README intro still says beta 0.18.50; set it and the What's New heading to the released version.
+
 ### IDEA (Jeff, 2026-09-24): voluntary restart option on the Junimo Shrine
 Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
 planning/buffs view (ShrinePreviewMenu). The menu that opens on a rewind to buy permanent upgrades is NOT the
