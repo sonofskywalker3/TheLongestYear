@@ -9,7 +9,7 @@ namespace TheLongestYear.Loop
 {
     /// <summary>
     /// Skips the overnight <see cref="FarmEvent"/> (owl / UFO sound event, meteorite, fairy, witch,
-    /// the CC room-restoration scene…) on a night whose morning is a FAIL rewind.
+    /// the CC room-restoration scene…) on a night whose morning is a rewind (a FAIL night or a voluntary restart).
     ///
     /// Why: vanilla nulls <c>Game1.farmEvent</c> one or two ticks BEFORE the post-event warp runs
     /// <c>showEndOfNightStuff</c>, which unconditionally replaces <c>activeClickableMenu</c> with
@@ -24,7 +24,7 @@ namespace TheLongestYear.Loop
     [HarmonyPatch(typeof(Utility), nameof(Utility.pickFarmEvent))]
     internal static class FarmEventSuppressionPatch
     {
-        /// <summary>Set by ModEntry: true when tonight's gate outcome is a FAIL rewind.</summary>
+        /// <summary>Set by ModEntry: true when tonight's morning rewinds (Fail or Restart).</summary>
         internal static Func<bool> SuppressTonight;
         internal static IMonitor Monitor;
 

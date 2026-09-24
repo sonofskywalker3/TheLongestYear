@@ -103,6 +103,18 @@ namespace TheLongestYear.Integration
             if (Game1.activeClickableMenu != null) return;         // don't stack on another menu
 
             Day28Branch branch = rc.PendingCutscene;
+            if (branch == Day28Branch.Restart)
+            {
+                // Voluntary restart: no Junimo scene. There is no black scene to cover the morning
+                // fade, so also wait for vanilla's end-of-night hand-off to finish (it clears
+                // showingEndOfNightStuff once the save menu is gone), then run the continuation the
+                // Fail scene's end would run. If the day never ended (the sleep did not take), this
+                // runs the chain mid-day instead; RunController.EndDayNow logs that case.
+                if (Game1.showingEndOfNightStuff) return;
+                _monitor.Log("Voluntary restart: no Junimo scene; starting hold -> upgrade menu -> banking -> reset.", LogLevel.Info);
+                rc.OnCutsceneEnded();
+                return;
+            }
             _monitor.Log(
                 $"Day-28 cutscene: opening the {branch} Junimo scene (eventUp={Game1.eventUp}, " +
                 $"farmEvent=none, newDay={Game1.newDay}).", LogLevel.Info);
