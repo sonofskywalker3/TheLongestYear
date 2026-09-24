@@ -276,7 +276,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             helper.ConsoleCommands.Add("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
             helper.ConsoleCommands.Add("tly_restart", "Debug: press the Junimo Shrine's Restart the year button. Opens the same yes/no (tly_answer 0 = Yes, 1 = No); refuses and logs why when the button would be hidden.", this.CmdRestart);
-            helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
+            helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based), or tly_answer key [n] for the Escape/N key path.", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
@@ -1284,7 +1284,9 @@ namespace TheLongestYear
             int x = (int)Game1.player.Tile.X;
             int y = (int)Game1.player.Tile.Y;
             string loc = Game1.currentLocation?.Name ?? "?";
-            this.Monitor.Log($"Player at tile ({x}, {y}) in '{loc}'.", LogLevel.Info);
+            this.Monitor.Log(
+                $"Player at tile ({x}, {y}) in '{loc}' (dialogueUp={Game1.dialogueUp}, " +
+                $"menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}).", LogLevel.Info);
         }
 
         private void CmdOpenCookbook(string command, string[] args)
@@ -1757,6 +1759,18 @@ namespace TheLongestYear
                     ? "tly_openshrine: restart button shown."
                     : $"tly_openshrine: restart button hidden ({block}).",
                 LogLevel.Info);
+            // Debug: the restart button's bounds against the tabs at this window size.
+            var restart = this.Helper.Reflection.GetField<ClickableComponent>(menu, "_restartButton").GetValue();
+            if (restart != null)
+            {
+                var tabs = this.Helper.Reflection.GetField<List<ClickableTextureComponent>>(menu, "_tabs").GetValue();
+                var tabRects = tabs.Select(t => t.bounds).ToList();
+                if (menu.upperRightCloseButton != null) tabRects.Add(menu.upperRightCloseButton.bounds);
+                bool overlap = tabRects.Any(r => r.Intersects(restart.bounds));
+                this.Monitor.Log(
+                    $"tly_openshrine: viewport {Game1.uiViewport.Width}x{Game1.uiViewport.Height}, restart {restart.bounds}, " +
+                    $"tabs+close {string.Join(" ", tabRects)}, overlap={overlap}.", LogLevel.Info);
+            }
         }
 
         /// <summary>Debug: close whatever menu is up without the mouse. A LevelUpMenu needs its OK
@@ -1903,9 +1917,22 @@ namespace TheLongestYear
                 this.Monitor.Log("tly_answer: no question dialogue is open.", LogLevel.Warn);
                 return;
             }
+            if (args.Length >= 1 && args[0].Equals("key", System.StringComparison.OrdinalIgnoreCase))
+            {
+                // Debug: the keyboard path (Escape, or N with "tly_answer key n"), which vanilla routes
+                // through receiveKeyPress instead of the click path above.
+                var key = args.Length >= 2 && args[1].Equals("n", System.StringComparison.OrdinalIgnoreCase)
+                    ? Microsoft.Xna.Framework.Input.Keys.N
+                    : Microsoft.Xna.Framework.Input.Keys.Escape;
+                box.transitioning = false;
+                box.safetyTimer = 0;
+                box.receiveKeyPress(key);
+                this.Monitor.Log($"tly_answer: sent key {key} (dialogueUp={Game1.dialogueUp}).", LogLevel.Info);
+                return;
+            }
             if (args.Length < 1 || !int.TryParse(args[0], out int n))
             {
-                this.Monitor.Log("Usage: tly_answer <n> (0-based response index)", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_answer <n> (0-based response index) | tly_answer key [n]", LogLevel.Warn);
                 return;
             }
             if (n < 0 || n >= box.responses.Length)

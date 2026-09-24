@@ -305,6 +305,7 @@ namespace TheLongestYear.Loop
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
                 // Releases the driver's Restart branch (DayStartedWhileBranchPending).
                 _dayStartedWhileBranchPending = true;
+                _monitor.Log($"Day start: the {_pendingCutscene} branch is pending; the day-start flow waits for it.", LogLevel.Trace);
                 return;
             }
 
