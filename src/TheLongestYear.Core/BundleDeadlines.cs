@@ -62,6 +62,14 @@ public static class BundleDeadlines
             else if (availability.Gate > deadline)
                 deadline = availability.Gate;
 
+            // The other end (Jeff, 2026-09-24): never due after the last season the item can be
+            // found. A Summer-only fish due at Winter let the any-N gates pass Summer and Fall
+            // without it, so the player played two more seasons into a fail they could no longer
+            // avoid. Never below the gate, so the cap cannot make a deadline unsatisfiable.
+            Season cap = (Season)Math.Max((int)model.LatestSeasonOf(id), (int)availability.Gate);
+            if (deadline > cap)
+                deadline = cap;
+
             result[id] = deadline;
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
@@ -78,7 +79,21 @@ public static class ItemAvailabilityBuilder
             }
         }
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step,
+            LatestSeasons(pools));
+    }
+
+    /// <summary>Last spawn season per item, for items whose window closes before Winter. Items
+    /// spawning in Winter (or year round) are left out; the model reads a missing id as Winter.</summary>
+    private static Dictionary<string, Season> LatestSeasons(ItemPools pools)
+    {
+        var latest = new Dictionary<string, Season>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, IReadOnlySet<Season>> entry in SpawnSeasonMap.FromPools(pools))
+        {
+            Season last = entry.Value.Max();
+            if (last < Season.Winter) latest[entry.Key] = last;
+        }
+        return latest;
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

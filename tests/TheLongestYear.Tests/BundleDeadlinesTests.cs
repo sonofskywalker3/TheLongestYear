@@ -23,6 +23,49 @@ public class BundleDeadlinesTests
         Assert.Equal(Season.Summer, result["(O)64"]);
     }
 
+    /// <summary>Nexus bug tanky24u, 2026-09-23: Specialty Fish, 4 of 4. Pufferfish is Summer only
+    /// and effort 10, so the spread plus the high-effort slide put it on Winter, after its window
+    /// had closed. It is now capped at Summer, the last season it can be caught.</summary>
+    [Fact]
+    public void A_Seasonal_Item_Is_Never_Due_After_Its_Last_Season()
+    {
+        var model = new ItemAvailabilityModel(
+            new Dictionary<string, ItemAvailability>
+            {
+                ["(O)128"] = new ItemAvailability(Season.Summer, 10, "pufferfish"),
+                ["(O)156"] = new ItemAvailability(Season.Spring, 3, "ghostfish"),
+                ["(O)734"] = new ItemAvailability(Season.Spring, 4, "woodskip"),
+                ["(O)164"] = new ItemAvailability(Season.Spring, 5, "sandfish"),
+            },
+            latestSeasons: new Dictionary<string, Season> { ["(O)128"] = Season.Summer });
+
+        var result = BundleDeadlines.For(new List<string> { "(O)128", "(O)156", "(O)734", "(O)164" }, model);
+
+        Assert.Equal(Season.Summer, result["(O)128"]);
+        Assert.Equal(3, result.Values.Count(s => s <= Season.Summer));
+    }
+
+    /// <summary>The cap never goes below the gate: a model that says an item closes before its
+    /// own gate season (a pacing floor later than its spawn window) keeps the gate.</summary>
+    [Fact]
+    public void The_Last_Season_Cap_Never_Drops_Below_The_Gate()
+    {
+        var model = new ItemAvailabilityModel(
+            new Dictionary<string, ItemAvailability>
+            {
+                ["(O)a"] = new ItemAvailability(Season.Fall, 9, "late pacing"),
+            },
+            latestSeasons: new Dictionary<string, Season> { ["(O)a"] = Season.Spring });
+
+        var result = BundleDeadlines.For(new List<string> { "(O)a" }, model);
+
+        Assert.Equal(Season.Fall, result["(O)a"]);
+    }
+
+    [Fact]
+    public void An_Item_With_No_Closing_Window_Reads_As_Winter()
+        => Assert.Equal(Season.Winter, Model(("(O)a", Season.Spring, 3)).LatestSeasonOf("(O)a"));
+
     private static ItemAvailabilityModel Model(params (string Id, Season Floor, int Effort)[] items)
         => new ItemAvailabilityModel(
             items.ToDictionary(
