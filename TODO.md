@@ -23,13 +23,40 @@ Jeff's answers (2026-09-24):
 1. Yes, the upgrade menu opens after a voluntary restart, same as a fail night.
 2. No payout. JP is already banked the moment it is earned (donations, weekly quests, season checkpoints),
    so there is nothing owed at restart time; the bank simply carries over.
-3. Yes, it counts as a fail (season pity is still live: `SeasonPity`, Difficulty > Season pity; not removed).
+3. Yes, it counts as a fail. Season pity itself is now GONE (Jeff: "they can adjust the difficulty
+   themselves", removed in 0.18.51, c441c94), so "a fail" only means a normal loop reset.
 4. Yes, also offered after "Keep playing": lets a player reach late-game things (Key to the City etc.),
-   stash them or buy a keep for them, then start Year 1 over.
+   stash them or buy a keep for them, then start Year 1 over. A keep for such items is out of scope here.
 5. Confirm with a plain popup along the lines of "Are you sure? This resets all progress, just like a failed
    season." No fail cutscene: a quick reset.
-Still open: does the fail-night bundle hold question (keep/reshuffle) and the pity offer still appear, or
-are they skipped too? Which season takes the fail after "Keep playing" (past Winter 28), if any?
+6. The bundle hold question (keep/reshuffle) still appears, same prices as a fail night.
+Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
+Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
+
+### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
+Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
+10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great
+point, I'll be happy to add that in." Needs a look at how vanilla picks the Lost Book drop and whether the
+rewind wipes the "books found" count (if it does, the pool refills every loop, which is the complaint).
+
+### PROMISED, NOT STARTED (Jeff to tanky24u, 24 Sep): keep barn/coop animals across a rewind
+Ask: an upgrade to keep an animal on rewind, like Keep Pet and the building keeps. Jeff: "I'll do it, just
+not excited about it at the moment." His open questions: one keep per animal ("keep 1 duck, X JP") or one
+pricier "keep all animals", what it costs, and how it interacts with the building keeps (an animal needs its
+barn or coop). Standing ruling from the keep_pet design (further down this file): kept barn/coop animals
+start the loop at 0 hearts so nobody gets large milk on day 1. `RunBaseline.StartingAnimals` and
+`WorldResetService.ApplyStartingAnimals` already exist for placing animals at reset.
+
+### LATER, Phase 4 (Jeff to tanky24u, 24 Sep): one-year perfection "Ultimate Challenge Mode"
+Ask: a setting to go for perfection in one year or the year resets. Jeff's plan: Phase 1 is this first year
+(1.0), Phase 2 adds year-2 goals (perfection, Skull Cavern, movie theater, probably Ginger Island), Phase 3 is
+ultimate perfection in year 3, then Phase 4 condenses it all into one year. Keep Completed Community Center
+makes it reachable with enough loops. Nothing to build now.
+
+### DONE 0.18.52 (on master, pushed, NOT released): Fortune: Rare Fish description (tanky24u, 24 Sep)
+The text said "Rare fish catch chance increased by 25%", which is not what it does: it acts as a permanent
+Curiosity Lure on every rod (vanilla boosts any fish under a 25% bite chance at that spot). New text: "Your
+rod always works as if it has a Curiosity Lure." Jeff already told him it is fixed in the next release.
 
 ### RELEASED 0.18.47 and 0.18.50 (2026-09-24), all three replied and marked Fixed: tanky24u's reports (Nexus bugs, 23 Sep)
 - **Boosted crops harvestable while looking unripe (fixed 0.18.44, shipped 0.18.47).** Growth Spurt, the Farming
