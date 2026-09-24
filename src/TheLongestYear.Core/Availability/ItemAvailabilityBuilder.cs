@@ -83,17 +83,24 @@ public static class ItemAvailabilityBuilder
             LatestSeasons(pools));
     }
 
-    /// <summary>Last spawn season per item, for items whose window closes before Winter. Items
-    /// spawning in Winter (or year round) are left out; the model reads a missing id as Winter.</summary>
-    private static Dictionary<string, Season> LatestSeasons(ItemPools pools)
+    /// <summary>Last season per item, for items whose window closes before Winter: fish, crab-pot
+    /// and forage spawn seasons, plus crop growing seasons (a live check on 2026-09-24 found Corn,
+    /// Summer and Fall, still due at Winter). An item in more than one pool takes the latest of
+    /// them. Items with a Winter or year-round season are left out; the model reads a missing id as
+    /// Winter.</summary>
+    internal static Dictionary<string, Season> LatestSeasons(ItemPools pools)
     {
-        var latest = new Dictionary<string, Season>(StringComparer.Ordinal);
-        foreach (KeyValuePair<string, IReadOnlySet<Season>> entry in SpawnSeasonMap.FromPools(pools))
+        var last = new Dictionary<string, Season>(StringComparer.Ordinal);
+        void Take(string id, Season season)
         {
-            Season last = entry.Value.Max();
-            if (last < Season.Winter) latest[entry.Key] = last;
+            if (!last.TryGetValue(id, out Season current) || season > current) last[id] = season;
         }
-        return latest;
+        foreach (KeyValuePair<string, IReadOnlySet<Season>> entry in SpawnSeasonMap.FromPools(pools))
+            Take(entry.Key, entry.Value.Max());
+        foreach (PoolItem crop in pools.Crops ?? new List<PoolItem>())
+            Take(crop.ItemId, crop.Seasons.Count == 0 ? Season.Winter : crop.Seasons.Max());
+        return last.Where(kv => kv.Value < Season.Winter)
+            .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

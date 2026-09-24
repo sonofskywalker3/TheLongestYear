@@ -62,6 +62,35 @@ public class BundleDeadlinesTests
         Assert.Equal(Season.Fall, result["(O)a"]);
     }
 
+    /// <summary>Live check 2026-09-24: Corn (Summer/Fall crop) was still due at Winter, because only
+    /// the fish, crab-pot and forage pools fed the last-season cap. Crops feed it too; a fish in two
+    /// pools takes the later season; a year-round item stays uncapped.</summary>
+    [Fact]
+    public void The_Builder_Caps_Crops_And_Spawns_At_Their_Last_Season()
+    {
+        var none = new List<string>();
+        var pools = new ItemPools
+        {
+            Crops = new List<PoolItem>
+            {
+                new("(O)270", 150, 1, new[] { Season.Summer, Season.Fall }, none),
+                new("(O)24", 35, 1, new[] { Season.Spring }, none),
+            },
+            Fish = new List<PoolItem>
+            {
+                new("(O)128", 200, 1, new[] { Season.Summer }, none),
+                new("(O)131", 50, 1, System.Array.Empty<Season>(), none),
+            },
+        };
+
+        ItemAvailabilityModel model = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(pools);
+
+        Assert.Equal(Season.Fall, model.LatestSeasonOf("(O)270"));
+        Assert.Equal(Season.Spring, model.LatestSeasonOf("(O)24"));
+        Assert.Equal(Season.Summer, model.LatestSeasonOf("(O)128"));
+        Assert.Equal(Season.Winter, model.LatestSeasonOf("(O)131"));
+    }
+
     [Fact]
     public void An_Item_With_No_Closing_Window_Reads_As_Winter()
         => Assert.Equal(Season.Winter, Model(("(O)a", Season.Spring, 3)).LatestSeasonOf("(O)a"));
