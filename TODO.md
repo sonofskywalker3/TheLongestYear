@@ -6,14 +6,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### IDEA (Jeff, 2026-09-24): voluntary restart option at the Junimo Shrine
-From tanky24u's Nexus post (23 Sep): the player asked about resetting mid-loop, or after finishing the Center, to go after
-long-haul boosts (Key to the City, How to Win Friends) without risking the win. Today the only rewinds are a
-failed day 28 and the post-win "Start a new loop" choice; the debug `tly_reset` skips the shrine, so it is
-not a player route. Jeff: add a voluntary restart to the shrine. Needs a spec before building. Open questions:
-where the shrine is reachable mid-loop (today it only opens at a rewind or a win), what the restart pays out
-(JP for what was donated so far, or nothing), whether it counts as a fail for season pity and hold prices,
-and a confirm step so nobody throws away a run by accident.
+### IDEA (Jeff, 2026-09-24): voluntary restart option on the Junimo Shrine
+Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
+planning/buffs view (ShrinePreviewMenu). The menu that opens on a rewind to buy permanent upgrades is NOT the
+shrine; call it the upgrade menu.
+From tanky24u's Nexus post (23 Sep): the player asked about resetting mid-loop, or after finishing the
+Center, to go after long-haul things (Key to the City, How to Win Friends) without risking the win. Today
+the only rewinds are a failed day 28 and the post-win "Start a new loop" choice (and "Keep playing" is final:
+later Winter 28 wins are silent); the debug `tly_reset` skips the upgrade menu, so it is not a player route.
+Jeff: add a voluntary restart option to the Junimo Shrine. Needs a spec before building. Open questions:
+whether the upgrade menu opens after a voluntary restart the way it does on a fail night, what the restart
+pays out (JP for what was donated so far, or nothing), whether it counts as a fail for season pity and hold
+prices, whether it is also offered after "Keep playing", and a confirm step so nobody throws away a run by
+accident.
 
 ### FIXED 0.18.44 to 0.18.46 (2026-09-24, on master, pushed, NOT released): tanky24u's three reports (Nexus bugs, 23 Sep)
 - **0.18.44, boosted crops harvestable while looking unripe.** Growth Spurt, the Farming bonus and Green Thumb
