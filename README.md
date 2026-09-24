@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.43`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
+This is a **beta** (`0.18.47`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback).
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,15 @@ This is a **beta** (`0.18.43`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.47
+
+**Boosted crops look ready when they are, seasonal items stop being due after they leave, and the rewind's upgrade menu gets its own name.**
+
+- **Crops sped up by a boost look ready when they are ready.** Growth Spurt, the Farming week bonus and Green Thumb added their extra day after the game's own nightly growth, so a crop they finished could be picked while it still looked half grown. Wild seeds were hit hardest, because they never turned into their forage. The extra day now comes first. Green Thumb also no longer makes a ready regrowing crop look unripe for a day. Reported by tanky24u.
+- **A seasonal item is never due after its season ends.** A Summer-only fish like the Pufferfish could be due by Winter, so Summer and Fall let you through without it and the loop then failed at Winter, when it could no longer be caught. Every item is now due by the last season it can be found, so a missing Pufferfish shows up at the end of Summer instead of two seasons later. Reported by tanky24u.
+- **Year-Two Seeds is Spring and Summer only.** Fall Mixed Seeds already grow Artichoke a quarter of the time, so the Fall version only nudged that to about 29%. It can no longer be bought in Fall. Raised by tanky24u.
+- **The upgrade menu has its own name.** The menu where you spend JP on keeps after a rewind is now called Junimo Upgrades, and the Shrine prices setting is now Upgrade prices. The Junimo Shrine is the statue on your farm.
 
 ## What's New in 0.18.43
 
