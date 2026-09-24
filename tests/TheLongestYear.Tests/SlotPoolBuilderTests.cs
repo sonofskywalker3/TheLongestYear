@@ -192,6 +192,21 @@ public class SlotPoolBuilderTests
         Assert.Equal("Boost: Sneak Peek", pool.Single(s => s.ItemId == "(O)611").RouteTag);
         Assert.Null(pool.Single(s => s.ItemId == "(O)24").RouteTag);
     }
+
+    [Fact]
+    public void Artichoke_carries_no_boost_route_tag()
+    {
+        // Vanilla Fall Mixed Seeds grow Artichoke; Year-Two Seeds has no Fall version any more.
+        var data = BundleData((3, "Boosted", "248 1 0 274 1 0 24 1 0", 3));
+        var reqs = Reqs(SeasonalReq("Boosted", "(O)248", "(O)274", "(O)24"));
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
+
+        Assert.Equal("Boost: Year-Two Seeds", pool.Single(s => s.ItemId == "(O)248").RouteTag);
+
+        Assert.Null(pool.Single(s => s.ItemId == "(O)274").RouteTag);
+    }
     [Fact]
     public void A_doubled_id_offers_its_second_slot_once_the_first_is_filled()
     {

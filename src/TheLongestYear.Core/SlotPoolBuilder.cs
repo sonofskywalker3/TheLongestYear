@@ -118,13 +118,14 @@ public static class SlotPoolBuilder
     }
 
     /// <summary>A goal's Boost route (spec 2026-08-28-obtainable-board-4-boosts), or null when
-    /// the item follows vanilla pacing. A year-2 crop always routes through Year-Two Seeds (or the
-    /// permanent buy); a dish routes through Sneak Peek when its availability basis (routeTagOf)
+    /// the item follows vanilla pacing. Garlic and Red Cabbage always route through Year-Two Seeds
+    /// (or the permanent buy); Artichoke comes from vanilla Fall Mixed Seeds, which the boost no
+    /// longer touches, so it carries no tag. A dish routes through Sneak Peek when its availability basis (routeTagOf)
     /// carries <see cref="Availability.CookedDishAvailability.SneakPeekBasisMarker"/>, the one
     /// place that note's text is defined.</summary>
     private static string? RouteTagFor(string id, Func<string, string?>? routeTagOf)
     {
-        if (PoolAdditions.YearTwoCropIds.Contains(id)) return YearTwoSeedsRouteTag;
+        if (PoolAdditions.YearTwoCropIds.Contains(id) && id != YearTwoCrops.Artichoke) return YearTwoSeedsRouteTag;
         string? basis = routeTagOf?.Invoke(id);
         return basis != null
                && basis.Contains(Availability.CookedDishAvailability.SneakPeekBasisMarker, StringComparison.Ordinal)

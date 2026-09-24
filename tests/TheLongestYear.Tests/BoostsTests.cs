@@ -118,6 +118,12 @@ public class BoostsTests
         => Assert.Equal(BoostPurchase.Result.NotAvailable,
             BoostPurchase.TryBuy(Meta(), new RunState(), BoostId.YearTwoSeeds, BoostContext.Simple(100)));
 
+    /// <summary>Fall Mixed Seeds already grow Artichoke 25% of the time (Jeff, 2026-09-24).</summary>
+    [Fact]
+    public void Year_two_seeds_cannot_be_bought_in_fall()
+        => Assert.Equal(BoostPurchase.Result.NotAvailable,
+            BoostPurchase.TryBuy(Meta(), new RunState(), BoostId.YearTwoSeeds, BoostContext.Simple(60)));
+
     [Fact]
     public void Prune_drops_only_entries_that_ended_before_today()
     {
@@ -177,7 +183,7 @@ public class BoostsTests
     [Theory]
     [InlineData(Season.Spring, "476")]
     [InlineData(Season.Summer, "485")]
-    [InlineData(Season.Fall, "489")]
+    [InlineData(Season.Fall, null)]
     [InlineData(Season.Winter, null)]
     public void Seed_per_season(Season season, string? expected) => Assert.Equal(expected, YearTwoSeeds.SeedIdFor(season));
 }
