@@ -15,7 +15,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
   bbcode match, and its fail-night line still says holds are TLY Custom boards only (the bbcode says
   otherwise, and `BundleHold.IsOfferable` now allows every board). Bring them back to identical.
 
-### IDEA (Jeff, 2026-09-24): voluntary restart option on the Junimo Shrine
+### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
+When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
+must also clear `MetaState.Year2WallArmed` (spec: a restart after Keep playing works like "Start a new loop").
+Master has no such field, so nothing does it yet.
+
+### BUILT 0.18.53 to 0.18.56 (on master, pushed, NOT released, live test pending): voluntary restart on the Junimo Shrine
 Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
 planning/buffs view (ShrinePreviewMenu). The menu that opens on a rewind to buy permanent upgrades is NOT the
 shrine; call it the upgrade menu.
