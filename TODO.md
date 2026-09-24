@@ -19,6 +19,17 @@ whether the upgrade menu opens after a voluntary restart the way it does on a fa
 pays out (JP for what was donated so far, or nothing), whether it counts as a fail for season pity and hold
 prices, whether it is also offered after "Keep playing", and a confirm step so nobody throws away a run by
 accident.
+Jeff's answers (2026-09-24):
+1. Yes, the upgrade menu opens after a voluntary restart, same as a fail night.
+2. No payout. JP is already banked the moment it is earned (donations, weekly quests, season checkpoints),
+   so there is nothing owed at restart time; the bank simply carries over.
+3. Yes, it counts as a fail (season pity is still live: `SeasonPity`, Difficulty > Season pity; not removed).
+4. Yes, also offered after "Keep playing": lets a player reach late-game things (Key to the City etc.),
+   stash them or buy a keep for them, then start Year 1 over.
+5. Confirm with a plain popup along the lines of "Are you sure? This resets all progress, just like a failed
+   season." No fail cutscene: a quick reset.
+Still open: does the fail-night bundle hold question (keep/reshuffle) and the pity offer still appear, or
+are they skipped too? Which season takes the fail after "Keep playing" (past Winter 28), if any?
 
 ### RELEASED 0.18.47 and 0.18.50 (2026-09-24), all three replied and marked Fixed: tanky24u's reports (Nexus bugs, 23 Sep)
 - **Boosted crops harvestable while looking unripe (fixed 0.18.44, shipped 0.18.47).** Growth Spurt, the Farming
