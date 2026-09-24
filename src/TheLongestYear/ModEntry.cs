@@ -152,11 +152,12 @@ namespace TheLongestYear
             // once here; _runController is built on save load, so resolve it lazily like the picker.
             _day28Driver = new Day28CutsceneDriver(this.Monitor);
             _day28Driver.Attach(helper, () => _runController);
-            // Skip the overnight FarmEvent on FAIL nights — its end-of-event warp orphans the Fail
+            // Skip the overnight FarmEvent on nights whose morning rewinds (Fail or a voluntary restart): its end-of-event warp orphans the Fail
             // scene and drops the reset (see FarmEventSuppressionPatch). _runController is built on
             // save load, so resolve it lazily like the driver does.
             FarmEventSuppressionPatch.SuppressTonight =
-                () => _runController?.PendingCutscene == TheLongestYear.Core.Day28.Day28Branch.Fail;
+                () => TheLongestYear.Core.Day28.VoluntaryRestart.IsRewind(
+                    _runController?.PendingCutscene ?? TheLongestYear.Core.Day28.Day28Branch.None);
             FarmEventSuppressionPatch.Monitor = this.Monitor;
             WeatherScheduleWriterPatch.Monitor = this.Monitor;
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.

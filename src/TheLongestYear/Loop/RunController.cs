@@ -16,7 +16,7 @@ namespace TheLongestYear.Loop
     /// requirements, and executes the action (fail → reset next morning, advance month → consume
     /// any day-28 pre-pick, win → log). JP banks live as donations happen (DonationService); nothing extra is awarded at run end.
     /// </summary>
-    internal sealed class RunController
+    internal sealed partial class RunController
     {
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
@@ -515,9 +515,9 @@ namespace TheLongestYear.Loop
             watch.onContinue();
         }
 
-        /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
-        /// day-28 bedtime cutscene has finished. Clears the pending branch and runs its
-        /// continuation: FAIL → JP shop, then on close PerformReset + forced full save
+        /// <summary>Called by the <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
+        /// day-28 bedtime cutscene has finished, or directly (no scene) for a voluntary Restart.
+        /// Clears the pending branch and runs its continuation: FAIL → JP shop, then on close PerformReset + forced full save
         /// (ContinueAfterResetSpend); CONTINUE → roll straight into the next season's day-start
         /// flow (no shop, no reset).</summary>
         public void OnCutsceneEnded()
@@ -528,24 +528,15 @@ namespace TheLongestYear.Loop
             switch (branch)
             {
                 case Day28Branch.Fail:
-                    // Hide the day/time HUD across the choice -> shop -> reset so the stale
-                    // (pre-rewind) calendar date isn't shown while the player decides and shops.
-                    // ContinueAfterResetSpend restores it once the world is back on Spring 1.
-                    Game1.displayHUD = false;
-                    // Vanilla mode's reset regenerates the board via loadForNewGame and never
-                    // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
-                    // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
-                    // save's BundleSource from config at reset time, so config is what this reset
-                    // will actually run under.
-                    if (!BundleHold.IsOfferable(_config.BundleSource))
-                    {
-                        _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
-                        TryOpenShrineThenContinue(ContinueAfterResetSpend);
-                    }
-                    else
-                    {
-                        ShowHoldChoice();
-                    }
+                    StartRewindChain();
+                    break;
+                case Day28Branch.Restart:
+                    // Voluntary restart: the Fail chain without the scene (the driver skipped it).
+                    // After "Keep playing" the won-run flag silences later wins; a restart starts a
+                    // loop that can be won again. FinalizeReset's _store.Save() persists the clear.
+                    if (VoluntaryRestart.ClearWonRun(_store.State))
+                        _monitor.Log("Voluntary restart after Keep playing: the won-run flag is cleared, so the next loop can be won again.", LogLevel.Info);
+                    StartRewindChain();
                     break;
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
@@ -562,6 +553,31 @@ namespace TheLongestYear.Loop
                     // so the morning is never stranded.
                     DoDayStartSeasonAndHub();
                     break;
+            }
+        }
+
+        /// <summary>The rewind chain shared by a Fail night and a voluntary restart: hold question
+        /// (whenever BundleHold.IsOfferable, which is every bundle source today), upgrade menu,
+        /// recipe banking, reset.</summary>
+        private void StartRewindChain()
+        {
+            // Hide the day/time HUD across the choice -> shop -> reset so the stale
+            // (pre-rewind) calendar date isn't shown while the player decides and shops.
+            // FinalizeReset restores it once the world is back on Spring 1.
+            Game1.displayHUD = false;
+            // Vanilla mode's reset regenerates the board via loadForNewGame and never
+            // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
+            // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
+            // save's BundleSource from config at reset time, so config is what this reset
+            // will actually run under.
+            if (!BundleHold.IsOfferable(_config.BundleSource))
+            {
+                _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
+                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+            }
+            else
+            {
+                ShowHoldChoice();
             }
         }
 
@@ -872,6 +888,16 @@ namespace TheLongestYear.Loop
             // what the player sees on the board (a deposit the observer missed cannot fail an
             // otherwise-complete season, beta report khauser13; a phantom credit cannot pass one).
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
+            if (_pendingCutscene == Day28Branch.Restart)
+            {
+                // Voluntary restart (RunController.Restart.cs): the player chose to rewind tonight.
+                // The gate does not judge this night: no checkpoint JP, and no second outcome may
+                // overwrite the queued Restart. A room finished today must not play its restoration
+                // scene just before the rewind undoes it, same as a Fail night.
+                SuppressResetDoomedRoomScenes();
+                _monitor.Log("Voluntary restart night: the day-end gate is skipped; the rewind runs in the morning.", LogLevel.Info);
+                return;
+            }
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)
