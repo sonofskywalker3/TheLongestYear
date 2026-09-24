@@ -32,6 +32,9 @@ namespace TheLongestYear.Donations
             _effects = effects;
         }
 
+        /// <summary>Called after every successful purchase, from any buy path (shrine, console).</summary>
+        public System.Action<BoostId> Bought { get; set; }
+
         public BoostContext Context(int skill = -1) => BoostContextBuilder.Build(_store.Run, skill);
 
         /// <summary>Attempt to buy a boost today. Returns the rule's result so the menu can refresh its rows.</summary>
@@ -40,7 +43,10 @@ namespace TheLongestYear.Donations
             BoostContext ctx = Context(skill);
             BoostPurchase.Result result = BoostPurchase.TryBuy(_store.State, _store.Run, id, ctx);
             if (result == BoostPurchase.Result.Success)
+            {
                 ApplyImmediate(id, ctx);
+                Bought?.Invoke(id);
+            }
             Report(id, ctx, result);
             return result;
         }

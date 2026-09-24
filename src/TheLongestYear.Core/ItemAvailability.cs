@@ -77,7 +77,6 @@ public sealed class ItemAvailabilityModel
     private readonly HashSet<string> _unrecognised = new(StringComparer.Ordinal);
     private readonly HashSet<string> _rejectedSeasonOverrides = new(StringComparer.Ordinal);
     private readonly IReadOnlyDictionary<string, int> _weekOverrides;
-    private readonly IReadOnlyDictionary<string, Season> _latestSeasons;
     private readonly HashSet<string> _unknown = new(StringComparer.Ordinal);
 
     /// <summary>Which week the model answers with for gates and goals (spec
@@ -96,11 +95,9 @@ public sealed class ItemAvailabilityModel
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = null,
         IReadOnlyDictionary<string, int>? weekOverrides = null,
         WeekMode mode = WeekMode.Pacing,
-        DifficultyStep step = DifficultyStep.Normal,
-        IReadOnlyDictionary<string, Season>? latestSeasons = null)
+        DifficultyStep step = DifficultyStep.Normal)
     {
         _derived = derived ?? throw new ArgumentNullException(nameof(derived));
-        _latestSeasons = latestSeasons ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _seasonOverrides = seasonOverrides ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _effortOverrides = effortOverrides ?? new Dictionary<string, int>(StringComparer.Ordinal);
         _effortDerived = effortDerived ?? new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
@@ -138,16 +135,6 @@ public sealed class ItemAvailabilityModel
         if (_effortDerived.TryGetValue(id, out ItemEffort? e) && e.EarliestWeek != null) return e.EarliestWeek;
         return null;
     }
-
-    /// <summary>The last season of the year the item can still be found, from its spawn seasons
-    /// (fish, crab-pot and forage pools). Winter when nothing says the window closes, which is
-    /// the no-op direction: <see cref="BundleDeadlines"/> only ever caps a deadline DOWN to it.
-    /// Nexus bug tanky24u, 2026-09-23: a Summer-only Pufferfish was due at Winter, the any-N gate
-    /// let Summer and Fall pass without it, and the run was lost two seasons later.</summary>
-    public Season LatestSeasonOf(string qualifiedItemId)
-        => qualifiedItemId != null && _latestSeasons.TryGetValue(qualifiedItemId, out Season last)
-            ? last
-            : Season.Winter;
 
     /// <summary>True when a rule or an accepted override says when the item first exists.</summary>
     public bool IsPlaced(string qualifiedItemId)
