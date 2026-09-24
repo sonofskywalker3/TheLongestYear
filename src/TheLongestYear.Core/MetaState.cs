@@ -104,36 +104,10 @@ public sealed class MetaState
     /// tly_reset, post-win new loop), which must reshuffle. Cleared by PerformReset.</summary>
     public bool HoldChoiceMadeForReset { get; set; }
 
-    /// <summary>Fails recorded at each season gate, index = (int)Season. Drives season pity
-    /// (spec 2026-08-25). Padded to four entries by <see cref="SeasonPity"/> on read.</summary>
-    public List<int> SeasonFailCounts { get; set; } = new() { 0, 0, 0, 0 };
-
-    /// <summary>The season index of the most recent Fail night, -1 before the first fail. The
-    /// keep-path quota easing applies to this season only.</summary>
-    public int LastFailSeason { get; set; } = -1;
-
-    /// <summary>Season index whose slot pools were trimmed when the CURRENT board was rolled
-    /// (reshuffle-path pity), -1 = no trim. Stamped by SeasonPity.StampReshuffleTrim before the
-    /// reset generates; a reload must regenerate with the same values or the manifest check fails.</summary>
-    public int BoardTrimSeason { get; set; } = -1;
-
-    /// <summary>Trim units applied when the current board was rolled (see <see cref="BoardTrimSeason"/>).</summary>
-    public int BoardTrimSteps { get; set; }
-
-    /// <summary>How many Fail-night pity offers the player has accepted in a row. Drives the
-    /// offer's price (first accept free, then the <c>PityCosts</c> curve). Declining resets it.</summary>
-    public int ConsecutivePityUses { get; set; }
-
-    /// <summary>Season index the keep-path quota ease applies to for the CURRENT board, -1 = no
-    /// ease. Stamped by <see cref="SeasonPity.StampKeepEase"/> at the Fail-night KEEP choice;
-    /// cleared on reshuffle (<see cref="SeasonPity.StampReshuffleTrim"/>) and on a choiceless
-    /// reset (<see cref="BundleHold.ConsumeChoiceAtReset"/>'s no-choice branch). The load path
-    /// reads this stamp (not live fail counts) so a reload reproduces the same eased
-    /// requirements instead of snapping back to standard difficulty.</summary>
-    public int BoardEaseSeason { get; set; } = -1;
-
-    /// <summary>Ease steps applied when the current board was kept (see <see cref="BoardEaseSeason"/>).</summary>
-    public int BoardEaseSteps { get; set; }
+    // Season pity (removed 2026-09-24) kept SeasonFailCounts, LastFailSeason, BoardTrimSeason,
+    // BoardTrimSteps, ConsecutivePityUses, BoardEaseSeason and BoardEaseSteps here. Old saves
+    // still carry those keys; SMAPI's JSON reader skips members the type no longer has, so they
+    // load cleanly and any ease or trim they recorded simply stops applying.
 
     /// <summary>The loop number to seed bundle generation with: <see cref="BundleSeedLoop"/>
     /// when set, else <see cref="CompletedResets"/>. Both the reset-time generation and the
@@ -145,9 +119,8 @@ public sealed class MetaState
     /// the loop begins. Every consumer reads THIS, never <c>config.Difficulty</c>, which is what
     /// makes a GMCM change apply at the next reset rather than mid-season.
     ///
-    /// RESOLVED VALUES are stamped rather than the ten steps, matching the
-    /// <see cref="BoardEaseSeason"/> idiom: a reload has to reproduce the reset exactly, and
-    /// stamping steps would let a future release that retunes what "Hard" means silently change
+    /// RESOLVED VALUES are stamped rather than the steps: a reload has to reproduce the reset
+    /// exactly, and stamping steps would let a future release that retunes what "Hard" means silently change
     /// an in-flight run's economy.
     ///
     /// Null on a save from before difficulty modifiers existed. See
@@ -155,7 +128,7 @@ public sealed class MetaState
     /// identical to that save's previous behaviour. Spec 2026-08-26.</summary>
     public DifficultyProfile? Difficulty { get; set; }
 
-    /// <summary>The profile in force for ECONOMY reads (JP, prices, cart, pity): the stamp when
+    /// <summary>The profile in force for ECONOMY reads (JP, prices, cart, holds): the stamp when
     /// present, otherwise resolved live from config so a player who has never reset still gets the
     /// setting he just chose.</summary>
     public DifficultyProfile EffectiveDifficulty(GameplayConfig config)

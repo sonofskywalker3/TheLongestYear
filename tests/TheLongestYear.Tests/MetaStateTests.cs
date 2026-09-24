@@ -359,22 +359,39 @@ public class MetaStateTests
         Assert.Equal(2, held.EffectiveBundleSeedLoop);
     }
 
+    /// <summary>Season pity was removed 2026-09-24. A save written before that still carries its
+    /// fields, including an ease/trim stamp and the pity block inside the difficulty stamp. It has
+    /// to load without error, keep everything else, and carry no easing forward (the type has
+    /// nowhere left to put it). The game reads saves through SMAPI's Newtonsoft settings, which
+    /// likewise skip unknown members.</summary>
     [Fact]
-    public void Pity_fields_round_trip_and_default()
+    public void An_old_save_with_season_pity_fields_still_loads()
     {
-        var fresh = new MetaState();
-        Assert.Equal(new[] { 0, 0, 0, 0 }, fresh.SeasonFailCounts);
-        Assert.Equal(-1, fresh.LastFailSeason);
-        Assert.Equal(-1, fresh.BoardTrimSeason);
-        Assert.Equal(0, fresh.BoardTrimSteps);
+        const string json = @"
+            {
+              ""JunimoPoints"": 120,
+              ""ConsecutiveHolds"": 1,
+              ""SeasonFailCounts"": [1, 6, 0, 0],
+              ""LastFailSeason"": 1,
+              ""BoardTrimSeason"": 1,
+              ""BoardTrimSteps"": 2,
+              ""ConsecutivePityUses"": 3,
+              ""BoardEaseSeason"": 1,
+              ""BoardEaseSteps"": 2,
+              ""Difficulty"": {
+                ""HoldPriceFactor"": 2.0,
+                ""Pity"": { ""Enabled"": true, ""Threshold"": 5, ""QuotaStep"": 0.1, ""QuotaFloor"": 0.5, ""TrimPerStep"": 2 },
+                ""Steps"": { ""HoldPrices"": 2, ""SeasonPity"": 2 }
+              }
+            }";
 
-        var original = new MetaState { SeasonFailCounts = new System.Collections.Generic.List<int> { 1, 6, 0, 0 }, LastFailSeason = 1, BoardTrimSeason = 1, BoardTrimSteps = 2 };
-        string json = JsonSerializer.Serialize(original);
         MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
-        Assert.Equal(new[] { 1, 6, 0, 0 }, restored.SeasonFailCounts);
-        Assert.Equal(1, restored.LastFailSeason);
-        Assert.Equal(1, restored.BoardTrimSeason);
-        Assert.Equal(2, restored.BoardTrimSteps);
+
+        Assert.Equal(120, restored.JunimoPoints);
+        Assert.Equal(1, restored.ConsecutiveHolds);
+        Assert.NotNull(restored.Difficulty);
+        Assert.Equal(2.0, restored.Difficulty!.HoldPriceFactor, 6);
+        Assert.Equal(DifficultyStep.Hard, restored.Difficulty.Steps.HoldPrices);
     }
 }
 
@@ -435,7 +452,7 @@ public class MetaStateDifficultyStampTests
                 {
                     StackSize = DifficultyStep.Hard,
                     JpEarned = DifficultyStep.Extreme,
-                    SeasonPity = DifficultyStep.Extreme,
+                    HoldPrices = DifficultyStep.Extreme,
                 },
                 cfg),
         };
@@ -446,9 +463,9 @@ public class MetaStateDifficultyStampTests
         Assert.NotNull(restored.Difficulty);
         Assert.Equal(1.5, restored.Difficulty!.StackFactor, 6);
         Assert.Equal(0.5, restored.Difficulty.JpEarnedFactor, 6);
-        Assert.False(restored.Difficulty.Pity.Enabled);
+        Assert.Equal(4.0, restored.Difficulty.HoldPriceFactor, 6);
         Assert.Equal(DifficultyStep.Hard, restored.Difficulty.Steps.StackSize);
-        Assert.Equal(DifficultyStep.Extreme, restored.Difficulty.Steps.SeasonPity);
+        Assert.Equal(DifficultyStep.Extreme, restored.Difficulty.Steps.HoldPrices);
     }
 }
 
