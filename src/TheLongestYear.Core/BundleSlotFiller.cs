@@ -49,7 +49,7 @@ public static class BundleSlotFiller
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
-        PityTrim? trim = null, RarityThresholds? thresholds = null, Action<string>? log = null,
+        Action<string>? log = null,
         IReadOnlySet<string>? avoid = null, ItemAvailabilityModel? availability = null,
         PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null, int legendaryBudget = int.MaxValue)
     {
@@ -58,7 +58,7 @@ public static class BundleSlotFiller
 
         // Recipe bundles roll part by part (Dye: one item per colour; Field Research: one of each
         // of four things), so the parts are resolved once here, and every later pass runs on their
-        // union: the pity trim, the avoid set, the stretch swap and the hard-item swap.
+        // union: the avoid set, the stretch swap and the hard-item swap.
         // <paramref name="knownRecipe"/> is the caller's cached recipe for this same bundle (the
         // engine already builds one for its diagnostics): pass it and BundlePoolRecipes.For runs
         // once per bundle per generation instead of three times.
@@ -84,53 +84,11 @@ public static class BundleSlotFiller
             ? Math.Min(spec.PickCount, spec.Slots.Count)
             : spec.Slots.Count;
 
-        // The domain this bundle's stack and quality roll with, and the domain its candidates are
-        // SCORED with. A Recipe bundle has no domain of its own, so it borrows the one its dominant
-        // part maps to (see RecipeRollDomain). Decided here, before the trim, because the trim
-        // reads it twice: the quality-off unit only buys something when the domain rolls quality,
-        // and ItemHardness.Trim's station bonus is a per-domain judgement. Scoring a recipe's
-        // candidates as PoolDomain.Recipe would have been scoring them as no domain at all
-        // (final review, 2026-08-29).
+        // The domain this bundle's stack and quality roll with. A Recipe bundle has no domain of
+        // its own, so it borrows the one its dominant part maps to (see RecipeRollDomain).
         PoolDomain rollDomain = recipe == null
             ? match.Domain
             : RecipeRollDomain(recipe, targetCount);
-
-        // Season pity, reshuffle path (spec 2026-08-25): quality-off costs one unit for the whole
-        // bundle when the domain rolls quality; the rest remove the hardest candidates, never
-        // below what this bundle needs to fill.
-        bool qualityOff = false;
-        if (TrimApplies(match, trim))
-        {
-            int before = candidates.Count;
-            int units = trim!.Units;
-            if (DomainRollsQuality(rollDomain) && units > 0)
-            {
-                qualityOff = true;
-                units -= 1;
-            }
-            candidates = ItemHardness.Trim(candidates, units, targetCount, rollDomain, thresholds ?? new RarityThresholds());
-            int after = candidates.Count;
-            if (log != null)
-            {
-                int removed = before - after;
-                string guardNote = after == targetCount && removed < units ? " (guard stopped early)" : "";
-                log($"pity trim '{spec.Name}': {before} candidates -> {after} (units {trim.Units}, quality off {qualityOff}, need {targetCount}){guardNote}");
-            }
-            // Carry the trim into the parts: a part keeps only what survived, unless nothing of
-            // it did, in which case the part stands as it was rather than becoming unfillable.
-            if (recipe != null)
-            {
-                var kept = new HashSet<string>(candidates.Select(p => p.ItemId), StringComparer.Ordinal);
-                for (int i = 0; i < parts.Count; i++)
-                {
-                    IReadOnlyList<PoolItem> trimmed = parts[i].Where(p => kept.Contains(p.ItemId)).ToList();
-                    if (trimmed.Count > 0)
-                        parts[i] = trimmed;
-                    else
-                        log?.Invoke($"'{spec.Name}': the trim took every candidate of part {recipe.Parts[i].Label}; that part rolls untrimmed.");
-                }
-            }
-        }
 
         (Func<PoolItem, bool>? capped, int cap) = CapFor(spec, match, pools);
 
@@ -222,7 +180,7 @@ public static class BundleSlotFiller
         // what actually leaves this method.
         LegendaryFishRules.Enforce(chosen, candidates, availability?.Step ?? DifficultyStep.Normal, rng, log, spec.Name, legendaryBudget);
 
-        // Stack and quality (rollDomain decided above the trim). A vanilla id the roll drew again
+        // Stack and quality (rollDomain decided above). A vanilla id the roll drew again
         // keeps the stack and quality the vanilla slot carried, so a re-roll that lands on the
         // bundle's own item reproduces vanilla's ask. That holds on EVERY domain, not only Recipe:
         // a legacy-domain roll can land on one of the bundle's own items just as easily, and there
@@ -243,7 +201,7 @@ public static class BundleSlotFiller
             slots.Add(new BundleSlotSpec(
                 item.ItemId,
                 RollStack(rollDomain, item, tuning, rng),
-                LegendaryFishRules.ClampQuality(item.ItemId, qualityOff ? 0 : RollQuality(rollDomain, item, pools, tuning, rng))));
+                LegendaryFishRules.ClampQuality(item.ItemId, RollQuality(rollDomain, item, pools, tuning, rng))));
         }
 
         // The old 40-99 "big ask" roll on one forage slot is gone (2026-09-04): every fish and
@@ -537,7 +495,7 @@ public static class BundleSlotFiller
             .ToList();
 
     /// <summary>How many distinct items <see cref="Fill"/> could pick for this bundle before any
-    /// pity trim or avoid set (0 for a domain it does not re-roll). The engine fills the
+    /// avoid set (0 for a domain it does not re-roll). The engine fills the
     /// tightest bundles first so a small pool is not the one left holding the repeat fallback.
     ///
     /// Pass the same <paramref name="availability"/> the fill will get: a recipe part can read the
@@ -558,17 +516,6 @@ public static class BundleSlotFiller
         => match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
             ? (p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows), FishBundleCandidates.NightMarketFishPerBundle)
             : (null, int.MaxValue);
-
-    /// <summary>A trim applies to bundles feeding the trimmed season's gate: season-agnostic
-    /// pools (Metals, ArtisanGoods, Fish, CrabPot, MonsterDrops, generic crops) feed every
-    /// season, so they count; season-named bundles count only for their own season.</summary>
-    public static bool TrimApplies(DomainMatch match, PityTrim? trim)
-        => trim != null && trim.Units > 0 && match.Domain != PoolDomain.None
-           && (match.Season == null || match.Season == trim.Season);
-
-    /// <summary>Mirrors the domains <see cref="RollQuality"/> can give a silver/gold ask.</summary>
-    public static bool DomainRollsQuality(PoolDomain domain)
-        => domain is PoolDomain.QualityCrops or PoolDomain.SeasonalCrops or PoolDomain.SeasonalForage or PoolDomain.Fish;
 
     private static IReadOnlyList<PoolItem> Candidates(
         BundleSpec spec, DomainMatch match, ItemPools pools,

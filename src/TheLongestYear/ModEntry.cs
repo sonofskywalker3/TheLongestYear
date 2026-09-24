@@ -300,7 +300,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpavailability", "Write a Markdown listing of every item in every bundle on the LIVE board with the earliest season the engine says it can exist, why, and the season its gate demands it. Usage: tly_dumpavailability [fileName]", this.CmdDumpAvailability);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
-            helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
+            helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the nine configured difficulty steps, the nine this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop: nothing written or persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
@@ -336,7 +336,6 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
             helper.ConsoleCommands.Add("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
-            helper.ConsoleCommands.Add("tly_pity", "Debug: season pity counters and the Fail-night offer. Usage: tly_pity status | tly_pity set <spring|summer|fall|winter> <fails> | tly_pity accept|decline (after tly_hold keep|reshuffle, before tly_reset).", this.CmdPity);
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1838,20 +1837,16 @@ namespace TheLongestYear
         /// The pin has to survive <see cref="BundleHold.ConsumeChoiceAtReset"/>, which otherwise
         /// snaps BundleSeedLoop back to the post-bump CompletedResets for any reset that skipped
         /// the Fail-night hold question, which is exactly the console path.  Stamping
-        /// HoldChoiceMadeForReset makes that call a no-op, so the pin stands; the pity trim/ease
-        /// that the same call would normally clear is cleared here instead, since a board that
-        /// carried a leftover trim would not match the same seed loop generated elsewhere.
+        /// HoldChoiceMadeForReset makes that call a no-op, so the pin stands.
         /// ConsecutiveHolds is zeroed too: this is a debug pin, not a paid hold.</summary>
         private void PinSeedLoopForNextReset(int seedLoop)
         {
             TheLongestYear.Core.MetaState state = _meta.State;
             state.BundleSeedLoop = seedLoop;
             state.ConsecutiveHolds = 0;
-            TheLongestYear.Core.SeasonPity.ClearBoardTrim(state);
-            TheLongestYear.Core.SeasonPity.ClearBoardEase(state);
             state.HoldChoiceMadeForReset = true;
             this.Monitor.Log(
-                $"tly_reset: pinned bundle seed loop {seedLoop} for this reset (pity trim/ease cleared, consecutive holds zeroed).",
+                $"tly_reset: pinned bundle seed loop {seedLoop} for this reset (consecutive holds zeroed).",
                 LogLevel.Info);
             if (TheLongestYear.Core.BundleSourceNames.IsVanilla(state.BundleSource))
                 this.Monitor.Log(
@@ -2243,10 +2238,10 @@ namespace TheLongestYear
                 min: 0, max: 5000, interval: 100);
 
             // ---- Difficulty modifiers (spec 2026-08-26) ----
-            // Ten independent dials. Everything defaults to Normal, which is the shipping balance,
+            // Nine independent dials. Everything defaults to Normal, which is the shipping balance,
             // and a change lands at the NEXT reset because WorldResetService stamps the resolved
             // profile onto the save and every consumer reads that stamp. The overall lever above
-            // them only sets all ten at once (DifficultyLever); nothing reads it for gameplay.
+            // them only sets all nine at once (DifficultyLever); nothing reads it for gameplay.
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.difficulty.section"));
             gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.difficulty.blurb"));
 
@@ -2313,41 +2308,6 @@ namespace TheLongestYear
                 () => _config.Difficulty.HoldPrices, v => _config.Difficulty.HoldPrices = v,
                 () => Strings.Get("gmcm.difficulty.hold-prices.name"),
                 () => Strings.Get("gmcm.difficulty.hold-prices.tooltip"));
-            AddDifficultyOption(
-                () => _config.Difficulty.SeasonPity, v => _config.Difficulty.SeasonPity = v,
-                () => Strings.Get("gmcm.difficulty.season-pity.name"),
-                () => Strings.Get("gmcm.difficulty.season-pity.tooltip"));
-
-            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.pity.section"));
-            gmcm.AddBoolOption(this.ModManifest,
-                getValue: () => _config.PityEnabled,
-                setValue: v => _config.PityEnabled = v,
-                name: () => Strings.Get("gmcm.pity.enabled.name"),
-                tooltip: () => Strings.Get("gmcm.pity.enabled.tooltip"));
-            gmcm.AddNumberOption(this.ModManifest,
-                getValue: () => _config.PityThreshold,
-                setValue: v => _config.PityThreshold = v,
-                name: () => Strings.Get("gmcm.pity.threshold.name"),
-                tooltip: () => Strings.Get("gmcm.pity.threshold.tooltip"),
-                min: 0, max: 20, interval: 1);
-            gmcm.AddNumberOption(this.ModManifest,
-                getValue: () => (float)_config.PityQuotaStep,
-                setValue: v => _config.PityQuotaStep = v,
-                name: () => Strings.Get("gmcm.pity.quota-step.name"),
-                tooltip: () => Strings.Get("gmcm.pity.quota-step.tooltip"),
-                min: 0f, max: 0.5f, interval: 0.05f);
-            gmcm.AddNumberOption(this.ModManifest,
-                getValue: () => (float)_config.PityQuotaFloor,
-                setValue: v => _config.PityQuotaFloor = v,
-                name: () => Strings.Get("gmcm.pity.quota-floor.name"),
-                tooltip: () => Strings.Get("gmcm.pity.quota-floor.tooltip"),
-                min: 0.1f, max: 1f, interval: 0.05f);
-            gmcm.AddNumberOption(this.ModManifest,
-                getValue: () => _config.PityTrimPerStep,
-                setValue: v => _config.PityTrimPerStep = v,
-                name: () => Strings.Get("gmcm.pity.trim.name"),
-                tooltip: () => Strings.Get("gmcm.pity.trim.tooltip"),
-                min: 0, max: 10, interval: 1);
 
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
@@ -2550,7 +2510,6 @@ namespace TheLongestYear
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_dumpeffort": this.CmdDumpEffort(command, args); break;
-                case "tly_pity": this.CmdPity(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
@@ -4115,8 +4074,7 @@ namespace TheLongestYear
             LogStep("shrine prices", configured.ShrinePrices, live.Steps.ShrinePrices);
             LogStep("starting gold", configured.StartingGold, live.Steps.StartingGold);
             LogStep("cart slots", configured.CartSlots, live.Steps.CartSlots);
-            LogStep("hold/pity prices", configured.HoldPrices, live.Steps.HoldPrices);
-            LogStep("season pity", configured.SeasonPity, live.Steps.SeasonPity);
+            LogStep("hold prices", configured.HoldPrices, live.Steps.HoldPrices);
 
             this.Monitor.Log("  Resolved values in force:", LogLevel.Info);
             this.Monitor.Log(
@@ -4127,11 +4085,7 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"    economy: JP x{live.JpEarnedFactor}, shrine prices x{live.ShrinePriceFactor}, " +
                 $"starting gold {live.StartingGold}g, starting cart slots {live.StartingCartSlots}, " +
-                $"hold/pity prices x{live.HoldPriceFactor}",
-                LogLevel.Info);
-            this.Monitor.Log(
-                $"    season pity: {(live.Pity.Enabled ? "on" : "OFF")}, threshold {live.Pity.Threshold}, " +
-                $"quota step {live.Pity.QuotaStep}, floor {live.Pity.QuotaFloor}, trim {live.Pity.TrimPerStep}/step",
+                $"hold prices x{live.HoldPriceFactor}",
                 LogLevel.Info);
 
             this.Monitor.Log(
@@ -4323,7 +4277,6 @@ namespace TheLongestYear
                 return;
             }
 
-            PityTrim trim = TheLongestYear.Loop.BundleEngine.TrimFor(_meta.State);
             // Diagnostics have to show what the loop actually runs under, so this uses the STAMPED
             // profile like every other generation path. A preview resolved from live config would
             // report a board the save is not playing.
@@ -4332,7 +4285,7 @@ namespace TheLongestYear
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             firstEngine.Availability = _availability;
-            GeneratedBundleSet first = firstEngine.Generate(seed, trim);
+            GeneratedBundleSet first = firstEngine.Generate(seed);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
                 LogLevel.Info);
@@ -4340,7 +4293,7 @@ namespace TheLongestYear
 
             var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             secondEngine.Availability = _availability;
-            GeneratedBundleSet second = secondEngine.Generate(seed, trim);
+            GeneratedBundleSet second = secondEngine.Generate(seed);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -4506,8 +4459,8 @@ namespace TheLongestYear
             this.Monitor.Log($"  derived season pins in effect: {derivedSeasonPins.Count}", LogLevel.Info);
 
             IReadOnlyList<BundleRequirement> requirements = engine != null
-                ? engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability)
-                : set.BuildRequirements(itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
+                ? engine.BuildRequirements(set, itemSeasonPins, bundleQuotas, availability: _availability)
+                : set.BuildRequirements(itemSeasonPins, bundleQuotas, availability: _availability);
             int generated = set.Bundles.Count;
             int classified = requirements.Count;
             int skipped = generated - classified;
@@ -5015,59 +4968,13 @@ namespace TheLongestYear
                 case "reshuffle":
                     bool keep = mode == "keep";
                     var result = BundleHold.Apply(s, keep: keep, _config.BundleHoldCosts, s.EffectiveDifficulty(_config).HoldPriceFactor);
-                    if (result != BundleHold.HoldResult.NotEnoughJp)
-                        SeasonPity.DeclinePity(s, held: keep);   // the offer is a separate step: tly_pity accept|decline
-                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}, ease {s.BoardEaseSeason}/{s.BoardEaseSteps}, trim {s.BoardTrimSeason}/{s.BoardTrimSteps}; offer now {SeasonPity.OfferFor(s, keep, _config)} at {SeasonPity.PityCost(s, _config)} JP (tly_pity accept|decline).", LogLevel.Info);
+                    this.Monitor.Log($"tly_hold {mode}: {result}. JP {s.JunimoPoints}, consecutive holds {s.ConsecutiveHolds}, seed loop {s.BundleSeedLoop}, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
                     this.Monitor.Log("tly_hold: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
                     break;
                 default:
                     this.Monitor.Log($"tly_hold status: CompletedResets {s.CompletedResets}, seed loop {s.EffectiveBundleSeedLoop} (stored {s.BundleSeedLoop}), consecutive holds {s.ConsecutiveHolds}, next hold costs {BundleHold.NextCost(s, _config.BundleHoldCosts, s.EffectiveDifficulty(_config).HoldPriceFactor)} JP, choice stamped {s.HoldChoiceMadeForReset}.", LogLevel.Info);
                     break;
             }
-        }
-
-        private void CmdPity(string command, string[] args)
-        {
-            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            MetaState s = _meta.State;
-            string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
-            if (mode == "set")
-            {
-                if (args.Length < 3 || !Enum.TryParse(args[1], ignoreCase: true, out TheLongestYear.Core.Season season) || !int.TryParse(args[2], out int fails))
-                {
-                    this.Monitor.Log("Usage: tly_pity set <spring|summer|fall|winter> <fails>", LogLevel.Warn);
-                    return;
-                }
-                SeasonPity.Counts(s)[(int)season] = Math.Max(0, fails);
-                s.LastFailSeason = (int)season;
-                _meta.Save();
-                this.Monitor.Log($"tly_pity: {season} fails set to {fails} (LastFailSeason = {season}). Saved.", LogLevel.Info);
-            }
-            else if (mode == "accept" || mode == "decline")
-            {
-                bool held = s.ConsecutiveHolds > 0;   // the pending tly_hold choice decides the path
-                if (mode == "accept")
-                {
-                    var offer = SeasonPity.OfferFor(s, held, _config);
-                    var pity = SeasonPity.AcceptPity(s, held, _config);
-                    this.Monitor.Log($"tly_pity accept ({(held ? "kept" : "reshuffled")} board, offer {offer}): {pity}. JP {s.JunimoPoints}, consecutive uses {s.ConsecutivePityUses}.", LogLevel.Info);
-                }
-                else
-                {
-                    SeasonPity.DeclinePity(s, held);
-                    this.Monitor.Log($"tly_pity decline ({(held ? "kept" : "reshuffled")} board): uses reset, stamps cleared.", LogLevel.Info);
-                }
-                this.Monitor.Log("tly_pity: run tly_reset before sleeping or this choice goes stale.", LogLevel.Warn);
-            }
-            var counts = SeasonPity.Counts(s);
-            var ease = SeasonPity.CurrentQuotaEase(s, _config);
-            this.Monitor.Log(
-                $"tly_pity status: fails Spring {counts[0]} / Summer {counts[1]} / Fall {counts[2]} / Winter {counts[3]}; threshold {_config.PityThreshold}; " +
-                $"steps Spring {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Spring, _config)} / Summer {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Summer, _config)} / Fall {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Fall, _config)} / Winter {SeasonPity.EaseSteps(s, TheLongestYear.Core.Season.Winter, _config)}; " +
-                $"last fail season {s.LastFailSeason}; held {s.ConsecutiveHolds}; quota ease {(ease == null ? "none" : $"{ease.Season} {ease.Steps} steps factor {ease.Factor:0.00}")}; " +
-                $"ease stamp season {s.BoardEaseSeason} steps {s.BoardEaseSteps}; " +
-                $"board trim season {s.BoardTrimSeason} units {s.BoardTrimSteps}; consecutive pity uses {s.ConsecutivePityUses} (next offer {SeasonPity.PityCost(s, _config)} JP); enabled {_config.PityEnabled}.",
-                LogLevel.Info);
         }
 
         private void CmdPayVault(string command, string[] args)
@@ -5183,8 +5090,7 @@ namespace TheLongestYear
                         foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in itemSeasonPins)
                             pins[pin.Key] = pin.Value;   // base pins win over derived, as BundleEngine.BuildRequirements does
                         var stored = TheLongestYear.Core.BoardRequirements.Build(
-                            state.WrittenBoard, pins, bundleQuotas,
-                            SeasonPity.CurrentQuotaEase(state, _config), _availability);
+                            state.WrittenBoard, pins, bundleQuotas, _availability);
                         this.Monitor.Log(
                             $"Requirements source: stored engine board (loop {state.CompletedResets}, seed loop {state.EffectiveBundleSeedLoop}, {stored.Count} bundles).",
                             LogLevel.Info);
@@ -5200,7 +5106,7 @@ namespace TheLongestYear
                 {
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
                     engine.Availability = _availability;
-                    GeneratedBundleSet set = engine.Generate(seed, TheLongestYear.Loop.BundleEngine.TrimFor(state));
+                    GeneratedBundleSet set = engine.Generate(seed);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
                     if (!EngineManifestCheck.Matches(generatedData, liveData))
                     {
@@ -5216,8 +5122,7 @@ namespace TheLongestYear
                     }
 
                     var requirements = engine.BuildRequirements(
-                        set, itemSeasonPins, bundleQuotas,
-                        SeasonPity.CurrentQuotaEase(state, _config), _availability);
+                        set, itemSeasonPins, bundleQuotas, _availability);
                     string flagNote = nonObject == _config.EnableNonObjectDonations
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
@@ -5229,7 +5134,7 @@ namespace TheLongestYear
 
                 this.Monitor.Log(
                     "ResolveRequirements: engine manifest mismatch (stale or foreign bundle data), " +
-                    "falling back to read path; any season-pity easing on the held board is not applied on this path.",
+                    "falling back to read path.",
                     LogLevel.Warn);
                 // fall through to the legacy read-and-classify path below.
             }
@@ -5252,7 +5157,7 @@ namespace TheLongestYear
                 // just written, so they are stamped with it.
                 state.WrittenBoardFlavors = new Dictionary<string, string>(set.Flavors);
                 var requirements = engine.BuildRequirements(
-                    set, itemSeasonPins, bundleQuotas, ease: null, availability: _availability);
+                    set, itemSeasonPins, bundleQuotas, availability: _availability);
                 this.Monitor.Log(
                     $"Requirements source: engine generation (fresh run, {requirements.Count} bundles written).",
                     LogLevel.Info);

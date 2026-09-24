@@ -27,7 +27,6 @@ public static class BoardRequirements
         IReadOnlyDictionary<string, string> board,
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int[]> bundleQuotas,
-        SeasonEase? ease = null,
         ItemAvailabilityModel? availability = null)
     {
         var result = new List<BundleRequirement>();
@@ -56,8 +55,6 @@ public static class BoardRequirements
                     req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines,
                     bundleIndex: req.BundleIndex, slots: req.Slots);
             }
-            if (ease != null)
-                req = SeasonEase.Apply(req, ease);   // season pity, keep path (spec 2026-08-25)
             result.Add(req);
         }
         return result;

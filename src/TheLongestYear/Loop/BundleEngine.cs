@@ -201,16 +201,9 @@ namespace TheLongestYear.Loop
             _difficulty = difficulty ?? new Core.DifficultyProfile();
         }
 
-        /// <summary>The reshuffle-path pity trim stamped on the CURRENT board, or null. Every
-        /// Generate call for a live board must pass this so a reload reproduces the same set.</summary>
-        public static PityTrim TrimFor(MetaState meta)
-            => meta.BoardTrimSeason >= 0 && meta.BoardTrimSeason < Calendar.MonthsPerYear && meta.BoardTrimSteps > 0
-                ? new PityTrim((Core.Season)meta.BoardTrimSeason, meta.BoardTrimSteps)
-                : null;
-
         /// <summary>Draws one bundle per room-position (Vault unmodified) and returns the
         /// generated set. Deterministic for a given seed (see <see cref="BundleEngineSeed"/>).</summary>
-        public GeneratedBundleSet Generate(int seed, PityTrim trim = null)
+        public GeneratedBundleSet Generate(int seed)
         {
             _lastSeed = seed;
             _lastDomains.Clear();
@@ -355,7 +348,7 @@ namespace TheLongestYear.Loop
                 int legendariesSoFar = picked.Where(r => r.Composed != null).Sum(r => r.Composed.Slots.Count(sl => Core.LegendaryFishRules.IsLegendary(sl.ItemId)));
                 int legendaryBudget = legendaryAllowance == int.MaxValue ? int.MaxValue : legendaryAllowance - legendariesSoFar;
                 IReadOnlySet<string> banned = legendaryBudget <= 0 ? Core.LegendaryFishRules.Ids : null;
-                BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, trim, _thresholds,
+                BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng,
                     msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe, banned, legendaryBudget);
                 if (ReferenceEquals(composed, pick))
                 {
@@ -457,13 +450,12 @@ namespace TheLongestYear.Loop
             GeneratedBundleSet set,
             IReadOnlyDictionary<string, Core.Season> basePins,
             IReadOnlyDictionary<string, int[]> bundleQuotas,
-            SeasonEase ease = null,
             Core.ItemAvailabilityModel availability = null)
         {
             var merged = new Dictionary<string, Core.Season>(LastDerivedSeasonPins, StringComparer.Ordinal);
             foreach (KeyValuePair<string, Core.Season> pin in basePins)
                 merged[pin.Key] = pin.Value;
-            return set.BuildRequirements(merged, bundleQuotas, ease, availability);
+            return set.BuildRequirements(merged, bundleQuotas, availability);
         }
 
         /// <summary>Writes the generated set into <c>Game1.netWorldState</c> and re-syncs the CC

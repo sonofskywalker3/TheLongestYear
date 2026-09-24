@@ -423,97 +423,18 @@ namespace TheLongestYear.Loop
             AfterHoldChoice(held: keep);
         }
 
-        /// <summary>Second Fail-night question (Jeff, 2026-08-25, "like Mario's assist offer"):
-        /// once the board's fate is decided, the Junimos offer to ease the failed season when
-        /// enough fails have piled up. Nothing is stamped unless the player says yes; declining
-        /// (or nothing to offer) clears any easing and resets the accept counter.</summary>
+        /// <summary>The board's fate is decided: open the upgrade menu, then reset. Deferred a tick
+        /// because this runs inside the hold question's answer callback (see
+        /// <see cref="DeferShrineThenContinue"/>). Season pity used to offer a second question
+        /// here; it was removed (Jeff, 2026-09-24: players adjust the difficulty themselves).</summary>
         private void AfterHoldChoice(bool held)
         {
-            MetaState meta = _store.State;
-            if (SeasonPity.OfferFor(meta, held, _config) == SeasonPity.PityOffer.None)
-            {
-                SeasonPity.DeclinePity(meta, held);
-                DeferShrineThenContinue(ContinueAfterResetSpend);
-                return;
-            }
-            // Deferred one tick (drained by TickShrineWatchdog): this runs inside the hold
-            // question's answer callback, and GameLocation.answerDialogue tears down the
-            // dialogue box right after that callback returns, which would wipe a nested
-            // question's own callback (2026-08-25 smoke: the offer showed, then the watchdog
-            // treated it as replaced and declined it). Same fix as the NotEnoughJp re-ask.
-            _pityReaskHeld = held;
-        }
-
-        private void ShowPityChoice(bool held)
-        {
-            MetaState meta = _store.State;
-            long cost = SeasonPity.PityCost(meta, _config);
-            string season = TheLongestYear.UI.SeasonGoalsMenu.SeasonName((CoreSeason)meta.LastFailSeason);
-            var offer = SeasonPity.OfferFor(meta, held, _config);
-            string prompt = offer == SeasonPity.PityOffer.Ease
-                ? Strings.Get("dialog.pity.prompt-ease", new Dictionary<string, string> { ["season"] = season })
-                : Strings.Get("dialog.pity.prompt-trim", new Dictionary<string, string> { ["season"] = season });
-            string yesLabel = cost == 0
-                ? Strings.Get("dialog.pity.yes-free")
-                : Strings.Get("dialog.pity.yes", new Dictionary<string, string> { ["cost"] = cost.ToString() });
-            var responses = new[]
-            {
-                new StardewValley.Response("yes", yesLabel),
-                new StardewValley.Response("no",  Strings.Get("dialog.pity.no"))
-            };
-
-            GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
-            if (loc == null)
-            {
-                _monitor.Log("Pity offer: no currentLocation available, treating as declined.", LogLevel.Warn);
-                ApplyPityChoice(held, accept: false);
-                return;
-            }
-
-            loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
-            {
-                _menuWatch = null;
-                if (key == "yes")
-                {
-                    SeasonPity.PityResult result = SeasonPity.AcceptPity(meta, held, _config);
-                    if (result == SeasonPity.PityResult.NotEnoughJp)
-                    {
-                        Game1.playSound("cancel");
-                        Game1.addHUDMessage(new HUDMessage(Strings.Get("dialog.pity.not-enough-jp",
-                            new Dictionary<string, string> { ["cost"] = cost.ToString(), ["have"] = meta.JunimoPoints.ToString() }), HUDMessage.error_type));
-                        _pityReaskHeld = held;   // re-ask next tick, same reason as the hold re-ask
-                        return;
-                    }
-                    _monitor.Log($"Pity offer: ACCEPTED ({offer}, cost {cost} JP, consecutive uses now {meta.ConsecutivePityUses}, ease {meta.BoardEaseSeason}/{meta.BoardEaseSteps}, trim {meta.BoardTrimSeason}/{meta.BoardTrimSteps}).", LogLevel.Info);
-                    Game1.playSound("junimoMeep1");
-                    DeferShrineThenContinue(ContinueAfterResetSpend);
-                    return;
-                }
-                ApplyPityChoice(held, accept: false);
-            });
-
-            if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
-                _menuWatch = (box, () => ApplyPityChoice(held, accept: false));
-        }
-
-        private void ApplyPityChoice(bool held, bool accept)
-        {
-            if (!accept)
-            {
-                SeasonPity.DeclinePity(_store.State, held);
-                _monitor.Log("Pity offer: declined (uses reset, no easing stamped).", LogLevel.Info);
-            }
             DeferShrineThenContinue(ContinueAfterResetSpend);
         }
 
-        /// <summary>Set by AfterHoldChoice (first ask) and ShowPityChoice's NotEnoughJp branch
-        /// (re-ask); drained by TickShrineWatchdog once no menu is up. Holds which path the
-        /// offer applies to.</summary>
-        private bool? _pityReaskHeld;
-
         /// <summary>Queue the shrine open for the next tick instead of opening it now.
         /// MUST be used by every caller that runs inside a question’s answer callback (the hold
-        /// choice and both pity outcomes): vanilla calls answerDialogue -> our callback and only
+        /// choice): vanilla calls answerDialogue -> our callback and only
         /// then tryOutro()s the DialogueBox (GameLocation.cs answerDialogue, DialogueBox
         /// receiveLeftClick), so the box is still Game1.activeClickableMenu while we run.
         /// MenuLauncher.CanOpen refuses to open over it, TryOpenShrineThenContinue would take its
@@ -575,12 +496,6 @@ namespace TheLongestYear.Loop
             {
                 _holdReaskPending = false;
                 ShowHoldChoice();
-                return;
-            }
-            if (_pityReaskHeld is bool reaskHeld && Game1.activeClickableMenu == null)
-            {
-                _pityReaskHeld = null;
-                ShowPityChoice(reaskHeld);
                 return;
             }
             if (_shrineOpenPending != null && Game1.activeClickableMenu == null)
@@ -966,7 +881,6 @@ namespace TheLongestYear.Loop
 
                 case RunAction.AdvanceMonth:
                     _monitor.Log($"Month cleared ({Run.Season}). Advancing.", LogLevel.Info);
-                    SeasonPity.RecordPass(_store.State, Run.Season, _config);   // season pity: passed gates fall back to the threshold
                     // Season-checkpoint award (spec 2026-07-14 economy Change 2): pays at the ENTERING
                     // season's multiplier so progressing always out-earns re-farming spring.
                     long checkpointJp = JpBoostHelper.Apply(_store.State, Jp.CheckpointBonus(Run.WeekOfYear + 1));
@@ -984,8 +898,6 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.FailReset:
-                    SeasonPity.RecordFail(_store.State, Run.Season);   // season pity: counted before the Fail-night choice reads it
-                    _monitor.Log($"Season pity: {Run.Season} fails now {SeasonPity.Counts(_store.State)[(int)Run.Season]}, ease steps next loop {SeasonPity.EaseSteps(_store.State, Run.Season, _config)}.", LogLevel.Info);
                     // The morning rewind un-restores every CC room. Strip any room the player
                     // FINISHED TODAY out of mailForTomorrow so its overnight restoration scene
                     // (the bus/greenhouse/minecart WorldChangeEvent) never plays — otherwise the
@@ -997,7 +909,6 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.Win:
-                    SeasonPity.RecordPass(_store.State, CoreSeason.Winter, _config);
                     // 2026-05-29 continue-after-victory: only award the win-JP + queue the
                     // post-win choice popup on the FIRST win this playthrough. Subsequent
                     // Winter 28 wins (after the player chose Keep playing) re-fire RunAction.Win

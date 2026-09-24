@@ -42,13 +42,12 @@ public sealed class GeneratedBundleSet
     public IReadOnlyList<BundleRequirement> BuildRequirements(
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int[]> bundleQuotas,
-        SeasonEase? ease = null,
         ItemAvailabilityModel? availability = null)
     {
         // One classification loop for the generator and the stored-board path: the set is
         // reduced to the exact bundle strings the game will see (writer -> parser), so what is
         // classified can never drift from what was written.
-        return BoardRequirements.Build(ToBundleData(), itemSeasonPins, bundleQuotas, ease, availability);
+        return BoardRequirements.Build(ToBundleData(), itemSeasonPins, bundleQuotas, availability);
     }
 
     /// <summary>ramp[s] may never exceed the number of ingredient slots obtainable by the

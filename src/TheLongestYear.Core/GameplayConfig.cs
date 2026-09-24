@@ -49,27 +49,9 @@ public sealed class GameplayConfig
     /// Reshuffling resets the counter. Spec 2026-08-24 keep-bundles hold.</summary>
     public List<long> BundleHoldCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
 
-    /// <summary>Season pity (spec 2026-08-25): after <see cref="PityThreshold"/> fails at the SAME
-    /// season, each further fail eases that season's gate. Counting always runs; this switch only
-    /// zeroes the effect so it can be turned on later without losing history.</summary>
-    public bool PityEnabled { get; set; } = true;
-
-    /// <summary>Fails at one season before easing starts (the first N are standard difficulty).</summary>
-    public int PityThreshold { get; set; } = 5;
-
-    /// <summary>Quota reduction per ease step when the player KEEPS the board (0.10 = -10%).</summary>
-    public double PityQuotaStep { get; set; } = 0.10;
-
-    /// <summary>Lowest quota factor the keep-path easing can reach.</summary>
-    public double PityQuotaFloor { get; set; } = 0.50;
-
-    /// <summary>Hardest items removed from that season's slot pools per ease step when the player RESHUFFLES.</summary>
-    public int PityTrimPerStep { get; set; } = 2;
-
-    /// <summary>JP price of accepting the Junimos' pity offer on a Fail night, indexed by how
-    /// many offers the player has accepted in a row (index 0 = first accept, free). Same shape
-    /// and default as <see cref="BundleHoldCosts"/>; declining resets the counter.</summary>
-    public List<long> PityCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
+    // Season pity (removed 2026-09-24) had PityEnabled, PityThreshold, PityQuotaStep,
+    // PityQuotaFloor, PityTrimPerStep and PityCosts here. An old config.json that still lists
+    // them loads fine: SMAPI skips keys the model no longer has and drops them on its next write.
 
     /// <summary>
     /// The override layer for rulings the derivation rules cannot see. Everything that USED to

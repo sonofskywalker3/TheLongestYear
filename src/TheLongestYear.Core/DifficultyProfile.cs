@@ -1,32 +1,10 @@
 namespace TheLongestYear.Core;
 
-/// <summary>The resolved season-pity dials for one loop. Derived from the config baselines by
-/// <see cref="DifficultyResolver"/> so config.json stays the definition of Normal.</summary>
-public sealed class PityProfile
-{
-    /// <summary>False turns easing off entirely. Counting still runs (that is
-    /// <see cref="MetaState.SeasonFailCounts"/>), so re-enabling resumes where it left off.</summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>Fails at one season played at standard difficulty before easing starts.</summary>
-    public int Threshold { get; set; } = 5;
-
-    /// <summary>Quota reduction per ease step on the KEEP path (0.10 = -10%).</summary>
-    public double QuotaStep { get; set; } = 0.10;
-
-    /// <summary>Lowest quota factor the keep-path easing can reach.</summary>
-    public double QuotaFloor { get; set; } = 0.50;
-
-    /// <summary>Hardest items removed per ease step on the RESHUFFLE path.</summary>
-    public int TrimPerStep { get; set; } = 2;
-}
-
-/// <summary>The resolved effective values for one loop: what the ten
+/// <summary>The resolved effective values for one loop: what the nine
 /// <see cref="DifficultySettings"/> steps actually mean in numbers.
 ///
 /// This is what gets stamped into <see cref="MetaState.Difficulty"/> at reset, and RESOLVED
-/// VALUES are stamped rather than the steps themselves. That matches the existing pity-stamp
-/// idiom (BoardEaseSeason / BoardEaseSteps), which exists so a reload reproduces the reset
+/// VALUES are stamped rather than the steps themselves, so a reload reproduces the reset
 /// exactly. If the steps were stamped instead, a later release that retuned what "Hard" means
 /// would silently change an in-flight run's economy the next time it loaded.
 ///
@@ -78,11 +56,8 @@ public sealed class DifficultyProfile
     /// <summary>Traveling Cart items shown before any Cart Stall upgrade is owned.</summary>
     public int StartingCartSlots { get; set; } = CartSlotRules.MinSlots;
 
-    /// <summary>Multiplier on the hold and pity price curves.</summary>
+    /// <summary>Multiplier on the hold price curve.</summary>
     public double HoldPriceFactor { get; set; } = 1.0;
-
-    /// <summary>Resolved season-pity dials.</summary>
-    public PityProfile Pity { get; set; } = new();
 
     /// <summary>The steps this profile was resolved from. Diagnostics and the two "all normal"
     /// fast paths only; never the source of a balance number.</summary>

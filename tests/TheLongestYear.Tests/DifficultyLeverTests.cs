@@ -27,7 +27,7 @@ public class DifficultyLeverTests
             {
                 settings.StackSize, settings.QualityAsks, settings.RequiredSlots, settings.ItemRarity,
                 settings.JpEarned, settings.ShrinePrices, settings.StartingGold, settings.CartSlots,
-                settings.HoldPrices, settings.SeasonPity,
+                settings.HoldPrices,
             },
             dial => Assert.Equal(step, dial));
     }

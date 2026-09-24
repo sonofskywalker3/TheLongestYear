@@ -1,8 +1,8 @@
 namespace TheLongestYear.Core;
 
-/// <summary>The ten configured difficulty modifiers, serialized into
+/// <summary>The nine configured difficulty modifiers, serialized into
 /// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
-/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
+/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all nine, and a dial edited
 /// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
 /// Every property defaults to <see cref="DifficultyStep.Normal"/>, and Normal is the mod's
@@ -21,7 +21,7 @@ public sealed class DifficultySettings
     /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
     public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Set the lever and all ten dials to one level.</summary>
+    /// <summary>Set the lever and all nine dials to one level.</summary>
     public void SetAll(DifficultyStep step)
     {
         Overall = step;
@@ -34,7 +34,6 @@ public sealed class DifficultySettings
         StartingGold = step;
         CartSlots = step;
         HoldPrices = step;
-        SeasonPity = step;
     }
 
     // ---- Ask-side: baked into the board when it is generated ----
@@ -68,17 +67,13 @@ public sealed class DifficultySettings
     /// <summary>How many items the Traveling Cart shows before any Cart Stall upgrade.</summary>
     public DifficultyStep CartSlots { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Scales the JP price of holding the board on a Fail night, and of accepting the
-    /// Junimos' pity offer. The first of each stays free at every step, because the curves start
-    /// at 0: the step makes REPEATED holds expensive, it does not tax the first mistake.</summary>
+    /// <summary>Scales the JP price of holding the board on a Fail night. The first hold stays
+    /// free at every step, because the curve starts at 0: the step makes REPEATED holds
+    /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
-    // ---- Mercy ----
-
-    /// <summary>How readily the Junimos ease a season you keep failing. Extreme turns season
-    /// pity off entirely; the fail counting still runs, so dropping back to Normal resumes where
-    /// easing would have been.</summary>
-    public DifficultyStep SeasonPity { get; set; } = DifficultyStep.Normal;
+    // A tenth dial, SeasonPity, was removed with the season pity feature (2026-09-24). Old
+    // config.json files that still carry it load fine; SMAPI skips the unknown key.
 
     /// <summary>True when every modifier is Normal, i.e. this build behaves exactly as a
     /// pre-difficulty build.</summary>
@@ -88,8 +83,7 @@ public sealed class DifficultySettings
            && ShrinePrices == DifficultyStep.Normal
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
-           && HoldPrices == DifficultyStep.Normal
-           && SeasonPity == DifficultyStep.Normal;
+           && HoldPrices == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
     /// the Vanilla post-pass, so the default Vanilla path keeps its current zero-write behaviour.
@@ -114,6 +108,5 @@ public sealed class DifficultySettings
         StartingGold = StartingGold,
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
-        SeasonPity = SeasonPity,
     };
 }

@@ -4,7 +4,7 @@ namespace TheLongestYear.Core;
 
 /// <summary>The entire difficulty balance table, as one pure function.
 ///
-/// Everything the ten modifiers mean lives here and nowhere else, which is what makes the numbers
+/// Everything the nine modifiers mean lives here and nowhere else, which is what makes the numbers
 /// retunable in a later release without touching a single consumer, and what makes the whole ramp
 /// unit-testable without the game.
 ///
@@ -30,15 +30,6 @@ public static class DifficultyResolver
     /// deliberately identical: Normal is 1 and the floor is 0, so the ramp bottoms out at Hard and
     /// Extreme has nothing further to take.</summary>
     private const int CartEasy = 3, CartNormal = 1, CartHard = 0, CartExtreme = 0;
-
-    // Season pity: factors over the config baselines, so config.json remains the Normal definition.
-    private const double PityThresholdEasy = 0.6, PityThresholdHard = 1.6;
-    private const double PityStepEasy = 1.5, PityStepHard = 0.5;
-    private const double PityTrimEasy = 1.5, PityTrimHard = 0.5;
-
-    /// <summary>How far the quota FLOOR moves, expressed as a fraction of its distance from 1.0.
-    /// Easy 1.2 makes a 0.50 floor 0.40 (eases further); Hard 0.5 makes it 0.75 (eases less).</summary>
-    private const double PityFloorSeverityEasy = 1.2, PityFloorSeverityHard = 0.5;
 
     public static DifficultyProfile Resolve(DifficultySettings settings, GameplayConfig config)
     {
@@ -68,28 +59,7 @@ public static class DifficultyResolver
             StartingCartSlots = Pick(settings.CartSlots, CartEasy, CartNormal, CartHard, CartExtreme),
             HoldPriceFactor = Pick(settings.HoldPrices, HoldEasy, HoldNormal, HoldHard, HoldExtreme),
 
-            Pity = ResolvePity(settings.SeasonPity, config),
             Steps = settings.Clone(),
-        };
-    }
-
-    /// <summary>Extreme disables easing outright but keeps the baselines intact, so a player who
-    /// drops back to Normal gets the same curve he would have had. Config's own
-    /// <see cref="GameplayConfig.PityEnabled"/> still wins: a step can turn pity off, never on.</summary>
-    private static PityProfile ResolvePity(DifficultyStep step, GameplayConfig config)
-    {
-        double thresholdFactor = Pick(step, PityThresholdEasy, 1.0, PityThresholdHard, 1.0);
-        double stepFactor = Pick(step, PityStepEasy, 1.0, PityStepHard, 1.0);
-        double trimFactor = Pick(step, PityTrimEasy, 1.0, PityTrimHard, 1.0);
-        double floorSeverity = Pick(step, PityFloorSeverityEasy, 1.0, PityFloorSeverityHard, 1.0);
-
-        return new PityProfile
-        {
-            Enabled = config.PityEnabled && step != DifficultyStep.Extreme,
-            Threshold = Math.Max(0, RoundToInt(config.PityThreshold * thresholdFactor)),
-            QuotaStep = config.PityQuotaStep * stepFactor,
-            QuotaFloor = Math.Clamp(1.0 - (1.0 - config.PityQuotaFloor) * floorSeverity, 0.0, 1.0),
-            TrimPerStep = Math.Max(1, RoundToInt(config.PityTrimPerStep * trimFactor)),
         };
     }
 
