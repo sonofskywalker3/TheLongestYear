@@ -6,6 +6,33 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### IDEA (Jeff, 2026-09-24): voluntary restart option on the Junimo Shrine
+Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
+planning/buffs view (ShrinePreviewMenu). The menu that opens on a rewind to buy permanent upgrades is NOT the
+shrine; call it the upgrade menu.
+From tanky24u's Nexus post (23 Sep): the player asked about resetting mid-loop, or after finishing the
+Center, to go after long-haul things (Key to the City, How to Win Friends) without risking the win. Today
+the only rewinds are a failed day 28 and the post-win "Start a new loop" choice (and "Keep playing" is final:
+later Winter 28 wins are silent); the debug `tly_reset` skips the upgrade menu, so it is not a player route.
+Jeff: add a voluntary restart option to the Junimo Shrine. Needs a spec before building. Open questions:
+whether the upgrade menu opens after a voluntary restart the way it does on a fail night, what the restart
+pays out (JP for what was donated so far, or nothing), whether it counts as a fail for season pity and hold
+prices, whether it is also offered after "Keep playing", and a confirm step so nobody throws away a run by
+accident.
+
+### FIXED 0.18.44 to 0.18.46 (2026-09-24, on master, pushed, NOT released): tanky24u's three reports (Nexus bugs, 23 Sep)
+- **0.18.44, boosted crops harvestable while looking unripe.** Growth Spurt, the Farming bonus and Green Thumb
+  added their extra day after vanilla's nightly checks, so a wild seed crop they finished skipped its switch to
+  forage and sat pickable at a random half-grown sprite. The extra day now lands before vanilla's tick. Green
+  Thumb also stopped turning ready regrowing crops unready for a day. Not checked in game.
+- **0.18.45, Pufferfish due after Summer.** Not Ginger Island (the mod never counts the island): a Summer-only
+  fish with high effort slid to a Winter deadline, the any-N gates let Summer and Fall pass, and Winter failed.
+  Deadlines are now capped at the item's last spawn season (Jeff: "so they're not playing through 2 extra
+  seasons for an inevitable fail"). Specialty Fish then needs 3 by Summer.
+- **0.18.46, Artichoke odds question.** Year-Two Seeds is now Spring and Summer only (Jeff: vanilla Fall Mixed
+  Seeds already give Artichoke 25%, so it needs no boost).
+Replies wait until these ship (bug-reply-after-fix).
+
 ### FIXED 0.18.27 (2026-09-17, on master, pushed, NOT released): a repeat festival visit trapped the player (asteriaths, Nexus post 17 Sep)
 Jeff: "figure out the already danced flag, clear it if we're not, and if they don't dance with anyone they need to
 be able to leave." Findings from the PC decompile: vanilla has NO persistent "already danced" flag. The partner

@@ -132,7 +132,7 @@ public static class BoostPurchase
         BoostId.RainDance or BoostId.StormCall
             => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival
                && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
-        BoostId.YearTwoSeeds => ctx.Season != Season.Winter,
+        BoostId.YearTwoSeeds => YearTwoSeeds.SeedIdFor(ctx.Season) != null,
         BoostId.CrashCourse => BoostPricing.CrashCourseAvailable(run, ctx),
         BoostId.ElevatorPass => BoostPricing.ElevatorPassAvailable(ctx.MineFloor),
         _ => true,
@@ -204,8 +204,11 @@ public static class BoostState
     }
 }
 
-/// <summary>Year-Two Seeds facts (unchanged from plan 4): for the week it is bought in, every
-/// Mixed Seeds roll has this chance of yielding the season's following-year seed instead.</summary>
+/// <summary>Year-Two Seeds facts: for the week it is bought in, every Mixed Seeds roll has this
+/// chance of yielding the season's following-year seed instead. Spring and Summer only (Jeff,
+/// 2026-09-24): vanilla Fall Mixed Seeds already grow Artichoke 25% of the time, so a Fall
+/// version only nudged that to about 29% (tanky24u, Nexus 2026-09-23). The Cultivation upgrades
+/// skip Fall for the same reason.</summary>
 public static class YearTwoSeeds
 {
     public const double Chance = 0.05;
@@ -214,7 +217,6 @@ public static class YearTwoSeeds
     {
         Season.Spring => "476",
         Season.Summer => "485",
-        Season.Fall => "489",
         _ => null,
     };
 }

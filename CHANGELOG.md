@@ -17,6 +17,20 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.47 - 2026-09-24
+
+2188 tests.
+
+### Fixed
+
+- **Crops sped up by a boost look ready when they are ready.** Growth Spurt, the Farming week bonus and Green Thumb added their extra day after the game's own nightly growth, so a crop they finished could be picked while it still looked half grown. Wild seeds were hit hardest, because they never turned into their forage. The extra day now comes first. Green Thumb also no longer makes a ready regrowing crop look unripe for a day. Reported by tanky24u.
+- **A seasonal item is never due after its season ends.** A Summer-only fish like the Pufferfish could be due by Winter, so Summer and Fall let you through without it and the loop then failed at Winter, when it could no longer be caught. Every item is now due by the last season it can be found, so a missing Pufferfish shows up at the end of Summer instead of two seasons later. Reported by tanky24u.
+
+### Changed
+
+- **Year-Two Seeds is Spring and Summer only.** Fall Mixed Seeds already grow Artichoke a quarter of the time, so the Fall version only nudged that to about 29%. It can no longer be bought in Fall. Raised by tanky24u.
+- **The upgrade menu has its own name.** The menu where you spend JP on keeps after a rewind is now called Junimo Upgrades, and the Shrine prices setting is now Upgrade prices. The Junimo Shrine is the statue on your farm.
+
 ## 0.18.43 - 2026-09-23
 
 2183 tests.

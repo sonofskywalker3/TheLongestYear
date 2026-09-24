@@ -50,31 +50,27 @@ namespace TheLongestYear.Loop
 
         // ReSharper disable InconsistentNaming — Harmony convention.
 
-        /// <summary>Snapshot the crop's growth state before <see cref="Crop.newDay"/> runs when
-        /// the liability roll succeeds. The postfix restores from the snapshot.</summary>
+        /// <summary>Runs before <see cref="Crop.newDay"/>. Liability: snapshot the growth state so
+        /// the postfix can undo today's tick. Bonus (only when the liability didn't fire): add the
+        /// extra tick here, BEFORE vanilla's own tick, so vanilla's end-of-night checks (wild seed
+        /// to forage conversion, giant crop roll, phase skip) see the combined state. Nexus bug
+        /// tanky24u, 2026-09-23: as a postfix, a boost tick that finished a wild seed crop landed
+        /// after vanilla's conversion had been skipped, leaving a harvestable crop drawn at a
+        /// random mid-growth phase. Priority.Last so the snapshot includes any
+        /// <see cref="GreenThumbPatch"/> tick: the liability cancels vanilla's own day, not bonuses.</summary>
+        [HarmonyPriority(Priority.Last)]
         private static void Prefix(Crop __instance, int state, out (int phase, int dayOfPhase)? __state)
         {
             __state = null;
-            if (!ShouldSkipTickThisDay(__instance, state)) return;
-            __state = (__instance.currentPhase.Value, __instance.dayOfCurrentPhase.Value);
-        }
-
-        /// <summary>Handle bonus tick (postfix add) and liability restore (postfix snapshot revert).
-        /// Bonus runs only when the liability prefix didn't capture state.</summary>
-        private static void Postfix(Crop __instance, int state, (int phase, int dayOfPhase)? __state)
-        {
-            // Liability path: restore snapshot. Crop ends the day exactly where it started
-            // — no advance, no regression. Wins over bonus when both are somehow active.
-            if (__state.HasValue)
+            if (ShouldSkipTickThisDay(__instance, state))
             {
-                __instance.currentPhase.Value = __state.Value.phase;
-                __instance.dayOfCurrentPhase.Value = __state.Value.dayOfPhase;
+                __state = (__instance.currentPhase.Value, __instance.dayOfCurrentPhase.Value);
                 return;
             }
 
             // Bonus path: 20% chance per crop per day to grant an extra growth tick.
             if (__instance.dead.Value) return;
-            if (__instance.fullyGrown.Value && __instance.dayOfCurrentPhase.Value > 0) return;
+            if (__instance.fullyGrown.Value) return;
             if (state != 1) return;
             // One independent roll per stack (theme bonus + Growth Spurt); one extra tick at most
             // per day, since a tick is already a whole growth day (ruling 3).
@@ -84,19 +80,34 @@ namespace TheLongestYear.Loop
             for (int s = 0; s < stacks && !hit; s++)
                 hit = Game1.random.NextDouble() < RollChance;
             if (!hit) return;
-            if (__instance.fullyGrown.Value) return;
 
-            int maxForPhase = (__instance.phaseDays.Count > 0)
-                ? __instance.phaseDays[System.Math.Min(__instance.phaseDays.Count - 1, __instance.currentPhase.Value)]
-                : 0;
-            __instance.dayOfCurrentPhase.Value = System.Math.Min(
-                __instance.dayOfCurrentPhase.Value + 1, maxForPhase);
+            AdvanceOneTick(__instance);
+        }
 
-            if (__instance.dayOfCurrentPhase.Value >= maxForPhase
-                && __instance.currentPhase.Value < __instance.phaseDays.Count - 1)
+        /// <summary>Liability restore: the crop ends the day exactly where it started (plus any
+        /// bonus tick taken before the snapshot), no advance, no regression.</summary>
+        private static void Postfix(Crop __instance, (int phase, int dayOfPhase)? __state)
+        {
+            if (!__state.HasValue) return;
+            __instance.currentPhase.Value = __state.Value.phase;
+            __instance.dayOfCurrentPhase.Value = __state.Value.dayOfPhase;
+        }
+
+        /// <summary>Bump the crop forward exactly one day, advancing to the next phase if the
+        /// current one finishes. Same arithmetic as vanilla's own tick in Crop.newDay. Shared with
+        /// <see cref="GreenThumbPatch"/>.</summary>
+        internal static void AdvanceOneTick(Crop crop)
+        {
+            if (crop.phaseDays.Count == 0) return;
+            int maxForPhase = crop.phaseDays[System.Math.Min(
+                crop.phaseDays.Count - 1, crop.currentPhase.Value)];
+            crop.dayOfCurrentPhase.Value = System.Math.Min(
+                crop.dayOfCurrentPhase.Value + 1, maxForPhase);
+            if (crop.dayOfCurrentPhase.Value >= maxForPhase
+                && crop.currentPhase.Value < crop.phaseDays.Count - 1)
             {
-                __instance.currentPhase.Value++;
-                __instance.dayOfCurrentPhase.Value = 0;
+                crop.currentPhase.Value++;
+                crop.dayOfCurrentPhase.Value = 0;
             }
         }
     }

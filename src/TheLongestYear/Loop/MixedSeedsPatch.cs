@@ -10,8 +10,9 @@ namespace TheLongestYear.Loop
     /// Red Cabbage in Summer via cult_red_cabbage). 10% substitution chance each. There is no
     /// Fall entry on purpose: vanilla's Fall roll already yields Artichoke Seeds at 25%, so there
     /// is no RNG to buy off — the same reason the Starfruit twin was removed 2026-08-21 (the
-    /// desert is reachable without RNG). The Year-Two Seeds boost handled by the same patch is
-    /// not season-limited in this way (see below). See <see cref="MixedSeedsPatch"/>.
+    /// desert is reachable without RNG). The Year-Two Seeds boost handled by the same patch skips
+    /// Fall for the same reason (<see cref="TheLongestYear.Core.YearTwoSeeds"/>). See
+    /// <see cref="MixedSeedsPatch"/>.
     ///
     /// Upgrade ownership is read via <see cref="UpgradeChecker"/>, a static Func wired by
     /// ModEntry.OnSaveLoaded to avoid importing MetaStore into the patch.
