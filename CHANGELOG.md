@@ -17,6 +17,23 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.50 - 2026-09-24
+
+2202 tests.
+
+### Added
+
+- **Spring Returns, Summer Returns and Fall Returns.** Three new one-week boosts at the Junimo Shrine, 100 JP each. Each is sold once its season has passed this loop: Spring Returns from Summer on, Summer Returns from Fall on, Fall Returns in Winter. While one runs, that season's fish bite and its forage turns up again, on top of the current season's. Time of day, weather and fishing spots still apply, and the legendary fish are included, still once per loop.
+
+### Changed
+
+- **Seasonal items are back on their normal deadlines.** 0.18.47 made a seasonal fish or forage item due by the last season it could be found. The Returns boosts replace that: a Summer-only fish can be due at Winter again, and if you missed it, Summer Returns brings it back. Reported by tanky24u.
+- **Rain Dance works in Winter.** A past season's rain fish can be caught in Winter with Rain Dance and a Returns boost. Snow still does not count as rain. Storm Call is still not sold in Winter.
+
+### Fixed
+
+- **Two descriptions swapped a line.** 0.18.47 took Artichoke out of the wrong description. Year-Two Seeds now lists only Garlic and Red Cabbage, and Pierre's year-2 seeds upgrade lists Artichoke again, which he does stock.
+
 ## 0.18.47 - 2026-09-24
 
 2188 tests.
