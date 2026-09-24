@@ -25,6 +25,12 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
+## What's New in 0.18.51
+
+**Season pity is gone. The difficulty settings are how you make a season easier.**
+
+- **The Junimos no longer offer to ease a season you keep failing.** A Fail night now asks one thing, whether to keep your bundles or let them reshuffle, and then opens the upgrade menu. If a season is too hard, turn it down with the Difficulty settings instead. A season the Junimos had already eased goes back to normal. The "Hold and pity prices" setting is now just "Hold prices".
+
 ## What's New in 0.18.50
 
 **Missed a fish or forage item in its season? Buy the season back for a week.**
@@ -185,7 +191,7 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 - **The intro.** On a fresh game, Lewis greets you on the porch, then a Junimo explains the loop. You wake on Spring 1 and pick your first **weekly theme**.
 - **Weekly themes.** Each week you choose one of two offered themes. Room themes (Foraging, Farming, Fishing, Mining) take goals from their Community Center room; Spelunking, Artisan and Kitchen take goals by item kind from anywhere on the board, and Mixed takes anything. Goals follow what the season gate demands first; the weekly JP bonus is paid goal by goal and the drawback lifts when every goal is done. The planning hub opens at the start of each week.
 - **Seasonal goals.** The **Bundle Log** book (click to open) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
-- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the upgrade menu opens, they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.) After five fails at the same season, the Junimos also offer to ease that season's gate for a JP price on the same curve.
+- **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the upgrade menu opens, they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. (TLY Custom boards only.)
 - **Junimo Points (JP).** Donations earn JP, scaled by rarity and by how late in the year you give (later seasons are worth much more). JP banks across loops.
 - **Junimo Upgrades.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, and more.
 - **JP Boosts.** The Junimo statue on the farm sells this-loop edges for JP any day (weather, luck, a free late night, stacking bonuses, a temporary skill level, an elevator stop) and shows what is running on its Active tab.
@@ -236,11 +242,11 @@ Anything not on this list, please do report - the bugs tab on Nexus is read.
 
 ## Difficulty
 
-Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**, with one overall **Difficulty** option above them. Pick a level there and every dial switches to it, then change any single dial you like. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
+Nine difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**, with one overall **Difficulty** option above them. Pick a level there and every dial switches to it, then change any single dial you like. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
 
 **Changes take effect on your next loop, not straight away.** The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
 
-![The Difficulty section of the settings menu, ten dials all on Normal](release-notes/settings-difficulty.png)
+![The Difficulty section of the settings menu, every dial on Normal](release-notes/settings-difficulty.png)
 
 **What the bundles ask for**
 
@@ -256,8 +262,7 @@ Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**
 - **Upgrade prices.** Scales what upgrades cost in the upgrade menu.
 - **Starting gold.** Scales the `StartingMoney` value rather than replacing it. Extreme starts you with nothing.
 - **Starting cart slots.** How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is empty until you buy Cart Stall I.
-- **Hold and pity prices.** Scales the JP price of keeping your board on a Fail night, and of accepting the Junimos' offer to ease a season. The first of each stays free at every step.
-- **Season pity.** How readily the Junimos ease a season you keep failing. Easy helps sooner and more, Hard waits longer and helps less, Extreme never helps. Your failed-season counting keeps running either way, so turning it back up picks up where it left off.
+- **Hold prices.** Scales the JP price of keeping your board on a Fail night. The first hold stays free at every step.
 
 **One dial does not work on vanilla boards.** Item rarity applies to **TLY Custom** bundles only, because changing which item a vanilla bundle asks for would be changing the bundle. Stack size, quality asks and required slots all work on vanilla Standard and Remixed boards too.
 
@@ -296,7 +301,6 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
 | `BundleSource` | `Engine` | One setting, three values: `Engine` (the mod's own board every loop, the new-game **TLY Custom** choice), `Normal` or `Remixed` (the game's own board of that kind, or another bundle mod's, re-rolled the same way each loop). Switchable on an existing save; takes effect at the next loop. See [Switching bundle source later](#switching-bundle-source-later) |
 | `BundleHoldCosts` | `[0, 50, 100, 200, 300]` | JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count |
-| `PityThreshold` / `PityQuotaStep` / `PityQuotaFloor` / `PityTrimPerStep` / `PityCosts` | 5 / 0.10 / 0.50 / 2 / `[0, 50, 100, 200, 300]` | Season pity: fails at one season before the Junimos offer help; quota cut per extra fail on a kept board and its floor; hardest items trimmed per extra fail on a reshuffle; JP price of accepting, by consecutive accepts. `PityEnabled` turns the offer off (fails are still counted) |
 | `Enabled` | `true` | Master switch — turn the whole mod off to play vanilla |
 
 Upgrade prices are defined in the upgrade catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 / 1200 JP). Feedback on these is welcome.

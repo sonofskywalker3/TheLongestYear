@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.51 - 2026-09-24
+
+2142 tests.
+
+### Removed
+
+- **Season pity.** The Junimos no longer offer to ease a season you keep failing (Jeff, 2026-09-24: "they can adjust the difficulty themselves"). A Fail night now goes cutscene, keep-or-reshuffle question, upgrade menu, reset. The quota cut on a kept board and the hardest-item trim on a reshuffle are gone, and a save that had either goes back to the standard board. The "Season pity" difficulty dial, the Season pity settings section, the `Pity*` config keys and the `tly_pity` console command are removed; old saves and old config.json files still load. The "Hold and pity prices" dial is now "Hold prices".
+
 ## 0.18.50 - 2026-09-24
 
 2202 tests.
