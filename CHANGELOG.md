@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.56 - 2026-09-24
+
+2159 tests.
+
+### Added
+
+- **Restart the year at the Junimo Shrine.** A button on the statue's planning view asks a yes/no, then ends the day at once and runs the Fail-night chain with the Junimo scene removed: keep-or-reshuffle question, Junimo Upgrades, Cookbook and Craftbook banking, reset to Spring 1. Nothing is paid out; JP is already banked. It counts as a loop for the loop number and for consecutive hold prices. Hidden on day 28 (the real gate owns that night), while an event, cutscene or festival is playing, and while another reset is running. Choosing No returns to the shrine. After Keep playing it clears the won-run flag so the next loop can be won. Suggested by tanky24u (Nexus posts, 2026-09-23).
+- **`tly_restart`** debug command: presses the button headlessly (answer with `tly_answer 0` / `1`).
+
+### Fixed
+
+- **Fortune: Rare Fish's description says what it does.** It read "Rare fish catch chance increased by 25%", which is not how the upgrade works. It now reads "Your rod always works as if it has a Curiosity Lure." Reported by tanky24u.
+
 ## 0.18.51 - 2026-09-24
 
 2142 tests.
