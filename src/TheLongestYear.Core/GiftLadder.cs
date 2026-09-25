@@ -20,6 +20,10 @@ public static class GiftLadder
     public const string KeepQuarryBridgeId = "keep_quarry_bridge";
     public const string KeepBoulderClearedId = "keep_boulder_cleared";
     public const string KeepMinecartsId = "keep_minecarts";
+
+    /// <summary>Reach metric for a room-gated Gift: "room:RoomKey", met (1) when every bundle of
+    /// that room is complete on the live board. A keyed flag, so RunReachRequirement must list it.</summary>
+    public const string RoomReachMetric = "room";
     // The bus row is VaultRules.KeepBusUnlockedId ("keep_bus_unlocked").
 
     /// <summary>Gift upgrade id to the vanilla completion mail it restores.</summary>
