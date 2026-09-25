@@ -18,11 +18,17 @@ namespace TheLongestYear.Integration
     /// second tlyHoldUp replaces the first. Both are purely visual: the books themselves are granted by
     /// BookFurniture.ReconcileInventory, not by the event.
     ///
+    /// <c>tlyWaitWalk &lt;actor&gt; &lt;maxMs&gt;</c>: waits for the actor's advancedMove to end, but never
+    /// longer than maxMs; then drops his walk and halts him. An advancedMove only ends when the actor
+    /// lands exactly on the last tile, and Lewis stopped a few pixels short at the hall door, which
+    /// froze the opening under waitForAllStationary (Jeff, 2026-09-25).
+    ///
     /// Each command never throws: a failure is logged and the command is skipped.</summary>
     internal static class OpeningEventCommands
     {
         public const string HoldUpName = "tlyHoldUp";
         public const string TakeHeldName = "tlyTakeHeld";
+        public const string WaitWalkName = "tlyWaitWalk";
         // Above a Junimo's head: its sprite is drawn about three quarters of a tile tall.
         private static readonly Vector2 AboveHead = new(0f, -56f);
         private const float HeldScale = 3f;
@@ -31,6 +37,7 @@ namespace TheLongestYear.Integration
         private static GameLocation _heldIn;
 
         private static NPC _holder;
+        private static float _walkWaited = -1f;
 
         /// <summary>The actor holding an item right now, or null.</summary>
         internal static Character Holder => _holder;
@@ -87,6 +94,38 @@ namespace TheLongestYear.Integration
                 {
                     monitor.Log($"{HoldUpName}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn);
                 }
+                evt.CurrentCommand++;
+            });
+
+            Event.RegisterCommand(WaitWalkName, (evt, args, context) =>
+            {
+                try
+                {
+                    if (!ArgUtility.TryGet(args, 1, out string actorName, out string error)
+                        || !ArgUtility.TryGetInt(args, 2, out int maxMs, out error))
+                    {
+                        monitor.Log($"{WaitWalkName}: {error}; skipping.", LogLevel.Warn);
+                        _walkWaited = -1f;
+                        evt.CurrentCommand++;
+                        return;
+                    }
+                    if (_walkWaited < 0f) _walkWaited = 0f;
+                    _walkWaited += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+                    bool walking = evt.npcControllers != null
+                                   && evt.npcControllers.Exists(c => c.puppet?.Name == actorName);
+                    if (walking && _walkWaited < maxMs) return;   // called every tick until done
+                    if (walking)
+                    {
+                        monitor.Log($"{WaitWalkName}: {actorName}'s walk did not finish in {maxMs} ms; ending it where he stands.", LogLevel.Trace);
+                        evt.npcControllers.RemoveAll(c => c.puppet?.Name == actorName);
+                    }
+                    evt.getActorByName(actorName, out _)?.Halt();
+                }
+                catch (Exception ex)
+                {
+                    monitor.Log($"{WaitWalkName}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn);
+                }
+                _walkWaited = -1f;
                 evt.CurrentCommand++;
             });
 

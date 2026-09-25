@@ -169,7 +169,9 @@ public static class OpeningScript
             "advancedMove Lewis false 0 1 2 0 0 6",
             "pause 300",
             "faceDirection farmer 2",
-            "waitForAllStationary",
+            // Nine tiles at walking speed is about 4.8 s; cap the wait so a walk that stops short
+            // of the door can never freeze the scene.
+            "tlyWaitWalk Lewis 5500",
             "playSound doorClose",
             $"warp Lewis {Off}",
             "pause 700",
