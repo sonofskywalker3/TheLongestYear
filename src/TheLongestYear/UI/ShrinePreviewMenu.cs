@@ -375,6 +375,9 @@ namespace TheLongestYear.UI
                                 && d.RunReachRequirement != null
                                 && !RunReachEvaluator.Meets(d.RunReachRequirement))
                     .ToList();
+                // Room-blocked animal keeps (AnimalCapacityRule) sit with the locked rows, the
+                // reason in place of the reach text.
+                locked.AddRange(KeepShopFilter.RoomBlockedInCategory(cat, _state, RunReachEvaluator.Meets));
                 if (buyable.Count == 0 && locked.Count == 0)
                     continue;
 
@@ -400,7 +403,9 @@ namespace TheLongestYear.UI
                     _rows.Add(new Row
                     {
                         Kind = RowKind.Locked, Def = def,
-                        Requirement = ReachText.Describe(def.RunReachRequirement),
+                        Requirement = def.RunReachRequirement != null && !RunReachEvaluator.Meets(def.RunReachRequirement)
+                            ? ReachText.Describe(def.RunReachRequirement)
+                            : AnimalCapacityRule.BlockReason(_state, def.Id) ?? "",
                         Tooltip = def.Description,
                     });
             }

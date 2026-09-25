@@ -6,7 +6,8 @@ namespace TheLongestYear.Core;
 /// <summary>
 /// Pure visibility rules for the Junimo Shrine keep shop, shared by the purchase menu and the
 /// read-only preview. A keep is BUYABLE when it is not owned, its chain prerequisite is owned,
-/// its cross-run MetaRequirement is met, AND its in-run RunReachRequirement is met. The reach
+/// its cross-run MetaRequirement is met, its in-run RunReachRequirement is met, AND an animal keep
+/// fits the kept buildings' room (<see cref="AnimalCapacityRule"/>). The reach
 /// check is injected as a delegate so this stays pure/testable (the glue passes a live evaluator).
 /// </summary>
 public static class KeepShopFilter
@@ -22,7 +23,36 @@ public static class KeepShopFilter
             return false;
         if (def.RunReachRequirement != null && !reachMet(def.RunReachRequirement))
             return false;
+        if (AnimalCapacityRule.WouldOverflow(state, def.Id))
+            return false;
         return true;
+    }
+
+    /// <summary>True when <paramref name="def"/> passes every gate but the kept-building room
+    /// (<see cref="AnimalCapacityRule"/>): the menus show it greyed with the reason instead of
+    /// hiding it, so the player knows a bigger coop or barn keep opens it.</summary>
+    public static bool IsRoomBlocked(UpgradeDefinition def, MetaState state, Func<string?, bool> reachMet)
+    {
+        if (state.HasUpgrade(def.Id))
+            return false;
+        if (def.PrerequisiteId != null && !state.HasUpgrade(def.PrerequisiteId))
+            return false;
+        if (!state.MeetsMetaRequirement(def.MetaRequirement))
+            return false;
+        if (def.RunReachRequirement != null && !reachMet(def.RunReachRequirement))
+            return false;
+        return AnimalCapacityRule.WouldOverflow(state, def.Id);
+    }
+
+    /// <summary>The room-blocked keeps in a category, catalog order preserved.</summary>
+    public static IReadOnlyList<UpgradeDefinition> RoomBlockedInCategory(
+        UpgradeCategory category, MetaState state, Func<string?, bool> reachMet)
+    {
+        var blocked = new List<UpgradeDefinition>();
+        foreach (UpgradeDefinition def in UpgradeCatalog.ByCategory(category))
+            if (IsRoomBlocked(def, state, reachMet))
+                blocked.Add(def);
+        return blocked;
     }
 
     /// <summary>The buyable keeps in a category, catalog order preserved.</summary>
