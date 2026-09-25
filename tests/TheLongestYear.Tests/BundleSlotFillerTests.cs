@@ -523,17 +523,6 @@ public class BundleSlotFillerTests
         Assert.Equal(2, filled.NumberOfSlots);
     }
 
-    private static readonly RarityThresholds Thresholds = new();
-
-    [Fact]
-    public void DomainRollsQuality_matches_RollQuality_domains()
-    {
-        Assert.True(BundleSlotFiller.DomainRollsQuality(PoolDomain.QualityCrops));
-        Assert.True(BundleSlotFiller.DomainRollsQuality(PoolDomain.Fish));
-        Assert.False(BundleSlotFiller.DomainRollsQuality(PoolDomain.Metals));
-        Assert.False(BundleSlotFiller.DomainRollsQuality(PoolDomain.ArtisanGoods));
-    }
-
     [Fact]
     public void QualityAsk_OnlyForEligibleIds_WhenEligibilityKnown()
     {

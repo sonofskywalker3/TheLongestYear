@@ -31,6 +31,11 @@ namespace TheLongestYear.UI
         private static System.Func<RunState> _run;
         private static System.Func<BoostId, int, BoostPurchase.Result> _buyBoost;
 
+        /// <summary>The voluntary restart hooks: whether the button shows, and what it does.
+        /// Same static-hook idiom as <see cref="_state"/>. Unattached, the menu shows no button.</summary>
+        private static System.Func<bool> _restartOffered;
+        private static System.Action _requestRestart;
+
         public PlanningShrineService(IMonitor monitor, IModHelper helper)
         {
             _monitor = monitor;
@@ -47,6 +52,25 @@ namespace TheLongestYear.UI
         {
             _run = run;
             _buyBoost = buyBoost;
+        }
+
+        public void AttachRestart(System.Func<bool> offered, System.Action request)
+        {
+            _restartOffered = offered;
+            _requestRestart = request;
+        }
+
+        /// <summary>Open the Junimo Shrine view exactly as acting on the statue does, with the same
+        /// attached hooks. Also used to return to it when the player answers No to Restart the
+        /// year. Returns false (and opens nothing) when no save state is attached.</summary>
+        internal static bool OpenMenu()
+        {
+            MetaState state = _state?.Invoke();
+            if (state == null) return false;
+            Game1.activeClickableMenu = new ShrinePreviewMenu(
+                state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost,
+                _restartOffered, _requestRestart);
+            return true;
         }
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
@@ -132,8 +156,7 @@ namespace TheLongestYear.UI
                     }
                 }
 
-                Game1.activeClickableMenu = new ShrinePreviewMenu(
-                    state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost);
+                OpenMenu();
                 __result = true;
                 return false;
             }

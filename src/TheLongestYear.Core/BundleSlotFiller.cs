@@ -49,7 +49,7 @@ public static class BundleSlotFiller
     public static BundleSpec Fill(
         BundleSpec spec, DomainMatch match, ItemPools pools,
         BundleGenerationTuning tuning, Random rng,
-        RarityThresholds? thresholds = null, Action<string>? log = null,
+        Action<string>? log = null,
         IReadOnlySet<string>? avoid = null, ItemAvailabilityModel? availability = null,
         PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null, int legendaryBudget = int.MaxValue)
     {
@@ -84,10 +84,8 @@ public static class BundleSlotFiller
             ? Math.Min(spec.PickCount, spec.Slots.Count)
             : spec.Slots.Count;
 
-        // The domain this bundle's stack and quality roll with, and the domain its candidates are
-        // SCORED with. A Recipe bundle has no domain of its own, so it borrows the one its dominant
-        // part maps to (see RecipeRollDomain). Scoring a recipe's candidates as PoolDomain.Recipe
-        // would have been scoring them as no domain at all (final review, 2026-08-29).
+        // The domain this bundle's stack and quality roll with. A Recipe bundle has no domain of
+        // its own, so it borrows the one its dominant part maps to (see RecipeRollDomain).
         PoolDomain rollDomain = recipe == null
             ? match.Domain
             : RecipeRollDomain(recipe, targetCount);
@@ -518,10 +516,6 @@ public static class BundleSlotFiller
         => match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
             ? (p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows), FishBundleCandidates.NightMarketFishPerBundle)
             : (null, int.MaxValue);
-
-    /// <summary>Mirrors the domains <see cref="RollQuality"/> can give a silver/gold ask.</summary>
-    public static bool DomainRollsQuality(PoolDomain domain)
-        => domain is PoolDomain.QualityCrops or PoolDomain.SeasonalCrops or PoolDomain.SeasonalForage or PoolDomain.Fish;
 
     private static IReadOnlyList<PoolItem> Candidates(
         BundleSpec spec, DomainMatch match, ItemPools pools,

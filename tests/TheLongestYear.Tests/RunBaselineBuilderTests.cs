@@ -360,4 +360,12 @@ public class RunBaselineBuilderTests
         Assert.Contains("Garden Pot", baseline.KeptCraftingRecipes);
         Assert.Empty(RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500).KeptCraftingRecipes);
     }
+
+    [Fact]
+    public void StartingAnimals_put_the_ostrich_in_a_barn()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_barn", "start_ostrich" } };
+        var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
+        Assert.Contains(b.StartingAnimals, a => a.VanillaType == "Ostrich" && a.HousingType == "Barn");
+    }
 }

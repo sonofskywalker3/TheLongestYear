@@ -153,9 +153,9 @@ namespace TheLongestYear.Loop
             // player's Standard/Remixed choice BEFORE loadForNewGame — Game1.bundleType is a
             // non-persisted static (Nexus bug 1108030), so without this every reset wrote the
             // Standard set. Remixed re-rolls off the fresh uniqueIDForThisGame below.
-            // Difficulty modifiers (spec 2026-08-26): resolve the ten configured steps ONCE, here,
+            // Difficulty modifiers (spec 2026-08-26): resolve the nine configured steps ONCE, here,
             // and stamp the result on the save. Everything downstream -- board generation this
-            // reset, and the JP / price / cart reads for the whole loop -- reads the stamp,
+            // reset, and the JP / price / cart / hold reads for the whole loop -- reads the stamp,
             // which is what makes a GMCM change take effect at the NEXT reset rather than
             // mid-season. Stamped before the board is built, because the board is built from it.
             _meta.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
@@ -286,6 +286,11 @@ namespace TheLongestYear.Loop
             // per-save settings), so they -- and only they -- snapped back to default on every
             // loop (Nexus posts, RiseiJaku 2026-09-09). See DisplayOptionsCarryover.
             DisplayOptionsCarryover.Snapshot displayOptions = DisplayOptionsCarryover.Capture();
+
+            // 0f. Refresh the Herd Book from the live farm BEFORE loadForNewGame wipes the animals, so
+            // each registered animal comes back with this loop's hearts (spec 2026-09-25). An entry
+            // whose animal is gone keeps its last snapshot.
+            HerdBookService.RefreshBeforeReset(_meta, _monitor);
 
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             _timing.Mark("0 stamps, snapshots, reseed");
@@ -568,7 +573,14 @@ namespace TheLongestYear.Loop
             //    Gated on the upgrade + a prior snapshot inside the service.
             HorseCarryoverService.RestoreHorse(_meta, _monitor);
 
-            // 10. Place starting animals into matching housing.
+            // 10. Herd Book animals move in first (Jeff, 2026-09-25, option C): the Herd Book's
+            //     room check counts only its own slots, so its animals get each building's room
+            //     before the Start-with animals. An entry with no building or no room waits in the
+            //     book.
+            HerdBookService.Restore(_meta, _monitor);
+
+            // 10-start. Start-with animals fill whatever room the Herd Book left; one that no
+            //     longer fits is skipped and logged.
             ApplyStartingAnimals(baseline.StartingAnimals);
 
             // 10a. Restore the snapshotted pet on the Farm (keep_pet upgrade). Runs after
@@ -676,8 +688,7 @@ namespace TheLongestYear.Loop
                 // belongs to, so a board written before 0.18.33 keeps a null map and no flavors.
                 _meta.WrittenBoardFlavors = new Dictionary<string, string>(generatedSet.Flavors);
                 _monitor.Log(
-                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, " +
-                    $"consecutive holds {_meta.ConsecutiveHolds}).",
+                    $"Reset: bundle seed loop {_meta.EffectiveBundleSeedLoop} (CompletedResets {_meta.CompletedResets}, consecutive holds {_meta.ConsecutiveHolds}).",
                     LogLevel.Info);
                 _meta.BundlesGeneratedForReset = _meta.CompletedResets;
                 LastGeneratedRequirements = engine.BuildRequirements(
@@ -1179,15 +1190,18 @@ namespace TheLongestYear.Loop
             foreach (var animal in animals)
             {
                 var requiredInfo = ChainInfo(animal.HousingType);
+                // adoptAnimal never checks capacity, so skip full houses here. The Herd Book animals
+                // are already in (they move in first, option C 2026-09-25), so isFull() counts them.
                 Building housing = farm.buildings.FirstOrDefault(b =>
                 {
                     var info = ChainInfo(b.buildingType.Value);
-                    return info.Family == requiredInfo.Family && info.Tier >= requiredInfo.Tier;
+                    return info.Family == requiredInfo.Family && info.Tier >= requiredInfo.Tier
+                        && b.GetIndoors() is AnimalHouse candidate && !candidate.isFull();
                 });
                 if (housing == null)
                 {
                     _monitor.Log(
-                        $"Reset: no '{animal.HousingType}'-or-better building found for " +
+                        $"Reset: no '{animal.HousingType}'-or-better building with room for " +
                         $"starting animal '{animal.VanillaType}'; skipping.",
                         LogLevel.Warn);
                     continue;
@@ -1209,28 +1223,14 @@ namespace TheLongestYear.Loop
                     // Track only after a successful placement so a degenerate "indoors is null"
                     // case doesn't poison AnimalSpeciesEverOwned with a species the player doesn't
                     // actually have.
-                    if (!_meta.AnimalSpeciesEverOwned.Contains(animal.VanillaType, StringComparer.OrdinalIgnoreCase))
-                        _meta.AnimalSpeciesEverOwned.Add(animal.VanillaType);
+                    AnimalSpecies.Record(_meta.AnimalSpeciesEverOwned, animal.VanillaType);
+                    _monitor.Log($"Reset: starting animal '{animal.VanillaType}' placed in {housing.buildingType.Value}.", LogLevel.Info);
                 }
             }
         }
 
-        // Coop chain (chickens, ducks, etc.) and Barn chain (cows, goats, etc.) both
-        // have tier 1/2/3 housing — but a Coop must not satisfy a Cow placement and
-        // vice versa. The family string segregates the two chains; tier comparison
-        // only happens within a family. Silo is a one-tier family, present so the
-        // kept-building spot snapshot can key it (animals never request it).
-        private static (string Family, int Tier) ChainInfo(string blueprint) => blueprint switch
-        {
-            "Coop"         => ("coop", 1),
-            "Big Coop"     => ("coop", 2),
-            "Deluxe Coop"  => ("coop", 3),
-            "Barn"         => ("barn", 1),
-            "Big Barn"     => ("barn", 2),
-            "Deluxe Barn"  => ("barn", 3),
-            "Silo"         => ("silo", 1),
-            _ => ("", 0)
-        };
+        // See TheLongestYear.Core.AnimalHousing.
+        private static (string Family, int Tier) ChainInfo(string blueprint) => AnimalHousing.Chain(blueprint);
 
         // Force-clear a building footprint on the fresh farm: spawned objects/forage
         // (removeObjectsAndSpawned), terrain features (trees, grass, hoed dirt), and

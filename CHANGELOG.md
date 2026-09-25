@@ -17,6 +17,41 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.72 - 2026-09-25
+
+2364 tests.
+
+### Added
+
+- **Herd Book.** A fourth carried book (sprite index 3 in `assets/books.png`), granted to every save including existing ones. 18 slots on a fixed ladder: one free Chicken slot, then `herdbook_1..17` in Junimo Upgrades (Carryover, chained, 600 to 2250 JP): Chicken, Cow x2, Duck x2, Goat x2, Rabbit x2, Sheep x2, Pig x2, Void Chicken, Golden Chicken, Dinosaur, Ostrich. A Chicken slot takes white, brown and blue chickens only. A registered animal is refreshed from the live farm just before the reset (an animal that is gone keeps its last snapshot) and rebuilt with its id, name, skin, friendship, happiness, age (at least adult), days owned, Golden Animal Cracker and reproduction setting; Herd Book animals move in before the Start-with animals, which then get whatever room is left. It needs its slot kind's building keep (Duck and Dinosaur: Big Coop, Rabbit: Deluxe Coop, Goat: Big Barn, Sheep and Pig: Deluxe Barn, Ostrich: Barn) and room; otherwise it is logged, gets a HUD line, and stays registered. Opens on a rewind night after the Craftbook when an empty slot has a fitting animal. Suggested by tanky24u (Nexus, 2026-09-24).
+- **`tly_openherdbook`** and **`tly_herdbook list | record | register | remove | friend`** debug commands.
+- **Herd Book rows match the Animals tab layout**, and were sized up 15% with their content centered in the frame, so a slot's animal is easier to read at a glance.
+- **Room rule for keeps.** A Start with keep can't be bought if it would overflow the coop or barn you've kept, and Herd Book slots count toward that room too. A Herd Book slot only counts against other Herd Book slots, so the full Herd Book always fits inside one Deluxe Coop and one Deluxe Barn. The Junimo Upgrades menu greys out a blocked row with "Needs more coop room" or "Needs more barn room".
+
+### Fixed
+
+- **Start with an animal keeps could never be bought.** Nothing recorded the species you owned, and three gate names (Chicken, VoidChicken, Cow) never matched vanilla's (White Chicken, Void Chicken, White Cow). Species are now recorded from the farm on every DayStarted and Saving, normalized on both sides of the gate, so saves that stored the vanilla names match too.
+- **Start with Ostrich** needed Keep Deluxe Coop and put the ostrich in a coop; ostriches live in barns. It now needs Keep Barn.
+- **Start-with animals ignored building capacity.** A full coop or barn is now skipped.
+- **Gift of the Junimos room keeps could never be bought.** Keep Greenhouse, Keep Quarry Bridge, Keep Glittering Boulder and Keep Minecarts each check a different room's unlock flag, and the mod could not read any of them. They now unlock once you finish that room. Keep the Bus was fine. Reported by tanky24u.
+
+## 0.18.58 - 2026-09-24
+
+2159 tests.
+
+### Added
+
+- **Restart the year at the Junimo Shrine.** A button on the statue's planning view asks a yes/no, then ends the day at once and runs the Fail-night chain with the Junimo scene removed: keep-or-reshuffle question, Junimo Upgrades, Cookbook and Craftbook banking, reset to Spring 1. Nothing is paid out; JP is already banked. It counts as a loop for the loop number and for consecutive hold prices. Hidden on day 28 (the real gate owns that night), while an event, cutscene or festival is playing, and while another reset is running. Choosing No returns to the shrine. After Keep playing it clears the won-run flag so the next loop can be won. Suggested by tanky24u (Nexus posts, 2026-09-23).
+- **`tly_restart`** debug command: presses the button headlessly (answer with `tly_answer 0` / `1`).
+
+### Removed
+
+- **Season pity.** The Junimos no longer offer to ease a season you keep failing (Jeff, 2026-09-24: "they can adjust the difficulty themselves"). A Fail night now goes cutscene, keep-or-reshuffle question, upgrade menu, reset. The quota cut on a kept board and the hardest-item trim on a reshuffle are gone, and a save that had either goes back to the standard board. The "Season pity" difficulty dial, the Season pity settings section, the `Pity*` config keys and the `tly_pity` console command are removed; old saves and old config.json files still load. The "Hold and pity prices" dial is now "Hold prices".
+
+### Fixed
+
+- **Fortune: Rare Fish's description says what it does.** It read "Rare fish catch chance increased by 25%", which is not how the upgrade works. It now reads "Your rod always works as if it has a Curiosity Lure." Reported by tanky24u.
+
 ## 0.18.50 - 2026-09-24
 
 2202 tests.

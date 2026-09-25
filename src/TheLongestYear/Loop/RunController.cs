@@ -17,7 +17,7 @@ namespace TheLongestYear.Loop
     /// requirements, and executes the action (fail → reset next morning, advance month → consume
     /// any day-28 pre-pick, win → log). JP banks live as donations happen (DonationService); nothing extra is awarded at run end.
     /// </summary>
-    internal sealed class RunController
+    internal sealed partial class RunController
     {
         private readonly IMonitor _monitor;
         private readonly MetaStore _store;
@@ -313,6 +313,9 @@ namespace TheLongestYear.Loop
                 // JP shop + reset (Fail) or roll into the next season (Continue). Suppress the
                 // normal season-sync/hub flow until the scene resolves — same shape as the old
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
+                // Releases the driver's Restart branch (DayStartedWhileBranchPending).
+                _dayStartedWhileBranchPending = true;
+                _monitor.Log($"Day start: the {_pendingCutscene} branch is pending; the day-start flow waits for it.", LogLevel.Trace);
                 return;
             }
 
@@ -490,11 +493,10 @@ namespace TheLongestYear.Loop
             AfterHoldChoice(held: keep);
         }
 
-        /// <summary>Once the board's fate is decided, straight on to the shrine.
-        ///
-        /// A second Fail-night question used to sit here (season pity, spec 2026-08-25, "like
-        /// Mario's assist offer"): after enough fails at the same season the Junimos offered to
-        /// ease it. Retired 2026-09-11 as redundant beside the difficulty option.</summary>
+        /// <summary>The board's fate is decided: open the upgrade menu, then reset. Deferred a tick
+        /// because this runs inside the hold question's answer callback (see
+        /// <see cref="DeferShrineThenContinue"/>). Season pity used to offer a second question
+        /// here; it was removed (Jeff, 2026-09-24: players adjust the difficulty themselves).</summary>
         private void AfterHoldChoice(bool held)
         {
             DeferShrineThenContinue(ContinueAfterResetSpend);
@@ -560,6 +562,7 @@ namespace TheLongestYear.Loop
         /// a reset. JP stays banked for the next shrine visit.</summary>
         public void TickShrineWatchdog()
         {
+            TickRestartDeclined();
             if (_holdReaskPending && Game1.activeClickableMenu == null)
             {
                 _holdReaskPending = false;
@@ -583,39 +586,29 @@ namespace TheLongestYear.Loop
             watch.onContinue();
         }
 
-        /// <summary>Called by <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
-        /// day-28 bedtime cutscene has finished. Clears the pending branch and runs its
-        /// continuation: FAIL → JP shop, then on close PerformReset + forced full save
+        /// <summary>Called by the <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
+        /// day-28 bedtime cutscene has finished, or directly (no scene) for a voluntary Restart.
+        /// Clears the pending branch and runs its continuation: FAIL → JP shop, then on close PerformReset + forced full save
         /// (ContinueAfterResetSpend); CONTINUE → roll straight into the next season's day-start
         /// flow (no shop, no reset).</summary>
         public void OnCutsceneEnded()
         {
             Day28Branch branch = _pendingCutscene;
             _pendingCutscene = Day28Branch.None;
+            _dayStartedWhileBranchPending = false;
 
             switch (branch)
             {
                 case Day28Branch.Fail:
-                    // The HUD used to be hidden here because the pre-rewind calendar date would
-                    // otherwise show through the choice and the shrine. RewindSpringPaint now holds
-                    // Game1.season/dayOfMonth/timeOfDay at Spring 1 from the end of the rewind pan
-                    // through this whole window (paint versus state: the real reset still lands in
-                    // FinalizeReset below and reconciles everything for real), so the HUD already
-                    // shows the correct date and no longer needs hiding.
-                    // Vanilla mode's reset regenerates the board via loadForNewGame and never
-                    // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
-                    // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
-                    // save's BundleSource from config at reset time, so config is what this reset
-                    // will actually run under.
-                    if (!BundleHold.IsOfferable(_config.BundleSource))
-                    {
-                        _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
-                        TryOpenShrineThenContinue(ContinueAfterResetSpend);
-                    }
-                    else
-                    {
-                        ShowHoldChoice();
-                    }
+                    StartRewindChain();
+                    break;
+                case Day28Branch.Restart:
+                    // Voluntary restart: the Fail chain without the scene (the driver skipped it).
+                    // After "Keep playing" the won-run flag silences later wins; a restart starts a
+                    // loop that can be won again. FinalizeReset's _store.Save() persists the clear.
+                    if (VoluntaryRestart.ClearWonRun(_store.State))
+                        _monitor.Log("Voluntary restart after Keep playing: the won-run flag is cleared, so the next loop can be won again.", LogLevel.Info);
+                    StartRewindChain();
                     break;
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
@@ -626,6 +619,29 @@ namespace TheLongestYear.Loop
                     // so the morning is never stranded.
                     DoDayStartSeasonAndHub();
                     break;
+            }
+        }
+
+        /// <summary>The rewind chain shared by a Fail night and a voluntary restart: hold question
+        /// (whenever BundleHold.IsOfferable, which is every bundle source today), upgrade menu,
+        /// recipe banking, reset.</summary>
+        private void StartRewindChain()
+        {
+            // No HUD hiding here: on a Fail night RewindSpringPaint already holds the date at
+            // Spring 1 through this window, and FinalizeReset no longer turns the HUD back on.
+            // Vanilla mode's reset regenerates the board via loadForNewGame and never
+            // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
+            // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
+            // save's BundleSource from config at reset time, so config is what this reset
+            // will actually run under.
+            if (!BundleHold.IsOfferable(_config.BundleSource))
+            {
+                _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
+                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+            }
+            else
+            {
+                ShowHoldChoice();
             }
         }
 
@@ -695,9 +711,10 @@ namespace TheLongestYear.Loop
         /// first time it was opened. So between the shrine and the reset, open each book that has a
         /// free slot and something worth putting in it (see <see cref="RecipeBanking"/>), Cookbook
         /// then Craftbook, and continue once both are closed. Same watchdog as the shrine, so a menu
-        /// torn down underneath us still ends in a reset.</summary>
+        /// torn down underneath us still ends in a reset. The Herd Book follows the Craftbook
+        /// (RunController.HerdBook.cs).</summary>
         private void OfferRecipeBanking(System.Action onContinue)
-            => OfferBook(isCooking: true, () => OfferBook(isCooking: false, onContinue));
+            => OfferBook(isCooking: true, () => OfferBook(isCooking: false, () => OfferHerdBook(onContinue)));
 
         private void OfferBook(bool isCooking, System.Action onContinue)
         {
@@ -721,11 +738,29 @@ namespace TheLongestYear.Loop
             }
 
             string subtitle = Strings.Get("menu.books.bank-before-reset");
-            if (isCooking) _launcher.OpenCookbook(subtitle); else _launcher.OpenCraftbook(subtitle);
-            if (Game1.activeClickableMenu is TheLongestYear.UI.CookbookMenu or TheLongestYear.UI.CraftbookMenu)
+            WatchRewindMenu(
+                bookName,
+                $"slots={slots}, banked={banked.Count}, bankable={bankable}",
+                () => { if (isCooking) _launcher.OpenCookbook(subtitle); else _launcher.OpenCraftbook(subtitle); },
+                menu => menu is TheLongestYear.UI.CookbookMenu or TheLongestYear.UI.CraftbookMenu,
+                onContinue);
+        }
+
+        /// <summary>Shared by the rewind-night books (Cookbook, Craftbook, Herd Book): open the menu,
+        /// and if it is up, watch it (see <see cref="TickShrineWatchdog"/>) and continue from its
+        /// exitFunction; if something else is in the way, log it and continue straight away, so the
+        /// reset always happens.</summary>
+        private void WatchRewindMenu(
+            string name,
+            string detail,
+            System.Action open,
+            System.Func<StardewValley.Menus.IClickableMenu, bool> isExpected,
+            System.Action onContinue)
+        {
+            open();
+            if (Game1.activeClickableMenu is { } menu && isExpected(menu))
             {
-                StardewValley.Menus.IClickableMenu menu = Game1.activeClickableMenu;
-                _monitor.Log($"{bookName} offered before the reset: slots={slots}, banked={banked.Count}, bankable={bankable}.", LogLevel.Info);
+                _monitor.Log($"{name} offered before the reset: {detail}.", LogLevel.Info);
                 _menuWatch = (menu, onContinue);
                 menu.exitFunction = () =>
                 {
@@ -736,7 +771,7 @@ namespace TheLongestYear.Loop
             }
             string blockingMenu = Game1.activeClickableMenu?.GetType().Name ?? "none";
             _monitor.Log(
-                $"{bookName} could not open before the reset; continuing without it. " +
+                $"{name} could not open before the reset; continuing without it. " +
                 $"activeClickableMenu={blockingMenu}, eventUp={Game1.eventUp}.",
                 LogLevel.Warn);
             onContinue();
@@ -951,6 +986,8 @@ namespace TheLongestYear.Loop
         {
             // Kitchen bonus: tonight's FarmAnimal.dayUpdate writes new records; yesterday's are done.
             (Run.DoubleProduceToday ??= new System.Collections.Generic.List<DoubleProduceRecord>()).Clear();
+            // A new night: this morning's DayStarted mark (RunController.Restart.cs) no longer counts.
+            _dayStartedWhileBranchPending = false;
             // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
             TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
@@ -958,6 +995,16 @@ namespace TheLongestYear.Loop
             // what the player sees on the board (a deposit the observer missed cannot fail an
             // otherwise-complete season, beta report khauser13; a phantom credit cannot pass one).
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
+            if (_pendingCutscene == Day28Branch.Restart)
+            {
+                // Voluntary restart (RunController.Restart.cs): the player chose to rewind tonight.
+                // The gate does not judge this night: no checkpoint JP, and no second outcome may
+                // overwrite the queued Restart. A room finished today must not play its restoration
+                // scene just before the rewind undoes it, same as a Fail night.
+                SuppressResetDoomedRoomScenes();
+                _monitor.Log("Voluntary restart night: the day-end gate is skipped; the rewind runs in the morning.", LogLevel.Info);
+                return;
+            }
             bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State);
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)

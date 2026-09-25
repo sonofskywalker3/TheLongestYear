@@ -359,7 +359,7 @@ namespace TheLongestYear.Loop
                 int legendariesSoFar = picked.Where(r => r.Composed != null).Sum(r => r.Composed.Slots.Count(sl => Core.LegendaryFishRules.IsLegendary(sl.ItemId)));
                 int legendaryBudget = legendaryAllowance == int.MaxValue ? int.MaxValue : legendaryAllowance - legendariesSoFar;
                 IReadOnlySet<string> banned = legendaryBudget <= 0 ? Core.LegendaryFishRules.Ids : null;
-                BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng, _thresholds,
+                BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng,
                     msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe, banned, legendaryBudget);
                 if (ReferenceEquals(composed, pick))
                 {

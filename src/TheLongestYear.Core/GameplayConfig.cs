@@ -49,10 +49,9 @@ public sealed class GameplayConfig
     /// Reshuffling resets the counter. Spec 2026-08-24 keep-bundles hold.</summary>
     public List<long> BundleHoldCosts { get; set; } = new() { 0, 50, 100, 200, 300 };
 
-    // Season pity (spec 2026-08-25) lived here: PityEnabled, PityThreshold, PityQuotaStep,
-    // PityQuotaFloor, PityTrimPerStep and PityCosts. Retired 2026-09-11: it predates the difficulty
-    // option and is redundant beside it. Unknown keys left in an existing config.json are ignored
-    // on load, so nothing has to be migrated.
+    // Season pity (removed 2026-09-24) had PityEnabled, PityThreshold, PityQuotaStep,
+    // PityQuotaFloor, PityTrimPerStep and PityCosts here. An old config.json that still lists
+    // them loads fine: SMAPI skips keys the model no longer has and drops them on its next write.
 
     /// <summary>
     /// The override layer for rulings the derivation rules cannot see. Everything that USED to

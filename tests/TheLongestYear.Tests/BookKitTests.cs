@@ -5,12 +5,13 @@ namespace TheLongestYear.Tests;
 public class BookKitTests
 {
     [Fact]
-    public void Three_book_ids_are_stable()
+    public void Four_book_ids_are_stable()
     {
         Assert.Equal(
             new[] { "sonofskywalker3.TheLongestYear_Cookbook",
                     "sonofskywalker3.TheLongestYear_Craftbook",
-                    "sonofskywalker3.TheLongestYear_BundleLog" },
+                    "sonofskywalker3.TheLongestYear_BundleLog",
+                    "sonofskywalker3.TheLongestYear_HerdBook" },
             BookKit.AllBookQualifiedIds);
     }
 

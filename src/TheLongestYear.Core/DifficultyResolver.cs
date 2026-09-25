@@ -4,7 +4,7 @@ namespace TheLongestYear.Core;
 
 /// <summary>The entire difficulty balance table, as one pure function.
 ///
-/// Everything the ten modifiers mean lives here and nowhere else, which is what makes the numbers
+/// Everything the nine modifiers mean lives here and nowhere else, which is what makes the numbers
 /// retunable in a later release without touching a single consumer, and what makes the whole ramp
 /// unit-testable without the game.
 ///

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -28,5 +28,4 @@ public class ItemHardnessTests
         Assert.Equal(2, ItemHardness.Score(Item("(O)1", 10, new[] { Season.Winter, Season.Fall }), PoolDomain.Fish, T));
         Assert.Equal(1, ItemHardness.Score(Item("(O)1", 10, new[] { Season.Summer, Season.Fall }), PoolDomain.Fish, T));
     }
-
 }

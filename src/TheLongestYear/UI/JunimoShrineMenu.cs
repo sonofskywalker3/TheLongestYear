@@ -62,7 +62,12 @@ namespace TheLongestYear.UI
         {
             public readonly UpgradeDefinition Def;
             public readonly bool Owned;
-            public ShrineRow(UpgradeDefinition def, bool owned) { Def = def; Owned = owned; }
+            /// <summary>Set when the row passes every gate but the kept-building room
+            /// (AnimalCapacityRule): drawn greyed with this reason, never bought.</summary>
+            public readonly string BlockReason;
+            public ShrineRow(UpgradeDefinition def, bool owned, string blockReason = null)
+            { Def = def; Owned = owned; BlockReason = blockReason; }
+            public bool Buyable => !Owned && BlockReason == null;
         }
 
         public JunimoShrineMenu(IMonitor monitor, MetaStore store, UpgradePurchaseService purchases)
@@ -196,6 +201,8 @@ namespace TheLongestYear.UI
                     UpgradeDefinition def = rows[i].Def;
                     string footer = rows[i].Owned
                         ? Strings.Get("menu.shrine.owned")
+                        : rows[i].BlockReason != null
+                        ? rows[i].BlockReason
                         : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = _purchases.EffectiveCost(def).ToString() });
                     _hoverText = Strings.Get("menu.shrine.hover", new Dictionary<string, string>
                     {
@@ -222,7 +229,7 @@ namespace TheLongestYear.UI
             for (int i = 0; i < rows.Count; i++)
                 if (_rowSlots[i].containsPoint(x, y))
                 {
-                    if (!rows[i].Owned) TryBuy(rows[i].Def);    // owned rows are display-only
+                    if (rows[i].Buyable) TryBuy(rows[i].Def);    // owned and room-blocked rows are display-only
                     return;
                 }
         }
@@ -245,7 +252,7 @@ namespace TheLongestYear.UI
                 {
                     IReadOnlyList<ShrineRow> rows = VisibleRows(out _, out _);
                     int slot = id - RowIdBase;
-                    if (slot < rows.Count && !rows[slot].Owned) TryBuy(rows[slot].Def);
+                    if (slot < rows.Count && rows[slot].Buyable) TryBuy(rows[slot].Def);
                     return;
                 }
             }
@@ -300,6 +307,9 @@ namespace TheLongestYear.UI
             foreach (UpgradeDefinition def in
                 KeepShopFilter.BuyableInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
                 rows.Add(new ShrineRow(def, owned: false));
+            foreach (UpgradeDefinition def in
+                KeepShopFilter.RoomBlockedInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
+                rows.Add(new ShrineRow(def, owned: false, AnimalCapacityRule.BlockReason(_store.State, def.Id)));
             foreach (UpgradeDefinition def in
                 KeepShopFilter.OwnedLeavesInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
                 rows.Add(new ShrineRow(def, owned: true));
@@ -387,6 +397,18 @@ namespace TheLongestYear.UI
                     new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), OwnedGreen);
                 Utility.drawTextWithShadow(b, Strings.Get("menu.shrine.owned"), Game1.smallFont,
                     new Vector2(slot.bounds.X + 16, slot.bounds.Y + 56), OwnedGreen);
+                return;
+            }
+
+            if (row.BlockReason != null)
+            {
+                // Room-blocked: greyed like an unaffordable row, the reason where the cost goes.
+                IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
+                    slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, Color.White * 0.55f, 1f, false);
+                Utility.drawTextWithShadow(b, def.DisplayName, Game1.dialogueFont,
+                    new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), Game1.textColor * 0.6f);
+                Utility.drawTextWithShadow(b, row.BlockReason, Game1.smallFont,
+                    new Vector2(slot.bounds.X + 16, slot.bounds.Y + 56), Color.Red);
                 return;
             }
 

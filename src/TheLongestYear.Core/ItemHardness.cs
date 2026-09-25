@@ -1,11 +1,11 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>Hardness ranking for an item in a pool: rarity tier (Common 1 .. VeryRare 4) + 2 if
-/// the domain needs a station or recipe + 1 if the item's earliest spawn season is Fall or Winter.
-/// Higher = harder. Written for the reshuffle-path pity trim (spec 2026-08-25 section 3) and kept
-/// when that was retired, because <see cref="RarityBias"/> ranks with the same score.</summary>
+/// <summary>Hardness ranking used by <see cref="RarityBias"/> (the item-rarity difficulty step).
+/// Score = rarity tier (Common 1 .. VeryRare 4) + 2 if the domain needs a station or recipe
+/// + 1 if the item's earliest spawn season is Fall or Winter. Higher = harder.</summary>
 public static class ItemHardness
 {
     private const int StationBonus = 2;
