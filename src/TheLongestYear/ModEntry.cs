@@ -706,6 +706,8 @@ namespace TheLongestYear
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
+            JojaCounterPatch.Connect(this.Monitor, _meta,
+                () => this.Monitor.Log("Joja: Yes (bad ending not built yet).", LogLevel.Warn));
             XpMultiplierPatch.Connect(_meta.State);
             TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = _config.EnableDejaVuDialogue;
             TheLongestYear.Loop.AnimalDoubleProductPatch.Connect(() => _meta.Run);

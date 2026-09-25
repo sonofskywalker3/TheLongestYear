@@ -7,9 +7,29 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>Morris's offer (spec 2026-09-25-joja-offer-design): the scene, the letters, the blacklist.</summary>
+[Collection("i18n")]
 public class JojaOfferTests
 {
+    private readonly I18nFixture _fixture;
+    public JojaOfferTests(I18nFixture fixture) => _fixture = fixture;
+
     private static (RunState run, MetaState meta) Fresh() => (new RunState(), new MetaState());
+
+    /// <summary>The `$y` question built in JojaCounterPatch.Counter splits its answer/reply
+    /// fields on '_', so approved joja.morris.* text must never contain '_' or '\''. The
+    /// joja.* keys are not in default.json yet (they await the user's approval, spec
+    /// 2026-09-25-joja-offer), so this only checks a key once it exists — it never asserts
+    /// that a key is present (I18nGuardTests already covers missing literal keys).</summary>
+    [Fact]
+    public void Morris_question_and_answer_text_has_no_underscore_or_apostrophe_once_approved()
+    {
+        foreach (string key in new[] { "joja.morris.ask", "joja.morris.accept", "joja.morris.decline" })
+        {
+            if (!_fixture.Map.TryGetValue(key, out string value)) continue;
+            Assert.DoesNotContain("_", value);
+            Assert.DoesNotContain("'", value);
+        }
+    }
 
     [Fact]
     public void Scene_plays_once_a_loop_until_rejected()
