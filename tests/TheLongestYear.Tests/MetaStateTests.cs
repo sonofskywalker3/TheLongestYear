@@ -569,4 +569,17 @@ public class BoardDifficultyTests
         var s = new MetaState { AnimalSpeciesEverOwned = { "Void Chicken" } };
         Assert.False(s.MeetsMetaRequirement("species:Chicken"));
     }
+
+    [Fact]
+    public void HerdBook_starts_empty_and_round_trips_through_json()
+    {
+        Assert.Empty(new MetaState().HerdBook);
+        var original = new MetaState
+        {
+            HerdBook = { new HerdEntry(0, 42L, "Brown Chicken", "Nugget", "skinA", 850, 230, 40, 38, true, false) }
+        };
+        string json = JsonSerializer.Serialize(original);
+        MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
+        Assert.Equal(original.HerdBook, restored.HerdBook);
+    }
 }
