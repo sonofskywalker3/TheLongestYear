@@ -24,6 +24,12 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    whatever works). When the rest have popped in, the farmer does the shocked emote, and only then does
    the first Junimo message start. The unique per-Junimo effects are a separate nice-to-have (see IDEA below); for
    now one shared effect is enough.
+5. **Opening, the Junimo talk inside the Community Center: sprites and portraits don't match.** Only one
+   Junimo is visible on screen, and it looks greyish. The portrait box alternates between a green
+   Junimo and an empty box: green on lines 1, 3, 5, 7-8, 10-11, 13-14, 16-17 and 19; blank on 2, 4, 6,
+   9, 12, 15, 18 and 20. Fix: if it is meant to be one Junimo, every portrait and the on-screen sprite
+   are the same colour; if it is meant to be several (the staging in note 4 says several), all of them
+   are visible and each line shows the Junimo who is speaking, in its own colour, never a blank box.
 
 ### IDEA, nice to have (Jeff, 2026-09-25): each Junimo appears with its own nature effect
 Not now; investigate some time. Each Junimo colour gets its own entrance tied to a nature aspect: the
