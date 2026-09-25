@@ -6,8 +6,8 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### SPEC WRITTEN 2026-09-25, awaiting Jeff's review: Morris's offer (Joja side quest and game over)
-`docs/superpowers/specs/2026-09-25-joja-offer-design.md`. Next: Jeff reviews the spec, then the plan.
+### IN PROGRESS 2026-09-25 (Jeff: "build it"): Morris's offer (Joja side quest and game over)
+`docs/superpowers/specs/2026-09-25-joja-offer-design.md`, plan `docs/superpowers/plans/2026-09-25-joja-offer.md` (8 tasks, subagent-driven). Task 1 (the words) needs Jeff's OK first.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
