@@ -134,7 +134,7 @@ public static class OpeningScript
             "pause 400",
             // Morris leaves while the scene carries on: two or three steps, then Lewis turns
             // back (Jeff, 2026-09-25: nobody waits for him to clear the screen). He is taken off
-            // only once his walk has finished, so no move is left pending into the next location.
+            // with everyone else by the scene change to the hall, which also drops his walk.
             "move Morris 12 0 1 true",
             "pause 1200",
             "faceDirection farmer 1",
@@ -144,20 +144,19 @@ public static class OpeningScript
             "pause 1200",
             Say("Lewis", "lewis-3"),
             "pause 600",
-            "waitForAllStationary",
-            $"warp Morris {Off}",
-            "warp Robin -100 -100",
-            "globalFade",
-            $"viewport {Off}",
 
             // ---- Community Center: Lewis's piece, then the Junimos ----
-            "changeLocation CommunityCenter",
+            // The mod's own scene change: everyone on the farm fades out together (vanilla's
+            // changeLocation left Morris on the black screen, and Robin was taken off before the
+            // fade, Jeff 2026-09-25). It clears every actor and any walk still running, so Lewis
+            // is added again in the hall.
+            "tlyChangeLocation CommunityCenter 32 16",
             "warp farmer 32 16 true",
-            "warp Lewis 30 16",
-            "faceDirection Lewis 1",
+            "addTemporaryActor Lewis 16 32 30 16 1 true Character",
             "faceDirection farmer 3",
             "viewport 32 14 clamp",
-            "pause 800",
+            "tlyFadeIn",
+            "pause 500",
             Say("Lewis", "lewis-hall-1"),
             "playSound coin",
             "pause 300",
@@ -165,11 +164,11 @@ public static class OpeningScript
             "pause 600",
             // Lewis walks out and the farmer turns to watch him go (Jeff, 2026-09-25). Jeff's route:
             // down one, right two, then down the open aisle to the door. Straight down from his
-            // spot walks him through the wall.
-            "move Lewis 0 1 2",
+            // spot walks him through the wall. One advancedMove (relative legs) so he walks it
+            // without stopping between legs; separate moves paused at each corner.
+            "advancedMove Lewis false 0 1 2 0 0 6",
+            "pause 300",
             "faceDirection farmer 2",
-            "move Lewis 2 0 1",
-            "move Lewis 0 6 2 true",
             "waitForAllStationary",
             "playSound doorClose",
             $"warp Lewis {Off}",
