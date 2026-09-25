@@ -21,7 +21,8 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    Junimos is instant and jarring. New staging: Lewis walks out, and the farmer turns to watch him go.
    As soon as he is out, ONE Junimo pops up behind the farmer, the farmer turns with a "!" bubble, then
    the rest pop in. None of them may just blink in: each appears with an effect (flash, smoke,
-   whatever works). The unique per-Junimo effects are a separate nice-to-have (see IDEA below); for
+   whatever works). When the rest have popped in, the farmer does the shocked emote, and only then does
+   the first Junimo message start. The unique per-Junimo effects are a separate nice-to-have (see IDEA below); for
    now one shared effect is enough.
 
 ### IDEA, nice to have (Jeff, 2026-09-25): each Junimo appears with its own nature effect
