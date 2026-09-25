@@ -13,6 +13,11 @@ changelog all set via Chrome. Still to do:
   Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
 - DONE 2026-09-25: told tanky24u (Nexus posts) the restart and the Rare Fish text shipped, lore books later.
 
+### BUG (found 2026-09-25 in a Herd Book live test, pre-existing): a kept building can move to another building's spot
+With a kept Big Coop at (52,20) and a second plain Coop built at (60,27), the rewind placed the kept Big Coop at
+(60,27). SnapshotKeptBuildingSpots (WorldResetService) likely records the first building of the family it finds,
+not the kept (highest) one. Only bites players with two buildings of one family. Not fixed yet.
+
 ### IDEAS (Jeff, 2026-09-25): more animal powers
 - **Silo keeps X hay:** Keep Silo (150 JP) brings the silo back empty. A power that carries some hay across a rewind
   (tiers, e.g. 60 / 120 / 240) would feed Herd Book animals in a winter-length run. Needs a spec.
