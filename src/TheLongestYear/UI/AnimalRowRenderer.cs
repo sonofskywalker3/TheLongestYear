@@ -38,14 +38,43 @@ namespace TheLongestYear.UI
         private const int SmallSpriteShiftY = 48;
         private const int SpriteSlotHeight = 64;
 
-        /// <summary>Vanilla slot top is 16px above the sprite; a Herd Book row puts the sprite 2px below its top.</summary>
-        private const int VanillaSlotTopFromRow = -14;
-        private const int VanillaSpriteFromSlotTop = 16;
+        /// <summary>The tallest vanilla-drawn element: AnimalEntry always crops a large (non-chicken/
+        /// duck) sprite to a 28px-tall source rect (see AnimalPage.AnimalEntry), scaled 4x. Everything
+        /// else in the group (name, hearts, pet icons, cracker) lands inside this span, so centering
+        /// against it centers the whole group.</summary>
+        private const int VanillaContentHeight = 112;
+
+        /// <summary>Extra room left of a large sprite (cow, pig, etc.) so its widest frame does not
+        /// touch the row's left border; small sprites already get <see cref="SmallSpriteShiftX"/>.</summary>
+        private const int LargeSpriteLeftPadding = 8;
+
+        /// <summary>HerdBookMenu's row content width before RowGrowth (900px panel minus its padding
+        /// and scrollbar gutter). The vanilla column offsets below (name block, hearts start) were
+        /// tuned against this width; widening the row spreads them by the same ratio instead of
+        /// leaving them clumped on the left.</summary>
+        private const int BaseRowWidth = 784;
+
+        /// <summary>Vanilla drawNPCSlot's name-block X offset (192 - 20 + 96) from the sprite column,
+        /// scaled by the row's width growth over <see cref="BaseRowWidth"/>.</summary>
+        private const int NameBaseOffset = 268;
+
+        /// <summary>Vanilla drawNPCSlot's hearts-start X offset (512) from the sprite column, scaled
+        /// the same way as <see cref="NameBaseOffset"/>.</summary>
+        private const int HeartsBaseOffset = 512;
+
+        /// <summary>Gap kept from the row's right edge to the pet icon/checkbox column, so it tracks
+        /// the border directly instead of scaling with row width (matches its vanilla distance from
+        /// the border at <see cref="BaseRowWidth"/>).</summary>
+        private const int PetIconRightPadding = 124;
+
+        /// <summary>Vanilla drawNPCSlot's gap between the cracker badge and the pet icon column
+        /// ((704 - 4) - (576 - 20)).</summary>
+        private const int CrackerToPetIconGap = 144;
 
         private const int NoFriendship = -1;
         private const int NoPetState = -1;
         private const int HeartCount = 5;
-        private const int TopLineY = 6;
+        private const int TopLineY = 14;
         private const int TopLineX = 140;
         private const int TopLineGap = 24;
         private const int TypeBelowName = 44;
@@ -133,13 +162,24 @@ namespace TheLongestYear.UI
             AnimalPage.AnimalEntry entry = row.Entry;
             // Vanilla coordinates: the page's xPositionOnScreen sits one border width left of the slot.
             int pageX = area.X - IClickableMenu.borderWidth;
-            int slotTop = area.Y + VanillaSlotTopFromRow;
             bool small = entry.TextureSourceRect.Height <= SmallSpriteHeight;
+
+            // Center the vanilla group vertically in the row: VanillaContentHeight is the tallest
+            // element (the large sprite), so padding it evenly top/bottom centers everything anchored
+            // to the sprite, including the small-sprite rows (which are shorter and get extra headroom).
+            int contentTop = area.Y + (area.Height - VanillaContentHeight) / 2;
+            // Spread the row proportionally to how much wider it grew than the width the vanilla
+            // column offsets (hearts start, name block) were tuned against, so they don't clump on
+            // the left of a wider row. The pet icon/checkbox and cracker badge anchor to the row's
+            // right edge instead, at a fixed padding, so they track the border directly.
+            float widthGrowth = Math.Max(1f, area.Width / (float)BaseRowWidth);
+            int petIconX = area.Right - PetIconRightPadding;
+            int crackerX = petIconX - CrackerToPetIconGap;
 
             // AnimalPage.updateSlots: sprite 16px below the slot top, 48px lower still when short.
             ClickableTextureComponent sprite = row.Sprite;
-            sprite.bounds.X = pageX + IClickableMenu.borderWidth + 4 + (small ? SmallSpriteShiftX : 0);
-            sprite.bounds.Y = slotTop + VanillaSpriteFromSlotTop + (small ? SmallSpriteShiftY : 0);
+            sprite.bounds.X = pageX + IClickableMenu.borderWidth + 4 + (small ? SmallSpriteShiftX : LargeSpriteLeftPadding);
+            sprite.bounds.Y = contentTop + (small ? SmallSpriteShiftY : 0);
             sprite.draw(b);
             // Everything drawn in the row, so the keep note can be placed clear of all of it.
             var drawn = new List<PixelBox>
@@ -153,7 +193,7 @@ namespace TheLongestYear.UI
             float russianOffsetY = (LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ru
                 || LocalizedContentManager.CurrentLanguageCode == LocalizedContentManager.LanguageCode.ko) ? (0f - lineHeight) / 2f : 0f;
             int yOffset = small ? -40 : 8;
-            float nameCenterX = pageX + IClickableMenu.borderWidth * 3 / 2 + 192 - 20 + 96;
+            float nameCenterX = pageX + IClickableMenu.borderWidth * 3 / 2 + NameBaseOffset * widthGrowth;
             float nameY = sprite.bounds.Y + 48 + yOffset + russianOffsetY - 20f;
             Vector2 nameSize = Game1.dialogueFont.MeasureString(entry.DisplayName);
             b.DrawString(Game1.dialogueFont, entry.DisplayName,
@@ -165,10 +205,11 @@ namespace TheLongestYear.UI
                 double loveLevel = entry.FriendshipLevel / 1000f;
                 int halfHeart = (int)((loveLevel * 1000.0 % 200.0 >= 100.0) ? (loveLevel * 1000.0 / 200.0) : (-100.0));
                 int heartYOffset = entry.ReceivedAnimalCracker ? -24 : 0;
-                drawn.Add(new PixelBox(pageX + 512 - 4, sprite.bounds.Y + heartYOffset + yOffset + 64 - 24, HeartCount * HeartStep, HeartHeight));
+                int heartsX = pageX + (int)(HeartsBaseOffset * widthGrowth) - 4;
+                drawn.Add(new PixelBox(heartsX, sprite.bounds.Y + heartYOffset + yOffset + 64 - 24, HeartCount * HeartStep, HeartHeight));
                 for (int hearts = 0; hearts < HeartCount; hearts++)
                 {
-                    var pos = new Vector2(pageX + 512 - 4 + hearts * 32, sprite.bounds.Y + heartYOffset + yOffset + 64 - 24);
+                    var pos = new Vector2(heartsX + hearts * 32, sprite.bounds.Y + heartYOffset + yOffset + 64 - 24);
                     b.Draw(Game1.mouseCursors, pos,
                         new Rectangle(211 + ((loveLevel * 1000.0 <= (hearts + 1) * 195) ? 7 : 0), 428, 7, 6),
                         Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
@@ -179,16 +220,16 @@ namespace TheLongestYear.UI
             }
             if (row.ShowPetted && entry.WasPetYet != NoPetState)
             {
-                drawn.Add(new PixelBox(pageX + 704 - 4, sprite.bounds.Y + yOffset + 64 - 52, PetIconWidth, PetIconsHeight));
-                b.Draw(Game1.mouseCursors, new Vector2(pageX + 704 - 4, sprite.bounds.Y + yOffset + 64 - 52),
+                drawn.Add(new PixelBox(petIconX, sprite.bounds.Y + yOffset + 64 - 52, PetIconWidth, PetIconsHeight));
+                b.Draw(Game1.mouseCursors, new Vector2(petIconX, sprite.bounds.Y + yOffset + 64 - 52),
                     new Rectangle(32, 0, 10, 10), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.8f);
-                b.Draw(Game1.mouseCursors_1_6, new Vector2(pageX + 704 - 4, sprite.bounds.Y + yOffset + 64 - 8),
+                b.Draw(Game1.mouseCursors_1_6, new Vector2(petIconX, sprite.bounds.Y + yOffset + 64 - 8),
                     new Rectangle(273 + entry.WasPetYet * 9, 253, 9, 9), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.8f);
             }
             if (entry.ReceivedAnimalCracker)
             {
-                drawn.Add(new PixelBox(pageX + 576 - 20, sprite.bounds.Y + yOffset + 64 - 16, CrackerWidth, CrackerHeight));
-                Utility.drawWithShadow(b, Game1.objectSpriteSheet_2, new Vector2(pageX + 576 - 20, sprite.bounds.Y + yOffset + 64 - 16),
+                drawn.Add(new PixelBox(crackerX, sprite.bounds.Y + yOffset + 64 - 16, CrackerWidth, CrackerHeight));
+                Utility.drawWithShadow(b, Game1.objectSpriteSheet_2, new Vector2(crackerX, sprite.bounds.Y + yOffset + 64 - 16),
                     new Rectangle(16, 242, 15, 11), Color.White, 0f, Vector2.Zero, 4f, flipped: false, 0.8f);
             }
 
