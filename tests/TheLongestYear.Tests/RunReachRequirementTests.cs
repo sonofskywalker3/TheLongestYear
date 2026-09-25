@@ -56,4 +56,32 @@ public class RunReachRequirementTests
         Assert.Equal(4, r.Threshold);
         Assert.Equal(expectedMet, r.IsMet(actualCount));
     }
+
+    // tanky24u (Nexus, 2026-09-24): "room:BoilerRoom" did not parse, so the evaluator read it as
+    // malformed and every room-gated Gift of the Junimos row stayed locked for good.
+    [Theory]
+    [InlineData("room:Pantry", "Pantry")]
+    [InlineData("room:CraftsRoom", "CraftsRoom")]
+    [InlineData("room:FishTank", "FishTank")]
+    [InlineData("room:BoilerRoom", "BoilerRoom")]
+    public void Room_reach_parses_as_a_keyed_flag(string raw, string key)
+    {
+        RunReachRequirement? r = RunReachRequirement.Parse(raw);
+        Assert.NotNull(r);
+        Assert.Equal("room", r!.Metric);
+        Assert.Equal(key, r.Key);
+        Assert.True(r.IsMet(1));
+        Assert.False(r.IsMet(0));
+    }
+
+    [Fact]
+    public void Every_catalog_reach_requirement_parses()
+    {
+        foreach (UpgradeDefinition def in UpgradeCatalog.All)
+        {
+            if (def.RunReachRequirement == null) continue;
+            Assert.True(RunReachRequirement.Parse(def.RunReachRequirement) != null,
+                $"{def.Id}: reach '{def.RunReachRequirement}' does not parse");
+        }
+    }
 }
