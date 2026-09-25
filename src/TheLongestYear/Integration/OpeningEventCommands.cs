@@ -11,7 +11,9 @@ namespace TheLongestYear.Integration
     ///
     /// <c>tlyHoldUp &lt;actor&gt; &lt;qualifiedItemId&gt;</c>: the item's sprite appears above the actor's
     /// head until <c>tlyTakeHeld</c> removes it. While he holds it he keeps his idle animation but never
-    /// hops (Jeff, 2026-09-25: he jumped into the book), see <see cref="NoHopWhileHolding"/>.
+    /// hops (Jeff, 2026-09-25: he jumped into the book): <see cref="FollowHolder"/> holds his jump at
+    /// zero every tick. A Harmony prefix on Character.jump was tried first and missed hops in the live
+    /// run (the tiny jump methods can be inlined into Junimo.update).
     ///
     /// <c>tlyTakeHeld &lt;qualifiedItemId&gt;</c>: the held sprite goes, and the farmer holds the item up
     /// with NO "you received" box (Jeff, 2026-09-25: the box interrupted the next line). Only one item is held at a time; a
@@ -29,8 +31,9 @@ namespace TheLongestYear.Integration
         public const string HoldUpName = "tlyHoldUp";
         public const string TakeHeldName = "tlyTakeHeld";
         public const string WaitWalkName = "tlyWaitWalk";
-        // Above a Junimo's head: its sprite is drawn about three quarters of a tile tall.
-        private static readonly Vector2 AboveHead = new(0f, -56f);
+        // Just above a Junimo's head. A Junimo draws about a tile below its Position (live run
+        // 2026-09-25: at -56 the book sat over the stash, a tile above him).
+        private static readonly Vector2 AboveHead = new(0f, -20f);
         private const float HeldScale = 3f;
 
         private static TemporaryAnimatedSprite _held;
@@ -39,23 +42,7 @@ namespace TheLongestYear.Integration
         private static NPC _holder;
         private static float _walkWaited = -1f;
 
-        /// <summary>The actor holding an item right now, or null.</summary>
-        internal static Character Holder => _holder;
 
-        /// <summary>A Junimo hops on his own (Junimo.update, about 1% a tick). While he holds an item
-        /// every hop is skipped; his idle frames still play.</summary>
-        [HarmonyLib.HarmonyPatch]
-        internal static class NoHopWhileHolding
-        {
-            private static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
-            {
-                yield return HarmonyLib.AccessTools.Method(typeof(Character), nameof(Character.jump), System.Type.EmptyTypes);
-                yield return HarmonyLib.AccessTools.Method(typeof(Character), nameof(Character.jump), new[] { typeof(float) });
-                yield return HarmonyLib.AccessTools.Method(typeof(Character), nameof(Character.jumpWithoutSound), new[] { typeof(float) });
-            }
-
-            private static bool Prefix(Character __instance) => __instance == null || !ReferenceEquals(__instance, _holder);
-        }
 
         public static void Register(IMonitor monitor, IModHelper helper)
         {
@@ -148,9 +135,12 @@ namespace TheLongestYear.Integration
         private static void FollowHolder()
         {
             if (_held == null || _holder == null) return;
+            // No hop while holding: runs after the game's update and before the draw, so a hop
+            // started this tick never shows. His idle frames are untouched.
+            _holder.yJumpOffset = 0;
+            _holder.yJumpVelocity = 0f;
             Rectangle src = _held.sourceRect;
-            _held.Position = _holder.Position + AboveHead
-                + new Vector2((64f - src.Width * HeldScale) / 2f, _holder.yJumpOffset);
+            _held.Position = _holder.Position + AboveHead + new Vector2((64f - src.Width * HeldScale) / 2f, 0f);
         }
 
         private static void RemoveHeld()

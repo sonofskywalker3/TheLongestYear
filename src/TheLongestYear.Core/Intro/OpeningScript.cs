@@ -175,21 +175,24 @@ public static class OpeningScript
             "playSound doorClose",
             $"warp Lewis {Off}",
             "pause 700",
+            // Tiles checked against a gridded screenshot of the unrepaired hall (2026-09-25): all
+            // six stand on clear planks; 35,14 was inside the rubble patch and 32,14 read as
+            // sitting on the farmer's head.
             // One Junimo pops up behind the farmer, who turns with a "!". Then the rest pop in,
             // each in a puff of its own colour, and the farmer does the surprised emote (the
             // emote menu's: frame 94, a jump, the bat screech) before anyone speaks.
-            "tlyJunimo Junimo0 32 14 0 pop",
+            "tlyJunimo Junimo0 32 13 0 pop",
             "pause 500",
             "faceDirection farmer 0",
             "emote farmer 16",
             "pause 700",
             "tlyJunimo Junimo1 29 14 1 pop",
             "pause 250",
-            "tlyJunimo Junimo2 35 14 2 pop",
+            "tlyJunimo Junimo2 35 12 2 pop",
             "pause 250",
             "tlyJunimo Junimo3 30 12 3 pop",
             "pause 250",
-            "tlyJunimo Junimo4 34 12 4 pop",
+            "tlyJunimo Junimo4 34 11 4 pop",
             "pause 250",
             "tlyJunimo Junimo5 32 11 5 pop",
             "pause 600",
