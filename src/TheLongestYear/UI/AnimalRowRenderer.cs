@@ -75,7 +75,8 @@ namespace TheLongestYear.UI
         private const int NoPetState = -1;
         private const int HeartCount = 5;
         private const int TopLineY = 14;
-        private const int TopLineX = 140;
+        private const int TopLineX = 156;   // clear of the large (cow-sized) sprite's right edge at x+140
+        private const int SpriteLiftY = 8;
         private const int TopLineGap = 24;
         private const int TypeBelowName = 44;
         private const float FadedAlpha = 0.8f;
@@ -179,7 +180,10 @@ namespace TheLongestYear.UI
             // AnimalPage.updateSlots: sprite 16px below the slot top, 48px lower still when short.
             ClickableTextureComponent sprite = row.Sprite;
             sprite.bounds.X = pageX + IClickableMenu.borderWidth + 4 + (small ? SmallSpriteShiftX : LargeSpriteLeftPadding);
-            sprite.bounds.Y = contentTop + (small ? SmallSpriteShiftY : 0);
+            int spriteAnchorY = contentTop + (small ? SmallSpriteShiftY : 0);
+            // Jeff (2026-09-25): the animals sat a hair low in the row, so the picture alone is drawn
+            // SpriteLiftY higher; the name, hearts and icons keep their vanilla offsets from the anchor.
+            sprite.bounds.Y = spriteAnchorY - SpriteLiftY;
             sprite.draw(b);
             // Everything drawn in the row, so the keep note can be placed clear of all of it.
             var drawn = new List<PixelBox>
@@ -187,6 +191,7 @@ namespace TheLongestYear.UI
                 new PixelBox(sprite.bounds.X, sprite.bounds.Y,
                     (int)(entry.TextureSourceRect.Width * SpriteScale), (int)(entry.TextureSourceRect.Height * SpriteScale)),
             };
+            sprite.bounds.Y = spriteAnchorY;
 
             // AnimalPage.drawNPCSlot from here down.
             float lineHeight = Game1.smallFont.MeasureString("W").Y;
