@@ -159,10 +159,13 @@ public static class OpeningScript
             "pause 300",
             Say("Lewis", "lewis-hall-2"),
             "pause 600",
-            // Lewis walks out and the farmer turns to watch him go (Jeff, 2026-09-25).
-            "move Lewis 0 7 2 true",
-            "pause 300",
+            // Lewis walks out and the farmer turns to watch him go (Jeff, 2026-09-25). Jeff's route:
+            // down one, right two, then down the open aisle to the door. Straight down from his
+            // spot walks him through the wall.
+            "move Lewis 0 1 2",
             "faceDirection farmer 2",
+            "move Lewis 2 0 1",
+            "move Lewis 0 6 2 true",
             "waitForAllStationary",
             "playSound doorClose",
             $"warp Lewis {Off}",
