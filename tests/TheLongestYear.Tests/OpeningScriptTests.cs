@@ -26,7 +26,10 @@ public class OpeningScriptTests
     {
         string script = OpeningScript.Build(Text, "flag");
         foreach (string key in OpeningScript.LineKeys)
-            Assert.Equal(1, CountOf(script, $"\"[{key}]\""));
+            Assert.Equal(1, CountOf(script, $"[{key}]"));
+        // Every speak carries its text in quotes (pages joined with #$b# inside one pair).
+        foreach (string speak in script.Split('/').Where(c => c.StartsWith("speak ", StringComparison.Ordinal)))
+            Assert.EndsWith("\"", speak);
     }
 
     [Fact]
