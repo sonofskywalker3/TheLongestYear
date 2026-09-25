@@ -20,7 +20,7 @@ not the kept (highest) one. Only bites players with two buildings of one family.
 
 ### RELEASED 0.18.72 (2026-09-25): Gift of the Junimos room keeps (tanky24u, Nexus bugs, 24 Sep)
 Keep Greenhouse / Quarry Bridge / Glittering Boulder / Minecarts were never buyable: RunReachRequirement.Parse
-did not know the "room:" keyed flag, so the gate always failed (00ac8e5). Reply to tanky24u drafted, awaiting
+did not know the "room:" keyed flag, so the gate always failed (00ac8e5). Replied to tanky24u and marked Fixed in 0.18.72 (2026-09-25).
 Jeff's yes before posting; then mark the bug Fixed in 0.18.72.
 
 ### IDEAS (Jeff, 2026-09-25): more animal powers
