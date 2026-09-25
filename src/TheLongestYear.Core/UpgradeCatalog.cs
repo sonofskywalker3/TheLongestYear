@@ -301,12 +301,14 @@ public static class UpgradeCatalog
         new UpgradeDefinition("start_duck", UpgradeCategory.Buildings, 500, "keep_big_coop", "species:Duck"),
         new UpgradeDefinition("start_dinosaur", UpgradeCategory.Buildings, 900, "keep_big_coop", "species:Dinosaur"),
         new UpgradeDefinition("start_rabbit", UpgradeCategory.Buildings, 700, "keep_deluxe_coop", "species:Rabbit"),
-        new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, 1500, "keep_deluxe_coop", "species:Ostrich"),
         // Barn animals:
         new UpgradeDefinition("start_cow", UpgradeCategory.Buildings, 400, "keep_barn", "species:Cow"),
         new UpgradeDefinition("start_goat", UpgradeCategory.Buildings, 500, "keep_big_barn", "species:Goat"),
         new UpgradeDefinition("start_sheep", UpgradeCategory.Buildings, 600, "keep_deluxe_barn", "species:Sheep"),
         new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, 700, "keep_deluxe_barn", "species:Pig"),
+        // Ostriches live in barns (Data/FarmAnimals House "Barn"); this row used to sit in the coop
+        // chain and put the ostrich in a Deluxe Coop (fixed with the Herd Book, 2026-09-25).
+        new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, 1500, "keep_barn", "species:Ostrich"),
         };
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());

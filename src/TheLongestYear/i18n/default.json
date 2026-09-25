@@ -223,7 +223,8 @@
     "upgrade.start_rabbit.name": "Start with Rabbit",
     "upgrade.start_rabbit.desc": "Start each loop with a Rabbit (Deluxe Coop).",
     "upgrade.start_ostrich.name": "Start with Ostrich",
-    "upgrade.start_ostrich.desc": "Start each loop with an Ostrich (Deluxe Coop).",
+    // DRAFT herd-book: corrected housing, reviewed in Task 5.
+    "upgrade.start_ostrich.desc": "Start each loop with an Ostrich in your Barn.",
     "upgrade.start_cow.name": "Start with Cow",
     "upgrade.start_cow.desc": "Start each loop with a Cow in your Barn.",
     "upgrade.start_goat.name": "Start with Goat",

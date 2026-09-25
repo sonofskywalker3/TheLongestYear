@@ -400,4 +400,8 @@ public class UpgradeCatalogTests
             "upgrades:xp_mult_farming_4,xp_mult_fishing_4,xp_mult_foraging_4,xp_mult_mining_4,xp_mult_combat_4",
             capstone.MetaRequirement);
     }
+
+    [Fact]
+    public void Start_ostrich_needs_a_barn_because_ostriches_live_in_barns()
+        => Assert.Equal("keep_barn", UpgradeCatalog.TryGet("start_ostrich")!.PrerequisiteId);
 }

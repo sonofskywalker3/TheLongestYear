@@ -528,4 +528,45 @@ public class BoardDifficultyTests
         // The live-config read the fix replaced would have produced HardGates here.
         Assert.Equal(DifficultyStep.Hard, meta.EffectiveDifficulty(cfg).Steps.ItemRarity);
     }
+
+    [Theory]
+    [InlineData("start_chicken", "Brown Chicken")]
+    [InlineData("start_void_chicken", "Void Chicken")]
+    [InlineData("start_duck", "Duck")]
+    [InlineData("start_dinosaur", "Dinosaur")]
+    [InlineData("start_rabbit", "Rabbit")]
+    [InlineData("start_ostrich", "Ostrich")]
+    [InlineData("start_cow", "Brown Cow")]
+    [InlineData("start_goat", "Goat")]
+    [InlineData("start_sheep", "Sheep")]
+    [InlineData("start_pig", "Pig")]
+    public void Every_start_row_passes_its_gate_once_its_species_is_recorded(string upgradeId, string vanillaType)
+    {
+        var def = UpgradeCatalog.TryGet(upgradeId)!;
+        var s = new MetaState();
+        Assert.False(s.MeetsMetaRequirement(def.MetaRequirement));
+        AnimalSpecies.Record(s.AnimalSpeciesEverOwned, vanillaType);
+        Assert.True(s.MeetsMetaRequirement(def.MetaRequirement));
+    }
+
+    [Fact]
+    public void The_start_row_theory_covers_every_start_row()
+        => Assert.Equal(10, UpgradeCatalog.All.Count(u => u.Id.StartsWith("start_")));
+
+    [Theory]
+    [InlineData("White Chicken", "species:Chicken")]
+    [InlineData("Void Chicken", "species:VoidChicken")]
+    [InlineData("White Cow", "species:Cow")]
+    public void A_vanilla_name_recorded_before_the_fix_still_passes_the_gate(string recorded, string requirement)
+    {
+        var s = new MetaState { AnimalSpeciesEverOwned = { recorded } };
+        Assert.True(s.MeetsMetaRequirement(requirement));
+    }
+
+    [Fact]
+    public void A_void_chicken_does_not_open_the_chicken_gate()
+    {
+        var s = new MetaState { AnimalSpeciesEverOwned = { "Void Chicken" } };
+        Assert.False(s.MeetsMetaRequirement("species:Chicken"));
+    }
 }

@@ -56,7 +56,7 @@ public static class RunBaselineBuilder
             ["start_duck"]          = ("Duck",          "Big Coop"),
             ["start_dinosaur"]      = ("Dinosaur",      "Big Coop"),
             ["start_rabbit"]        = ("Rabbit",        "Deluxe Coop"),
-            ["start_ostrich"]       = ("Ostrich",       "Deluxe Coop"),
+            ["start_ostrich"]       = ("Ostrich",       "Barn"),
             ["start_cow"]           = ("White Cow",     "Barn"),
             ["start_goat"]          = ("Goat",          "Big Barn"),
             ["start_sheep"]         = ("Sheep",         "Deluxe Barn"),
