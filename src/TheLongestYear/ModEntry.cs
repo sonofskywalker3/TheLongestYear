@@ -91,6 +91,7 @@ namespace TheLongestYear
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.JojaLetterService _jojaLetters;
+        private Integration.JojaOfferDriver _jojaOffer;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
         private Integration.MorrisDarkSprite _morrisDark;
         private Integration.MorrisDarkPortrait _morrisDarkPortrait;
@@ -285,6 +286,9 @@ namespace TheLongestYear
             // Morris's letters (spec 2026-09-25-joja-offer-design): "come see me" then "make a decision" mail.
             _jojaLetters = new TheLongestYear.Loop.JojaLetterService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _jojaLetters.OnAssetRequested;
+            // Morris's offer scene on the first visit to JojaMart each loop (same spec).
+            _jojaOffer = new Integration.JojaOfferDriver(this.Monitor, _meta);
+            _jojaOffer.Attach(helper);
             // The opening's deathbed and letter text (spec 2026-09-16). Hooked at Entry so the very first
             // Strings/StringsFromCSFiles load already carries it; the minigame reads it before any save exists.
             _openingStrings = new OpeningStringsEditor(this.Monitor, () => _config.Enabled);
@@ -495,7 +499,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.HerdBookDebugCommand.Name, TheLongestYear.DebugCommands.HerdBookDebugCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.JojaDebugCommand.Name, TheLongestYear.DebugCommands.JojaDebugCommand.Description,
-                (cmd, a) => TheLongestYear.DebugCommands.JojaDebugCommand.Run(this.Monitor, _meta, a));
+                (cmd, a) => TheLongestYear.DebugCommands.JojaDebugCommand.Run(this.Monitor, _meta, a, _jojaOffer));
             helper.ConsoleCommands.Add("tly_activeeffects",
                 "Print the currently active theme bonus and liability.",
                 this.CmdActiveEffects);
@@ -3413,7 +3417,7 @@ namespace TheLongestYear
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
                 case "tly_restart": this.CmdRestart(command, args); break;
-                case "tly_joja": TheLongestYear.DebugCommands.JojaDebugCommand.Run(this.Monitor, _meta, args); break;
+                case "tly_joja": TheLongestYear.DebugCommands.JojaDebugCommand.Run(this.Monitor, _meta, args, _jojaOffer); break;
                 case "tly_day28continue":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceContinueCutscene(); break;

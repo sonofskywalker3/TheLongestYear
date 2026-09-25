@@ -125,7 +125,8 @@ namespace TheLongestYear.Integration
         /// <summary>Events whose overlay, tree fade and speech box this class serves.</summary>
         internal static bool IsOurEvent(Event ev)
             => ev != null && (ev.id == EndingEventKeys.EventId || ev.id == SeasonTurnEventKeys.EventId
-                              || ev.id == TheLongestYear.Core.Intro.OpeningScript.EventId);
+                              || ev.id == TheLongestYear.Core.Intro.OpeningScript.EventId
+                              || ev.id == JojaEventKeys.OfferId || ev.id == JojaEventKeys.BadEndingId);
 
         public static void Register(IMonitor monitor, IModHelper helper)
         {
