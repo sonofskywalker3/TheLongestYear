@@ -345,6 +345,11 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_opencraftbook",
                 "Open the Craftbook menu directly (debug).",
                 this.CmdOpenCraftbook);
+            helper.ConsoleCommands.Add("tly_openherdbook",
+                "Open the Herd Book menu directly (debug).",
+                this.CmdOpenHerdBook);
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.HerdBookDebugCommand.Name, TheLongestYear.DebugCommands.HerdBookDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add("tly_activeeffects",
                 "Print the currently active theme bonus and liability.",
                 this.CmdActiveEffects);
@@ -1301,6 +1306,12 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _launcher?.OpenCraftbook();
+        }
+
+        private void CmdOpenHerdBook(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _launcher?.OpenHerdBook();
         }
 
         private void CmdSetStash(string command, string[] args)
@@ -2567,6 +2578,8 @@ namespace TheLongestYear
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
+                case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
+                case "tly_herdbook": TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;

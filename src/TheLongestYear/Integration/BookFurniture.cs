@@ -6,7 +6,7 @@ using TheLongestYear.Core.Interactables;
 
 namespace TheLongestYear.Integration
 {
-    /// <summary>Registers the three carried "book" furniture (Cookbook/Craftbook/Bundle-log) as
+    /// <summary>Registers the four carried "book" furniture (Cookbook/Craftbook/Bundle-log/Herd Book) as
     /// custom furniture: edits Data/Furniture to add the rows and provides the tilesheet. The
     /// checkForAction interception (open menus) and the per-loop sweep are added in later tasks.</summary>
     internal sealed class BookFurniture
@@ -110,6 +110,8 @@ namespace TheLongestYear.Integration
                     data[BookKit.CookbookId]  = $"Cookbook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.cookbook")}/0/{tex}";
                     data[BookKit.CraftbookId] = $"Craftbook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.craftbook")}/1/{tex}";
                     data[BookKit.BundleLogId] = $"BundleLog/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.bundle-log")}/2/{tex}";
+                    // Sprite index 3: the fourth 16x16 cover in assets/books.png (64x16 sheet).
+                    data[BookKit.HerdBookId]  = $"HerdBook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.herdbook")}/3/{tex}";
                 }, AssetEditPriority.Default);
             }
         }
@@ -131,6 +133,7 @@ namespace TheLongestYear.Integration
                     case BookKit.CookbookId:  launcher.OpenCookbook();    __result = true; return false;
                     case BookKit.CraftbookId: launcher.OpenCraftbook();   __result = true; return false;
                     case BookKit.BundleLogId: launcher.OpenSeasonGoals(); __result = true; return false;
+                    case BookKit.HerdBookId:  launcher.OpenHerdBook();    __result = true; return false;
                     default: return true;
                 }
             }
@@ -138,7 +141,7 @@ namespace TheLongestYear.Integration
 
         /// <summary>Draw the carried books at full inventory-slot scale. Vanilla caps a 1x1
         /// furniture's menu icon at <c>getScaleSizeForMenu() == 2f</c> (a 16x16 sprite drawn at
-        /// 32px in a 64px slot), so the books looked tiny in the toolbar. For our three book ids
+        /// 32px in a 64px slot), so the books looked tiny in the toolbar. For our four book ids
         /// we render the sprite scaled to fill the slot like a normal item; everything else falls
         /// through to vanilla.</summary>
         [HarmonyLib.HarmonyPatch(typeof(StardewValley.Objects.Furniture), nameof(StardewValley.Objects.Furniture.drawInMenu),
@@ -154,6 +157,7 @@ namespace TheLongestYear.Integration
                     case BookKit.CookbookId:
                     case BookKit.CraftbookId:
                     case BookKit.BundleLogId:
+                    case BookKit.HerdBookId:
                         break;
                     default:
                         return true;
