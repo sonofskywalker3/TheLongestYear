@@ -51,7 +51,19 @@ Ask: once a Lost Book (library lore book) has been found, take it out of the art
 point, I'll be happy to add that in." Needs a look at how vanilla picks the Lost Book drop and whether the
 rewind wipes the "books found" count (if it does, the pool refills every loop, which is the complaint).
 
-### PROMISED, NOT STARTED (Jeff to tanky24u, 24 Sep): keep barn/coop animals across a rewind
+### BUILT 0.18.59 to 0.18.66 (on master, pushed, NOT released, live-tested 2026-09-25): the Herd Book (keep barn/coop animals across a rewind)
+Spec docs/superpowers/specs/2026-09-25-herd-book-design.md, plan docs/superpowers/plans/2026-09-25-herd-book.md.
+Every player starts with the Herd Book (cow cover, books.png index 3) and one Chicken slot; herdbook_1..17 add
+slots in order: Chicken, Cow x2, Duck x2, Goat x2, Rabbit x2, Sheep x2, Pig x2, then Void Chicken, Golden Chicken,
+Dinosaur, Ostrich. A registered animal comes back each loop with its hearts. Rows are drawn like the game's
+Animals tab. This meets tanky24u's "keep +1 animal" preference. Also fixed: the ten "start with a" keeps were
+never buyable (gate never met); Ostrich now lives in a Barn.
+Open for Jeff: start_* animals take building room before Herd Book animals, so a 0-heart start animal can push a
+hearted Herd Book animal to "waits". Keep that order? Also: the remove prompt says "won't come back next loop
+unless you put it back in", which is wrong for an animal no longer on the farm (removing it loses it).
+Later (all three books): Escape/B in the picker should go back to the slot list, not close the book; picker
+scroll sound.
+Original notes:
 Ask: an upgrade to keep an animal on rewind, like Keep Pet and the building keeps. Jeff: "I'll do it, just
 not excited about it at the moment." His open questions: one keep per animal ("keep 1 duck, X JP") or one
 pricier "keep all animals", what it costs, and how it interacts with the building keeps (an animal needs its
