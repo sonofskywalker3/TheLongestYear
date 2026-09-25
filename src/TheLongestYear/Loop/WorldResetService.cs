@@ -552,12 +552,15 @@ namespace TheLongestYear.Loop
             //    Gated on the upgrade + a prior snapshot inside the service.
             HorseCarryoverService.RestoreHorse(_meta, _monitor);
 
-            // 10. Place starting animals into matching housing.
-            ApplyStartingAnimals(baseline.StartingAnimals);
-
-            // 10-herd. Herd Book animals, after the Start-with animals so both count toward each
-            // building's room. An entry with no building or no room waits in the book.
+            // 10. Herd Book animals move in first (Jeff, 2026-09-25, option C): the Herd Book's
+            //     room check counts only its own slots, so its animals get each building's room
+            //     before the Start-with animals. An entry with no building or no room waits in the
+            //     book.
             HerdBookService.Restore(_meta, _monitor);
+
+            // 10-start. Start-with animals fill whatever room the Herd Book left; one that no
+            //     longer fits is skipped and logged.
+            ApplyStartingAnimals(baseline.StartingAnimals);
 
             // 10a. Restore the snapshotted pet on the Farm (keep_pet upgrade). Runs after
             // starting animals so the Farm.characters collection is already settled. No-op
@@ -1150,8 +1153,8 @@ namespace TheLongestYear.Loop
             foreach (var animal in animals)
             {
                 var requiredInfo = ChainInfo(animal.HousingType);
-                // adoptAnimal never checks capacity, so skip full houses here (spec 2026-09-25: the
-                // Start-with animals and the Herd Book share each building's room).
+                // adoptAnimal never checks capacity, so skip full houses here. The Herd Book animals
+                // are already in (they move in first, option C 2026-09-25), so isFull() counts them.
                 Building housing = farm.buildings.FirstOrDefault(b =>
                 {
                     var info = ChainInfo(b.buildingType.Value);
