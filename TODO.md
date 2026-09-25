@@ -28,10 +28,10 @@ did not know the "room:" keyed flag, so the gate always failed (00ac8e5). Replie
 - **Keep a second coop / barn:** only matters for "start with a" room. The full Herd Book fits one Deluxe of each
   (9 + 9 of 12), and start_* animals take what is left. Raise if players ask.
 
-### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
-When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
-must also clear `MetaState.Year2WallArmed` (spec: a restart after Keep playing works like "Start a new loop").
-Master has no such field, so nothing does it yet.
+### DONE on story (merge c879c17, 2026-09-25): voluntary restart clears the Year 2 wall
+`VoluntaryRestart.ClearWonRun` also clears `MetaState.Year2WallArmed` on story. The same merge hides the
+shrine's Restart button while the Year One Ending is armed, and pins `Day28Branch.Restart = 4` (3 was
+the retired Win) so a persisted branch number never changes meaning.
 
 ### RELEASED 0.18.58 (2026-09-25, live-tested 2026-09-24): voluntary restart on the Junimo Shrine
 Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
