@@ -3,9 +3,9 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.18.70 - 2026-09-25
+## 0.18.72 - 2026-09-25
 
-2359 tests.
+2364 tests.
 
 ### Added
 
@@ -19,6 +19,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - **Start with an animal keeps could never be bought.** Nothing recorded the species you owned, and three gate names (Chicken, VoidChicken, Cow) never matched vanilla's (White Chicken, Void Chicken, White Cow). Species are now recorded from the farm on every DayStarted and Saving, normalized on both sides of the gate, so saves that stored the vanilla names match too.
 - **Start with Ostrich** needed Keep Deluxe Coop and put the ostrich in a coop; ostriches live in barns. It now needs Keep Barn.
 - **Start-with animals ignored building capacity.** A full coop or barn is now skipped.
+- **Gift of the Junimos room keeps could never be bought.** Keep Greenhouse, Keep Quarry Bridge, Keep Glittering Boulder and Keep Minecarts each check a different room's unlock flag, and the mod could not read any of them. They now unlock once you finish that room. Keep the Bus was fine. Reported by tanky24u.
 
 ## 0.18.58 - 2026-09-24
 

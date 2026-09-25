@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.72`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.58`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,19 +24,6 @@ This is a **beta** (`0.18.72`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.72
-
-**Keep your favorite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
-
-- **The Herd Book.** A new book you carry from the first day, like the Cookbook and Craftbook. Put an animal in one of its slots and it comes back after every rewind as the same animal: same name, same hearts, fully grown. You start with one Chicken slot. Junimo Upgrades sells the rest in a fixed order: a second Chicken, then two each for Cows, Ducks, Goats, Rabbits, Sheep and Pigs, then one each for the Void Chicken, Golden Chicken, Dinosaur and Ostrich. Suggested by tanky24u.
-- **Herd Book rows look like the Animals tab.** Bigger rows laid out the way the game's own Animals tab does, so it's easy to see who's in each slot.
-- **The Herd Book opens before a rewind.** After the Cookbook and Craftbook, it opens on its own when it has an empty slot and an animal on your farm that fits it.
-- **Start with an animal can be bought.** None of the ten Start with keeps could ever be bought, because the mod never noticed the animals you owned. It now notes every kind of animal on your farm each morning, so once you have had a chicken, Start with Chicken is for sale after Keep Coop.
-- **Start with Ostrich uses a Barn.** Ostriches live in barns, but this keep put one in a Deluxe Coop. It now needs Keep Barn.
-- **Room rule for keeps.** A Start with keep can't be bought if it would overflow the coop or barn you've kept, and Herd Book slots count toward that room too. A Herd Book slot only counts against other Herd Book slots though, so the full Herd Book always fits inside one Deluxe Coop and one Deluxe Barn. The menu tells you when you're out of room: "Needs more coop room" or "Needs more barn room".
-- **On a rewind, Herd Book animals move in first.** Start with animals get whatever room is left over, not the other way around.
-- **Gift of the Junimos room keeps can be bought.** Keep Greenhouse, Keep Quarry Bridge, Keep Glittering Boulder and Keep Minecarts could never be bought, because the mod could not read that room's unlock check. They now unlock once you finish that room. Keep the Bus was fine. Reported by tanky24u.
 
 ## What's New in 0.18.58
 
@@ -180,7 +167,7 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 - **Junimo Upgrades.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
 - **JP Boosts.** The Junimo statue on your farm sells this-loop edges for JP: tomorrow's rain or a lucky day, a free late night, stacking forage/fish/crop/mine/drop chances, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot, or an elevator stop you have not earned yet. An Active tab shows what is running and a Plan tab shows what each keep still needs.
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
-- **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, a **Herd Book** that brings your registered animals back with their hearts, and a Junimo Stash chest that survives resets.
+- **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
 - **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
 - **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.
 - **The town half-remembers.** Villagers you have spent a lot of time with across loops occasionally say something uncanny. Rare, no gameplay effect, and it never explains itself. Toggle in Features.
