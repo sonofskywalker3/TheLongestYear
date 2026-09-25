@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -13,18 +14,19 @@ namespace TheLongestYear.UI
     /// <summary>
     /// The Herd Book (spec 2026-09-25), laid out like <see cref="CookbookMenu"/>. One row per owned
     /// slot in ladder order, labeled with its kind. An empty row opens a picker of the farm animals
-    /// that slot accepts and that are not registered yet (name, species, hearts); a filled row asks
-    /// to remove the animal. A row whose building keep is not owned says which keep it needs.
+    /// that slot accepts and that are not registered yet; a filled row asks to remove the animal.
+    /// Animal rows (picker and filled slots) are drawn like the game's Animals tab by
+    /// <see cref="AnimalRowRenderer"/>. A row whose building keep is not owned says which keep it needs.
     /// Opened from the placed book, <c>tly_openherdbook</c>, and the rewind night
     /// (RunController.OfferHerdBook, with a subtitle).
     /// </summary>
     internal sealed class HerdBookMenu : IClickableMenu
     {
         private const int PanelWidth = 900;
-        private const int PanelHeight = 640;
+        private const int PanelHeight = 720;
         private const int PanelPad = 32;
-        private const int RowHeight = 72;
-        private const int RowSpacing = 8;
+        private const int RowHeight = 116;   // the Animals tab's 112px slot plus 2px above and below the sprite
+        private const int RowSpacing = 4;
         private const int RowTextInset = 16;
         private const int RowIdBase = 8300;
         private const int ScrollUpId = 8950;
@@ -45,6 +47,8 @@ namespace TheLongestYear.UI
 
         private int _pendingSlot = -1;
         private List<FarmAnimal> _pickerList;   // null = slot mode
+        private List<AnimalRow> _pickerRows;
+        private readonly Dictionary<HerdEntry, AnimalRow> _slotRows = new Dictionary<HerdEntry, AnimalRow>();
         private int _pickerScroll;
         private int _scroll;
         private int _rowsPerPage;
@@ -180,6 +184,7 @@ namespace TheLongestYear.UI
             _pendingSlot = slotIndex;
             _pickerList = HerdBookService.Candidates(_slots[slotIndex], _meta);
             _pickerScroll = 0;
+            _pickerRows = _pickerList.Select(a => AnimalRowRenderer.ForLive(a, _monitor)).ToList();
             if (_pickerList.Count == 0)
             {
                 Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.herdbook.no-animals"), HUDMessage.newQuest_type));
@@ -190,6 +195,7 @@ namespace TheLongestYear.UI
         private void ClosePicker()
         {
             _pickerList = null;
+            _pickerRows = null;
             _pendingSlot = -1;
             _pickerScroll = 0;
         }
@@ -279,6 +285,21 @@ namespace TheLongestYear.UI
                 HerdSlotKind kind = _slots[slotIndex];
                 HerdEntry entry = HerdBookRules.EntryAt(_meta.HerdBook, slotIndex);
                 string kindName = HerdSlotRules.DisplayName(kind);
+                string note = null;
+                if (!_meta.HasUpgrade(HerdSlotRules.RequiredKeepId(kind)))
+                {
+                    string keep = UpgradeCatalog.TryGet(HerdSlotRules.RequiredKeepId(kind))?.DisplayName ?? HerdSlotRules.RequiredHousing(kind);
+                    note = Strings.Get("menu.herdbook.needs-keep", new Dictionary<string, string> { ["keep"] = keep });
+                }
+
+                AnimalRow animalRow = entry == null ? null : SlotRow(entry);
+                if (animalRow?.Entry != null)
+                {
+                    DrawRowBox(b, row, Color.White);
+                    AnimalRowRenderer.Draw(b, row, animalRow, kindName, note);
+                    continue;
+                }
+
                 string label = entry == null
                     ? Strings.Get("menu.herdbook.empty-slot", new Dictionary<string, string> { ["kind"] = kindName })
                     : Strings.Get("menu.herdbook.filled-slot", new Dictionary<string, string>
@@ -288,11 +309,8 @@ namespace TheLongestYear.UI
                             ["hearts"] = HerdBookRules.Hearts(entry.Friendship).ToString(),
                         });
                 DrawRow(b, row, label, entry == null ? Color.White * EmptyRowAlpha : Color.White);
-
-                if (!_meta.HasUpgrade(HerdSlotRules.RequiredKeepId(kind)))
+                if (note != null)
                 {
-                    string keep = UpgradeCatalog.TryGet(HerdSlotRules.RequiredKeepId(kind))?.DisplayName ?? HerdSlotRules.RequiredHousing(kind);
-                    string note = Strings.Get("menu.herdbook.needs-keep", new Dictionary<string, string> { ["keep"] = keep });
                     Vector2 size = Game1.smallFont.MeasureString(note);
                     Utility.drawTextWithShadow(b, note, Game1.smallFont,
                         new Vector2(row.Right - RowTextInset - size.X, row.Y + (row.Height - size.Y) / 2),
@@ -301,12 +319,29 @@ namespace TheLongestYear.UI
             }
         }
 
+        /// <summary>The filled slot's row, built once per entry: from the live animal when it is on
+        /// the farm, else from the stored entry.</summary>
+        private AnimalRow SlotRow(HerdEntry entry)
+        {
+            if (_slotRows.TryGetValue(entry, out AnimalRow cached)) return cached;
+            FarmAnimal live = HerdBookService.LiveAnimals().FirstOrDefault(a => a.myID.Value == entry.AnimalId);
+            AnimalRow built = live != null ? AnimalRowRenderer.ForLive(live, _monitor) : AnimalRowRenderer.ForStored(entry, _monitor);
+            _slotRows[entry] = built;
+            return built;
+        }
+
         private void DrawPickerRows(SpriteBatch b)
         {
             for (int i = 0; i < _rowSlots.Count; i++)
             {
                 int pickerIndex = _pickerScroll + i;
                 if (pickerIndex >= _pickerList.Count) break;
+                if (_pickerRows[pickerIndex].Entry != null)
+                {
+                    DrawRowBox(b, _rowSlots[i].bounds, Color.White);
+                    AnimalRowRenderer.Draw(b, _rowSlots[i].bounds, _pickerRows[pickerIndex], null, null);
+                    continue;
+                }
                 FarmAnimal animal = _pickerList[pickerIndex];
                 string label = Strings.Get("menu.herdbook.picker-row", new Dictionary<string, string>
                 {
@@ -318,10 +353,13 @@ namespace TheLongestYear.UI
             }
         }
 
+        private static void DrawRowBox(SpriteBatch b, Rectangle row, Color tint)
+            => IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
+                row.X, row.Y, row.Width, row.Height, tint, 1f, false);
+
         private static void DrawRow(SpriteBatch b, Rectangle row, string label, Color tint)
         {
-            IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
-                row.X, row.Y, row.Width, row.Height, tint, 1f, false);
+            DrawRowBox(b, row, tint);
             Utility.drawTextWithShadow(b, label, Game1.dialogueFont,
                 new Vector2(row.X + RowTextInset, row.Y + (row.Height - (int)Game1.dialogueFont.MeasureString(label).Y) / 2),
                 Game1.textColor);
