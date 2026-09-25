@@ -181,6 +181,11 @@ namespace TheLongestYear
             GrandpaCandleCommand.Register(this.Monitor);
             Integration.EndingEventCommands.Register(this.Monitor, helper);
             Integration.OpeningEventCommands.Register(this.Monitor);
+            // The stash's Junimo-chest sprite. Wired at Entry, not on save load: the opening tour
+            // places the stash before a new game's save exists, and without the loader the draw
+            // patch fell back to a plain purple-tinted chest (Jeff, 2026-09-25).
+            JunimoStashService.SetTextureLoader(
+                () => this.Helper.ModContent.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("assets/junimo_stash.png"));
             // Rewind cutscene (spec 2026-09-11-rewind-cutscene, task 7): REQUIRED WIRING for all
             // scenes the day-28 FAIL branch chains together. Without these, the menu-steal teardown
             // shared by RewindBedroomScene and RewindMorningScene is dead code, RewindPanScene's own
@@ -692,8 +697,6 @@ namespace TheLongestYear
             };
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
-            JunimoStashService.SetTextureLoader(
-                () => this.Helper.ModContent.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("assets/junimo_stash.png"));
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
