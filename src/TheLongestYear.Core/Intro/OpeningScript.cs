@@ -34,6 +34,10 @@ public static class OpeningScript
     public static string Build(Func<string, string> text, string ccSeenMail)
     {
         string Say(string who, string key) => $"speak {who} \"{text(Prefix + key)}\"";
+        // Back-to-back lines from one speaker with nothing to watch between them share one box as
+        // pages, instead of the box closing and reopening for each (Jeff, 2026-09-25).
+        string SayPages(string who, params string[] keys)
+            => $"speak {who} \"{string.Join("#$b#", Array.ConvertAll(keys, k => text(Prefix + k)))}\"";
         // The lead Junimo holds a book up as he names it (no scripted hop while he holds it); the
         // farmer then takes it and holds it up. The 3000 ms pause after each is the hold-up pose
         // (2500 + 500 ms), so the next line never opens over it.
@@ -53,9 +57,7 @@ public static class OpeningScript
             "viewport 23 10 clamp true",
             "move farmer 0 2 2",
             "playMusic SettlingIn",
-            Say("Robin", "robin-1"),
-            "pause 300",
-            Say("Robin", "robin-2"),
+            SayPages("Robin", "robin-1", "robin-2"),
             "pause 400",
             "playSound busDoorOpen",
             "addTemporaryActor Morris 16 32 22 8 2 true Character",
@@ -116,9 +118,7 @@ public static class OpeningScript
             "pause 400",
             "faceDirection Lewis 1",
             "faceDirection Morris 3",
-            Say("Morris", "morris-farm-1"),
-            "pause 200",
-            Say("Morris", "morris-farm-2"),
+            SayPages("Morris", "morris-farm-1", "morris-farm-2"),
             "playSound shwip",
             "pause 500",
             Say("Morris", "morris-farm-3"),
@@ -257,10 +257,7 @@ public static class OpeningScript
             "pause 500",
             "playSound junimoMeep1",
             "jump Junimo0",
-            Say("Junimo0", "tour-1"),
-            "pause 400",
-            "jump Junimo0",
-            Say("Junimo0", "tour-2"),
+            SayPages("Junimo0", "tour-1", "tour-2"),
             "pause 300",
             "faceDirection farmer 3",
             "jump Junimo1",
@@ -287,11 +284,7 @@ public static class OpeningScript
             HandOver(Interactables.BookKit.HerdBookId),
             "pause 3000",
             "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
-            Say("Junimo0", "tour-7"),
-            "pause 200",
-            Say("Junimo0", "tour-8"),
-            "pause 400",
-            Say("Junimo0", "tour-9"),
+            SayPages("Junimo0", "tour-7", "tour-8", "tour-9"),
             "pause 600",
             "playSound junimoMeep1",
             "pause 800",
