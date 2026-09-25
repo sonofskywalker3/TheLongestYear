@@ -36,22 +36,87 @@ public class AnimalCapacityRuleTests
     }
 
     [Fact]
-    public void Demand_counts_the_free_chicken_slot()
+    public void HerdDemand_counts_the_free_chicken_slot()
     {
         MetaState meta = Owning();
-        Assert.Equal(1, AnimalCapacityRule.Demand(meta, AnimalHousing.CoopFamily));
-        Assert.Equal(0, AnimalCapacityRule.Demand(meta, AnimalHousing.BarnFamily));
+        Assert.Equal(1, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.CoopFamily));
+        Assert.Equal(0, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.BarnFamily));
     }
 
     [Fact]
-    public void Demand_sums_start_rows_and_herd_slots_per_family()
+    public void Herd_and_start_demand_are_counted_separately_per_family()
     {
         // herdbook_1..4: slots Chicken, Chicken, Cow, Cow, Duck -> coop 3, barn 2.
-        // start_chicken + start_duck -> coop +2; start_cow + start_ostrich -> barn +2.
+        // start_chicken + start_duck -> coop 2; start_cow + start_ostrich -> barn 2.
         MetaState meta = Owning(HerdTiers(4).Concat(new[]
             { "start_chicken", "start_duck", "start_cow", "start_ostrich" }).ToArray());
-        Assert.Equal(5, AnimalCapacityRule.Demand(meta, AnimalHousing.CoopFamily));
-        Assert.Equal(4, AnimalCapacityRule.Demand(meta, AnimalHousing.BarnFamily));
+        Assert.Equal(3, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.CoopFamily));
+        Assert.Equal(2, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.BarnFamily));
+        Assert.Equal(2, AnimalCapacityRule.StartDemand(meta, AnimalHousing.CoopFamily));
+        Assert.Equal(2, AnimalCapacityRule.StartDemand(meta, AnimalHousing.BarnFamily));
+    }
+
+    [Fact]
+    public void DemandFor_a_herd_tier_counts_only_herd_slots_and_a_start_row_counts_both()
+    {
+        MetaState meta = Owning(HerdTiers(4).Concat(new[] { "start_chicken", "start_duck" }).ToArray());
+        Assert.Equal(3, AnimalCapacityRule.DemandFor(meta, "herdbook_5"));
+        Assert.Equal(5, AnimalCapacityRule.DemandFor(meta, "start_rabbit"));
+        Assert.Equal(0, AnimalCapacityRule.DemandFor(meta, "keep_coop"));
+    }
+
+    [Fact]
+    public void Herd_tier_ignores_start_rows()
+    {
+        // Free slot + three coop start rows fill 4 of the Coop's 4 in the old count; the Herd
+        // Book only counts its own slots (free slot + tier 1 = 2), so the tier is allowed.
+        MetaState meta = Owning("keep_coop", "start_chicken", "start_void_chicken", "start_duck");
+        Assert.False(AnimalCapacityRule.WouldOverflow(meta, "herdbook_1"));
+    }
+
+    [Fact]
+    public void Herd_tier_is_refused_when_herd_slots_alone_fill_the_room()
+    {
+        // herdbook_1..7: coop slots 0, 1, 4, 5 = 4 = Coop room; herdbook_8 is a Rabbit (coop).
+        MetaState meta = Owning(HerdTiers(7).Concat(new[] { "keep_coop", "keep_barn" }).ToArray());
+        Assert.Equal(4, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.CoopFamily));
+        Assert.True(AnimalCapacityRule.WouldOverflow(meta, "herdbook_8"));
+        meta.OwnedUpgrades.Add("keep_big_coop");
+        Assert.False(AnimalCapacityRule.WouldOverflow(meta, "herdbook_8"));
+    }
+
+    [Fact]
+    public void Start_row_counts_the_herd_slots_too()
+    {
+        // Herd coop slots 0, 1, 4, 5 already fill the Coop; a coop start row has no room left.
+        MetaState meta = Owning(HerdTiers(7).Concat(new[] { "keep_coop" }).ToArray());
+        Assert.True(AnimalCapacityRule.WouldOverflow(meta, "start_chicken"));
+    }
+
+    [Fact]
+    public void Full_ladder_always_fits_deluxe_buildings_even_with_every_start_row()
+    {
+        MetaState meta = Owning(RunBaselineBuilder.StartingAnimalIds
+            .Concat(new[] { "keep_deluxe_coop", "keep_deluxe_barn" }).ToArray());
+        for (int tier = 1; tier <= UpgradeCatalog.HerdBookMaxTier; tier++)
+        {
+            Assert.False(AnimalCapacityRule.WouldOverflow(meta, $"herdbook_{tier}"));
+            meta.OwnedUpgrades.Add($"herdbook_{tier}");
+        }
+    }
+
+    [Fact]
+    public void Later_herd_tier_may_squeeze_owned_start_rows_without_blocking()
+    {
+        // Free slot + three coop start rows = 4 = Coop room. Buying herdbook_1 is still allowed
+        // (herd only counts herd), leaving 5 coop animals owed a 4-room Coop; that is accepted.
+        // A further coop start row is refused, a further herd tier still checks herd slots only.
+        MetaState meta = Owning("keep_coop", "keep_barn", "start_chicken", "start_void_chicken", "start_duck");
+        Assert.Equal(UpgradePurchase.PurchaseResult.Success,
+            UpgradePurchase.TryPurchase(meta, UpgradeCatalog.TryGet("herdbook_1")));
+        Assert.Contains("start_duck", meta.OwnedUpgrades);
+        Assert.True(AnimalCapacityRule.WouldOverflow(meta, "start_rabbit"));
+        Assert.False(AnimalCapacityRule.WouldOverflow(meta, "herdbook_2"));
     }
 
     [Theory]
@@ -129,7 +194,8 @@ public class AnimalCapacityRuleTests
         // coop buys are refused, barn buys still work.
         MetaState meta = Owning("keep_coop", "keep_barn", "herdbook_1", "start_chicken",
             "start_void_chicken", "start_duck", "start_dinosaur");
-        Assert.Equal(6, AnimalCapacityRule.Demand(meta, AnimalHousing.CoopFamily));
+        Assert.Equal(2, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.CoopFamily));
+        Assert.Equal(4, AnimalCapacityRule.StartDemand(meta, AnimalHousing.CoopFamily));
         Assert.True(AnimalCapacityRule.WouldOverflow(meta, "start_rabbit"));
         Assert.False(AnimalCapacityRule.WouldOverflow(meta, "start_cow"));
     }

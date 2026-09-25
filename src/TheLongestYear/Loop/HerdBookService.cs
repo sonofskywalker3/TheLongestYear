@@ -114,7 +114,7 @@ namespace TheLongestYear.Loop
             meta.HerdBook = refreshed;
         }
 
-        /// <summary>Step 10a of the reset, right after the Start-with animals: rebuild every registered
+        /// <summary>Step 10 of the reset, before the Start-with animals: rebuild every registered
         /// animal as an adult in a kept building with room (see <see cref="HerdPlacement"/>). An entry
         /// that cannot come back is logged, gets a HUD line, and stays in the book.</summary>
         public static void Restore(MetaState meta, IMonitor monitor)

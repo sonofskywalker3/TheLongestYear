@@ -4,8 +4,9 @@ using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>An animal house on the fresh farm: its building type and the room left in it after the
-/// Start-with animals went in (animalLimit minus animalsThatLiveHere).</summary>
+/// <summary>An animal house on the fresh farm: its building type and the room left in it
+/// (animalLimit minus animalsThatLiveHere). The Herd Book is restored before the Start-with
+/// animals (option C, 2026-09-25), so on a rewind this is the building's whole room.</summary>
 public sealed record HerdHouse(string Blueprint, int FreeRoom);
 
 /// <summary>Why a Herd Book entry did not come back this loop.</summary>

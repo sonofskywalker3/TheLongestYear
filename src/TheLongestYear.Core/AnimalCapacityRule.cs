@@ -5,9 +5,13 @@ namespace TheLongestYear.Core;
 /// <summary>
 /// No animal keep may be bought past the room of the kept buildings (Jeff, 2026-09-25: "you
 /// shouldn't allow purchases that will overflow your max space in a kept building"). A
-/// "Start with" row or a Herd Book tier is refused when, after the buy, the animals that must
-/// live in its family (Coop or Barn) would outnumber the highest kept building of that family.
-/// Only further buys are refused: a save already over the limit keeps everything it owns.
+/// Herd Book tier is refused when its family's (Coop or Barn) owned Herd Book slots plus the new
+/// one would outnumber the highest kept building of that family; "Start with" rows do not count
+/// against it (option C, 2026-09-25). A "Start with" row is refused when the Herd Book slots plus
+/// the owned Start-with rows of its family plus the new one would. A later Herd Book tier may so
+/// leave less room for Start-with animals already owned; that is accepted, and on a rewind the
+/// Herd Book animals move in first and Start-with animals that no longer fit are skipped. Only
+/// further buys are refused: a save already over the limit keeps everything it owns.
 /// </summary>
 public static class AnimalCapacityRule
 {
@@ -37,18 +41,40 @@ public static class AnimalCapacityRule
         return 0;
     }
 
-    /// <summary>Animals that must live in a family: owned "Start with" rows housed there plus the
-    /// owned Herd Book slots (the free first Chicken slot included) whose kind lives there.</summary>
-    public static int Demand(MetaState meta, string family)
+    /// <summary>Owned Herd Book slots (the free first Chicken slot included) whose kind lives in
+    /// a family.</summary>
+    public static int HerdDemand(MetaState meta, string family)
+    {
+        int demand = 0;
+        int herdTier = meta.HighestKeptTier(UpgradeCatalog.HerdBookPrefix, UpgradeCatalog.HerdBookMaxTier);
+        foreach (HerdSlotKind kind in HerdSlotRules.SlotsFor(herdTier))
+            if (AnimalHousing.Chain(HerdSlotRules.RequiredHousing(kind)).Family == family)
+                demand++;
+        return demand;
+    }
+
+    /// <summary>Owned "Start with" rows housed in a family.</summary>
+    public static int StartDemand(MetaState meta, string family)
     {
         int demand = 0;
         foreach (string startId in RunBaselineBuilder.StartingAnimalIds)
             if (meta.HasUpgrade(startId) && FamilyOf(startId) == family)
                 demand++;
-        int herdTier = meta.HighestKeptTier(UpgradeCatalog.HerdBookPrefix, UpgradeCatalog.HerdBookMaxTier);
-        foreach (HerdSlotKind kind in HerdSlotRules.SlotsFor(herdTier))
-            if (AnimalHousing.Chain(HerdSlotRules.RequiredHousing(kind)).Family == family)
-                demand++;
+        return demand;
+    }
+
+    /// <summary>The animals already counted against the room when <paramref name="upgradeId"/> is
+    /// bought (Jeff, 2026-09-25, option C): a Herd Book tier counts only the owned Herd Book slots
+    /// of its family, since Herd Book animals move in first on a rewind; a "Start with" row counts
+    /// the Herd Book slots plus the owned Start-with rows. 0 for rows that add no animal.</summary>
+    public static int DemandFor(MetaState meta, string upgradeId)
+    {
+        string? family = FamilyOf(upgradeId);
+        if (family == null)
+            return 0;
+        int demand = HerdDemand(meta, family);
+        if (RunBaselineBuilder.StartingAnimalHousing(upgradeId) != null)
+            demand += StartDemand(meta, family);
         return demand;
     }
 
@@ -73,7 +99,7 @@ public static class AnimalCapacityRule
         string? family = FamilyOf(upgradeId);
         if (family == null)
             return false;
-        return Demand(meta, family) + 1 > Capacity(meta, family);
+        return DemandFor(meta, upgradeId) + 1 > Capacity(meta, family);
     }
 
     /// <summary>The short player-facing reason a row is refused ("Needs a bigger coop"), or null

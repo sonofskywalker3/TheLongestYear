@@ -33,7 +33,7 @@ public class HerdPlacementTests
     }
 
     [Fact]
-    public void Room_already_taken_by_starting_animals_counts()
+    public void A_house_with_no_free_room_is_NoRoom()
     {
         List<HerdAssignment> result = HerdPlacement.Assign(new[] { Entry(0, 1, "White Chicken") }, 1, new[] { new HerdHouse("Coop", 0) });
         Assert.Equal(HerdSkip.NoRoom, result.Single().Skip);
