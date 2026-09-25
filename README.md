@@ -27,7 +27,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ## What's New in 0.18.70
 
-**Keep your favourite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
+**Keep your favorite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
 
 - **The Herd Book.** A new book you carry from the first day, like the Cookbook and Craftbook. Put an animal in one of its slots and it comes back after every rewind as the same animal: same name, same hearts, fully grown. You start with one Chicken slot. Junimo Upgrades sells the rest in a fixed order: a second Chicken, then two each for Cows, Ducks, Goats, Rabbits, Sheep and Pigs, then one each for the Void Chicken, Golden Chicken, Dinosaur and Ostrich. Suggested by tanky24u.
 - **Herd Book rows look like the Animals tab.** Bigger rows laid out the way the game's own Animals tab does, so it's easy to see who's in each slot.
