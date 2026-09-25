@@ -14,7 +14,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_joja";
         public const string Description =
-            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject";
+            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject | counter | cashier";
 
         private const int MinArgsLetter = 3;
 
@@ -49,6 +49,12 @@ namespace TheLongestYear.DebugCommands
                 case "unreject":
                     state.JojaRejectedLoop = 0;
                     m.Log("tly_joja: JojaRejectedLoop reset to 0.", LogLevel.Info);
+                    break;
+                case "counter":
+                    JojaCounterPatch.DebugCounter();
+                    break;
+                case "cashier":
+                    JojaCounterPatch.DebugCashier();
                     break;
                 default:
                     m.Log(Description, LogLevel.Warn);

@@ -15,6 +15,13 @@ namespace TheLongestYear.Loop
     /// Story note from the user (2026-05-26): future Junimo dialogue will explain in-fiction
     /// why this option is unavailable. For v1 we just block the answer and show a generic
     /// message so the player isn't confused by a no-op click.
+    ///
+    /// spec 2026-09-25-joja-offer-design: Morris's counter no longer reaches this dialogue at
+    /// all — <see cref="JojaCounterPatch"/> intercepts <c>JojaMart.checkAction</c> before vanilla's
+    /// "JoinJoja" question is ever asked, so this prefix's "JojaSignUp_Yes" case never fires from
+    /// that path anymore. This class stays in as a safety net for any other path (a future patch
+    /// order change, another mod triggering the vanilla question, etc.) that might still route a
+    /// "JojaSignUp_Yes" answer through here.
     /// </summary>
     [HarmonyPatch(typeof(JojaMart), nameof(JojaMart.answerDialogue))]
     internal static class JojaMembershipBlock
