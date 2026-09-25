@@ -308,14 +308,7 @@ namespace TheLongestYear.UI
                             ["name"] = entry.Name,
                             ["hearts"] = HerdBookRules.Hearts(entry.Friendship).ToString(),
                         });
-                DrawRow(b, row, label, entry == null ? Color.White * EmptyRowAlpha : Color.White);
-                if (note != null)
-                {
-                    Vector2 size = Game1.smallFont.MeasureString(note);
-                    Utility.drawTextWithShadow(b, note, Game1.smallFont,
-                        new Vector2(row.Right - RowTextInset - size.X, row.Y + (row.Height - size.Y) / 2),
-                        Game1.textColor * NoteAlpha);
-                }
+                DrawRow(b, row, label, entry == null ? Color.White * EmptyRowAlpha : Color.White, note);
             }
         }
 
@@ -357,12 +350,29 @@ namespace TheLongestYear.UI
             => IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 row.X, row.Y, row.Width, row.Height, tint, 1f, false);
 
-        private static void DrawRow(SpriteBatch b, Rectangle row, string label, Color tint)
+        /// <summary>A text-only row: <paramref name="label"/> in the dialogue font, and the optional
+        /// <paramref name="note"/> on its own line under it in the small font, the pair centred in
+        /// the row. Each line shrinks to the row's width if it would run past it, so the two never
+        /// share a line and nothing leaves the box.</summary>
+        private static void DrawRow(SpriteBatch b, Rectangle row, string label, Color tint, string note = null)
         {
             DrawRowBox(b, row, tint);
+            float maxW = row.Width - RowTextInset * 2;
+            Vector2 labelSize = Game1.dialogueFont.MeasureString(label);
+            float labelScale = FitScale(labelSize.X, maxW);
+            float labelH = labelSize.Y * labelScale;
+            Vector2 noteSize = note == null ? Vector2.Zero : Game1.smallFont.MeasureString(note);
+            float noteScale = FitScale(noteSize.X, maxW);
+            float noteH = noteSize.Y * noteScale;
+            float top = row.Y + (int)((row.Height - labelH - noteH) / 2);
             Utility.drawTextWithShadow(b, label, Game1.dialogueFont,
-                new Vector2(row.X + RowTextInset, row.Y + (row.Height - (int)Game1.dialogueFont.MeasureString(label).Y) / 2),
-                Game1.textColor);
+                new Vector2(row.X + RowTextInset, top), Game1.textColor, labelScale);
+            if (note != null)
+                Utility.drawTextWithShadow(b, note, Game1.smallFont,
+                    new Vector2(row.X + RowTextInset, top + labelH), Game1.textColor * NoteAlpha, noteScale);
         }
+
+        private static float FitScale(float textWidth, float maxWidth)
+            => textWidth <= maxWidth || textWidth <= 0f ? 1f : maxWidth / textWidth;
     }
 }

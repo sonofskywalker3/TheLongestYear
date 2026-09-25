@@ -578,8 +578,9 @@ public class BoardDifficultyTests
         {
             HerdBook = { new HerdEntry(0, 42L, "Brown Chicken", "Nugget", "skinA", 850, 230, 40, 38, true, false) }
         };
-        string json = JsonSerializer.Serialize(original);
-        MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
+        // Newtonsoft, the serializer SMAPI reads and writes save data with.
+        string json = Newtonsoft.Json.JsonConvert.SerializeObject(original);
+        MetaState restored = Newtonsoft.Json.JsonConvert.DeserializeObject<MetaState>(json)!;
         Assert.Equal(original.HerdBook, restored.HerdBook);
     }
 }
