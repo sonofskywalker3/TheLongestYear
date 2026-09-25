@@ -11,7 +11,7 @@ GitHub release v0.18.58, Nexus file (CI), version field, description (README and
 changelog all set via Chrome. Still to do:
 - Retake `release-notes/settings-difficulty.png` (README only; still shows the Season pity dial, ten dials).
   Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
-- Tell tanky24u the restart and the Rare Fish text shipped (draft to Jeff first).
+- DONE 2026-09-25: told tanky24u (Nexus posts) the restart and the Rare Fish text shipped, lore books later.
 
 ### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
 When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
@@ -56,7 +56,9 @@ Ask: an upgrade to keep an animal on rewind, like Keep Pet and the building keep
 not excited about it at the moment." His open questions: one keep per animal ("keep 1 duck, X JP") or one
 pricier "keep all animals", what it costs, and how it interacts with the building keeps (an animal needs its
 barn or coop). Standing ruling from the keep_pet design (further down this file): kept barn/coop animals
-start the loop at 0 hearts so nobody gets large milk on day 1. `RunBaseline.StartingAnimals` and
+start the loop at 0 hearts so nobody gets large milk on day 1.
+tanky24u's preference (Nexus posts, 24 Sep): "keep +1 animal" (one keep per animal) rather than keep all of
+one type or keep all animals; they know opinions differ. `RunBaseline.StartingAnimals` and
 `WorldResetService.ApplyStartingAnimals` already exist for placing animals at reset.
 
 ### LATER, Phase 4 (Jeff to tanky24u, 24 Sep): one-year perfection "Ultimate Challenge Mode"
