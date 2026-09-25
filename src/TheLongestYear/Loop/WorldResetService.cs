@@ -1171,8 +1171,7 @@ namespace TheLongestYear.Loop
                     // Track only after a successful placement so a degenerate "indoors is null"
                     // case doesn't poison AnimalSpeciesEverOwned with a species the player doesn't
                     // actually have.
-                    if (!_meta.AnimalSpeciesEverOwned.Contains(animal.VanillaType, StringComparer.OrdinalIgnoreCase))
-                        _meta.AnimalSpeciesEverOwned.Add(animal.VanillaType);
+                    AnimalSpecies.Record(_meta.AnimalSpeciesEverOwned, animal.VanillaType);
                 }
             }
         }

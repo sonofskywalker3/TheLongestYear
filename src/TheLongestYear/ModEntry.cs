@@ -829,6 +829,8 @@ namespace TheLongestYear
             // FarmerReset.loadForNewGame, MetaState doesn't).
             _introInjector?.MarkIntroSeenIfApplicable();
             RecordSeenEvents();
+            if (RunActivation.IsActive)
+                TheLongestYear.Loop.AnimalSpeciesRecorder.Record(_meta.State, this.Monitor);
             _meta.Save();
             this.Monitor.Log($"Meta-state saved with the game. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Trace);
         }
@@ -2386,6 +2388,7 @@ namespace TheLongestYear
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
+            TheLongestYear.Loop.AnimalSpeciesRecorder.Record(_meta.State, this.Monitor);
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);

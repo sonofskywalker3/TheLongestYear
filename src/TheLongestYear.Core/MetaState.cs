@@ -42,8 +42,8 @@ public sealed class MetaState
     /// <summary>
     /// Animal species the player has ever owned across all runs in this playthrough.
     /// Drives "Start with [animal]" upgrade availability via the species: meta-requirement
-    /// prefix on <see cref="UpgradeDefinition.MetaRequirement"/>. Game-side hookup that
-    /// adds to this list when an animal joins a coop/barn is part of a later plan.
+    /// prefix on <see cref="UpgradeDefinition.MetaRequirement"/>. Written by
+    /// <c>AnimalSpeciesRecorder</c> on DayStarted and Saving, normalized by <see cref="AnimalSpecies"/>.
     /// </summary>
     public List<string> AnimalSpeciesEverOwned { get; set; } = new();
 
@@ -321,7 +321,9 @@ public sealed class MetaState
         string value = requirement.Substring(colon + 1);
         return ns switch
         {
-            "species" => AnimalSpeciesEverOwned.Contains(value, StringComparer.OrdinalIgnoreCase),
+            // Normalized on both sides so a save that recorded "White Chicken" (the old
+            // ApplyStartingAnimals) still opens species:Chicken (spec 2026-09-25).
+            "species" => AnimalSpeciesEverOwned.Any(owned => AnimalSpecies.Matches(owned, value)),
             "upgrade" => OwnedUpgrades.Contains(value, StringComparer.Ordinal),
             // "upgrades" = conjunction: EVERY comma-separated id must be owned. Added for the
             // xp_mult_all capstone (spec 2026-07-14 economy Change 3).
