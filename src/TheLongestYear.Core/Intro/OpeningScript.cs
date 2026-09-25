@@ -34,10 +34,12 @@ public static class OpeningScript
     public static string Build(Func<string, string> text, string ccSeenMail)
     {
         string Say(string who, string key) => $"speak {who} \"{text(Prefix + key)}\"";
-        // The lead Junimo holds a book up as he names it; the farmer then takes it and holds it up.
+        // The lead Junimo holds a book up as he names it (no scripted hop while he holds it); the
+        // farmer then takes it and holds it up. The 3000 ms pause after each is the hold-up pose
+        // (2500 + 500 ms), so the next line never opens over it.
         // Visual only: the books are granted by the mod's inventory reconcile, not by the event.
         string HoldUp(string bookId) => $"tlyHoldUp Junimo0 (F){bookId}";
-        string HandOver(string bookId) => $"tlyTakeHeld/playSound coin/itemAboveHead (F){bookId}";
+        string HandOver(string bookId) => $"tlyTakeHeld (F){bookId}/playSound coin";
 
         var s = new List<string>
         {
@@ -262,25 +264,21 @@ public static class OpeningScript
             "pause 300",
             "faceDirection farmer 1",
             HoldUp(Interactables.BookKit.CookbookId),
-            "jump Junimo0",
             Say("Junimo0", "tour-4"),
             HandOver(Interactables.BookKit.CookbookId),
-            "pause 1200",
+            "pause 3000",
             HoldUp(Interactables.BookKit.CraftbookId),
-            "jump Junimo0",
             Say("Junimo0", "tour-5"),
             HandOver(Interactables.BookKit.CraftbookId),
-            "pause 1200",
+            "pause 3000",
             HoldUp(Interactables.BookKit.BundleLogId),
-            "jump Junimo0",
             Say("Junimo0", "tour-6"),
             HandOver(Interactables.BookKit.BundleLogId),
-            "pause 1200",
+            "pause 3000",
             HoldUp(Interactables.BookKit.HerdBookId),
-            "jump Junimo0",
             Say("Junimo0", "tour-herd"),
             HandOver(Interactables.BookKit.HerdBookId),
-            "pause 1200",
+            "pause 3000",
             Say("Junimo0", "tour-7"),
             "pause 200",
             Say("Junimo0", "tour-8"),

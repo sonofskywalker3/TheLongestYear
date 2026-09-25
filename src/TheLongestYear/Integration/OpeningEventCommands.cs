@@ -10,7 +10,11 @@ namespace TheLongestYear.Integration
     /// Junimo naming each book should hold it up, and the farmer should take it from him).
     ///
     /// <c>tlyHoldUp &lt;actor&gt; &lt;qualifiedItemId&gt;</c>: the item's sprite appears above the actor's
-    /// head and stays there until <c>tlyTakeHeld</c> removes it. Only one item is held at a time; a
+    /// head and rides along with him (a Junimo hops on his own now and then) until <c>tlyTakeHeld</c>
+    /// removes it.
+    ///
+    /// <c>tlyTakeHeld &lt;qualifiedItemId&gt;</c>: the held sprite goes, and the farmer holds the item up
+    /// with NO "you received" box (Jeff, 2026-09-25: the box interrupted the next line). Only one item is held at a time; a
     /// second tlyHoldUp replaces the first. Both are purely visual: the books themselves are granted by
     /// BookFurniture.ReconcileInventory, not by the event.
     ///
@@ -26,8 +30,12 @@ namespace TheLongestYear.Integration
         private static TemporaryAnimatedSprite _held;
         private static GameLocation _heldIn;
 
-        public static void Register(IMonitor monitor)
+        private static NPC _holder;
+
+        public static void Register(IMonitor monitor, IModHelper helper)
         {
+            helper.Events.GameLoop.UpdateTicked += (_, _) => FollowHolder();
+
             Event.RegisterCommand(HoldUpName, (evt, args, context) =>
             {
                 try
@@ -52,6 +60,7 @@ namespace TheLongestYear.Integration
                             _held = new TemporaryAnimatedSprite(data.TextureName, src, 999999f, 1, 0, at,
                                 flicker: false, flipped: false, 1f, 0f, Color.White, HeldScale, 0f, 0f, 0f);
                             _heldIn = Game1.currentLocation;
+                            _holder = actor;
                             _heldIn.temporarySprites.Add(_held);
                         }
                     }
@@ -66,8 +75,25 @@ namespace TheLongestYear.Integration
             Event.RegisterCommand(TakeHeldName, (evt, args, context) =>
             {
                 RemoveHeld();
+                try
+                {
+                    if (ArgUtility.TryGet(args, 1, out string itemId, out _))
+                        Game1.player.holdUpItemThenMessage(ItemRegistry.Create(itemId), showMessage: false);
+                }
+                catch (Exception ex)
+                {
+                    monitor.Log($"{TakeHeldName}: {ex.GetType().Name}: {ex.Message}; the farmer does not hold it up.", LogLevel.Warn);
+                }
                 evt.CurrentCommand++;
             });
+        }
+
+        private static void FollowHolder()
+        {
+            if (_held == null || _holder == null) return;
+            Rectangle src = _held.sourceRect;
+            _held.Position = _holder.Position + AboveHead
+                + new Vector2((64f - src.Width * HeldScale) / 2f, _holder.yJumpOffset);
         }
 
         private static void RemoveHeld()
@@ -76,6 +102,7 @@ namespace TheLongestYear.Integration
                 _heldIn.temporarySprites.Remove(_held);
             _held = null;
             _heldIn = null;
+            _holder = null;
         }
     }
 }

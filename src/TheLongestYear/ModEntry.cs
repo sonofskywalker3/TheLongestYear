@@ -180,7 +180,7 @@ namespace TheLongestYear
             _meta = new MetaStore(helper.Data);
             GrandpaCandleCommand.Register(this.Monitor);
             Integration.EndingEventCommands.Register(this.Monitor, helper);
-            Integration.OpeningEventCommands.Register(this.Monitor);
+            Integration.OpeningEventCommands.Register(this.Monitor, helper);
             // The stash's Junimo-chest sprite. Wired at Entry, not on save load: the opening tour
             // places the stash before a new game's save exists, and without the loader the draw
             // patch fell back to a plain purple-tinted chest (Jeff, 2026-09-25).
