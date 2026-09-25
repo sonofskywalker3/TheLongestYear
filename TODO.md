@@ -13,6 +13,12 @@ changelog all set via Chrome. Still to do:
   Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
 - DONE 2026-09-25: told tanky24u (Nexus posts) the restart and the Rare Fish text shipped, lore books later.
 
+### IDEAS (Jeff, 2026-09-25): more animal powers
+- **Silo keeps X hay:** Keep Silo (150 JP) brings the silo back empty. A power that carries some hay across a rewind
+  (tiers, e.g. 60 / 120 / 240) would feed Herd Book animals in a winter-length run. Needs a spec.
+- **Keep a second coop / barn:** only matters for "start with a" room. The full Herd Book fits one Deluxe of each
+  (9 + 9 of 12), and start_* animals take what is left. Raise if players ask.
+
 ### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
 When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
 must also clear `MetaState.Year2WallArmed` (spec: a restart after Keep playing works like "Start a new loop").
@@ -58,8 +64,8 @@ slots in order: Chicken, Cow x2, Duck x2, Goat x2, Rabbit x2, Sheep x2, Pig x2, 
 Dinosaur, Ostrich. A registered animal comes back each loop with its hearts. Rows are drawn like the game's
 Animals tab. This meets tanky24u's "keep +1 animal" preference. Also fixed: the ten "start with a" keeps were
 never buyable (gate never met); Ostrich now lives in a Barn.
-Open for Jeff: start_* animals take building room before Herd Book animals, so a 0-heart start animal can push a
-hearted Herd Book animal to "waits". Keep that order? Also: the remove prompt says "won't come back next loop
+Jeff (2026-09-25, option C): Herd Book purchases count only Herd Book slots against kept room; start_* purchases
+count both; Herd Book animals move in first on a rewind, start_* animals get what is left (0.18.70). Also: the remove prompt says "won't come back next loop
 unless you put it back in", which is wrong for an animal no longer on the farm (removing it loses it).
 Later (all three books): Escape/B in the picker should go back to the slot list, not close the book; picker
 scroll sound.
