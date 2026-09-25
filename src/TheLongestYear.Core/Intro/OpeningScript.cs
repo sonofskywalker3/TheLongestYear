@@ -11,6 +11,8 @@ namespace TheLongestYear.Core.Intro;
 public static class OpeningScript
 {
     public const string VanillaKey = "60367/u 0";
+    /// <summary>The event id the game gives this script (the key's id part).</summary>
+    public const string EventId = "60367";
     public static readonly string[] LocationOrder = { "BusStop", "Farm", "CommunityCenter", "Farm" };
     private const string Off = "-100 -100";
     private const string Prefix = "event.opening.";
@@ -152,7 +154,7 @@ public static class OpeningScript
             "warp Lewis 30 16",
             "faceDirection Lewis 1",
             "faceDirection farmer 3",
-            "viewport 32 14 true",
+            "viewport 32 14 clamp",
             "pause 800",
             Say("Lewis", "lewis-hall-1"),
             "playSound coin",
@@ -221,11 +223,13 @@ public static class OpeningScript
             Say("Junimo0", "junimo-8"),
             "pause 600",
             "playSound junimoMeep1",
-            "globalFade",
-            $"viewport {Off}",
 
             // ---- Farm again: the tour on the porch (Standard-farm tiles, offset per farm type) ----
-            "changeLocation Farm",
+            // The mod's own scene change (EndingEventCommands): fades the whole screen with the
+            // hall still drawn, clears the hall's actors and loads the farm under black. Vanilla's
+            // changeLocation left Junimo sprites showing on the black screen (Jeff, 2026-09-25).
+            // It clears every actor, so the two tour Junimos are added again below.
+            "tlyChangeLocation Farm 66 18",
             // Place the stash chest and planning shrine now, before the tour speaks about them
             // (finding 1, 2026-09-16 review): OnSaveCreating fires too late on a brand-new game
             // to guarantee this, so the script places them itself via this custom command
@@ -234,15 +238,17 @@ public static class OpeningScript
             "warp farmer 66 18 true",
             "faceDirection farmer 1",
             // Two of the hall's six come along: the lead at the farmer's side, the next by the
-            // shrine. The other four stay behind.
+            // shrine. tlyJunimo places on raw tiles; the vanilla warp after it applies the farm
+            // type's tile offset.
+            "tlyJunimo Junimo0 67 18 0",
             "warp Junimo0 67 18",
+            "tlyJunimo Junimo1 62 18 1",
             "warp Junimo1 62 18",
-            "warp Junimo2 -100 -100",
-            "warp Junimo3 -100 -100",
-            "warp Junimo4 -100 -100",
-            "warp Junimo5 -100 -100",
-            "viewport 66 18 true",
-            "pause 800",
+            // "clamp" keeps the camera inside the farm; without it the view ran past the right
+            // edge and drew a black bar (Jeff, 2026-09-25).
+            "viewport 66 18 clamp",
+            "tlyFadeIn",
+            "pause 500",
             "playSound junimoMeep1",
             "jump Junimo0",
             Say("Junimo0", "tour-1"),

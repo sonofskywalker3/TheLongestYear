@@ -13,8 +13,9 @@ public class OpeningScriptTests
     public void The_script_visits_bus_stop_farm_hall_and_farm_in_that_order_and_ends_in_bed()
     {
         string[] commands = OpeningScript.Build(Text, "tly_intro_cc_seen").Split('/');
-        var locations = commands.Where(c => c.StartsWith("changeLocation ", StringComparison.Ordinal))
-            .Select(c => c.Substring("changeLocation ".Length)).ToArray();
+        var locations = commands
+            .Where(c => c.StartsWith("changeLocation ", StringComparison.Ordinal) || c.StartsWith("tlyChangeLocation ", StringComparison.Ordinal))
+            .Select(c => c.Split(' ')[1]).ToArray();
         Assert.Equal(new[] { "Farm", "CommunityCenter", "Farm" }, locations);   // BusStop is where 60367 starts
         Assert.Equal("end beginGame", commands[^1]);
         Assert.Equal("addMailReceived tly_intro_cc_seen", commands[^2]);
@@ -33,7 +34,8 @@ public class OpeningScriptTests
     {
         string[] commands = OpeningScript.Build(Text, "flag").Split('/');
         int hall = Array.IndexOf(commands, "changeLocation CommunityCenter");
-        int tour = Array.LastIndexOf(commands, "changeLocation Farm");
+        int tour = Array.FindLastIndex(commands, c => c.StartsWith("tlyChangeLocation Farm", StringComparison.Ordinal));
+        Assert.True(tour > hall);
         Assert.Contains(commands.Take(hall), c => c == "warp Morris -100 -100");
         Assert.DoesNotContain(commands.Skip(hall), c => c.Contains("Morris"));
         Assert.Contains(commands.Take(hall), c => c == "warp Robin -100 -100");
