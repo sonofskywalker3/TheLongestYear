@@ -15,6 +15,8 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    to buy it" with "our petition to purchase it and convert it into a warehouse has been approved." The
    full line becomes: "The Community Center is a registered historical landmark, but because it has been
    left to rot, our petition to purchase it and convert it into a warehouse has been approved."
+3. **Opening, Morris leaving:** the others should only wait while Morris walks 2 or 3 steps, then carry
+   on with the scene while he keeps walking off. Right now everyone stands there until he is offscreen.
 
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
 GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
