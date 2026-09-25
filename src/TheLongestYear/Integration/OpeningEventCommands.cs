@@ -10,8 +10,8 @@ namespace TheLongestYear.Integration
     /// Junimo naming each book should hold it up, and the farmer should take it from him).
     ///
     /// <c>tlyHoldUp &lt;actor&gt; &lt;qualifiedItemId&gt;</c>: the item's sprite appears above the actor's
-    /// head and rides along with him (a Junimo hops on his own now and then) until <c>tlyTakeHeld</c>
-    /// removes it.
+    /// head until <c>tlyTakeHeld</c> removes it. While he holds it he keeps his idle animation but never
+    /// hops (Jeff, 2026-09-25: he jumped into the book), see <see cref="NoHopWhileHolding"/>.
     ///
     /// <c>tlyTakeHeld &lt;qualifiedItemId&gt;</c>: the held sprite goes, and the farmer holds the item up
     /// with NO "you received" box (Jeff, 2026-09-25: the box interrupted the next line). Only one item is held at a time; a
@@ -31,6 +31,24 @@ namespace TheLongestYear.Integration
         private static GameLocation _heldIn;
 
         private static NPC _holder;
+
+        /// <summary>The actor holding an item right now, or null.</summary>
+        internal static Character Holder => _holder;
+
+        /// <summary>A Junimo hops on his own (Junimo.update, about 1% a tick). While he holds an item
+        /// every hop is skipped; his idle frames still play.</summary>
+        [HarmonyLib.HarmonyPatch]
+        internal static class NoHopWhileHolding
+        {
+            private static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
+            {
+                yield return HarmonyLib.AccessTools.Method(typeof(Character), nameof(Character.jump), System.Type.EmptyTypes);
+                yield return HarmonyLib.AccessTools.Method(typeof(Character), nameof(Character.jump), new[] { typeof(float) });
+                yield return HarmonyLib.AccessTools.Method(typeof(Character), nameof(Character.jumpWithoutSound), new[] { typeof(float) });
+            }
+
+            private static bool Prefix(Character __instance) => __instance == null || !ReferenceEquals(__instance, _holder);
+        }
 
         public static void Register(IMonitor monitor, IModHelper helper)
         {
