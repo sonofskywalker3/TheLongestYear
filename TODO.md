@@ -30,6 +30,13 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    9, 12, 15, 18 and 20. Fix: if it is meant to be one Junimo, every portrait and the on-screen sprite
    are the same colour; if it is meant to be several (the staging in note 4 says several), all of them
    are visible and each line shows the Junimo who is speaking, in its own colour, never a blank box.
+6. **Opening, the farm tour with the Junimos:**
+   - Two WHITE Junimos stand on the farm, but the portrait box shows a green one. Portraits must match
+     the Junimo actually speaking (same rule as note 5).
+   - The Junimo saying "this is your Cookbook, this is your Craftbook", etc. should actually hold each
+     book up as he names it, and the farmer should visibly take it from him.
+   - He also has to hand over the Herd Book (level 1), which the tour doesn't give yet. It came from
+     master in 0.18.72, so the tour has no line for it: that needs a new line (game-writing skill).
 
 ### IDEA, nice to have (Jeff, 2026-09-25): each Junimo appears with its own nature effect
 Not now; investigate some time. Each Junimo colour gets its own entrance tied to a nature aspect: the
