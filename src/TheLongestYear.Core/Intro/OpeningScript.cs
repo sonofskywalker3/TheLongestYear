@@ -268,18 +268,22 @@ public static class OpeningScript
             Say("Junimo0", "tour-4"),
             HandOver(Interactables.BookKit.CookbookId),
             "pause 3000",
+            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
             HoldUp(Interactables.BookKit.CraftbookId),
             Say("Junimo0", "tour-5"),
             HandOver(Interactables.BookKit.CraftbookId),
             "pause 3000",
+            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
             HoldUp(Interactables.BookKit.BundleLogId),
             Say("Junimo0", "tour-6"),
             HandOver(Interactables.BookKit.BundleLogId),
             "pause 3000",
+            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
             HoldUp(Interactables.BookKit.HerdBookId),
             Say("Junimo0", "tour-herd"),
             HandOver(Interactables.BookKit.HerdBookId),
             "pause 3000",
+            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
             Say("Junimo0", "tour-7"),
             "pause 200",
             Say("Junimo0", "tour-8"),
