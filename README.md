@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.58`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.72`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.18.70
+## What's New in 0.18.72
 
 **Keep your favorite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
 
@@ -36,6 +36,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 - **Start with Ostrich uses a Barn.** Ostriches live in barns, but this keep put one in a Deluxe Coop. It now needs Keep Barn.
 - **Room rule for keeps.** A Start with keep can't be bought if it would overflow the coop or barn you've kept, and Herd Book slots count toward that room too. A Herd Book slot only counts against other Herd Book slots though, so the full Herd Book always fits inside one Deluxe Coop and one Deluxe Barn. The menu tells you when you're out of room: "Needs more coop room" or "Needs more barn room".
 - **On a rewind, Herd Book animals move in first.** Start with animals get whatever room is left over, not the other way around.
+- **Gift of the Junimos room keeps can be bought.** Keep Greenhouse, Keep Quarry Bridge, Keep Glittering Boulder and Keep Minecarts could never be bought, because the mod could not read that room's unlock check. They now unlock once you finish that room. Keep the Bus was fine. Reported by tanky24u.
 
 ## What's New in 0.18.58
 
