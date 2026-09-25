@@ -180,6 +180,7 @@ namespace TheLongestYear
             _meta = new MetaStore(helper.Data);
             GrandpaCandleCommand.Register(this.Monitor);
             Integration.EndingEventCommands.Register(this.Monitor, helper);
+            Integration.OpeningEventCommands.Register(this.Monitor);
             // Rewind cutscene (spec 2026-09-11-rewind-cutscene, task 7): REQUIRED WIRING for all
             // scenes the day-28 FAIL branch chains together. Without these, the menu-steal teardown
             // shared by RewindBedroomScene and RewindMorningScene is dead code, RewindPanScene's own

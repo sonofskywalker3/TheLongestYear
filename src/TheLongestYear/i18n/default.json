@@ -590,7 +590,7 @@
 
     // -- onboarding mail / furniture display names ---------------------------------
     "mail.intro.title": "The Longest Year",
-    "mail.intro.body": "Welcome to The Longest Year!^^You're stuck looping Year 1 until you finish the Community Center. Each loop you spend Junimo Points (JP) on permanent upgrades.^^Two things that trip everyone up:^1) You earn a LOT more JP the deeper into the year you get, so don't feel behind early.^2) DON'T rush to complete bundles! Hold an item until its weekly theme comes up, then donate it - you bank a 1.5x JP bonus AND clear that week's downside. Rushing donations wastes both.^^Also: festivals give your day back on purpose. You can leave and come back, and leaving early keeps your clock - returning 'early' is intended, not a bug.^^Good luck. The Junimos are counting on you.",
+    "mail.intro.body": "Welcome to The Longest Year!^^You're stuck looping Year 1 until you finish the Community Center. Each loop you spend Junimo Points (JP) on permanent upgrades.^^Two things that trip everyone up:^1) You earn a LOT more JP the deeper into the year you get, so don't feel behind early.^2) DON'T rush to complete bundles! Hold an item until its weekly theme comes up, then donate it - you bank a 1.5x JP bonus AND clear that week's downside. Rushing donations wastes both.^^Also: festivals give your day back on purpose. You can leave and come back, and leaving early keeps your clock - returning 'early' is intended, not a bug.^^Good luck. The Junimos are counting on you.^^   -SonOfSkywalker3",
     "furniture.cookbook": "The Longest Year Cookbook",
     "furniture.craftbook": "The Longest Year Craftbook",
     "furniture.bundle-log": "The Longest Year Bundle Log",
@@ -705,7 +705,7 @@
     "event.opening.robin-walk-2": "And here we are, your new home.",
     "event.opening.lewis-1": "Welcome, @! I'm Lewis, Mayor of Pelican Town. Everyone's been asking about you.",
     "event.opening.morris-farm-1": "Mayor Lewis. Morris, Joja Corporation. I'll be brief.",
-    "event.opening.morris-farm-2": "The Community Center is a registered historical landmark, but because it has been left to rot, Joja has been granted a petition to buy it.",
+    "event.opening.morris-farm-2": "The Community Center is a registered historical landmark, but because it has been left to rot, our petition to purchase it and convert it into a warehouse has been approved.",
     "event.opening.morris-farm-3": "I've been assigned to manage the local JojaMart and see the contract through. You'll find me there.",
     "event.opening.lewis-2": "Wait, it says here if we restore it to working condition before Spring 1 of next year this contract is automatically voided.",
     "event.opening.morris-farm-4": "That isn't much of a concern. We've done our research and know there's no money for it in the town budget.",
