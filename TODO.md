@@ -37,6 +37,9 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
      book up as he names it, and the farmer should visibly take it from him.
    - He also has to hand over the Herd Book (level 1), which the tour doesn't give yet. It came from
      master in 0.18.72, so the tour has no line for it: that needs a new line (game-writing skill).
+7. **Welcome letter (`mail.intro.body`, "Welcome to The Longest Year!"):** sign it at the bottom with
+   Jeff's signature, `SonOfSkywalker3`, after "The Junimos are counting on you." (vanilla sign-off
+   style, e.g. `^   -SonOfSkywalker3`). Grandpa's letter is unchanged.
 
 ### IDEA, nice to have (Jeff, 2026-09-25): each Junimo appears with its own nature effect
 Not now; investigate some time. Each Junimo colour gets its own entrance tied to a nature aspect: the
