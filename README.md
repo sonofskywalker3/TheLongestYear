@@ -25,16 +25,17 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.18.65
+## What's New in 0.18.70
 
 **Keep your favourite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
 
 - **The Herd Book.** A new book you carry from the first day, like the Cookbook and Craftbook. Put an animal in one of its slots and it comes back after every rewind as the same animal: same name, same hearts, fully grown. You start with one Chicken slot. Junimo Upgrades sells the rest in a fixed order: a second Chicken, then two each for Cows, Ducks, Goats, Rabbits, Sheep and Pigs, then one each for the Void Chicken, Golden Chicken, Dinosaur and Ostrich. Suggested by tanky24u.
-- **It needs a home to come back to.** An animal returns only when you keep a building it can live in and there is room inside. Otherwise it waits in the book and tries again next loop, and the book tells you which keep a slot needs.
+- **Herd Book rows look like the Animals tab.** Bigger rows laid out the way the game's own Animals tab does, so it's easy to see who's in each slot.
 - **The Herd Book opens before a rewind.** After the Cookbook and Craftbook, it opens on its own when it has an empty slot and an animal on your farm that fits it.
 - **Start with an animal can be bought.** None of the ten Start with keeps could ever be bought, because the mod never noticed the animals you owned. It now notes every kind of animal on your farm each morning, so once you have had a chicken, Start with Chicken is for sale after Keep Coop.
 - **Start with Ostrich uses a Barn.** Ostriches live in barns, but this keep put one in a Deluxe Coop. It now needs Keep Barn.
-- **A full building stays full.** A Start with animal no longer squeezes into a coop or barn that has no room.
+- **Room rule for keeps.** A Start with keep can't be bought if it would overflow the coop or barn you've kept, and Herd Book slots count toward that room too. A Herd Book slot only counts against other Herd Book slots though, so the full Herd Book always fits inside one Deluxe Coop and one Deluxe Barn. The menu tells you when you're out of room: "Needs more coop room" or "Needs more barn room".
+- **On a rewind, Herd Book animals move in first.** Start with animals get whatever room is left over, not the other way around.
 
 ## What's New in 0.18.58
 
