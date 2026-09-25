@@ -9,6 +9,10 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ### PLAYTHROUGH FEEDBACK (Jeff's story speedrun, started 2026-09-25): hold until Jeff says to fix
 Collected while Jeff plays; do not touch his running game. Fix only when he says so.
 
+**Notes 1 to 7 BUILT 2026-09-25 (commit after c879c17 on story), awaiting Jeff's replay of the opening.** The
+Herd Book tour line (`event.opening.tour-herd`) is a draft pending his OK; it is in the working tree, not committed.
+Note 4's shocked emote is the emote menu's "surprised" (frame 94, jump, bat screech, "!"); vanilla has no other.
+
 1. **Opening, arrival scene:** when the farmer and Robin turn right to look at Lewis, Morris should
    turn right to look at him at the same moment.
 2. **Opening, Morris's line (`event.opening.morris-farm-2`):** replace "Joja has been granted a petition
