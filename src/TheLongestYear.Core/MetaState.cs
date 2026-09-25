@@ -42,8 +42,8 @@ public sealed class MetaState
     /// <summary>
     /// Animal species the player has ever owned across all runs in this playthrough.
     /// Drives "Start with [animal]" upgrade availability via the species: meta-requirement
-    /// prefix on <see cref="UpgradeDefinition.MetaRequirement"/>. Game-side hookup that
-    /// adds to this list when an animal joins a coop/barn is part of a later plan.
+    /// prefix on <see cref="UpgradeDefinition.MetaRequirement"/>. Written by
+    /// <c>AnimalSpeciesRecorder</c> on DayStarted and Saving, normalized by <see cref="AnimalSpecies"/>.
     /// </summary>
     public List<string> AnimalSpeciesEverOwned { get; set; } = new();
 
@@ -171,9 +171,8 @@ public sealed class MetaState
     /// the loop begins. Every consumer reads THIS, never <c>config.Difficulty</c>, which is what
     /// makes a GMCM change apply at the next reset rather than mid-season.
     ///
-    /// RESOLVED VALUES are stamped rather than the ten steps, matching the
-    /// <see cref="BoardEaseSeason"/> idiom: a reload has to reproduce the reset exactly, and
-    /// stamping steps would let a future release that retunes what "Hard" means silently change
+    /// RESOLVED VALUES are stamped rather than the steps: a reload has to reproduce the reset
+    /// exactly, and stamping steps would let a future release that retunes what "Hard" means silently change
     /// an in-flight run's economy.
     ///
     /// Null on a save from before difficulty modifiers existed. See
@@ -181,7 +180,7 @@ public sealed class MetaState
     /// identical to that save's previous behaviour. Spec 2026-08-26.</summary>
     public DifficultyProfile? Difficulty { get; set; }
 
-    /// <summary>The profile in force for ECONOMY reads (JP, prices, cart, pity): the stamp when
+    /// <summary>The profile in force for ECONOMY reads (JP, prices, cart, holds): the stamp when
     /// present, otherwise resolved live from config so a player who has never reset still gets the
     /// setting he just chose.</summary>
     public DifficultyProfile EffectiveDifficulty(GameplayConfig config)
@@ -338,6 +337,13 @@ public sealed class MetaState
     public List<string> CraftbookRecipes { get; set; } = new();
 
     /// <summary>
+    /// Animals registered in the Herd Book, one per slot, sorted by slot (spec 2026-09-25). Each is
+    /// refreshed from its live animal just before a reset and rebuilt, hearts included, right after
+    /// the starting animals. An entry whose animal or building is missing stays for next time.
+    /// </summary>
+    public List<HerdEntry> HerdBook { get; set; } = new();
+
+    /// <summary>
     /// String IDs of indicator bubbles the player has already dismissed. Prevents the ?/!
     /// bubble from re-appearing after a reset. Values are "tly.cookbook", "tly.craftbook",
     /// and "tly.fireplace". Using <see cref="HashSet{T}"/> so duplicate dismissals are
@@ -410,7 +416,9 @@ public sealed class MetaState
         string value = requirement.Substring(colon + 1);
         return ns switch
         {
-            "species" => AnimalSpeciesEverOwned.Contains(value, StringComparer.OrdinalIgnoreCase),
+            // Normalized on both sides so a save that recorded "White Chicken" (the old
+            // ApplyStartingAnimals) still opens species:Chicken (spec 2026-09-25).
+            "species" => AnimalSpeciesEverOwned.Any(owned => AnimalSpecies.Matches(owned, value)),
             "upgrade" => OwnedUpgrades.Contains(value, StringComparer.Ordinal),
             // "upgrades" = conjunction: EVERY comma-separated id must be owned. Added for the
             // xp_mult_all capstone (spec 2026-07-14 economy Change 3).

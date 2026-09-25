@@ -87,6 +87,13 @@ namespace TheLongestYear.UI
             _monitor.Log("Opened Craftbook menu.", LogLevel.Info);
         }
 
+        public void OpenHerdBook(string subtitle = null)
+        {
+            if (!CanOpen()) return;
+            Game1.activeClickableMenu = new HerdBookMenu(_monitor, _store.State, subtitle);
+            _monitor.Log("Opened Herd Book menu.", LogLevel.Info);
+        }
+
         /// <summary>UX2: per-season goal tracker, separate from the weekly hub selection surface.
         /// Opened on demand via the SeasonGoalsHotkey config.</summary>
         public void OpenSeasonGoals()

@@ -42,6 +42,11 @@ namespace TheLongestYear.UI
         private const int TabsTop = 112;
         private const int TabStripH = TabHeight + 12;
 
+        // ---- Restart the year (spec 2026-09-24-voluntary-restart): right end of the tab strip ----
+        private const int RestartButtonId = 6300;
+        private const int RestartButtonMinWidth = 220;
+        private const int RestartButtonPadding = 32;
+
         // ---- Foresight calendar panel (Plan tab, drawn above the scrolling list) ----
         private const int ForesightBlockGap = 14;       // vertical gap after weather / cart blocks
         private const int WeatherCellWidth = 64;
@@ -89,6 +94,9 @@ namespace TheLongestYear.UI
         private readonly RunState _run;
         private readonly Func<BoostId, int, BoostPurchase.Result> _buyBoost;
         private readonly double _priceFactor;
+        private readonly bool _showRestart;
+        private readonly Action _requestRestart;
+        private ClickableComponent _restartButton;
 
         private ShrineTab _tab = ShrineTab.Active;
         private readonly List<ClickableTextureComponent> _tabs = new();
@@ -114,13 +122,18 @@ namespace TheLongestYear.UI
         private string _hoverText = "";
 
         public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0, RunState run = null,
-            Func<BoostId, int, BoostPurchase.Result> buyBoost = null)
+            Func<BoostId, int, BoostPurchase.Result> buyBoost = null,
+            Func<bool> restartOffered = null, Action requestRestart = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
             _priceFactor = priceFactor;
             _run = run;
             _buyBoost = buyBoost;
+            // Read once at open: single-player time is paused while a menu is up, so nothing the
+            // rule reads can change before the menu closes.
+            _requestRestart = requestRestart;
+            _showRestart = requestRestart != null && (restartOffered?.Invoke() ?? false);
             BuildForesight();
             BuildRows();
             RecomputeBoundsAndLayout();
@@ -362,6 +375,9 @@ namespace TheLongestYear.UI
                                 && d.RunReachRequirement != null
                                 && !RunReachEvaluator.Meets(d.RunReachRequirement))
                     .ToList();
+                // Room-blocked animal keeps (AnimalCapacityRule) sit with the locked rows, the
+                // reason in place of the reach text.
+                locked.AddRange(KeepShopFilter.RoomBlockedInCategory(cat, _state, RunReachEvaluator.Meets));
                 if (buyable.Count == 0 && locked.Count == 0)
                     continue;
 
@@ -387,7 +403,9 @@ namespace TheLongestYear.UI
                     _rows.Add(new Row
                     {
                         Kind = RowKind.Locked, Def = def,
-                        Requirement = ReachText.Describe(def.RunReachRequirement),
+                        Requirement = def.RunReachRequirement != null && !RunReachEvaluator.Meets(def.RunReachRequirement)
+                            ? ReachText.Describe(def.RunReachRequirement)
+                            : AnimalCapacityRule.BlockReason(_state, def.Id) ?? "",
                         Tooltip = def.Description,
                     });
             }
@@ -462,6 +480,21 @@ namespace TheLongestYear.UI
                 });
             }
 
+            _restartButton = null;
+            if (_showRestart)
+            {
+                string restartLabel = Strings.Get("shrine.restart.button");
+                int w = Math.Max(RestartButtonMinWidth, (int)Game1.smallFont.MeasureString(restartLabel).X + RestartButtonPadding);
+                _restartButton = new ClickableComponent(
+                    new Rectangle(_listX + _listWidth - w, yPositionOnScreen + TabsTop, w, TabHeight), "restart")
+                {
+                    myID = RestartButtonId,
+                    leftNeighborID = TabIdBase + tabs.Length - 1,
+                    downNeighborID = RowIdBase,
+                };
+                _tabs[tabs.Length - 1].rightNeighborID = RestartButtonId;
+            }
+
             LayoutForesight();
 
             _listY = yPositionOnScreen + TabsTop + TabStripH + ForesightPanelHeight();
@@ -485,6 +518,8 @@ namespace TheLongestYear.UI
             this.initializeUpperRightCloseButton();
 
             allClickableComponents = new List<ClickableComponent>(_tabs) { _scrollUp, _scrollDown };
+            if (_restartButton != null)
+                allClickableComponents.Add(_restartButton);
             allClickableComponents.AddRange(_rowSlots);
             if (upperRightCloseButton != null)
                 allClickableComponents.Add(upperRightCloseButton);
@@ -581,6 +616,7 @@ namespace TheLongestYear.UI
             {
                 int id = currentlySnappedComponent.myID;
                 if (id >= TabIdBase && id < TabIdBase + _tabs.Count) { SetTab((ShrineTab)(id - TabIdBase)); return; }
+                if (id == RestartButtonId && _restartButton != null) { RequestRestart(); return; }
                 if (id == ScrollUpId) { Scroll(-1); return; }
                 if (id == ScrollDownId) { Scroll(+1); return; }
                 if (id >= RowIdBase && id < RowIdBase + _rowsPerPage)
@@ -606,6 +642,7 @@ namespace TheLongestYear.UI
             {
                 if (_tabs[i].containsPoint(x, y)) { SetTab((ShrineTab)i); return; }
             }
+            if (_restartButton != null && _restartButton.containsPoint(x, y)) { RequestRestart(); return; }
             if (_scrollUp.containsPoint(x, y)) { Scroll(-1); return; }
             if (_scrollDown.containsPoint(x, y)) { Scroll(+1); return; }
 
@@ -643,6 +680,16 @@ namespace TheLongestYear.UI
             _buyBoost(row.Boost.Id, row.Skill);   // sound, HUD and logging all live in the callback
             BuildRows();                          // the row's control flips to Active on success
             ClampScroll();
+        }
+
+        /// <summary>Close the shrine and hand over to the mod's yes/no. The question box would
+        /// replace this menu anyway; closing first keeps the hand-off clean. Answering No reopens
+        /// the shrine (RunController.AskVoluntaryRestart).</summary>
+        private void RequestRestart()
+        {
+            Game1.playSound("smallSelect");
+            exitThisMenuNoSound();
+            _requestRestart();
         }
 
         public override void performHoverAction(int x, int y)
@@ -724,6 +771,18 @@ namespace TheLongestYear.UI
                 Utility.drawTextWithShadow(b, label, Game1.smallFont,
                     new Vector2(tab.bounds.X + (tab.bounds.Width - labelSize.X) / 2f,
                         tab.bounds.Y + (tab.bounds.Height - labelSize.Y) / 2f),
+                    Game1.textColor);
+            }
+
+            if (_restartButton != null)
+            {
+                Rectangle r = _restartButton.bounds;
+                IClickableMenu.drawTextureBox(b, Game1.mouseCursors, new Rectangle(432, 439, 9, 9),
+                    r.X, r.Y, r.Width, r.Height, Color.White, 4f, drawShadow: false);
+                string restartLabel = Strings.Get("shrine.restart.button");
+                Vector2 restartSize = Game1.smallFont.MeasureString(restartLabel);
+                Utility.drawTextWithShadow(b, restartLabel, Game1.smallFont,
+                    new Vector2(r.X + (r.Width - restartSize.X) / 2f, r.Y + (r.Height - restartSize.Y) / 2f),
                     Game1.textColor);
             }
 

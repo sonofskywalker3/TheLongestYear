@@ -1,6 +1,6 @@
 namespace TheLongestYear.Core.Interactables
 {
-    /// <summary>Identity + reconcile rules for the three carried "book" furniture items. The
+    /// <summary>Identity + reconcile rules for the four carried "book" furniture items. The
     /// per-loop invariant is "exactly ONE copy of each exists" — counting both the inventory and
     /// books placed in the world, so deliberately-placed books are left where they are. A copy is
     /// granted only when none exists (e.g. after a loop reset); duplicates are trimmed to one.</summary>
@@ -9,8 +9,11 @@ namespace TheLongestYear.Core.Interactables
         public const string CookbookId  = "sonofskywalker3.TheLongestYear_Cookbook";
         public const string CraftbookId = "sonofskywalker3.TheLongestYear_Craftbook";
         public const string BundleLogId = "sonofskywalker3.TheLongestYear_BundleLog";
+        /// <summary>The Herd Book (spec 2026-09-25). Every save holds one from the start, existing saves
+        /// included: BookFurniture.ReconcileInventory grants any book in this list that is missing.</summary>
+        public const string HerdBookId  = "sonofskywalker3.TheLongestYear_HerdBook";
 
-        public static readonly string[] AllBookQualifiedIds = { CookbookId, CraftbookId, BundleLogId };
+        public static readonly string[] AllBookQualifiedIds = { CookbookId, CraftbookId, BundleLogId, HerdBookId };
 
         /// <summary>How many to add so the player holds exactly one, given how many they already
         /// hold AFTER any extras/placed copies have been removed.</summary>

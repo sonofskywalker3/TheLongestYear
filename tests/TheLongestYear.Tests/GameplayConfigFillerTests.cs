@@ -31,4 +31,28 @@ public class GameplayConfigFillerTests
         config.ThemeFillerBySeason = null!;
         Assert.Equal(GoalSamplingRules.UnlimitedFiller, config.FillerAllowanceFor(Season.Spring));
     }
+
+    /// <summary>Season pity was removed 2026-09-24. A config.json from before that still lists its
+    /// keys (and a SeasonPity step under Difficulty); it must load with every other value intact.
+    /// SMAPI reads config through Newtonsoft, which skips unknown keys the same way.</summary>
+    [Fact]
+    public void An_old_config_with_season_pity_keys_still_loads()
+    {
+        const string json = @"{
+            ""StartingMoney"": 750,
+            ""PityEnabled"": false,
+            ""PityThreshold"": 3,
+            ""PityQuotaStep"": 0.2,
+            ""PityQuotaFloor"": 0.4,
+            ""PityTrimPerStep"": 4,
+            ""PityCosts"": [0, 10],
+            ""Difficulty"": { ""HoldPrices"": 2, ""SeasonPity"": 0 }
+        }";
+
+        GameplayConfig config = System.Text.Json.JsonSerializer.Deserialize<GameplayConfig>(json)!;
+
+        Assert.Equal(750, config.StartingMoney);
+        Assert.Equal(DifficultyStep.Hard, config.Difficulty.HoldPrices);
+        Assert.NotNull(DifficultyResolver.Resolve(config.Difficulty, config));
+    }
 }

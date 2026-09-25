@@ -6,7 +6,34 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### IDEA (Jeff, 2026-09-24): voluntary restart option on the Junimo Shrine
+### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
+GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
+changelog all set via Chrome. Still to do:
+- Retake `release-notes/settings-difficulty.png` (README only; still shows the Season pity dial, ten dials).
+  Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
+- DONE 2026-09-25: told tanky24u (Nexus posts) the restart and the Rare Fish text shipped, lore books later.
+
+### BUG (found 2026-09-25 in a Herd Book live test, pre-existing): a kept building can move to another building's spot
+With a kept Big Coop at (52,20) and a second plain Coop built at (60,27), the rewind placed the kept Big Coop at
+(60,27). SnapshotKeptBuildingSpots (WorldResetService) likely records the first building of the family it finds,
+not the kept (highest) one. Only bites players with two buildings of one family. Not fixed yet.
+
+### RELEASED 0.18.72 (2026-09-25): Gift of the Junimos room keeps (tanky24u, Nexus bugs, 24 Sep)
+Keep Greenhouse / Quarry Bridge / Glittering Boulder / Minecarts were never buyable: RunReachRequirement.Parse
+did not know the "room:" keyed flag, so the gate always failed (00ac8e5). Replied to tanky24u and marked Fixed in 0.18.72 (2026-09-25).
+
+### IDEAS (Jeff, 2026-09-25): more animal powers
+- **Silo keeps X hay:** Keep Silo (150 JP) brings the silo back empty. A power that carries some hay across a rewind
+  (tiers, e.g. 60 / 120 / 240) would feed Herd Book animals in a winter-length run. Needs a spec.
+- **Keep a second coop / barn:** only matters for "start with a" room. The full Herd Book fits one Deluxe of each
+  (9 + 9 of 12), and start_* animals take what is left. Raise if players ask.
+
+### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
+When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
+must also clear `MetaState.Year2WallArmed` (spec: a restart after Keep playing works like "Start a new loop").
+Master has no such field, so nothing does it yet.
+
+### RELEASED 0.18.58 (2026-09-25, live-tested 2026-09-24): voluntary restart on the Junimo Shrine
 Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
 planning/buffs view (ShrinePreviewMenu). The menu that opens on a rewind to buy permanent upgrades is NOT the
 shrine; call it the upgrade menu.
@@ -19,19 +46,71 @@ whether the upgrade menu opens after a voluntary restart the way it does on a fa
 pays out (JP for what was donated so far, or nothing), whether it counts as a fail for season pity and hold
 prices, whether it is also offered after "Keep playing", and a confirm step so nobody throws away a run by
 accident.
+Jeff's answers (2026-09-24):
+1. Yes, the upgrade menu opens after a voluntary restart, same as a fail night.
+2. No payout. JP is already banked the moment it is earned (donations, weekly quests, season checkpoints),
+   so there is nothing owed at restart time; the bank simply carries over.
+3. Yes, it counts as a fail. Season pity itself is now GONE (Jeff: "they can adjust the difficulty
+   themselves", removed in 0.18.51, c441c94), so "a fail" only means a normal loop reset.
+4. Yes, also offered after "Keep playing": lets a player reach late-game things (Key to the City etc.),
+   stash them or buy a keep for them, then start Year 1 over. A keep for such items is out of scope here.
+5. Confirm with a plain popup along the lines of "Are you sure? This resets all progress, just like a failed
+   season." No fail cutscene: a quick reset.
+6. The bundle hold question (keep/reshuffle) still appears, same prices as a fail night.
+Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
+Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
-### FIXED 0.18.44 to 0.18.46 (2026-09-24, on master, pushed, NOT released): tanky24u's three reports (Nexus bugs, 23 Sep)
-- **0.18.44, boosted crops harvestable while looking unripe.** Growth Spurt, the Farming bonus and Green Thumb
-  added their extra day after vanilla's nightly checks, so a wild seed crop they finished skipped its switch to
-  forage and sat pickable at a random half-grown sprite. The extra day now lands before vanilla's tick. Green
-  Thumb also stopped turning ready regrowing crops unready for a day. Not checked in game.
-- **0.18.45, Pufferfish due after Summer.** Not Ginger Island (the mod never counts the island): a Summer-only
-  fish with high effort slid to a Winter deadline, the any-N gates let Summer and Fall pass, and Winter failed.
-  Deadlines are now capped at the item's last spawn season (Jeff: "so they're not playing through 2 extra
-  seasons for an inevitable fail"). Specialty Fish then needs 3 by Summer.
-- **0.18.46, Artichoke odds question.** Year-Two Seeds is now Spring and Summer only (Jeff: vanilla Fall Mixed
-  Seeds already give Artichoke 25%, so it needs no boost).
-Replies wait until these ship (bug-reply-after-fix).
+### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
+Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
+10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great
+point, I'll be happy to add that in." Needs a look at how vanilla picks the Lost Book drop and whether the
+rewind wipes the "books found" count (if it does, the pool refills every loop, which is the complaint).
+
+### RELEASED 0.18.72 (2026-09-25): the Herd Book (keep barn/coop animals across a rewind)
+Spec docs/superpowers/specs/2026-09-25-herd-book-design.md, plan docs/superpowers/plans/2026-09-25-herd-book.md.
+Every player starts with the Herd Book (cow cover, books.png index 3) and one Chicken slot; herdbook_1..17 add
+slots in order: Chicken, Cow x2, Duck x2, Goat x2, Rabbit x2, Sheep x2, Pig x2, then Void Chicken, Golden Chicken,
+Dinosaur, Ostrich. A registered animal comes back each loop with its hearts. Rows are drawn like the game's
+Animals tab. This meets tanky24u's "keep +1 animal" preference. Also fixed: the ten "start with a" keeps were
+never buyable (gate never met); Ostrich now lives in a Barn.
+Jeff (2026-09-25, option C): Herd Book purchases count only Herd Book slots against kept room; start_* purchases
+count both; Herd Book animals move in first on a rewind, start_* animals get what is left (0.18.70). Also: the remove prompt says "won't come back next loop
+unless you put it back in", which is wrong for an animal no longer on the farm (removing it loses it).
+Later (all three books): Escape/B in the picker should go back to the slot list, not close the book; picker
+scroll sound.
+Original notes:
+Ask: an upgrade to keep an animal on rewind, like Keep Pet and the building keeps. Jeff: "I'll do it, just
+not excited about it at the moment." His open questions: one keep per animal ("keep 1 duck, X JP") or one
+pricier "keep all animals", what it costs, and how it interacts with the building keeps (an animal needs its
+barn or coop). Standing ruling from the keep_pet design (further down this file): kept barn/coop animals
+start the loop at 0 hearts so nobody gets large milk on day 1.
+tanky24u's preference (Nexus posts, 24 Sep): "keep +1 animal" (one keep per animal) rather than keep all of
+one type or keep all animals; they know opinions differ. `RunBaseline.StartingAnimals` and
+`WorldResetService.ApplyStartingAnimals` already exist for placing animals at reset.
+
+### LATER, Phase 4 (Jeff to tanky24u, 24 Sep): one-year perfection "Ultimate Challenge Mode"
+Ask: a setting to go for perfection in one year or the year resets. Jeff's plan: Phase 1 is this first year
+(1.0), Phase 2 adds year-2 goals (perfection, Skull Cavern, movie theater, probably Ginger Island), Phase 3 is
+ultimate perfection in year 3, then Phase 4 condenses it all into one year. Keep Completed Community Center
+makes it reachable with enough loops. Nothing to build now.
+
+### RELEASED in 0.18.58: Fortune: Rare Fish description (tanky24u, 24 Sep)
+The text said "Rare fish catch chance increased by 25%", which is not what it does: it acts as a permanent
+Curiosity Lure on every rod (vanilla boosts any fish under a 25% bite chance at that spot). New text: "Your
+rod always works as if it has a Curiosity Lure." Jeff already told him it is fixed in the next release.
+
+### RELEASED 0.18.47 and 0.18.50 (2026-09-24), all three replied and marked Fixed: tanky24u's reports (Nexus bugs, 23 Sep)
+- **Boosted crops harvestable while looking unripe (fixed 0.18.44, shipped 0.18.47).** Growth Spurt, the Farming
+  bonus and Green Thumb added their extra day after vanilla's nightly checks, so a wild seed crop they finished
+  skipped its switch to forage. The extra day now lands before vanilla's tick. Live-checked with `tly_cropprobe`
+  (400 Spring Seeds: old code 34/60/46/7 stuck crops on mornings 4 to 7, fixed code none).
+- **Pufferfish due after Summer (shipped 0.18.50).** Not Ginger Island (the mod never counts the island): a
+  Summer-only fish could be due at Winter. First fixed with a last-season deadline cap (0.18.45, crops added then
+  removed in 0.18.48/0.18.49), then Jeff replaced the cap with the Spring/Summer/Fall Returns boosts: a one-week
+  Junimo Shrine boost per passed season that adds that season's fish and forage (legendaries included). Rain
+  Dance now sells in Winter for rain fish. Live-checked with `tly_spawnprobe`.
+- **Artichoke odds question (0.18.46, shipped 0.18.47).** Year-Two Seeds is Spring and Summer only. 0.18.46
+  edited the wrong description (Pierre's year-2 seeds upgrade); both texts corrected in 0.18.50.
 
 ### FIXED 0.18.27 (2026-09-17, on master, pushed, NOT released): a repeat festival visit trapped the player (asteriaths, Nexus post 17 Sep)
 Jeff: "figure out the already danced flag, clear it if we're not, and if they don't dance with anyone they need to

@@ -4,8 +4,7 @@
 /// <see cref="DifficultySettings"/> steps actually mean in numbers.
 ///
 /// This is what gets stamped into <see cref="MetaState.Difficulty"/> at reset, and RESOLVED
-/// VALUES are stamped rather than the steps themselves. That matches the board-stamp
-/// idiom (BoardEaseSeason / BoardEaseSteps), which exists so a reload reproduces the reset
+/// VALUES are stamped rather than the steps themselves, so a reload reproduces the reset
 /// exactly. If the steps were stamped instead, a later release that retuned what "Hard" means
 /// would silently change an in-flight run's economy the next time it loaded.
 ///

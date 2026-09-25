@@ -360,22 +360,39 @@ public class MetaStateTests
         Assert.Equal(2, held.EffectiveBundleSeedLoop);
     }
 
+    /// <summary>Season pity was removed 2026-09-24. A save written before that still carries its
+    /// fields, including an ease/trim stamp and the pity block inside the difficulty stamp. It has
+    /// to load without error, keep everything else, and carry no easing forward (the type has
+    /// nowhere left to put it). The game reads saves through SMAPI's Newtonsoft settings, which
+    /// likewise skip unknown members.</summary>
     [Fact]
-    public void Pity_fields_round_trip_and_default()
+    public void An_old_save_with_season_pity_fields_still_loads()
     {
-        var fresh = new MetaState();
-        Assert.Equal(new[] { 0, 0, 0, 0 }, fresh.SeasonFailCounts);
-        Assert.Equal(-1, fresh.LastFailSeason);
-        Assert.Equal(-1, fresh.BoardTrimSeason);
-        Assert.Equal(0, fresh.BoardTrimSteps);
+        const string json = @"
+            {
+              ""JunimoPoints"": 120,
+              ""ConsecutiveHolds"": 1,
+              ""SeasonFailCounts"": [1, 6, 0, 0],
+              ""LastFailSeason"": 1,
+              ""BoardTrimSeason"": 1,
+              ""BoardTrimSteps"": 2,
+              ""ConsecutivePityUses"": 3,
+              ""BoardEaseSeason"": 1,
+              ""BoardEaseSteps"": 2,
+              ""Difficulty"": {
+                ""HoldPriceFactor"": 2.0,
+                ""Pity"": { ""Enabled"": true, ""Threshold"": 5, ""QuotaStep"": 0.1, ""QuotaFloor"": 0.5, ""TrimPerStep"": 2 },
+                ""Steps"": { ""HoldPrices"": 2, ""SeasonPity"": 2 }
+              }
+            }";
 
-        var original = new MetaState { SeasonFailCounts = new System.Collections.Generic.List<int> { 1, 6, 0, 0 }, LastFailSeason = 1, BoardTrimSeason = 1, BoardTrimSteps = 2 };
-        string json = JsonSerializer.Serialize(original);
         MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
-        Assert.Equal(new[] { 1, 6, 0, 0 }, restored.SeasonFailCounts);
-        Assert.Equal(1, restored.LastFailSeason);
-        Assert.Equal(1, restored.BoardTrimSeason);
-        Assert.Equal(2, restored.BoardTrimSteps);
+
+        Assert.Equal(120, restored.JunimoPoints);
+        Assert.Equal(1, restored.ConsecutiveHolds);
+        Assert.NotNull(restored.Difficulty);
+        Assert.Equal(2.0, restored.Difficulty!.HoldPriceFactor, 6);
+        Assert.Equal(DifficultyStep.Hard, restored.Difficulty.Steps.HoldPrices);
     }
 }
 
@@ -436,7 +453,7 @@ public class MetaStateDifficultyStampTests
                 {
                     StackSize = DifficultyStep.Hard,
                     JpEarned = DifficultyStep.Extreme,
-                    ShrinePrices = DifficultyStep.Easy,
+                    HoldPrices = DifficultyStep.Extreme,
                 },
                 cfg),
         };
@@ -447,9 +464,9 @@ public class MetaStateDifficultyStampTests
         Assert.NotNull(restored.Difficulty);
         Assert.Equal(1.5, restored.Difficulty!.StackFactor, 6);
         Assert.Equal(0.5, restored.Difficulty.JpEarnedFactor, 6);
-        Assert.Equal(0.75, restored.Difficulty.ShrinePriceFactor, 6);
+        Assert.Equal(4.0, restored.Difficulty.HoldPriceFactor, 6);
         Assert.Equal(DifficultyStep.Hard, restored.Difficulty.Steps.StackSize);
-        Assert.Equal(DifficultyStep.Easy, restored.Difficulty.Steps.ShrinePrices);
+        Assert.Equal(DifficultyStep.Extreme, restored.Difficulty.Steps.HoldPrices);
     }
 }
 
@@ -558,5 +575,60 @@ public class BoardDifficultyTests
         Assert.Equal(WeekMode.Pacing, WeekModes.For(meta.BoardDifficulty(cfg).Steps.ItemRarity));
         // The live-config read the fix replaced would have produced HardGates here.
         Assert.Equal(DifficultyStep.Hard, meta.EffectiveDifficulty(cfg).Steps.ItemRarity);
+    }
+
+    [Theory]
+    [InlineData("start_chicken", "Brown Chicken")]
+    [InlineData("start_void_chicken", "Void Chicken")]
+    [InlineData("start_duck", "Duck")]
+    [InlineData("start_dinosaur", "Dinosaur")]
+    [InlineData("start_rabbit", "Rabbit")]
+    [InlineData("start_ostrich", "Ostrich")]
+    [InlineData("start_cow", "Brown Cow")]
+    [InlineData("start_goat", "Goat")]
+    [InlineData("start_sheep", "Sheep")]
+    [InlineData("start_pig", "Pig")]
+    public void Every_start_row_passes_its_gate_once_its_species_is_recorded(string upgradeId, string vanillaType)
+    {
+        var def = UpgradeCatalog.TryGet(upgradeId)!;
+        var s = new MetaState();
+        Assert.False(s.MeetsMetaRequirement(def.MetaRequirement));
+        AnimalSpecies.Record(s.AnimalSpeciesEverOwned, vanillaType);
+        Assert.True(s.MeetsMetaRequirement(def.MetaRequirement));
+    }
+
+    [Fact]
+    public void The_start_row_theory_covers_every_start_row()
+        => Assert.Equal(10, UpgradeCatalog.All.Count(u => u.Id.StartsWith("start_")));
+
+    [Theory]
+    [InlineData("White Chicken", "species:Chicken")]
+    [InlineData("Void Chicken", "species:VoidChicken")]
+    [InlineData("White Cow", "species:Cow")]
+    public void A_vanilla_name_recorded_before_the_fix_still_passes_the_gate(string recorded, string requirement)
+    {
+        var s = new MetaState { AnimalSpeciesEverOwned = { recorded } };
+        Assert.True(s.MeetsMetaRequirement(requirement));
+    }
+
+    [Fact]
+    public void A_void_chicken_does_not_open_the_chicken_gate()
+    {
+        var s = new MetaState { AnimalSpeciesEverOwned = { "Void Chicken" } };
+        Assert.False(s.MeetsMetaRequirement("species:Chicken"));
+    }
+
+    [Fact]
+    public void HerdBook_starts_empty_and_round_trips_through_json()
+    {
+        Assert.Empty(new MetaState().HerdBook);
+        var original = new MetaState
+        {
+            HerdBook = { new HerdEntry(0, 42L, "Brown Chicken", "Nugget", "skinA", 850, 230, 40, 38, true, false) }
+        };
+        // Newtonsoft, the serializer SMAPI reads and writes save data with.
+        string json = Newtonsoft.Json.JsonConvert.SerializeObject(original);
+        MetaState restored = Newtonsoft.Json.JsonConvert.DeserializeObject<MetaState>(json)!;
+        Assert.Equal(original.HerdBook, restored.HerdBook);
     }
 }

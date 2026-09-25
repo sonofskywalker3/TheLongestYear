@@ -24,7 +24,7 @@ public sealed class DifficultySettings
     /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
     public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Set the lever and all ten dials to one level.</summary>
+    /// <summary>Set the lever and all nine dials to one level.</summary>
     public void SetAll(DifficultyStep step)
     {
         Overall = step;

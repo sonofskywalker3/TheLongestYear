@@ -400,4 +400,48 @@ public class UpgradeCatalogTests
             "upgrades:xp_mult_farming_4,xp_mult_fishing_4,xp_mult_foraging_4,xp_mult_mining_4,xp_mult_combat_4",
             capstone.MetaRequirement);
     }
+
+    [Fact]
+    public void Start_ostrich_needs_a_barn_because_ostriches_live_in_barns()
+        => Assert.Equal("keep_barn", UpgradeCatalog.TryGet("start_ostrich")!.PrerequisiteId);
+
+    [Theory]
+    [InlineData("herdbook_1", 750, null, HerdSlotKind.Chicken)]
+    [InlineData("herdbook_2", 600, "herdbook_1", HerdSlotKind.Cow)]
+    [InlineData("herdbook_3", 750, "herdbook_2", HerdSlotKind.Cow)]
+    [InlineData("herdbook_4", 750, "herdbook_3", HerdSlotKind.Duck)]
+    [InlineData("herdbook_5", 950, "herdbook_4", HerdSlotKind.Duck)]
+    [InlineData("herdbook_6", 750, "herdbook_5", HerdSlotKind.Goat)]
+    [InlineData("herdbook_7", 950, "herdbook_6", HerdSlotKind.Goat)]
+    [InlineData("herdbook_8", 1050, "herdbook_7", HerdSlotKind.Rabbit)]
+    [InlineData("herdbook_9", 1300, "herdbook_8", HerdSlotKind.Rabbit)]
+    [InlineData("herdbook_10", 900, "herdbook_9", HerdSlotKind.Sheep)]
+    [InlineData("herdbook_11", 1150, "herdbook_10", HerdSlotKind.Sheep)]
+    [InlineData("herdbook_12", 1050, "herdbook_11", HerdSlotKind.Pig)]
+    [InlineData("herdbook_13", 1300, "herdbook_12", HerdSlotKind.Pig)]
+    [InlineData("herdbook_14", 900, "herdbook_13", HerdSlotKind.VoidChicken)]
+    [InlineData("herdbook_15", 1500, "herdbook_14", HerdSlotKind.GoldenChicken)]
+    [InlineData("herdbook_16", 1350, "herdbook_15", HerdSlotKind.Dinosaur)]
+    [InlineData("herdbook_17", 2250, "herdbook_16", HerdSlotKind.Ostrich)]
+    public void Herd_book_rows_have_the_designed_price_chain_and_slot(string id, long cost, string? prereq, HerdSlotKind adds)
+    {
+        var def = UpgradeCatalog.TryGet(id);
+        Assert.NotNull(def);
+        Assert.Equal(UpgradeCategory.Carryover, def!.Category);
+        Assert.Equal(cost, def.Cost);
+        Assert.Equal(prereq, def.PrerequisiteId);
+        Assert.Null(def.MetaRequirement);
+        Assert.Null(def.RunReachRequirement);
+        int tier = int.Parse(id.Substring(UpgradeCatalog.HerdBookPrefix.Length));
+        Assert.Equal(adds, UpgradeCatalog.HerdBookSlots(tier)[tier]);
+    }
+
+    [Fact]
+    public void Herd_book_has_seventeen_tiers_after_the_free_slot()
+    {
+        Assert.Equal(17, UpgradeCatalog.HerdBookMaxTier);
+        Assert.Equal(HerdSlotRules.LadderLength - 1, UpgradeCatalog.HerdBookMaxTier);
+        Assert.Null(UpgradeCatalog.TryGet("herdbook_0"));
+        Assert.Null(UpgradeCatalog.TryGet("herdbook_18"));
+    }
 }

@@ -213,11 +213,12 @@ namespace TheLongestYear
             // isn't built until OnSaveLoaded, so resolve it lazily like the driver above.
             _endingDriver = new EndingEventDriver(this.Monitor, _meta, _config);
             _endingDriver.Attach(helper, () => _runController);
-            // Skip the overnight FarmEvent on FAIL nights — its end-of-event warp orphans the Fail
+            // Skip the overnight FarmEvent on nights whose morning rewinds (Fail or a voluntary restart): its end-of-event warp orphans the Fail
             // scene and drops the reset (see FarmEventSuppressionPatch). _runController is built on
             // save load, so resolve it lazily like the driver does.
             FarmEventSuppressionPatch.SuppressTonight =
-                () => _runController?.PendingCutscene == TheLongestYear.Core.Day28.Day28Branch.Fail;
+                () => TheLongestYear.Core.Day28.VoluntaryRestart.IsRewind(
+                    _runController?.PendingCutscene ?? TheLongestYear.Core.Day28.Day28Branch.None);
             FarmEventSuppressionPatch.Monitor = this.Monitor;
             // The overnight slot (spec 2026-09-21): tonight's strike scene takes it from a random
             // vanilla event, and anything scripted keeps it while the strike lands at once instead.
@@ -405,7 +406,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
             helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here] [confirm] | circle. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
-            helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based).", this.CmdAnswer);
+            helper.ConsoleCommands.Add("tly_restart", "Debug: press the Junimo Shrine's Restart the year button. Opens the same yes/no (tly_answer 0 = Yes, 1 = No); refuses and logs why when the button would be hidden.", this.CmdRestart);
+            helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based), or tly_answer key [n] for the Escape/N key path.", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
@@ -477,6 +479,11 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_opencraftbook",
                 "Open the Craftbook menu directly (debug).",
                 this.CmdOpenCraftbook);
+            helper.ConsoleCommands.Add("tly_openherdbook",
+                "Open the Herd Book menu directly (debug).",
+                this.CmdOpenHerdBook);
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.HerdBookDebugCommand.Name, TheLongestYear.DebugCommands.HerdBookDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add("tly_activeeffects",
                 "Print the currently active theme bonus and liability.",
                 this.CmdActiveEffects);
@@ -876,6 +883,9 @@ namespace TheLongestYear
                     this.RefreshSneakPeekChannelLabel();
                 return result;
             });
+            _planningShrine.AttachRestart(
+                () => _runController?.IsVoluntaryRestartOffered() == true,
+                () => _runController?.AskVoluntaryRestart());
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
@@ -971,6 +981,7 @@ namespace TheLongestYear
             }
             DonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
+            TheLongestYear.Loop.HerdBookService.ClearPending();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
             // OnSaveLoaded; the dormant bail returns before that, so detach here too or a tracker
             // left over from a prior TLY save keeps firing on the non-TLY save's warps.
@@ -996,6 +1007,8 @@ namespace TheLongestYear
             // FarmerReset.loadForNewGame, MetaState doesn't).
             _introInjector?.MarkIntroSeenIfApplicable();
             RecordSeenEvents();
+            if (RunActivation.IsActive)
+                TheLongestYear.Loop.AnimalSpeciesRecorder.Record(_meta.State, this.Monitor);
             _meta.Save();
             this.Monitor.Log($"Meta-state saved with the game. JP banked: {_meta.State.JunimoPoints}.", LogLevel.Trace);
         }
@@ -1510,7 +1523,9 @@ namespace TheLongestYear
             int x = (int)Game1.player.Tile.X;
             int y = (int)Game1.player.Tile.Y;
             string loc = Game1.currentLocation?.Name ?? "?";
-            this.Monitor.Log($"Player at tile ({x}, {y}) in '{loc}'.", LogLevel.Info);
+            this.Monitor.Log(
+                $"Player at tile ({x}, {y}) in '{loc}' (dialogueUp={Game1.dialogueUp}, " +
+                $"menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}).", LogLevel.Info);
         }
 
         /// <summary>Debug: say where a running event is stuck and step a speak line on. Headless runs
@@ -1683,6 +1698,12 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _launcher?.OpenCraftbook();
+        }
+
+        private void CmdOpenHerdBook(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _launcher?.OpenHerdBook();
         }
 
         private void CmdSetStash(string command, string[] args)
@@ -2146,10 +2167,30 @@ namespace TheLongestYear
             }
             var menu = new TheLongestYear.UI.ShrinePreviewMenu(
                 _meta.State, _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor, _meta.Run,
-                (id, skill) => _boostPurchases.TryBuy(id, skill));
+                (id, skill) => _boostPurchases.TryBuy(id, skill),
+                () => _runController?.IsVoluntaryRestartOffered() == true,
+                () => _runController?.AskVoluntaryRestart());
             menu.ShowTab(tab);
             Game1.activeClickableMenu = menu;
             this.Monitor.Log($"tly_openshrine: shrine opened on the {tab} tab.", LogLevel.Info);
+            var block = _runController?.VoluntaryRestartBlock() ?? TheLongestYear.Core.Day28.RestartBlock.ResetRunning;
+            this.Monitor.Log(
+                block == TheLongestYear.Core.Day28.RestartBlock.None
+                    ? "tly_openshrine: restart button shown."
+                    : $"tly_openshrine: restart button hidden ({block}).",
+                LogLevel.Info);
+            // Debug: the restart button's bounds against the tabs at this window size.
+            var restart = this.Helper.Reflection.GetField<ClickableComponent>(menu, "_restartButton").GetValue();
+            if (restart != null)
+            {
+                var tabs = this.Helper.Reflection.GetField<List<ClickableTextureComponent>>(menu, "_tabs").GetValue();
+                var tabRects = tabs.Select(t => t.bounds).ToList();
+                if (menu.upperRightCloseButton != null) tabRects.Add(menu.upperRightCloseButton.bounds);
+                bool overlap = tabRects.Any(r => r.Intersects(restart.bounds));
+                this.Monitor.Log(
+                    $"tly_openshrine: viewport {Game1.uiViewport.Width}x{Game1.uiViewport.Height}, restart {restart.bounds}, " +
+                    $"tabs+close {string.Join(" ", tabRects)}, overlap={overlap}.", LogLevel.Info);
+            }
         }
 
         /// <summary>Debug: close whatever menu is up without the mouse. A LevelUpMenu needs its OK
@@ -2721,6 +2762,13 @@ namespace TheLongestYear
             string speaker = args.Length >= 2 && args[0] == "speaker" ? args[1] : null;
             _endingDriver?.StartNow(speaker);
         }
+        /// <summary>Debug: the shrine's Restart the year button without the mouse.</summary>
+        private void CmdRestart(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            _runController?.AskVoluntaryRestart();
+        }
+
 
         /// <summary>Debug: pick a response on the open question dialogue without the mouse, for the
         /// headless runbook (e.g. the loop-again/keep-playing choice after the Year One Ending, or
@@ -2735,9 +2783,22 @@ namespace TheLongestYear
                 this.Monitor.Log("tly_answer: no question dialogue is open.", LogLevel.Warn);
                 return;
             }
+            if (args.Length >= 1 && args[0].Equals("key", System.StringComparison.OrdinalIgnoreCase))
+            {
+                // Debug: the keyboard path (Escape, or N with "tly_answer key n"), which vanilla routes
+                // through receiveKeyPress instead of the click path above.
+                var key = args.Length >= 2 && args[1].Equals("n", System.StringComparison.OrdinalIgnoreCase)
+                    ? Microsoft.Xna.Framework.Input.Keys.N
+                    : Microsoft.Xna.Framework.Input.Keys.Escape;
+                box.transitioning = false;
+                box.safetyTimer = 0;
+                box.receiveKeyPress(key);
+                this.Monitor.Log($"tly_answer: sent key {key} (dialogueUp={Game1.dialogueUp}).", LogLevel.Info);
+                return;
+            }
             if (args.Length < 1 || !int.TryParse(args[0], out int n))
             {
-                this.Monitor.Log("Usage: tly_answer <n> (0-based response index)", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_answer <n> (0-based response index) | tly_answer key [n]", LogLevel.Warn);
                 return;
             }
             if (n < 0 || n >= box.responses.Length)
@@ -2757,7 +2818,10 @@ namespace TheLongestYear
                 box.transitioning = false;
                 box.selectedResponse = n;
                 box.receiveLeftClick(0, 0, false);
-                if (object.ReferenceEquals(Game1.activeClickableMenu, box))
+                // A taken answer starts the box's outro (transitioning) and it closes itself a few
+                // frames later; callbacks that open a menu afterwards (the voluntary restart's No)
+                // wait for that close. Only a box still up and not closing ignored the click.
+                if (object.ReferenceEquals(Game1.activeClickableMenu, box) && !box.transitioning)
                     this.Monitor.Log("tly_answer: the box did not close; send it again", LogLevel.Warn);
                 else
                     this.Monitor.Log($"tly_answer: chose response {n} (\"{text}\").", LogLevel.Info);
@@ -3102,10 +3166,10 @@ namespace TheLongestYear
                 min: 0, max: 5000, interval: 100);
 
             // ---- Difficulty modifiers (spec 2026-08-26) ----
-            // Ten independent dials. Everything defaults to Normal, which is the shipping balance,
+            // Nine independent dials. Everything defaults to Normal, which is the shipping balance,
             // and a change lands at the NEXT reset because WorldResetService stamps the resolved
             // profile onto the save and every consumer reads that stamp. The overall lever above
-            // them only sets all ten at once (DifficultyLever); nothing reads it for gameplay.
+            // them only sets all nine at once (DifficultyLever); nothing reads it for gameplay.
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.difficulty.section"));
             gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.difficulty.blurb"));
 
@@ -3203,6 +3267,7 @@ namespace TheLongestYear
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
+            TheLongestYear.Loop.AnimalSpeciesRecorder.Record(_meta.State, this.Monitor);
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);
@@ -3253,6 +3318,11 @@ namespace TheLongestYear
                 // Gate on a clear surface so the retry opens cleanly and doesn't re-log every tick.
                 if (Game1.activeClickableMenu == null && !Game1.eventUp)
                     _runController?.TryDrainDeferredOffer();
+
+                // Herd Book "waiting" HUD lines from the reset, held until the save and the planning
+                // hub are gone so they don't expire unseen. Runs after the deferred offer so a hub
+                // that opens this tick keeps them waiting.
+                Loop.HerdBookService.ShowWaitingHud(this.Monitor);
 
                 // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
                 // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
@@ -3329,6 +3399,7 @@ namespace TheLongestYear
                 case "tly_failreset":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceFailReset(); break;
+                case "tly_restart": this.CmdRestart(command, args); break;
                 case "tly_day28continue":
                     if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); break; }
                     _runController?.DebugForceContinueCutscene(); break;
@@ -3389,6 +3460,8 @@ namespace TheLongestYear
                 case "tly_eventstep": this.CmdEventStep(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
+                case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
+                case "tly_herdbook": TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;

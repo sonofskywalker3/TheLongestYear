@@ -56,12 +56,20 @@ public static class RunBaselineBuilder
             ["start_duck"]          = ("Duck",          "Big Coop"),
             ["start_dinosaur"]      = ("Dinosaur",      "Big Coop"),
             ["start_rabbit"]        = ("Rabbit",        "Deluxe Coop"),
-            ["start_ostrich"]       = ("Ostrich",       "Deluxe Coop"),
+            ["start_ostrich"]       = ("Ostrich",       "Barn"),
             ["start_cow"]           = ("White Cow",     "Barn"),
             ["start_goat"]          = ("Goat",          "Big Barn"),
             ["start_sheep"]         = ("Sheep",         "Deluxe Barn"),
             ["start_pig"]           = ("Pig",           "Deluxe Barn"),
         };
+
+    /// <summary>The "Start with" row ids, catalog order (read by <see cref="AnimalCapacityRule"/>).</summary>
+    public static IEnumerable<string> StartingAnimalIds => StartingAnimalMap.Keys;
+
+    /// <summary>The housing blueprint a "Start with" row's animal lives in ("Coop", "Big Barn"...),
+    /// or null when <paramref name="upgradeId"/> is not a start_* row.</summary>
+    public static string? StartingAnimalHousing(string upgradeId)
+        => StartingAnimalMap.TryGetValue(upgradeId, out var mapping) ? mapping.HousingType : null;
 
     public static RunBaseline Build(MetaState meta, RunState run, PlayerSnapshot peaks, int defaultStartingMoney)
     {
