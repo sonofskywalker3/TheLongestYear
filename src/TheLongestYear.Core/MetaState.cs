@@ -235,6 +235,13 @@ public sealed class MetaState
     /// can be skipped (spec 2026-09-21).</summary>
     public HashSet<string> StrikeScenesSeen { get; set; } = new();
 
+    /// <summary>Morris's offer scene has played at least once on this save, so it is skippable.</summary>
+    public bool JojaOfferEverSeen { get; set; }
+
+    /// <summary>The loop (RunState.RunNumber) Morris and the player parted ways in: a No at his
+    /// counter or the fourth unanswered letter. 0 = never. Permanent: no reset clears it.</summary>
+    public int JojaRejectedLoop { get; set; }
+
     /// <summary>Unused since 2026-09-21 (the first-strike letters were replaced by the overnight
     /// scenes). Kept so a save written before then still loads.</summary>
     public HashSet<string> SabotageLettersSent { get; set; } = new();
