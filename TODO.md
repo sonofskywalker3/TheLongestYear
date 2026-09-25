@@ -6,6 +6,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### PLAYTHROUGH FEEDBACK (Jeff's story speedrun, started 2026-09-25): hold until Jeff says to fix
+Collected while Jeff plays; do not touch his running game. Fix only when he says so.
+
+1. **Opening, arrival scene:** when the farmer and Robin turn right to look at Lewis, Morris should
+   turn right to look at him at the same moment.
+
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
 GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
 changelog all set via Chrome. Still to do:
