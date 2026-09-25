@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -50,6 +51,21 @@ namespace TheLongestYear.UI
         private const int TypeBelowName = 44;
         private const float FadedAlpha = 0.8f;
 
+        // Vanilla drawNPCSlot icon sizes, in screen pixels (source size x 4).
+        private const int HeartStep = 32;
+        private const int HeartHeight = 24;
+        private const int PetIconWidth = 40;
+        private const int PetIconsHeight = 80;   // hand icon (40) plus the petted/not-petted mark below it
+        private const int CrackerWidth = 60;
+        private const int CrackerHeight = 44;
+
+        /// <summary>Room kept between the note and anything else drawn in the row (covers the text shadow).</summary>
+        private const int NotePadding = 8;
+        /// <summary>Gap between the note's bottom line and the row's bottom edge.</summary>
+        private const int NoteBottomInset = 6;
+        /// <summary>Gap between the note and the row's right edge.</summary>
+        private const int NoteRightInset = 16;
+
         /// <summary>A live animal, straight through the vanilla entry. Text-only row when that fails.</summary>
         public static AnimalRow ForLive(FarmAnimal animal, IMonitor monitor)
         {
@@ -85,6 +101,10 @@ namespace TheLongestYear.UI
                 animal.age.Value = HerdBookRules.AdultAge(stored.Age, data.DaysToMature);
                 animal.friendshipTowardFarmer.Value = HerdBookRules.ClampFriendship(stored.Friendship);
                 animal.hasEatenAnimalCracker.Value = stored.HasEatenAnimalCracker;
+                // As HerdBookService.Rebuild: an adult sheep has its wool, so it draws unsheared. A
+                // local Random seeded from the id keeps this draw path off Game1.random.
+                if (data.ProduceOnMature)
+                    animal.currentProduce.Value = animal.GetProduceID(new Random(stored.AnimalId.GetHashCode()));
                 animal.ReloadTextureIfNeeded();
                 var entry = new AnimalPage.AnimalEntry(animal);
                 return new AnimalRow { Entry = entry, TypeName = animal.displayType, ShowPetted = false, Sprite = CreateSprite(entry) };
@@ -106,7 +126,8 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>Draw <paramref name="row"/> into <paramref name="area"/>, with an optional faded top line
-        /// (the slot kind on book rows) and an optional note after it (the missing keep).</summary>
+        /// (the slot kind on book rows) and an optional note (the missing keep), placed where it
+        /// overlaps nothing else in the row.</summary>
         public static void Draw(SpriteBatch b, Rectangle area, AnimalRow row, string topLabel, string note)
         {
             AnimalPage.AnimalEntry entry = row.Entry;
@@ -120,6 +141,12 @@ namespace TheLongestYear.UI
             sprite.bounds.X = pageX + IClickableMenu.borderWidth + 4 + (small ? SmallSpriteShiftX : 0);
             sprite.bounds.Y = slotTop + VanillaSpriteFromSlotTop + (small ? SmallSpriteShiftY : 0);
             sprite.draw(b);
+            // Everything drawn in the row, so the keep note can be placed clear of all of it.
+            var drawn = new List<PixelBox>
+            {
+                new PixelBox(sprite.bounds.X, sprite.bounds.Y,
+                    (int)(entry.TextureSourceRect.Width * SpriteScale), (int)(entry.TextureSourceRect.Height * SpriteScale)),
+            };
 
             // AnimalPage.drawNPCSlot from here down.
             float lineHeight = Game1.smallFont.MeasureString("W").Y;
@@ -128,14 +155,17 @@ namespace TheLongestYear.UI
             int yOffset = small ? -40 : 8;
             float nameCenterX = pageX + IClickableMenu.borderWidth * 3 / 2 + 192 - 20 + 96;
             float nameY = sprite.bounds.Y + 48 + yOffset + russianOffsetY - 20f;
+            Vector2 nameSize = Game1.dialogueFont.MeasureString(entry.DisplayName);
             b.DrawString(Game1.dialogueFont, entry.DisplayName,
-                new Vector2(nameCenterX - (int)(Game1.dialogueFont.MeasureString(entry.DisplayName).X / 2f), nameY), Game1.textColor);
+                new Vector2(nameCenterX - (int)(nameSize.X / 2f), nameY), Game1.textColor);
+            drawn.Add(Box(nameCenterX - (int)(nameSize.X / 2f), nameY, nameSize));
 
             if (entry.FriendshipLevel != NoFriendship)
             {
                 double loveLevel = entry.FriendshipLevel / 1000f;
                 int halfHeart = (int)((loveLevel * 1000.0 % 200.0 >= 100.0) ? (loveLevel * 1000.0 / 200.0) : (-100.0));
                 int heartYOffset = entry.ReceivedAnimalCracker ? -24 : 0;
+                drawn.Add(new PixelBox(pageX + 512 - 4, sprite.bounds.Y + heartYOffset + yOffset + 64 - 24, HeartCount * HeartStep, HeartHeight));
                 for (int hearts = 0; hearts < HeartCount; hearts++)
                 {
                     var pos = new Vector2(pageX + 512 - 4 + hearts * 32, sprite.bounds.Y + heartYOffset + yOffset + 64 - 24);
@@ -149,6 +179,7 @@ namespace TheLongestYear.UI
             }
             if (row.ShowPetted && entry.WasPetYet != NoPetState)
             {
+                drawn.Add(new PixelBox(pageX + 704 - 4, sprite.bounds.Y + yOffset + 64 - 52, PetIconWidth, PetIconsHeight));
                 b.Draw(Game1.mouseCursors, new Vector2(pageX + 704 - 4, sprite.bounds.Y + yOffset + 64 - 52),
                     new Rectangle(32, 0, 10, 10), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.8f);
                 b.Draw(Game1.mouseCursors_1_6, new Vector2(pageX + 704 - 4, sprite.bounds.Y + yOffset + 64 - 8),
@@ -156,25 +187,77 @@ namespace TheLongestYear.UI
             }
             if (entry.ReceivedAnimalCracker)
             {
+                drawn.Add(new PixelBox(pageX + 576 - 20, sprite.bounds.Y + yOffset + 64 - 16, CrackerWidth, CrackerHeight));
                 Utility.drawWithShadow(b, Game1.objectSpriteSheet_2, new Vector2(pageX + 576 - 20, sprite.bounds.Y + yOffset + 64 - 16),
                     new Rectangle(16, 242, 15, 11), Color.White, 0f, Vector2.Zero, 4f, flipped: false, 0.8f);
             }
 
-            // Herd Book extras: the type under the name, the slot kind and keep note on the top line.
+            // Herd Book extras: the type under the name, the slot kind on the top line, and the keep
+            // note wherever the row has room for it.
             if (!string.IsNullOrEmpty(row.TypeName))
             {
                 Vector2 typeSize = Game1.smallFont.MeasureString(row.TypeName);
-                Utility.drawTextWithShadow(b, row.TypeName, Game1.smallFont,
-                    new Vector2(nameCenterX - (int)(typeSize.X / 2f), nameY + TypeBelowName), Game1.textColor * FadedAlpha);
+                var typePos = new Vector2(nameCenterX - (int)(typeSize.X / 2f), nameY + TypeBelowName);
+                Utility.drawTextWithShadow(b, row.TypeName, Game1.smallFont, typePos, Game1.textColor * FadedAlpha);
+                drawn.Add(Box(typePos.X, typePos.Y, typeSize));
             }
-            float topX = area.X + TopLineX;
             if (topLabel != null)
             {
-                Utility.drawTextWithShadow(b, topLabel, Game1.smallFont, new Vector2(topX, area.Y + TopLineY), Game1.textColor * FadedAlpha);
-                topX += Game1.smallFont.MeasureString(topLabel).X + TopLineGap;
+                var labelPos = new Vector2(area.X + TopLineX, area.Y + TopLineY);
+                Utility.drawTextWithShadow(b, topLabel, Game1.smallFont, labelPos, Game1.textColor * FadedAlpha);
+                // Widened so a note that follows it on the same line keeps the old gap.
+                PixelBox label = Box(labelPos.X, labelPos.Y, Game1.smallFont.MeasureString(topLabel));
+                drawn.Add(label with { Width = label.Width + TopLineGap - NotePadding });
             }
             if (note != null)
-                Utility.drawTextWithShadow(b, note, Game1.smallFont, new Vector2(topX, area.Y + TopLineY), Game1.textColor * FadedAlpha);
+                DrawNote(b, area, note, drawn);
         }
+
+        /// <summary>The keep note, placed clear of everything in <paramref name="drawn"/>: on the top
+        /// line after the slot kind when it fits there (the hearts and pet icon rise into that line
+        /// on some rows), else right-aligned on the row's bottom line, else shrunk into the widest
+        /// free stretch of either line.</summary>
+        private static void DrawNote(SpriteBatch b, Rectangle area, string note, List<PixelBox> drawn)
+        {
+            Vector2 size = Game1.smallFont.MeasureString(note);
+            int noteW = (int)Math.Ceiling(size.X);
+            int noteH = (int)Math.Ceiling(size.Y);
+            int xMin = area.X + TopLineX;
+            int xMax = area.Right - NoteRightInset;
+
+            int topY = area.Y + TopLineY;
+            List<FreeSpan> topSpans = RowTextFit.FreeSpans(drawn, topY, topY + noteH, xMin, xMax, NotePadding);
+            FreeSpan? top = RowTextFit.FirstFitting(topSpans, noteW);
+            if (top != null)
+            {
+                DrawFaded(b, note, top.Value.Start, topY, 1f);
+                return;
+            }
+
+            int bottomY = area.Bottom - NoteBottomInset - noteH;
+            List<FreeSpan> bottomSpans = RowTextFit.FreeSpans(drawn, bottomY, bottomY + noteH, xMin, xMax, NotePadding);
+            FreeSpan? bottom = RowTextFit.LastFitting(bottomSpans, noteW);
+            if (bottom != null)
+            {
+                DrawFaded(b, note, bottom.Value.End - noteW, bottomY, 1f);
+                return;
+            }
+
+            // Neither line has room at full size: shrink it into the widest gap. Checked at full
+            // height, so the smaller text stays clear too.
+            FreeSpan? widestTop = RowTextFit.Widest(topSpans);
+            FreeSpan? widestBottom = RowTextFit.Widest(bottomSpans);
+            bool useTop = widestTop != null && (widestBottom == null || widestTop.Value.Width >= widestBottom.Value.Width);
+            FreeSpan? gap = useTop ? widestTop : widestBottom;
+            if (gap == null) return;
+            float scale = gap.Value.Width / (float)noteW;
+            DrawFaded(b, note, gap.Value.Start, useTop ? topY : bottomY + (int)(noteH * (1f - scale)), scale);
+        }
+
+        private static void DrawFaded(SpriteBatch b, string text, float x, float y, float scale)
+            => Utility.drawTextWithShadow(b, text, Game1.smallFont, new Vector2(x, y), Game1.textColor * FadedAlpha, scale);
+
+        private static PixelBox Box(float x, float y, Vector2 size)
+            => new PixelBox((int)x, (int)y, (int)Math.Ceiling(size.X), (int)Math.Ceiling(size.Y));
     }
 }

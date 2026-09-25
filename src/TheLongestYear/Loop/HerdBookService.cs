@@ -82,6 +82,10 @@ namespace TheLongestYear.Loop
         /// and shown by <see cref="ShowWaitingHud"/> once the player is free.</summary>
         private static readonly List<string> PendingWaitingHud = new();
 
+        /// <summary>Drop any held HUD lines. Called when the save is left (ModEntry.DeactivateTly), so
+        /// lines from one save never show on the next one loaded.</summary>
+        public static void ClearPending() => PendingWaitingHud.Clear();
+
         /// <summary>Called every tick from ModEntry; shows the held lines when no menu or event is up.</summary>
         public static void ShowWaitingHud(IMonitor monitor)
         {

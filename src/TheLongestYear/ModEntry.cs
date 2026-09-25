@@ -813,6 +813,7 @@ namespace TheLongestYear
             }
             DonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
+            TheLongestYear.Loop.HerdBookService.ClearPending();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
             // OnSaveLoaded; the dormant bail returns before that, so detach here too or a tracker
             // left over from a prior TLY save keeps firing on the non-TLY save's warps.
