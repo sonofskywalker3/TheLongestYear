@@ -200,6 +200,21 @@ public sealed class RunState
     /// (spec 2026-09-21): a kind's scene is due only the first time it strikes in a loop.</summary>
     public HashSet<string> StrikeScenesPlayed { get; set; } = new();
 
+    // ---- Morris's offer (spec 2026-09-25-joja-offer-design). Per loop: a rewind starts all four over. ----
+
+    /// <summary>Day of year (1..112) the offer scene played this loop, -1 = not yet this loop.</summary>
+    public int JojaSceneSeenDay { get; set; } = -1;
+
+    /// <summary>This loop's eight "come see me" letter days (day of year), planned on the first
+    /// morning that needs them. Empty = not planned yet.</summary>
+    public List<int> JojaLetterDays { get; set; } = new();
+
+    /// <summary>How many "come see me" letters went out this loop.</summary>
+    public int JojaLettersSent { get; set; }
+
+    /// <summary>How many "make a decision" letters went out this loop.</summary>
+    public int JojaDecisionLettersSent { get; set; }
+
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
     {
@@ -379,5 +394,9 @@ public sealed class RunState
         GuaranteedTamperDone = false;
         (StruckEvents ??= new()).Clear();
         (StrikeScenesPlayed ??= new()).Clear();
+        JojaSceneSeenDay = -1;
+        (JojaLetterDays ??= new()).Clear();
+        JojaLettersSent = 0;
+        JojaDecisionLettersSent = 0;
     }
 }
