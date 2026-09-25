@@ -653,9 +653,10 @@ namespace TheLongestYear.Loop
         /// first time it was opened. So between the shrine and the reset, open each book that has a
         /// free slot and something worth putting in it (see <see cref="RecipeBanking"/>), Cookbook
         /// then Craftbook, and continue once both are closed. Same watchdog as the shrine, so a menu
-        /// torn down underneath us still ends in a reset.</summary>
+        /// torn down underneath us still ends in a reset. The Herd Book follows the Craftbook
+        /// (RunController.HerdBook.cs).</summary>
         private void OfferRecipeBanking(System.Action onContinue)
-            => OfferBook(isCooking: true, () => OfferBook(isCooking: false, onContinue));
+            => OfferBook(isCooking: true, () => OfferBook(isCooking: false, () => OfferHerdBook(onContinue)));
 
         private void OfferBook(bool isCooking, System.Action onContinue)
         {

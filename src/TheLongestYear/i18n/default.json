@@ -560,6 +560,10 @@
     "menu.herdbook.needs-keep": "Needs {{keep}} to come back",
     "menu.herdbook.no-animals": "No animal on your farm fits this slot yet.",
     "menu.herdbook.remove-confirm": "Take {{name}} out of the Herd Book?\n{{name}} won't come back next loop unless you add it again.",
+    // DRAFT herd-book: rewind-night subtitle and the reset's HUD lines.
+    "menu.herdbook.bank-before-reset": "The loop is about to reset. Put the animals you want back in the book, then close it.",
+    "hud.herdbook.no-building": "{{name}} is waiting in the Herd Book: it needs {{keep}}.",
+    "hud.herdbook.no-room": "{{name}} is waiting in the Herd Book: there was no room for it.",
     "menu.victory.restored": "You have restored the Community Center. The valley is saved!",
     "menu.victory.continue-hint": "(press A or click to continue)",
     "menu.cutscene.continue-hint": "(click or press A to continue)",
