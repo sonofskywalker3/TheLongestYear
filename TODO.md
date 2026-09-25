@@ -6,7 +6,10 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### PLAYTHROUGH FEEDBACK (Jeff's story speedrun, started 2026-09-25): hold until Jeff says to fix
+### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
+Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
+
+#### Opening feedback (was: hold until Jeff says to fix)
 Collected while Jeff plays; do not touch his running game. Fix only when he says so.
 
 **Notes 1 to 7 BUILT 2026-09-25, plus the follow-ups from Jeff's replays (Lewis's route and smooth walk,
