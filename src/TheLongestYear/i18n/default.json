@@ -551,6 +551,15 @@
     "menu.books.empty-slot": "[empty, click to add]",
     "menu.cookbook.remove-confirm": "Remove \"{{recipe}}\" from the cookbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.craftbook.remove-confirm": "Remove \"{{recipe}}\" from the craftbook?\nThis recipe won't carry over next run unless re-banked.",
+    // DRAFT herd-book: Herd Book menu text, for the game-writing pass (Task 5).
+    "menu.herdbook.title": "Herd Book: {{used}} / {{total}} slots",
+    "menu.herdbook.choose": "Choose an animal for this slot:",
+    "menu.herdbook.empty-slot": "{{kind}}: [empty, click to add]",
+    "menu.herdbook.filled-slot": "{{kind}}: {{name}}, {{hearts}} hearts",
+    "menu.herdbook.picker-row": "{{name}} ({{species}}), {{hearts}} hearts",
+    "menu.herdbook.needs-keep": "Needs {{keep}} to come back",
+    "menu.herdbook.no-animals": "No animal on your farm fits this slot yet.",
+    "menu.herdbook.remove-confirm": "Take {{name}} out of the Herd Book?\n{{name}} won't come back next loop unless you add it again.",
     "menu.victory.restored": "You have restored the Community Center. The valley is saved!",
     "menu.victory.continue-hint": "(press A or click to continue)",
     "menu.cutscene.continue-hint": "(click or press A to continue)",
@@ -563,6 +572,8 @@
     "furniture.cookbook": "The Longest Year Cookbook",
     "furniture.craftbook": "The Longest Year Craftbook",
     "furniture.bundle-log": "The Longest Year Bundle Log",
+    // DRAFT herd-book
+    "furniture.herdbook": "The Longest Year Herd Book",
     "furniture.planning-shrine": "Junimo Planning Shrine",
 
     // -- gmcm -------------------------------------------------------------------------
