@@ -17,6 +17,18 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    left to rot, our petition to purchase it and convert it into a warehouse has been approved."
 3. **Opening, Morris leaving:** the others should only wait while Morris walks 2 or 3 steps, then carry
    on with the scene while he keeps walking off. Right now everyone stands there until he is offscreen.
+4. **Opening, Lewis to the Junimos inside the Community Center:** the cut from Lewis straight to the
+   Junimos is instant and jarring. New staging: Lewis walks out, and the farmer turns to watch him go.
+   As soon as he is out, ONE Junimo pops up behind the farmer, the farmer turns with a "!" bubble, then
+   the rest pop in. None of them may just blink in: each appears with an effect (flash, smoke,
+   whatever works). The unique per-Junimo effects are a separate nice-to-have (see IDEA below); for
+   now one shared effect is enough.
+
+### IDEA, nice to have (Jeff, 2026-09-25): each Junimo appears with its own nature effect
+Not now; investigate some time. Each Junimo colour gets its own entrance tied to a nature aspect: the
+green one appears in the middle of a patch of grass growing up, the blue one in a water drop, the
+orange one in a gust of autumn leaves, and so on for the rest. Would replace the shared pop-in effect
+from playthrough feedback 4 above, and could be reused wherever Junimos appear in the story scenes.
 
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
 GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
