@@ -22,12 +22,16 @@ namespace TheLongestYear.UI
     /// </summary>
     internal sealed class HerdBookMenu : IClickableMenu
     {
-        private const int PanelWidth = 900;
-        private const int PanelHeight = 720;
+        // Rows grown ~15% (Jeff, 2026-09-25) so the sprite/name/hearts/icons/note have room and
+        // never overlap; the panel grows to match. Base sizes kept in comments for reference.
+        private const float RowGrowth = 1.15f;
+        private const int PanelWidth = 1035;   // 900 * RowGrowth
+        private const int PanelHeight = 828;   // 720 * RowGrowth
         private const int PanelPad = 32;
-        private const int RowHeight = 116;   // the Animals tab's 112px slot plus 2px above and below the sprite
+        private const int RowHeight = 134;   // 116 * RowGrowth; the Animals tab's 112px slot plus 2px above and below the sprite
         private const int RowSpacing = 4;
         private const int RowTextInset = 16;
+        private const int ScrollbarGutter = 52;   // arrow width/offset reserved to the right of each row
         private const int RowIdBase = 8300;
         private const int ScrollUpId = 8950;
         private const int ScrollDownId = 8951;
@@ -88,7 +92,7 @@ namespace TheLongestYear.UI
 
             int listX = xPositionOnScreen + PanelPad;
             int listY = yPositionOnScreen + HeaderHeight;
-            int listW = width - PanelPad * 2 - 52;
+            int listW = width - PanelPad * 2 - ScrollbarGutter;
             int listH = height - HeaderHeight - PanelPad;
             _rowsPerPage = Math.Max(1, listH / (RowHeight + RowSpacing));
 
