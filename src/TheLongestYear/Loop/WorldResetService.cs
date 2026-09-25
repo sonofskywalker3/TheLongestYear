@@ -277,6 +277,11 @@ namespace TheLongestYear.Loop
             // loop (Nexus posts, RiseiJaku 2026-09-09). See DisplayOptionsCarryover.
             DisplayOptionsCarryover.Snapshot displayOptions = DisplayOptionsCarryover.Capture();
 
+            // 0f. Refresh the Herd Book from the live farm BEFORE loadForNewGame wipes the animals, so
+            // each registered animal comes back with this loop's hearts (spec 2026-09-25). An entry
+            // whose animal is gone keeps its last snapshot.
+            HerdBookService.RefreshBeforeReset(_meta, _monitor);
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -549,6 +554,10 @@ namespace TheLongestYear.Loop
 
             // 10. Place starting animals into matching housing.
             ApplyStartingAnimals(baseline.StartingAnimals);
+
+            // 10-herd. Herd Book animals, after the Start-with animals so both count toward each
+            // building's room. An entry with no building or no room waits in the book.
+            HerdBookService.Restore(_meta, _monitor);
 
             // 10a. Restore the snapshotted pet on the Farm (keep_pet upgrade). Runs after
             // starting animals so the Farm.characters collection is already settled. No-op
@@ -1141,15 +1150,18 @@ namespace TheLongestYear.Loop
             foreach (var animal in animals)
             {
                 var requiredInfo = ChainInfo(animal.HousingType);
+                // adoptAnimal never checks capacity, so skip full houses here (spec 2026-09-25: the
+                // Start-with animals and the Herd Book share each building's room).
                 Building housing = farm.buildings.FirstOrDefault(b =>
                 {
                     var info = ChainInfo(b.buildingType.Value);
-                    return info.Family == requiredInfo.Family && info.Tier >= requiredInfo.Tier;
+                    return info.Family == requiredInfo.Family && info.Tier >= requiredInfo.Tier
+                        && b.GetIndoors() is AnimalHouse candidate && !candidate.isFull();
                 });
                 if (housing == null)
                 {
                     _monitor.Log(
-                        $"Reset: no '{animal.HousingType}'-or-better building found for " +
+                        $"Reset: no '{animal.HousingType}'-or-better building with room for " +
                         $"starting animal '{animal.VanillaType}'; skipping.",
                         LogLevel.Warn);
                     continue;
@@ -1172,26 +1184,13 @@ namespace TheLongestYear.Loop
                     // case doesn't poison AnimalSpeciesEverOwned with a species the player doesn't
                     // actually have.
                     AnimalSpecies.Record(_meta.AnimalSpeciesEverOwned, animal.VanillaType);
+                    _monitor.Log($"Reset: starting animal '{animal.VanillaType}' placed in {housing.buildingType.Value}.", LogLevel.Info);
                 }
             }
         }
 
-        // Coop chain (chickens, ducks, etc.) and Barn chain (cows, goats, etc.) both
-        // have tier 1/2/3 housing — but a Coop must not satisfy a Cow placement and
-        // vice versa. The family string segregates the two chains; tier comparison
-        // only happens within a family. Silo is a one-tier family, present so the
-        // kept-building spot snapshot can key it (animals never request it).
-        private static (string Family, int Tier) ChainInfo(string blueprint) => blueprint switch
-        {
-            "Coop"         => ("coop", 1),
-            "Big Coop"     => ("coop", 2),
-            "Deluxe Coop"  => ("coop", 3),
-            "Barn"         => ("barn", 1),
-            "Big Barn"     => ("barn", 2),
-            "Deluxe Barn"  => ("barn", 3),
-            "Silo"         => ("silo", 1),
-            _ => ("", 0)
-        };
+        // See TheLongestYear.Core.AnimalHousing.
+        private static (string Family, int Tier) ChainInfo(string blueprint) => AnimalHousing.Chain(blueprint);
 
         // Force-clear a building footprint on the fresh farm: spawned objects/forage
         // (removeObjectsAndSpawned), terrain features (trees, grass, hoed dirt), and
