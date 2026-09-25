@@ -18,6 +18,11 @@ With a kept Big Coop at (52,20) and a second plain Coop built at (60,27), the re
 (60,27). SnapshotKeptBuildingSpots (WorldResetService) likely records the first building of the family it finds,
 not the kept (highest) one. Only bites players with two buildings of one family. Not fixed yet.
 
+### RELEASED 0.18.72 (2026-09-25): Gift of the Junimos room keeps (tanky24u, Nexus bugs, 24 Sep)
+Keep Greenhouse / Quarry Bridge / Glittering Boulder / Minecarts were never buyable: RunReachRequirement.Parse
+did not know the "room:" keyed flag, so the gate always failed (00ac8e5). Reply to tanky24u drafted, awaiting
+Jeff's yes before posting; then mark the bug Fixed in 0.18.72.
+
 ### IDEAS (Jeff, 2026-09-25): more animal powers
 - **Silo keeps X hay:** Keep Silo (150 JP) brings the silo back empty. A power that carries some hay across a rewind
   (tiers, e.g. 60 / 120 / 240) would feed Herd Book animals in a winter-length run. Needs a spec.
@@ -62,7 +67,7 @@ Ask: once a Lost Book (library lore book) has been found, take it out of the art
 point, I'll be happy to add that in." Needs a look at how vanilla picks the Lost Book drop and whether the
 rewind wipes the "books found" count (if it does, the pool refills every loop, which is the complaint).
 
-### BUILT 0.18.59 to 0.18.66 (on master, pushed, NOT released, live-tested 2026-09-25): the Herd Book (keep barn/coop animals across a rewind)
+### RELEASED 0.18.72 (2026-09-25): the Herd Book (keep barn/coop animals across a rewind)
 Spec docs/superpowers/specs/2026-09-25-herd-book-design.md, plan docs/superpowers/plans/2026-09-25-herd-book.md.
 Every player starts with the Herd Book (cow cover, books.png index 3) and one Chicken slot; herdbook_1..17 add
 slots in order: Chicken, Cow x2, Duck x2, Goat x2, Rabbit x2, Sheep x2, Pig x2, then Void Chicken, Golden Chicken,
