@@ -11,6 +11,10 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
 
 1. **Opening, arrival scene:** when the farmer and Robin turn right to look at Lewis, Morris should
    turn right to look at him at the same moment.
+2. **Opening, Morris's line (`event.opening.morris-farm-2`):** replace "Joja has been granted a petition
+   to buy it" with "our petition to purchase it and convert it into a warehouse has been approved." The
+   full line becomes: "The Community Center is a registered historical landmark, but because it has been
+   left to rot, our petition to purchase it and convert it into a warehouse has been approved."
 
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
 GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
