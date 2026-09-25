@@ -14,11 +14,11 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_joja";
         public const string Description =
-            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject | counter | cashier";
+            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject | counter | cashier | scene";
 
         private const int MinArgsLetter = 3;
 
-        public static void Run(IMonitor m, MetaStore meta, string[] args)
+        public static void Run(IMonitor m, MetaStore meta, string[] args, Integration.JojaOfferDriver offerDriver = null)
         {
             if (!Context.IsWorldReady) { m.Log("Load a save first.", LogLevel.Warn); return; }
             if (meta == null || args.Length < 1) { m.Log(Description, LogLevel.Warn); return; }
@@ -55,6 +55,9 @@ namespace TheLongestYear.DebugCommands
                     break;
                 case "cashier":
                     JojaCounterPatch.DebugCashier();
+                    break;
+                case "scene" when offerDriver != null:
+                    offerDriver.DebugReplay();
                     break;
                 default:
                     m.Log(Description, LogLevel.Warn);
