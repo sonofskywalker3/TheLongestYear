@@ -6,21 +6,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### NEXT RELEASE CHECKLIST (Jeff: "make sure you do", 2026-09-24)
-- Push the live Nexus description from `docs/nexus-description.bbcode` (season pity removed; needs Jeff's
-  "yes, push").
-- Retake `release-notes/settings-difficulty.png` (still shows the Season pity dial, ten dials).
-- README intro still says beta 0.18.50, and the newest What's New heading says 0.18.56 while the manifest is 0.18.58; set both to the released version.
-- README and Nexus description have drifted outside What's New: the README's "How it works" section has no
-  bbcode match, and its fail-night line still says holds are TLY Custom boards only (the bbcode says
-  otherwise, and `BundleHold.IsOfferable` now allows every board). Bring them back to identical.
+### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
+GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
+changelog all set via Chrome. Still to do:
+- Retake `release-notes/settings-difficulty.png` (README only; still shows the Season pity dial, ten dials).
+  Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
+- Tell tanky24u the restart and the Rare Fish text shipped (draft to Jeff first).
 
 ### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
 When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
 must also clear `MetaState.Year2WallArmed` (spec: a restart after Keep playing works like "Start a new loop").
 Master has no such field, so nothing does it yet.
 
-### BUILT 0.18.53 to 0.18.58 (on master, pushed, NOT released, live-tested 2026-09-24, all checks passed): voluntary restart on the Junimo Shrine
+### RELEASED 0.18.58 (2026-09-25, live-tested 2026-09-24): voluntary restart on the Junimo Shrine
 Terminology (Jeff, 2026-09-24): the Junimo Shrine is the Junimo statue on the farm that opens the
 planning/buffs view (ShrinePreviewMenu). The menu that opens on a rewind to buy permanent upgrades is NOT the
 shrine; call it the upgrade menu.
@@ -67,7 +65,7 @@ Ask: a setting to go for perfection in one year or the year resets. Jeff's plan:
 ultimate perfection in year 3, then Phase 4 condenses it all into one year. Keep Completed Community Center
 makes it reachable with enough loops. Nothing to build now.
 
-### DONE 0.18.52 (on master, pushed, NOT released): Fortune: Rare Fish description (tanky24u, 24 Sep)
+### RELEASED in 0.18.58: Fortune: Rare Fish description (tanky24u, 24 Sep)
 The text said "Rare fish catch chance increased by 25%", which is not what it does: it acts as a permanent
 Curiosity Lure on every rod (vanilla boosts any fish under a 25% bite chance at that spot). New text: "Your
 rod always works as if it has a Curiosity Lure." Jeff already told him it is fixed in the next release.
