@@ -14,6 +14,11 @@ namespace TheLongestYear.Core;
 /// </summary>
 public static class UpgradeCatalog
 {
+    // Herd Book tier prices, herdbook_1..17 (spec 2026-09-25 slot ladder, levels 2..18; level 1 is
+    // the free Chicken slot). MUST stay above _all: Build() reads it during static initialization.
+    private static readonly long[] HerdBookCosts =
+        { 750, 600, 750, 750, 950, 750, 950, 1050, 1300, 900, 1150, 1050, 1300, 900, 1500, 1350, 2250 };
+
     private static readonly IReadOnlyList<UpgradeDefinition> _all = Build();
     private static readonly IReadOnlyDictionary<string, UpgradeDefinition> _byId =
         _all.ToDictionary(u => u.Id);
@@ -57,6 +62,15 @@ public static class UpgradeCatalog
         int tier = Math.Clamp(highestOwnedTier, 0, BookMaxTier);
         return BookBaseSlots + tier * BookSlotsPerTier;
     }
+
+    /// <summary>Id prefix of the Herd Book tiers: herdbook_N adds Herd Book slot N.</summary>
+    public const string HerdBookPrefix = "herdbook_";
+
+    /// <summary>Herd Book tiers sold: 17, one per slot after the free first one (18 slots).</summary>
+    public const int HerdBookMaxTier = 17;
+
+    /// <summary>The Herd Book slots for the highest owned herdbook tier (0 = only the free slot).</summary>
+    public static IReadOnlyList<HerdSlotKind> HerdBookSlots(int highestOwnedTier) => HerdSlotRules.SlotsFor(highestOwnedTier);
 
     private static IReadOnlyList<UpgradeDefinition> Build()
     {
@@ -310,6 +324,11 @@ public static class UpgradeCatalog
         // chain and put the ostrich in a Deluxe Coop (fixed with the Herd Book, 2026-09-25).
         new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, 1500, "keep_barn", "species:Ostrich"),
         };
+        // Herd Book (spec 2026-09-25): a chain like the Cookbook's, no building gate. A slot whose
+        // building keep is not owned yet just waits (the menu says so).
+        for (int tier = 1; tier <= HerdBookMaxTier; tier++)
+            entries.Add(new UpgradeDefinition($"{HerdBookPrefix}{tier}", UpgradeCategory.Carryover,
+                HerdBookCosts[tier - 1], tier == 1 ? null : $"{HerdBookPrefix}{tier - 1}"));
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMineElevatorKeeps());

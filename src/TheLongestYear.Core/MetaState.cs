@@ -249,6 +249,13 @@ public sealed class MetaState
     public List<string> CraftbookRecipes { get; set; } = new();
 
     /// <summary>
+    /// Animals registered in the Herd Book, one per slot, sorted by slot (spec 2026-09-25). Each is
+    /// refreshed from its live animal just before a reset and rebuilt, hearts included, right after
+    /// the starting animals. An entry whose animal or building is missing stays for next time.
+    /// </summary>
+    public List<HerdEntry> HerdBook { get; set; } = new();
+
+    /// <summary>
     /// String IDs of indicator bubbles the player has already dismissed. Prevents the ?/!
     /// bubble from re-appearing after a reset. Values are "tly.cookbook", "tly.craftbook",
     /// and "tly.fireplace". Using <see cref="HashSet{T}"/> so duplicate dismissals are
