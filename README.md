@@ -25,6 +25,17 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
+## What's New in 0.18.65
+
+**Keep your favourite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
+
+- **The Herd Book.** A new book you carry from the first day, like the Cookbook and Craftbook. Put an animal in one of its slots and it comes back after every rewind as the same animal: same name, same hearts, fully grown. You start with one Chicken slot. Junimo Upgrades sells the rest in a fixed order: a second Chicken, then two each for Cows, Ducks, Goats, Rabbits, Sheep and Pigs, then one each for the Void Chicken, Golden Chicken, Dinosaur and Ostrich. Suggested by tanky24u.
+- **It needs a home to come back to.** An animal returns only when you keep a building it can live in and there is room inside. Otherwise it waits in the book and tries again next loop, and the book tells you which keep a slot needs.
+- **The Herd Book opens before a rewind.** After the Cookbook and Craftbook, it opens on its own when it has an empty slot and an animal on your farm that fits it.
+- **Start with an animal can be bought.** None of the ten Start with keeps could ever be bought, because the mod never noticed the animals you owned. It now notes every kind of animal on your farm each morning, so once you have had a chicken, Start with Chicken is for sale after Keep Coop.
+- **Start with Ostrich uses a Barn.** Ostriches live in barns, but this keep put one in a Deluxe Coop. It now needs Keep Barn.
+- **A full building stays full.** A Start with animal no longer squeezes into a coop or barn that has no room.
+
 ## What's New in 0.18.58
 
 **Start the year over whenever you like from the Junimo Shrine, and season pity is gone.**
@@ -167,7 +178,7 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 - **Junimo Upgrades.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
 - **JP Boosts.** The Junimo statue on your farm sells this-loop edges for JP: tomorrow's rain or a lucky day, a free late night, stacking forage/fish/crop/mine/drop chances, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot, or an elevator stop you have not earned yet. An Active tab shows what is running and a Plan tab shows what each keep still needs.
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
-- **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, and a Junimo Stash chest that survives resets.
+- **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, a **Herd Book** that brings your registered animals back with their hearts, and a Junimo Stash chest that survives resets.
 - **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
 - **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.
 - **The town half-remembers.** Villagers you have spent a lot of time with across loops occasionally say something uncanny. Rare, no gameplay effect, and it never explains itself. Toggle in Features.

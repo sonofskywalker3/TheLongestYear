@@ -3,6 +3,21 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.65 - 2026-09-25
+
+2308 tests.
+
+### Added
+
+- **Herd Book.** A fourth carried book (sprite index 3 in `assets/books.png`), granted to every save including existing ones. 18 slots on a fixed ladder: one free Chicken slot, then `herdbook_1..17` in Junimo Upgrades (Carryover, chained, 600 to 2250 JP): Chicken, Cow x2, Duck x2, Goat x2, Rabbit x2, Sheep x2, Pig x2, Void Chicken, Golden Chicken, Dinosaur, Ostrich. A Chicken slot takes white, brown and blue chickens only. A registered animal is refreshed from the live farm just before the reset (an animal that is gone keeps its last snapshot) and rebuilt after the Start-with animals with its id, name, skin, friendship, happiness, age (at least adult), days owned, Golden Animal Cracker and reproduction setting. It needs its slot kind's building keep (Duck and Dinosaur: Big Coop, Rabbit: Deluxe Coop, Goat: Big Barn, Sheep and Pig: Deluxe Barn, Ostrich: Barn) and room; otherwise it is logged, gets a HUD line, and stays registered. Opens on a rewind night after the Craftbook when an empty slot has a fitting animal. Suggested by tanky24u (Nexus, 2026-09-24).
+- **`tly_openherdbook`** and **`tly_herdbook list | record | register | remove | friend`** debug commands.
+
+### Fixed
+
+- **Start with an animal keeps could never be bought.** Nothing recorded the species you owned, and three gate names (Chicken, VoidChicken, Cow) never matched vanilla's (White Chicken, Void Chicken, White Cow). Species are now recorded from the farm on every DayStarted and Saving, normalized on both sides of the gate, so saves that stored the vanilla names match too.
+- **Start with Ostrich** needed Keep Deluxe Coop and put the ostrich in a coop; ostriches live in barns. It now needs Keep Barn.
+- **Start-with animals ignored building capacity.** A full coop or barn is now skipped.
+
 ## 0.18.58 - 2026-09-24
 
 2159 tests.
