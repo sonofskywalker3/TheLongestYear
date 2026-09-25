@@ -423,6 +423,8 @@
     "shrine.boosts.crash-course-row": "{{skill}} {{from}} to {{to}}",
     "shrine.boosts.elevator-row": "floor {{from}} to {{to}}",
     "shrine.plan.locked": "Locked ({{count}})",
+    "shrine.no-room.coop": "Needs more coop room",
+    "shrine.no-room.barn": "Needs more barn room",
     "shrine.boosts.enter-mine": "Enter the mine first",
     "shrine.boosts.bottom-reached": "Bottom reached",
     "shrine.boosts.multiplier": "Current multiplier: x{{factor}}",

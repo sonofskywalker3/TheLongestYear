@@ -21,7 +21,10 @@ public static class UpgradePurchase
         /// (e.g. "Start with Chicken" requires ever having owned a chicken).</summary>
         MetaRequirementMissing,
         /// <summary>The player does not have enough Junimo Points.</summary>
-        NotEnoughJp
+        NotEnoughJp,
+        /// <summary>An animal keep that would put more animals in its Coop or Barn family than the
+        /// kept buildings hold (<see cref="AnimalCapacityRule"/>).</summary>
+        NoAnimalRoom
     }
 
     /// <param name="priceFactor">The run's difficulty shrine-price factor (spec 2026-08-26).
@@ -38,6 +41,8 @@ public static class UpgradePurchase
             return PurchaseResult.PrerequisiteMissing;
         if (!state.MeetsMetaRequirement(definition.MetaRequirement))
             return PurchaseResult.MetaRequirementMissing;
+        if (AnimalCapacityRule.WouldOverflow(state, definition.Id))
+            return PurchaseResult.NoAnimalRoom;
         long cost = UpgradePricing.EffectiveCost(definition, priceFactor, state);
         if (state.JunimoPoints < cost)
             return PurchaseResult.NotEnoughJp;

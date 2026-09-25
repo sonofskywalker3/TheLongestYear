@@ -78,6 +78,16 @@ namespace TheLongestYear.Donations
                         $"Cannot purchase '{def.Id}': meta-requirement '{def.MetaRequirement}' not yet met.",
                         LogLevel.Info);
                     break;
+                case UpgradePurchase.PurchaseResult.NoAnimalRoom:
+                {
+                    string family = AnimalCapacityRule.FamilyOf(def.Id);
+                    _monitor.Log(
+                        $"Cannot purchase '{def.Id}': the kept {family} buildings hold " +
+                        $"{AnimalCapacityRule.Capacity(_store.State, family)} animals and " +
+                        $"{AnimalCapacityRule.Demand(_store.State, family)} already need that room.",
+                        LogLevel.Info);
+                    break;
+                }
             }
         }
     }

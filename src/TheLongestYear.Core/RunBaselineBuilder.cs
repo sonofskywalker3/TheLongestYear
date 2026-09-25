@@ -63,6 +63,14 @@ public static class RunBaselineBuilder
             ["start_pig"]           = ("Pig",           "Deluxe Barn"),
         };
 
+    /// <summary>The "Start with" row ids, catalog order (read by <see cref="AnimalCapacityRule"/>).</summary>
+    public static IEnumerable<string> StartingAnimalIds => StartingAnimalMap.Keys;
+
+    /// <summary>The housing blueprint a "Start with" row's animal lives in ("Coop", "Big Barn"...),
+    /// or null when <paramref name="upgradeId"/> is not a start_* row.</summary>
+    public static string? StartingAnimalHousing(string upgradeId)
+        => StartingAnimalMap.TryGetValue(upgradeId, out var mapping) ? mapping.HousingType : null;
+
     public static RunBaseline Build(MetaState meta, RunState run, PlayerSnapshot peaks, int defaultStartingMoney)
     {
         // Seed Money — 5-tier chain, highest owned tier wins (the dollar amount is the

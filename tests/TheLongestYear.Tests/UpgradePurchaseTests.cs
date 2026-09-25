@@ -95,7 +95,8 @@ public class UpgradePurchaseTests
         var state = new MetaState
         {
             JunimoPoints = 500,
-            AnimalSpeciesEverOwned = { "Chicken" }
+            AnimalSpeciesEverOwned = { "Chicken" },
+            OwnedUpgrades = { "keep_coop" },   // room for the chicken (AnimalCapacityRule)
         };
         var result = UpgradePurchase.TryPurchase(
             state, Def("start_chicken", 400, meta: "species:Chicken"));
@@ -110,7 +111,8 @@ public class UpgradePurchaseTests
         var state = new MetaState
         {
             JunimoPoints = 500,
-            AnimalSpeciesEverOwned = { "chicken" }   // lowercase
+            AnimalSpeciesEverOwned = { "chicken" },   // lowercase
+            OwnedUpgrades = { "keep_coop" },          // room for the chicken (AnimalCapacityRule)
         };
         var result = UpgradePurchase.TryPurchase(
             state, Def("start_chicken", 400, meta: "species:Chicken"));   // mixed case requirement
