@@ -680,11 +680,29 @@ namespace TheLongestYear.Loop
             }
 
             string subtitle = Strings.Get("menu.books.bank-before-reset");
-            if (isCooking) _launcher.OpenCookbook(subtitle); else _launcher.OpenCraftbook(subtitle);
-            if (Game1.activeClickableMenu is TheLongestYear.UI.CookbookMenu or TheLongestYear.UI.CraftbookMenu)
+            WatchRewindMenu(
+                bookName,
+                $"slots={slots}, banked={banked.Count}, bankable={bankable}",
+                () => { if (isCooking) _launcher.OpenCookbook(subtitle); else _launcher.OpenCraftbook(subtitle); },
+                menu => menu is TheLongestYear.UI.CookbookMenu or TheLongestYear.UI.CraftbookMenu,
+                onContinue);
+        }
+
+        /// <summary>Shared by the rewind-night books (Cookbook, Craftbook, Herd Book): open the menu,
+        /// and if it is up, watch it (see <see cref="TickShrineWatchdog"/>) and continue from its
+        /// exitFunction; if something else is in the way, log it and continue straight away, so the
+        /// reset always happens.</summary>
+        private void WatchRewindMenu(
+            string name,
+            string detail,
+            System.Action open,
+            System.Func<StardewValley.Menus.IClickableMenu, bool> isExpected,
+            System.Action onContinue)
+        {
+            open();
+            if (Game1.activeClickableMenu is { } menu && isExpected(menu))
             {
-                StardewValley.Menus.IClickableMenu menu = Game1.activeClickableMenu;
-                _monitor.Log($"{bookName} offered before the reset: slots={slots}, banked={banked.Count}, bankable={bankable}.", LogLevel.Info);
+                _monitor.Log($"{name} offered before the reset: {detail}.", LogLevel.Info);
                 _menuWatch = (menu, onContinue);
                 menu.exitFunction = () =>
                 {
@@ -695,7 +713,7 @@ namespace TheLongestYear.Loop
             }
             string blockingMenu = Game1.activeClickableMenu?.GetType().Name ?? "none";
             _monitor.Log(
-                $"{bookName} could not open before the reset; continuing without it. " +
+                $"{name} could not open before the reset; continuing without it. " +
                 $"activeClickableMenu={blockingMenu}, eventUp={Game1.eventUp}.",
                 LogLevel.Warn);
             onContinue();

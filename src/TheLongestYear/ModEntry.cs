@@ -2451,6 +2451,11 @@ namespace TheLongestYear
                 if (Game1.activeClickableMenu == null && !Game1.eventUp)
                     _runController?.TryDrainDeferredOffer();
 
+                // Herd Book "waiting" HUD lines from the reset, held until the save and the planning
+                // hub are gone so they don't expire unseen. Runs after the deferred offer so a hub
+                // that opens this tick keeps them waiting.
+                Loop.HerdBookService.ShowWaitingHud(this.Monitor);
+
                 // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
                 // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the
                 // festival's end time rather than up to 30 ticks (~500ms) later.

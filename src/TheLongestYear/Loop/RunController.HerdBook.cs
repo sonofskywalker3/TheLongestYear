@@ -25,24 +25,12 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            _launcher.OpenHerdBook(Strings.Get("menu.herdbook.bank-before-reset"));
-            if (Game1.activeClickableMenu is TheLongestYear.UI.HerdBookMenu)
-            {
-                StardewValley.Menus.IClickableMenu menu = Game1.activeClickableMenu;
-                _monitor.Log($"Herd Book offered before the reset: slots={slots.Count}, registered={registered}, animals={live.Count}.", LogLevel.Info);
-                _menuWatch = (menu, onContinue);
-                menu.exitFunction = () =>
-                {
-                    _menuWatch = null;
-                    onContinue();
-                };
-                return;
-            }
-            _monitor.Log(
-                "Herd Book could not open before the reset; continuing without it. " +
-                $"activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, eventUp={Game1.eventUp}.",
-                LogLevel.Warn);
-            onContinue();
+            WatchRewindMenu(
+                "Herd Book",
+                $"slots={slots.Count}, registered={registered}, animals={live.Count}",
+                () => _launcher.OpenHerdBook(Strings.Get("menu.herdbook.bank-before-reset")),
+                menu => menu is TheLongestYear.UI.HerdBookMenu,
+                onContinue);
         }
     }
 }

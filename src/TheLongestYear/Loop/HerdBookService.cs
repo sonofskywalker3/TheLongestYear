@@ -71,6 +71,27 @@ namespace TheLongestYear.Loop
             return removed;
         }
 
+        /// <summary>What vanilla growFully sets daysSinceLastLay to: past every animal's produce interval.</summary>
+        private const int ProduceReadyDays = 99;
+
+        /// <summary>How long a "waiting in the Herd Book" HUD line stays up (vanilla default is 5250 ms).</summary>
+        private const float WaitingHudMs = 10000f;
+
+        /// <summary>HUD lines from <see cref="Restore"/>. The reset is followed by the save and the
+        /// planning hub, and a HUDMessage counts down behind open menus, so the lines are held here
+        /// and shown by <see cref="ShowWaitingHud"/> once the player is free.</summary>
+        private static readonly List<string> PendingWaitingHud = new();
+
+        /// <summary>Called every tick from ModEntry; shows the held lines when no menu or event is up.</summary>
+        public static void ShowWaitingHud(IMonitor monitor)
+        {
+            if (PendingWaitingHud.Count == 0 || !Context.IsPlayerFree) return;
+            foreach (string line in PendingWaitingHud)
+                Game1.addHUDMessage(new HUDMessage(line, HUDMessage.newQuest_type) { timeLeft = WaitingHudMs });
+            monitor.Log($"HerdBook: showed {PendingWaitingHud.Count} waiting line(s) now that the player is free.", LogLevel.Trace);
+            PendingWaitingHud.Clear();
+        }
+
         /// <summary>Step 0f of the reset, before loadForNewGame: every registered animal still on the
         /// farm takes its current snapshot, so it comes back with this loop's hearts. One that is gone
         /// keeps its last snapshot.</summary>
@@ -94,6 +115,7 @@ namespace TheLongestYear.Loop
         /// that cannot come back is logged, gets a HUD line, and stays in the book.</summary>
         public static void Restore(MetaState meta, IMonitor monitor)
         {
+            PendingWaitingHud.Clear();
             if (meta == null || meta.HerdBook.Count == 0) return;
             Farm farm = Game1.getFarm();
             if (farm == null)
@@ -147,14 +169,20 @@ namespace TheLongestYear.Loop
             }
             animal.Name = entry.Name;
             animal.displayName = entry.Name;
-            if (!string.IsNullOrEmpty(entry.SkinId))
-                animal.skinID.Value = entry.SkinId;
+            // Unconditional: a null SkinId is the default look, and a re-rolled id would otherwise
+            // pick a random skin in the constructor.
+            animal.skinID.Value = entry.SkinId;
             animal.friendshipTowardFarmer.Value = HerdBookRules.ClampFriendship(entry.Friendship);
             animal.happiness.Value = HerdBookRules.ClampHappiness(entry.Happiness);
             animal.age.Value = HerdBookRules.AdultAge(entry.Age, data.DaysToMature);
             animal.daysOwned.Value = entry.DaysOwned;
             animal.hasEatenAnimalCracker.Value = entry.HasEatenAnimalCracker;
             animal.allowReproduction.Value = entry.AllowReproduction;
+            // Same as vanilla FarmAnimal.growFully: ready to produce tonight, and a sheep has its
+            // wool (unsheared sprite) straight away.
+            if (data.ProduceOnMature)
+                animal.currentProduce.Value = animal.GetProduceID(Game1.random);
+            animal.daysSinceLastLay.Value = ProduceReadyDays;
             animal.ReloadTextureIfNeeded();   // baby sprite to adult sprite
             return animal;
         }
@@ -172,10 +200,9 @@ namespace TheLongestYear.Loop
                 $"HerdBook: '{a.Entry.Name}' ({a.Entry.Type}, slot {a.Entry.SlotIndex}) waits: {a.Skip} " +
                 $"(needs a {HerdSlotRules.RequiredHousing(kind)} or better with room). Entry kept.",
                 LogLevel.Info);
-            Game1.addHUDMessage(new HUDMessage(
+            PendingWaitingHud.Add(
                 Strings.Get(a.Skip == HerdSkip.NoRoom ? "hud.herdbook.no-room" : "hud.herdbook.no-building",
-                    new Dictionary<string, string> { ["name"] = a.Entry.Name, ["keep"] = keep }),
-                HUDMessage.newQuest_type));
+                    new Dictionary<string, string> { ["name"] = a.Entry.Name, ["keep"] = keep }));
         }
     }
 }
