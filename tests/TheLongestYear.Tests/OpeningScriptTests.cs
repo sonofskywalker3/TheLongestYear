@@ -30,17 +30,16 @@ public class OpeningScriptTests
     }
 
     [Fact]
-    public void Morris_is_gone_before_the_hall_and_lewis_is_gone_before_the_tour()
+    public void Morris_and_Robin_stay_on_the_farm_and_Lewis_stays_in_the_hall()
     {
         string[] commands = OpeningScript.Build(Text, "flag").Split('/');
-        int hall = Array.IndexOf(commands, "changeLocation CommunityCenter");
+        // tlyChangeLocation clears every actor, so leaving a scene is the scene change itself.
+        int hall = Array.FindIndex(commands, c => c.StartsWith("tlyChangeLocation CommunityCenter", StringComparison.Ordinal));
         int tour = Array.FindLastIndex(commands, c => c.StartsWith("tlyChangeLocation Farm", StringComparison.Ordinal));
-        Assert.True(tour > hall);
-        Assert.Contains(commands.Take(hall), c => c == "warp Morris -100 -100");
+        Assert.True(hall > 0 && tour > hall);
         Assert.DoesNotContain(commands.Skip(hall), c => c.Contains("Morris"));
-        Assert.Contains(commands.Take(hall), c => c == "warp Robin -100 -100");
         Assert.DoesNotContain(commands.Skip(hall), c => c.Contains("Robin"));
-        Assert.Contains(commands.Skip(hall).Take(tour - hall), c => c == "warp Lewis -100 -100");
+        Assert.Contains(commands.Skip(hall).Take(tour - hall), c => c.StartsWith("addTemporaryActor Lewis ", StringComparison.Ordinal));
         Assert.DoesNotContain(commands.Skip(tour), c => c.Contains("Lewis"));
     }
 
@@ -71,7 +70,9 @@ public class OpeningScriptTests
         string[] commands = OpeningScript.Build(Text, "flag").Split('/');
         var overrideNames = commands
             .Where(c => c.StartsWith("addTemporaryActor ", StringComparison.Ordinal))
-            .Select(c => c.Split(' ')[^1])
+            // addTemporaryActor <sprite> <w> <h> <x> <y> <dir> <breather> <type> [overrideName]:
+            // with no override the actor is named after its sprite.
+            .Select(c => c.Split(' ') is var p && p.Length > 9 ? p[9] : c.Split(' ')[1])
             .ToList();
         Assert.Equal(overrideNames.Distinct().Count(), overrideNames.Count);
     }
