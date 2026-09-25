@@ -23,6 +23,10 @@ namespace TheLongestYear.Integration
         private const string Prefix = "Portraits/Junimo";
         private const string SourceAsset = "Characters/Junimo";
         private const int PortraitSheet = 128, Cell = 64, Frame = 16, Scale = 3;
+        // Six cells (2 wide, 3 high), every one the same face. A line tagged $h or $s asks for cell 1
+        // or 2; with only cell 0 drawn those pages showed an empty portrait box (opening playthrough,
+        // Jeff 2026-09-25: blank on every page that ended a $h or $s line).
+        private const int SheetHeight = Cell * 3;
         // The Junimo is 16 px of real art, so filling the whole 64 px cell the way a hand-drawn
         // villager portrait does made it read as a wall of giant pixels in the speech box (Jeff,
         // 2026-09-10). It is drawn at 3x and centred in the cell instead, leaving a margin.
@@ -65,7 +69,7 @@ namespace TheLongestYear.Integration
 
         private Texture2D Build(Color tint)
         {
-            var pixels = new Color[PortraitSheet * PortraitSheet];
+            var pixels = new Color[PortraitSheet * SheetHeight];
             try
             {
                 Texture2D source = Game1.content.Load<Texture2D>(SourceAsset);
@@ -79,11 +83,14 @@ namespace TheLongestYear.Integration
                         if (sx >= source.Width || sy >= source.Height || sx >= Frame || sy >= Frame) continue;
                         Color c = src[sy * source.Width + sx];
                         if (c.A == 0) continue;
-                        pixels[(y + Inset) * PortraitSheet + (x + Inset)] = new Color(
+                        var tinted = new Color(
                             (byte)(c.R * tint.R / 255),
                             (byte)(c.G * tint.G / 255),
                             (byte)(c.B * tint.B / 255),
                             c.A);
+                        for (int cy = 0; cy < SheetHeight; cy += Cell)
+                            for (int cx = 0; cx < PortraitSheet; cx += Cell)
+                                pixels[(cy + y + Inset) * PortraitSheet + (cx + x + Inset)] = tinted;
                     }
                 }
                 if (!_logged)
@@ -96,9 +103,9 @@ namespace TheLongestYear.Integration
             {
                 // A transparent sheet still ends the per-frame retry loop, which is the point.
                 _monitor.Log($"Junimo portrait: could not build from {SourceAsset} ({ex.Message}); serving a blank portrait.", LogLevel.Warn);
-                pixels = new Color[PortraitSheet * PortraitSheet];
+                pixels = new Color[PortraitSheet * SheetHeight];
             }
-            var result = new Texture2D(Game1.graphics.GraphicsDevice, PortraitSheet, PortraitSheet);
+            var result = new Texture2D(Game1.graphics.GraphicsDevice, PortraitSheet, SheetHeight);
             result.SetData(pixels);
             return result;
         }

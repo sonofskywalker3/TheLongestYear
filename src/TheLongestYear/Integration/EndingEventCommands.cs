@@ -30,6 +30,9 @@ namespace TheLongestYear.Integration
 
         public static Color Get(int index)
             => index >= 0 && index < Colours.Length ? Colours[index] : Colours[0];
+
+        /// <summary>The palette slot <see cref="Get"/> actually uses for <paramref name="index"/>.</summary>
+        public static int Slot(int index) => index >= 0 && index < Colours.Length ? index : 0;
     }
 
     /// <summary>Custom event commands the Year One Ending needs beyond vanilla's set (registered through
@@ -372,7 +375,15 @@ namespace TheLongestYear.Integration
                         net.Value = JunimoPalette.Get(colour);
                     else
                         monitor.Log($"{JunimoName}: could not set the colour of {name}; it keeps a random one.", LogLevel.Trace);
+                    // A real Junimo never loads a portrait itself, so vanilla "speak" showed an empty
+                    // box. Hand it the tinted face JunimoPortrait serves for this palette slot.
+                    try { junimo.Portrait = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("Portraits/Junimo" + JunimoPalette.Slot(colour)); }
+                    catch (Exception ex) { monitor.Log($"{JunimoName}: no portrait for {name} ({ex.GetType().Name}).", LogLevel.Trace); }
                     evt.actors.Add(junimo);
+                    // Optional fifth arg "pop": appear in a puff of smoke in the Junimo's colour
+                    // instead of blinking in (Jeff, 2026-09-25 opening playthrough).
+                    if (ArgUtility.Get(args, 5) == "pop")
+                        Pop(junimo.Position, JunimoPalette.Get(colour));
                 }
                 catch (Exception ex)
                 {
@@ -380,6 +391,16 @@ namespace TheLongestYear.Integration
                 }
                 evt.CurrentCommand++;
             });
+        }
+
+        /// <summary>A Junimo's entrance: a smoke puff in its colour and a few sparkles, with its meep.</summary>
+        internal static void Pop(Vector2 position, Color colour)
+        {
+            GameLocation loc = Game1.currentLocation;
+            if (loc == null) return;
+            loc.temporarySprites.Add(new TemporaryAnimatedSprite(5, position, colour, animationLength: 8, animationInterval: 70f));
+            Utility.addSprinklesToLocation(loc, (int)(position.X / 64f), (int)(position.Y / 64f), 1, 1, 400, 40, colour);
+            Game1.playSound("junimoMeep1");
         }
 
         private static void DrawBlack(Microsoft.Xna.Framework.Graphics.SpriteBatch b)
