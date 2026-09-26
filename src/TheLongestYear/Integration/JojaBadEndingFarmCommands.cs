@@ -101,7 +101,7 @@ namespace TheLongestYear.Integration
                 int outside = farm == null ? 0 : JojaFarmAnimals.Outside(farm);
                 if (outside > 0 && _waitElapsed < timeout) return;   // called every tick until they are in
                 if (outside > 0)
-                    _monitor.Log($"{AnimalsWaitName}: {outside} of {JojaFarmAnimals.Count} animal(s) still out after {timeout} ms; moved in unseen: "
+                    _monitor.Log($"{AnimalsWaitName}: {outside} of {JojaFarmAnimals.Count} animal(s) still out after {timeout} ms; moved in directly: "
                                  + string.Join("; ", JojaFarmAnimals.SendStragglersInside(farm)), LogLevel.Info);
                 else
                     _monitor.Log($"{AnimalsWaitName}: all {JojaFarmAnimals.Count} animals went in on their own ({(int)_waitElapsed} ms after the last pan).", LogLevel.Info);

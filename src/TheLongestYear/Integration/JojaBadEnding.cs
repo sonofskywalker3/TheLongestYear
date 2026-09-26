@@ -9,7 +9,12 @@
 // Town: the river south-east of town runs down cols 76..82 under the bridge on rows 93..96; west
 //   bank sand 74,89..93, east bank sand 83,90..92. Dead fish on the sand at 74,90, 74,92 and 83,91.
 //   The farmer is parked at 74,93 (sand). Camera: 78,93 (river, bridge, both banks), then a pan to
-//   44,57 (Pierre's front, boarded up by JojaPierreBoards).
+//   44,57 (Pierre's front, boarded up by JojaPierreBoards). Floating litter only on the river the
+//   camera on 78,93 sees (74..85 x 84..101).
+// Beach (Maps/Beach is 104 x 50, patch export 2026-09-25): the sand runs from the west sea (x 0..8)
+//   past Elliott's cabin and the river mouth (x 57..62) to the tide pools and the east pier (x 86).
+//   The camera pans the shore on rows 18..20 from x 18 to x 86; litter is picked from the whole map
+//   by the shore rule in JojaLitter (dry open sand within 4 tiles of water).
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
