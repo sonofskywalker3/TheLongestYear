@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.ItemTypeDefinitions;
 
 namespace TheLongestYear.Integration
 {
