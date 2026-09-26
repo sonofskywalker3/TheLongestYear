@@ -25,7 +25,8 @@ namespace TheLongestYear.Integration
     /// <c>tlyClosedSign &lt;x&gt; &lt;y&gt;</c>: two brown planks nailed in an X across the two-tile door whose
     /// bottom-left tile is (x, y). LooseSprites/Cursors has no "closed" sign, so they are drawn from
     /// Game1.staminaRect.
-    /// <c>tlyGameOver</c>: ends the script and exits to the title without saving.</summary>
+    /// <c>tlyGameOver</c>: ends the script and opens the Game Over screen (JojaGameOverMenu), which
+    /// exits to the title without saving.</summary>
     internal static partial class JojaBadEndingCommands
     {
         public const string HideFarmhouseName = "tlyHideFarmhouse";
@@ -102,7 +103,7 @@ namespace TheLongestYear.Integration
             if (_gameOverSent) return;
             _gameOverSent = true;
             _monitor.Log($"Joja: {why}; exiting to the title without saving.", LogLevel.Warn);
-            // Task 7 routes this through JojaGameOverMenu instead of going straight to the title.
+            // Straight to the title, no Game Over screen: an abnormal end is not the scene's ending.
             Game1.ExitToTitle();
         }
 
@@ -288,18 +289,18 @@ namespace TheLongestYear.Integration
 
         private static void GameOver(Event evt, string[] args, EventContext context)
         {
-            // Task 7 replaces this with JojaGameOverMenu (which exits to the title itself).
             evt.CurrentCommand++;   // past the last command: the script idles under the black overlay
             if (_gameOverSent) return;
             _gameOverSent = true;
             try
             {
-                _monitor.Log("Joja: bad ending over; exiting to the title without saving.", LogLevel.Info);
-                Game1.ExitToTitle();
+                _monitor.Log("Joja: bad ending over; showing the Game Over screen (no save).", LogLevel.Info);
+                Game1.activeClickableMenu = new UI.JojaGameOverMenu(_monitor);   // its Exit() goes to the title
             }
             catch (Exception ex)
             {
-                _monitor.Log($"{GameOverName}: {ex.GetType().Name}: {ex.Message}.", LogLevel.Error);
+                _monitor.Log($"{GameOverName}: {ex.GetType().Name}: {ex.Message}; exiting to the title without saving.", LogLevel.Error);
+                Game1.ExitToTitle();
             }
         }
 

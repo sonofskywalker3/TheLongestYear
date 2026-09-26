@@ -2223,6 +2223,13 @@ namespace TheLongestYear
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (ok != null) { ok.Invoke(levelUp, null); this.Monitor.Log($"tly_dismiss: {name} OK clicked.", LogLevel.Info); return; }
             }
+            if (menu is UI.JojaGameOverMenu)
+            {
+                // Its own key path (exit to the title, no save); exitThisMenu would strand the event.
+                menu.receiveKeyPress(Microsoft.Xna.Framework.Input.Keys.Enter);
+                this.Monitor.Log($"tly_dismiss: {name} sent Enter.", LogLevel.Info);
+                return;
+            }
             menu.exitThisMenu(playSound: false);
             this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
         }
