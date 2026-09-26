@@ -67,9 +67,14 @@ and wiping a deep run for that reads as mean rather than roguelike; SMAPI's dail
 make a permanent loss undoable anyway.
 
 **The scene** (we cannot build a real factory, so it is staged):
-- The farm: the farmhouse torn down (dust and debris over it, then the building hidden for the rest
-  of the scene), coops and barns going up, and lines of sad animals walking in: cows, sheep, goats,
-  chickens, ducks, pigs only (no rabbits, no exotic animals).
+- The farm (reworked by Jeff, 2026-09-25, after watching the first build): the farmhouse torn down
+  (dust and debris over it, then the building hidden for the rest of the scene), then the whole farm
+  paved: real flooring (a concrete-looking floor) laid across the entire map, and **real** coops and
+  barns (actual farm buildings, with their proper bases, not sprites drawn on top) in rows side by side
+  across the whole farm. **Real** farm animals (cows, sheep, goats, chickens, ducks, pigs only; no
+  rabbits, no exotic animals), each housed in one of those buildings, walk in the way they do in the
+  evening: the game's own go-home behavior, not scripted lines. The camera pans across all the rows.
+  All of it is in memory only: the scene always ends at the title without saving (fail-closed).
 - The town: pollution, a green river with dead fish, driftwood all over the beach, a Closed sign
   across Pierre's door.
 - Staging uses the mod's own event tools where they exist (`tlyChangeLocation`, `tlyFadeIn`,
