@@ -3303,7 +3303,9 @@ namespace TheLongestYear
             TheLongestYear.Loop.AnimalSpeciesRecorder.Record(_meta.State, this.Monitor);
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
-            _jojaLetters?.OnDayStarted();
+            // Before the run controller (it reads the game's date, see the method), but told about a
+            // pending rewind so the old loop's last morning sends nothing.
+            _jojaLetters?.OnDayStarted(rewindPending: _runController?.IsRewindChainRunning == true);
             _runController?.OnDayStarted(sender, e);
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.

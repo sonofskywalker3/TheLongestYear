@@ -33,34 +33,49 @@ namespace TheLongestYear.Loop
         /// <summary>Called from ModEntry's DayStarted, BEFORE RunController syncs Run.Season and
         /// Run.DayOfMonth to the new day, so today is read from the game's own date. Reading the run
         /// calendar here delivered every letter a day late (live check 2026-09-25: day 8 planned,
-        /// arrived on day 9).</summary>
-        public void OnDayStarted()
+        /// arrived on day 9).
+        ///
+        /// <paramref name="rewindPending"/> is RunController.IsRewindChainRunning: on the morning a
+        /// loop ends, DayStarted fires with the OLD loop's state before the rewind chain begins the
+        /// new one, so no letter goes out (JojaOffer.MorningLetter owns that rule).</summary>
+        public void OnDayStarted(bool rewindPending)
         {
             if (!RunActivation.IsActive || Game1.player == null) return;
             RunState run = _meta.Run;
             MetaState meta = _meta.State;
-            if (run.JojaLetterDays == null || run.JojaLetterDays.Count == 0)
-                run.JojaLetterDays = JojaOffer.PlanLetterDays(unchecked(run.Seed * 31 + 0x4A6F6A61));
             int today = Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
 
-            int come = JojaOffer.ComeLetterDue(run, meta, today);
-            if (come > 0)
+            JojaLetter letter = JojaOffer.MorningLetter(run, meta, today, rewindPending);
+            if (letter.Kind == JojaLetterKind.None) return;
+            Deliver((letter.Kind == JojaLetterKind.Come ? ComePrefix : DecidePrefix) + letter.Number);
+            JojaOffer.Record(run, meta, letter);
+            if (letter.Rejects)
+                _monitor.Log($"Joja: the fourth decision letter went unanswered; rejected in loop {run.RunNumber}.", LogLevel.Info);
+        }
+
+        /// <summary>True for any of Morris's letter keys.</summary>
+        public static bool IsLetterKey(string key)
+            => key != null && (key.StartsWith(ComePrefix, System.StringComparison.Ordinal)
+                               || key.StartsWith(DecidePrefix, System.StringComparison.Ordinal));
+
+        /// <summary>Called by the loop reset: an unread Morris letter from the old loop must not sit
+        /// in the new loop's mailbox. Returns how many were removed.</summary>
+        public static int PurgeFromMail(Farmer who)
+        {
+            if (who == null) return 0;
+            int removed = 0;
+            for (int i = who.mailbox.Count - 1; i >= 0; i--)
             {
-                Deliver(ComePrefix + come);
-                run.JojaLettersSent = come;
-                return;   // at most one Morris letter a morning
+                if (!IsLetterKey(who.mailbox[i])) continue;
+                who.mailbox.RemoveAt(i);
+                removed++;
             }
-            int decide = JojaOffer.DecisionLetterDue(run, meta, today);
-            if (decide > 0)
+            foreach (string key in System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(who.mailForTomorrow, IsLetterKey)))
             {
-                Deliver(DecidePrefix + decide);
-                run.JojaDecisionLettersSent = decide;
-                if (decide == JojaOffer.DecisionLetters)
-                {
-                    JojaOffer.Reject(meta, run.RunNumber);
-                    _monitor.Log($"Joja: the fourth decision letter went unanswered; rejected in loop {run.RunNumber}.", LogLevel.Info);
-                }
+                who.mailForTomorrow.Remove(key);
+                removed++;
             }
+            return removed;
         }
 
         private void Deliver(string key)
