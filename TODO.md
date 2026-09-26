@@ -6,7 +6,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BUILT 2026-09-25 (Jeff: "build it"): Morris's offer (Joja side quest and game over)
+### WAITING ON JEFF: play through and check the Morris ending (built 2026-09-25, Jeff: "build it"): Morris's offer (Joja side quest and game over)
 `docs/superpowers/specs/2026-09-25-joja-offer-design.md`, plan `docs/superpowers/plans/2026-09-25-joja-offer.md` (8 tasks, subagent-driven).
 All 8 tasks built on `story`. Headless check 2026-09-25 (log only, frames came back black): letters on
 their planned days, the offer scene on first entry, the cashier and Morris lines for undecided, No,
@@ -14,6 +14,8 @@ same-loop and later-loop, the bad ending end to end with the Game Over screen an
 written, and no letters after a rejection. Fixed in that check: letters had arrived a day late.
 
 **Still only Jeff can check (by eye or ear):**
+- **Jeff to do (2026-09-26): play the Morris ending himself, from the letters through saying Yes to the
+  Game Over screen, and sign it off or send notes.** The items below are what to look at on the way.
 - The music, `grandpas_theme`, by ear (the other candidate is `sadpiano`; a one-line change).
 - The farmhouse lot is paved along with the rest of the farm (the brief said leave it; left out it
   showed as a lawn rectangle). One-line revert if he prefers.
