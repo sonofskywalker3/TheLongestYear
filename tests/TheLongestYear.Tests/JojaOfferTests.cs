@@ -15,19 +15,37 @@ public class JojaOfferTests
 
     private static (RunState run, MetaState meta) Fresh() => (new RunState(), new MetaState());
 
+    private static readonly string[] MorrisQuestionKeys = { "joja.morris.ask", "joja.morris.accept", "joja.morris.decline" };
+
     /// <summary>The `$y` question built in JojaCounterPatch.Counter splits its answer/reply
-    /// fields on '_', so approved joja.morris.* text must never contain '_' or '\''. The
-    /// joja.* keys are not in default.json yet (they await the user's approval, spec
-    /// 2026-09-25-joja-offer), so this only checks a key once it exists — it never asserts
-    /// that a key is present (I18nGuardTests already covers missing literal keys).</summary>
+    /// fields on '_', so the joja.morris.* question and answer text must never contain '_' or
+    /// '\''. default.json must carry all three keys; every i18n file the mod ships is checked,
+    /// and a translation that leaves a key out falls back to default.json.</summary>
     [Fact]
-    public void Morris_question_and_answer_text_has_no_underscore_or_apostrophe_once_approved()
+    public void Morris_question_and_answer_text_has_no_underscore_or_apostrophe()
     {
-        foreach (string key in new[] { "joja.morris.ask", "joja.morris.accept", "joja.morris.decline" })
+        foreach (string key in MorrisQuestionKeys)
+            Assert.True(_fixture.Map.ContainsKey(key), $"default.json is missing {key}");
+
+        string i18nDir = System.IO.Path.GetDirectoryName(I18nFixture.DefaultJsonPath)!;
+        var options = new System.Text.Json.JsonDocumentOptions
         {
-            if (!_fixture.Map.TryGetValue(key, out string value)) continue;
-            Assert.DoesNotContain("_", value);
-            Assert.DoesNotContain("'", value);
+            CommentHandling = System.Text.Json.JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+        };
+        string[] files = System.IO.Directory.GetFiles(i18nDir, "*.json");
+        Assert.NotEmpty(files);
+        foreach (string file in files)
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(file), options);
+            foreach (string key in MorrisQuestionKeys)
+            {
+                if (!doc.RootElement.TryGetProperty(key, out System.Text.Json.JsonElement element)) continue;
+                string value = element.GetString() ?? "";
+                string where = $"{System.IO.Path.GetFileName(file)}: {key}";
+                Assert.False(value.Contains('_'), $"{where} contains '_'");
+                Assert.False(value.Contains('\''), $"{where} contains an apostrophe");
+            }
         }
     }
 
