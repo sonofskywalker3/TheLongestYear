@@ -390,6 +390,10 @@ namespace TheLongestYear.Loop
                     $"In-place reset: purged {purged.Count} stale CC restoration mail from mailForTomorrow " +
                     $"([{string.Join(", ", purged)}]) so no phantom room-fix scene fires on the fresh run.",
                     LogLevel.Info);
+            // Morris's letters are per loop: an unread one from the old loop must not greet the new.
+            int jojaPurged = JojaLetterService.PurgeFromMail(Game1.player);
+            if (jojaPurged > 0)
+                _monitor.Log($"In-place reset: purged {jojaPurged} unread Morris letter(s) from the old loop.", LogLevel.Info);
 
             // 1b. Museum wipe. LibraryMuseum.museumPieces is a PROPERTY over
             // Game1.netWorldState.Value.MuseumPieces (LibraryMuseum.cs:50) — world-state level,

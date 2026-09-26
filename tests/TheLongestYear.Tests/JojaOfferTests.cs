@@ -133,6 +133,122 @@ public class JojaOfferTests
         Assert.Equal(0, JojaOffer.DecisionLetterDue(run, meta, 17));
     }
 
+    // ---- MorningLetter: the one place that decides this morning's Morris letter ----
+
+    private const int FallTen = 66;   // Fall 10 = day of year 56 + 10
+
+    [Fact]
+    public void Morning_letter_is_the_next_come_letter_and_only_one_a_morning()
+    {
+        var (run, meta) = Fresh();
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        JojaLetter first = JojaOffer.MorningLetter(run, meta, today: 21, rewindPending: false);
+        Assert.Equal(new JojaLetter(JojaLetterKind.Come, 1, Rejects: false), first);
+        JojaOffer.Record(run, meta, first);
+        Assert.Equal(1, run.JojaLettersSent);
+        // Two slots were behind on day 21; the second waits for the next morning.
+        Assert.Equal(new JojaLetter(JojaLetterKind.Come, 2, false), JojaOffer.MorningLetter(run, meta, 22, false));
+    }
+
+    [Fact]
+    public void Morning_letter_turns_to_decision_letters_once_the_scene_is_seen()
+    {
+        var (run, meta) = Fresh();
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        JojaOffer.MarkSceneSeen(run, meta, 10);
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 16, false));
+        Assert.Equal(new JojaLetter(JojaLetterKind.Decide, 1, false), JojaOffer.MorningLetter(run, meta, 20, false));
+    }
+
+    [Fact]
+    public void Morning_letter_sends_nothing_and_plans_nothing_while_a_rewind_is_pending()
+    {
+        var (run, meta) = Fresh();
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 30, rewindPending: true));
+        Assert.Empty(run.JojaLetterDays);
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 30, rewindPending: true));
+    }
+
+    [Fact]
+    public void Fourth_decision_letter_rejects_only_when_no_rewind_is_pending()
+    {
+        var (run, meta) = Fresh();
+        JojaOffer.MarkSceneSeen(run, meta, 10);
+        run.JojaDecisionLettersSent = 3;
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 38, rewindPending: true));
+        Assert.False(JojaOffer.IsRejected(meta));
+
+        JojaLetter fourth = JojaOffer.MorningLetter(run, meta, 38, rewindPending: false);
+        Assert.Equal(new JojaLetter(JojaLetterKind.Decide, 4, Rejects: true), fourth);
+        JojaOffer.Record(run, meta, fourth);
+        Assert.Equal(4, run.JojaDecisionLettersSent);
+        Assert.Equal(run.RunNumber, meta.JojaRejectedLoop);
+    }
+
+    [Fact]
+    public void Earlier_decision_letters_do_not_reject()
+    {
+        var (run, meta) = Fresh();
+        JojaOffer.MarkSceneSeen(run, meta, 10);
+        JojaLetter third = new(JojaLetterKind.Decide, 3, Rejects: false);
+        run.JojaDecisionLettersSent = 2;
+        Assert.Equal(third, JojaOffer.MorningLetter(run, meta, 31, false));
+        JojaOffer.Record(run, meta, third);
+        Assert.False(JojaOffer.IsRejected(meta));
+    }
+
+    [Fact]
+    public void A_fresh_loop_plans_the_whole_year_from_the_loop_seed()
+    {
+        var (run, meta) = Fresh();
+        run.BeginNewRun(seed: 77);
+        JojaOffer.MorningLetter(run, meta, today: 1, rewindPending: false);
+        Assert.Equal(JojaOffer.PlanLetterDays(JojaOffer.LetterSeed(77)), run.JojaLetterDays);
+    }
+
+    [Fact]
+    public void A_first_plan_mid_year_starts_at_letter_one_on_the_next_future_slot_with_no_burst()
+    {
+        var (run, meta) = Fresh();
+        run.BeginNewRun(seed: 77);
+        List<int> wholeYear = JojaOffer.PlanLetterDays(JojaOffer.LetterSeed(77));
+        List<int> ahead = wholeYear.Where(d => d >= FallTen).ToList();
+        Assert.NotEmpty(ahead);   // the seed leaves Fall and Winter slots after Fall 10
+
+        var deliveries = new List<(int day, JojaLetter letter)>();
+        for (int day = FallTen; day <= Calendar.DayOfYear(3, 28); day++)
+        {
+            JojaLetter letter = JojaOffer.MorningLetter(run, meta, day, false);
+            if (letter.Kind == JojaLetterKind.None) continue;
+            JojaOffer.Record(run, meta, letter);
+            deliveries.Add((day, letter));
+        }
+        Assert.Equal(ahead, deliveries.Select(d => d.day).ToList());
+        Assert.Equal(Enumerable.Range(1, ahead.Count), deliveries.Select(d => d.letter.Number));
+        Assert.All(deliveries, d => Assert.Equal(JojaLetterKind.Come, d.letter.Kind));
+    }
+
+    [Fact]
+    public void A_first_plan_past_every_slot_sends_nothing()
+    {
+        var (run, meta) = Fresh();
+        run.BeginNewRun(seed: 77);
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, Calendar.DayOfYear(3, 28), false));
+    }
+
+    [Fact]
+    public void A_slot_slept_through_still_arrives_the_next_morning()
+    {
+        var (run, meta) = Fresh();
+        run.BeginNewRun(seed: 77);
+        JojaOffer.MorningLetter(run, meta, today: 1, rewindPending: false);   // plans the year
+        int slot = run.JojaLetterDays[0];
+        // The morning of the slot never ran this code (a rewind-pending morning, say).
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, slot, rewindPending: true));
+        Assert.Equal(new JojaLetter(JojaLetterKind.Come, 1, false), JojaOffer.MorningLetter(run, meta, slot + 1, false));
+    }
+
     [Fact]
     public void Morris_line_after_rejection_depends_on_the_loop()
     {

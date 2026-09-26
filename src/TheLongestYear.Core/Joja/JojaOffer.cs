@@ -10,6 +10,16 @@ public enum JojaMorrisLine { Ask, RefuseAgain, PositionFilled }
 /// <summary>What the cashier says when the player tries to shop.</summary>
 public enum JojaCashierLine { Undecided, Refused }
 
+/// <summary>Which of Morris's letters a morning brings.</summary>
+public enum JojaLetterKind { None, Come, Decide }
+
+/// <summary>This morning's Morris letter: its kind, its number within that kind (come 1..8,
+/// decide 1..4), and whether sending it ends the offer (the fourth decision letter).</summary>
+public readonly record struct JojaLetter(JojaLetterKind Kind, int Number, bool Rejects)
+{
+    public static readonly JojaLetter None = new(JojaLetterKind.None, 0, false);
+}
+
 /// <summary>Morris's offer (spec 2026-09-25-joja-offer-design). Pure rules over RunState (per loop)
 /// and MetaState (per save). Saying Yes is not recorded anywhere: the game side plays the bad
 /// ending and returns to the title without saving.</summary>
@@ -69,6 +79,49 @@ public static class JojaOffer
         if (next >= DecisionLetters) return 0;
         int due = run.JojaSceneSeenDay + (next + 1) * DaysPerWeek;
         return dayOfYear >= due ? next + 1 : 0;
+    }
+
+    /// <summary>The letter-day seed for a loop, derived from the loop's own seed.</summary>
+    public static int LetterSeed(int runSeed) => unchecked(runSeed * 31 + 0x4A6F6A61);
+
+    /// <summary>The one place that decides this morning's Morris letter, at most one a morning.
+    /// Nothing while a rewind is pending: that morning still carries the OLD loop's state, and a
+    /// fourth decision letter there would reject the player at the loop boundary (the spec says a
+    /// rewind before the fourth starts over). A slot that falls on such a morning arrives the next
+    /// one, through the <c>&gt;=</c> in <see cref="ComeLetterDue"/> / <see cref="DecisionLetterDue"/>.
+    ///
+    /// The loop's letter days are planned here the first time they are needed, keeping only the
+    /// slots from today on. A fresh loop plans on Spring 1 or 2 and so keeps all eight; a run
+    /// already mid-year when the letters first ship (an old save) starts at letter 1 on the next
+    /// slot at the normal cadence instead of catching up on every slot it missed. The planned
+    /// list is stored, so its index IS the letter number minus one.</summary>
+    public static JojaLetter MorningLetter(RunState run, MetaState meta, int today, bool rewindPending)
+    {
+        if (rewindPending) return JojaLetter.None;
+        if (run.JojaLetterDays == null || run.JojaLetterDays.Count == 0)
+            run.JojaLetterDays = PlanLetterDays(LetterSeed(run.Seed)).Where(d => d >= today).ToList();
+
+        int come = ComeLetterDue(run, meta, today);
+        if (come > 0) return new JojaLetter(JojaLetterKind.Come, come, Rejects: false);
+        int decide = DecisionLetterDue(run, meta, today);
+        if (decide > 0) return new JojaLetter(JojaLetterKind.Decide, decide, Rejects: decide == DecisionLetters);
+        return JojaLetter.None;
+    }
+
+    /// <summary>Record a delivered letter: advance its counter, and on the fourth decision letter
+    /// take the silence as a rejection in this loop.</summary>
+    public static void Record(RunState run, MetaState meta, JojaLetter letter)
+    {
+        switch (letter.Kind)
+        {
+            case JojaLetterKind.Come:
+                run.JojaLettersSent = letter.Number;
+                break;
+            case JojaLetterKind.Decide:
+                run.JojaDecisionLettersSent = letter.Number;
+                if (letter.Rejects) Reject(meta, run.RunNumber);
+                break;
+        }
     }
 
     /// <summary>The player and Morris part ways. Keeps the FIRST loop it happened in.</summary>

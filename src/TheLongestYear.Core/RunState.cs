@@ -205,8 +205,9 @@ public sealed class RunState
     /// <summary>Day of year (1..112) the offer scene played this loop, -1 = not yet this loop.</summary>
     public int JojaSceneSeenDay { get; set; } = -1;
 
-    /// <summary>This loop's eight "come see me" letter days (day of year), planned on the first
-    /// morning that needs them. Empty = not planned yet.</summary>
+    /// <summary>This loop's "come see me" letter days (day of year), planned on the first morning
+    /// that needs them and keeping only the days from that morning on (eight on a fresh loop,
+    /// fewer on a run first planned mid-year). Entry i is letter i+1. Empty = not planned yet.</summary>
     public List<int> JojaLetterDays { get; set; } = new();
 
     /// <summary>How many "come see me" letters went out this loop.</summary>
