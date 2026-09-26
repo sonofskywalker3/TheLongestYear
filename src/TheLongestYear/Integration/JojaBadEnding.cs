@@ -40,6 +40,14 @@ namespace TheLongestYear.Integration
         // Farm offsets from the farmhouse entry (see the tile notes above).
         private static readonly Point HouseDust = new(-6, -7);
         private const int HouseDustW = 11, HouseDustH = 9;
+        // Cleared ground (Controller ruling 2026-09-25, in memory only): the house footprint plus
+        // its sprite's west column and the mailbox column (rows door-3..door+1; not the fence
+        // behind it), the barn and coop footprints, and the route rows door-1..door+1 from the barn
+        // door to the east edge (a big animal on row door draws over the row above it).
+        private static readonly Point HouseClear = new(-6, -3);
+        private const int HouseClearW = 11, HouseClearH = 5;
+        private const int BarnFootW = 7, BarnFootH = 4, CoopFootW = 6, CoopFootH = 3;
+        private const int RouteClearDy = -1, RouteClearH = 3;
         private static readonly Point Barn = new(-10, -1);
         private const int BarnW = 7, BarnDoorDx = 3;
         private static readonly Point Coop = new(9, -1);
@@ -110,14 +118,18 @@ namespace TheLongestYear.Integration
                 $"{EndingEventCommands.FadeInName} 1200",
                 "pause 800",
                 "playSound explosion",
+                $"{JojaBadEndingCommands.ClearName} {door.X + HouseClear.X} {door.Y + HouseClear.Y} {HouseClearW} {HouseClearH}",
                 $"{JojaBadEndingCommands.DustName} {door.X + HouseDust.X} {door.Y + HouseDust.Y} {HouseDustW} {HouseDustH} 1000",
                 "playSound explosion",
                 $"{JojaBadEndingCommands.DustName} {door.X + HouseDust.X} {door.Y + HouseDust.Y} {HouseDustW} {HouseDustH} 1000",
                 JojaBadEndingCommands.HideFarmhouseName,
                 "pause 1000",
+                $"{JojaBadEndingCommands.ClearName} {barnX} {barnY - BarnFootH + 1} {BarnFootW} {BarnFootH}",
+                $"{JojaBadEndingCommands.ClearName} {barnX + BarnDoorDx} {lineY + RouteClearDy} {farmWidth - (barnX + BarnDoorDx)} {RouteClearH}",
                 $"{JojaBadEndingCommands.DustName} {barnX} {barnY - BuildingSpriteRows + 1} {BarnW} {BuildingSpriteRows} 1000",
                 $"{JojaBadEndingCommands.BuildingSpriteName} Barn {barnX} {barnY}",
                 "pause 300",
+                $"{JojaBadEndingCommands.ClearName} {coopX} {coopY - CoopFootH + 1} {CoopFootW} {CoopFootH}",
                 $"{JojaBadEndingCommands.DustName} {coopX} {coopY - BuildingSpriteRows + 1} {CoopW} {BuildingSpriteRows} 1000",
                 $"{JojaBadEndingCommands.BuildingSpriteName} Coop {coopX} {coopY}",
                 "pause 800",
@@ -211,13 +223,16 @@ namespace TheLongestYear.Integration
                 loc.startEvent(new Event(Build(Game1.player.TilePoint, Game1.player.FacingDirection, door, width), null, JojaEventKeys.BadEndingId));
                 if (loc.currentEvent?.id == JojaEventKeys.BadEndingId)
                 {
+                    JojaBadEndingCommands.MarkRunning();
                     monitor.Log($"Joja: bad ending (door={door.X},{door.Y}, farm width {width}, from {loc.Name}).", LogLevel.Info);
                     return;
                 }
             }
             if (triesLeft <= 0)
             {
-                monitor.Log("Joja: the bad ending could not start (the game stayed busy).", LogLevel.Warn);
+                // Never leave the player in the store after a Yes. Task 7 routes this through
+                // JojaGameOverMenu instead of going straight to the title.
+                JojaBadEndingCommands.FailClosed("the bad ending could not start (the game stayed busy)");
                 return;
             }
             DelayedAction.functionAfterDelay(() => TryStart(monitor, triesLeft - 1), StartRetryMs);

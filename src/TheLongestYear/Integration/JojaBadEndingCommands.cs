@@ -26,7 +26,7 @@ namespace TheLongestYear.Integration
     /// bottom-left tile is (x, y). LooseSprites/Cursors has no "closed" sign, so they are drawn from
     /// Game1.staminaRect.
     /// <c>tlyGameOver</c>: ends the script and exits to the title without saving.</summary>
-    internal static class JojaBadEndingCommands
+    internal static partial class JojaBadEndingCommands
     {
         public const string HideFarmhouseName = "tlyHideFarmhouse";
         public const string ShowFarmhouseName = "tlyShowFarmhouse";
@@ -36,6 +36,7 @@ namespace TheLongestYear.Integration
         public const string WaterTintName = "tlyWaterTint";
         public const string ClosedSignName = "tlyClosedSign";
         public const string GameOverName = "tlyGameOver";
+        public const string ClearName = "tlyClear";
 
         private const string AnimalTexturePrefix = "Animals";
         private const int FaceLeft = 3;
@@ -53,6 +54,15 @@ namespace TheLongestYear.Integration
         private static bool _farmhouseHidden;
         private static float _dustElapsed = -1f;
         private static bool _gameOverSent;
+        // Set once the bad ending has really started; cleared at the title. While it is set, the
+        // scene must end at the title: if the event goes away any other way (a command threw and
+        // vanilla skipped the event), OnTick exits to the title so no later sleep saves the world
+        // the scene changed (the farm clear, above all).
+        private static bool _running;
+        private static int _missingTicks;
+        // A tlyChangeLocation leaves the event parked (currentEvent null) until the new map loads;
+        // only an absence longer than this, with no warp pending, counts as the scene gone.
+        private const int FailClosedGraceTicks = 90;
         private static readonly List<(GameLocation Loc, TemporaryAnimatedSprite Sprite)> Sprites = new();
         private static readonly List<(GameLocation Loc, Rectangle Door)> Planks = new();
         private static GameLocation _tinted;
@@ -64,17 +74,43 @@ namespace TheLongestYear.Integration
         {
             _monitor = monitor;
             helper.Events.GameLoop.UpdateTicked += (_, _) => OnTick();
-            helper.Events.GameLoop.ReturnedToTitle += (_, _) => { Cleanup(); _gameOverSent = false; };
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => { Cleanup(); _gameOverSent = false; _running = false; _missingTicks = 0; };
             helper.Events.Display.RenderedWorld += (_, e) => DrawPlanks(e.SpriteBatch);
 
-            Event.RegisterCommand(HideFarmhouseName, (evt, args, context) => { _farmhouseHidden = true; evt.CurrentCommand++; });
-            Event.RegisterCommand(ShowFarmhouseName, (evt, args, context) => { _farmhouseHidden = false; evt.CurrentCommand++; });
+            Event.RegisterCommand(HideFarmhouseName, (evt, args, context) => Guarded(evt, HideFarmhouseName, () => _farmhouseHidden = true));
+            Event.RegisterCommand(ShowFarmhouseName, (evt, args, context) => Guarded(evt, ShowFarmhouseName, () => _farmhouseHidden = false));
+            Event.RegisterCommand(ClearName, Clear);
             Event.RegisterCommand(DustName, Dust);
             Event.RegisterCommand(BuildingSpriteName, BuildingSprite);
             Event.RegisterCommand(ItemSpriteName, ItemSprite);
             Event.RegisterCommand(WaterTintName, WaterTint);
             Event.RegisterCommand(ClosedSignName, ClosedSign);
             Event.RegisterCommand(GameOverName, GameOver);
+        }
+
+        /// <summary>The bad ending has started: from now on it can only end at the title.</summary>
+        internal static void MarkRunning()
+        {
+            _running = true;
+            _gameOverSent = false;
+            _missingTicks = 0;
+        }
+
+        /// <summary>A Yes that lost its scene goes straight to the title, no save.</summary>
+        internal static void FailClosed(string why)
+        {
+            if (_gameOverSent) return;
+            _gameOverSent = true;
+            _monitor.Log($"Joja: {why}; exiting to the title without saving.", LogLevel.Warn);
+            // Task 7 routes this through JojaGameOverMenu instead of going straight to the title.
+            Game1.ExitToTitle();
+        }
+
+        private static void Guarded(Event evt, string name, Action action)
+        {
+            try { action(); }
+            catch (Exception ex) { _monitor.Log($"{name}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn); }
+            evt.CurrentCommand++;
         }
 
         private static void Skip(Event evt, string name, string error)
@@ -131,6 +167,7 @@ namespace TheLongestYear.Integration
                     motion = new Vector2(0f, -0.3f),
                 };
                 loc.temporarySprites.Add(puff);
+                Sprites.Add((loc, puff));
             }
         }
 
@@ -222,8 +259,31 @@ namespace TheLongestYear.Integration
                 return;
             }
             // The two tiles of the door, from the top of the tile above (x, y) to the bottom of (x, y).
-            Planks.Add((Game1.currentLocation, new Rectangle(x * 64, (y - 1) * 64, 128, 128)));
-            evt.CurrentCommand++;
+            Guarded(evt, ClosedSignName, () => Planks.Add((Game1.currentLocation, new Rectangle(x * 64, (y - 1) * 64, 128, 128))));
+        }
+
+        /// <summary>tlyClear &lt;x&gt; &lt;y&gt; &lt;w&gt; &lt;h&gt;: empties that farm rectangle for the scene (see
+        /// JojaFarmClear). Runs only inside the bad ending, which always ends at the title unsaved.</summary>
+        private static void Clear(Event evt, string[] args, EventContext context)
+        {
+            if (!ArgUtility.TryGetInt(args, 1, out int x, out string error)
+                || !ArgUtility.TryGetInt(args, 2, out int y, out error)
+                || !ArgUtility.TryGetInt(args, 3, out int w, out error)
+                || !ArgUtility.TryGetInt(args, 4, out int h, out error))
+            {
+                Skip(evt, ClearName, error);
+                return;
+            }
+            Guarded(evt, ClearName, () =>
+            {
+                if (!_running || !IsBadEnding(evt) || !IsBadEnding(Game1.CurrentEvent) || Game1.currentLocation is not Farm farm)
+                {
+                    _monitor.Log($"{ClearName}: only runs on the farm inside the bad ending; skipping.", LogLevel.Warn);
+                    return;
+                }
+                string cleared = JojaFarmClear.Clear(farm, new Rectangle(x, y, w, h));
+                _monitor.Log($"{ClearName} {x},{y} {w}x{h}: cleared {cleared} (in memory; the scene ends unsaved).", LogLevel.Info);
+            });
         }
 
         private static void GameOver(Event evt, string[] args, EventContext context)
@@ -232,8 +292,15 @@ namespace TheLongestYear.Integration
             evt.CurrentCommand++;   // past the last command: the script idles under the black overlay
             if (_gameOverSent) return;
             _gameOverSent = true;
-            _monitor.Log("Joja: bad ending over; exiting to the title without saving.", LogLevel.Info);
-            Game1.ExitToTitle();
+            try
+            {
+                _monitor.Log("Joja: bad ending over; exiting to the title without saving.", LogLevel.Info);
+                Game1.ExitToTitle();
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"{GameOverName}: {ex.GetType().Name}: {ex.Message}.", LogLevel.Error);
+            }
         }
 
         private static void Add(TemporaryAnimatedSprite sprite)
@@ -247,55 +314,22 @@ namespace TheLongestYear.Integration
         private static void OnTick()
         {
             Event ev = Game1.CurrentEvent;
-            if (!IsBadEnding(ev))
+            if (IsBadEnding(ev))
             {
-                if (_farmhouseHidden || Sprites.Count > 0 || Planks.Count > 0 || _tinted != null || _dustElapsed >= 0f)
-                    Cleanup();
+                _missingTicks = 0;
+                FlipLeftWalkers(ev);
                 return;
             }
-            FlipLeftWalkers(ev);
-        }
-
-        /// <summary>A farm animal's sheet has no left-facing row (FarmAnimal draws its right-facing
-        /// frames flipped); an NPC walking left shows row 3, which is the eating frames. Swap them
-        /// to the right-walk frames, mirrored, after the game's update and before the draw.</summary>
-        private static void FlipLeftWalkers(Event ev)
-        {
-            foreach (NPC actor in ev.actors)
+            if (_farmhouseHidden || Sprites.Count > 0 || Planks.Count > 0 || _tinted != null || _dustElapsed >= 0f)
+                Cleanup();
+            if (!_running || _gameOverSent) return;
+            if (Game1.locationRequest != null || Game1.isWarping)
             {
-                AnimatedSprite sprite = actor?.Sprite;
-                if (sprite?.textureName.Value == null || !sprite.textureName.Value.StartsWith(AnimalTexturePrefix, StringComparison.Ordinal))
-                    continue;
-                if (actor.FacingDirection != FaceLeft)
-                {
-                    actor.flip = false;
-                    continue;
-                }
-                if (sprite.currentFrame >= LeftFramesStart && sprite.currentFrame < LeftFramesStart + FramesPerRow)
-                    sprite.CurrentFrame = RightFramesStart + sprite.currentFrame - LeftFramesStart;
-                actor.flip = true;
+                _missingTicks = 0;   // a scene change in flight: the event comes back on the load
+                return;
             }
-        }
-
-        private static void DrawPlanks(SpriteBatch b)
-        {
-            if (Planks.Count == 0 || !IsBadEnding(Game1.CurrentEvent)) return;
-            foreach (var (loc, door) in Planks)
-            {
-                if (loc != Game1.currentLocation) continue;
-                Vector2 centre = Game1.GlobalToLocal(Game1.viewport, new Vector2(door.Center.X, door.Center.Y));
-                DrawPlank(b, centre, PlankAngle);
-                DrawPlank(b, centre, -PlankAngle);
-            }
-        }
-
-        private static void DrawPlank(SpriteBatch b, Vector2 centre, float angle)
-        {
-            var origin = new Vector2(0.5f, 0.5f);
-            b.Draw(Game1.staminaRect, centre, null, PlankEdgeColour, angle, origin,
-                new Vector2(PlankLength + PlankEdge, PlankThickness + PlankEdge), SpriteEffects.None, 1f);
-            b.Draw(Game1.staminaRect, centre, null, PlankColour, angle, origin,
-                new Vector2(PlankLength, PlankThickness), SpriteEffects.None, 1f);
+            if (++_missingTicks < FailClosedGraceTicks) return;
+            FailClosed("the bad ending stopped before its end (a command failed or it was skipped)");
         }
 
         private static void RestoreWater()
@@ -314,28 +348,6 @@ namespace TheLongestYear.Integration
             Sprites.Clear();
             Planks.Clear();
             RestoreWater();
-        }
-
-        private static bool IsHiddenFarmhouse(Building building)
-            => _farmhouseHidden && building != null && building == Game1.getFarm()?.GetMainFarmHouse();
-
-        [HarmonyPatch(typeof(Building), nameof(Building.draw))]
-        internal static class HideFarmhouseDraw
-        {
-            private static bool Prefix(Building __instance) => !IsHiddenFarmhouse(__instance);
-        }
-
-        /// <summary>The farm's new-mail flag floats over the mailbox; with the house gone it would
-        /// hang in the air. While hidden, the mailbox is off the map.</summary>
-        [HarmonyPatch(typeof(Farmer), nameof(Farmer.getMailboxPosition))]
-        internal static class HideMailFlag
-        {
-            private static readonly Point OffMap = new(-100, -100);
-
-            private static void Postfix(ref Point __result)
-            {
-                if (_farmhouseHidden) __result = OffMap;
-            }
         }
     }
 }
