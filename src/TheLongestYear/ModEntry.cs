@@ -467,7 +467,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost today (debug, the same purchase the shrine's Buy button makes), or list the roster with each row's state. Usage: tly_boost list | tly_boost <id> [farming|fishing|foraging|mining|combat]", this.CmdBoost);
             helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
-            helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
+            helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, a dialogue box via its own close, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
             helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan) exactly as the statue does, so every tab's rows build and draw headlessly. Usage: tly_openshrine [active|boosts|plan]", this.CmdOpenShrine);
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
@@ -2228,6 +2228,16 @@ namespace TheLongestYear
                 // Its own key path (exit to the title, no save); exitThisMenu would strand the event.
                 menu.receiveKeyPress(Microsoft.Xna.Framework.Input.Keys.Enter);
                 this.Monitor.Log($"tly_dismiss: {name} sent Enter.", LogLevel.Info);
+                return;
+            }
+            if (menu is StardewValley.Menus.DialogueBox box)
+            {
+                // The box's own close path. exitThisMenu leaves Game1.dialogueUp and
+                // Game1.currentSpeaker set, and the next night's NPC dialogue reset then empties the
+                // speaker's stack under them: drawDialogueBox's Peek throws "Stack empty" every
+                // frame and the game dies (live 2026-09-25, Morris's counter line, then a sleep).
+                box.closeDialogue();
+                this.Monitor.Log($"tly_dismiss: {name} closed (closeDialogue).", LogLevel.Info);
                 return;
             }
             menu.exitThisMenu(playSound: false);
