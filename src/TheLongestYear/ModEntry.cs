@@ -183,6 +183,7 @@ namespace TheLongestYear
             GrandpaCandleCommand.Register(this.Monitor);
             Integration.EndingEventCommands.Register(this.Monitor, helper);
             Integration.OpeningEventCommands.Register(this.Monitor, helper);
+            Integration.JojaBadEndingCommands.Register(this.Monitor, helper);
             // The stash's Junimo-chest sprite. Wired at Entry, not on save load: the opening tour
             // places the stash before a new game's save exists, and without the loader the draw
             // patch fell back to a plain purple-tinted chest (Jeff, 2026-09-25).
@@ -710,8 +711,7 @@ namespace TheLongestYear
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
-            JojaCounterPatch.Connect(this.Monitor, _meta,
-                () => this.Monitor.Log("Joja: Yes (bad ending not built yet).", LogLevel.Warn));
+            JojaCounterPatch.Connect(this.Monitor, _meta, () => Integration.JojaBadEnding.Start(this.Monitor));
             XpMultiplierPatch.Connect(_meta.State);
             TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = _config.EnableDejaVuDialogue;
             TheLongestYear.Loop.AnimalDoubleProductPatch.Connect(() => _meta.Run);

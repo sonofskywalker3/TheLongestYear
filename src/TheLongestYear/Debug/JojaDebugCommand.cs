@@ -14,7 +14,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_joja";
         public const string Description =
-            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject | counter | cashier | scene";
+            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject | counter | cashier | scene | badending";
 
         private const int MinArgsLetter = 3;
 
@@ -58,6 +58,9 @@ namespace TheLongestYear.DebugCommands
                     break;
                 case "scene" when offerDriver != null:
                     offerDriver.DebugReplay();
+                    break;
+                case "badending":
+                    Integration.JojaBadEnding.Start(m);
                     break;
                 default:
                     m.Log(Description, LogLevel.Warn);
