@@ -40,13 +40,17 @@ namespace TheLongestYear.Integration
         private static GameLocation _heldIn;
 
         private static NPC _holder;
+        // The tlyWaitWalk timer belongs to one command in one event instance. A scene skipped mid-wait
+        // (Morris's offer walk) never reaches the command's end, so the timer is keyed to the event
+        // and command index it started on: any other one starts from zero.
         private static float _walkWaited = -1f;
-
-
+        private static Event _walkEvent;
+        private static int _walkCommand = -1;
 
         public static void Register(IMonitor monitor, IModHelper helper)
         {
             helper.Events.GameLoop.UpdateTicked += (_, _) => FollowHolder();
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => ResetWalkWait();
 
             Event.RegisterCommand(HoldUpName, (evt, args, context) =>
             {
@@ -92,11 +96,16 @@ namespace TheLongestYear.Integration
                         || !ArgUtility.TryGetInt(args, 2, out int maxMs, out error))
                     {
                         monitor.Log($"{WaitWalkName}: {error}; skipping.", LogLevel.Warn);
-                        _walkWaited = -1f;
+                        ResetWalkWait();
                         evt.CurrentCommand++;
                         return;
                     }
-                    if (_walkWaited < 0f) _walkWaited = 0f;
+                    if (_walkWaited < 0f || !ReferenceEquals(_walkEvent, evt) || _walkCommand != evt.CurrentCommand)
+                    {
+                        _walkWaited = 0f;
+                        _walkEvent = evt;
+                        _walkCommand = evt.CurrentCommand;
+                    }
                     _walkWaited += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
                     bool walking = evt.npcControllers != null
                                    && evt.npcControllers.Exists(c => c.puppet?.Name == actorName);
@@ -112,7 +121,7 @@ namespace TheLongestYear.Integration
                 {
                     monitor.Log($"{WaitWalkName}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn);
                 }
-                _walkWaited = -1f;
+                ResetWalkWait();
                 evt.CurrentCommand++;
             });
 
@@ -141,6 +150,13 @@ namespace TheLongestYear.Integration
             _holder.yJumpVelocity = 0f;
             Rectangle src = _held.sourceRect;
             _held.Position = _holder.Position + AboveHead + new Vector2((64f - src.Width * HeldScale) / 2f, 0f);
+        }
+
+        private static void ResetWalkWait()
+        {
+            _walkWaited = -1f;
+            _walkEvent = null;
+            _walkCommand = -1;
         }
 
         private static void RemoveHeld()
