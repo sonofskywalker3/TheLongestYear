@@ -9,19 +9,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ### FIXED in 0.18.74 (not released): ozzy2540, seasons failing under Challenging CC Bundles
 Reproduced live with SVE + CCCB. Nexus Posts tab reply waits for the release.
 
-### WAITING ON JEFF: Thrippa's Nexus post (2026-09-25/26), two design calls
-- **Eggs in Spring Foraging.** Not a misread: Visit Mount Vapius's forage table really spawns Large
-  Brown Egg, Duck Egg, Speckled Fowl Egg and Goose Egg on the ground (spring to fall). TLY puts
-  anything in a location's forage list into the forage pool with no category check. Option: keep
-  animal products (egg, milk, animal product categories) out of the forage pool; they still reach
-  Animal and Chef's bundles.
-- **Cornucopia's Spring Rose in a bundle.** Its starter is tagged rare, and Pierre and Joja only sell
-  rare Cornucopia seeds from YEAR 2. TLY never sees those listings (they are ALL_ITEMS item queries),
-  so the starter looks source-less and is allowed by design. Its one year-1 route is the Traveling
-  Cart's random Cornucopia seed (60% of days, one seed out of the whole set). Call needed: should a
-  random-pick cart entry count as a way to get an item? If not: resolve item-query shop entries,
-  skip listings gated to YEAR 2+, and treat random cart picks as luck.
-- Dye bundle color-tag cleanup is already on the list (Jeff replied 2026-09-25).
+### FIXED in 0.18.75 / 0.18.76 (not released): Thrippa's Nexus post (2026-09-25/26)
+- 0.18.75: eggs, milk and animal products stay out of Foraging (Visit Mount Vapius spawns eggs on the ground).
+- 0.18.76: TLY reads item-query shop and spawn lines (ALL_ITEMS + PerItemCondition, as Cornucopia writes
+  them) for every mod, and year-2 locks close a route. Spring Rose and the other rare Cornucopia flowers are
+  kept off the board, verified live. Reply waits for the release.
+- Dye bundle color-tag cleanup is still on the list (Jeff replied 2026-09-25).
 
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
 GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
