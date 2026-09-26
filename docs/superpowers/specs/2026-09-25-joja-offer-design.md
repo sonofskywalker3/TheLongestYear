@@ -78,7 +78,8 @@ make a permanent loss undoable anyway.
   and player building (Jeff, 2026-09-25).
   All of it is in memory only: the scene always ends at the title without saving (fail-closed).
 - The town: pollution, a green river with dead fish, driftwood and dead fish all over the
-  beach with the camera panning along the shore, and sad music over the whole scene (Jeff, 2026-09-25). Pierre's shop shut down the
+  beach with the camera panning along the shore, and sad music over the whole scene (Jeff, 2026-09-25). Debris is sparse and irregularly
+  scattered, and dead fish and trash also float in the river: neglected, not a junkyard (Jeff). Pierre's shop shut down the
   way vanilla shows the closed JojaMart (Jeff, 2026-09-25): vanilla swaps Joja's tiles to a pre-drawn
   boarded copy on the Town sheet (Town.showDestroyedJoja, index +20); Pierre has no such copy, so the
   mod builds one at load from the game's own tiles (boards from the closed-Joja art over his windows
