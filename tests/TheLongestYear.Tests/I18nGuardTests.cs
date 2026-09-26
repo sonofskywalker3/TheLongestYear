@@ -167,6 +167,13 @@ public class I18nGuardTests
             // key list instead.
             foreach (string key in SeasonTurn.AllLineKeys)
                 _ = Strings.Get(key);
+            // mail.joja.come-N / mail.joja.decide-N are built as $"mail.joja.come-{i}" /
+            // $"mail.joja.decide-{i}" in JojaLetterService.OnAssetRequested, over the fixed
+            // counts JojaOffer.ComeLetters/DecisionLetters; walk the same ranges.
+            for (int i = 1; i <= TheLongestYear.Core.Joja.JojaOffer.ComeLetters; i++)
+                _ = Strings.Get($"mail.joja.come-{i}");
+            for (int i = 1; i <= TheLongestYear.Core.Joja.JojaOffer.DecisionLetters; i++)
+                _ = Strings.Get($"mail.joja.decide-{i}");
         }
         finally
         {
