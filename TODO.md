@@ -6,8 +6,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### IN PROGRESS 2026-09-25 (Jeff: "build it"): Morris's offer (Joja side quest and game over)
-`docs/superpowers/specs/2026-09-25-joja-offer-design.md`, plan `docs/superpowers/plans/2026-09-25-joja-offer.md` (8 tasks, subagent-driven). Task 1 (the words) needs Jeff's OK first.
+### BUILT 2026-09-25 (Jeff: "build it"): Morris's offer (Joja side quest and game over)
+`docs/superpowers/specs/2026-09-25-joja-offer-design.md`, plan `docs/superpowers/plans/2026-09-25-joja-offer.md` (8 tasks, subagent-driven).
+All 8 tasks built on `story`. Headless check 2026-09-25 (log only, frames came back black): letters on
+their planned days, the offer scene on first entry, the cashier and Morris lines for undecided, No,
+same-loop and later-loop, the bad ending end to end with the Game Over screen and the title, no save
+written, and no letters after a rejection. Fixed in that check: letters had arrived a day late.
+
+**Still only Jeff can check (by eye or ear):**
+- The music, `grandpas_theme`, by ear (the other candidate is `sadpiano`; a one-line change).
+- The farmhouse lot is paved along with the rest of the farm (the brief said leave it; left out it
+  showed as a lawn rectangle). One-line revert if he prefers.
+- The offer scene's staging: Morris steps out from the counter's west end (18,24) and walks to the farmer.
+- The placeholder wording (all offer, cashier, Morris and letter lines went in as placeholders he accepted to build with).
+- Pierre's boarded-up shop in the bad ending.
+- A Yes after dark: the scene plays in outdoor night lighting (animals still go in); never seen live.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
