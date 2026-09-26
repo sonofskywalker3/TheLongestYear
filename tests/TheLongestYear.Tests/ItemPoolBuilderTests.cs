@@ -135,6 +135,28 @@ public class ItemPoolBuilderTests
         Assert.Empty(pools.Forage);
     }
 
+    /// <summary>Nexus post Thrippa, 2026-09-25: Visit Mount Vapius spawns eggs on the ground, so
+    /// Spring Foraging asked for six Large Brown Eggs. Animal products stay out of the forage
+    /// pool; the Animal and Chef's bundles still reach them. Plants beside them stay in.</summary>
+    [Fact]
+    public void Forage_AnimalProducts_StayOutOfPool()
+    {
+        var pools = Build(
+            forage: new[]
+            {
+                new RawSpawnEntry("(O)182", Season.Spring, null, "Custom_MtVapius"),   // Large Brown Egg
+                new RawSpawnEntry("(O)186", Season.Spring, null, "Custom_MtVapius"),   // Large Milk
+                new RawSpawnEntry("(O)440", Season.Spring, null, "Custom_MtVapius"),   // Wool
+                new RawSpawnEntry("(O)16", Season.Spring, null, "Custom_MtVapius"),    // Wild Horseradish
+            },
+            objects: Objects(
+                ("182", Obj(category: -5)),
+                ("186", Obj(category: -6)),
+                ("440", Obj(category: -18)),
+                ("16", Obj(category: -81))));
+        Assert.Equal(new[] { "(O)16" }, pools.Forage.Select(p => p.ItemId).ToArray());
+    }
+
     [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]

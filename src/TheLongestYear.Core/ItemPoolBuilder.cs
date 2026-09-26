@@ -528,6 +528,11 @@ public static class ItemPoolBuilder
             string id = Qualify(bare);
             if (!Vets(bare, id, objects, excluded))
                 continue;
+            // A map that drops eggs, milk or wool on the ground (Visit Mount Vapius) does not make
+            // them forage: a Foraging bundle asking for Large Brown Eggs reads as a bug (Nexus post
+            // Thrippa, 2026-09-25). The Animal and Chef's bundles still reach them by kind.
+            if (IsAnimalProduct(objects[bare]))
+                continue;
             AddSeasons(id, SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons));
         }
 
@@ -815,6 +820,9 @@ public static class ItemPoolBuilder
     /// (<see cref="AvailabilityWeeks.BookWeeks"/> is the year-1 list).</summary>
     private static bool IsBookWithoutYearOneRoute(string qualifiedId, RawObjectEntry obj)
         => BookCategories.Contains(obj.Category) && !AvailabilityWeeks.BookWeeks.ContainsKey(qualifiedId);
+
+    private static bool IsAnimalProduct(RawObjectEntry obj)
+        => ItemKindClassifier.From(obj.Category, obj.Type) is ItemKind.Egg or ItemKind.Milk or ItemKind.AnimalProduct;
 
     private static bool IsRing(RawObjectEntry obj)
         => string.Equals(obj.Type, RingType, StringComparison.OrdinalIgnoreCase)
