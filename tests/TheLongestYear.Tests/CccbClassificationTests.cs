@@ -56,6 +56,27 @@ public class CccbClassificationTests
         Assert.True(classified >= 40, $"only {classified} classified");
     }
 
+    /// <summary>Nexus post ozzy2540, 2026-09-25: CCCB's Spring Crops is pick 8 of 9, the board
+    /// shows 8 slots, and the Bundle Log asked for 9. A seasonal name used to take every slot.</summary>
+    [Fact]
+    public void Seasonal_pick_x_of_y_bundle_needs_x_not_y()
+    {
+        var pack = LoadPack();
+        var parsed = BundleParsing.Parse("Pantry/0", pack["Spring Crops"]);
+        var req = BundleClassifier.Classify(parsed, Theme.Farming,
+            new Dictionary<string, Season>(), GameplayConfig.DefaultBundleQuotas)!;
+
+        Assert.Equal(BundleKind.Seasonal, req.Kind);
+        Assert.Equal(8, req.NumberOfSlots);
+
+        var ledger = new SlotLedger();
+        Assert.Equal(8, req.MissingForSeason(Season.Spring, ledger).Count);
+        for (int i = 0; i < 8; i++) ledger.Add(0, i, req.Slots[i].ItemId);
+        Assert.Equal(0, req.MissingForSeason(Season.Spring, ledger).Count);
+        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Spring, ledger));
+        Assert.Equal(0, SeasonNeed.For(req, Season.Spring, 8));
+    }
+
     [Fact]
     public void Quality_and_stack_asks_are_carried_per_ingredient()
     {

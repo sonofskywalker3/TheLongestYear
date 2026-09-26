@@ -913,7 +913,8 @@ namespace TheLongestYear.Loop
             // Mirror the ledger from the board before the gate reads it, so the gate judges exactly
             // what the player sees on the board (a deposit the observer missed cannot fail an
             // otherwise-complete season, beta report khauser13; a phantom credit cannot pass one).
-            TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
+            int mirroredTonight = TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
+            _monitor.Log($"Day end: {mirroredTonight} filled slot(s) mirrored from the board for the gate.", LogLevel.Trace);
             if (_pendingCutscene == Day28Branch.Restart)
             {
                 // Voluntary restart (RunController.Restart.cs): the player chose to rewind tonight.

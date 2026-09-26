@@ -2403,6 +2403,9 @@ namespace TheLongestYear
             this.Monitor.Log($"Window: set to {w}x{h} (config dial).", LogLevel.Info);
         }
 
+        // Low: runs after other mods' DayStarted, so a bundle mod that swaps its board in each
+        // morning (Challenging CC Bundles) has done so before ReclassifyIfBoardChanged reads it.
+        [EventPriority(EventPriority.Low)]
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
@@ -2430,6 +2433,10 @@ namespace TheLongestYear
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
         }
 
+        // High: the day-28 gate must read the board the player filled today. Challenging CC Bundles
+        // swaps the morning board back out on DayEnding, and a gate running after that counted only
+        // the slots the smaller board has (ozzy2540, 2026-09-25: 47 slots filled, 32 counted).
+        [EventPriority(EventPriority.High)]
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
             if (!RunActivation.IsActive) return;
@@ -3812,8 +3819,8 @@ namespace TheLongestYear
             switch (req.Kind)
             {
                 case BundleKind.Seasonal:
-                    // Everything, but only once its named season has arrived.
-                    return (int)req.SeasonalSeason.Value <= (int)season ? req.Ingredients.Count : 0;
+                    // Its X slots (every slot unless pick X of Y), once its named season has arrived.
+                    return (int)req.SeasonalSeason.Value <= (int)season ? req.NumberOfSlots : 0;
 
                 case BundleKind.PerItem:
                     // Each pinned ingredient is due at its own pin.

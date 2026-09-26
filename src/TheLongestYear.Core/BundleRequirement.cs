@@ -95,13 +95,18 @@ public sealed class BundleRequirement
         IReadOnlyDictionary<string, int>? ingredientQualities = null,
         IReadOnlyDictionary<string, Season>? stretchLines = null,
         int bundleIndex = -1,
-        IReadOnlyList<BundleSlot>? slots = null)
+        IReadOnlyList<BundleSlot>? slots = null,
+        int numberOfSlots = 0)
     {
         if (ingredients == null || ingredients.Count == 0)
             throw new ArgumentException("Seasonal bundle needs at least one ingredient.", nameof(ingredients));
+        // A seasonal bundle can be pick X of Y like any other (Challenging CC Bundles' Spring Crops
+        // is 8 of 9). Zero, or anything outside 1..Y, means every slot, as before.
+        int shown = slots?.Count ?? ingredients.Count;
+        int required = numberOfSlots > 0 && numberOfSlots < shown ? numberOfSlots : shown;
         return new BundleRequirement(
             name, theme, BundleKind.Seasonal,
-            ingredients, slots?.Count ?? ingredients.Count,
+            ingredients, required,
             seasonalSeason: season,
             itemSeasonPins: null,
             cumulativeRequiredBySeason: null,
@@ -207,7 +212,7 @@ public sealed class BundleRequirement
     }
 
     /// <summary>For the <paramref name="season"/> checkpoint: how many more slots the gate needs and
-    /// which ids could fill them. Seasonal: every unfilled slot once its season is due. PerItem:
+    /// which ids could fill them. Seasonal: X minus filled once its season is due. PerItem:
     /// as many slots as are pinned at or before the season, fillable by ANY of the bundle's
     /// unfilled slots (a doubled id counts as two pinned slots). Percentage: required minus filled,
     /// with every unfilled slot's id as a candidate. For PerItem and Percentage the count and the
@@ -227,8 +232,11 @@ public sealed class BundleRequirement
         {
             case BundleKind.Seasonal:
                 if ((int)SeasonalSeason!.Value > (int)season) return (0, Array.Empty<string>());
-                var sItems = UnfilledIds(ledger, _ => true);
-                return (sItems.Count, sItems);
+                // X of the slots once its season is due, not every slot: on a pick-X-of-Y board
+                // the bundle completes at X and the rest can never be filled.
+                int seasonalNeeded = Math.Max(0, NumberOfSlots - ledger.FilledCount(BundleIndex));
+                if (seasonalNeeded == 0) return (0, Array.Empty<string>());
+                return (seasonalNeeded, UnfilledIds(ledger, _ => true));
 
             case BundleKind.PerItem:
                 int dueSlots = Slots.Count(slot =>
