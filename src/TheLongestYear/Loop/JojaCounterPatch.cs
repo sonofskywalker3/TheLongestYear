@@ -52,9 +52,12 @@ namespace TheLongestYear.Loop
 
         private static void OpenCashier()
         {
-            string key = JojaOffer.CashierLine(_meta.State) == JojaCashierLine.Refused
-                ? "joja.cashier.refused" : "joja.cashier.undecided";
-            Game1.drawObjectDialogue(Strings.Get(key));
+            // Extracted to a paren-free ternary condition so the literal keys are visible to
+            // I18nGuardTests' Strings.Get(...) scanner (its regex excludes parens from the
+            // condition, and JojaOffer.CashierLine(...) is a call).
+            JojaCashierLine line = JojaOffer.CashierLine(_meta.State);
+            Game1.drawObjectDialogue(Strings.Get(line == JojaCashierLine.Refused
+                ? "joja.cashier.refused" : "joja.cashier.undecided"));
         }
 
         [HarmonyPatch(typeof(JojaMart), nameof(JojaMart.checkAction))]
