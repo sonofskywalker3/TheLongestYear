@@ -77,8 +77,12 @@ make a permanent loss undoable anyway.
   Before any of it, the WHOLE farm is cleared: every tree, crop, plant, weed, stone, debris, object
   and player building (Jeff, 2026-09-25).
   All of it is in memory only: the scene always ends at the title without saving (fail-closed).
-- The town: pollution, a green river with dead fish, driftwood all over the beach. (The boarded X
-  across Pierre's door was cut: Jeff did not like it, 2026-09-25.)
+- The town: pollution, a green river with dead fish, driftwood all over the beach. Pierre's shop shut down the
+  way vanilla shows the closed JojaMart (Jeff, 2026-09-25): vanilla swaps Joja's tiles to a pre-drawn
+  boarded copy on the Town sheet (Town.showDestroyedJoja, index +20); Pierre has no such copy, so the
+  mod builds one at load from the game's own tiles (boards from the closed-Joja art over his windows
+  and door, walls darkened to match) and swaps Pierre's building to it for the bad ending only. It
+  replaces the plank X, which Jeff cut.
 - Staging uses the mod's own event tools where they exist (`tlyChangeLocation`, `tlyFadeIn`,
   `tlyFadeOut`, the black overlay) plus temporary sprites for the buildings, debris, sign, fish and
   driftwood. Tile positions are taken from gridded screenshots of each map, never guessed (see
