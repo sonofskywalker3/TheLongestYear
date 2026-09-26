@@ -46,6 +46,9 @@ namespace TheLongestYear.Loop
 
         internal static void ResetChoice() => _lastChoice = Choice.TlyCustom;
 
+        /// <summary>What picking a dropdown entry does, for tly_newgame's bundle-choice token.</summary>
+        internal static void SetChoice(Choice choice) => _lastChoice = choice;
+
         /// <summary>Maps a console token ("custom" / "standard" / "remixed", plus the dropdown's
         /// own vanilla wording) onto a <see cref="Choice"/>, so a diagnostic command can generate
         /// a board under a chosen option WITHOUT touching the save's stamped choice. Returns

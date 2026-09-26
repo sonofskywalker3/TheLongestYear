@@ -267,7 +267,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
             helper.ConsoleCommands.Add("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
             helper.ConsoleCommands.Add("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
-            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", this.CmdNewGame);
+            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [custom|standard|remixed] [name]", this.CmdNewGame);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
@@ -1056,11 +1056,17 @@ namespace TheLongestYear
             }
             if (args.Length < 1 || !NewGameFarmTypes.TryGetValue(args[0], out int farmType))
             {
-                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]", LogLevel.Info);
+                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [custom|standard|remixed] [name]", LogLevel.Info);
                 return;
             }
             bool skipIntro = args.Skip(1).Any(a => a.Equals("skipintro", StringComparison.OrdinalIgnoreCase));
-            string name = args.Skip(1).FirstOrDefault(a => !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)) ?? "Rodger";
+            // Optional Advanced Options bundle choice (custom / standard / remixed); the default
+            // stays TLY Custom. Standard keeps another bundle mod's board, as a player would pick.
+            string bundleToken = args.Skip(1).FirstOrDefault(a => BundleOptionPatch.TryParseChoice(a, out _));
+            if (bundleToken != null && BundleOptionPatch.TryParseChoice(bundleToken, out var bundleChoice))
+                BundleOptionPatch.SetChoice(bundleChoice);
+            string name = args.Skip(1).FirstOrDefault(a => !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)
+                && !BundleOptionPatch.TryParseChoice(a, out _)) ?? "Rodger";
 
             Game1.resetPlayer();
             Game1.player.Name = name;
