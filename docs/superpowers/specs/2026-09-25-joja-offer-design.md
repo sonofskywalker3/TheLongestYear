@@ -81,7 +81,7 @@ make a permanent loss undoable anyway.
 - "Game Over", centered, about a third of the way down.
 - In the middle, centered: "The Junimos were forced to abandon the valley, and Joja was left to take
   over unopposed." (Jeff's line, two spelling fixes approved.)
-- Bottom third: the farmer in a suit and fedora standing by Morris, both with glowing red eyes. The
+- Bottom third: the farmer in a suit (no hat, black boots; Jeff 2026-09-25 dropped the fedora) standing by Morris, both with glowing red eyes. The
   dark, red-eyed Morris sprite already exists (`MorrisDarkSprite`); the farmer is drawn with borrowed
   clothes and red eyes for this screen only, never touching the save's real appearance.
 - A button (and any key) returns to the title. No save is written.
