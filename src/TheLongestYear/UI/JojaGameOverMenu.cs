@@ -9,7 +9,6 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.GameData.Pants;
 using StardewValley.GameData.Shirts;
 using StardewValley.Menus;
-using StardewValley.Objects;
 using TheLongestYear.Core;
 using TheLongestYear.Integration;
 
@@ -17,14 +16,23 @@ namespace TheLongestYear.UI
 {
     /// <summary>The end of Morris's offer taken (JojaBadEnding's <c>tlyGameOver</c>): full-screen
     /// black, "Game Over" a third of the way down, the message in the middle, and in the bottom
-    /// third the farmer in a suit and fedora beside Morris, both with glowing red eyes. The button,
-    /// any key or any controller button exits to the title without saving.
+    /// third the farmer in a suit, bare-headed and in black boots, beside Morris, both with glowing
+    /// red eyes. The button, any key or any controller button exits to the title without saving.
     ///
-    /// The farmer is re-dressed live (hat, shirt and pants overrides, red eyes) for the picture:
+    /// Input is swallowed for the first 600 ms (<see cref="InputDelayMs"/>) so a player mashing
+    /// through the scene's last dialogue does not skip the screen unseen. The only way out is that
+    /// input path: <c>exitThisMenu</c> would close the screen without reaching the title and leave
+    /// the finished event idling, which is why <c>tly_dismiss</c> sends this menu a key press
+    /// instead of closing it.
+    ///
+    /// The farmer is re-dressed live (hat off, shirt and pants overrides, black boots, red eyes):
     /// nothing is saved after this screen, so the change never reaches the save on disk.</summary>
     internal sealed class JojaGameOverMenu : IClickableMenu
     {
-        private const string FedoraName = "Fedora";
+        // Characters/Farmer/shoeColors: one 4-pixel row per shoe colour, read by FarmerRenderer.ApplyShoeColor.
+        private const string ShoeColoursAsset = "Characters/Farmer/shoeColors";
+        private const int ShoeRowWidth = 4;
+        private const int ColourSpreadWeight = 2;
         private static readonly string[] SuitWords = { "Suit", "Tuxedo" };
         private const float Scale = 4f;
         private const int SpriteW = 16, SpriteH = 32;
@@ -33,8 +41,6 @@ namespace TheLongestYear.UI
         private const int FiguresBelowTwoThirds = 16;
         private const int TitleLift = 40;
         private const int ButtonGap = 32, ButtonPadX = 32, ButtonPadY = 20;
-        // Swallow input this long after opening so a player mashing through the scene's last
-        // dialogue does not skip the screen unseen.
         private const double InputDelayMs = 600;
         private const float PulseMs = 300f;
         // A 4x4 core over the 4x4 iris, with two fainter, larger squares around it for the glow
@@ -91,20 +97,21 @@ namespace TheLongestYear.UI
         private int FarmerX => width / 2 - FigureGap / 2 - FigureW;
         private int MorrisX => width / 2 + FigureGap / 2;
 
-        /// <summary>Fedora, a suit shirt and pants, red eyes. Each slot is independent: one that
-        /// cannot be found or throws is logged and left as it was.</summary>
+        /// <summary>No hat, a suit shirt and pants, black boots, red eyes. Each slot is independent:
+        /// one that cannot be found or throws is logged and left as it was.</summary>
         private void DressFarmer()
         {
             Farmer who = Game1.player;
+            try { who.hat.Value = null; }
+            catch (Exception ex) { _monitor.Log($"Joja game over: hat: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
+
             try
             {
-                string hatId = null;
-                foreach (var (id, raw) in DataLoader.Hats(Game1.content))
-                    if (raw.Split('/')[0] == FedoraName) { hatId = id; break; }
-                if (hatId == null) _monitor.Log("Joja game over: no Fedora in Data/Hats; hat unchanged.", LogLevel.Warn);
-                else who.hat.Value = ItemRegistry.Create<Hat>("(H)" + hatId);
+                int row = DarkestShoeRow();
+                who.changeShoeColor(row.ToString());
+                _monitor.Log($"Joja game over: shoe colour row {row}.", LogLevel.Trace);
             }
-            catch (Exception ex) { _monitor.Log($"Joja game over: hat: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
+            catch (Exception ex) { _monitor.Log($"Joja game over: boots: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
 
             try
             {
@@ -139,6 +146,28 @@ namespace TheLongestYear.UI
 
             try { who.changeEyeColor(Color.Red); }
             catch (Exception ex) { _monitor.Log($"Joja game over: eyes: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
+        }
+
+        /// <summary>The blackest shoeColors row: dark AND grey, scored as brightness plus twice each
+        /// shade's colour spread, lowest wins. Brightness alone picks vanilla row 8, a dark red
+        /// (live 2026-09-25); this picks row 7, black to charcoal grey ((0,0,0) to (66,66,66)).</summary>
+        private static int DarkestShoeRow()
+        {
+            Texture2D tex = Game1.content.Load<Texture2D>(ShoeColoursAsset);
+            var px = new Color[tex.Width * tex.Height];
+            tex.GetData(px);
+            int best = 0, bestSum = int.MaxValue;
+            for (int row = 0; row < tex.Height; row++)
+            {
+                int sum = 0;
+                for (int i = 0; i < ShoeRowWidth; i++)
+                {
+                    Color c = px[row * ShoeRowWidth + i];   // the renderer indexes rows as which * 4
+                    sum += c.R + c.G + c.B + ColourSpreadWeight * (Math.Max(c.R, Math.Max(c.G, c.B)) - Math.Min(c.R, Math.Min(c.G, c.B)));
+                }
+                if (sum < bestSum) { bestSum = sum; best = row; }
+            }
+            return best;
         }
 
         private static string FindSuit<T>(IDictionary<string, T> data, Func<T, string> name, out string found)

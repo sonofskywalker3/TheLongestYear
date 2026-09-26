@@ -74,9 +74,11 @@ make a permanent loss undoable anyway.
   across the whole farm. **Real** farm animals (cows, sheep, goats, chickens, ducks, pigs only; no
   rabbits, no exotic animals), each housed in one of those buildings, walk in the way they do in the
   evening: the game's own go-home behavior, not scripted lines. The camera pans across all the rows.
+  Before any of it, the WHOLE farm is cleared: every tree, crop, plant, weed, stone, debris, object
+  and player building (Jeff, 2026-09-25).
   All of it is in memory only: the scene always ends at the title without saving (fail-closed).
-- The town: pollution, a green river with dead fish, driftwood all over the beach, a Closed sign
-  across Pierre's door.
+- The town: pollution, a green river with dead fish, driftwood all over the beach. (The boarded X
+  across Pierre's door was cut: Jeff did not like it, 2026-09-25.)
 - Staging uses the mod's own event tools where they exist (`tlyChangeLocation`, `tlyFadeIn`,
   `tlyFadeOut`, the black overlay) plus temporary sprites for the buildings, debris, sign, fish and
   driftwood. Tile positions are taken from gridded screenshots of each map, never guessed (see
