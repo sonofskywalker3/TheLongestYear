@@ -136,6 +136,14 @@ namespace TheLongestYear.Integration
 
             helper.Events.GameLoop.UpdateTicked += (_, _) => HoldTreesTranslucent();
             helper.Events.Display.Rendered += (_, e) => DrawBlack(e.SpriteBatch);
+            // A scene cut off mid-command (the bad ending failing closed mid-pan, 2026-09-25) left
+            // _panning set, so the next scene's first tlyPanTo finished at once on the old target.
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) =>
+            {
+                _panning = _fadingIn = _fadingOut = _saying = _changing = false;
+                _black = 0f;
+                _afterEnd = -1f;
+            };
 
             // tlyFadeOut [ms]: take the overlay to black, eased, and leave it there. Used before
             // "end": the vanilla globalFade cleared itself when the event ended, which showed the

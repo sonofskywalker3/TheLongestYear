@@ -147,7 +147,8 @@ namespace TheLongestYear.Integration
         }
 
         /// <summary>Time is up: whoever is still out goes in the way vanilla moves an animal home when
-        /// no player is watching (FarmAnimal.cs 1550-1558). Returns how many.</summary>
+        /// no player is watching (FarmAnimal.cs 1550-1558). Returns one note per animal moved (type, tile,
+        /// its door, how far its go-home got), for the log.</summary>
         internal static List<string> SendStragglersInside(Farm farm)
         {
             var notes = new List<string>();

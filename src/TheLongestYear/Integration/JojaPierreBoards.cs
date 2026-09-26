@@ -131,9 +131,19 @@ namespace TheLongestYear.Integration
                 boards = $"door and {Windows.Length} windows boarded";
             }
 
-            _built = new Texture2D(Game1.graphics.GraphicsDevice, source.Width, source.Height);
-            _built.SetData(pixels);
-            _helper.GameContent.InvalidateCache(AssetName);
+            // One texture for the whole session, refilled on each run: SMAPI's cache and the map
+            // display device hold this instance, so it is never disposed under them, and a replay
+            // allocates nothing new. Only a sheet of another size (a map mod) gets a fresh one.
+            if (_built == null || _built.Width != source.Width || _built.Height != source.Height)
+            {
+                _built = new Texture2D(Game1.graphics.GraphicsDevice, source.Width, source.Height);
+                _built.SetData(pixels);
+                _helper.GameContent.InvalidateCache(AssetName);
+            }
+            else
+            {
+                _built.SetData(pixels);
+            }
 
             TileSheet stale = map.GetTileSheet(SheetId);
             if (stale != null) map.RemoveTileSheet(stale);
