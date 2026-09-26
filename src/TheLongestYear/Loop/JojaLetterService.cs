@@ -30,7 +30,10 @@ namespace TheLongestYear.Loop
             }, AssetEditPriority.Default);
         }
 
-        /// <summary>Called from ModEntry's DayStarted, after the run-state has synced the date.</summary>
+        /// <summary>Called from ModEntry's DayStarted, BEFORE RunController syncs Run.Season and
+        /// Run.DayOfMonth to the new day, so today is read from the game's own date. Reading the run
+        /// calendar here delivered every letter a day late (live check 2026-09-25: day 8 planned,
+        /// arrived on day 9).</summary>
         public void OnDayStarted()
         {
             if (!RunActivation.IsActive || Game1.player == null) return;
@@ -38,7 +41,7 @@ namespace TheLongestYear.Loop
             MetaState meta = _meta.State;
             if (run.JojaLetterDays == null || run.JojaLetterDays.Count == 0)
                 run.JojaLetterDays = JojaOffer.PlanLetterDays(unchecked(run.Seed * 31 + 0x4A6F6A61));
-            int today = Calendar.DayOfYear((int)run.Season, run.DayOfMonth);
+            int today = Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
 
             int come = JojaOffer.ComeLetterDue(run, meta, today);
             if (come > 0)
