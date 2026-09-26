@@ -9,16 +9,17 @@ using SObject = StardewValley.Object;
 
 namespace TheLongestYear.Integration
 {
-    /// <summary>The bad ending's bulldozer: empties the farm (or a tile rectangle of it) and paves it,
-    /// so the scene's real coops, barns and animals stand on concrete whatever the player built or
-    /// planted there.
-    /// Objects, terrain features (crops, trees, grass, flooring), resource clumps, large terrain
-    /// features (bushes) and any building overlapping it, except the main farmhouse (the scene hides
-    /// that instead). Mod-tagged objects (modData keys starting "tly") are kept.
+    /// <summary>The bad ending's bulldozer: empties the whole farm and paves it, so the scene's real
+    /// coops, barns and animals stand on concrete whatever the player built or planted there.
+    /// <see cref="ClearAll"/> removes objects, terrain features (crops, trees, grass, flooring),
+    /// resource clumps, large terrain features (bushes), every building except the main farmhouse
+    /// (the scene hides that instead), the farm animals, outdoor furniture, pets and horses. The mod's
+    /// own tagged objects (modData keys starting "tly", the Junimo Stash) are lifted off for the scene
+    /// and put back by <see cref="RestoreHeld"/>.
     ///
     /// IN MEMORY ONLY. This is safe only because the bad ending always ends at the title without
     /// saving: JojaBadEndingCommands fails closed to the title if the scene ends any other way, and
-    /// the tlyClear command refuses to run outside the scene.</summary>
+    /// its tlyClearFarm / tlyPaveFarm commands refuse to run outside the scene.</summary>
     internal static class JojaFarmClear
     {
         private const string ModDataPrefix = "tly";

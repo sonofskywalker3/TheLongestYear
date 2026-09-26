@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.GameData;
 
 namespace TheLongestYear.Integration
 {
@@ -60,6 +61,7 @@ namespace TheLongestYear.Integration
         private static GameLocation _tinted;
         private static Color _tintOriginal;
         private static string _music;
+        private static GameLocation _musicCheckedIn;
 
         internal static bool IsBadEnding(Event ev) => ev != null && ev.id == JojaEventKeys.BadEndingId;
 
@@ -98,6 +100,7 @@ namespace TheLongestYear.Integration
             if (_gameOverSent) return;
             _gameOverSent = true;
             _monitor.Log($"Joja: {why}; exiting to the title without saving.", LogLevel.Warn);
+            Cleanup();
             // Straight to the title, no Game Over screen: an abnormal end is not the scene's ending.
             Game1.ExitToTitle();
         }
@@ -240,10 +243,17 @@ namespace TheLongestYear.Integration
             Guarded(evt, MusicName, () =>
             {
                 _music = cue;
-                Game1.changeMusicTrack(cue);
+                PlayMusic();
                 _monitor.Log($"{MusicName}: playing '{cue}'.", LogLevel.Trace);
             });
         }
+
+        /// <summary>The Event music context, the one vanilla's own playMusic event command uses
+        /// (Event.cs 1329): the Default context is refused on a green-rain day (Game1.cs 10064), which
+        /// left the cue re-requested every tick and never playing.</summary>
+        private static void PlayMusic() => Game1.changeMusicTrack(_music, track_interruptable: false, MusicContext.Event);
+
+        private static bool MusicHeld => Game1.getMusicTrackName(MusicContext.Event) == _music;
 
         private static void GameOver(Event evt, string[] args, EventContext context)
         {
@@ -280,7 +290,16 @@ namespace TheLongestYear.Integration
                 {
                     BobFloating();
                     if (Game1.currentLocation is Farm farm) JojaFarmAnimals.Tick(farm);
-                    if (_music != null && Game1.getMusicTrackName() != _music) Game1.changeMusicTrack(_music);
+                    if (_music != null && Game1.currentLocation != _musicCheckedIn)
+                    {
+                        _musicCheckedIn = Game1.currentLocation;
+                        _monitor.Log($"{MusicName}: now in {_musicCheckedIn?.Name}, scene music '{Game1.getMusicTrackName(MusicContext.Event)}'.", LogLevel.Info);
+                    }
+                    if (_music != null && !MusicHeld)
+                    {
+                        _monitor.Log($"{MusicName}: '{Game1.getMusicTrackName(MusicContext.Event)}' was requested in {Game1.currentLocation?.Name}; '{_music}' put back.", LogLevel.Info);
+                        PlayMusic();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -288,18 +307,26 @@ namespace TheLongestYear.Integration
                 }
                 return;
             }
-            if (_farmhouseHidden || Sprites.Count > 0 || _tinted != null || _dustElapsed >= 0f || JojaPierreBoards.Active
-                || JojaFarmAnimals.Count > 0 || _music != null || JojaFarmClear.HasHeld)
-                Cleanup();
-            if (!_running || _gameOverSent) return;
-            if (Game1.locationRequest != null || Game1.isWarping)
+            if (_running && !_gameOverSent)
             {
-                _missingTicks = 0;   // a scene change in flight: the event comes back on the load
+                // tlyChangeLocation leaves currentEvent null until the new map loads (Event.cs
+                // 4867-4879): the scene is still on, so nothing is restored and the music is held.
+                // Only a real end cleans up: the title, the Game Over screen, or FailClosed below.
+                if (Game1.locationRequest != null || Game1.isWarping)
+                {
+                    _missingTicks = 0;
+                    return;
+                }
+                if (++_missingTicks < FailClosedGraceTicks) return;
+                FailClosed("the bad ending stopped before its end (a command failed or it was skipped)");
                 return;
             }
-            if (++_missingTicks < FailClosedGraceTicks) return;
-            FailClosed("the bad ending stopped before its end (a command failed or it was skipped)");
+            if (NeedsCleanup) Cleanup();
         }
+
+        private static bool NeedsCleanup
+            => _farmhouseHidden || Sprites.Count > 0 || _tinted != null || _dustElapsed >= 0f || JojaPierreBoards.Active
+               || JojaFarmAnimals.Count > 0 || _music != null || JojaFarmClear.HasHeld;
 
         private static void RestoreWater()
         {
@@ -310,6 +337,10 @@ namespace TheLongestYear.Integration
 
         private static void Cleanup()
         {
+            if (NeedsCleanup)
+                _monitor.Log($"Joja bad ending: restoring (Pierre's tiles {JojaPierreBoards.Active}, mod objects set aside {JojaFarmClear.HasHeld}, "
+                             + $"scene animals {JojaFarmAnimals.Count}, water tint {_tinted != null}, music '{_music}').", LogLevel.Info);
+            if (_music != null) Game1.stopMusicTrack(MusicContext.Event);
             _farmhouseHidden = false;
             _dustElapsed = -1f;
             foreach (var (loc, sprite) in Sprites)
@@ -323,6 +354,7 @@ namespace TheLongestYear.Integration
             JojaFarmClear.RestoreHeld();
             ResetFarmCommands();
             _music = null;
+            _musicCheckedIn = null;
         }
     }
 }
