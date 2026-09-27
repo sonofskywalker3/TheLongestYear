@@ -6,14 +6,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### FIXED in 0.18.74 (not released): ozzy2540, seasons failing under Challenging CC Bundles
-Reproduced live with SVE + CCCB. Nexus Posts tab reply waits for the release.
+### RELEASED 0.18.76 (2026-09-27): ozzy2540, seasons failing under Challenging CC Bundles
+Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, changelog). Nexus Posts reply drafted, waiting on Jeff's yes.
 
-### FIXED in 0.18.75 / 0.18.76 (not released): Thrippa's Nexus post (2026-09-25/26)
+### RELEASED 0.18.76 (2026-09-27): Thrippa's Nexus post (2026-09-25/26). Reply drafted, waiting on Jeff's yes
 - 0.18.75: eggs, milk and animal products stay out of Foraging (Visit Mount Vapius spawns eggs on the ground).
 - 0.18.76: TLY reads item-query shop and spawn lines (ALL_ITEMS + PerItemCondition, as Cornucopia writes
   them) for every mod, and year-2 locks close a route. Spring Rose and the other rare Cornucopia flowers are
-  kept off the board, verified live. Reply waits for the release.
+  kept off the board, verified live.
 - Dye bundle color-tag cleanup is still on the list (Jeff replied 2026-09-25).
 
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
