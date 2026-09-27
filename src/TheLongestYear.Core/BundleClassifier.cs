@@ -123,7 +123,8 @@ public static class BundleClassifier
         {
             Season season = ParseSeason(seasonalMatch.Groups["season"].Value);
             return BundleRequirement.CreateSeasonal(name, theme, ingredients, season,
-                ingredientStacks, ingredientQualities, bundleIndex: parsed.Index, slots: slots);
+                ingredientStacks, ingredientQualities, bundleIndex: parsed.Index, slots: slots,
+                numberOfSlots: parsed.NumberOfSlots);
         }
 
         // KIND 3: Percentage — has a named quota override, BUT only when X < Y after dedup.

@@ -37,6 +37,12 @@ public static class YearTwoCrops
     public const string RedCabbage = "(O)266";
     public const string Artichoke = "(O)274";
 
+    /// <summary>The seeds behind those three crops. Their "YEAR 2" shop lines are TLY's own
+    /// business (the upgrades above, and <see cref="ExcludedFor"/> on Easy), so source reachability
+    /// does not read the year lock on them. Every other year-2 line, vanilla or modded, is closed.</summary>
+    public static readonly IReadOnlySet<string> TlyUnlockedSeedIds =
+        new HashSet<string>(StringComparer.Ordinal) { "(O)476", "(O)485", "(O)489" };
+
     /// <summary>Qualified ids to keep out of every pool for a player with these upgrades, on this
     /// difficulty step. Only Easy still refuses year-2 crops outright once the pools carry them at
     /// weight 1 (spec 2026-08-28-obtainable-board, section 3); Normal and above ask for them like

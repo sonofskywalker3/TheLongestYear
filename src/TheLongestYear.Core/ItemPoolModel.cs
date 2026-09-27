@@ -167,8 +167,10 @@ public sealed record RawLocationLink(string From, string To);
 
 /// <summary>One Data/Shops stock line. <paramref name="IsRecipe"/> is the shop entry's own
 /// IsRecipe flag: such a line teaches a recipe rather than selling the item, so it is a source of
-/// the KNOWLEDGE, never of the item itself.</summary>
-public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false);
+/// the KNOWLEDGE, never of the item itself. <paramref name="LockedAfterYearOne"/> marks a line whose
+/// Condition needs year 2 or later (<see cref="Availability.YearOneCondition"/>): a known route, but
+/// a closed one in a loop that never leaves year 1.</summary>
+public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false, bool LockedAfterYearOne = false);
 
 /// <summary>Where a shop can actually be opened. A shop with no known placement leaves everything
 /// it sells allowed, per the conservative rule.</summary>

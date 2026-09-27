@@ -94,11 +94,12 @@ namespace TheLongestYear.Loop
                         continue;
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
-                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id)))
-                        foreach (string id in SpawnItemIds(f.ItemId, f.RandomItemId))
+                    // A row gated to year 2 or later never spawns in a loop (YearOneCondition).
+                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition)))
+                        foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
-                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id)))
-                        foreach (string id in SpawnItemIds(f.ItemId, f.RandomItemId))
+                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition)))
+                        foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             fish.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
                 }
 
@@ -159,8 +160,15 @@ namespace TheLongestYear.Loop
                     foreach (var entry in kv.Value.Items ?? new List<ShopItemData>())
                     {
                         if (entry == null || string.IsNullOrEmpty(entry.ItemId)) continue;
-                        if (!ItemIsObject(entry.ItemId)) continue;
-                        shopListings.Add(new RawShopListing(entry.ItemId, kv.Key, entry.IsRecipe));
+                        // Read the line the way the game does (item queries, RandomItemId,
+                        // PerItemCondition), and keep a year-2 line as a known but closed route.
+                        bool locked = !YearOneCondition.Allows(entry.Condition);
+                        foreach (string id in OfferedObjectIds(entry.ItemId, entry.RandomItemId, entry.PerItemCondition))
+                        {
+                            bool lockedHere = locked
+                                && !YearTwoCrops.TlyUnlockedSeedIds.Contains(BundleParsing.NormalizeItemId(id));
+                            shopListings.Add(new RawShopListing(id, kv.Key, entry.IsRecipe, lockedHere));
+                        }
                     }
                     foreach (var owner in kv.Value.Owners ?? new List<ShopOwnerData>())
                     {
@@ -341,20 +349,59 @@ namespace TheLongestYear.Loop
             }
         }
 
-        private static IEnumerable<string> SpawnItemIds(string itemId, List<string> randomItemId)
+        /// <summary>Every object id a Data/Shops or Data/Locations line offers, read the way the game
+        /// reads it: a plain id as-is, and a fixed-set item query (ALL_ITEMS, FLAVORED_ITEM)
+        /// resolved through the game's own ItemQueryResolver with the line's PerItemCondition, so a
+        /// mod that sells by context tag is read exactly as it wrote it (Cornucopia, Nexus post
+        /// Thrippa 2026-09-25). Random picks and non-object queries offer nothing here; see
+        /// <see cref="ItemQueryRules"/>. Each RandomItemId option is one possible line.</summary>
+        private IEnumerable<string> OfferedObjectIds(string itemId, List<string> randomItemId, string perItemCondition)
         {
-            if (!string.IsNullOrEmpty(itemId) && ItemIsObject(itemId))
-                yield return itemId;
-            foreach (string id in randomItemId ?? new List<string>())
-                if (!string.IsNullOrEmpty(id) && ItemIsObject(id))
-                    yield return id;
+            var raws = new List<string>();
+            if (!string.IsNullOrEmpty(itemId)) raws.Add(itemId);
+            raws.AddRange((randomItemId ?? new List<string>()).Where(r => !string.IsNullOrEmpty(r)));
+
+            foreach (string raw in raws)
+            {
+                switch (ItemQueryRules.Classify(raw, IsRegisteredQueryKey))
+                {
+                    case ShopItemQueryKind.PlainId:
+                        yield return raw;
+                        break;
+                    case ShopItemQueryKind.Resolve:
+                        foreach (string id in ResolveQuery(raw, perItemCondition))
+                            yield return id;
+                        break;
+                }
+            }
         }
 
-        /// <summary>Only plain objects belong in bundle pools (spawn ids can be qualified
-        /// with any item type; bundles can only ask for objects).</summary>
-        private static bool ItemIsObject(string id)
-            => !id.StartsWith("(", StringComparison.Ordinal)
-               || id.StartsWith("(O)", StringComparison.Ordinal);
+        private static bool IsRegisteredQueryKey(string key)
+            => StardewValley.Internal.ItemQueryResolver.ItemResolvers.ContainsKey(key);
+
+        private List<string> ResolveQuery(string query, string perItemCondition)
+        {
+            var ids = new List<string>();
+            try
+            {
+                var results = StardewValley.Internal.ItemQueryResolver.TryResolve(
+                    query, new StardewValley.Internal.ItemQueryContext(),
+                    StardewValley.Internal.ItemQuerySearchMode.All, perItemCondition,
+                    logError: (q, error) => _monitor?.Log($"GameDataPools: item query '{q}' failed: {error}", LogLevel.Trace));
+                foreach (var result in results)
+                {
+                    string qualified = (result?.Item as Item)?.QualifiedItemId;
+                    if (qualified != null && qualified.StartsWith("(O)", StringComparison.Ordinal))
+                        ids.Add(qualified);
+                }
+            }
+            catch (Exception ex)
+            {
+                // One bad line from one mod must not cost the whole read: skip it, as before.
+                _monitor?.Log($"GameDataPools: could not resolve item query '{query}' ({ex.GetType().Name}: {ex.Message}); skipped.", LogLevel.Trace);
+            }
+            return ids;
+        }
 
         private static Core.Season? MapSeason(StardewValley.Season? season)
             => season == null ? null : MapSeasonValue(season.Value);

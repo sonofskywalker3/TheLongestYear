@@ -407,7 +407,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
             helper.ConsoleCommands.Add("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
             helper.ConsoleCommands.Add("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
-            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [name]", this.CmdNewGame);
+            helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", this.CmdNewGame);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
@@ -1271,7 +1271,7 @@ namespace TheLongestYear
             }
             if (args.Length < 1 || !NewGameFarmTypes.TryGetValue(args[0], out int farmType))
             {
-                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [name]", LogLevel.Info);
+                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", LogLevel.Info);
                 return;
             }
             bool skipIntro = args.Skip(1).Any(a => a.Equals("skipintro", StringComparison.OrdinalIgnoreCase));
@@ -1281,9 +1281,15 @@ namespace TheLongestYear
                 this.Monitor.Log("tly_newgame: skipintro and arrival cannot be combined.", LogLevel.Warn);
                 return;
             }
+            // Optional Advanced Options bundle choice (custom / standard / remixed); the default
+            // stays TLY Custom. Standard keeps another bundle mod's board, as a player would pick.
+            string bundleToken = args.Skip(1).FirstOrDefault(a => BundleOptionPatch.TryParseChoice(a, out _));
+            if (bundleToken != null && BundleOptionPatch.TryParseChoice(bundleToken, out var bundleChoice))
+                BundleOptionPatch.SetChoice(bundleChoice);
             string name = args.Skip(1).FirstOrDefault(a =>
                 !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)
-                && !a.Equals("arrival", StringComparison.OrdinalIgnoreCase)) ?? "Rodger";
+                && !a.Equals("arrival", StringComparison.OrdinalIgnoreCase)
+                && !BundleOptionPatch.TryParseChoice(a, out _)) ?? "Rodger";
 
             Game1.resetPlayer();
             Game1.player.Name = name;
@@ -3297,6 +3303,9 @@ namespace TheLongestYear
             this.Monitor.Log($"Window: set to {w}x{h} (config dial).", LogLevel.Info);
         }
 
+        // Low: runs after other mods' DayStarted, so a bundle mod that swaps its board in each
+        // morning (Challenging CC Bundles) has done so before ReclassifyIfBoardChanged reads it.
+        [EventPriority(EventPriority.Low)]
         private void OnDayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
         {
             if (!RunActivation.IsActive) return;
@@ -3327,6 +3336,10 @@ namespace TheLongestYear
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
         }
 
+        // High: the day-28 gate must read the board the player filled today. Challenging CC Bundles
+        // swaps the morning board back out on DayEnding, and a gate running after that counted only
+        // the slots the smaller board has (ozzy2540, 2026-09-25: 47 slots filled, 32 counted).
+        [EventPriority(EventPriority.High)]
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
             if (!RunActivation.IsActive) return;
@@ -4831,8 +4844,8 @@ namespace TheLongestYear
             switch (req.Kind)
             {
                 case BundleKind.Seasonal:
-                    // Everything, but only once its named season has arrived.
-                    return (int)req.SeasonalSeason.Value <= (int)season ? req.Ingredients.Count : 0;
+                    // Its X slots (every slot unless pick X of Y), once its named season has arrived.
+                    return (int)req.SeasonalSeason.Value <= (int)season ? req.NumberOfSlots : 0;
 
                 case BundleKind.PerItem:
                     // Each pinned ingredient is due at its own pin.

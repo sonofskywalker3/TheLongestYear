@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.76`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.72`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,14 +24,6 @@ This is a **beta** (`0.18.76`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.76
-
-**Seasons pass again under Challenging CC Bundles, and eggs and year-2 flowers from other mods stay out of your bundles.**
-
-- **Seasons pass with Challenging CC Bundles.** With Challenging CC Bundles installed, a season could fail on its last night even with every bundle filled, because the mod was checking the smaller standard board instead of the one you filled. It now checks the board you actually filled. A bundle that asks for 8 of its 9 items also showed "needs 9" in the Bundle Log; it now says 8. Reported by ozzy2540.
-- **No eggs in the Foraging bundles.** Some mods, like Visit Mount Vapius, scatter eggs on the ground to pick up, and those eggs could turn up in a Foraging bundle. Eggs, milk and other animal products are now left out of Foraging. The Animal and Chef's bundles still ask for them. Reported by Thrippa.
-- **Items another mod holds back until year 2 stay off the board.** Some mods only sell a seed from year 2 on, like Cornucopia's Spring Rose and its other rare flowers, but the mod couldn't read how those shops are written and asked for them anyway. It now reads them, so anything you can't get in year 1 stays out of your bundles. This works for any mod that writes its shops that way. Two base-game items, the Tea Set and the Animal Catalogue, are left out for the same reason. Reported by Thrippa.
 
 ## What's New in 0.18.72
 

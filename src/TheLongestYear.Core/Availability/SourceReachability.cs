@@ -196,6 +196,7 @@ public sealed class SourceReachability
         foreach (RawShopListing listing in listings)
         {
             if (!listing.IsRecipe) continue;
+            if (listing.LockedAfterYearOne) { anyPlaced = true; continue; }   // teaches only from year 2
             if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places))
             {
                 // An unplaced teaching shop is an UNKNOWN route, not a closed one, exactly like
@@ -228,6 +229,13 @@ public sealed class SourceReachability
         {
             if (listing.IsRecipe) continue;       // teaches the recipe, does not sell the item
             anySale = true;
+            if (listing.LockedAfterYearOne)
+            {
+                // A known seller, but only from year 2, which a loop never reaches: a closed
+                // route, the same as a shop on an unreachable map (Nexus post Thrippa, 2026-09-25).
+                anyPlaced = true;
+                continue;
+            }
             if (!_shopLocations.TryGetValue(listing.ShopId, out List<string>? places) || places.Count == 0)
             {
                 // A shop nobody could place is an UNKNOWN route, not a closed one. The
