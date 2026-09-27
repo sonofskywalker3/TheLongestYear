@@ -17,6 +17,20 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.76 - 2026-09-27
+
+2398 tests. Rolls up 0.18.73 to 0.18.76.
+
+### Fixed
+
+- **A finished season failed under Challenging CC Bundles.** CCCB swaps its board in on DayStarted and the base board back on DayEnding/Saving; it loads first, so the day-end ledger mirror read the smaller base board and the gate counted too few filled slots. OnDayEnding is now EventPriority.High and OnDayStarted Low. Separately, a "<Season> Crops/Foraging" bundle was classified Seasonal and demanded every slot; it now honors pick-X-of-Y (CCCB Spring Crops is 8 of 9). Reported by ozzy2540 (Nexus, 2026-09-25).
+- **Eggs in Foraging.** BuildForagePool took anything on any location's forage list, and Visit Mount Vapius spawns eggs on the ground. Categories -5, -6 and -18 (eggs, milk, animal products) are now skipped for Foraging; Animal and Chef's bundles still reach them. Reported by Thrippa (Nexus, 2026-09-25).
+- **Item-query shop and spawn lines are read.** Data/Shops and Data/Locations ItemIds that are fixed-set queries (ALL_ITEMS, FLAVORED_ITEM, and keys other mods register) are resolved through the game's ItemQueryResolver with the line's PerItemCondition. Top-level YEAR clauses are judged for year 1: a year-2 shop line is a known but closed route, a year-2 spawn row is not read. Pierre's three year-2 seeds stay exempt. Cornucopia's 13 rare flowers (Spring Rose included) are now kept off the board; vanilla newly kept off: Tea Set and Animal Catalogue. Reported by Thrippa.
+
+### Added
+
+- **`tly_newgame` takes a bundle choice** (`custom` / `standard` / `remixed`) so headless runs can start on another bundle mod's board.
+
 ## 0.18.72 - 2026-09-25
 
 2364 tests.
