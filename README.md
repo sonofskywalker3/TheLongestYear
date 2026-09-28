@@ -30,7 +30,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 **Keep your Fish Pond through a rewind, and re-rolling the weekly themes stops showing the same pair.**
 
 - **Keep Fish Pond.** A new upgrade in Junimo Upgrades (Buildings, 750 JP), unlocked once you build a Fish Pond. After a rewind your pond is back in the same spot, finished and empty, so you skip the rebuild and the seaweed. The fish don't come with it; carry one in the Junimo Stash if you want to restock. With several ponds, the one with the most fish is the one kept. Suggested by elaineofshalott.
-- **Re-rolling the themes shows something new.** With the re-roll setting on, a week where only two themes could ask for two goals re-rolled the same pair forever. A re-roll now offers any theme you haven't picked this month that has at least one goal, never shows a pair twice until every pair has come up, and keeps the re-rolled pair if the hub is reopened. Reported by Nijah.
+- **Re-rolling the themes shows something new.** With the re-roll setting on, a week where only two themes could ask for two goals re-rolled the same pair forever. A re-roll now offers any theme you haven't picked this month that has at least one goal, and never shows a pair twice until every pair has come up. Reported by Nijah.
 
 ## What's New in 0.18.76
 
