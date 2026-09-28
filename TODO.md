@@ -36,15 +36,19 @@ Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply 
     are credited today from the CC slot flag.
   - Dials CONFIRMED (Jeff, 2026-09-28): Required Slots sets the top-up count, Item Rarity sets the item limits.
 - **Theme rerolls** move here from Features: Off / Costs JP / Free (replaces the on/off switch; an old
-  `true` migrates to Free). Cost proposal: about one goal's JP, doubling per reroll, reset weekly.
+  `true` migrates to Free). Cost (Jeff, 2026-09-28): starts at 50 JP, doubling per reroll, reset weekly. Note:
+  the whole weekly bonus is 30 JP x season multiplier (30 Spring, 120 Winter), so a Spring reroll costs
+  more than the week pays. Jeff to confirm flat 50 vs scaling with the season.
 - **Double theme week**: take both cards, both buffs, both drawbacks, both goal lists. Proposal: once a
   season, a random week 2 or 3; each list lifts its own drawback.
 - **Random weekly JP multiplier**: 0.5x to 1.5x (Jeff), shown on the card.
 - **Wildcard days**: one random twist day a week; must show in the quest log and/or the Junimo Shrine.
 - **Random bundle rewards** (Jeff: "100% this"): completed bundles give a random reward each loop.
-- **Random cart days**: open question, fixed twice a week on random days, or a nightly roll like the darkness.
-- **Mystery cards**: Jeff likes the idea, not the execution (the fixed buff/debuff gives the theme away).
-  Proposal: a sealed third card on some weeks, showing only its JP multiplier.
+- **Random cart days**: each day gets its own chance, but the whole week is rolled at the start of the
+  week (like weather) so the Cart Stall preview can show the days. Average about 2 a week, never 0.
+- **Mystery card**: shows only its JP multiplier, always 1.25x to 1.75x (Jeff) to reward the risk.
+  No third card (Jeff worried about the GUI): on some weeks one of the two normal cards is dealt face
+  down instead, same size and slot.
 - REJECTED: random starting kit.
 
 ### REQUEST (elaineofshalott, Nexus posts, 2026-09-27): keep fish ponds into the next loop
