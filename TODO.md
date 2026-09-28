@@ -6,8 +6,66 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
+Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
+- **RELEASED 0.18.79 (2026-09-28, with Keep Fish Pond): reroll shows the same pair.** Cause: a reroll shuffles only the
+  themes that qualify (not picked this month, 2+ askable goals). A week with exactly 2 qualifiers (late
+  month, thin activity themes) can only ever show that one pair. Fix, reroll path only: keep the
+  not-picked-this-month rule, lower the goal floor from 2 to 1 (never 0: a 0-goal theme lifts the
+  drawback for free), and never repeat a pair until every pair has been shown. Normal weekly offer unchanged.
+- **Theme items never change on reroll.** Working as designed: goals are seeded by run+week+theme,
+  gate-due items are drawn first, Spring weights Easy 8 / Medium 3 / Hard 1 / Extreme 0. Harder
+  difficulties need more lines, so they show more variety. Asked Nijah whether a reroll should skip the
+  item balancing too (would not touch the normal roll).
+- **Decouple buff/debuff pairs.** Pairings are hard coded (ThemeModifiers). Asked Nijah why: randomization
+  or something else.
+
+#### RANDOMIZER settings section (Jeff, 2026-09-28): all off by default, trade balance for variety
+SPEC WRITTEN on branch `randomizer`: `docs/superpowers/specs/2026-09-28-randomizer-design.md`. NOT
+scheduled: target 1.1, after the story release, while players wait for Year 2 (2.0). The notes below
+are the brainstorm; the spec is the source of truth.
+- **Random theme items**: drop the gate-first ordering and effort weighting. Keep the "obtainable by this
+  week" rule so no goal is impossible.
+- **Random buff/debuff pairings**: never pair a theme with a drawback that blocks its own goals
+  (Foraging + foraging off).
+- **Random shrine donations** (Jeff's favourite): top the weekly goal list up with items that have NO CC
+  slot, donated at the Junimo Shrine for the same JP a CC donation would pay. Unprepared-for asks, but
+  missing them never fails you; you just earn less JP and keep the drawback.
+  - Top-up target by the **Required Slots** difficulty dial: Easy 3, Normal 4, Hard 5, Extreme 6 goals.
+  - Item limits: Easy/Normal = obtainable this week, same theme kind. Hard/Extreme = anything the player
+    could get now OR could already have got this loop (missed the rainy-day catfish in week 2? should
+    have stocked up). Proposed dial for this: **Item Rarity** (Jeff to confirm).
+  - Needs: a donate screen on the shrine (it takes no items today) and its own goal credit, since goals
+    are credited today from the CC slot flag.
+  - Dials CONFIRMED (Jeff, 2026-09-28): Required Slots sets the top-up count, Item Rarity sets the item limits.
+- **Theme rerolls** move here from Features: Off / Costs JP / Free (replaces the on/off switch; an old
+  `true` migrates to Free). Cost (Jeff, 2026-09-28): starts at 50 JP, doubling per reroll, reset weekly. Note:
+  the whole weekly bonus is 30 JP x season multiplier (30 Spring, 120 Winter), so a Spring reroll costs
+  more than the week pays. CONFIRMED flat 50 (Jeff): paying JP should not make rerolls a
+  pick-anything-every-week option unless the player sets them to Free.
+- **Double theme week**: take both cards, both buffs, both drawbacks, both goal lists. Proposal: once a
+  season, a random week 2 or 3; each list lifts its own drawback.
+- **Random weekly JP multiplier**: 0.5x to 1.5x (Jeff), shown on the card.
+- **Wildcard days**: one random twist day a week; must show in the quest log and/or the Junimo Shrine.
+- **Random bundle rewards** (Jeff: "100% this"): completed bundles give a random reward each loop.
+- **Random cart days**: each day gets its own chance, but the whole week is rolled at the start of the
+  week (like weather) so the Cart Stall preview can show the days. Average about 2 a week, never 0.
+- **Mystery card**: shows only its JP multiplier, always 1.25x to 1.75x (Jeff) to reward the risk.
+  No third card (Jeff worried about the GUI): on some weeks one of the two normal cards is dealt face
+  down instead, same size and slot.
+- REJECTED: random starting kit.
+
 ### REQUEST (elaineofshalott, Nexus posts, 2026-09-27): keep fish ponds into the next loop
-One line, unanswered. Needs Jeff's call before any reply.
+Jeff asked her back on Nexus (2026-09-27): rebuild cost only, or the fish too? Is Roe / Aged Roe / Caviar hard to get
+in time? HOLD the 0.18.77 release until she answers; her reason decides empty vs stocked.
+Sarahwinchester97's "more than one pet?" answered the same day (Keep Pet brings every pet back).
+- ANSWERED (elaine, 2026-09-28): she wants the POND kept (re-grinding the seaweed every loop is the pain).
+  Fish are fine to carry in a Junimo Stash slot, "entirely fair" given legendary pond profits. So the
+  empty pond in 0.18.77 is exactly her ask; the release hold on her answer is lifted.
+  CREDIT at release (Jeff, 2026-09-28): the README + Nexus What's New line for Keep Fish Pond ends
+  "Suggested by elaineofshalott." (CHANGELOG already credits her.)
+- RELEASED 0.18.79 (2026-09-28, live rewind check passed headless): Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
+  same spot. Needs a live rewind check. A stocked pond / keep-a-fish power is still undecided by Jeff.
 
 ### RELEASED 0.18.76 (2026-09-27): ozzy2540, seasons failing under Challenging CC Bundles
 Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, changelog). Replied on Nexus Posts 2026-09-27.

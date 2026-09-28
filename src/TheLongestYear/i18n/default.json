@@ -284,6 +284,8 @@
     "upgrade.keep_deluxe_barn.desc": "Start each loop with a Deluxe Barn.",
     "upgrade.keep_silo.name": "Keep Silo",
     "upgrade.keep_silo.desc": "Start each loop with a Silo already built.",
+    "upgrade.keep_fish_pond.name": "Keep Fish Pond",
+    "upgrade.keep_fish_pond.desc": "Start each loop with one Fish Pond in the same spot. It comes back empty.",
     "upgrade.keep_kitchen.name": "Keep Kitchen",
     "upgrade.keep_kitchen.desc": "Start each loop with the Kitchen house upgrade (cooking accessible day 1).",
     "upgrade.keep_basement.name": "Keep Basement",

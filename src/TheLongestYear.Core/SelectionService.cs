@@ -100,20 +100,19 @@ public static class SelectionService
         return offer;
     }
 
-    /// <summary>The themes a re-roll may shuffle among: the qualified ones, or the not-picked room
-    /// themes when fewer than <see cref="OfferSize"/> qualify.</summary>
+    /// <summary>The themes a re-roll may offer: every theme not picked this month that can ask for
+    /// at least <see cref="MinAskableToPad"/> goal (Jeff, 2026-09-28, from Nijah's report: with the
+    /// old floor of <see cref="MinAskableToOffer"/> a week with exactly two qualified themes
+    /// re-rolled the same pair forever). Never a theme that can ask nothing, which would lift the
+    /// drawback for free. The normal weekly offer keeps its floor of two.</summary>
     public static IReadOnlyList<Theme> Candidates(
         IReadOnlyCollection<Theme> alreadySelectedThisMonth, Func<Theme, int> askableFor)
     {
         if (askableFor == null) throw new ArgumentNullException(nameof(askableFor));
         var selectedSet = new HashSet<Theme>(alreadySelectedThisMonth ?? Array.Empty<Theme>());
-        List<Theme> qualified = Enum.GetValues(typeof(Theme)).Cast<Theme>()
-            .Where(t => !selectedSet.Contains(t) && askableFor(t) >= MinAskableToOffer)
+        return Enum.GetValues(typeof(Theme)).Cast<Theme>()
+            .Where(t => !selectedSet.Contains(t) && askableFor(t) >= MinAskableToPad)
             .OrderBy(t => (int)t)
-            .ToList();
-        if (qualified.Count >= OfferSize) return qualified;
-        return qualified
-            .Concat(ThemeDomains.RoomThemes.Where(t => !selectedSet.Contains(t) && !qualified.Contains(t) && askableFor(t) >= MinAskableToPad))
             .ToList();
     }
 

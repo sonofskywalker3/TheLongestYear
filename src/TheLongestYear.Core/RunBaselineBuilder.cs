@@ -132,6 +132,9 @@ public static class RunBaselineBuilder
         // Silo is a single-tier keep, no chain.
         if (meta.HasUpgrade("keep_silo"))
             keptBuildings.Add("Silo");
+        // Keep Fish Pond: one pond, rebuilt empty (see FishPondKeep).
+        if (meta.HasUpgrade(FishPondKeep.UpgradeId))
+            keptBuildings.Add(FishPondKeep.BuildingType);
 
         // Starting animals — every owned start_<species> goes in (the prerequisite chain
         // already enforces the matching housing was bought, so the housing is in keptBuildings).
