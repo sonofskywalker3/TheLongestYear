@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased (0.18.77)
+
+2410 tests.
+
+### Added
+
+- **Keep Fish Pond** (Junimo Upgrades, Buildings, 750 JP; unlocked once a Fish Pond is built this loop). The rewind puts one Fish Pond back where the player had it, finished and empty: no fish, no output, no population gates, no request, no Golden Animal Cracker. With several ponds, the one with the most fish is the one remembered (the first one on a tie). If that spot is taken on the fresh farm, the pond goes to (46,18) or the nearest free 5x5 around it; it is placed after the other kept buildings, the greenhouse and the stable, and never duplicates a pond the fresh farm already has. Requested by elaineofshalott (Nexus, 2026-09-27).
+
 ## 0.18.76 - 2026-09-27
 
 2398 tests. Rolls up 0.18.73 to 0.18.76.
