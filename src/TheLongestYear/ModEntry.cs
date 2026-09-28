@@ -309,6 +309,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
+            helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen]", this.CmdReroll);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
             helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
             helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
@@ -2560,6 +2561,7 @@ namespace TheLongestYear
                 case "tly_trophytest": this.CmdTrophyTest(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
+                case "tly_reroll": this.CmdReroll(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
                 case "tly_driedprobe": this.CmdDriedProbe(command, args); break;
@@ -4743,6 +4745,27 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _launcher?.OpenWeeklyHub();
+        }
+
+        /// <summary>Headless re-roll check: presses the hub's re-roll button, or closes and reopens
+        /// the hub so a run can see the re-rolled pair restored.</summary>
+        private void CmdReroll(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.activeClickableMenu is not TheLongestYear.UI.WeeklyHubMenu hub)
+            {
+                this.Monitor.Log("tly_reroll: the planning hub is not open.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length > 0 && args[0].Equals("reopen", StringComparison.OrdinalIgnoreCase))
+            {
+                Game1.activeClickableMenu = null;
+                _launcher?.OpenWeeklyHub();
+                return;
+            }
+            int count = args.Length > 0 && int.TryParse(args[0], out int n) && n > 0 ? n : 1;
+            for (int i = 0; i < count; i++)
+                hub.RerollForDebug();
         }
 
         private void CmdSeasonGoals(string command, string[] args)

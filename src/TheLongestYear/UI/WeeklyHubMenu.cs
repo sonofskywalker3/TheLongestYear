@@ -581,6 +581,10 @@ namespace TheLongestYear.UI
                 LogLevel.Info);
         }
 
+        /// <summary>The re-roll button, for the tly_reroll console command (works whether or not the
+        /// button is enabled, so a headless run can press it).</summary>
+        public void RerollForDebug() => RerollOffer();
+
         /// <summary>The card click, by theme name, for the tly_select console command: the same
         /// commit path as the mouse (current-week pick or day-28 pre-pick), then the menu closes.
         /// Any theme is accepted, on or off the cards (it is a debug command).</summary>
