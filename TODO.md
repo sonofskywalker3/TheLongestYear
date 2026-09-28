@@ -21,6 +21,9 @@ Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply 
   or something else.
 
 #### RANDOMIZER settings section (Jeff, 2026-09-28): all off by default, trade balance for variety
+SPEC WRITTEN on branch `randomizer`: `docs/superpowers/specs/2026-09-28-randomizer-design.md`. NOT
+scheduled: target 1.1, after the story release, while players wait for Year 2 (2.0). The notes below
+are the brainstorm; the spec is the source of truth.
 - **Random theme items**: drop the gate-first ordering and effort weighting. Keep the "obtainable by this
   week" rule so no goal is impossible.
 - **Random buff/debuff pairings**: never pair a theme with a drawback that blocks its own goals
