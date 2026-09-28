@@ -38,7 +38,8 @@ Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply 
 - **Theme rerolls** move here from Features: Off / Costs JP / Free (replaces the on/off switch; an old
   `true` migrates to Free). Cost (Jeff, 2026-09-28): starts at 50 JP, doubling per reroll, reset weekly. Note:
   the whole weekly bonus is 30 JP x season multiplier (30 Spring, 120 Winter), so a Spring reroll costs
-  more than the week pays. Jeff to confirm flat 50 vs scaling with the season.
+  more than the week pays. CONFIRMED flat 50 (Jeff): paying JP should not make rerolls a
+  pick-anything-every-week option unless the player sets them to Free.
 - **Double theme week**: take both cards, both buffs, both drawbacks, both goal lists. Proposal: once a
   season, a random week 2 or 3; each list lifts its own drawback.
 - **Random weekly JP multiplier**: 0.5x to 1.5x (Jeff), shown on the card.
