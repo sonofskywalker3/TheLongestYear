@@ -59,6 +59,8 @@ Sarahwinchester97's "more than one pet?" answered the same day (Keep Pet brings 
 - ANSWERED (elaine, 2026-09-28): she wants the POND kept (re-grinding the seaweed every loop is the pain).
   Fish are fine to carry in a Junimo Stash slot, "entirely fair" given legendary pond profits. So the
   empty pond in 0.18.77 is exactly her ask; the release hold on her answer is lifted.
+  CREDIT at release (Jeff, 2026-09-28): the README + Nexus What's New line for Keep Fish Pond ends
+  "Suggested by elaineofshalott." (CHANGELOG already credits her.)
 - BUILT 0.18.77 on master, unreleased: Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
   same spot. Needs a live rewind check. A stocked pond / keep-a-fish power is still undecided by Jeff.
 
