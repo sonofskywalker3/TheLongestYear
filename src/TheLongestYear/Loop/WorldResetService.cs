@@ -274,6 +274,8 @@ namespace TheLongestYear.Loop
             // ruling — same contract as the stable above). Unconditional: cheap, and keeping the spot
             // fresh even before the keep is purchased means the first keep-owning reset already knows it.
             SnapshotKeptBuildingSpots();
+            // Keep Fish Pond remembers one pond (most fish, first on a tie), under its own key.
+            FishPondCarryoverService.SnapshotSpot(_meta);
 
             // 0d. Bank the LIVE stash chest before loadForNewGame wipes the Farm. StashItems is
             // otherwise refreshed only on the Saving event, so anything deposited after the last
@@ -576,6 +578,10 @@ namespace TheLongestYear.Loop
             //    no auto-build, so a player who hasn't built a stable yet has no horse this loop).
             //    Gated on the upgrade + a prior snapshot inside the service.
             HorseCarryoverService.RestoreHorse(_meta, _monitor);
+
+            // 9a. Keep Fish Pond: one EMPTY pond back at the player's spot. Runs after every other
+            //     building is back, so the pond is the one that moves if its spot is now taken.
+            FishPondCarryoverService.Restore(_meta, _monitor);
 
             // 10. Herd Book animals move in first (Jeff, 2026-09-25, option C): the Herd Book's
             //     room check counts only its own slots, so its animals get each building's room
@@ -1129,6 +1135,10 @@ namespace TheLongestYear.Loop
             Farm farm = Game1.getFarm();
             foreach (string blueprint in buildings)
             {
+                // Keep Fish Pond has its own restore (step 9a, FishPondCarryoverService).
+                if (blueprint == FishPondKeep.BuildingType)
+                    continue;
+
                 // Player's own spot first (step-0c snapshot); fixed tile only as legacy fallback.
                 Vector2 tile;
                 if (_meta.KeptBuildingSpots.TryGetValue(ChainInfo(blueprint).Family, out BuildingSpot spot))

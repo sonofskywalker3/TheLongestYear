@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.76`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.79`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,13 @@ This is a **beta** (`0.18.76`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.79
+
+**Keep your Fish Pond through a rewind, and re-rolling the weekly themes stops showing the same pair.**
+
+- **Keep Fish Pond.** A new upgrade in Junimo Upgrades (Buildings, 750 JP), unlocked once you build a Fish Pond. After a rewind your pond is back in the same spot, finished and empty, so you skip the rebuild and the seaweed. The fish don't come with it; carry one in the Junimo Stash if you want to restock. With several ponds, the one with the most fish is the one kept. Suggested by elaineofshalott.
+- **Re-rolling the themes shows something new.** With the re-roll setting on, a week where only two themes could ask for two goals re-rolled the same pair forever. A re-roll now offers any theme you haven't picked this month that has at least one goal, never shows a pair twice until every pair has come up, and keeps the re-rolled pair if the hub is reopened. Reported by Nijah.
 
 ## What's New in 0.18.76
 
@@ -359,6 +366,39 @@ As of 0.11.60, every player-visible string in the mod lives in a JSON file
 (`i18n/default.json`) — the mod is fully translatable with no DLL edits or rebuilds. See
 [`docs/TRANSLATING.md`](docs/TRANSLATING.md) for how to add a language. If you translate it,
 let us know (Nexus DM or GitHub issue) and we'll link your work from the mod page.
+
+---
+
+## Thanks
+
+This mod is shaped by the players who report bugs and suggest ideas. Every one of these made it better. Thank you!
+
+- **tanky24u**: suggested the Herd Book and Restart the year, and reported ten bugs and balance problems.
+- **FayGabi**: rings in the Dye bundle, Friendship 101 in the Book bundle, Chests Anywhere in the stash, once-per-loop items, and a new farm quit before its first night.
+- **ChaoticMindset**: Willy's letter, quest scenes and Gunther's Rusty Key coming back every loop, and the Joja Mart bundle.
+- **Emmalution**: played the whole loop on YouTube; her stream found the villager first-meeting lines and the weekly goals that ticked for free.
+- **gazumbrado**: Golden Egg and legendary fish asks, fish quantities, Keep Bus Unlocked, and the Skip intro checkbox.
+- **Thrippa**: eggs in the Foraging bundles and year-2 seeds from other mods.
+- **ozzy2540**: seasons failing under Challenging CC Bundles, and a finished season that could still fail.
+- **Mycatisinapiano1528**: Marlon selling back last loop's items, and Cactus Fruit before the desert.
+- **ShadowedAciexox**: dried fruit and smoked fish names, and Gil's Trophies asks.
+- **ada113**: must-donate-all season gates, and when the Cookbook and Craftbook open.
+- **asteriaths**: getting stuck on a second festival visit, and Chests Anywhere in the stash.
+- **spenderg**: out-of-season fish in weekly themes, and a controller double press.
+- **elaineofshalott**: suggested Keep Fish Pond.
+- **amaliekirstine**: festival contests and cutscenes stopping the clock.
+- **SilviaVA**: the Dye bundle asking for things a year cannot reach.
+- **RiseiJaku**: Zoom Level and UI Scale surviving the rewind.
+- **goblinslayer66666**: the Difficulty setting reaching Hard and Extreme.
+- **gmastern1**: quitting after a failed season skipping the rewind.
+- **pitytheviolins**: bundles asking for a dish from another mod's shop.
+- **Tottelotta123**: Garlic Cultivation and its price.
+- **khauser13**: egg colors in the quest log, and the Advanced Options screenshot.
+- **ggrace67**: weekly goals that ticked without a donation.
+- **Nijah, nyxnyx2234, Bumblewyn, IshoMoogoo and lexihope**: reports that shaped the early balance passes.
+- **supercam19**: the book art, and the fix that refills mine carts and barrels every loop.
+- **cwybabiesucks**: the banner art.
+- **u/Gribbleby**: the idea for villagers' déjà vu dialogue.
 
 ---
 
