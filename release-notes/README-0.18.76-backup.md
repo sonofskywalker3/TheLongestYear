@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.79`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.76`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,13 +24,6 @@ This is a **beta** (`0.18.79`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.79
-
-**Keep your Fish Pond through a rewind, and re-rolling the weekly themes stops showing the same pair.**
-
-- **Keep Fish Pond.** A new upgrade in Junimo Upgrades (Buildings, 750 JP), unlocked once you build a Fish Pond. After a rewind your pond is back in the same spot, finished and empty, so you skip the rebuild and the seaweed. The fish don't come with it; carry one in the Junimo Stash if you want to restock. With several ponds, the one with the most fish is the one kept. Suggested by elaineofshalott.
-- **Re-rolling the themes shows something new.** With the re-roll setting on, a week where only two themes could ask for two goals re-rolled the same pair forever. A re-roll now offers any theme you haven't picked this month that has at least one goal, never shows a pair twice until every pair has come up, and keeps the re-rolled pair if the hub is reopened. Reported by Nijah.
 
 ## What's New in 0.18.76
 
