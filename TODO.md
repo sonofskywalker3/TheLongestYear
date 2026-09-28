@@ -6,6 +6,35 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
+Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply drafted 2026-09-28.
+- **BUG, fix approved (Jeff, 2026-09-28): reroll shows the same pair.** Cause: a reroll shuffles only the
+  themes that qualify (not picked this month, 2+ askable goals). A week with exactly 2 qualifiers (late
+  month, thin activity themes) can only ever show that one pair. Fix, reroll path only: keep the
+  not-picked-this-month rule, lower the goal floor from 2 to 1 (never 0: a 0-goal theme lifts the
+  drawback for free), and never repeat a pair until every pair has been shown. Normal weekly offer unchanged.
+- **Theme items never change on reroll.** Working as designed: goals are seeded by run+week+theme,
+  gate-due items are drawn first, Spring weights Easy 8 / Medium 3 / Hard 1 / Extreme 0. Harder
+  difficulties need more lines, so they show more variety. Asked Nijah whether a reroll should skip the
+  item balancing too (would not touch the normal roll).
+- **Decouple buff/debuff pairs.** Pairings are hard coded (ThemeModifiers). Asked Nijah why: randomization
+  or something else.
+
+#### RANDOMIZER settings section (Jeff, 2026-09-28): all off by default, trade balance for variety
+- **Random theme items**: drop the gate-first ordering and effort weighting. Keep the "obtainable by this
+  week" rule so no goal is impossible.
+- **Random buff/debuff pairings**: never pair a theme with a drawback that blocks its own goals
+  (Foraging + foraging off).
+- **Random shrine donations** (Jeff's favourite): top the weekly goal list up with items that have NO CC
+  slot, donated at the Junimo Shrine for the same JP a CC donation would pay. Unprepared-for asks, but
+  missing them never fails you; you just earn less JP and keep the drawback.
+  - Top-up target by the **Required Slots** difficulty dial: Easy 3, Normal 4, Hard 5, Extreme 6 goals.
+  - Item limits: Easy/Normal = obtainable this week, same theme kind. Hard/Extreme = anything the player
+    could get now OR could already have got this loop (missed the rainy-day catfish in week 2? should
+    have stocked up). Proposed dial for this: **Item Rarity** (Jeff to confirm).
+  - Needs: a donate screen on the shrine (it takes no items today) and its own goal credit, since goals
+    are credited today from the CC slot flag.
+
 ### REQUEST (elaineofshalott, Nexus posts, 2026-09-27): keep fish ponds into the next loop
 Jeff asked her back on Nexus (2026-09-27): rebuild cost only, or the fish too? Is Roe / Aged Roe / Caviar hard to get
 in time? HOLD the 0.18.77 release until she answers; her reason decides empty vs stocked.
