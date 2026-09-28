@@ -3,9 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased (0.18.77)
+## Unreleased (0.18.78)
 
-2410 tests.
+2422 tests.
+
+### Fixed
+
+- **Re-roll Themes could show the same pair again and again.** A re-roll only drew from themes that could ask for two or more goals, so a week where exactly two qualified re-rolled that pair forever. A re-roll now offers any theme not picked this month that has at least one goal, never repeats a pair until every pair has been shown, and the re-rolled pair is kept for the week when the hub is closed. Reported by Nijah (Nexus posts, 2026-09-28).
 
 ### Added
 
