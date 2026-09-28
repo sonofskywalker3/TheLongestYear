@@ -8,6 +8,8 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### REQUEST (elaineofshalott, Nexus posts, 2026-09-27): keep fish ponds into the next loop
 One line, unanswered. Needs Jeff's call before any reply.
+- BUILT 0.18.77 on master, unreleased: Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
+  same spot. Needs a live rewind check. A stocked pond / keep-a-fish power is still undecided by Jeff.
 
 ### RELEASED 0.18.76 (2026-09-27): ozzy2540, seasons failing under Challenging CC Bundles
 Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, changelog). Replied on Nexus Posts 2026-09-27.
