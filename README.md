@@ -362,6 +362,39 @@ let us know (Nexus DM or GitHub issue) and we'll link your work from the mod pag
 
 ---
 
+## Thanks
+
+This mod is shaped by the players who report bugs and suggest ideas. Every one of these made it better. Thank you!
+
+- **tanky24u**: suggested the Herd Book and Restart the year, and reported ten bugs and balance problems.
+- **FayGabi**: rings in the Dye bundle, Friendship 101 in the Book bundle, Chests Anywhere in the stash, once-per-loop items, and a new farm quit before its first night.
+- **ChaoticMindset**: Willy's letter, quest scenes and Gunther's Rusty Key coming back every loop, and the Joja Mart bundle.
+- **Emmalution**: played the whole loop on YouTube; her stream found the villager first-meeting lines and the weekly goals that ticked for free.
+- **gazumbrado**: Golden Egg and legendary fish asks, fish quantities, Keep Bus Unlocked, and the Skip intro checkbox.
+- **Thrippa**: eggs in the Foraging bundles and year-2 seeds from other mods.
+- **ozzy2540**: seasons failing under Challenging CC Bundles, and a finished season that could still fail.
+- **Mycatisinapiano1528**: Marlon selling back last loop's items, and Cactus Fruit before the desert.
+- **ShadowedAciexox**: dried fruit and smoked fish names, and Gil's Trophies asks.
+- **ada113**: must-donate-all season gates, and when the Cookbook and Craftbook open.
+- **asteriaths**: getting stuck on a second festival visit, and Chests Anywhere in the stash.
+- **spenderg**: out-of-season fish in weekly themes, and a controller double press.
+- **elaineofshalott**: suggested Keep Fish Pond.
+- **amaliekirstine**: festival contests and cutscenes stopping the clock.
+- **SilviaVA**: the Dye bundle asking for things a year cannot reach.
+- **RiseiJaku**: Zoom Level and UI Scale surviving the rewind.
+- **goblinslayer66666**: the Difficulty setting reaching Hard and Extreme.
+- **gmastern1**: quitting after a failed season skipping the rewind.
+- **pitytheviolins**: bundles asking for a dish from another mod's shop.
+- **Tottelotta123**: Garlic Cultivation and its price.
+- **khauser13**: egg colors in the quest log, and the Advanced Options screenshot.
+- **ggrace67**: weekly goals that ticked without a donation.
+- **Nijah, nyxnyx2234, Bumblewyn, IshoMoogoo and lexihope**: reports that shaped the early balance passes.
+- **supercam19**: the book art, and the fix that refills mine carts and barrels every loop.
+- **cwybabiesucks**: the banner art.
+- **u/Gribbleby**: the idea for villagers' déjà vu dialogue.
+
+---
+
 ## Also by this author
 
 - [**Android Consolizer**](https://www.nexusmods.com/stardewvalley/mods/41869) — Full console-style controller support for Stardew Valley on Android.
