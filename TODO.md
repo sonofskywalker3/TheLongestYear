@@ -6,10 +6,13 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### RELEASED 0.18.76 (2026-09-27): ozzy2540, seasons failing under Challenging CC Bundles
-Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, changelog). Nexus Posts reply drafted, waiting on Jeff's yes.
+### REQUEST (elaineofshalott, Nexus posts, 2026-09-27): keep fish ponds into the next loop
+One line, unanswered. Needs Jeff's call before any reply.
 
-### RELEASED 0.18.76 (2026-09-27): Thrippa's Nexus post (2026-09-25/26). Reply drafted, waiting on Jeff's yes
+### RELEASED 0.18.76 (2026-09-27): ozzy2540, seasons failing under Challenging CC Bundles
+Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, changelog). Replied on Nexus Posts 2026-09-27.
+
+### RELEASED 0.18.76 (2026-09-27): Thrippa's Nexus post (2026-09-25/26). Replied on Nexus Posts 2026-09-27
 - 0.18.75: eggs, milk and animal products stay out of Foraging (Visit Mount Vapius spawns eggs on the ground).
 - 0.18.76: TLY reads item-query shop and spawn lines (ALL_ITEMS + PerItemCondition, as Cornucopia writes
   them) for every mod, and year-2 locks close a route. Spring Rose and the other rare Cornucopia flowers are
