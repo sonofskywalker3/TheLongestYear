@@ -7,7 +7,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ## Open
 
 ### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
-Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply drafted 2026-09-28.
+Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
 - **BUG, fix approved (Jeff, 2026-09-28): reroll shows the same pair.** Cause: a reroll shuffles only the
   themes that qualify (not picked this month, 2+ askable goals). A week with exactly 2 qualifiers (late
   month, thin activity themes) can only ever show that one pair. Fix, reroll path only: keep the
@@ -59,7 +59,6 @@ Sarahwinchester97's "more than one pet?" answered the same day (Keep Pet brings 
 - ANSWERED (elaine, 2026-09-28): she wants the POND kept (re-grinding the seaweed every loop is the pain).
   Fish are fine to carry in a Junimo Stash slot, "entirely fair" given legendary pond profits. So the
   empty pond in 0.18.77 is exactly her ask; the release hold on her answer is lifted.
-- Reroll reply posted to Nijah on Nexus posts 2026-09-28.
 - BUILT 0.18.77 on master, unreleased: Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
   same spot. Needs a live rewind check. A stocked pond / keep-a-fish power is still undecided by Jeff.
 
