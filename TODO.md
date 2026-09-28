@@ -56,6 +56,10 @@ Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply 
 Jeff asked her back on Nexus (2026-09-27): rebuild cost only, or the fish too? Is Roe / Aged Roe / Caviar hard to get
 in time? HOLD the 0.18.77 release until she answers; her reason decides empty vs stocked.
 Sarahwinchester97's "more than one pet?" answered the same day (Keep Pet brings every pet back).
+- ANSWERED (elaine, 2026-09-28): she wants the POND kept (re-grinding the seaweed every loop is the pain).
+  Fish are fine to carry in a Junimo Stash slot, "entirely fair" given legendary pond profits. So the
+  empty pond in 0.18.77 is exactly her ask; the release hold on her answer is lifted.
+- Reroll reply posted to Nijah on Nexus posts 2026-09-28.
 - BUILT 0.18.77 on master, unreleased: Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
   same spot. Needs a live rewind check. A stocked pond / keep-a-fish power is still undecided by Jeff.
 
