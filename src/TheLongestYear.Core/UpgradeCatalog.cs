@@ -272,6 +272,10 @@ public static class UpgradeCatalog
         // the Coop/Barn keeps to match its vanilla cost (100g + stones vs. thousands).
         new UpgradeDefinition("keep_silo", UpgradeCategory.Buildings, 150,
             metaRequirement: null, runReachRequirement: "building:Silo"),
+        // Fish Pond (elaineofshalott, Nexus 2026-09-27; Jeff: one pond, back EMPTY). Priced off the
+        // coop ladder (4,000g coop = 600 JP, 10,000g big coop = 1,200 JP; the pond is 5,000g).
+        new UpgradeDefinition(FishPondKeep.UpgradeId, UpgradeCategory.Buildings, 750,
+            metaRequirement: null, runReachRequirement: "building:" + FishPondKeep.BuildingType),
         new UpgradeDefinition("keep_kitchen", UpgradeCategory.Buildings, 800,
             metaRequirement: null, runReachRequirement: "house:1"),
         new UpgradeDefinition("keep_basement", UpgradeCategory.Buildings, 1800, "keep_kitchen",
