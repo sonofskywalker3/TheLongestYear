@@ -82,22 +82,26 @@ public class SelectionServiceTests
     }
 
     [Fact]
-    public void Candidates_are_the_qualified_themes_or_the_room_themes_when_short()
+    public void Candidates_are_every_not_picked_theme_that_can_ask_at_least_one_goal()
     {
-        Assert.Equal(new[] { Theme.Farming, Theme.Artisan }, SelectionService.Candidates(System.Array.Empty<Theme>(), Askable));
-        var padded = SelectionService.Candidates(new[] { Theme.Farming }, Askable);
-        Assert.Equal(new[] { Theme.Artisan }, padded);
+        // Reroll floor of one (Nijah, Nexus 2026-09-28): Kitchen (1 goal) is a candidate even
+        // though two themes qualify for the normal offer; Spelunking (0 goals) never is.
+        Assert.Equal(new[] { Theme.Farming, Theme.Artisan, Theme.Kitchen }, SelectionService.Candidates(System.Array.Empty<Theme>(), Askable));
+        Assert.Equal(new[] { Theme.Artisan, Theme.Kitchen }, SelectionService.Candidates(new[] { Theme.Farming }, Askable));
     }
 
     [Fact]
-    public void Candidates_pad_with_room_themes_that_can_ask_at_least_one()
+    public void Candidates_include_one_goal_themes_outside_the_room_themes()
     {
-        int Askable(Theme t) => t == Theme.Artisan ? 5 : t == Theme.Mining ? 1 : 0;
-        var padded = SelectionService.Candidates(new[] { Theme.Farming }, Askable);
-        Assert.Contains(Theme.Artisan, padded);
-        Assert.Contains(Theme.Mining, padded);
-        Assert.DoesNotContain(Theme.Farming, padded);
+        int Askable(Theme t) => t == Theme.Artisan ? 5 : t == Theme.Mining ? 1 : t == Theme.Spelunking ? 1 : 0;
+        var candidates = SelectionService.Candidates(new[] { Theme.Farming }, Askable);
+        Assert.Equal(new[] { Theme.Mining, Theme.Spelunking, Theme.Artisan }, candidates);
     }
+
+    [Fact]
+    public void Candidates_never_include_a_theme_that_can_ask_nothing()
+        => Assert.Empty(SelectionService.Candidates(System.Array.Empty<Theme>(), _ => 0));
+
     [Fact]
     public void Offer_has_two_distinct_themes()
     {

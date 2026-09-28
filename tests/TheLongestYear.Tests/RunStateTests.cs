@@ -369,4 +369,59 @@ public class RunStateTests
         Assert.Equal(-1, back.CartStockDay);
         Assert.Empty(back.CartStockIds);
     }
+
+    // Nijah, Nexus 2026-09-28: a rerolled offer is kept for the week when the hub closes.
+    private static RunState WithReroll(int week)
+    {
+        var run = new RunState();
+        run.RecordReroll(week, new[] { Theme.Farming, Theme.Kitchen }, 2);
+        run.RerollSeenPairs.Add("Farming|Kitchen");
+        return run;
+    }
+
+    [Fact]
+    public void A_rerolled_offer_survives_a_save_round_trip()
+    {
+        RunState back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(WithReroll(6)))!;
+        Assert.Equal(6, back.RerollWeek);
+        Assert.Equal(2, back.RerollCount);
+        Assert.Equal(new[] { Theme.Farming, Theme.Kitchen }, back.RerolledOffer);
+        Assert.Equal(new[] { "Farming|Kitchen" }, back.RerollSeenPairs);
+        Assert.Equal(new[] { Theme.Farming, Theme.Kitchen }, back.RerolledOfferFor(6));
+    }
+
+    [Fact]
+    public void A_rerolled_offer_from_another_week_is_ignored()
+    {
+        var run = WithReroll(6);
+        Assert.Null(run.RerolledOfferFor(7));
+        Assert.Null(new RunState().RerolledOfferFor(-1));
+    }
+
+    [Fact]
+    public void A_rerolled_offer_that_holds_a_theme_picked_since_is_ignored()
+    {
+        var run = WithReroll(6);
+        Assert.Null(run.RerolledOfferFor(6, new[] { Theme.Kitchen }));
+        Assert.NotNull(run.RerolledOfferFor(6, new[] { Theme.Mining }));
+    }
+
+    [Fact]
+    public void Reroll_state_is_cleared_by_a_pick_a_new_month_and_a_new_loop()
+    {
+        var picked = WithReroll(6);
+        picked.Select(Theme.Mining);
+        var month = WithReroll(6);
+        month.BeginNewMonth(Season.Summer);
+        var loop = WithReroll(6);
+        loop.BeginNewRun(9);
+
+        foreach (RunState run in new[] { picked, month, loop })
+        {
+            Assert.Equal(-1, run.RerollWeek);
+            Assert.Equal(0, run.RerollCount);
+            Assert.Empty(run.RerolledOffer);
+            Assert.Empty(run.RerollSeenPairs);
+        }
+    }
 }
