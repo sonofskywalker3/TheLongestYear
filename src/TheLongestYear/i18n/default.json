@@ -581,6 +581,7 @@
     // -- gmcm -------------------------------------------------------------------------
     // -- new-game Advanced Options (vanilla CC-bundles dropdown replaced) -------
     "ago.bundles.tly-custom": "TLY Custom",
+    "ago.year1.tly-custom-note": "Does not affect TLY Custom bundles.",
     "ago.bundles.tly-custom.tooltip": "TLY Custom (default): The Longest Year builds its own Community Center board every loop (vanilla + remixed pools plus its authored bundles). Pick Normal or Remixed instead to keep the game's own board - the mod then re-rolls it the same way on every reset.",
 
     "gmcm.section": "The Longest Year",

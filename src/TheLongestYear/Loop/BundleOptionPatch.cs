@@ -75,12 +75,26 @@ namespace TheLongestYear.Loop
             }
         }
 
+        /// <summary>The "Guarantee Year 1 Completable" checkbox only arms a Red Cabbage Seeds visit at
+        /// the Traveling Cart for the game's own board, so it does nothing to a TLY Custom board
+        /// (a streamer read it as doing nothing at all, 2026-09-29). Append that to its tooltip,
+        /// found by vanilla's own tooltip text, which also covers its label row.</summary>
+        private static void NoteYearOneCheckbox(AdvancedGameOptions menu)
+        {
+            string vanilla = Game1.content.LoadString("Strings\\UI:AGO_Year1Completable_Tooltip");
+            string noted = vanilla + "\n\n" + Strings.Get("ago.year1.tly-custom-note");
+            foreach (OptionsElement key in menu.tooltips.Where(kv => kv.Value == vanilla).Select(kv => kv.Key).ToList())
+                menu.tooltips[key] = noted;
+        }
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(AdvancedGameOptions __instance)
         {
             if (Enabled == null || !Enabled()) return;
             if (Context.IsWorldReady) return;   // new-game flow only (AGO is title-screen only, belt-and-braces)
+
+            NoteYearOneCheckbox(__instance);
 
             string remixed = Game1.BundleType.Remixed.ToString();
             OptionsDropDown dropdown = __instance.options
