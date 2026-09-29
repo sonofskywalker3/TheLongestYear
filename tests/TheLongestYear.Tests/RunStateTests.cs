@@ -216,6 +216,16 @@ public class RunStateTests
     }
 
     [Fact]
+    public void BeginNewRun_clears_the_voluntary_restart_menus_flag()
+    {
+        var run = new RunState { RestartMenusDone = true };
+
+        run.BeginNewRun(seed: 5);
+
+        Assert.False(run.RestartMenusDone);
+    }
+
+    [Fact]
     public void OfferPresentedWeek_defaults_to_negative_one()
         => Assert.Equal(-1, new RunState().OfferPresentedWeek);
 
