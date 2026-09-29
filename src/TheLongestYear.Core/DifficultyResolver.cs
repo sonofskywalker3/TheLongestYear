@@ -20,6 +20,9 @@ public static class DifficultyResolver
     private const double QualityEasy = 0.5, QualityNormal = 1.0, QualityHard = 2.0, QualityExtreme = 3.0;
     private const double RarityEasy = 0.5, RarityNormal = 1.0, RarityHard = 1.6, RarityExtreme = 2.4;
 
+    // Theme week discount (spec 2026-09-29-theme-week-discount), keyed on the Stack Size step.
+    private const double WeekDiscountEasy = 0.5, WeekDiscountNormal = 0.25, WeekDiscountHard = 0.0, WeekDiscountExtreme = 0.0;
+
     // Economy ramps (spec section 2.2).
     private const double JpEasy = 1.5, JpNormal = 1.0, JpHard = 0.75, JpExtreme = 0.5;
     private const double PriceEasy = 0.75, PriceNormal = 1.0, PriceHard = 1.25, PriceExtreme = 1.5;
@@ -51,6 +54,7 @@ public static class DifficultyResolver
             RequireAllSlots = settings.RequiredSlots == DifficultyStep.Extreme,
             RarityBias = Pick(settings.ItemRarity, RarityEasy, RarityNormal, RarityHard, RarityExtreme),
             OncePerLoopAsksOne = config.OncePerLoopAsksOne,
+            WeeklyGoalStackDiscount = WeeklyGoalDiscountFor(settings.StackSize),
 
             JpEarnedFactor = Pick(settings.JpEarned, JpEasy, JpNormal, JpHard, JpExtreme),
             ShrinePriceFactor = Pick(settings.ShrinePrices, PriceEasy, PriceNormal, PriceHard, PriceExtreme),
@@ -62,6 +66,10 @@ public static class DifficultyResolver
             Steps = settings.Clone(),
         };
     }
+
+    /// <summary>The theme week discount for a Stack Size step: Easy 50%, Normal 25%, none on Hard or Extreme.</summary>
+    public static double WeeklyGoalDiscountFor(DifficultyStep stackSize)
+        => Pick(stackSize, WeekDiscountEasy, WeekDiscountNormal, WeekDiscountHard, WeekDiscountExtreme);
 
     /// <summary>Extreme's 0.0x is an exact zero, not a rounding artefact, so the player really
     /// does start a loop with nothing.</summary>

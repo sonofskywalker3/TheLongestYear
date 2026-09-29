@@ -285,7 +285,7 @@ namespace TheLongestYear.UI
 
             // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
             int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
-            var sample = _runController.SampleSlotsForTheme(theme.Value, _offerSeason, week);
+            var sample = _runController.PreviewSlotsForTheme(theme.Value, _offerSeason, week);
 
             foreach (BonusSlot slot in sample)
             {

@@ -17,6 +17,28 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.98 - 2026-09-29
+
+2497 tests. Rolls up 0.18.85 to 0.18.98.
+
+### Fixed
+
+- **Restarting the year at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, any level-ups and the next day's date before being asked about your bundles and upgrades. Now the bundle question, the upgrade menu and the books come right after you say yes. Then the day fades out and you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the rewind resets your gold anyway. Seen in Dummy Dog Ben's stream.
+- **Qi Beans counted as a year-1 find.** The game's default artifact spot drops Qi Beans only while Mr. Qi's Qi Beans challenge is running, which needs Ginger Island. TLY read the row without its condition. Conditions that need a special-order rule only Mr. Qi's orders grant (read from the game's special orders, so mod orders count too) now close the row, for artifact spots, forage, fish and shop lines alike. Across 60 test boards nothing asks for a Qi Bean.
+
+### Added
+
+- **Keep Lost Books** (Junimo Upgrades, Carryover, 100 JP). Lost Books you have found stay found through a rewind, so artifact spots, fishing chests and the mines stop turning up ones you already have and you can dig for bundle artifacts instead. Suggested by tanky24u (Nexus posts, 2026-09-24).
+
+### Changed
+
+- **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week. With Stack size on Easy it asks for half, on Normal a quarter less, and on Hard or Extreme nothing changes. It rounds down and never goes below 10, so 31 Cauliflower becomes 23 on Normal. The planning hub shows the lowered counts before you pick. Finish a goal that week and it stays finished. A goal you have not finished goes back to its full count when the next week starts or when you pick a different theme. Reported by Nijah (Nexus posts, 2026-09-29): 31 Cauliflower in week 1 was too many.
+- **Marnie brings a pet again after a rewind, and Keep Pet costs 50 JP.** Without Keep Pet, a rewind marked Marnie's pet visit as already seen, so it never came back and the only route was the paid Adopt option at her counter. A farm with no pet after a rewind now gets the visit again. Keep Pet drops from 75 to 50 JP. Seen in Dummy Dog Ben's stream.
+- **The "Guarantee Year 1 Completable" checkbox says it does not affect TLY Custom bundles.** It only arms the Traveling Cart's Red Cabbage Seeds visit for the game's own board. It still works for Normal and Remixed, though TLY's cart-slot limit can hide the seeds that day.
+- **Artifacts wait for week 3.** Every artifact, whatever finds it (dig spots, geodes, monster drops, fishing chests), now counts as available from week 3, giving geodes and dig spots time to turn up. A week-1 board could ask for Elvish Jewelry. Seen in Dummy Dog Ben's stream.
+
+- **The Dye bundle asks for grown and gathered things.** It used to pick any object with the right colour tag, so across 60 test boards it asked for cooked dishes, artifacts, bombs, skill books, Joja Cola, Energy Tonic and a Qi Bean. It now picks only from the six vanilla Dye items (Red Mushroom, Sea Urchin, Sunflower, Duck Feather, Aquamarine, Red Cabbage), the common gems and crystals (Emerald, Aquamarine, Ruby, Amethyst, Topaz, Jade, Quartz, Fire Quartz, Frozen Tear; the deeper crystals still wait for their mine floors), and coloured crops, fruit, flowers, forage and beach finds. Each colour takes the game's own dye-pot shades, so gold counts as yellow, jade as green and aquamarine as blue. The same 60 boards now ask only for those. Seen in Dummy Dog Ben's stream (Elvish Jewelry and a book).
+
 ## 0.18.84 - 2026-09-29
 
 2447 tests. Rolls up 0.18.82 to 0.18.84.
@@ -24,7 +46,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Weekly goals could ask for items before they could exist.** Seasonal bundles (Spring Crops and the like) skipped the obtainable-by-this-week check the other bundle kinds already had, so in any week of that season a goal could name an item that wasn't reachable yet: Strawberries (seeds go on sale day 13) or Cauliflower (12 days to grow) in Spring week 1, for example. Seasonal lines now wait for their week like everything else. Reported by Nijah (Nexus posts, 2026-09-29); also seen in Dummy Dog Ben's stream.
-- **Week 1 asked for gold-quality crops.** A weekly goal could name a silver or gold line from day 1, when a gold Carrot is about a 1% roll. Lines that ask for silver or better are now held until week 3 of the year. Seen in Dummy Dog Ben's stream.
+- **Week 1 asked for silver and gold quality crops.** A weekly goal could name a silver or gold line from day 1, when a gold Carrot is about a 1% roll. Lines that ask for silver or better are now held until week 3 of the year. Seen in Dummy Dog Ben's stream.
 - **Long upgrade and boost descriptions ran off the screen.** Hover tooltips in the Junimo Upgrades, planning statue, weekly hub and Season Goals menus were one unwrapped line, so a long description (Sneak Peek) ran off the edge at larger UI scales. They now wrap. Seen in Dummy Dog Ben's stream.
 
 ## 0.18.81 - 2026-09-28

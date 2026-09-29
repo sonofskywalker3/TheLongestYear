@@ -82,11 +82,11 @@ public class ShopAvailabilityTests
     }
 
     [Fact]
-    public void Pool_artifact_without_a_spot_row_is_week_1()
+    public void Pool_artifact_without_a_spot_row_is_the_artifact_week()
     {
         var composer = new EffortComposer(new EffortData(), new Dictionary<string, ItemAvailability>(), hasKitchen: false,
             artifacts: new List<PoolItem> { new("(O)103", 300, 1, new List<Season>(), new List<string>()) });
-        Assert.Equal(1, composer.Derive("(O)103")!.EarliestWeek);
+        Assert.Equal(AvailabilityWeeks.ArtifactWeek, composer.Derive("(O)103")!.EarliestWeek);
     }
 
     [Fact]

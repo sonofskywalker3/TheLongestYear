@@ -27,6 +27,12 @@ public sealed class RunState
     /// 2026-09-12). Cleared when the scene ends.</summary>
     public Day28.Day28Branch PendingDay28 { get; set; } = Day28.Day28Branch.None;
 
+    /// <summary>A voluntary restart already ran its menus (bundle hold, upgrade menu, books)
+    /// before the night, so the morning only runs the reset (Jeff, 2026-09-29: Ben saw the payout,
+    /// a level-up and "Spring 6" before being asked about his bundles). Persisted with
+    /// <see cref="PendingDay28"/> so a quit after the night save still resets without re-asking.</summary>
+    public bool RestartMenusDone { get; set; }
+
     /// <summary>True when a load should run the month rollover itself: the calendar moved on
     /// since the run-state was saved AND no day-28 outcome is waiting to decide what happens
     /// instead. A pending Fail rewinds rather than advances, so it must never roll over.</summary>
@@ -61,6 +67,12 @@ public sealed class RunState
     /// 1.5× SelectionBonusMultiplier. Cleared on Select/BeginNewMonth/BeginNewRun.
     /// </summary>
     public List<BonusSlot> CurrentWeekBonusSlots { get; set; } = new();
+
+    /// <summary>The week-of-year whose goal lines the theme week discount lowered on the board
+    /// (-1 = none). <see cref="CurrentSelection"/> outlives its week, so this is what tells the
+    /// day start, after a save and reload too, that last week's lines are owed their full ask
+    /// back. Spec 2026-09-29-theme-week-discount.</summary>
+    public int DiscountWeek { get; set; } = -1;
 
     /// <summary>Themes already selected this month (cleared each month): four picks from the
     /// eight themes, so at least four are never selected in a given month.</summary>
@@ -406,6 +418,9 @@ public sealed class RunState
         VaultBundlesPaid.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
+        // The rewind rewrites the whole board, so no discounted line is left to put back.
+        DiscountWeek = -1;
+        RestartMenusDone = false;
         OfferPresentedWeek = -1;
         ClearReroll();
         PeakMineFloor = 0;

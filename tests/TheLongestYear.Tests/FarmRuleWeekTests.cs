@@ -11,9 +11,9 @@ public class FarmRuleWeekTests
     private static readonly Func<string, int?> NoEffort = _ => 1;
 
     [Fact]
-    public void Artifact_in_town_is_week_1_and_desert_only_is_week_9()
+    public void Artifact_in_town_is_week_3_and_desert_only_is_week_9()
     {
-        Assert.Equal(1, ArtifactAvailability.Derive("(O)100", new List<RawArtifactSpot> { new("Town", "(O)100", 0.1) })!.EarliestWeek);
+        Assert.Equal(AvailabilityWeeks.ArtifactWeek, ArtifactAvailability.Derive("(O)100", new List<RawArtifactSpot> { new("Town", "(O)100", 0.1) })!.EarliestWeek);
         Assert.Equal(9, ArtifactAvailability.Derive("(O)100", new List<RawArtifactSpot> { new("Desert", "(O)100", 0.1) })!.EarliestWeek);
     }
 

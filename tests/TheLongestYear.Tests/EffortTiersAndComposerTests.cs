@@ -77,4 +77,28 @@ public class EffortComposerTests
         Assert.Equal(EffortSource.Price, model.For("(O)999").Source);
         Assert.Contains("(O)999", model.UnrecognisedIds);
     }
+
+    /// <summary>Every artifact waits for week 3, whatever route finds it, so geodes, dig spots and
+    /// monster drops have time to turn up (Jeff, 2026-09-29; a streamer's week-1 board asked for
+    /// Elvish Jewelry).</summary>
+    [Fact]
+    public void Artifacts_are_floored_at_week_3_on_every_route()
+    {
+        var data = new EffortData
+        {
+            Objects = new Dictionary<string, RawObjectEntry>
+            {
+                ["104"] = Obj(0, "Elvish Jewelry", "Arch"),
+                ["96"] = Obj(0, "Dwarf Scroll I", "Arch"),
+                ["767"] = Obj(-28, "Bat Wing"),
+            },
+            ArtifactSpots = new List<RawArtifactSpot> { new("Forest", "(O)104", 0.05) },
+            MonsterDrops = new List<RawMonsterDrop> { new("Bat", "(O)767", 0.9), new("Green Slime", "(O)96", 0.5) },
+        };
+        var composer = new EffortComposer(data, new Dictionary<string, ItemAvailability>(), hasKitchen: false);
+
+        Assert.Equal(3, composer.Derive("(O)104")!.EarliestWeek);
+        Assert.Equal(3, composer.Derive("(O)96")!.EarliestWeek);
+        Assert.True(composer.Derive("(O)767")!.EarliestWeek < 3);
+    }
 }

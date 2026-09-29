@@ -649,25 +649,57 @@ public class ItemPoolBuilderTests
         // Vanilla tags the Amethyst Ring color_purple (Nexus, 2026-09-14); a ring cannot be donated.
         ItemPools pools = BuildPoolsWithObjects(
             ("529", "Amethyst Ring", cat: 0, tags: new[] { "color_purple", "ring_item" }),
-            ("66", "Amethyst", cat: -2, tags: new[] { "color_purple" }));
-        Assert.Contains(pools.ColourTags["color_purple"], p => p.ItemId == "(O)66");
+            ("254", "Melon", cat: -79, tags: new[] { "color_purple" }));
+        Assert.Contains(pools.ColourTags["color_purple"], p => p.ItemId == "(O)254");
         Assert.DoesNotContain(pools.ColourTags["color_purple"], p => p.ItemId == "(O)529");
     }
 
     [Fact]
-    public void ColourTags_skip_books_without_a_year_one_route_so_Dye_never_asks_for_one()
+    public void ColourTags_skip_books_so_Dye_never_asks_for_one()
     {
-        // The Queen of Sauce Cookbook is color_blue and needs 100 golden walnuts (SilviaVA, Nexus,
-        // 2026-09-17). The Book pool already keeps drop-only and post-year-1 books out; the colour
-        // index walked every object and let them straight back in through Dye.
+        // The Queen of Sauce Cookbook (color_blue, 100 golden walnuts) reached a Dye bundle (SilviaVA,
+        // Nexus, 2026-09-17), and a streamer's board asked for Woodcutter's Weekly (2026-09-29).
         ItemPools pools = BuildPoolsWithObjects(
             ("Book_QueenOfSauce", "Queen Of Sauce Cookbook", cat: -102, tags: new[] { "color_blue", "book_item" }),
-            ("Book_PriceCatalogue", "Price Catalogue", cat: -102, tags: new[] { "color_gold", "book_item" }),
             ("SkillBook_1", "Bait And Bobber", cat: -103, tags: new[] { "color_blue", "book_item" }),
             ("372", "Clam", cat: -23, tags: new[] { "color_blue" }));
         Assert.Contains(pools.ColourTags["color_blue"], p => p.ItemId == "(O)372");
-        Assert.Contains(pools.ColourTags["color_blue"], p => p.ItemId == "(O)SkillBook_1");
-        Assert.Contains(pools.ColourTags["color_gold"], p => p.ItemId == "(O)Book_PriceCatalogue");
+        Assert.DoesNotContain(pools.ColourTags["color_blue"], p => p.ItemId == "(O)SkillBook_1");
         Assert.DoesNotContain(pools.ColourTags["color_blue"], p => p.ItemId == "(O)Book_QueenOfSauce");
+    }
+
+    /// <summary>Dye picks from the six vanilla Dye items, the six common gems, and coloured crops,
+    /// fruit, flowers, forage and beach finds only (Jeff, 2026-09-29). Diamond, Prismatic Shard and
+    /// the mineral-type gems (Quartz and the like) stay out. 60 boards had asked for dishes, artifacts,
+    /// bombs, books, Joja Cola and Energy Tonic.</summary>
+    [Fact]
+    public void ColourTags_hold_only_vanilla_dye_items_and_grown_or_gathered_things()
+    {
+        ItemPools pools = BuildPoolsWithObjects(
+            ("444", "Duck Feather", cat: -18, tags: new[] { "color_white" }),
+            ("62", "Aquamarine", cat: -2, tags: new[] { "color_blue" }),
+            ("190", "Cauliflower", cat: -75, tags: new[] { "color_white" }),
+            ("613", "Apple", cat: -79, tags: new[] { "color_red" }),
+            ("421", "Sunflower", cat: -80, tags: new[] { "color_yellow" }),
+            ("18", "Daffodil", cat: -81, tags: new[] { "color_yellow" }),
+            ("397", "Sea Urchin", cat: -23, tags: new[] { "color_purple" }),
+            ("204", "Lucky Lunch", cat: -7, tags: new[] { "color_yellow" }),
+            ("583", "Prehistoric Rib", cat: 0, tags: new[] { "color_white" }),
+            ("286", "Cherry Bomb", cat: -8, tags: new[] { "color_red" }),
+            ("446", "Rabbit's Foot", cat: -18, tags: new[] { "color_white" }),
+            ("66", "Amethyst", cat: -2, tags: new[] { "color_purple" }),
+            ("68", "Topaz", cat: -2, tags: new[] { "color_gold" }),
+            ("72", "Diamond", cat: -2, tags: new[] { "color_white" }),
+            ("80", "Quartz", cat: -2, tags: new[] { "color_white" }),
+            ("84", "Frozen Tear", cat: -2, tags: new[] { "color_cyan" }),
+            ("74", "Prismatic Shard", cat: -2, tags: new[] { "color_prismatic" }),
+            ("86", "Earth Crystal", cat: -2, tags: new[] { "color_copper" }),
+            ("130", "Tuna", cat: -4, tags: new[] { "color_blue" }));
+        var all = pools.ColourTags.Values.SelectMany(l => l).Select(p => p.ItemId).ToHashSet();
+
+        foreach (string kept in new[] { "(O)444", "(O)62", "(O)190", "(O)613", "(O)421", "(O)18", "(O)397", "(O)66", "(O)68", "(O)80", "(O)84" })
+            Assert.Contains(kept, all);
+        foreach (string dropped in new[] { "(O)204", "(O)583", "(O)286", "(O)446", "(O)72", "(O)74", "(O)86", "(O)130" })
+            Assert.DoesNotContain(dropped, all);
     }
 }

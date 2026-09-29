@@ -102,6 +102,10 @@ public static class UpgradeCatalog
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
 
+        // Keep Lost Books (Jeff, 2026-09-29): found Lost Books stay found, so digging stops
+        // turning up ones already read. See LostBookKeep.
+        new UpgradeDefinition(LostBookKeep.UpgradeId, UpgradeCategory.Carryover, 100),
+
         // Carryover — Cookbook + Craftbook (recipe banking across runs).
         // Tier determines the slot pool size. Highest owned tier wins (owning III = 20 slots).
         // Cookbook: gated by kitchen (HouseUpgradeLevel >= 1) at interaction time, not at purchase.
@@ -288,7 +292,8 @@ public static class UpgradeCatalog
         // pets don't produce anything you'd ship or donate, so the cost reflects "mostly
         // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
         // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
-        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 75,
+        // 50 JP (Jeff, 2026-09-29; was 75): cheap enough for a first-loop buy.
+        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
             metaRequirement: null, runReachRequirement: "pet:1"),
 
         // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward

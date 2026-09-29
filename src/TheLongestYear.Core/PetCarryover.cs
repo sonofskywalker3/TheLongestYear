@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace TheLongestYear.Core;
 
@@ -43,4 +44,21 @@ public static class PetCarryover
         => (RestoreTileX - 1 - ColumnsPerPet * Math.Max(0, index), RestoreTileY - 1);
 
     public static int ClampFriendship(int value) => Math.Clamp(value, 0, MaxFriendship);
+
+    /// <summary>Marnie's pet visit, cat (1590166) and dog (897405). Data/Events/Farm keys them on
+    /// money earned, weekday, weather, pet preference and host only.</summary>
+    public static readonly IReadOnlyList<string> ArrivalSceneIds = new[] { "1590166", "897405" };
+
+    /// <summary>After a rewind leaves the farm petless, un-mark Marnie's pet visit so it plays again
+    /// (Jeff, 2026-09-29: a streamer read the missing visit as "no pet this loop"). The events-seen
+    /// reseed marks every watched scene seen, so without this the visit never came back. Returns how
+    /// many ids were cleared.</summary>
+    public static int ReopenArrivalScenes(ISet<string> eventsSeen, bool farmHasPet)
+    {
+        if (eventsSeen == null || farmHasPet) return 0;
+        int cleared = 0;
+        foreach (string id in ArrivalSceneIds)
+            if (eventsSeen.Remove(id)) cleared++;
+        return cleared;
+    }
 }
