@@ -32,7 +32,7 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   rules only Qi orders grant (from Data/SpecialOrders). Also unplaces Son of Crimsonfish (LEGENDARY_FAMILY).
 - **BUILT 0.18.87: Dye adds Quartz, Fire Quartz, Frozen Tear, Earth Crystal** (Jeff). Model weeks: Quartz and
   Earth Crystal wk 1, Frozen Tear and Fire Quartz wk 2. Earth Crystal is color_copper (orange group) and Dye
-  has no orange slot, so it never lands. QUESTION for Jeff if he wants an orange slot.
+  has no orange slot; Jeff 2026-09-29: remove it (0.18.88).
 - Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
