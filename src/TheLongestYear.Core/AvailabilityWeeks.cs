@@ -40,7 +40,9 @@ public static class AvailabilityWeeks
     public const int ShopDishWeek = 3;
     public const int PondDelayWeeks = 4;
     public const int SaplingWeek = 1;
-    public const int ArtifactWeek = 1;
+    /// <summary>First week any artifact may be asked for, whatever route finds it: time for geodes,
+    /// dig spots and drops to turn up (Jeff, 2026-09-29; was 1).</summary>
+    public const int ArtifactWeek = 3;
     public const int SalmonberryWeek = 3;
     public const int BlackberryWeek = 10;
     public const int SkullCavernWeek = 9;
