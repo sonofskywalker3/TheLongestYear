@@ -34,6 +34,10 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   Earth Crystal wk 1, Frozen Tear and Fire Quartz wk 2. Earth Crystal is color_copper (orange group) and Dye
   has no orange slot; Jeff 2026-09-29: remove it (0.18.88).
 - Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
+- **BUILT 0.18.89: artifacts floored at week 3** (Jeff 2026-09-29), every route (EffortComposer). 60 boards: no
+  impossible gates. Sea Jelly checked: no fishing level (Beach row MinFishingLevel 0), week 1 stays.
+- **QUESTION for Jeff: "keep library books" upgrade.** Does not exist; only Keep Stardrop (Museum). Asked what it
+  should keep (museum donations? Lost Books?).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
 

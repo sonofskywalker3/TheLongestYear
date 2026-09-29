@@ -107,6 +107,9 @@ public sealed class EffortComposer
                 && (candidate.EarliestWeek ?? 0) < late.Week)
                 candidate = new ItemEffort(candidate.Effort, $"{candidate.Basis}; late floor: {late.Note}, week {late.Week} (for Jeff to confirm)",
                     late.Week, AvailabilityWeeks.SeasonOf(late.Week));
+            if (IsArtifact(qualifiedId) && (candidate.EarliestWeek ?? AvailabilityWeeks.ArtifactWeek) < AvailabilityWeeks.ArtifactWeek)
+                candidate = new ItemEffort(candidate.Effort, $"{candidate.Basis}; artifact floor, week {AvailabilityWeeks.ArtifactWeek}",
+                    AvailabilityWeeks.ArtifactWeek, AvailabilityWeeks.SeasonOf(AvailabilityWeeks.ArtifactWeek));
             bool better = best == null
                 || (candidate.EarliestWeek ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
                 || (candidate.EarliestWeek == best.EarliestWeek && candidate.Effort < best.Effort);
@@ -116,6 +119,17 @@ public sealed class EffortComposer
     }
 
     private const int PoolArtifactEffort = 4;
+    private const string ObjectQualifier = "(O)";
+
+    /// <summary>Data/Objects Type "Arch": geode drops, dig spots, monster drops and fishing chests
+    /// all yield these, and every route waits for <see cref="AvailabilityWeeks.ArtifactWeek"/>.</summary>
+    private bool IsArtifact(string qualifiedId)
+    {
+        string bare = qualifiedId.StartsWith(ObjectQualifier, StringComparison.Ordinal)
+            ? qualifiedId.Substring(ObjectQualifier.Length) : qualifiedId;
+        return _data.Objects.TryGetValue(bare, out RawObjectEntry? obj)
+               && ItemKindClassifier.From(obj.Category, obj.Type) == ItemKind.Artifact;
+    }
 
     /// <summary>An artifact the catalog's own pool lists but the spot data does not (five on the
     /// 2026-08-28 boards: Ancient Doll, Anchor, Bone Flute, Golden Relic, Prehistoric Handaxe):
