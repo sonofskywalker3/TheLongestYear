@@ -229,4 +229,22 @@ public class SlotPoolBuilderTests
         Assert.DoesNotContain(pool, s => s.IngredientIndex == 0);
         Assert.Equal(3, pool.Count);   // Wood slot 1, Stone, Hardwood
     }
+
+    /// <summary>A Seasonal bundle's lines obey the week check like every other kind. They used
+    /// to be in play all season, so Spring week 1 asked for Strawberries (seeds on day 13) and
+    /// Cauliflower (12 days to grow): tly_goals on a clean save, Nijah and Dummy Dog Ben
+    /// (2026-09-29).</summary>
+    [Fact]
+    public void A_seasonal_line_the_week_check_rejects_is_not_a_goal()
+    {
+        var data = BundleData((0, "Spring Crops", "24 1 0 400 21 1 190 5 0", 3));
+        var reqs = Reqs(SeasonalReq("Spring Crops", "(O)24", "(O)400", "(O)190"));
+        var week1 = new HashSet<string> { "(O)24" };   // Parsnip only: 4 days
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Farming, Season.Spring, week1.Contains, weekOfYear: 1);
+
+        Assert.Equal(new[] { "(O)24" }, pool.Select(s => s.ItemId));
+        Assert.True(pool[0].Due);
+    }
 }
