@@ -30,7 +30,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 **Weekly goals stop asking for things you can't have yet, and long descriptions fit on the screen.**
 
 - **Weekly goals wait for their items.** Bundles tied to one season, like Spring Crops, could hand out a weekly goal before its item could exist, in any week of that season: Strawberries before the Egg Festival sells the seeds, or Cauliflower before it has had time to grow. Those goals now wait until you can actually get the item. Reported by Nijah.
-- **No gold-quality goals in the first two weeks.** A weekly goal could ask for silver or gold crops on day 1, when a gold Carrot is about a 1 in 100 roll. Quality asks now start in week 3.
+- **No quality goals in the first two weeks.** A weekly goal could ask for silver or gold crops on day 1, when a gold Carrot is about a 1 in 100 roll. Quality asks now start in week 3.
 - **Long descriptions fit on the screen.** Upgrade and boost descriptions, like Sneak Peek's, were drawn on one line and could run off the screen at larger UI scales. They now wrap.
 
 ## What's New in 0.18.81
