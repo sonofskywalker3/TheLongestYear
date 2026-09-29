@@ -8,7 +8,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
 Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
-- **BUILT 0.18.82: week-1 goals named later crops.** Seasonal bundles skipped the week check (Strawberry,
+- **BUILT 0.18.82: goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
 - **BUILT 0.18.83: tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
   checked in game by hover (needs the mouse).
