@@ -62,6 +62,12 @@ public sealed class RunState
     /// </summary>
     public List<BonusSlot> CurrentWeekBonusSlots { get; set; } = new();
 
+    /// <summary>The week-of-year whose goal lines the theme week discount lowered on the board
+    /// (-1 = none). <see cref="CurrentSelection"/> outlives its week, so this is what tells the
+    /// day start, after a save and reload too, that last week's lines are owed their full ask
+    /// back. Spec 2026-09-29-theme-week-discount.</summary>
+    public int DiscountWeek { get; set; } = -1;
+
     /// <summary>Themes already selected this month (cleared each month): four picks from the
     /// eight themes, so at least four are never selected in a given month.</summary>
     public List<Theme> SelectedThemesThisMonth { get; set; } = new();
@@ -352,6 +358,8 @@ public sealed class RunState
         VaultBundlesPaid.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
+        // The rewind rewrites the whole board, so no discounted line is left to put back.
+        DiscountWeek = -1;
         OfferPresentedWeek = -1;
         ClearReroll();
         PeakMineFloor = 0;
