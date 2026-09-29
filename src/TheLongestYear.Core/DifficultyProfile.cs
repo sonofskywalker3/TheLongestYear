@@ -41,6 +41,16 @@ public sealed class DifficultyProfile
     /// a profile stamped before the setting existed reads as on.</summary>
     public bool OncePerLoopAsksOne { get; set; } = true;
 
+    /// <summary>How much the picked theme lowers its week's goal lines (see
+    /// <see cref="WeeklyGoalDiscount"/>). Resolved from the Stack Size step. Null on a profile
+    /// stamped before the discount existed; read it through
+    /// <see cref="EffectiveWeeklyGoalStackDiscount"/>.</summary>
+    public double? WeeklyGoalStackDiscount { get; set; }
+
+    /// <summary>The stamped discount, or for an older stamp the one its own Stack Size step resolves to.</summary>
+    public double EffectiveWeeklyGoalStackDiscount()
+        => WeeklyGoalStackDiscount ?? DifficultyResolver.WeeklyGoalDiscountFor(Steps?.StackSize ?? DifficultyStep.Normal);
+
     // ---- Economy (read live from the stamp) ----
 
     /// <summary>Multiplier on every Junimo Point award.</summary>

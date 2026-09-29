@@ -8,10 +8,13 @@ namespace TheLongestYear.Loop
 {
     /// <summary>Voluntary restart at the Junimo Shrine (spec
     /// docs/superpowers/specs/2026-09-24-voluntary-restart-design.md). The shrine's button asks a
-    /// vanilla yes/no question; Yes queues <see cref="Day28Branch.Restart"/> and ends the day at
-    /// once. That night <see cref="OnDayEnding"/> skips the gate; in the morning the
-    /// Day28CutsceneDriver skips the scene and calls <see cref="OnCutsceneEnded"/>, which runs the
-    /// Fail chain (hold, upgrade menu, books, reset).</summary>
+    /// vanilla yes/no question. Yes runs the Fail chain's menus right away, on the same day (hold,
+    /// upgrade menu, books), then queues <see cref="Day28Branch.Restart"/> with
+    /// <see cref="RunState.RestartMenusDone"/> and ends the day. That night <see cref="OnDayEnding"/>
+    /// skips the gate and the shipping and level-up screens; in the morning the Day28CutsceneDriver
+    /// skips the scene and calls <see cref="OnCutsceneEnded"/>, which resets at once. Before
+    /// 0.18.98 the menus ran in the morning, after the payout, level-ups and the new date (Jeff,
+    /// 2026-09-29, from Ben's stream).</summary>
     internal sealed partial class RunController
     {
         /// <summary>True while any part of a rewind or win chain is queued or waiting on a menu.</summary>
@@ -19,7 +22,10 @@ namespace TheLongestYear.Loop
             _pendingCutscene != Day28Branch.None
             || _shrineOpenPending != null
             || _menuWatch != null
-            || _holdReaskPending;
+            || _holdReaskPending
+            || _restartChainPending
+            || _restartChainBeforeNight
+            || _restartSleepPending;
 
         private RestartSituation RestartSituationNow() => new(
             DayOfMonth: Game1.dayOfMonth,
@@ -110,17 +116,82 @@ namespace TheLongestYear.Loop
             }
             _monitor.Log(
                 $"Voluntary restart confirmed on {Game1.season} {Game1.dayOfMonth} at {Game1.timeOfDay} " +
-                $"(run {Run.RunNumber}, {_store.State.JunimoPoints} JP banked). Ending the day now.",
+                $"(run {Run.RunNumber}, {_store.State.JunimoPoints} JP banked). Hold -> upgrade menu -> books now, then the night.",
                 LogLevel.Info);
-            // Same call, same tick: the Day28CutsceneDriver runs a pending Restart on its next clear
-            // tick once DayStarted has run (DayStartedWhileBranchPending), so Game1.newDay must
-            // already be true by then or the flag must be set here for the mid-day fallback.
+            // The menus run BEFORE the night (Jeff, 2026-09-29): sleeping first showed the shipping
+            // payout, level-ups and the next day's date before the bundle question. Not from inside
+            // this answer callback, though: the question box is still the active menu (see the No
+            // branch). TickVoluntaryRestart starts the chain once the box has closed.
+            _restartChainPending = true;
+        }
+
+        /// <summary>Yes was answered; the chain starts once the question box has closed.</summary>
+        private bool _restartChainPending;
+
+        /// <summary>The rewind chain running now belongs to a voluntary restart, so its end puts
+        /// the farmer to sleep (<see cref="FinishRewindChain"/>) instead of resetting mid-day.</summary>
+        private bool _restartChainBeforeNight;
+
+        /// <summary>The chain's menus are done; the night starts once the last menu has closed.</summary>
+        private bool _restartSleepPending;
+
+        /// <summary>Polled every tick (from <see cref="TickShrineWatchdog"/>): starts the restart's
+        /// menus after Yes, and ends the day after them, each once no menu or dialogue is up.</summary>
+        private void TickVoluntaryRestart()
+        {
+            if (!_restartChainPending && !_restartSleepPending) return;
+            if (Game1.activeClickableMenu != null || Game1.dialogueUp || Game1.eventUp) return;
+            if (_restartChainPending)
+            {
+                _restartChainPending = false;
+                _restartChainBeforeNight = true;
+                StartRewindChain();
+                return;
+            }
+            _restartSleepPending = false;
+            Run.RestartMenusDone = true;
+            _monitor.Log("Voluntary restart: menus done; ending the day. The reset runs as soon as the morning starts.", LogLevel.Info);
+            // The Day28CutsceneDriver runs a pending Restart on its next clear tick once DayStarted
+            // has run (DayStartedWhileBranchPending), so Game1.newDay must already be true by then or
+            // the flag must be set here for the mid-day fallback.
             _pendingCutscene = Day28Branch.Restart;
             _dayStartedWhileBranchPending = false;
+            Game1.displayHUD = false;
             EndDayNow();
             // The sleep did not take: no night, so no DayStarted will come to release the driver.
             if (!Game1.newDay)
                 _dayStartedWhileBranchPending = true;
+        }
+
+        /// <summary>The last step of the rewind chain (after the books). A voluntary restart's
+        /// chain runs before the night, so it ends the day; every other chain resets now.</summary>
+        private void FinishRewindChain()
+        {
+            if (_restartChainBeforeNight)
+            {
+                _restartChainBeforeNight = false;
+                _restartSleepPending = true;
+                return;
+            }
+            FinalizeReset("shrine closed");
+        }
+
+        /// <summary>The restart night (<see cref="OnDayEnding"/>): the reset wipes the gold, the
+        /// skills and the shipped items anyway, so skip the shipping payout screen and the level-up
+        /// screens instead of showing them right before the rewind. Kept skills still get their
+        /// profession pickers after the reset (ProfessionPickerScheduler).</summary>
+        private void QuietRestartNight()
+        {
+            Farmer player = Game1.player;
+            if (player == null) return;
+            var bin = Game1.getFarm()?.getShippingBin(player);
+            int shipped = bin?.Count ?? 0;
+            bin?.Clear();
+            int levels = player.newLevels.Count;
+            player.newLevels.Clear();
+            _monitor.Log(
+                $"Voluntary restart night: skipped the shipping screen ({shipped} stack(s) in the bin) and {levels} level-up screen(s).",
+                LogLevel.Info);
         }
 
         /// <summary>Put the host to sleep where they stand, with vanilla's own <c>debug sleep</c>

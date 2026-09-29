@@ -12,20 +12,47 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
 - **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
   checked in game by hover (needs the mouse).
-- **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
-  Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
-- **QUESTION for Jeff: pet after a rewind.** Without Keep Pet the free Marnie cutscene never replays; the
-  only route is Adopt at Marnie's counter (paid license, never announced). Ben read it as "no pet chance".
-  Options: replay the cutscene on a petless farm, or announce the Adopt route (letter), or cheaper license.
-- **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
-  the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
-  leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.
+- **RELEASED 0.18.98 (2026-09-29): theme week discount** (Jeff 2026-09-29, spec 2026-09-29-theme-week-discount). Nijah's
+  "31 Cauliflowers in week 1": the picked theme lowers its week's goal lines over 10 (Easy 50%, Normal 25%,
+  Hard/Extreme 0; floor 10, round down), reverted at the next week, a re-pick and the month start; donated
+  lines stay done. In game on Normal and Hard: apply, save+reload (stored engine board), week revert,
+  re-pick revert, donated lines kept, month rollover. 0.18.97: the hub preview (and tly_goals) shows the
+  discounted counts before the pick (Jeff, 2026-09-29: yes).
+- **RELEASED 0.18.98 (2026-09-29): shrine restart runs its menus before the night** (Jeff 2026-09-29, Ben reset on day 5 and
+  saw payout, level-up, "Spring 6", then the bundle question). Yes -> hold -> upgrade menu -> books -> sleep
+  (shipping and level-up screens skipped, HUD hidden) -> reset at first clear morning tick
+  (RunState.RestartMenusDone). In game: day 5 + a farming level, restart -> reshuffle -> shrine closed -> night
+  skipped 1 level-up screen -> Spring 1 hub. Not seen: a full shipping bin (code clears it), the look of the
+  fade (headless). Jeff playtested it 2026-09-29: worked well.
+- **RELEASED 0.18.98 (2026-09-29):** rolls up 0.18.85-0.18.98 (Dye, Qi Bean, artifacts week 3, pet, Year 1
+  tooltip, Keep Lost Books, theme discount, shrine restart). Reply to tanky24u (Keep Lost Books) now owed.
+- **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
+  not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
+  with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
+- **RELEASED 0.18.98: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
+  visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
+  (the visit needs the naming prompt clicked); unit-tested.
+- **RELEASED 0.18.98: Year 1 checkbox tooltip** (Jeff 2026-09-29): appends "Does not affect TLY Custom bundles."
+  (placeholder, Jeff may reword). Not seen in game (needs the Advanced Options screen clicked).
 - **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
   weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
   asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
+- **BUILT 0.18.85-86: Dye bundle limited** (Jeff 2026-09-29): six vanilla Dye items + the six common gems +
+  coloured crops, fruit, flowers, forage, beach finds (the game's isForage test); colours use the game's dye-pot
+  shade groups. 60-board check: 22 Dye bundles, all picks allowed, gems land. Dye now has no hard item for the
+  Hard/Extreme hard-item swap.
+- **BUILT 0.18.87: Qi Bean no longer year-1.** Cause: Default artifact spot row gated on
+  PLAYER_SPECIAL_ORDER_RULE_ACTIVE DROP_QI_BEANS, read without its condition. YearOneCondition now closes
+  rules only Qi orders grant (from Data/SpecialOrders). Also unplaces Son of Crimsonfish (LEGENDARY_FAMILY).
+- **BUILT 0.18.87: Dye adds Quartz, Fire Quartz, Frozen Tear, Earth Crystal** (Jeff). Model weeks: Quartz and
+  Earth Crystal wk 1, Frozen Tear and Fire Quartz wk 2. Earth Crystal is color_copper (orange group) and Dye
+  has no orange slot; Jeff 2026-09-29: remove it (0.18.88).
+- Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
+- **BUILT 0.18.89: artifacts floored at week 3** (Jeff 2026-09-29), every route (EffortComposer). 60 boards: no
+  impossible gates. Sea Jelly checked: no fishing level (Beach row MinFishingLevel 0), week 1 stays.
+- Keep Lost Books: Jeff chose Lost Books only (0.18.92, see the tanky24u item).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
-- Reply to Nijah owed now that 0.18.84 is out (goal fix + quality hold; randomizer answers go in the spec).
 
 ### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
@@ -243,6 +270,7 @@ Jeff's answers (2026-09-24):
 Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
 Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
+### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). Reply to tanky24u owed once shipped.
 ### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
 Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
 10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great

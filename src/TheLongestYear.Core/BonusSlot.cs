@@ -12,6 +12,11 @@ public sealed class BonusSlot
     public int IngredientIndex { get; set; }
     public string ItemId { get; set; } = "";
     public int Stack { get; set; } = 1;
+
+    /// <summary>The line's full ask while the theme week discount has lowered it (spec
+    /// 2026-09-29-theme-week-discount); 0 = not discounted. <see cref="Stack"/> then holds the
+    /// discounted ask, which is what the quest text, the hub and tly_goals show.</summary>
+    public int OriginalStack { get; set; }
     public int Quality { get; set; }
     public string BundleName { get; set; } = "";
 
