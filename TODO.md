@@ -12,28 +12,27 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
 - **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
   checked in game by hover (needs the mouse).
-- **BUILT 0.18.93-96: theme week discount** (Jeff 2026-09-29, spec 2026-09-29-theme-week-discount). Nijah's
+- **RELEASED 0.18.98 (2026-09-29): theme week discount** (Jeff 2026-09-29, spec 2026-09-29-theme-week-discount). Nijah's
   "31 Cauliflowers in week 1": the picked theme lowers its week's goal lines over 10 (Easy 50%, Normal 25%,
   Hard/Extreme 0; floor 10, round down), reverted at the next week, a re-pick and the month start; donated
   lines stay done. In game on Normal and Hard: apply, save+reload (stored engine board), week revert,
   re-pick revert, donated lines kept, month rollover. 0.18.97: the hub preview (and tly_goals) shows the
-  discounted counts before the pick (Jeff, 2026-09-29: yes). AWAITING Jeff's playtest before release.
-- **BUILT 0.18.98: shrine restart runs its menus before the night** (Jeff 2026-09-29, Ben reset on day 5 and
+  discounted counts before the pick (Jeff, 2026-09-29: yes).
+- **RELEASED 0.18.98 (2026-09-29): shrine restart runs its menus before the night** (Jeff 2026-09-29, Ben reset on day 5 and
   saw payout, level-up, "Spring 6", then the bundle question). Yes -> hold -> upgrade menu -> books -> sleep
   (shipping and level-up screens skipped, HUD hidden) -> reset at first clear morning tick
   (RunState.RestartMenusDone). In game: day 5 + a farming level, restart -> reshuffle -> shrine closed -> night
   skipped 1 level-up screen -> Spring 1 hub. Not seen: a full shipping bin (code clears it), the look of the
-  fade (headless). AWAITING Jeff's playtest before release.
-- **RELEASE HANDOFF (2026-09-29):** after Jeff tests 0.18.93-0.18.98 (theme week discount + hub preview +
-  shrine restart), cut the release from the CHANGELOG "0.18.98 - unreleased" section per
-  docs/RELEASE_TOOLING.md. If he reports problems, fix on master first.
+  fade (headless). Jeff playtested it 2026-09-29: worked well.
+- **RELEASED 0.18.98 (2026-09-29):** rolls up 0.18.85-0.18.98 (Dye, Qi Bean, artifacts week 3, pet, Year 1
+  tooltip, Keep Lost Books, theme discount, shrine restart). Reply to tanky24u (Keep Lost Books) now owed.
 - **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
   not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
   with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
-- **BUILT 0.18.90: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
+- **RELEASED 0.18.98: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
   visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
   (the visit needs the naming prompt clicked); unit-tested.
-- **BUILT 0.18.91: Year 1 checkbox tooltip** (Jeff 2026-09-29): appends "Does not affect TLY Custom bundles."
+- **RELEASED 0.18.98: Year 1 checkbox tooltip** (Jeff 2026-09-29): appends "Does not affect TLY Custom bundles."
   (placeholder, Jeff may reword). Not seen in game (needs the Advanced Options screen clicked).
 - **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
   weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
@@ -200,7 +199,7 @@ Jeff's answers (2026-09-24):
 Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
 Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
-### BUILT 0.18.92 (unreleased): Keep Lost Books, 100 JP (Jeff 2026-09-29). Reply to tanky24u owed once shipped.
+### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). Reply to tanky24u owed once shipped.
 ### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
 Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
 10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great

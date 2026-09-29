@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.84`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.98`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,19 @@ This is a **beta** (`0.18.84`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.98
+
+**Picking a theme lowers that week's goals, restarting at the shrine asks its questions first, and a new Keep Lost Books upgrade.**
+
+- **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week: half with Stack size on Easy, a quarter less on Normal, unchanged on Hard or Extreme. It never goes below 10, so 31 Cauliflower becomes 23 on Normal. The planning hub shows the lowered counts before you pick. Reported by Nijah.
+- **Restarting at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, level-ups and the next day's date before being asked about your bundles. Now the bundle question, the upgrade menu and the books come right after you say yes, then you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the restart resets your gold anyway.
+- **Keep Lost Books (Junimo Upgrades, 100 JP).** Lost Books you have found stay found through a rewind, so artifact spots and fishing chests stop turning up ones you already have and you can dig for bundle artifacts instead. Suggested by tanky24u.
+- **Marnie brings a pet again after a rewind.** A farm with no pet after a rewind gets her visit again, instead of only the paid Adopt option at her counter. Keep Pet now costs 50 JP (was 75).
+- **Artifacts wait for week 3.** A week 1 goal could ask for something like Elvish Jewelry. Artifacts now start showing up in goals from week 3, giving geodes and dig spots time to turn them up.
+- **The Dye bundle asks for grown and gathered things.** It could ask for cooked dishes, bombs, skill books or Joja Cola. It now picks from the vanilla Dye items, the common gems and crystals, and coloured crops, flowers, forage and beach finds.
+- **No more Qi Bean goals.** Qi Beans only drop during one of Mr. Qi's challenges, which needs Ginger Island, but a bundle could still ask for one.
+- **The Guarantee Year 1 Completable checkbox says it does not affect TLY Custom bundles.** It only changes the game's own bundle board.
 
 ## What's New in 0.18.84
 
