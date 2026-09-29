@@ -25,7 +25,7 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   skipped 1 level-up screen -> Spring 1 hub. Not seen: a full shipping bin (code clears it), the look of the
   fade (headless). Jeff playtested it 2026-09-29: worked well.
 - **RELEASED 0.18.98 (2026-09-29):** rolls up 0.18.85-0.18.98 (Dye, Qi Bean, artifacts week 3, pet, Year 1
-  tooltip, Keep Lost Books, theme discount, shrine restart). Reply to tanky24u (Keep Lost Books) now owed.
+  tooltip, Keep Lost Books, theme discount, shrine restart). DONE 2026-09-29: told tanky24u (Nexus posts) Keep Lost Books shipped.
 - **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
   not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
   with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
@@ -199,7 +199,7 @@ Jeff's answers (2026-09-24):
 Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
 Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
-### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). Reply to tanky24u owed once shipped.
+### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). tanky24u told 2026-09-29.
 ### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
 Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
 10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great
