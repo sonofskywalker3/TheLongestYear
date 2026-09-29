@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.83 - unreleased
+
+### Fixed
+
+- **Week 1 asked for crops that can't exist yet.** Seasonal bundles (Spring Crops and the like) skipped the obtainable-by-this-week check the other bundle kinds already had, so Spring week 1 could ask for Strawberries (seeds go on sale day 13) or Cauliflower (12 days to grow). Seasonal lines now wait for their week like everything else. Reported by Nijah (Nexus posts, 2026-09-29); also seen in Dummy Dog Ben's stream.
+- **Long upgrade and boost descriptions ran off the screen.** Hover tooltips in the Junimo Upgrades, planning statue, weekly hub and Season Goals menus were one unwrapped line, so a long description (Elevator Pass, Sneak Peek) ran off the edge at larger UI scales. They now wrap. Seen in Dummy Dog Ben's stream.
+
 ## 0.18.81 - 2026-09-28
 
 2442 tests. Rolls up 0.18.80 to 0.18.81.
