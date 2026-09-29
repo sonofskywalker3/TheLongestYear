@@ -864,13 +864,14 @@ public static class ItemPoolBuilder
     };
 
     /// <summary>The six gems the mines' gem nodes drop (Emerald, Aquamarine, Ruby, Amethyst, Topaz,
-    /// Jade) plus the four common mine crystals (Quartz, Fire Quartz, Frozen Tear, Earth Crystal).
+    /// Jade) plus three common mine crystals (Quartz, Fire Quartz, Frozen Tear). Earth Crystal is
+    /// copper, the game's orange, and Dye has no orange slot, so it is left out (Jeff, 2026-09-29).
     /// Diamond and Prismatic Shard are rare and stay out, as do geode minerals (Jeff, 2026-09-29).
     /// The deeper crystals still wait for their floors: the board's availability model places them.</summary>
     private static readonly IReadOnlySet<string> CommonGems = new HashSet<string>(StringComparer.Ordinal)
     {
         "(O)60", "(O)62", "(O)64", "(O)66", "(O)68", "(O)70",
-        "(O)80", "(O)82", "(O)84", "(O)86",
+        "(O)80", "(O)82", "(O)84",
     };
 
     /// <summary>Whether the Dye recipe may pick this object: a vanilla Dye item, a common gem, or
