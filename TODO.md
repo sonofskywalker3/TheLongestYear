@@ -8,9 +8,9 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
 Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
-- **BUILT 0.18.82: goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
+- **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
-- **BUILT 0.18.83: tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
+- **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
   checked in game by hover (needs the mouse).
 - **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
   Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
@@ -20,12 +20,12 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 - **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
   the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
   leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.
-- **BUILT 0.18.84: quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
+- **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
   weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
   asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
-- Reply to Nijah owed after 0.18.83 ships.
+- Reply to Nijah owed now that 0.18.84 is out (goal fix + quality hold; randomizer answers go in the spec).
 
 ### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
