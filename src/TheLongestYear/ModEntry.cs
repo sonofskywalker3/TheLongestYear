@@ -675,6 +675,10 @@ namespace TheLongestYear
                 new GoalGroupCap(GoalGroupCap.JellyIds, 1),
             };
             _runController.Availability = _availability;
+            // The theme week discount rewrites stacks on the board; that is our own write, not
+            // another mod's, so the vanilla-mode fingerprint follows it.
+            _runController.AfterBoardWrite = () =>
+                _boardFingerprint = BoardInspection.Fingerprint(Game1.netWorldState.Value.BundleData);
             _runController.ItemKindOf = id =>
             {
                 string bare = BundleParsing.StripQualifier(id);
