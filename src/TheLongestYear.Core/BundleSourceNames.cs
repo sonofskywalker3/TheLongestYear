@@ -58,6 +58,22 @@ public static class BundleSourceNames
     public static string ForVanillaType(string? vanillaBundleType) =>
         Is(vanillaBundleType, VanillaTypeRemixed) ? Remixed : Normal;
 
+    /// <summary>The board a save's next reset builds (Engine, Normal or Remixed). The save's own
+    /// choice (<see cref="MetaState.ChosenBundleSource"/>) wins. A save from before that field
+    /// existed keeps the board it runs under now. The shared config is never consulted: it holds
+    /// every save's default, so reading it let a newer TLY Custom game flip an older Normal save
+    /// to custom bundles at its next reset (victoriatauanem, Nexus 2026-09-28).</summary>
+    public static string ForSave(string? chosen, string? stampedSource, string? vanillaBundleType)
+    {
+        if (!string.IsNullOrEmpty(chosen))
+        {
+            string normalized = Normalize(chosen);
+            if (normalized != LegacyVanilla)
+                return normalized;
+        }
+        return IsVanilla(stampedSource) ? ForVanillaType(vanillaBundleType) : Engine;
+    }
+
     /// <summary>Canonical spelling for any accepted input. The legacy value is PRESERVED rather
     /// than folded into one of the two layouts: turning it into Normal would silently move a
     /// remixed save onto the standard board at its next reset.</summary>

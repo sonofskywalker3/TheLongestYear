@@ -572,10 +572,11 @@ namespace TheLongestYear.Loop
             Game1.displayHUD = false;
             // Vanilla mode's reset regenerates the board via loadForNewGame and never
             // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
-            // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
-            // save's BundleSource from config at reset time, so config is what this reset
+            // Read the save's chosen source, not its BundleSource stamp: PerformReset
+            // re-stamps from the choice at reset time, so the choice is what this reset
             // will actually run under.
-            if (!BundleHold.IsOfferable(_config.BundleSource))
+            MetaState state = _store.State;
+            if (!BundleHold.IsOfferable(BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType)))
             {
                 _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
                 TryOpenShrineThenContinue(ContinueAfterResetSpend);

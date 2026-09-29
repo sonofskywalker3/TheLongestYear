@@ -140,7 +140,7 @@ namespace TheLongestYear.Loop
             // (user playtest 2026-05-27: "I've still got 2 saves"). Compute the new folder name
             // ourselves from the old path: keep everything before the last underscore (the player
             // name component), append the new uniqueID.
-            // BundleSource (spec 2026-08-21): a config flip takes effect HERE, at the reset. Stamp
+            // BundleSource (spec 2026-08-21): the save's chosen source takes effect HERE, at the reset. Stamp
             // the save with the mode this loop runs under, and in Vanilla mode hand vanilla the
             // player's Standard/Remixed choice BEFORE loadForNewGame — Game1.bundleType is a
             // non-persisted static (Nexus bug 1108030), so without this every reset wrote the
@@ -173,17 +173,20 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"Availability model rebuilt for {step} ({mode}).", LogLevel.Info);
             }
 
-            bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
+            // The SAVE's own choice, never the config: the config is shared by every save, so a
+            // newer TLY Custom game used to flip an older Normal save to custom bundles here
+            // (victoriatauanem, Nexus 2026-09-28).
+            string boardSource = TheLongestYear.Core.BundleSourceNames.ForSave(
+                _meta.ChosenBundleSource, _meta.BundleSource, _meta.VanillaBundleType);
+            _meta.ChosenBundleSource = boardSource;
+            bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(boardSource);
             _meta.BundleSource = vanillaBoard
                 ? TheLongestYear.Core.BundleSourceNames.LegacyVanilla : TheLongestYear.Core.BundleSourceNames.Engine;
             if (vanillaBoard)
             {
                 // One setting, three choices (Jeff 2026-08-27): Normal and Remixed each name a
-                // Game1.BundleType outright, so the config now owns the layout and a player can
-                // move between the two on an existing save. The legacy "Vanilla" value names no
-                // layout and returns null here, which deliberately leaves whatever the save
-                // already recorded in place rather than guessing and flipping a remixed save.
-                string configuredType = TheLongestYear.Core.BundleSourceNames.VanillaTypeFor(_config.BundleSource);
+                // Game1.BundleType outright, so a player can move between the two on an existing save.
+                string configuredType = TheLongestYear.Core.BundleSourceNames.VanillaTypeFor(boardSource);
                 if (configuredType != null)
                     _meta.VanillaBundleType = configuredType;
 
@@ -191,7 +194,7 @@ namespace TheLongestYear.Loop
                 Game1.bundleType = remixed ? Game1.BundleType.Remixed : Game1.BundleType.Default;
                 if (string.IsNullOrEmpty(_meta.VanillaBundleType))
                     _meta.VanillaBundleType = Game1.bundleType.ToString();
-                _monitor.Log($"Reset: bundle source {_config.BundleSource} — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
+                _monitor.Log($"Reset: bundle source {boardSource} — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
             }
             else
             {
