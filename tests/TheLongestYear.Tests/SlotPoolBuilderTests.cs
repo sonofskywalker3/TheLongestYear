@@ -72,7 +72,7 @@ public class SlotPoolBuilderTests
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => new[] { false, false }, reqs,
-            Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
+            Theme.Farming, Season.Spring, _ => true, weekOfYear: SlotPoolBuilder.QualityGoalFirstWeek);
 
         Assert.Equal(2, pool.Count);
         var green = pool.Single(s => s.ItemId == "(O)188");
@@ -91,7 +91,7 @@ public class SlotPoolBuilderTests
 
         var pool = SlotPoolBuilder.OpenSlotsForTheme(
             data, _ => new[] { true, false }, reqs,
-            Theme.Farming, Season.Spring, _ => true, weekOfYear: 1);
+            Theme.Farming, Season.Spring, _ => true, weekOfYear: SlotPoolBuilder.QualityGoalFirstWeek);
 
         Assert.Single(pool);
         Assert.Equal("(O)188", pool[0].ItemId);
@@ -228,5 +228,42 @@ public class SlotPoolBuilderTests
         Assert.Contains(pool, s => s.BundleIndex == 13 && s.IngredientIndex == 1 && s.ItemId == "(O)388");
         Assert.DoesNotContain(pool, s => s.IngredientIndex == 0);
         Assert.Equal(3, pool.Count);   // Wood slot 1, Stone, Hardwood
+    }
+
+    /// <summary>A Seasonal bundle's lines obey the week check like every other kind. They used
+    /// to be in play all season, so Spring week 1 asked for Strawberries (seeds on day 13) and
+    /// Cauliflower (12 days to grow): tly_goals on a clean save, Nijah and Dummy Dog Ben
+    /// (2026-09-29).</summary>
+    [Fact]
+    public void A_seasonal_line_the_week_check_rejects_is_not_a_goal()
+    {
+        var data = BundleData((0, "Spring Crops", "24 1 0 400 21 1 190 5 0", 3));
+        var reqs = Reqs(SeasonalReq("Spring Crops", "(O)24", "(O)400", "(O)190"));
+        var week1 = new HashSet<string> { "(O)24" };   // Parsnip only: 4 days
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Farming, Season.Spring, week1.Contains, weekOfYear: 1);
+
+        Assert.Equal(new[] { "(O)24" }, pool.Select(s => s.ItemId));
+        Assert.True(pool[0].Due);
+    }
+
+    /// <summary>A line that asks for silver or better is not a goal before week 3: week 1 asked a
+    /// streamer for gold Carrots, about a 1% roll at Farming 0 (Jeff, 2026-09-29).</summary>
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(2, false)]
+    [InlineData(3, true)]
+    [InlineData(4, true)]
+    public void A_quality_line_is_held_until_week_3(int week, bool offered)
+    {
+        var data = BundleData((0, "Spring Crops", "24 5 0 Carrot 8 2", 2));
+        var reqs = Reqs(SeasonalReq("Spring Crops", "(O)24", "(O)Carrot"));
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Farming, Season.Spring, _ => true, weekOfYear: week);
+
+        Assert.Contains(pool, s => s.ItemId == "(O)24");
+        Assert.Equal(offered, pool.Any(s => s.ItemId == "(O)Carrot"));
     }
 }

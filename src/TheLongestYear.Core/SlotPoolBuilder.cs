@@ -17,6 +17,7 @@ namespace TheLongestYear.Core;
 ///   - A bundle that already has NumberOfSlots completed ingredient lines is complete — its
 ///     remaining lines can no longer be donated and are excluded.
 ///   - Category refs and completed slots are excluded. Null slot state ⇒ all lines open.
+///   - A line asking for silver or better is held until <see cref="QualityGoalFirstWeek"/>.
 ///   - A stretch line (BundleRequirement.StretchLines) is forced in play and Due once
 ///     weekOfYear reaches AvailabilityWeeks.LastWeekOf(its stretch season), regardless of the
 ///     obtainability predicate; its emitted slot carries Stretch = true.
@@ -28,6 +29,10 @@ public static class SlotPoolBuilder
 {
     private const string YearTwoSeedsRouteTag = "Boost: Year-Two Seeds";
     private const string SneakPeekRouteTag = "Boost: Sneak Peek";
+
+    /// <summary>First week of the year a line asking for silver or better may be a goal. Week 1
+    /// asked a streamer for gold Carrots, about a 1% roll at Farming 0 (Jeff, 2026-09-29).</summary>
+    public const int QualityGoalFirstWeek = 3;
 
     public static IReadOnlyList<BonusSlot> OpenSlotsForTheme(
         IReadOnlyDictionary<string, string> bundleData,
@@ -99,6 +104,7 @@ public static class SlotPoolBuilder
                 if (!inPlay.Contains(id)) continue;
                 if (perLine && !ThemeDomains.Matches(theme, kindOf!(id))) continue;
                 if (state != null && i < state.Length && state[i]) continue;   // already donated
+                if (ing.Quality > 0 && weekOfYear < QualityGoalFirstWeek) continue;
 
                 pool.Add(new BonusSlot
                 {
