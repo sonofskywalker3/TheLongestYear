@@ -288,7 +288,8 @@ public static class UpgradeCatalog
         // pets don't produce anything you'd ship or donate, so the cost reflects "mostly
         // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
         // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
-        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 75,
+        // 50 JP (Jeff, 2026-09-29; was 75): cheap enough for a first-loop buy.
+        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
             metaRequirement: null, runReachRequirement: "pet:1"),
 
         // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward

@@ -14,9 +14,9 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   checked in game by hover (needs the mouse).
 - **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
   Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
-- **QUESTION for Jeff: pet after a rewind.** Without Keep Pet the free Marnie cutscene never replays; the
-  only route is Adopt at Marnie's counter (paid license, never announced). Ben read it as "no pet chance".
-  Options: replay the cutscene on a petless farm, or announce the Adopt route (letter), or cheaper license.
+- **BUILT 0.18.90: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
+  visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
+  (the visit needs the naming prompt clicked); unit-tested.
 - **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
   the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
   leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.

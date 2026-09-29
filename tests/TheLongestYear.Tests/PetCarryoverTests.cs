@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using System.Text.Json;
 using TheLongestYear.Core;
@@ -68,4 +69,26 @@ public class PetCarryoverTests
         PetCarryover.MigrateLegacy(s);
         Assert.Equal("Rex", s.PetStates[0].Name);
     }
+
+    /// <summary>A rewind with no pet on the farm lets Marnie's pet visit play again (Jeff,
+    /// 2026-09-29; a streamer thought the pet chance was gone). Both arrival scenes, cat and dog.</summary>
+    [Fact]
+    public void A_petless_farm_reopens_both_pet_arrival_scenes()
+    {
+        var seen = new HashSet<string> { "1590166", "897405", "60367" };
+        Assert.Equal(2, PetCarryover.ReopenArrivalScenes(seen, farmHasPet: false));
+        Assert.Equal(new[] { "60367" }, seen);
+    }
+
+    [Fact]
+    public void A_farm_with_a_pet_keeps_the_arrival_scenes_seen()
+    {
+        var seen = new HashSet<string> { "1590166", "897405" };
+        Assert.Equal(0, PetCarryover.ReopenArrivalScenes(seen, farmHasPet: true));
+        Assert.Equal(2, seen.Count);
+    }
+
+    [Fact]
+    public void Keep_Pet_costs_50_JP()
+        => Assert.Equal(50L, UpgradeCatalog.All.Single(u => u.Id == "keep_pet").Cost);
 }
