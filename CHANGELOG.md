@@ -28,7 +28,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Weekly goals could ask for items before they could exist.** Seasonal bundles (Spring Crops and the like) skipped the obtainable-by-this-week check the other bundle kinds already had, so in any week of that season a goal could name an item that wasn't reachable yet: Strawberries (seeds go on sale day 13) or Cauliflower (12 days to grow) in Spring week 1, for example. Seasonal lines now wait for their week like everything else. Reported by Nijah (Nexus posts, 2026-09-29); also seen in Dummy Dog Ben's stream.
-- **Week 1 asked for gold-quality crops.** A weekly goal could name a silver or gold line from day 1, when a gold Carrot is about a 1% roll. Lines that ask for silver or better are now held until week 3 of the year. Seen in Dummy Dog Ben's stream.
+- **Week 1 asked for silver and gold quality crops.** A weekly goal could name a silver or gold line from day 1, when a gold Carrot is about a 1% roll. Lines that ask for silver or better are now held until week 3 of the year. Seen in Dummy Dog Ben's stream.
 - **Long upgrade and boost descriptions ran off the screen.** Hover tooltips in the Junimo Upgrades, planning statue, weekly hub and Season Goals menus were one unwrapped line, so a long description (Sneak Peek) ran off the edge at larger UI scales. They now wrap. Seen in Dummy Dog Ben's stream.
 
 ## 0.18.81 - 2026-09-28
