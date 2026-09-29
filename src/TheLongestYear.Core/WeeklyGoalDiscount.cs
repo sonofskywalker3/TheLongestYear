@@ -97,6 +97,40 @@ public static class WeeklyGoalDiscount
         return edits;
     }
 
+    /// <summary>What the planning hub shows for a theme before it is picked: copies of the sampled
+    /// slots with the discounted ask. A line this week's pick already lowered on the board (in
+    /// <paramref name="currentWeek"/> with an <see cref="BonusSlot.OriginalStack"/>) starts from its
+    /// full ask, so reopening the hub mid-week never lowers it twice.</summary>
+    public static List<BonusSlot> Preview(
+        IEnumerable<BonusSlot> sample, IEnumerable<BonusSlot> currentWeek, double discount)
+    {
+        var fullAsk = new Dictionary<(int, int), int>();
+        foreach (BonusSlot s in currentWeek ?? Array.Empty<BonusSlot>())
+            if (s.OriginalStack > 0)
+                fullAsk[(s.BundleIndex, s.IngredientIndex)] = s.OriginalStack;
+
+        var shown = new List<BonusSlot>();
+        foreach (BonusSlot s in sample ?? Array.Empty<BonusSlot>())
+        {
+            int full = fullAsk.TryGetValue((s.BundleIndex, s.IngredientIndex), out int original) ? original : s.Stack;
+            shown.Add(new BonusSlot
+            {
+                BundleIndex = s.BundleIndex,
+                IngredientIndex = s.IngredientIndex,
+                ItemId = s.ItemId,
+                Stack = Stack(full, discount),
+                Quality = s.Quality,
+                BundleName = s.BundleName,
+                Deposited = s.Deposited,
+                Due = s.Due,
+                Paid = s.Paid,
+                Stretch = s.Stretch,
+                RouteTag = s.RouteTag,
+            });
+        }
+        return shown;
+    }
+
     /// <summary>The new values of the keys <paramref name="edits"/> change in <paramref name="board"/>
     /// (live BundleData or the stored engine board). Keys the board lacks are ignored.</summary>
     public static Dictionary<string, string> ApplyEdits(

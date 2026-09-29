@@ -18,6 +18,15 @@ namespace TheLongestYear.Loop
         /// fingerprint here so ReclassifyIfBoardChanged does not take our own write for another mod's.</summary>
         public System.Action AfterBoardWrite { get; set; }
 
+        /// <summary>The goals the planning hub shows for a theme, with the discount the pick would
+        /// give already taken off (Jeff, 2026-09-29), so the player sees the benefit when choosing.
+        /// Display only; the board changes when the theme is picked.</summary>
+        public IReadOnlyList<BonusSlot> PreviewSlotsForTheme(Theme theme, TheLongestYear.Core.Season season, int weekOfYear)
+            => WeeklyGoalDiscount.Preview(
+                SampleSlotsForTheme(theme, season, weekOfYear),
+                Run.CurrentWeekBonusSlots,
+                _store.State.BoardDifficulty(_config).EffectiveWeeklyGoalStackDiscount());
+
         /// <summary>Lower this week's goal lines. Runs right after the goal slots are committed.</summary>
         private void ApplyWeekDiscount()
         {

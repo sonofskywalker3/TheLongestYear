@@ -16,8 +16,8 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   "31 Cauliflowers in week 1": the picked theme lowers its week's goal lines over 10 (Easy 50%, Normal 25%,
   Hard/Extreme 0; floor 10, round down), reverted at the next week, a re-pick and the month start; donated
   lines stay done. In game on Normal and Hard: apply, save+reload (stored engine board), week revert,
-  re-pick revert, donated lines kept, month rollover. OPEN for Jeff: should the hub preview show the
-  discounted numbers before the pick?
+  re-pick revert, donated lines kept, month rollover. 0.18.97: the hub preview (and tly_goals) shows the
+  discounted counts before the pick (Jeff, 2026-09-29: yes). AWAITING Jeff's playtest before release.
 - **BUILT 0.18.90: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
   visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
   (the visit needs the naming prompt clicked); unit-tested.

@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.18.96 - unreleased
+## 0.18.97 - unreleased
 
 ### Fixed
 
@@ -15,7 +15,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week. With Stack size on Easy it asks for half, on Normal a quarter less, and on Hard or Extreme nothing changes. It rounds down and never goes below 10, so 31 Cauliflower becomes 23 on Normal. Finish a goal that week and it stays finished. A goal you have not finished goes back to its full count when the next week starts or when you pick a different theme. Reported by Nijah (Nexus posts, 2026-09-29): 31 Cauliflower in week 1 was too many.
+- **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week. With Stack size on Easy it asks for half, on Normal a quarter less, and on Hard or Extreme nothing changes. It rounds down and never goes below 10, so 31 Cauliflower becomes 23 on Normal. The planning hub shows the lowered counts before you pick. Finish a goal that week and it stays finished. A goal you have not finished goes back to its full count when the next week starts or when you pick a different theme. Reported by Nijah (Nexus posts, 2026-09-29): 31 Cauliflower in week 1 was too many.
 - **Marnie brings a pet again after a rewind, and Keep Pet costs 50 JP.** Without Keep Pet, a rewind marked Marnie's pet visit as already seen, so it never came back and the only route was the paid Adopt option at her counter. A farm with no pet after a rewind now gets the visit again. Keep Pet drops from 75 to 50 JP. Seen in Dummy Dog Ben's stream.
 - **The "Guarantee Year 1 Completable" checkbox says it does not affect TLY Custom bundles.** It only arms the Traveling Cart's Red Cabbage Seeds visit for the game's own board. It still works for Normal and Remixed, though TLY's cart-slot limit can hide the seeds that day.
 - **Artifacts wait for week 3.** Every artifact, whatever finds it (dig spots, geodes, monster drops, fishing chests), now counts as available from week 3, giving geodes and dig spots time to turn up. A week-1 board could ask for Elvish Jewelry. Seen in Dummy Dog Ben's stream.
