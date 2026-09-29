@@ -10,7 +10,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
 - **BUILT 0.18.82: week-1 goals named later crops.** Seasonal bundles skipped the week check (Strawberry,
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
-- **BUILT 0.18.83: tooltips ran off screen** (Elevator Pass). HoverText.Draw wraps all four menus. Not
+- **BUILT 0.18.83: tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
   checked in game by hover (needs the mouse).
 - **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
   Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
