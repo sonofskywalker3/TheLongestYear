@@ -3,11 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.18.86 - unreleased
+## 0.18.87 - unreleased
+
+### Fixed
+
+- **Qi Beans counted as a year-1 find.** The game's default artifact spot drops Qi Beans only while Mr. Qi's Qi Beans challenge is running, which needs Ginger Island. TLY read the row without its condition. Conditions that need a special-order rule only Mr. Qi's orders grant (read from the game's special orders, so mod orders count too) now close the row, for artifact spots, forage, fish and shop lines alike. Across 60 test boards nothing asks for a Qi Bean.
 
 ### Changed
 
-- **The Dye bundle asks for grown and gathered things.** It used to pick any object with the right colour tag, so across 60 test boards it asked for cooked dishes, artifacts, bombs, skill books, Joja Cola, Energy Tonic and a Qi Bean. It now picks only from the six vanilla Dye items (Red Mushroom, Sea Urchin, Sunflower, Duck Feather, Aquamarine, Red Cabbage), the six common gems (Emerald, Aquamarine, Ruby, Amethyst, Topaz, Jade), and coloured crops, fruit, flowers, forage and beach finds. Each colour takes the game's own dye-pot shades, so gold counts as yellow, jade as green and aquamarine as blue. The same 60 boards now ask only for those. Seen in Dummy Dog Ben's stream (Elvish Jewelry and a book).
+- **The Dye bundle asks for grown and gathered things.** It used to pick any object with the right colour tag, so across 60 test boards it asked for cooked dishes, artifacts, bombs, skill books, Joja Cola, Energy Tonic and a Qi Bean. It now picks only from the six vanilla Dye items (Red Mushroom, Sea Urchin, Sunflower, Duck Feather, Aquamarine, Red Cabbage), the common gems and crystals (Emerald, Aquamarine, Ruby, Amethyst, Topaz, Jade, Quartz, Fire Quartz, Frozen Tear, Earth Crystal; the deeper crystals still wait for their mine floors), and coloured crops, fruit, flowers, forage and beach finds. Each colour takes the game's own dye-pot shades, so gold counts as yellow, jade as green and aquamarine as blue. The same 60 boards now ask only for those. Seen in Dummy Dog Ben's stream (Elvish Jewelry and a book).
 
 ## 0.18.84 - 2026-09-29
 

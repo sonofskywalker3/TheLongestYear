@@ -90,4 +90,37 @@ public class YearOneSourceTests
         Assert.Contains("(O)489", YearTwoCrops.TlyUnlockedSeedIds);
         Assert.DoesNotContain("(O)273", YearTwoCrops.TlyUnlockedSeedIds);
     }
+
+    /// <summary>Qi Bean was placed as a year-1 artifact-spot drop: the Default spot's Qi Bean row
+    /// only drops while Qi's DROP_QI_BEANS rule is active, and only Qi's Walnut Room orders grant
+    /// it (2026-09-29). A rule granted by no reachable order closes the row.</summary>
+    [Theory]
+    [InlineData("PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS", false)]
+    [InlineData("SEASON fall, PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current LEGENDARY_FAMILY", false)]
+    [InlineData("!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS", true)]
+    [InlineData("PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current SOME_TOWN_RULE", true)]
+    [InlineData("ANY \"PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS\" \"SEASON fall\"", true)]
+    public void A_special_order_rule_only_Qi_grants_closes_the_row(string condition, bool allowed)
+    {
+        var closed = new HashSet<string>(StringComparer.Ordinal) { "DROP_QI_BEANS", "LEGENDARY_FAMILY" };
+        Assert.Equal(allowed, YearOneCondition.Allows(condition, closed));
+    }
+
+    [Fact]
+    public void Without_closed_rules_a_special_order_clause_stays_open()
+        => Assert.True(YearOneCondition.Allows("PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS"));
+
+    [Fact]
+    public void Rules_only_Qi_orders_grant_are_closed()
+    {
+        var orders = new[]
+        {
+            new RawSpecialOrder("QiChallenge2", "Qi", new[] { "DROP_QI_BEANS", "QI_BEANS" }),
+            new RawSpecialOrder("TownThing", "", new[] { "QI_BEANS", "TOWN_RULE" }),
+        };
+        var closed = YearOneCondition.RulesOnlyQiGrants(orders);
+        Assert.Contains("DROP_QI_BEANS", closed);
+        Assert.DoesNotContain("QI_BEANS", closed);
+        Assert.DoesNotContain("TOWN_RULE", closed);
+    }
 }

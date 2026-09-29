@@ -863,12 +863,14 @@ public static class ItemPoolBuilder
         "(O)420", "(O)397", "(O)421", "(O)444", "(O)62", "(O)266",
     };
 
-    /// <summary>The six gems the mines' gem nodes drop: Emerald, Aquamarine, Ruby, Amethyst,
-    /// Topaz, Jade. Diamond and Prismatic Shard are rare, and Quartz and its kin are minerals
-    /// (Jeff, 2026-09-29: "other common gems too, not all minerals").</summary>
+    /// <summary>The six gems the mines' gem nodes drop (Emerald, Aquamarine, Ruby, Amethyst, Topaz,
+    /// Jade) plus the four common mine crystals (Quartz, Fire Quartz, Frozen Tear, Earth Crystal).
+    /// Diamond and Prismatic Shard are rare and stay out, as do geode minerals (Jeff, 2026-09-29).
+    /// The deeper crystals still wait for their floors: the board's availability model places them.</summary>
     private static readonly IReadOnlySet<string> CommonGems = new HashSet<string>(StringComparer.Ordinal)
     {
         "(O)60", "(O)62", "(O)64", "(O)66", "(O)68", "(O)70",
+        "(O)80", "(O)82", "(O)84", "(O)86",
     };
 
     /// <summary>Whether the Dye recipe may pick this object: a vanilla Dye item, a common gem, or

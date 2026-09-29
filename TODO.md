@@ -27,8 +27,12 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   coloured crops, fruit, flowers, forage, beach finds (the game's isForage test); colours use the game's dye-pot
   shade groups. 60-board check: 22 Dye bundles, all picks allowed, gems land. Dye now has no hard item for the
   Hard/Extreme hard-item swap.
-- **BUG to look at: Qi Bean placed as year-1 obtainable.** A Dye board asked for one before the limit. It
-  only comes from Qi's post-Ginger-Island challenge. Find which route the model uses and close it.
+- **BUILT 0.18.87: Qi Bean no longer year-1.** Cause: Default artifact spot row gated on
+  PLAYER_SPECIAL_ORDER_RULE_ACTIVE DROP_QI_BEANS, read without its condition. YearOneCondition now closes
+  rules only Qi orders grant (from Data/SpecialOrders). Also unplaces Son of Crimsonfish (LEGENDARY_FAMILY).
+- **BUILT 0.18.87: Dye adds Quartz, Fire Quartz, Frozen Tear, Earth Crystal** (Jeff). Model weeks: Quartz and
+  Earth Crystal wk 1, Frozen Tear and Fire Quartz wk 2. Earth Crystal is color_copper (orange group) and Dye
+  has no orange slot, so it never lands. QUESTION for Jeff if he wants an orange slot.
 - Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.

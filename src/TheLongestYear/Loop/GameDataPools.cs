@@ -40,6 +40,7 @@ namespace TheLongestYear.Loop
         /// excluded ids (YearTwoCrops.ExcludedFor on the current MetaState); null = none.</param>
         public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null)
         {
+            IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
             var crops = new List<RawCropEntry>();
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
             var forage = new List<RawSpawnEntry>();
@@ -95,10 +96,10 @@ namespace TheLongestYear.Loop
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     // A row gated to year 2 or later never spawns in a loop (YearOneCondition).
-                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition)))
+                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition, closedRules)))
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
-                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition)))
+                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition, closedRules)))
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             fish.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
                 }
@@ -162,7 +163,7 @@ namespace TheLongestYear.Loop
                         if (entry == null || string.IsNullOrEmpty(entry.ItemId)) continue;
                         // Read the line the way the game does (item queries, RandomItemId,
                         // PerItemCondition), and keep a year-2 line as a known but closed route.
-                        bool locked = !YearOneCondition.Allows(entry.Condition);
+                        bool locked = !YearOneCondition.Allows(entry.Condition, closedRules);
                         foreach (string id in OfferedObjectIds(entry.ItemId, entry.RandomItemId, entry.PerItemCondition))
                         {
                             bool lockedHere = locked
@@ -287,7 +288,8 @@ namespace TheLongestYear.Loop
                 // ArtifactSpotChances. The Dinosaur Egg's only traceable proof: the animal route
                 // below would otherwise condemn it (Dinosaurs are not sold and hatch only from it).
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
-                    foreach (ArtifactSpotDropData spot in kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                    foreach (ArtifactSpotDropData spot in (kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                                 .Where(s => YearOneCondition.Allows(s?.Condition, closedRules)))
                     {
                         foreach (string id in ItemQueryIds.Expand(spot?.ItemId)) MarkSpawn(id);
                         foreach (string raw in spot?.RandomItemId ?? new List<string>())
