@@ -120,6 +120,19 @@ public static class BundlePoolRecipes
         "color_red", "color_purple", "color_yellow", "color_white", "color_blue", "color_green",
     };
 
+    /// <summary>Every shade a Dye colour accepts: the game's own dye-pot groups
+    /// (DyeMenu.validPotColors), so Topaz (gold), Jade and Aquamarine count. White has no pot group
+    /// and stays itself.</summary>
+    private static readonly IReadOnlyDictionary<string, string[]> DyeShades = new Dictionary<string, string[]>
+    {
+        ["color_red"] = new[] { "color_red", "color_salmon", "color_dark_red", "color_pink" },
+        ["color_yellow"] = new[] { "color_yellow", "color_dark_yellow", "color_gold", "color_sand" },
+        ["color_green"] = new[] { "color_green", "color_dark_green", "color_lime", "color_yellow_green", "color_jade" },
+        ["color_blue"] = new[] { "color_blue", "color_dark_blue", "color_dark_cyan", "color_light_cyan", "color_cyan", "color_aquamarine" },
+        ["color_purple"] = new[] { "color_purple", "color_dark_purple", "color_dark_pink", "color_pale_violet_red", "color_poppyseed", "color_iridium" },
+        ["color_white"] = new[] { "color_white" },
+    };
+
     /// <summary>Bundles with no pool of their own: they re-roll from their own vanilla items, so
     /// the trim can shorten them but nothing new is ever asked for. Helper's and Home Cook's are
     /// hand-picked vanilla lists with no kind in common (Jeff, 2026-08-29).</summary>
@@ -270,9 +283,12 @@ public static class BundlePoolRecipes
     /// whatever class it is (Jeff, 2026-09-17: "fix ALL classes the same way").</summary>
     private static IReadOnlyList<PoolPart> DyeParts()
         => DyeColourTags.Select(tag => new PoolPart(
-            (p, m) => p.ColourTags.TryGetValue(tag, out IReadOnlyList<PoolItem>? list)
-                ? Placeable(list.Where(i => !LegendaryFishRules.IsLegendary(i.ItemId)).ToList(), m)
-                : Array.Empty<PoolItem>(),
+            (p, m) => Placeable(DyeShades[tag]
+                .SelectMany(shade => p.ColourTags.TryGetValue(shade, out IReadOnlyList<PoolItem>? list)
+                    ? list : Array.Empty<PoolItem>())
+                .Where(i => !LegendaryFishRules.IsLegendary(i.ItemId))
+                .GroupBy(i => i.ItemId, StringComparer.Ordinal).Select(g => g.First())
+                .ToList(), m),
             1, tag)).ToList();
 
     /// <summary>A by-kind bucket, model-gated like Dye: the buckets come from the same walk of

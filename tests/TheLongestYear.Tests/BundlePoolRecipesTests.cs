@@ -377,4 +377,32 @@ public class BundlePoolRecipesTests
         PoolRecipe gil = BundlePoolRecipes.For("Gil's Trophies", Array.Empty<string>(), pools, model);
         Assert.Equal(2, gil.Parts[0].Source(pools, model).Count);
     }
+
+    /// <summary>Each Dye colour takes the game's own dye-pot shade group (DyeMenu.validPotColors),
+    /// so Topaz (color_gold), Jade (color_jade) and Aquamarine (color_aquamarine) can land
+    /// (Jeff, 2026-09-29).</summary>
+    [Fact]
+    public void Dye_colour_parts_take_the_games_whole_shade_group()
+    {
+        ItemPools pools = Pools() with
+        {
+            ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>>(StringComparer.Ordinal)
+            {
+                ["color_yellow"] = new[] { Item("(O)421") },
+                ["color_gold"] = new[] { Item("(O)68") },
+                ["color_jade"] = new[] { Item("(O)70") },
+                ["color_aquamarine"] = new[] { Item("(O)62") },
+                ["color_pink"] = new[] { Item("(O)Pink") },
+                ["color_iridium"] = new[] { Item("(O)Irid") },
+            },
+        };
+        PoolRecipe r = BundlePoolRecipes.For("Dye", Array.Empty<string>(), pools, null);
+        IReadOnlyList<PoolItem> Part(string label) => r.Parts.Single(p => p.Label == label).Source(pools, null);
+
+        Assert.Equal(new[] { "(O)421", "(O)68" }, Part("color_yellow").Select(i => i.ItemId).OrderBy(x => x == "(O)68"));
+        Assert.Contains(Part("color_green"), i => i.ItemId == "(O)70");
+        Assert.Contains(Part("color_blue"), i => i.ItemId == "(O)62");
+        Assert.Contains(Part("color_red"), i => i.ItemId == "(O)Pink");
+        Assert.Contains(Part("color_purple"), i => i.ItemId == "(O)Irid");
+    }
 }

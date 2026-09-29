@@ -863,10 +863,19 @@ public static class ItemPoolBuilder
         "(O)420", "(O)397", "(O)421", "(O)444", "(O)62", "(O)266",
     };
 
-    /// <summary>Whether the Dye recipe may pick this object: a vanilla Dye item, or something
-    /// grown or gathered (the game's own forage test: crops, fruit, flowers, forage, beach finds).</summary>
+    /// <summary>The six gems the mines' gem nodes drop: Emerald, Aquamarine, Ruby, Amethyst,
+    /// Topaz, Jade. Diamond and Prismatic Shard are rare, and Quartz and its kin are minerals
+    /// (Jeff, 2026-09-29: "other common gems too, not all minerals").</summary>
+    private static readonly IReadOnlySet<string> CommonGems = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)60", "(O)62", "(O)64", "(O)66", "(O)68", "(O)70",
+    };
+
+    /// <summary>Whether the Dye recipe may pick this object: a vanilla Dye item, a common gem, or
+    /// something grown or gathered (the game's own forage test: crops, fruit, flowers, forage,
+    /// beach finds).</summary>
     private static bool IsDyeCandidate(string qualifiedId, RawObjectEntry obj)
-        => VanillaDyeItems.Contains(qualifiedId) || IsForageCategory(obj, qualifiedId);
+        => VanillaDyeItems.Contains(qualifiedId) || CommonGems.Contains(qualifiedId) || IsForageCategory(obj, qualifiedId);
 
     /// <summary>Mirrors StardewValley.Object.isForage(): the only objects the game gives
     /// forage quality to when picked up.</summary>

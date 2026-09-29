@@ -23,8 +23,10 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 - **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
   weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
   asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
-- **BUILT 0.18.85: Dye bundle limited** (Jeff 2026-09-29): six vanilla Dye items + coloured crops, fruit,
-  flowers, forage, beach finds (the game's isForage test). 60-board check: 22 Dye bundles, all picks allowed.
+- **BUILT 0.18.85-86: Dye bundle limited** (Jeff 2026-09-29): six vanilla Dye items + the six common gems +
+  coloured crops, fruit, flowers, forage, beach finds (the game's isForage test); colours use the game's dye-pot
+  shade groups. 60-board check: 22 Dye bundles, all picks allowed, gems land. Dye now has no hard item for the
+  Hard/Extreme hard-item swap.
 - **BUG to look at: Qi Bean placed as year-1 obtainable.** A Dye board asked for one before the limit. It
   only comes from Qi's post-Ginger-Island challenge. Find which route the model uses and close it.
 - Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
