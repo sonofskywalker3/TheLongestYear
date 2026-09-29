@@ -668,8 +668,9 @@ public class ItemPoolBuilderTests
         Assert.DoesNotContain(pools.ColourTags["color_blue"], p => p.ItemId == "(O)Book_QueenOfSauce");
     }
 
-    /// <summary>Dye picks from the six vanilla Dye items plus coloured crops, fruit, flowers,
-    /// forage and beach finds only (Jeff, 2026-09-29). 60 boards had asked for dishes, artifacts,
+    /// <summary>Dye picks from the six vanilla Dye items, the six common gems, and coloured crops,
+    /// fruit, flowers, forage and beach finds only (Jeff, 2026-09-29). Diamond, Prismatic Shard and
+    /// the mineral-type gems (Quartz and the like) stay out. 60 boards had asked for dishes, artifacts,
     /// bombs, books, Joja Cola and Energy Tonic.</summary>
     [Fact]
     public void ColourTags_hold_only_vanilla_dye_items_and_grown_or_gathered_things()
@@ -687,12 +688,15 @@ public class ItemPoolBuilderTests
             ("286", "Cherry Bomb", cat: -8, tags: new[] { "color_red" }),
             ("446", "Rabbit's Foot", cat: -18, tags: new[] { "color_white" }),
             ("66", "Amethyst", cat: -2, tags: new[] { "color_purple" }),
+            ("68", "Topaz", cat: -2, tags: new[] { "color_gold" }),
+            ("72", "Diamond", cat: -2, tags: new[] { "color_white" }),
+            ("80", "Quartz", cat: -2, tags: new[] { "color_white" }),
             ("130", "Tuna", cat: -4, tags: new[] { "color_blue" }));
         var all = pools.ColourTags.Values.SelectMany(l => l).Select(p => p.ItemId).ToHashSet();
 
-        foreach (string kept in new[] { "(O)444", "(O)62", "(O)190", "(O)613", "(O)421", "(O)18", "(O)397" })
+        foreach (string kept in new[] { "(O)444", "(O)62", "(O)190", "(O)613", "(O)421", "(O)18", "(O)397", "(O)66", "(O)68" })
             Assert.Contains(kept, all);
-        foreach (string dropped in new[] { "(O)204", "(O)583", "(O)286", "(O)446", "(O)66", "(O)130" })
+        foreach (string dropped in new[] { "(O)204", "(O)583", "(O)286", "(O)446", "(O)72", "(O)80", "(O)130" })
             Assert.DoesNotContain(dropped, all);
     }
 }
