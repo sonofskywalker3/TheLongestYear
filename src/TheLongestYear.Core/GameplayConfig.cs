@@ -197,8 +197,9 @@ public sealed class GameplayConfig
 
     /// <summary>Where the Community Center board comes from. "Engine" (default): The Longest Year
     /// builds its own board every loop. "Vanilla": keep the game's own Standard/Remixed board (or
-    /// another bundle mod's) and re-roll it the same way on every reset. Takes effect at the next
-    /// reset; the new-game Advanced Options dropdown sets it per save. See
+    /// another bundle mod's) and re-roll it the same way on every reset. Only the DEFAULT the
+    /// new-game Advanced Options dropdown starts on: each save keeps its own choice in
+    /// <see cref="MetaState.ChosenBundleSource"/>, and a reset never reads this. See
     /// <see cref="BundleSourceNames"/>.</summary>
     public string BundleSource { get; set; } = BundleSourceNames.Engine;
 
