@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.81`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.79`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,13 +24,6 @@ This is a **beta** (`0.18.81`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.81
-
-**Each save keeps its own bundle choice, and bundles stop asking for Ostrich Mayo.**
-
-- **Your bundle choice stays with your save.** Picking Normal or Remixed bundles for one farm, then starting another farm on TLY Custom, switched the first farm to TLY Custom bundles at its next rewind. Each save now keeps the choice it was made with. The Bundle source setting in the mod's settings menu changes the save you have loaded; on the title screen it only sets what a new game starts on. If this already happened to your farm, set it back there and your next rewind uses that board again. Reported by victoriatauanem.
-- **No more Ostrich Mayo in bundles.** With Blue Eggs and Golden Mayo installed, a bundle could ask for Ostrich Mayo, which needs Ostrich Eggs from Ginger Island. The mod now follows machine goods back to what goes in them, and farm animals back to where you get them, so an item from any mod that needs something a year can't reach stays off the board. Reported by Ninjamaid.
 
 ## What's New in 0.18.79
 
@@ -275,7 +268,7 @@ You are not locked into the board you picked when you started. **Bundle source**
 
 Another bundle mod's board is covered by Normal or Remixed: whatever the game generates is what the mod keeps.
 
-Like the difficulty dials, a switch applies at your **next loop**, not straight away. The year you are already playing keeps the board it started with. The setting belongs to the save you have loaded. On the title screen it only picks what a new game starts with, so one farm's choice never changes another's.
+Like the difficulty dials, a switch applies at your **next loop**, not straight away. The year you are already playing keeps the board it started with.
 
 **Keeping your board on a Fail night works on all three.** If you hold, you get the same board back next loop whichever source it came from.
 
@@ -296,7 +289,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `BundleQuotas` | per-bundle | How much each percentage-bundle asks for |
 | `StashTileX/Y` | `0,0` (auto) | Where the Junimo Stash chest is placed (`0,0` = auto-pick near the farmhouse). The Bundle Log / Cookbook / Craftbook are placeable furniture you can put anywhere. |
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
-| `BundleSource` | `Engine` | One setting, three values: `Engine` (the mod's own board every loop, the new-game **TLY Custom** choice), `Normal` or `Remixed` (the game's own board of that kind, or another bundle mod's, re-rolled the same way each loop). Only the default a new game starts on: each save keeps its own choice, which the in-game settings menu changes, and it takes effect at the next loop. See [Switching bundle source later](#switching-bundle-source-later) |
+| `BundleSource` | `Engine` | One setting, three values: `Engine` (the mod's own board every loop, the new-game **TLY Custom** choice), `Normal` or `Remixed` (the game's own board of that kind, or another bundle mod's, re-rolled the same way each loop). Switchable on an existing save; takes effect at the next loop. See [Switching bundle source later](#switching-bundle-source-later) |
 | `BundleHoldCosts` | `[0, 50, 100, 200, 300]` | JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count |
 | `Enabled` | `true` | Master switch: turn the whole mod off to play vanilla |
 
@@ -402,8 +395,6 @@ This mod is shaped by the players who report bugs and suggest ideas. Every one o
 - **Tottelotta123**: Garlic Cultivation and its price.
 - **khauser13**: egg colors in the quest log, and the Advanced Options screenshot.
 - **ggrace67**: weekly goals that ticked without a donation.
-- **victoriatauanem**: a Normal-bundles farm switching to custom bundles at the rewind.
-- **Ninjamaid**: an Ostrich Mayo ask from another mod.
 - **Nijah, nyxnyx2234, Bumblewyn, IshoMoogoo and lexihope**: reports that shaped the early balance passes.
 - **supercam19**: the book art, and the fix that refills mine carts and barrels every loop.
 - **cwybabiesucks**: the banner art.
