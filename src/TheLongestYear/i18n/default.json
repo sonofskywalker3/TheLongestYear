@@ -54,6 +54,8 @@
     "upgrade.starter_gold_4.desc": "Start each loop with +10,000g.",
     "upgrade.starter_gold_5.name": "Seed Money V",
     "upgrade.starter_gold_5.desc": "Start each loop with +25,000g.",
+    "upgrade.keep_lost_books.name": "Keep Lost Books",
+    "upgrade.keep_lost_books.desc": "Lost Books you have found stay found. Digging no longer turns up ones you already have.",
     "upgrade.cookbook_1.name": "Cookbook I",
     "upgrade.cookbook_1.desc": "Expand the Cookbook from 4 to 8 cooking recipe slots.",
     "upgrade.cookbook_2.name": "Cookbook II",

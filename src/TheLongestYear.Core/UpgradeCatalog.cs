@@ -102,6 +102,10 @@ public static class UpgradeCatalog
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
 
+        // Keep Lost Books (Jeff, 2026-09-29): found Lost Books stay found, so digging stops
+        // turning up ones already read. See LostBookKeep.
+        new UpgradeDefinition(LostBookKeep.UpgradeId, UpgradeCategory.Carryover, 100),
+
         // Carryover — Cookbook + Craftbook (recipe banking across runs).
         // Tier determines the slot pool size. Highest owned tier wins (owning III = 20 slots).
         // Cookbook: gated by kitchen (HouseUpgradeLevel >= 1) at interaction time, not at purchase.
