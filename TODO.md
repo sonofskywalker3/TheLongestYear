@@ -6,6 +6,24 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
+Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
+- **BUILT 0.18.82: week-1 goals named later crops.** Seasonal bundles skipped the week check (Strawberry,
+  Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
+- **BUILT 0.18.83: tooltips ran off screen** (Elevator Pass). HoverText.Draw wraps all four menus. Not
+  checked in game by hover (needs the mouse).
+- **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
+  Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
+- **QUESTION for Jeff: pet after a rewind.** Without Keep Pet the free Marnie cutscene never replays; the
+  only route is Adopt at Marnie's counter (paid license, never announced). Ben read it as "no pet chance".
+  Options: replay the cutscene on a petless farm, or announce the Adopt route (letter), or cheaper license.
+- **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
+  the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
+  leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.
+- Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
+  pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
+- Reply to Nijah owed after 0.18.83 ships.
+
 ### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
 - **RELEASED 0.18.81 (2026-09-28).** Reachability now reads machine rules and farm animals. In-game check with
