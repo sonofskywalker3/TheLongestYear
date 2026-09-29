@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.81 - unreleased
+
+### Fixed
+
+- **A Normal-bundles save switched to custom bundles at its rewind.** The new-game bundle pick was copied into config.json, and every reset read config.json, so starting a TLY Custom game changed the board of every older save at its next rewind. Each save now keeps its own choice; the settings menu changes the loaded save's choice (the title-screen value is only the new-game default). Saves from before this keep the board they run under. Reported by victoriatauanem (Nexus posts, 2026-09-28).
+- **Ostrich Mayo from Blue Eggs and Golden Mayo reached the board.** The reachability check only read shops, seeds and recipes, and an item with no route it could read stayed allowed. It now reads Data/Machines (a good made only from one out-of-reach input is out of reach) and Data/FarmAnimals (an animal nobody sells, hatched only from the egg it lays, makes that egg out of reach), for every mod's items. Artifact spots count as proof, so the Dinosaur Egg stays. Checked in game with the mod installed: Ostrich Egg and Ostrich Mayo are the only two new exclusions. Reported by Ninjamaid (Nexus posts, 2026-09-28).
+
 ## 0.18.79 - 2026-09-28
 
 2422 tests. Rolls up 0.18.77 to 0.18.79.
