@@ -6,13 +6,34 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
+Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
+- **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
+  Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
+- **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
+  checked in game by hover (needs the mouse).
+- **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
+  Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
+- **QUESTION for Jeff: pet after a rewind.** Without Keep Pet the free Marnie cutscene never replays; the
+  only route is Adopt at Marnie's counter (paid license, never announced). Ben read it as "no pet chance".
+  Options: replay the cutscene on a petless farm, or announce the Adopt route (letter), or cheaper license.
+- **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
+  the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
+  leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.
+- **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
+  weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
+  asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
+- Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
+  pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
+- Reply to Nijah owed now that 0.18.84 is out (goal fix + quality hold; randomizer answers go in the spec).
+
 ### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
 - **RELEASED 0.18.81 (2026-09-28).** Reachability now reads machine rules and farm animals. In-game check with
   the mod: kept-off list went from 2 items to 4 (+ Ostrich Egg, + Ostrich Mayo), nothing else.
 - NOT changed: the week model still rates Ostrich Egg as a Spring barn product (AnimalProductAvailability
   gives an unbuyable animal a fixed step, not "unplaced"). Harmless now that reachability drops it.
-- Jeff told her a fix was coming. Follow-up owed once 0.18.81 ships (she may have removed the mod).
+- Follow-up reply POSTED on Nexus 2026-09-29.
 
 ### BUG (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind
 "I was playing with normal bundles, but when I reset the year, I got random custom bundles instead." No log.
@@ -24,7 +45,7 @@ Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + O
 - Other possible cause, NOT fixed: TLY added to a save made without it (or a save with a donation before
   day-1 load) reads the vanilla board for loop 1 but defaults to Engine at the rewind. Ask her if the
   save started with TLY installed.
-- Jeff replied on Nexus that it will be fixed (2026-09-28). Follow-up owed once 0.18.81 ships.
+- Reply POSTED on Nexus 2026-09-29: fix explained, asked about other saves and whether the farm started with TLY. Waiting on the answer.
 
 ### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
 Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
