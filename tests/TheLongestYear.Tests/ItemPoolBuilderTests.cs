@@ -691,12 +691,14 @@ public class ItemPoolBuilderTests
             ("68", "Topaz", cat: -2, tags: new[] { "color_gold" }),
             ("72", "Diamond", cat: -2, tags: new[] { "color_white" }),
             ("80", "Quartz", cat: -2, tags: new[] { "color_white" }),
+            ("84", "Frozen Tear", cat: -2, tags: new[] { "color_cyan" }),
+            ("74", "Prismatic Shard", cat: -2, tags: new[] { "color_prismatic" }),
             ("130", "Tuna", cat: -4, tags: new[] { "color_blue" }));
         var all = pools.ColourTags.Values.SelectMany(l => l).Select(p => p.ItemId).ToHashSet();
 
-        foreach (string kept in new[] { "(O)444", "(O)62", "(O)190", "(O)613", "(O)421", "(O)18", "(O)397", "(O)66", "(O)68" })
+        foreach (string kept in new[] { "(O)444", "(O)62", "(O)190", "(O)613", "(O)421", "(O)18", "(O)397", "(O)66", "(O)68", "(O)80", "(O)84" })
             Assert.Contains(kept, all);
-        foreach (string dropped in new[] { "(O)204", "(O)583", "(O)286", "(O)446", "(O)72", "(O)80", "(O)130" })
+        foreach (string dropped in new[] { "(O)204", "(O)583", "(O)286", "(O)446", "(O)72", "(O)74", "(O)130" })
             Assert.DoesNotContain(dropped, all);
     }
 }

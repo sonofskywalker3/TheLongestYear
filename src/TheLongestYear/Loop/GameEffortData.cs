@@ -41,6 +41,7 @@ namespace TheLongestYear.Loop
 
         public EffortData Build(IReadOnlyList<string> excludedLocationMarkers)
         {
+            IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
             var geodeDrops = new List<RawGeodeDrop>();
             var monsterDrops = new List<RawMonsterDrop>();
@@ -93,7 +94,10 @@ namespace TheLongestYear.Loop
                 {
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
-                    foreach (ArtifactSpotDropData spot in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                    // A row only a closed rule switches on is no route: the Default spot's Qi Bean
+                    // row drops only during Qi's DROP_QI_BEANS order (2026-09-29).
+                    foreach (ArtifactSpotDropData spot in (loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                                 .Where(s => TheLongestYear.Core.Availability.YearOneCondition.Allows(s?.Condition, closedRules)))
                         foreach (string id in SpawnIds(spot?.ItemId, spot?.RandomItemId))
                             artifactSpots.Add(new RawArtifactSpot(kv.Key, id, spot.Chance));
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, excludedLocationMarkers))
