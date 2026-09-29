@@ -27,6 +27,12 @@ public sealed class RunState
     /// 2026-09-12). Cleared when the scene ends.</summary>
     public Day28.Day28Branch PendingDay28 { get; set; } = Day28.Day28Branch.None;
 
+    /// <summary>A voluntary restart already ran its menus (bundle hold, upgrade menu, books)
+    /// before the night, so the morning only runs the reset (Jeff, 2026-09-29: Ben saw the payout,
+    /// a level-up and "Spring 6" before being asked about his bundles). Persisted with
+    /// <see cref="PendingDay28"/> so a quit after the night save still resets without re-asking.</summary>
+    public bool RestartMenusDone { get; set; }
+
     /// <summary>True when a load should run the month rollover itself: the calendar moved on
     /// since the run-state was saved AND no day-28 outcome is waiting to decide what happens
     /// instead. A pending Fail rewinds rather than advances, so it must never roll over.</summary>
@@ -360,6 +366,7 @@ public sealed class RunState
         CurrentWeekBonusSlots.Clear();
         // The rewind rewrites the whole board, so no discounted line is left to put back.
         DiscountWeek = -1;
+        RestartMenusDone = false;
         OfferPresentedWeek = -1;
         ClearReroll();
         PeakMineFloor = 0;

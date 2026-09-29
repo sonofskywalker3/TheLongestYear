@@ -18,6 +18,18 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   lines stay done. In game on Normal and Hard: apply, save+reload (stored engine board), week revert,
   re-pick revert, donated lines kept, month rollover. 0.18.97: the hub preview (and tly_goals) shows the
   discounted counts before the pick (Jeff, 2026-09-29: yes). AWAITING Jeff's playtest before release.
+- **BUILT 0.18.98: shrine restart runs its menus before the night** (Jeff 2026-09-29, Ben reset on day 5 and
+  saw payout, level-up, "Spring 6", then the bundle question). Yes -> hold -> upgrade menu -> books -> sleep
+  (shipping and level-up screens skipped, HUD hidden) -> reset at first clear morning tick
+  (RunState.RestartMenusDone). In game: day 5 + a farming level, restart -> reshuffle -> shrine closed -> night
+  skipped 1 level-up screen -> Spring 1 hub. Not seen: a full shipping bin (code clears it), the look of the
+  fade (headless). AWAITING Jeff's playtest before release.
+- **RELEASE HANDOFF (2026-09-29):** after Jeff tests 0.18.93-0.18.98 (theme week discount + hub preview +
+  shrine restart), cut the release from the CHANGELOG "0.18.98 - unreleased" section per
+  docs/RELEASE_TOOLING.md. If he reports problems, fix on master first.
+- **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
+  not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
+  with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
 - **BUILT 0.18.90: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
   visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
   (the visit needs the naming prompt clicked); unit-tested.

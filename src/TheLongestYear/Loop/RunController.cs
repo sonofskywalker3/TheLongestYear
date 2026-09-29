@@ -306,6 +306,10 @@ namespace TheLongestYear.Loop
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
                 // Releases the driver's Restart branch (DayStartedWhileBranchPending).
                 _dayStartedWhileBranchPending = true;
+                // A voluntary restart resets as soon as the morning is clear; keep the new day's
+                // date off the screen until the world is back on Spring 1.
+                if (_pendingCutscene == Day28Branch.Restart)
+                    Game1.displayHUD = false;
                 _monitor.Log($"Day start: the {_pendingCutscene} branch is pending; the day-start flow waits for it.", LogLevel.Trace);
                 return;
             }
@@ -497,6 +501,7 @@ namespace TheLongestYear.Loop
         public void TickShrineWatchdog()
         {
             TickRestartDeclined();
+            TickVoluntaryRestart();
             if (_holdReaskPending && Game1.activeClickableMenu == null)
             {
                 _holdReaskPending = false;
@@ -542,7 +547,18 @@ namespace TheLongestYear.Loop
                     // loop that can be won again. FinalizeReset's _store.Save() persists the clear.
                     if (VoluntaryRestart.ClearWonRun(_store.State))
                         _monitor.Log("Voluntary restart after Keep playing: the won-run flag is cleared, so the next loop can be won again.", LogLevel.Info);
-                    StartRewindChain();
+                    if (Run.RestartMenusDone)
+                    {
+                        // The hold, upgrade menu and books ran before the night: reset straight away.
+                        Run.RestartMenusDone = false;
+                        Game1.displayHUD = false;
+                        FinalizeReset("voluntary restart");
+                    }
+                    else
+                    {
+                        // A Restart queued by a build before 0.18.98 (loaded mid-night): menus now.
+                        StartRewindChain();
+                    }
                     break;
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
@@ -647,7 +663,7 @@ namespace TheLongestYear.Loop
         /// recipe books, then performs the actual world reset and resumes the normal day-start
         /// sync + hub trigger.</summary>
         private void ContinueAfterResetSpend()
-            => OfferRecipeBanking(() => FinalizeReset("shrine closed"));
+            => OfferRecipeBanking(FinishRewindChain);
 
         /// <summary>Nexus post ada113, 2026-09-07: the Cookbook and Craftbook start at 0 slots, the
         /// first tier is bought at the shrine that opens right here, and the reset that follows wipes
@@ -927,6 +943,7 @@ namespace TheLongestYear.Loop
                 // overwrite the queued Restart. A room finished today must not play its restoration
                 // scene just before the rewind undoes it, same as a Fail night.
                 SuppressResetDoomedRoomScenes();
+                QuietRestartNight();
                 _monitor.Log("Voluntary restart night: the day-end gate is skipped; the rewind runs in the morning.", LogLevel.Info);
                 return;
             }

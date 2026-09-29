@@ -3,10 +3,11 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.18.97 - unreleased
+## 0.18.98 - unreleased
 
 ### Fixed
 
+- **Restarting the year at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, any level-ups and the next day's date before being asked about your bundles and upgrades. Now the bundle question, the upgrade menu and the books come right after you say yes. Then the day fades out and you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the rewind resets your gold anyway. Seen in Dummy Dog Ben's stream.
 - **Qi Beans counted as a year-1 find.** The game's default artifact spot drops Qi Beans only while Mr. Qi's Qi Beans challenge is running, which needs Ginger Island. TLY read the row without its condition. Conditions that need a special-order rule only Mr. Qi's orders grant (read from the game's special orders, so mod orders count too) now close the row, for artifact spots, forage, fish and shop lines alike. Across 60 test boards nothing asks for a Qi Bean.
 
 ### Added
