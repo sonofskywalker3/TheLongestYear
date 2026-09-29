@@ -4177,7 +4177,7 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"    asks: stack x{live.StackFactor}, quality x{live.QualityFactor}, " +
                 $"required slots {(live.RequireAllSlots ? "ALL shown" : live.RequiredSlotsDelta.ToString("+0;-0;0"))}, " +
-                $"rarity bias {live.RarityBias}",
+                $"rarity bias {live.RarityBias}, theme week discount {live.EffectiveWeeklyGoalStackDiscount():P0}",
                 LogLevel.Info);
             this.Monitor.Log(
                 $"    economy: JP x{live.JpEarnedFactor}, shrine prices x{live.ShrinePriceFactor}, " +

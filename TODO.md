@@ -12,8 +12,12 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
 - **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
   checked in game by hover (needs the mouse).
-- **QUESTION for Jeff: week-1 quantities.** Goals are whole bundle lines, so week 1 can ask 31 Carp, 35
-  Wild Horseradish, 27 Parsnip (full stacks). Nijah: "31 Cauliflowers" in week 1 is not realistic.
+- **BUILT 0.18.93-96: theme week discount** (Jeff 2026-09-29, spec 2026-09-29-theme-week-discount). Nijah's
+  "31 Cauliflowers in week 1": the picked theme lowers its week's goal lines over 10 (Easy 50%, Normal 25%,
+  Hard/Extreme 0; floor 10, round down), reverted at the next week, a re-pick and the month start; donated
+  lines stay done. In game on Normal and Hard: apply, save+reload (stored engine board), week revert,
+  re-pick revert, donated lines kept, month rollover. OPEN for Jeff: should the hub preview show the
+  discounted numbers before the pick?
 - **BUILT 0.18.90: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
   visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
   (the visit needs the naming prompt clicked); unit-tested.
