@@ -70,4 +70,28 @@ public class BundleSourceNamesTests
     [InlineData("Remixed")]
     public void A_Vanilla_Choice_Round_Trips_Through_The_Game_Bundle_Type(string source)
         => Assert.Equal(source, BundleSourceNames.ForVanillaType(BundleSourceNames.VanillaTypeFor(source)));
+
+    /// <summary>A save's own choice wins. The config is shared by every save, so reading it at a
+    /// reset let a newer TLY Custom game flip an older Normal save to custom bundles
+    /// (victoriatauanem, Nexus 2026-09-28).</summary>
+    [Theory]
+    [InlineData("Normal", "Engine", null, "Normal")]
+    [InlineData("Remixed", "Vanilla", "Default", "Remixed")]
+    [InlineData("Engine", "Vanilla", "Default", "Engine")]
+    [InlineData("normal", "Engine", null, "Normal")]
+    public void ForSave_Uses_The_Saves_Chosen_Source(string chosen, string stamped, string? type, string expected)
+        => Assert.Equal(expected, BundleSourceNames.ForSave(chosen, stamped, type));
+
+    /// <summary>Saves from before the choice was kept per save carry on with the board they run
+    /// under now, never whatever the shared config says.</summary>
+    [Theory]
+    [InlineData(null, "Vanilla", "Default", "Normal")]
+    [InlineData(null, "Vanilla", "Remixed", "Remixed")]
+    [InlineData(null, "Vanilla", null, "Normal")]
+    [InlineData(null, "Engine", null, "Engine")]
+    [InlineData(null, null, null, "Engine")]
+    [InlineData("", "Vanilla", "Remixed", "Remixed")]
+    [InlineData("Vanilla", "Vanilla", "Remixed", "Remixed")]
+    public void ForSave_Falls_Back_To_The_Board_The_Save_Runs_Under(string? chosen, string? stamped, string? type, string expected)
+        => Assert.Equal(expected, BundleSourceNames.ForSave(chosen, stamped, type));
 }

@@ -6,6 +6,26 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
+Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
+- **RELEASED 0.18.81 (2026-09-28).** Reachability now reads machine rules and farm animals. In-game check with
+  the mod: kept-off list went from 2 items to 4 (+ Ostrich Egg, + Ostrich Mayo), nothing else.
+- NOT changed: the week model still rates Ostrich Egg as a Spring barn product (AnimalProductAvailability
+  gives an unbuyable animal a fixed step, not "unplaced"). Harmless now that reachability drops it.
+- Jeff told her a fix was coming. Follow-up owed once 0.18.81 ships (she may have removed the mod).
+
+### BUG (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind
+"I was playing with normal bundles, but when I reset the year, I got random custom bundles instead." No log.
+- **RELEASED 0.18.81 (2026-09-28).** Cause: the new-game pick was mirrored into config.json and every reset read
+  config.json, so any later TLY Custom new game flipped older Normal saves. Fix: MetaState.ChosenBundleSource
+  per save; GMCM edits the loaded save's choice; config is only the new-game default.
+- Her save is already on custom bundles. The fix does not undo that: she sets Bundle source to Normal in
+  the in-game mod settings, and her next rewind is Normal again. Say so in the reply.
+- Other possible cause, NOT fixed: TLY added to a save made without it (or a save with a donation before
+  day-1 load) reads the vanilla board for loop 1 but defaults to Engine at the rewind. Ask her if the
+  save started with TLY installed.
+- Jeff replied on Nexus that it will be fixed (2026-09-28). Follow-up owed once 0.18.81 ships.
+
 ### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
 Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
 - **RELEASED 0.18.79 (2026-09-28, with Keep Fish Pond): reroll shows the same pair.** Cause: a reroll shuffles only the

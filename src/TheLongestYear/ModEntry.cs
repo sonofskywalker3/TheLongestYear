@@ -459,7 +459,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
             helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
             helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
-            helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the config's BundleSource so the next reset honours it.", this.CmdBundleSource);
+            helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the save's chosen source so the next reset honours it.", this.CmdBundleSource);
             helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
@@ -649,15 +649,10 @@ namespace TheLongestYear
                     ? BundleSourceNames.LegacyVanilla : BundleSourceNames.Engine;
                 _meta.State.VanillaBundleType =
                     BundleSourceNames.VanillaTypeFor(chosenSource) ?? Game1.BundleType.Default.ToString();
-
-                // Mirror the Advanced Options pick into the config, which is the ONE setting that
-                // owns this from now on. Without this the first reset would re-stamp from a config
-                // the player never touched and silently undo the choice he just made.
-                if (!string.Equals(_config.BundleSource, chosenSource, StringComparison.OrdinalIgnoreCase))
-                {
-                    _config.BundleSource = chosenSource;
-                    this.Helper.WriteConfig(_config);
-                }
+                // Kept on the save, not mirrored into the config: the config is shared by every
+                // save, and mirroring it here is how a new TLY Custom game flipped an older Normal
+                // save to custom bundles at its next reset (victoriatauanem, Nexus 2026-09-28).
+                _meta.State.ChosenBundleSource = chosenSource;
 
                 this.Monitor.Log(
                     $"New game: bundle source={chosenSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
@@ -3119,17 +3114,27 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.resend-better-start.tooltip"));
 
             gmcm.AddTextOption(this.ModManifest,
-                // One setting, three choices. A config written before this change says the legacy
-                // "Vanilla", which names no layout, so show it as whichever layout the loaded save
-                // is actually on rather than defaulting a remixed save to Normal.
+                // One setting, three choices. With a save loaded it reads and writes THAT save's
+                // choice; the config is shared by every save and only holds the default the new-game
+                // dropdown starts on. An older config may say the legacy "Vanilla",
+                // which names no layout, so show it as Normal.
                 getValue: () =>
                 {
+                    if (Context.IsWorldReady && _metaLoaded)
+                    {
+                        MetaState state = _meta.State;
+                        return BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType);
+                    }
                     string stored = BundleSourceNames.Normalize(_config.BundleSource);
-                    return stored == BundleSourceNames.LegacyVanilla
-                        ? BundleSourceNames.ForVanillaType(_meta?.State?.VanillaBundleType)
-                        : stored;
+                    return stored == BundleSourceNames.LegacyVanilla ? BundleSourceNames.Normal : stored;
                 },
-                setValue: v => _config.BundleSource = BundleSourceNames.Normalize(v),
+                setValue: v =>
+                {
+                    if (Context.IsWorldReady && _metaLoaded)
+                        _meta.State.ChosenBundleSource = BundleSourceNames.Normalize(v);
+                    else
+                        _config.BundleSource = BundleSourceNames.Normalize(v);
+                },
                 name: () => Strings.Get("gmcm.bundle-source.name"),
                 tooltip: () => Strings.Get("gmcm.bundle-source.tooltip"),
                 allowedValues: BundleSourceNames.All,
@@ -5894,22 +5899,22 @@ namespace TheLongestYear
         }
 
         /// <summary>Diagnostics: read/set MetaState.BundleSource + VanillaBundleType and the
-        /// config's BundleSource in memory so an unattended smoke can reset in each mode.</summary>
+        /// save's chosen source in memory so an unattended smoke can reset in each mode.</summary>
         private void CmdBundleSource(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length >= 1)
-            {
-                string source = BundleSourceNames.Normalize(args[0]);
-                _config.BundleSource = source;
-                _meta.State.BundleSource = source;
-            }
+                _meta.State.BundleSource = BundleSourceNames.Normalize(args[0]);
             if (args.Length >= 2)
                 _meta.State.VanillaBundleType = string.Equals(args[1], "Remixed", StringComparison.OrdinalIgnoreCase)
                     ? Game1.BundleType.Remixed.ToString() : Game1.BundleType.Default.ToString();
+            if (args.Length >= 1)
+                _meta.State.ChosenBundleSource = BundleSourceNames.IsVanilla(_meta.State.BundleSource)
+                    ? BundleSourceNames.ForVanillaType(_meta.State.VanillaBundleType)
+                    : BundleSourceNames.Engine;
             this.Monitor.Log(
                 $"tly_bundlesource: save BundleSource={_meta.State.BundleSource}, VanillaBundleType={_meta.State.VanillaBundleType ?? "(unknown)"}, " +
-                $"config BundleSource={_config.BundleSource}, marker={_meta.State.BundlesGeneratedForReset}, loop={_meta.State.CompletedResets}.",
+                $"chosen={_meta.State.ChosenBundleSource ?? "(none)"}, config default={_config.BundleSource}, marker={_meta.State.BundlesGeneratedForReset}, loop={_meta.State.CompletedResets}.",
                 LogLevel.Info);
         }
 
