@@ -12,7 +12,7 @@ Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + O
   the mod: kept-off list went from 2 items to 4 (+ Ostrich Egg, + Ostrich Mayo), nothing else.
 - NOT changed: the week model still rates Ostrich Egg as a Spring barn product (AnimalProductAvailability
   gives an unbuyable animal a fixed step, not "unplaced"). Harmless now that reachability drops it.
-- Jeff told her a fix was coming. Follow-up owed once 0.18.81 ships (she may have removed the mod).
+- Follow-up reply POSTED on Nexus 2026-09-29.
 
 ### BUG (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind
 "I was playing with normal bundles, but when I reset the year, I got random custom bundles instead." No log.
@@ -24,7 +24,7 @@ Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + O
 - Other possible cause, NOT fixed: TLY added to a save made without it (or a save with a donation before
   day-1 load) reads the vanilla board for loop 1 but defaults to Engine at the rewind. Ask her if the
   save started with TLY installed.
-- Jeff replied on Nexus that it will be fixed (2026-09-28). Follow-up owed once 0.18.81 ships.
+- Reply POSTED on Nexus 2026-09-29: fix explained, asked about other saves and whether the farm started with TLY. Waiting on the answer.
 
 ### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
 Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
