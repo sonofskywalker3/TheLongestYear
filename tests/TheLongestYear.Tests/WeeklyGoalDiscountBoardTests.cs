@@ -169,3 +169,37 @@ public class WeeklyGoalDiscountBoardTests
         Assert.Empty(WeeklyGoalDiscount.ApplyEdits(Board(), edits));
     }
 }
+
+/// <summary>The planning hub's preview shows the discounted numbers before the pick (Jeff, 2026-09-29).</summary>
+public class WeeklyGoalDiscountPreviewTests
+{
+    private static BonusSlot Slot(int bundle, int ingredient, int stack, int original = 0)
+        => new() { BundleIndex = bundle, IngredientIndex = ingredient, ItemId = "(O)24", Stack = stack, OriginalStack = original };
+
+    [Fact]
+    public void Preview_shows_the_discounted_stack_without_touching_the_sample()
+    {
+        var sample = new List<BonusSlot> { Slot(0, 0, 31), Slot(0, 1, 8) };
+
+        var shown = WeeklyGoalDiscount.Preview(sample, new List<BonusSlot>(), 0.25);
+
+        Assert.Equal(new[] { 23, 8 }, shown.Select(s => s.Stack));
+        Assert.Equal(new[] { 31, 8 }, sample.Select(s => s.Stack));
+        Assert.Equal("(O)24", shown[0].ItemId);
+    }
+
+    /// <summary>Reopening the hub mid-week: this week's goal lines are already lowered on the board,
+    /// so the preview starts from their full ask instead of lowering them twice.</summary>
+    [Fact]
+    public void Preview_starts_a_line_already_lowered_this_week_from_its_full_ask()
+    {
+        var current = new List<BonusSlot> { Slot(0, 0, 23, original: 31) };
+        var sample = new List<BonusSlot> { Slot(0, 0, 23) };
+
+        var shown = WeeklyGoalDiscount.Preview(sample, current, 0.25);
+
+        Assert.Equal(23, shown[0].Stack);
+        Assert.Equal(15, WeeklyGoalDiscount.Preview(sample, current, 0.5)[0].Stack);
+        Assert.Equal(31, WeeklyGoalDiscount.Preview(sample, current, 0.0)[0].Stack);
+    }
+}

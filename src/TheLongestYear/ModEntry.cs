@@ -292,7 +292,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_sweepforage", "Take every spawned forage item on every map and put it in the sweep chest on the Farm (a real harvest, for measuring what a season actually yields). Run 'clear' first, then once a day, then 'report'. Usage: tly_sweepforage [clear|report]", this.CmdSweepForage);
             helper.ConsoleCommands.Add("tly_forageyield", "Simulate how much of each forage item a player could gather by a cutoff day if every reachable map were cleared every day, and print the 20-80% band a requirement should sit in. Forage only. Read-only. Usage: tly_forageyield [spring|summer|fall|winter|<day>] [itemId]", this.CmdForageYield);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
-            helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
+            helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample and counts the planning hub shows, theme week discount included). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add(
@@ -3690,7 +3690,7 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_goals: {season} week {week} (run season {run.Season} day {run.DayOfMonth}, loop seed {run.Seed}).", LogLevel.Info);
             foreach (TheLongestYear.Core.Theme theme in Enum.GetValues(typeof(TheLongestYear.Core.Theme)))
             {
-                IReadOnlyList<BonusSlot> slots = _runController.SampleSlotsForTheme(theme, season, week);
+                IReadOnlyList<BonusSlot> slots = _runController.PreviewSlotsForTheme(theme, season, week);
                 this.Monitor.Log($"  {theme}: {slots.Count} goal(s)", LogLevel.Info);
                 foreach (BonusSlot slot in slots)
                 {
