@@ -6,7 +6,7 @@ namespace TheLongestYear.UI
 {
     /// <summary>Hover tooltips for the mod's menus, wrapped. Vanilla's drawHoverText sizes the box
     /// to the text's unwrapped width and only nudges it back from the right edge, so a long
-    /// description ran off the left of the screen at larger UI scales (the Elevator Pass boost,
+    /// description ran off the left of the screen at larger UI scales (the Sneak Peek boost,
     /// a streamer's run, 2026-09-29). Wrapping keeps the existing line breaks.</summary>
     internal static class HoverText
     {
