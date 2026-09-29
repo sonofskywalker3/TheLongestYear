@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.84`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.81`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,14 +24,6 @@ This is a **beta** (`0.18.84`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.84
-
-**Weekly goals stop asking for things you can't have yet, and long descriptions fit on the screen.**
-
-- **Weekly goals wait for their items.** Bundles tied to one season, like Spring Crops, could hand out a weekly goal before its item could exist, in any week of that season: Strawberries before the Egg Festival sells the seeds, or Cauliflower before it has had time to grow. Those goals now wait until you can actually get the item. Reported by Nijah.
-- **No gold-quality goals in the first two weeks.** A weekly goal could ask for silver or gold crops on day 1, when a gold Carrot is about a 1 in 100 roll. Quality asks now start in week 3.
-- **Long descriptions fit on the screen.** Upgrade and boost descriptions, like Sneak Peek's, were drawn on one line and could run off the screen at larger UI scales. They now wrap.
 
 ## What's New in 0.18.81
 
