@@ -17,9 +17,8 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 - **BUILT 0.18.90: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
   visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
   (the visit needs the naming prompt clicked); unit-tested.
-- **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
-  the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
-  leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.
+- **BUILT 0.18.91: Year 1 checkbox tooltip** (Jeff 2026-09-29): appends "Does not affect TLY Custom bundles."
+  (placeholder, Jeff may reword). Not seen in game (needs the Advanced Options screen clicked).
 - **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
   weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
   asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
