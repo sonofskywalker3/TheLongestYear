@@ -402,7 +402,9 @@ namespace TheLongestYear.Loop
             // library shelf rewinds with the museum (user ruling 2026-07-10: full reset for
             // consistency; books scatter again each loop).
             int lostBooks = Game1.netWorldState.Value.LostBooksFound;
-            if (lostBooks > 0)
+            if (lostBooks > 0 && _meta.HasUpgrade(TheLongestYear.Core.LostBookKeep.UpgradeId))
+                _monitor.Log($"In-place reset: Keep Lost Books owned; {lostBooks} lost book(s) stay found.", LogLevel.Info);
+            else if (lostBooks > 0)
             {
                 Game1.netWorldState.Value.LostBooksFound = 0;
                 _monitor.Log(
@@ -494,11 +496,17 @@ namespace TheLongestYear.Loop
             // from config: the step scales config.StartingMoney, so a hand-tuned baseline is
             // still honoured and a GMCM change only lands on the next loop.
             RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _meta.Difficulty.StartingGold);
+            // Keep Lost Books: FarmerReset clears all mail, so lift the books' read markers first.
+            IReadOnlyList<string> keptBookMail = _meta.HasUpgrade(TheLongestYear.Core.LostBookKeep.UpgradeId)
+                ? TheLongestYear.Core.LostBookKeep.MailToKeep(Game1.player.mailReceived)
+                : Array.Empty<string>();
             _farmerReset.Apply(Game1.player, baseline,
                 _meta.CookbookRecipes,
                 _meta.CraftbookRecipes,
                 _meta.SeenEventsEver,
                 CatchLimitedFishIds);
+            foreach (string flag in keptBookMail)
+                Game1.player.mailReceived.Add(flag);
 
             // 5. Profession picker re-trigger queue. Enqueued here; the actual menus
             //    surface on the next DayStarted (RunController drains after reset).

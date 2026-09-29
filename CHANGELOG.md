@@ -3,11 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.18.91 - unreleased
+## 0.18.92 - unreleased
 
 ### Fixed
 
 - **Qi Beans counted as a year-1 find.** The game's default artifact spot drops Qi Beans only while Mr. Qi's Qi Beans challenge is running, which needs Ginger Island. TLY read the row without its condition. Conditions that need a special-order rule only Mr. Qi's orders grant (read from the game's special orders, so mod orders count too) now close the row, for artifact spots, forage, fish and shop lines alike. Across 60 test boards nothing asks for a Qi Bean.
+
+### Added
+
+- **Keep Lost Books** (Junimo Upgrades, Carryover, 100 JP). Lost Books you have found stay found through a rewind, so artifact spots, fishing chests and the mines stop turning up ones you already have and you can dig for bundle artifacts instead. Suggested by tanky24u (Nexus posts, 2026-09-24).
 
 ### Changed
 
