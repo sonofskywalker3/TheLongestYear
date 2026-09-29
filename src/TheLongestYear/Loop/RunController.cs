@@ -146,6 +146,7 @@ namespace TheLongestYear.Loop
                     "raced the month rollover. Running BeginNewMonth now (clears last month's theme " +
                     "selections; consumes any day-28 pre-pick).",
                     LogLevel.Info);
+                RevertWeekDiscount("month rollover on load");
                 Run.BeginNewMonth(calendarSeason);
                 if (Run.CurrentSelection.HasValue)
                 {
@@ -847,6 +848,9 @@ namespace TheLongestYear.Loop
             // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
             // CurrentSelection).
             var season = (CoreSeason)(int)Game1.season;
+            // Last week's discounted goal lines get their full ask back before the month rolls
+            // over and before the hub previews this week's goals (spec 2026-09-29-theme-week-discount).
+            RevertWeekDiscountIfStale(Calendar.WeekOfYear((int)season, Game1.dayOfMonth));
             if (season != Run.Season)
             {
                 Run.BeginNewMonth(season);
@@ -1032,6 +1036,8 @@ namespace TheLongestYear.Loop
                 }
             }
 
+            // A re-pick or re-roll replaces the goal lines, so the old ones go back to full first.
+            RevertWeekDiscount("re-pick");
             Run.Select(theme);
             // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
             // card, console). Mark the week presented and drop any deferred re-present for it —
@@ -1066,11 +1072,13 @@ namespace TheLongestYear.Loop
         /// RunState. Clears the legacy id list so post-migration saves stop carrying it.</summary>
         private void PopulateBonusSlotsForCurrentSelection()
         {
+            RevertWeekDiscount("goals re-sampled");
             Run.CurrentWeekBonusSlots.Clear();
             Run.CurrentWeekBonusItems.Clear();
             if (!Run.CurrentSelection.HasValue) return;
             var sample = SampleSlotsForTheme(Run.CurrentSelection.Value, Run.Season, Run.WeekOfYear);
             Run.CurrentWeekBonusSlots.AddRange(sample);
+            ApplyWeekDiscount();
         }
 
         /// <summary>Empty goal pool (everything for this theme already donated): no quest this
