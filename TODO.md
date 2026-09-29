@@ -23,9 +23,13 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 - **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
   weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
   asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
+- **BUILT 0.18.85: Dye bundle limited** (Jeff 2026-09-29): six vanilla Dye items + coloured crops, fruit,
+  flowers, forage, beach finds (the game's isForage test). 60-board check: 22 Dye bundles, all picks allowed.
+- **BUG to look at: Qi Bean placed as year-1 obtainable.** A Dye board asked for one before the limit. It
+  only comes from Qi's post-Ginger-Island challenge. Find which route the model uses and close it.
+- Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
-- Reply to Nijah owed now that 0.18.84 is out (goal fix + quality hold; randomizer answers go in the spec).
 
 ### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.

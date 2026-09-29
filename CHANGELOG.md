@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.18.85 - unreleased
+
+### Changed
+
+- **The Dye bundle asks for grown and gathered things.** It used to pick any object with the right colour tag, so across 60 test boards it asked for cooked dishes, artifacts, bombs, skill books, Joja Cola, Energy Tonic and a Qi Bean. It now picks only from the six vanilla Dye items (Red Mushroom, Sea Urchin, Sunflower, Duck Feather, Aquamarine, Red Cabbage) and coloured crops, fruit, flowers, forage and beach finds. The same 60 boards now ask only for those. Seen in Dummy Dog Ben's stream (Elvish Jewelry and a book).
+
 ## 0.18.84 - 2026-09-29
 
 2447 tests. Rolls up 0.18.82 to 0.18.84.
