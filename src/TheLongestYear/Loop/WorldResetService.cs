@@ -580,6 +580,11 @@ namespace TheLongestYear.Loop
             //      bought), re-open vanilla adoption route at Marnie counter: the rewind
             //      otherwise shuts every door to a new pet. See EnableAdoptionIfPetless.
             PetCarryoverService.EnableAdoptionIfPetless(_monitor);
+            // 10c. A petless farm gets Marnie's pet visit back too, not just the paid Adopt option.
+            int reopened = TheLongestYear.Core.PetCarryover.ReopenArrivalScenes(
+                Game1.player.eventsSeen, farmHasPet: Utility.getAllPets().Any());
+            if (reopened > 0)
+                _monitor.Log($"PetCarryover: no pet after the rewind; Marnie's pet visit can play again ({reopened} scene ids cleared).", LogLevel.Info);
 
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
