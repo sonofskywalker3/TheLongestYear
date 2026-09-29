@@ -181,6 +181,13 @@ public sealed record RawShopPlacement(string ShopId, string LocationName);
 public sealed record RawRecipeEntry(
     string OutputItemId, IReadOnlyList<string> IngredientItemIds, string Unlock);
 
+/// <summary>One Data/FarmAnimals entry as a reachability route. <paramref name="Buyable"/>: Marnie
+/// sells it (PurchasePrice 0 or more), or a buyable animal's AlternatePurchaseTypes can hand it
+/// out (Blue Chicken from White Chicken). <paramref name="EggItemIds"/>: what it hatches from in an
+/// incubator. <paramref name="ProduceItemIds"/>: regular and deluxe produce.</summary>
+public sealed record RawAnimalSource(
+    string Name, bool Buyable, IReadOnlyList<string> EggItemIds, IReadOnlyList<string> ProduceItemIds);
+
 /// <summary>One Data/Fish row, reduced to the fields the availability model gates on.
 ///
 /// Field indices verified against the decompiled Android source, GameLocation.

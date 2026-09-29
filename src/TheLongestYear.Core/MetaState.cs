@@ -203,9 +203,16 @@ public sealed class MetaState
     /// writes its own board every loop) or <see cref="BundleSourceNames.Vanilla"/> (keep the
     /// game's Standard/Remixed or another bundle mod's board, regenerated the same way on every
     /// reset). Stamped from the Advanced Options choice on the new-game load and re-stamped from
-    /// the config at every reset; SaveLoaded reads THIS, never the config, so a config flip only
-    /// takes effect at the next reset (spec 2026-08-21).</summary>
+    /// <see cref="ChosenBundleSource"/> at every reset; SaveLoaded reads THIS, so a change of
+    /// choice only takes effect at the next reset (spec 2026-08-21).</summary>
     public string BundleSource { get; set; } = BundleSourceNames.Engine;
+
+    /// <summary>The player's board choice for THIS save (Engine / Normal / Remixed), applied at
+    /// its next reset. Set by the new-game Advanced Options dropdown and by the in-game settings
+    /// menu. Null on saves from before 0.18.80, which keep the board they run under (see
+    /// <see cref="BundleSourceNames.ForSave"/>). Kept per save because the config is shared by
+    /// every save.</summary>
+    public string? ChosenBundleSource { get; set; }
 
     /// <summary>The player's vanilla Standard/Remixed choice ("Default" / "Remixed") — what
     /// <c>Game1.bundleType</c> must be set to before <c>loadForNewGame</c> on a Vanilla-mode

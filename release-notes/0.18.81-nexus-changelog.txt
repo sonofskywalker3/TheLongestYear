@@ -1,0 +1,7 @@
+0.18.81 - Each save keeps its own bundle choice, and bundles stop asking for Ostrich Mayo.
+
+Fixed
+- Your bundle choice stays with your save. Picking Normal or Remixed bundles for one farm, then starting another farm on TLY Custom, switched the first farm to TLY Custom bundles at its next rewind. Each save now keeps the choice it was made with. The Bundle source setting in the mod's settings menu changes the save you have loaded; on the title screen it only sets what a new game starts on. If this already happened to your farm, set it back there and your next rewind uses that board again. Reported by victoriatauanem.
+- No more Ostrich Mayo in bundles. With Blue Eggs and Golden Mayo installed, a bundle could ask for Ostrich Mayo, which needs Ostrich Eggs from Ginger Island. The mod now follows machine goods back to what goes in them, and farm animals back to where you get them, so an item from any mod that needs something a year can't reach stays off the board. Reported by Ninjamaid.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
