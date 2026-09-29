@@ -283,12 +283,76 @@ namespace TheLongestYear.Loop
                 // a source rule).
                 foreach (string output in craftingOutputs)
                     MarkSpawn(output);
+                // Artifact spots, both the Data/Locations rows and each object's own
+                // ArtifactSpotChances. The Dinosaur Egg's only traceable proof: the animal route
+                // below would otherwise condemn it (Dinosaurs are not sold and hatch only from it).
+                foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                    foreach (ArtifactSpotDropData spot in kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                    {
+                        foreach (string id in ItemQueryIds.Expand(spot?.ItemId)) MarkSpawn(id);
+                        foreach (string raw in spot?.RandomItemId ?? new List<string>())
+                            foreach (string id in ItemQueryIds.Expand(raw)) MarkSpawn(id);
+                    }
+                foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
+                    if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0)
+                        MarkSpawn(kv.Key);
+
+                // Machine goods and animal produce as routes (Ninjamaid, Nexus 2026-09-28: Blue Eggs
+                // and Golden Mayo's Ostrich Mayo is made only from an Ostrich Egg, which a loop never
+                // reaches, and with no route read at all it stayed allowed).
+                var machineRules = new List<RawMachineRule>();
+                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.Machines.MachineData>>("Data/Machines"))
+                {
+                    foreach (var rule in kv.Value?.OutputRules ?? new List<StardewValley.GameData.Machines.MachineOutputRule>())
+                    {
+                        var outputs = new List<string>();
+                        foreach (var output in rule?.OutputItem ?? new List<StardewValley.GameData.Machines.MachineItemOutput>())
+                        {
+                            outputs.AddRange(ItemQueryIds.Expand(output?.ItemId));
+                            foreach (string raw in output?.RandomItemId ?? new List<string>())
+                                outputs.AddRange(ItemQueryIds.Expand(raw));
+                        }
+                        if (outputs.Count == 0) continue;
+                        var triggers = rule.Triggers ?? new List<StardewValley.GameData.Machines.MachineOutputTriggerRule>();
+                        if (triggers.Count == 0) triggers = new List<StardewValley.GameData.Machines.MachineOutputTriggerRule> { new() };
+                        foreach (var trigger in triggers)
+                            machineRules.Add(new RawMachineRule(
+                                kv.Key, trigger?.RequiredItemId,
+                                (IReadOnlyList<string>)(trigger?.RequiredTags ?? new List<string>()),
+                                outputs, rule.MinutesUntilReady, rule.DaysUntilReady));
+                    }
+                }
+
+                var animalData = Game1.content.Load<Dictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData>>("Data/FarmAnimals");
+                var boughtAsAlternate = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var kv in animalData)
+                {
+                    if (kv.Value == null || kv.Value.PurchasePrice < 0) continue;
+                    foreach (var alternate in kv.Value.AlternatePurchaseTypes ?? new List<StardewValley.GameData.FarmAnimals.AlternatePurchaseAnimals>())
+                        foreach (string name in alternate?.AnimalIds ?? new List<string>())
+                            if (!string.IsNullOrEmpty(name)) boughtAsAlternate.Add(name);
+                }
+                var animals = new List<RawAnimalSource>();
+                foreach (var kv in animalData)
+                {
+                    var a = kv.Value;
+                    if (a == null) continue;
+                    var produce = (a.ProduceItemIds ?? new List<StardewValley.GameData.FarmAnimals.FarmAnimalProduce>())
+                        .Concat(a.DeluxeProduceItemIds ?? new List<StardewValley.GameData.FarmAnimals.FarmAnimalProduce>())
+                        .Where(p => !string.IsNullOrEmpty(p?.ItemId))
+                        .Select(p => p.ItemId)
+                        .ToList();
+                    animals.Add(new RawAnimalSource(
+                        kv.Key, a.PurchasePrice >= 0 || boughtAsAlternate.Contains(kv.Key),
+                        a.EggItemIds ?? new List<string>(), produce));
+                }
 
                 IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                     links, allLocations,
                     name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
                 reachability = new SourceReachability(
-                    unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds);
+                    unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
+                    machineRules, animals);
                 _monitor?.Log(
                     $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
                     LogLevel.Trace);
