@@ -189,13 +189,11 @@ public static class ItemPoolBuilder
             PoolItem item = MakeItem(id, objects, tuning, seasons, Array.Empty<string>());
             byKind[ItemKindClassifier.From(bare, obj)].Add(item);
 
-            // The colour index feeds the Dye recipe. Vanilla tags the Amethyst Ring color_purple,
-            // and a ring is not an Object at runtime, so the donation menu cannot lift it; one
-            // landed in a Dye bundle through this index (Nexus, 2026-09-14). Rings stay out.
-            // Books too, unless the Book pool would offer them: every book carries a colour tag,
-            // and the Queen of Sauce Cookbook (color_blue, 100 golden walnuts) reached a Dye
-            // bundle this way (SilviaVA, Nexus, 2026-09-17).
-            if (!IsRing(obj) && !IsBookWithoutYearOneRoute(id, obj) && obj.ContextTags != null)
+            // The colour index feeds the Dye recipe, and Dye picks only from the six vanilla Dye
+            // items plus coloured crops, fruit, flowers, forage and beach finds (Jeff,
+            // 2026-09-29). Every other object with a colour tag, dishes, artifacts, bombs, books,
+            // rings, Joja Cola, used to be fair game: 60 boards asked for all of them.
+            if (IsDyeCandidate(id, obj) && obj.ContextTags != null)
             {
                 foreach (string tag in obj.ContextTags)
                 {
@@ -813,20 +811,8 @@ public static class ItemPoolBuilder
     /// PoolAdditions.VetExceptions id skips the ExcludeFromRandomSale check: those are the
     /// curated mine fish and legendaries, wanted despite the flag (spec 2026-08-28-obtainable-board,
     /// section 3).</summary>
-    private const string RingType = "Ring";
-    private const string RingItemTag = "ring_item";
-
-    /// <summary>A book the Book pool would not offer: drop-only, Volcano, walnut-gated or year 2
-    /// (<see cref="AvailabilityWeeks.BookWeeks"/> is the year-1 list).</summary>
-    private static bool IsBookWithoutYearOneRoute(string qualifiedId, RawObjectEntry obj)
-        => BookCategories.Contains(obj.Category) && !AvailabilityWeeks.BookWeeks.ContainsKey(qualifiedId);
-
     private static bool IsAnimalProduct(RawObjectEntry obj)
         => ItemKindClassifier.From(obj.Category, obj.Type) is ItemKind.Egg or ItemKind.Milk or ItemKind.AnimalProduct;
-
-    private static bool IsRing(RawObjectEntry obj)
-        => string.Equals(obj.Type, RingType, StringComparison.OrdinalIgnoreCase)
-           || (obj.ContextTags != null && obj.ContextTags.Contains(RingItemTag));
 
     private static bool Vets(
         string bareId, string qualifiedId,
@@ -869,6 +855,18 @@ public static class ItemPoolBuilder
     private const string ForageItemTag = "forage_item";
     private const string TruffleId = "(O)430";
     private static readonly int[] ForageCategories = { -79, -80, -81, -75, -23 };
+
+    /// <summary>Vanilla's standard Dye bundle: Red Mushroom, Sea Urchin, Sunflower, Duck
+    /// Feather, Aquamarine, Red Cabbage.</summary>
+    private static readonly IReadOnlySet<string> VanillaDyeItems = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)420", "(O)397", "(O)421", "(O)444", "(O)62", "(O)266",
+    };
+
+    /// <summary>Whether the Dye recipe may pick this object: a vanilla Dye item, or something
+    /// grown or gathered (the game's own forage test: crops, fruit, flowers, forage, beach finds).</summary>
+    private static bool IsDyeCandidate(string qualifiedId, RawObjectEntry obj)
+        => VanillaDyeItems.Contains(qualifiedId) || IsForageCategory(obj, qualifiedId);
 
     /// <summary>Mirrors StardewValley.Object.isForage(): the only objects the game gives
     /// forage quality to when picked up.</summary>
