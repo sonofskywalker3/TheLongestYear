@@ -8,7 +8,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
-- **BUILT 0.18.81, unreleased.** Reachability now reads machine rules and farm animals. In-game check with
+- **RELEASED 0.18.81 (2026-09-28).** Reachability now reads machine rules and farm animals. In-game check with
   the mod: kept-off list went from 2 items to 4 (+ Ostrich Egg, + Ostrich Mayo), nothing else.
 - NOT changed: the week model still rates Ostrich Egg as a Spring barn product (AnimalProductAvailability
   gives an unbuyable animal a fixed step, not "unplaced"). Harmless now that reachability drops it.
@@ -16,7 +16,7 @@ Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + O
 
 ### BUG (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind
 "I was playing with normal bundles, but when I reset the year, I got random custom bundles instead." No log.
-- **BUILT 0.18.80 (ships in 0.18.81), unreleased.** Cause: the new-game pick was mirrored into config.json and every reset read
+- **RELEASED 0.18.81 (2026-09-28).** Cause: the new-game pick was mirrored into config.json and every reset read
   config.json, so any later TLY Custom new game flipped older Normal saves. Fix: MetaState.ChosenBundleSource
   per save; GMCM edits the loaded save's choice; config is only the new-game default.
 - Her save is already on custom bundles. The fix does not undo that: she sets Bundle source to Normal in
