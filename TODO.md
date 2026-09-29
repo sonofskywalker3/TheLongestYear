@@ -20,13 +20,9 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 - **QUESTION for Jeff: "Guarantee Year 1 Completable" checkbox.** Only arms a Red Cabbage Seeds visit at
   the Traveling Cart; TLY's cart-slot cap turns it back into luck. Ben said it "does nothing". Options:
   leave, tooltip note, hide under TLY Custom, or let the guaranteed seeds bypass the cap.
-- **QUESTION for Jeff: quality asks in early weeks.** The week check ignores quality, so Ben's week-1
-  Mixed goals asked for gold-quality Carrots (about 1% gold at Farming 0 without fertilizer). Needs a rule
-  for when a silver/gold line may be a goal (farming level, fertilizer week, or a flat week per tier).
-- Ben's "chilies" (Part 1, 1:31) is an auto-caption ("chilies leak moist"); his week-1 goals read out at
-  0:38 and 1:05 were Anchovy x14, Oyster x8, gold Carrots. No Hot Pepper confirmed; the Dye bundle is not
-  involved (at 1:03 he reads the whole-year board). Morel and Common Mushroom are model week 4, so any
-  week-1 ask for them came through the Seasonal gap fixed in 0.18.82.
+- **BUILT 0.18.84: quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
+  weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
+  asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
 - Reply to Nijah owed after 0.18.83 ships.
