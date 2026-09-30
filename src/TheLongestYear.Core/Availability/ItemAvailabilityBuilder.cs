@@ -78,7 +78,25 @@ public static class ItemAvailabilityBuilder
             }
         }
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        if (effortData == null)
+            return model;
+
+        // The dish table needs the model's placements, so it is built from this first model and
+        // handed to the one returned. Its effort cap reads a composer that never counts the
+        // kitchen (hasKitchen: true), so keep_kitchen cannot move a dish ingredient's effort and
+        // with it an ask on a stored board. The ingredient basis is the model-free pass lookup;
+        // dishes used as ingredients are resolved inside DishAskBasis.Build.
+        EffortComposer kitchenFree = hasKitchen
+            ? composer!
+            : new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step);
+        IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
+            effortData,
+            id => model.IsPlaced(id) ? model.For(id) : null,
+            (id, s) => QuantityAskPass.BasisByDeadline(id, s),
+            kitchenFree.EffortOf);
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
+            { DishBases = dishBases };
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

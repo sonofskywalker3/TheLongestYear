@@ -74,8 +74,15 @@ public static class SeasonalAskBasis
     /// null when the item has no row or every season so far is 0.</summary>
     public static double? BasisByDeadline(string itemId, Season? deadline)
     {
-        if (!Rows.TryGetValue(itemId, out double[]? bySeason))
-            return null;
+        return Rows.TryGetValue(itemId, out double[]? bySeason) ? BestUpTo(bySeason, deadline) : null;
+    }
+
+    /// <summary>The best positive entry of a Spring..Winter row from Spring up to the deadline (Winter
+    /// when there is none), or null when every season so far is 0. Shared with the generated dish
+    /// table (<see cref="Availability.DishAskBasis"/>).</summary>
+    public static double? BestUpTo(IReadOnlyList<double> bySeason, Season? deadline)
+    {
+        if (bySeason == null) throw new ArgumentNullException(nameof(bySeason));
         Season last = deadline ?? Season.Winter;
         double? best = null;
         for (Season s = Season.Spring; s <= last; s++)
