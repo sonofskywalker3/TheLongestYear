@@ -80,9 +80,9 @@ public static class BundleSlotFiller
             for (int i = 0; i < parts.Count; i++)
                 parts[i] = parts[i].Where(p => !banned.Contains(p.ItemId)).ToList();
         }
-        int targetCount = spec.PickCount > 0
-            ? Math.Min(spec.PickCount, spec.Slots.Count)
-            : spec.Slots.Count;
+        (int Shown, int Needs)? shape = BundleShapes.For(spec.Name);
+        int targetCount = shape?.Shown
+            ?? (spec.PickCount > 0 ? Math.Min(spec.PickCount, spec.Slots.Count) : spec.Slots.Count);
 
         // The domain this bundle's stack and quality roll with. A Recipe bundle has no domain of
         // its own, so it borrows the one its dominant part maps to (see RecipeRollDomain).
@@ -210,7 +210,7 @@ public static class BundleSlotFiller
         return spec with
         {
             Slots = slots,
-            NumberOfSlots = Math.Min(spec.NumberOfSlots, slots.Count),
+            NumberOfSlots = Math.Min(shape?.Needs ?? spec.NumberOfSlots, slots.Count),
         };
     }
 
