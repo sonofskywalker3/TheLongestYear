@@ -737,4 +737,40 @@ public class BundleSlotFillerTests
         var b = BundleSlotFiller.Fill(spec, RecipeMatch, RecipePools(), Tuning, new Random(21));
         Assert.Equal(a.Slots.Select(s => s.ItemId), b.Slots.Select(s => s.ItemId));
     }
+
+    /// <summary>The Prismatic Shard / Mystery Box board allowance (CappedAsks): a fill handed a
+    /// budget of none never lets a capped id through, however heavily the pool weights it.</summary>
+    [Fact]
+    public void Fill_never_passes_the_capped_budget()
+    {
+        var pools = new ItemPools
+        {
+            Metals = new[] { Item("(O)74", weight: 1000), Item("(O)m1"), Item("(O)m2"), Item("(O)m3"), Item("(O)m4") },
+        };
+        var spec = Spec("Blacksmith's", 4);
+        var budget = new Dictionary<string, int> { [CappedAsks.PrismaticShard] = 0, [CappedAsks.MysteryBox] = 0 };
+        for (int seed = 0; seed < 50; seed++)
+        {
+            BundleSpec filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null), pools, Tuning,
+                new Random(seed), cappedBudget: budget);
+            Assert.NotSame(spec, filled);
+            Assert.Equal(4, filled.Slots.Count);
+            Assert.DoesNotContain(filled.Slots, s => s.ItemId == CappedAsks.PrismaticShard);
+        }
+    }
+
+    [Fact]
+    public void Fill_keeps_a_capped_item_the_budget_still_allows()
+    {
+        var pools = new ItemPools
+        {
+            Metals = new[] { Item("(O)74", weight: 100000), Item("(O)m1"), Item("(O)m2"), Item("(O)m3"), Item("(O)m4") },
+        };
+        var budget = new Dictionary<string, int> { [CappedAsks.PrismaticShard] = 1 };
+
+        BundleSpec filled = BundleSlotFiller.Fill(Spec("Blacksmith's", 4), new DomainMatch(PoolDomain.Metals, null),
+            pools, Tuning, new Random(3), cappedBudget: budget);
+
+        Assert.Single(filled.Slots, s => s.ItemId == CappedAsks.PrismaticShard);
+    }
 }

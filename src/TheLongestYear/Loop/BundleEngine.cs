@@ -119,6 +119,15 @@ namespace TheLongestYear.Loop
         /// <summary>Salt for the board-level legendary allowance roll (LegendaryFishRules.BoardAllowance).</summary>
         private const int LegendarySalt = 0x1E6D;
 
+        /// <summary>Remixed's Helper's bundle, whose only items are the Prize Ticket and the Mystery
+        /// Box (Data/RandomBundles). A board with no Mystery Box allowance leaves it out of its
+        /// position's candidates; a board that picks it keeps one Mystery Box back for it
+        /// (CappedAsks, spec 2026-09-30-quantity-rules section 2).</summary>
+        private const string HelpersBundleName = "Helper's";
+
+        /// <summary>The Mystery Boxes a picked Helper's keeps back from the rest of the board.</summary>
+        private const int HelpersMysteryBoxReservation = 1;
+
         // The filler's "no stretch item for X" / "no hard item" lines are diagnostics about the
         // shape of a POOL, not events: on a board of 30-odd bundles they fire dozens of times per
         // generation and drown the swaps a reader actually wants to see. Keep them (they explain a
@@ -223,8 +232,12 @@ namespace TheLongestYear.Loop
             int legendaryAllowance = Core.LegendaryFishRules.BoardAllowance(
                 Availability?.Step ?? Core.DifficultyStep.Normal, new Random(seed ^ LegendarySalt));
             _monitor?.Log($"BundleEngine: legendary allowance for this board: {(legendaryAllowance == int.MaxValue ? "open" : legendaryAllowance.ToString())}.", LogLevel.Trace);
+            // Prismatic Shard / Mystery Box allowance (CappedAsks.BoardAllowance): fixed by the
+            // stamped Stack size step, no roll, so it moves no stream.
+            int cappedAllowance = Core.CappedAsks.BoardAllowance(_difficulty.Steps?.StackSize ?? Core.DifficultyStep.Normal);
+            _monitor?.Log($"BundleEngine: Prismatic Shard / Mystery Box allowance for this board: {cappedAllowance} each.", LogLevel.Trace);
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
-                WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, legendaryAllowance);
+                WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, legendaryAllowance, cappedAllowance);
 
             var allPicks = new List<BundleSpec>();
             // "bundleIndex:slotIndex" -> the input a flavored slot names. Persisted beside the
@@ -274,7 +287,10 @@ namespace TheLongestYear.Loop
                 if (PassThroughRooms.Contains(roomEntry.Key))
                     continue; // already emitted above, unmodified
 
-                IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(roomEntry.Value, seed, roomEntry.Key);
+                IReadOnlyList<IReadOnlyList<BundleSpec>> positions = cappedAllowance == 0
+                    ? WithoutHelpers(roomEntry.Value)
+                    : roomEntry.Value;
+                IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(positions, seed, roomEntry.Key);
                 foreach (BundleSpec pick in picks)
                 {
                     if (!TryClaimIndex(pick, claimedIndices))
@@ -348,8 +364,18 @@ namespace TheLongestYear.Loop
                 int legendariesSoFar = picked.Where(r => r.Composed != null).Sum(r => r.Composed.Slots.Count(sl => Core.LegendaryFishRules.IsLegendary(sl.ItemId)));
                 int legendaryBudget = legendaryAllowance == int.MaxValue ? int.MaxValue : legendaryAllowance - legendariesSoFar;
                 IReadOnlySet<string> banned = legendaryBudget <= 0 ? Core.LegendaryFishRules.Ids : null;
+                IReadOnlyDictionary<string, int> cappedBudget = CappedBudget(picked, record, cappedAllowance);
+                List<string> cappedOut = cappedBudget.Where(kv => kv.Value <= 0).Select(kv => kv.Key)
+                    .OrderBy(id => id, StringComparer.Ordinal).ToList();
+                if (cappedOut.Count > 0)
+                {
+                    var withCapped = new HashSet<string>(cappedOut, StringComparer.Ordinal);
+                    if (banned != null) withCapped.UnionWith(banned);
+                    banned = withCapped;
+                }
                 BundleSpec composed = BundleSlotFiller.Fill(pick, record.Match, itemPools, _tuning, slotRng,
-                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe, banned, legendaryBudget);
+                    msg => _monitor?.Log("BundleEngine: " + msg, FillerLogLevel(msg)), asked, Availability, record.Recipe, banned, legendaryBudget,
+                    cappedBudget);
                 if (ReferenceEquals(composed, pick))
                 {
                     _monitor?.Log(
@@ -397,10 +423,66 @@ namespace TheLongestYear.Loop
                     out IReadOnlyDictionary<int, string> slotFlavors);
                 foreach (KeyValuePair<int, string> flavor in slotFlavors)
                     flavors[Core.FlavoredSlotPass.KeyFor(composed.Index, flavor.Key)] = flavor.Value;
+                // A capped item asks for one, whatever the passes above made of its stack
+                // (vanilla's "5 Mystery Box" on a kept Helper's, the stack dial, the quantity pass).
+                composed = Core.CappedAsks.ClampBundle(composed);
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
 
+            // Guard, not the rule: the fill budgets above are what hold the allowance. The
+            // pass-through rooms are outside the loop's economy (The Missing's own Prismatic Shard) and
+            // are not counted, as Pass 2 never counts them either.
+            List<BundleSpec> themed = allPicks.Where(b => !PassThroughRooms.Contains(b.Room)).ToList();
+            foreach (string id in Core.CappedAsks.Ids.OrderBy(id => id, StringComparer.Ordinal))
+            {
+                int onBoard = Core.CappedAsks.CountOnBoard(id, themed);
+                if (onBoard > cappedAllowance)
+                    _monitor?.Log(
+                        $"BundleEngine: board asks for {id} x{onBoard}, over its allowance of {cappedAllowance} (seed {seed}).",
+                        LogLevel.Error);
+            }
+
             return new GeneratedBundleSet(allPicks, flavors);
+        }
+
+        /// <summary>Drops Helper's from every position that has another candidate to pick instead,
+        /// for a board with no Mystery Box allowance: its only items are the Prize Ticket and the
+        /// Mystery Box, so a fill with the box banned cannot fill it and would fall back to
+        /// vanilla's own box ask. A position where Helper's is the only candidate keeps it.</summary>
+        private static IReadOnlyList<IReadOnlyList<BundleSpec>> WithoutHelpers(IReadOnlyList<IReadOnlyList<BundleSpec>> positions)
+            => positions
+                .Select(candidates =>
+                {
+                    List<BundleSpec> others = candidates.Where(c => c.Name != HelpersBundleName).ToList();
+                    return others.Count > 0 && others.Count < candidates.Count
+                        ? (IReadOnlyList<BundleSpec>)others
+                        : candidates;
+                })
+                .ToList();
+
+        /// <summary>What is left of each capped item's allowance for <paramref name="record"/>'s
+        /// fill: the allowance, less what the bundles composed so far ask for (read as clamped,
+        /// since every capped slot ends at one), less a Mystery Box kept back for each picked
+        /// Helper's still waiting to fill. Helper's itself fills against its own reservation.</summary>
+        private static IReadOnlyDictionary<string, int> CappedBudget(
+            IReadOnlyList<PickRecord> picked, PickRecord record, int cappedAllowance)
+        {
+            List<BundleSpec> composedSoFar = picked
+                .Where(r => r.Composed != null)
+                .Select(r => Core.CappedAsks.ClampBundle(r.Composed))
+                .ToList();
+            var budget = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string id in Core.CappedAsks.Ids)
+                budget[id] = cappedAllowance - Core.CappedAsks.CountOnBoard(id, composedSoFar);
+
+            if (record.Pick.Name == HelpersBundleName)
+            {
+                budget[Core.CappedAsks.MysteryBox] = HelpersMysteryBoxReservation;
+                return budget;
+            }
+            int helpersWaiting = picked.Count(r => r != record && r.Composed == null && r.Pick.Name == HelpersBundleName);
+            budget[Core.CappedAsks.MysteryBox] -= helpersWaiting * HelpersMysteryBoxReservation;
+            return budget;
         }
 
         /// <summary>One non-Vault pick between the passes of <see cref="Generate"/>: Composed is
@@ -528,11 +610,11 @@ namespace TheLongestYear.Loop
         /// like they have no alternates when they do.</summary>
         public IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> BuildCandidatePools(
             ItemPools itemPools, int seed)
-            => WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, int.MaxValue);
+            => WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, int.MaxValue, int.MaxValue);
 
         private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> WidenWithAuthoredBundles(
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools,
-            ItemPools itemPools, int seed, int legendaryAllowance)
+            ItemPools itemPools, int seed, int legendaryAllowance, int cappedAllowance)
         {
             var widened = new Dictionary<string, List<List<BundleSpec>>>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry in pools)
@@ -556,6 +638,7 @@ namespace TheLongestYear.Loop
                 // Easy keeps the slow-route books (gold tools, 1,000 kills) off the Book bundle.
                 var bannedIds = new HashSet<string>(Core.BookRouteRules.BannedFor(step), StringComparer.Ordinal);
                 if (legendaryAllowance == 0) bannedIds.UnionWith(Core.LegendaryFishRules.Ids);
+                if (cappedAllowance == 0) bannedIds.UnionWith(Core.CappedAsks.Ids);
                 BundleSpec composed = AuthoredBundleComposer.Compose(
                     def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng,
                     step, banned: bannedIds.Count > 0 ? bannedIds : null);

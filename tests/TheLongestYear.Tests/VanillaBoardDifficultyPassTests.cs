@@ -319,4 +319,23 @@ public class VanillaBoardDifficultyPassTests
 
         Assert.Equal(data.Keys.OrderBy(k => k), result.Keys.OrderBy(k => k));
     }
+
+    /// <summary>A Remixed board's Helper's asks for a stack of Mystery Boxes; a capped item is
+    /// asked for once per slot whatever the stack dial says (CappedAsks). The Prize Ticket beside
+    /// it scales as any other ask does.</summary>
+    [Fact]
+    public void The_vanilla_board_asks_for_one_Mystery_Box()
+    {
+        const string key = "Bulletin Board/34";
+        var data = Board(key, "Helper's/O TreasureTotem 5/PrizeTicket 2 0 MysteryBox 5 0/4/2//Helper's");
+
+        var parsed = Out(VanillaBoardDifficultyPass.Apply(
+            data, P(new DifficultySettings { StackSize = DifficultyStep.Hard }),
+            new BundleGenerationTuning(), 123), key);
+        int stackOf(string id) => parsed.Ingredients
+            .Single(i => BundleParsing.NormalizeItemId(i.ItemRef) == id).Stack;
+
+        Assert.Equal(1, stackOf(CappedAsks.MysteryBox));
+        Assert.Equal(3, stackOf("(O)PrizeTicket"));   // 2 * 1.5, untouched by the cap
+    }
 }
