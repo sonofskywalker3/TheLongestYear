@@ -115,6 +115,14 @@ public static class AvailabilityWeeks
             ["(O)CaveJelly"] = (4, Season.Spring),  // Cave Jelly
         };
 
+    /// <summary>The Night Market submarine fish. The pool files them under Winter through the
+    /// festival mapping, which reads as Winter 1 (week 13); the market opens Winter 15.</summary>
+    public static readonly IReadOnlyDictionary<string, int> NightMarketFishWeeks =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["(O)798"] = 15, ["(O)799"] = 15, ["(O)800"] = 15,
+        };
+
     /// <summary>Legendary fish pacing weeks (Jeff, spec 2026-08-28-obtainable-board section 3):
     /// Legend rains in Spring, Crimsonfish Summer, Angler Fall, Glacierfish Winter, Mutant Carp
     /// waits on the sewer's Fishing 3 gate. Applied as a floor over the season/location week so
@@ -176,7 +184,7 @@ public static class AvailabilityWeeks
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
             ["(O)78"] = (1, "Cave Carrot, mine dirt from floor 1"),
-            ["(O)Moss"] = (1, "Moss, from trees in any season"),
+            ["(O)Moss"] = (6, "Moss, trees restart young each loop; Summer's green rain is the first real crop"),
             ["(O)815"] = (4, "Tea Leaves, Caroline's tea sapling recipe plus 20 days"),
             ["(O)746"] = (12, "Jack-O-Lantern, Spirit's Eve Fall 27"),
             ["(O)373"] = (12, "Golden Pumpkin, Spirit's Eve maze"),

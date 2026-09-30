@@ -226,4 +226,20 @@ public class FishAvailabilityDeriveTests
 
         Assert.Equal(1, result.Week);
     }
+
+    [Theory]
+    [InlineData("(O)798")]
+    [InlineData("(O)799")]
+    [InlineData("(O)800")]
+    public void Night_Market_fish_wait_for_Winter_15(string id)
+    {
+        var item = new PoolItem(id, 50, 3, new[] { Season.Winter }, Array.Empty<string>());
+        ItemAvailability a = FishAvailability.Derive(item, null);
+        Assert.Equal(15, a.EarliestWeek);
+        Assert.Equal(15, a.HardWeek);
+    }
+
+    [Fact]
+    public void Moss_waits_for_summer()
+        => Assert.Equal(6, AvailabilityWeeks.OtherPlacements["(O)Moss"].Week);
 }
