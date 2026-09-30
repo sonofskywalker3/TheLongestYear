@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.98`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.118`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,16 @@ This is a **beta** (`0.18.98`). It is feature-complete for v1 and stable in test
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.118
+
+**The Sticky bundle asks for sticky things, bundle amounts follow what a year can produce, and Prismatic Shard and Mystery Box are rare asks.**
+
+- **The Sticky bundle asks for sticky things.** It could ask for a single Acorn. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, the tapper syrups, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat. Reported by elaineofshalott.
+- **Bundle amounts follow what a year can produce.** Tree seeds, Moss, tree fruit, forage, trash, pantry goods, Hay, Prize Tickets, the rare fish and most cooked dishes now ask for amounts sized to what you can gather, grow, buy or cook by then, instead of just one. A dish is never asked for before you can cook it.
+- **Prismatic Shard and Mystery Box are rare asks.** On the boards the mod builds, your Stack size setting limits them: none on Easy, at most one on Normal, two on Hard and three on Extreme, each asked for one at a time. Helper's asks for one Mystery Box instead of five. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard.
+- **No more Mystic Syrup.** Its tree only comes from a late-game mastery reward.
+- **Fairer dates.** Prismatic Shard is a Fall-or-later ask (it was counted as a Spring item), the Night Market fish wait for Winter 15, and Moss waits for Summer.
 
 ## What's New in 0.18.98
 
