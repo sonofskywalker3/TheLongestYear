@@ -702,4 +702,15 @@ public class ItemPoolBuilderTests
         foreach (string dropped in new[] { "(O)204", "(O)583", "(O)286", "(O)446", "(O)72", "(O)74", "(O)86", "(O)130" })
             Assert.DoesNotContain(dropped, all);
     }
+
+    /// <summary>Mystic Syrup comes only from a tapper on the Mystic Tree, whose seed is the Foraging
+    /// Mastery reward (every skill at 10, then 10,000 XP). A one-year loop never reaches this; exclude it
+    /// from every bundle pool (Jeff, 2026-09-30).</summary>
+    [Fact]
+    public void Mystic_Syrup_is_excluded_from_every_pool()
+    {
+        // Its seed is the Foraging Mastery crafting recipe (all five skills at 10, then 10,000 XP);
+        // the syrup only comes from a tapper on that tree (Jeff, 2026-09-30: remove it).
+        Assert.Contains("(O)MysticSyrup", ItemPoolBuilder.BuiltInExcludedItemIds);
+    }
 }
