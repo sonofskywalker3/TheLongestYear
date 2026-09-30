@@ -6,6 +6,29 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### QUESTION (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
+Jeff replied 2026-09-30 guessing a production-chain leak. It is not a leak: the Sticky recipe
+(BundlePoolRecipes, since 0.16.116) re-rolls its one slot from "Sap or resource", the whole
+Resource bucket plus TapperGoods, and TapperGoods deliberately adds Hardwood, Sap, Moss, Maple Seed,
+Acorn and Pine Cone. So an Acorn (or Stone, Fiber, Clay...) is a legal Sticky pick, and the quantity
+pass can land it at 1. Needs Jeff's ruling on what Sticky should ask for (e.g. sticky things only:
+Sap, Oak Resin, Maple Syrup, Pine Tar) before any change.
+
+### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
+Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.
+- **user5726212 (Nexus posts, 2026-09-29), local co-op.** Jeff replied 2026-09-30 (filed, not planned yet).
+  - **A farmhand joining re-offers the weekly theme pick**, and that pick changes the Season Goals book
+    but not the Community Center, so the two disagree. The week's theme state is probably being
+    rolled or offered per client instead of once by the host.
+  - **The farmhand cannot read the Community Center bundles and has to meet the Wizard.**
+    CommunityCenterUnlock.Apply only marks Game1.MasterPlayer (event 112, ccDoorUnlock,
+    canReadJunimoText, seenJunimoNote). Farmhands need the same flags, set on their own client.
+  - **No JP is gained for the farmhand under any circumstances.** JP is one pool per save; decide
+    whether farmhand donations bank into it and whether farmhands see it.
+- Earlier notes that belong to the same pass: Boosts tab host-only question (Plan 06 notes, search
+  "Multiplayer: decide"), netWorldState `farmhandData` leaking across the rewind (own item below),
+  multiplayer feature ask from CausticOptimist.
+
 ### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
 Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
 - **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
