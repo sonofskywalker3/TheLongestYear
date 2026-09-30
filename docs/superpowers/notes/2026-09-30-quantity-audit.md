@@ -38,3 +38,25 @@ kind. Grouped below; "x1-1" means every sighting asked for one.
 - **Prismatic Shard, 37 sightings.** Year-1 possible (mines 100+ drops, rare), but frequent for how
   rare it is.
 - **Mystery Box, 19 sightings** in Helper's, always x5.
+
+## After (0.18.112, verified 2026-09-30)
+
+Same method, 240 boards: `tly_genbundles 1-60` at each Stack size step (Easy, Normal, Hard,
+Extreme), Rodger throwaway, profile stamped by `tly_reset`; per-step logs audited with a temporary
+test that calls `QuantityAskPass.Covers(id)` with no model.
+
+- **Mystic Syrup: 0 slots** on all 240 boards (was 39 sightings in 60).
+- **Prismatic Shard and Mystery Box per board** (Vault and Abandoned Joja Mart not counted): Easy 0,
+  Normal 1, Hard 1, Extreme 1. All under the 0/1/2/3 allowance; the vanilla Joja Mart bundle still
+  carries one Shard x1 on every board and is not counted. Mystery Box is x1 (was always x5).
+- **Uncovered non-dish slots:** only the single-on-purpose list (artifacts, books, trophies and
+  rings, saplings, gems, legendary fish, Apricot, Cherry, Jack-O-Lantern) plus four leftovers to
+  consider: Treasure Chest (Field Research, vanilla stack), the egg and milk category asks in Home
+  Cook's (x8 to x20, vanilla stack scaled by the dial), and Void Salmon and Dinosaur Mayonnaise in
+  the vanilla Joja Mart bundle (x1).
+- **Dishes still at x1 on every sighting** (the model has no more to give them): 23 on Easy, 19 on
+  Normal, 9 on Hard and Extreme (Lobster Bisque, Squid Ink Ravioli, Fish Taco, Fruit Salad and the
+  like).
+- **Helper's:** nothing above x1 except the Prize Ticket hand row (x2, x3 on Extreme).
+- **tly_itemmodel:** Prismatic Shard week 9 (effort 7); Moss week 6; (O)798, (O)799, (O)800 week 15.
+

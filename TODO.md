@@ -22,6 +22,13 @@ Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek)
   Slime, syrups, Honey, Jelly keep their existing rows. Side effect: Sugar and Ice Cream asks in
   Chef's and Children's now band too (were x1). 60 boards on Normal: 14 Sticky, all 4 of 6; Ice
   Cream x7-13, Sugar x8-20, Slime x26-48, Sap x29-34, syrups x2-6, dishes x1-4.
+- **BUILT 0.18.113: quantity rules** (spec 2026-09-30-quantity-rules-design). Hand rows
+  for tree seeds, fruit, forage, trash, pantry goods, rare fish; dishes through the availability
+  model; Mystic Syrup out; Prismatic Shard and Mystery Box capped 0/1/2/3 per board; Night Market
+  fish week 15; Moss week 6. Verified on 240 boards (60 per Stack size step): no Mystic Syrup, caps
+  held, every uncovered slot on the single-on-purpose list; after-numbers in
+  docs/superpowers/notes/2026-09-30-quantity-audit.md. Open leftovers: Home Cook's egg/milk category
+  asks and Treasure Chest amounts have no rule, 9 to 23 dishes stay x1.
 - Reply to elaineofshalott waits on the release.
 
 ### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
