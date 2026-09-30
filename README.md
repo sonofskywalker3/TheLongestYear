@@ -30,11 +30,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 **Picking a theme lowers that week's goals, restarting at the shrine asks its questions first, and a new Keep Lost Books upgrade.**
 
 - **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week: half with Stack size on Easy, a quarter less on Normal, unchanged on Hard or Extreme. It never goes below 10, so 31 Cauliflower becomes 23 on Normal. The planning hub shows the lowered counts before you pick. Reported by Nijah.
-- **Restarting at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, level-ups and the next day's date before being asked about your bundles. Now the bundle question, the upgrade menu and the books come right after you say yes, then you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the restart resets your gold anyway.
+- **Restarting at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, level-ups and the next day's date before being asked about your bundles. Now the bundle question, the upgrade menu and the books come right after you say yes, then you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the restart resets your gold anyway. Spotted in Dummy Dog Ben's stream.
 - **Keep Lost Books (Junimo Upgrades, 100 JP).** Lost Books you have found stay found through a rewind, so artifact spots and fishing chests stop turning up ones you already have and you can dig for bundle artifacts instead. Suggested by tanky24u.
-- **Marnie brings a pet again after a rewind.** A farm with no pet after a rewind gets her visit again, instead of only the paid Adopt option at her counter. Keep Pet now costs 50 JP (was 75).
-- **Artifacts wait for week 3.** A week 1 goal could ask for something like Elvish Jewelry. Artifacts now start showing up in goals from week 3, giving geodes and dig spots time to turn them up.
-- **The Dye bundle asks for grown and gathered things.** It could ask for cooked dishes, bombs, skill books or Joja Cola. It now picks from the vanilla Dye items, the common gems and crystals, and coloured crops, flowers, forage and beach finds.
+- **Marnie brings a pet again after a rewind.** A farm with no pet after a rewind gets her visit again, instead of only the paid Adopt option at her counter. Keep Pet now costs 50 JP (was 75). Spotted in Dummy Dog Ben's stream.
+- **Artifacts wait for week 3.** A week 1 goal could ask for something like Elvish Jewelry. Artifacts now start showing up in goals from week 3, giving geodes and dig spots time to turn them up. Spotted in Dummy Dog Ben's stream.
+- **The Dye bundle asks for grown and gathered things.** It could ask for cooked dishes, bombs, skill books or Joja Cola. It now picks from the vanilla Dye items, the common gems and crystals, and coloured crops, flowers, forage and beach finds. Spotted in Dummy Dog Ben's stream.
 - **No more Qi Bean goals.** Qi Beans only drop during one of Mr. Qi's challenges, which needs Ginger Island, but a bundle could still ask for one.
 - **The Guarantee Year 1 Completable checkbox says it does not affect TLY Custom bundles.** It only changes the game's own bundle board.
 
@@ -42,9 +42,9 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 **Weekly goals stop asking for things you can't have yet, and long descriptions fit on the screen.**
 
-- **Weekly goals wait for their items.** Bundles tied to one season, like Spring Crops, could hand out a weekly goal before its item could exist, in any week of that season: Strawberries before the Egg Festival sells the seeds, or Cauliflower before it has had time to grow. Those goals now wait until you can actually get the item. Reported by Nijah.
-- **No quality goals in the first two weeks.** A weekly goal could ask for silver or gold crops on day 1, when a gold Carrot is about a 1 in 100 roll. Quality asks now start in week 3.
-- **Long descriptions fit on the screen.** Upgrade and boost descriptions, like Sneak Peek's, were drawn on one line and could run off the screen at larger UI scales. They now wrap.
+- **Weekly goals wait for their items.** Bundles tied to one season, like Spring Crops, could hand out a weekly goal before its item could exist, in any week of that season: Strawberries before the Egg Festival sells the seeds, or Cauliflower before it has had time to grow. Those goals now wait until you can actually get the item. Reported by Nijah, and spotted in Dummy Dog Ben's stream.
+- **No quality goals in the first two weeks.** A weekly goal could ask for silver or gold crops on day 1, when a gold Carrot is about a 1 in 100 roll. Quality asks now start in week 3. Spotted in Dummy Dog Ben's stream.
+- **Long descriptions fit on the screen.** Upgrade and boost descriptions, like Sneak Peek's, were drawn on one line and could run off the screen at larger UI scales. They now wrap. Spotted in Dummy Dog Ben's stream.
 
 ## What's New in 0.18.81
 
@@ -405,6 +405,7 @@ This mod is shaped by the players who report bugs and suggest ideas. Every one o
 - **FayGabi**: rings in the Dye bundle, Friendship 101 in the Book bundle, Chests Anywhere in the stash, once-per-loop items, and a new farm quit before its first night.
 - **ChaoticMindset**: Willy's letter, quest scenes and Gunther's Rusty Key coming back every loop, and the Joja Mart bundle.
 - **Emmalution**: played the whole loop on YouTube; her stream found the villager first-meeting lines and the weekly goals that ticked for free.
+- **Dummy Dog Ben**: played it on YouTube; the stream turned up the shrine restart order, week 1 quality and artifact goals, the Dye bundle, Marnie's pet visit and tooltips running off the screen.
 - **gazumbrado**: Golden Egg and legendary fish asks, fish quantities, Keep Bus Unlocked, and the Skip intro checkbox.
 - **Thrippa**: eggs in the Foraging bundles and year-2 seeds from other mods.
 - **ozzy2540**: seasons failing under Challenging CC Bundles, and a finished season that could still fail.
