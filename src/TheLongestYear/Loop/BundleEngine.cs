@@ -417,7 +417,7 @@ namespace TheLongestYear.Loop
                 var fishRng = new Random(seed ^ (finished.Index * SlotSaltPrime) ^ FishAskSalt);
                 BundleSpec composed = Core.QuantityAskPass.Apply(finished, _difficulty,
                     id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability), fishRng,
-                    out IReadOnlySet<int> bandedSlots);
+                    out IReadOnlySet<int> bandedSlots, Availability);
                 composed = Core.StackScaling.Apply(composed, _difficulty, bandedSlots);
                 // Name the fruit, mushroom or fish on any flavored slot, and re-roll that slot's
                 // stack against what the named input actually yields. AFTER StackScaling: the
@@ -427,7 +427,7 @@ namespace TheLongestYear.Loop
                     composed, seed, _difficulty, itemPools,
                     id => Availability?.IsPlaced(id) == true ? Availability.For(id).Week : (int?)null,
                     id => BundleSlotFiller.DeadlineFor(composed, record.Match, composed.Slots, id, Availability),
-                    out IReadOnlyDictionary<int, string> slotFlavors);
+                    out IReadOnlyDictionary<int, string> slotFlavors, Availability);
                 foreach (KeyValuePair<int, string> flavor in slotFlavors)
                     flavors[Core.FlavoredSlotPass.KeyFor(composed.Index, flavor.Key)] = flavor.Value;
                 // A capped item asks for one, whatever the passes above made of its stack

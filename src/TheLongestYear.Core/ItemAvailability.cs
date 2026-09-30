@@ -88,6 +88,11 @@ public sealed class ItemAvailabilityModel
     /// 2026-08-28-obtainable-board-2-stretch). Drives <see cref="StretchRule.Applies"/>.</summary>
     public DifficultyStep Step { get; }
 
+    /// <summary>The generated per-season dish bases (<see cref="Availability.DishAskBasis"/>), Spring
+    /// to Winter. Empty unless the builder had effort data. <see cref="QuantityAskPass"/> reads it
+    /// only for ids with no <see cref="SeasonalAskBasis"/> hand row.</summary>
+    public IReadOnlyDictionary<string, double[]> DishBases { get; init; } = new Dictionary<string, double[]>(StringComparer.Ordinal);
+
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,

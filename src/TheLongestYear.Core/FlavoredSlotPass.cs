@@ -30,6 +30,7 @@ public static class FlavoredSlotPass
     /// <param name="deadlineFor">The season a slot's ask is due, as the classifier will give it.</param>
     /// <param name="flavors">Slot index to the input id that slot now names. Empty when the
     /// bundle has no flavored slot, or when nothing was reachable in time for one.</param>
+    /// <param name="model">Passed through to the quantity lookup for the generated dish table.</param>
     public static BundleSpec Apply(
         BundleSpec spec,
         int seed,
@@ -37,7 +38,8 @@ public static class FlavoredSlotPass
         ItemPools pools,
         Func<string, int?> weekOf,
         Func<string, Season?> deadlineFor,
-        out IReadOnlyDictionary<int, string> flavors)
+        out IReadOnlyDictionary<int, string> flavors,
+        ItemAvailabilityModel? model = null)
     {
         if (spec == null) throw new ArgumentNullException(nameof(spec));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -66,7 +68,7 @@ public static class FlavoredSlotPass
             var bases = new Dictionary<string, double>(StringComparer.Ordinal);
             foreach (string candidate in FlavoredSlotRules.CandidatesFor(baseId, pools, weekOf, deadlineWeek))
             {
-                if (QuantityAskPass.BasisByDeadline(candidate, deadlineFor(candidate)) is not double b) continue;
+                if (QuantityAskPass.BasisByDeadline(candidate, deadlineFor(candidate), model) is not double b) continue;
                 sizeable.Add(candidate);
                 bases[candidate] = b;
             }
