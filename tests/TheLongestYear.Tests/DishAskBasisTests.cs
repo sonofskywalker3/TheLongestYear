@@ -47,7 +47,7 @@ public class DishAskBasisTests
     [Fact]
     public void A_dish_ingredient_reads_the_ingredient_dish_row()
     {
-        // Tortilla: Corn 99 x 0.25 = 25, capped at 12 (effort 2 + TV unlock 3 = 5, the 4-6 band is 8).
+        // Tortilla: Corn 99 x 0.25 = 25, capped at 8 (effort 2 + TV unlock 3 = 5, the 4-6 band).
         Assert.Equal(DishAskBasis.CapMidDish, Build()["(O)229"][1]);
         // Fish Taco: min(Tuna 16.9, Tortilla 8) x 0.25 = 2.
         Assert.Equal(2, Build()["(O)213"][1]);
@@ -64,14 +64,19 @@ public class DishAskBasisTests
     [Fact]
     public void Keep_kitchen_never_moves_the_table()
     {
+        // Wheat Flour (Pierre's, effort 1) + a friendship unlock (2) = effort 3 without the kitchen,
+        // the top of the 12 band; counting the kitchen would make it 4, in the 8 band. Flour's
+        // Summer basis 40 x 0.25 = 10 sits between the two caps, so a kitchen leak shows as 8.
         var data = new EffortData
         {
             Objects = new Dictionary<string, RawObjectEntry> { ["246"] = Obj(-25, "Wheat Flour"), ["9001"] = Obj(-7, "Flat Bread") },
-            CookingRecipes = new List<RawCookingRecipe> { new("Flat Bread", new[] { "(O)246" }, "(O)9001", "default") },
+            CookingRecipes = new List<RawCookingRecipe> { new("Flat Bread", new[] { "(O)246" }, "(O)9001", "f Emily 3") },
         };
         ItemAvailabilityModel without = ItemAvailabilityBuilder.Build(new ItemPools(), effortData: data, hasKitchen: false);
         ItemAvailabilityModel with = ItemAvailabilityBuilder.Build(new ItemPools(), effortData: data, hasKitchen: true);
-        Assert.True(without.DishBases.ContainsKey("(O)9001"));
+        Assert.Equal(4, without.For("(O)9001").Effort);   // the model's effort does count the kitchen
+        Assert.Equal(3, with.For("(O)9001").Effort);
+        Assert.Equal(10, without.DishBases["(O)9001"][(int)Season.Winter]);
         Assert.Equal(without.DishBases["(O)9001"], with.DishBases["(O)9001"]);
         Assert.Empty(ItemAvailabilityBuilder.Build(new ItemPools()).DishBases);
     }

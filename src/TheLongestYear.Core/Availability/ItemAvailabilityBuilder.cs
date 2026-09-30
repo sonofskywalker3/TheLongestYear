@@ -85,11 +85,12 @@ public static class ItemAvailabilityBuilder
         // The dish table needs the model's placements, so it is built from this first model and
         // handed to the one returned. Its effort cap reads a composer that never counts the
         // kitchen (hasKitchen: true), so keep_kitchen cannot move a dish ingredient's effort and
-        // with it an ask on a stored board. The ingredient basis is the model-free pass lookup;
-        // dishes used as ingredients are resolved inside DishAskBasis.Build.
-        EffortComposer kitchenFree = hasKitchen
-            ? composer!
-            : new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step);
+        // with it an ask on a stored board. It is built fresh here on EVERY path, after the trap
+        // rewrite above, never the composer that ran DeriveAll before that rewrite: reusing that
+        // one when keep_kitchen is owned would give the two kitchen states different memoised
+        // efforts. The ingredient basis is the model-free pass lookup; dishes used as ingredients
+        // are resolved inside DishAskBasis.Build.
+        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step);
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,
