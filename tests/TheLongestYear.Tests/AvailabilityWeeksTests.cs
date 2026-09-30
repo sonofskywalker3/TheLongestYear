@@ -98,17 +98,27 @@ public class AvailabilityWeeksTests
     public void Mystic_syrup_is_excluded_from_pools()
         => Assert.Contains("(O)MysticSyrup", ItemPoolBuilder.BuiltInExcludedItemIds);
 
-    /// <summary>Previously, Mystic Syrup was pinned to the last week because its tapper rule answered
-    /// early (Foraging 4 plus the tap wait). Now it is excluded entirely because its tree seed (the
-    /// Foraging Mastery reward) is unreachable in a one-year loop (Jeff, 2026-09-30).</summary>
+    /// <summary>Excluded from pools, yet the model still places it (effort derivation walks all of
+    /// Data/Objects) and stored boards are rebuilt with that model, so the late floor stays and is
+    /// pinned to the last week.</summary>
     [Fact]
-    public void Mystic_syrup_is_excluded_not_pinned()
-    {
-        // Verify the exclusion is in place
-        Assert.Contains("(O)MysticSyrup", ItemPoolBuilder.BuiltInExcludedItemIds);
+    public void Mystic_syrup_is_pinned_to_the_last_week()
+        => Assert.Equal(Calendar.WeeksPerYear, AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week);
 
-        // Verify it is no longer in LateFloors (which used to be its workaround)
-        Assert.DoesNotContain("(O)MysticSyrup", AvailabilityWeeks.LateFloors.Keys);
+    /// <summary>The regression that matters: the tapper rule on its own answers early (Foraging 4
+    /// plus the tap wait), so the pin only helps if the composer's late floor actually beats it.</summary>
+    [Fact]
+    public void Mystic_syrup_late_floor_beats_the_tapper_rule()
+    {
+        var data = new EffortData
+        {
+            TapItems = new List<RawTapItem> { new("13", "(O)MysticSyrup", 7) },
+        };
+
+        int rawTapperWeek = TapperAvailability.Derive("(O)MysticSyrup", data)!.EarliestWeek!.Value;
+        Assert.True(rawTapperWeek < Calendar.WeeksPerYear,
+            "the tapper rule is expected to answer early on its own; that is why the pin exists");
+        Assert.True(AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week > rawTapperWeek);
     }
 
     [Fact]
