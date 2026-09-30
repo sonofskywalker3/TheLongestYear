@@ -47,6 +47,13 @@ public static class CappedAsks
     public static int ClampStack(string? itemId, int stack)
         => IsCapped(itemId) ? CappedSlotStack : stack;
 
+    /// <summary>Repairs one live BundleData value: every capped ask above one comes back as one,
+    /// every other field survives byte for byte. Null when nothing needed changing. This only
+    /// lowers stacks; it cannot hold the per-board count on a board the engine did not build
+    /// (see <see cref="VanillaBoardDifficultyPass"/>).</summary>
+    public static string? RepairBundleValue(string value)
+        => BundleAskRewrite.LowerAsks(value, (id, stack) => Math.Min(stack, ClampStack(id, stack)));
+
     /// <summary>Lowers every capped slot to a stack of one. Returns the same reference when nothing
     /// needed lowering, so callers can tell a no-op by reference.</summary>
     public static BundleSpec ClampBundle(BundleSpec spec)

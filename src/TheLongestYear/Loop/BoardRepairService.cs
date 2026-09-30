@@ -227,7 +227,9 @@ namespace TheLongestYear.Loop
         /// <para>With <paramref name="oncePerLoopAsksOne"/> on, the same pass lowers every ask above
         /// one for a once-per-loop item (<see cref="OncePerLoopAsks"/>: legendaries, the gift-box
         /// books, the Golden Pumpkin), for boards written before 0.18.12 or while the setting was
-        /// off. Off never raises anything back.</para></summary>
+        /// off. Off never raises anything back.</para>
+        /// <para>Every capped ask (<see cref="CappedAsks"/>: Prismatic Shard, Mystery Box) above one
+        /// is lowered to one on every board, whatever the settings.</para></summary>
         public static int ClampUnstackableAsks(IMonitor monitor, MetaState state, bool oncePerLoopAsksOne = true)
         {
             if (!Context.IsMainPlayer) return 0;
@@ -237,6 +239,9 @@ namespace TheLongestYear.Loop
             string Repair(string value)
             {
                 string repaired = UnstackableAsks.RepairBundleValue(value);
+                // A capped item (Prismatic Shard, Mystery Box) asks for one whatever the settings:
+                // a board written before the rule, or a vanilla Helper's "5 Mystery Box".
+                repaired = CappedAsks.RepairBundleValue(repaired ?? value) ?? repaired;
                 if (!oncePerLoopAsksOne) return repaired;
                 return OncePerLoopAsks.RepairBundleValue(repaired ?? value) ?? repaired;
             }
@@ -256,7 +261,7 @@ namespace TheLongestYear.Loop
                 if (repaired == null) continue;
                 updates[entry.Key] = repaired;
                 monitor?.Log(
-                    $"Board repair: '{entry.Key}' asked for more than one of an item that never stacks or that a loop gives only once; lowered to one.",
+                    $"Board repair: '{entry.Key}' asked for more than one of an item that never stacks, that a loop gives only once, or that a board asks for once per slot; lowered to one.",
                     LogLevel.Info);
             }
             if (updates.Count == 0) return 0;

@@ -55,4 +55,20 @@ public class CappedAsksTests
         var b = new BundleSpec("R", 2, "B", "B", "O 1 1", 0, 1, new List<BundleSlotSpec> { new("(O)74", 2, 0) });
         Assert.Equal(3, CappedAsks.CountOnBoard("(O)74", new[] { a, b }));
     }
+
+    [Fact]
+    public void RepairBundleValue_lowers_a_capped_ask_to_one_and_leaves_the_rest()
+    {
+        const string value = "Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 5 0/4/2//Helper's";
+        Assert.Equal(
+            "Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 1 0/4/2//Helper's",
+            CappedAsks.RepairBundleValue(value));
+    }
+
+    [Fact]
+    public void RepairBundleValue_returns_null_when_nothing_needs_lowering()
+    {
+        Assert.Null(CappedAsks.RepairBundleValue("Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 1 0/4/2//Helper's"));
+        Assert.Null(CappedAsks.RepairBundleValue("Vault/-1 2500 2500/4/1"));
+    }
 }

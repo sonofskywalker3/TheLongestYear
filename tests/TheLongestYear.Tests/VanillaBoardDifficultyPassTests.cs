@@ -338,4 +338,35 @@ public class VanillaBoardDifficultyPassTests
         Assert.Equal(1, stackOf(CappedAsks.MysteryBox));
         Assert.Equal(3, stackOf("(O)PrizeTicket"));   // 2 * 1.5, untouched by the cap
     }
+
+    /// <summary>An all-Normal profile skips every dial, but not the capped-item clamp: the
+    /// one-per-slot rule holds on every board, whatever the difficulty.</summary>
+    [Fact]
+    public void All_Normal_still_asks_for_one_Mystery_Box()
+    {
+        const string key = "Bulletin Board/34";
+        var data = Board(key, "Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 5 0/4/2//Helper's");
+
+        var result = VanillaBoardDifficultyPass.Apply(
+            data, P(new DifficultySettings()), new BundleGenerationTuning(), 123);
+
+        Assert.Equal("Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 1 0/4/2//Helper's", result[key]);
+        Assert.Equal("Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 5 0/4/2//Helper's", data[key]);
+    }
+
+    [Fact]
+    public void All_Normal_leaves_every_other_bundle_byte_for_byte()
+    {
+        var data = new Dictionary<string, string>
+        {
+            ["Bulletin Board/34"] = "Helper's/O TreasureTotem 5/PrizeTicket 5 0 MysteryBox 5 0/4/2//Helper's",
+            [ArtisanKey] = ArtisanXFourYSix,
+        };
+
+        var result = VanillaBoardDifficultyPass.Apply(
+            data, P(new DifficultySettings()), new BundleGenerationTuning(), 123);
+
+        Assert.Equal(ArtisanXFourYSix, result[ArtisanKey]);
+        Assert.Equal(data.Keys.OrderBy(k => k), result.Keys.OrderBy(k => k));
+    }
 }
