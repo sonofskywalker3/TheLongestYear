@@ -215,6 +215,7 @@ public static class AvailabilityWeeks
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
             ["(O)Book_Artifact"] = 2,   // an artifact spot can drop it from week 2, Jeff 2026-08-29
+            ["(O)Moss"] = 4,            // Moss grows on trees from Spring, earliest in week 4 (spec 2026-09-30-quantity-rules section 6)
         };
 
     /// <summary>Fish with no Data/Fish row the parser reads (the 1.6 jellies): effort by hand so the
