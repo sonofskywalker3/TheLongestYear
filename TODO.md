@@ -6,13 +6,18 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### QUESTION (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
-Jeff replied 2026-09-30 guessing a production-chain leak. It is not a leak: the Sticky recipe
-(BundlePoolRecipes, since 0.16.116) re-rolls its one slot from "Sap or resource", the whole
-Resource bucket plus TapperGoods, and TapperGoods deliberately adds Hardwood, Sap, Moss, Maple Seed,
-Acorn and Pine Cone. So an Acorn (or Stone, Fiber, Clay...) is a legal Sticky pick, and the quantity
-pass can land it at 1. Needs Jeff's ruling on what Sticky should ask for (e.g. sticky things only:
-Sap, Oak Resin, Maple Syrup, Pine Tar) before any change.
+### BUILT 0.18.99 (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
+Jeff replied 2026-09-30 guessing a production-chain leak. It was not a leak: the Sticky recipe
+(since 0.16.116) re-rolled from "Sap or resource", the whole Resource bucket plus TapperGoods (which
+adds Acorn, Maple Seed, Pine Cone, Moss, Hardwood). Jeff 2026-09-30: "anything in the game that is
+year 1 obtainable and sticky. like ice cream, sugar". Now a fixed list, model-gated: Sap, Maple
+Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce,
+Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek). 60 boards
+(tly_genbundles 1-60): 14 Sticky bundles, all from the list.
+- **OPEN, needs Jeff: the stack.** Sticky is one slot, and outside the quantity tables (Honey, Jelly
+  banded x4 to x8) the filler rolls a small stack: 8 of 14 asks were x1 (Ice Cream x1 four times,
+  Sugar x1 twice). A single Sugar is as trivial as the single Acorn was. Sap keeps vanilla's 500,
+  capped at 99. Reply to elaineofshalott waits on this and the release.
 
 ### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
 Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.

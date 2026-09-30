@@ -228,19 +228,32 @@ public class BundlePoolRecipesTests
     }
 
     [Fact]
-    public void Sticky_takes_resources_and_tapper_goods()
+    public void Sticky_takes_only_sticky_things_the_model_can_place()
     {
         ItemPools pools = new()
         {
-            TapperGoods = new[] { Item("(O)92") },
+            TapperGoods = new[] { Item("(O)92"), Item("(O)309"), Item("(O)709") },   // Sap, Acorn, Hardwood
+            ArtisanGoods = new[] { Item("(O)340") },                                  // Honey
+            Cooking = new[] { Item("(O)233"), Item("(O)731") },                       // Ice Cream, Maple Bar
             ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
             {
-                [ItemKind.Resource] = new[] { Item("(O)388") },
+                [ItemKind.Resource] = new[] { Item("(O)388"), Item("(O)390") },     // Wood, Stone
+                [ItemKind.Other] = new[] { Item("(O)245") },                        // Sugar
             },
         };
-        List<string> ids = BundlePoolRecipes.For("Sticky", Array.Empty<string>(), pools, null)
-            .Parts[0].Source(pools, null).Select(p => p.ItemId).ToList();
-        Assert.Equal(new[] { "(O)388", "(O)92" }, ids);
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)92"] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1),
+            ["(O)309"] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1),
+            ["(O)388"] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1),
+            ["(O)340"] = new(Season.Spring, 2, "test", EarliestWeek: 2, HardWeek: 2),
+            ["(O)233"] = new(Season.Summer, 1, "test", EarliestWeek: 5, HardWeek: 5),
+            ["(O)245"] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1),
+        });
+        List<string> ids = BundlePoolRecipes.For("Sticky", Array.Empty<string>(), pools, model)
+            .Parts[0].Source(pools, model).Select(p => p.ItemId).OrderBy(i => i, StringComparer.Ordinal).ToList();
+        // No Acorn, Wood or Stone; Maple Bar has no model row, so it cannot be placed in year 1.
+        Assert.Equal(new[] { "(O)233", "(O)245", "(O)340", "(O)92" }, ids);
     }
 
     [Fact]
