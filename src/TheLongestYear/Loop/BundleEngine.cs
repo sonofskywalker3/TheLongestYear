@@ -107,6 +107,13 @@ namespace TheLongestYear.Loop
         /// the room still re-rolls.</summary>
         public static bool IsPassThroughRoom(string room) => PassThroughRooms.Contains(room);
 
+        /// <summary>Rooms the Prismatic Shard / Mystery Box board count leaves out: the Vault and
+        /// the Abandoned Joja Mart are outside the year's goal (no theme, no season gate), so their
+        /// asks are not the year's. The Missing's own Prismatic Shard is not counted against the
+        /// allowance; its contents stay exactly as vanilla wrote them. Pass 2 never counts these
+        /// rooms either, because they are emitted before it and never enter its pick records.</summary>
+        private static bool CappedCountSkipsRoom(string room) => PassThroughRooms.Contains(room);
+
         // Per-bundle RNG salt for slot composition (trim + Plan-2 slot filling). spec.Index is
         // vanilla's own absolute bundle index — unique per generation — so each bundle gets an
         // independent deterministic stream from the loop seed.
@@ -429,10 +436,8 @@ namespace TheLongestYear.Loop
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
 
-            // Guard, not the rule: the fill budgets above are what hold the allowance. The
-            // pass-through rooms are outside the loop's economy (The Missing's own Prismatic Shard) and
-            // are not counted, as Pass 2 never counts them either.
-            List<BundleSpec> themed = allPicks.Where(b => !PassThroughRooms.Contains(b.Room)).ToList();
+            // Guard, not the rule: the fill budgets above are what hold the allowance.
+            List<BundleSpec> themed = allPicks.Where(b => !CappedCountSkipsRoom(b.Room)).ToList();
             foreach (string id in Core.CappedAsks.Ids.OrderBy(id => id, StringComparer.Ordinal))
             {
                 int onBoard = Core.CappedAsks.CountOnBoard(id, themed);

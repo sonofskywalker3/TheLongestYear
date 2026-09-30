@@ -1321,8 +1321,9 @@ namespace TheLongestYear.Loop
         /// stack size, quality asks, and required slots. Never changes which item a slot asks for,
         /// so a Standard or Remixed board keeps its identity and only its numbers move.
         ///
-        /// Skipped entirely when those three are all Normal, which keeps the default Vanilla path
-        /// exactly as it was: zero writes, and no extra log line.
+        /// When those three are all Normal the dials are skipped, and only a capped ask above one
+        /// (Prismatic Shard, Mystery Box: Remixed's Helper's "5 Mystery Box") is lowered to one.
+        /// A board without one gets zero writes and no extra log line, as before.
         ///
         /// Seeded from the same basis as the Engine path, so a replayed reset reproduces the same
         /// board and the anti-save-scum guarantee still holds.</summary>
@@ -1330,7 +1331,10 @@ namespace TheLongestYear.Loop
         {
             TheLongestYear.Core.DifficultyProfile difficulty = _meta.Difficulty;
             if (difficulty == null || difficulty.Steps.AsksAllNormal())
+            {
+                ClampVanillaCappedAsks();
                 return;
+            }
 
             Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
             if (live == null || live.Count == 0)
@@ -1378,6 +1382,33 @@ namespace TheLongestYear.Loop
                 $"stacks {difficulty.Steps.StackSize}, quality {difficulty.Steps.QualityAsks}, " +
                 $"required slots {difficulty.Steps.RequiredSlots}; seed {seed}). " +
                 "Item ids are unchanged.",
+                LogLevel.Info);
+        }
+
+        /// <summary>The all-Normal half of <see cref="ApplyVanillaBoardDifficulty"/>: writes only
+        /// the bundles holding a capped ask above one, lowered to one. On a vanilla board the stack
+        /// clamp is the whole capped rule; the per-board count is held on engine boards only, since
+        /// this path never changes an item or removes a bundle.</summary>
+        private void ClampVanillaCappedAsks()
+        {
+            Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
+            if (live == null || live.Count == 0)
+                return;
+
+            var updates = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string key in live.Keys.OrderBy(k => k, StringComparer.Ordinal))
+            {
+                string clamped = TheLongestYear.Core.CappedAsks.RepairBundleValue(live[key]);
+                if (clamped != null)
+                    updates[key] = clamped;
+            }
+            if (updates.Count == 0)
+                return;
+
+            Game1.netWorldState.Value.SetBundleData(updates);
+            _monitor.Log(
+                $"Reset: Vanilla board asks for one of each capped item per slot; lowered {updates.Count} bundle(s): " +
+                string.Join(", ", updates.Keys) + ".",
                 LogLevel.Info);
         }
 
