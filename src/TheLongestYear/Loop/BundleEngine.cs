@@ -482,7 +482,10 @@ namespace TheLongestYear.Loop
 
             if (record.Pick.Name == HelpersBundleName)
             {
-                budget[Core.CappedAsks.MysteryBox] = HelpersMysteryBoxReservation;
+                // Never hand Helper's more than the board has left. Known exception: when the Mystery
+                // Box allowance is 0 and Helper's is the only candidate at its position, it is kept
+                // (a position cannot be left empty) and its vanilla Mystery Box slots clamp to one box.
+                budget[Core.CappedAsks.MysteryBox] = Math.Min(HelpersMysteryBoxReservation, budget[Core.CappedAsks.MysteryBox]);
                 return budget;
             }
             int helpersWaiting = picked.Count(r => r != record && r.Composed == null && r.Pick.Name == HelpersBundleName);
