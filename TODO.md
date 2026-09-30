@@ -17,7 +17,7 @@ Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek)
 - **BUILT 0.18.100: shape and amounts** (Jeff 2026-09-30: "3/4/5/6 by difficulty ... ice cream is
   hard in spring, trivial in summer, easy in later seasons"). BundleShapes: Sticky shows 6, needs 4,
   so the Required Slots dial reads 3/4/5/6. QuantityBasisTables.Seasonal: per-season bases for
-  Sugar (20/40/40/40), Ice Cream (3/25/25/25), Maple Bar (1/3/3/3), Cranberry Sauce (1/1/5/8),
+  Sugar (20/40/40/40), Ice Cream (0/25/25/25), Maple Bar (0/3/3/3), Cranberry Sauce (0/0/5/8; 0 = cannot exist yet, fixed 0.18.101 after Jeff asked),
   Miner's Treat (3/6/6/6, Mummy drop 4 still wins in Spring); best season up to the deadline. Sap,
   Slime, syrups, Honey, Jelly keep their existing rows. Side effect: Sugar and Ice Cream asks in
   Chef's and Children's now band too (were x1). 60 boards on Normal: 14 Sticky, all 4 of 6; Ice

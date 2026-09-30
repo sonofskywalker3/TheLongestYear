@@ -64,9 +64,9 @@ public class StickyBundleTests
     }
 
     [Fact]
-    public void Ice_cream_is_hard_in_spring_and_plentiful_from_summer()
+    public void Ice_cream_has_no_spring_basis_and_is_plentiful_from_summer()
     {
-        Assert.Equal(3, QuantityAskPass.BasisByDeadline(IceCream, Season.Spring));
+        Assert.Null(QuantityAskPass.BasisByDeadline(IceCream, Season.Spring));   // the stand is its first route
         Assert.Equal(25, QuantityAskPass.BasisByDeadline(IceCream, Season.Summer));
         Assert.Equal(25, QuantityAskPass.BasisByDeadline(IceCream, Season.Winter));   // bought in Summer, kept
     }
@@ -76,7 +76,9 @@ public class StickyBundleTests
     {
         Assert.Equal(20, QuantityAskPass.BasisByDeadline(Sugar, Season.Spring));
         Assert.Equal(40, QuantityAskPass.BasisByDeadline(Sugar, Season.Fall));
-        Assert.Equal(1, QuantityAskPass.BasisByDeadline(CranberrySauce, Season.Summer));
+        Assert.Null(QuantityAskPass.BasisByDeadline(CranberrySauce, Season.Summer));   // a Fall crop
+        Assert.Null(QuantityAskPass.BasisByDeadline("(O)731", Season.Spring));          // Maple Bar
+        Assert.Equal(5, QuantityAskPass.BasisByDeadline(CranberrySauce, Season.Fall));
         Assert.Equal(8, QuantityAskPass.BasisByDeadline(CranberrySauce, Season.Winter));
         Assert.Equal(4, QuantityAskPass.BasisByDeadline(MinersTreat, Season.Spring));   // Mummy drop beats cooking 3
         Assert.Equal(6, QuantityAskPass.BasisByDeadline(MinersTreat, Season.Summer));
