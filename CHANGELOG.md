@@ -7,7 +7,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **The Sticky bundle asks for sticky things, and more of them.** It picked one item from every resource plus the tapper extras, so it could ask for a single Acorn, some Stone or Fiber. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, Maple Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat, only what a year can reach. Amounts follow the season the bundle is due: Ice Cream is a handful in Spring, when only Jodi's recipe makes it, and 5 to 13 on Normal once the Summer stand sells it; Sugar asks less in Spring while money is short. Reported by elaineofshalott.
+- **The Sticky bundle asks for sticky things, and more of them.** It picked one item from every resource plus the tapper extras, so it could ask for a single Acorn, some Stone or Fiber. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, Maple Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat, only what a year can reach. Amounts follow the season the bundle is due: Ice Cream asks 5 to 13 on Normal once the Summer stand sells it, and nothing appears before the season it can exist; Sugar asks less in Spring while money is short. Reported by elaineofshalott.
 
 ## 0.18.98 - 2026-09-29
 
