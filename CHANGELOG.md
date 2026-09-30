@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- **The Sticky bundle asks for something sticky.** It picked its one item from every resource plus the tapper extras, so it could ask for a single Acorn, some Stone or Fiber. It now picks from Sap, Maple Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat, and only what a year can reach. Reported by elaineofshalott.
+
 ## 0.18.98 - 2026-09-29
 
 2497 tests. Rolls up 0.18.85 to 0.18.98.
