@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
 using Xunit;
@@ -58,6 +59,32 @@ public class GeodeAvailabilityTests
     {
         Assert.Null(GeodeAvailability.Derive("(O)541", new List<RawGeodeDrop> { new("(O)275", "(O)541", 1) }));
         Assert.Null(GeodeAvailability.Derive("(O)24", new List<RawGeodeDrop>()));
+    }
+
+    [Fact]
+    public void A_drop_under_one_percent_after_the_table_split_is_not_a_route()
+    {
+        var drops = new List<RawGeodeDrop>
+        {
+            new("(O)749", "(O)74", 0.008),   // Omni Geode -> Prismatic Shard, halved to 0.4%
+        };
+        Assert.Null(GeodeAvailability.Derive("(O)74", drops));
+    }
+
+    [Fact]
+    public void A_listed_drop_still_counts_after_the_split()
+    {
+        var drops = new List<RawGeodeDrop> { new("(O)535", "(O)86", 0.3) };   // Geode -> Earth Crystal
+        Assert.NotNull(GeodeAvailability.Derive("(O)86", drops));
+    }
+
+    [Fact]
+    public void Default_table_rows_are_not_halved_twice()
+    {
+        // Omni table rows are 0.5 / 10 = 5% each; halving again would be 2.5%, still a route, so pin the chance.
+        RawGeodeDrop row = GeodeAvailability.DefaultTableDrops("(O)749").First(r => r.ItemId == "(O)82");
+        Assert.True(row.FromDefaultTable);
+        Assert.Contains("chance 0.05", GeodeAvailability.Derive("(O)82", new[] { row })!.Basis);
     }
 
     [Fact]

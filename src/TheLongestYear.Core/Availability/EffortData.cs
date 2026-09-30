@@ -6,7 +6,7 @@ namespace TheLongestYear.Core.Availability;
 // ---- glue (Loop/GameEffortData) normalises them. Objects are keyed by BARE id like the pools.
 
 /// <summary>One Data/Objects GeodeDrops row (or one row of the code-only default table).</summary>
-public sealed record RawGeodeDrop(string GeodeItemId, string ItemId, double Chance);
+public sealed record RawGeodeDrop(string GeodeItemId, string ItemId, double Chance, bool FromDefaultTable = false);
 
 /// <summary>One Data/Monsters drop-table pair, with the monster it belongs to.</summary>
 public sealed record RawMonsterDrop(string MonsterName, string ItemId, double Chance);

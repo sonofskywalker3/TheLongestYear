@@ -14,6 +14,8 @@ public static class GeodeAvailability
     private const double CommonChance = 1.0 / 8;
     private const double UncommonChance = 1.0 / 20;
     private const double DefaultTableShare = 0.5;
+    private const double GeodeTableShare = 0.5;
+    private const double NegligibleChance = 0.01;
 
     private sealed record GeodeRule(int Area, int Effort, string Label);
 
@@ -40,7 +42,7 @@ public static class GeodeAvailability
 
     public static IReadOnlyList<RawGeodeDrop> DefaultTableDrops(string geodeQualifiedId)
         => geodeQualifiedId != null && DefaultTable.TryGetValue(geodeQualifiedId, out string[]? ids)
-            ? ids.Select(id => new RawGeodeDrop(geodeQualifiedId, id, DefaultTableShare / ids.Length)).ToList()
+            ? ids.Select(id => new RawGeodeDrop(geodeQualifiedId, id, DefaultTableShare / ids.Length, FromDefaultTable: true)).ToList()
             : Array.Empty<RawGeodeDrop>();
 
     public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawGeodeDrop> drops)
@@ -51,13 +53,21 @@ public static class GeodeAvailability
         {
             if (drop.ItemId != qualifiedId || !Geodes.TryGetValue(drop.GeodeItemId, out GeodeRule? geode))
                 continue;
-            int step = ChanceStep(drop.Chance);
+            // Data GeodeDrops rows are read on half of cracks for these four geodes (they all carry
+            // GeodeDropsDefaultItems); the code-only default-table rows already carry that half in their
+            // chance (DefaultTableDrops marks them FromDefaultTable). A drop under 1% after the split is
+            // not a route a year can plan on: Prismatic Shard from an Omni Geode is 0.4% a crack and
+            // needs 16 geodes cracked first.
+            double chance = drop.FromDefaultTable ? drop.Chance : drop.Chance * GeodeTableShare;
+            if (chance < NegligibleChance)
+                continue;
+            int step = ChanceStep(chance);
             int effort = geode.Effort + step;
             int week = MineAreas.Week(geode.Area);
             bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
             if (better)
                 best = new ItemEffort(effort,
-                    $"geode, {geode.Label}, chance {drop.Chance:0.###} (+{step}), week {week}, effort {effort}",
+                    $"geode, {geode.Label}, chance {chance:0.###} (+{step}), week {week}, effort {effort}",
                     week, MineAreas.GateSeason(geode.Area), HardWeek: MineAreas.HardWeek(geode.Area));
         }
         return best;
