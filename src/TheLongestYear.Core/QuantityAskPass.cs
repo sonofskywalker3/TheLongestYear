@@ -70,7 +70,7 @@ public static class QuantityAskPass
                || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)
                || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id)
                || QuantityBasisTables.Resources.ContainsKey(id)
-               || QuantityBasisTables.Seasonal.ContainsKey(id);
+               || SeasonalAskBasis.Rows.ContainsKey(id);
     }
 
     /// <summary>One aggregation rule for every item (Codex review, 2026-09-04: the old fish-first,
@@ -91,24 +91,8 @@ public static class QuantityAskPass
         }
         foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDropsMeasured, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
-        double? seasonal = SeasonalBasis(id, deadline);
+        double? seasonal = SeasonalAskBasis.BasisByDeadline(id, deadline);
         if (seasonal != null && (best == null || seasonal > best)) best = seasonal;
-        return best;
-    }
-
-    /// <summary>The best season's basis from Spring up to the deadline (Winter when there is none):
-    /// what was bought or cooked earlier is still in the chest.</summary>
-    private static double? SeasonalBasis(string id, Season? deadline)
-    {
-        if (!QuantityBasisTables.Seasonal.TryGetValue(id, out double[]? bySeason))
-            return null;
-        Season last = deadline ?? Season.Winter;
-        double? best = null;
-        for (Season s = Season.Spring; s <= last; s++)
-        {
-            double basis = bySeason[(int)s];
-            if (basis > 0 && (best == null || basis > best)) best = basis;
-        }
         return best;
     }
 }

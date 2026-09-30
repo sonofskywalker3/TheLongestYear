@@ -108,27 +108,6 @@ public static class QuantityBasisTables
         ["(O)445"] = 5,    // Caviar
     };
 
-    /// <summary>Bases that change with the season a slot is due, for the Sticky bundle's shop goods
-    /// and dishes (Jeff, 2026-09-30: "ice cream ... is hard in spring, trivial in summer, easy in
-    /// later seasons"). Order Spring, Summer, Fall, Winter. QuantityAskPass takes the best season up
-    /// to the deadline, since anything bought or cooked earlier keeps. A 0 is a season the item cannot
-    /// exist in yet (the availability model's earliest week); it never contributes. Every dish also needs the
-    /// kitchen (the first house upgrade), which is why Spring sits low across the board.</summary>
-    public static readonly IReadOnlyDictionary<string, double[]> Seasonal = new Dictionary<string, double[]>(StringComparer.Ordinal)
-    {
-        // Pierre's, 100g, all year. Spring money is short: Normal asks 4 to 10, about 1,000g.
-        ["(O)245"] = new double[] { 20, 40, 40, 40 },   // Sugar
-        // First route is the Summer ice cream stand (250g); what you buy there keeps, so later
-        // seasons read the same.
-        ["(O)233"] = new double[] { 0, 25, 25, 25 },    // Ice Cream
-        // Recipe from Sneak Peek (year-two episode) plus Maple Syrup (tapper, Foraging 4), Sugar, Flour.
-        ["(O)731"] = new double[] { 0, 3, 3, 3 },       // Maple Bar
-        // Gus's 7-heart recipe and a Fall crop; Winter cooks from a stocked cellar.
-        ["(O)238"] = new double[] { 0, 0, 5, 8 },       // Cranberry Sauce
-        // Mining 3 recipe; Cave Carrot, Sugar and Milk, so a cow first.
-        ["(O)243"] = new double[] { 3, 6, 6, 6 },       // Miner's Treat
-    };
-
     /// <summary>Raw resources a week of chopping, tilling and stump-clearing yields, so Extreme does
     /// not sit Fiber x2 and Clay x2 next to Stone x79 (Codex review, 2026-09-04). Stone is in Mines.</summary>
     public static readonly IReadOnlyDictionary<string, double> Resources = new Dictionary<string, double>(StringComparer.Ordinal)
