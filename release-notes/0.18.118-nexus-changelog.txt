@@ -1,0 +1,12 @@
+0.18.118 - The Sticky bundle asks for sticky things, bundle amounts follow what a year can produce, and Prismatic Shard and Mystery Box are rare asks.
+
+Changed
+- The Sticky bundle asks for sticky things. It could ask for a single Acorn. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, the tapper syrups, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat. Reported by elaineofshalott.
+- Bundle amounts follow what a year can produce. Tree seeds, Moss, tree fruit, forage, trash, pantry goods, Hay, Prize Tickets, the rare fish and most cooked dishes now ask for amounts sized to what you can gather, grow, buy or cook by then, instead of just one. A dish is never asked for before you can cook it.
+- Prismatic Shard and Mystery Box are rare asks. On the boards the mod builds, your Stack size setting limits them: none on Easy, at most one on Normal, two on Hard and three on Extreme, each asked for one at a time. Helper's asks for one Mystery Box instead of five. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard.
+
+Fixed
+- No more Mystic Syrup. Its tree only comes from a late-game mastery reward.
+- Fairer dates. Prismatic Shard is a Fall-or-later ask (it was counted as a Spring item), the Night Market fish wait for Winter 15, and Moss waits for Summer.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
