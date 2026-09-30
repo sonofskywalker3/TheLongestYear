@@ -91,27 +91,24 @@ public class AvailabilityWeeksTests
     public void Cactus_fruit_is_desert_forage_not_an_oasis_crop()
         => Assert.False(AvailabilityWeeks.LateFloors.ContainsKey("(O)90"));
 
-    /// <summary>Mystic Syrup's tapper rule cannot see that its tree has to be planted first, and
-    /// the seed is the Foraging Mastery reward, so it is pinned to the last week of the loop.
-    /// Reported by Nijah 2026-08-30 (Mystic Syrup asked on an early board).</summary>
+    /// <summary>Mystic Syrup's tree seed is the Foraging Mastery reward (every skill at 10, then 10,000 XP),
+    /// which a one-year loop never reaches. It is excluded from every bundle pool (Jeff, 2026-09-30).
+    /// Previously reported by Nijah 2026-08-30 (Mystic Syrup asked on an early board).</summary>
     [Fact]
-    public void Mystic_syrup_is_pinned_to_the_last_week()
-        => Assert.Equal(Calendar.WeeksPerYear, AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week);
+    public void Mystic_syrup_is_excluded_from_pools()
+        => Assert.Contains("(O)MysticSyrup", ItemPoolBuilder.BuiltInExcludedItemIds);
 
-    /// <summary>The regression that matters: the tapper rule on its own answers early (Foraging 4
-    /// plus the tap wait), so the pin only helps if the composer's late floor actually beats it.</summary>
+    /// <summary>Previously, Mystic Syrup was pinned to the last week because its tapper rule answered
+    /// early (Foraging 4 plus the tap wait). Now it is excluded entirely because its tree seed (the
+    /// Foraging Mastery reward) is unreachable in a one-year loop (Jeff, 2026-09-30).</summary>
     [Fact]
-    public void Mystic_syrup_late_floor_beats_the_tapper_rule()
+    public void Mystic_syrup_is_excluded_not_pinned()
     {
-        var data = new EffortData
-        {
-            TapItems = new List<RawTapItem> { new("13", "(O)MysticSyrup", 7) },
-        };
+        // Verify the exclusion is in place
+        Assert.Contains("(O)MysticSyrup", ItemPoolBuilder.BuiltInExcludedItemIds);
 
-        int rawTapperWeek = TapperAvailability.Derive("(O)MysticSyrup", data)!.EarliestWeek!.Value;
-        Assert.True(rawTapperWeek < Calendar.WeeksPerYear,
-            "the tapper rule is expected to answer early on its own; that is why the pin exists");
-        Assert.True(AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week > rawTapperWeek);
+        // Verify it is no longer in LateFloors (which used to be its workaround)
+        Assert.DoesNotContain("(O)MysticSyrup", AvailabilityWeeks.LateFloors.Keys);
     }
 
     [Fact]

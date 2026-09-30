@@ -771,6 +771,7 @@ public static class ItemPoolBuilder
                   //                     Egg and Ostrich Egg, NOT flagged ExcludeFromRandomSale, so the vet let
                   //                     it into the Chef's / Animal recipe buckets (Nexus 1127469, gazumbrado:
                   //                     "2 golden eggs which are perfection locked").
+        "(O)MysticSyrup", // Mystic Tree only; its seed is the Foraging Mastery recipe (Jeff, 2026-09-30)
     };
 
     /// <summary>Built-in excluded location markers, merged with the config list by
