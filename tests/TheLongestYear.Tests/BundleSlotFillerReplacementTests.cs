@@ -234,4 +234,25 @@ public class BundleSlotFillerReplacementTests
             Assert.Null(pick);
         }
     }
+
+    /// <summary>A repair has no way to know what is left of the board's Prismatic Shard / Mystery
+    /// Box allowance, so capped ids are out of every replacement draw, like the legendaries.</summary>
+    [Fact]
+    public void Replacement_draws_never_offer_a_capped_item()
+    {
+        var pools = new ItemPools
+        {
+            Metals = new[] { Item("(O)m1"), Item("(O)m2"), Item(CappedAsks.PrismaticShard, weight: 1000) },
+        };
+        var spec = Spec("Blacksmith's", "(O)m1", "(O)m2");
+
+        for (int seed = 0; seed < 20; seed++)
+        {
+            PoolItem? pick = BundleSlotFiller.ReplacementFor(
+                spec, 0, new DomainMatch(PoolDomain.Metals, null), pools, Tuning, new Random(seed),
+                Nothing, availability: null, knownRecipe: null);
+
+            Assert.Null(pick);
+        }
+    }
 }

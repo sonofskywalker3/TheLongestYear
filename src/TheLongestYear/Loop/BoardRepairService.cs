@@ -172,7 +172,8 @@ namespace TheLongestYear.Loop
                         continue;
                     }
 
-                    int stack = OncePerLoopAsks.ClampStack(pick.ItemId, slot.Stack, _oncePerLoopAsksOne);
+                    int stack = CappedAsks.ClampStack(pick.ItemId,
+                        OncePerLoopAsks.ClampStack(pick.ItemId, slot.Stack, _oncePerLoopAsksOne));
                     int quality = LegendaryFishRules.ClampQuality(pick.ItemId, KeepQuality(pick.ItemId, slot.Quality));
                     slots[i] = new BundleIngredient(pick.ItemId, stack, quality);
 
