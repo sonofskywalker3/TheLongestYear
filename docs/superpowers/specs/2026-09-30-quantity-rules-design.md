@@ -97,7 +97,7 @@ arithmetic is in the notes file.
 | Orange, Peach | 0, 14, 14, 14 | 2 trees each, one fruit a day in season, 28 days to mature. |
 | Apple, Pomegranate | 0, 0, 14, 14 | Same, Fall fruit. |
 | Apricot, Cherry | stay single | Spring fruit: a day-1 sapling bears only in year 2. Cart and bat cave give a trickle. |
-| Tea Leaves | 0, 17, 17, 17 | 10 bushes (matches the Green Tea row), leaves on days 22-28. |
+| Tea Leaves | 7, 17, 17, 17 | Spring: Caroline's sunroom (opens at 2 hearts) has one tea bush, a leaf a day on days 22-28. From Summer: 10 of your own bushes (matches the Green Tea row). |
 | Cave Carrot | 15, 15, 15, 15 | Mine barrels, about 30 a mine day, 4 mine days a week. |
 | Spring Onion | 35, 0, 0, 0 | Spring forage in the south-east Forest. |
 | Salmonberry | 80, 0, 0, 0 | Spring 15-18 only, about 20-25 bushes a day. Replaces vanilla's stack. |
@@ -120,12 +120,16 @@ Same assumptions as the simulated rows: Fishing 10, bait, 2 catches a game hour.
 | Ice Pip | 9 x4 | Mine floor 60. |
 | Lava Eel | 7.6 x4 | Mine floor 100. |
 | Slimejack | 36.5 x4 | Mutant Bug Lair. |
-| Midnight Squid | 0, 0, 0, 11.2 | Night Market submarine, Winter 15-17. |
-| Spook Fish | 0, 0, 0, 8.7 | Same. |
-| Blobfish | 0, 0, 0, 5.4 | Same. |
+| Midnight Squid | 0, 0, 0, 5 | Night Market submarine, Winter 15-17. |
+| Spook Fish | 0, 0, 0, 4 | Same. |
+| Blobfish | 0, 0, 0, 2 | Same. |
 
-The Night Market rows count the market's **3 days**, not a 7-day week (7 days would ask for more
-than the event allows).
+The Night Market rows count the time you can actually fish (Jeff, 2026-09-30: "it's only open for a
+few hours at night"). The submarine runs from 5pm, costs 1,000g a ride, and you fish until you
+surface or 2am. The rows assume one ride a night and about 4 game hours of fishing (the rest of the
+night is the market itself and getting home), over the 3 nights: 12 hours, 24 casts. Chances per
+cast: Midnight Squid 0.207, Spook Fish 0.162, Blobfish 0.10. On Normal that asks 1 to 3 Squid, 1
+or 2 Spook Fish, 1 Blobfish.
 
 ## 5. Cooked dishes: a generated table
 
@@ -184,9 +188,9 @@ rows read them:
 
 ## Out of scope (noted, not changed)
 
-- Orange and Peach rate week 5, and Tea Leaves week 4. Both assume a day-1 sapling or a day-2
-  recipe, which the rows above already cover through their 0 seasons. Raising those weeks is a
-  pacing call for Jeff (Open questions).
+- Orange and Peach rate week 5, which assumes a 4,000-6,000g sapling bought on day 1. Left as is.
+- Tea Leaves week 4 is correct (Jeff, 2026-09-30): Caroline's sunroom opens at 2 hearts and its
+  tea bush gives leaves on days 22-28.
 - Authored bundles (Tapper's, Jeweler's, Four Seasons Sampler) have no availability filter at all.
   Mystic Syrup was the only leak it produced in the audit. A general filter is its own change.
 - The fish simulator ignores `IgnoreFishDataRequirements`, and some pool comments name wrong mine
@@ -209,9 +213,8 @@ rows read them:
 - **Existing saves.** Boards are stored when written, so a save in progress keeps its board until
   its next rewind. New rules apply to boards generated after the update.
 
-## Open questions for Jeff
+## Rulings (Jeff, 2026-09-30)
 
-1. The Night Market fish are sized to the 3 market days. OK?
-2. Orange and Peach at week 5, and Tea at week 4, assume buying a 4,000-6,000g sapling on day 1 or
-   getting the tea recipe on day 2. Leave those, or move them later (week 6-7 and 8)?
-3. The Prismatic Shard and Mystery Box cap follows Stack size. Or should it follow Item rarity?
+1. Night Market fish: sized to the hours you can fish, not 3 days (section 4).
+2. Tea Leaves week 4 stands: Caroline's sunroom tea bush.
+3. The Prismatic Shard and Mystery Box cap follows Stack size.
