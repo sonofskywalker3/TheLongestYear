@@ -29,7 +29,7 @@ Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek)
   held, every uncovered slot on the single-on-purpose list; after-numbers in
   docs/superpowers/notes/2026-09-30-quantity-audit.md. Open leftovers: Home Cook's egg/milk category
   asks and Treasure Chest amounts have no rule, 9 to 23 dishes stay x1.
-- Reply to elaineofshalott waits on the release.
+- RELEASED 0.18.118 (2026-09-30). Follow-up reply to elaineofshalott POSTED on Nexus posts 2026-09-30.
 
 ### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
 Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.
