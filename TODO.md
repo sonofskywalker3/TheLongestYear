@@ -14,10 +14,15 @@ year 1 obtainable and sticky. like ice cream, sugar". Now a fixed list, model-ga
 Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce,
 Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek). 60 boards
 (tly_genbundles 1-60): 14 Sticky bundles, all from the list.
-- **OPEN, needs Jeff: the stack.** Sticky is one slot, and outside the quantity tables (Honey, Jelly
-  banded x4 to x8) the filler rolls a small stack: 8 of 14 asks were x1 (Ice Cream x1 four times,
-  Sugar x1 twice). A single Sugar is as trivial as the single Acorn was. Sap keeps vanilla's 500,
-  capped at 99. Reply to elaineofshalott waits on this and the release.
+- **BUILT 0.18.100: shape and amounts** (Jeff 2026-09-30: "3/4/5/6 by difficulty ... ice cream is
+  hard in spring, trivial in summer, easy in later seasons"). BundleShapes: Sticky shows 6, needs 4,
+  so the Required Slots dial reads 3/4/5/6. QuantityBasisTables.Seasonal: per-season bases for
+  Sugar (20/40/40/40), Ice Cream (3/25/25/25), Maple Bar (1/3/3/3), Cranberry Sauce (1/1/5/8),
+  Miner's Treat (3/6/6/6, Mummy drop 4 still wins in Spring); best season up to the deadline. Sap,
+  Slime, syrups, Honey, Jelly keep their existing rows. Side effect: Sugar and Ice Cream asks in
+  Chef's and Children's now band too (were x1). 60 boards on Normal: 14 Sticky, all 4 of 6; Ice
+  Cream x7-13, Sugar x8-20, Slime x26-48, Sap x29-34, syrups x2-6, dishes x1-4.
+- Reply to elaineofshalott waits on the release.
 
 ### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
 Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.
