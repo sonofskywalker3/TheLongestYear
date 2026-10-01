@@ -105,3 +105,25 @@ the stash.
 - Live: dresser with hats only (accepted, survives); dresser with a ring (refused, message,
   item back in inventory); dyed shirt survives; Keep Farm Decor with a path under a stump and
   copper axe kept (hardwood at the stump tile); Keep Worn Gear with a Combined Ring.
+
+## Addendum (Jeff, 2026-10-01, after the final review)
+
+**Keep Farm Decor keeps no furniture.** It keeps only paths and flooring, fences and gates,
+lamp-posts, torches, braziers, signs, and decorative big craftables with NO function: not a
+container (chests, mini-shipping bin, mini-fridge), not a machine, not playable (arcade machines
+out), not a producer. Trees and other small growth under kept decor: cleared, no wood.
+
+**Keep Farm Furniture (new upgrade).** One level, **250 JP**, category Buildings.
+- Keeps every Furniture piece in the farmhouse (and its cellar/extensions) and on the Farm
+  outside, at the same tiles and rotation. Dressers and other storage furniture included.
+  Chests and other Object containers are never furniture and never kept.
+- Anything non-cosmetic stored inside kept furniture (rings in a dresser, fish in a tank,
+  an item on a table) is wiped, exactly as today. The description must say so plainly: move
+  it to the stash first. Cosmetic contents (hats, shirts, pants, furniture, wallpaper,
+  flooring) stay inside.
+- The farmhouse's own starter furniture is replaced by the kept set when the upgrade is owned
+  (no duplicate beds/tables).
+- A kept piece that no longer fits (smaller house on the new loop, a kept building or other
+  object on its tile, off-map) goes to the stash, else the overflow chest. Never deleted.
+- Outdoor coverage is a default taken without Jeff's explicit answer; house-only is a
+  one-line change if he prefers.
