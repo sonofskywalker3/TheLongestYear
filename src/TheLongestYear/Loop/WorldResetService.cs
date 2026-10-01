@@ -294,10 +294,6 @@ namespace TheLongestYear.Loop
                 ? FarmDecorSnapshot.Capture(Game1.getFarm(), _monitor)
                 : null;
 
-            // 0h. Carry the overflow chests' items (what the full stash could not take) through the
-            // rewind; they go back at step 13b. Without this the fresh farm wipes them.
-            List<Item> overflowCarry = _stashService?.LiftOverflowChests();
-
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -723,10 +719,6 @@ namespace TheLongestYear.Loop
             {
                 _monitor.Log($"Reset: Keep Farm Decor restore failed; continuing the reset.\n{ex}", LogLevel.Error);
             }
-
-            // 13b. The overflow chests' items carried from step 0h: into the stash, the rest into a
-            // fresh overflow chest beside it.
-            _stashService?.ReturnOverflowCarry(overflowCarry);
 
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up

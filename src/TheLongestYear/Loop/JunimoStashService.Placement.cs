@@ -117,7 +117,7 @@ namespace TheLongestYear.Loop
         /// <summary>
         /// True when the tile is clear enough that a chest placed there will be visible and
         /// reachable. Checks: no building, no resource clump, no existing object, no furniture
-        /// (Keep Farm Decor can put outdoor furniture back first), no terrain feature other than
+        /// (a placed outdoor table or the planning shrine), no terrain feature other than
         /// a path or floor (trees and grass obscure the chest, which is exactly what burned the
         /// user on (72, 12)) and no large terrain feature (bush).
         /// </summary>

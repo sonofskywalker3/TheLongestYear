@@ -12,8 +12,9 @@ namespace TheLongestYear.Loop
     /// the planning shrine are already placed, so they count as blockers. FarmDecorPlanner decides;
     /// this applies: clear the large debris the kept tools can break (hardwood on the ground where it
     /// stood, boulders drop nothing), clear small debris under kept tiles (no drops), place the rest,
-    /// and send displaced pieces to the stash, or to the overflow chest beside it when the stash is
-    /// full. Nothing is ever deleted.</summary>
+    /// and send displaced pieces to the stash. What the stash has no room for drops on the ground
+    /// as an ordinary pickup next to whatever blocked the piece (spec Addendum 2). Nothing is
+    /// deleted on purpose; a drop that itself fails is logged as an Error.</summary>
     internal static class FarmDecorCarryoverService
     {
         private const string AxeKey = "axe";
@@ -37,8 +38,8 @@ namespace TheLongestYear.Loop
 
             // Every piece is placed or sent to the stash exactly once; this tracks which. If anything
             // in the plan or the clearing throws (a mod's hook), the pieces not yet handled go to the
-            // stash so the rest of the reset goes on and nothing is lost. Catching Exception is
-            // deliberate here: the throw can come from any mod.
+            // stash (else the ground beside their own tile) so the rest of the reset goes on.
+            // Catching Exception is deliberate here: the throw can come from any mod.
             var handled = new HashSet<int>();
             try
             {
@@ -50,7 +51,7 @@ namespace TheLongestYear.Loop
                 monitor.Log($"Keep Farm Decor: the restore failed partway ({ex.GetType().Name}: {ex.Message}); " +
                             $"sending the {left.Count} piece(s) not yet placed to the stash.\n{ex}", LogLevel.Error);
                 foreach (FarmDecorSnapshot.Entry e in left)
-                    SendToStash(farm, e, stash, monitor);
+                    SendToStash(farm, e, stash, DropNear(farm, e.Tile, monitor), monitor);
             }
         }
 
@@ -85,6 +86,7 @@ namespace TheLongestYear.Loop
             var swapTiles = new HashSet<Vector2>(plan.SameObjectTilesToSwap.Select(t => new Vector2(t.X, t.Y)));
             Dictionary<int, FarmDecorSnapshot.Entry> byId = snapshot.Entries.ToDictionary(e => e.Id);
             int failed = 0;
+            int dropped = 0;
             foreach (int id in plan.Placed)
             {
                 FarmDecorSnapshot.Entry e = byId[id];
@@ -92,19 +94,19 @@ namespace TheLongestYear.Loop
                 if (!TryPlace(farm, e, swapTiles, monitor))
                 {
                     failed++;
-                    SendToStash(farm, e, stash, monitor);
+                    dropped += SendToStash(farm, e, stash, DropNear(farm, e.Tile, monitor), monitor);
                 }
             }
 
-            int overflowed = 0;
             foreach (int id in plan.Displaced)
             {
                 handled.Add(id);
-                overflowed += SendToStash(farm, byId[id], stash, monitor);
+                FarmDecorSnapshot.Entry e = byId[id];
+                dropped += SendToStash(farm, e, stash, BesideBlocker(farm, e, plan, monitor), monitor);
             }
 
             monitor.Log($"Keep Farm Decor: placed {plan.Placed.Count - failed} ({swapTiles.Count} in place of the fresh farm's own), " +
-                        $"to the stash {plan.Displaced.Count + failed} ({overflowed} item(s) to the overflow chest), " +
+                        $"to the stash {plan.Displaced.Count + failed} ({dropped} item(s) dropped on the ground beside their blocker), " +
                         $"cleared {plan.ClearedClumps.Count} large debris and {plan.DebrisTilesToClear.Count} debris tile(s).", LogLevel.Info);
         }
 
@@ -126,7 +128,7 @@ namespace TheLongestYear.Loop
             {
                 bool landed = IsOnFarm(farm, e);
                 monitor.Log($"Keep Farm Decor: placing piece {e.Id} at ({e.Tile.X}, {e.Tile.Y}) threw; " +
-                            (landed ? "it is on the farm anyway." : "sending it to the stash.") +
+                            (landed ? "it is on the farm anyway." : "sending it to the stash, else the ground beside it.") +
                             $" {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
                 return landed;
             }
@@ -139,11 +141,10 @@ namespace TheLongestYear.Loop
             return e.Obj != null && farm.objects.TryGetValue(e.Tile, out StardewValley.Object o) && o == e.Obj;
         }
 
-        // A piece that cannot go on its tile: its items go to the stash, what does not fit to the
-        // overflow chest beside it. Returns how many items went to the overflow chest.
-        private static int SendToStash(Farm farm, FarmDecorSnapshot.Entry e, JunimoStashService stash, IMonitor monitor)
+        // A piece that cannot go on its tile: its items go to the stash, what does not fit drops on
+        // the ground at dropTile. Returns how many items were dropped.
+        private static int SendToStash(Farm farm, FarmDecorSnapshot.Entry e, JunimoStashService stash, Vector2 dropTile, IMonitor monitor)
         {
-            int overflowed = 0;
             List<Item> items;
             try
             {
@@ -151,46 +152,75 @@ namespace TheLongestYear.Loop
             }
             catch (System.Exception ex)
             {
-                // Last resort: the piece's own object (a path has no item to store) goes to the
-                // overflow chest as it is, torch and all.
+                // Last resort: the piece's own object (a path has no item to drop) goes on the
+                // ground as it is, torch and all.
                 monitor.Log($"Keep Farm Decor: could not turn piece {e.Id} at ({e.Tile.X}, {e.Tile.Y}) into stash items" +
-                            (e.Obj != null ? "; storing the piece itself in the overflow chest. " : ". ") +
+                            (e.Obj != null ? "; dropping the piece itself on the ground. " : ". ") +
                             $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
                 if (e.Obj == null)
                     return 0;
-                LastResort(farm, stash, e.Obj, monitor);
+                GroundDrop.AtTile(farm, dropTile, e.Obj, monitor, $"Keep Farm Decor piece {e.Id} could not be stored");
                 return 1;
             }
+            int dropped = 0;
             foreach (Item item in items)
             {
+                Item left;
                 try
                 {
-                    Item left = stash != null ? stash.TryDeposit(item) : item;
-                    if (left == null) continue;
-                    overflowed++;
-                    if (stash != null)
-                        stash.StoreInOverflowChest(left);
-                    else
-                        // No stash service: still never delete, an overflow chest by the farmhouse door.
-                        JunimoStashService.StoreInOverflowChest(farm, null, left, monitor);
+                    left = stash != null ? stash.TryDeposit(item) : item;
                 }
                 catch (System.Exception ex)
                 {
-                    monitor.Log($"Keep Farm Decor: could not store '{item.QualifiedItemId}' x{item.Stack} from piece {e.Id}; trying the overflow chest. " +
+                    // Exception on purpose: a mod's inventory hook. The item drops instead.
+                    monitor.Log($"Keep Farm Decor: could not put '{item.QualifiedItemId}' x{item.Stack} from piece {e.Id} in the stash; dropping it. " +
                                 $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
-                    LastResort(farm, stash, item, monitor);
+                    left = item;
                 }
+                if (left == null) continue;
+                dropped++;
+                GroundDrop.AtTile(farm, dropTile, left, monitor, $"the stash had no room for Keep Farm Decor piece {e.Id}");
             }
-            return overflowed;
+            return dropped;
         }
 
-        private static void LastResort(Farm farm, JunimoStashService stash, Item item, IMonitor monitor)
-            => JunimoStashService.LastResortOverflow(farm, stash?.LastPlacedTile, item, monitor);
+        // Where a displaced piece drops: its own tile if that is open, else the nearest open tile
+        // to whatever blocked it (the planner names the tile). Never throws.
+        private static Vector2 BesideBlocker(Farm farm, FarmDecorSnapshot.Entry e, DecorPlan plan, IMonitor monitor)
+        {
+            try
+            {
+                DecorTile blocker = plan.BlockedAt.TryGetValue(e.Id, out DecorTile b) ? b : new DecorTile((int)e.Tile.X, (int)e.Tile.Y);
+                DecorTile? spot = DropSpot.ForDisplaced(e.Tiles, blocker, (x, y) => GroundDrop.IsOpen(farm, x, y), GroundDrop.SearchRadius);
+                return spot is DecorTile t ? new Vector2(t.X, t.Y) : new Vector2(blocker.X, blocker.Y);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: a mod's location hook. The piece's own tile still takes the drop.
+                monitor.Log($"Keep Farm Decor: finding a drop spot for piece {e.Id} threw; using its own tile. {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
+                return e.Tile;
+            }
+        }
+
+        // Where a piece that failed outside the plan drops: the nearest open tile to its own. Never throws.
+        private static Vector2 DropNear(Farm farm, Vector2 tile, IMonitor monitor)
+        {
+            try
+            {
+                return GroundDrop.NearestOpen(farm, tile);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: a mod's location hook. The tile itself still takes the drop.
+                monitor.Log($"Keep Farm Decor: finding a drop spot near ({tile.X}, {tile.Y}) threw; using that tile. {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
+                return tile;
+            }
+        }
 
         // Fresh-farm state of one tile for the planner. Every terrain feature (grass, saplings, trees)
         // and every bush is small debris: it shares or blocks the tile and kept decor wins. Any other
         // object the fresh farm holds is FreshObject (the planner swaps it for a kept piece with the
-        // same id); chests (the stash, an overflow chest) and furniture are OtherObject.
+        // same id); chests (the stash) and furniture are OtherObject.
         private static TileBlock Survey(Farm farm, int x, int y)
         {
             if (!farm.isTileOnMap(x, y)) return TileBlock.OffMap;

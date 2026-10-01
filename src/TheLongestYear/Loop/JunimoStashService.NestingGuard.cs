@@ -51,11 +51,14 @@ namespace TheLongestYear.Loop
                 removed = true;
                 // An empty slot, never Farmer.addItemToInventory: that stacks, and on Android the
                 // dragged stack is still in its own slot, so it would stack onto itself.
-                if (!StashNestingRefusal.TryPutInEmptySlot(Game1.player, after))
+                if (!StashNestingRefusal.TryPutInEmptySlot(Game1.player, after)
+                    // Inventory full: it drops at the player's feet (spec Addendum 2). A drop that
+                    // fails is logged by GroundDrop and the container goes back in its stash slot.
+                    && !GroundDrop.AtFeet(Game1.player, after, _monitor, "a refused container could not go back in a full inventory"))
                 {
-                    // Inventory full: never delete, the overflow chest beside the stash takes it.
-                    StoreInOverflowChest(after);
-                    _monitor.Log($"JunimoStashService: refused '{after.QualifiedItemId}' and the inventory was full; it went to the overflow chest.", LogLevel.Info);
+                    inventory[index] = after;
+                    removed = false;
+                    return;
                 }
                 removed = false;
                 StashNestingRefusal.ShowHud();

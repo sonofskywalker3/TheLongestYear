@@ -214,7 +214,7 @@ namespace TheLongestYear.Loop
             {
                 // Saves from 0.18.118 or earlier can hold a container with non-cosmetic contents
                 // (the deposit check is new). Never delete: keep the cosmetic contents nested and
-                // take everything else out as its own stash entry, or into the overflow chest if full.
+                // take everything else out as its own stash entry, or onto the ground beside the stash if full.
                 var ejected = new List<StashItemRecord>();
                 StashItemRecord record = StashNesting.Trim(_meta.StashItems[index], ejected);
 
@@ -247,8 +247,8 @@ namespace TheLongestYear.Loop
             {
                 foreach (Item extra in overflow)
                     if (TryDeposit(extra) is Item left)
-                        StoreInOverflowChest(left);
-                // The extras now live on their own (in the stash or the overflow chest). Write the
+                        DropBesideStash(left, "the stash was full when an old stashed container was emptied");
+                // The extras now live on their own (in the stash or on the ground). Write the
                 // trimmed containers and the deposited extras back, so a second populate (tly_setstash,
                 // save load) neither ejects them again nor loses the ones already in the stash.
                 // Unknown-id records stay banked, as they were before.
