@@ -63,6 +63,7 @@ namespace TheLongestYear.Loop
             _monitor = monitor;
             _meta    = meta;
             _config  = config;
+            StashItemCodec.Monitor = monitor;
         }
 
         /// <summary>
@@ -206,21 +207,27 @@ namespace TheLongestYear.Loop
             int restored = 0;
             var overflow = new List<Item>();
             int ejectedCount = 0;
-            foreach (StashItemRecord stored in _meta.StashItems)
+            var unknown = new List<StashItemRecord>();
+            int total = _meta.StashItems.Count;
+            for (int index = 0; index < _meta.StashItems.Count; index++)
             {
                 // Saves from 0.18.118 or earlier can hold a container with non-cosmetic contents
                 // (the deposit check is new). Never delete: keep the cosmetic contents nested and
-                // take everything else out as its own stash entry, or onto the ground if full.
+                // take everything else out as its own stash entry, or into the overflow chest if full.
                 var ejected = new List<StashItemRecord>();
-                StashItemRecord record = StashNesting.Trim(stored, ejected);
+                StashItemRecord record = StashNesting.Trim(_meta.StashItems[index], ejected);
 
                 // Ejected items first, so they survive even when the container's own id is unknown.
                 foreach (StashItemRecord e in ejected)
+                {
                     if (StashItemCodec.CreateFromRecord(e, _monitor, overflow) is Item loose)
                     {
                         overflow.Add(loose);
                         ejectedCount++;
                     }
+                    else
+                        _monitor.Log($"JunimoStashService: could not recreate ejected item '{e.ItemId}' from '{record.ItemId}' (unknown id).", LogLevel.Warn);
+                }
 
                 Item item = StashItemCodec.CreateFromRecord(record, _monitor, overflow);
                 if (item == null)
@@ -228,19 +235,30 @@ namespace TheLongestYear.Loop
                     _monitor.Log(
                         $"JunimoStashService: could not recreate item '{record.ItemId}' (unknown id), skipping.",
                         LogLevel.Warn);
+                    // Its nested items were handed out above (CreateFromRecord puts them in overflow).
+                    unknown.Add(record with { Contents = null, HeldObject = null });
                     continue;
                 }
                 chest.Items.Add(item);
                 restored++;
             }
-            foreach (Item extra in overflow)
-                if (TryDeposit(extra) is Item left)
-                    DropNearStash(left);
+            if (overflow.Count > 0)
+            {
+                foreach (Item extra in overflow)
+                    if (TryDeposit(extra) is Item left)
+                        StoreInOverflowChest(left);
+                // The extras now live on their own (in the stash or the overflow chest). Write the
+                // trimmed containers and the deposited extras back, so a second populate (tly_setstash,
+                // save load) neither ejects them again nor loses the ones already in the stash.
+                // Unknown-id records stay banked, as they were before.
+                BankToMeta();
+                _meta.StashItems.AddRange(unknown);
+            }
             if (ejectedCount > 0)
                 _monitor.Log($"JunimoStashService: took {ejectedCount} non-cosmetic item(s) out of stashed containers.", LogLevel.Info);
 
             _monitor.Log(
-                $"JunimoStashService: restored {restored}/{_meta.StashItems.Count} items into stash chest.",
+                $"JunimoStashService: restored {restored}/{total} items into stash chest.",
                 LogLevel.Trace);
         }
 

@@ -17,6 +17,14 @@ namespace TheLongestYear.Loop
     /// </summary>
     internal static class StashItemCodec
     {
+        /// <summary>Deepest container nesting ToRecord walks. Vanilla never nests this deep; the cap
+        /// only guards against a mod container that holds itself.</summary>
+        internal const int MaxNestingDepth = 16;
+
+        /// <summary>Log sink for the static paths that have no caller monitor (ToRecord, the mod
+        /// item-list lookup). Set by JunimoStashService.</summary>
+        internal static IMonitor Monitor;
+
         /// <summary>Snapshot one item (top-level or a tool attachment) into a record. Flavored/
         /// preserved goods (Smoked Fish, Wine, Jelly, Aged Roe, Honey, Bait, …) bake their source
         /// identity + sale price into preservedParentSheetIndex / preserve / price.Value. Recreating
@@ -24,7 +32,9 @@ namespace TheLongestYear.Loop
         /// so capture those fields when present. Plain items have no preserve identity → leave the
         /// fields null so restore doesn't touch them. A tool with slots records each slot in order
         /// (null for an empty one) so rod bait/tackle survive the loop.</summary>
-        internal static StashItemRecord ToRecord(Item item)
+        internal static StashItemRecord ToRecord(Item item) => ToRecord(item, 0);
+
+        private static StashItemRecord ToRecord(Item item, int depth)
         {
             var obj = item as StardewValley.Object;
             int quality = obj?.quality.Value ?? 0;
@@ -40,7 +50,7 @@ namespace TheLongestYear.Loop
                 {
                     attachments = new List<StashItemRecord>(tool.attachments.Count);
                     foreach (StardewValley.Object slot in tool.attachments)
-                        attachments.Add(slot == null ? null : ToRecord(slot));
+                        attachments.Add(slot == null ? null : ToRecord(slot, depth + 1));
                 }
                 if (tool.enchantments.Count > 0)
                 {
@@ -58,19 +68,29 @@ namespace TheLongestYear.Loop
                     pair.defenseBonus.Value, pair.immunityBonus.Value)
                 : null;
             List<StashItemRecord> innerRings = item is CombinedRing combined && combined.combinedRings.Count > 0
-                ? combined.combinedRings.Where(r => r != null).Select(ToRecord).ToList()
+                ? combined.combinedRings.Where(r => r != null).Select(r => ToRecord(r, depth + 1)).ToList()
                 : null;
             int? trinketSeed = item is Trinket trinket ? trinket.generationSeed.Value : null;
 
             // An empty container records null, never an empty list: the legacy rescue reads a
             // non-null list as "has contents".
             List<StashItemRecord> contents = null;
+            StashItemRecord heldObject = null;
             IList<Item> held = ContainerItems(item);
-            if (held != null && held.Any(i => i != null))
-                contents = held.Where(i => i != null).Select(ToRecord).ToList();
-            StashItemRecord heldObject = item is StardewValley.Object holder && holder.heldObject.Value != null
-                ? ToRecord(holder.heldObject.Value)
-                : null;
+            bool hasContents = held != null && held.Any(i => i != null);
+            StardewValley.Object heldValue = (item as StardewValley.Object)?.heldObject.Value;
+            if (depth >= MaxNestingDepth)
+            {
+                if (hasContents || heldValue != null)
+                    Monitor?.Log($"StashItemCodec: '{item.QualifiedItemId}' is nested more than {MaxNestingDepth} deep; its contents are not recorded.", LogLevel.Warn);
+            }
+            else
+            {
+                if (hasContents)
+                    contents = held.Where(i => i != null).Select(i => ToRecord(i, depth + 1)).ToList();
+                if (heldValue != null)
+                    heldObject = ToRecord(heldValue, depth + 1);
+            }
 
             return new StashItemRecord(
                 item.QualifiedItemId,
@@ -114,12 +134,24 @@ namespace TheLongestYear.Loop
                     ?? type.GetProperties(Public).FirstOrDefault(p => p.CanRead && p.GetIndexParameters().Length == 0 && typeof(IList<Item>).IsAssignableFrom(p.PropertyType));
                 ModItemLists[type] = member;
             }
-            return member switch
+            try
             {
-                System.Reflection.FieldInfo f => f.GetValue(item) as IList<Item>,
-                System.Reflection.PropertyInfo p => p.GetValue(item) as IList<Item>,
-                _ => null,
-            };
+                return member switch
+                {
+                    System.Reflection.FieldInfo f => f.GetValue(item) as IList<Item>,
+                    System.Reflection.PropertyInfo p => p.GetValue(item) as IList<Item>,
+                    _ => null,
+                };
+            }
+            catch (System.Reflection.TargetInvocationException ex)
+            {
+                // A mod getter that throws must not take the whole bank down (BankToMeta has
+                // already cleared the list). Treat the type as not a container from now on, so
+                // this logs once per type.
+                ModItemLists[type] = null;
+                Monitor?.Log($"StashItemCodec: reading '{type.FullName}.{member.Name}' threw ({ex.InnerException?.GetType().Name}: {ex.InnerException?.Message}); treating it as not a container.", LogLevel.Warn);
+                return null;
+            }
         }
 
         /// <summary>Remove, on the live item, everything nested that is not cosmetic, at any depth.
@@ -168,7 +200,11 @@ namespace TheLongestYear.Loop
             Item item = ItemRegistry.Create(record.ItemId, record.Quantity, record.Quality,
                 allowNull: true);
             if (item == null)
+            {
+                // The container is gone, but what it held is not: hand those items out.
+                RescueNestedOfUnknown(record, monitor, orphans);
                 return null;
+            }
 
             // A trinket's stats are rolled from its seed; the registry rolls a new random seed.
             if (record.TrinketSeed.HasValue && item is Trinket rolled)
@@ -262,6 +298,24 @@ namespace TheLongestYear.Loop
             }
 
             return item;
+        }
+
+        /// <summary>A container whose own id is unknown still had contents and a held object;
+        /// recreate them into <paramref name="orphans"/> so nothing is deleted.</summary>
+        private static void RescueNestedOfUnknown(StashItemRecord record, IMonitor monitor, List<Item> orphans)
+        {
+            var nested = new List<StashItemRecord>();
+            if (record.Contents != null)
+                nested.AddRange(record.Contents.Where(r => r != null));
+            if (record.HeldObject != null)
+                nested.Add(record.HeldObject);
+            foreach (StashItemRecord childRecord in nested)
+            {
+                if (CreateFromRecord(childRecord, monitor, orphans) is Item child)
+                    orphans.Add(child);
+                else
+                    monitor?.Log($"StashItemCodec: could not recreate '{childRecord.ItemId}' inside unknown '{record.ItemId}' (unknown id).", LogLevel.Warn);
+            }
         }
 
         /// <summary>Put a banked tool's enchantments back. Mirrors vanilla Tool.CopyEnchantments
