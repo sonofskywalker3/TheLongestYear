@@ -246,8 +246,7 @@ namespace TheLongestYear.Loop
             if (overflow.Count > 0)
             {
                 foreach (Item extra in overflow)
-                    if (TryDeposit(extra) is Item left)
-                        DropBesideStash(left, "the stash was full when an old stashed container was emptied");
+                    DepositOrDropBesideStash(extra, "the stash was full when an old stashed container was emptied");
                 // The extras now live on their own (in the stash or on the ground). Write the
                 // trimmed containers and the deposited extras back, so a second populate (tly_setstash,
                 // save load) neither ejects them again nor loses the ones already in the stash.
