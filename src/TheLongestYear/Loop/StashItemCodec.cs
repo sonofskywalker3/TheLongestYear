@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Enchantments;
+using StardewValley.Objects;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -47,6 +49,18 @@ namespace TheLongestYear.Loop
                 }
             }
 
+            StashClothingRecord clothing = item is Clothing shirt
+                ? new StashClothingRecord(shirt.clothesColor.Value.PackedValue, shirt.dyeable.Value)
+                : null;
+            StashBootsRecord boots = item is Boots pair
+                ? new StashBootsRecord(pair.appliedBootSheetIndex.Value, pair.indexInColorSheet.Value,
+                    pair.defenseBonus.Value, pair.immunityBonus.Value)
+                : null;
+            List<StashItemRecord> innerRings = item is CombinedRing combined && combined.combinedRings.Count > 0
+                ? combined.combinedRings.Where(r => r != null).Select(ToRecord).ToList()
+                : null;
+            int? trinketSeed = item is Trinket trinket ? trinket.generationSeed.Value : null;
+
             return new StashItemRecord(
                 item.QualifiedItemId,
                 item.Stack,
@@ -55,7 +69,8 @@ namespace TheLongestYear.Loop
                 hasPreserveIdentity && obj.preserve.Value.HasValue ? (int)obj.preserve.Value.Value : null,
                 hasPreserveIdentity ? obj.Price : null,
                 attachments,
-                enchantments);
+                enchantments,
+                Clothing: clothing, Boots: boots, InnerRings: innerRings, TrinketSeed: trinketSeed);
         }
 
         /// <summary>Recreate one banked item from its record: registry lookup by id/stack/quality,
@@ -67,6 +82,37 @@ namespace TheLongestYear.Loop
                 allowNull: true);
             if (item == null)
                 return null;
+
+            // A trinket's stats are rolled from its seed; the registry rolls a new random seed.
+            if (record.TrinketSeed.HasValue && item is Trinket rolled)
+                item = new Trinket(rolled.ItemId, record.TrinketSeed.Value);
+
+            if (record.Clothing != null && item is Clothing clothes)
+            {
+                clothes.clothesColor.Value = new Microsoft.Xna.Framework.Color(record.Clothing.Color);
+                clothes.dyeable.Value = record.Clothing.Dyeable;
+            }
+
+            // Tailored boots: the same four fields vanilla Boots.GetOneCopyFrom copies.
+            if (record.Boots != null && item is Boots boots)
+            {
+                boots.appliedBootSheetIndex.Value = record.Boots.AppliedBootSheetIndex;
+                boots.indexInColorSheet.Value = record.Boots.ColorIndex;
+                boots.defenseBonus.Value = record.Boots.Defense;
+                boots.immunityBonus.Value = record.Boots.Immunity;
+            }
+
+            if (record.InnerRings != null && item is CombinedRing combined)
+            {
+                combined.combinedRings.Clear();
+                foreach (StashItemRecord inner in record.InnerRings)
+                {
+                    if (CreateFromRecord(inner, monitor) is Ring ring)
+                        combined.combinedRings.Add(ring);
+                    else
+                        monitor?.Log($"StashItemCodec: could not recreate inner ring '{inner?.ItemId}' of a Combined Ring.", LogLevel.Warn);
+                }
+            }
 
             // Re-apply a flavored good's source identity + baked price (see BankToMeta). Mirrors
             // the game's own Object.GetOneCopyFrom, which copies exactly these three fields. Only
