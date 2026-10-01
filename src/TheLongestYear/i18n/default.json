@@ -45,6 +45,8 @@
     "upgrade.backpack_2.desc": "Start each loop with the 36-slot backpack.",
     "upgrade.keep_golden_scythe.name": "Keep Golden Scythe",
     "upgrade.keep_golden_scythe.desc": "Start each loop with the Golden Scythe instead of the basic scythe.",
+    "upgrade.keep_worn_gear.name": "Keep Worn Gear",
+    "upgrade.keep_worn_gear.desc": "The boots, rings and trinket you're wearing when the year rewinds stay on you.",
     "upgrade.starter_gold_1.name": "Seed Money I",
     "upgrade.starter_gold_1.desc": "Start each loop with +1,000g.",
     "upgrade.starter_gold_2.name": "Seed Money II",

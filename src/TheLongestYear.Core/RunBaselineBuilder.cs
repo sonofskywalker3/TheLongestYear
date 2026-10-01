@@ -193,6 +193,7 @@ public static class RunBaselineBuilder
             KeptEventIds = keptEvents,
             KeptStardropCount = keptStardrops,
             GrantGoldenScythe = meta.HasUpgrade("keep_golden_scythe"),
+            KeepWornGear = meta.HasUpgrade(WornGearKeep.UpgradeId),
         };
     }
 

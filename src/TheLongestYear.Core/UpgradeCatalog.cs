@@ -88,6 +88,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, 250,
             metaRequirement: null, runReachRequirement: "scythe:golden"),
 
+        // Keep Worn Gear (spec 2026-10-01, sarahwinchester97): worn boots, rings and trinkets stay
+        // on through the rewind. Priced well above Keep Golden Scythe: rings and trinkets are power.
+        new UpgradeDefinition(WornGearKeep.UpgradeId, UpgradeCategory.Loadout, WornGearKeep.Cost),
+
         // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
         // 5-tier with a more generous floor and ceiling per user feedback). Each tier
         // sets the TOTAL starting-gold bonus to its amount (not additive — owning II

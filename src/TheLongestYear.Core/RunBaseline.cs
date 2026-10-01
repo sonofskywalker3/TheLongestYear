@@ -98,6 +98,9 @@ public sealed class RunBaseline
 
     /// <summary>Grant the Golden Scythe instead of the basic scythe each run (Keep Golden Scythe).</summary>
     public bool GrantGoldenScythe { get; init; }
+
+    /// <summary>Keep Worn Gear owned: FarmerReset leaves boots, rings and trinkets equipped.</summary>
+    public bool KeepWornGear { get; init; }
 }
 
 /// <summary>One starting-animal entry. The reset code finds a building of <c>HousingType</c>
