@@ -304,6 +304,10 @@ public static class UpgradeCatalog
         // back on the same tiles. Above Keep Pet: paths give a speed boost and the layout saves clearing.
         new UpgradeDefinition(FarmDecorKeep.UpgradeId, UpgradeCategory.Buildings, FarmDecorKeep.Cost),
 
+        // Keep Farmhouse Furniture (spec 2026-10-01, Addendum 2, Jeff): every furniture piece in the
+        // farmhouse and cellar back at the same tile and rotation; non-cosmetic contents are wiped.
+        new UpgradeDefinition(FarmhouseFurnitureKeep.UpgradeId, UpgradeCategory.Buildings, FarmhouseFurnitureKeep.Cost),
+
         // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward
         // across loops, one row per room, never the Bulletin Board. Priced on a shared ladder
         // (GiftLadder): every Gift owned raises the price of the rest, 1,000 JP up to 5,000. The
