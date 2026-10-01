@@ -5,7 +5,7 @@ namespace TheLongestYear.Core;
 /// <summary>What kind of thing stands on a farm tile, as the game-bound snapshot classifies it.</summary>
 public enum FarmThingKind { Flooring, Fence, Torch, Sign, Furniture, BigCraftable, Object }
 
-/// <summary>Ground = a path or floor (terrain feature); Object = objects and furniture.</summary>
+/// <summary>Ground = a path or floor (terrain feature); Object = objects.</summary>
 public enum DecorLayer { Ground, Object }
 
 /// <summary>Why a tile cannot take decor on the fresh farm. FreshObject is a non-debris object the
@@ -20,7 +20,7 @@ public enum DecorTool { Axe, Pickaxe }
 /// <summary>One farm tile.</summary>
 public readonly record struct DecorTile(int X, int Y);
 
-/// <summary>A kept decor piece (one object, or one multi-tile furniture), the tiles it covers and,
+/// <summary>A kept decor piece (one path or one object), the tiles it covers and,
 /// for an object, its qualified item id (null when unknown).</summary>
 public sealed record DecorPiece(int Id, DecorLayer Layer, IReadOnlyList<DecorTile> Tiles, string? ItemId = null);
 

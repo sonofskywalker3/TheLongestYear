@@ -14,11 +14,11 @@ public class FarmDecorKeepTests
     [InlineData(FarmThingKind.Torch, "(O)93")]
     [InlineData(FarmThingKind.Torch, "(BC)146")]         // campfire
     [InlineData(FarmThingKind.Sign, "(BC)37")]
-    [InlineData(FarmThingKind.Furniture, "(F)1120")]
     [InlineData(FarmThingKind.BigCraftable, "(BC)152")]  // wood lamp-post
     [InlineData(FarmThingKind.BigCraftable, "(BC)153")]  // iron lamp-post
     [InlineData(FarmThingKind.BigCraftable, "(BC)108")]  // tub o' flowers
     [InlineData(FarmThingKind.BigCraftable, "(BC)TextSign")]
+    [InlineData(FarmThingKind.BigCraftable, "(BC)94")]   // singing stone (Jeff: may stay)
     public void Spec_decor_is_kept(FarmThingKind kind, string id) => Assert.True(FarmDecorKeep.IsKeptDecor(kind, id));
 
     [Theory]
@@ -34,6 +34,37 @@ public class FarmDecorKeepTests
     [InlineData(FarmThingKind.Furniture, "(F)sonofskywalker3.TheLongestYear_PlanningShrine")]
     public void Machines_crops_sprinklers_scarecrows_chests_are_never_kept(FarmThingKind kind, string id)
         => Assert.False(FarmDecorKeep.IsKeptDecor(kind, id));
+
+    // Jeff, 2026-10-01: Keep Farm Decor keeps no furniture of any kind.
+    [Theory]
+    [InlineData("(F)1120")]   // outdoor table
+    [InlineData("(F)0")]      // oak chair
+    [InlineData("(F)1376")]   // furniture lamp
+    [InlineData("(F)704")]    // dresser
+    [InlineData("(F)sonofskywalker3.TheLongestYear_PlanningShrine")]
+    public void Furniture_is_never_kept(string id) => Assert.False(FarmDecorKeep.IsKeptDecor(FarmThingKind.Furniture, id));
+
+    // Round 2 audit (Jeff, 2026-10-01): big craftables with a function are not decor.
+    [Theory]
+    [InlineData("(BC)56")]    // slime ball: breaks for slime
+    [InlineData("(BC)83")]    // wicked statue: keeps the witch out
+    [InlineData("(BC)118")]   // barrel: breakable loot container
+    [InlineData("(BC)119")]   // crate
+    [InlineData("(BC)120")]
+    [InlineData("(BC)121")]
+    [InlineData("(BC)122")]
+    [InlineData("(BC)123")]
+    [InlineData("(BC)124")]
+    [InlineData("(BC)125")]
+    [InlineData("(BC)174")]
+    [InlineData("(BC)175")]
+    [InlineData("(BC)262")]
+    [InlineData("(BC)263")]
+    [InlineData("(BC)141")]   // prairie king arcade
+    [InlineData("(BC)159")]   // junimo kart arcade
+    [InlineData("(BC)219")]   // cursed p.k. arcade
+    public void Big_craftables_with_a_function_are_never_kept(string id)
+        => Assert.False(FarmDecorKeep.IsKeptDecor(FarmThingKind.BigCraftable, id));
 
     // ----- clump rules: tool tier x debris type -----
 

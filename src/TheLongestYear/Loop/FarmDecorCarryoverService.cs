@@ -136,8 +136,6 @@ namespace TheLongestYear.Loop
         {
             if (e.Floor != null)
                 return farm.terrainFeatures.TryGetValue(e.Tile, out TerrainFeature tf) && tf == e.Floor;
-            if (e.Furniture != null)
-                return farm.furniture.Contains(e.Furniture);
             return e.Obj != null && farm.objects.TryGetValue(e.Tile, out StardewValley.Object o) && o == e.Obj;
         }
 
@@ -221,8 +219,6 @@ namespace TheLongestYear.Loop
         {
             if (e.Floor != null)
                 farm.terrainFeatures[e.Tile] = e.Floor;
-            else if (e.Furniture != null)
-                farm.furniture.Add(e.Furniture);   // OnValueAdded runs Furniture.OnAdded (lights)
             else if (e.Obj != null)
             {
                 farm.objects[e.Tile] = e.Obj;
@@ -232,9 +228,8 @@ namespace TheLongestYear.Loop
             }
         }
 
-        // A displaced piece as stash items: the path's item, a fresh fence/torch/sign/decoration
-        // (plus a torch that sat on a fence), or the furniture itself (its contents are already
-        // trimmed to cosmetic, so the stash rule holds).
+        // A displaced piece as stash items: the path's item, or a fresh fence/torch/sign/decoration
+        // (plus a torch that sat on a fence).
         private static IEnumerable<Item> ToItems(FarmDecorSnapshot.Entry e, IMonitor monitor)
         {
             if (e.Floor != null)
@@ -245,8 +240,6 @@ namespace TheLongestYear.Loop
                 else
                     monitor.Log($"Keep Farm Decor: path '{e.Floor.whichFloor.Value}' at ({e.Tile.X}, {e.Tile.Y}) has no item to put in the stash, so it is not restored.", LogLevel.Warn);
             }
-            else if (e.Furniture != null)
-                yield return e.Furniture;
             else if (e.Obj != null)
             {
                 yield return ItemRegistry.Create(e.Obj.QualifiedItemId);
