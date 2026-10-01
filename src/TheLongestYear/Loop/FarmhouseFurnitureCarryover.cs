@@ -29,6 +29,8 @@ namespace TheLongestYear.Loop
         {
             public readonly List<Entry> Entries = new();
             public int WipedContents;
+            /// <summary>The old house's upgrade level: house tiles shift by level like a vanilla upgrade.</summary>
+            public int HouseLevel;
         }
 
         private const int CellarHouseLevel = 3;
@@ -47,10 +49,28 @@ namespace TheLongestYear.Loop
                 monitor.Log("Keep Farmhouse Furniture: no farmhouse before the rewind; nothing kept.", LogLevel.Warn);
                 return snap;
             }
-            int failed = LiftFrom(house, fromCellar: false, snap, monitor);
-            GameLocation cellar = FindCellar(house, monitor);
-            if (cellar != null)
-                failed += LiftFrom(cellar, fromCellar: true, snap, monitor);
+            int failed = 0;
+            try
+            {
+                snap.HouseLevel = house.upgradeLevel;
+                failed += LiftFrom(house, fromCellar: false, snap, monitor);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: a mod's location hook. What was lifted so far is kept.
+                monitor.Log($"Keep Farmhouse Furniture: lifting from the house failed partway; keeping the {snap.Entries.Count} piece(s) lifted so far. {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+            }
+            try
+            {
+                GameLocation cellar = FindCellar(house, monitor);
+                if (cellar != null)
+                    failed += LiftFrom(cellar, fromCellar: true, snap, monitor);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: a mod's location hook. What was lifted so far is kept.
+                monitor.Log($"Keep Farmhouse Furniture: lifting from the cellar failed partway; keeping what was lifted. {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+            }
 
             monitor.Log($"Keep Farmhouse Furniture: lifted {snap.Entries.Count} piece(s) out of the house before the rewind, " +
                         $"wiped {snap.WipedContents} non-cosmetic item(s) inside them" +
@@ -64,22 +84,27 @@ namespace TheLongestYear.Loop
             int failed = 0;
             foreach (Furniture piece in location.furniture.ToList())
             {
-                if (piece == null || !FarmhouseFurnitureKeep.IsKeptPiece(piece.QualifiedItemId)) continue;
-                var tile = piece.TileLocation;
+                if (piece == null) continue;
+                Vector2 tile = Vector2.Zero;
+                bool removed = false;
                 try
                 {
+                    if (!FarmhouseFurnitureKeep.IsKeptPiece(piece.QualifiedItemId)) continue;
+                    tile = piece.TileLocation;
                     location.furniture.Remove(piece);
+                    removed = true;
                 }
                 catch (System.Exception ex)
                 {
-                    // Exception on purpose: a mod's collection hook. Kept when it is off the old house anyway.
-                    if (location.furniture.Contains(piece))
+                    // Exception on purpose: a mod's item or collection hook. Kept when it is off the old house anyway.
+                    removed = !location.furniture.Contains(piece);
+                    if (!removed)
                     {
                         failed++;
-                        monitor.Log($"Keep Farmhouse Furniture: lifting '{piece.QualifiedItemId}' at ({tile.X}, {tile.Y}) threw; it stays with the old house. {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
-                        continue;
+                        monitor.Log($"Keep Farmhouse Furniture: lifting a piece at ({tile.X}, {tile.Y}) threw; it stays with the old house. {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
                     }
                 }
+                if (!removed) continue;
                 snap.WipedContents += WipeNonCosmetic(piece, monitor);
                 snap.Entries.Add(new Entry { Piece = piece, Tile = tile, FromCellar = fromCellar });
             }
@@ -140,9 +165,13 @@ namespace TheLongestYear.Loop
             Vector2 door = DoorTile(house, monitor);
             var handled = new HashSet<Entry>();
             var unplaced = new List<Entry>();
+            // The kept set replaces the starter set (no second bed or table). The starter bed is held
+            // back in case the house would otherwise end without a bed.
+            BedFurniture starterBed = null;
             try
             {
-                RestoreInto(house, snap, door, handled, unplaced, monitor);
+                starterBed = house.furniture.OfType<BedFurniture>().FirstOrDefault();
+                RestoreInto(house, snap, starterBed, handled, unplaced, monitor);
             }
             catch (System.Exception ex)
             {
@@ -150,28 +179,40 @@ namespace TheLongestYear.Loop
                 List<Entry> left = snap.Entries.Where(e => !handled.Contains(e)).ToList();
                 monitor.Log($"Keep Farmhouse Furniture: the restore failed partway; dropping the {left.Count} piece(s) not yet placed by the front door.\n{ex}", LogLevel.Error);
                 unplaced.AddRange(left.Where(e => !house.furniture.Contains(e.Piece)));
+                EnsureStarterBed(house, starterBed, monitor);
             }
 
             int dropped = 0;
             foreach (Entry e in unplaced)
-                if (GroundDrop.Near(house, door, e.Piece, monitor, $"Keep Farmhouse Furniture piece from ({e.Tile.X}, {e.Tile.Y}) had no room"))
+                if (GroundDrop.Near(house, door, e.Piece, monitor, $"Keep Farmhouse Furniture piece for ({e.Tile.X}, {e.Tile.Y}) had no room"))
                     dropped++;
             int keptUnplaced = unplaced.Count(snap.Entries.Contains);
             monitor.Log($"Keep Farmhouse Furniture: placed {snap.Entries.Count - keptUnplaced} of {snap.Entries.Count} kept piece(s), " +
                         $"dropped {dropped} by the front door at ({door.X}, {door.Y})" +
                         (dropped < unplaced.Count ? $", {unplaced.Count - dropped} could not be dropped (see errors)." : "."), LogLevel.Info);
+            if (!HasSleepableBed(house))
+                monitor.Log("Keep Farmhouse Furniture: the house ends the rewind with no bed the player can sleep in; " +
+                            "a bed dropped by the front door must be placed before sleeping.", LogLevel.Error);
         }
 
-        private static void RestoreInto(FarmHouse house, Snapshot snap, Vector2 door, HashSet<Entry> handled, List<Entry> unplaced, IMonitor monitor)
+        private static void RestoreInto(FarmHouse house, Snapshot snap, BedFurniture starterBed, HashSet<Entry> handled, List<Entry> unplaced, IMonitor monitor)
         {
-            // The kept set replaces the starter set (no second bed or table). The starter bed is held
-            // back in case the house would otherwise end without a bed.
-            BedFurniture starterBed = house.furniture.OfType<BedFurniture>().FirstOrDefault();
             int starterCount = house.furniture.Count;
             house.furniture.Clear();
             monitor.Log($"Keep Farmhouse Furniture: removed {starterCount} starter piece(s).", LogLevel.Trace);
 
-            GameLocation cellar = house.upgradeLevel >= CellarHouseLevel ? FindCellar(house, monitor) : null;
+            // House tiles move with the house level the way a vanilla upgrade moves them
+            // (FarmHouse.moveObjectsForHouseUpgrade); the cellar's map never changes.
+            int level = house.upgradeLevel;
+            (int dx, int dy) = FarmhouseFurnitureKeep.TileShift(snap.HouseLevel, level);
+            if (dx != 0 || dy != 0)
+            {
+                foreach (Entry e in snap.Entries.Where(e => !e.FromCellar))
+                    e.Tile += new Vector2(dx, dy);
+                monitor.Log($"Keep Farmhouse Furniture: house level {snap.HouseLevel} to {level}; house tiles shift by ({dx}, {dy}).", LogLevel.Info);
+            }
+
+            GameLocation cellar = level >= CellarHouseLevel ? FindCellar(house, monitor) : null;
             IReadOnlyList<int> order = FarmhouseFurnitureKeep.PlacementOrder(
                 snap.Entries.Select(e => e.Piece.furniture_type.Value == Furniture.rug).ToList());
             foreach (int index in order)
@@ -183,9 +224,9 @@ namespace TheLongestYear.Loop
                     unplaced.Add(e);
             }
 
-            bool bedPlaced = house.furniture.Any(f => f is BedFurniture);
-            Entry keptBed = unplaced.FirstOrDefault(e => e.Piece is BedFurniture && !e.FromCellar);
-            BedFallback fallback = FarmhouseFurnitureKeep.ForBed(bedPlaced, keptBed != null);
+            Entry keptBed = unplaced.FirstOrDefault(e => !e.FromCellar && e.Piece is BedFurniture bed
+                && Kind(bed) is BedKind kind && FarmhouseFurnitureKeep.IsStarterSpotCandidate(kind, level));
+            BedFallback fallback = FarmhouseFurnitureKeep.ForBed(house.GetPlayerBed() != null, HasSleepableBed(house), keptBed != null);
             Vector2 bedTile = starterBed?.TileLocation ?? FallbackStarterBedTile;
             if (fallback == BedFallback.KeptBedAtStarterSpot)
             {
@@ -198,7 +239,7 @@ namespace TheLongestYear.Loop
                     return;
                 }
                 keptBed.Tile = was;
-                fallback = BedFallback.StarterBed;
+                fallback = FarmhouseFurnitureKeep.ForBed(house.GetPlayerBed() != null, HasSleepableBed(house), legalKeptBedUnplaced: false);
             }
             if (fallback == BedFallback.StarterBed && starterBed != null)
             {
@@ -209,6 +250,32 @@ namespace TheLongestYear.Loop
                     unplaced.Add(starter);
             }
         }
+
+        // After a failed restore: the starter bed goes back whenever the house has no bed to sleep in.
+        // Never throws.
+        private static void EnsureStarterBed(FarmHouse house, BedFurniture starterBed, IMonitor monitor)
+        {
+            try
+            {
+                if (starterBed == null || house.furniture.Contains(starterBed)) return;
+                BedFallback fallback = FarmhouseFurnitureKeep.ForBed(house.GetPlayerBed() != null, HasSleepableBed(house), legalKeptBedUnplaced: false);
+                if (fallback != BedFallback.StarterBed) return;
+                house.furniture.Add(starterBed);
+                monitor.Log("Keep Farmhouse Furniture: put the starter bed back after the failed restore.", LogLevel.Info);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: a mod's collection hook. The no-bed error below still reports it.
+                monitor.Log($"Keep Farmhouse Furniture: putting the starter bed back threw. {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+            }
+        }
+
+        // An adult bed is in the house (a child bed is not the player's).
+        private static bool HasSleepableBed(FarmHouse house)
+            => house.furniture.OfType<BedFurniture>().Any(b => Kind(b) is BedKind kind && kind != BedKind.Child);
+
+        private static BedKind? Kind(BedFurniture bed)
+            => System.Enum.TryParse(bed.bedType.ToString(), out BedKind kind) ? kind : null;
 
         // Place one piece on its own tile when its room exists and the vanilla check allows it. True
         // when it is in the room. Never throws.
@@ -228,17 +295,22 @@ namespace TheLongestYear.Loop
             {
                 // Exception on purpose: a mod's furniture or collection hook.
                 bool landed = target != null && target.furniture.Contains(e.Piece);
-                monitor.Log($"Keep Farmhouse Furniture: placing '{e.Piece.QualifiedItemId}' at ({e.Tile.X}, {e.Tile.Y}) threw; " +
+                monitor.Log($"Keep Farmhouse Furniture: placing a piece at ({e.Tile.X}, {e.Tile.Y}) threw; " +
                             (landed ? "it is in the house anyway." : "dropping it by the front door.") +
                             $" {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
                 return landed;
             }
         }
 
-        /// <summary>The vanilla placement check at the piece's own tile and rotation. A wall piece the
-        /// check would slide to another wall row does not fit (it would not be where the player put it).</summary>
+        /// <summary>The vanilla placement check at the piece's tile and rotation, plus vanilla's bed
+        /// rule from BedFurniture.placementAction (a double bed needs house level 1, a child bed
+        /// level 2), which canBePlacedHere does not check. A wall piece the check would slide to
+        /// another wall row does not fit (it would not be where the player put it).</summary>
         internal static bool Fits(GameLocation target, Entry e)
         {
+            if (e.Piece is BedFurniture bed && target is FarmHouse house
+                && Kind(bed) is BedKind kind && !FarmhouseFurnitureKeep.IsBedLegal(kind, house.upgradeLevel))
+                return false;
             if (e.Piece.TileLocation != e.Tile)
                 e.Piece.TileLocation = e.Tile;
             bool ok = e.Piece.canBePlacedHere(target, e.Tile, PlacementMask, showError: false);
