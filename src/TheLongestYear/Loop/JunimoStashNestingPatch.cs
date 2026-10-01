@@ -45,7 +45,9 @@ namespace TheLongestYear.Loop
     /// item through to the slot watcher instead is no fix: addItem would then report success and
     /// vanilla would call removeItemFromInventory on the instance the watcher just handed back.
     /// So for the stash: an item still in the inventory stays where it is; one already lifted out
-    /// (PC: the menu's held item) goes to an empty slot, or the overflow chest when there is none.
+    /// onto this menu's cursor (PC: the held item) goes to an empty slot, or drops at the player's
+    /// feet when there is none (spec Addendum 2). The cursor item is read and written through
+    /// MenuHeldItem: a property on PC, a field on Android.
     /// </summary>
     [HarmonyPatch(typeof(Chest), nameof(Chest.grabItemFromInventory))]
     internal static class JunimoStashGrabPatch
@@ -60,16 +62,60 @@ namespace TheLongestYear.Loop
             if (blocked.Count == 0)
                 return true;
 
-            if (!ContainsInstance(who.Items, item))
-            {
-                if (Game1.activeClickableMenu is ItemGrabMenu menu && ReferenceEquals(menu.heldItem, item))
-                    menu.heldItem = null;
-                if (!StashNestingRefusal.TryPutInEmptySlot(who, item))
-                    JunimoStashService.StoreInOverflowChest(Game1.getFarm(), __instance.TileLocation, item, StashItemCodec.Monitor);
-            }
+            // Only an item lifted onto this menu's cursor is moved. Anything else (still in its own
+            // slot, or from a caller we do not know) is refused where it is, never copied.
+            if (!ContainsInstance(who.Items, item)
+                && Game1.activeClickableMenu is MenuWithInventory menu
+                && ReferenceEquals(MenuHeldItem.Get(menu), item))
+                HandBackFromCursor(menu, who, item);
             StashNestingRefusal.ShowHud();
             PatchLog.Trace($"JunimoStashGrabPatch: refused '{item.QualifiedItemId}', holds {string.Join(", ", blocked)}.");
             return false;
+        }
+
+        /// <summary>The refused item is on the cursor: put it in an empty inventory slot, or at the
+        /// player's feet when there is none, and only then take it off the cursor. If anything
+        /// fails, it goes back on the cursor (and out of the slot it was put in), so it is never
+        /// lost and never doubled.</summary>
+        private static void HandBackFromCursor(MenuWithInventory menu, Farmer who, Item item)
+        {
+            bool dropped = false;
+            try
+            {
+                if (!StashNestingRefusal.TryPutInEmptySlot(who, item))
+                {
+                    dropped = GroundDrop.AtFeet(who, item, StashItemCodec.Monitor,
+                        "a refused container could not go back in a full inventory");
+                    if (!dropped)
+                        return; // Still on the cursor: nothing moved, nothing lost.
+                }
+                if (!MenuHeldItem.TrySet(menu, null))
+                    throw new System.InvalidOperationException("the cursor item could not be cleared");
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: this runs inside the game's own menu click. Undo the move.
+                for (int i = 0; i < who.Items.Count; i++)
+                    if (ReferenceEquals(who.Items[i], item))
+                        who.Items[i] = null;
+                bool back = !dropped && SafeSetCursor(menu, item);
+                PatchLog.Warn($"JunimoStashGrabPatch: handing back '{item.QualifiedItemId}' threw ({ex.GetType().Name}: {ex.Message}); " +
+                              (dropped ? "it was dropped at the player's feet and may still be on the cursor." : back ? "it stays on the cursor." : "it could not be put back on the cursor."));
+            }
+        }
+
+        private static bool SafeSetCursor(MenuWithInventory menu, Item item)
+        {
+            try
+            {
+                return MenuHeldItem.TrySet(menu, item);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: the restore inside a catch must not throw again.
+                PatchLog.Warn($"JunimoStashGrabPatch: restoring the cursor item threw. {ex.GetType().Name}: {ex.Message}");
+                return false;
+            }
         }
 
         private static bool ContainsInstance(IList<Item> items, Item item)
