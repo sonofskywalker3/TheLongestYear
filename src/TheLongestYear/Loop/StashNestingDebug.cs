@@ -26,6 +26,7 @@ namespace TheLongestYear.Loop
                 case "hats": Deposit(chest, Dresser(monitor, withRing: false), monitor); break;
                 case "ring": Deposit(chest, Dresser(monitor, withRing: true), monitor); break;
                 case "gear": foreach (Item i in Gear()) Deposit(chest, i, monitor); break;
+                case "rod": Deposit(chest, BaitedRod(), monitor); break;
                 case "legacy":
                     chest.Items.Add(Dresser(monitor, withRing: true));
                     monitor.Log("tly_stashnest: legacy dresser (hat, shirt, pants, ring) placed straight in the stash.", LogLevel.Info);
@@ -81,6 +82,15 @@ namespace TheLongestYear.Loop
             return new List<Item> { pants, boots, ring, trinket };
         }
 
+        // A rod with bait and tackle, deposited through Chest.addItem (the nesting guard's path).
+        private static Item BaitedRod()
+        {
+            var rod = ItemRegistry.Create<Tool>("(T)IridiumRod");
+            if (rod.attachments.Count > 0) rod.attachments[0] = ItemRegistry.Create<StardewValley.Object>("(O)685", 20);
+            if (rod.attachments.Count > 1) rod.attachments[1] = ItemRegistry.Create<StardewValley.Object>("(O)686");
+            return rod;
+        }
+
         private static void Fill(JunimoStashService stash, IMonitor monitor)
         {
             int added = 0;
@@ -122,6 +132,8 @@ namespace TheLongestYear.Loop
             if (item is Boots b) parts.Add($"boots={b.appliedBootSheetIndex.Value}/{b.defenseBonus.Value}/{b.immunityBonus.Value}");
             if (item is CombinedRing r) parts.Add($"rings=[{string.Join(",", r.combinedRings.Select(x => x.QualifiedItemId))}]");
             if (item is Trinket t) parts.Add($"seed={t.generationSeed.Value}");
+            if (item is Tool tool && tool.attachments.Count > 0)
+                parts.Add($"attachments=[{string.Join(", ", tool.attachments.Select(a => a == null ? "empty" : $"{a.QualifiedItemId} x{a.Stack}"))}]");
             if (StashItemCodec.ContainerItems(item) is IList<Item> inside && inside.Any(i => i != null))
                 parts.Add($"contents=[{string.Join(", ", inside.Where(i => i != null).Select(Describe))}]");
             return string.Join(" ", parts);

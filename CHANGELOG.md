@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- **A dresser in the Junimo Stash keeps what's in it.** Hats, shirts, pants, furniture, wallpaper and flooring stay inside through the rewind. Anything else in it (rings, boots, fish, tools) has to come out first: the stash hands the dresser back with a message. A dresser stashed by an older version with other things inside gets them taken out into their own stash slots, or set down beside the stash if it is full. Reported by sarahwinchester97.
+- **Stashed items keep their looks and stats.** Dyed shirts and pants keep their colour, tailored boots keep their stats, a Combined Ring keeps both rings and a trinket keeps its rolled stats. A fishing rod keeps its bait and tackle.
+
+### Added
+
+- **Keep Farm Decor** (Junimo Upgrades, Buildings, 500 JP). Start each loop with your paths, fences, gates, lamp-posts, torches, braziers, signs and decorations where you left them. Furniture is not kept. A stump or hollow log in the way is cleared if your kept axe could break it, and you get its hardwood; a boulder is cleared if your kept pickaxe could. A piece with no room goes to the stash. If the stash is full, it is left where it was blocked, so pick it up on day 1.
+- **Keep Worn Gear** (Junimo Upgrades, Loadout, 1,000 JP). The boots, rings and trinket you're wearing when the year rewinds stay on you.
+- **Keep Farmhouse Furniture** (Junimo Upgrades, Buildings, 250 JP). Your farmhouse furniture stays where you put it, dressers included. Anything inside it that isn't a hat, shirt, pants, furniture, wallpaper or flooring is wiped, so move it to the stash first. If your house is a different size after the rewind, furniture moves with its room. Furniture with no room in the new house is left by the front door. Pick it up on day 1.
+
 ## 0.18.118 - 2026-09-30
 
 2576 tests. Rolls up 0.18.99 to 0.18.118.
