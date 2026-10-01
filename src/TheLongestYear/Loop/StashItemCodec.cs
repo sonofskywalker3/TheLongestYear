@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Enchantments;
 using StardewValley.Objects;
+using StardewValley.Objects.Trinkets;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -61,6 +62,16 @@ namespace TheLongestYear.Loop
                 : null;
             int? trinketSeed = item is Trinket trinket ? trinket.generationSeed.Value : null;
 
+            // An empty container records null, never an empty list: the legacy rescue reads a
+            // non-null list as "has contents".
+            List<StashItemRecord> contents = null;
+            IList<Item> held = ContainerItems(item);
+            if (held != null && held.Any(i => i != null))
+                contents = held.Where(i => i != null).Select(ToRecord).ToList();
+            StashItemRecord heldObject = item is StardewValley.Object holder && holder.heldObject.Value != null
+                ? ToRecord(holder.heldObject.Value)
+                : null;
+
             return new StashItemRecord(
                 item.QualifiedItemId,
                 item.Stack,
@@ -70,13 +81,89 @@ namespace TheLongestYear.Loop
                 hasPreserveIdentity ? obj.Price : null,
                 attachments,
                 enchantments,
+                Contents: contents, HeldObject: heldObject,
                 Clothing: clothing, Boots: boots, InnerRings: innerRings, TrinketSeed: trinketSeed);
         }
 
-        /// <summary>Recreate one banked item from its record: registry lookup by id/stack/quality,
-        /// the flavored-good identity, then a tool's attachment slots and enchantments. Null when the
-        /// id is unknown to this game (mod item from a removed mod, typo).</summary>
+        // Mod item types that expose their own item list, resolved once per type.
+        private static readonly Dictionary<System.Type, System.Reflection.MemberInfo> ModItemLists = new();
+
+        /// <summary>The live item list a container item holds: a dresser's or fish tank's
+        /// heldItems, a carried chest's Items, or a mod bag's own list. Null for anything else.</summary>
+        internal static IList<Item> ContainerItems(Item item)
+        {
+            switch (item)
+            {
+                case StorageFurniture storage: return storage.heldItems;
+                case Chest chest: return chest.Items;
+            }
+            return ModItemList(item);
+        }
+
+        // A mod bag: any public instance field or readable property holding an IList<Item>, on a type
+        // the game assembly does not define. Game types are covered by the switch above.
+        private static IList<Item> ModItemList(Item item)
+        {
+            System.Type type = item?.GetType();
+            if (type == null || type.Assembly == typeof(Item).Assembly)
+                return null;
+            if (!ModItemLists.TryGetValue(type, out System.Reflection.MemberInfo member))
+            {
+                const System.Reflection.BindingFlags Public = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+                member = (System.Reflection.MemberInfo)type.GetFields(Public).FirstOrDefault(f => typeof(IList<Item>).IsAssignableFrom(f.FieldType))
+                    ?? type.GetProperties(Public).FirstOrDefault(p => p.CanRead && p.GetIndexParameters().Length == 0 && typeof(IList<Item>).IsAssignableFrom(p.PropertyType));
+                ModItemLists[type] = member;
+            }
+            return member switch
+            {
+                System.Reflection.FieldInfo f => f.GetValue(item) as IList<Item>,
+                System.Reflection.PropertyInfo p => p.GetValue(item) as IList<Item>,
+                _ => null,
+            };
+        }
+
+        /// <summary>Remove, on the live item, everything nested that is not cosmetic, at any depth.
+        /// For decor kept on the farm (Keep Farm Decor): an outdoor dresser keeps its hats; its ring
+        /// is wiped with the rest of the farm, exactly as a chest's contents are.</summary>
+        internal static void StripNonCosmetic(Item container)
+        {
+            IList<Item> items = ContainerItems(container);
+            if (items != null)
+                for (int i = items.Count - 1; i >= 0; i--)
+                {
+                    Item child = items[i];
+                    if (child == null) continue;
+                    if (StashNesting.IsCosmetic(child.QualifiedItemId))
+                        StripNonCosmetic(child);
+                    else
+                        items.RemoveAt(i);
+                }
+            if (container is StardewValley.Object holder && holder.heldObject.Value is StardewValley.Object held)
+            {
+                if (StashNesting.IsCosmetic(held.QualifiedItemId))
+                    StripNonCosmetic(held);
+                else
+                    holder.heldObject.Value = null;
+            }
+        }
+
+        /// <summary>Recreate one banked item; nested items with nowhere to go are logged and lost.
+        /// Callers that must never lose an item use the overload with an orphan list.</summary>
         internal static Item CreateFromRecord(StashItemRecord record, IMonitor monitor)
+        {
+            var orphans = new List<Item>();
+            Item item = CreateFromRecord(record, monitor, orphans);
+            if (orphans.Count > 0)
+                monitor?.Log($"StashItemCodec: {orphans.Count} nested item(s) of '{record.ItemId}' had nowhere to go.", LogLevel.Warn);
+            return item;
+        }
+
+        /// <summary>Recreate one banked item from its record: registry lookup by id/stack/quality,
+        /// the flavored-good identity, then a tool's attachment slots and enchantments, then a
+        /// container's contents and held object. Null when the id is unknown to this game (mod item
+        /// from a removed mod, typo). Nested items the recreated item cannot hold (its type no
+        /// longer holds items) go to <paramref name="orphans"/> instead of being lost.</summary>
+        internal static Item CreateFromRecord(StashItemRecord record, IMonitor monitor, List<Item> orphans)
         {
             Item item = ItemRegistry.Create(record.ItemId, record.Quantity, record.Quality,
                 allowNull: true);
@@ -107,7 +194,7 @@ namespace TheLongestYear.Loop
                 combined.combinedRings.Clear();
                 foreach (StashItemRecord inner in record.InnerRings)
                 {
-                    if (CreateFromRecord(inner, monitor) is Ring ring)
+                    if (CreateFromRecord(inner, monitor, orphans) is Ring ring)
                         combined.combinedRings.Add(ring);
                     else
                         monitor?.Log($"StashItemCodec: could not recreate inner ring '{inner?.ItemId}' of a Combined Ring.", LogLevel.Warn);
@@ -138,7 +225,7 @@ namespace TheLongestYear.Loop
                 {
                     StashItemRecord slotRecord = record.Attachments[i];
                     if (slotRecord == null) continue;
-                    if (CreateFromRecord(slotRecord, monitor) is StardewValley.Object attachment)
+                    if (CreateFromRecord(slotRecord, monitor, orphans) is StardewValley.Object attachment)
                         tool.attachments[i] = attachment;
                     else
                         monitor?.Log(
@@ -149,6 +236,30 @@ namespace TheLongestYear.Loop
 
             if (item is Tool enchanted && record.Enchantments != null)
                 RestoreEnchantments(enchanted, record, monitor);
+
+            if (record.Contents != null)
+            {
+                IList<Item> target = ContainerItems(item);
+                foreach (StashItemRecord childRecord in record.Contents)
+                {
+                    if (childRecord == null) continue;
+                    Item child = CreateFromRecord(childRecord, monitor, orphans);
+                    if (child == null)
+                        monitor?.Log($"StashItemCodec: could not recreate '{childRecord.ItemId}' inside '{record.ItemId}' (unknown id).", LogLevel.Warn);
+                    else if (target != null)
+                        target.Add(child);
+                    else
+                        orphans.Add(child);
+                }
+            }
+            if (record.HeldObject != null)
+            {
+                Item heldItem = CreateFromRecord(record.HeldObject, monitor, orphans);
+                if (item is StardewValley.Object holder && heldItem is StardewValley.Object heldObj)
+                    holder.heldObject.Value = heldObj;
+                else if (heldItem != null)
+                    orphans.Add(heldItem);
+            }
 
             return item;
         }

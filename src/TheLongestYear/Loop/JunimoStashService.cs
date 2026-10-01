@@ -100,6 +100,7 @@ namespace TheLongestYear.Loop
                 {
                     staleTiles.Add(pair.Key);
                     CollectCarriedModData(existing, carried);
+                    RescueLegacyRecords(existing);
                 }
             }
             foreach (Vector2 staleTile in staleTiles)
@@ -203,9 +204,25 @@ namespace TheLongestYear.Loop
                 return;
 
             int restored = 0;
-            foreach (StashItemRecord record in _meta.StashItems)
+            var overflow = new List<Item>();
+            int ejectedCount = 0;
+            foreach (StashItemRecord stored in _meta.StashItems)
             {
-                Item item = StashItemCodec.CreateFromRecord(record, _monitor);
+                // Saves from 0.18.118 or earlier can hold a container with non-cosmetic contents
+                // (the deposit check is new). Never delete: keep the cosmetic contents nested and
+                // take everything else out as its own stash entry, or onto the ground if full.
+                var ejected = new List<StashItemRecord>();
+                StashItemRecord record = StashNesting.Trim(stored, ejected);
+
+                // Ejected items first, so they survive even when the container's own id is unknown.
+                foreach (StashItemRecord e in ejected)
+                    if (StashItemCodec.CreateFromRecord(e, _monitor, overflow) is Item loose)
+                    {
+                        overflow.Add(loose);
+                        ejectedCount++;
+                    }
+
+                Item item = StashItemCodec.CreateFromRecord(record, _monitor, overflow);
                 if (item == null)
                 {
                     _monitor.Log(
@@ -216,6 +233,11 @@ namespace TheLongestYear.Loop
                 chest.Items.Add(item);
                 restored++;
             }
+            foreach (Item extra in overflow)
+                if (TryDeposit(extra) is Item left)
+                    DropNearStash(left);
+            if (ejectedCount > 0)
+                _monitor.Log($"JunimoStashService: took {ejectedCount} non-cosmetic item(s) out of stashed containers.", LogLevel.Info);
 
             _monitor.Log(
                 $"JunimoStashService: restored {restored}/{_meta.StashItems.Count} items into stash chest.",
