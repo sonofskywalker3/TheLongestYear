@@ -6,6 +6,16 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BEFORE RELEASING 0.18.135: Jeff tests by hand (asked 2026-10-01 to be reminded)
+- Keep Worn Gear trinket slot: claim the Combat mastery perk (that is what opens the trinket
+  slot), wear a trinket, buy Keep Worn Gear, rewind. The trinket is still worn and the slot still
+  shows. Then the same rewind WITHOUT a trinket worn: the slot should be gone again until the
+  Combat mastery perk is claimed again (Keep Mastery owners re-claim it at the pedestal).
+- Android device: the mod loads; drag a dresser holding a ring into the stash (refused, back in
+  your inventory).
+- PC, full inventory: same drag, the dresser lands at your feet.
+- Night after a Keep Farm Decor rewind: kept torches and lamp-posts glow.
+
 ### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
 Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
 same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
