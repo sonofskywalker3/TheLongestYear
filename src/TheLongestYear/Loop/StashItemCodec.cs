@@ -154,31 +154,6 @@ namespace TheLongestYear.Loop
             }
         }
 
-        /// <summary>Remove, on the live item, everything nested that is not cosmetic, at any depth.
-        /// For decor kept on the farm (Keep Farm Decor): an outdoor dresser keeps its hats; its ring
-        /// is wiped with the rest of the farm, exactly as a chest's contents are.</summary>
-        internal static void StripNonCosmetic(Item container)
-        {
-            IList<Item> items = ContainerItems(container);
-            if (items != null)
-                for (int i = items.Count - 1; i >= 0; i--)
-                {
-                    Item child = items[i];
-                    if (child == null) continue;
-                    if (StashNesting.IsCosmetic(child.QualifiedItemId))
-                        StripNonCosmetic(child);
-                    else
-                        items.RemoveAt(i);
-                }
-            if (container is StardewValley.Object holder && holder.heldObject.Value is StardewValley.Object held)
-            {
-                if (StashNesting.IsCosmetic(held.QualifiedItemId))
-                    StripNonCosmetic(held);
-                else
-                    holder.heldObject.Value = null;
-            }
-        }
-
         /// <summary>Recreate one banked item; nested items with nowhere to go are logged and lost.
         /// Callers that must never lose an item use the overload with an orphan list.</summary>
         internal static Item CreateFromRecord(StashItemRecord record, IMonitor monitor)

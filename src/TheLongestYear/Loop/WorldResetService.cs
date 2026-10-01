@@ -287,7 +287,7 @@ namespace TheLongestYear.Loop
             // whose animal is gone keeps its last snapshot.
             HerdBookService.RefreshBeforeReset(_meta, _monitor);
 
-            // 0g. Keep Farm Decor: lift paths, fences, lights, signs and outdoor furniture off the
+            // 0g. Keep Farm Decor: lift paths, fences, lights, signs and decorations off the
             // farm before loadForNewGame discards it; they go back at step 13a. Held in memory like
             // the display options above: the reset is one call.
             FarmDecorSnapshot keptDecor = _meta.HasUpgrade(FarmDecorKeep.UpgradeId)

@@ -23,11 +23,8 @@ namespace TheLongestYear.Loop
             public Vector2 Tile;
             public Flooring Floor;               // Ground layer
             public StardewValley.Object Obj;     // fence, torch, sign, decor big craftable
-            public Furniture Furniture;          // outdoor furniture
             public List<DecorTile> Tiles;
         }
-
-        private const int TileSize = 64;
 
         public readonly List<Entry> Entries = new();
 
@@ -36,7 +33,7 @@ namespace TheLongestYear.Loop
             var snap = new FarmDecorSnapshot();
             if (farm == null) return snap;
 
-            // Each piece is lifted on its own: one that throws (a mod's object or furniture hook)
+            // Each piece is lifted on its own: one that throws (a mod's object hook)
             // stays on the farm, logged, and the rest of the reset goes on.
             int failed = 0;
             foreach (var pair in farm.terrainFeatures.Pairs.ToList())
@@ -62,20 +59,7 @@ namespace TheLongestYear.Loop
                     snap.Add(DecorLayer.Object, pair.Key, OneTile(pair.Key), obj: obj);
             }
 
-            foreach (Furniture f in farm.furniture.ToList())
-            {
-                if (!FarmDecorKeep.IsKeptDecor(FarmThingKind.Furniture, f.QualifiedItemId)) continue;
-                if (!TryLift(monitor, f.QualifiedItemId, f.TileLocation,
-                        remove: () =>
-                        {
-                            StashItemCodec.StripNonCosmetic(f);
-                            farm.furniture.Remove(f);
-                        },
-                        stillThere: () => farm.furniture.Contains(f)))
-                    failed++;
-                else
-                    snap.Add(DecorLayer.Object, f.TileLocation, TilesOf(f.boundingBox.Value), furniture: f);
-            }
+            // No furniture (Jeff, 2026-10-01): it stays with the old farm like everything else.
 
             monitor.Log($"Keep Farm Decor: lifted {snap.Entries.Count} piece(s) off the farm before the rewind" +
                         (failed > 0 ? $"; {failed} could not be lifted and stay with the old farm." : "."),
@@ -121,17 +105,8 @@ namespace TheLongestYear.Loop
 
         internal static List<DecorTile> OneTile(Vector2 tile) => new() { new DecorTile((int)tile.X, (int)tile.Y) };
 
-        internal static List<DecorTile> TilesOf(Rectangle pixels)
-        {
-            var tiles = new List<DecorTile>();
-            for (int x = pixels.X / TileSize; x <= (pixels.Right - 1) / TileSize; x++)
-                for (int y = pixels.Y / TileSize; y <= (pixels.Bottom - 1) / TileSize; y++)
-                    tiles.Add(new DecorTile(x, y));
-            return tiles;
-        }
-
         private void Add(DecorLayer layer, Vector2 tile, List<DecorTile> tiles,
-            Flooring floor = null, StardewValley.Object obj = null, Furniture furniture = null)
-            => Entries.Add(new Entry { Id = Entries.Count, Layer = layer, Tile = tile, Tiles = tiles, Floor = floor, Obj = obj, Furniture = furniture });
+            Flooring floor = null, StardewValley.Object obj = null)
+            => Entries.Add(new Entry { Id = Entries.Count, Layer = layer, Tile = tile, Tiles = tiles, Floor = floor, Obj = obj });
     }
 }

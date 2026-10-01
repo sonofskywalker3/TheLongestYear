@@ -300,7 +300,7 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
             metaRequirement: null, runReachRequirement: "pet:1"),
 
-        // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, outdoor furniture
+        // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)
         // back on the same tiles. Above Keep Pet: paths give a speed boost and the layout saves clearing.
         new UpgradeDefinition(FarmDecorKeep.UpgradeId, UpgradeCategory.Buildings, FarmDecorKeep.Cost),
 
