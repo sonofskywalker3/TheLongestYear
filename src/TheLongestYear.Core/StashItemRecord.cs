@@ -27,6 +27,13 @@ namespace TheLongestYear.Core;
 /// carries preserve fields). Null for anything that is not a tool with slots, and for records
 /// written before the field existed.
 /// </para>
+///
+/// <para>
+/// Contents, HeldObject, Clothing, Boots, InnerRings and TrinketSeed (spec 2026-10-01,
+/// sarahwinchester97's dresser) carry what lives on the instance: a container's contents, an item
+/// set on a table, dye, tailoring, a Combined Ring's two rings and a trinket's rolled stats. All
+/// null by default so 0.18.118 saves load.
+/// </para>
 /// </summary>
 /// <param name="PreservedParentSheetIndex">Source item id of a flavored good (e.g. the fish a
 /// Smoked Fish was made from); null for non-preserved items.</param>
@@ -38,6 +45,16 @@ namespace TheLongestYear.Core;
 /// for empty slots; null when the item has no slots.</param>
 /// <param name="Enchantments">A tool's enchantments/forges in order; null when it has none or the
 /// record predates the field.</param>
+/// <param name="Contents">A container's held items (StorageFurniture <c>heldItems</c>, a Chest
+/// item's <c>Items</c>, a mod bag's item list), non-null entries only.</param>
+/// <param name="HeldObject">The item's <c>Object.heldObject</c> (an item or lamp on a table).</param>
+/// <param name="Clothing">A shirt's or pants' dye colour and dyeable flag.</param>
+/// <param name="Boots">A pair of boots' tailoring (applied sheet index, colour index, bonuses).</param>
+/// <param name="InnerRings">A Combined Ring's <c>combinedRings</c>. Deliberately not
+/// <see cref="Contents"/>: inner rings are part of the ring, not something it holds, and must not
+/// trip the nesting rule.</param>
+/// <param name="TrinketSeed">A trinket's <c>generationSeed</c>; recreating with the same seed
+/// re-rolls identical stats.</param>
 public sealed record StashItemRecord(
     string ItemId,
     int Quantity,
@@ -46,4 +63,10 @@ public sealed record StashItemRecord(
     int? Preserve = null,
     int? Price = null,
     List<StashItemRecord?>? Attachments = null,
-    List<StashEnchantmentRecord>? Enchantments = null);
+    List<StashEnchantmentRecord>? Enchantments = null,
+    List<StashItemRecord>? Contents = null,
+    StashItemRecord? HeldObject = null,
+    StashClothingRecord? Clothing = null,
+    StashBootsRecord? Boots = null,
+    List<StashItemRecord>? InnerRings = null,
+    int? TrinketSeed = null);
