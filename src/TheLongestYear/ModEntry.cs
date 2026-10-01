@@ -391,6 +391,9 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_decor",
                 "Debug: set up and inspect Keep Farm Decor cases. Usage: tly_decor <clumps|path x y|fence x y|check x y>",
                 (cmd, a) => { if (Context.IsWorldReady) FarmDecorDebug.Run(a, this.Monitor); });
+            helper.ConsoleCommands.Add("tly_housefurn",
+                "Debug: set up and inspect Keep Farmhouse Furniture cases. Usage: tly_housefurn <list|place id x y [rotations]|fill x y|check>",
+                (cmd, a) => { if (Context.IsWorldReady) FarmhouseFurnitureDebug.Run(a, _meta.State, this.Monitor); });
             helper.ConsoleCommands.Add("tly_giftbox",
                 "Debug: report or open a vanilla one-time gift box. Usage: tly_giftbox <Location> <x> <y> [warp|open]",
                 this.CmdGiftBox);
@@ -2547,6 +2550,7 @@ namespace TheLongestYear
                 case "tly_additem": this.CmdAddItem(command, args); break;
                 case "tly_stashnest": if (Context.IsWorldReady) StashNestingDebug.Run(args, this.Monitor, _stashService); break;
                 case "tly_decor": if (Context.IsWorldReady) FarmDecorDebug.Run(args, this.Monitor); break;
+                case "tly_housefurn": if (Context.IsWorldReady) FarmhouseFurnitureDebug.Run(args, _meta.State, this.Monitor); break;
                 case "tly_removehorse": this.CmdRemoveHorse(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
                 case "tly_win":
