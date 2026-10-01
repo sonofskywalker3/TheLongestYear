@@ -113,17 +113,31 @@ lamp-posts, torches, braziers, signs, and decorative big craftables with NO func
 container (chests, mini-shipping bin, mini-fridge), not a machine, not playable (arcade machines
 out), not a producer. Trees and other small growth under kept decor: cleared, no wood.
 
-**Keep Farm Furniture (new upgrade).** One level, **250 JP**, category Buildings.
-- Keeps every Furniture piece in the farmhouse (and its cellar/extensions) and on the Farm
-  outside, at the same tiles and rotation. Dressers and other storage furniture included.
-  Chests and other Object containers are never furniture and never kept.
-- Anything non-cosmetic stored inside kept furniture (rings in a dresser, fish in a tank,
-  an item on a table) is wiped, exactly as today. The description must say so plainly: move
-  it to the stash first. Cosmetic contents (hats, shirts, pants, furniture, wallpaper,
-  flooring) stay inside.
-- The farmhouse's own starter furniture is replaced by the kept set when the upgrade is owned
-  (no duplicate beds/tables).
-- A kept piece that no longer fits (smaller house on the new loop, a kept building or other
-  object on its tile, off-map) goes to the stash, else the overflow chest. Never deleted.
-- Outdoor coverage is a default taken without Jeff's explicit answer; house-only is a
-  one-line change if he prefers.
+**Keep Farm Furniture: superseded, see Addendum 2.**
+
+## Addendum 2 (Jeff, 2026-10-01): no overflow chest; Keep Farmhouse Furniture
+
+**No overflow chest.** It was never approved and is removed entirely (no chest is placed, no
+carry-over of its contents). When the stash is full, or something cannot go back, items drop on
+the ground as ordinary pickups:
+- Displaced Keep Farm Decor pieces: dropped next to whatever blocked them (the clump, the
+  building, the object), on the Farm.
+- Non-cosmetic items taken out of an old stashed container on load: next to the stash chest.
+- A container refused at deposit when the player's inventory is full: at the player's feet.
+- Error fallbacks: the same drop spot as the case they guard.
+Ground items are not saved overnight; every drop happens on day 1 of a loop (or at the moment
+of the refusal), so the player has the day to pick them up. Upgrade descriptions say so where it
+applies.
+
+**Keep Farmhouse Furniture (new upgrade).** One level, **250 JP**, category Buildings.
+- Keeps every Furniture piece inside the farmhouse (all its rooms, cellar included) at the same
+  tiles and rotation. Dressers and other storage furniture included. Chests and other Object
+  containers are not furniture and are never kept. Furniture outside on the Farm is not kept by
+  any upgrade.
+- Non-cosmetic contents of kept furniture (rings in a dresser, fish in a tank, an item on a
+  table) are wiped. Cosmetic contents stay. The description says plainly: move anything else to
+  the stash first.
+- The kept set replaces the farmhouse's starter furniture (no duplicate bed or table).
+- Furniture from rooms the new loop does not have (a house or room upgrade that was not kept),
+  or that cannot be placed for any reason, drops as a pickup inside the house by the front
+  door. The description says these must be picked up on day 1.
