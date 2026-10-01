@@ -125,7 +125,9 @@ namespace TheLongestYear.Loop
         {
             if (!farm.isTileOpenBesidesTerrainFeatures(tile))
                 return false;
-            if (farm.terrainFeatures.ContainsKey(tile))
+            // A path or floor under the chest is fine (Keep Farm Decor can restore one there).
+            if (farm.terrainFeatures.TryGetValue(tile, out StardewValley.TerrainFeatures.TerrainFeature feature)
+                && feature is not StardewValley.TerrainFeatures.Flooring)
                 return false;
             var rect = new Microsoft.Xna.Framework.Rectangle((int)tile.X * 64, (int)tile.Y * 64, 64, 64);
             foreach (var ltf in farm.largeTerrainFeatures)

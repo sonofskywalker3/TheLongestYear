@@ -300,6 +300,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
             metaRequirement: null, runReachRequirement: "pet:1"),
 
+        // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, outdoor furniture
+        // back on the same tiles. Above Keep Pet: paths give a speed boost and the layout saves clearing.
+        new UpgradeDefinition(FarmDecorKeep.UpgradeId, UpgradeCategory.Buildings, FarmDecorKeep.Cost),
+
         // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward
         // across loops, one row per room, never the Bulletin Board. Priced on a shared ladder
         // (GiftLadder): every Gift owned raises the price of the rest, 1,000 JP up to 5,000. The
