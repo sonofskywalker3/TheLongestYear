@@ -41,7 +41,8 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>After the stash and kept decor are back (step 13b): the carried overflow items go
-        /// into the stash where they fit, the rest into a fresh overflow chest beside it.</summary>
+        /// into the stash where they fit, the rest into a fresh overflow chest beside it. A container
+        /// the stash nesting rule refuses goes straight to the overflow chest.</summary>
         internal void ReturnOverflowCarry(List<Item> carried)
         {
             if (carried == null || carried.Count == 0)
@@ -51,6 +52,11 @@ namespace TheLongestYear.Loop
             {
                 try
                 {
+                    if (StashNestingRefusal.Blocked(item).Count > 0)
+                    {
+                        StoreInOverflowChest(item);
+                        continue;
+                    }
                     Item left = TryDeposit(item);
                     if (left == null)
                     {
@@ -61,10 +67,30 @@ namespace TheLongestYear.Loop
                 }
                 catch (System.Exception ex)
                 {
-                    _monitor.Log($"JunimoStashService: could not put back overflow item '{item.QualifiedItemId}' x{item.Stack}. {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                    _monitor.Log($"JunimoStashService: could not put back overflow item '{item.QualifiedItemId}' x{item.Stack}; trying the overflow chest. {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                    LastResortOverflow(item);
                 }
             }
             _monitor.Log($"JunimoStashService: {carried.Count} carried overflow item(s) back: {toStash} into the stash, {carried.Count - toStash} into the overflow chest.", LogLevel.Info);
+        }
+
+        /// <summary>Inside a catch that would otherwise drop an item: one more try at the overflow
+        /// chest, itself guarded. If that throws too, the loss is logged as an Error.</summary>
+        internal void LastResortOverflow(Item item) => LastResortOverflow(Game1.getFarm(), _placedTile, item, _monitor);
+
+        internal static void LastResortOverflow(Farm farm, Microsoft.Xna.Framework.Vector2? stashTile, Item item, IMonitor monitor)
+        {
+            if (item == null)
+                return;
+            try
+            {
+                StoreInOverflowChest(farm, stashTile, item, monitor);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: this is the last guard. Logged loudly with the item.
+                monitor.Log($"JunimoStashService: the last-resort overflow chest also failed; '{item.QualifiedItemId}' x{item.Stack} is lost. {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+            }
         }
     }
 }

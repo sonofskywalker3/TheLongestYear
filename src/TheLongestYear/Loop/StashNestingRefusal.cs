@@ -33,6 +33,27 @@ namespace TheLongestYear.Loop
             }
         }
 
+        /// <summary>Put a refused item in the first empty slot of the player's inventory, by index.
+        /// Never stacks: Farmer.addItemToInventory merges onto a matching stack, and a filled
+        /// container (a chest stacks to 999 and canStackWith ignores contents) would either lose
+        /// its contents in the merge or, when the same instance is still in its own slot (Android),
+        /// stack onto itself. An empty slot never holds that instance. False when there is none.</summary>
+        internal static bool TryPutInEmptySlot(Farmer who, Item item)
+        {
+            IList<Item> slots = who?.Items;
+            if (slots == null || item == null)
+                return false;
+            int usable = System.Math.Min(slots.Count, who.MaxItems);
+            for (int i = 0; i < usable; i++)
+            {
+                if (slots[i] != null)
+                    continue;
+                slots[i] = item;
+                return true;
+            }
+            return false;
+        }
+
         internal static void ShowHud()
         {
             if (Hud.TryFire(System.Environment.TickCount64))
