@@ -49,7 +49,7 @@ namespace TheLongestYear.Loop
             // Last resort: place at the desired tile anyway and hope the overlay is visible.
             // (Better than no chest at all, the player can use tly_setstash to relocate.)
             _monitor.Log(
-                $"JunimoStashService: no clear tile near the farmhouse — placing at ({desired.X}, {desired.Y}) " +
+                $"JunimoStashService: no clear tile near the farmhouse, placing at ({desired.X}, {desired.Y}) " +
                 $"despite blocker ({DescribeBlocker(farm, desired)}). Use tly_setstash to relocate.",
                 LogLevel.Warn);
             return desired;
@@ -116,10 +116,10 @@ namespace TheLongestYear.Loop
 
         /// <summary>
         /// True when the tile is clear enough that a chest placed there will be visible and
-        /// reachable. Checks: no building, no resource clump, no existing object, no terrain
-        /// feature (tree/grass) and no large terrain feature (bush), even though objects/terrain
-        /// don't physically block the place, they obscure the chest visually and that's exactly
-        /// what burned the user on (72, 12).
+        /// reachable. Checks: no building, no resource clump, no existing object, no furniture
+        /// (Keep Farm Decor can put outdoor furniture back first), no terrain feature other than
+        /// a path or floor (trees and grass obscure the chest, which is exactly what burned the
+        /// user on (72, 12)) and no large terrain feature (bush).
         /// </summary>
         private static bool IsTilePlaceable(Farm farm, Vector2 tile)
         {
@@ -132,6 +132,9 @@ namespace TheLongestYear.Loop
             var rect = new Microsoft.Xna.Framework.Rectangle((int)tile.X * 64, (int)tile.Y * 64, 64, 64);
             foreach (var ltf in farm.largeTerrainFeatures)
                 if (ltf.getBoundingBox().Intersects(rect))
+                    return false;
+            foreach (var furniture in farm.furniture)
+                if (furniture.boundingBox.Value.Intersects(rect))
                     return false;
             return true;
         }

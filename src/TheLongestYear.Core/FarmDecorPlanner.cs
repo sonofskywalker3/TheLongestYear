@@ -12,22 +12,43 @@ namespace TheLongestYear.Core;
 /// cleared if the KEPT tool tier breaks it, else every piece it touches goes to the stash.
 /// Unbreakable clumps are resolved first so a breakable clump is never cleared for a piece the
 /// stash takes anyway. Large debris elsewhere is never touched. Small debris under placed pieces
-/// is listed for clearing (no drops).
+/// is listed for clearing (no drops). An object-layer piece whose tile holds a fresh object with
+/// the same item id (the starting fences a farm map spawns) is not displaced: the fresh one is
+/// listed for swapping, so the kept piece is not duplicated into the stash every loop.
 /// </summary>
 public static class FarmDecorPlanner
 {
     private const TileBlock AlwaysBlocks = TileBlock.OffMap | TileBlock.Building;
-    private const TileBlock ObjectLayerBlocks = AlwaysBlocks | TileBlock.OtherObject;
+    private const TileBlock ObjectLayerBlocks = AlwaysBlocks | TileBlock.OtherObject | TileBlock.FreshObject;
 
+    /// <param name="freshObjectIdAt">The qualified item id of the fresh object on a tile, or null.
+    /// Only read for tiles that report FreshObject. Null when the caller has no ids (no swaps).</param>
     public static DecorPlan Plan(IReadOnlyList<DecorPiece> pieces, IReadOnlyList<DecorClump> clumps,
-        Func<int, int, TileBlock> blockAt, int axeTier, int pickaxeTier)
+        Func<int, int, TileBlock> blockAt, int axeTier, int pickaxeTier,
+        Func<int, int, string?>? freshObjectIdAt = null)
     {
         var displaced = new HashSet<int>();
+        var swaps = new Dictionary<int, List<DecorTile>>();
         foreach (DecorPiece piece in pieces)
         {
             TileBlock blocking = piece.Layer == DecorLayer.Object ? ObjectLayerBlocks : AlwaysBlocks;
-            if (piece.Tiles.Any(t => (blockAt(t.X, t.Y) & blocking) != 0))
-                displaced.Add(piece.Id);
+            var pieceSwaps = new List<DecorTile>();
+            foreach (DecorTile t in piece.Tiles)
+            {
+                TileBlock block = blockAt(t.X, t.Y);
+                if (piece.Layer == DecorLayer.Object && IsSameObject(piece, t, block, freshObjectIdAt))
+                {
+                    block &= ~TileBlock.FreshObject;
+                    pieceSwaps.Add(t);
+                }
+                if ((block & blocking) != 0)
+                {
+                    displaced.Add(piece.Id);
+                    break;
+                }
+            }
+            if (pieceSwaps.Count > 0)
+                swaps[piece.Id] = pieceSwaps;
         }
 
         foreach (DecorClump clump in clumps.Where(c => !FarmDecorKeep.CanBreak(c.Index, axeTier, pickaxeTier)))
@@ -46,12 +67,24 @@ public static class FarmDecorPlanner
             .Distinct()
             .ToList();
 
+        List<DecorTile> swapTiles = placed
+            .SelectMany(p => swaps.TryGetValue(p.Id, out List<DecorTile>? s) ? s : new List<DecorTile>())
+            .Distinct()
+            .ToList();
+
         return new DecorPlan(
             placed.Select(p => p.Id).ToList(),
             pieces.Where(p => displaced.Contains(p.Id)).Select(p => p.Id).ToList(),
             cleared,
-            debris);
+            debris,
+            swapTiles);
     }
+
+    private static bool IsSameObject(DecorPiece piece, DecorTile t, TileBlock block, Func<int, int, string?>? freshObjectIdAt)
+        => piece.ItemId != null
+           && freshObjectIdAt != null
+           && (block & TileBlock.FreshObject) != 0
+           && string.Equals(freshObjectIdAt(t.X, t.Y), piece.ItemId, StringComparison.Ordinal);
 
     private static bool Overlaps(DecorPiece piece, DecorClump clump)
         => piece.Tiles.Any(t => clump.Tiles.Contains(t));

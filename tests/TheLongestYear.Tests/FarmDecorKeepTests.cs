@@ -183,6 +183,62 @@ public class FarmDecorKeepTests
     }
 
     [Fact]
+    public void Same_fresh_fence_is_swapped_not_displaced()
+    {
+        // Meadowlands and mod farms spawn their own Wood Fences: the kept fence replaces the fresh
+        // one instead of going to the stash and leaving a duplicate on the farm every loop.
+        var fence = new DecorPiece(1, DecorLayer.Object, T((4, 4)), "(O)322");
+        DecorPlan plan = FarmDecorPlanner.Plan(new[] { fence }, new DecorClump[0],
+            (x, y) => TileBlock.FreshObject, 0, 0, (x, y) => "(O)322");
+        Assert.Equal(new[] { 1 }, plan.Placed);
+        Assert.Empty(plan.Displaced);
+        Assert.Equal(new[] { new DecorTile(4, 4) }, plan.SameObjectTilesToSwap);
+    }
+
+    [Fact]
+    public void Different_fresh_object_still_displaces()
+    {
+        var fence = new DecorPiece(1, DecorLayer.Object, T((4, 4)), "(O)298");
+        DecorPlan plan = FarmDecorPlanner.Plan(new[] { fence }, new DecorClump[0],
+            (x, y) => TileBlock.FreshObject, 0, 0, (x, y) => "(O)322");
+        Assert.Empty(plan.Placed);
+        Assert.Equal(new[] { 1 }, plan.Displaced);
+        Assert.Empty(plan.SameObjectTilesToSwap);
+    }
+
+    [Fact]
+    public void Same_id_but_furniture_or_stash_on_the_tile_still_displaces()
+    {
+        // OtherObject (furniture, the stash chest) is never swapped, even with a matching fresh id.
+        var fence = new DecorPiece(1, DecorLayer.Object, T((4, 4)), "(O)322");
+        DecorPlan plan = FarmDecorPlanner.Plan(new[] { fence }, new DecorClump[0],
+            (x, y) => TileBlock.FreshObject | TileBlock.OtherObject, 0, 0, (x, y) => "(O)322");
+        Assert.Equal(new[] { 1 }, plan.Displaced);
+        Assert.Empty(plan.SameObjectTilesToSwap);
+    }
+
+    [Fact]
+    public void Same_id_swap_is_dropped_when_the_piece_is_displaced_by_unbreakable_debris()
+    {
+        var fence = new DecorPiece(1, DecorLayer.Object, T((5, 5)), "(O)322");
+        DecorPlan plan = FarmDecorPlanner.Plan(new[] { fence }, new[] { Clump(3, 672, 5, 5) },
+            (x, y) => TileBlock.FreshObject, 0, 0, (x, y) => "(O)322");
+        Assert.Equal(new[] { 1 }, plan.Displaced);
+        Assert.Empty(plan.SameObjectTilesToSwap);
+    }
+
+    [Fact]
+    public void Fresh_object_without_ids_blocks_like_any_object()
+    {
+        var fence = new DecorPiece(1, DecorLayer.Object, T((4, 4)));
+        var path = new DecorPiece(2, DecorLayer.Ground, T((4, 4)));
+        DecorPlan plan = FarmDecorPlanner.Plan(new[] { fence, path }, new DecorClump[0],
+            (x, y) => TileBlock.FreshObject, 0, 0);
+        Assert.Equal(new[] { 2 }, plan.Placed);
+        Assert.Equal(new[] { 1 }, plan.Displaced);
+    }
+
+    [Fact]
     public void Debris_under_displaced_decor_is_left_alone()
     {
         var path = new DecorPiece(1, DecorLayer.Ground, T((4, 4)));
