@@ -50,9 +50,21 @@ namespace TheLongestYear.Loop
                 List<FarmDecorSnapshot.Entry> left = snapshot.Entries.Where(e => !handled.Contains(e.Id)).ToList();
                 monitor.Log($"Keep Farm Decor: the restore failed partway ({ex.GetType().Name}: {ex.Message}); " +
                             $"sending the {left.Count} piece(s) not yet placed to the stash.\n{ex}", LogLevel.Error);
+                var tally = new Tally();
                 foreach (FarmDecorSnapshot.Entry e in left)
-                    SendToStash(farm, e, stash, DropNear(farm, e.Tile, monitor), monitor);
+                    SendToStash(farm, e, stash, DropNear(farm, e.Tile, monitor), monitor, tally);
+                monitor.Log($"Keep Farm Decor: of the pieces not yet placed, {tally}.", LogLevel.Info);
             }
+        }
+
+        // What happened to the items of pieces that could not go on their own tile.
+        private sealed class Tally
+        {
+            public int Stashed, Dropped, Lost;
+
+            public override string ToString()
+                => $"{Stashed} item(s) went to the stash, {Dropped} dropped on the ground" +
+                   (Lost > 0 ? $", {Lost} could not be dropped and are lost (see errors)" : "");
         }
 
         private static void RestorePlanned(Farm farm, FarmDecorSnapshot snapshot, IReadOnlyDictionary<string, int> keptToolTiers,
@@ -86,7 +98,7 @@ namespace TheLongestYear.Loop
             var swapTiles = new HashSet<Vector2>(plan.SameObjectTilesToSwap.Select(t => new Vector2(t.X, t.Y)));
             Dictionary<int, FarmDecorSnapshot.Entry> byId = snapshot.Entries.ToDictionary(e => e.Id);
             int failed = 0;
-            int dropped = 0;
+            var tally = new Tally();
             foreach (int id in plan.Placed)
             {
                 FarmDecorSnapshot.Entry e = byId[id];
@@ -94,7 +106,7 @@ namespace TheLongestYear.Loop
                 if (!TryPlace(farm, e, swapTiles, monitor))
                 {
                     failed++;
-                    dropped += SendToStash(farm, e, stash, DropNear(farm, e.Tile, monitor), monitor);
+                    SendToStash(farm, e, stash, DropNear(farm, e.Tile, monitor), monitor, tally);
                 }
             }
 
@@ -102,11 +114,11 @@ namespace TheLongestYear.Loop
             {
                 handled.Add(id);
                 FarmDecorSnapshot.Entry e = byId[id];
-                dropped += SendToStash(farm, e, stash, BesideBlocker(farm, e, plan, monitor), monitor);
+                SendToStash(farm, e, stash, BesideBlocker(farm, e, plan, monitor), monitor, tally);
             }
 
-            monitor.Log($"Keep Farm Decor: placed {plan.Placed.Count - failed} ({swapTiles.Count} in place of the fresh farm's own), " +
-                        $"to the stash {plan.Displaced.Count + failed} ({dropped} item(s) dropped on the ground beside their blocker), " +
+            monitor.Log($"Keep Farm Decor: placed {plan.Placed.Count - failed} piece(s) ({swapTiles.Count} in place of the fresh farm's own); " +
+                        $"{plan.Displaced.Count} displaced and {failed} failed to place (their items: {tally}); " +
                         $"cleared {plan.ClearedClumps.Count} large debris and {plan.DebrisTilesToClear.Count} debris tile(s).", LogLevel.Info);
         }
 
@@ -142,8 +154,8 @@ namespace TheLongestYear.Loop
         }
 
         // A piece that cannot go on its tile: its items go to the stash, what does not fit drops on
-        // the ground at dropTile. Returns how many items were dropped.
-        private static int SendToStash(Farm farm, FarmDecorSnapshot.Entry e, JunimoStashService stash, Vector2 dropTile, IMonitor monitor)
+        // the ground at dropTile. Counts each item in the tally: stashed, dropped, or lost when the drop failed.
+        private static void SendToStash(Farm farm, FarmDecorSnapshot.Entry e, JunimoStashService stash, Vector2 dropTile, IMonitor monitor, Tally tally)
         {
             List<Item> items;
             try
@@ -158,11 +170,16 @@ namespace TheLongestYear.Loop
                             (e.Obj != null ? "; dropping the piece itself on the ground. " : ". ") +
                             $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
                 if (e.Obj == null)
-                    return 0;
-                GroundDrop.AtTile(farm, dropTile, e.Obj, monitor, $"Keep Farm Decor piece {e.Id} could not be stored");
-                return 1;
+                {
+                    tally.Lost++;
+                    return;
+                }
+                if (GroundDrop.AtTile(farm, dropTile, e.Obj, monitor, $"Keep Farm Decor piece {e.Id} could not be stored"))
+                    tally.Dropped++;
+                else
+                    tally.Lost++;
+                return;
             }
-            int dropped = 0;
             foreach (Item item in items)
             {
                 Item left;
@@ -177,11 +194,16 @@ namespace TheLongestYear.Loop
                                 $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
                     left = item;
                 }
-                if (left == null) continue;
-                dropped++;
-                GroundDrop.AtTile(farm, dropTile, left, monitor, $"the stash had no room for Keep Farm Decor piece {e.Id}");
+                if (left == null)
+                {
+                    tally.Stashed++;
+                    continue;
+                }
+                if (GroundDrop.AtTile(farm, dropTile, left, monitor, $"the stash had no room for Keep Farm Decor piece {e.Id}"))
+                    tally.Dropped++;
+                else
+                    tally.Lost++;
             }
-            return dropped;
         }
 
         // Where a displaced piece drops: its own tile if that is open, else the nearest open tile

@@ -37,6 +37,29 @@ namespace TheLongestYear.Loop
             return null;
         }
 
+        /// <summary><see cref="TryDeposit"/>, and what does not fit drops beside the stash. A deposit
+        /// that throws drops the item there too, unless it already landed in the stash. Never throws.</summary>
+        internal void DepositOrDropBesideStash(Item item, string why)
+        {
+            Item left;
+            try
+            {
+                left = TryDeposit(item);
+            }
+            catch (System.Exception ex)
+            {
+                // Exception on purpose: a mod's inventory hook. The item drops instead.
+                bool landed = FindStashChest()?.Items.Contains(item) == true;
+                _monitor.Log($"JunimoStashService: putting '{item?.QualifiedItemId}' x{item?.Stack} in the stash threw; " +
+                             (landed ? "it is in the stash anyway." : "dropping it beside the stash.") +
+                             $" {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                left = landed ? null : item;
+                why = "putting it in the stash failed";
+            }
+            if (left != null)
+                DropBesideStash(left, why);
+        }
+
         /// <summary>Something the stash has no room for (spec Addendum 2): it drops on the ground as
         /// an ordinary pickup, one tile south of the stash chest or the nearest open tile to it.
         /// Falls back to the farmhouse door when no stash is placed. Never throws.</summary>
