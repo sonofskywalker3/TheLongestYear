@@ -23,6 +23,7 @@ public class FarmDecorKeepTests
 
     [Theory]
     [InlineData(FarmThingKind.BigCraftable, "(BC)12")]   // keg (machine)
+    [InlineData(FarmThingKind.BigCraftable, "(BC)117")]  // soda machine (Data/Machines)
     [InlineData(FarmThingKind.BigCraftable, "(BC)8")]    // scarecrow
     [InlineData(FarmThingKind.BigCraftable, "(BC)110")]  // rarecrow
     [InlineData(FarmThingKind.BigCraftable, "(BC)130")]  // chest
@@ -116,6 +117,25 @@ public class FarmDecorKeepTests
         var bench = new DecorPiece(1, DecorLayer.Object, T((10, 10), (12, 10)));
         DecorPlan plan = FarmDecorPlanner.Plan(new[] { bench },
             new[] { Clump(7, 600, 10, 10), Clump(8, 602, 12, 10) }, Open, axeTier: 1, pickaxeTier: 0);
+        Assert.Equal(new[] { 1 }, plan.Displaced);
+        Assert.Empty(plan.ClearedClumps);
+    }
+
+    [Fact]
+    public void A_clump_overlapping_only_on_a_non_anchor_tile_still_counts()
+    {
+        var path = new DecorPiece(1, DecorLayer.Ground, T((11, 11)));
+        DecorPlan cleared = FarmDecorPlanner.Plan(new[] { path }, new[] { Clump(7, 600, 10, 10) }, Open, 1, 0);
+        Assert.Equal(new[] { new ClearedClump(7, 2) }, cleared.ClearedClumps);
+        DecorPlan kept = FarmDecorPlanner.Plan(new[] { path }, new[] { Clump(7, 600, 10, 10) }, Open, 0, 0);
+        Assert.Equal(new[] { 1 }, kept.Displaced);
+    }
+
+    [Fact]
+    public void A_high_axe_tier_does_not_break_a_boulder()
+    {
+        var path = new DecorPiece(1, DecorLayer.Ground, T((5, 5)));
+        DecorPlan plan = FarmDecorPlanner.Plan(new[] { path }, new[] { Clump(3, 672, 5, 5) }, Open, axeTier: 4, pickaxeTier: 1);
         Assert.Equal(new[] { 1 }, plan.Displaced);
         Assert.Empty(plan.ClearedClumps);
     }
