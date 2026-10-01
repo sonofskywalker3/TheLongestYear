@@ -294,6 +294,21 @@ namespace TheLongestYear.Loop
                 ? FarmDecorSnapshot.Capture(Game1.getFarm(), _monitor)
                 : null;
 
+            // 0h. Keep Farmhouse Furniture: lift the house's and cellar's furniture (non-cosmetic
+            // contents wiped) before loadForNewGame builds a new house; it goes back at step 14b.
+            FarmhouseFurnitureCarryover.Snapshot keptHouseFurniture = null;
+            if (_meta.HasUpgrade(FarmhouseFurnitureKeep.UpgradeId))
+            {
+                try
+                {
+                    keptHouseFurniture = FarmhouseFurnitureCarryover.Capture(_monitor);
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Reset: Keep Farmhouse Furniture capture failed; continuing the reset.\n{ex}", LogLevel.Error);
+                }
+            }
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -735,6 +750,17 @@ namespace TheLongestYear.Loop
             //      AddStarterFurniture so the FULL default set (bed, fireplace, rug, table+bowl, …) is
             //      laid down at the correct positions for the current HouseUpgradeLevel.
             RestoreFarmHouseFurniture(home);
+
+            // 14b. Keep Farmhouse Furniture: the kept set replaces the starter set just laid down, on
+            //      the house and cellar this loop has (kitchen and cellar exist since step 14).
+            try
+            {
+                FarmhouseFurnitureCarryover.Restore(keptHouseFurniture, home, _monitor);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Reset: Keep Farmhouse Furniture restore failed; continuing the reset.\n{ex}", LogLevel.Error);
+            }
 
             // Undo vanilla's one-way map edits. Fixing the beach bridge (Beach.fixBridge) and
             // Robin's community shortcuts (showCommunityUpgradeShortcuts / ApplyMapOverride) edit
