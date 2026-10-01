@@ -51,12 +51,47 @@ public class FarmhouseFurnitureKeepTests
     }
 
     [Theory]
-    [InlineData(true, false, BedFallback.None)]               // a kept bed is in the house
-    [InlineData(true, true, BedFallback.None)]
-    [InlineData(false, true, BedFallback.KeptBedAtStarterSpot)] // the kept bed had no room: try the starter spot
-    [InlineData(false, false, BedFallback.StarterBed)]          // no kept bed at all: the starter bed comes back
-    public void The_house_always_ends_with_a_bed(bool bedPlaced, bool keptBedUnplaced, BedFallback expected)
-        => Assert.Equal(expected, FarmhouseFurnitureKeep.ForBed(bedPlaced, keptBedUnplaced));
+    [InlineData(true, true, false, BedFallback.None)]                 // the player's bed is in the house
+    [InlineData(true, true, true, BedFallback.None)]
+    [InlineData(false, false, true, BedFallback.KeptBedAtStarterSpot)] // a legal kept bed had no room: try the starter spot
+    [InlineData(false, true, true, BedFallback.KeptBedAtStarterSpot)]  // a single bed in a big house: move the kept double
+    [InlineData(false, true, false, BedFallback.None)]                 // a single bed in a big house still sleeps: no second bed
+    [InlineData(false, false, false, BedFallback.StarterBed)]          // no bed the player can sleep in: the starter bed comes back
+    public void The_house_always_ends_with_a_bed(bool playerBed, bool sleepableBed, bool legalKeptBedUnplaced, BedFallback expected)
+        => Assert.Equal(expected, FarmhouseFurnitureKeep.ForBed(playerBed, sleepableBed, legalKeptBedUnplaced));
+
+    // BedFurniture.placementAction (PC and Android): a Double bed needs house level 1, a Child bed level 2.
+    [Theory]
+    [InlineData(BedKind.Single, 0, true)]
+    [InlineData(BedKind.Single, 3, true)]
+    [InlineData(BedKind.Double, 0, false)]
+    [InlineData(BedKind.Double, 1, true)]
+    [InlineData(BedKind.Child, 1, false)]
+    [InlineData(BedKind.Child, 2, true)]
+    public void Bed_is_legal_at_the_vanilla_house_levels(BedKind kind, int level, bool legal)
+        => Assert.Equal(legal, FarmhouseFurnitureKeep.IsBedLegal(kind, level));
+
+    [Theory]
+    [InlineData(BedKind.Single, 0, true)]
+    [InlineData(BedKind.Double, 0, false)]   // not legal in the cabin
+    [InlineData(BedKind.Double, 2, true)]
+    [InlineData(BedKind.Child, 2, false)]    // never the player's bed
+    [InlineData(BedKind.Child, 3, false)]
+    public void Only_a_legal_adult_bed_moves_to_the_starter_spot(BedKind kind, int level, bool candidate)
+        => Assert.Equal(candidate, FarmhouseFurnitureKeep.IsStarterSpotCandidate(kind, level));
+
+    // FarmHouse.moveObjectsForHouseUpgrade (PC and Android): L0 to L1 (6,0), L1 to L2 (18,19),
+    // L0 to L2/L3 (24,19), L1 to L0 (-6,0).
+    [Theory]
+    [InlineData(0, 1, 6, 0)]
+    [InlineData(1, 0, -6, 0)]
+    [InlineData(1, 2, 18, 19)]
+    [InlineData(0, 3, 24, 19)]
+    [InlineData(3, 3, 0, 0)]
+    [InlineData(2, 3, 0, 0)]
+    [InlineData(3, 0, -24, -19)]
+    public void Kept_tiles_shift_with_the_house_level(int from, int to, int dx, int dy)
+        => Assert.Equal((dx, dy), FarmhouseFurnitureKeep.TileShift(from, to));
 }
 
 [Collection("i18n")]
