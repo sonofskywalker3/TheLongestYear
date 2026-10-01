@@ -35,6 +35,28 @@ namespace TheLongestYear.Loop
                 return;
             }
 
+            // Every piece is placed or sent to the stash exactly once; this tracks which. If anything
+            // in the plan or the clearing throws (a mod's hook), the pieces not yet handled go to the
+            // stash so the rest of the reset goes on and nothing is lost. Catching Exception is
+            // deliberate here: the throw can come from any mod.
+            var handled = new HashSet<int>();
+            try
+            {
+                RestorePlanned(farm, snapshot, keptToolTiers, stash, monitor, handled);
+            }
+            catch (System.Exception ex)
+            {
+                List<FarmDecorSnapshot.Entry> left = snapshot.Entries.Where(e => !handled.Contains(e.Id)).ToList();
+                monitor.Log($"Keep Farm Decor: the restore failed partway ({ex.GetType().Name}: {ex.Message}); " +
+                            $"sending the {left.Count} piece(s) not yet placed to the stash.\n{ex}", LogLevel.Error);
+                foreach (FarmDecorSnapshot.Entry e in left)
+                    SendToStash(farm, e, stash, monitor);
+            }
+        }
+
+        private static void RestorePlanned(Farm farm, FarmDecorSnapshot snapshot, IReadOnlyDictionary<string, int> keptToolTiers,
+            JunimoStashService stash, IMonitor monitor, HashSet<int> handled)
+        {
             int axe = keptToolTiers != null && keptToolTiers.TryGetValue(AxeKey, out int a) ? a : 0;
             int pick = keptToolTiers != null && keptToolTiers.TryGetValue(PickaxeKey, out int p) ? p : 0;
 
@@ -42,9 +64,12 @@ namespace TheLongestYear.Loop
             List<DecorClump> clumps = clumpRefs
                 .Select((c, i) => new DecorClump(i, c.parentSheetIndex.Value, ClumpTiles(c)))
                 .ToList();
-            List<DecorPiece> pieces = snapshot.Entries.Select(e => new DecorPiece(e.Id, e.Layer, e.Tiles)).ToList();
+            List<DecorPiece> pieces = snapshot.Entries
+                .Select(e => new DecorPiece(e.Id, e.Layer, e.Tiles, e.Obj?.QualifiedItemId))
+                .ToList();
 
-            DecorPlan plan = FarmDecorPlanner.Plan(pieces, clumps, (x, y) => Survey(farm, x, y), axe, pick);
+            DecorPlan plan = FarmDecorPlanner.Plan(pieces, clumps, (x, y) => Survey(farm, x, y), axe, pick,
+                (x, y) => farm.objects.TryGetValue(new Vector2(x, y), out StardewValley.Object o) ? o?.QualifiedItemId : null);
 
             foreach (ClearedClump cleared in plan.ClearedClumps)
             {
@@ -57,13 +82,84 @@ namespace TheLongestYear.Loop
             foreach (DecorTile tile in plan.DebrisTilesToClear)
                 ClearSmallDebris(farm, tile);
 
+            var swapTiles = new HashSet<Vector2>(plan.SameObjectTilesToSwap.Select(t => new Vector2(t.X, t.Y)));
             Dictionary<int, FarmDecorSnapshot.Entry> byId = snapshot.Entries.ToDictionary(e => e.Id);
+            int failed = 0;
             foreach (int id in plan.Placed)
-                Place(farm, byId[id]);
+            {
+                FarmDecorSnapshot.Entry e = byId[id];
+                handled.Add(id);
+                if (!TryPlace(farm, e, swapTiles, monitor))
+                {
+                    failed++;
+                    SendToStash(farm, e, stash, monitor);
+                }
+            }
 
             int overflowed = 0;
             foreach (int id in plan.Displaced)
-                foreach (Item item in ToItems(byId[id]))
+            {
+                handled.Add(id);
+                overflowed += SendToStash(farm, byId[id], stash, monitor);
+            }
+
+            monitor.Log($"Keep Farm Decor: placed {plan.Placed.Count - failed} ({swapTiles.Count} in place of the fresh farm's own), " +
+                        $"to the stash {plan.Displaced.Count + failed} ({overflowed} item(s) to the overflow chest), " +
+                        $"cleared {plan.ClearedClumps.Count} large debris and {plan.DebrisTilesToClear.Count} debris tile(s).", LogLevel.Info);
+        }
+
+        // Place one piece; a mod hook that throws sends the piece to the stash instead, unless the
+        // instance already landed on the farm (then it stays, logged). Exception is caught on
+        // purpose: the throw can come from any mod's collection hook.
+        private static bool TryPlace(Farm farm, FarmDecorSnapshot.Entry e, HashSet<Vector2> swapTiles, IMonitor monitor)
+        {
+            try
+            {
+                // The fresh farm spawned the same object here (Meadowlands fences): the kept one,
+                // with its gate state and torch, takes its place.
+                if (e.Obj != null && swapTiles.Contains(e.Tile))
+                    farm.objects.Remove(e.Tile);
+                Place(farm, e);
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                bool landed = IsOnFarm(farm, e);
+                monitor.Log($"Keep Farm Decor: placing piece {e.Id} at ({e.Tile.X}, {e.Tile.Y}) threw; " +
+                            (landed ? "it is on the farm anyway." : "sending it to the stash.") +
+                            $" {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
+                return landed;
+            }
+        }
+
+        private static bool IsOnFarm(Farm farm, FarmDecorSnapshot.Entry e)
+        {
+            if (e.Floor != null)
+                return farm.terrainFeatures.TryGetValue(e.Tile, out TerrainFeature tf) && tf == e.Floor;
+            if (e.Furniture != null)
+                return farm.furniture.Contains(e.Furniture);
+            return e.Obj != null && farm.objects.TryGetValue(e.Tile, out StardewValley.Object o) && o == e.Obj;
+        }
+
+        // A piece that cannot go on its tile: its items go to the stash, what does not fit to the
+        // overflow chest beside it. Returns how many items went to the overflow chest.
+        private static int SendToStash(Farm farm, FarmDecorSnapshot.Entry e, JunimoStashService stash, IMonitor monitor)
+        {
+            int overflowed = 0;
+            List<Item> items;
+            try
+            {
+                items = ToItems(e, monitor).ToList();
+            }
+            catch (System.Exception ex)
+            {
+                monitor.Log($"Keep Farm Decor: could not turn piece {e.Id} at ({e.Tile.X}, {e.Tile.Y}) into stash items. " +
+                            $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                return 0;
+            }
+            foreach (Item item in items)
+            {
+                try
                 {
                     Item left = stash != null ? stash.TryDeposit(item) : item;
                     if (left == null) continue;
@@ -71,19 +167,22 @@ namespace TheLongestYear.Loop
                     if (stash != null)
                         stash.StoreInOverflowChest(left);
                     else
-                    {
-                        // No stash service: still never delete. The ground is the last resort, logged.
-                        Game1.createItemDebris(left, byId[id].Tile * TileSize + new Vector2(TileSize / 2, TileSize / 2), AnyDirection, farm);
-                        monitor.Log($"Keep Farm Decor: no stash; dropped '{left.QualifiedItemId}' where it stood.", LogLevel.Warn);
-                    }
+                        // No stash service: still never delete, an overflow chest by the farmhouse door.
+                        JunimoStashService.StoreInOverflowChest(farm, null, left, monitor);
                 }
-
-            monitor.Log($"Keep Farm Decor: placed {plan.Placed.Count}, to the stash {plan.Displaced.Count} ({overflowed} item(s) to the overflow chest), " +
-                        $"cleared {plan.ClearedClumps.Count} large debris and {plan.DebrisTilesToClear.Count} debris tile(s).", LogLevel.Info);
+                catch (System.Exception ex)
+                {
+                    monitor.Log($"Keep Farm Decor: could not store '{item.QualifiedItemId}' x{item.Stack} from piece {e.Id}. " +
+                                $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                }
+            }
+            return overflowed;
         }
 
         // Fresh-farm state of one tile for the planner. Every terrain feature (grass, saplings, trees)
-        // and every bush is small debris: it shares or blocks the tile and kept decor wins.
+        // and every bush is small debris: it shares or blocks the tile and kept decor wins. Any other
+        // object the fresh farm holds is FreshObject (the planner swaps it for a kept piece with the
+        // same id); chests (the stash, an overflow chest) and furniture are OtherObject.
         private static TileBlock Survey(Farm farm, int x, int y)
         {
             if (!farm.isTileOnMap(x, y)) return TileBlock.OffMap;
@@ -92,7 +191,8 @@ namespace TheLongestYear.Loop
             TileBlock block = TileBlock.None;
             if (farm.getBuildingAt(tile) != null) block |= TileBlock.Building;
             if (farm.objects.TryGetValue(tile, out StardewValley.Object obj))
-                block |= IsSmallDebris(obj) ? TileBlock.SmallDebris : TileBlock.OtherObject;
+                block |= IsSmallDebris(obj) ? TileBlock.SmallDebris
+                    : obj is StardewValley.Objects.Chest ? TileBlock.OtherObject : TileBlock.FreshObject;
             if (farm.furniture.Any(f => f.boundingBox.Value.Intersects(rect))) block |= TileBlock.OtherObject;
             if (farm.terrainFeatures.ContainsKey(tile)) block |= TileBlock.SmallDebris;
             if (farm.largeTerrainFeatures.Any(l => l.getBoundingBox().Intersects(rect))) block |= TileBlock.SmallDebris;
@@ -135,13 +235,15 @@ namespace TheLongestYear.Loop
         // A displaced piece as stash items: the path's item, a fresh fence/torch/sign/decoration
         // (plus a torch that sat on a fence), or the furniture itself (its contents are already
         // trimmed to cosmetic, so the stash rule holds).
-        private static IEnumerable<Item> ToItems(FarmDecorSnapshot.Entry e)
+        private static IEnumerable<Item> ToItems(FarmDecorSnapshot.Entry e, IMonitor monitor)
         {
             if (e.Floor != null)
             {
                 string objectId = Flooring.GetFloorPathItemLookup().FirstOrDefault(kv => kv.Value == e.Floor.whichFloor.Value).Key;
                 if (objectId != null)
                     yield return ItemRegistry.Create("(O)" + objectId);
+                else
+                    monitor.Log($"Keep Farm Decor: path '{e.Floor.whichFloor.Value}' at ({e.Tile.X}, {e.Tile.Y}) has no item to put in the stash, so it is not restored.", LogLevel.Warn);
             }
             else if (e.Furniture != null)
                 yield return e.Furniture;

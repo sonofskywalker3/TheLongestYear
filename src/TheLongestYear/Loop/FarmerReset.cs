@@ -86,8 +86,8 @@ namespace TheLongestYear.Loop
                 p.Equip<StardewValley.Objects.Boots>(null, p.boots);
                 p.Equip<StardewValley.Objects.Ring>(null, p.leftRing);
                 p.Equip<StardewValley.Objects.Ring>(null, p.rightRing);
-                // Trinkets unequip by index assignment — that fires OnTrinketChange → Trinket.Unapply,
-                // the same path the inventory page uses — then the emptied list is cleared.
+                // Trinkets unequip by index assignment: that fires OnTrinketChange → Trinket.Unapply,
+                // the same path the inventory page uses. Then the emptied list is cleared.
                 for (int i = 0; i < p.trinketItems.Count; i++)
                     p.trinketItems[i] = null;
                 p.trinketItems.Clear();

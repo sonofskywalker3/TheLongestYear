@@ -141,6 +141,7 @@ namespace TheLongestYear.Loop
             StampChestsAnywhereOptOutIfNeeded(chest);
             farm.objects[tile] = chest;
             _placedTile = tile;
+            GuardNesting(chest);
 
             _monitor.Log(
                 $"JunimoStashService: placed stash chest at ({tile.X}, {tile.Y}), " +
@@ -304,6 +305,7 @@ namespace TheLongestYear.Loop
                 && obj is Chest chest
                 && chest.modData.ContainsKey(StashModDataKey))
             {
+                GuardNesting(chest);
                 return chest;
             }
 
@@ -314,6 +316,7 @@ namespace TheLongestYear.Loop
                 if (pair.Value is Chest c && c.modData.ContainsKey(StashModDataKey))
                 {
                     _placedTile = pair.Key;
+                    GuardNesting(c);
                     return c;
                 }
             }

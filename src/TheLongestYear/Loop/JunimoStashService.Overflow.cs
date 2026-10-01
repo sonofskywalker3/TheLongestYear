@@ -49,17 +49,20 @@ namespace TheLongestYear.Loop
         /// chest is the only place that never deletes. Reuses an overflow chest already there; when
         /// that tile is blocked or that chest is full, walks outward to the nearest tagged chest
         /// with room or free tile. Falls back to the farmhouse door when no stash is placed.</summary>
-        internal void StoreInOverflowChest(Item item)
+        internal void StoreInOverflowChest(Item item) => StoreInOverflowChest(Game1.getFarm(), _placedTile, item, _monitor);
+
+        /// <summary>The same, for callers without a stash service: <paramref name="stashTile"/> null
+        /// anchors at the farmhouse door.</summary>
+        internal static void StoreInOverflowChest(Farm farm, Vector2? stashTile, Item item, IMonitor monitor)
         {
             if (item == null)
                 return;
-            Farm farm = Game1.getFarm();
             if (farm == null)
             {
-                _monitor.Log($"JunimoStashService: no farm loaded, could not store overflow '{item.QualifiedItemId}' x{item.Stack}.", LogLevel.Warn);
+                monitor.Log($"JunimoStashService: no farm loaded, could not store overflow '{item.QualifiedItemId}' x{item.Stack}.", LogLevel.Warn);
                 return;
             }
-            Vector2 anchor = _placedTile ?? (TryGetFarmHouseEntry(farm) is Point door ? new Vector2(door.X, door.Y) : Vector2.Zero);
+            Vector2 anchor = stashTile ?? (TryGetFarmHouseEntry(farm) is Point door ? new Vector2(door.X, door.Y) : Vector2.Zero);
             Vector2 start = anchor + new Vector2(0f, 1f);
             string what = $"'{item.QualifiedItemId}' x{item.Stack}";
 
@@ -70,7 +73,7 @@ namespace TheLongestYear.Loop
                     if (existing is Chest tagged && tagged.modData.ContainsKey(OverflowModDataKey)
                         && tagged.addItem(item) == null)
                     {
-                        _monitor.Log($"JunimoStashService: stash full, put {what} in the overflow chest at ({tile.X}, {tile.Y}).", LogLevel.Info);
+                        monitor.Log($"JunimoStashService: stash full, put {what} in the overflow chest at ({tile.X}, {tile.Y}).", LogLevel.Info);
                         return;
                     }
                     continue;
@@ -82,13 +85,13 @@ namespace TheLongestYear.Loop
                 chest.modData[OverflowModDataKey] = "1";
                 chest.addItem(item);
                 farm.objects[tile] = chest;
-                _monitor.Log($"JunimoStashService: stash full, placed an overflow chest at ({tile.X}, {tile.Y}) holding {what}.", LogLevel.Info);
+                monitor.Log($"JunimoStashService: stash full, placed an overflow chest at ({tile.X}, {tile.Y}) holding {what}.", LogLevel.Info);
                 return;
             }
 
             // No tile within reach: the ground is the last resort (logged loudly, it is not saved).
             Game1.createItemDebris(item, start * 64f + new Vector2(32f, 32f), -1, farm);
-            _monitor.Log($"JunimoStashService: no free tile for an overflow chest near ({start.X}, {start.Y}); dropped '{item.QualifiedItemId}' x{item.Stack} on the ground there. Pick it up before saving.", LogLevel.Warn);
+            monitor.Log($"JunimoStashService: no free tile for an overflow chest near ({start.X}, {start.Y}); dropped '{item.QualifiedItemId}' x{item.Stack} on the ground there. Pick it up before saving.", LogLevel.Warn);
         }
 
         /// <summary>The start tile, then each square ring around it out to the radius.</summary>

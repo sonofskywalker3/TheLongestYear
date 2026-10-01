@@ -36,31 +36,77 @@ namespace TheLongestYear.Loop
             var snap = new FarmDecorSnapshot();
             if (farm == null) return snap;
 
+            // Each piece is lifted on its own: one that throws (a mod's object or furniture hook)
+            // stays on the farm, logged, and the rest of the reset goes on.
+            int failed = 0;
             foreach (var pair in farm.terrainFeatures.Pairs.ToList())
             {
                 if (pair.Value is not Flooring floor) continue;
-                farm.terrainFeatures.Remove(pair.Key);
-                snap.Add(DecorLayer.Ground, pair.Key, OneTile(pair.Key), floor: floor);
+                if (!TryLift(monitor, floor.GetType().Name, pair.Key,
+                        remove: () => farm.terrainFeatures.Remove(pair.Key),
+                        stillThere: () => farm.terrainFeatures.TryGetValue(pair.Key, out var tf) && tf == floor))
+                    failed++;
+                else
+                    snap.Add(DecorLayer.Ground, pair.Key, OneTile(pair.Key), floor: floor);
             }
 
             foreach (var pair in farm.objects.Pairs.ToList())
             {
                 StardewValley.Object obj = pair.Value;
                 if (obj == null || !FarmDecorKeep.IsKeptDecor(KindOf(obj), obj.QualifiedItemId)) continue;
-                farm.objects.Remove(pair.Key);
-                snap.Add(DecorLayer.Object, pair.Key, OneTile(pair.Key), obj: obj);
+                if (!TryLift(monitor, obj.QualifiedItemId, pair.Key,
+                        remove: () => farm.objects.Remove(pair.Key),
+                        stillThere: () => farm.objects.TryGetValue(pair.Key, out var o) && o == obj))
+                    failed++;
+                else
+                    snap.Add(DecorLayer.Object, pair.Key, OneTile(pair.Key), obj: obj);
             }
 
             foreach (Furniture f in farm.furniture.ToList())
             {
                 if (!FarmDecorKeep.IsKeptDecor(FarmThingKind.Furniture, f.QualifiedItemId)) continue;
-                StashItemCodec.StripNonCosmetic(f);
-                farm.furniture.Remove(f);
-                snap.Add(DecorLayer.Object, f.TileLocation, TilesOf(f.boundingBox.Value), furniture: f);
+                if (!TryLift(monitor, f.QualifiedItemId, f.TileLocation,
+                        remove: () =>
+                        {
+                            StashItemCodec.StripNonCosmetic(f);
+                            farm.furniture.Remove(f);
+                        },
+                        stillThere: () => farm.furniture.Contains(f)))
+                    failed++;
+                else
+                    snap.Add(DecorLayer.Object, f.TileLocation, TilesOf(f.boundingBox.Value), furniture: f);
             }
 
-            monitor.Log($"Keep Farm Decor: lifted {snap.Entries.Count} piece(s) off the farm before the rewind.", LogLevel.Info);
+            monitor.Log($"Keep Farm Decor: lifted {snap.Entries.Count} piece(s) off the farm before the rewind" +
+                        (failed > 0 ? $"; {failed} could not be lifted and stay with the old farm." : "."),
+                        failed > 0 ? LogLevel.Warn : LogLevel.Info);
             return snap;
+        }
+
+        // Catching Exception is deliberate: a mod's hook on the farm's collections can throw anything,
+        // and the reset must go on. True when the piece is off the farm (keep it in the snapshot,
+        // even when a hook threw after the removal); false when it is still there (it stays).
+        private static bool TryLift(IMonitor monitor, string what, Vector2 tile, System.Action remove, System.Func<bool> stillThere)
+        {
+            try
+            {
+                remove();
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                bool lifted = !SafeStillThere(stillThere);
+                monitor.Log($"Keep Farm Decor: lifting '{what}' at ({tile.X}, {tile.Y}) threw; " +
+                            (lifted ? "it was already off the farm, so it is kept." : "it stays on the farm.") +
+                            $" {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
+                return lifted;
+            }
+        }
+
+        private static bool SafeStillThere(System.Func<bool> stillThere)
+        {
+            try { return stillThere(); }
+            catch (System.InvalidOperationException) { return true; }
         }
 
         internal static FarmThingKind KindOf(StardewValley.Object obj) => obj switch
