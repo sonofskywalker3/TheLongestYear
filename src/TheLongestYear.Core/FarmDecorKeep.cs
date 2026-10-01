@@ -41,8 +41,9 @@ public static class FarmDecorKeep
         [758] = new(DecorTool.Pickaxe, Basic, NoDrop),
     };
 
-    /// <summary>Decorative big craftables (Data/BigCraftables, 1.6, checked against the game's
-    /// patch export): no machine data, no crop, no scarecrow, no storage, no warp or shop.</summary>
+    /// <summary>Decorative big craftables (Data/BigCraftables, 1.6). Every id was checked against
+    /// Data/Machines (none is a machine; the Soda Machine, 117, was removed), and none is a crop pot,
+    /// scarecrow, chest, warp or shop.</summary>
     private static readonly HashSet<string> DecorBigCraftableIds = new(StringComparer.Ordinal)
     {
         "(BC)0", "(BC)1", "(BC)2", "(BC)3", "(BC)4", "(BC)5", "(BC)6", "(BC)7",   // house plants
@@ -52,7 +53,7 @@ public static class FarmDecorKeep
         "(BC)64", "(BC)65", "(BC)66", "(BC)67", "(BC)68", "(BC)69", "(BC)70", "(BC)72", "(BC)73",
         "(BC)74", "(BC)75", "(BC)76", "(BC)78", "(BC)79", "(BC)80", "(BC)83", "(BC)84", "(BC)85",
         "(BC)86", "(BC)87", "(BC)88", "(BC)89", "(BC)94", "(BC)95", "(BC)98", "(BC)107", "(BC)108",
-        "(BC)111", "(BC)112", "(BC)116", "(BC)117", "(BC)118", "(BC)119", "(BC)120", "(BC)121",
+        "(BC)111", "(BC)112", "(BC)116", "(BC)118", "(BC)119", "(BC)120", "(BC)121",
         "(BC)122", "(BC)123", "(BC)124", "(BC)125", "(BC)141", "(BC)152", "(BC)153", "(BC)155",
         "(BC)159", "(BC)161", "(BC)162", "(BC)164", "(BC)174", "(BC)175", "(BC)184", "(BC)188",
         "(BC)192", "(BC)196", "(BC)200", "(BC)204", "(BC)219", "(BC)262", "(BC)263", "(BC)TextSign",
