@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Enchantments;
 using StardewValley.Objects;
 using TheLongestYear.Core;
 using TheLongestYear.UI;
@@ -23,7 +22,7 @@ namespace TheLongestYear.Loop
     ///
     /// The chest is identified by <c>modData["tly.junimo.stash"] == "1"</c>.
     /// </summary>
-    internal sealed class JunimoStashService
+    internal sealed partial class JunimoStashService
     {
         internal const string StashModDataKey = "tly.junimo.stash";
 
@@ -194,153 +193,6 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>
-        /// Resolve the tile to place the stash chest at. Returns Vector2.Zero only if we
-        /// cannot find any valid tile (extremely degenerate Farm state).
-        /// </summary>
-        private Vector2 ResolveTile(Farm farm)
-        {
-            bool isAuto = _config.StashTileX == 0 && _config.StashTileY == 0;
-            Vector2 desired = isAuto ? AutoTile(farm) : new Vector2(_config.StashTileX, _config.StashTileY);
-
-            // Empty Farm somehow — auto-pick gave Zero. Bail.
-            if (isAuto && desired == Vector2.Zero)
-                return Vector2.Zero;
-
-            if (IsTilePlaceable(farm, desired))
-                return desired;
-
-            // Configured tile (or first auto candidate) is blocked. Walk the auto candidate
-            // ladder looking for a clear tile near the farmhouse before falling back.
-            Point? entryPoint = TryGetFarmHouseEntry(farm);
-            if (entryPoint.HasValue)
-            {
-                foreach (Vector2 candidate in AutoCandidates(entryPoint.Value))
-                {
-                    if (candidate == desired) continue;  // already tried
-                    if (!IsTilePlaceable(farm, candidate)) continue;
-
-                    string source = isAuto
-                        ? $"first auto candidate ({desired.X}, {desired.Y}) blocked by " +
-                          $"{DescribeBlocker(farm, desired)}"
-                        : $"configured tile ({desired.X}, {desired.Y}) blocked by " +
-                          $"{DescribeBlocker(farm, desired)}";
-                    _monitor.Log(
-                        $"JunimoStashService: {source}; using fallback tile ({candidate.X}, {candidate.Y}). " +
-                        "Run tly_setstash to anchor a different tile.",
-                        LogLevel.Info);
-                    return candidate;
-                }
-            }
-
-            // Last resort: place at the desired tile anyway and hope the overlay is visible.
-            // (Better than no chest at all — the player can use tly_setstash to relocate.)
-            _monitor.Log(
-                $"JunimoStashService: no clear tile near the farmhouse — placing at ({desired.X}, {desired.Y}) " +
-                $"despite blocker ({DescribeBlocker(farm, desired)}). Use tly_setstash to relocate.",
-                LogLevel.Warn);
-            return desired;
-        }
-
-        /// <summary>Pick a tile three east + one south of the farmhouse entry. Path through
-        /// the 2026-05-28 / 2026-05-29 playtests:
-        ///   - (entry+2,+1)  : original — landed on the porch (blocked by Farmhouse building)
-        ///   - (entry+2,+2)  : 2026-05-28 ladder fallback — "directly in front of the exit"
-        ///   - (entry+4,+2)  : 2026-05-29 first retry — "in front of the mailbox" (which sits
-        ///                     at (68, 16) on the Standard farm per Farm.cs:1483, so the
-        ///                     chest at (68, 17) was the mail-reading tile)
-        ///   - (entry+3,+2)  : 2026-05-29 second retry — "one space too low"
-        ///   - (entry+3,+1)  : current — same column as before, one tile north. On Standard
-        ///                     farm that's (67, 16): one tile west of the mailbox column,
-        ///                     just clear of the porch's bottom edge. Returns Vector2.Zero
-        ///                     if the entry is unavailable.</summary>
-        private static Vector2 AutoTile(Farm farm)
-        {
-            Point? entry = TryGetFarmHouseEntry(farm);
-            return entry.HasValue
-                ? new Vector2(entry.Value.X + 3, entry.Value.Y + 1)
-                : Vector2.Zero;
-        }
-
-        /// <summary>
-        /// Ordered list of fallback candidate offsets relative to the farmhouse entry tile.
-        /// The first candidate is the original "+2, +1" choice; subsequent entries are biased
-        /// SOUTH and AWAY (-/+ X) of the entry so they clear the Farmhouse building footprint
-        /// — the 2026-05-28 playtest showed (+2, +1) lands on the porch which intersects the
-        /// Building.intersects rect. Tiles are tried in order; first one that <c>IsTilePlaceable</c>
-        /// wins.
-        /// </summary>
-        private static System.Collections.Generic.IEnumerable<Vector2> AutoCandidates(Point entry)
-        {
-            // (dx, dy) offsets — 2026-05-29 v3: lead with (+3, +1), fall through south then
-            // east past the mailbox column then west. Avoids both the porch (dx <=2 at +1) and
-            // the mailbox column (dx=4) on Standard farm.
-            (int dx, int dy)[] offsets =
-            {
-                ( 3, 1),  // new default — west-of-mailbox, just clear of porch
-                ( 3, 2),
-                ( 3, 3),
-                ( 5, 1),  // jump past the mailbox column
-                ( 5, 2),
-                ( 2, 3),  // SE, deeper south than the old default
-                ( 0, 3),  // straight south, far enough to clear porch
-                (-2, 3),
-                (-3, 2),  // wider west fallback
-                (-4, 2),  // widest west fallback
-            };
-
-            foreach (var (dx, dy) in offsets)
-                yield return new Vector2(entry.X + dx, entry.Y + dy);
-        }
-
-        /// <summary>Safe wrapper around <c>Farm.GetMainFarmHouseEntry</c> — returns null if the
-        /// farmhouse isn't resolvable yet (very early load, degenerate state).</summary>
-        private static Point? TryGetFarmHouseEntry(Farm farm)
-        {
-            try { return farm.GetMainFarmHouseEntry(); }
-            catch { return null; }
-        }
-
-        /// <summary>
-        /// True when the tile is clear enough that a chest placed there will be visible and
-        /// reachable. Checks: no building, no resource clump, no existing object, no terrain
-        /// feature (tree/grass) and no large terrain feature (bush) — even though objects/terrain
-        /// don't physically block the place, they obscure the chest visually and that's exactly
-        /// what burned the user on (72, 12).
-        /// </summary>
-        private static bool IsTilePlaceable(Farm farm, Vector2 tile)
-        {
-            if (!farm.isTileOpenBesidesTerrainFeatures(tile))
-                return false;
-            if (farm.terrainFeatures.ContainsKey(tile))
-                return false;
-            var rect = new Microsoft.Xna.Framework.Rectangle((int)tile.X * 64, (int)tile.Y * 64, 64, 64);
-            foreach (var ltf in farm.largeTerrainFeatures)
-                if (ltf.getBoundingBox().Intersects(rect))
-                    return false;
-            return true;
-        }
-
-        /// <summary>Best-effort human-readable blocker description for the log.</summary>
-        private static string DescribeBlocker(Farm farm, Vector2 tile)
-        {
-            var rect = new Microsoft.Xna.Framework.Rectangle((int)tile.X * 64, (int)tile.Y * 64, 64, 64);
-            foreach (var b in farm.buildings)
-                if (b.intersects(rect))
-                    return $"building '{b.buildingType.Value}'";
-            foreach (var c in farm.resourceClumps)
-                if (c.getBoundingBox().Intersects(rect))
-                    return "resource clump";
-            if (farm.objects.TryGetValue(tile, out StardewValley.Object obj))
-                return $"object '{obj?.QualifiedItemId ?? "?"}'";
-            if (farm.terrainFeatures.ContainsKey(tile))
-                return $"terrain feature '{farm.terrainFeatures[tile]?.GetType().Name ?? "?"}'";
-            foreach (var ltf in farm.largeTerrainFeatures)
-                if (ltf.getBoundingBox().Intersects(rect))
-                    return $"large terrain feature '{ltf.GetType().Name}'";
-            return "tile not passable";
-        }
-
-        /// <summary>
         /// Fill the placed stash chest from <see cref="MetaState.StashItems"/>.
         /// Call after <see cref="PlaceChest"/> on each reset. No-op if no chest is placed.
         /// </summary>
@@ -353,37 +205,14 @@ namespace TheLongestYear.Loop
             int restored = 0;
             foreach (StashItemRecord record in _meta.StashItems)
             {
-                Item item = CreateFromRecord(record);
+                Item item = StashItemCodec.CreateFromRecord(record, _monitor);
                 if (item == null)
                 {
                     _monitor.Log(
-                        $"JunimoStashService: could not recreate item '{record.ItemId}' (unknown id) — skipping.",
+                        $"JunimoStashService: could not recreate item '{record.ItemId}' (unknown id), skipping.",
                         LogLevel.Warn);
                     continue;
                 }
-
-                // A stashed tool's slots (rod bait/tackle) are instance state the registry cannot
-                // rebuild, same class as the kept-tier rod transplant in FarmerReset. Clamped to the
-                // recreated tool's slot count so a stale record can never overflow.
-                if (item is Tool tool && record.Attachments != null)
-                {
-                    int slots = System.Math.Min(record.Attachments.Count, tool.attachments.Count);
-                    for (int i = 0; i < slots; i++)
-                    {
-                        StashItemRecord slotRecord = record.Attachments[i];
-                        if (slotRecord == null) continue;
-                        if (CreateFromRecord(slotRecord) is StardewValley.Object attachment)
-                            tool.attachments[i] = attachment;
-                        else
-                            _monitor.Log(
-                                $"JunimoStashService: could not recreate attachment '{slotRecord.ItemId}' on '{record.ItemId}' — slot left empty.",
-                                LogLevel.Warn);
-                    }
-                }
-
-                if (item is Tool enchanted && record.Enchantments != null)
-                    RestoreEnchantments(enchanted, record);
-
                 chest.Items.Add(item);
                 restored++;
             }
@@ -391,101 +220,6 @@ namespace TheLongestYear.Loop
             _monitor.Log(
                 $"JunimoStashService: restored {restored}/{_meta.StashItems.Count} items into stash chest.",
                 LogLevel.Trace);
-        }
-
-        /// <summary>Recreate one banked item (top-level or a tool attachment) from its record:
-        /// registry lookup by id/stack/quality, then the flavored-good identity re-applied. Null
-        /// when the id is unknown to this game (mod item from a removed mod, typo).</summary>
-        private static Item CreateFromRecord(StashItemRecord record)
-        {
-            Item item = ItemRegistry.Create(record.ItemId, record.Quantity, record.Quality,
-                allowNull: true);
-            if (item == null)
-                return null;
-
-            // Re-apply a flavored good's source identity + baked price (see BankToMeta). Mirrors
-            // the game's own Object.GetOneCopyFrom, which copies exactly these three fields. Only
-            // set when captured (null for plain items), so non-preserved items keep their
-            // data-driven price untouched.
-            if (item is StardewValley.Object obj)
-            {
-                if (record.PreservedParentSheetIndex != null)
-                    obj.preservedParentSheetIndex.Value = record.PreservedParentSheetIndex;
-                if (record.Preserve.HasValue)
-                    obj.preserve.Value = (StardewValley.Object.PreserveType)record.Preserve.Value;
-                if (record.Price.HasValue)
-                    obj.Price = record.Price.Value;
-            }
-            return item;
-        }
-
-        /// <summary>Snapshot one item (top-level or a tool attachment) into a record. Flavored/
-        /// preserved goods (Smoked Fish, Wine, Jelly, Aged Roe, Honey, Bait, …) bake their source
-        /// identity + sale price into preservedParentSheetIndex / preserve / price.Value. Recreating
-        /// by base id alone loses ALL of it (a Smoked Legend comes back as a blank 57g smoked fish),
-        /// so capture those fields when present. Plain items have no preserve identity → leave the
-        /// fields null so restore doesn't touch them. A tool with slots records each slot in order
-        /// (null for an empty one) so rod bait/tackle survive the loop.</summary>
-        private static StashItemRecord ToRecord(Item item)
-        {
-            var obj = item as StardewValley.Object;
-            int quality = obj?.quality.Value ?? 0;
-
-            bool hasPreserveIdentity = obj != null &&
-                (!string.IsNullOrEmpty(obj.preservedParentSheetIndex.Value) || obj.preserve.Value.HasValue);
-
-            List<StashItemRecord> attachments = null;
-            List<StashEnchantmentRecord> enchantments = null;
-            if (item is Tool tool)
-            {
-                if (tool.attachments.Count > 0)
-                {
-                    attachments = new List<StashItemRecord>(tool.attachments.Count);
-                    foreach (StardewValley.Object slot in tool.attachments)
-                        attachments.Add(slot == null ? null : ToRecord(slot));
-                }
-                if (tool.enchantments.Count > 0)
-                {
-                    enchantments = new List<StashEnchantmentRecord>(tool.enchantments.Count);
-                    foreach (BaseEnchantment e in tool.enchantments)
-                        enchantments.Add(new StashEnchantmentRecord(e.GetType().FullName, e.GetLevel()));
-                }
-            }
-
-            return new StashItemRecord(
-                item.QualifiedItemId,
-                item.Stack,
-                quality,
-                hasPreserveIdentity ? obj.preservedParentSheetIndex.Value : null,
-                hasPreserveIdentity && obj.preserve.Value.HasValue ? (int)obj.preserve.Value.Value : null,
-                hasPreserveIdentity ? obj.Price : null,
-                attachments,
-                enchantments);
-        }
-
-        /// <summary>Put a banked tool's enchantments back. Mirrors vanilla Tool.CopyEnchantments
-        /// (add the instance, then ApplyTo) rather than AddEnchantment, which bumps a forge one
-        /// level per call instead of restoring the recorded level. Types resolve against the game
-        /// assembly; an unknown one is logged and skipped so a removed mod can't break the whole
-        /// stash.</summary>
-        private void RestoreEnchantments(Tool tool, StashItemRecord record)
-        {
-            foreach (StashEnchantmentRecord e in record.Enchantments)
-            {
-                if (e?.Type == null) continue;
-                System.Type type = System.Type.GetType(e.Type) ?? typeof(BaseEnchantment).Assembly.GetType(e.Type);
-                if (type == null || !typeof(BaseEnchantment).IsAssignableFrom(type))
-                {
-                    _monitor.Log(
-                        $"JunimoStashService: unknown enchantment type '{e.Type}' on '{record.ItemId}' — skipping.",
-                        LogLevel.Warn);
-                    continue;
-                }
-                if (System.Activator.CreateInstance(type) is not BaseEnchantment enchantment) continue;
-                enchantment.Level = e.Level;
-                tool.enchantments.Add(enchantment);
-                enchantment.ApplyTo(tool);
-            }
         }
 
         /// <summary>
@@ -507,7 +241,7 @@ namespace TheLongestYear.Loop
             foreach (Item item in chest.Items)
             {
                 if (item == null) continue;
-                _meta.StashItems.Add(ToRecord(item));
+                _meta.StashItems.Add(StashItemCodec.ToRecord(item));
             }
 
             _monitor.Log(
