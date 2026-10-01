@@ -33,12 +33,15 @@ public sealed record ClumpRule(DecorTool Tool, int MinTier, int HardwoodDrop);
 /// <summary>A clump the plan clears and the hardwood it drops on its own tiles.</summary>
 public sealed record ClearedClump(int ClumpId, int HardwoodDrop);
 
-/// <summary>Placed piece ids, displaced piece ids (stash or overflow chest), clumps to clear, small
-/// debris tiles to clear, and tiles whose fresh object is the same item as the kept piece placed
-/// there (the fresh one is lifted and the kept one, with its gate state, goes in its place).</summary>
+/// <summary>Placed piece ids, displaced piece ids (to the stash, else dropped on the ground), clumps
+/// to clear, small debris tiles to clear, tiles whose fresh object is the same item as the kept
+/// piece placed there (the fresh one is lifted and the kept one, with its gate state, goes in its
+/// place), and for each displaced piece the tile that blocked it (a building, object, clump or the
+/// map edge), so a piece the stash cannot take drops beside its blocker.</summary>
 public sealed record DecorPlan(
     IReadOnlyList<int> Placed,
     IReadOnlyList<int> Displaced,
     IReadOnlyList<ClearedClump> ClearedClumps,
     IReadOnlyList<DecorTile> DebrisTilesToClear,
-    IReadOnlyList<DecorTile> SameObjectTilesToSwap);
+    IReadOnlyList<DecorTile> SameObjectTilesToSwap,
+    IReadOnlyDictionary<int, DecorTile> BlockedAt);
