@@ -6,6 +6,38 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
+Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
+same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
+else inside is refused at deposit. Stashed items keep dye, boot tailoring, Combined Ring rings,
+trinket rolls and rod bait/tackle. Older stashed containers holding other items get them taken out
+(stash slot, else a pickup on the ground beside the stash; there is no overflow chest). New
+upgrades: Keep Farm Decor (Buildings, 500 JP; paths, fences, lights, signs, no-function
+decorations, no furniture), Keep Worn Gear (Loadout, 1,000 JP), Keep Farmhouse Furniture
+(Buildings, 250 JP). Live checks 2026-10-01 (headless, automated): 21 PASS, 0 FAIL.
+- Stash: dresser with hat/dyed shirt/pants accepted and kept through a reset; dresser with a ring
+  refused; dyed pants, tailored boots (514/4/4), Combined Ring [(O)529,(O)530], trinket seed and
+  a baited rod (deposited through Chest.addItem) all identical after reset.
+- Legacy eject: ring taken out into its own slot; with a full stash dropped beside the stash at
+  (67, 18). The 0.18.118-save rescue path was not exercised (no such save); a plain reload logs no
+  rescue line.
+- Keep Worn Gear: nothing kept without it; with it boots, both rings, trinket and trinketSlots=1
+  identical after reset.
+- Keep Farm Decor: stump under a path cleared with the kept copper axe (2 hardwood on the tile);
+  boulder kept with a basic pickaxe (fence and torch to the stash); no axe keep leaves the stump
+  and stashes the path; full stash stacks what it can and drops the rest beside the blocker; a
+  path under the stash chest keeps the chest on its tile after save and reload; Meadowlands keeps
+  its 33 starter fences in place with nothing duplicated into the stash.
+- Keep Farmhouse Furniture: dresser, rug and painting back on their tiles, hat kept, ring wiped,
+  one bed; house level 1 back to 0 shifts pieces by (-6, 0), the double bed and a kitchen plant
+  drop by the front door and the starter bed stays.
+- Outstanding for Jeff: Android on-device load, heldItem reflection and drag refusal in the stash
+  menu; refusing a container with a full inventory (lands at your feet; menu-only path); torch and
+  lamp-post glow at night after a decor restore; confirm the decorative big craftable list in
+  FarmDecorKeep and the trinketSlots re-grant.
+- Reply to sarahwinchester97 only after the release ships (bug-reply-after-fix). Her current
+  dresser is gone; the rescue covers only saves where it is still in the stash.
+
 ### BUILT 0.18.99 (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
 Jeff replied 2026-09-30 guessing a production-chain leak. It was not a leak: the Sticky recipe
 (since 0.16.116) re-rolled from "Sap or resource", the whole Resource bucket plus TapperGoods (which
