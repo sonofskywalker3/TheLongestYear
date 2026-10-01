@@ -262,6 +262,8 @@
     "upgrade.keep_shortcuts.desc": "Start each loop with all of Robin's map shortcuts pre-cleared.",
     "upgrade.keep_pet.name": "Keep Pet",
     "upgrade.keep_pet.desc": "Your pet returns at the start of every loop with its name and friendship hearts intact.",
+    "upgrade.keep_farm_decor.name": "Keep Farm Decor",
+    "upgrade.keep_farm_decor.desc": "Start each loop with your paths, fences, lights, signs and outdoor furniture where you left them.",
     "upgrade.keep_bus_unlocked.name": "Keep Bus Unlocked",
     "upgrade.keep_bus_unlocked.desc": "The bus to the desert runs from the first day.",
     "upgrade.start_chicken.name": "Start with Chicken",

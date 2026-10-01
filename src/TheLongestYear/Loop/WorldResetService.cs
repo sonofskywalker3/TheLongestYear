@@ -287,6 +287,13 @@ namespace TheLongestYear.Loop
             // whose animal is gone keeps its last snapshot.
             HerdBookService.RefreshBeforeReset(_meta, _monitor);
 
+            // 0g. Keep Farm Decor: lift paths, fences, lights, signs and outdoor furniture off the
+            // farm before loadForNewGame discards it; they go back at step 13a. Held in memory like
+            // the display options above: the reset is one call.
+            FarmDecorSnapshot keptDecor = _meta.HasUpgrade(FarmDecorKeep.UpgradeId)
+                ? FarmDecorSnapshot.Capture(Game1.getFarm(), _monitor)
+                : null;
+
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
 
@@ -700,6 +707,10 @@ namespace TheLongestYear.Loop
             _stashService?.PlaceChest();
             _stashService?.PopulateFromMeta();
             _planningShrine?.Place(_stashService?.LastPlacedTile);
+
+            // 13a. Keep Farm Decor back on its tiles, after kept buildings, the stash chest and the
+            // planning shrine, so each of them wins its tile and displaced decor can go to the stash.
+            FarmDecorCarryoverService.Restore(keptDecor, baseline.ToolTiers, _stashService, _monitor);
 
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up

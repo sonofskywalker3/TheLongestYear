@@ -191,3 +191,17 @@ public class FarmDecorKeepTests
         Assert.Empty(plan.DebrisTilesToClear);
     }
 }
+
+[Collection("i18n")]
+public class FarmDecorKeepCatalogTests
+{
+    [Fact]
+    public void Catalog_row_is_one_level_500_jp_in_buildings()
+    {
+        UpgradeDefinition row = UpgradeCatalog.All.Single(u => u.Id == FarmDecorKeep.UpgradeId);
+        Assert.Equal(500L, row.Cost);
+        Assert.Equal(UpgradeCategory.Buildings, row.Category);
+        Assert.Null(row.PrerequisiteId);
+        Assert.Null(row.RunReachRequirement);
+    }
+}

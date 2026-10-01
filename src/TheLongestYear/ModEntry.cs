@@ -388,6 +388,9 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_stashnest",
                 "Debug: exercise the stash nesting rule and item identity. Usage: tly_stashnest <hats|ring|gear|legacy|fill|wear|worn|check>",
                 (cmd, a) => { if (Context.IsWorldReady) StashNestingDebug.Run(a, this.Monitor, _stashService); });
+            helper.ConsoleCommands.Add("tly_decor",
+                "Debug: set up and inspect Keep Farm Decor cases. Usage: tly_decor <clumps|path x y|fence x y|check x y>",
+                (cmd, a) => { if (Context.IsWorldReady) FarmDecorDebug.Run(a, this.Monitor); });
             helper.ConsoleCommands.Add("tly_giftbox",
                 "Debug: report or open a vanilla one-time gift box. Usage: tly_giftbox <Location> <x> <y> [warp|open]",
                 this.CmdGiftBox);
@@ -2543,6 +2546,7 @@ namespace TheLongestYear
                 case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_additem": this.CmdAddItem(command, args); break;
                 case "tly_stashnest": if (Context.IsWorldReady) StashNestingDebug.Run(args, this.Monitor, _stashService); break;
+                case "tly_decor": if (Context.IsWorldReady) FarmDecorDebug.Run(args, this.Monitor); break;
                 case "tly_removehorse": this.CmdRemoveHorse(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
                 case "tly_win":
