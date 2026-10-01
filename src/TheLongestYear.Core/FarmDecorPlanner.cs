@@ -6,7 +6,7 @@ namespace TheLongestYear.Core;
 
 /// <summary>
 /// Where kept decor goes on the fresh farm (spec 2026-10-01, "Conflicts on the fresh farm").
-/// A piece goes to the stash when a tile is off the map or under a building (kept buildings are
+/// A piece is displaced (to the stash, else dropped beside its blocker: Addendum 2) when a tile is off the map or under a building (kept buildings are
 /// placed first and win), or, for an object-layer piece, when another object or furniture now
 /// stands there (a path may run under an object). Large debris touching a still-placed piece is
 /// cleared if the KEPT tool tier breaks it, else every piece it touches goes to the stash.
@@ -28,6 +28,7 @@ public static class FarmDecorPlanner
         Func<int, int, string?>? freshObjectIdAt = null)
     {
         var displaced = new HashSet<int>();
+        var blockedAt = new Dictionary<int, DecorTile>();
         var swaps = new Dictionary<int, List<DecorTile>>();
         foreach (DecorPiece piece in pieces)
         {
@@ -44,6 +45,7 @@ public static class FarmDecorPlanner
                 if ((block & blocking) != 0)
                 {
                     displaced.Add(piece.Id);
+                    blockedAt[piece.Id] = t;
                     break;
                 }
             }
@@ -54,7 +56,10 @@ public static class FarmDecorPlanner
         foreach (DecorClump clump in clumps.Where(c => !FarmDecorKeep.CanBreak(c.Index, axeTier, pickaxeTier)))
             foreach (DecorPiece piece in pieces)
                 if (!displaced.Contains(piece.Id) && Overlaps(piece, clump))
+                {
                     displaced.Add(piece.Id);
+                    blockedAt[piece.Id] = piece.Tiles.First(t => clump.Tiles.Contains(t));
+                }
 
         var cleared = new List<ClearedClump>();
         foreach (DecorClump clump in clumps.Where(c => FarmDecorKeep.CanBreak(c.Index, axeTier, pickaxeTier)))
@@ -77,7 +82,8 @@ public static class FarmDecorPlanner
             pieces.Where(p => displaced.Contains(p.Id)).Select(p => p.Id).ToList(),
             cleared,
             debris,
-            swapTiles);
+            swapTiles,
+            blockedAt);
     }
 
     private static bool IsSameObject(DecorPiece piece, DecorTile t, TileBlock block, Func<int, int, string?>? freshObjectIdAt)
