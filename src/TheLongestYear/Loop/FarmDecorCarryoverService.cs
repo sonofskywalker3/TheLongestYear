@@ -151,9 +151,15 @@ namespace TheLongestYear.Loop
             }
             catch (System.Exception ex)
             {
-                monitor.Log($"Keep Farm Decor: could not turn piece {e.Id} at ({e.Tile.X}, {e.Tile.Y}) into stash items. " +
+                // Last resort: the piece's own object (a path has no item to store) goes to the
+                // overflow chest as it is, torch and all.
+                monitor.Log($"Keep Farm Decor: could not turn piece {e.Id} at ({e.Tile.X}, {e.Tile.Y}) into stash items" +
+                            (e.Obj != null ? "; storing the piece itself in the overflow chest. " : ". ") +
                             $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
-                return 0;
+                if (e.Obj == null)
+                    return 0;
+                LastResort(farm, stash, e.Obj, monitor);
+                return 1;
             }
             foreach (Item item in items)
             {
@@ -170,12 +176,16 @@ namespace TheLongestYear.Loop
                 }
                 catch (System.Exception ex)
                 {
-                    monitor.Log($"Keep Farm Decor: could not store '{item.QualifiedItemId}' x{item.Stack} from piece {e.Id}. " +
+                    monitor.Log($"Keep Farm Decor: could not store '{item.QualifiedItemId}' x{item.Stack} from piece {e.Id}; trying the overflow chest. " +
                                 $"{ex.GetType().Name}: {ex.Message}", LogLevel.Error);
+                    LastResort(farm, stash, item, monitor);
                 }
             }
             return overflowed;
         }
+
+        private static void LastResort(Farm farm, JunimoStashService stash, Item item, IMonitor monitor)
+            => JunimoStashService.LastResortOverflow(farm, stash?.LastPlacedTile, item, monitor);
 
         // Fresh-farm state of one tile for the planner. Every terrain feature (grass, saplings, trees)
         // and every bush is small debris: it shares or blocks the tile and kept decor wins. Any other
