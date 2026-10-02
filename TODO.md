@@ -273,6 +273,9 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    the eyes. Fix: tone the glow down, and place it so it covers the white of the farmer's eyes for
    every farmer style (male/female, any skin, eye colour, hair or hat). Today the farmer's spots
    are fixed offsets in `JojaGameOverMenu.FarmerEyes`, measured on one farmer only.
+6. **"Come see me" letters at least a week apart:** keep twice a season on random days, but never two
+   in the same week; any two letters must be at least 7 days apart (across season boundaries too).
+   Jeff's save rolled Spring 11 and 14, and Fall 13 and 15.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
