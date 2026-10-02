@@ -6,13 +6,6 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BEFORE RELEASING 0.18.135 (Jeff, 2026-10-02)
-- PASS 2026-10-02: kept lamp-posts and a fence-post torch glow at night right after a Keep Farm Decor
-  rewind, no sleep or reload (agent live check on the Rodger save, screenshots shown to Jeff).
-- Dropped: Android on-device check (Jeff: not now); full-inventory refusal (only reachable if the
-  dresser's freed slot is filled while it is on the cursor; a safety net, not a player path).
-- Decorative big craftable list in FarmDecorKeep: approved by Jeff 2026-10-02.
-
 ### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
 Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
 same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
@@ -42,7 +35,10 @@ decorations, no furniture), Keep Worn Gear (Loadout, 1,000 JP), Keep Farmhouse F
   menu; refusing a container with a full inventory (lands at your feet; menu-only path); torch and
   lamp-post glow at night after a decor restore; confirm the decorative big craftable list in
   FarmDecorKeep and the trinketSlots re-grant.
-- Reply to sarahwinchester97 only after the release ships (bug-reply-after-fix). Her current
+- RELEASED 0.18.135 (2026-10-02): GitHub, Nexus file, version, description and changelog live.
+  Hand checks: decor glow PASS (agent run); Android and full-inventory checks dropped by Jeff;
+  decor big craftable list approved by Jeff.
+- Reply to sarahwinchester97 now due (bug-reply-after-fix); draft goes to Jeff first. Her current
   dresser is gone; the rescue covers only saves where it is still in the stash.
 
 ### BUILT 0.18.99 (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
