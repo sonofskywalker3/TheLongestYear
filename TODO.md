@@ -7,7 +7,8 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ## Open
 
 ### BEFORE RELEASING 0.18.135 (Jeff, 2026-10-02)
-- Night after a Keep Farm Decor rewind: kept torches and lamp-posts glow (agent live check, screenshots to Jeff).
+- PASS 2026-10-02: kept lamp-posts and a fence-post torch glow at night right after a Keep Farm Decor
+  rewind, no sleep or reload (agent live check on the Rodger save, screenshots shown to Jeff).
 - Dropped: Android on-device check (Jeff: not now); full-inventory refusal (only reachable if the
   dresser's freed slot is filled while it is on the cursor; a safety net, not a player path).
 - Decorative big craftable list in FarmDecorKeep: approved by Jeff 2026-10-02.
