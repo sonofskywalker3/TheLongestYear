@@ -276,6 +276,11 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
 6. **"Come see me" letters at least a week apart:** keep twice a season on random days, but never two
    in the same week; any two letters must be at least 7 days apart (across season boundaries too).
    Jeff's save rolled Spring 11 and 14, and Fall 13 and 15.
+7. **Morris's refusal after a rejection by letter:** today he says "you heard me, leave", which only
+   fits a No said to his face. When the rejection came from the 4th "make a decision" letter, his
+   first line is Jeff's, verbatim: "You must not have read my letter. You're no longer welcome here.
+   Leave." After that one time it can go back to the "leave" line. Needs the rejection to remember
+   how it happened (in person or by letter) and whether the letter line has been shown.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
