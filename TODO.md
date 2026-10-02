@@ -260,6 +260,8 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    counter, then blinks and is suddenly in the middle of the room. Fix: hold the screen black on
    entry until the scene is fully staged, then fade in and run it. Never show the normal room state
    and then snap to the scene's start positions.
+2. **Morris smiles after a No:** his portrait shows a smile on the refusal line(s) after the player
+   turns him down. He should look displeased (angry/neutral portrait), not happy.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
