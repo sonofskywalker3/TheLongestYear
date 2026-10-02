@@ -262,6 +262,8 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    and then snap to the scene's start positions.
 2. **Morris smiles after a No:** his portrait shows a smile on the refusal line(s) after the player
    turns him down. He should look displeased (angry/neutral portrait), not happy.
+3. **Bad ending pan is too long:** the destruction and building are fine, but panning over row after
+   row of coops and barns is too much. Show only the first row of buildings, then fade out.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
