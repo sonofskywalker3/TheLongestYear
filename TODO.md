@@ -268,8 +268,8 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    about 1 second, it moves up to the Community Center, which has also been turned into the Joja
    warehouse, and only then the Game Over screen. (Vanilla has a Joja warehouse look for the CC from
    the Joja route; check whether it can be borrowed.)
-5. **Game Over screen, the farmer's glowing eyes are in the wrong place:** the glow uses Morris's eye
-   spacing (his eyes sit close together), so on the farmer it lands on the bridge of the nose, not
+5. **Game Over screen, the farmer's glowing eyes are in the wrong place:** Morris's eyes sit close
+   together and the farmer's do not; on Jeff's farmer the glow lands on the bridge of the nose, not
    the eyes. Fix: tone the glow down, and place it so it covers the white of the farmer's eyes for
    every farmer style (male/female, any skin, eye colour, hair or hat). Today the farmer's spots
    are fixed offsets in `JojaGameOverMenu.FarmerEyes`, measured on one farmer only.
