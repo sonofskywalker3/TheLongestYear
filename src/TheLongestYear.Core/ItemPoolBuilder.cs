@@ -779,8 +779,16 @@ public static class ItemPoolBuilder
     /// <see cref="BuiltInExcludedItemIds"/>). BugLand = Mutant Bug Lair: behind the Dark
     /// Talisman quest, which is itself post-CC — never year-1 content. WitchSwamp is behind
     /// the same quest, so Void Salmon is out too (0.12.18; the 2026-08-24 "hard but fair"
-    /// ruling assumed the swamp was reachable in year 1, which it is not).</summary>
-    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers = new[] { "BugLand", "WitchSwamp" };
+    /// ruling assumed the swamp was reachable in year 1, which it is not).
+    ///
+    /// Island (Ginger Island, and SVE's Custom_DinoIsland event maps), FableReef and
+    /// CrimsonBadlands (SVE) used to be config defaults only, so a saved marker list without them
+    /// let island fish into the pools (player report 2026-10, paigefromabook: Weatherman's asked
+    /// for a Stingray, which is caught only in the Pirate Cove). Checked against the live
+    /// Data/Locations (91 keys) and SVE's LocationsData: "Island" matches only the Ginger Island
+    /// maps and the two DinoIsland maps, none of them year-1 places.</summary>
+    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers =
+        new[] { "BugLand", "WitchSwamp", "Island", "FableReef", "CrimsonBadlands" };
 
     /// <summary>Data/Locations keys that are not places anyone fishes or forages, matched
     /// EXACTLY (case-insensitive) rather than by substring so a modded "Temple" or
