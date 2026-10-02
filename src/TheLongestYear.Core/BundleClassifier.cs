@@ -11,7 +11,9 @@ namespace TheLongestYear.Core;
 /// be unit-tested with synthetic <see cref="ParsedBundle"/>s.
 ///
 /// Decision order (the first match wins):
-///   1. Name matches "(Spring|Summer|Fall|Winter) (Foraging|Crops)" → <see cref="BundleKind.Seasonal"/>.
+///   1. Name matches "(Spring|Summer|Fall|Winter) (Foraging|Crops)" → <see cref="BundleKind.Seasonal"/>,
+///      unless the model says its own season cannot supply the slots it needs: then a
+///      <see cref="BundleKind.Percentage"/> ramp capped by what is reachable (<see cref="SeasonalReachRamp"/>).
 ///   2. Name has an entry in <paramref name="bundleQuotas"/> AND X &lt; Y after dedup
 ///      → <see cref="BundleKind.Percentage"/>. (X &gt;= Y is structurally impossible for a
 ///      Percentage quota — fall through to PerItem.)
@@ -122,6 +124,17 @@ public static class BundleClassifier
         if (seasonalMatch.Success)
         {
             Season season = ParseSeason(seasonalMatch.Groups["season"].Value);
+            int[]? reachRamp = availability != null
+                ? SeasonalReachRamp(season, parsed.NumberOfSlots, slots, ingredients.Count, availability)
+                : null;
+            if (reachRamp != null)
+                return BundleRequirement.CreatePercentage(
+                    name, theme, ingredients,
+                    numberOfSlots: reachRamp[^1],
+                    cumulativeRequiredBySeason: reachRamp,
+                    ingredientStacks: ingredientStacks,
+                    ingredientQualities: ingredientQualities,
+                    bundleIndex: parsed.Index, slots: slots);
             return BundleRequirement.CreateSeasonal(name, theme, ingredients, season,
                 ingredientStacks, ingredientQualities, bundleIndex: parsed.Index, slots: slots,
                 numberOfSlots: parsed.NumberOfSlots);
@@ -205,6 +218,37 @@ public static class BundleClassifier
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
             stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);
+    }
+
+    /// <summary>The ramp for a season-named bundle whose own season cannot supply the slots it
+    /// needs, or null when it can (the normal case: the bundle stays Seasonal, "X by its season").
+    ///
+    /// A board can hold items the model dates after the bundle's season: one rolled before
+    /// 0.18.136 (Spring Crops with Rhubarb, Oasis seeds, week 11: gmastern1, 2026-10), or one a
+    /// mod or a Remixed set shaped. "All by Spring" would then be impossible. Jeff's ruling: a
+    /// gate takes ANY N of a bundle's items, so a checkpoint is due only as many slots as the
+    /// bundle's items can supply by then. Nothing before the bundle's season, then the reachable
+    /// slot count capped at X, and X in Winter so the bundle must still be completed to win.
+    /// X is the same required count <see cref="BundleRequirement.CreateSeasonal"/> derives.</summary>
+    public static int[]? SeasonalReachRamp(
+        Season season, int numberOfSlots, IReadOnlyList<BundleSlot> slots, int distinctIngredients,
+        ItemAvailabilityModel model)
+    {
+        if (slots == null || slots.Count == 0 || model == null) return null;
+        int required = numberOfSlots > 0 && numberOfSlots < slots.Count ? numberOfSlots : slots.Count;
+        // A Percentage requirement needs Y >= X over distinct ids; a doubled-id board short of
+        // that keeps the Seasonal shape rather than throw.
+        if (distinctIngredients < required) return null;
+
+        int ReachableBy(Season s) => slots.Count(slot => model.For(slot.ItemId).Gate <= s);
+        if (ReachableBy(season) >= required) return null;
+
+        var ramp = new int[Calendar.MonthsPerYear];
+        for (int s = (int)season; s < ramp.Length; s++)
+            ramp[s] = Math.Min(required, ReachableBy((Season)s));
+        ramp[^1] = required;
+        for (int s = 1; s < ramp.Length; s++) ramp[s] = Math.Max(ramp[s], ramp[s - 1]);
+        return ramp;
     }
 
     /// <summary>
