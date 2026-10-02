@@ -6,6 +6,21 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; waiting on player logs
+- **gmastern1 (Nexus posts):** Spring Crops showed complete in Winter without Rhubarb. Released code
+  cannot complete an unfilled bundle or swap Rhubarb on load, and a Spring Crops needing all 4 with
+  Rhubarb could not pass Spring 28, so his was most likely 3-required (Easy or pick-3-of-4). Real
+  leak found on the way and fixed (0.18.136/137): season-named bundles took items dated after their
+  season (Rhubarb, Coffee Bean in Spring; Starfruit in Summer). Replied 2026-10-02 asking for his
+  SMAPI log and difficulty; told him he can restart the year at the Junimo Shrine.
+- **paigefromabook (Nexus bugs, filed on 0.18.72):** Weatherman's asked for Stingray. Island markers
+  were config defaults only; now built-in (0.18.138) and repair swaps island-only fish on load
+  (0.18.139). Cause on her save unproven (config list or another fish mod). Replied 2026-10-02 asking
+  for her SMAPI log and the ExcludedLocationMarkers line.
+- sarahwinchester97: note posted 2026-10-02 that the dresser fix and Keep Worn Gear are out.
+- Open: merge master into `story` hits real conflicts (BundleEngine, WorldResetService, ModEntry,
+  i18n/default.json); aborted, needs its own task.
+
 ### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
 Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
 same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
