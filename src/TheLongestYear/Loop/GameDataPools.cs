@@ -51,6 +51,9 @@ namespace TheLongestYear.Loop
             var fruitTrees = new List<RawFruitTreeEntry>();
             var geodeDrops = new List<RawGeodeDropEntry>();
             var festivalSeasons = new Dictionary<string, Core.Season>(StringComparer.OrdinalIgnoreCase);
+            // Fish caught in an excluded place (Ginger Island, Fable Reef...): never pooled, but
+            // handed to the reachability rule so a board that already asks for one is repaired.
+            var excludedCatch = new HashSet<string>(StringComparer.Ordinal);
 
             try
             {
@@ -92,7 +95,15 @@ namespace TheLongestYear.Loop
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, tuning.ExcludedLocationMarkers))
+                    {
+                        // Non-habitat keys (Default, Temp, fishingGame) are not places at all, so
+                        // they say nothing about where a fish can or cannot be caught.
+                        if (!ItemPoolBuilder.BuiltInNonHabitatLocationKeys.Contains(kv.Key))
+                            foreach (SpawnFishData f in (kv.Value?.Fish ?? new List<SpawnFishData>()).Where(r => r != null))
+                                foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
+                                    excludedCatch.Add(BundleParsing.NormalizeItemId(id));
                         continue;
+                    }
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     // A row gated to year 2 or later never spawns in a loop (YearOneCondition).
@@ -354,7 +365,7 @@ namespace TheLongestYear.Loop
                     name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
                 reachability = new SourceReachability(
                     unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
-                    machineRules, animals);
+                    machineRules, animals, excludedCatch);
                 _monitor?.Log(
                     $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
                     LogLevel.Trace);

@@ -355,4 +355,40 @@ public class SourceReachabilityTests
         Assert.DoesNotContain(pools.Crops, item => item.ItemId == "(O)FishmongerCrop");
         Assert.Contains(pools.Crops, item => item.ItemId == "(O)Parsnip");
     }
+
+    /// <summary>Player report 2026-10 (paigefromabook): Weatherman's asked for a Stingray. It is
+    /// caught only in the Pirate Cove on Ginger Island and no shop sells it, so with no rule it read
+    /// as "untraceable, allowed" and board repair kept it. A fish whose only catch rows are in
+    /// excluded places is a known, closed route.</summary>
+    [Fact]
+    public void Fish_caught_only_in_excluded_places_is_unreachable()
+    {
+        var rule = new SourceReachability(
+            Unreachable, Array.Empty<RawShopListing>(), Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), NoSpawns,
+            excludedCatchIds: new HashSet<string>(StringComparer.Ordinal) { "(O)836" });
+        Assert.True(rule.IsUnreachable("(O)836"));
+        Assert.Contains("(O)836", rule.Reasons.Keys);
+    }
+
+    [Fact]
+    public void Fish_caught_in_an_excluded_place_and_somewhere_reachable_is_allowed()
+    {
+        var rule = new SourceReachability(
+            Unreachable, Array.Empty<RawShopListing>(), Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(),
+            new HashSet<string>(StringComparer.Ordinal) { "(O)130" },   // Tuna: Beach too
+            excludedCatchIds: new HashSet<string>(StringComparer.Ordinal) { "(O)130" });
+        Assert.False(rule.IsUnreachable("(O)130"));
+    }
+
+    [Fact]
+    public void Fish_caught_only_in_excluded_places_but_sold_somewhere_reachable_is_allowed()
+    {
+        var rule = new SourceReachability(
+            Unreachable, new[] { new RawShopListing("(O)836", TownShop) }, Placements,
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), NoSpawns,
+            excludedCatchIds: new HashSet<string>(StringComparer.Ordinal) { "(O)836" });
+        Assert.False(rule.IsUnreachable("(O)836"));
+    }
 }
