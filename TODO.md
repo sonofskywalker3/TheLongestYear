@@ -7,10 +7,6 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ## Open
 
 ### BEFORE RELEASING 0.18.135: Jeff tests by hand (asked 2026-10-01 to be reminded)
-- Keep Worn Gear trinket slot: claim the Combat mastery perk (that is what opens the trinket
-  slot), wear a trinket, buy Keep Worn Gear, rewind. The trinket is still worn and the slot still
-  shows. Then the same rewind WITHOUT a trinket worn: the slot should be gone again until the
-  Combat mastery perk is claimed again (Keep Mastery owners re-claim it at the pedestal).
 - Android device: the mod loads; drag a dresser holding a ring into the stash (refused, back in
   your inventory).
 - PC, full inventory: same drag, the dresser lands at your feet.
