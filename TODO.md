@@ -264,6 +264,10 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    turns him down. He should look displeased (angry/neutral portrait), not happy.
 3. **Bad ending pan is too long:** the destruction and building are fine, but panning over row after
    row of coops and barns is too much. Show only the first row of buildings, then fade out.
+4. **Bad ending town pan ends on the Community Center:** after the town pan holds on Pierre's for
+   about 1 second, it moves up to the Community Center, which has also been turned into the Joja
+   warehouse, and only then the Game Over screen. (Vanilla has a Joja warehouse look for the CC from
+   the Joja route; check whether it can be borrowed.)
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
