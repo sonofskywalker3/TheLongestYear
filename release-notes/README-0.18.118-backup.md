@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.135`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.118`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,16 +24,6 @@ This is a **beta** (`0.18.135`). It is feature-complete for v1 and stable in tes
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
-
-## What's New in 0.18.135
-
-**A dresser in the stash keeps its clothes, and three new upgrades keep your farm decor, your worn gear and your farmhouse furniture.**
-
-- **A dresser in the Junimo Stash keeps what's in it.** A stashed dresser came back empty after a rewind. Hats, shirts, pants, furniture, wallpaper and flooring now stay inside. Anything else in it, like rings, boots or fish, has to come out first: the stash hands the dresser back with a message. A dresser stashed by an older version with other things inside gets them taken out into the stash. Reported by sarahwinchester97.
-- **Stashed items keep their looks and stats.** Dyed clothes keep their colour, tailored boots keep their stats, a Combined Ring keeps both rings, a trinket keeps its rolled stats and a fishing rod keeps its bait and tackle.
-- **Keep Farm Decor (Junimo Upgrades, Buildings, 500 JP).** Paths, fences, gates, lamp-posts, torches, braziers, signs and decorations come back where you left them every loop. Furniture is not kept. A stump, log or boulder in the way is cleared if your kept axe or pickaxe could break it. A piece with no room goes to the stash, or is left on the ground nearby when the stash is full.
-- **Keep Worn Gear (Junimo Upgrades, Loadout, 1,000 JP).** The boots, rings and trinket you're wearing when the year rewinds stay on you.
-- **Keep Farmhouse Furniture (Junimo Upgrades, Buildings, 250 JP).** Furniture inside your farmhouse stays where you put it, dressers included. Anything in a dresser that isn't clothing, furniture, wallpaper or flooring is wiped, so stash it first. If your house is a different size after the rewind, furniture moves with its room, and anything with no room is left by the front door.
 
 ## What's New in 0.18.118
 

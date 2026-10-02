@@ -1,0 +1,12 @@
+0.18.135 - A dresser in the stash keeps its clothes, and three new upgrades keep your farm decor, your worn gear and your farmhouse furniture.
+
+Fixed
+- A dresser in the Junimo Stash keeps what's in it. A stashed dresser came back empty after a rewind. Hats, shirts, pants, furniture, wallpaper and flooring now stay inside. Anything else in it, like rings, boots or fish, has to come out first: the stash hands the dresser back with a message. A dresser stashed by an older version with other things inside gets them taken out into the stash. Reported by sarahwinchester97.
+- Stashed items keep their looks and stats. Dyed clothes keep their colour, tailored boots keep their stats, a Combined Ring keeps both rings, a trinket keeps its rolled stats and a fishing rod keeps its bait and tackle.
+
+Added
+- Keep Farm Decor (Junimo Upgrades, Buildings, 500 JP). Paths, fences, gates, lamp-posts, torches, braziers, signs and decorations come back where you left them every loop. Furniture is not kept. A stump, log or boulder in the way is cleared if your kept axe or pickaxe could break it. A piece with no room goes to the stash, or is left on the ground nearby when the stash is full.
+- Keep Worn Gear (Junimo Upgrades, Loadout, 1,000 JP). The boots, rings and trinket you're wearing when the year rewinds stay on you.
+- Keep Farmhouse Furniture (Junimo Upgrades, Buildings, 250 JP). Furniture inside your farmhouse stays where you put it, dressers included. Anything in a dresser that isn't clothing, furniture, wallpaper or flooring is wiped, so stash it first. If your house is a different size after the rewind, furniture moves with its room, and anything with no room is left by the front door.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
