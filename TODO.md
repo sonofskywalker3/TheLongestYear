@@ -283,8 +283,7 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
    how it happened (in person or by letter) and whether the letter line has been shown.
 8. **Bad ending always plays in daylight:** a Yes after dark currently plays the farm and town in
    night lighting. Jeff doesn't want that: the conversion isn't literally happening that night, so
-   the whole bad ending plays in day lighting no matter when the player says Yes. (Animals going
-   home still fits as part of the day.)
+   the whole bad ending plays in day lighting no matter when the player says Yes.
 
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
