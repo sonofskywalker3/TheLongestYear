@@ -451,6 +451,39 @@ public class BundleSlotFillerTests
         Assert.True(anySeasonCropSeenInGenericBundle);
     }
 
+    /// <summary>Player report 2026-10 (gmastern1): a Spring Crops bundle asked for Rhubarb. Data/Crops
+    /// lists Rhubarb as a Spring crop, but its seeds come from the Oasis and the model dates the
+    /// harvest to week 11, so a season-named bundle holding it could never meet its own Spring gate.
+    /// A season-named bundle draws only items the model can deliver by the end of its season.</summary>
+    [Fact]
+    public void SeasonNamedBundle_LeavesOutItemsTheModelDatesAfterItsSeason()
+    {
+        Season[] spring = { Season.Spring };
+        var pools = new ItemPools
+        {
+            Crops = new[]
+            {
+                Item("(O)24", seasons: spring), Item("(O)188", seasons: spring),
+                Item("(O)190", seasons: spring), Item("(O)192", seasons: spring),
+                Item("(O)250", seasons: spring),
+                Item("(O)252", weight: 100, seasons: spring), // Rhubarb: Oasis seeds, week 11
+            },
+        };
+        var model = Model(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)24"] = Avail(1, 1), ["(O)188"] = Avail(1, 1), ["(O)190"] = Avail(2, 2),
+            ["(O)192"] = Avail(1, 1), ["(O)250"] = Avail(1, 1), ["(O)252"] = Avail(11, 11),
+        });
+        for (int seed = 0; seed < 40; seed++)
+        {
+            BundleSpec filled = BundleSlotFiller.Fill(Spec("Spring Crops", 4, 4),
+                new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring), pools, Tuning, new Random(seed),
+                availability: model);
+            Assert.Equal(4, filled.Slots.Count);
+            Assert.DoesNotContain(filled.Slots, s => s.ItemId == "(O)252");
+        }
+    }
+
     /// <summary>No item asked twice across the board (Jeff, 2026-08-28: "Flounder on 3 bundles",
     /// "Mussel on 4"). The engine hands each fill the ids every earlier bundle already asks for;
     /// the fill leaves them out while the pool can still fill every slot without them, and only

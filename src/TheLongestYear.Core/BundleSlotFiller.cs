@@ -70,7 +70,7 @@ public static class BundleSlotFiller
             ? new List<IReadOnlyList<PoolItem>>()
             : recipe.Parts.Select(part => part.Source(pools, availability)).ToList();
         IReadOnlyList<PoolItem> candidates = recipe == null
-            ? Candidates(spec, match, pools)
+            ? Candidates(spec, match, pools, availability)
             : BundlePoolRecipes.Union(parts.ToArray());
         // A banned id is out of every draw this bundle makes (the raw roll, the stretch swap, the
         // hard-item swap, a recipe part), unlike <paramref name="avoid"/>, which yields when the
@@ -536,9 +536,9 @@ public static class BundleSlotFiller
                         .Parts.Select(part => part.Source(pools, availability)).ToArray());
             case PoolDomain.SeasonalCrops:
             case PoolDomain.QualityCrops:
-                return FilterSeason(pools.Crops, match.Season);
+                return FilterSeason(pools.Crops, match.Season, availability);
             case PoolDomain.SeasonalForage:
-                return FilterSeason(pools.Forage, match.Season);
+                return FilterSeason(pools.Forage, match.Season, availability);
             case PoolDomain.Fish:
                 return FishBundleCandidates.IsNightFishingBundle(spec)
                     ? FishBundleCandidates.ForNightFishing(pools.Fish, pools.FishRows)
@@ -560,11 +560,20 @@ public static class BundleSlotFiller
     /// vanilla's own Spring/Summer/Fall/Winter bundles. Any-season items (beach shellfish,
     /// desert fruit, an all-year modded crop) would otherwise sit in all four pools at full
     /// weight and crowd out the season's real forage (player report 2026-08-28, Mussel in four
-    /// foraging bundles). A season-less bundle (null) still draws from the whole pool.</summary>
-    private static IReadOnlyList<PoolItem> FilterSeason(IReadOnlyList<PoolItem> pool, Season? season)
+    /// foraging bundles). A season-less bundle (null) still draws from the whole pool.
+    ///
+    /// With a model, the bundle also leaves out anything the model dates after its own season.
+    /// A season-named bundle is gated "all by its season" (BundleClassifier), and an item whose
+    /// spawn season matches but whose source opens later (Rhubarb and Starfruit from the Oasis,
+    /// Coffee Bean from week 5) made that gate impossible (player report 2026-10, gmastern1:
+    /// Spring Crops asked for Rhubarb).</summary>
+    private static IReadOnlyList<PoolItem> FilterSeason(
+        IReadOnlyList<PoolItem> pool, Season? season, ItemAvailabilityModel? availability = null)
         => season == null
             ? pool
-            : pool.Where(p => p.Seasons.Count > 0 && p.Seasons.Contains(season.Value)).ToList();
+            : pool.Where(p => p.Seasons.Count > 0 && p.Seasons.Contains(season.Value)
+                              && (availability == null || availability.For(p.ItemId).Gate <= season.Value))
+                  .ToList();
 
     private static int RollStack(
         PoolDomain domain, PoolItem item, BundleGenerationTuning tuning, Random rng)
