@@ -263,7 +263,7 @@ Collected while Jeff plays; do not touch his running game. Fix only when he says
 clean scene changes both ways, camera clamp, stash sprite in the tour, silent book handover, no hop while
 holding, farmer turns back to the Junimo). Automated run 2026-09-25 16:22 and re-run 16:32 (frame capture):
 no freeze, clean fades, Morris turns and walks off mid-scene, Junimos on clear tiles, colored portraits on
-every page, books held just above the Junimo. Still only Jeff can check: the deathbed and letter with a
+every page, books held just above the Junimo. Jeff verified by eye 2026-10-02: the deathbed and letter with a
 female farmer (tly_newgame arrival skips them) and the signed welcome letter in the mailbox.**  The
 Herd Book tour line (`event.opening.tour-herd`) is approved and committed.
 Note 4's shocked emote is the emote menu's "surprised" (frame 94, jump, bat screech, "!"); vanilla has no other.
