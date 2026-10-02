@@ -6,11 +6,11 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BEFORE RELEASING 0.18.135: Jeff tests by hand (asked 2026-10-01 to be reminded)
-- Android device: the mod loads; drag a dresser holding a ring into the stash (refused, back in
-  your inventory).
-- PC, full inventory: same drag, the dresser lands at your feet.
-- Night after a Keep Farm Decor rewind: kept torches and lamp-posts glow.
+### BEFORE RELEASING 0.18.135 (Jeff, 2026-10-02)
+- Night after a Keep Farm Decor rewind: kept torches and lamp-posts glow (agent live check, screenshots to Jeff).
+- Dropped: Android on-device check (Jeff: not now); full-inventory refusal (only reachable if the
+  dresser's freed slot is filled while it is on the cursor; a safety net, not a player path).
+- Decorative big craftable list in FarmDecorKeep: approved by Jeff 2026-10-02.
 
 ### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
 Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
