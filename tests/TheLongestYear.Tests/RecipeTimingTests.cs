@@ -14,6 +14,16 @@ public class RecipeTimingTests
         RecipePrices = new Dictionary<string, int> { ["(O)206"] = 150 },   // Pizza at the Saloon
     };
 
+    [Fact]
+    public void A_recipe_reports_its_ingredient_counts()
+    {
+        var plum = new RawCookingRecipe("Plum Pudding", new[] { "(O)406", "(O)246", "(O)245" }, "(O)604", "l 13",
+            new[] { 2, 1, 1 });
+        Assert.Equal(2, plum.CountOf(0));
+        Assert.Equal(1, plum.CountOf(2));
+        Assert.Equal(1, new RawCookingRecipe("X", new[] { "(O)1" }, "(O)2", "default").CountOf(0));
+    }
+
     [Theory]
     [InlineData("Stir Fry", "l 100", 1)]
     [InlineData("Vegetable Stew", "f Caroline 7", 8)]

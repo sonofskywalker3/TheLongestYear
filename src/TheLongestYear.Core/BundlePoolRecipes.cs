@@ -96,7 +96,17 @@ public static class BundlePoolRecipes
     /// 2026-08-29).</summary>
     private static readonly string[] ChefStaples = { "(O)245", "(O)246", "(O)247", "(O)419", "(O)423" };
 
-    private static readonly string[] Berries = { "(O)296", "(O)410" };
+    /// <summary>Sticky: things that are actually sticky (Jeff, 2026-09-30). It used to re-roll from
+    /// every resource plus the tapper extras, so it could ask for one Acorn or some Stone
+    /// (elaineofshalott). Sap, the three tapper syrups, Honey, Jelly, Sugar, Slime, Ice Cream,
+    /// Maple Bar, Cranberry Sauce and Miner's Treat. The model check keeps it to year-1 items.</summary>
+    private static readonly string[] StickyThings =
+    {
+        "(O)92", "(O)724", "(O)725", "(O)726", "(O)340", "(O)344",
+        "(O)245", "(O)766", "(O)233", "(O)731", "(O)238", "(O)243",
+    };
+
+    private static readonly string[] Berries ={ "(O)296", "(O)410" };
     private static readonly string[] Dolls = { "(O)103", "(O)126", "(O)127" };
 
     /// <summary>Solar and Void Essence. Both are monster loot by category, so the ByKind walk
@@ -191,7 +201,7 @@ public static class BundlePoolRecipes
             ["Crab Pot"] = _ => One(CrabPotSource, "Crab pot"),
             ["Exotic Foraging"] = _ => One((p, _) => Union(p.Forage, p.TapperGoods), "Forage or tapper"),
             ["Rare Crops"] = _ => One(RareCropSource, "Rare crop"),
-            ["Sticky"] = _ => One((p, m) => Union(Bucket(p, ItemKind.Resource, m), p.TapperGoods), "Sap or resource"),
+            ["Sticky"] = _ => One((p, m) => Placeable(Fixed(p, StickyThings), m), "Something sticky"),
         };
 
     /// <summary>The recipe this bundle re-rolls from. Named recipe first, else the majority

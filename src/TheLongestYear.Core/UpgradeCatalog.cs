@@ -88,6 +88,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, 250,
             metaRequirement: null, runReachRequirement: "scythe:golden"),
 
+        // Keep Worn Gear (spec 2026-10-01, sarahwinchester97): worn boots, rings and trinkets stay
+        // on through the rewind. Priced well above Keep Golden Scythe: rings and trinkets are power.
+        new UpgradeDefinition(WornGearKeep.UpgradeId, UpgradeCategory.Loadout, WornGearKeep.Cost),
+
         // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
         // 5-tier with a more generous floor and ceiling per user feedback). Each tier
         // sets the TOTAL starting-gold bonus to its amount (not additive — owning II
@@ -295,6 +299,14 @@ public static class UpgradeCatalog
         // 50 JP (Jeff, 2026-09-29; was 75): cheap enough for a first-loop buy.
         new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
             metaRequirement: null, runReachRequirement: "pet:1"),
+
+        // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)
+        // back on the same tiles. Above Keep Pet: paths give a speed boost and the layout saves clearing.
+        new UpgradeDefinition(FarmDecorKeep.UpgradeId, UpgradeCategory.Buildings, FarmDecorKeep.Cost),
+
+        // Keep Farmhouse Furniture (spec 2026-10-01, Addendum 2, Jeff): every furniture piece in the
+        // farmhouse and cellar back at the same tile and rotation; non-cosmetic contents are wiped.
+        new UpgradeDefinition(FarmhouseFurnitureKeep.UpgradeId, UpgradeCategory.Buildings, FarmhouseFurnitureKeep.Cost),
 
         // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward
         // across loops, one row per room, never the Bulletin Board. Priced on a shared ladder

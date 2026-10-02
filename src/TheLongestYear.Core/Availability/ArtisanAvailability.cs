@@ -37,6 +37,7 @@ public static class ArtisanAvailability
         foreach (RawMachineRule rule in data.MachineRules)
         {
             if (!rule.OutputItemIds.Contains(qualifiedId)) continue;
+            if (!MachineObtainable(rule.MachineItemId, data)) continue;
             (int inputEffort, string inputNote, int? inputWeek, bool hasInput) = InputEffort(rule, data, effortOf, weekOf);
             string? unlock = data.MachineUnlocks.TryGetValue(rule.MachineItemId, out string? u) ? u : null;
             int machine = MachineUnlockEffort(unlock);
@@ -86,6 +87,16 @@ public static class ArtisanAvailability
         }
         return (NoInputEffort, "none", null, false);
     }
+
+    /// <summary>A machine only makes a route when a first-year player can get the machine: a crafting
+    /// recipe (Data/CraftingRecipes), a recipe shop row (Data/Shops) or a hand-ruled route
+    /// (AvailabilityWeeks.MachineRouteWeeks). A machine with none of these is a reward or a
+    /// placed object (the Statue Of True Perfection, (BC)280, makes Prismatic Shards with no input
+    /// but needs 100% Perfection), so its outputs get no route from it.</summary>
+    public static bool MachineObtainable(string machineId, EffortData data)
+        => data.MachineUnlocks.ContainsKey(machineId)
+           || data.RecipePrices.ContainsKey(machineId)
+           || AvailabilityWeeks.MachineRouteWeeks.ContainsKey(machineId);
 
     /// <summary>1 for a machine unlocked by default or a skill level under 4, 2 for levels 4 to 7,
     /// 3 for level 8 and up or a friendship, quest or purchase unlock ("null" in the recipe data).</summary>

@@ -94,6 +94,39 @@ public class GatedItemVettingTests
         Assert.Contains("(O)795", ItemPoolBuilder.BuiltInExcludedItemIds);
     }
 
+    /// <summary>Ginger Island and SVE's Fable Reef / Crimson Badlands are not year-1 places, and that
+    /// must hold when a saved config.json carries its own marker list (SMAPI replaces list defaults
+    /// wholesale). Player report 2026-10 (paigefromabook): Weatherman's asked for a Stingray, which
+    /// is caught only in the Pirate Cove (IslandSouthEastCave). The config list adds on top.</summary>
+    [Theory]
+    [InlineData("IslandSouthEastCave", true)]   // Stingray
+    [InlineData("IslandSouth", true)]           // Lionfish
+    [InlineData("IslandNorth", true)]           // Blue Discus
+    [InlineData("Custom_DinoIsland_South", true)] // SVE: Lance's 14-heart event map
+    [InlineData("Custom_FableReef", true)]
+    [InlineData("Custom_CrimsonBadlands", true)]
+    [InlineData("Beach", false)]
+    [InlineData("Mountain", false)]
+    [InlineData("Forest", false)]
+    [InlineData("Town", false)]
+    [InlineData("Woods", false)]
+    [InlineData("Desert", false)]
+    [InlineData("Submarine", false)]
+    [InlineData("Custom_ForestWest", false)]
+    public void IslandAndSveLateMarkers_AreBuiltIn_SurviveAnEmptiedConfigList(string key, bool excluded)
+    {
+        var emptied = new List<string>();
+        Assert.Equal(excluded, ItemPoolBuilder.IsExcludedLocation(key, emptied));
+    }
+
+    [Fact]
+    public void ConfigMarkerList_AddsOnTopOfTheBuiltIns()
+    {
+        var markers = new List<string> { "MyModLateMap" };
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("Custom_MyModLateMap", markers));
+        Assert.True(ItemPoolBuilder.IsExcludedLocation("IslandWest", markers));
+    }
+
     /// <summary>Golden Egg (Nexus 1127469, gazumbrado, 2026-09-02): Golden Chickens need
     /// Perfection, so it is post-CC by definition, yet Data/Objects does not flag it out of
     /// random sale the way it flags Void Egg and Ostrich Egg. The built-in list has to name it.</summary>

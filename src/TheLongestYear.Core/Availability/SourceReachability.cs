@@ -18,6 +18,7 @@ public sealed class SourceReachability
     private readonly Dictionary<string, List<string>> _shopLocations;
     private readonly Dictionary<string, List<string>> _seedByHarvest;
     private readonly IReadOnlySet<string> _reachableSpawnIds;
+    private readonly IReadOnlySet<string> _excludedCatchIds;
     private readonly Dictionary<string, bool> _memo = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _reasons = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<RawRecipeEntry>> _recipesByOutput;
@@ -29,6 +30,12 @@ public sealed class SourceReachability
     /// rule that makes it needs one specific input that is itself out of reach.</param>
     /// <param name="animals">Data/FarmAnimals. Produce is out of reach when every animal that
     /// makes it can neither be bought nor hatched from an egg reachable some OTHER way.</param>
+    /// <param name="excludedCatchIds">Ids with a Data/Locations FISH row in an excluded place
+    /// (ItemPoolBuilder.IsExcludedLocation markers: Ginger Island, Fable Reef...). A known route
+    /// that is closed: such a fish is out of reach unless something else vouches for it (a catch
+    /// row anywhere reachable, which is in <paramref name="reachableSpawnIds"/>, or a reachable
+    /// shop). Fish rows only: forage rows on the island (Purple Mushroom in the island cave) name
+    /// items the game also hands out from code with no data row, so they prove nothing.</param>
     public SourceReachability(
         IReadOnlySet<string> unreachableLocations,
         IReadOnlyList<RawShopListing> shopListings,
@@ -37,8 +44,11 @@ public sealed class SourceReachability
         IReadOnlyList<RawRecipeEntry> recipes,
         IReadOnlySet<string> reachableSpawnIds,
         IReadOnlyList<RawMachineRule>? machineRules = null,
-        IReadOnlyList<RawAnimalSource>? animals = null)
+        IReadOnlyList<RawAnimalSource>? animals = null,
+        IReadOnlySet<string>? excludedCatchIds = null)
     {
+        _excludedCatchIds = excludedCatchIds ?? new HashSet<string>(StringComparer.Ordinal);
+
         foreach (RawMachineRule rule in machineRules ?? Array.Empty<RawMachineRule>())
         {
             if (rule?.OutputItemIds == null) continue;
@@ -155,6 +165,15 @@ public sealed class SourceReachability
         if (_reachableSpawnIds.Contains(id)) return false;
 
         bool anySourceKnown = false;
+
+        // Caught only in excluded places (the positive-proof check above already let through any
+        // fish that also bites somewhere reachable). Player report 2026-10, paigefromabook: a
+        // Stingray (Pirate Cove only, sold nowhere) read as "untraceable, allowed".
+        if (_excludedCatchIds.Contains(id))
+        {
+            anySourceKnown = true;
+            reason = "it is caught only in places this run cannot reach";
+        }
 
         if (BoughtSomewhere(id, out bool shopUnreachable))
         {

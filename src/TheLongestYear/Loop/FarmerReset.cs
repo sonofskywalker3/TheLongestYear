@@ -79,14 +79,20 @@ namespace TheLongestYear.Loop
             // 2026-07-09 all-slots wipe): they carry no stats, and stripping them can never be
             // undone "authentically" — the character-creation outfit is recorded nowhere, so a
             // wipe just leaves the farmer in underwear with no way back to their look.
-            p.Equip<StardewValley.Objects.Boots>(null, p.boots);
-            p.Equip<StardewValley.Objects.Ring>(null, p.leftRing);
-            p.Equip<StardewValley.Objects.Ring>(null, p.rightRing);
-            // Trinkets unequip by index assignment — that fires OnTrinketChange → Trinket.Unapply,
-            // the same path the inventory page uses — then the emptied list is cleared.
-            for (int i = 0; i < p.trinketItems.Count; i++)
-                p.trinketItems[i] = null;
-            p.trinketItems.Clear();
+            // Keep Worn Gear (spec 2026-10-01) skips this block: the owner keeps the worn instances.
+            bool keptTrinket = baseline.KeepWornGear && p.trinketItems.Any(t => t != null);
+            uint keptTrinketSlots = keptTrinket ? p.stats.Get(WornGearKeep.TrinketSlotsStat) : 0;
+            if (!baseline.KeepWornGear)
+            {
+                p.Equip<StardewValley.Objects.Boots>(null, p.boots);
+                p.Equip<StardewValley.Objects.Ring>(null, p.leftRing);
+                p.Equip<StardewValley.Objects.Ring>(null, p.rightRing);
+                // Trinkets unequip by index assignment: that fires OnTrinketChange → Trinket.Unapply,
+                // the same path the inventory page uses. Then the emptied list is cleared.
+                for (int i = 0; i < p.trinketItems.Count; i++)
+                    p.trinketItems[i] = null;
+                p.trinketItems.Clear();
+            }
 
             // Run-scoped per-farmer progress the reset never covered (same audit):
             //  - slayer kill counts persist while the Gil_* reward mail is wiped below, so loop 2
@@ -101,6 +107,9 @@ namespace TheLongestYear.Loop
             p.chestConsumedMineLevels.Clear();
             foreach (string key in StatResetRules.SelectRunScoped(p.stats.Values.Keys))
                 p.stats.Values.Remove(key);
+            // A kept trinket needs its slot visible, or it is worn and cannot be taken off.
+            if (keptTrinketSlots > 0)
+                p.stats.Set(WornGearKeep.TrinketSlotsStat, keptTrinketSlots);
 
             // Skills — clear everything first.
             for (int i = 0; i < p.experiencePoints.Count; i++)

@@ -37,6 +37,26 @@ public static class CookedDishAvailability
         return SpecialUnlockEffort;
     }
 
+    /// <summary>One recipe's effort without the kitchen term: its hardest ingredient plus the unlock,
+    /// the arithmetic <see cref="Derive"/> uses before it adds <see cref="KitchenCost"/>. An ingredient
+    /// no rule can place makes it <see cref="ExtremeEffort"/>, as in Derive. The dish ask cap reads
+    /// this, never the model's effort, because the kitchen point moves with keep_kitchen and a
+    /// stored board must regenerate byte for byte across that upgrade.</summary>
+    public static int EffortWithoutKitchen(RawCookingRecipe recipe, EffortData data, Func<string, int?> effortOf)
+    {
+        if (recipe == null) throw new ArgumentNullException(nameof(recipe));
+        if (data == null) throw new ArgumentNullException(nameof(data));
+        if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
+        int hardest = 0;
+        foreach (string ingredient in recipe.IngredientIds)
+        {
+            int? e = IngredientEffort(ingredient, data, effortOf);
+            if (e == null) return ExtremeEffort;
+            hardest = Math.Max(hardest, e.Value);
+        }
+        return hardest + UnlockEffort(recipe.UnlockCondition);
+    }
+
     /// <param name="step">Required, no default: the difficulty step decides whether the year-2
     /// Queen of Sauce episodes are a route at all (Easy has no Sneak Peek Boost), so a caller that
     /// silently fell back to Normal would place dishes the board cannot deliver.</param>

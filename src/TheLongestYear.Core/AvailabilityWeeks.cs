@@ -102,7 +102,9 @@ public static class AvailabilityWeeks
         };
 
     /// <summary>The last week of the year, used as a late floor for anything a one-year loop can
-    /// only reach at the very end (see <see cref="LateFloors"/>).</summary>
+    /// only reach at the very end (see <see cref="LateFloors"/>). Mystic Syrup is the one row that uses it:
+    /// it is excluded from every pool, but the model still places it (effort derivation walks all of
+    /// Data/Objects), and stored boards are rebuilt with that model, so its floor must stay.</summary>
     private const int WeeksPerYearFloor = Calendar.WeeksPerYear;
 
     /// <summary>Bush berries have no spawn rows; their weeks are calendar facts.</summary>
@@ -124,6 +126,14 @@ public static class AvailabilityWeeks
             ["(O)161"] = (2, Season.Spring),        // Ice Pip
             ["(O)162"] = (4, Season.Spring),        // Lava Eel
             ["(O)CaveJelly"] = (4, Season.Spring),  // Cave Jelly
+        };
+
+    /// <summary>The Night Market submarine fish. The pool files them under Winter through the
+    /// festival mapping, which reads as Winter 1 (week 13); the market opens Winter 15.</summary>
+    public static readonly IReadOnlyDictionary<string, int> NightMarketFishWeeks =
+        new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["(O)798"] = 15, ["(O)799"] = 15, ["(O)800"] = 15,
         };
 
     /// <summary>Legendary fish pacing weeks (Jeff, spec 2026-08-28-obtainable-board section 3):
@@ -187,7 +197,7 @@ public static class AvailabilityWeeks
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
             ["(O)78"] = (1, "Cave Carrot, mine dirt from floor 1"),
-            ["(O)Moss"] = (1, "Moss, from trees in any season"),
+            ["(O)Moss"] = (6, "Moss, trees restart young each loop; Summer's green rain is the first real crop"),
             ["(O)815"] = (4, "Tea Leaves, Caroline's tea sapling recipe plus 20 days"),
             ["(O)746"] = (12, "Jack-O-Lantern, Spirit's Eve Fall 27"),
             ["(O)373"] = (12, "Golden Pumpkin, Spirit's Eve maze"),
@@ -205,6 +215,7 @@ public static class AvailabilityWeeks
         new Dictionary<string, int>(StringComparer.Ordinal)
         {
             ["(O)Book_Artifact"] = 2,   // an artifact spot can drop it from week 2, Jeff 2026-08-29
+            ["(O)Moss"] = 4,            // Moss grows on trees from Spring, earliest in week 4 (spec 2026-09-30-quantity-rules section 6)
         };
 
     /// <summary>Fish with no Data/Fish row the parser reads (the 1.6 jellies): effort by hand so the

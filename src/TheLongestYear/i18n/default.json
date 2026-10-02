@@ -21,6 +21,7 @@
     "hud.sabotage.spoiled": "Some of your things have spoiled in the night. ({{count}})",
     "hud.sabotage.missing": "Some of your things have gone missing overnight. ({{count}})",
     "hud.sabotage.hall": "You awaken with a feeling that something is wrong at the Community Center.",
+    "hud.stash-nesting-refused": "The stash only holds hats, shirts, pants, furniture, wallpaper and flooring inside a container, so take the rest out first.",
 
     // -- question / message dialogues ---------------------------------------------
     "dialog.cave.prompt": "The cave waits, familiar and patient. What should it nurture this year?",
@@ -81,6 +82,8 @@
     "upgrade.backpack_2.desc": "Start each loop with the 36-slot backpack.",
     "upgrade.keep_golden_scythe.name": "Keep Golden Scythe",
     "upgrade.keep_golden_scythe.desc": "Start each loop with the Golden Scythe instead of the basic scythe.",
+    "upgrade.keep_worn_gear.name": "Keep Worn Gear",
+    "upgrade.keep_worn_gear.desc": "The boots, rings and trinket you're wearing when the year rewinds stay on you.",
     "upgrade.starter_gold_1.name": "Seed Money I",
     "upgrade.starter_gold_1.desc": "Start each loop with +1,000g.",
     "upgrade.starter_gold_2.name": "Seed Money II",
@@ -296,6 +299,10 @@
     "upgrade.keep_shortcuts.desc": "Start each loop with all of Robin's map shortcuts pre-cleared.",
     "upgrade.keep_pet.name": "Keep Pet",
     "upgrade.keep_pet.desc": "Your pet returns at the start of every loop with its name and friendship hearts intact.",
+    "upgrade.keep_farm_decor.name": "Keep Farm Decor",
+    "upgrade.keep_farm_decor.desc": "Start each loop with your paths, fences, lights, signs and decorations where you left them. A piece with no room goes to the stash. If the stash is full, it is left where it was blocked, so pick it up on day 1.",
+    "upgrade.keep_farmhouse_furniture.name": "Keep Farmhouse Furniture",
+    "upgrade.keep_farmhouse_furniture.desc": "Your farmhouse furniture stays where you put it, dressers included. Anything inside it that isn't a hat, shirt, pants, furniture, wallpaper or flooring is wiped, so move it to the stash first. Furniture with no room in the new house is left by the front door. Pick it up on day 1.",
     "upgrade.keep_bus_unlocked.name": "Keep Bus Unlocked",
     "upgrade.keep_bus_unlocked.desc": "The bus to the desert runs from the first day.",
     "upgrade.start_chicken.name": "Start with Chicken",

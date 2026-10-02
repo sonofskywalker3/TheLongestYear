@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.Json;
 using TheLongestYear.Core;
 using Xunit;
@@ -149,5 +150,96 @@ public class StashItemRecordEnchantmentTests
         StashItemRecord restored = JsonSerializer.Deserialize<StashItemRecord>(legacyJson)!;
         Assert.Null(restored.Enchantments);
         Assert.Equal(2, restored.Attachments!.Count);
+    }
+}
+
+public class StashItemRecordContentsTests
+{
+    [Fact]
+    public void New_fields_default_to_null()
+    {
+        var r = new StashItemRecord("(F)704", 1, 0);
+        Assert.Null(r.Contents);
+        Assert.Null(r.HeldObject);
+        Assert.Null(r.Clothing);
+        Assert.Null(r.Boots);
+        Assert.Null(r.InnerRings);
+        Assert.Null(r.TrinketSeed);
+    }
+
+    [Fact]
+    public void Dresser_with_a_dyed_shirt_and_a_hat_round_trips_through_json()
+    {
+        var shirt = new StashItemRecord("(S)1000", 1, 0, Clothing: new StashClothingRecord(0xFF2828C8u, true));
+        var hat = new StashItemRecord("(H)0", 1, 0);
+        var dresser = new StashItemRecord("(F)704", 1, 0,
+            Contents: new System.Collections.Generic.List<StashItemRecord> { shirt, hat });
+
+        StashItemRecord back = JsonSerializer.Deserialize<StashItemRecord>(JsonSerializer.Serialize(dresser))!;
+
+        Assert.Equal(2, back.Contents!.Count);
+        Assert.Equal("(S)1000", back.Contents[0].ItemId);
+        Assert.Equal(0xFF2828C8u, back.Contents[0].Clothing!.Color);
+        Assert.True(back.Contents[0].Clothing!.Dyeable);
+        Assert.Equal("(H)0", back.Contents[1].ItemId);
+    }
+
+    [Fact]
+    public void Nested_depth_two_round_trips()
+    {
+        var hat = new StashItemRecord("(H)2", 1, 0);
+        var inner = new StashItemRecord("(F)709", 1, 0, Contents: new() { hat });
+        var outer = new StashItemRecord("(F)704", 1, 0, Contents: new() { inner });
+
+        StashItemRecord back = JsonSerializer.Deserialize<StashItemRecord>(JsonSerializer.Serialize(outer))!;
+
+        Assert.Equal("(H)2", back.Contents![0].Contents![0].ItemId);
+    }
+
+    [Fact]
+    public void Held_object_round_trips()
+    {
+        var table = new StashItemRecord("(F)1120", 1, 0, HeldObject: new StashItemRecord("(F)1376", 1, 0));
+        StashItemRecord back = JsonSerializer.Deserialize<StashItemRecord>(JsonSerializer.Serialize(table))!;
+        Assert.Equal("(F)1376", back.HeldObject!.ItemId);
+    }
+
+    [Fact]
+    public void Tailored_boots_round_trip()
+    {
+        var boots = new StashItemRecord("(B)504", 1, 0, Boots: new StashBootsRecord("514", 7, 4, 4));
+        StashItemRecord back = JsonSerializer.Deserialize<StashItemRecord>(JsonSerializer.Serialize(boots))!;
+        Assert.Equal(new StashBootsRecord("514", 7, 4, 4), back.Boots);
+    }
+
+    [Fact]
+    public void Combined_ring_and_trinket_round_trip()
+    {
+        var ring = new StashItemRecord("(O)880", 1, 0, InnerRings: new()
+        {
+            new StashItemRecord("(O)529", 1, 0),
+            new StashItemRecord("(O)530", 1, 0),
+        });
+        var trinket = new StashItemRecord("(TR)ParrotEgg", 1, 0, TrinketSeed: 1234567);
+
+        StashItemRecord ringBack = JsonSerializer.Deserialize<StashItemRecord>(JsonSerializer.Serialize(ring))!;
+        StashItemRecord trinketBack = JsonSerializer.Deserialize<StashItemRecord>(JsonSerializer.Serialize(trinket))!;
+
+        Assert.Equal(new[] { "(O)529", "(O)530" }, ringBack.InnerRings!.Select(r => r.ItemId));
+        Assert.Equal(1234567, trinketBack.TrinketSeed);
+    }
+
+    [Fact]
+    public void Json_from_0_18_118_still_loads()
+    {
+        // A record as 0.18.118 wrote it: rod with bait and an enchantment, none of the new fields.
+        const string legacyJson =
+            "{\"ItemId\":\"(T)IridiumRod\",\"Quantity\":1,\"Quality\":0,\"Attachments\":[null,null]," +
+            "\"Enchantments\":[{\"Type\":\"StardewValley.Enchantments.AutoHookEnchantment\",\"Level\":1}]}";
+        StashItemRecord back = JsonSerializer.Deserialize<StashItemRecord>(legacyJson)!;
+        Assert.Null(back.Contents);
+        Assert.Null(back.Clothing);
+        Assert.Null(back.TrinketSeed);
+        Assert.Single(back.Enchantments!);
     }
 }

@@ -451,6 +451,39 @@ public class BundleSlotFillerTests
         Assert.True(anySeasonCropSeenInGenericBundle);
     }
 
+    /// <summary>Player report 2026-10 (gmastern1): a Spring Crops bundle asked for Rhubarb. Data/Crops
+    /// lists Rhubarb as a Spring crop, but its seeds come from the Oasis and the model dates the
+    /// harvest to week 11, so a season-named bundle holding it could never meet its own Spring gate.
+    /// A season-named bundle draws only items the model can deliver by the end of its season.</summary>
+    [Fact]
+    public void SeasonNamedBundle_LeavesOutItemsTheModelDatesAfterItsSeason()
+    {
+        Season[] spring = { Season.Spring };
+        var pools = new ItemPools
+        {
+            Crops = new[]
+            {
+                Item("(O)24", seasons: spring), Item("(O)188", seasons: spring),
+                Item("(O)190", seasons: spring), Item("(O)192", seasons: spring),
+                Item("(O)250", seasons: spring),
+                Item("(O)252", weight: 100, seasons: spring), // Rhubarb: Oasis seeds, week 11
+            },
+        };
+        var model = Model(new Dictionary<string, ItemAvailability>
+        {
+            ["(O)24"] = Avail(1, 1), ["(O)188"] = Avail(1, 1), ["(O)190"] = Avail(2, 2),
+            ["(O)192"] = Avail(1, 1), ["(O)250"] = Avail(1, 1), ["(O)252"] = Avail(11, 11),
+        });
+        for (int seed = 0; seed < 40; seed++)
+        {
+            BundleSpec filled = BundleSlotFiller.Fill(Spec("Spring Crops", 4, 4),
+                new DomainMatch(PoolDomain.SeasonalCrops, Season.Spring), pools, Tuning, new Random(seed),
+                availability: model);
+            Assert.Equal(4, filled.Slots.Count);
+            Assert.DoesNotContain(filled.Slots, s => s.ItemId == "(O)252");
+        }
+    }
+
     /// <summary>No item asked twice across the board (Jeff, 2026-08-28: "Flounder on 3 bundles",
     /// "Mussel on 4"). The engine hands each fill the ids every earlier bundle already asks for;
     /// the fill leaves them out while the pool can still fill every slot without them, and only
@@ -736,5 +769,41 @@ public class BundleSlotFillerTests
         var a = BundleSlotFiller.Fill(spec, RecipeMatch, RecipePools(), Tuning, new Random(21));
         var b = BundleSlotFiller.Fill(spec, RecipeMatch, RecipePools(), Tuning, new Random(21));
         Assert.Equal(a.Slots.Select(s => s.ItemId), b.Slots.Select(s => s.ItemId));
+    }
+
+    /// <summary>The Prismatic Shard / Mystery Box board allowance (CappedAsks): a fill handed a
+    /// budget of none never lets a capped id through, however heavily the pool weights it.</summary>
+    [Fact]
+    public void Fill_never_passes_the_capped_budget()
+    {
+        var pools = new ItemPools
+        {
+            Metals = new[] { Item("(O)74", weight: 1000), Item("(O)m1"), Item("(O)m2"), Item("(O)m3"), Item("(O)m4") },
+        };
+        var spec = Spec("Blacksmith's", 4);
+        var budget = new Dictionary<string, int> { [CappedAsks.PrismaticShard] = 0, [CappedAsks.MysteryBox] = 0 };
+        for (int seed = 0; seed < 50; seed++)
+        {
+            BundleSpec filled = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Metals, null), pools, Tuning,
+                new Random(seed), cappedBudget: budget);
+            Assert.NotSame(spec, filled);
+            Assert.Equal(4, filled.Slots.Count);
+            Assert.DoesNotContain(filled.Slots, s => s.ItemId == CappedAsks.PrismaticShard);
+        }
+    }
+
+    [Fact]
+    public void Fill_keeps_a_capped_item_the_budget_still_allows()
+    {
+        var pools = new ItemPools
+        {
+            Metals = new[] { Item("(O)74", weight: 100000), Item("(O)m1"), Item("(O)m2"), Item("(O)m3"), Item("(O)m4") },
+        };
+        var budget = new Dictionary<string, int> { [CappedAsks.PrismaticShard] = 1 };
+
+        BundleSpec filled = BundleSlotFiller.Fill(Spec("Blacksmith's", 4), new DomainMatch(PoolDomain.Metals, null),
+            pools, Tuning, new Random(3), cappedBudget: budget);
+
+        Assert.Single(filled.Slots, s => s.ItemId == CappedAsks.PrismaticShard);
     }
 }

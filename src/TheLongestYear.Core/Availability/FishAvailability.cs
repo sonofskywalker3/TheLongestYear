@@ -44,6 +44,12 @@ public static class FishAvailability
             floor = mineFish.Gate > AvailabilityWeeks.SeasonOf(week) ? mineFish.Gate : AvailabilityWeeks.SeasonOf(week);
             hardWeek = Math.Max(hardWeek, mineFish.Week);
         }
+        if (AvailabilityWeeks.NightMarketFishWeeks.TryGetValue(item.ItemId, out int market))
+        {
+            week = Math.Max(week, market);
+            hardWeek = Math.Max(hardWeek, market);
+            floor = AvailabilityWeeks.SeasonOf(week);
+        }
         if (AvailabilityWeeks.LegendaryPacingWeeks.TryGetValue(item.ItemId, out int legendary))
             week = Math.Max(week, legendary);
 

@@ -21,15 +21,18 @@ public static class QuantityAskPass
 {
     private const int QualityGold = 2;
 
-    public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng)
-        => Apply(spec, profile, deadlineFor, rng, out _);
+    public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng,
+        ItemAvailabilityModel? model = null)
+        => Apply(spec, profile, deadlineFor, rng, out _, model);
 
     /// <param name="bandedSlots">The slot indices this pass actually set. The stack multiplier skips
     /// exactly these; an item that has a basis somewhere but none reachable by its deadline is NOT
     /// banded, keeps its stack, and still meets the multiplier (Codex review, 2026-09-04).</param>
+    /// <param name="model">Carries the generated dish table (<see cref="ItemAvailabilityModel.DishBases"/>);
+    /// without it cooked dishes stay single asks.</param>
     public static BundleSpec Apply(
         BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng,
-        out IReadOnlySet<int> bandedSlots)
+        out IReadOnlySet<int> bandedSlots, ItemAvailabilityModel? model = null)
     {
         if (spec == null) throw new ArgumentNullException(nameof(spec));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -42,9 +45,9 @@ public static class QuantityAskPass
         for (int i = 0; i < spec.Slots.Count; i++)
         {
             BundleSlotSpec slot = spec.Slots[i];
-            if (LegendaryFishRules.IsLegendary(slot.ItemId) || !Covers(slot.ItemId))
+            if (LegendaryFishRules.IsLegendary(slot.ItemId) || !Covers(slot.ItemId, model))
                 continue;
-            double? basis = BasisByDeadline(slot.ItemId, deadlineFor(slot.ItemId));
+            double? basis = BasisByDeadline(slot.ItemId, deadlineFor(slot.ItemId), model);
             if (basis == null)
                 continue;
             touched.Add(i);
@@ -61,7 +64,7 @@ public static class QuantityAskPass
 
     /// <summary>True when the item's ask is banded by this pass, so the stack multiplier must
     /// leave it alone.</summary>
-    public static bool Covers(string? itemId)
+    public static bool Covers(string? itemId, ItemAvailabilityModel? model = null)
     {
         if (itemId == null) return false;
         string id = BundleParsing.NormalizeItemId(itemId);
@@ -69,15 +72,21 @@ public static class QuantityAskPass
                || QuantityBasisTables.CrabPot.ContainsKey(id) || QuantityBasisTables.Crops.ContainsKey(id)
                || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)
                || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id)
-               || QuantityBasisTables.Resources.ContainsKey(id);
+               || QuantityBasisTables.Resources.ContainsKey(id)
+               || SeasonalAskBasis.Rows.ContainsKey(id)
+               || model?.DishBases.ContainsKey(id) == true;
     }
 
     /// <summary>One aggregation rule for every item (Codex review, 2026-09-04: the old fish-first,
     /// forage-second precedence let Crab take its 5 pot catches over 99 from Lava Crabs and Cactus
     /// Fruit its measured forage over the shop-seed 99): a player uses every source, so the LARGEST
     /// basis stands. The one sum is forage plus crab pot, because a shellfish is gathered on the
-    /// beach and trapped in the same week, and that sum is then one candidate like any other.</summary>
-    public static double? BasisByDeadline(string itemId, Season? deadline)
+    /// beach and trapped in the same week, and that sum is then one candidate like any other.
+    ///
+    /// A <see cref="SeasonalAskBasis"/> hand row is the per-season candidate when the id has one, even
+    /// in a season where it reads 0; only an id without a hand row falls back to the model's
+    /// generated dish table.</summary>
+    public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
         double? best = FishAskBasis.BasisByDeadline(id, deadline);
@@ -90,6 +99,10 @@ public static class QuantityAskPass
         }
         foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDropsMeasured, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
+        double? seasonal = SeasonalAskBasis.Rows.ContainsKey(id)
+            ? SeasonalAskBasis.BasisByDeadline(id, deadline)
+            : model != null && model.DishBases.TryGetValue(id, out double[]? dish) ? SeasonalAskBasis.BestUpTo(dish, deadline) : null;
+        if (seasonal != null && (best == null || seasonal > best)) best = seasonal;
         return best;
     }
 }

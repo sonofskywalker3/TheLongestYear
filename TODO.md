@@ -6,6 +6,96 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; waiting on player logs
+- **gmastern1 (Nexus posts):** Spring Crops showed complete in Winter without Rhubarb. Released code
+  cannot complete an unfilled bundle or swap Rhubarb on load, and a Spring Crops needing all 4 with
+  Rhubarb could not pass Spring 28, so his was most likely 3-required (Easy or pick-3-of-4). Real
+  leak found on the way and fixed (0.18.136/137): season-named bundles took items dated after their
+  season (Rhubarb, Coffee Bean in Spring; Starfruit in Summer). Replied 2026-10-02 asking for his
+  SMAPI log and difficulty; told him he can restart the year at the Junimo Shrine.
+- **paigefromabook (Nexus bugs, filed on 0.18.72):** Weatherman's asked for Stingray. Island markers
+  were config defaults only; now built-in (0.18.138) and repair swaps island-only fish on load
+  (0.18.139). Cause on her save unproven (config list or another fish mod). Replied 2026-10-02 asking
+  for her SMAPI log and the ExcludedLocationMarkers line.
+- sarahwinchester97: note posted 2026-10-02 that the dresser fix and Keep Worn Gear are out.
+- Open: merge master into `story` hits real conflicts (BundleEngine, WorldResetService, ModEntry,
+  i18n/default.json); aborted, needs its own task.
+
+### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
+Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
+same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
+else inside is refused at deposit. Stashed items keep dye, boot tailoring, Combined Ring rings,
+trinket rolls and rod bait/tackle. Older stashed containers holding other items get them taken out
+(stash slot, else a pickup on the ground beside the stash; there is no overflow chest). New
+upgrades: Keep Farm Decor (Buildings, 500 JP; paths, fences, lights, signs, no-function
+decorations, no furniture), Keep Worn Gear (Loadout, 1,000 JP), Keep Farmhouse Furniture
+(Buildings, 250 JP). Live checks 2026-10-01 (headless, automated): 21 PASS, 0 FAIL.
+- Stash: dresser with hat/dyed shirt/pants accepted and kept through a reset; dresser with a ring
+  refused; dyed pants, tailored boots (514/4/4), Combined Ring [(O)529,(O)530], trinket seed and
+  a baited rod (deposited through Chest.addItem) all identical after reset.
+- Legacy eject: ring taken out into its own slot; with a full stash dropped beside the stash at
+  (67, 18). The 0.18.118-save rescue path was not exercised (no such save); a plain reload logs no
+  rescue line.
+- Keep Worn Gear: nothing kept without it; with it boots, both rings, trinket and trinketSlots=1
+  identical after reset.
+- Keep Farm Decor: stump under a path cleared with the kept copper axe (2 hardwood on the tile);
+  boulder kept with a basic pickaxe (fence and torch to the stash); no axe keep leaves the stump
+  and stashes the path; full stash stacks what it can and drops the rest beside the blocker; a
+  path under the stash chest keeps the chest on its tile after save and reload; Meadowlands keeps
+  its 33 starter fences in place with nothing duplicated into the stash.
+- Keep Farmhouse Furniture: dresser, rug and painting back on their tiles, hat kept, ring wiped,
+  one bed; house level 1 back to 0 shifts pieces by (-6, 0), the double bed and a kitchen plant
+  drop by the front door and the starter bed stays.
+- Outstanding for Jeff: Android on-device load, heldItem reflection and drag refusal in the stash
+  menu; refusing a container with a full inventory (lands at your feet; menu-only path); torch and
+  lamp-post glow at night after a decor restore; confirm the decorative big craftable list in
+  FarmDecorKeep and the trinketSlots re-grant.
+- RELEASED 0.18.135 (2026-10-02): GitHub, Nexus file, version, description and changelog live.
+  Hand checks: decor glow PASS (agent run); Android and full-inventory checks dropped by Jeff;
+  decor big craftable list approved by Jeff.
+- Reply to sarahwinchester97 now due (bug-reply-after-fix); draft goes to Jeff first. Her current
+  dresser is gone; the rescue covers only saves where it is still in the stash.
+
+### BUILT 0.18.99 (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
+Jeff replied 2026-09-30 guessing a production-chain leak. It was not a leak: the Sticky recipe
+(since 0.16.116) re-rolled from "Sap or resource", the whole Resource bucket plus TapperGoods (which
+adds Acorn, Maple Seed, Pine Cone, Moss, Hardwood). Jeff 2026-09-30: "anything in the game that is
+year 1 obtainable and sticky. like ice cream, sugar". Now a fixed list, model-gated: Sap, Maple
+Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce,
+Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek). 60 boards
+(tly_genbundles 1-60): 14 Sticky bundles, all from the list.
+- **BUILT 0.18.100: shape and amounts** (Jeff 2026-09-30: "3/4/5/6 by difficulty ... ice cream is
+  hard in spring, trivial in summer, easy in later seasons"). BundleShapes: Sticky shows 6, needs 4,
+  so the Required Slots dial reads 3/4/5/6. QuantityBasisTables.Seasonal: per-season bases for
+  Sugar (20/40/40/40), Ice Cream (0/25/25/25), Maple Bar (0/3/3/3), Cranberry Sauce (0/0/5/8; 0 = cannot exist yet, fixed 0.18.101 after Jeff asked),
+  Miner's Treat (3/6/6/6, Mummy drop 4 still wins in Spring); best season up to the deadline. Sap,
+  Slime, syrups, Honey, Jelly keep their existing rows. Side effect: Sugar and Ice Cream asks in
+  Chef's and Children's now band too (were x1). 60 boards on Normal: 14 Sticky, all 4 of 6; Ice
+  Cream x7-13, Sugar x8-20, Slime x26-48, Sap x29-34, syrups x2-6, dishes x1-4.
+- **BUILT 0.18.113: quantity rules** (spec 2026-09-30-quantity-rules-design). Hand rows
+  for tree seeds, fruit, forage, trash, pantry goods, rare fish; dishes through the availability
+  model; Mystic Syrup out; Prismatic Shard and Mystery Box capped 0/1/2/3 per board; Night Market
+  fish week 15; Moss week 6. Verified on 240 boards (60 per Stack size step): no Mystic Syrup, caps
+  held, every uncovered slot on the single-on-purpose list; after-numbers in
+  docs/superpowers/notes/2026-09-30-quantity-audit.md. Open leftovers: Home Cook's egg/milk category
+  asks and Treasure Chest amounts have no rule, 9 to 23 dishes stay x1.
+- RELEASED 0.18.118 (2026-09-30). Follow-up reply to elaineofshalott POSTED on Nexus posts 2026-09-30.
+
+### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
+Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.
+- **user5726212 (Nexus posts, 2026-09-29), local co-op.** Jeff replied 2026-09-30 (filed, not planned yet).
+  - **A farmhand joining re-offers the weekly theme pick**, and that pick changes the Season Goals book
+    but not the Community Center, so the two disagree. The week's theme state is probably being
+    rolled or offered per client instead of once by the host.
+  - **The farmhand cannot read the Community Center bundles and has to meet the Wizard.**
+    CommunityCenterUnlock.Apply only marks Game1.MasterPlayer (event 112, ccDoorUnlock,
+    canReadJunimoText, seenJunimoNote). Farmhands need the same flags, set on their own client.
+  - **No JP is gained for the farmhand under any circumstances.** JP is one pool per save; decide
+    whether farmhand donations bank into it and whether farmhands see it.
+- Earlier notes that belong to the same pass: Boosts tab host-only question (Plan 06 notes, search
+  "Multiplayer: decide"), netWorldState `farmhandData` leaking across the rewind (own item below),
+  multiplayer feature ask from CausticOptimist.
+
 ### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
 Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
 - **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
@@ -25,7 +115,7 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
   skipped 1 level-up screen -> Spring 1 hub. Not seen: a full shipping bin (code clears it), the look of the
   fade (headless). Jeff playtested it 2026-09-29: worked well.
 - **RELEASED 0.18.98 (2026-09-29):** rolls up 0.18.85-0.18.98 (Dye, Qi Bean, artifacts week 3, pet, Year 1
-  tooltip, Keep Lost Books, theme discount, shrine restart). Reply to tanky24u (Keep Lost Books) now owed.
+  tooltip, Keep Lost Books, theme discount, shrine restart). DONE 2026-09-29: told tanky24u (Nexus posts) Keep Lost Books shipped.
 - **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
   not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
   with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
@@ -270,7 +360,7 @@ Jeff's answers (2026-09-24):
 Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
 Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
-### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). Reply to tanky24u owed once shipped.
+### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). tanky24u told 2026-09-29.
 ### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
 Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
 10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great
