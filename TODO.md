@@ -253,6 +253,14 @@ written, and no letters after a rejection. Fixed in that check: letters had arri
 - Pierre's boarded-up shop in the bad ending.
 - A Yes after dark: the scene plays in outdoor night lighting (animals still go in); never seen live.
 
+#### Morris ending playthrough feedback (Jeff, 2026-10-02). Hold until Jeff says to fix
+Collected while Jeff plays; do not touch his running game. Fix only when he says so.
+
+1. **Offer scene entrance flicker:** on walking into JojaMart, Morris shows standing behind his
+   counter, then blinks and is suddenly in the middle of the room. Fix: hold the screen black on
+   entry until the scene is fully staged, then fade in and run it. Never show the normal room state
+   and then snap to the scene's start positions.
+
 ### DONE 2026-09-25 (Jeff signed off): the opening. Playthrough feedback from Jeff's story speedrun below, all built
 Last item built after sign-off: back-to-back lines from one speaker share one box as pages (Robin, Morris, tour 1-2 and 7-9).
 
