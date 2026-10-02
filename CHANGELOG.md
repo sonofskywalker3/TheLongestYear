@@ -17,6 +17,42 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 
+## 0.18.139 - 2026-10-02
+
+2783 tests. Rolls up 0.18.136 to 0.18.139.
+
+### Fixed
+
+- **Season crop bundles only ask for what the season can grow.** Spring Crops could ask for Rhubarb or Coffee Bean, and Summer Crops for Starfruit, which you can't get in time for that season's deadline. They now pick only crops you can have by then. If your current board already has one, the amount due is lowered to what that season can supply when you load your save, and the rest is due by Winter.
+- **Ginger Island fish stay out of bundles.** Weatherman's could ask for Stingray, and Lionfish or Blue Discus could turn up too, all island-only fish. Ginger Island and its modded counterparts are now always off limits, and a board that already asks for one gets it swapped for a reachable fish when you load your save. Reported by paigefromabook.
+
+## 0.18.135 - 2026-10-02
+
+2761 tests. Rolls up 0.18.119 to 0.18.135.
+
+### Fixed
+
+- **A dresser in the Junimo Stash keeps what's in it.** Hats, shirts, pants, furniture, wallpaper and flooring stay inside through the rewind. Anything else in it (rings, boots, fish, tools) has to come out first: the stash hands the dresser back with a message. A dresser stashed by an older version with other things inside gets them taken out into their own stash slots, or set down beside the stash if it is full. Reported by sarahwinchester97.
+- **Stashed items keep their looks and stats.** Dyed shirts and pants keep their colour, tailored boots keep their stats, a Combined Ring keeps both rings and a trinket keeps its rolled stats. A fishing rod keeps its bait and tackle.
+
+### Added
+
+- **Keep Farm Decor** (Junimo Upgrades, Buildings, 500 JP). Start each loop with your paths, fences, gates, lamp-posts, torches, braziers, signs and decorations where you left them. Furniture is not kept. A stump or hollow log in the way is cleared if your kept axe could break it, and you get its hardwood; a boulder is cleared if your kept pickaxe could. A piece with no room goes to the stash. If the stash is full, it is left where it was blocked, so pick it up on day 1.
+- **Keep Worn Gear** (Junimo Upgrades, Loadout, 1,000 JP). The boots, rings and trinket you're wearing when the year rewinds stay on you.
+- **Keep Farmhouse Furniture** (Junimo Upgrades, Buildings, 250 JP). Your farmhouse furniture stays where you put it, dressers included. Anything inside it that isn't a hat, shirt, pants, furniture, wallpaper or flooring is wiped, so move it to the stash first. If your house is a different size after the rewind, furniture moves with its room. Furniture with no room in the new house is left by the front door. Pick it up on day 1.
+
+## 0.18.118 - 2026-09-30
+
+2576 tests. Rolls up 0.18.99 to 0.18.118.
+
+### Fixed
+
+- **The Sticky bundle asks for sticky things, and more of them.** It picked one item from every resource plus the tapper extras, so it could ask for a single Acorn, some Stone or Fiber. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, Maple Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat, only what a year can reach. Amounts follow the season the bundle is due: Ice Cream asks 5 to 13 on Normal once the Summer stand sells it, and nothing appears before the season it can exist; Sugar asks less in Spring while money is short. Reported by elaineofshalott.
+- **Bundle amounts follow what a year can actually produce.** A Sticky bundle asking for one Acorn started a check of every ask the board had no amount rule for, and most of the gaps are filled. Tree seeds (Acorn, Maple Seed, Pine Cone) and Moss, tree fruit, forage (Cave Carrot, Tea Leaves, Spring Onion, Salmonberry), trash, pantry goods (Sugar, Rice, Vinegar and the like), Hay, Prize Tickets and the rare fish (Goby, Stonefish, Ice Pip, Lava Eel, Slimejack and the three Night Market fish) now ask for amounts a year can reach, and cooked dishes scale where your kitchen, recipes and shops allow more than one (some dishes still ask for one). The Treasure Chest and the Home Cook's egg and milk asks have no rule yet. Thanks to elaineofshalott for the Acorn report that started it.
+- **Mystic Syrup is no longer asked for.** It only comes from a late-game reward, so it could never be a fair year-1 ask.
+- **Prismatic Shard and Mystery Box are rare asks now.** On the boards The Longest Year builds, the bundles you need for the year hold a limited number of them, set by the Stack size setting: at most one on Normal, two on Hard and three on Extreme, none on Easy, and each is asked for one at a time. On the Normal and Remixed bundle sources (the game's own board) each is asked for one at a time, but the number of them is not limited. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard on every board. Prismatic Shard is also no longer counted as a Spring item; it comes from deep Skull Cavern nodes, so it is a Fall-or-later ask.
+- **The Night Market fish wait for Winter 15.** Midnight Squid, Spook Fish and Blobfish were asked for before the market opens. Moss is asked from Summer, when the trees have grown.
+
 ## 0.18.98 - 2026-09-29
 
 2497 tests. Rolls up 0.18.85 to 0.18.98.

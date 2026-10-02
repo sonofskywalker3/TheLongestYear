@@ -464,3 +464,58 @@ public class BundleClassifierAvailabilityTests
         Assert.Equal(BundleKind.Seasonal, req.Kind);
     }
 }
+
+/// <summary>A season-named bundle is gated "X by its own season". When the board holds items the
+/// model dates after that season (an old board with Rhubarb in Spring Crops, gmastern1 2026-10),
+/// the season can only ever supply what is reachable by then. Jeff's ruling: a gate takes any N
+/// of the bundle's items, so the season's due count is capped at what its items can supply, and
+/// the rest is due by Winter.</summary>
+public class BundleClassifierSeasonalReachTests
+{
+    private static ParsedBundle Bundle(string name, int numberOfSlots, params string[] ids)
+        => new ParsedBundle("Pantry", 0, name,
+            ids.Select(id => new BundleIngredient(id, 1, 0)).ToList(), numberOfSlots);
+
+    private static ItemAvailabilityModel Model()
+        => new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(System.StringComparer.Ordinal)
+        {
+            ["(O)24"] = new ItemAvailability(Season.Spring, 1, "test"),
+            ["(O)188"] = new ItemAvailability(Season.Spring, 1, "test"),
+            ["(O)190"] = new ItemAvailability(Season.Spring, 1, "test"),
+            ["(O)433"] = new ItemAvailability(Season.Summer, 3, "test"),  // Coffee Bean, week 5
+            ["(O)252"] = new ItemAvailability(Season.Fall, 6, "test"),    // Rhubarb, week 11
+        });
+
+    private static BundleRequirement Classify(ParsedBundle bundle)
+        => BundleClassifier.Classify(bundle, Theme.Farming,
+            new Dictionary<string, Season>(), new Dictionary<string, int[]>(), Model())!;
+
+    [Fact]
+    public void MustAll_SpringCrops_WithRhubarb_DueThreeBySpring_AllByWinter()
+    {
+        BundleRequirement req = Classify(Bundle("Spring Crops", 4, "(O)24", "(O)188", "(O)190", "(O)252"));
+        Assert.Equal(3, req.MissingForSeason(Season.Spring, TestLedger.Empty()).Count);
+        Assert.Equal(3, req.MissingForSeason(Season.Summer, TestLedger.Empty()).Count);
+        Assert.Equal(4, req.MissingForSeason(Season.Fall, TestLedger.Empty()).Count);
+        Assert.Equal(4, req.MissingForSeason(Season.Winter, TestLedger.Empty()).Count);
+        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Spring, TestLedger.Fill(req, "(O)24", "(O)188", "(O)190")));
+    }
+
+    [Fact]
+    public void ThreeOfFour_SpringCrops_WithRhubarbAndCoffee_DueTwoBySpring()
+    {
+        BundleRequirement req = Classify(Bundle("Spring Crops", 3, "(O)24", "(O)188", "(O)433", "(O)252"));
+        Assert.Equal(2, req.MissingForSeason(Season.Spring, TestLedger.Empty()).Count);
+        Assert.Equal(3, req.MissingForSeason(Season.Summer, TestLedger.Empty()).Count);
+        Assert.Equal(3, req.MissingForSeason(Season.Winter, TestLedger.Empty()).Count);
+    }
+
+    [Fact]
+    public void SeasonalBundle_ItsSeasonCanSupply_StaysSeasonal()
+    {
+        BundleRequirement req = Classify(Bundle("Spring Crops", 3, "(O)24", "(O)188", "(O)190", "(O)252"));
+        Assert.Equal(BundleKind.Seasonal, req.Kind);
+        Assert.Equal(Season.Spring, req.SeasonalSeason);
+        Assert.Equal(3, req.MissingForSeason(Season.Spring, TestLedger.Empty()).Count);
+    }
+}

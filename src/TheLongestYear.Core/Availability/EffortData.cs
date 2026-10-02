@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace TheLongestYear.Core.Availability;
@@ -6,7 +7,7 @@ namespace TheLongestYear.Core.Availability;
 // ---- glue (Loop/GameEffortData) normalises them. Objects are keyed by BARE id like the pools.
 
 /// <summary>One Data/Objects GeodeDrops row (or one row of the code-only default table).</summary>
-public sealed record RawGeodeDrop(string GeodeItemId, string ItemId, double Chance);
+public sealed record RawGeodeDrop(string GeodeItemId, string ItemId, double Chance, bool FromDefaultTable = false);
 
 /// <summary>One Data/Monsters drop-table pair, with the monster it belongs to.</summary>
 public sealed record RawMonsterDrop(string MonsterName, string ItemId, double Chance);
@@ -30,7 +31,12 @@ public sealed record RawBuilding(string Name, string? BuildingToUpgrade);
 /// <summary>One Data/CookingRecipes entry: ingredient ids (a negative id is a category ref),
 /// the output id and the unlock condition field.</summary>
 public sealed record RawCookingRecipe(
-    string Name, IReadOnlyList<string> IngredientIds, string OutputItemId, string UnlockCondition);
+    string Name, IReadOnlyList<string> IngredientIds, string OutputItemId, string UnlockCondition,
+    IReadOnlyList<int>? IngredientCounts = null)
+{
+    /// <summary>How many of ingredient i the recipe takes; 1 when the data gave no count.</summary>
+    public int CountOf(int i) => IngredientCounts != null && i < IngredientCounts.Count ? Math.Max(1, IngredientCounts[i]) : 1;
+}
 
 /// <summary>One product a fish pond can yield and the population it needs.</summary>
 public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation);

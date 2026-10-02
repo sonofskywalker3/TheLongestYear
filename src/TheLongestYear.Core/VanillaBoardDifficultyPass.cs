@@ -65,7 +65,7 @@ public static class VanillaBoardDifficultyPass
         if (tuning == null) throw new ArgumentNullException(nameof(tuning));
 
         if (profile.Steps.AsksAllNormal())
-            return bundleData;
+            return ClampCappedAsks(bundleData);
 
         // Ordinal key order, not dictionary order: the RNG stream must not depend on how the
         // caller's dictionary happens to enumerate.
@@ -76,6 +76,28 @@ public static class VanillaBoardDifficultyPass
             result[key] = ApplyToBundle(key, bundleData[key], profile, tuning, rng, qualityEligibleIds);
         }
         return result;
+    }
+
+    /// <summary>The all-Normal path: every dial is a no-op, but a capped item (Prismatic Shard,
+    /// Mystery Box) still asks for one per slot, so Remixed's Helper's "5 Mystery Box" becomes 1.
+    /// Returns the SAME reference when no bundle holds a capped ask above one, so an ordinary
+    /// all-Normal board keeps its zero-write behaviour; otherwise only the capped stacks change.
+    ///
+    /// The stack clamp is the whole capped rule on a vanilla board. This pass never changes which
+    /// item a slot asks for or removes a bundle, so the per-board count (<see
+    /// cref="CappedAsks.BoardAllowance"/>) is held on engine boards only.</summary>
+    private static IDictionary<string, string> ClampCappedAsks(IDictionary<string, string> bundleData)
+    {
+        Dictionary<string, string>? result = null;
+        foreach (string key in bundleData.Keys.OrderBy(k => k, StringComparer.Ordinal))
+        {
+            string value = bundleData[key];
+            string? clamped = string.IsNullOrEmpty(value) ? null : CappedAsks.RepairBundleValue(value);
+            if (clamped == null) continue;
+            result ??= new Dictionary<string, string>(bundleData, StringComparer.Ordinal);
+            result[key] = clamped;
+        }
+        return result ?? bundleData;
     }
 
     private static string ApplyToBundle(
@@ -101,8 +123,8 @@ public static class VanillaBoardDifficultyPass
 
         fields[IngredientsField] = string.Join(" ", ingredients.Select(ing =>
         {
-            int stack = UnstackableAsks.ClampStack(ing.ItemRef,
-                OncePerLoopAsks.ClampStack(ing.ItemRef, StackScaling.ScaleStack(ing.Stack, profile.StackFactor), profile.OncePerLoopAsksOne));
+            int stack = CappedAsks.ClampStack(ing.ItemRef, UnstackableAsks.ClampStack(ing.ItemRef,
+                OncePerLoopAsks.ClampStack(ing.ItemRef, StackScaling.ScaleStack(ing.Stack, profile.StackFactor), profile.OncePerLoopAsksOne)));
             int quality = LegendaryFishRules.ClampQuality(ing.ItemRef, RollQuality(ing, profile, tuning, rng, qualityEligibleIds));
             return $"{ing.ItemRef} {stack} {quality}";
         }));

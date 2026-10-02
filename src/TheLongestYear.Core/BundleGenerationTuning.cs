@@ -36,16 +36,12 @@ public sealed class BundleGenerationTuning
         // live here (Nexus 1122358: a saved config wiped the old sapling defaults).
     };
 
-    /// <summary>Spawn locations whose key contains any of these markers (case-insensitive)
-    /// are excluded from pool derivation — post-CC / late-game areas whose items aren't
-    /// year-1 obtainable (Ginger Island; SVE's Fable Reef and Crimson Badlands).
-    /// Config-extensible for other mods' late-game maps.</summary>
-    public List<string> ExcludedLocationMarkers { get; set; } = new()
-    {
-        "Island", "FableReef", "CrimsonBadlands",
-        // BugLand (Mutant Bug Lair) is a BUILT-IN marker in ItemPoolBuilder — see
-        // ExcludedItemIds note for why mandatory exclusions can't live in this list.
-    };
+    /// <summary>Config extension point: spawn locations whose key contains any of these markers
+    /// (case-insensitive) are excluded from pool derivation, on top of the built-in markers
+    /// (ItemPoolBuilder.BuiltInExcludedLocationMarkers: Ginger Island, SVE's Fable Reef and
+    /// Crimson Badlands, the Mutant Bug Lair, the Witch's Swamp). For other mods' late-game maps.
+    /// Empty by default: see the ExcludedItemIds note for why mandatory exclusions can't live here.</summary>
+    public List<string> ExcludedLocationMarkers { get; set; } = new();
 
     /// <summary>Config extension point: additional qualified item ids that can never carry
     /// a quality star, so slot re-rolls must never put a silver/gold ask on them. The
