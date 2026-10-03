@@ -13,7 +13,7 @@ namespace TheLongestYear.Integration
     /// coops, barns and animals stand on concrete whatever the player built or planted there.
     /// <see cref="ClearAll"/> removes objects, terrain features (crops, trees, grass, flooring),
     /// resource clumps, large terrain features (bushes), every building except the main farmhouse
-    /// (the scene hides that instead), the farm animals, outdoor furniture, pets and horses. The mod's
+    /// (kept, or hidden by the razed-house version), the farm animals, outdoor furniture, pets and horses. The mod's
     /// own tagged objects (modData keys starting "tly", the Junimo Stash) are lifted off for the scene
     /// and put back by <see cref="RestoreHeld"/>.
     ///
@@ -70,11 +70,13 @@ namespace TheLongestYear.Integration
 
         /// <summary>Lays the flooring on every tile the player could lay it on (the flooring item's own
         /// canBePlacedHere, Object.cs 5768: buildings ignored, so flooring may go under the new
-        /// ones), plus the hidden farmhouse's own lot: the house is gone for the scene and
-        /// Data/Buildings lets flooring lie under a Farmhouse (AllowsFlooringUnderneath), and left
-        /// out it read as a lawn in the middle of the concrete (live 2026-09-25; Jeff: "concrete
-        /// across the whole map"). Returns the number of tiles paved.</summary>
-        public static int Pave(Farm farm, string floorId)
+        /// ones). With <paramref name="paveLot"/> (the razed-house version) the hidden farmhouse's
+        /// own lot too: the house is gone for the scene and Data/Buildings lets flooring lie under a
+        /// Farmhouse (AllowsFlooringUnderneath), and left out it read as a lawn in the middle of the
+        /// concrete (live 2026-09-25; Jeff: "concrete across the whole map"). Without it (the kept
+        /// house) no tile of the house's footprint is paved: the sprite covers it. Returns the
+        /// number of tiles paved.</summary>
+        public static int Pave(Farm farm, string floorId, bool paveLot)
         {
             if (!Game1.floorPathData.TryGetValue(floorId, out var data) || data?.ItemId == null)
                 throw new System.ArgumentException($"no flooring '{floorId}' in Data/FloorsAndPaths");
@@ -88,7 +90,9 @@ namespace TheLongestYear.Integration
                 {
                     var tile = new Vector2(x, y);
                     if (farm.terrainFeatures.ContainsKey(tile)) continue;
-                    bool lot = house != null && house.occupiesTile(tile) && farm.getTileIndexAt(x, y, "Back") >= 0 && !farm.isWaterTile(x, y);
+                    bool underHouse = house != null && house.occupiesTile(tile);
+                    if (underHouse && !paveLot) continue;
+                    bool lot = underHouse && farm.getTileIndexAt(x, y, "Back") >= 0 && !farm.isWaterTile(x, y);
                     if (!lot && !floorItem.canBePlacedHere(farm, tile, CollisionMask.All, showError: false)) continue;
                     farm.terrainFeatures.Add(tile, new Flooring(floorId));
                     paved++;

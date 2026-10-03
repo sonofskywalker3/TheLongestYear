@@ -12,7 +12,8 @@ namespace TheLongestYear.Integration
     /// unsaved: everything they do is in memory only.
     ///
     /// <c>tlyClearFarm</c>: empties the whole farm (JojaFarmClear.ClearAll).
-    /// <c>tlyPaveFarm &lt;floorId&gt;</c>: flooring on every tile it can legally go (JojaFarmClear.Pave).
+    /// <c>tlyPaveFarm &lt;floorId&gt;</c>: flooring on every tile it can legally go (JojaFarmClear.Pave),
+    /// and on the farmhouse's lot only while the house is hidden.
     /// <c>tlyJojaFarm</c>: the rows of real coops and barns and their animals (JojaFactoryFarm), then
     /// splices the pan along the first row into the script right after itself.
     /// <c>tlyAnimalsHome</c>: from now on each building's animals get the evening signal once its
@@ -63,7 +64,7 @@ namespace TheLongestYear.Integration
                 Skip(evt, PaveFarmName, error);
                 return;
             }
-            OnSceneFarm(evt, PaveFarmName, farm => $"flooring '{floor}' laid on {JojaFarmClear.Pave(farm, floor)} tiles (in memory)");
+            OnSceneFarm(evt, PaveFarmName, farm => $"flooring '{floor}' laid on {JojaFarmClear.Pave(farm, floor, paveLot: _farmhouseHidden)} tiles (in memory)");
         }
 
         private static void JojaFarm(Event evt, string[] args, EventContext context)
