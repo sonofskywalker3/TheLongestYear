@@ -3,7 +3,7 @@
     // The Longest Year: English source of truth.
     // TRANSLATORS: copy this file to <locale>.json (e.g. zh.json), translate the
     // VALUES only. Preserve exactly: {{token}} placeholders, @ (player name),
-    // #$b# (page break), $h/$s/$a (portrait poses). Keys missing from your file
+    // #$b# (page break), $h/$s/$u/$a (portrait poses). Keys missing from your file
     // fall back to English per-key. See docs/TRANSLATING.md.
     // ============================================================================
 
@@ -51,9 +51,12 @@
     "joja.morris.ask": "Well, @. Do you accept my offer?",
     "joja.morris.accept": "I accept",
     "joja.morris.decline": "No thanks",
-    "joja.morris.refuse": "Then we're done here. Joja reserves the right to refuse service to anyone, for any reason. You may not shop here. And I'll make sure you never work for Joja again.",
-    "joja.morris.refuse-again": "You heard me. Leave.",
-    "joja.morris.position-filled": "I'm sorry, the position I mentioned has already been filled. We've determined that you aren't to be trusted. Please leave immediately.",
+    // Every line after a No ends in $u: Morris's scowl (portrait cell 3). Untagged lines show his smile.
+    "joja.morris.refuse": "Then we're done here. Joja reserves the right to refuse service to anyone, for any reason. You may not shop here. And I'll make sure you never work for Joja again.$u",
+    "joja.morris.refuse-again": "You heard me. Leave.$u",
+    // Jeff's line (2026-10-02): the first visit after the fourth decision letter turned the player away.
+    "joja.morris.refuse-letter": "You must not have read my letter. You're no longer welcome here. Leave.$u",
+    "joja.morris.position-filled": "I'm sorry, the position I mentioned has already been filled. We've determined that you aren't to be trusted. Please leave immediately.$u",
     "mail.joja.come.title": "A Message from Morris",
     "mail.joja.decide.title": "Your Answer",
     "joja.gameover.title": "Game Over",

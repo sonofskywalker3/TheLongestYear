@@ -249,6 +249,14 @@ public sealed class MetaState
     /// counter or the fourth unanswered letter. 0 = never. Permanent: no reset clears it.</summary>
     public int JojaRejectedLoop { get; set; }
 
+    /// <summary>The rejection came from the fourth "make a decision" letter, not a No at Morris's
+    /// counter. False on a save rejected before this was recorded, which counts as in person.</summary>
+    public bool JojaRejectedByLetter { get; set; }
+
+    /// <summary>Morris has said his once-only line after a rejection by letter ("You must not have
+    /// read my letter").</summary>
+    public bool JojaLetterRefusalShown { get; set; }
+
     /// <summary>Unused since 2026-09-21 (the first-strike letters were replaced by the overnight
     /// scenes). Kept so a save written before then still loads.</summary>
     public HashSet<string> SabotageLettersSent { get; set; } = new();
