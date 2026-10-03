@@ -20,6 +20,12 @@ iridium, Prismatic Shard and Skull Cavern drops gate in Summer. Hard, Normal and
 Not moved: artisan goods and dishes made from desert items (no rule derives their hard week yet),
 Sandy's friendship recipes (pacing only).
 
+### BUILT 0.18.141 (gmastern1, Nexus posts, 2026-10-02): X in the recipe picker skipped the book
+Picking a recipe to bank at the end of a run, then pressing X on the recipe list, closed the whole
+Cookbook/Craftbook and started the run. Now X, Escape and controller B on the recipe list step back
+to the slot list; from the slot list they close the book as before. Both books. Not checked in game
+yet. Reply to gmastern1 after it ships.
+
 ### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
 On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
 impossible on the first try but beatable by about loop 3; once a player reaches loop 3 the board
