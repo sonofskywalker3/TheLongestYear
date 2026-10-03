@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,75 +5,35 @@ using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
-using StardewValley.GameData.Pants;
-using StardewValley.GameData.Shirts;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.UI
 {
     /// <summary>The end of Morris's offer taken (JojaBadEnding's <c>tlyGameOver</c>): full-screen
-    /// black, "Game Over" a third of the way down, the message in the middle, and in the bottom
-    /// third the farmer in a suit, bare-headed and in black boots, beside Morris, each with one
-    /// glowing red pixel per eye (the farmer's go out while he blinks). The button, any key or any
-    /// controller button exits to the title without saving.
+    /// black, "Game Over" a third of the way down, the message in the middle and the button below
+    /// it. The button, any key or any controller button exits to the title without saving. (The
+    /// farmer in a suit beside Morris, red-eyed, was cut: Jeff, 2026-10-02, "just get rid of the
+    /// sprites, it's fine.")
     ///
     /// Input is swallowed for the first 600 ms (<see cref="InputDelayMs"/>) so a player mashing
     /// through the scene's last dialogue does not skip the screen unseen. The only way out is that
     /// input path: <c>exitThisMenu</c> would close the screen without reaching the title and leave
     /// the finished event idling, which is why <c>tly_dismiss</c> sends this menu a key press
-    /// instead of closing it.
-    ///
-    /// The farmer is re-dressed live (hat off, shirt and pants overrides, black boots):
-    /// nothing is saved after this screen, so the change never reaches the save on disk.</summary>
+    /// instead of closing it.</summary>
     internal sealed class JojaGameOverMenu : IClickableMenu
     {
-        // Characters/Farmer/shoeColors: one 4-pixel row per shoe colour, read by FarmerRenderer.ApplyShoeColor.
-        private const string ShoeColoursAsset = "Characters/Farmer/shoeColors";
-        private const int ShoeRowWidth = 4;
-        private const int ColourSpreadWeight = 2;
-        private static readonly string[] SuitWords = { "Suit", "Tuxedo" };
-        private const float Scale = 4f;
-        private const int SpriteW = 16, SpriteH = 32;
-        private const int FigureW = (int)(SpriteW * Scale), FigureH = (int)(SpriteH * Scale);
-        private const int FigureGap = 48;
-        private const int FiguresBelowTwoThirds = 16;
         private const int TitleLift = 40;
-        private const int ButtonGap = 32, ButtonPadX = 32, ButtonPadY = 20;
+        private const int ButtonPadX = 32, ButtonPadY = 20;
+        private const int ButtonBelowTwoThirds = 16;
         private const double InputDelayMs = 600;
-        private const float PulseMs = 300f;
-        // A core over the glow pixel with two faint rims around it, padded in screen pixels. Toned
-        // down from a 16-pixel halo at 0.18 / 0.35 after Jeff's playthrough (note 5, 2026-10-02).
-        private static readonly (int Pad, float Alpha)[] GlowLayers = { (4, 0.07f), (2, 0.16f), (0, 0.85f) };
-        private const float GlowMin = 0.55f, GlowRange = 0.45f;
-        // Each eye is one red pixel (Morris's old iris red, MorrisDarkSprite's RedEye): Jeff liked
-        // Morris's single red pixel, so the farmer gets the same (round 2 note 9, 2026-10-02). A
-        // darkened 3x3 ring round it read as "a demon raccoon" and was taken out (SpriteEyes.Ring).
-        private static readonly Color RedEye = new(230, 20, 20);
-        private const string MorrisAsset = "Characters/Morris";
-        // Vanilla has no suit pants (Data/Pants, 1.6): the farmer's own pants go charcoal instead.
-        private static readonly Color SuitPantsColour = new(58, 58, 68);
-        private const float FigureLayer = 0.8f;
         private static readonly Color MessageColour = new(220, 220, 220);
         private static readonly Color TitleColour = new(200, 30, 30);
-
-        // FarmerRenderer's eye swatches on row 0 of the base sheet: every pixel of these two colours
-        // is recoloured to the eye colour, so they mark the irises on any base sheet.
-        private static readonly int[] IrisSwatches = { 276, 277 };
-        // Frame 0 eyes (iris and white) on the vanilla male base, sprite pixels: used only when the
-        // farmer's sheet cannot be read. The female base's sit one row lower.
-        private static readonly PixelBox[] FallbackFarmerEyes = { new(5, 11, 2, 2), new(9, 11, 2, 2) };
-        // Morris's irises on vanilla Characters/Morris frame 0 (one pixel each, the colour
-        // MorrisDarkSprite recolours red for the ending).
-        private static readonly PixelBox[] MorrisEyes = { new(7, 9, 1, 1), new(9, 9, 1, 1) };
 
         private readonly IMonitor _monitor;
         private readonly string _title;
         private readonly string[] _messageLines;
         private readonly string _buttonText;
-        private readonly Texture2D _morris;
-        private readonly EyeMarks _farmerEyes;
-        private readonly EyeMarks _morrisEyes = EyeMarks.For(MorrisEyes);
         private readonly ClickableComponent _button;
         private readonly double _openedAt;
         private bool _exiting;
@@ -88,162 +47,14 @@ namespace TheLongestYear.UI
             _buttonText = Strings.Get("joja.gameover.button");
             _openedAt = Game1.currentGameTime?.TotalGameTime.TotalMilliseconds ?? 0;
 
-            try { _morris = Game1.content.Load<Texture2D>(MorrisAsset); }
-            catch (Exception ex) { _monitor.Log($"Joja game over: no Morris sprite ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn); }
-
-            DressFarmer();
-            _farmerEyes = EyeMarks.For(FindFarmerEyes());
-
             Vector2 size = Game1.dialogueFont.MeasureString(_buttonText);
             int bw = (int)size.X + ButtonPadX * 2, bh = (int)size.Y + ButtonPadY * 2;
-            int by = FiguresTop + FigureH + ButtonGap;
+            int by = height * 2 / 3 + ButtonBelowTwoThirds;
             _button = new ClickableComponent(new Rectangle((width - bw) / 2, by, bw, bh), "ReturnToTitle") { myID = 0 };
             allClickableComponents = new List<ClickableComponent> { _button };
             if (Game1.options.SnappyMenus)
                 snapToDefaultClickableComponent();
             _monitor.Log("Joja: game over screen", LogLevel.Info);
-        }
-
-        private int FiguresTop => height * 2 / 3 + FiguresBelowTwoThirds;
-        private int FarmerX => width / 2 - FigureGap / 2 - FigureW;
-        private int MorrisX => width / 2 + FigureGap / 2;
-
-        /// <summary>No hat, a suit shirt and pants, black boots. Each slot is independent:
-        /// one that cannot be found or throws is logged and left as it was.</summary>
-        private void DressFarmer()
-        {
-            Farmer who = Game1.player;
-            try { who.hat.Value = null; }
-            catch (Exception ex) { _monitor.Log($"Joja game over: hat: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
-
-            try
-            {
-                int row = DarkestShoeRow();
-                who.changeShoeColor(row.ToString());
-                _monitor.Log($"Joja game over: shoe colour row {row}.", LogLevel.Trace);
-            }
-            catch (Exception ex) { _monitor.Log($"Joja game over: boots: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
-
-            try
-            {
-                string shirtId = FindSuit(DataLoader.Shirts(Game1.content), d => d.Name, out string shirtName);
-                if (shirtId == null) _monitor.Log("Joja game over: no suit shirt in Data/Shirts; shirt unchanged.", LogLevel.Warn);
-                else
-                {
-                    who.changeShirt(shirtId);
-                    _monitor.Log($"Joja game over: shirt {shirtId} ({shirtName}).", LogLevel.Trace);
-                }
-            }
-            catch (Exception ex) { _monitor.Log($"Joja game over: shirt: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
-
-            try
-            {
-                var pants = DataLoader.Pants(Game1.content);
-                string pantsId = FindSuit(pants, d => d.Name, out string pantsName);
-                if (pantsId == null)
-                {
-                    who.changePantsColor(SuitPantsColour);
-                    _monitor.Log("Joja game over: no suit pants in Data/Pants; own pants dyed charcoal.", LogLevel.Trace);
-                }
-                else
-                {
-                    who.changePantStyle(pantsId);
-                    // An override is drawn in the farmer's own pants colour; use the suit's.
-                    who.changePantsColor(Utility.StringToColor(pants[pantsId].DefaultColor) ?? Color.White);
-                    _monitor.Log($"Joja game over: pants {pantsId} ({pantsName}).", LogLevel.Trace);
-                }
-            }
-            catch (Exception ex) { _monitor.Log($"Joja game over: pants: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
-        }
-
-        /// <summary>The farmer's eyes on the frame this screen draws, read once from the base sheet
-        /// FarmerRenderer draws (male or female, bald or not): the iris pixels plus the whites
-        /// touching them. Hair, hats and the skin and eye recolours are separate layers or swaps,
-        /// so the source sheet alone places the eyes for every farmer.</summary>
-        private IReadOnlyList<PixelBox> FindFarmerEyes()
-        {
-            string sheet = Game1.player.FarmerRenderer?.textureName.Value;
-            try
-            {
-                Texture2D tex = Game1.content.Load<Texture2D>(sheet);
-                var colours = new Color[tex.Width * tex.Height];
-                tex.GetData(colours);
-                var px = new uint[colours.Length];
-                for (int i = 0; i < colours.Length; i++) px[i] = colours[i].PackedValue;
-
-                var iris = new List<uint>();
-                foreach (int swatch in IrisSwatches)
-                    if (swatch < px.Length) iris.Add(px[swatch]);
-                IReadOnlyList<PixelBox> eyes = SpriteEyes.Find(px, tex.Width, 0, 0, SpriteW, SpriteH, iris);
-                if (eyes.Count > 0)
-                {
-                    _monitor.Log($"Joja game over: farmer eyes on {sheet}: {string.Join(", ", eyes)}.", LogLevel.Trace);
-                    return eyes;
-                }
-                _monitor.Log($"Joja game over: no eyes found on {sheet}; using the vanilla male positions.", LogLevel.Warn);
-            }
-            catch (Exception ex)
-            {
-                _monitor.Log($"Joja game over: farmer eyes from {sheet}: {ex.GetType().Name}: {ex.Message}; using the vanilla male positions.", LogLevel.Warn);
-            }
-            return FallbackFarmerEyes;
-        }
-
-        /// <summary>One figure's eye marks in screen pixels from its top-left (both figures draw at
-        /// <see cref="Scale"/>): the red glow pixel of each eye.</summary>
-        private sealed class EyeMarks
-        {
-            public Rectangle[] Glow { get; private init; }
-
-            public static EyeMarks For(IReadOnlyList<PixelBox> eyes)
-            {
-                var glow = new List<(int X, int Y)>();
-                foreach (PixelBox eye in eyes) glow.Add(SpriteEyes.GlowPixel(eye, SpriteW));
-                return new EyeMarks { Glow = ToFigure(glow) };
-            }
-
-            private static Rectangle[] ToFigure(IReadOnlyList<(int X, int Y)> pixels)
-            {
-                var r = new Rectangle[pixels.Count];
-                int size = (int)Scale;
-                for (int i = 0; i < pixels.Count; i++)
-                    r[i] = new Rectangle(pixels[i].X * size, pixels[i].Y * size, size, size);
-                return r;
-            }
-        }
-
-        /// <summary>The blackest shoeColors row: dark AND grey, scored as brightness plus twice each
-        /// shade's colour spread, lowest wins. Brightness alone picks vanilla row 8, a dark red
-        /// (live 2026-09-25); this picks row 7, black to charcoal grey ((0,0,0) to (66,66,66)).</summary>
-        private static int DarkestShoeRow()
-        {
-            Texture2D tex = Game1.content.Load<Texture2D>(ShoeColoursAsset);
-            var px = new Color[tex.Width * tex.Height];
-            tex.GetData(px);
-            int best = 0, bestSum = int.MaxValue;
-            for (int row = 0; row < tex.Height; row++)
-            {
-                int sum = 0;
-                for (int i = 0; i < ShoeRowWidth; i++)
-                {
-                    Color c = px[row * ShoeRowWidth + i];   // the renderer indexes rows as which * 4
-                    sum += c.R + c.G + c.B + ColourSpreadWeight * (Math.Max(c.R, Math.Max(c.G, c.B)) - Math.Min(c.R, Math.Min(c.G, c.B)));
-                }
-                if (sum < bestSum) { bestSum = sum; best = row; }
-            }
-            return best;
-        }
-
-        private static string FindSuit<T>(IDictionary<string, T> data, Func<T, string> name, out string found)
-        {
-            foreach (var (id, entry) in data)
-            {
-                string n = name(entry) ?? "";
-                foreach (string word in SuitWords)
-                    if (n.Contains(word, StringComparison.OrdinalIgnoreCase)) { found = n; return id; }
-            }
-            found = null;
-            return null;
         }
 
         private bool InputReady =>
@@ -300,25 +111,6 @@ namespace TheLongestYear.UI
                 y += lineH;
             }
 
-            var farmerPos = new Vector2(FarmerX, FiguresTop);
-            FarmerRenderer.isDrawingForUI = true;
-            try
-            {
-                Game1.player.FarmerRenderer.draw(b, new FarmerSprite.AnimationFrame(0, 0, false, false), 0,
-                    new Rectangle(0, 0, SpriteW, SpriteH), farmerPos, Vector2.Zero, FigureLayer, 2, Color.White, 0f, 1f, Game1.player);
-            }
-            finally { FarmerRenderer.isDrawingForUI = false; }
-
-            var morrisPos = new Vector2(MorrisX, FiguresTop);
-            if (_morris != null)
-                b.Draw(_morris, morrisPos, new Rectangle(0, 0, SpriteW, SpriteH), Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, FigureLayer);
-
-            double t = Game1.currentGameTime?.TotalGameTime.TotalMilliseconds ?? 0;
-            float pulse = GlowMin + GlowRange * (float)(0.5 + 0.5 * Math.Sin(t / PulseMs));
-            // FarmerRenderer draws closed lids while currentEyes != 0 (a blink): no red over them.
-            if (Game1.player.currentEyes == 0) DrawGlow(b, farmerPos, _farmerEyes, pulse);
-            DrawGlow(b, morrisPos, _morrisEyes, pulse);
-
             Rectangle r = _button.bounds;
             int grow = _button.scale > 1f ? 4 : 0;
             drawTextureBox(b, r.X - grow, r.Y - grow, r.Width + grow * 2, r.Height + grow * 2, Color.White);
@@ -327,20 +119,6 @@ namespace TheLongestYear.UI
                 new Vector2(r.X + (r.Width - ts.X) / 2f, r.Y + (r.Height - ts.Y) / 2f), Game1.textColor);
 
             drawMouse(b);
-        }
-
-        /// <summary>The red pixels, then the pulsing glow over them.</summary>
-        private static void DrawGlow(SpriteBatch b, Vector2 origin, EyeMarks eyes, float pulse)
-        {
-            int ox = (int)origin.X, oy = (int)origin.Y;
-            foreach (Rectangle p in eyes.Glow)
-                b.Draw(Game1.staminaRect, new Rectangle(ox + p.X, oy + p.Y, p.Width, p.Height),
-                    null, RedEye, 0f, Vector2.Zero, SpriteEffects.None, 1f);
-            foreach (var (pad, alpha) in GlowLayers)
-                foreach (Rectangle eye in eyes.Glow)
-                    b.Draw(Game1.staminaRect,
-                        new Rectangle((int)origin.X + eye.X - pad, (int)origin.Y + eye.Y - pad, eye.Width + pad * 2, eye.Height + pad * 2),
-                        null, Color.Red * (alpha * pulse), 0f, Vector2.Zero, SpriteEffects.None, 1f);
         }
     }
 }
