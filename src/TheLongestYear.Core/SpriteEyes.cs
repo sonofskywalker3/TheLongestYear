@@ -69,6 +69,32 @@ public static class SpriteEyes
         uint At(int x, int y) => pixels[(frameY + y) * sheetWidth + frameX + x];
     }
 
+    /// <summary>The one pixel of an eye box that glows red on the Game Over screen: the top row
+    /// of the column nearer the nose (the iris on the vanilla farmer sheets, whose whites sit on
+    /// the outer side). A 1x1 box, like Morris's, is its own glow pixel.</summary>
+    public static (int X, int Y) GlowPixel(PixelBox eye, int frameW)
+    {
+        bool leftOfCentre = eye.X * 2 + eye.Width <= frameW;
+        return (leftOfCentre ? eye.Right - 1 : eye.X, eye.Y);
+    }
+
+    /// <summary>The pixels around the glow pixels that are darkened to bring the red out: the 8
+    /// neighbours of each, each pixel once even where two rings touch, never a glow pixel itself.</summary>
+    public static IReadOnlyList<(int X, int Y)> Ring(IReadOnlyCollection<(int X, int Y)> glowPixels)
+    {
+        var centres = new HashSet<(int, int)>(glowPixels);
+        var seen = new HashSet<(int, int)>();
+        var ring = new List<(int X, int Y)>();
+        foreach (var (x, y) in glowPixels)
+            for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                var p = (x + dx, y + dy);
+                if (!centres.Contains(p) && seen.Add(p)) ring.Add(p);
+            }
+        return ring;
+    }
+
     /// <summary>Opaque, every channel light, and close to grey.</summary>
     public static bool IsEyeWhite(uint packed)
     {
