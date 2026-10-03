@@ -53,6 +53,37 @@ public static class AvailabilityWeeks
     /// <summary>Desert hard week (Jeff): a Spring bus is possible but not fun; Hard may ask from
     /// Summer week 2.</summary>
     public const int DesertHardWeek = 6;
+    /// <summary>Desert week on Extreme (Jeff, 2026-10-02, from elaineofshalott): the bus counts as
+    /// fixed from Spring week 3. Extreme only; Hard keeps <see cref="DesertHardWeek"/>. Only
+    /// desert-derived dates move, and each derived item keeps its own real time on top (crop
+    /// growth, the crop's own season: <see cref="OasisSeedCrops"/>).</summary>
+    public const int DesertExtremeWeek = 3;
+    /// <summary>The Skull Key waits at the bottom of the mines, floor 120 (week 4 at
+    /// <see cref="MineFloorsPerWeek"/>). The Skull Cavern needs it as well as the bus.</summary>
+    public const int SkullKeyFloor = 120;
+
+    /// <summary>The desert's hard week for a model built in this mode: Extreme (HardAll) reads
+    /// <see cref="DesertExtremeWeek"/>, every other mode <see cref="DesertHardWeek"/>. A Pacing or
+    /// HardGates model carries Hard's number, so Hard and below are unchanged.</summary>
+    public static int DesertHardWeekFor(WeekMode mode)
+        => mode == WeekMode.HardAll ? DesertExtremeWeek : DesertHardWeek;
+
+    /// <summary>The Skull Cavern's hard week: the later of the desert's and the week after the
+    /// Skull Key's floor is reached. Week 5 on Extreme, week 6 (the desert) on Hard.</summary>
+    public static int SkullCavernHardWeekFor(WeekMode mode)
+        => Math.Max(DesertHardWeekFor(mode), MineFloorWeek(SkullKeyFloor) + 1);
+
+    /// <summary>Crops whose only year-1 seed source is Sandy's Oasis. On Extreme their hard week
+    /// is derived from <see cref="DesertExtremeWeek"/> and the crop's own growth and seasons
+    /// (CropForageAvailability.OasisHarvestWeek) instead of the <see cref="SeedSourceWeeks"/> row,
+    /// which assumes Hard's Summer-week-6 bus.</summary>
+    public static readonly IReadOnlySet<string> OasisSeedCrops = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)284",   // Beet
+        "(O)252",   // Rhubarb
+        "(O)268",   // Starfruit
+        "(O)90",    // Cactus Fruit
+    };
 
     /// <summary>Crops whose seeds come from a festival, the cart, the Oasis or another source
     /// with its own week, rather than Pierre's day-1 shelf: the harvest cannot come before the
@@ -62,7 +93,8 @@ public static class AvailabilityWeeks
     /// for the three year-two crops that is the Year-Two Seeds Boost route (spec
     /// 2026-08-28-obtainable-board-4-boosts): a Mixed Seeds roll in the crop's own season, which
     /// lands before the permanent buy the pacing week assumes. For every other row the two are the
-    /// same number, because a festival or Oasis date is a calendar fact, not a pacing judgement.</summary>
+    /// same number, because a festival or Oasis date is a calendar fact, not a pacing judgement.
+    /// On Extreme the Oasis rows' hard week is derived instead (<see cref="OasisSeedCrops"/>).</summary>
     public static readonly IReadOnlyDictionary<string, (int Week, int Hard)> SeedSourceWeeks =
         new Dictionary<string, (int, int)>(StringComparer.Ordinal)
         {
@@ -343,8 +375,10 @@ public static class AvailabilityWeeks
     /// waits for Fall.</summary>
     public static Season MineAreaGateSeason(int area) => area == MineAreas.SkullCavern ? Season.Fall : Season.Spring;
 
-    /// <summary>Hard week for a mine area: the same floors, Skull Cavern at the Desert hard week.</summary>
-    public static int MineAreaHardWeek(int area) => area == MineAreas.SkullCavern ? DesertHardWeek : MineAreaWeek(area);
+    /// <summary>Hard week for a mine area: the same floors, Skull Cavern at
+    /// <see cref="SkullCavernHardWeekFor"/> (week 6 on Hard, week 5 on Extreme).</summary>
+    public static int MineAreaHardWeek(int area, WeekMode mode = WeekMode.Pacing)
+        => area == MineAreas.SkullCavern ? SkullCavernHardWeekFor(mode) : MineAreaWeek(area);
 
     /// <summary>Week a machine unlocked at a skill level is realistically running.</summary>
     public static int MachineLevelWeek(int level) => level switch

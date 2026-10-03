@@ -20,12 +20,14 @@ public sealed class EffortComposer
     private readonly IReadOnlyList<PoolItem> _artifacts;
     private readonly IReadOnlyList<PoolItem> _books;
     private readonly DifficultyStep _step;
+    private readonly WeekMode _mode;
     private readonly Dictionary<string, ItemEffort?> _memo = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visiting = new(StringComparer.Ordinal);
 
     public EffortComposer(EffortData data, IReadOnlyDictionary<string, ItemAvailability> seasonDerived, bool hasKitchen,
         IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null,
-        IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal)
+        IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal,
+        WeekMode mode = WeekMode.Pacing)
     {
         _artifacts = artifacts ?? Array.Empty<PoolItem>();
         _books = books ?? Array.Empty<PoolItem>();
@@ -34,6 +36,7 @@ public sealed class EffortComposer
         _hasKitchen = hasKitchen;
         _saplings = saplings ?? Array.Empty<PoolItem>();
         _step = step;
+        _mode = mode;
     }
 
     /// <summary>Effort for any id the model can place, or null. This is the resolver the
@@ -85,13 +88,13 @@ public sealed class EffortComposer
         {
             FishingTrashAvailability.Derive(qualifiedId),
             ShopAvailability.Derive(qualifiedId),
-            MineralNodeAvailability.Derive(qualifiedId),
-            GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops),
-            MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops),
-            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots),
+            MineralNodeAvailability.Derive(qualifiedId, _mode),
+            GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops, _mode),
+            MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops, _mode),
+            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots, _mode),
             AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings),
-            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops),
-            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns),
+            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops, _mode),
+            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode),
             CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
             TapperAvailability.Derive(qualifiedId, _data),
             PoolArtifact(qualifiedId),

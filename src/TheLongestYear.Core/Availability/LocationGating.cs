@@ -16,29 +16,36 @@ public static class LocationGating
 {
     /// <summary>Matched as case-sensitive substrings of the location key, so "Desert",
     /// "SkullCave" and "IslandSouth" all catch their family of map keys. Hard is the first week
-    /// the location can exist at all (facts); Week is the pacing week (a judgement call).
+    /// the location can exist at all (facts); Week is the pacing week (a judgement call). Extreme is
+    /// the hard week a model built for Extreme (WeekMode.HardAll) reads: the same as Hard except
+    /// for the desert and the Skull Cavern (Jeff, 2026-10-02: Extreme opens the desert in Spring
+    /// week 3).
     ///
     /// Exact = the marker must equal the whole location key. "Woods" (the Secret Woods) needs it:
     /// as a substring it also swallows "Backwoods", the free day-1 map north of the farm, and
     /// would gate everything foraged there behind the Steel Axe.</summary>
-    private static readonly (string Marker, int Week, int Hard, bool Exact)[] GatedMarkers =
+    private static readonly (string Marker, int Week, int Hard, int Extreme, bool Exact)[] GatedMarkers =
     {
         // Bus repair costs 40,000g through the Vault bundle. Fall pacing, Summer hard (Jeff,
         // 2026-08-28: a Spring bus is possible but not fun; Hard may ask from Summer week 2).
-        ("Desert",    AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek, false),
-        ("SkullCave", AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeek, false),
+        // Extreme from Spring week 3 (Jeff, 2026-10-02).
+        ("Desert",    AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.DesertHardWeekFor(WeekMode.HardGates),
+            AvailabilityWeeks.DesertHardWeekFor(WeekMode.HardAll), false),
+        // The bus and the Skull Key (floor 120): week 6 on Hard, week 5 on Extreme.
+        ("SkullCave", AvailabilityWeeks.SkullCavernWeek, AvailabilityWeeks.SkullCavernHardWeekFor(WeekMode.HardGates),
+            AvailabilityWeeks.SkullCavernHardWeekFor(WeekMode.HardAll), false),
         // MountainUnlock clears the landslide on day 1; depth is handled per mine area
         // (AvailabilityWeeks.MineAreaWeek: 30 floors a week).
-        ("UndergroundMine", 1, 1, false),
+        ("UndergroundMine", 1, 1, 1, false),
         // Rusty Key: 60 museum donations. Reachable mid-run by a player who digs, not before.
-        ("Sewer",     AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, false),
-        ("BugLand",   AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, false),
+        ("Sewer",     AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, false),
+        ("BugLand",   AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, AvailabilityWeeks.SewerWeek, false),
         // Witch's Swamp needs the Dark Talisman, which needs the Sewer first, then the Mutant
         // Bug Lair quest. Last stop of a long chain.
-        ("WitchSwamp", AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, false),
-        ("WitchHut",   AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, false),
+        ("WitchSwamp", AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, false),
+        ("WitchHut",   AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, AvailabilityWeeks.SwampWeek, false),
         // Secret Woods needs the Steel Axe (Morel, Fiddlehead, Woodskip, hardwood stumps).
-        ("Woods", 4, 4, Exact: true),
+        ("Woods", 4, 4, 4, Exact: true),
     };
 
     /// <summary>First week of the year the player can stand in this location.</summary>
@@ -46,7 +53,7 @@ public static class LocationGating
     {
         if (string.IsNullOrEmpty(locationKey))
             return 1;
-        foreach ((string marker, int week, int _, bool exact) in GatedMarkers)
+        foreach ((string marker, int week, int _, int _, bool exact) in GatedMarkers)
             if (Matches(locationKey, marker, exact))
                 return week;
         return 1;
@@ -65,22 +72,23 @@ public static class LocationGating
     }
 
     /// <summary>First week the location can exist at all (facts, not pacing): a Hard-mode ask
-    /// may demand it this early.</summary>
-    public static int HardWeekFor(string locationKey)
+    /// may demand it this early. A model built for Extreme (<see cref="WeekMode.HardAll"/>) reads
+    /// the Extreme column; every other mode reads Hard's.</summary>
+    public static int HardWeekFor(string locationKey, WeekMode mode = WeekMode.Pacing)
     {
         if (string.IsNullOrEmpty(locationKey)) return 1;
-        foreach ((string marker, int _, int hard, bool exact) in GatedMarkers)
-            if (Matches(locationKey, marker, exact)) return hard;
+        foreach ((string marker, int _, int hard, int extreme, bool exact) in GatedMarkers)
+            if (Matches(locationKey, marker, exact)) return mode == WeekMode.HardAll ? extreme : hard;
         return 1;
     }
 
     /// <summary>The EASIEST hard week among the given locations, because reaching any one of
     /// them is enough to get the item.</summary>
-    public static int HardWeekForAny(IReadOnlyList<string> locationKeys)
+    public static int HardWeekForAny(IReadOnlyList<string> locationKeys, WeekMode mode = WeekMode.Pacing)
     {
         if (locationKeys == null || locationKeys.Count == 0) return 1;
         int best = Calendar.WeeksPerYear;
-        foreach (string key in locationKeys) best = Math.Min(best, HardWeekFor(key));
+        foreach (string key in locationKeys) best = Math.Min(best, HardWeekFor(key, mode));
         return best;
     }
 

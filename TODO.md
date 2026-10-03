@@ -6,12 +6,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### IN PROGRESS (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
+### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
 elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
 Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
 calls the bus repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items reach
 Spring deadlines. "If they're picking Extreme they do want a challenge." Not a floodgate: only the
 desert date moves. Reply to elaineofshalott after it ships.
+Built: `AvailabilityWeeks.DesertExtremeWeek` = 3, read only by a model built for Extreme (WeekMode
+HardAll); LocationGating gained an Extreme column. Extreme weeks: desert forage and fish 3 (Spring),
+Rhubarb 4 (Spring, seeds week 3 plus 13 days), Starfruit 6 (Summer), Beet 9 (Fall), Cactus Fruit 3.
+Skull Cavern on Extreme is week 5 (the week after the Skull Key, floor 120 at 30 floors a week), so
+iridium, Prismatic Shard and Skull Cavern drops gate in Summer. Hard, Normal and Easy unchanged.
+Not moved: artisan goods and dishes made from desert items (no rule derives their hard week yet),
+Sandy's friendship recipes (pacing only).
 
 ### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
 On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
