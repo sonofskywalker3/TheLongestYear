@@ -34,7 +34,8 @@ namespace TheLongestYear.Integration
     /// the first row while its animals go in; the town river runs green with dead fish on the bank and
     /// floating in it, Pierre's is boarded up like the closed JojaMart, and up the square the
     /// Community Center has become a Joja warehouse; the camera pans along a beach
-    /// strewn with driftwood, trash and dead fish. Then Game Over.</summary>
+    /// strewn with driftwood, trash and dead fish. Then Game Over. All of it in daylight, whatever
+    /// the hour of the Yes (tlyDaylight).</summary>
     internal static class JojaBadEnding
     {
         // Farm offsets from the farmhouse entry (see the tile notes above).
@@ -83,6 +84,7 @@ namespace TheLongestYear.Integration
                 // ---- JojaMart: the answer given, the store goes dark, the music turns ----
                 $"{JojaBadEndingCommands.MusicName} {Music}",
                 $"{EndingEventCommands.FadeOutName} 1200",
+                JojaBadEndingCommands.DaylightName,   // under black, before the first warp: every place after it is day
 
                 // ---- The farm: the house comes down ----
                 $"{EndingEventCommands.ChangeLocationName} Farm {door.X} {door.Y + FarmerArriveDy}",
