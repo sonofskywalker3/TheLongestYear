@@ -10,14 +10,13 @@ using StardewValley.GameData.Pants;
 using StardewValley.GameData.Shirts;
 using StardewValley.Menus;
 using TheLongestYear.Core;
-using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
 {
     /// <summary>The end of Morris's offer taken (JojaBadEnding's <c>tlyGameOver</c>): full-screen
     /// black, "Game Over" a third of the way down, the message in the middle, and in the bottom
-    /// third the farmer in a suit, bare-headed and in black boots, beside Morris, both with glowing
-    /// red eyes. The button, any key or any controller button exits to the title without saving.
+    /// third the farmer in a suit, bare-headed and in black boots, beside Morris, each with one
+    /// glowing red pixel per eye inside a darkened 3x3 ring. The button, any key or any controller button exits to the title without saving.
     ///
     /// Input is swallowed for the first 600 ms (<see cref="InputDelayMs"/>) so a player mashing
     /// through the scene's last dialogue does not skip the screen unseen. The only way out is that
@@ -25,7 +24,7 @@ namespace TheLongestYear.UI
     /// the finished event idling, which is why <c>tly_dismiss</c> sends this menu a key press
     /// instead of closing it.
     ///
-    /// The farmer is re-dressed live (hat off, shirt and pants overrides, black boots, red eyes):
+    /// The farmer is re-dressed live (hat off, shirt and pants overrides, black boots):
     /// nothing is saved after this screen, so the change never reaches the save on disk.</summary>
     internal sealed class JojaGameOverMenu : IClickableMenu
     {
@@ -43,11 +42,17 @@ namespace TheLongestYear.UI
         private const int ButtonGap = 32, ButtonPadX = 32, ButtonPadY = 20;
         private const double InputDelayMs = 600;
         private const float PulseMs = 300f;
-        // A core over the whole eye (iris and white), with two faint rims around it for the glow,
-        // padded in screen pixels (red drawn on a red iris alone would not show). Toned down from
-        // a 16-pixel halo at 0.18 / 0.35 after Jeff's playthrough (note 5, 2026-10-02).
+        // A core over the glow pixel with two faint rims around it, padded in screen pixels. Toned
+        // down from a 16-pixel halo at 0.18 / 0.35 after Jeff's playthrough (note 5, 2026-10-02).
         private static readonly (int Pad, float Alpha)[] GlowLayers = { (4, 0.07f), (2, 0.16f), (0, 0.85f) };
         private const float GlowMin = 0.55f, GlowRange = 0.45f;
+        // Each eye is one red pixel (Morris's old iris red, MorrisDarkSprite's RedEye) with the 8
+        // sprite pixels around it darkened to MorrisDarkSprite's shadow (a third of their value):
+        // Jeff liked Morris's single red pixel and the dark round it bringing it out (round 2
+        // note 9, 2026-10-02), so the farmer gets the same.
+        private static readonly Color RedEye = new(230, 20, 20);
+        private const float RingDarkness = 0.68f;
+        private const string MorrisAsset = "Characters/Morris";
         // Vanilla has no suit pants (Data/Pants, 1.6): the farmer's own pants go charcoal instead.
         private static readonly Color SuitPantsColour = new(58, 58, 68);
         private const float FigureLayer = 0.8f;
@@ -60,8 +65,8 @@ namespace TheLongestYear.UI
         // Frame 0 eyes (iris and white) on the vanilla male base, sprite pixels: used only when the
         // farmer's sheet cannot be read. The female base's sit one row lower.
         private static readonly PixelBox[] FallbackFarmerEyes = { new(5, 11, 2, 2), new(9, 11, 2, 2) };
-        // Morris's recoloured irises (MorrisDarkSprite, sprite pixels (7,9)/(9,9) on frame 0). His
-        // whites are darkened with the rest of him, so the glow sits on the irises alone.
+        // Morris's irises on vanilla Characters/Morris frame 0 (one pixel each, the colour
+        // MorrisDarkSprite recolours red for the ending).
         private static readonly PixelBox[] MorrisEyes = { new(7, 9, 1, 1), new(9, 9, 1, 1) };
 
         private readonly IMonitor _monitor;
@@ -69,8 +74,8 @@ namespace TheLongestYear.UI
         private readonly string[] _messageLines;
         private readonly string _buttonText;
         private readonly Texture2D _morris;
-        private readonly Rectangle[] _farmerEyes;
-        private readonly Rectangle[] _morrisEyes = ToFigure(MorrisEyes);
+        private readonly EyeMarks _farmerEyes;
+        private readonly EyeMarks _morrisEyes = EyeMarks.For(MorrisEyes);
         private readonly ClickableComponent _button;
         private readonly double _openedAt;
         private bool _exiting;
@@ -84,11 +89,11 @@ namespace TheLongestYear.UI
             _buttonText = Strings.Get("joja.gameover.button");
             _openedAt = Game1.currentGameTime?.TotalGameTime.TotalMilliseconds ?? 0;
 
-            try { _morris = Game1.content.Load<Texture2D>(MorrisDarkSprite.AssetName); }
+            try { _morris = Game1.content.Load<Texture2D>(MorrisAsset); }
             catch (Exception ex) { _monitor.Log($"Joja game over: no Morris sprite ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn); }
 
             DressFarmer();
-            _farmerEyes = ToFigure(FindFarmerEyes());
+            _farmerEyes = EyeMarks.For(FindFarmerEyes());
 
             Vector2 size = Game1.dialogueFont.MeasureString(_buttonText);
             int bw = (int)size.X + ButtonPadX * 2, bh = (int)size.Y + ButtonPadY * 2;
@@ -104,7 +109,7 @@ namespace TheLongestYear.UI
         private int FarmerX => width / 2 - FigureGap / 2 - FigureW;
         private int MorrisX => width / 2 + FigureGap / 2;
 
-        /// <summary>No hat, a suit shirt and pants, black boots, red eyes. Each slot is independent:
+        /// <summary>No hat, a suit shirt and pants, black boots. Each slot is independent:
         /// one that cannot be found or throws is logged and left as it was.</summary>
         private void DressFarmer()
         {
@@ -150,9 +155,6 @@ namespace TheLongestYear.UI
                 }
             }
             catch (Exception ex) { _monitor.Log($"Joja game over: pants: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
-
-            try { who.changeEyeColor(Color.Red); }
-            catch (Exception ex) { _monitor.Log($"Joja game over: eyes: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
         }
 
         /// <summary>The farmer's eyes on the frame this screen draws, read once from the base sheet
@@ -188,13 +190,28 @@ namespace TheLongestYear.UI
             return FallbackFarmerEyes;
         }
 
-        /// <summary>Sprite-pixel boxes to screen pixels from a figure's top-left (both figures draw at <see cref="Scale"/>).</summary>
-        private static Rectangle[] ToFigure(IReadOnlyList<PixelBox> boxes)
+        /// <summary>One figure's eye marks in screen pixels from its top-left (both figures draw at
+        /// <see cref="Scale"/>): the red glow pixel of each eye and the darkened ring round them.</summary>
+        private sealed class EyeMarks
         {
-            var r = new Rectangle[boxes.Count];
-            for (int i = 0; i < boxes.Count; i++)
-                r[i] = new Rectangle((int)(boxes[i].X * Scale), (int)(boxes[i].Y * Scale), (int)(boxes[i].Width * Scale), (int)(boxes[i].Height * Scale));
-            return r;
+            public Rectangle[] Glow { get; private init; }
+            public Rectangle[] Ring { get; private init; }
+
+            public static EyeMarks For(IReadOnlyList<PixelBox> eyes)
+            {
+                var glow = new List<(int X, int Y)>();
+                foreach (PixelBox eye in eyes) glow.Add(SpriteEyes.GlowPixel(eye, SpriteW));
+                return new EyeMarks { Glow = ToFigure(glow), Ring = ToFigure(SpriteEyes.Ring(glow)) };
+            }
+
+            private static Rectangle[] ToFigure(IReadOnlyList<(int X, int Y)> pixels)
+            {
+                var r = new Rectangle[pixels.Count];
+                int size = (int)Scale;
+                for (int i = 0; i < pixels.Count; i++)
+                    r[i] = new Rectangle(pixels[i].X * size, pixels[i].Y * size, size, size);
+                return r;
+            }
         }
 
         /// <summary>The blackest shoeColors row: dark AND grey, scored as brightness plus twice each
@@ -313,10 +330,18 @@ namespace TheLongestYear.UI
             drawMouse(b);
         }
 
-        private static void DrawGlow(SpriteBatch b, Vector2 origin, Rectangle[] eyes, float pulse)
+        /// <summary>The ring darkened, then the red pixels, then the pulsing glow over them.</summary>
+        private static void DrawGlow(SpriteBatch b, Vector2 origin, EyeMarks eyes, float pulse)
         {
+            int ox = (int)origin.X, oy = (int)origin.Y;
+            foreach (Rectangle p in eyes.Ring)
+                b.Draw(Game1.staminaRect, new Rectangle(ox + p.X, oy + p.Y, p.Width, p.Height),
+                    null, Color.Black * RingDarkness, 0f, Vector2.Zero, SpriteEffects.None, 1f);
+            foreach (Rectangle p in eyes.Glow)
+                b.Draw(Game1.staminaRect, new Rectangle(ox + p.X, oy + p.Y, p.Width, p.Height),
+                    null, RedEye, 0f, Vector2.Zero, SpriteEffects.None, 1f);
             foreach (var (pad, alpha) in GlowLayers)
-                foreach (Rectangle eye in eyes)
+                foreach (Rectangle eye in eyes.Glow)
                     b.Draw(Game1.staminaRect,
                         new Rectangle((int)origin.X + eye.X - pad, (int)origin.Y + eye.Y - pad, eye.Width + pad * 2, eye.Height + pad * 2),
                         null, Color.Red * (alpha * pulse), 0f, Vector2.Zero, SpriteEffects.None, 1f);

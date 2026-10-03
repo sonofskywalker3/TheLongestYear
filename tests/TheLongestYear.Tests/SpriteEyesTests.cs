@@ -122,6 +122,44 @@ public class SpriteEyesTests
     }
 
     [Fact]
+    public void Glow_pixel_is_the_top_of_the_column_nearer_the_nose()
+    {
+        Assert.Equal((6, 11), SpriteEyes.GlowPixel(new PixelBox(5, 11, 2, 2), 16));
+        Assert.Equal((9, 11), SpriteEyes.GlowPixel(new PixelBox(9, 11, 2, 2), 16));
+        Assert.Equal((6, 12), SpriteEyes.GlowPixel(new PixelBox(5, 12, 2, 2), 16));
+    }
+
+    [Fact]
+    public void A_one_pixel_eye_is_its_own_glow_pixel()
+    {
+        Assert.Equal((7, 9), SpriteEyes.GlowPixel(new PixelBox(7, 9, 1, 1), 16));
+        Assert.Equal((9, 9), SpriteEyes.GlowPixel(new PixelBox(9, 9, 1, 1), 16));
+    }
+
+    [Fact]
+    public void Ring_is_the_eight_neighbours_of_one_glow_pixel()
+    {
+        var ring = SpriteEyes.Ring(new[] { (7, 9) });
+
+        Assert.Equal(8, ring.Count);
+        Assert.DoesNotContain((7, 9), ring);
+        Assert.Contains((6, 8), ring);
+        Assert.Contains((8, 10), ring);
+    }
+
+    [Fact]
+    public void Touching_rings_darken_each_pixel_once_and_never_a_glow_pixel()
+    {
+        // Morris's eyes, two pixels apart: the rings share column 8.
+        var ring = SpriteEyes.Ring(new[] { (7, 9), (9, 9) });
+
+        Assert.Equal(13, ring.Count);
+        Assert.Equal(ring.Count, new HashSet<(int, int)>(ring).Count);
+        Assert.DoesNotContain((7, 9), ring);
+        Assert.DoesNotContain((9, 9), ring);
+    }
+
+    [Fact]
     public void No_iris_on_the_frame_finds_nothing()
     {
         Assert.Empty(FindIn(new[] { "....", ".GG.", "...." }));
