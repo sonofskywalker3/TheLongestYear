@@ -70,8 +70,12 @@ namespace TheLongestYear.Integration
         /// <summary>From now on, each building's animals are sent home once its animal door is on screen.</summary>
         internal static void ArmWhenSeen() => _whenSeen = true;
 
-        /// <summary>The scene's animals still outside on the farm.</summary>
-        internal static int Outside(Farm farm) => Animals.Keys.Count(id => farm.animals.ContainsKey(id));
+        /// <summary>The scene's animals called home so far (their door came on screen).</summary>
+        internal static int Called => Animals.Values.Count(s => s.Signalled);
+
+        /// <summary>The called animals still outside on the farm. The rows the camera never shows
+        /// are never called, so they do not count.</summary>
+        internal static int CalledOutside(Farm farm) => Animals.Count(a => a.Value.Signalled && farm.animals.ContainsKey(a.Key));
 
         internal static void Reset()
         {
@@ -146,18 +150,17 @@ namespace TheLongestYear.Integration
             }
         }
 
-        /// <summary>Time is up: whoever is still out goes in the way vanilla moves an animal home when
-        /// no player is watching (FarmAnimal.cs 1550-1558). Returns one note per animal moved (type, tile,
-        /// its door, how far its go-home got), for the log.</summary>
-        internal static List<string> SendStragglersInside(Farm farm)
+        /// <summary>Time is up: the called animals still out (type, tile, its door, how far its go-home
+        /// got), for the log. They are left where they stand: the scene fades out next, and moving
+        /// them in now would pop them off the screen in plain view.</summary>
+        internal static List<string> CalledStillOut(Farm farm)
         {
             var notes = new List<string>();
             foreach (var (id, state) in Animals)
             {
-                if (!farm.animals.TryGetValue(id, out FarmAnimal animal)) continue;
+                if (!state.Signalled || !farm.animals.TryGetValue(id, out FarmAnimal animal)) continue;
                 notes.Add($"{animal.type.Value} at {animal.TilePoint.X},{animal.TilePoint.Y} for door {state.Home.tileX.Value + state.Home.animalDoor.X},{state.Home.tileY.Value + state.Home.animalDoor.Y}"
-                          + $" (signalled {state.Signalled}, sent {state.Sent}, tries {state.Tries}, walking {animal.controller != null})");
-                EnterNow(farm, animal, state.Home);
+                          + $" (sent {state.Sent}, tries {state.Tries}, walking {animal.controller != null})");
             }
             return notes;
         }
