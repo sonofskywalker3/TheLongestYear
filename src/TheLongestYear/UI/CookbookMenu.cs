@@ -23,7 +23,7 @@ namespace TheLongestYear.UI
     /// On dismiss, <c>MetaState.DismissedIndicators</c> gets "tly.cookbook" so the one-time
     /// cookbook intro quest doesn't re-fire on subsequent loop resets.
     /// </summary>
-    internal sealed class CookbookMenu : IClickableMenu
+    internal sealed class CookbookMenu : IClickableMenu, IRecipeBookMenu
     {
         private const int PanelWidth  = 900;
         private const int PanelHeight = 640;
@@ -213,6 +213,16 @@ namespace TheLongestYear.UI
                 return;
             }
             base.receiveKeyPress(key);
+        }
+
+        public bool PickerOpen => _pickerList != null;
+
+        public Rectangle? FirstEmptySlotBounds()
+        {
+            if (_pickerList != null) return null;
+            int row = _meta.CookbookRecipes.Count - _scroll;
+            if (_meta.CookbookRecipes.Count >= _slotCount || row < 0 || row >= _rowSlots.Count) return null;
+            return _rowSlots[row].bounds;
         }
 
         private void ClosePicker()
