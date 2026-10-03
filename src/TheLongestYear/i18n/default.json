@@ -42,7 +42,7 @@
     // Jeff's line (voluntary restart confirm, 2026-09-24).
     "dialog.restart.prompt": "Are you sure? This resets all progress, just like a failed season.",
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
-    // -- Morris's offer (spec 2026-09-25-joja-offer-design); placeholder wording Jeff accepted to build with --
+    // -- Morris's offer (spec 2026-09-25-joja-offer-design); Jeff made this wording the script 2026-10-02 --
     "event.joja-offer.morris-1": "@. I hoped you'd come by. My offer still stands, and I got approval to sweeten it.",
     "event.joja-offer.morris-2": "Joja will buy your farm outright, for more money than it will ever make you. We'll turn the land into a meat processing plant.",
     "event.joja-offer.morris-3": "You'd be my assistant manager. Company housing, transportation, excellent benefits. The whole package. Think about it.",
@@ -68,7 +68,7 @@
     "mail.joja.come-4": "@,^^Half the year is gone, and you still haven't come to see me. Come to JojaMart this week.^^   -Morris",
     "mail.joja.come-5": "@,^^I've been patient. Corporate is asking why the position is still open. Come see me.^^   -Morris",
     "mail.joja.come-6": "@,^^This is not a request anymore. Come to JojaMart.^^   -Morris",
-    "mail.joja.come-7": "@,^^Your farm is running out of time, and so is my patience. Come see me before the year ends.^^   -Morris",
+    "mail.joja.come-7": "@,^^The year is almost over. So is my patience. Come see me.^^   -Morris",
     "mail.joja.come-8": "@,^^Last chance. Come to the store, or I'll find someone who wants it.^^   -Morris",
     "mail.joja.decide-1": "@,^^I trust you've had time to think it over. I'll be at the store when you're ready to sign.^^   -Morris",
     "mail.joja.decide-2": "@,^^It's been two weeks. I don't appreciate being kept waiting. Come give me your answer.^^   -Morris",

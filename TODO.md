@@ -267,6 +267,8 @@ Jeff confirmed by eye: the walk-in (black until staged), Morris's scowl after a 
    how it looks (keep the old version easy to bring back).
 11. **Writing pass on the placeholders:** Jeff thinks the placeholders are OK; keep them, but try a
    real writing pass (letters, offer, cashier, Morris lines) and show both so he can compare.
+   DONE 2026-10-02: Jeff rejected the pass ("you just asked how can i make this shorter, and that's not
+   morris"). The placeholders are now the script, except come-7, which takes the new line.
 
 1. **Offer scene entrance flicker:** on walking into JojaMart, Morris shows standing behind his
    counter, then blinks and is suddenly in the middle of the room. Fix: hold the screen black on
