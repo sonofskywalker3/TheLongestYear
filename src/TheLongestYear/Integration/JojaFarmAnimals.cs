@@ -17,14 +17,15 @@ namespace TheLongestYear.Integration
     ///   the same call GameLocation.UpdateWhenCurrentLocation makes each tick (GameLocation.cs 4109).
     ///   During an event it returns at once because <c>Game1.shouldTimePass()</c> is false while
     ///   <c>eventUp</c> (Game1.cs 8828), so this class makes that same call itself for the scene's
-    ///   animals with shouldTimePass answering true for the duration of the call only (and, after 8pm,
-    ///   the clock read as 7:50pm for the call only, or SleepIfNecessary, FarmAnimal.cs 1737, would
-    ///   freeze them). Wandering, walking, the door check and the "dwoop" all come from that code.
+    ///   animals with shouldTimePass answering true for the duration of the call only. The scene
+    ///   holds the clock at noon (tlyDaylight), so SleepIfNecessary (FarmAnimal.cs 1737, 8pm on)
+    ///   never freezes them. Wandering, walking, the door check and the "dwoop" all come from that code.
     /// - The evening signal is the go-home branch of <c>FarmAnimal.behaviors</c> (FarmAnimal.cs
     ///   1548-1566): at 5pm or later, with the home's animal door open, the animal gets
     ///   <c>new PathFindController(animal, location, isAtEndPoint, 0, null, 200, animal door tile)</c>.
     ///   Vanilla rolls a 0.2% chance a tick for it; the scene gives it directly, animal by animal,
-    ///   once the building is on screen, a little staggered.
+    ///   once the building is on screen, a little staggered. Nothing in it needs the clock: the
+    ///   door warp (below) is the same at noon.
     /// - The animal door opens the way the player opens it: <c>Building.ToggleAnimalDoor</c>
     ///   (Building.cs 899), with its creak; Building.Update slides it open (Building.cs 1345).
     /// - An animal walks in the vanilla way: at the door, updateWhenCurrentLocation moves it into the
@@ -60,7 +61,6 @@ namespace TheLongestYear.Integration
         private const int MaxTries = 3;
         private const int HoldWarpMs = 1000;
         private const int SeenInsetTiles = 2;
-        private const int SleepHour = 2000, AwakeHour = 1950;
 
         internal static int Count => Animals.Count;
 
@@ -70,8 +70,12 @@ namespace TheLongestYear.Integration
         /// <summary>From now on, each building's animals are sent home once its animal door is on screen.</summary>
         internal static void ArmWhenSeen() => _whenSeen = true;
 
-        /// <summary>The scene's animals still outside on the farm.</summary>
-        internal static int Outside(Farm farm) => Animals.Keys.Count(id => farm.animals.ContainsKey(id));
+        /// <summary>The scene's animals called home so far (their door came on screen).</summary>
+        internal static int Called => Animals.Values.Count(s => s.Signalled);
+
+        /// <summary>The called animals still outside on the farm. The rows the camera never shows
+        /// are never called, so they do not count.</summary>
+        internal static int CalledOutside(Farm farm) => Animals.Count(a => a.Value.Signalled && farm.animals.ContainsKey(a.Key));
 
         internal static void Reset()
         {
@@ -121,10 +125,7 @@ namespace TheLongestYear.Integration
                 else { SendHome(farm, animal, state.Home, RetryLimit); state.Tries++; }
             }
 
-            int clock = Game1.timeOfDay;
-            bool night = clock >= SleepHour;
             _forceTimePass = true;
-            if (night) Game1.timeOfDay = AwakeHour;
             try
             {
                 var view = new Rectangle(Game1.viewport.X, Game1.viewport.Y, Game1.viewport.Width, Game1.viewport.Height);
@@ -142,22 +143,20 @@ namespace TheLongestYear.Integration
             finally
             {
                 _forceTimePass = false;
-                if (night) Game1.timeOfDay = clock;
             }
         }
 
-        /// <summary>Time is up: whoever is still out goes in the way vanilla moves an animal home when
-        /// no player is watching (FarmAnimal.cs 1550-1558). Returns one note per animal moved (type, tile,
-        /// its door, how far its go-home got), for the log.</summary>
-        internal static List<string> SendStragglersInside(Farm farm)
+        /// <summary>Time is up: the called animals still out (type, tile, its door, how far its go-home
+        /// got), for the log. They are left where they stand: the scene fades out next, and moving
+        /// them in now would pop them off the screen in plain view.</summary>
+        internal static List<string> CalledStillOut(Farm farm)
         {
             var notes = new List<string>();
             foreach (var (id, state) in Animals)
             {
-                if (!farm.animals.TryGetValue(id, out FarmAnimal animal)) continue;
+                if (!state.Signalled || !farm.animals.TryGetValue(id, out FarmAnimal animal)) continue;
                 notes.Add($"{animal.type.Value} at {animal.TilePoint.X},{animal.TilePoint.Y} for door {state.Home.tileX.Value + state.Home.animalDoor.X},{state.Home.tileY.Value + state.Home.animalDoor.Y}"
-                          + $" (signalled {state.Signalled}, sent {state.Sent}, tries {state.Tries}, walking {animal.controller != null})");
-                EnterNow(farm, animal, state.Home);
+                          + $" (sent {state.Sent}, tries {state.Tries}, walking {animal.controller != null})");
             }
             return notes;
         }

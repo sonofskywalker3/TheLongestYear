@@ -15,7 +15,9 @@ namespace TheLongestYear.Integration
     /// real"). Runs on the cleared, paved farm: lays out rows with <see cref="JojaFarmLayout"/> over
     /// the farm's own <c>isBuildable</c> (so every farm type gets its own rows), puts up real
     /// buildings in <c>farm.buildings</c>, fully built with their interiors, and real animals housed in
-    /// them, then returns the commands that pan across every row (tlyPanTo) while the animals go in.
+    /// them, then returns the commands that pan along the first row only (tlyPanTo) while its animals
+    /// go in (Jeff, 2026-10-02: "going over row after row is too much, just do the first row of
+    /// buildings and then fade out"). Every row still goes up: the whole farm is converted.
     /// IN MEMORY ONLY, like the rest of the bad ending's farm.</summary>
     internal static class JojaFactoryFarm
     {
@@ -35,8 +37,10 @@ namespace TheLongestYear.Integration
         private const int Seed = 20260925;
 
         private const int PanMsPerTile = 170, MinPanMs = 1200;
-        private const int SettleMs = 1500, RowStartPauseMs = 500, RowEndPauseMs = 900, AfterMs = 1500;
-        private const int WaitTimeoutMs = 8000;
+        private const int SettleMs = 1500, RowStartPauseMs = 500, AfterMs = 1000;
+        // The last doors come into view at the pan's end; their animals need the door lead, the
+        // spread and a few tiles' walk. Whoever is still out then stays out under the fade.
+        private const int WaitTimeoutMs = 5000;
         private const int RowCentreDy = -1;     // a row reads from its sprite tops to its lane: centre one above the bottom
 
         /// <summary>Puts up the rows and their animals; returns a log summary and the pan script.</summary>
@@ -114,26 +118,25 @@ namespace TheLongestYear.Integration
             JojaFarmAnimals.Add(animal, home);
         }
 
-        /// <summary>Settle, arm the go-home signal, then pan along every row in turn (left to right,
-        /// then back the other way), each leg paced by its length; then wait for the last animal in.</summary>
+        /// <summary>Settle, arm the go-home signal, then pan along the first row (left to right), paced
+        /// by its length; then wait, briefly, for the animals the camera saw to go in. The rows below
+        /// are never on screen, so their animals are never called and stand still.</summary>
         private static List<string> PanScript(IReadOnlyList<FarmBuildingRow> rows, IReadOnlyList<(int W, int H)> sizes)
         {
             var s = new List<string> { $"pause {SettleMs}", JojaBadEndingCommands.AnimalsHomeName };
-            float halfView = Game1.viewport.Width / (2f * Game1.tileSize);
-            var at = new Vector2((Game1.viewport.X + Game1.viewport.Width / 2f) / Game1.tileSize, (Game1.viewport.Y + Game1.viewport.Height / 2f) / Game1.tileSize);
-            for (int i = 0; i < rows.Count; i++)
+            if (rows.Count > 0)
             {
-                FarmBuildingRow row = rows[i];
+                float halfView = Game1.viewport.Width / (2f * Game1.tileSize);
+                var at = new Vector2((Game1.viewport.X + Game1.viewport.Width / 2f) / Game1.tileSize, (Game1.viewport.Y + Game1.viewport.Height / 2f) / Game1.tileSize);
+                FarmBuildingRow row = rows[0];
                 FarmBuildingSpot last = row.Spots[row.Spots.Count - 1];
                 int right = last.X + sizes[last.Kind].W - 1;
                 int from = (int)Math.Round(row.Left + halfView - 1), to = (int)Math.Round(right - halfView + 1);
                 if (to < from) from = to = (row.Left + right) / 2;
-                if (i % 2 == 1) (from, to) = (to, from);
                 int y = row.Bottom + RowCentreDy;
                 s.Add(Pan(ref at, from, y));
                 s.Add($"pause {RowStartPauseMs}");
                 if (to != from) s.Add(Pan(ref at, to, y));
-                s.Add($"pause {RowEndPauseMs}");
             }
             s.Add($"{JojaBadEndingCommands.AnimalsWaitName} {WaitTimeoutMs}");
             s.Add($"pause {AfterMs}");
