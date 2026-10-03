@@ -3,7 +3,16 @@
 //
 // Farm: the anchor is Farm.GetMainFarmHouseEntry() (Standard: 64,15; Farmhouse at 59,12, size 9x5,
 // HumanDoor 5,2). The farmhouse sprite (160x144 px, DrawOffset -16,2) covers cols door-6..door+3,
-// rows door-7..door+1, and its mailbox draw layer the column after: dust door-6, door-7, 11 x 9.
+// rows door-7..door+1, and its mailbox draw layer the column after: that 11 x 9 at door-6, door-7
+// is HouseRect. The kept house (the default; Jeff, 2026-10-02: "try keeping the farmhouse"): one
+// explosion's dust on each side of it (4 x 8 at door-10 and door+5, rows door-6..door+1; the
+// puffs grow right and down, so they lap its edges), the farm-wide dust skips puffs centred on
+// HouseRect, and the house's own footprint stays unpaved (it is under the sprite). The Joja sign
+// (JojaBadEndingVisuals, Cursors' warehouse sign, 52 x 20 px at 4x) sits centred on the door
+// tile with its bottom 136 px above the entry tile's top: just over the door frame on all three
+// upgrade levels (Buildings/houses: door frame tops at sprite rows 77, 77, 75). SignDust is its
+// puff. The razed house (tly_joja badending [floorId] razehouse, or RazeHouseByDefault): dust on
+// HouseRect, then the house hidden, as before.
 // Nothing else on the farm is a fixed tile: the rows of coops and barns come from the farm's own
 // isBuildable after the clear (JojaFactoryFarm), so every farm type lays out its own.
 // Town: the river south-east of town runs down cols 76..82 under the bridge on rows 93..96; west
@@ -29,9 +38,10 @@ using StardewValley;
 namespace TheLongestYear.Integration
 {
     /// <summary>The bad ending of Morris's offer (spec 2026-09-25-joja-offer-design): the player said
-    /// Yes. No dialogue, sad music throughout: the farmhouse goes up in dust, the whole farm is
-    /// bulldozed and paved, rows of real coops and barns go up all over it, and the camera pans along
-    /// the first row while its animals go in; the town river runs green with dead fish on the bank and
+    /// Yes. No dialogue, sad music throughout: dust goes up around the farmhouse and everything
+    /// else on the farm is bulldozed and paved, a Joja sign goes up over the farmhouse door (or, the
+    /// older version, the farmhouse itself goes up in dust), rows of real coops and barns go up all
+    /// over the farm, and the camera pans along the first row while its animals go in; the town river runs green with dead fish on the bank and
     /// floating in it, Pierre's is boarded up like the closed JojaMart, and up the square the
     /// Community Center has become a Joja warehouse; the camera pans along a beach
     /// strewn with driftwood, trash and dead fish. Then Game Over. All of it in daylight, whatever
@@ -39,8 +49,14 @@ namespace TheLongestYear.Integration
     internal static class JojaBadEnding
     {
         // Farm offsets from the farmhouse entry (see the tile notes above).
-        private static readonly Point HouseDust = new(-6, -7);
-        private const int HouseDustW = 11, HouseDustH = 9;
+        private static readonly Rectangle HouseRect = new(-6, -7, 11, 9);   // the house sprite and mailbox
+        private static readonly Rectangle LeftDust = new(-10, -6, 4, 8), RightDust = new(5, -6, 4, 8);
+        private static readonly Rectangle SignDust = new(-1, -4, 3, 2);
+        private const int SignDelayMs = 450, SignDustMs = 900, SignHoldMs = 1600;
+        // The ending's default: false keeps the farmhouse and puts the Joja sign on it; true brings
+        // back the house torn down and hidden (tly_joja badending [floorId] razehouse picks it too).
+        internal const bool RazeHouseByDefault = false;
+        internal const string RazeHouseArg = "razehouse";
         private const int FarmerArriveDy = 3;
         internal const string DefaultFloor = "1";         // Flooring.stone: flat grey slabs, the closest to concrete (vs 5 gravel, 12 town cobbles; task 6b report)
         private const string Music = "grandpas_theme";    // see the task 6b report
@@ -69,13 +85,16 @@ namespace TheLongestYear.Integration
 
         private const int StartRetries = 20, StartRetryMs = 250;
 
-        internal static string Build(Point farmer, int facing, Point door, string floor)
+        internal static string Build(Point farmer, int facing, Point door, string floor, bool razeHouse = RazeHouseByDefault)
         {
             Point off = new(door.X - VanillaEntry.X, door.Y - VanillaEntry.Y);
             // Vanilla commands on the farm (viewport, warp) add the farm's event offset themselves;
             // the tly* commands take absolute tiles.
             string V(int x, int y) => $"{x - off.X} {y - off.Y}";
-            string houseDust = $"{JojaBadEndingCommands.DustName} {door.X + HouseDust.X} {door.Y + HouseDust.Y} {HouseDustW} {HouseDustH} 1000";
+            string At(Rectangle r) => $"{door.X + r.X} {door.Y + r.Y} {r.Width} {r.Height}";
+            string Dust(Rectangle r, int ms) => $"{JojaBadEndingCommands.DustName} {At(r)} {ms}";
+            // The kept house stays out of the farm-wide dust; the razed one is gone by then.
+            string DustView(int ms) => $"{JojaBadEndingCommands.DustViewName} {ms}" + (razeHouse ? "" : $" {At(HouseRect)}");
 
             var s = new List<string>
             {
@@ -92,24 +111,54 @@ namespace TheLongestYear.Integration
                 $"viewport {V(door.X, door.Y)} clamp",
                 $"{EndingEventCommands.FadeInName} 1200",
                 "pause 800",
-                "playSound explosion",
-                houseDust,
-                "playSound explosion",
-                houseDust,
-                JojaBadEndingCommands.HideFarmhouseName,
+            };
+            if (razeHouse)
+            {
+                // ---- The farm: the house comes down (the older version) ----
+                s.AddRange(new[]
+                {
+                    "playSound explosion", Dust(HouseRect, 1000),
+                    "playSound explosion", Dust(HouseRect, 1000),
+                    JojaBadEndingCommands.HideFarmhouseName,
+                });
+            }
+            else
+            {
+                // ---- The farm: the ground goes up on both sides of the house ----
+                s.AddRange(new[]
+                {
+                    "playSound explosion", Dust(LeftDust, 1000),
+                    "playSound explosion", Dust(RightDust, 1000),
+                });
+            }
+            s.AddRange(new[]
+            {
                 "pause 1000",
 
                 // ---- ...then everything else goes, and the concrete goes down ----
                 "playSound boulderBreak",
-                $"{JojaBadEndingCommands.DustViewName} 2600",
+                DustView(2600),
                 "pause 900",
                 JojaBadEndingCommands.ClearFarmName,
-                $"{JojaBadEndingCommands.PaveFarmName} {floor}",
+                $"{JojaBadEndingCommands.PaveFarmName} {floor}",   // paves the house's lot only once it is hidden
                 "pause 2600",
-
+            });
+            if (!razeHouse)
+            {
+                // ---- ...and Joja's sign goes up over the door, under its own puff ----
+                s.AddRange(new[]
+                {
+                    "playSound hammer",
+                    $"{JojaBadEndingCommands.JojaSignName} {door.X} {door.Y} {SignDelayMs}",
+                    Dust(SignDust, SignDustMs),
+                    $"pause {SignHoldMs}",
+                });
+            }
+            s.AddRange(new[]
+            {
                 // ---- ...then the coops and barns go up, full of animals ----
                 "playSound hammer",
-                $"{JojaBadEndingCommands.DustViewName} 2600",
+                DustView(2600),
                 "pause 900",
                 JojaBadEndingCommands.JojaFarmName,   // puts every row up, then adds the pan along the first one
 
@@ -118,7 +167,7 @@ namespace TheLongestYear.Integration
                 "warp farmer -100 -100",
                 $"viewport {RiverView.X} {RiverView.Y} clamp",
                 $"{JojaBadEndingCommands.WaterTintName} {RiverTintR} {RiverTintG} {RiverTintB}",
-            };
+            });
             foreach (var f in DeadFish)
                 s.Add($"{JojaBadEndingCommands.ItemSpriteName} {f.Id} {f.X} {f.Y} {f.Deg}");
             s.AddRange(new[]
@@ -155,9 +204,10 @@ namespace TheLongestYear.Integration
 
         /// <summary>Plays the bad ending from wherever the player stands (JojaMart after the Yes).
         /// Waits out a closing dialogue box or an ending event, then gives up after a few seconds.</summary>
-        public static void Start(IMonitor monitor, string floor = DefaultFloor) => TryStart(monitor, StartRetries, floor);
+        public static void Start(IMonitor monitor, string floor = DefaultFloor, bool razeHouse = RazeHouseByDefault)
+            => TryStart(monitor, StartRetries, floor, razeHouse);
 
-        private static void TryStart(IMonitor monitor, int triesLeft, string floor)
+        private static void TryStart(IMonitor monitor, int triesLeft, string floor, bool razeHouse)
         {
             GameLocation loc = Game1.currentLocation;
             bool busy = !Context.IsWorldReady || loc == null || Game1.eventUp || loc.currentEvent != null
@@ -166,11 +216,11 @@ namespace TheLongestYear.Integration
             {
                 Farm farm = Game1.getFarm();
                 Point door = farm.GetMainFarmHouseEntry();
-                loc.startEvent(new Event(Build(Game1.player.TilePoint, Game1.player.FacingDirection, door, floor), null, JojaEventKeys.BadEndingId));
+                loc.startEvent(new Event(Build(Game1.player.TilePoint, Game1.player.FacingDirection, door, floor, razeHouse), null, JojaEventKeys.BadEndingId));
                 if (loc.currentEvent?.id == JojaEventKeys.BadEndingId)
                 {
                     JojaBadEndingCommands.MarkRunning();
-                    monitor.Log($"Joja: bad ending (door={door.X},{door.Y}, floor {floor}, {farm.Map.Layers[0].LayerWidth}x{farm.Map.Layers[0].LayerHeight} farm, from {loc.Name}).", LogLevel.Info);
+                    monitor.Log($"Joja: bad ending (door={door.X},{door.Y}, floor {floor}, farmhouse {(razeHouse ? "razed" : "kept, Joja sign")}, {farm.Map.Layers[0].LayerWidth}x{farm.Map.Layers[0].LayerHeight} farm, from {loc.Name}).", LogLevel.Info);
                     return;
                 }
             }
@@ -181,7 +231,7 @@ namespace TheLongestYear.Integration
                 JojaBadEndingCommands.FailClosed("the bad ending could not start (the game stayed busy)");
                 return;
             }
-            DelayedAction.functionAfterDelay(() => TryStart(monitor, triesLeft - 1, floor), StartRetryMs);
+            DelayedAction.functionAfterDelay(() => TryStart(monitor, triesLeft - 1, floor, razeHouse), StartRetryMs);
         }
     }
 }
