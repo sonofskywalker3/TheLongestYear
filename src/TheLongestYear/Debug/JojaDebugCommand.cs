@@ -14,7 +14,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_joja";
         public const string Description =
-            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject [letter] | unreject | counter | cashier | scene | badending [floorId]";
+            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject [letter] | unreject | counter | cashier | scene | badending [floorId] [razehouse]";
 
         private const int MinArgsLetter = 3;
         private const string RejectByLetterArg = "letter";
@@ -66,13 +66,26 @@ namespace TheLongestYear.DebugCommands
                     offerDriver.DebugReplay();
                     break;
                 case "badending":
-                    // Optional flooring id, to compare floors on a captured frame (default stone floor).
-                    Integration.JojaBadEnding.Start(m, args.Length > 1 ? args[1] : Integration.JojaBadEnding.DefaultFloor);
+                    // Optional flooring id, to compare floors on a captured frame (default stone floor);
+                    // "razehouse" plays the older version that tears the farmhouse down.
+                    BadEnding(m, args);
                     break;
                 default:
                     m.Log(Description, LogLevel.Warn);
                     break;
             }
+        }
+
+        private static void BadEnding(IMonitor m, string[] args)
+        {
+            string floor = Integration.JojaBadEnding.DefaultFloor;
+            bool razeHouse = Integration.JojaBadEnding.RazeHouseByDefault;
+            for (int i = 1; i < args.Length; i++)
+            {
+                if (args[i].ToLowerInvariant() == Integration.JojaBadEnding.RazeHouseArg) razeHouse = true;
+                else floor = args[i];
+            }
+            Integration.JojaBadEnding.Start(m, floor, razeHouse);
         }
 
         private static void Letter(IMonitor m, string which, int n)
