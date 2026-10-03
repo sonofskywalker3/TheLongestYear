@@ -256,6 +256,13 @@ written, and no letters after a rejection. Fixed in that check: letters had arri
 #### Morris ending playthrough feedback (Jeff, 2026-10-02). ALL 8 BUILT 2026-10-02, awaiting Jeff's replay
 Plan `docs/superpowers/plans/2026-10-02-morris-ending-feedback.md`. Headless check 2026-10-02 (log only; a minimized window gives no frames): offer scene starts on the warp in, staged behind black; letter days [4, 21, 30, 48, 62, 73, 89, 110]; letter-route line once, then refuse-again; bad ending from 21:30 held at 12:00, first row only (21 of 102 animals in on their own), Joja warehouse on (141 tiles), beach, Game Over with eyes found at (5,11)/(9,11), everything restored on the way to the title. Jeff still to see by eye: no flicker on the walk-in, the scowl, the glow, the warehouse, daylight. Jeff chose to keep the beach after the CC. Still open from the first list: music, paved farmhouse lot, wording. The PC itself rebooted during Jeff's beach scene (Kernel-Power 41, no bugcheck, nothing in the SMAPI log); the same scene ran clean in the headless check.
 
+#### Morris ending replay feedback (Jeff, 2026-10-02, round 2). Hold until Jeff says to fix
+Jeff confirmed by eye: the walk-in (black until staged), Morris's scowl after a No, the letter-route line.
+9. **Game Over, Morris's glowing eyes too small:** the farmer's glow is now 2x2 sprite pixels per eye
+   (position is better), but Morris's is 1 pixel per eye. Make Morris's eyes the same size as the
+   farmer's. Jeff also noted Morris "still looks way darker" (MorrisDarkSprite blacks him down on
+   purpose); asked whether he wants that changed.
+
 1. **Offer scene entrance flicker:** on walking into JojaMart, Morris shows standing behind his
    counter, then blinks and is suddenly in the middle of the room. Fix: hold the screen black on
    entry until the scene is fully staged, then fade in and run it. Never show the normal room state
