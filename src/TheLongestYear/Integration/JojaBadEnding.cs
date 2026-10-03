@@ -11,6 +11,11 @@
 //   The farmer is parked at 74,93 (sand). Camera: 78,93 (river, bridge, both banks), then a pan to
 //   44,57 (Pierre's front, boarded up by JojaPierreBoards). Floating litter only on the river the
 //   camera on 78,93 sees (74..85 x 84..101).
+// Community Center (Maps/Town patch export and the PC 1.6 decompile, 2026-10-02): the building is
+//   47..58 x 11..20 (Town.refurbishCommunityCenter's ccBounds), its door 52..53 x 19 (the
+//   WarpCommunityCenter tiles), straight up the square from Pierre's (door 43..44 x 55). The Joja
+//   facade vanilla draws over it (Town.ccFacadePosition, 3044,940 px, 174 x 101 px at 4x) covers
+//   about 47..58 x 14..21. Camera: 53,16 (the whole front and roof), panned up to from 44,57.
 // Beach (Maps/Beach is 104 x 50, patch export 2026-09-25): the sand runs from the west sea (x 0..8)
 //   past Elliott's cabin and the river mouth (x 57..62) to the tide pools and the east pier (x 86).
 //   The camera pans the shore on rows 18..20 from x 18 to x 86; litter is picked from the whole map
@@ -25,10 +30,12 @@ namespace TheLongestYear.Integration
 {
     /// <summary>The bad ending of Morris's offer (spec 2026-09-25-joja-offer-design): the player said
     /// Yes. No dialogue, sad music throughout: the farmhouse goes up in dust, the whole farm is
-    /// bulldozed and paved, rows of real coops and barns go up and the animals go in for the night
-    /// while the camera pans along them; the town river runs green with dead fish on the bank and
-    /// floating in it, Pierre's is boarded up like the closed JojaMart; the camera pans along a beach
-    /// strewn with driftwood, trash and dead fish. Then Game Over.</summary>
+    /// bulldozed and paved, rows of real coops and barns go up all over it, and the camera pans along
+    /// the first row while its animals go in; the town river runs green with dead fish on the bank and
+    /// floating in it, Pierre's is boarded up like the closed JojaMart, and up the square the
+    /// Community Center has become a Joja warehouse; the camera pans along a beach
+    /// strewn with driftwood, trash and dead fish. Then Game Over. All of it in daylight, whatever
+    /// the hour of the Yes (tlyDaylight).</summary>
     internal static class JojaBadEnding
     {
         // Farm offsets from the farmhouse entry (see the tile notes above).
@@ -42,7 +49,8 @@ namespace TheLongestYear.Integration
         private static readonly Point VanillaEntry = new(64, 15);
 
         // Town and Beach tiles.
-        private static readonly Point TownPark = new(74, 93), RiverView = new(78, 93), PierreView = new(44, 57);
+        private static readonly Point TownPark = new(74, 93), RiverView = new(78, 93), PierreView = new(44, 57), WarehouseView = new(53, 16);
+        private const int PierreHoldMs = 1000, WarehousePanMs = 4000, WarehouseHoldMs = 2500;
         private static readonly (string Id, int X, int Y, int Deg)[] DeadFish =
         {
             ("(O)145", 74, 90, 200), ("(O)132", 74, 92, 165), ("(O)145", 83, 91, 190),
@@ -76,6 +84,7 @@ namespace TheLongestYear.Integration
                 // ---- JojaMart: the answer given, the store goes dark, the music turns ----
                 $"{JojaBadEndingCommands.MusicName} {Music}",
                 $"{EndingEventCommands.FadeOutName} 1200",
+                JojaBadEndingCommands.DaylightName,   // under black, before the first warp: every place after it is day
 
                 // ---- The farm: the house comes down ----
                 $"{EndingEventCommands.ChangeLocationName} Farm {door.X} {door.Y + FarmerArriveDy}",
@@ -102,7 +111,7 @@ namespace TheLongestYear.Integration
                 "playSound hammer",
                 $"{JojaBadEndingCommands.DustViewName} 2600",
                 "pause 900",
-                JojaBadEndingCommands.JojaFarmName,   // puts them up, then adds the pan across every row
+                JojaBadEndingCommands.JojaFarmName,   // puts every row up, then adds the pan along the first one
 
                 // ---- Town: the river runs green, Pierre's is boarded up ----
                 $"{EndingEventCommands.ChangeLocationName} Town {TownPark.X} {TownPark.Y}",
@@ -116,10 +125,15 @@ namespace TheLongestYear.Integration
             {
                 Litter(RiverSeed, "water", RiverArea, RiverCount, RiverSpacing, FloatingLitter),
                 JojaBadEndingCommands.BoardPierreName,
+                JojaBadEndingCommands.JojaWarehouseName,
                 $"{EndingEventCommands.FadeInName} 1200",
                 "pause 2500",
                 $"{EndingEventCommands.PanToName} {PierreView.X} {PierreView.Y} 4000",
-                "pause 3000",
+                $"pause {PierreHoldMs}",
+
+                // ---- ...and up the square, the Community Center is a Joja warehouse ----
+                $"{EndingEventCommands.PanToName} {WarehouseView.X} {WarehouseView.Y} {WarehousePanMs}",
+                $"pause {WarehouseHoldMs}",
 
                 // ---- The beach: the tide brings in the rest ----
                 $"{EndingEventCommands.ChangeLocationName} Beach {BeachPark.X} {BeachPark.Y}",
