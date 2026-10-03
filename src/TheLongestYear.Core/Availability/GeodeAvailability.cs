@@ -45,7 +45,7 @@ public static class GeodeAvailability
             ? ids.Select(id => new RawGeodeDrop(geodeQualifiedId, id, DefaultTableShare / ids.Length, FromDefaultTable: true)).ToList()
             : Array.Empty<RawGeodeDrop>();
 
-    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawGeodeDrop> drops)
+    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawGeodeDrop> drops, WeekMode mode = WeekMode.Pacing)
     {
         if (drops == null) throw new ArgumentNullException(nameof(drops));
         ItemEffort? best = null;
@@ -68,7 +68,7 @@ public static class GeodeAvailability
             if (better)
                 best = new ItemEffort(effort,
                     $"geode, {geode.Label}, chance {chance:0.###} (+{step}), week {week}, effort {effort}",
-                    week, MineAreas.GateSeason(geode.Area), HardWeek: MineAreas.HardWeek(geode.Area));
+                    week, MineAreas.GateSeason(geode.Area), HardWeek: MineAreas.HardWeek(geode.Area, mode));
         }
         return best;
     }

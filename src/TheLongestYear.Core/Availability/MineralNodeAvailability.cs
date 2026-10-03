@@ -34,7 +34,7 @@ public static class MineralNodeAvailability
         };
 
     /// <summary>Null means "not a node item this rule set knows".</summary>
-    public static ItemEffort? Derive(string qualifiedId)
+    public static ItemEffort? Derive(string qualifiedId, WeekMode mode = WeekMode.Pacing)
     {
         if (qualifiedId == null || !Rules.TryGetValue(qualifiedId, out NodeRule? rule))
             return null;
@@ -42,6 +42,6 @@ public static class MineralNodeAvailability
         int week = MineAreas.Week(rule.Area);
         return new ItemEffort(effort,
             $"node, {rule.Note}, {MineAreas.Label(rule.Area)}, week {week}, effort {effort}",
-            week, MineAreas.GateSeason(rule.Area), HardWeek: MineAreas.HardWeek(rule.Area));
+            week, MineAreas.GateSeason(rule.Area), HardWeek: MineAreas.HardWeek(rule.Area, mode));
     }
 }

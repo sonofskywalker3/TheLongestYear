@@ -30,14 +30,14 @@ public static class ItemAvailabilityBuilder
         var derived = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
 
         foreach (PoolItem item in pools.Fish ?? new List<PoolItem>())
-            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId));
+            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
 
         foreach (PoolItem item in pools.CrabPot ?? new List<PoolItem>())
-            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId));
+            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
 
         foreach (PoolItem item in pools.Metals ?? new List<PoolItem>())
         {
-            ItemAvailability? metal = MetalsAvailability.Derive(item);
+            ItemAvailability? metal = MetalsAvailability.Derive(item, mode);
             if (metal != null)
                 derived[item.ItemId] = metal;
         }
@@ -55,7 +55,7 @@ public static class ItemAvailabilityBuilder
         }
 
         EffortComposer? composer = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step)
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step, mode)
             : null;
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = composer?.DeriveAll();
 
@@ -90,7 +90,7 @@ public static class ItemAvailabilityBuilder
         // one when keep_kitchen is owned would give the two kitchen states different memoised
         // efforts. The ingredient basis is the model-free pass lookup; dishes used as ingredients
         // are resolved inside DishAskBasis.Build.
-        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step);
+        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step, mode);
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,

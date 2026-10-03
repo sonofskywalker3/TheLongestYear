@@ -8,7 +8,7 @@ namespace TheLongestYear.Core.Availability;
 /// rarity step from the spot chance, minimum over every location. This is what makes a Dinosaur
 /// Egg (Mountain spots at 0.005) harder than a Diamond whatever the two sell for. The week is
 /// week 1 (artifact spots and the museum exist on day 1) unless every spot is behind a gated
-/// location (Desert week 9).</summary>
+/// location (Desert week 9; its hard week follows LocationGating, week 3 on Extreme).</summary>
 public static class ArtifactAvailability
 {
     private const int TownReach = 1;
@@ -35,7 +35,7 @@ public static class ArtifactAvailability
     public static int ChanceStep(double chance)
         => chance >= CommonChance ? 0 : chance >= UncommonChance ? 1 : chance >= RareChance ? 2 : 3;
 
-    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawArtifactSpot> spots)
+    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawArtifactSpot> spots, WeekMode mode = WeekMode.Pacing)
     {
         if (spots == null) throw new ArgumentNullException(nameof(spots));
         ItemEffort? best = null;
@@ -50,7 +50,7 @@ public static class ArtifactAvailability
                 best = new ItemEffort(effort,
                     $"artifact spot, {spot.Location} at {spot.Chance:0.####} (+{step}), week {week}, effort {effort}",
                     week, AvailabilityWeeks.SeasonOf(week),
-                    HardWeek: Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.HardWeekFor(spot.Location)));
+                    HardWeek: Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.HardWeekFor(spot.Location, mode)));
         }
         return best;
     }
