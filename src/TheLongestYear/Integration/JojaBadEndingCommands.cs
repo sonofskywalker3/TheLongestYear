@@ -14,9 +14,12 @@ namespace TheLongestYear.Integration
     ///
     /// <c>tlyHideFarmhouse</c> / <c>tlyShowFarmhouse</c>: the main farmhouse (and the mailbox, a
     /// draw layer of it) is not drawn while hidden; the floating new-mail flag moves off-map with it.
+    /// <c>tlyJojaSign &lt;x&gt; &lt;y&gt; [delayMs]</c>: the Joja sign over the farmhouse door whose entry
+    /// tile is (x, y), shown after delayMs (JojaBadEndingVisuals).
     /// <c>tlyDust &lt;x&gt; &lt;y&gt; &lt;w&gt; &lt;h&gt; &lt;ms&gt;</c>: smoke puffs over the tile rectangle for ms, then continues.
-    /// <c>tlyDustView &lt;ms&gt;</c>: big puffs over the whole screen for ms; continues at once, so the
-    /// commands after it run under the dust.
+    /// <c>tlyDustView &lt;ms&gt; [x y w h]</c>: big puffs over the whole screen for ms, none centred on
+    /// the optional tile rectangle (the kept farmhouse); continues at once, so the commands after it
+    /// run under the dust.
     /// <c>tlyItemSprite &lt;itemId&gt; &lt;x&gt; &lt;y&gt; [degrees]</c>: an item lying on tile (x, y).
     /// <c>tlyWaterTint &lt;r&gt; &lt;g&gt; &lt;b&gt;</c>: the current location's water colour, restored at the end.
     /// <c>tlyMusic &lt;cue&gt;</c>: plays a music cue and keeps it playing until the scene ends.
@@ -104,6 +107,7 @@ namespace TheLongestYear.Integration
             }));
             Event.RegisterCommand(LitterName, Litter);
             Event.RegisterCommand(GameOverName, GameOver);
+            Event.RegisterCommand(JojaSignName, JojaSign);
             RegisterFarmCommands();
         }
 
@@ -137,74 +141,6 @@ namespace TheLongestYear.Integration
         {
             _monitor.Log($"{name}: {error}; skipping.", LogLevel.Warn);
             evt.CurrentCommand++;
-        }
-
-        private static void Dust(Event evt, string[] args, EventContext context)
-        {
-            try
-            {
-                if (_dustElapsed < 0f)
-                {
-                    if (!ArgUtility.TryGetInt(args, 1, out int x, out string error)
-                        || !ArgUtility.TryGetInt(args, 2, out int y, out error)
-                        || !ArgUtility.TryGetInt(args, 3, out int w, out error)
-                        || !ArgUtility.TryGetInt(args, 4, out int h, out error)
-                        || !ArgUtility.TryGetInt(args, 5, out int ms, out error))
-                    {
-                        Skip(evt, DustName, error);
-                        return;
-                    }
-                    SpawnDust(Game1.currentLocation, x, y, Math.Max(1, w), Math.Max(1, h), Math.Max(1, ms), PuffsPerTileSecond, MaxPuffs, 1.4f, 0.8f);
-                    _dustElapsed = 0f;
-                    return;
-                }
-                ArgUtility.TryGetInt(args, 5, out int total, out _);
-                _dustElapsed += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
-                if (_dustElapsed < total) return;   // called every tick until the dust has run
-            }
-            catch (Exception ex)
-            {
-                _monitor.Log($"{DustName}: {ex.GetType().Name}: {ex.Message}; skipping.", LogLevel.Warn);
-            }
-            _dustElapsed = -1f;
-            evt.CurrentCommand++;
-        }
-
-        /// <summary>Dust over everything on screen (one tile past each edge), without waiting.</summary>
-        private static void DustView(Event evt, string[] args, EventContext context)
-        {
-            if (!ArgUtility.TryGetInt(args, 1, out int ms, out string error))
-            {
-                Skip(evt, DustViewName, error);
-                return;
-            }
-            Guarded(evt, DustViewName, () =>
-            {
-                int x = Game1.viewport.X / Game1.tileSize - 1, y = Game1.viewport.Y / Game1.tileSize - 1;
-                int w = Game1.viewport.Width / Game1.tileSize + 3, h = Game1.viewport.Height / Game1.tileSize + 3;
-                SpawnDust(Game1.currentLocation, x, y, w, h, Math.Max(1, ms), ViewPuffsPerTileSecond, MaxViewPuffs, ViewPuffScaleMin, ViewPuffScaleSpread);
-            });
-        }
-
-        /// <summary>Puffs scattered over the rectangle, their starts spread over the whole duration,
-        /// drawn above everything so what changes under them is hidden.</summary>
-        private static void SpawnDust(GameLocation loc, int x, int y, int w, int h, int ms, float perTileSecond, int max, float scaleMin, float scaleSpread)
-        {
-            if (loc == null) return;
-            int count = Math.Clamp((int)(w * h * perTileSecond * ms / 1000f), MinPuffs, max);
-            int lastStart = Math.Max(0, ms - PuffAnimMs);
-            for (int i = 0; i < count; i++)
-            {
-                var pos = new Vector2(x + (float)Game1.random.NextDouble() * w - 0.5f, y + (float)Game1.random.NextDouble() * h - 0.5f) * 64f;
-                var puff = new TemporaryAnimatedSprite(5, pos, DustColour, animationLength: 8,
-                    flipped: Game1.random.Next(2) == 0, animationInterval: 60f, layerDepth: 1f, delay: Game1.random.Next(lastStart + 1))
-                {
-                    scale = scaleMin + (float)Game1.random.NextDouble() * scaleSpread,
-                    motion = new Vector2(0f, -0.3f),
-                };
-                loc.temporarySprites.Add(puff);
-                Sprites.Add((loc, puff));
-            }
         }
 
         private static void ItemSprite(Event evt, string[] args, EventContext context)
