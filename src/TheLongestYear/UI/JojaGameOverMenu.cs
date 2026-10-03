@@ -43,28 +43,34 @@ namespace TheLongestYear.UI
         private const int ButtonGap = 32, ButtonPadX = 32, ButtonPadY = 20;
         private const double InputDelayMs = 600;
         private const float PulseMs = 300f;
-        // A 4x4 core over the 4x4 iris, with two fainter, larger squares around it for the glow
-        // (red drawn on a red iris alone would not show).
-        private static readonly (int Size, float Alpha)[] GlowLayers = { (16, 0.18f), (10, 0.35f), (4, 1f) };
-        private const float GlowMin = 0.35f, GlowRange = 0.65f;
+        // A core over the whole eye (iris and white), with two faint rims around it for the glow,
+        // padded in screen pixels (red drawn on a red iris alone would not show). Toned down from
+        // a 16-pixel halo at 0.18 / 0.35 after Jeff's playthrough (note 5, 2026-10-02).
+        private static readonly (int Pad, float Alpha)[] GlowLayers = { (4, 0.07f), (2, 0.16f), (0, 0.85f) };
+        private const float GlowMin = 0.55f, GlowRange = 0.45f;
         // Vanilla has no suit pants (Data/Pants, 1.6): the farmer's own pants go charcoal instead.
         private static readonly Color SuitPantsColour = new(58, 58, 68);
         private const float FigureLayer = 0.8f;
         private static readonly Color MessageColour = new(220, 220, 220);
         private static readonly Color TitleColour = new(200, 30, 30);
 
-        // Eye centres within a figure, in screen pixels from its top-left at 4x. Measured on the
-        // live Game Over frame (2026-09-25, 1920x1080, joja-task7/go-1.png): the farmer's red irises
-        // cover x 24-27 and 36-39 at y 48-51 (frame 0 facing down, fedora on), Morris's recoloured
-        // irises (MorrisDarkSprite, sprite pixels (7,9)/(9,9)) cover x 28-31 and 36-39 at y 36-39.
-        private static readonly Vector2[] FarmerEyes = { new(26, 50), new(38, 50) };
-        private static readonly Vector2[] MorrisEyes = { new(30, 38), new(38, 38) };
+        // FarmerRenderer's eye swatches on row 0 of the base sheet: every pixel of these two colours
+        // is recoloured to the eye colour, so they mark the irises on any base sheet.
+        private static readonly int[] IrisSwatches = { 276, 277 };
+        // Frame 0 eyes (iris and white) on the vanilla male base, sprite pixels: used only when the
+        // farmer's sheet cannot be read. The female base's sit one row lower.
+        private static readonly PixelBox[] FallbackFarmerEyes = { new(5, 11, 2, 2), new(9, 11, 2, 2) };
+        // Morris's recoloured irises (MorrisDarkSprite, sprite pixels (7,9)/(9,9) on frame 0). His
+        // whites are darkened with the rest of him, so the glow sits on the irises alone.
+        private static readonly PixelBox[] MorrisEyes = { new(7, 9, 1, 1), new(9, 9, 1, 1) };
 
         private readonly IMonitor _monitor;
         private readonly string _title;
         private readonly string[] _messageLines;
         private readonly string _buttonText;
         private readonly Texture2D _morris;
+        private readonly Rectangle[] _farmerEyes;
+        private readonly Rectangle[] _morrisEyes = ToFigure(MorrisEyes);
         private readonly ClickableComponent _button;
         private readonly double _openedAt;
         private bool _exiting;
@@ -82,6 +88,7 @@ namespace TheLongestYear.UI
             catch (Exception ex) { _monitor.Log($"Joja game over: no Morris sprite ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn); }
 
             DressFarmer();
+            _farmerEyes = ToFigure(FindFarmerEyes());
 
             Vector2 size = Game1.dialogueFont.MeasureString(_buttonText);
             int bw = (int)size.X + ButtonPadX * 2, bh = (int)size.Y + ButtonPadY * 2;
@@ -146,6 +153,48 @@ namespace TheLongestYear.UI
 
             try { who.changeEyeColor(Color.Red); }
             catch (Exception ex) { _monitor.Log($"Joja game over: eyes: {ex.GetType().Name}: {ex.Message}.", LogLevel.Warn); }
+        }
+
+        /// <summary>The farmer's eyes on the frame this screen draws, read once from the base sheet
+        /// FarmerRenderer draws (male or female, bald or not): the iris pixels plus the whites
+        /// touching them. Hair, hats and the skin and eye recolours are separate layers or swaps,
+        /// so the source sheet alone places the eyes for every farmer.</summary>
+        private IReadOnlyList<PixelBox> FindFarmerEyes()
+        {
+            string sheet = Game1.player.FarmerRenderer?.textureName.Value;
+            try
+            {
+                Texture2D tex = Game1.content.Load<Texture2D>(sheet);
+                var colours = new Color[tex.Width * tex.Height];
+                tex.GetData(colours);
+                var px = new uint[colours.Length];
+                for (int i = 0; i < colours.Length; i++) px[i] = colours[i].PackedValue;
+
+                var iris = new List<uint>();
+                foreach (int swatch in IrisSwatches)
+                    if (swatch < px.Length) iris.Add(px[swatch]);
+                IReadOnlyList<PixelBox> eyes = SpriteEyes.Find(px, tex.Width, 0, 0, SpriteW, SpriteH, iris);
+                if (eyes.Count > 0)
+                {
+                    _monitor.Log($"Joja game over: farmer eyes on {sheet}: {string.Join(", ", eyes)}.", LogLevel.Trace);
+                    return eyes;
+                }
+                _monitor.Log($"Joja game over: no eyes found on {sheet}; using the vanilla male positions.", LogLevel.Warn);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Joja game over: farmer eyes from {sheet}: {ex.GetType().Name}: {ex.Message}; using the vanilla male positions.", LogLevel.Warn);
+            }
+            return FallbackFarmerEyes;
+        }
+
+        /// <summary>Sprite-pixel boxes to screen pixels from a figure's top-left (both figures draw at <see cref="Scale"/>).</summary>
+        private static Rectangle[] ToFigure(IReadOnlyList<PixelBox> boxes)
+        {
+            var r = new Rectangle[boxes.Count];
+            for (int i = 0; i < boxes.Count; i++)
+                r[i] = new Rectangle((int)(boxes[i].X * Scale), (int)(boxes[i].Y * Scale), (int)(boxes[i].Width * Scale), (int)(boxes[i].Height * Scale));
+            return r;
         }
 
         /// <summary>The blackest shoeColors row: dark AND grey, scored as brightness plus twice each
@@ -251,8 +300,8 @@ namespace TheLongestYear.UI
 
             double t = Game1.currentGameTime?.TotalGameTime.TotalMilliseconds ?? 0;
             float pulse = GlowMin + GlowRange * (float)(0.5 + 0.5 * Math.Sin(t / PulseMs));
-            DrawGlow(b, farmerPos, FarmerEyes, pulse);
-            DrawGlow(b, morrisPos, MorrisEyes, pulse);
+            DrawGlow(b, farmerPos, _farmerEyes, pulse);
+            DrawGlow(b, morrisPos, _morrisEyes, pulse);
 
             Rectangle r = _button.bounds;
             int grow = _button.scale > 1f ? 4 : 0;
@@ -264,11 +313,12 @@ namespace TheLongestYear.UI
             drawMouse(b);
         }
 
-        private static void DrawGlow(SpriteBatch b, Vector2 origin, Vector2[] eyes, float pulse)
+        private static void DrawGlow(SpriteBatch b, Vector2 origin, Rectangle[] eyes, float pulse)
         {
-            foreach (var (size, alpha) in GlowLayers)
-                foreach (Vector2 eye in eyes)
-                    b.Draw(Game1.staminaRect, new Rectangle((int)(origin.X + eye.X) - size / 2, (int)(origin.Y + eye.Y) - size / 2, size, size),
+            foreach (var (pad, alpha) in GlowLayers)
+                foreach (Rectangle eye in eyes)
+                    b.Draw(Game1.staminaRect,
+                        new Rectangle((int)origin.X + eye.X - pad, (int)origin.Y + eye.Y - pad, eye.Width + pad * 2, eye.Height + pad * 2),
                         null, Color.Red * (alpha * pulse), 0f, Vector2.Zero, SpriteEffects.None, 1f);
         }
     }
