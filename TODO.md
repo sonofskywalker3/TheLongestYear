@@ -256,12 +256,17 @@ written, and no letters after a rejection. Fixed in that check: letters had arri
 #### Morris ending playthrough feedback (Jeff, 2026-10-02). ALL 8 BUILT 2026-10-02, awaiting Jeff's replay
 Plan `docs/superpowers/plans/2026-10-02-morris-ending-feedback.md`. Headless check 2026-10-02 (log only; a minimized window gives no frames): offer scene starts on the warp in, staged behind black; letter days [4, 21, 30, 48, 62, 73, 89, 110]; letter-route line once, then refuse-again; bad ending from 21:30 held at 12:00, first row only (21 of 102 animals in on their own), Joja warehouse on (141 tiles), beach, Game Over with eyes found at (5,11)/(9,11), everything restored on the way to the title. Jeff still to see by eye: no flicker on the walk-in, the scowl, the glow, the warehouse, daylight. Jeff chose to keep the beach after the CC. Still open from the first list: music, paved farmhouse lot, wording. The PC itself rebooted during Jeff's beach scene (Kernel-Power 41, no bugcheck, nothing in the SMAPI log); the same scene ran clean in the headless check.
 
-#### Morris ending replay feedback (Jeff, 2026-10-02, round 2). Hold until Jeff says to fix
+#### Morris ending replay feedback (Jeff, 2026-10-02, round 2). Jeff: try 9-11 now
 Jeff confirmed by eye: the walk-in (black until staged), Morris's scowl after a No, the letter-route line, the whole ending (daylight, one row, Pierre's, warehouse, beach). Music `grandpas_theme` approved by ear.
-9. **Game Over, Morris's glowing eyes too small:** the farmer's glow is now 2x2 sprite pixels per eye
-   (position is better), but Morris's is 1 pixel per eye. Make Morris's eyes the same size as the
-   farmer's. Jeff also noted Morris "still looks way darker" (MorrisDarkSprite blacks him down on
-   purpose); asked whether he wants that changed.
+9. **Game Over eyes (CORRECTED by Jeff: he likes MORRIS's eyes, not the farmer's):** the farmer's eyes
+   match Morris's, one red pixel per eye. Morris loses the blacked-down look (normal sprite) except a
+   darker 3x3 ring around each red pixel, "I think that helps bring it out"; try the same ring on the
+   farmer. Jeff wants to see how it looks.
+10. **Try: keep the farmhouse.** In the bad ending, the farmhouse stays; everything else is knocked
+   down in the dust clouds around it, and a Joja sign goes above the farmhouse door. Jeff wants to see
+   how it looks (keep the old version easy to bring back).
+11. **Writing pass on the placeholders:** Jeff thinks the placeholders are OK; keep them, but try a
+   real writing pass (letters, offer, cashier, Morris lines) and show both so he can compare.
 
 1. **Offer scene entrance flicker:** on walking into JojaMart, Morris shows standing behind his
    counter, then blinks and is suddenly in the middle of the room. Fix: hold the screen black on
