@@ -26,6 +26,14 @@ Cookbook/Craftbook and started the run. Now X, Escape and controller B on the re
 to the slot list; from the slot list they close the book as before. Both books. Not checked in game
 yet. Reply to gmastern1 after it ships.
 
+### BUILT 0.18.143 (sigyn2002, Nexus bugs, 2026-10-03): crop fairy left wild seeds as crops
+The crop fairy grew wild seeds (Spring/Summer/Fall/Winter Seeds) to ready without turning them into
+forage: they kept a mid-growth sprite and all harvested as normal-quality Wild Horseradish (the
+placeholder harvest). Vanilla bug too, reproduced on a game with no TLY: vanilla only converts wild
+seeds in the overnight crop update, and the fairy comes after it. Now any full grow (the fairy) turns
+a wild seed crop into random seasonal forage on the spot, same as the overnight update. A stuck crop
+already in a save converts the next night if left unpicked. Reply to sigyn2002 after it ships.
+
 ### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
 On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
 impossible on the first try but beatable by about loop 3; once a player reaches loop 3 the board
