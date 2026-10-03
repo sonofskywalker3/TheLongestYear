@@ -25,8 +25,8 @@ namespace TheLongestYear.Integration
 {
     /// <summary>The bad ending of Morris's offer (spec 2026-09-25-joja-offer-design): the player said
     /// Yes. No dialogue, sad music throughout: the farmhouse goes up in dust, the whole farm is
-    /// bulldozed and paved, rows of real coops and barns go up and the animals go in for the night
-    /// while the camera pans along them; the town river runs green with dead fish on the bank and
+    /// bulldozed and paved, rows of real coops and barns go up all over it, and the camera pans along
+    /// the first row while its animals go in; the town river runs green with dead fish on the bank and
     /// floating in it, Pierre's is boarded up like the closed JojaMart; the camera pans along a beach
     /// strewn with driftwood, trash and dead fish. Then Game Over.</summary>
     internal static class JojaBadEnding
@@ -102,7 +102,7 @@ namespace TheLongestYear.Integration
                 "playSound hammer",
                 $"{JojaBadEndingCommands.DustViewName} 2600",
                 "pause 900",
-                JojaBadEndingCommands.JojaFarmName,   // puts them up, then adds the pan across every row
+                JojaBadEndingCommands.JojaFarmName,   // puts every row up, then adds the pan along the first one
 
                 // ---- Town: the river runs green, Pierre's is boarded up ----
                 $"{EndingEventCommands.ChangeLocationName} Town {TownPark.X} {TownPark.Y}",

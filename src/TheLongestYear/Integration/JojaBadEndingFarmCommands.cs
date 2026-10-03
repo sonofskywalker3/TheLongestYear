@@ -14,11 +14,11 @@ namespace TheLongestYear.Integration
     /// <c>tlyClearFarm</c>: empties the whole farm (JojaFarmClear.ClearAll).
     /// <c>tlyPaveFarm &lt;floorId&gt;</c>: flooring on every tile it can legally go (JojaFarmClear.Pave).
     /// <c>tlyJojaFarm</c>: the rows of real coops and barns and their animals (JojaFactoryFarm), then
-    /// splices the pan across every row into the script right after itself.
+    /// splices the pan along the first row into the script right after itself.
     /// <c>tlyAnimalsHome</c>: from now on each building's animals get the evening signal once its
     /// door is on screen (JojaFarmAnimals). Continues at once.
-    /// <c>tlyAnimalsWait &lt;ms&gt;</c>: waits until every scene animal is inside, at most ms; then any
-    /// still out go in the way vanilla moves animals home unseen.</summary>
+    /// <c>tlyAnimalsWait &lt;ms&gt;</c>: waits until every animal the camera called home is inside, at
+    /// most ms; any still out stay out (the scene fades out next).</summary>
     internal static partial class JojaBadEndingCommands
     {
         public const string ClearFarmName = "tlyClearFarm";
@@ -82,7 +82,7 @@ namespace TheLongestYear.Integration
                 var commands = evt.eventCommands.ToList();
                 commands.InsertRange(Math.Min(evt.CurrentCommand, commands.Count), pan);
                 evt.eventCommands = commands.ToArray();
-                _monitor.Log($"{JojaFarmName}: pan across the rows: {string.Join(" / ", pan)}", LogLevel.Trace);
+                _monitor.Log($"{JojaFarmName}: pan along the first row: {string.Join(" / ", pan)}", LogLevel.Trace);
             }
             catch (Exception ex)
             {
@@ -98,13 +98,13 @@ namespace TheLongestYear.Integration
                 if (_waitElapsed < 0f) _waitElapsed = 0f;
                 _waitElapsed += Game1.currentGameTime.ElapsedGameTime.Milliseconds;
                 Farm farm = Game1.currentLocation as Farm;
-                int outside = farm == null ? 0 : JojaFarmAnimals.Outside(farm);
+                int outside = farm == null ? 0 : JojaFarmAnimals.CalledOutside(farm);
                 if (outside > 0 && _waitElapsed < timeout) return;   // called every tick until they are in
                 if (outside > 0)
-                    _monitor.Log($"{AnimalsWaitName}: {outside} of {JojaFarmAnimals.Count} animal(s) still out after {timeout} ms; moved in directly: "
-                                 + string.Join("; ", JojaFarmAnimals.SendStragglersInside(farm)), LogLevel.Info);
+                    _monitor.Log($"{AnimalsWaitName}: {outside} of {JojaFarmAnimals.Called} called animal(s) still out after {timeout} ms; left out for the fade: "
+                                 + string.Join("; ", JojaFarmAnimals.CalledStillOut(farm)), LogLevel.Info);
                 else
-                    _monitor.Log($"{AnimalsWaitName}: all {JojaFarmAnimals.Count} animals went in on their own ({(int)_waitElapsed} ms after the last pan).", LogLevel.Info);
+                    _monitor.Log($"{AnimalsWaitName}: all {JojaFarmAnimals.Called} called animals (of {JojaFarmAnimals.Count}) went in on their own ({(int)_waitElapsed} ms after the pan).", LogLevel.Info);
             }
             catch (Exception ex)
             {
