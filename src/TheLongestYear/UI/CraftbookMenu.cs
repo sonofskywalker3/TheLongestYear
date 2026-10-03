@@ -23,7 +23,7 @@ namespace TheLongestYear.UI
     /// On dismiss, <c>MetaState.DismissedIndicators</c> gets "tly.craftbook" so the one-time
     /// craftbook intro quest doesn't re-fire on subsequent loop resets.
     /// </summary>
-    internal sealed class CraftbookMenu : IClickableMenu
+    internal sealed class CraftbookMenu : IClickableMenu, IRecipeBookMenu
     {
         private const int PanelWidth  = 900;
         private const int PanelHeight = 640;
@@ -213,6 +213,16 @@ namespace TheLongestYear.UI
                 return;
             }
             base.receiveKeyPress(key);
+        }
+
+        public bool PickerOpen => _pickerList != null;
+
+        public Rectangle? FirstEmptySlotBounds()
+        {
+            if (_pickerList != null) return null;
+            int row = _meta.CraftbookRecipes.Count - _scroll;
+            if (_meta.CraftbookRecipes.Count >= _slotCount || row < 0 || row >= _rowSlots.Count) return null;
+            return _rowSlots[row].bounds;
         }
 
         private void ClosePicker()

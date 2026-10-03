@@ -2623,6 +2623,15 @@ namespace TheLongestYear
                 case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
                 case "tly_herdbook": TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
+                case TheLongestYear.DebugCommands.RarityStepCommand.Name:
+                    TheLongestYear.DebugCommands.RarityStepCommand.Run(this.Monitor, _config, _meta?.State,
+                        BuildAvailabilityModelFor, _enginePools, _catalog.Select(c => c.Id), DisplayName,
+                        this.Helper.DirectoryPath, args);
+                    break;
+                case TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name:
+                    TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,
+                        () => _launcher?.OpenCookbook(), () => _launcher?.OpenCraftbook(), args);
+                    break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
