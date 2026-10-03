@@ -70,11 +70,11 @@ namespace TheLongestYear.Integration
 
         /// <summary>Lays the flooring on every tile the player could lay it on (the flooring item's own
         /// canBePlacedHere, Object.cs 5768: buildings ignored, so flooring may go under the new
-        /// ones). With <paramref name="paveLot"/> (the razed-house version) the hidden farmhouse's
-        /// own lot too: the house is gone for the scene and Data/Buildings lets flooring lie under a
-        /// Farmhouse (AllowsFlooringUnderneath), and left out it read as a lawn in the middle of the
-        /// concrete (live 2026-09-25; Jeff: "concrete across the whole map"). Without it (the kept
-        /// house) no tile of the house's footprint is paved: the sprite covers it. Returns the
+        /// ones). With <paramref name="paveLot"/> the farmhouse's own lot too (both versions pass
+        /// it; with the house kept, grass showed through the sprite's see-through edges).
+        /// Data/Buildings lets flooring lie under a Farmhouse (AllowsFlooringUnderneath), and with the
+        /// house razed and the lot left out it read as a lawn in the middle of the
+        /// concrete (live 2026-09-25; Jeff: "concrete across the whole map"). Returns the
         /// number of tiles paved.</summary>
         public static int Pave(Farm farm, string floorId, bool paveLot)
         {

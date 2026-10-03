@@ -64,7 +64,7 @@ namespace TheLongestYear.Integration
                 Skip(evt, PaveFarmName, error);
                 return;
             }
-            OnSceneFarm(evt, PaveFarmName, farm => $"flooring '{floor}' laid on {JojaFarmClear.Pave(farm, floor, paveLot: _farmhouseHidden)} tiles (in memory)");
+            OnSceneFarm(evt, PaveFarmName, farm => $"flooring '{floor}' laid on {JojaFarmClear.Pave(farm, floor, paveLot: true)} tiles (in memory)");
         }
 
         private static void JojaFarm(Event evt, string[] args, EventContext context)
