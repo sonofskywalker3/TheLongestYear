@@ -16,7 +16,8 @@ namespace TheLongestYear.UI
     /// <summary>The end of Morris's offer taken (JojaBadEnding's <c>tlyGameOver</c>): full-screen
     /// black, "Game Over" a third of the way down, the message in the middle, and in the bottom
     /// third the farmer in a suit, bare-headed and in black boots, beside Morris, each with one
-    /// glowing red pixel per eye inside a darkened 3x3 ring. The button, any key or any controller button exits to the title without saving.
+    /// glowing red pixel per eye (the farmer's go out while he blinks). The button, any key or any
+    /// controller button exits to the title without saving.
     ///
     /// Input is swallowed for the first 600 ms (<see cref="InputDelayMs"/>) so a player mashing
     /// through the scene's last dialogue does not skip the screen unseen. The only way out is that
@@ -46,12 +47,10 @@ namespace TheLongestYear.UI
         // down from a 16-pixel halo at 0.18 / 0.35 after Jeff's playthrough (note 5, 2026-10-02).
         private static readonly (int Pad, float Alpha)[] GlowLayers = { (4, 0.07f), (2, 0.16f), (0, 0.85f) };
         private const float GlowMin = 0.55f, GlowRange = 0.45f;
-        // Each eye is one red pixel (Morris's old iris red, MorrisDarkSprite's RedEye) with the 8
-        // sprite pixels around it darkened to MorrisDarkSprite's shadow (a third of their value):
-        // Jeff liked Morris's single red pixel and the dark round it bringing it out (round 2
-        // note 9, 2026-10-02), so the farmer gets the same.
+        // Each eye is one red pixel (Morris's old iris red, MorrisDarkSprite's RedEye): Jeff liked
+        // Morris's single red pixel, so the farmer gets the same (round 2 note 9, 2026-10-02). A
+        // darkened 3x3 ring round it read as "a demon raccoon" and was taken out (SpriteEyes.Ring).
         private static readonly Color RedEye = new(230, 20, 20);
-        private const float RingDarkness = 0.68f;
         private const string MorrisAsset = "Characters/Morris";
         // Vanilla has no suit pants (Data/Pants, 1.6): the farmer's own pants go charcoal instead.
         private static readonly Color SuitPantsColour = new(58, 58, 68);
@@ -191,17 +190,16 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>One figure's eye marks in screen pixels from its top-left (both figures draw at
-        /// <see cref="Scale"/>): the red glow pixel of each eye and the darkened ring round them.</summary>
+        /// <see cref="Scale"/>): the red glow pixel of each eye.</summary>
         private sealed class EyeMarks
         {
             public Rectangle[] Glow { get; private init; }
-            public Rectangle[] Ring { get; private init; }
 
             public static EyeMarks For(IReadOnlyList<PixelBox> eyes)
             {
                 var glow = new List<(int X, int Y)>();
                 foreach (PixelBox eye in eyes) glow.Add(SpriteEyes.GlowPixel(eye, SpriteW));
-                return new EyeMarks { Glow = ToFigure(glow), Ring = ToFigure(SpriteEyes.Ring(glow)) };
+                return new EyeMarks { Glow = ToFigure(glow) };
             }
 
             private static Rectangle[] ToFigure(IReadOnlyList<(int X, int Y)> pixels)
@@ -317,7 +315,8 @@ namespace TheLongestYear.UI
 
             double t = Game1.currentGameTime?.TotalGameTime.TotalMilliseconds ?? 0;
             float pulse = GlowMin + GlowRange * (float)(0.5 + 0.5 * Math.Sin(t / PulseMs));
-            DrawGlow(b, farmerPos, _farmerEyes, pulse);
+            // FarmerRenderer draws closed lids while currentEyes != 0 (a blink): no red over them.
+            if (Game1.player.currentEyes == 0) DrawGlow(b, farmerPos, _farmerEyes, pulse);
             DrawGlow(b, morrisPos, _morrisEyes, pulse);
 
             Rectangle r = _button.bounds;
@@ -330,13 +329,10 @@ namespace TheLongestYear.UI
             drawMouse(b);
         }
 
-        /// <summary>The ring darkened, then the red pixels, then the pulsing glow over them.</summary>
+        /// <summary>The red pixels, then the pulsing glow over them.</summary>
         private static void DrawGlow(SpriteBatch b, Vector2 origin, EyeMarks eyes, float pulse)
         {
             int ox = (int)origin.X, oy = (int)origin.Y;
-            foreach (Rectangle p in eyes.Ring)
-                b.Draw(Game1.staminaRect, new Rectangle(ox + p.X, oy + p.Y, p.Width, p.Height),
-                    null, Color.Black * RingDarkness, 0f, Vector2.Zero, SpriteEffects.None, 1f);
             foreach (Rectangle p in eyes.Glow)
                 b.Draw(Game1.staminaRect, new Rectangle(ox + p.X, oy + p.Y, p.Width, p.Height),
                     null, RedEye, 0f, Vector2.Zero, SpriteEffects.None, 1f);
