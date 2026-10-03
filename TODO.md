@@ -6,6 +6,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### IN PROGRESS (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
+elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
+Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
+calls the bus repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items reach
+Spring deadlines. "If they're picking Extreme they do want a challenge." Not a floodgate: only the
+desert date moves. Reply to elaineofshalott after it ships.
+
+### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
+On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
+impossible on the first try but beatable by about loop 3; once a player reaches loop 3 the board
+starts asking for things that are impossible until about loop 5, and so on. Jeff's reasoning: with
+enough loops anything is possible at any time, and Extreme should reflect that. Needs a spec
+(brainstorm first): what "possible by loop N" means in the availability model (kept upgrades,
+Keep Seeds/Tools, the Junimo stash and books carry power forward), which dates move per loop, and
+whether the ramp is per save or resets when a season is cleared.
+
 ### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; waiting on player logs
 - **gmastern1 (Nexus posts):** Spring Crops showed complete in Winter without Rhubarb. Released code
   cannot complete an unfilled bundle or swap Rhubarb on load, and a Spring Crops needing all 4 with
