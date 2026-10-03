@@ -39,6 +39,7 @@ namespace TheLongestYear.Integration
         private const int FaceUp = 0, FaceDown = 2;
         private const int ViewportRowsAboveDoor = 3;
         private const int WalkTimeoutMs = 6000;
+        private const int FadeInMs = 800;
 
         // The painted Morris behind the counter (map art, not an NPC).
         internal const int PaintedX = 21, PaintedBodyY = 24, PaintedHeadY = 23;
@@ -56,12 +57,19 @@ namespace TheLongestYear.Integration
                 Sanitise(Strings.Get("event.joja-offer.morris-1")),
                 Sanitise(Strings.Get("event.joja-offer.morris-2")),
                 Sanitise(Strings.Get("event.joja-offer.morris-3")));
-            var s = new List<string> { "none", "-1000 -1000", $"farmer {DoorX} {DoorY} {FaceUp}" };
+            // Staged behind black (Jeff, 2026-10-02: the room showed Morris at his counter, then he
+            // blinked to the floor). The driver already holds the overlay black; tlyBlack keeps the
+            // script whole on its own, and tlyFadeIn reveals the room only once Morris is placed.
+            var s = new List<string>
+            {
+                "none", "-1000 -1000", $"farmer {DoorX} {DoorY} {FaceUp}", EndingEventCommands.BlackName,
+            };
             if (skippable) s.Add("skippable");
             s.AddRange(new[]
             {
                 $"addTemporaryActor Morris 16 32 {MorrisStartX} {MorrisStartY} {FaceDown} true Character",
                 $"viewport {DoorX} {DoorY - ViewportRowsAboveDoor} clamp",
+                $"{EndingEventCommands.FadeInName} {FadeInMs}",
                 "pause 400",
                 // Morris comes out from behind the counter to meet the farmer.
                 $"advancedMove Morris false {RouteLegs}",
@@ -109,7 +117,12 @@ namespace TheLongestYear.Integration
 
     /// <summary>Starts Morris's offer on the first visit to JojaMart each loop: on the warp in, and
     /// then every half second while the farmer stands there, so a scene blocked by a menu or a fade
-    /// starts once the way is clear.</summary>
+    /// starts once the way is clear.
+    ///
+    /// The scene is staged behind black (Jeff, 2026-10-02). On the warp it starts under the warp's
+    /// own fade, still near black, and the scene overlay takes over at once, so the vanilla room
+    /// (Morris painted behind his counter) never shows. Started from the poll or the debug command,
+    /// the room is already on screen, so it fades to black first.</summary>
     internal sealed class JojaOfferDriver
     {
         private const int PollTicks = 30;
@@ -117,6 +130,7 @@ namespace TheLongestYear.Integration
         private readonly IMonitor _monitor;
         private readonly MetaStore _meta;
         private readonly JojaOfferEvent.PaintedMorris _painted = new();
+        private bool _fadingOut;   // a poll or debug start is waiting on its fade to black
 
         public JojaOfferDriver(IMonitor monitor, MetaStore meta) { _monitor = monitor; _meta = meta; }
 
@@ -124,12 +138,12 @@ namespace TheLongestYear.Integration
         {
             helper.Events.Player.Warped += OnWarped;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
-            helper.Events.GameLoop.ReturnedToTitle += (_, _) => _painted.Restore();
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => { _painted.Restore(); _fadingOut = false; };
         }
 
         private void OnWarped(object sender, WarpedEventArgs e)
         {
-            if (e.IsLocalPlayer && e.NewLocation?.Name == JojaOfferEvent.LocationName) TryStart();
+            if (e.IsLocalPlayer && e.NewLocation?.Name == JojaOfferEvent.LocationName) TryStart(atWarp: true);
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -138,20 +152,40 @@ namespace TheLongestYear.Integration
             if (_painted.Hidden && !Game1.eventUp && Game1.currentLocation?.currentEvent == null)
                 _painted.Restore();   // the scene ended, was skipped, or was lost
             if (!e.IsMultipleOf(PollTicks)) return;
-            if (Game1.currentLocation?.Name == JojaOfferEvent.LocationName) TryStart();
+            if (Game1.currentLocation?.Name == JojaOfferEvent.LocationName) TryStart(atWarp: false);
         }
 
-        private static bool Busy()
-            => Game1.eventUp || Game1.activeClickableMenu != null || Game1.isFestival() || !Context.CanPlayerMove;
+        /// <summary>At the warp the farmer cannot move yet (the warp's fade-in holds him), and that
+        /// is exactly when the scene should start, so only a real blocker counts there. Checking
+        /// CanPlayerMove at the warp too is what let the room show first: the warp start always
+        /// failed, and the poll started the scene up to half a second after the room had faded in.</summary>
+        private bool Busy(bool atWarp)
+            => _fadingOut || Game1.eventUp || Game1.activeClickableMenu != null || Game1.dialogueUp
+               || Game1.isFestival() || (!atWarp && (Game1.globalFade || !Context.CanPlayerMove));
 
-        private void TryStart()
+        private void TryStart(bool atWarp)
         {
             if (!RunActivation.IsActive || _meta == null) return;
-            if (!JojaOffer.ShouldPlayScene(_meta.Run, _meta.State, busy: Busy())) return;
-            Start();
+            if (!JojaOffer.ShouldPlayScene(_meta.Run, _meta.State, busy: Busy(atWarp))) return;
+            if (atWarp) Start(atWarp: true);
+            else FadeOutThenStart();
         }
 
-        private void Start()
+        /// <summary>The room is on screen: fade it to black with the world intact, then stage the
+        /// scene in the same update the fade completes, before the next frame draws.</summary>
+        private void FadeOutThenStart()
+        {
+            _fadingOut = true;
+            Game1.globalFadeToBlack(() =>
+            {
+                _fadingOut = false;
+                if (Game1.currentLocation?.Name == JojaOfferEvent.LocationName && !Game1.eventUp && Start(atWarp: false))
+                    return;
+                Game1.globalFadeToClear();   // the way closed during the fade: give the room back
+            });
+        }
+
+        private bool Start(bool atWarp)
         {
             RunState run = _meta.Run;
             MetaState meta = _meta.State;
@@ -161,11 +195,20 @@ namespace TheLongestYear.Integration
             if (loc.currentEvent?.id != JojaEventKeys.OfferId)
             {
                 _monitor.Log("Joja: the offer scene did not start (an event was ending); trying again shortly.", LogLevel.Trace);
-                return;
+                return false;
             }
+            // Black from this frame on: the overlay covers the room until tlyFadeIn, after Morris is
+            // placed. The game's own fade (the warp's fade-in, or the fade out above) is cancelled, as
+            // tlyChangeLocation does: a fade still running holds the script's first commands, and a
+            // finished one would clear itself over the staging.
+            EndingEventCommands.HoldBlack();
+            Game1.fadeToBlack = false;
+            Game1.globalFade = false;
+            Game1.fadeToBlackAlpha = 0f;
             _painted.Hide(loc);
             JojaOffer.MarkSceneSeen(run, meta, Calendar.DayOfYear((int)run.Season, run.DayOfMonth));
-            _monitor.Log($"Joja: offer scene (skippable={skip}).", LogLevel.Info);
+            _monitor.Log($"Joja: offer scene (skippable={skip}, {(atWarp ? "on the warp in" : "after a fade to black")}), staged behind black.", LogLevel.Info);
+            return true;
         }
 
         /// <summary>Debug (tly_joja scene): forget today's scene and play it now if in JojaMart.</summary>
@@ -177,12 +220,12 @@ namespace TheLongestYear.Integration
                 _monitor.Log("tly_joja scene: JojaSceneSeenDay reset; walk into JojaMart to see it.", LogLevel.Info);
                 return;
             }
-            if (Busy())
+            if (Busy(atWarp: false))
             {
                 _monitor.Log("tly_joja scene: JojaSceneSeenDay reset; the game is busy, it starts once the way is clear.", LogLevel.Info);
                 return;
             }
-            Start();
+            FadeOutThenStart();
         }
     }
 }

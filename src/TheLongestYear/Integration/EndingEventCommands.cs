@@ -122,6 +122,11 @@ namespace TheLongestYear.Integration
             Game1.viewport.Y = (int)System.Math.Round(c.Y - Game1.viewport.Height / 2f);
         }
 
+        /// <summary>Puts the overlay to black at once, from code. A scene started by a driver calls it
+        /// right after startEvent, so the frame before the script's first command already draws black
+        /// (the overlay only draws while one of <see cref="IsOurEvent"/>'s events is up).</summary>
+        internal static void HoldBlack() => _black = 1f;
+
         /// <summary>Events whose overlay, tree fade and speech box this class serves.</summary>
         internal static bool IsOurEvent(Event ev)
             => ev != null && (ev.id == EndingEventKeys.EventId || ev.id == SeasonTurnEventKeys.EventId
@@ -132,7 +137,7 @@ namespace TheLongestYear.Integration
         {
             // tlyBlack: put the overlay to black at once. A scene that starts under the wake-up fade
             // uses it before its first location change so no frame of the bedroom draws.
-            Event.RegisterCommand(BlackName, (evt, args, context) => { _black = 1f; evt.CurrentCommand++; });
+            Event.RegisterCommand(BlackName, (evt, args, context) => { HoldBlack(); evt.CurrentCommand++; });
 
             helper.Events.GameLoop.UpdateTicked += (_, _) => HoldTreesTranslucent();
             helper.Events.Display.Rendered += (_, e) => DrawBlack(e.SpriteBatch);
