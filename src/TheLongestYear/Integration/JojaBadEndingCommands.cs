@@ -21,6 +21,8 @@ namespace TheLongestYear.Integration
     /// <c>tlyWaterTint &lt;r&gt; &lt;g&gt; &lt;b&gt;</c>: the current location's water colour, restored at the end.
     /// <c>tlyMusic &lt;cue&gt;</c>: plays a music cue and keeps it playing until the scene ends.
     /// <c>tlyBoardPierre</c>: Pierre's shop boarded up (JojaPierreBoards), restored at the end.
+    /// <c>tlyJojaWarehouse</c>: the Community Center drawn as the Joja warehouse (JojaWarehouse),
+    /// restored at the end.
     /// <c>tlyLitter</c>: see JojaLitter.cs. The farm commands are in JojaBadEndingFarmCommands.cs.
     /// <c>tlyGameOver</c>: ends the script and opens the Game Over screen (JojaGameOverMenu), which
     /// exits to the title without saving.</summary>
@@ -34,6 +36,7 @@ namespace TheLongestYear.Integration
         public const string WaterTintName = "tlyWaterTint";
         public const string MusicName = "tlyMusic";
         public const string BoardPierreName = "tlyBoardPierre";
+        public const string JojaWarehouseName = "tlyJojaWarehouse";
         public const string GameOverName = "tlyGameOver";
 
         private const float SpriteScale = 4f;
@@ -69,6 +72,7 @@ namespace TheLongestYear.Integration
         {
             _monitor = monitor;
             JojaPierreBoards.Register(monitor, helper);
+            JojaWarehouse.Register(monitor);
             helper.Events.GameLoop.UpdateTicked += (_, _) => OnTick();
             helper.Events.GameLoop.ReturnedToTitle += (_, _) => { Cleanup(); _gameOverSent = false; _running = false; _missingTicks = 0; };
 
@@ -81,6 +85,8 @@ namespace TheLongestYear.Integration
             Event.RegisterCommand(MusicName, Music);
             Event.RegisterCommand(BoardPierreName, (evt, args, context) => Guarded(evt, BoardPierreName,
                 () => _monitor.Log($"{BoardPierreName}: {JojaPierreBoards.Apply(Game1.currentLocation)}.", LogLevel.Info)));
+            Event.RegisterCommand(JojaWarehouseName, (evt, args, context) => Guarded(evt, JojaWarehouseName,
+                () => _monitor.Log($"{JojaWarehouseName}: {JojaWarehouse.Apply(Game1.currentLocation)} (in memory).", LogLevel.Info)));
             Event.RegisterCommand(LitterName, Litter);
             Event.RegisterCommand(GameOverName, GameOver);
             RegisterFarmCommands();
@@ -326,7 +332,7 @@ namespace TheLongestYear.Integration
 
         private static bool NeedsCleanup
             => _farmhouseHidden || Sprites.Count > 0 || _tinted != null || _dustElapsed >= 0f || JojaPierreBoards.Active
-               || JojaFarmAnimals.Count > 0 || _music != null || JojaFarmClear.HasHeld;
+               || JojaWarehouse.Active || JojaFarmAnimals.Count > 0 || _music != null || JojaFarmClear.HasHeld;
 
         private static void RestoreWater()
         {
@@ -338,7 +344,7 @@ namespace TheLongestYear.Integration
         private static void Cleanup()
         {
             if (NeedsCleanup)
-                _monitor.Log($"Joja bad ending: restoring (Pierre's tiles {JojaPierreBoards.Active}, mod objects set aside {JojaFarmClear.HasHeld}, "
+                _monitor.Log($"Joja bad ending: restoring (Pierre's tiles {JojaPierreBoards.Active}, Joja warehouse {JojaWarehouse.Active}, mod objects set aside {JojaFarmClear.HasHeld}, "
                              + $"scene animals {JojaFarmAnimals.Count}, water tint {_tinted != null}, music '{_music}').", LogLevel.Info);
             if (_music != null) Game1.stopMusicTrack(MusicContext.Event);
             _farmhouseHidden = false;
@@ -350,6 +356,7 @@ namespace TheLongestYear.Integration
             _bobClock = 0f;
             RestoreWater();
             JojaPierreBoards.Restore();
+            JojaWarehouse.Restore();
             JojaFarmAnimals.Reset();
             JojaFarmClear.RestoreHeld();
             ResetFarmCommands();
