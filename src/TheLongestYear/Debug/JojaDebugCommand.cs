@@ -14,9 +14,10 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_joja";
         public const string Description =
-            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject | unreject | counter | cashier | scene | badending [floorId]";
+            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject [letter] | unreject | counter | cashier | scene | badending [floorId]";
 
         private const int MinArgsLetter = 3;
+        private const string RejectByLetterArg = "letter";
 
         public static void Run(IMonitor m, MetaStore meta, string[] args, Integration.JojaOfferDriver offerDriver = null)
         {
@@ -43,11 +44,16 @@ namespace TheLongestYear.DebugCommands
                     m.Log("tly_joja: JojaSceneSeenDay reset to -1.", LogLevel.Info);
                     break;
                 case "reject":
-                    JojaOffer.Reject(state, run.RunNumber);
-                    m.Log($"tly_joja: rejected in loop {state.JojaRejectedLoop}.", LogLevel.Info);
+                    // "reject letter" takes the fourth-decision-letter route (Morris's letter line next).
+                    bool byLetter = args.Length > 1 && args[1].ToLowerInvariant() == RejectByLetterArg;
+                    JojaOffer.Reject(state, run.RunNumber, byLetter);
+                    m.Log($"tly_joja: rejected in loop {state.JojaRejectedLoop}, " +
+                        $"{(state.JojaRejectedByLetter ? "by letter" : "in person")}.", LogLevel.Info);
                     break;
                 case "unreject":
                     state.JojaRejectedLoop = 0;
+                    state.JojaRejectedByLetter = false;
+                    state.JojaLetterRefusalShown = false;
                     m.Log("tly_joja: JojaRejectedLoop reset to 0.", LogLevel.Info);
                     break;
                 case "counter":
@@ -87,6 +93,7 @@ namespace TheLongestYear.DebugCommands
         {
             m.Log(
                 $"tly_joja: JojaOfferEverSeen={state.JojaOfferEverSeen} JojaRejectedLoop={state.JojaRejectedLoop} " +
+                $"JojaRejectedByLetter={state.JojaRejectedByLetter} JojaLetterRefusalShown={state.JojaLetterRefusalShown} " +
                 $"JojaSceneSeenDay={run.JojaSceneSeenDay} JojaLettersSent={run.JojaLettersSent} " +
                 $"JojaDecisionLettersSent={run.JojaDecisionLettersSent} " +
                 $"JojaLetterDays=[{string.Join(", ", run.JojaLetterDays ?? new List<int>())}] " +
