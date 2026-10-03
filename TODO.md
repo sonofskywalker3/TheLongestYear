@@ -261,7 +261,8 @@ Jeff confirmed by eye: the walk-in (black until staged), Morris's scowl after a 
 9. **Game Over eyes (CORRECTED by Jeff: he likes MORRIS's eyes, not the farmer's):** the farmer's eyes
    match Morris's, one red pixel per eye. Morris loses the blacked-down look (normal sprite) except a
    darker 3x3 ring around each red pixel, "I think that helps bring it out"; try the same ring on the
-   farmer. Jeff wants to see how it looks. BUILT 2026-10-02 (preview image sent), awaiting his look in game.
+   farmer. Jeff wants to see how it looks. BUILT 2026-10-02; seen in game: ring read as "a demon
+   raccoon", taken out (red dots alone), and the farmer's red goes out while he blinks. Farmhouse kept + sign: Jeff likes it.
 10. **Try: keep the farmhouse.** In the bad ending, the farmhouse stays; everything else is knocked
    down in the dust clouds around it, and a Joja sign goes above the farmhouse door. Jeff wants to see
    how it looks (keep the old version easy to bring back). BUILT 2026-10-02: house kept, dust either side, lot paved, the
