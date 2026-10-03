@@ -261,10 +261,12 @@ Jeff confirmed by eye: the walk-in (black until staged), Morris's scowl after a 
 9. **Game Over eyes (CORRECTED by Jeff: he likes MORRIS's eyes, not the farmer's):** the farmer's eyes
    match Morris's, one red pixel per eye. Morris loses the blacked-down look (normal sprite) except a
    darker 3x3 ring around each red pixel, "I think that helps bring it out"; try the same ring on the
-   farmer. Jeff wants to see how it looks.
+   farmer. Jeff wants to see how it looks. BUILT 2026-10-02 (preview image sent), awaiting his look in game.
 10. **Try: keep the farmhouse.** In the bad ending, the farmhouse stays; everything else is knocked
    down in the dust clouds around it, and a Joja sign goes above the farmhouse door. Jeff wants to see
-   how it looks (keep the old version easy to bring back).
+   how it looks (keep the old version easy to bring back). BUILT 2026-10-02: house kept, dust either side, lot paved, the
+   Joja warehouse board (Cursors 544,1292) over the door; `tly_joja badending razehouse` or
+   `JojaBadEnding.RazeHouseByDefault = true` brings the old version back. Awaiting his look in game.
 11. **Writing pass on the placeholders:** Jeff thinks the placeholders are OK; keep them, but try a
    real writing pass (letters, offer, cashier, Morris lines) and show both so he can compare.
    DONE 2026-10-02: Jeff rejected the pass ("you just asked how can i make this shorter, and that's not
