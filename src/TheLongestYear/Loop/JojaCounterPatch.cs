@@ -32,13 +32,18 @@ namespace TheLongestYear.Loop
             if (morris == null) return;
             morris.CurrentDialogue.Clear();
             RunState run = _meta.Run;
-            switch (JojaOffer.MorrisLine(run, _meta.State, run.RunNumber))
+            JojaMorrisLine line = JojaOffer.MorrisLine(run, _meta.State, run.RunNumber);
+            switch (line)
             {
                 case JojaMorrisLine.Ask:
                     string q = $"$y '{Strings.Get("joja.morris.ask")}_{Strings.Get("joja.morris.accept")}_ _{Strings.Get("joja.morris.decline")}_ '";
                     var ask = new Dialogue(morris, null, q);
                     ask.answerQuestionBehavior = Answer;
                     morris.setNewDialogue(ask);
+                    break;
+                case JojaMorrisLine.RefuseAfterLetter:
+                    // The fourth decision letter turned the player away; he never said it to their face.
+                    morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.refuse-letter")));
                     break;
                 case JojaMorrisLine.RefuseAgain:
                     morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.refuse-again")));
@@ -47,6 +52,7 @@ namespace TheLongestYear.Loop
                     morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.position-filled")));
                     break;
             }
+            JojaOffer.MarkMorrisLineShown(_meta.State, line);
             Game1.drawDialogue(morris);
         }
 

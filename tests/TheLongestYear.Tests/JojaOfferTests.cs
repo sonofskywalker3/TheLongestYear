@@ -95,6 +95,96 @@ public class JojaOfferTests
         Assert.Equal(days.OrderBy(d => d), days);
     }
 
+    private const int SeedsToCheck = 5000;
+
+    /// <summary>Note 6 (Jeff, 2026-10-02): any two letters at least a week apart, across a season
+    /// boundary too, still two per season on days 2..27, over many seeds.</summary>
+    [Fact]
+    public void Letter_days_are_at_least_a_week_apart_for_every_seed()
+    {
+        for (int seed = 0; seed < SeedsToCheck; seed++)
+        {
+            List<int> days = JojaOffer.PlanLetterDays(seed);
+            Assert.Equal(JojaOffer.ComeLetters, days.Count);
+            for (int season = 0; season < 4; season++)
+            {
+                var inSeason = days.Where(d => (d - 1) / 28 == season).ToList();
+                Assert.Equal(2, inSeason.Count);
+                Assert.All(inSeason, d => Assert.InRange((d - 1) % 28 + 1, 2, 27));
+            }
+            for (int i = 1; i < days.Count; i++)
+                Assert.True(days[i] - days[i - 1] >= JojaOffer.DaysPerWeek,
+                    $"seed {seed}: letters on days {days[i - 1]} and {days[i]} are under a week apart");
+        }
+    }
+
+    [Fact]
+    public void Letter_days_still_vary_from_seed_to_seed()
+    {
+        var firstDays = new HashSet<int>();
+        var lastDays = new HashSet<int>();
+        for (int seed = 0; seed < SeedsToCheck; seed++)
+        {
+            List<int> days = JojaOffer.PlanLetterDays(seed);
+            firstDays.Add(days[0]);
+            lastDays.Add(days[^1]);
+        }
+        // Spring's first letter can land anywhere a later one still fits (2..20), Winter's second
+        // anywhere a week after a first one (Winter 9..27).
+        Assert.Equal(Enumerable.Range(2, 19).ToHashSet(), firstDays);
+        Assert.Equal(Enumerable.Range(Calendar.DayOfYear(3, 9), 19).ToHashSet(), lastDays);
+    }
+
+    /// <summary>A save that rolled its days before the week rule (Jeff's: Spring 11 and 14) re-plans
+    /// the letters it has not had yet, keeping the ones already sent, a week after the last one.</summary>
+    [Fact]
+    public void An_old_plan_that_breaks_the_week_rule_is_replanned_after_the_letters_already_sent()
+    {
+        var (run, meta) = Fresh();
+        run.BeginNewRun(seed: 77);
+        run.JojaLetterDays = new List<int> { 11, 14, 40, 45, 70, 80, 95, 97 };
+        run.JojaLettersSent = 1;
+        JojaLetter letter = JojaOffer.MorningLetter(run, meta, today: 12, rewindPending: false);
+        Assert.Equal(JojaLetter.None, letter);
+
+        Assert.Equal(11, run.JojaLetterDays[0]);
+        Assert.InRange(run.JojaLetterDays.Count, 2, JojaOffer.ComeLetters);
+        Assert.True(run.JojaLetterDays[1] >= 11 + JojaOffer.DaysPerWeek);
+        for (int i = 1; i < run.JojaLetterDays.Count; i++)
+            Assert.True(run.JojaLetterDays[i] - run.JojaLetterDays[i - 1] >= JojaOffer.DaysPerWeek);
+        // The new days come from the loop's own plan, so a reload the same morning plans the same.
+        List<int> loopPlan = JojaOffer.PlanLetterDays(JojaOffer.LetterSeed(77));
+        Assert.All(run.JojaLetterDays.Skip(1), d => Assert.Contains(d, loopPlan));
+
+        var again = new RunState();
+        again.BeginNewRun(seed: 77);
+        again.JojaLetterDays = new List<int> { 11, 14, 40, 45, 70, 80, 95, 97 };
+        again.JojaLettersSent = 1;
+        JojaOffer.MorningLetter(again, meta, today: 12, rewindPending: false);
+        Assert.Equal(run.JojaLetterDays, again.JojaLetterDays);
+    }
+
+    [Fact]
+    public void An_old_plan_that_keeps_the_week_rule_is_left_alone()
+    {
+        var (run, meta) = Fresh();
+        var days = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        run.JojaLetterDays = new List<int>(days);
+        JojaOffer.MorningLetter(run, meta, today: 3, rewindPending: false);
+        Assert.Equal(days, run.JojaLetterDays);
+    }
+
+    [Fact]
+    public void Letters_already_sent_too_close_together_do_not_force_a_replan()
+    {
+        var (run, meta) = Fresh();
+        var days = new List<int> { 11, 14, 40, 50, 70, 80, 95, 105 };
+        run.JojaLetterDays = new List<int>(days);
+        run.JojaLettersSent = 2;
+        JojaOffer.MorningLetter(run, meta, today: 20, rewindPending: false);
+        Assert.Equal(days, run.JojaLetterDays);
+    }
+
     [Fact]
     public void Come_letters_go_out_in_order_on_their_days_and_stop_once_the_scene_is_seen()
     {
@@ -276,6 +366,72 @@ public class JojaOfferTests
         Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
         run.BeginNewRun(3);
         Assert.Equal(JojaMorrisLine.PositionFilled, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+    }
+
+    /// <summary>Note 7 (Jeff, 2026-10-02): after the fourth decision letter the player never heard
+    /// Morris say no, so his first line is the letter one, once; then "You heard me. Leave."</summary>
+    [Fact]
+    public void A_rejection_by_letter_gets_the_letter_line_once_then_the_usual_one()
+    {
+        var (run, meta) = Fresh();
+        JojaOffer.MarkSceneSeen(run, meta, 10);
+        run.JojaDecisionLettersSent = 3;
+        JojaOffer.Record(run, meta, new JojaLetter(JojaLetterKind.Decide, 4, Rejects: true));
+        Assert.True(meta.JojaRejectedByLetter);
+        Assert.Equal(JojaMorrisLine.RefuseAfterLetter, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+
+        JojaOffer.MarkMorrisLineShown(meta, JojaMorrisLine.RefuseAfterLetter);
+        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+        run.BeginNewRun(4);
+        Assert.Equal(JojaMorrisLine.PositionFilled, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+    }
+
+    [Fact]
+    public void A_letter_rejection_first_seen_in_a_later_loop_is_still_position_filled()
+    {
+        var (run, meta) = Fresh();
+        JojaOffer.Reject(meta, run.RunNumber, byLetter: true);
+        run.BeginNewRun(4);
+        Assert.Equal(JojaMorrisLine.PositionFilled, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+    }
+
+    [Fact]
+    public void A_rejection_in_person_never_gets_the_letter_line()
+    {
+        var (run, meta) = Fresh();
+        JojaOffer.Reject(meta, run.RunNumber);
+        Assert.False(meta.JojaRejectedByLetter);
+        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+        JojaOffer.Reject(meta, run.RunNumber, byLetter: true);   // the first rejection stands
+        Assert.False(meta.JojaRejectedByLetter);
+    }
+
+    [Fact]
+    public void A_save_rejected_before_the_route_was_recorded_counts_as_in_person()
+    {
+        var run = Newtonsoft.Json.JsonConvert.DeserializeObject<RunState>("{\"RunNumber\":2}")!;
+        var meta = Newtonsoft.Json.JsonConvert.DeserializeObject<MetaState>("{\"JojaRejectedLoop\":2}")!;
+        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+    }
+
+    [Fact]
+    public void Morris_letter_refusal_is_jeffs_line_verbatim()
+    {
+        Assert.Equal("You must not have read my letter. You're no longer welcome here. Leave.$u",
+            _fixture.Map["joja.morris.refuse-letter"]);
+    }
+
+    /// <summary>Note 2 (Jeff, 2026-10-02): no smile after a No. Morris's sheet has four cells
+    /// (0 smile, 1 pursed frown, 2 shocked, 3 scowl); untagged lines show cell 0, so every line
+    /// after a rejection carries $u (cell 3).</summary>
+    [Theory]
+    [InlineData("joja.morris.refuse")]
+    [InlineData("joja.morris.refuse-again")]
+    [InlineData("joja.morris.refuse-letter")]
+    [InlineData("joja.morris.position-filled")]
+    public void Morris_scowls_on_every_line_after_a_no(string key)
+    {
+        Assert.EndsWith("$u", _fixture.Map[key]);
     }
 
     [Fact]
