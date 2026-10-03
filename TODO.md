@@ -235,7 +235,7 @@ Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, 
   kept off the board, verified live.
 - Dye bundle color-tag cleanup is still on the list (Jeff replied 2026-09-25).
 
-### WAITING ON JEFF: play through and check the Morris ending (built 2026-09-25, Jeff: "build it"): Morris's offer (Joja side quest and game over)
+### DONE 2026-10-02 (Jeff signed off): the Morris ending. Morris's offer (Joja side quest and game over), built 2026-09-25
 `docs/superpowers/specs/2026-09-25-joja-offer-design.md`, plan `docs/superpowers/plans/2026-09-25-joja-offer.md` (8 tasks, subagent-driven).
 All 8 tasks built on `story`. Headless check 2026-09-25 (log only, frames came back black): letters on
 their planned days, the offer scene on first entry, the cashier and Morris lines for undecided, No,
