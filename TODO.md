@@ -25,6 +25,27 @@ Field Research's fish part. Pools after: Lake 12, River 19, Ocean 18, Specialty 
 2026-10-05: Specialty Fish holds at most one Night Market fish (Midnight Squid, Spook Fish, Blobfish,
 Octopus count), the same cap Night Fishing has; a test board had asked for all three Submarine fish. Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
 
+### BUILT (elaineofshalott, Nexus posts, 2026-10-04): Keep Special Orders Board
+Shipped in 0.18.144. New Buildings keep, flat 1,500 JP (not on
+the Gifts ladder): the Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop with
+its normal weekly orders. Unlocks once a run reached Fall 2, the day vanilla opens the board (reach
+`special_orders`, read from DaysPlayed, which is still the run's count when the Fail-morning perk
+screen opens: a Summer fail reads 57 and does not count, a Fall fail reads 85 and does). Postfix on
+`SpecialOrder.IsSpecialOrdersBoardUnlocked`, plus a Town.MakeMapModifications fallback that puts the
+board tiles up itself in case the JIT inlined the gate.
+Also for every player, with or without the keep: the rewind now drops town special orders (in
+progress or unclaimed), clears the board's offer so it re-rolls, and forgets completed town orders so
+the non-repeatable ones come back. Before this all three leaked across loops (player.team is never
+rebuilt). Qi's orders are left alone.
+Strings for Jeff's review: "Keep Special Orders Board" / "The Special Orders board outside Mayor Lewis's house
+is open from Spring 1 of every loop." / Plan tab: "unlocked once the Special Orders board opens
+(Fall 2)".
+Not checked in game: `tly_ordersboard` before and after a `tly_failreset` with the keep owned (board
+up on Spring 1, board action tile present, opening it offers two fresh orders, accepting one works);
+same without the keep (board down, no town order carried, completed list has no town ids); a Fall-fail
+perk screen shows the row as buyable and a Summer-fail one shows it Locked. Reply to elaineofshalott
+after it ships.
+
 ### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
 elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
 Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
