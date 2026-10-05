@@ -21,7 +21,9 @@ Catfish. Pools from the live data: Lake 17 to 13 fish, River 22 to 20, Ocean 19 
 Specialty 31 to 20 (5 of them legendaries). Jeff, 2026-10-05: jellies are an ingredient, not a
 fish, so no fish bundle (Lake, River, Ocean, Specialty, Night Fishing, Quality Fish, Master Fisher's,
 Weatherman's) asks for Sea, River or Cave Jelly or a modded jelly; they stay in the game and in
-Field Research's fish part. Pools after: Lake 12, River 19, Ocean 18, Specialty 19. Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
+Field Research's fish part. Pools after: Lake 12, River 19, Ocean 18, Specialty 19. Also Jeff,
+2026-10-05: Specialty Fish holds at most one Night Market fish (Midnight Squid, Spook Fish, Blobfish,
+Octopus count), the same cap Night Fishing has; a test board had asked for all three Submarine fish. Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
 
 ### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
 elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).

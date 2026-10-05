@@ -94,6 +94,13 @@ public static class FishBundleCandidates
         return fishPool.Where(p => p.Locations.Any(habitat.Contains)).ToList();
     }
 
+    /// <summary>Bundles that hold at most <see cref="NightMarketFishPerBundle"/> Night Market fish:
+    /// Night Fishing (Jeff, 2026-08-28) and Specialty Fish (Jeff, 2026-10-05), where the Submarine
+    /// trio all count as hard to reach and a board once asked for Midnight Squid, Spook Fish and
+    /// Blobfish together. The legendary cap is separate (LegendaryFishRules).</summary>
+    public static bool CapsNightMarketFish(BundleSpec spec)
+        => IsNightFishingBundle(spec) || IsSpecialtyFishBundle(spec);
+
     public static bool IsSpecialtyFishBundle(BundleSpec spec)
         => string.Equals(spec.Name, SpecialtyFishBundleName, StringComparison.OrdinalIgnoreCase);
 
