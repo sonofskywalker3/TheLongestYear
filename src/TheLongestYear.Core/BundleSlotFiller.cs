@@ -543,7 +543,7 @@ public static class BundleSlotFiller
                 if (FishBundleCandidates.IsNightFishingBundle(spec))
                     return FishBundleCandidates.ForNightFishing(pools.Fish, pools.FishRows);
                 return FishBundleCandidates.IsSpecialtyFishBundle(spec)
-                    ? FishBundleCandidates.ForSpecialty(pools.Fish)
+                    ? FishBundleCandidates.ForSpecialty(pools.Fish, pools.FishRows)
                     : FishBundleCandidates.ByHabitat(spec, pools.Fish);
             case PoolDomain.CrabPot:
                 return pools.CrabPot;

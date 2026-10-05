@@ -227,6 +227,32 @@ public sealed record RawFishEntry(
         return anyWindow;
     }
 
+    private const int ClockHundred = 100;
+    private const double MinutesPerHour = 60.0;
+    /// <summary>What <see cref="DailyWindowHours"/> reports for a row with no biting window: open all day.</summary>
+    public const double AllDayHours = 24.0;
+
+    /// <summary>Total hours a day this fish bites: the sum of every Data/Fish time range (game
+    /// clock, so 1800 2600 is 6pm to 2am, 8 hours). A row with no parseable window is open all
+    /// day (<see cref="AllDayHours"/>), the lenient direction.</summary>
+    public double DailyWindowHours()
+    {
+        string[] parts = (RawTimeSpans ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int minutes = 0;
+        bool anyWindow = false;
+        for (int i = 0; i + 1 < parts.Length; i += 2)
+        {
+            if (!int.TryParse(parts[i], out int start) || !int.TryParse(parts[i + 1], out int end))
+                return AllDayHours;
+            anyWindow = true;
+            minutes += ClockMinutes(end) - ClockMinutes(start);
+        }
+        return anyWindow ? minutes / MinutesPerHour : AllDayHours;
+    }
+
+    private static int ClockMinutes(int clock)
+        => clock / ClockHundred * (int)MinutesPerHour + clock % ClockHundred;
+
     public static RawFishEntry Parse(string itemId, string? row)
     {
         string[] fields = (row ?? "").Split('/');
