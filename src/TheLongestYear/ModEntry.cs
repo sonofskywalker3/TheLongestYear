@@ -4046,6 +4046,7 @@ namespace TheLongestYear
                                     : TheLongestYear.Core.FishBundleCandidates.IsSpecialtyFishBundle(c)
                                         ? " Only hard-to-reach fish: legendaries, fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market), or hard fish (difficulty 80+) that bite 8 hours a day or less."
                                         : " Only fish from the water most of the bundle's vanilla fish share.")
+                                    + " Never a jelly."
                                 : " Any item in that pool can appear.";
                             body = $"  - Re-rolls from the **{match.Domain}** pool{season}.{rule} No item is asked for twice across the board; see the pool tables below.";
                         }

@@ -56,6 +56,14 @@ public sealed record ItemPools
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-28).</summary>
     public IReadOnlySet<string> TrapFishIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
 
+    /// <summary>Qualified ids of every jelly the fish pool carries (Jeff, 2026-10-05: "jellies are
+    /// an ingredient, not a fish"). Marked in Data/Objects by carrying BOTH the "fish_nonfish" and
+    /// "counts_as_fish_catch" context tags: Seaweed and the algae carry only the first, real fish
+    /// neither. No fish bundle asks for these (FishBundleCandidates.WithoutJellies);
+    /// they stay in <see cref="Fish"/> for everything else. Empty in hand-built pools, where the
+    /// id-suffix check (<see cref="ItemPoolBuilder.IsJelly"/>) still catches the vanilla three.</summary>
+    public IReadOnlySet<string> JellyIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Qualified ids of every fruit a Data/FruitTrees tree grows. The weekly-goal
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-29).</summary>
     public IReadOnlySet<string> FruitTreeFruitIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);

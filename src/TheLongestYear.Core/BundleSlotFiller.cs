@@ -540,11 +540,14 @@ public static class BundleSlotFiller
             case PoolDomain.SeasonalForage:
                 return FilterSeason(pools.Forage, match.Season, availability);
             case PoolDomain.Fish:
+            {
+                IReadOnlyList<PoolItem> fish = FishBundleCandidates.WithoutJellies(pools);
                 if (FishBundleCandidates.IsNightFishingBundle(spec))
-                    return FishBundleCandidates.ForNightFishing(pools.Fish, pools.FishRows);
+                    return FishBundleCandidates.ForNightFishing(fish, pools.FishRows);
                 return FishBundleCandidates.IsSpecialtyFishBundle(spec)
-                    ? FishBundleCandidates.ForSpecialty(pools.Fish, pools.FishRows)
-                    : FishBundleCandidates.ByHabitat(spec, pools.Fish);
+                    ? FishBundleCandidates.ForSpecialty(fish, pools.FishRows)
+                    : FishBundleCandidates.ByHabitat(spec, fish);
+            }
             case PoolDomain.CrabPot:
                 return pools.CrabPot;
             case PoolDomain.MonsterDrops:
