@@ -117,7 +117,8 @@ public static class AuthoredBundleComposer
             case AuthoredSlotSource.Forage:
                 return pools.Forage;
             case AuthoredSlotSource.Fish:
-                return pools.Fish;
+                // Weatherman's: a fish bundle, so no jellies (Jeff, 2026-10-05).
+                return FishBundleCandidates.WithoutJellies(pools);
             default:
                 return Array.Empty<PoolItem>();
         }

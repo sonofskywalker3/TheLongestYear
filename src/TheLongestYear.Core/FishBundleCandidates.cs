@@ -60,6 +60,13 @@ public static class FishBundleCandidates
     /// Forest Farm and is still the Secret Woods fish.</summary>
     private const string FarmMapPrefix = "Farm_";
 
+    /// <summary>The fish pool every fish bundle draws from: <see cref="ItemPools.Fish"/> minus the
+    /// jellies (Jeff, 2026-10-05: "jellies are an ingredient, not a fish"). The pool itself keeps
+    /// them for everything that is not a fish bundle. <see cref="ItemPools.JellyIds"/> is the data
+    /// mark; the id-suffix check covers hand-built pools that carry no marks.</summary>
+    public static IReadOnlyList<PoolItem> WithoutJellies(ItemPools pools)
+        => pools.Fish.Where(p => !pools.JellyIds.Contains(p.ItemId) && !ItemPoolBuilder.IsJelly(p.ItemId)).ToList();
+
     public static bool IsNightFishingBundle(BundleSpec spec)
         => string.Equals(spec.Name, NightFishingBundleName, StringComparison.OrdinalIgnoreCase);
 

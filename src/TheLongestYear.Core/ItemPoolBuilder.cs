@@ -127,6 +127,11 @@ public static class ItemPoolBuilder
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
             QualityEligibleIds = qualityEligible,
             TrapFishIds = new HashSet<string>(trapFishIds.Select(id => Qualify(Unqualify(id))), StringComparer.Ordinal),
+            JellyIds = new HashSet<string>(
+                fishPool.Where(p => IsJelly(p.ItemId)
+                                    || (objects.TryGetValue(Unqualify(p.ItemId), out RawObjectEntry? obj) && IsJellyCatch(obj)))
+                    .Select(p => p.ItemId),
+                StringComparer.Ordinal),
             FruitTreeFruitIds = new HashSet<string>(
                 fruitTrees.SelectMany(t => t.FruitItemIds ?? Array.Empty<string>())
                     .Where(id => !string.IsNullOrEmpty(id))
@@ -895,6 +900,18 @@ public static class ItemPoolBuilder
         => Array.IndexOf(ForageCategories, obj.Category) >= 0
            || (obj.ContextTags != null && obj.ContextTags.Contains(ForageItemTag))
            || qualifiedId == TruffleId;
+
+    private const string FishNonFishTag = "fish_nonfish";
+    private const string CountsAsFishCatchTag = "counts_as_fish_catch";
+
+    /// <summary>A jelly in Data/Objects terms: a rod catch the game counts as a fish catch
+    /// ("counts_as_fish_catch") but marks as not a fish ("fish_nonfish"). In vanilla 1.6 that is
+    /// exactly Sea, River and Cave Jelly; Seaweed and the algae are "fish_nonfish" only. A modded
+    /// jelly that copies vanilla's tags is caught the same way (Jeff, 2026-10-05).</summary>
+    public static bool IsJellyCatch(RawObjectEntry obj)
+        => obj.ContextTags != null
+           && obj.ContextTags.Contains(FishNonFishTag)
+           && obj.ContextTags.Contains(CountsAsFishCatchTag);
 
     /// <summary>River/Sea/Cave Jelly are rod catches that never carry quality.</summary>
     public static bool IsJelly(string qualifiedId)
