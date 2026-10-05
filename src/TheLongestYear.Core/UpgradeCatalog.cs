@@ -290,6 +290,12 @@ public static class UpgradeCatalog
             metaRequirement: null, runReachRequirement: "house:3"),
         new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, 900,
             metaRequirement: null, runReachRequirement: "shortcuts:1"),
+        // Keep Special Orders Board (Jeff, 2026-10-05; elaineofshalott, Nexus): the town board is
+        // open from Spring 1. Buildings, next to Keep Map Shortcuts: both keep a piece of the town
+        // map open across the rewind. Not Gifts (that category is the CC-room ladder). Flat 1,500 JP.
+        // Reach: the run got to Fall 2, the day vanilla opens the board.
+        new UpgradeDefinition(SpecialOrdersBoardKeep.UpgradeId, UpgradeCategory.Buildings, SpecialOrdersBoardKeep.Cost,
+            metaRequirement: null, runReachRequirement: SpecialOrdersBoardKeep.ReachMetric),
 
         // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
         // across loops. 2026-05-29 spec: sentimental upgrade, not progression-gating —

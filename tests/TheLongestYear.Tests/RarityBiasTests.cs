@@ -136,6 +136,7 @@ public class RarityBiasTests
             DerivedSeasonPins = new Dictionary<string, Season> { ["(O)24"] = Season.Fall },
             QualityEligibleIds = new HashSet<string> { "(O)24" },
             TrapFishIds = new HashSet<string> { "(O)715" },
+            JellyIds = new HashSet<string> { "(O)SeaJelly" },
             FruitTreeFruitIds = new HashSet<string> { "(O)634" },
             ExcludedIds = new HashSet<string> { "(O)266" },
             FishRows = new Dictionary<string, RawFishEntry>

@@ -30,8 +30,9 @@ public static class MineAreas
     /// <summary>Season a day-28 gate may first demand an item from the area.</summary>
     public static Season GateSeason(int area) => AvailabilityWeeks.MineAreaGateSeason(area);
 
-    /// <summary>Hard week for the area (AvailabilityWeeks.MineAreaHardWeek).</summary>
-    public static int HardWeek(int area) => AvailabilityWeeks.MineAreaHardWeek(area);
+    /// <summary>Hard week for the area in a model built in this mode
+    /// (AvailabilityWeeks.MineAreaHardWeek).</summary>
+    public static int HardWeek(int area, WeekMode mode = WeekMode.Pacing) => AvailabilityWeeks.MineAreaHardWeek(area, mode);
 
     public static string Label(int area) => area switch
     {

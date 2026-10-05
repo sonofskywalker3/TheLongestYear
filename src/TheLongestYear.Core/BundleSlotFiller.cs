@@ -518,9 +518,10 @@ public static class BundleSlotFiller
         return WeightedSampler.Capacity(Candidates(spec, match, pools, availability, knownRecipe), capped, cap);
     }
 
-    /// <summary>Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).</summary>
+    /// <summary>Night Fishing and Specialty Fish: at most one Night Market fish per bundle (see
+    /// FishBundleCandidates.CapsNightMarketFish).</summary>
     private static (Func<PoolItem, bool>? Capped, int Cap) CapFor(BundleSpec spec, DomainMatch match, ItemPools pools)
-        => match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
+        => match.Domain == PoolDomain.Fish && FishBundleCandidates.CapsNightMarketFish(spec)
             ? (p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows), FishBundleCandidates.NightMarketFishPerBundle)
             : (null, int.MaxValue);
 
@@ -540,9 +541,14 @@ public static class BundleSlotFiller
             case PoolDomain.SeasonalForage:
                 return FilterSeason(pools.Forage, match.Season, availability);
             case PoolDomain.Fish:
-                return FishBundleCandidates.IsNightFishingBundle(spec)
-                    ? FishBundleCandidates.ForNightFishing(pools.Fish, pools.FishRows)
-                    : FishBundleCandidates.ByHabitat(spec, pools.Fish);
+            {
+                IReadOnlyList<PoolItem> fish = FishBundleCandidates.WithoutJellies(pools);
+                if (FishBundleCandidates.IsNightFishingBundle(spec))
+                    return FishBundleCandidates.ForNightFishing(fish, pools.FishRows);
+                return FishBundleCandidates.IsSpecialtyFishBundle(spec)
+                    ? FishBundleCandidates.ForSpecialty(fish, pools.FishRows)
+                    : FishBundleCandidates.ByHabitat(spec, fish);
+            }
             case PoolDomain.CrabPot:
                 return pools.CrabPot;
             case PoolDomain.MonsterDrops:

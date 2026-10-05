@@ -56,6 +56,14 @@ public sealed record ItemPools
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-28).</summary>
     public IReadOnlySet<string> TrapFishIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
 
+    /// <summary>Qualified ids of every jelly the fish pool carries (Jeff, 2026-10-05: "jellies are
+    /// an ingredient, not a fish"). Marked in Data/Objects by carrying BOTH the "fish_nonfish" and
+    /// "counts_as_fish_catch" context tags: Seaweed and the algae carry only the first, real fish
+    /// neither. No fish bundle asks for these (FishBundleCandidates.WithoutJellies);
+    /// they stay in <see cref="Fish"/> for everything else. Empty in hand-built pools, where the
+    /// id-suffix check (<see cref="ItemPoolBuilder.IsJelly"/>) still catches the vanilla three.</summary>
+    public IReadOnlySet<string> JellyIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Qualified ids of every fruit a Data/FruitTrees tree grows. The weekly-goal
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-29).</summary>
     public IReadOnlySet<string> FruitTreeFruitIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
@@ -226,6 +234,32 @@ public sealed record RawFishEntry(
         }
         return anyWindow;
     }
+
+    private const int ClockHundred = 100;
+    private const double MinutesPerHour = 60.0;
+    /// <summary>What <see cref="DailyWindowHours"/> reports for a row with no biting window: open all day.</summary>
+    public const double AllDayHours = 24.0;
+
+    /// <summary>Total hours a day this fish bites: the sum of every Data/Fish time range (game
+    /// clock, so 1800 2600 is 6pm to 2am, 8 hours). A row with no parseable window is open all
+    /// day (<see cref="AllDayHours"/>), the lenient direction.</summary>
+    public double DailyWindowHours()
+    {
+        string[] parts = (RawTimeSpans ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int minutes = 0;
+        bool anyWindow = false;
+        for (int i = 0; i + 1 < parts.Length; i += 2)
+        {
+            if (!int.TryParse(parts[i], out int start) || !int.TryParse(parts[i + 1], out int end))
+                return AllDayHours;
+            anyWindow = true;
+            minutes += ClockMinutes(end) - ClockMinutes(start);
+        }
+        return anyWindow ? minutes / MinutesPerHour : AllDayHours;
+    }
+
+    private static int ClockMinutes(int clock)
+        => clock / ClockHundred * (int)MinutesPerHour + clock % ClockHundred;
 
     public static RawFishEntry Parse(string itemId, string? row)
     {
