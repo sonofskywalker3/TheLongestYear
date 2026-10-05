@@ -15,9 +15,10 @@ vanilla fish bite there: Lake Fish is the mountain lake (Mountain, Backwoods), R
 and Forest, Ocean Fish is the Beach. A bundle whose fish share no water (Quality Fish, Master
 Fisher's) keeps its old mixed pool. Specialty Fish now asks only for hard-to-reach fish: a
 legendary, or a fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market,
-volcano), never one from ordinary open water, so no Herring, Pufferfish or Catfish. Pools from the
-live data: Lake 17 to 13 fish, River 22 to 20, Ocean 19 unchanged, Specialty 31 to 17 (5 of them
-legendaries). Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
+volcano), or (Jeff, 2026-10-05) an open-water fish that is hard (difficulty 80 or more) and bites
+8 hours a day or less in total: Pufferfish, Octopus and Super Cucumber. No Herring, Squid or
+Catfish. Pools from the live data: Lake 17 to 13 fish, River 22 to 20, Ocean 19 unchanged,
+Specialty 31 to 20 (5 of them legendaries). Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
 
 ### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
 elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).

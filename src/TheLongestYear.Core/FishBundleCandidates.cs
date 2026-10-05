@@ -16,9 +16,10 @@ namespace TheLongestYear.Core;
 ///   falls back to the whole pool.</item>
 ///   <item><see cref="ForSpecialty"/> (same report: "specialty fish asked for herring"): Specialty
 ///   Fish's originals sit at the Beach, the mines, the desert and the Woods, so the habitat rule
-///   counted every Beach fish. It now asks only for hard-to-reach fish: a legendary, or a fish
-///   whose every spawn location is a gated place (<see cref="HardToReachLocations"/>), never one
-///   catchable in ordinary open water.</item>
+///   counted every Beach fish. It now asks only for hard-to-reach fish: a legendary, a fish
+///   whose every spawn location is a gated place (<see cref="HardToReachLocations"/>), or an
+///   open-water fish that is hard AND bites only briefly (<see cref="IsHardShortWindowFish"/>,
+///   Jeff, 2026-10-05). An ordinary open-water fish never qualifies.</item>
 ///   <item><see cref="ForNightFishing"/> (Jeff, 2026-08-28): Night Fishing's vanilla ingredients
 ///   span every water, so the habitat rule let daytime ocean fish like Flounder in. It now
 ///   asks only for fish that are NOT catchable before 6pm anywhere (every Data/Fish biting
@@ -89,8 +90,25 @@ public static class FishBundleCandidates
     public static bool IsSpecialtyFishBundle(BundleSpec spec)
         => string.Equals(spec.Name, SpecialtyFishBundleName, StringComparison.OrdinalIgnoreCase);
 
-    public static IReadOnlyList<PoolItem> ForSpecialty(IReadOnlyList<PoolItem> fishPool)
-        => fishPool.Where(IsHardToReach).ToList();
+    public static IReadOnlyList<PoolItem> ForSpecialty(
+        IReadOnlyList<PoolItem> fishPool, IReadOnlyDictionary<string, RawFishEntry>? fishRows)
+        => fishPool.Where(p => IsHardToReach(p)
+                               || (fishRows != null
+                                   && fishRows.TryGetValue(Unqualify(p.ItemId), out RawFishEntry? row)
+                                   && IsHardShortWindowFish(row)))
+            .ToList();
+
+    /// <summary>Jeff's ruling, 2026-10-05: an open-water fish still counts as a specialty when it
+    /// is both hard to land and bites only briefly. Against vanilla data that admits Pufferfish
+    /// (80, noon to 4pm), Octopus (95, 6am to 1pm) and Super Cucumber (80, 6pm to 2am); Squid
+    /// (75) stays out.</summary>
+    public const int SpecialtyMinDifficulty = 80;
+    public const double SpecialtyMaxDailyWindowHours = 8.0;
+
+    public static bool IsHardShortWindowFish(RawFishEntry row)
+        => !row.IsTrap
+           && row.Difficulty >= SpecialtyMinDifficulty
+           && row.DailyWindowHours() <= SpecialtyMaxDailyWindowHours;
 
     /// <summary>A legendary, or a fish with at least one spawn location outside the farm maps and
     /// every such location in <see cref="HardToReachLocations"/>.</summary>

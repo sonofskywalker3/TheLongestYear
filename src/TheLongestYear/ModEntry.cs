@@ -4044,7 +4044,7 @@ namespace TheLongestYear
                                 ? (TheLongestYear.Core.FishBundleCandidates.IsNightFishingBundle(c)
                                     ? " Only fish that cannot be caught before 6pm, plus at most one Night Market fish."
                                     : TheLongestYear.Core.FishBundleCandidates.IsSpecialtyFishBundle(c)
-                                        ? " Only hard-to-reach fish: legendaries, or fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market)."
+                                        ? " Only hard-to-reach fish: legendaries, fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market), or hard fish (difficulty 80+) that bite 8 hours a day or less."
                                         : " Only fish from the water most of the bundle's vanilla fish share.")
                                 : " Any item in that pool can appear.";
                             body = $"  - Re-rolls from the **{match.Domain}** pool{season}.{rule} No item is asked for twice across the board; see the pool tables below.";
