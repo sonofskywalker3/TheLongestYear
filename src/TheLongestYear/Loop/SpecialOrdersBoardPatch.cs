@@ -8,7 +8,7 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Keep Special Orders Board: the town board outside Pierre's is open from Spring 1 of every loop.
+    /// Keep Special Orders Board: the town board outside Mayor Lewis's house is open from Spring 1 of every loop.
     /// Vanilla gates it on <c>SpecialOrder.IsSpecialOrdersBoardUnlocked()</c>, which is
     /// <c>Game1.stats.DaysPlayed &gt;= 58</c> (SpecialOrder.cs:432, PC and Android alike), and the
     /// rewind sets DaysPlayed back to 1. The postfix returns true while the keep is owned.

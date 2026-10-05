@@ -8,7 +8,7 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ### BUILT (elaineofshalott, Nexus posts, 2026-10-04): Keep Special Orders Board
 Branch `feat/keep-special-orders-board`, no version yet. New Buildings keep, flat 1,500 JP (not on
-the Gifts ladder): the Special Orders board outside Pierre's is open from Spring 1 of every loop with
+the Gifts ladder): the Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop with
 its normal weekly orders. Unlocks once a run reached Fall 2, the day vanilla opens the board (reach
 `special_orders`, read from DaysPlayed, which is still the run's count when the Fail-morning perk
 screen opens: a Summer fail reads 57 and does not count, a Fall fail reads 85 and does). Postfix on
@@ -18,7 +18,7 @@ Also for every player, with or without the keep: the rewind now drops town speci
 progress or unclaimed), clears the board's offer so it re-rolls, and forgets completed town orders so
 the non-repeatable ones come back. Before this all three leaked across loops (player.team is never
 rebuilt). Qi's orders are left alone.
-Strings for Jeff's review: "Keep Special Orders Board" / "The Special Orders board outside Pierre's
+Strings for Jeff's review: "Keep Special Orders Board" / "The Special Orders board outside Mayor Lewis's house
 is open from Spring 1 of every loop." / Plan tab: "unlocked once the Special Orders board opens
 (Fall 2)".
 Not checked in game: `tly_ordersboard` before and after a `tly_failreset` with the keep owned (board
