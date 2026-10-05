@@ -518,9 +518,10 @@ public static class BundleSlotFiller
         return WeightedSampler.Capacity(Candidates(spec, match, pools, availability, knownRecipe), capped, cap);
     }
 
-    /// <summary>Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).</summary>
+    /// <summary>Night Fishing and Specialty Fish: at most one Night Market fish per bundle (see
+    /// FishBundleCandidates.CapsNightMarketFish).</summary>
     private static (Func<PoolItem, bool>? Capped, int Cap) CapFor(BundleSpec spec, DomainMatch match, ItemPools pools)
-        => match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
+        => match.Domain == PoolDomain.Fish && FishBundleCandidates.CapsNightMarketFish(spec)
             ? (p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows), FishBundleCandidates.NightMarketFishPerBundle)
             : (null, int.MaxValue);
 
