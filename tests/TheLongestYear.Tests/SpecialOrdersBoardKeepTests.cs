@@ -5,7 +5,7 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>Keep Special Orders Board (Jeff, 2026-10-05; elaineofshalott asked on Nexus): the town
-/// board outside Pierre's is open from Spring 1 of every loop. Unlocks once a run reached the day
+/// board outside Mayor Lewis's house is open from Spring 1 of every loop. Unlocks once a run reached the day
 /// the vanilla board opens (Fall 2, DaysPlayed 58).</summary>
 public class SpecialOrdersBoardKeepTests
 {
