@@ -1,7 +1,7 @@
 namespace TheLongestYear.Core;
 
 /// <summary>Keep Special Orders Board (Jeff, 2026-10-05; elaineofshalott asked on Nexus,
-/// 2026-10-04): the town board outside Pierre's is open from Spring 1 of every loop with its
+/// 2026-10-04): the town board outside Mayor Lewis's house is open from Spring 1 of every loop with its
 /// normal weekly orders. Vanilla opens it on Fall 2 (<c>SpecialOrder.IsSpecialOrdersBoardUnlocked</c>:
 /// <c>Game1.stats.DaysPlayed &gt;= 58</c>), and the rewind puts DaysPlayed back to 1, so without the
 /// keep the board closes again every loop. Flat price, not on the Gifts ladder.</summary>

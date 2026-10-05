@@ -9,7 +9,7 @@ namespace TheLongestYear.Core;
 /// in the next (its due date counted from the old calendar), the board kept offering last loop's
 /// pair, and every completed non-repeatable town order was gone for good.
 /// <para>
-/// Rule: every town order (OrderType "", the board outside Pierre's) is dropped, in progress or
+/// Rule: every town order (OrderType "", the board outside Mayor Lewis's house) is dropped, in progress or
 /// finished-but-unclaimed; the board's offer and its "already took one this week" mark are cleared
 /// so it re-rolls; completed town orders are forgotten so they can come back. Mr. Qi's orders and
 /// any other board type (the Desert Festival's Marlon board) are left as they are. A completed id
