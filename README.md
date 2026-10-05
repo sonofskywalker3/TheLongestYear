@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.139`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.18.144`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -24,6 +24,17 @@ This is a **beta** (`0.18.139`). It is feature-complete for v1 and stable in tes
 Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
+
+## What's New in 0.18.144
+
+**Keep the Special Orders board all year, fish bundles ask for the right fish, and fixes for the recipe books and the crop fairy.**
+
+- **Keep Special Orders Board** (Junimo Upgrades, Buildings, 1,500 JP). The Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop. You can buy it once the board has opened in a loop (Fall 2). Suggested by elaineofshalott.
+- **Extreme opens the desert in Spring week 3.** With Item rarity on Extreme, the bus counts as repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items can turn up in Spring. Hard and the other settings are unchanged. Suggested by elaineofshalott.
+- **Fish bundles ask for fish from their own water.** Lake Fish could ask for Catfish and Woodskip, and Specialty Fish for Herring. Lake, River and Ocean Fish now pick only fish that live in that water. Specialty Fish picks hard-to-reach fish: Secret Woods, desert, mine and Night Market fish, the legendaries, and the hard short-window catches (Pufferfish, Octopus, Super Cucumber), with at most one Night Market fish. Fish bundles never ask for a jelly. A board you already have keeps its fish until it re-rolls. Reported by Nerlana.
+- **Special orders start fresh every loop.** An order taken in one loop carried into the next with its old due date, the board kept last loop's offers, and one-time orders you had finished never came back. Each rewind now drops orders in progress and puts every town order back on offer.
+- **The recipe book picker steps back instead of closing.** Pressing X, Escape or B on the recipe list now goes back to the slot list. Before, it closed the Cookbook or Craftbook and started the run. Reported by gmastern1.
+- **The crop fairy turns wild seeds into forage.** Wild seeds the fairy grew stayed half-grown and all harvested as Wild Horseradish. They now become seasonal forage on the spot. A stuck crop already in your save fixes itself overnight if you leave it. Reported by sigyn2002.
 
 ## What's New in 0.18.139
 

@@ -473,6 +473,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
+            helper.ConsoleCommands.Add("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
@@ -3509,6 +3511,7 @@ namespace TheLongestYear
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
+                case "tly_ordersboard": TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, args); break;
                 case "tly_cropprobe": TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, args); break;
                 case "tly_spawnprobe": TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, args); break;
                 case "tly_minesweep": TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, args); break;
@@ -3536,6 +3539,15 @@ namespace TheLongestYear
                 case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
                 case "tly_herdbook": TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
+                case TheLongestYear.DebugCommands.RarityStepCommand.Name:
+                    TheLongestYear.DebugCommands.RarityStepCommand.Run(this.Monitor, _config, _meta?.State,
+                        BuildAvailabilityModelFor, _enginePools, _catalog.Select(c => c.Id), DisplayName,
+                        this.Helper.DirectoryPath, args);
+                    break;
+                case TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name:
+                    TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,
+                        () => _launcher?.OpenCookbook(), () => _launcher?.OpenCraftbook(), args);
+                    break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
@@ -5059,7 +5071,10 @@ namespace TheLongestYear
                             string rule = match.Domain == PoolDomain.Fish
                                 ? (TheLongestYear.Core.FishBundleCandidates.IsNightFishingBundle(c)
                                     ? " Only fish that cannot be caught before 6pm, plus at most one Night Market fish."
-                                    : " Only fish sharing a spawn location with the bundle's vanilla fish.")
+                                    : TheLongestYear.Core.FishBundleCandidates.IsSpecialtyFishBundle(c)
+                                        ? " Only hard-to-reach fish: legendaries, fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market), or hard fish (difficulty 80+) that bite 8 hours a day or less, with at most one Night Market fish."
+                                        : " Only fish from the water most of the bundle's vanilla fish share.")
+                                    + " Never a jelly."
                                 : " Any item in that pool can appear.";
                             body = $"  - Re-rolls from the **{match.Domain}** pool{season}.{rule} No item is asked for twice across the board; see the pool tables below.";
                         }

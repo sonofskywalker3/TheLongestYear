@@ -77,6 +77,11 @@ namespace TheLongestYear.Integration
                 "pet"      => p.hasPet() ? 1 : 0,
                 "shortcuts" => Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts") ? 1 : 0,
                 "bus"      => _runState?.Invoke()?.VaultBundlesPaid.Count ?? 0,   // 0–4 (deduped on insert)
+                // The run reached Fall 2, the day vanilla opens the board. Read straight from
+                // DaysPlayed, NOT the (patched) IsSpecialOrdersBoardUnlocked. DaysPlayed only drops
+                // back to 1 inside PerformReset, which runs after the perk screen closes, so the
+                // Fail-morning shrine still sees this run's count (no run-state record needed).
+                "special_orders" => SpecialOrdersBoardKeep.ReachValue(Game1.stats.DaysPlayed),
                 _          => -1,   // unknown metric fails closed
             };
             return actual >= 0 && r.IsMet(actual);

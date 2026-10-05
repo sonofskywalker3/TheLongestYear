@@ -46,7 +46,7 @@ public static class MonsterDropAvailability
     public static int? SpawnAreaFor(string monsterName)
         => monsterName != null && SpawnArea.TryGetValue(monsterName, out int area) ? area : null;
 
-    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawMonsterDrop> drops)
+    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawMonsterDrop> drops, WeekMode mode = WeekMode.Pacing)
     {
         if (drops == null) throw new ArgumentNullException(nameof(drops));
         ItemEffort? best = null;
@@ -64,8 +64,8 @@ public static class MonsterDropAvailability
             if (better)
                 best = new ItemEffort(effort,
                     $"monster drop, {drop.MonsterName} ({MineAreas.Label(area.Value)}) at {drop.Chance:0.##} (+{step}), week {week}, effort {effort}"
-                        + (rare ? $", rare drop: pacing Winter, hard week {MineAreas.HardWeek(area.Value)}" : ""),
-                    week, rare ? Season.Winter : MineAreas.GateSeason(area.Value), HardWeek: MineAreas.HardWeek(area.Value));
+                        + (rare ? $", rare drop: pacing Winter, hard week {MineAreas.HardWeek(area.Value, mode)}" : ""),
+                    week, rare ? Season.Winter : MineAreas.GateSeason(area.Value), HardWeek: MineAreas.HardWeek(area.Value, mode));
         }
         return best;
     }

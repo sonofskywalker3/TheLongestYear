@@ -29,7 +29,9 @@ public static class FishAvailability
     /// is 100 units and the span arithmetic is plain subtraction.</summary>
     private const int ClockUnitsPerHour = 100;
 
-    public static ItemAvailability Derive(PoolItem item, RawFishEntry? row)
+    /// <param name="mode">The mode the model is built in: Extreme (HardAll) reads the Extreme
+    /// desert week for the hard week (LocationGating.HardWeekFor).</param>
+    public static ItemAvailability Derive(PoolItem item, RawFishEntry? row, WeekMode mode = WeekMode.Pacing)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -37,7 +39,7 @@ public static class FishAvailability
         int locationWeek = LocationGating.WeekForAny(item.Locations);
         int week = Math.Max(spawnWeek, locationWeek);
         Season floor = AvailabilityWeeks.SeasonOf(week);
-        int hardWeek = Math.Max(spawnWeek, LocationGating.HardWeekForAny(item.Locations));
+        int hardWeek = Math.Max(spawnWeek, LocationGating.HardWeekForAny(item.Locations, mode));
         if (AvailabilityWeeks.MineFishWeeks.TryGetValue(item.ItemId, out (int Week, Season Gate) mineFish))
         {
             week = Math.Max(week, mineFish.Week);

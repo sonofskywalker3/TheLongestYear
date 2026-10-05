@@ -21,7 +21,7 @@ public static class CropForageAvailability
     private const int SaplingEffort = 2;
     private static readonly string[] RemoteMarkers = { "Woods", "Desert", "Island" };
 
-    public static ItemEffort? DeriveCrop(string qualifiedId, IReadOnlyList<RawCropGrowth> crops)
+    public static ItemEffort? DeriveCrop(string qualifiedId, IReadOnlyList<RawCropGrowth> crops, WeekMode mode = WeekMode.Pacing)
     {
         if (crops == null) throw new ArgumentNullException(nameof(crops));
         ItemEffort? best = null;
@@ -48,6 +48,11 @@ public static class CropForageAvailability
                 {
                     week = Math.Max(grown, seed.Week);
                     hardWeek = Math.Max(grown, seed.Hard);
+                    // Extreme opens the Oasis in Spring week 3 (Jeff, 2026-10-02): the hard week is
+                    // the honest harvest from that date, never later than the row's own.
+                    if (mode == WeekMode.HardAll && AvailabilityWeeks.OasisSeedCrops.Contains(qualifiedId)
+                        && OasisHarvestWeek(crop, AvailabilityWeeks.DesertHardWeekFor(mode)) is int oasis)
+                        hardWeek = Math.Max(grown, Math.Min(seed.Hard, oasis));
                 }
             }
             bool better = best == null
@@ -64,7 +69,26 @@ public static class CropForageAvailability
         return best;
     }
 
-    public static ItemEffort? DeriveForage(string qualifiedId, IReadOnlyList<RawSpawnEntry> spawns)
+    /// <summary>First harvest week of a crop whose seeds can first be bought in
+    /// <paramref name="seedWeek"/>: planted on the first day of the earliest week that is both in
+    /// one of the crop's seasons and not before the seeds, harvested its growth time later (the
+    /// same whole-week arithmetic as the pacing week), and only if that harvest still lands inside
+    /// the season. Null when no season of the year fits.</summary>
+    public static int? OasisHarvestWeek(RawCropGrowth crop, int seedWeek)
+    {
+        if (crop == null) throw new ArgumentNullException(nameof(crop));
+        int growWeeks = crop.GrowthDays / Calendar.DaysPerWeek;
+        foreach (Season season in crop.Seasons.OrderBy(s => s))
+        {
+            int plant = Math.Max(AvailabilityWeeks.FirstWeekOf(season), seedWeek);
+            int harvest = plant + growWeeks;
+            if (plant <= AvailabilityWeeks.LastWeekOf(season) && harvest <= AvailabilityWeeks.LastWeekOf(season))
+                return harvest;
+        }
+        return null;
+    }
+
+    public static ItemEffort? DeriveForage(string qualifiedId, IReadOnlyList<RawSpawnEntry> spawns, WeekMode mode = WeekMode.Pacing)
     {
         if (spawns == null) throw new ArgumentNullException(nameof(spawns));
         List<RawSpawnEntry> rows = spawns.Where(s => s.ItemId == qualifiedId).ToList();
@@ -86,7 +110,7 @@ public static class CropForageAvailability
             .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.WeekFor(s.Location ?? "")))
             .Min();
         int hardWeek = rows
-            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.HardWeekFor(s.Location ?? "")))
+            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.HardWeekFor(s.Location ?? "", mode)))
             .Min();
         return new ItemEffort(effort,
             $"forage, {locations.Count} location(s) (+{single}){(remote > 0 ? ", remote only (+1)" : "")}, week {week}, effort {effort}",

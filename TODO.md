@@ -6,6 +6,83 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
+"My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
+fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:
+Carp also bites in the Secret Woods pond and the Sewer, so Lake Fish counted the Woods as lake and
+asked for Woodskip and Catfish. Now a place counts as the bundle's water only when most of its
+vanilla fish bite there: Lake Fish is the mountain lake (Mountain, Backwoods), River Fish is Town
+and Forest, Ocean Fish is the Beach. A bundle whose fish share no water (Quality Fish, Master
+Fisher's) keeps its old mixed pool. Specialty Fish now asks only for hard-to-reach fish: a
+legendary, or a fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market,
+volcano), or (Jeff, 2026-10-05) an open-water fish that is hard (difficulty 80 or more) and bites
+8 hours a day or less in total: Pufferfish, Octopus and Super Cucumber. No Herring, Squid or
+Catfish. Pools from the live data: Lake 17 to 13 fish, River 22 to 20, Ocean 19 unchanged,
+Specialty 31 to 20 (5 of them legendaries). Jeff, 2026-10-05: jellies are an ingredient, not a
+fish, so no fish bundle (Lake, River, Ocean, Specialty, Night Fishing, Quality Fish, Master Fisher's,
+Weatherman's) asks for Sea, River or Cave Jelly or a modded jelly; they stay in the game and in
+Field Research's fish part. Pools after: Lake 12, River 19, Ocean 18, Specialty 19. Also Jeff,
+2026-10-05: Specialty Fish holds at most one Night Market fish (Midnight Squid, Spook Fish, Blobfish,
+Octopus count), the same cap Night Fishing has; a test board had asked for all three Submarine fish. Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
+
+### BUILT (elaineofshalott, Nexus posts, 2026-10-04): Keep Special Orders Board
+Shipped in 0.18.144. New Buildings keep, flat 1,500 JP (not on
+the Gifts ladder): the Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop with
+its normal weekly orders. Unlocks once a run reached Fall 2, the day vanilla opens the board (reach
+`special_orders`, read from DaysPlayed, which is still the run's count when the Fail-morning perk
+screen opens: a Summer fail reads 57 and does not count, a Fall fail reads 85 and does). Postfix on
+`SpecialOrder.IsSpecialOrdersBoardUnlocked`, plus a Town.MakeMapModifications fallback that puts the
+board tiles up itself in case the JIT inlined the gate.
+Also for every player, with or without the keep: the rewind now drops town special orders (in
+progress or unclaimed), clears the board's offer so it re-rolls, and forgets completed town orders so
+the non-repeatable ones come back. Before this all three leaked across loops (player.team is never
+rebuilt). Qi's orders are left alone.
+Strings for Jeff's review: "Keep Special Orders Board" / "The Special Orders board outside Mayor Lewis's house
+is open from Spring 1 of every loop." / Plan tab: "unlocked once the Special Orders board opens
+(Fall 2)".
+Not checked in game: `tly_ordersboard` before and after a `tly_failreset` with the keep owned (board
+up on Spring 1, board action tile present, opening it offers two fresh orders, accepting one works);
+same without the keep (board down, no town order carried, completed list has no town ids); a Fall-fail
+perk screen shows the row as buyable and a Summer-fail one shows it Locked. Reply to elaineofshalott
+after it ships.
+
+### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
+elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
+Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
+calls the bus repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items reach
+Spring deadlines. "If they're picking Extreme they do want a challenge." Not a floodgate: only the
+desert date moves. Reply to elaineofshalott after it ships.
+Built: `AvailabilityWeeks.DesertExtremeWeek` = 3, read only by a model built for Extreme (WeekMode
+HardAll); LocationGating gained an Extreme column. Extreme weeks: desert forage and fish 3 (Spring),
+Rhubarb 4 (Spring, seeds week 3 plus 13 days), Starfruit 6 (Summer), Beet 9 (Fall), Cactus Fruit 3.
+Skull Cavern on Extreme is week 5 (the week after the Skull Key, floor 120 at 30 floors a week), so
+iridium, Prismatic Shard and Skull Cavern drops gate in Summer. Hard, Normal and Easy unchanged.
+Not moved: artisan goods and dishes made from desert items (no rule derives their hard week yet),
+Sandy's friendship recipes (pacing only).
+
+### BUILT 0.18.141 (gmastern1, Nexus posts, 2026-10-02): X in the recipe picker skipped the book
+Picking a recipe to bank at the end of a run, then pressing X on the recipe list, closed the whole
+Cookbook/Craftbook and started the run. Now X, Escape and controller B on the recipe list step back
+to the slot list; from the slot list they close the book as before. Both books. Not checked in game
+yet. Reply to gmastern1 after it ships.
+
+### BUILT 0.18.143 (sigyn2002, Nexus bugs, 2026-10-03): crop fairy left wild seeds as crops
+The crop fairy grew wild seeds (Spring/Summer/Fall/Winter Seeds) to ready without turning them into
+forage: they kept a mid-growth sprite and all harvested as normal-quality Wild Horseradish (the
+placeholder harvest). Vanilla bug too, reproduced on a game with no TLY: vanilla only converts wild
+seeds in the overnight crop update, and the fairy comes after it. Now any full grow (the fairy) turns
+a wild seed crop into random seasonal forage on the spot, same as the overnight update. A stuck crop
+already in a save converts the next night if left unpicked. Reply to sigyn2002 after it ships.
+
+### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
+On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
+impossible on the first try but beatable by about loop 3; once a player reaches loop 3 the board
+starts asking for things that are impossible until about loop 5, and so on. Jeff's reasoning: with
+enough loops anything is possible at any time, and Extreme should reflect that. Needs a spec
+(brainstorm first): what "possible by loop N" means in the availability model (kept upgrades,
+Keep Seeds/Tools, the Junimo stash and books carry power forward), which dates move per loop, and
+whether the ramp is per save or resets when a season is cleared.
+
 ### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; waiting on player logs
 - **gmastern1 (Nexus posts):** Spring Crops showed complete in Winter without Rhubarb. Released code
   cannot complete an unfilled bundle or swap Rhubarb on load, and a Spring Crops needing all 4 with

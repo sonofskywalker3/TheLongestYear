@@ -530,7 +530,14 @@ namespace TheLongestYear.Loop
             //     while DaysPlayed <= 1. Re-run vanilla's refresh now that DaysPlayed is back to 1.
             Game1.RefreshQuestOfTheDay();
 
+            // 2e. Special orders. They live on player.team, which loadForNewGame never rebuilds, so a
+            //     town order, the board's offer and the completed list all rode into the next loop.
+            //     Drop town orders, clear the board so it re-rolls, forget completed town orders.
+            //     Qi's orders are left alone. Every player, with or without Keep Special Orders Board.
+            SpecialOrderReset.Apply(_monitor);
+
             _timing.Mark("2 calendar, weather, netWorldState sync");
+
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
