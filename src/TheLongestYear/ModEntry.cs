@@ -4043,7 +4043,9 @@ namespace TheLongestYear
                             string rule = match.Domain == PoolDomain.Fish
                                 ? (TheLongestYear.Core.FishBundleCandidates.IsNightFishingBundle(c)
                                     ? " Only fish that cannot be caught before 6pm, plus at most one Night Market fish."
-                                    : " Only fish sharing a spawn location with the bundle's vanilla fish.")
+                                    : TheLongestYear.Core.FishBundleCandidates.IsSpecialtyFishBundle(c)
+                                        ? " Only hard-to-reach fish: legendaries, or fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market)."
+                                        : " Only fish from the water most of the bundle's vanilla fish share.")
                                 : " Any item in that pool can appear.";
                             body = $"  - Re-rolls from the **{match.Domain}** pool{season}.{rule} No item is asked for twice across the board; see the pool tables below.";
                         }

@@ -6,6 +6,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
+"My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
+fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:
+Carp also bites in the Secret Woods pond and the Sewer, so Lake Fish counted the Woods as lake and
+asked for Woodskip and Catfish. Now a place counts as the bundle's water only when most of its
+vanilla fish bite there: Lake Fish is the mountain lake (Mountain, Backwoods), River Fish is Town
+and Forest, Ocean Fish is the Beach. A bundle whose fish share no water (Quality Fish, Master
+Fisher's) keeps its old mixed pool. Specialty Fish now asks only for hard-to-reach fish: a
+legendary, or a fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market,
+volcano), never one from ordinary open water, so no Herring, Pufferfish or Catfish. Pools from the
+live data: Lake 17 to 13 fish, River 22 to 20, Ocean 19 unchanged, Specialty 31 to 17 (5 of them
+legendaries). Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
+
 ### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
 elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
 Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
