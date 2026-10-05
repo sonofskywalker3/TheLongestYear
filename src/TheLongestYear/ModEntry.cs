@@ -327,6 +327,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
+            helper.ConsoleCommands.Add("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
@@ -2598,6 +2600,7 @@ namespace TheLongestYear
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
+                case "tly_ordersboard": TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, args); break;
                 case "tly_cropprobe": TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, args); break;
                 case "tly_spawnprobe": TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, args); break;
                 case "tly_minesweep": TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, args); break;
