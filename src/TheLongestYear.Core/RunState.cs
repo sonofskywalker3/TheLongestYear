@@ -89,6 +89,11 @@ public sealed class RunState
     /// </summary>
     public Theme? NextMonthSelection { get; set; }
 
+    /// <summary>The drawback paired with <see cref="CurrentSelection"/> this week (randomizer
+    /// pairings). Null means the theme's own drawback (old saves, pairings off). The caller sets
+    /// it right after <see cref="Select"/>.</summary>
+    public string? CurrentLiabilityId { get; set; }
+
     /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
     /// Used so a re-trigger mid-week is a no-op — the hub only opens once per target week.</summary>
     public int OfferPresentedWeek { get; set; } = -1;
@@ -330,6 +335,7 @@ public sealed class RunState
     public void Select(Theme theme)
     {
         CurrentSelection = theme;
+        CurrentLiabilityId = null;
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
@@ -348,6 +354,7 @@ public sealed class RunState
         DayOfMonth = 1;
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
+        CurrentLiabilityId = null;
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
@@ -374,6 +381,7 @@ public sealed class RunState
         (DonatedSlots ??= new()).Clear();
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
+        CurrentLiabilityId = null;
         NextMonthSelection = null;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
