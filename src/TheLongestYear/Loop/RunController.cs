@@ -94,15 +94,11 @@ namespace TheLongestYear.Loop
         /// <summary>This week's Randomizer settings (snapshotted at the first read of the week).</summary>
         internal RandomizerSettings Randomizer => Run.RandomizerFor(Run.WeekOfYear, _config.Randomizer);
 
-        internal RandomizerSettings RandomizerForWeek(int week) => Run.RandomizerFor(week, _config.Randomizer);
-
-        /// <summary>Settings for a week without storing a snapshot for a week that has not
-        /// started (the pre-pick preview reads the live config).</summary>
-        internal RandomizerSettings RandomizerForWeekNoStore(int week)
+        /// <summary>Settings for a week. For the current week this is <see cref="Randomizer"/>, which
+        /// stores the week's snapshot on first read; a week that has not started is never
+        /// snapshotted early (the pre-pick preview reads the live config).</summary>
+        internal RandomizerSettings RandomizerForWeekPeek(int week)
             => week == Run.WeekOfYear ? Randomizer : _config.Randomizer;
-
-        /// <summary>The live settings, for the day-28 pre-pick hub (next month's week must not be snapshotted early).</summary>
-        internal RandomizerSettings Live => _config.Randomizer;
 
         /// <summary>Per-group caps on a theme's weekly goal list: at most one fruit-tree fruit
         /// (Data/FruitTrees) and at most one crab-pot catch (Data/Fish trap rows); Jeff,
@@ -890,7 +886,7 @@ namespace TheLongestYear.Loop
                     PopulateBonusSlotsForCurrentSelection();
                     // The card was shown with this week's settings; pick the drawback the same way.
                     Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear,
-                        Run.CurrentSelection.Value, RandomizerForWeekNoStore(Run.WeekOfYear).RandomPairings);
+                        Run.CurrentSelection.Value, RandomizerForWeekPeek(Run.WeekOfYear).RandomPairings);
                     var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                     ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(
@@ -1075,7 +1071,7 @@ namespace TheLongestYear.Loop
             // A re-pick or re-roll replaces the goal lines, so the old ones go back to full first.
             RevertWeekDiscount("re-pick");
             Run.Select(theme);
-            RandomizerSettings rand = RandomizerForWeekNoStore(Run.WeekOfYear);
+            RandomizerSettings rand = RandomizerForWeekPeek(Run.WeekOfYear);
             Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, theme, rand.RandomPairings);
             Run.CurrentGoalMultiplier = slot < 0 ? 1.0 : CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, theme, slot, rand);
             // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
@@ -1198,7 +1194,7 @@ namespace TheLongestYear.Loop
         /// derived model (null for an id no rule placed, which then takes the price bucket).</summary>
         private GoalSamplingRules RulesFor(CoreSeason season, int weekOfYear)
             => new GoalSamplingRules(season, _config.FillerAllowanceFor(season), EffortOf,
-                Even: RandomizerForWeekNoStore(weekOfYear).RandomThemeItems);
+                Even: RandomizerForWeekPeek(weekOfYear).RandomThemeItems);
 
         private int? EffortOf(string itemId)
             => Availability != null && Availability.HasDerivedEffort(itemId)
