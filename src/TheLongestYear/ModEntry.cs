@@ -2731,10 +2731,14 @@ namespace TheLongestYear
                     this.Monitor.Log($"tly_select: {sideError}", LogLevel.Warn);
                     return;
                 }
-                if (side != null || hub.ConfirmByName(args[0]))
+                if (side != null)
+                    return; // TryPickSide already logged the real outcome.
+                if (!hub.ConfirmByName(args[0]))
+                    this.Monitor.Log($"tly_select: unknown theme '{args[0]}'. Options: {string.Join(", ", Enum.GetNames(typeof(TheLongestYear.Core.Theme)))}.", LogLevel.Warn);
+                else if (hub.LastPickTook)
                     this.Monitor.Log($"tly_select: picked {args[0]} on the open planning hub.", LogLevel.Info);
                 else
-                    this.Monitor.Log($"tly_select: unknown theme '{args[0]}'. Options: {string.Join(", ", Enum.GetNames(typeof(TheLongestYear.Core.Theme)))}.", LogLevel.Warn);
+                    this.Monitor.Log($"tly_select: {args[0]} was rejected (already picked this month).", LogLevel.Warn);
                 return;
             }
             // skipOfferCheck: this is a debug/playtest command; let it force any theme, not just

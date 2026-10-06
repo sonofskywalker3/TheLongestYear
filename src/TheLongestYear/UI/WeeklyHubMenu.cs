@@ -589,7 +589,9 @@ namespace TheLongestYear.UI
                 _spendJp?.Invoke(cost);
             }
             RerollOffer();
-            message = $"Reroll paid {cost} JP (JP {before} -> {_getJp?.Invoke() ?? 0})";
+            message = cost > 0
+                ? $"Reroll paid {cost} JP (JP {before} -> {_getJp?.Invoke() ?? 0})"
+                : "Reroll (free)";
             return true;
         }
 
@@ -612,8 +614,15 @@ namespace TheLongestYear.UI
             if (!System.Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
             { error = $"unknown theme '{themeName}'."; return false; }
             if (_offer.Count <= slot || _offer[slot] != theme)
-            { error = $"{theme} is not on the {side} card (offer: [{string.Join(", ", _offer)}])."; return false; }
+            {
+                // The face-down card never shows its theme at Warn/Info; the real offer goes to Trace.
+                error = $"{theme} is not on the {side} card (offer: [{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand))}]).";
+                _monitor.Log($"tly_select: real offer = [{string.Join(", ", _offer)}].", LogLevel.Trace);
+                return false;
+            }
             ConfirmSelection(theme, slot);
+            if (!LastPickTook)
+            { error = $"{theme} was rejected (already picked this month, or not a valid offer)."; return false; }
             double mult = _isPreSelectForNextMonth ? _run.NextMonthGoalMultiplier : _run.CurrentGoalMultiplier;
             _monitor.Log($"Selected {theme} (slot {slot}, goal JP {CardMultiplier.Format(mult)})", LogLevel.Info);
             return true;
@@ -719,6 +728,10 @@ namespace TheLongestYear.UI
 
         private bool _forcedPick;
 
+        /// <summary>True when the last <see cref="ConfirmSelection"/> actually recorded the pick
+        /// (SelectByName can reject it), so debug logs never claim a pick that did not happen.</summary>
+        public bool LastPickTook { get; private set; }
+
         /// <param name="slot">The card position picked (0 left, 1 right); it sets the goal multiplier.</param>
         private void ConfirmSelection(Theme theme, int slot)
         {
@@ -731,6 +744,9 @@ namespace TheLongestYear.UI
                 // The reroll path already excludes already-selected-this-month themes, so the
                 // gameplay rule that matters is preserved. A console pick off the cards is forced.
                 _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0 || _forcedPick, slot: slot);
+            LastPickTook = _isPreSelectForNextMonth
+                ? _run.NextMonthSelection == theme
+                : _run.CurrentSelection == theme;
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }
