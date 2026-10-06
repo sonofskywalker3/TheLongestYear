@@ -12,12 +12,15 @@ public static class CardMultiplier
     private const int MysteryOneIn = 4;
     private const int SaltMultiplier = 0x51A7, SaltMysteryWeek = 0x6C3B, SaltMysteryValue = 0x7D4F;
 
-    private static Random Rng(int seed, int week, int salt) => new(seed ^ (week * 7919) ^ salt);
+    /// <summary>Every roll here seeds through <see cref="RollSeed"/>, so the two cards of a week (and the
+    /// sealed value as rerolls change the sealed theme) roll independently (final review I1).</summary>
+    private static Random Rng(int seed, int week, int salt, int theme = NoTheme) => RollSeed.Rng(seed, week, salt, theme);
+    private const int NoTheme = -1;
 
     public static double For(int seed, int weekOfYear, Theme theme, bool random)
     {
         if (!random) return 1.0;
-        int step = Rng(seed, weekOfYear, SaltMultiplier ^ ((int)theme * 1031)).Next(RandomSteps);
+        int step = Rng(seed, weekOfYear, SaltMultiplier, (int)theme).Next(RandomSteps);
         return (RandomLowHundredths + step * StepHundredths) / 100.0;
     }
 
@@ -41,7 +44,7 @@ public static class CardMultiplier
 
     public static double Mystery(int seed, int weekOfYear, Theme theme)
     {
-        int step = Rng(seed, weekOfYear, SaltMysteryValue ^ ((int)theme * 1031)).Next(MysterySteps);
+        int step = Rng(seed, weekOfYear, SaltMysteryValue, (int)theme).Next(MysterySteps);
         return (MysteryLowHundredths + step * StepHundredths) / 100.0;
     }
 

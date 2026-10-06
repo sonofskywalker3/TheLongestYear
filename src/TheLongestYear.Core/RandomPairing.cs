@@ -9,8 +9,6 @@ namespace TheLongestYear.Core;
 public static class RandomPairing
 {
     private const int Salt = 0x2B9D;
-    private const int WeekMix = 7919;
-    private const int ThemeMix = 1031;
 
     public static readonly IReadOnlyList<string> AllLiabilities = new[]
     {
@@ -41,7 +39,8 @@ public static class RandomPairing
         if (!random) return own;
         IReadOnlySet<string> excluded = ExcludedFor(theme);
         var allowed = AllLiabilities.Where(id => !excluded.Contains(id)).ToList();
-        var rng = new Random(seed ^ (weekOfYear * WeekMix) ^ ((int)theme * ThemeMix) ^ Salt);
+        // RollSeed, not a xor of related seeds: two cards of one week must draw independently (final review I1).
+        var rng = RollSeed.Rng(seed, weekOfYear, Salt, (int)theme);
         return allowed[rng.Next(allowed.Count)];
     }
 
