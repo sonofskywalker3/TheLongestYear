@@ -57,6 +57,7 @@ namespace TheLongestYear
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
+        private TheLongestYear.Loop.WildcardDayService _wildcardDays;
         private IntroEventInjector _introInjector;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
@@ -327,6 +328,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost today (debug, the same purchase the shrine's Buy button makes), or list the roster with each row's state. Usage: tly_boost list | tly_boost <id> [farming|fishing|foraging|mining|combat]", this.CmdBoost);
+            helper.ConsoleCommands.Add("tly_wildcard", "Debug: show this week's wildcard day and twist, or set today's twist (headless twist checks). Usage: tly_wildcard [twistId|clear]", this.CmdWildcard);
             helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
             helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
             helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan) exactly as the statue does, so every tab's rows build and draw headlessly. Usage: tly_openshrine [active|boosts|plan]", this.CmdOpenShrine);
@@ -706,6 +708,9 @@ namespace TheLongestYear
                     : ItemKind.Other;
             };
             _runController.AttachQuestService(_questService);
+            _wildcardDays = new TheLongestYear.Loop.WildcardDayService(this.Monitor, () => _meta.Run);
+            TheLongestYear.Loop.WildcardDayService.GrowthNight = () => _meta.Run.WildcardGrowthNight;
+            _runController.AttachWildcardService(_wildcardDays);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
@@ -807,6 +812,8 @@ namespace TheLongestYear
             _playSeasonDonatedThisSeason = 0;
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
+            DayEffects.Clear();
+            TheLongestYear.Loop.WildcardDayService.GrowthNight = null;
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = null;
@@ -2664,6 +2671,7 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_boost": this.CmdBoost(command, args); break;
                 case "tly_boostexpire": _boostEffects?.OnDayStarted(); break;
+                case "tly_wildcard": this.CmdWildcard(command, args); break;
                 case "tly_dismiss": this.CmdDismiss(command, args); break;
                 case "tly_openshrine": this.CmdOpenShrine(command, args); break;
                 case "tly_tv": this.CmdTv(command, args); break;
@@ -4886,6 +4894,13 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _launcher?.OpenWeeklyHub();
+        }
+
+        /// <summary>Wildcard days debug: the week's plan, or set/clear today's twist.</summary>
+        private void CmdWildcard(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _wildcardDays == null) { this.Monitor.Log("Load a TLY save first.", LogLevel.Warn); return; }
+            this.Monitor.Log("tly_wildcard: " + _wildcardDays.Debug(args), LogLevel.Info);
         }
 
         private void CmdHubCards(string command, string[] args)

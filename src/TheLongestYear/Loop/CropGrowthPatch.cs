@@ -62,6 +62,11 @@ namespace TheLongestYear.Loop
         private static void Prefix(Crop __instance, int state, out (int phase, int dayOfPhase)? __state)
         {
             __state = null;
+            // Wildcard extra growth: the night after the wildcard day, every watered unripe crop
+            // takes one guaranteed extra tick. Taken first so a theme liability skip (which
+            // restores the snapshot below) cancels only vanilla's own day, not this one.
+            if (WildcardGrowthTonight() && IsWateredUnripe(__instance, state))
+                AdvanceOneTick(__instance);
             if (ShouldSkipTickThisDay(__instance, state))
             {
                 __state = (__instance.currentPhase.Value, __instance.dayOfCurrentPhase.Value);
@@ -83,6 +88,13 @@ namespace TheLongestYear.Loop
 
             AdvanceOneTick(__instance);
         }
+
+        private static bool WildcardGrowthTonight()
+            => RunActivation.IsActive && WildcardDayService.GrowthNight?.Invoke() == true;
+
+        private static bool IsWateredUnripe(Crop crop, int state)
+            => state == 1 && !crop.dead.Value && !crop.fullyGrown.Value
+               && crop.phaseDays.Count > 0 && crop.currentPhase.Value < crop.phaseDays.Count - 1;
 
         /// <summary>Liability restore: the crop ends the day exactly where it started (plus any
         /// bonus tick taken before the snapshot), no advance, no regression.</summary>

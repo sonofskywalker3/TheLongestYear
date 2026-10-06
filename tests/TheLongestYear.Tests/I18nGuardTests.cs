@@ -126,6 +126,9 @@ public class I18nGuardTests
             // reach Strings.Get through a variable, so walk the rule's own key set.
             foreach (string key in FlavorlessBundleSlots.AllLabelKeys)
                 _ = Strings.Get(key);
+            // wildcard.twist.* is built from the twist id (WildcardText.Name); walk the pool.
+            foreach (string twist in WildcardSchedule.AllTwists)
+                Assert.NotEqual(twist, WildcardText.Name(twist));
         }
         finally
         {

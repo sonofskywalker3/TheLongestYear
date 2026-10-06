@@ -32,6 +32,13 @@ namespace TheLongestYear.Loop
             if (ActiveEffectsProvider.ActiveLiability("fish_bite_down"))
                 __result *= 1.30f;  // 30% slower (Farming liability)
 
+            // Wildcard fast/slow bites: one more 30% step, separate from the theme (a lifted
+            // drawback never lifts the wildcard's, and the wildcard never revives a lifted one).
+            bool fast = DayEffects.Has(WildcardSchedule.FastBites);
+            bool slow = DayEffects.Has(WildcardSchedule.SlowBites);
+            if (fast || slow)
+                __result *= WildcardEffects.BiteFactor(fast, slow);
+
             // Quick Bite passive accelerator (quick_bite_1..5): 5% faster per tier, max 25%.
             // Stacks multiplicatively with the theme bonus — Quick Bite V on a Fishing week
             // = 0.70 × 0.75 = ~47.5% sooner total. Intentional: the whole point of the

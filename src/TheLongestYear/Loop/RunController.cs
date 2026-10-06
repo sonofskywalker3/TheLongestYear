@@ -286,6 +286,9 @@ namespace TheLongestYear.Loop
             // save+reload mid-week reflects already-donated items.
             _questService?.OnRunLoaded();
 
+            // Wildcard day: re-publish a twist already revealed today (never re-rolled).
+            _wildcard?.OnRunLoaded();
+
             // Clear the stale vanilla "Rat Problem" quest (the CC is already open this run). The
             // Harmony prefix stops new adds; this strips it from a save that already received it.
             RatProblemQuestPatch.StripFromLog(_monitor);
@@ -827,6 +830,7 @@ namespace TheLongestYear.Loop
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();
+            _wildcard?.OnReset();
             // Persist the post-reset meta (JP spent at the shrine, new OwnedUpgrades, the bumped
             // run/reset counters) IMMEDIATELY. A deferred SaveLoaded fires after the in-place reset
             // and calls MetaStore.Load(), which would otherwise overwrite our in-memory state with
@@ -939,6 +943,9 @@ namespace TheLongestYear.Loop
             Run.Season = season;
             Run.DayOfMonth = Game1.dayOfMonth;
 
+            // Wildcard days: plan the week (week start) and reveal today's twist, before the offer.
+            _wildcard?.OnDayStarted(() => RandomizerForWeekPeek(Run.WeekOfYear));
+
             // Open the weekly planning hub on every week-start morning (days 1, 8, 15, 22).
             // This replaces the prior Sunday-night DayEnding trigger, which fired during the
             // sleep/save sequence when Game1.player.CanMove == false — MenuLauncher.CanOpen
@@ -972,6 +979,8 @@ namespace TheLongestYear.Loop
             (Run.DoubleProduceToday ??= new System.Collections.Generic.List<DoubleProduceRecord>()).Clear();
             // A new night: this morning's DayStarted mark (RunController.Restart.cs) no longer counts.
             _dayStartedWhileBranchPending = false;
+            // Wildcard extra growth: tonight's crop pass sees tomorrow's date, so flag it now.
+            _wildcard?.OnDayEnding();
             // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
             TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
@@ -1559,6 +1568,11 @@ namespace TheLongestYear.Loop
         /// quest in the player's quest log — created on theme selection, refreshed on donation,
         /// auto-completed when every goal slot is complete.</summary>
         public void AttachQuestService(WeeklyThemeQuestService quest) => _questService = quest;
+
+        private WildcardDayService _wildcard;
+
+        /// <summary>Wildcard days (Randomizer): planned and revealed from the day start.</summary>
+        public void AttachWildcardService(WildcardDayService wildcard) => _wildcard = wildcard;
 
         /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
         /// <c>Run.WeekOfYear + 1</c> (and a <paramref name="seasonOverride"/> on day 28) so the

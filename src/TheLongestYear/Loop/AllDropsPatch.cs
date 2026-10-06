@@ -86,9 +86,11 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(ref int __result)
         {
-            if (!ActiveEffectsProvider.ActiveLiability("all_sell_prices_down"))
-                return;
-            __result = System.Math.Max(1, __result / 2);
+            if (ActiveEffectsProvider.ActiveLiability("all_sell_prices_down"))
+                __result = System.Math.Max(1, __result / 2);
+            // Wildcard sell_down: its own 75%, on top of the halving when both apply.
+            if (DayEffects.Has(WildcardSchedule.SellDown))
+                __result = WildcardEffects.SellPrice(__result, true);
         }
     }
 }
