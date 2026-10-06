@@ -105,4 +105,28 @@ public class CardMultiplierTests
         Assert.Equal(1.0, CardMultiplier.ForCard(seed, 5, Theme.Fishing, 0, r));
         Assert.Equal(1.0, CardMultiplier.ForCard(seed, 5, Theme.Fishing, 1, r));
     }
+
+    [Fact]
+    public void The_offer_log_hides_the_sealed_theme_behind_a_question_mark()
+    {
+        // Final review I2: the Info log must not name the face-down theme.
+        var r = new RandomizerSettings { MysteryCard = true };
+        int seed = Enumerable.Range(0, 500).First(s => CardMultiplier.IsMysteryWeek(s, 5, true));
+        int sealedSlot = CardMultiplier.SealedSlot(seed, 5);
+        var offer = new[] { Theme.Fishing, Theme.Kitchen };
+        var labels = CardMultiplier.OfferLabels(offer, seed, 5, r);
+        Assert.Equal("?", labels[sealedSlot]);
+        Assert.Equal(offer[1 - sealedSlot].ToString(), labels[1 - sealedSlot]);
+        Assert.True(CardMultiplier.AnySealed(offer.Length, seed, 5, r));
+    }
+
+    [Fact]
+    public void The_offer_log_names_both_themes_when_nothing_is_sealed()
+    {
+        var off = new RandomizerSettings();
+        int seed = Enumerable.Range(0, 500).First(s => CardMultiplier.IsMysteryWeek(s, 5, true));
+        var offer = new[] { Theme.Fishing, Theme.Kitchen };
+        Assert.Equal(new[] { "Fishing", "Kitchen" }, CardMultiplier.OfferLabels(offer, seed, 5, off));
+        Assert.False(CardMultiplier.AnySealed(offer.Length, seed, 5, off));
+    }
 }

@@ -58,10 +58,15 @@ namespace TheLongestYear.UI
                 cartPreviewSlots: 0,
                 getJp: () => _store.State.JunimoPoints,
                 spendJp: n => _store.State.JunimoPoints -= n);
+            // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
+            int offerWeek = seasonOverride.HasValue ? _store.Run.WeekOfYear + 1 : _store.Run.WeekOfYear;
+            RandomizerSettings offerRand = _runController.RandomizerForWeekPeek(offerWeek);
             _monitor.Log(
                 $"Opened planning hub (week {_store.Run.WeekOfYear}{(seasonOverride.HasValue ? $" → {offerSeason}" : "")}, " +
-                $"offer: {string.Join(",", offer)}).",
+                $"offer: {string.Join(",", CardMultiplier.OfferLabels(offer, _store.Run.Seed, offerWeek, offerRand))}).",
                 LogLevel.Info);
+            if (CardMultiplier.AnySealed(offer.Count, _store.Run.Seed, offerWeek, offerRand))
+                _monitor.Log($"Planning hub offer with the face-down card: {string.Join(",", offer)}.", LogLevel.Trace);
             return true;
         }
 
