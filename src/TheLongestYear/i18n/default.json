@@ -508,6 +508,7 @@
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",
     "menu.hub.season-mult": "Junimo gratitude grows with the seasons - donations now earn x{{mult}} JP.",
     "menu.hub.reroll": "Re-roll Themes",
+    "menu.hub.reroll-cost": "Re-roll ({{cost}} JP)",
     "menu.hub.reroll-count": "Re-roll ({{count}})",
     "menu.hub.no-offer": "(no offer)",
     "menu.hub.bonus-week": "Bonus this week (1.5x):",
