@@ -16,6 +16,9 @@ public sealed class RandomizerSettings
     public bool MysteryCard { get; set; }
     public bool RandomBundleRewards { get; set; }
     public bool RandomCartDays { get; set; }
+    public bool DoubleThemeWeek { get; set; }
+    public bool WildcardDays { get; set; }
+    public bool RandomShrineDonations { get; set; }
 
     public RandomizerSettings Clone() => (RandomizerSettings)MemberwiseClone();
 }

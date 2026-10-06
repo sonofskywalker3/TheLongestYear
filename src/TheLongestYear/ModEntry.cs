@@ -2444,6 +2444,21 @@ namespace TheLongestYear
                 setValue: v => _config.Randomizer.RandomCartDays = v,
                 name: () => Strings.Get("gmcm.randomizer.random-cart-days.name"),
                 tooltip: () => Strings.Get("gmcm.randomizer.random-cart-days.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.DoubleThemeWeek,
+                setValue: v => _config.Randomizer.DoubleThemeWeek = v,
+                name: () => Strings.Get("gmcm.randomizer.double-theme-week.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.double-theme-week.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.WildcardDays,
+                setValue: v => _config.Randomizer.WildcardDays = v,
+                name: () => Strings.Get("gmcm.randomizer.wildcard-days.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.wildcard-days.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomShrineDonations,
+                setValue: v => _config.Randomizer.RandomShrineDonations = v,
+                name: () => Strings.Get("gmcm.randomizer.random-shrine-donations.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-shrine-donations.tooltip"));
 
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
