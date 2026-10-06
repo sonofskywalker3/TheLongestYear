@@ -336,7 +336,7 @@ namespace TheLongestYear.UI
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
             // Reserve space for the reroll debug button row below preview rows / cards — only when
-            // the button is enabled (config.EnableThemeReroll, off by default).
+            // the button is enabled (Randomizer Rerolls is not Off; off by default).
             int rerollBlock = (_rand.Rerolls != RerollMode.Off) ? RerollButtonHeight + 24 : 0;
             height = titleBlock + CardHeight + previewBlock + rerollBlock + PanelPadding;
 
@@ -413,7 +413,7 @@ namespace TheLongestYear.UI
             // Reroll debug button — centred horizontally, sits in the bottom strip of the
             // panel just above its border. Lets the playtester cycle through theme offers
             // without resetting the run. Not gameplay-balanced; QA-only, gated behind
-            // config.EnableThemeReroll (off by default). When disabled it isn't built or added,
+            // Randomizer Rerolls not being Off (off by default). When disabled it isn't built or added,
             // so receiveLeftClick / DrawRerollButton (both null-guarded) skip it entirely.
             if (_rand.Rerolls != RerollMode.Off)
             {
@@ -550,7 +550,7 @@ namespace TheLongestYear.UI
             : _run.SelectedThemesThisMonth;
 
         /// <summary>
-        /// Regenerate the offer (config EnableThemeReroll). Salt the underlying seed with the
+        /// Regenerate the offer (Randomizer Rerolls setting). Salt the underlying seed with the
         /// week's re-roll count so the offer stays deterministic. Candidates are every theme not
         /// picked this month that can ask for at least one goal, and <see cref="RerollCycle"/>
         /// never repeats a pair shown this week until every pair has been shown (Nijah, Nexus
