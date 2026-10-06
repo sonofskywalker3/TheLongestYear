@@ -22,9 +22,12 @@ public static class ShrineGoalSampler
 
     /// <summary>Uniform pick without replacement, at most <paramref name="count"/> ids, honouring
     /// group caps. Input is de-duplicated and sorted first so the result depends only on the seed.
-    /// Returns fewer when the pool runs short.</summary>
+    /// Returns fewer when the pool runs short. <paramref name="alreadyChosen"/> is the list's CC
+    /// goals: they count toward the caps (one fruit-tree fruit, trap fish, jelly per list) but are
+    /// never returned.</summary>
     public static IReadOnlyList<string> Pick(int seed, int weekOfYear, Theme theme,
-        IReadOnlyList<string> candidateIds, int count, IReadOnlyList<GoalGroupCap> caps)
+        IReadOnlyList<string> candidateIds, int count, IReadOnlyList<GoalGroupCap> caps,
+        IReadOnlyCollection<string>? alreadyChosen = null)
     {
         var picked = new List<string>();
         if (count <= 0) return picked;
@@ -35,18 +38,22 @@ public static class ShrineGoalSampler
             int i = rng.Next(pool.Count);
             string id = pool[i];
             pool.RemoveAt(i);
-            if (IsCapped(id, picked, caps)) continue;
+            if (IsCapped(id, picked, alreadyChosen, caps)) continue;
             picked.Add(id);
         }
         return picked;
     }
 
-    private static bool IsCapped(string id, List<string> picked, IReadOnlyList<GoalGroupCap>? caps)
+    private static bool IsCapped(string id, List<string> picked, IReadOnlyCollection<string>? alreadyChosen,
+        IReadOnlyList<GoalGroupCap>? caps)
     {
         if (caps == null) return false;
         foreach (GoalGroupCap cap in caps)
-            if (cap.Ids.Contains(id) && picked.Count(p => cap.Ids.Contains(p)) >= cap.Max)
-                return true;
+        {
+            if (!cap.Ids.Contains(id)) continue;
+            int taken = picked.Count(p => cap.Ids.Contains(p)) + (alreadyChosen?.Count(p => cap.Ids.Contains(p)) ?? 0);
+            if (taken >= cap.Max) return true;
+        }
         return false;
     }
 

@@ -30,12 +30,14 @@ namespace TheLongestYear.Loop
         {
             if (!(RandomizerForWeekPeek(Run.WeekOfYear) ?? new RandomizerSettings()).RandomShrineDonations) return;
             Run.CurrentWeekShrineGoals ??= new List<ShrineGoal>();
-            RollShrineList(FirstShrineList, Run.CurrentSelection, Run.CurrentWeekBonusSlots.Count);
-            RollShrineList(SecondShrineList, Run.SecondSelection, Run.SecondWeekBonusSlots?.Count ?? 0);
+            RollShrineList(FirstShrineList, Run.CurrentSelection, Run.CurrentWeekBonusSlots);
+            RollShrineList(SecondShrineList, Run.SecondSelection, Run.SecondWeekBonusSlots);
         }
 
-        private void RollShrineList(int list, Theme? selection, int ccGoals)
+        private void RollShrineList(int list, Theme? selection, IReadOnlyList<BonusSlot> ccSlots)
         {
+            int ccGoals = ccSlots?.Count ?? 0;
+            string[] ccItemIds = ccSlots?.Select(s => s.ItemId).ToArray() ?? Array.Empty<string>();
             if (selection is not Theme theme) return;
             if (Run.CurrentWeekShrineGoals.Any(g => g.ListIndex == list)) return;
             if (ShrineThemeIds == null || Availability == null || SeasonsOf == null)
@@ -75,7 +77,9 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"Shrine goals: skipped {unplaced.Count} {theme} item(s) the availability model cannot place: " +
                              string.Join(", ", unplaced) + ".", LogLevel.Trace);
 
-            IReadOnlyList<string> picked = ShrineGoalSampler.Pick(Run.Seed, week, theme, allowed, count, GoalCaps);
+            // The list's CC goals count toward the one-per-list group caps (RunController.GoalCaps).
+            IReadOnlyList<string> picked = ShrineGoalSampler.Pick(Run.Seed, week, theme, allowed, count, GoalCaps,
+                alreadyChosen: ccItemIds);
             Random rng = RollSeed.Rng(Run.Seed, week, ShrineGoalRules.StackSalt, (int)theme);
             ItemAvailabilityModel model = Availability;
             List<ShrineGoal> goals = ShrineGoalRules.Build(picked, list, profile, rng,

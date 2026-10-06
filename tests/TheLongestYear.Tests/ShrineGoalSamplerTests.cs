@@ -47,6 +47,30 @@ public class ShrineGoalSamplerTests
     }
 
     [Fact]
+    public void Pick_counts_the_lists_cc_goals_toward_the_caps()
+    {
+        var capped = new HashSet<string>(Pool.Take(15));
+        var caps = new List<GoalGroupCap> { new(capped, 1) };
+        string ccGoal = Pool[0];
+        for (int seed = 0; seed < 30; seed++)
+        {
+            var p = ShrineGoalSampler.Pick(seed, 2, Theme.Farming, Pool.Skip(1).ToList(), 4, caps,
+                alreadyChosen: new[] { ccGoal, "(O)NotCapped" });
+            Assert.DoesNotContain(p, x => capped.Contains(x));
+            Assert.Equal(4, p.Count);
+        }
+    }
+
+    [Fact]
+    public void Pick_with_no_capped_cc_goal_matches_the_plain_pick()
+    {
+        var caps = new List<GoalGroupCap> { new(new HashSet<string>(Pool.Take(15)), 1) };
+        for (int seed = 0; seed < 30; seed++)
+            Assert.Equal(ShrineGoalSampler.Pick(seed, 2, Theme.Farming, Pool, 4, caps),
+                ShrineGoalSampler.Pick(seed, 2, Theme.Farming, Pool, 4, caps, alreadyChosen: new[] { "(O)NotCapped" }));
+    }
+
+    [Fact]
     public void Pick_returns_fewer_when_the_pool_is_short_and_empty_for_zero()
     {
         Assert.Equal(2, ShrineGoalSampler.Pick(1, 1, Theme.Mining, new[] { "a", "b" }, 5, NoCaps).Count);
