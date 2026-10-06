@@ -40,7 +40,8 @@ public static class WildcardDays
         if (!HasPlanThisWeek(run) || run.DayOfMonth != run.WildcardDay) return null;
         string? stored = StoredTwistToday(run);
         if (stored != null) return stored;
-        run.WildcardTwist = WildcardSchedule.TwistFor(run.Seed, run.WeekOfYear, minecartsRepaired());
+        run.WildcardTwist = WildcardSchedule.TwistFor(run.Seed, run.WeekOfYear, minecartsRepaired(),
+            WildcardSchedule.SnowAllowed((int)run.Season, run.DayOfMonth));
         run.WildcardTwistDay = run.DayOfMonth;
         revealedNow = true;
         return run.WildcardTwist;
@@ -57,6 +58,18 @@ public static class WildcardDays
 
     /// <summary>True on the night that follows an extra-growth wildcard day (read at DayEnding).</summary>
     public static bool GrowthTonight(RunState run) => StoredTwistToday(run) == WildcardSchedule.ExtraGrowth;
+
+    /// <summary>The twist whose overnight half runs tonight (read at DayEnding): the snow day (no
+    /// outdoor growth) or the night event. Null on any other night and on day 28, the rewind
+    /// night, whose farm-event slot belongs to the day-28 driver.</summary>
+    public static string? NightTwistTonight(RunState run)
+    {
+        if (run.DayOfMonth == RewindDay) return null;
+        string? twist = StoredTwistToday(run);
+        return twist == WildcardSchedule.SnowDay || twist == WildcardSchedule.NightEvent ? twist : null;
+    }
+
+    private const int RewindDay = 28;
 
     /// <summary>Debug: make today the wildcard day with <paramref name="twistId"/>.</summary>
     public static void ForceToday(RunState run, string twistId)
