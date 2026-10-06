@@ -12,7 +12,8 @@ public class RandomizerSettingsTests
         var r = new GameplayConfig().Randomizer;
         Assert.Equal(RerollMode.Off, r.Rerolls);
         Assert.False(r.RandomThemeItems || r.RandomPairings || r.RandomMultiplier
-            || r.MysteryCard || r.RandomBundleRewards || r.RandomCartDays);
+            || r.MysteryCard || r.RandomBundleRewards || r.RandomCartDays
+            || r.DoubleThemeWeek || r.WildcardDays || r.RandomShrineDonations);
     }
 
     [Fact]
@@ -48,11 +49,15 @@ public class RandomizerSettingsTests
     public void The_snapshot_survives_a_save_round_trip()
     {
         var run = new RunState();
-        run.RandomizerFor(3, new RandomizerSettings { RandomMultiplier = true, Rerolls = RerollMode.CostsJp });
+        run.RandomizerFor(3, new RandomizerSettings { RandomMultiplier = true, Rerolls = RerollMode.CostsJp,
+            DoubleThemeWeek = true, WildcardDays = true, RandomShrineDonations = true });
         var back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(run))!;
         Assert.Equal(3, back.RandomizerWeek);
         Assert.True(back.RandomizerFor(3, new RandomizerSettings()).RandomMultiplier);
         Assert.Equal(RerollMode.CostsJp, back.RandomizerSnapshot!.Rerolls);
+        Assert.True(back.RandomizerSnapshot.DoubleThemeWeek);
+        Assert.True(back.RandomizerSnapshot.WildcardDays);
+        Assert.True(back.RandomizerSnapshot.RandomShrineDonations);
     }
 
     [Fact]
