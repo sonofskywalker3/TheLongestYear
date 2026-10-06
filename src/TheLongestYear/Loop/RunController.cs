@@ -349,6 +349,8 @@ namespace TheLongestYear.Loop
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
                 // Releases the driver's Restart branch (DayStartedWhileBranchPending).
                 _dayStartedWhileBranchPending = true;
+                // Yesterday's wildcard twist (max luck) must not reach the boosts' morning pass.
+                DayEffects.Clear();
                 // A voluntary restart resets as soon as the morning is clear; keep the new day's
                 // date off the screen until the world is back on Spring 1.
                 if (_pendingCutscene == Day28Branch.Restart)
