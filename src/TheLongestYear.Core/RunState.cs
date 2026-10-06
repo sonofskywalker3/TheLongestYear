@@ -127,6 +127,10 @@ public sealed class RunState
     /// <summary>Wildcard days: the day-of-month the twist was revealed, so a reload re-applies it.</summary>
     public int WildcardTwistDay { get; set; }
 
+    /// <summary>Wildcard days: set at the end of an extra_growth day so tonight's crop pass adds its
+    /// tick (the overnight hooks already see tomorrow's date); cleared the next morning.</summary>
+    public bool WildcardGrowthNight { get; set; }
+
     /// <summary>Random Cart Days: the week (of year) whose rolled days are in <see cref="CartDays"/>; -1 = none.</summary>
     public int CartDaysWeek { get; set; } = -1;
 
@@ -496,6 +500,7 @@ public sealed class RunState
         WildcardDay = 0;
         WildcardTwist = null;
         WildcardTwistDay = 0;
+        WildcardGrowthNight = false;
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back
