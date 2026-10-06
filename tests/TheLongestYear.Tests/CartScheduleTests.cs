@@ -38,17 +38,28 @@ public class CartScheduleTests
 
     [Fact]
     public void Off_gives_vanilla_days()
-        => Assert.Equal(new[] { 12, 14 }, CartSchedule.ForWeek(new RunState(), 2, 0, 8, random: false));
+        => Assert.Equal(new[] { 12, 14 }, CartSchedule.ForWeek(new RunState(), 0, 10, random: false));
 
     [Fact]
     public void A_rolled_week_is_stored_and_reused()
     {
         var run = new RunState();
-        var first = CartSchedule.ForWeek(run, 6, 1, 15, random: true);
+        var first = CartSchedule.ForWeek(run, 1, 10, random: true);
         Assert.Equal(6, run.CartDaysWeek);
         run.CartDays = new List<int> { 20 };
-        Assert.Equal(new[] { 20 }, CartSchedule.ForWeek(run, 6, 1, 15, random: true));
+        Assert.Equal(new[] { 20 }, CartSchedule.ForWeek(run, 1, 10, random: true));
         Assert.NotNull(first);
+    }
+
+    [Fact]
+    public void Two_calls_on_one_date_agree_and_store_under_the_dates_own_week()
+    {
+        var run = new RunState { Seed = 77, DayOfMonth = 1 }; // WeekOfYear lags: must be ignored
+        var a = CartSchedule.ForWeek(run, 2, 22, random: true).ToList();
+        var b = CartSchedule.ForWeek(run, 2, 22, random: true).ToList();
+        Assert.Equal(a, b);
+        Assert.Equal(Calendar.WeekOfYear(2, 22), run.CartDaysWeek);
+        Assert.All(a, d => Assert.InRange(d, 22, 28));
     }
 
     [Fact]

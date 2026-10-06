@@ -403,7 +403,7 @@
     "menu.shrine-preview.weather-header": "Weather",
     "menu.shrine-preview.weather-day-hover": "Day {{day}} - {{weather}}",
     "menu.shrine-preview.cart-away": "Traveling Cart: not in town (next: {{day}})",
-    "menu.shrine-preview.cart-away-season": "Traveling Cart: not in town (no more visits this season)",
+    "menu.shrine-preview.cart-away-season": "Traveling Cart: not in town (none left this season)",
     "menu.shrine-preview.cart-catalog-header": "Cart Catalog: bundle items today",
     "menu.shrine-preview.cart-traveling-header": "Traveling Cart: bundle items today",
     "menu.shrine-preview.cart-nothing": "Nothing here for a bundle today.",
