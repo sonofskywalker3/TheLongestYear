@@ -1858,6 +1858,15 @@ namespace TheLongestYear
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (ok != null) { ok.Invoke(levelUp, null); this.Monitor.Log($"tly_dismiss: {name} OK clicked.", LogLevel.Info); return; }
             }
+            // A DialogueBox must close through its own closeDialogue (the click path): exitThisMenu
+            // leaves Game1.dialogueUp set, which freezes every fade-to-clear (ScreenFade.UpdateFadeAlpha)
+            // and hung a crop fairy night forever (smoke 2026-10-06: the fairy waits on !fadeToBlack).
+            if (menu is StardewValley.Menus.DialogueBox box)
+            {
+                box.closeDialogue();
+                this.Monitor.Log($"tly_dismiss: {name} closed (dialogueUp={Game1.dialogueUp}).", LogLevel.Info);
+                return;
+            }
             menu.exitThisMenu(playSound: false);
             this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
         }
