@@ -63,7 +63,7 @@ namespace TheLongestYear.Donations
             if (bonusApplies)
                 WeeklyGoalCredit.RecordDeposit(Run.CurrentWeekBonusSlots, bundleIndex, ingredientIndex);
             long awarded = bonusApplies
-                ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier, MidpointRounding.AwayFromZero)
+                ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier * Run.CurrentGoalMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;
             awarded = JpBoostHelper.Apply(_store.State, awarded);
 
@@ -73,7 +73,7 @@ namespace TheLongestYear.Donations
             else
                 _monitor.Log($"OnItemDonated('{qualifiedItemId}') without a slot identity: JP paid, ledger untouched (the board mirror settles it).", LogLevel.Trace);
 
-            string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier})" : "";
+            string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier}, card x{Run.CurrentGoalMultiplier})" : "";
             int jpBoostTier = JpBoostHelper.HighestTier(_store.State);
             string boostTag = jpBoostTier > 0 ? $" (jp_boost tier {jpBoostTier})" : "";
             // Per-item donation line is Trace: a full CC restoration donates dozens-to-hundreds of
