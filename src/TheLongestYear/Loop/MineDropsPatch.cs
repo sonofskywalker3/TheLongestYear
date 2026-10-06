@@ -147,7 +147,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static bool Prefix(MineShaft __instance, xTile.Dimensions.Location tileLocation, ref bool __result)
         {
-            if (!ActiveEffectsProvider.ActiveLiability("mines_closed"))
+            bool themeClosed = ActiveEffectsProvider.ActiveLiability("mines_closed");
+            if (!themeClosed && !DayEffects.Has(WildcardSchedule.MinesClosedDay))
                 return true;
 
             // Vanilla only activates the elevator on floors <= 120; tile 112 is inert otherwise.
@@ -160,7 +161,9 @@ namespace TheLongestYear.Loop
             // Tile 112 = elevator, tile 173 = descend ladder.
             if (tileIndex == 112 || tileIndex == 173)
             {
-                Game1.drawObjectDialogue(Strings.Get("dialog.mines.uneasy-1"));
+                Game1.drawObjectDialogue(themeClosed
+                    ? Strings.Get("dialog.mines.uneasy-1")
+                    : Strings.Get("dialog.mines.wildcard-1"));
                 __result = true;
                 return false; // skip original
             }
@@ -191,7 +194,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static bool Prefix(string[] action, Farmer who, ref bool __result)
         {
-            if (!ActiveEffectsProvider.ActiveLiability("mines_closed"))
+            bool themeClosed = ActiveEffectsProvider.ActiveLiability("mines_closed");
+            if (!themeClosed && !DayEffects.Has(WildcardSchedule.MinesClosedDay))
                 return true;
             if (action == null || action.Length == 0)
                 return true;
@@ -202,7 +206,9 @@ namespace TheLongestYear.Loop
             if (verb != "Mine" && verb != "NextMineLevel" && verb != "MineElevator")
                 return true;
 
-            Game1.drawObjectDialogue(Strings.Get("dialog.mines.uneasy-2"));
+            Game1.drawObjectDialogue(themeClosed
+                ? Strings.Get("dialog.mines.uneasy-2")
+                : Strings.Get("dialog.mines.wildcard-2"));
             __result = true;
             return false; // skip original — no warp into the shaft
         }

@@ -42,6 +42,8 @@ namespace TheLongestYear.Loop
             // Haggler boost (spec 2026-08-29, 2.7): +10% additive with the chain, same exclusions.
             int percent = ShopDiscount.PercentForTier(tier)
                 + (BoostEffectsService.HagglerActive?.Invoke() == true ? ShopDiscount.HagglerPercent : 0);
+            // Wildcard shop sale: 25% more off for the day, same exclusions.
+            percent = WildcardEffects.ShopPercent(percent, DayEffects.Has(WildcardSchedule.ShopSale));
             if (percent == 0) return;
 
             foreach (var key in new System.Collections.Generic.List<ISalable>(__result.Keys))

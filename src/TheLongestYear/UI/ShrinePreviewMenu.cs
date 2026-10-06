@@ -318,6 +318,10 @@ namespace TheLongestYear.UI
                 _rows.Add(Note(ThemeNote(ActiveEffectsProvider.SecondBonusId, ActiveEffectsProvider.SecondLiabilityId,
                     ActiveEffectsProvider.SecondLiabilitySuppressed, _run?.SecondSelection)));
             }
+            // Wildcard day: today's twist, on its own line (it is not part of either theme).
+            if (DayEffects.Today is string twist)
+                _rows.Add(Note(Strings.Get("shrine.active.wildcard",
+                    new Dictionary<string, string> { ["twist"] = WildcardText.Name(twist) })));
 
             foreach (UpgradeCategory cat in Enum.GetValues(typeof(UpgradeCategory)))
             {
