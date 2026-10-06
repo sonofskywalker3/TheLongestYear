@@ -41,8 +41,8 @@ public static class CardMultiplier
     }
 
     /// <summary>True when the card in <paramref name="slot"/> is face down this week.</summary>
-    public static bool IsSealed(int seed, int weekOfYear, int slot, RandomizerSettings r)
-        => r.MysteryCard && IsMysteryWeek(seed, weekOfYear, true) && slot == SealedSlot(seed, weekOfYear);
+    public static bool IsSealed(int seed, int weekOfYear, int slot, RandomizerSettings r, bool doubleWeek = false)
+        => !doubleWeek && r.MysteryCard && IsMysteryWeek(seed, weekOfYear, true) && slot == SealedSlot(seed, weekOfYear);
 
     public static double Mystery(int seed, int weekOfYear, Theme theme)
     {
@@ -50,8 +50,8 @@ public static class CardMultiplier
         return (MysteryLowHundredths + step * StepHundredths) / 100.0;
     }
 
-    public static double ForCard(int seed, int week, Theme theme, int slot, RandomizerSettings r)
-        => IsSealed(seed, week, slot, r)
+    public static double ForCard(int seed, int week, Theme theme, int slot, RandomizerSettings r, bool doubleWeek = false)
+        => IsSealed(seed, week, slot, r, doubleWeek)
             ? Mystery(seed, week, theme)
             : For(seed, week, theme, r.RandomMultiplier);
 
@@ -60,12 +60,12 @@ public static class CardMultiplier
 
     /// <summary>The offer in card order for an Info log line, with <see cref="SealedLabel"/> in place
     /// of the face-down theme so the SMAPI console never gives the mystery card away.</summary>
-    public static IReadOnlyList<string> OfferLabels(IReadOnlyList<Theme> offer, int seed, int week, RandomizerSettings r)
-        => offer.Select((t, slot) => IsSealed(seed, week, slot, r) ? SealedLabel : t.ToString()).ToList();
+    public static IReadOnlyList<string> OfferLabels(IReadOnlyList<Theme> offer, int seed, int week, RandomizerSettings r, bool doubleWeek = false)
+        => offer.Select((t, slot) => IsSealed(seed, week, slot, r, doubleWeek) ? SealedLabel : t.ToString()).ToList();
 
     /// <summary>True when any of the first <paramref name="cards"/> slots is face down this week.</summary>
-    public static bool AnySealed(int cards, int seed, int week, RandomizerSettings r)
-        => Enumerable.Range(0, cards).Any(slot => IsSealed(seed, week, slot, r));
+    public static bool AnySealed(int cards, int seed, int week, RandomizerSettings r, bool doubleWeek = false)
+        => Enumerable.Range(0, cards).Any(slot => IsSealed(seed, week, slot, r, doubleWeek));
 
     /// <summary>Display form: "1.25x", "0.5x", "1x".</summary>
     public static string Format(double multiplier)

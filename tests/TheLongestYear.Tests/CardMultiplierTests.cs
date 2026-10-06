@@ -130,3 +130,18 @@ public class CardMultiplierTests
         Assert.False(CardMultiplier.AnySealed(offer.Length, seed, 5, off));
     }
 }
+
+public class CardMultiplierDoubleWeekTests
+{
+    [Fact]
+    public void No_card_is_sealed_on_a_double_week_even_when_mystery_would_roll()
+    {
+        var r = new RandomizerSettings { MysteryCard = true };
+        int seed = Enumerable.Range(0, 500).First(s => CardMultiplier.IsMysteryWeek(s, 5, true));
+        int slot = CardMultiplier.SealedSlot(seed, 5);
+        Assert.True(CardMultiplier.IsSealed(seed, 5, slot, r));
+        Assert.False(CardMultiplier.IsSealed(seed, 5, slot, r, doubleWeek: true));
+        Assert.Equal(1.0, CardMultiplier.ForCard(seed, 5, Theme.Fishing, slot, r, doubleWeek: true));
+        Assert.False(CardMultiplier.AnySealed(2, seed, 5, r, doubleWeek: true));
+    }
+}

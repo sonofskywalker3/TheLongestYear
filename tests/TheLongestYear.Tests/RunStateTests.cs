@@ -444,4 +444,47 @@ public class RunStateTests
             Assert.Empty(run.RerollSeenPairs);
         }
     }
+
+    [Fact]
+    public void SelectSecond_adds_to_the_months_themes_and_Select_BeginNewMonth_BeginNewRun_clear_it()
+    {
+        RunState Fresh()
+        {
+            var r = new RunState();
+            r.Select(Theme.Mining);
+            r.SelectSecond(Theme.Fishing);
+            r.SecondLiabilityId = "x"; r.SecondGoalMultiplier = 1.4; r.SecondLiabilitySuppressedThisWeek = true;
+            r.SecondWeekBonusSlots.Add(new BonusSlot());
+            return r;
+        }
+        void AssertCleared(RunState r)
+        {
+            Assert.Null(r.SecondSelection); Assert.False(r.IsDoubleWeekSelection);
+            Assert.Empty(r.SecondWeekBonusSlots); Assert.Null(r.SecondLiabilityId);
+            Assert.Equal(1.0, r.SecondGoalMultiplier); Assert.False(r.SecondLiabilitySuppressedThisWeek);
+        }
+        RunState a = Fresh();
+        Assert.True(a.IsDoubleWeekSelection);
+        Assert.Contains(Theme.Fishing, a.SelectedThemesThisMonth);
+        a.Select(Theme.Farming); AssertCleared(a);
+        RunState b = Fresh(); b.BeginNewMonth(Season.Summer); AssertCleared(b);
+        RunState c = Fresh(); c.BeginNewRun(5); AssertCleared(c);
+    }
+
+    [Fact]
+    public void Second_selection_survives_a_json_round_trip_and_an_old_save_has_none()
+    {
+        var r = new RunState();
+        r.Select(Theme.Mining);
+        r.SelectSecond(Theme.Fishing);
+        r.SecondLiabilityId = "x"; r.SecondGoalMultiplier = 1.4; r.SecondLiabilitySuppressedThisWeek = true;
+        RunState back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(r))!;
+        Assert.Equal(Theme.Fishing, back.SecondSelection);
+        Assert.Equal("x", back.SecondLiabilityId);
+        Assert.Equal(1.4, back.SecondGoalMultiplier);
+        Assert.True(back.SecondLiabilitySuppressedThisWeek);
+        RunState old = JsonSerializer.Deserialize<RunState>("{}")!;
+        Assert.Null(old.SecondSelection);
+        Assert.Equal(1.0, old.SecondGoalMultiplier);
+    }
 }
