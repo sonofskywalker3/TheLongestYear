@@ -98,6 +98,12 @@ namespace TheLongestYear.Loop
                 ["bonus"] = ThemeModifiers.DisplayNameFor(bonusId),
                 ["drawback"] = ThemeModifiers.DisplayNameFor(liabilityId),
             });
+            // The randomizer's card multiplier (1x shows nothing, the quest log stays as before).
+            if (Run.CurrentGoalMultiplier != NoGoalMultiplier)
+                q.questDescription += "\n" + Strings.Get("quest.weekly.mult", new Dictionary<string, string>
+                {
+                    ["mult"] = CardMultiplier.Format(Run.CurrentGoalMultiplier),
+                });
             q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}";
             q.dayQuestAccepted.Value = Game1.Date.TotalDays;
             q.daysLeft.Value = -1;   // no time limit (the next week's pick will replace it)
@@ -199,11 +205,17 @@ namespace TheLongestYear.Loop
             }
         }
 
+        /// <summary>The goal multiplier that changes nothing (randomizer off, old saves, debug picks).</summary>
+        private const double NoGoalMultiplier = 1.0;
+
         /// <summary>Rule D: the weekly bonus (30 x season multiplier) split evenly across the
-        /// week's goals and paid as each lands. A one-goal Winter week pays 120 / 7, not 120.</summary>
+        /// week's goals and paid as each lands. A one-goal Winter week pays 120 / 7, not 120.
+        /// The randomizer's card multiplier (stored at selection) scales the bonus before the split.</summary>
         private void PayGoalShares(int newlyPaid, int doneCount, int total)
         {
-            long perGoal = WeeklyGoalPayout.PerGoal(Jp.WeeklyQuestBonus(Run.WeekOfYear), total);
+            long weeklyBonus = (long)Math.Round(Jp.WeeklyQuestBonus(Run.WeekOfYear) * Run.CurrentGoalMultiplier,
+                MidpointRounding.AwayFromZero);
+            long perGoal = WeeklyGoalPayout.PerGoal(weeklyBonus, total);
             long paid = JpBoostHelper.Apply(_store.State, perGoal * newlyPaid);
             _store.State.JunimoPoints += paid;
             Game1.addHUDMessage(new HUDMessage(

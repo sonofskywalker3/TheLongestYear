@@ -518,6 +518,8 @@
     "menu.hub.weather-header": "Weather",
     "menu.hub.day-label": "Day {{day}} - {{weather}}",
     "menu.hub.cart-label": "Cart: {{label}}",
+    "menu.hub.card-mult": "Goal JP this week: {{mult}}",
+    "menu.hub.mystery-mult": "Pick it blind for {{mult}} goal JP.",
     "menu.goals.title": "Season Goals: {{season}} (day {{day}})",
     "menu.goals.title-held": "Season Goals: {{season}} (day {{day}}) held {{holds}}x",
     "menu.goals.badge-met": "checkpoint met",
@@ -535,6 +537,7 @@
     // -- quests / composed fragments / tags -----------------------------------------
     "quest.weekly.title": "Weekly Theme: {{theme}}",
     "quest.weekly.description": "Bonus: {{bonus}}\nDrawback: {{drawback}}",
+    "quest.weekly.mult": "Goal JP: {{mult}}",
     "quest.weekly.progress": "Donated {{done}}/{{total}}:",
     "quest.weekly.slot": "{{item}}{{color}}{{qty}}{{quality}} - {{bundle}}",
     "quest.weekly.qty": " x{{count}}",

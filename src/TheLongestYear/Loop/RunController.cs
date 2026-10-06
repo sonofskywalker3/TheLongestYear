@@ -894,7 +894,8 @@ namespace TheLongestYear.Loop
                     var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                     ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(
-                        $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
+                        $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season} " +
+                        $"(goal JP {CardMultiplier.Format(Run.CurrentGoalMultiplier)}).",
                         LogLevel.Info);
 
                     ApplyEmptyPoolLiftIfNeeded();
@@ -1046,7 +1047,9 @@ namespace TheLongestYear.Loop
         };
 
         /// <summary>Select one of this week's offered themes (driven by the UI; debug command + UI).</summary>
-        public void SelectByName(string themeName, bool skipOfferCheck = false)
+        /// <param name="slot">The hub card position the pick came from (0 left, 1 right); it sets
+        /// this week's goal multiplier. -1 (console and debug picks) pays 1x.</param>
+        public void SelectByName(string themeName, bool skipOfferCheck = false, int slot = -1)
         {
             if (!Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
             {
@@ -1072,8 +1075,9 @@ namespace TheLongestYear.Loop
             // A re-pick or re-roll replaces the goal lines, so the old ones go back to full first.
             RevertWeekDiscount("re-pick");
             Run.Select(theme);
-            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, theme,
-                RandomizerForWeekNoStore(Run.WeekOfYear).RandomPairings);
+            RandomizerSettings rand = RandomizerForWeekNoStore(Run.WeekOfYear);
+            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, theme, rand.RandomPairings);
+            Run.CurrentGoalMultiplier = slot < 0 ? 1.0 : CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, theme, slot, rand);
             // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
             // card, console). Mark the week presented and drop any deferred re-present for it —
             // otherwise a stale deferred offer (stashed while a picker was already up) drains the
@@ -1088,7 +1092,7 @@ namespace TheLongestYear.Loop
             ActiveEffectsProvider.Set(bonus, liability);
             ApplyEmptyPoolLiftIfNeeded();
             _monitor.Log(
-                $"Selected {theme} (bonus {bonus}, liability {liability}). " +
+                $"Selected {theme} (bonus {bonus}, liability {liability}, goal JP {CardMultiplier.Format(Run.CurrentGoalMultiplier)}). " +
                 $"Goal slots this week: [{string.Join(", ", Run.CurrentWeekBonusSlots.Select(s => $"{s.ItemId}@{s.BundleName}#{s.IngredientIndex}"))}].",
                 LogLevel.Info);
 
@@ -1360,11 +1364,17 @@ namespace TheLongestYear.Loop
         public ItemAvailabilityModel Availability { get; set; }
 
         /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.</summary>
-        public void PreSelectForNextMonth(Theme theme)
+        /// <param name="slot">The hub card position (0 left, 1 right); -1 pays 1x. The multiplier is
+        /// stored now with the live settings the day-28 hub showed, and applied by BeginNewMonth.</param>
+        public void PreSelectForNextMonth(Theme theme, int slot = -1)
         {
             Run.NextMonthSelection = theme;
+            Run.NextMonthGoalMultiplier = slot < 0
+                ? 1.0
+                : CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear + 1, theme, slot, _config.Randomizer ?? new RandomizerSettings());
             _monitor.Log(
-                $"Pre-pick set: {theme} will be the week-1 selection of {NextSeason(Run.Season)}.",
+                $"Pre-pick set: {theme} will be the week-1 selection of {NextSeason(Run.Season)} " +
+                $"(goal JP {CardMultiplier.Format(Run.NextMonthGoalMultiplier)}).",
                 LogLevel.Info);
         }
 

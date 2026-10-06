@@ -94,6 +94,15 @@ public sealed class RunState
     /// it right after <see cref="Select"/>.</summary>
     public string? CurrentLiabilityId { get; set; }
 
+    /// <summary>The randomizer multiplier on this week's goal JP (the weekly bonus shares and the
+    /// goal-slot donation bonus), stored at selection so payment never recomputes it. 1.0 for old
+    /// saves, pairings that predate it, and every pick made off the hub cards.</summary>
+    public double CurrentGoalMultiplier { get; set; } = 1.0;
+
+    /// <summary>The goal multiplier of the day-28 pre-pick card, carried into
+    /// <see cref="CurrentGoalMultiplier"/> when <see cref="BeginNewMonth"/> applies the pre-pick.</summary>
+    public double NextMonthGoalMultiplier { get; set; } = 1.0;
+
     /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
     /// Used so a re-trigger mid-week is a no-op — the hub only opens once per target week.</summary>
     public int OfferPresentedWeek { get; set; } = -1;
@@ -336,6 +345,7 @@ public sealed class RunState
     {
         CurrentSelection = theme;
         CurrentLiabilityId = null;
+        CurrentGoalMultiplier = 1.0;
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
@@ -355,6 +365,7 @@ public sealed class RunState
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
         CurrentLiabilityId = null;
+        CurrentGoalMultiplier = 1.0;
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
@@ -366,8 +377,10 @@ public sealed class RunState
         if (NextMonthSelection.HasValue)
         {
             Select(NextMonthSelection.Value);
+            CurrentGoalMultiplier = NextMonthGoalMultiplier;
             NextMonthSelection = null;
         }
+        NextMonthGoalMultiplier = 1.0;
     }
 
     /// <summary>Start a fresh loop attempt: reset to Spring 1, wipe ledger + selections, set the new seed.</summary>
@@ -383,6 +396,8 @@ public sealed class RunState
         CurrentSelection = null;
         CurrentLiabilityId = null;
         NextMonthSelection = null;
+        CurrentGoalMultiplier = 1.0;
+        NextMonthGoalMultiplier = 1.0;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
         VaultBundlesPaid.Clear();

@@ -40,6 +40,15 @@ namespace TheLongestYear.UI
         private const int BodyLineHeight = 26;
         private const int SectionGap = 8;
 
+        // ---------- Card positions (the slot index the randomizer's multiplier is keyed on) ----------
+        private const int LeftSlot = 0;
+        private const int RightSlot = 1;
+        private const int NoSlot = -1;
+
+        // ---------- Face-down mystery card ----------
+        private const float MysteryMarkScale = 3f;
+        private const int MysteryMarkGap = 16;
+
         // ---------- Header tip lines (banking tip + season-multiplier line) ----------
         // Vertical gap from the banking-tip line to the season-multiplier line below it
         // (0.12.0 clarity pass). titleBlock must reserve this same amount so the cards
@@ -227,8 +236,8 @@ namespace TheLongestYear.UI
             var btn = b;
             if (btn == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
-                if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmSelection(_offer[0]); return; }
-                if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmSelection(_offer[1]); return; }
+                if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmSelection(_offer[0], LeftSlot); return; }
+                if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmSelection(_offer[1], RightSlot); return; }
             }
             if (btn == Microsoft.Xna.Framework.Input.Buttons.B && !_themePicked) return;
 
@@ -279,12 +288,21 @@ namespace TheLongestYear.UI
 
         // ---------- per-card data ----------
 
-        /// <summary>Resolve the bonus-item preview for each card's theme from the current offer.</summary>
+        /// <summary>Resolve the bonus-item preview for each card's theme from the current offer.
+        /// The face-down card gets none: no icons, so no item tooltips either.</summary>
         private void ResolvePerCardData()
         {
-            ResolveBonusItemsForTheme(_offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus);
-            ResolveBonusItemsForTheme(_offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus);
+            ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus);
+            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus);
         }
+
+        /// <summary>True when the card in <paramref name="slot"/> is face down this offer week. Keyed on
+        /// seed, week and slot only, so a reroll keeps the same slot sealed.</summary>
+        private bool IsSealed(int slot) => CardMultiplier.IsSealed(_run.Seed, OfferWeek, slot, _rand);
+
+        /// <summary>Show a multiplier line on face-up cards when multipliers are in play this week.</summary>
+        private bool ShowsMultiplier
+            => _rand.RandomMultiplier || CardMultiplier.IsMysteryWeek(_run.Seed, OfferWeek, _rand.MysteryCard);
 
         private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest)
         {
@@ -550,9 +568,9 @@ namespace TheLongestYear.UI
                 return;
             }
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
-                ConfirmSelection(_offer[0]);
+                ConfirmSelection(_offer[0], LeftSlot);
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
-                ConfirmSelection(_offer[1]);
+                ConfirmSelection(_offer[1], RightSlot);
         }
 
         /// <summary>The week whose offer this hub shows: next month's week 1 on the day-28 pre-pick hub.</summary>
@@ -615,23 +633,25 @@ namespace TheLongestYear.UI
             if (!System.Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
                 return false;
             _forcedPick = !_offer.Contains(theme);
-            ConfirmSelection(theme);
+            // A debug pick pays 1x, like every other pick made off the cards.
+            ConfirmSelection(theme, NoSlot);
             return true;
         }
 
         private bool _forcedPick;
 
-        private void ConfirmSelection(Theme theme)
+        /// <param name="slot">The card position picked (0 left, 1 right); it sets the goal multiplier.</param>
+        private void ConfirmSelection(Theme theme, int slot)
         {
             _themePicked = true;
             if (_isPreSelectForNextMonth)
-                _runController.PreSelectForNextMonth(theme);
+                _runController.PreSelectForNextMonth(theme, slot);
             else
                 // skipOfferCheck whenever the menu has rerolled so picks off the rerolled
                 // offer aren't rejected by RunController's canonical OfferForWeek validation.
                 // The reroll path already excludes already-selected-this-month themes, so the
                 // gameplay rule that matters is preserved. A console pick off the cards is forced.
-                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0 || _forcedPick);
+                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0 || _forcedPick, slot: slot);
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }
@@ -672,8 +692,8 @@ namespace TheLongestYear.UI
                 new Vector2(panelCenterX - multSize.X / 2f, drawY),
                 Game1.textColor);
 
-            DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds);
-            DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds);
+            DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds, LeftSlot);
+            DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds, RightSlot);
 
             DrawWeatherCalendar(b);
             for (int i = 0; i < _cartRows.Count; i++)
@@ -766,7 +786,7 @@ namespace TheLongestYear.UI
         }
 
         private void DrawCard(SpriteBatch b, ClickableComponent card, Theme? theme,
-            List<Item> bonus, List<Rectangle> bonusBounds)
+            List<Item> bonus, List<Rectangle> bonusBounds, int slot)
         {
             if (card == null) return;
 
@@ -781,6 +801,12 @@ namespace TheLongestYear.UI
             {
                 Utility.drawTextWithShadow(b, Strings.Get("menu.hub.no-offer"), Game1.smallFont,
                     new Vector2(card.bounds.X + 24, card.bounds.Y + 24), Game1.textColor);
+                return;
+            }
+
+            if (IsSealed(slot))
+            {
+                DrawSealedCard(b, card, theme.Value, slot);
                 return;
             }
 
@@ -819,6 +845,20 @@ namespace TheLongestYear.UI
 
             // Bonus header above the icon row (both share BonusBottomMargin so they move together).
             int bonusHeaderY = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize - BodyLineHeight - 4;
+
+            // Randomizer card multiplier, under the drawback. Two-line bonus and drawback lines still
+            // leave room above the bonus header; the clamp keeps an extreme wrap off the header.
+            if (ShowsMultiplier)
+            {
+                string multLine = Strings.Get("menu.hub.card-mult", new Dictionary<string, string>
+                {
+                    ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme.Value, slot, _rand)),
+                });
+                int multHeight = (int)Game1.smallFont.MeasureString(multLine).Y;
+                int multY = System.Math.Min(textY, bonusHeaderY - multHeight);
+                Utility.drawTextWithShadow(b, multLine, Game1.smallFont,
+                    new Vector2(textX, multY), Game1.textColor);
+            }
             Utility.drawTextWithShadow(b, Strings.Get("menu.hub.bonus-week"), Game1.smallFont,
                 new Vector2(textX, bonusHeaderY), Game1.textColor);
 
@@ -837,6 +877,30 @@ namespace TheLongestYear.UI
             {
                 DrawBonusIcons(b, bonus, bonusBounds);
             }
+        }
+
+        /// <summary>The face-down mystery card: a large "?" and its multiplier, nothing else (no theme,
+        /// buff, drawback or goal icons). Still a normal card for clicks and gamepad focus.</summary>
+        private void DrawSealedCard(SpriteBatch b, ClickableComponent card, Theme theme, int slot)
+        {
+            const string mark = "?";
+            Vector2 markSize = Game1.dialogueFont.MeasureString(mark) * MysteryMarkScale;
+            string multLine = Strings.Get("menu.hub.mystery-mult", new Dictionary<string, string>
+            {
+                ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand)),
+            });
+            int textWidth = card.bounds.Width - CardInnerPad * 2;
+            string multWrapped = Game1.parseText(multLine, Game1.smallFont, textWidth);
+            Vector2 multSize = Game1.smallFont.MeasureString(multWrapped);
+
+            float blockHeight = markSize.Y + MysteryMarkGap + multSize.Y;
+            float top = card.bounds.Y + (card.bounds.Height - blockHeight) / 2f;
+            Utility.drawTextWithShadow(b, mark, Game1.dialogueFont,
+                new Vector2(card.bounds.X + (card.bounds.Width - markSize.X) / 2f, top),
+                Game1.textColor, MysteryMarkScale);
+            Utility.drawTextWithShadow(b, multWrapped, Game1.smallFont,
+                new Vector2(card.bounds.X + (card.bounds.Width - multSize.X) / 2f, top + markSize.Y + MysteryMarkGap),
+                Game1.textColor);
         }
 
         private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds)
