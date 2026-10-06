@@ -69,8 +69,15 @@ namespace TheLongestYear.Loop
 
             // Dismiss whatever menu might be open (vanilla forceEndFestival does this) so the
             // confirmation prompt doesn't linger past auto-eject.
+            // Clearing dialogueUp too, as vanilla's Event.skipEvent does: dropping a DialogueBox with
+            // exitActiveMenu leaves the flag set, and a stale dialogueUp freezes every fade-to-clear
+            // (ScreenFade.UpdateFadeAlpha) and pins player.CanMove false (Game1.UpdateOther).
             if (Game1.activeClickableMenu != null)
+            {
                 Game1.exitActiveMenu();
+                Game1.dialogueUp = false;
+                Game1.dialogueTyping = false;
+            }
 
             // Belt and braces: never leave the player mid-cast. Vanilla's forceEndFestival does not
             // finish a fishing cast, and a player ejected that way stayed "holding" the contest rod
