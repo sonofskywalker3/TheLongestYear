@@ -472,6 +472,30 @@ public class RunStateTests
     }
 
     [Fact]
+    public void Shrine_goals_clear_per_list_and_round_trip()
+    {
+        RunState Fresh()
+        {
+            var r = new RunState();
+            r.Select(Theme.Mining); r.SelectSecond(Theme.Fishing);
+            r.CurrentWeekShrineGoals.Add(new ShrineGoal { ItemId = "(O)1", Stack = 2, ListIndex = 0, Deposited = true });
+            r.CurrentWeekShrineGoals.Add(new ShrineGoal { ItemId = "(O)2", Stack = 3, ListIndex = 1, Paid = true });
+            return r;
+        }
+        var rt = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(Fresh()))!;
+        Assert.Equal(2, rt.CurrentWeekShrineGoals.Count);
+        Assert.True(rt.CurrentWeekShrineGoals[0].Deposited);
+        Assert.True(rt.CurrentWeekShrineGoals[1].Paid);
+        Assert.Empty(new RunState().CurrentWeekShrineGoals);
+
+        var a = Fresh(); a.SelectSecond(Theme.Farming);
+        Assert.Single(a.CurrentWeekShrineGoals); Assert.Equal(0, a.CurrentWeekShrineGoals[0].ListIndex);
+        var b = Fresh(); b.Select(Theme.Farming); Assert.Empty(b.CurrentWeekShrineGoals);
+        var c = Fresh(); c.BeginNewMonth(Season.Summer); Assert.Empty(c.CurrentWeekShrineGoals);
+        var d = Fresh(); d.BeginNewRun(9); Assert.Empty(d.CurrentWeekShrineGoals);
+    }
+
+    [Fact]
     public void Second_selection_survives_a_json_round_trip_and_an_old_save_has_none()
     {
         var r = new RunState();
