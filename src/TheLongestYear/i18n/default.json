@@ -435,6 +435,13 @@
     "shrine.tab.active": "Active",
     "shrine.tab.boosts": "Boosts",
     "shrine.tab.plan": "Plan",
+    "shrine.tab.donate": "Donate",
+    "shrine.donate.header": "This week's shrine goals",
+    "shrine.donate.hint": "Pick an item below to donate it.",
+    "shrine.donate.all-done": "Every shrine goal is donated this week.",
+    "shrine.donate.stack": "x{{stack}}",
+    "shrine.donate.goal-hover": "{{name}} x{{stack}}",
+    "shrine.donate.goal-done-hover": "{{name}} x{{stack}}\nDonated.",
     // Jeff's name for the button (voluntary restart, 2026-09-24).
     "shrine.restart.button": "Restart the year",
     "shrine.active.running": "Running boosts",
