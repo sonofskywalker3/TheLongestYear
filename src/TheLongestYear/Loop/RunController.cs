@@ -91,6 +91,14 @@ namespace TheLongestYear.Loop
 
         private RunState Run => _store.Run;
 
+        /// <summary>This week's Randomizer settings (snapshotted at the first read of the week).</summary>
+        internal RandomizerSettings Randomizer => Run.RandomizerFor(Run.WeekOfYear, _config.Randomizer);
+
+        internal RandomizerSettings RandomizerForWeek(int week) => Run.RandomizerFor(week, _config.Randomizer);
+
+        /// <summary>The live settings, for the day-28 pre-pick hub (next month's week must not be snapshotted early).</summary>
+        internal RandomizerSettings Live => _config.Randomizer;
+
         /// <summary>Per-group caps on a theme's weekly goal list: at most one fruit-tree fruit
         /// (Data/FruitTrees) and at most one crab-pot catch (Data/Fish trap rows); Jeff,
         /// 2026-08-28. Null = no caps.</summary>

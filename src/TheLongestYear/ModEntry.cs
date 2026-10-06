@@ -128,6 +128,11 @@ namespace TheLongestYear
             {
                 _config.StashTileX = 0; _config.StashTileY = 0; migrated = true;
             }
+            if (RandomizerMigration.Apply(_config))
+            {
+                migrated = true;
+                this.Monitor.Log("Migrated config.json: theme reroll switch moved to Randomizer > Rerolls = Free.", LogLevel.Info);
+            }
             if (migrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
 
@@ -2303,12 +2308,6 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.dejavu.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
-                getValue: () => _config.EnableThemeReroll,
-                setValue: v => _config.EnableThemeReroll = v,
-                name: () => Strings.Get("gmcm.theme-reroll.name"),
-                tooltip: () => Strings.Get("gmcm.theme-reroll.tooltip"));
-
-            gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.EnableNonObjectDonations,
                 setValue: v => _config.EnableNonObjectDonations = v,
                 name: () => Strings.Get("gmcm.non-object.name"),
@@ -2399,6 +2398,47 @@ namespace TheLongestYear
                 () => _config.Difficulty.HoldPrices, v => _config.Difficulty.HoldPrices = v,
                 () => Strings.Get("gmcm.difficulty.hold-prices.name"),
                 () => Strings.Get("gmcm.difficulty.hold-prices.tooltip"));
+
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.randomizer.section"));
+            gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.randomizer.blurb"));
+
+            gmcm.AddTextOption(this.ModManifest,
+                getValue: () => _config.Randomizer.Rerolls.ToString(),
+                setValue: v => _config.Randomizer.Rerolls = Enum.TryParse(v, out RerollMode m) ? m : RerollMode.Off,
+                name: () => Strings.Get("gmcm.randomizer.rerolls.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.rerolls.tooltip"),
+                allowedValues: new[] { "Off", "CostsJp", "Free" },
+                formatAllowedValue: FormatRerollMode);
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomThemeItems,
+                setValue: v => _config.Randomizer.RandomThemeItems = v,
+                name: () => Strings.Get("gmcm.randomizer.random-theme-items.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-theme-items.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomPairings,
+                setValue: v => _config.Randomizer.RandomPairings = v,
+                name: () => Strings.Get("gmcm.randomizer.random-pairings.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-pairings.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomMultiplier,
+                setValue: v => _config.Randomizer.RandomMultiplier = v,
+                name: () => Strings.Get("gmcm.randomizer.random-multiplier.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-multiplier.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.MysteryCard,
+                setValue: v => _config.Randomizer.MysteryCard = v,
+                name: () => Strings.Get("gmcm.randomizer.mystery-card.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.mystery-card.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomBundleRewards,
+                setValue: v => _config.Randomizer.RandomBundleRewards = v,
+                name: () => Strings.Get("gmcm.randomizer.random-bundle-rewards.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-bundle-rewards.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomCartDays,
+                setValue: v => _config.Randomizer.RandomCartDays = v,
+                name: () => Strings.Get("gmcm.randomizer.random-cart-days.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-cart-days.tooltip"));
 
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
@@ -5479,6 +5519,15 @@ namespace TheLongestYear
                 return Strings.Get("gmcm.bundle-source.remixed");
             return Strings.Get("gmcm.bundle-source.engine");
         }
+
+        private static string FormatRerollMode(string rawValue) => Enum.TryParse(rawValue, out RerollMode m)
+            ? m switch
+            {
+                RerollMode.CostsJp => Strings.Get("gmcm.randomizer.rerolls.costs-jp"),
+                RerollMode.Free => Strings.Get("gmcm.randomizer.rerolls.free"),
+                _ => Strings.Get("gmcm.randomizer.rerolls.off"),
+            }
+            : Strings.Get("gmcm.randomizer.rerolls.off");
 
         private static string FormatDifficultyStep(string rawValue) => DifficultySteps.Parse(rawValue) switch
         {

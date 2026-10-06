@@ -91,6 +91,7 @@ namespace TheLongestYear.UI
         /// sleeping on day 28). The pick routes through <see cref="RunController.PreSelectForNextMonth"/>
         /// rather than the normal current-week selection path.</summary>
         private readonly bool _isPreSelectForNextMonth;
+        private readonly RandomizerSettings _rand;
 
         private IReadOnlyList<Theme> _offer;
 
@@ -136,6 +137,8 @@ namespace TheLongestYear.UI
             _offer = offer ?? new List<Theme>();
             _offerSeason = offerSeason ?? run.Season;
             _isPreSelectForNextMonth = isPreSelectForNextMonth;
+            // The day-28 hub offers next month's week: read live rather than snapshot a future week.
+            _rand = isPreSelectForNextMonth ? config.Randomizer : runController.Randomizer;
             _weatherSageSlots = weatherSageSlots;
 
             // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
@@ -334,7 +337,7 @@ namespace TheLongestYear.UI
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
             // Reserve space for the reroll debug button row below preview rows / cards — only when
             // the button is enabled (config.EnableThemeReroll, off by default).
-            int rerollBlock = _config.EnableThemeReroll ? RerollButtonHeight + 24 : 0;
+            int rerollBlock = (_rand.Rerolls != RerollMode.Off) ? RerollButtonHeight + 24 : 0;
             height = titleBlock + CardHeight + previewBlock + rerollBlock + PanelPadding;
 
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
@@ -349,14 +352,14 @@ namespace TheLongestYear.UI
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
-                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : ((_rand.Rerolls != RerollMode.Off) ? RerollButtonId : -1)
             };
             _rightCard = new ClickableComponent(new Rectangle(cardsRightX, cardsY, CardWidth, CardHeight),
                 _offer.Count > 1 ? ThemeDisplay.Name(_offer[1]) : "right-card")
             {
                 myID = CardIdRight,
                 leftNeighborID = CardIdLeft,
-                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : ((_rand.Rerolls != RerollMode.Off) ? RerollButtonId : -1)
             };
 
             _weatherRows.Clear();
@@ -412,7 +415,7 @@ namespace TheLongestYear.UI
             // without resetting the run. Not gameplay-balanced; QA-only, gated behind
             // config.EnableThemeReroll (off by default). When disabled it isn't built or added,
             // so receiveLeftClick / DrawRerollButton (both null-guarded) skip it entirely.
-            if (_config.EnableThemeReroll)
+            if (_rand.Rerolls != RerollMode.Off)
             {
                 int rerollX = xPositionOnScreen + (width - RerollButtonWidth) / 2;
                 int rerollY = yPositionOnScreen + height - RerollButtonHeight - 16;
