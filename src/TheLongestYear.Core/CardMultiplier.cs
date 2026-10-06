@@ -25,8 +25,15 @@ public static class CardMultiplier
         => enabled && Rng(seed, weekOfYear, SaltMysteryWeek).Next(MysteryOneIn) == 0;
 
     /// <summary>The face-down card's position (0 left, 1 right). Depends on seed and week only, so a
-    /// reroll of the themes keeps the same slot sealed.</summary>
-    public static int SealedSlot(int seed, int weekOfYear) => Rng(seed, weekOfYear, SaltMysteryWeek ^ 1).Next(2);
+    /// reroll of the themes keeps the same slot sealed. It is the SECOND draw of the mystery-week
+    /// Random: a separate Random on a neighbouring seed (the old salt ^ 1) correlated with the
+    /// mystery roll and sealed the right card about 95% of mystery weeks.</summary>
+    public static int SealedSlot(int seed, int weekOfYear)
+    {
+        Random rng = Rng(seed, weekOfYear, SaltMysteryWeek);
+        rng.Next(MysteryOneIn); // the IsMysteryWeek draw
+        return rng.Next(2);
+    }
 
     /// <summary>True when the card in <paramref name="slot"/> is face down this week.</summary>
     public static bool IsSealed(int seed, int weekOfYear, int slot, RandomizerSettings r)

@@ -85,11 +85,24 @@ public class CardMultiplierTests
     }
 
     [Fact]
-    public void Rerolling_keeps_the_same_slot_sealed()
+    public void The_face_down_card_lands_left_and_right_about_evenly()
     {
-        // The sealed slot depends on seed and week only, never on the themes shown.
-        int seed = Enumerable.Range(0, 500).First(s => CardMultiplier.IsMysteryWeek(s, 9, true));
-        int slot = CardMultiplier.SealedSlot(seed, 9);
-        Assert.All(Enumerable.Range(0, 20), _ => Assert.Equal(slot, CardMultiplier.SealedSlot(seed, 9)));
+        // Over weeks that ARE mystery weeks, neither side may dominate (a correlated draw once
+        // put the sealed card on the right about 95% of the time).
+        var slots = Enumerable.Range(0, 8000)
+            .Where(s => CardMultiplier.IsMysteryWeek(s, 7, true))
+            .Select(s => CardMultiplier.SealedSlot(s, 7))
+            .ToList();
+        double right = slots.Count(x => x == 1) / (double)slots.Count;
+        Assert.InRange(right, 0.35, 0.65);
+    }
+
+    [Fact]
+    public void Default_settings_pay_one_times_on_both_cards_even_on_a_mystery_week()
+    {
+        var r = new RandomizerSettings();
+        int seed = Enumerable.Range(0, 500).First(s => CardMultiplier.IsMysteryWeek(s, 5, true));
+        Assert.Equal(1.0, CardMultiplier.ForCard(seed, 5, Theme.Fishing, 0, r));
+        Assert.Equal(1.0, CardMultiplier.ForCard(seed, 5, Theme.Fishing, 1, r));
     }
 }

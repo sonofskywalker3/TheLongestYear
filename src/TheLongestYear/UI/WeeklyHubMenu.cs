@@ -152,7 +152,7 @@ namespace TheLongestYear.UI
             _offerSeason = offerSeason ?? run.Season;
             _isPreSelectForNextMonth = isPreSelectForNextMonth;
             // The day-28 hub offers next month's week: read live rather than snapshot a future week.
-            _rand = isPreSelectForNextMonth ? config.Randomizer : runController.Randomizer;
+            _rand = isPreSelectForNextMonth ? (config.Randomizer ?? new RandomizerSettings()) : runController.Randomizer;
             _weatherSageSlots = weatherSageSlots;
 
             // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
