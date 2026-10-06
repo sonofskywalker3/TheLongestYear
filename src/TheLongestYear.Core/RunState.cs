@@ -381,12 +381,18 @@ public sealed class RunState
     public bool SecondLiabilitySuppressedThisWeek { get; set; }
     public bool IsDoubleWeekSelection => SecondSelection.HasValue;
 
+    /// <summary>The week's random shrine donation goals (Randomizer). ListIndex 0 belongs to the
+    /// first theme (cleared by <see cref="Select"/>), 1 to the double-week second theme (cleared by
+    /// <see cref="SelectSecond"/>); all cleared by BeginNewMonth and BeginNewRun.</summary>
+    public List<ShrineGoal> CurrentWeekShrineGoals { get; set; } = new();
+
     public void SelectSecond(Theme theme)
     {
         SecondSelection = theme;
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         (SecondWeekBonusSlots ??= new()).Clear();
+        (CurrentWeekShrineGoals ??= new()).RemoveAll(g => g.ListIndex == 1);
         ClearSecondState(keepSelection: true);
     }
 
@@ -400,6 +406,7 @@ public sealed class RunState
 
     private void ClearSecondSelection()
     {
+        (CurrentWeekShrineGoals ??= new()).RemoveAll(g => g.ListIndex == 1);
         (SecondWeekBonusSlots ??= new()).Clear();
         ClearSecondState();
     }
@@ -414,6 +421,7 @@ public sealed class RunState
         CurrentLiabilityId = null;
         CurrentGoalMultiplier = 1.0;
         ClearSecondSelection();
+        CurrentWeekShrineGoals.RemoveAll(g => g.ListIndex == 0);
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
@@ -435,6 +443,7 @@ public sealed class RunState
         CurrentLiabilityId = null;
         CurrentGoalMultiplier = 1.0;
         ClearSecondSelection();
+        CurrentWeekShrineGoals.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
@@ -471,6 +480,7 @@ public sealed class RunState
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
         VaultBundlesPaid.Clear();
+        CurrentWeekShrineGoals.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         // The rewind rewrites the whole board, so no discounted line is left to put back.
