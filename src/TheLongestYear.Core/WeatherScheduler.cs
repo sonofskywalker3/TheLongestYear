@@ -214,6 +214,9 @@ public static class WeatherScheduler
         available.Remove(day1);
     }
 
+    /// <summary>Vanilla festival days of a season (empty for an unknown index).</summary>
+    public static IReadOnlyList<int> FestivalDays(int seasonIndex) => FestivalsFor(seasonIndex);
+
     private static int[] FestivalsFor(int seasonIndex) => seasonIndex switch
     {
         0 => SpringFestivals,

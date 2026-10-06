@@ -114,6 +114,13 @@ public sealed class RunState
 
     /// <summary>The week <see cref="RandomizerSnapshot"/> was taken for; -1 when none.</summary>
     public int RandomizerWeek { get; set; } = -1;
+
+    /// <summary>Random Cart Days: the week (of year) whose rolled days are in <see cref="CartDays"/>; -1 = none.</summary>
+    public int CartDaysWeek { get; set; } = -1;
+
+    /// <summary>Random Cart Days: this week's rolled cart days (day-of-month), stored the first time they are asked for.</summary>
+    public List<int> CartDays { get; set; } = new();
+
     /// <summary>The Randomizer settings as they stood when this week's offer was first shown.</summary>
     public RandomizerSettings? RandomizerSnapshot { get; set; }
 
@@ -410,6 +417,8 @@ public sealed class RunState
         ClearReroll();
         RandomizerWeek = -1;
         RandomizerSnapshot = null;
+        CartDaysWeek = -1;
+        (CartDays ??= new()).Clear();
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back
