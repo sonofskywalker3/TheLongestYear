@@ -360,6 +360,38 @@ public sealed class RunState
     /// <summary>The ledger as a read view for the gate, the page and the sims.</summary>
     public SlotLedger DonatedLedger() => new SlotLedger(DonatedSlots ?? new List<DonatedSlot>());
 
+    /// <summary>Double theme week: the second picked theme and its per-week state (all cleared by
+    /// <see cref="Select"/>, <see cref="BeginNewMonth"/> and <see cref="BeginNewRun"/>).</summary>
+    public Theme? SecondSelection { get; set; }
+    public List<BonusSlot> SecondWeekBonusSlots { get; set; } = new();
+    public string? SecondLiabilityId { get; set; }
+    public double SecondGoalMultiplier { get; set; } = 1.0;
+    public bool SecondLiabilitySuppressedThisWeek { get; set; }
+    public bool IsDoubleWeekSelection => SecondSelection.HasValue;
+
+    public void SelectSecond(Theme theme)
+    {
+        SecondSelection = theme;
+        if (!SelectedThemesThisMonth.Contains(theme))
+            SelectedThemesThisMonth.Add(theme);
+        (SecondWeekBonusSlots ??= new()).Clear();
+        ClearSecondState(keepSelection: true);
+    }
+
+    private void ClearSecondState(bool keepSelection = false)
+    {
+        if (!keepSelection) SecondSelection = null;
+        SecondLiabilityId = null;
+        SecondGoalMultiplier = 1.0;
+        SecondLiabilitySuppressedThisWeek = false;
+    }
+
+    private void ClearSecondSelection()
+    {
+        (SecondWeekBonusSlots ??= new()).Clear();
+        ClearSecondState();
+    }
+
     /// <summary>Select a theme for this week: set current and add to the month's selections set.
     /// Also clears <see cref="LiabilitySuppressedThisWeek"/> — a fresh pick must always start
     /// with the liability active, otherwise the player could keep cycling themes to skip
@@ -369,6 +401,7 @@ public sealed class RunState
         CurrentSelection = theme;
         CurrentLiabilityId = null;
         CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
@@ -389,6 +422,7 @@ public sealed class RunState
         CurrentSelection = null;
         CurrentLiabilityId = null;
         CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
@@ -420,6 +454,7 @@ public sealed class RunState
         CurrentLiabilityId = null;
         NextMonthSelection = null;
         CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
         NextMonthGoalMultiplier = 1.0;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
