@@ -557,26 +557,85 @@ namespace TheLongestYear.UI
 
             if (_rerollButton != null && _rerollButton.containsPoint(x, y))
             {
-                long cost = CurrentRerollCost();
-                if (cost > 0)
-                {
-                    // A paid reroll that cannot change the offer is greyed and takes nothing
-                    // (final review T2): no charge, no count, no price step.
-                    if (cost > (_getJp?.Invoke() ?? 0) || !RerollCanChange())
-                    {
-                        Game1.playSound("cancel");
-                        return;
-                    }
-                    _spendJp?.Invoke(cost);
-                }
-                RerollOffer();
-                Game1.playSound("smallSelect");
+                Game1.playSound(TryRerollFromButton(out _) ? "smallSelect" : "cancel");
                 return;
             }
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
                 ConfirmSelection(_offer[0], LeftSlot);
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
                 ConfirmSelection(_offer[1], RightSlot);
+        }
+
+        /// <summary>The re-roll button's click: a paid reroll that cannot change the offer, or that
+        /// the player cannot afford, is refused and takes nothing (final review T2: no charge, no
+        /// count, no price step). On success the free or paid reroll runs. <paramref name="message"/>
+        /// is the outcome line (also used by the tly_reroll paid command).</summary>
+        private bool TryRerollFromButton(out string message)
+        {
+            long cost = CurrentRerollCost();
+            long before = _getJp?.Invoke() ?? 0;
+            if (cost > 0)
+            {
+                if (cost > before)
+                {
+                    message = $"Reroll refused: costs {cost} JP, only {before} JP.";
+                    return false;
+                }
+                if (!RerollCanChange())
+                {
+                    message = "Reroll refused: no other pair to show.";
+                    return false;
+                }
+                _spendJp?.Invoke(cost);
+            }
+            RerollOffer();
+            message = $"Reroll paid {cost} JP (JP {before} -> {_getJp?.Invoke() ?? 0})";
+            return true;
+        }
+
+        /// <summary>The reroll button's own click path, for tly_reroll paid.</summary>
+        public string RerollPaidForDebug()
+        {
+            TryRerollFromButton(out string message);
+            return message;
+        }
+
+        /// <summary>The card click for one side, for tly_select &lt;theme&gt; &lt;left|right&gt;: the real card
+        /// path (goal multiplier and mystery card included). Fails if the theme is not on that side.</summary>
+        public bool TryPickSide(string themeName, string side, out string error)
+        {
+            error = null;
+            int slot;
+            if (side.Equals("left", System.StringComparison.OrdinalIgnoreCase)) slot = LeftSlot;
+            else if (side.Equals("right", System.StringComparison.OrdinalIgnoreCase)) slot = RightSlot;
+            else { error = $"side must be left or right, got '{side}'."; return false; }
+            if (!System.Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
+            { error = $"unknown theme '{themeName}'."; return false; }
+            if (_offer.Count <= slot || _offer[slot] != theme)
+            { error = $"{theme} is not on the {side} card (offer: [{string.Join(", ", _offer)}])."; return false; }
+            ConfirmSelection(theme, slot);
+            double mult = _isPreSelectForNextMonth ? _run.NextMonthGoalMultiplier : _run.CurrentGoalMultiplier;
+            _monitor.Log($"Selected {theme} (slot {slot}, goal JP {CardMultiplier.Format(mult)})", LogLevel.Info);
+            return true;
+        }
+
+        /// <summary>One line per card for tly_hubcards: slot, theme (? plus the real theme at Trace when
+        /// face down), drawback id and multiplier.</summary>
+        public void LogCards()
+        {
+            for (int slot = 0; slot < _offer.Count; slot++)
+            {
+                Theme theme = _offer[slot];
+                bool sealedCard = IsSealed(slot);
+                string drawback = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme, _rand.RandomPairings);
+                double mult = CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand);
+                _monitor.Log(
+                    $"Hub card slot {slot}: {(sealedCard ? CardMultiplier.SealedLabel : theme.ToString())}, " +
+                    $"drawback {drawback}, goal JP {CardMultiplier.Format(mult)}{(sealedCard ? " (face down)" : "")}",
+                    LogLevel.Info);
+                if (sealedCard)
+                    _monitor.Log($"Hub card slot {slot} is {theme}.", LogLevel.Trace);
+            }
         }
 
         /// <summary>The week whose offer this hub shows: next month's week 1 on the day-28 pre-pick hub.</summary>

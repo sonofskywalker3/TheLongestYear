@@ -119,7 +119,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.FestivalMainEventOncePatch.Enabled = _config.FestivalMainEventOncePerDay;
 
             // One-shot config migration.
-            bool migrated = false;
+            bool stashTileMigrated = false;
             // 2026-05-28 second-pass migration for the stash tile:
             // The first migration set (72,12) as a hardcoded default, but the 2026-05-27 playtest
             // showed that tile is invisible on the Standard farm (under the farmhouse roof on
@@ -127,14 +127,13 @@ namespace TheLongestYear
             // relative to the FarmHouse entry instead.
             if (_config.StashTileX == 72 && _config.StashTileY == 12)
             {
-                _config.StashTileX = 0; _config.StashTileY = 0; migrated = true;
+                _config.StashTileX = 0; _config.StashTileY = 0; stashTileMigrated = true;
             }
             if (RandomizerMigration.Apply(_config))
             {
-                migrated = true;
                 this.Monitor.Log("Migrated config.json: theme reroll switch moved to Randomizer > Rerolls = Free.", LogLevel.Info);
             }
-            if (migrated)
+            if (stashTileMigrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
 
             // Always write the config back on Entry so any newly-added fields (Enabled, new
@@ -286,7 +285,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
-            helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
+            helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme> [left|right]", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
             helper.ConsoleCommands.Add("tly_skipscene", "Finish the open day-28 Junimo scene as if clicked through (debug/automation).", this.CmdSkipScene);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
@@ -314,8 +313,9 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop: nothing written or persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
+            helper.ConsoleCommands.Add("tly_hubcards", "Log each planning hub card: slot, theme (? if face down), drawback, goal multiplier (debug).", this.CmdHubCards);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
-            helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen]", this.CmdReroll);
+            helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen|paid]", this.CmdReroll);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
             helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
             helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
@@ -2629,6 +2629,7 @@ namespace TheLongestYear
                 case "tly_trophytest": this.CmdTrophyTest(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
+                case "tly_hubcards": this.CmdHubCards(command, args); break;
                 case "tly_reroll": this.CmdReroll(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
@@ -2702,13 +2703,20 @@ namespace TheLongestYear
         private void CmdSelect(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme>", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme> [left|right]", LogLevel.Warn); return; }
             // With the planning hub open this is the same as clicking the card, so an unattended
             // run never needs the mouse: the hub commits the pick (current week or the day-28
             // next-month pre-pick) and closes itself.
             if (Game1.activeClickableMenu is TheLongestYear.UI.WeeklyHubMenu hub)
             {
-                if (hub.ConfirmByName(args[0]))
+                // Optional side: the real card click (multiplier and mystery included).
+                string side = args.Length > 1 ? args[1] : null;
+                if (side != null && !hub.TryPickSide(args[0], side, out string sideError))
+                {
+                    this.Monitor.Log($"tly_select: {sideError}", LogLevel.Warn);
+                    return;
+                }
+                if (side != null || hub.ConfirmByName(args[0]))
                     this.Monitor.Log($"tly_select: picked {args[0]} on the open planning hub.", LogLevel.Info);
                 else
                     this.Monitor.Log($"tly_select: unknown theme '{args[0]}'. Options: {string.Join(", ", Enum.GetNames(typeof(TheLongestYear.Core.Theme)))}.", LogLevel.Warn);
@@ -4828,6 +4836,17 @@ namespace TheLongestYear
             _launcher?.OpenWeeklyHub();
         }
 
+        private void CmdHubCards(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.activeClickableMenu is not TheLongestYear.UI.WeeklyHubMenu hub)
+            {
+                this.Monitor.Log("tly_hubcards: the planning hub is not open.", LogLevel.Warn);
+                return;
+            }
+            hub.LogCards();
+        }
+
         /// <summary>Headless re-roll check: presses the hub's re-roll button, or closes and reopens
         /// the hub so a run can see the re-rolled pair restored.</summary>
         private void CmdReroll(string command, string[] args)
@@ -4842,6 +4861,12 @@ namespace TheLongestYear
             {
                 Game1.activeClickableMenu = null;
                 _launcher?.OpenWeeklyHub();
+                return;
+            }
+            if (args.Length > 0 && args[0].Equals("paid", StringComparison.OrdinalIgnoreCase))
+            {
+                // The reroll button's own code: price check, JP spend, RerollCanChange gate.
+                this.Monitor.Log(hub.RerollPaidForDebug(), LogLevel.Info);
                 return;
             }
             int count = args.Length > 0 && int.TryParse(args[0], out int n) && n > 0 ? n : 1;
