@@ -560,7 +560,9 @@ namespace TheLongestYear.UI
                 long cost = CurrentRerollCost();
                 if (cost > 0)
                 {
-                    if (cost > (_getJp?.Invoke() ?? 0))
+                    // A paid reroll that cannot change the offer is greyed and takes nothing
+                    // (final review T2): no charge, no count, no price step.
+                    if (cost > (_getJp?.Invoke() ?? 0) || !RerollCanChange())
                     {
                         Game1.playSound("cancel");
                         return;
@@ -583,6 +585,14 @@ namespace TheLongestYear.UI
         /// <summary>JP the next reroll charges: rerolls already made this week set the price.</summary>
         private long CurrentRerollCost()
             => RerollPricing.CostOf(_rand.Rerolls, _run.RerollWeek == OfferWeek ? _run.RerollCount : 0);
+
+        /// <summary>Cached <see cref="RerollCycle.CanChange"/> for the offer on screen; cleared by
+        /// <see cref="RerollOffer"/>. The candidates do not change while the hub is open.</summary>
+        private bool? _rerollCanChange;
+
+        private bool RerollCanChange()
+            => _rerollCanChange ??= RerollCycle.CanChange(
+                _runController.OfferCandidates(OfferWeek, _offerSeason, SelectionsForOffer), _offer);
 
         /// <summary>The picks the offer excludes. The day-28 pre-pick is for next month, so none
         /// (the same rule <see cref="MenuLauncher.OpenWeeklyHub"/> uses for the first offer).</summary>
@@ -618,6 +628,7 @@ namespace TheLongestYear.UI
             var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
             _offer = RerollCycle.Next(candidates, _run.RerollSeenPairs, _offer, rng).ToList();
             _run.RecordReroll(week, _offer, _rerollCounter);
+            _rerollCanChange = null;
             ResolvePerCardData();
             RecomputeBoundsAndLayout();
             // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
@@ -731,7 +742,8 @@ namespace TheLongestYear.UI
             if (_rerollButton == null) return;
 
             long cost = CurrentRerollCost();
-            float boxAlpha = cost > (_getJp?.Invoke() ?? 0) ? 0.5f : 1f;
+            bool blocked = cost > 0 && (cost > (_getJp?.Invoke() ?? 0) || !RerollCanChange());
+            float boxAlpha = blocked ? 0.5f : 1f;
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 _rerollButton.bounds.X, _rerollButton.bounds.Y,
                 _rerollButton.bounds.Width, _rerollButton.bounds.Height,
