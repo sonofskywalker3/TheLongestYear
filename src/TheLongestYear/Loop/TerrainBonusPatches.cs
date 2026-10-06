@@ -29,7 +29,11 @@ namespace TheLongestYear.Loop
         private const string Stone = "(O)390";
         private const string Wood  = "(O)388";
 
-        /// <summary>Shared roll + double helper. Routes by <see cref="ActiveEffectsProvider.ActiveBonus"/> (Mixed wins when both are active):
+        /// <summary>True when either theme entry carries <paramref name="id"/>. Boosts never count here.</summary>
+        private static bool IsThemeBonus(string id)
+            => ActiveEffectsProvider.BonusId == id || ActiveEffectsProvider.SecondBonusId == id;
+
+        /// <summary>Shared roll + double helper. Routes by the theme bonus entries (<see cref="ActiveEffectsProvider.BonusId"/>, or <see cref="ActiveEffectsProvider.SecondBonusId"/> on a double week; Mixed wins when both are active):
         /// <list type="bullet">
         ///   <item><c>all_drops_up</c> (Mixed): <see cref="BonusDropResolver.MixedAllDropsChance"/>
         ///     chance to clone one of the new drops, no filter.</item>
@@ -50,9 +54,9 @@ namespace TheLongestYear.Loop
         {
             if (loc?.debris == null || startDebrisCount < 0) return false;
 
-            // ActiveBonus counts either theme entry (a double week can hold both) and any boost bound to the id.
-            bool mixedActive = ActiveEffectsProvider.ActiveBonus("all_drops_up");
-            bool forageActive = applyForageYieldUp && ActiveEffectsProvider.ActiveBonus("forage_yield_up");
+            // Theme entries only (either one on a double week), never boosts: a single-theme week matches 0.18.145.
+            bool mixedActive = IsThemeBonus("all_drops_up");
+            bool forageActive = applyForageYieldUp && IsThemeBonus("forage_yield_up");
             if (!mixedActive && !forageActive) return false;
 
             // Round-13 spec: +1 from the rolled set, not full set doubled. See
