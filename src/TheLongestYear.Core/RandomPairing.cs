@@ -49,4 +49,11 @@ public static class RandomPairing
         var own = ThemeModifiers.For(theme);
         return (own.BonusId, run.CurrentLiabilityId ?? own.LiabilityId);
     }
+
+    /// <summary>Double theme week: the second card's effects, from its own stored drawback.</summary>
+    public static (string BonusId, string LiabilityId) SecondEffectsFor(RunState run, Theme theme)
+    {
+        var own = ThemeModifiers.For(theme);
+        return (own.BonusId, run.SecondLiabilityId ?? own.LiabilityId);
+    }
 }

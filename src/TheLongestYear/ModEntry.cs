@@ -1844,8 +1844,16 @@ namespace TheLongestYear
             string liability = TheLongestYear.Core.ActiveEffectsProvider.LiabilityId ?? "(none)";
             this.Monitor.Log(
                 $"Active effects: bonus={bonus}, liability={liability}. " +
-                $"Selection={_meta?.Run.CurrentSelection?.ToString() ?? "none"}.",
+                $"Selection={_meta?.Run.CurrentSelection?.ToString() ?? "none"}." +
+                (TheLongestYear.Core.ActiveEffectsProvider.LiabilitySuppressed ? " (liability lifted)" : ""),
                 LogLevel.Info);
+            if (TheLongestYear.Core.ActiveEffectsProvider.SecondBonusId != null)
+                this.Monitor.Log(
+                    $"Double week second entry: bonus={TheLongestYear.Core.ActiveEffectsProvider.SecondBonusId}, " +
+                    $"liability={TheLongestYear.Core.ActiveEffectsProvider.SecondLiabilityId ?? "(none)"}. " +
+                    $"Selection={_meta?.Run.SecondSelection?.ToString() ?? "none"}." +
+                    (TheLongestYear.Core.ActiveEffectsProvider.SecondLiabilitySuppressed ? " (liability lifted)" : ""),
+                    LogLevel.Info);
             if (_meta == null) return;
             int today = TodayDayOfYear();
             foreach (TheLongestYear.Core.ActiveBoost b in _meta.Run.ActiveBoosts)
@@ -3669,12 +3677,15 @@ namespace TheLongestYear
 
             if (chaseGoals && !quarterMode)
             {
-                foreach (BonusSlot slot in run.CurrentWeekBonusSlots)
+                // Both lists on a double week (the second is empty otherwise); each deposit lands on its own list.
+                var goalLists = new List<List<BonusSlot>> { run.CurrentWeekBonusSlots, run.SecondWeekBonusSlots ?? new List<BonusSlot>() };
+                foreach (List<BonusSlot> goalList in goalLists)
+                foreach (BonusSlot slot in goalList)
                 {
                     if (Flip(slot.BundleIndex, slot.IngredientIndex))
                     {
                         run.RecordDonation(slot.BundleIndex, slot.IngredientIndex, slot.ItemId);
-                        WeeklyGoalCredit.RecordDeposit(run.CurrentWeekBonusSlots, slot.BundleIndex, slot.IngredientIndex);
+                        WeeklyGoalCredit.RecordDeposit(goalList, slot.BundleIndex, slot.IngredientIndex);
                         flipped++;
                         log.Add($"  goal: deposited {DisplayName(slot.ItemId)} into {slot.BundleName}");
                     }
@@ -3796,6 +3807,28 @@ namespace TheLongestYear
                         LogLevel.Info);
                 }
             }
+
+            // This week's committed lists (both on a double week), with each goal's done state.
+            LogCommittedGoals("This week's goals", run.CurrentSelection, run.CurrentGoalMultiplier,
+                run.LiabilitySuppressedThisWeek, run.CurrentWeekBonusSlots);
+            if (run.SecondSelection.HasValue)
+                LogCommittedGoals("Double week second list", run.SecondSelection, run.SecondGoalMultiplier,
+                    run.SecondLiabilitySuppressedThisWeek, run.SecondWeekBonusSlots);
+        }
+
+        private void LogCommittedGoals(string label, TheLongestYear.Core.Theme? theme, double multiplier, bool lifted,
+            IReadOnlyList<BonusSlot> slots)
+        {
+            if (!theme.HasValue) { this.Monitor.Log($"{label}: no theme picked.", LogLevel.Info); return; }
+            this.Monitor.Log(
+                $"{label}: {theme} ({slots?.Count ?? 0} goal(s), goal JP {CardMultiplier.Format(multiplier)}{(lifted ? ", drawback lifted" : "")})",
+                LogLevel.Info);
+            if (slots == null) return;
+            foreach (BonusSlot slot in slots)
+                this.Monitor.Log(
+                    $"    - {DisplayName(slot.ItemId)} ({slot.ItemId}) x{slot.Stack}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]" +
+                    $"{(slot.Deposited ? " deposited" : "")}{(slot.Paid ? " paid" : "")}",
+                    LogLevel.Info);
         }
 
         /// <summary>The season-gate audit shared by <c>tly_gatecheck</c> (live board) and

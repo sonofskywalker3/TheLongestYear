@@ -260,6 +260,27 @@ namespace TheLongestYear.UI
             }
         }
 
+        /// <summary>The Active tab's theme line. <paramref name="theme"/> is set only on a double
+        /// week, where each line names its theme; otherwise the single-week text is unchanged.</summary>
+        private static string ThemeNote(string bonus, string liability, bool lifted, Theme? theme)
+        {
+            string bonusName = ThemeModifiers.DisplayNameFor(bonus);
+            string liabilityName = ThemeModifiers.DisplayNameFor(liability)
+                + (lifted ? " " + Strings.Get("shrine.active.lifted") : "");
+            if (theme is not Theme named)
+                return Strings.Get("shrine.active.theme", new Dictionary<string, string>
+                {
+                    ["bonus"] = bonusName,
+                    ["liability"] = liabilityName,
+                });
+            return Strings.Get("shrine.active.theme-named", new Dictionary<string, string>
+            {
+                ["theme"] = ThemeDisplay.Name(named),
+                ["bonus"] = bonusName,
+                ["liability"] = liabilityName,
+            });
+        }
+
         private void BuildActiveRows()
         {
             _rows.Add(Header(Strings.Get("shrine.active.running")));
@@ -288,13 +309,15 @@ namespace TheLongestYear.UI
             string liability = ActiveEffectsProvider.LiabilityId;
             if (bonus == null)
                 _rows.Add(Note(Strings.Get("shrine.active.no-theme")));
+            else if (ActiveEffectsProvider.SecondBonusId == null)
+                _rows.Add(Note(ThemeNote(bonus, liability, ActiveEffectsProvider.LiabilitySuppressed, null)));
             else
-                _rows.Add(Note(Strings.Get("shrine.active.theme", new Dictionary<string, string>
-                {
-                    ["bonus"] = ThemeModifiers.DisplayNameFor(bonus),
-                    ["liability"] = ThemeModifiers.DisplayNameFor(liability)
-                        + (ActiveEffectsProvider.LiabilitySuppressed ? " " + Strings.Get("shrine.active.lifted") : ""),
-                })));
+            {
+                // Double theme week: one note per theme, each with its own "(lifted)".
+                _rows.Add(Note(ThemeNote(bonus, liability, ActiveEffectsProvider.LiabilitySuppressed, _run?.CurrentSelection)));
+                _rows.Add(Note(ThemeNote(ActiveEffectsProvider.SecondBonusId, ActiveEffectsProvider.SecondLiabilityId,
+                    ActiveEffectsProvider.SecondLiabilitySuppressed, _run?.SecondSelection)));
+            }
 
             foreach (UpgradeCategory cat in Enum.GetValues(typeof(UpgradeCategory)))
             {

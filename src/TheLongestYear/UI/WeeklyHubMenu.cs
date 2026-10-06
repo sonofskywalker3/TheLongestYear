@@ -102,6 +102,18 @@ namespace TheLongestYear.UI
         private readonly bool _isPreSelectForNextMonth;
         private readonly RandomizerSettings _rand;
 
+        /// <summary>Double theme week (spec section 6): one click takes both cards. Never on the day-28
+        /// pre-pick hub, and an offer with fewer than two cards is a normal week. Recomputed when the
+        /// offer changes (a reroll on a double week rerolls the pair).</summary>
+        private bool _double;
+
+        private const int DoubleWeekCards = 2;
+
+        private bool ComputeDouble()
+            => !_isPreSelectForNextMonth
+               && _offer.Count == DoubleWeekCards
+               && DoubleWeek.Is(_run.Seed, OfferWeek, _rand.DoubleThemeWeek);
+
         private IReadOnlyList<Theme> _offer;
 
         private ClickableComponent _leftCard;
@@ -153,6 +165,7 @@ namespace TheLongestYear.UI
             _isPreSelectForNextMonth = isPreSelectForNextMonth;
             // The day-28 hub offers next month's week: read live rather than snapshot a future week.
             _rand = isPreSelectForNextMonth ? (config.Randomizer ?? new RandomizerSettings()) : runController.Randomizer;
+            _double = ComputeDouble();
             _weatherSageSlots = weatherSageSlots;
 
             // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
@@ -161,12 +174,13 @@ namespace TheLongestYear.UI
             if (rerolled != null)
             {
                 _offer = rerolled.ToList();
+                _double = ComputeDouble();
                 _rerollCounter = System.Math.Max(1, _run.RerollCount);
                 _monitor.Log(
                     $"WeeklyHubMenu: restored re-rolled offer for week {OfferWeek} = " +
-                    $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand))}] (reroll #{_rerollCounter}).",
+                    $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand, _double))}] (reroll #{_rerollCounter}).",
                     LogLevel.Info);
-                if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand))
+                if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand, _double))
                     _monitor.Log($"WeeklyHubMenu: restored offer with the face-down card = [{string.Join(", ", _offer)}].",
                         LogLevel.Trace);
             }
@@ -297,25 +311,35 @@ namespace TheLongestYear.UI
         private void ResolvePerCardData()
         {
             ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus);
-            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus);
+            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus,
+                // Double week: the right card shows its list without the lines the left card owns.
+                ownedByOtherCard: _double ? PreviewFor(_offer[0]) : null);
         }
 
         /// <summary>True when the card in <paramref name="slot"/> is face down this offer week. Keyed on
         /// seed, week and slot only, so a reroll keeps the same slot sealed.</summary>
-        private bool IsSealed(int slot) => CardMultiplier.IsSealed(_run.Seed, OfferWeek, slot, _rand);
+        private bool IsSealed(int slot) => CardMultiplier.IsSealed(_run.Seed, OfferWeek, slot, _rand, _double);
 
         /// <summary>Show a multiplier line on face-up cards when multipliers are in play this week.</summary>
         private bool ShowsMultiplier
-            => _rand.RandomMultiplier || CardMultiplier.IsMysteryWeek(_run.Seed, OfferWeek, _rand.MysteryCard);
+            => _rand.RandomMultiplier || (!_double && CardMultiplier.IsMysteryWeek(_run.Seed, OfferWeek, _rand.MysteryCard));
 
-        private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest)
+        /// <summary>The goals a card's theme would get, as the hub previews them.</summary>
+        private IReadOnlyList<BonusSlot> PreviewFor(Theme theme)
+        {
+            // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
+            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+            return _runController.PreviewSlotsForTheme(theme, _offerSeason, week);
+        }
+
+        private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest, IReadOnlyList<BonusSlot> ownedByOtherCard = null)
         {
             dest.Clear();
             if (theme == null) return;
 
-            // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
-            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
-            var sample = _runController.PreviewSlotsForTheme(theme.Value, _offerSeason, week);
+            IReadOnlyList<BonusSlot> sample = PreviewFor(theme.Value);
+            if (ownedByOtherCard != null)
+                sample = GoalLists.Dedupe(ownedByOtherCard, sample);
 
             foreach (BonusSlot slot in sample)
             {
@@ -616,7 +640,7 @@ namespace TheLongestYear.UI
             if (_offer.Count <= slot || _offer[slot] != theme)
             {
                 // The face-down card never shows its theme at Warn/Info; the real offer goes to Trace.
-                error = $"{theme} is not on the {side} card (offer: [{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand))}]).";
+                error = $"{theme} is not on the {side} card (offer: [{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand, _double))}]).";
                 _monitor.Log($"tly_select: real offer = [{string.Join(", ", _offer)}].", LogLevel.Trace);
                 return false;
             }
@@ -624,7 +648,13 @@ namespace TheLongestYear.UI
             if (!LastPickTook)
             { error = $"{theme} was rejected (already picked this month, or not a valid offer)."; return false; }
             double mult = _isPreSelectForNextMonth ? _run.NextMonthGoalMultiplier : _run.CurrentGoalMultiplier;
-            _monitor.Log($"Selected {theme} (slot {slot}, goal JP {CardMultiplier.Format(mult)})", LogLevel.Info);
+            if (_run.IsDoubleWeekSelection && !_isPreSelectForNextMonth)
+                _monitor.Log(
+                    $"Double week: selected {_run.CurrentSelection} (slot {LeftSlot}, goal JP {CardMultiplier.Format(_run.CurrentGoalMultiplier)}) " +
+                    $"and {_run.SecondSelection} (slot {RightSlot}, goal JP {CardMultiplier.Format(_run.SecondGoalMultiplier)})",
+                    LogLevel.Info);
+            else
+                _monitor.Log($"Selected {theme} (slot {slot}, goal JP {CardMultiplier.Format(mult)})", LogLevel.Info);
             return true;
         }
 
@@ -637,7 +667,7 @@ namespace TheLongestYear.UI
                 Theme theme = _offer[slot];
                 bool sealedCard = IsSealed(slot);
                 string drawback = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme, _rand.RandomPairings);
-                double mult = CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand);
+                double mult = CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double);
                 _monitor.Log(
                     $"Hub card slot {slot}: {(sealedCard ? CardMultiplier.SealedLabel : theme.ToString())}, " +
                     $"drawback {drawback}, goal JP {CardMultiplier.Format(mult)}{(sealedCard ? " (face down)" : "")}",
@@ -695,6 +725,7 @@ namespace TheLongestYear.UI
                 .OfferCandidates(week, _offerSeason, SelectionsForOffer);
             var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
             _offer = RerollCycle.Next(candidates, _run.RerollSeenPairs, _offer, rng).ToList();
+            _double = ComputeDouble();
             _run.RecordReroll(week, _offer, _rerollCounter);
             _rerollCanChange = null;
             ResolvePerCardData();
@@ -702,9 +733,9 @@ namespace TheLongestYear.UI
             // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
             _monitor.Log(
                 $"WeeklyHubMenu reroll #{_rerollCounter}: offer = " +
-                $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand))}].",
+                $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand, _double))}].",
                 LogLevel.Info);
-            if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand))
+            if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand, _double))
                 _monitor.Log($"WeeklyHubMenu reroll #{_rerollCounter}: offer with the face-down card = [{string.Join(", ", _offer)}].",
                     LogLevel.Trace);
         }
@@ -736,6 +767,16 @@ namespace TheLongestYear.UI
         private void ConfirmSelection(Theme theme, int slot)
         {
             _themePicked = true;
+            // Double week: either card (mouse, A button, or a console pick of a card on offer)
+            // takes both, left card first (slot 0) and right card second (slot 1).
+            if (_double && !_forcedPick)
+            {
+                _runController.SelectBoth(_offer[LeftSlot], _offer[RightSlot], skipOfferCheck: _rerollCounter > 0);
+                LastPickTook = _run.CurrentSelection == _offer[LeftSlot] && _run.SecondSelection == _offer[RightSlot];
+                Game1.playSound("smallSelect");
+                this.exitThisMenu();
+                return;
+            }
             if (_isPreSelectForNextMonth)
                 _runController.PreSelectForNextMonth(theme, slot);
             else
@@ -770,7 +811,7 @@ namespace TheLongestYear.UI
                 drawY += JunimoSpriteSize + 12;
             }
 
-            SpriteText.drawStringHorizontallyCenteredAt(b, Strings.Get("menu.hub.pick-theme"), panelCenterX, drawY);
+            SpriteText.drawStringHorizontallyCenteredAt(b, _double ? Strings.Get("menu.hub.double-week") : Strings.Get("menu.hub.pick-theme"), panelCenterX, drawY);
 
             drawY += 48;
             string bankingTip = Strings.Get("menu.hub.banking-tip");
@@ -948,7 +989,7 @@ namespace TheLongestYear.UI
             {
                 string multLine = Strings.Get("menu.hub.card-mult", new Dictionary<string, string>
                 {
-                    ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme.Value, slot, _rand)),
+                    ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme.Value, slot, _rand, _double)),
                 });
                 int multHeight = (int)Game1.smallFont.MeasureString(multLine).Y;
                 int multY = System.Math.Min(textY, bonusHeaderY - multHeight);
@@ -983,7 +1024,7 @@ namespace TheLongestYear.UI
             Vector2 markSize = Game1.dialogueFont.MeasureString(mark) * MysteryMarkScale;
             string multLine = Strings.Get("menu.hub.mystery-mult", new Dictionary<string, string>
             {
-                ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand)),
+                ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double)),
             });
             int textWidth = card.bounds.Width - CardInnerPad * 2;
             string multWrapped = Game1.parseText(multLine, Game1.smallFont, textWidth);

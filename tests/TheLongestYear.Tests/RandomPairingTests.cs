@@ -49,6 +49,15 @@ public class RandomPairingTests
     }
 
     [Fact]
+    public void Second_effects_use_the_second_stored_drawback_not_the_first()
+    {
+        var run = new RunState { CurrentLiabilityId = "mines_closed" };
+        Assert.Equal(ThemeModifiers.For(Theme.Farming), RandomPairing.SecondEffectsFor(run, Theme.Farming));
+        run.SecondLiabilityId = "monster_damage_up";
+        Assert.Equal((ThemeModifiers.For(Theme.Farming).BonusId, "monster_damage_up"), RandomPairing.SecondEffectsFor(run, Theme.Farming));
+    }
+
+    [Fact]
     public void An_old_save_has_no_stored_drawback()
         => Assert.Null(System.Text.Json.JsonSerializer.Deserialize<RunState>("{}")!.CurrentLiabilityId);
 }
