@@ -51,7 +51,8 @@ public static class BundleSlotFiller
         BundleGenerationTuning tuning, Random rng,
         Action<string>? log = null,
         IReadOnlySet<string>? avoid = null, ItemAvailabilityModel? availability = null,
-        PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null, int legendaryBudget = int.MaxValue)
+        PoolRecipe? knownRecipe = null, IReadOnlySet<string>? banned = null, int legendaryBudget = int.MaxValue,
+        IReadOnlyDictionary<string, int>? cappedBudget = null)
     {
         if (match.Domain == PoolDomain.None)
             return spec;
@@ -69,7 +70,7 @@ public static class BundleSlotFiller
             ? new List<IReadOnlyList<PoolItem>>()
             : recipe.Parts.Select(part => part.Source(pools, availability)).ToList();
         IReadOnlyList<PoolItem> candidates = recipe == null
-            ? Candidates(spec, match, pools)
+            ? Candidates(spec, match, pools, availability)
             : BundlePoolRecipes.Union(parts.ToArray());
         // A banned id is out of every draw this bundle makes (the raw roll, the stretch swap, the
         // hard-item swap, a recipe part), unlike <paramref name="avoid"/>, which yields when the
@@ -80,9 +81,9 @@ public static class BundleSlotFiller
             for (int i = 0; i < parts.Count; i++)
                 parts[i] = parts[i].Where(p => !banned.Contains(p.ItemId)).ToList();
         }
-        int targetCount = spec.PickCount > 0
-            ? Math.Min(spec.PickCount, spec.Slots.Count)
-            : spec.Slots.Count;
+        (int Shown, int Needs)? shape = BundleShapes.For(spec.Name);
+        int targetCount = shape?.Shown
+            ?? (spec.PickCount > 0 ? Math.Min(spec.PickCount, spec.Slots.Count) : spec.Slots.Count);
 
         // The domain this bundle's stack and quality roll with. A Recipe bundle has no domain of
         // its own, so it borrows the one its dominant part maps to (see RecipeRollDomain).
@@ -179,6 +180,10 @@ public static class BundleSlotFiller
         // rule is exactly the kind of pass that puts a legendary in, and the cap has to hold on
         // what actually leaves this method.
         LegendaryFishRules.Enforce(chosen, candidates, availability?.Step ?? DifficultyStep.Normal, rng, log, spec.Name, legendaryBudget);
+        // Prismatic Shard / Mystery Box board allowance (CappedAsks), for the same reason and in the
+        // same place. Null means the caller keeps no board count, so nothing is capped here.
+        if (cappedBudget != null)
+            CappedAsks.Enforce(chosen, candidates, cappedBudget, rng, log, spec.Name);
 
         // Stack and quality (rollDomain decided above). A vanilla id the roll drew again
         // keeps the stack and quality the vanilla slot carried, so a re-roll that lands on the
@@ -210,7 +215,7 @@ public static class BundleSlotFiller
         return spec with
         {
             Slots = slots,
-            NumberOfSlots = Math.Min(spec.NumberOfSlots, slots.Count),
+            NumberOfSlots = Math.Min(shape?.Needs ?? spec.NumberOfSlots, slots.Count),
         };
     }
 
@@ -229,7 +234,8 @@ public static class BundleSlotFiller
     /// once the pool runs short: a repair that hands back an id the board already asks for has not
     /// repaired anything. Legendary fish are out of every repair draw, because the board's
     /// legendary allowance was spent when the board was generated and this pass has no way to know
-    /// what is left of it.
+    /// what is left of it. The Prismatic Shard and Mystery Box (<see cref="CappedAsks"/>) are out
+    /// for the same reason.
     ///
     /// <paramref name="tuning"/> is unused today. It is in the signature so a caller passes the
     /// same block <see cref="Fill"/> takes and a later rule that needs it (a stack or quality
@@ -284,7 +290,8 @@ public static class BundleSlotFiller
         List<PoolItem> pool = candidates
             .Where(p => !taken.Contains(p.ItemId)
                         && !(avoid != null && avoid.Contains(p.ItemId))
-                        && !LegendaryFishRules.IsLegendary(p.ItemId))
+                        && !LegendaryFishRules.IsLegendary(p.ItemId)
+                        && !CappedAsks.IsCapped(p.ItemId))
             .ToList();
 
         // Night Fishing's one-Night-Market-fish cap: if the bundle's other slots already hold as
@@ -511,9 +518,10 @@ public static class BundleSlotFiller
         return WeightedSampler.Capacity(Candidates(spec, match, pools, availability, knownRecipe), capped, cap);
     }
 
-    /// <summary>Night Fishing: at most one Night Market fish per bundle (see FishBundleCandidates).</summary>
+    /// <summary>Night Fishing and Specialty Fish: at most one Night Market fish per bundle (see
+    /// FishBundleCandidates.CapsNightMarketFish).</summary>
     private static (Func<PoolItem, bool>? Capped, int Cap) CapFor(BundleSpec spec, DomainMatch match, ItemPools pools)
-        => match.Domain == PoolDomain.Fish && FishBundleCandidates.IsNightFishingBundle(spec)
+        => match.Domain == PoolDomain.Fish && FishBundleCandidates.CapsNightMarketFish(spec)
             ? (p => FishBundleCandidates.IsNightMarketFish(p, pools.FishRows), FishBundleCandidates.NightMarketFishPerBundle)
             : (null, int.MaxValue);
 
@@ -529,13 +537,18 @@ public static class BundleSlotFiller
                         .Parts.Select(part => part.Source(pools, availability)).ToArray());
             case PoolDomain.SeasonalCrops:
             case PoolDomain.QualityCrops:
-                return FilterSeason(pools.Crops, match.Season);
+                return FilterSeason(pools.Crops, match.Season, availability);
             case PoolDomain.SeasonalForage:
-                return FilterSeason(pools.Forage, match.Season);
+                return FilterSeason(pools.Forage, match.Season, availability);
             case PoolDomain.Fish:
-                return FishBundleCandidates.IsNightFishingBundle(spec)
-                    ? FishBundleCandidates.ForNightFishing(pools.Fish, pools.FishRows)
-                    : FishBundleCandidates.ByHabitat(spec, pools.Fish);
+            {
+                IReadOnlyList<PoolItem> fish = FishBundleCandidates.WithoutJellies(pools);
+                if (FishBundleCandidates.IsNightFishingBundle(spec))
+                    return FishBundleCandidates.ForNightFishing(fish, pools.FishRows);
+                return FishBundleCandidates.IsSpecialtyFishBundle(spec)
+                    ? FishBundleCandidates.ForSpecialty(fish, pools.FishRows)
+                    : FishBundleCandidates.ByHabitat(spec, fish);
+            }
             case PoolDomain.CrabPot:
                 return pools.CrabPot;
             case PoolDomain.MonsterDrops:
@@ -553,11 +566,20 @@ public static class BundleSlotFiller
     /// vanilla's own Spring/Summer/Fall/Winter bundles. Any-season items (beach shellfish,
     /// desert fruit, an all-year modded crop) would otherwise sit in all four pools at full
     /// weight and crowd out the season's real forage (player report 2026-08-28, Mussel in four
-    /// foraging bundles). A season-less bundle (null) still draws from the whole pool.</summary>
-    private static IReadOnlyList<PoolItem> FilterSeason(IReadOnlyList<PoolItem> pool, Season? season)
+    /// foraging bundles). A season-less bundle (null) still draws from the whole pool.
+    ///
+    /// With a model, the bundle also leaves out anything the model dates after its own season.
+    /// A season-named bundle is gated "all by its season" (BundleClassifier), and an item whose
+    /// spawn season matches but whose source opens later (Rhubarb and Starfruit from the Oasis,
+    /// Coffee Bean from week 5) made that gate impossible (player report 2026-10, gmastern1:
+    /// Spring Crops asked for Rhubarb).</summary>
+    private static IReadOnlyList<PoolItem> FilterSeason(
+        IReadOnlyList<PoolItem> pool, Season? season, ItemAvailabilityModel? availability = null)
         => season == null
             ? pool
-            : pool.Where(p => p.Seasons.Count > 0 && p.Seasons.Contains(season.Value)).ToList();
+            : pool.Where(p => p.Seasons.Count > 0 && p.Seasons.Contains(season.Value)
+                              && (availability == null || availability.For(p.ItemId).Gate <= season.Value))
+                  .ToList();
 
     private static int RollStack(
         PoolDomain domain, PoolItem item, BundleGenerationTuning tuning, Random rng)

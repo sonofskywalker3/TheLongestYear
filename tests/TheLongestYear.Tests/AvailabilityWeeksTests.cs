@@ -91,9 +91,16 @@ public class AvailabilityWeeksTests
     public void Cactus_fruit_is_desert_forage_not_an_oasis_crop()
         => Assert.False(AvailabilityWeeks.LateFloors.ContainsKey("(O)90"));
 
-    /// <summary>Mystic Syrup's tapper rule cannot see that its tree has to be planted first, and
-    /// the seed is the Foraging Mastery reward, so it is pinned to the last week of the loop.
-    /// Reported by Nijah 2026-08-30 (Mystic Syrup asked on an early board).</summary>
+    /// <summary>Mystic Syrup's tree seed is the Foraging Mastery reward (every skill at 10, then 10,000 XP),
+    /// which a one-year loop never reaches. It is excluded from every bundle pool (Jeff, 2026-09-30).
+    /// Previously reported by Nijah 2026-08-30 (Mystic Syrup asked on an early board).</summary>
+    [Fact]
+    public void Mystic_syrup_is_excluded_from_pools()
+        => Assert.Contains("(O)MysticSyrup", ItemPoolBuilder.BuiltInExcludedItemIds);
+
+    /// <summary>Excluded from pools, yet the model still places it (effort derivation walks all of
+    /// Data/Objects) and stored boards are rebuilt with that model, so the late floor stays and is
+    /// pinned to the last week.</summary>
     [Fact]
     public void Mystic_syrup_is_pinned_to_the_last_week()
         => Assert.Equal(Calendar.WeeksPerYear, AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week);

@@ -127,6 +127,11 @@ public static class ItemPoolBuilder
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
             QualityEligibleIds = qualityEligible,
             TrapFishIds = new HashSet<string>(trapFishIds.Select(id => Qualify(Unqualify(id))), StringComparer.Ordinal),
+            JellyIds = new HashSet<string>(
+                fishPool.Where(p => IsJelly(p.ItemId)
+                                    || (objects.TryGetValue(Unqualify(p.ItemId), out RawObjectEntry? obj) && IsJellyCatch(obj)))
+                    .Select(p => p.ItemId),
+                StringComparer.Ordinal),
             FruitTreeFruitIds = new HashSet<string>(
                 fruitTrees.SelectMany(t => t.FruitItemIds ?? Array.Empty<string>())
                     .Where(id => !string.IsNullOrEmpty(id))
@@ -189,13 +194,11 @@ public static class ItemPoolBuilder
             PoolItem item = MakeItem(id, objects, tuning, seasons, Array.Empty<string>());
             byKind[ItemKindClassifier.From(bare, obj)].Add(item);
 
-            // The colour index feeds the Dye recipe. Vanilla tags the Amethyst Ring color_purple,
-            // and a ring is not an Object at runtime, so the donation menu cannot lift it; one
-            // landed in a Dye bundle through this index (Nexus, 2026-09-14). Rings stay out.
-            // Books too, unless the Book pool would offer them: every book carries a colour tag,
-            // and the Queen of Sauce Cookbook (color_blue, 100 golden walnuts) reached a Dye
-            // bundle this way (SilviaVA, Nexus, 2026-09-17).
-            if (!IsRing(obj) && !IsBookWithoutYearOneRoute(id, obj) && obj.ContextTags != null)
+            // The colour index feeds the Dye recipe, and Dye picks only from the six vanilla Dye
+            // items plus coloured crops, fruit, flowers, forage and beach finds (Jeff,
+            // 2026-09-29). Every other object with a colour tag, dishes, artifacts, bombs, books,
+            // rings, Joja Cola, used to be fair game: 60 boards asked for all of them.
+            if (IsDyeCandidate(id, obj) && obj.ContextTags != null)
             {
                 foreach (string tag in obj.ContextTags)
                 {
@@ -773,6 +776,7 @@ public static class ItemPoolBuilder
                   //                     Egg and Ostrich Egg, NOT flagged ExcludeFromRandomSale, so the vet let
                   //                     it into the Chef's / Animal recipe buckets (Nexus 1127469, gazumbrado:
                   //                     "2 golden eggs which are perfection locked").
+        "(O)MysticSyrup", // Mystic Tree only; its seed is the Foraging Mastery recipe (Jeff, 2026-09-30)
     };
 
     /// <summary>Built-in excluded location markers, merged with the config list by
@@ -780,8 +784,16 @@ public static class ItemPoolBuilder
     /// <see cref="BuiltInExcludedItemIds"/>). BugLand = Mutant Bug Lair: behind the Dark
     /// Talisman quest, which is itself post-CC — never year-1 content. WitchSwamp is behind
     /// the same quest, so Void Salmon is out too (0.12.18; the 2026-08-24 "hard but fair"
-    /// ruling assumed the swamp was reachable in year 1, which it is not).</summary>
-    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers = new[] { "BugLand", "WitchSwamp" };
+    /// ruling assumed the swamp was reachable in year 1, which it is not).
+    ///
+    /// Island (Ginger Island, and SVE's Custom_DinoIsland event maps), FableReef and
+    /// CrimsonBadlands (SVE) used to be config defaults only, so a saved marker list without them
+    /// let island fish into the pools (player report 2026-10, paigefromabook: Weatherman's asked
+    /// for a Stingray, which is caught only in the Pirate Cove). Checked against the live
+    /// Data/Locations (91 keys) and SVE's LocationsData: "Island" matches only the Ginger Island
+    /// maps and the two DinoIsland maps, none of them year-1 places.</summary>
+    public static readonly IReadOnlyList<string> BuiltInExcludedLocationMarkers =
+        new[] { "BugLand", "WitchSwamp", "Island", "FableReef", "CrimsonBadlands" };
 
     /// <summary>Data/Locations keys that are not places anyone fishes or forages, matched
     /// EXACTLY (case-insensitive) rather than by substring so a modded "Temple" or
@@ -813,20 +825,8 @@ public static class ItemPoolBuilder
     /// PoolAdditions.VetExceptions id skips the ExcludeFromRandomSale check: those are the
     /// curated mine fish and legendaries, wanted despite the flag (spec 2026-08-28-obtainable-board,
     /// section 3).</summary>
-    private const string RingType = "Ring";
-    private const string RingItemTag = "ring_item";
-
-    /// <summary>A book the Book pool would not offer: drop-only, Volcano, walnut-gated or year 2
-    /// (<see cref="AvailabilityWeeks.BookWeeks"/> is the year-1 list).</summary>
-    private static bool IsBookWithoutYearOneRoute(string qualifiedId, RawObjectEntry obj)
-        => BookCategories.Contains(obj.Category) && !AvailabilityWeeks.BookWeeks.ContainsKey(qualifiedId);
-
     private static bool IsAnimalProduct(RawObjectEntry obj)
         => ItemKindClassifier.From(obj.Category, obj.Type) is ItemKind.Egg or ItemKind.Milk or ItemKind.AnimalProduct;
-
-    private static bool IsRing(RawObjectEntry obj)
-        => string.Equals(obj.Type, RingType, StringComparison.OrdinalIgnoreCase)
-           || (obj.ContextTags != null && obj.ContextTags.Contains(RingItemTag));
 
     private static bool Vets(
         string bareId, string qualifiedId,
@@ -870,12 +870,48 @@ public static class ItemPoolBuilder
     private const string TruffleId = "(O)430";
     private static readonly int[] ForageCategories = { -79, -80, -81, -75, -23 };
 
+    /// <summary>Vanilla's standard Dye bundle: Red Mushroom, Sea Urchin, Sunflower, Duck
+    /// Feather, Aquamarine, Red Cabbage.</summary>
+    private static readonly IReadOnlySet<string> VanillaDyeItems = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)420", "(O)397", "(O)421", "(O)444", "(O)62", "(O)266",
+    };
+
+    /// <summary>The six gems the mines' gem nodes drop (Emerald, Aquamarine, Ruby, Amethyst, Topaz,
+    /// Jade) plus three common mine crystals (Quartz, Fire Quartz, Frozen Tear). Earth Crystal is
+    /// copper, the game's orange, and Dye has no orange slot, so it is left out (Jeff, 2026-09-29).
+    /// Diamond and Prismatic Shard are rare and stay out, as do geode minerals (Jeff, 2026-09-29).
+    /// The deeper crystals still wait for their floors: the board's availability model places them.</summary>
+    private static readonly IReadOnlySet<string> CommonGems = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)60", "(O)62", "(O)64", "(O)66", "(O)68", "(O)70",
+        "(O)80", "(O)82", "(O)84",
+    };
+
+    /// <summary>Whether the Dye recipe may pick this object: a vanilla Dye item, a common gem, or
+    /// something grown or gathered (the game's own forage test: crops, fruit, flowers, forage,
+    /// beach finds).</summary>
+    private static bool IsDyeCandidate(string qualifiedId, RawObjectEntry obj)
+        => VanillaDyeItems.Contains(qualifiedId) || CommonGems.Contains(qualifiedId) || IsForageCategory(obj, qualifiedId);
+
     /// <summary>Mirrors StardewValley.Object.isForage(): the only objects the game gives
     /// forage quality to when picked up.</summary>
     public static bool IsForageCategory(RawObjectEntry obj, string qualifiedId)
         => Array.IndexOf(ForageCategories, obj.Category) >= 0
            || (obj.ContextTags != null && obj.ContextTags.Contains(ForageItemTag))
            || qualifiedId == TruffleId;
+
+    private const string FishNonFishTag = "fish_nonfish";
+    private const string CountsAsFishCatchTag = "counts_as_fish_catch";
+
+    /// <summary>A jelly in Data/Objects terms: a rod catch the game counts as a fish catch
+    /// ("counts_as_fish_catch") but marks as not a fish ("fish_nonfish"). In vanilla 1.6 that is
+    /// exactly Sea, River and Cave Jelly; Seaweed and the algae are "fish_nonfish" only. A modded
+    /// jelly that copies vanilla's tags is caught the same way (Jeff, 2026-10-05).</summary>
+    public static bool IsJellyCatch(RawObjectEntry obj)
+        => obj.ContextTags != null
+           && obj.ContextTags.Contains(FishNonFishTag)
+           && obj.ContextTags.Contains(CountsAsFishCatchTag);
 
     /// <summary>River/Sea/Cave Jelly are rod catches that never carry quality.</summary>
     public static bool IsJelly(string qualifiedId)

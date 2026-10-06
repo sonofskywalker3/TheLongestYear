@@ -278,7 +278,7 @@ public sealed class BundleRequirement
         switch (Kind)
         {
             case BundleKind.Seasonal:
-                return SeasonalSeason!.Value == season ? Ingredients : Enumerable.Empty<string>();
+                return SeasonalSeason!.Value == season ? Ingredients.Where(obtainablePredicate) : Enumerable.Empty<string>();
 
             case BundleKind.PerItem:
                 return ItemSeasonPins!
@@ -303,7 +303,8 @@ public sealed class BundleRequirement
     /// <summary>Ingredients that are "in play" for the given season — these become the candidate
     /// pool for the planning-hub bonus list.
     /// <list type="bullet">
-    ///   <item>Seasonal: all ingredients, but only when its season is the current season.</item>
+    ///   <item>Seasonal: ingredients that pass the <paramref name="obtainablePredicate"/>, but
+    ///         only when its season is the current season.</item>
     ///   <item>PerItem: ingredients pinned to the current season.</item>
     ///   <item>Percentage: ingredients that pass the <paramref name="obtainablePredicate"/>,
     ///         but ONLY when the bundle's cumulative quota for this season is non-zero. A
@@ -321,8 +322,10 @@ public sealed class BundleRequirement
         switch (Kind)
         {
             case BundleKind.Seasonal:
+                // The week check applies here too. Without it Spring week 1 offered Strawberries
+                // and Cauliflower from Spring Crops (Nijah, Dummy Dog Ben, 2026-09-29).
                 return SeasonalSeason!.Value == season
-                    ? Ingredients
+                    ? Ingredients.Where(obtainablePredicate)
                     : Enumerable.Empty<string>();
 
             case BundleKind.PerItem:

@@ -128,6 +128,19 @@ public class ArtisanAvailabilityTests
     private static int? Effort(string id) => id switch { "(O)398" => 3, "(O)613" => 4, "(O)262" => 2, "(O)184" => 1, _ => null };
 
     [Fact]
+    public void A_no_input_machine_with_no_recipe_and_no_shop_row_gives_no_route()
+    {
+        EffortData data = new()
+        {
+            MachineRules = new List<RawMachineRule>
+            {
+                new("(BC)280", null, new string[0], new[] { "(O)74" }, -1, 1),   // Statue Of True Perfection
+            },
+        };
+        Assert.Null(ArtisanAvailability.Derive("(O)74", data, _ => null));
+    }
+
+    [Fact]
     public void Wine_is_the_cheapest_fruit_plus_machine_plus_two_for_a_week_in_the_keg()
         => Assert.Equal(3 + 1 + 2, ArtisanAvailability.Derive("(O)348", Data(), Effort)!.Effort);
 

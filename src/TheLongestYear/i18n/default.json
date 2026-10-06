@@ -16,6 +16,7 @@
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
     "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
+    "hud.stash-nesting-refused": "The stash only holds hats, shirts, pants, furniture, wallpaper and flooring inside a container, so take the rest out first.",
 
     // -- question / message dialogues ---------------------------------------------
     "dialog.cave.prompt": "The cave waits, familiar and patient. What should it nurture this year?",
@@ -44,6 +45,8 @@
     "upgrade.backpack_2.desc": "Start each loop with the 36-slot backpack.",
     "upgrade.keep_golden_scythe.name": "Keep Golden Scythe",
     "upgrade.keep_golden_scythe.desc": "Start each loop with the Golden Scythe instead of the basic scythe.",
+    "upgrade.keep_worn_gear.name": "Keep Worn Gear",
+    "upgrade.keep_worn_gear.desc": "The boots, rings and trinket you're wearing when the year rewinds stay on you.",
     "upgrade.starter_gold_1.name": "Seed Money I",
     "upgrade.starter_gold_1.desc": "Start each loop with +1,000g.",
     "upgrade.starter_gold_2.name": "Seed Money II",
@@ -54,6 +57,8 @@
     "upgrade.starter_gold_4.desc": "Start each loop with +10,000g.",
     "upgrade.starter_gold_5.name": "Seed Money V",
     "upgrade.starter_gold_5.desc": "Start each loop with +25,000g.",
+    "upgrade.keep_lost_books.name": "Keep Lost Books",
+    "upgrade.keep_lost_books.desc": "Lost Books you have found stay found. Digging no longer turns up ones you already have.",
     "upgrade.cookbook_1.name": "Cookbook I",
     "upgrade.cookbook_1.desc": "Expand the Cookbook from 4 to 8 cooking recipe slots.",
     "upgrade.cookbook_2.name": "Cookbook II",
@@ -255,8 +260,14 @@
     "upgrade.keep_basement.desc": "Start each loop with the full L3 farmhouse (kitchen, kids' room, cellar with 33 cask slots) and the Cask recipe.",
     "upgrade.keep_shortcuts.name": "Keep Map Shortcuts",
     "upgrade.keep_shortcuts.desc": "Start each loop with all of Robin's map shortcuts pre-cleared.",
+    "upgrade.keep_special_orders_board.name": "Keep Special Orders Board",
+    "upgrade.keep_special_orders_board.desc": "The Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop.",
     "upgrade.keep_pet.name": "Keep Pet",
     "upgrade.keep_pet.desc": "Your pet returns at the start of every loop with its name and friendship hearts intact.",
+    "upgrade.keep_farm_decor.name": "Keep Farm Decor",
+    "upgrade.keep_farm_decor.desc": "Start each loop with your paths, fences, lights, signs and decorations where you left them. A piece with no room goes to the stash. If the stash is full, it is left where it was blocked, so pick it up on day 1.",
+    "upgrade.keep_farmhouse_furniture.name": "Keep Farmhouse Furniture",
+    "upgrade.keep_farmhouse_furniture.desc": "Your farmhouse furniture stays where you put it, dressers included. Anything inside it that isn't a hat, shirt, pants, furniture, wallpaper or flooring is wiped, so move it to the stash first. Furniture with no room in the new house is left by the front door. Pick it up on day 1.",
     "upgrade.keep_bus_unlocked.name": "Keep Bus Unlocked",
     "upgrade.keep_bus_unlocked.desc": "The bus to the desert runs from the first day.",
     "upgrade.start_chicken.name": "Start with Chicken",
@@ -581,6 +592,7 @@
     // -- gmcm -------------------------------------------------------------------------
     // -- new-game Advanced Options (vanilla CC-bundles dropdown replaced) -------
     "ago.bundles.tly-custom": "TLY Custom",
+    "ago.year1.tly-custom-note": "Does not affect TLY Custom bundles.",
     "ago.bundles.tly-custom.tooltip": "TLY Custom (default): The Longest Year builds its own Community Center board every loop (vanilla + remixed pools plus its authored bundles). Pick Normal or Remixed instead to keep the game's own board - the mod then re-rolls it the same way on every reset.",
 
     "gmcm.section": "The Longest Year",
@@ -617,6 +629,7 @@
     "reach.shortcuts": "unlocked with Robin's shortcuts",
     "reach.bus": "unlocked with {{value}} vault bundles paid",
     "reach.room": "unlocked once that room is complete",
+    "reach.special_orders": "unlocked once the Special Orders board opens (Fall 2)",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",
     "gmcm.features.section": "Features",
     "gmcm.features.blurb": "Turn individual parts of the mod off, or tune them. Changes apply straight away; nothing here needs a restart.",

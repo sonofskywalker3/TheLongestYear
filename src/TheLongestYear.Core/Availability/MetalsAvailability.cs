@@ -42,7 +42,7 @@ public static class MetalsAvailability
 
     /// <summary>Null means "not a metal this rule set knows", so the composer can try another
     /// domain or fall through to the unrecognised default.</summary>
-    public static ItemAvailability? Derive(PoolItem item)
+    public static ItemAvailability? Derive(PoolItem item, WeekMode mode = WeekMode.Pacing)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
         if (!Rules.TryGetValue(item.ItemId, out MetalRule? rule))
@@ -51,6 +51,6 @@ public static class MetalsAvailability
         Season gate = MineAreas.GateSeason(rule.Area);
         return new ItemAvailability(AvailabilityWeeks.SeasonOf(week), rule.Effort,
             $"{rule.Basis}, week {week}, gate {gate}, effort {rule.Effort}", EffortSource.Derived, week, gate,
-            HardWeek: MineAreas.HardWeek(rule.Area));
+            HardWeek: MineAreas.HardWeek(rule.Area, mode));
     }
 }

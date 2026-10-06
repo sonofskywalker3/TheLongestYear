@@ -88,6 +88,10 @@ public static class UpgradeCatalog
         new UpgradeDefinition("keep_golden_scythe", UpgradeCategory.Loadout, 250,
             metaRequirement: null, runReachRequirement: "scythe:golden"),
 
+        // Keep Worn Gear (spec 2026-10-01, sarahwinchester97): worn boots, rings and trinkets stay
+        // on through the rewind. Priced well above Keep Golden Scythe: rings and trinkets are power.
+        new UpgradeDefinition(WornGearKeep.UpgradeId, UpgradeCategory.Loadout, WornGearKeep.Cost),
+
         // Seed Money — 5-tier chain (2026-05-29 rebalance: was 2-tier +500g/+1500g, now
         // 5-tier with a more generous floor and ceiling per user feedback). Each tier
         // sets the TOTAL starting-gold bonus to its amount (not additive — owning II
@@ -101,6 +105,10 @@ public static class UpgradeCatalog
 
         // (Carryover: hand-authored entries removed in Plan 06A — replaced by the 50
         // programmatically-generated keep_<skill>_level_N entries below.)
+
+        // Keep Lost Books (Jeff, 2026-09-29): found Lost Books stay found, so digging stops
+        // turning up ones already read. See LostBookKeep.
+        new UpgradeDefinition(LostBookKeep.UpgradeId, UpgradeCategory.Carryover, 100),
 
         // Carryover — Cookbook + Craftbook (recipe banking across runs).
         // Tier determines the slot pool size. Highest owned tier wins (owning III = 20 slots).
@@ -282,14 +290,29 @@ public static class UpgradeCatalog
             metaRequirement: null, runReachRequirement: "house:3"),
         new UpgradeDefinition("keep_shortcuts", UpgradeCategory.Buildings, 900,
             metaRequirement: null, runReachRequirement: "shortcuts:1"),
+        // Keep Special Orders Board (Jeff, 2026-10-05; elaineofshalott, Nexus): the town board is
+        // open from Spring 1. Buildings, next to Keep Map Shortcuts: both keep a piece of the town
+        // map open across the rewind. Not Gifts (that category is the CC-room ladder). Flat 1,500 JP.
+        // Reach: the run got to Fall 2, the day vanilla opens the board.
+        new UpgradeDefinition(SpecialOrdersBoardKeep.UpgradeId, UpgradeCategory.Buildings, SpecialOrdersBoardKeep.Cost,
+            metaRequirement: null, runReachRequirement: SpecialOrdersBoardKeep.ReachMetric),
 
         // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
         // across loops. 2026-05-29 spec: sentimental upgrade, not progression-gating —
         // pets don't produce anything you'd ship or donate, so the cost reflects "mostly
         // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
         // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
-        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 75,
+        // 50 JP (Jeff, 2026-09-29; was 75): cheap enough for a first-loop buy.
+        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
             metaRequirement: null, runReachRequirement: "pet:1"),
+
+        // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)
+        // back on the same tiles. Above Keep Pet: paths give a speed boost and the layout saves clearing.
+        new UpgradeDefinition(FarmDecorKeep.UpgradeId, UpgradeCategory.Buildings, FarmDecorKeep.Cost),
+
+        // Keep Farmhouse Furniture (spec 2026-10-01, Addendum 2, Jeff): every furniture piece in the
+        // farmhouse and cellar back at the same tile and rotation; non-cosmetic contents are wiped.
+        new UpgradeDefinition(FarmhouseFurnitureKeep.UpgradeId, UpgradeCategory.Buildings, FarmhouseFurnitureKeep.Cost),
 
         // Gifts of the Junimos (Jeff, 2026-08-29): keep a Community Center room's world reward
         // across loops, one row per room, never the Bulletin Board. Priced on a shared ladder

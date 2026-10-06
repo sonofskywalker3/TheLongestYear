@@ -30,14 +30,14 @@ public static class ItemAvailabilityBuilder
         var derived = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
 
         foreach (PoolItem item in pools.Fish ?? new List<PoolItem>())
-            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId));
+            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
 
         foreach (PoolItem item in pools.CrabPot ?? new List<PoolItem>())
-            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId));
+            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
 
         foreach (PoolItem item in pools.Metals ?? new List<PoolItem>())
         {
-            ItemAvailability? metal = MetalsAvailability.Derive(item);
+            ItemAvailability? metal = MetalsAvailability.Derive(item, mode);
             if (metal != null)
                 derived[item.ItemId] = metal;
         }
@@ -55,7 +55,7 @@ public static class ItemAvailabilityBuilder
         }
 
         EffortComposer? composer = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step)
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step, mode)
             : null;
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = composer?.DeriveAll();
 
@@ -78,7 +78,26 @@ public static class ItemAvailabilityBuilder
             }
         }
 
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        if (effortData == null)
+            return model;
+
+        // The dish table needs the model's placements, so it is built from this first model and
+        // handed to the one returned. Its effort cap reads a composer that never counts the
+        // kitchen (hasKitchen: true), so keep_kitchen cannot move a dish ingredient's effort and
+        // with it an ask on a stored board. It is built fresh here on EVERY path, after the trap
+        // rewrite above, never the composer that ran DeriveAll before that rewrite: reusing that
+        // one when keep_kitchen is owned would give the two kitchen states different memoised
+        // efforts. The ingredient basis is the model-free pass lookup; dishes used as ingredients
+        // are resolved inside DishAskBasis.Build.
+        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step, mode);
+        IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
+            effortData,
+            id => model.IsPlaced(id) ? model.For(id) : null,
+            (id, s) => QuantityAskPass.BasisByDeadline(id, s),
+            kitchenFree.EffortOf);
+        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
+            { DishBases = dishBases };
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

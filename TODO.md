@@ -6,9 +6,244 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
+"My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
+fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:
+Carp also bites in the Secret Woods pond and the Sewer, so Lake Fish counted the Woods as lake and
+asked for Woodskip and Catfish. Now a place counts as the bundle's water only when most of its
+vanilla fish bite there: Lake Fish is the mountain lake (Mountain, Backwoods), River Fish is Town
+and Forest, Ocean Fish is the Beach. A bundle whose fish share no water (Quality Fish, Master
+Fisher's) keeps its old mixed pool. Specialty Fish now asks only for hard-to-reach fish: a
+legendary, or a fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market,
+volcano), or (Jeff, 2026-10-05) an open-water fish that is hard (difficulty 80 or more) and bites
+8 hours a day or less in total: Pufferfish, Octopus and Super Cucumber. No Herring, Squid or
+Catfish. Pools from the live data: Lake 17 to 13 fish, River 22 to 20, Ocean 19 unchanged,
+Specialty 31 to 20 (5 of them legendaries). Jeff, 2026-10-05: jellies are an ingredient, not a
+fish, so no fish bundle (Lake, River, Ocean, Specialty, Night Fishing, Quality Fish, Master Fisher's,
+Weatherman's) asks for Sea, River or Cave Jelly or a modded jelly; they stay in the game and in
+Field Research's fish part. Pools after: Lake 12, River 19, Ocean 18, Specialty 19. Also Jeff,
+2026-10-05: Specialty Fish holds at most one Night Market fish (Midnight Squid, Spook Fish, Blobfish,
+Octopus count), the same cap Night Fishing has; a test board had asked for all three Submarine fish. Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
+
+### BUILT (elaineofshalott, Nexus posts, 2026-10-04): Keep Special Orders Board
+Shipped in 0.18.144. New Buildings keep, flat 1,500 JP (not on
+the Gifts ladder): the Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop with
+its normal weekly orders. Unlocks once a run reached Fall 2, the day vanilla opens the board (reach
+`special_orders`, read from DaysPlayed, which is still the run's count when the Fail-morning perk
+screen opens: a Summer fail reads 57 and does not count, a Fall fail reads 85 and does). Postfix on
+`SpecialOrder.IsSpecialOrdersBoardUnlocked`, plus a Town.MakeMapModifications fallback that puts the
+board tiles up itself in case the JIT inlined the gate.
+Also for every player, with or without the keep: the rewind now drops town special orders (in
+progress or unclaimed), clears the board's offer so it re-rolls, and forgets completed town orders so
+the non-repeatable ones come back. Before this all three leaked across loops (player.team is never
+rebuilt). Qi's orders are left alone.
+Strings for Jeff's review: "Keep Special Orders Board" / "The Special Orders board outside Mayor Lewis's house
+is open from Spring 1 of every loop." / Plan tab: "unlocked once the Special Orders board opens
+(Fall 2)".
+Not checked in game: `tly_ordersboard` before and after a `tly_failreset` with the keep owned (board
+up on Spring 1, board action tile present, opening it offers two fresh orders, accepting one works);
+same without the keep (board down, no town order carried, completed list has no town ids); a Fall-fail
+perk screen shows the row as buyable and a Summer-fail one shows it Locked. Reply to elaineofshalott
+after it ships.
+
+### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
+elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
+Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
+calls the bus repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items reach
+Spring deadlines. "If they're picking Extreme they do want a challenge." Not a floodgate: only the
+desert date moves. Reply to elaineofshalott after it ships.
+Built: `AvailabilityWeeks.DesertExtremeWeek` = 3, read only by a model built for Extreme (WeekMode
+HardAll); LocationGating gained an Extreme column. Extreme weeks: desert forage and fish 3 (Spring),
+Rhubarb 4 (Spring, seeds week 3 plus 13 days), Starfruit 6 (Summer), Beet 9 (Fall), Cactus Fruit 3.
+Skull Cavern on Extreme is week 5 (the week after the Skull Key, floor 120 at 30 floors a week), so
+iridium, Prismatic Shard and Skull Cavern drops gate in Summer. Hard, Normal and Easy unchanged.
+Not moved: artisan goods and dishes made from desert items (no rule derives their hard week yet),
+Sandy's friendship recipes (pacing only).
+
+### BUILT 0.18.141 (gmastern1, Nexus posts, 2026-10-02): X in the recipe picker skipped the book
+Picking a recipe to bank at the end of a run, then pressing X on the recipe list, closed the whole
+Cookbook/Craftbook and started the run. Now X, Escape and controller B on the recipe list step back
+to the slot list; from the slot list they close the book as before. Both books. Not checked in game
+yet. Reply to gmastern1 after it ships.
+
+### BUILT 0.18.143 (sigyn2002, Nexus bugs, 2026-10-03): crop fairy left wild seeds as crops
+The crop fairy grew wild seeds (Spring/Summer/Fall/Winter Seeds) to ready without turning them into
+forage: they kept a mid-growth sprite and all harvested as normal-quality Wild Horseradish (the
+placeholder harvest). Vanilla bug too, reproduced on a game with no TLY: vanilla only converts wild
+seeds in the overnight crop update, and the fairy comes after it. Now any full grow (the fairy) turns
+a wild seed crop into random seasonal forage on the spot, same as the overnight update. A stuck crop
+already in a save converts the next night if left unpicked. Reply to sigyn2002 after it ships.
+
+### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
+On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
+impossible on the first try but beatable by about loop 3; once a player reaches loop 3 the board
+starts asking for things that are impossible until about loop 5, and so on. Jeff's reasoning: with
+enough loops anything is possible at any time, and Extreme should reflect that. Needs a spec
+(brainstorm first): what "possible by loop N" means in the availability model (kept upgrades,
+Keep Seeds/Tools, the Junimo stash and books carry power forward), which dates move per loop, and
+whether the ramp is per save or resets when a season is cleared.
+
+### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; waiting on player logs
+- **gmastern1 (Nexus posts):** Spring Crops showed complete in Winter without Rhubarb. Released code
+  cannot complete an unfilled bundle or swap Rhubarb on load, and a Spring Crops needing all 4 with
+  Rhubarb could not pass Spring 28, so his was most likely 3-required (Easy or pick-3-of-4). Real
+  leak found on the way and fixed (0.18.136/137): season-named bundles took items dated after their
+  season (Rhubarb, Coffee Bean in Spring; Starfruit in Summer). Replied 2026-10-02 asking for his
+  SMAPI log and difficulty; told him he can restart the year at the Junimo Shrine.
+- **paigefromabook (Nexus bugs, filed on 0.18.72):** Weatherman's asked for Stingray. Island markers
+  were config defaults only; now built-in (0.18.138) and repair swaps island-only fish on load
+  (0.18.139). Cause on her save unproven (config list or another fish mod). Replied 2026-10-02 asking
+  for her SMAPI log and the ExcludedLocationMarkers line.
+- sarahwinchester97: note posted 2026-10-02 that the dresser fix and Keep Worn Gear are out.
+- Open: merge master into `story` hits real conflicts (BundleEngine, WorldResetService, ModEntry,
+  i18n/default.json); aborted, needs its own task.
+
+### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
+Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
+same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
+else inside is refused at deposit. Stashed items keep dye, boot tailoring, Combined Ring rings,
+trinket rolls and rod bait/tackle. Older stashed containers holding other items get them taken out
+(stash slot, else a pickup on the ground beside the stash; there is no overflow chest). New
+upgrades: Keep Farm Decor (Buildings, 500 JP; paths, fences, lights, signs, no-function
+decorations, no furniture), Keep Worn Gear (Loadout, 1,000 JP), Keep Farmhouse Furniture
+(Buildings, 250 JP). Live checks 2026-10-01 (headless, automated): 21 PASS, 0 FAIL.
+- Stash: dresser with hat/dyed shirt/pants accepted and kept through a reset; dresser with a ring
+  refused; dyed pants, tailored boots (514/4/4), Combined Ring [(O)529,(O)530], trinket seed and
+  a baited rod (deposited through Chest.addItem) all identical after reset.
+- Legacy eject: ring taken out into its own slot; with a full stash dropped beside the stash at
+  (67, 18). The 0.18.118-save rescue path was not exercised (no such save); a plain reload logs no
+  rescue line.
+- Keep Worn Gear: nothing kept without it; with it boots, both rings, trinket and trinketSlots=1
+  identical after reset.
+- Keep Farm Decor: stump under a path cleared with the kept copper axe (2 hardwood on the tile);
+  boulder kept with a basic pickaxe (fence and torch to the stash); no axe keep leaves the stump
+  and stashes the path; full stash stacks what it can and drops the rest beside the blocker; a
+  path under the stash chest keeps the chest on its tile after save and reload; Meadowlands keeps
+  its 33 starter fences in place with nothing duplicated into the stash.
+- Keep Farmhouse Furniture: dresser, rug and painting back on their tiles, hat kept, ring wiped,
+  one bed; house level 1 back to 0 shifts pieces by (-6, 0), the double bed and a kitchen plant
+  drop by the front door and the starter bed stays.
+- Outstanding for Jeff: Android on-device load, heldItem reflection and drag refusal in the stash
+  menu; refusing a container with a full inventory (lands at your feet; menu-only path); torch and
+  lamp-post glow at night after a decor restore; confirm the decorative big craftable list in
+  FarmDecorKeep and the trinketSlots re-grant.
+- RELEASED 0.18.135 (2026-10-02): GitHub, Nexus file, version, description and changelog live.
+  Hand checks: decor glow PASS (agent run); Android and full-inventory checks dropped by Jeff;
+  decor big craftable list approved by Jeff.
+- Reply to sarahwinchester97 now due (bug-reply-after-fix); draft goes to Jeff first. Her current
+  dresser is gone; the rescue covers only saves where it is still in the stash.
+
+### BUILT 0.18.99 (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
+Jeff replied 2026-09-30 guessing a production-chain leak. It was not a leak: the Sticky recipe
+(since 0.16.116) re-rolled from "Sap or resource", the whole Resource bucket plus TapperGoods (which
+adds Acorn, Maple Seed, Pine Cone, Moss, Hardwood). Jeff 2026-09-30: "anything in the game that is
+year 1 obtainable and sticky. like ice cream, sugar". Now a fixed list, model-gated: Sap, Maple
+Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce,
+Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek). 60 boards
+(tly_genbundles 1-60): 14 Sticky bundles, all from the list.
+- **BUILT 0.18.100: shape and amounts** (Jeff 2026-09-30: "3/4/5/6 by difficulty ... ice cream is
+  hard in spring, trivial in summer, easy in later seasons"). BundleShapes: Sticky shows 6, needs 4,
+  so the Required Slots dial reads 3/4/5/6. QuantityBasisTables.Seasonal: per-season bases for
+  Sugar (20/40/40/40), Ice Cream (0/25/25/25), Maple Bar (0/3/3/3), Cranberry Sauce (0/0/5/8; 0 = cannot exist yet, fixed 0.18.101 after Jeff asked),
+  Miner's Treat (3/6/6/6, Mummy drop 4 still wins in Spring); best season up to the deadline. Sap,
+  Slime, syrups, Honey, Jelly keep their existing rows. Side effect: Sugar and Ice Cream asks in
+  Chef's and Children's now band too (were x1). 60 boards on Normal: 14 Sticky, all 4 of 6; Ice
+  Cream x7-13, Sugar x8-20, Slime x26-48, Sap x29-34, syrups x2-6, dishes x1-4.
+- **BUILT 0.18.113: quantity rules** (spec 2026-09-30-quantity-rules-design). Hand rows
+  for tree seeds, fruit, forage, trash, pantry goods, rare fish; dishes through the availability
+  model; Mystic Syrup out; Prismatic Shard and Mystery Box capped 0/1/2/3 per board; Night Market
+  fish week 15; Moss week 6. Verified on 240 boards (60 per Stack size step): no Mystic Syrup, caps
+  held, every uncovered slot on the single-on-purpose list; after-numbers in
+  docs/superpowers/notes/2026-09-30-quantity-audit.md. Open leftovers: Home Cook's egg/milk category
+  asks and Treasure Chest amounts have no rule, 9 to 23 dishes stay x1.
+- RELEASED 0.18.118 (2026-09-30). Follow-up reply to elaineofshalott POSTED on Nexus posts 2026-09-30.
+
+### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
+Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.
+- **user5726212 (Nexus posts, 2026-09-29), local co-op.** Jeff replied 2026-09-30 (filed, not planned yet).
+  - **A farmhand joining re-offers the weekly theme pick**, and that pick changes the Season Goals book
+    but not the Community Center, so the two disagree. The week's theme state is probably being
+    rolled or offered per client instead of once by the host.
+  - **The farmhand cannot read the Community Center bundles and has to meet the Wizard.**
+    CommunityCenterUnlock.Apply only marks Game1.MasterPlayer (event 112, ccDoorUnlock,
+    canReadJunimoText, seenJunimoNote). Farmhands need the same flags, set on their own client.
+  - **No JP is gained for the farmhand under any circumstances.** JP is one pool per save; decide
+    whether farmhand donations bank into it and whether farmhands see it.
+- Earlier notes that belong to the same pass: Boosts tab host-only question (Plan 06 notes, search
+  "Multiplayer: decide"), netWorldState `farmhandData` leaking across the rewind (own item below),
+  multiplayer feature ask from CausticOptimist.
+
+### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
+Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
+- **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
+  Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
+- **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
+  checked in game by hover (needs the mouse).
+- **RELEASED 0.18.98 (2026-09-29): theme week discount** (Jeff 2026-09-29, spec 2026-09-29-theme-week-discount). Nijah's
+  "31 Cauliflowers in week 1": the picked theme lowers its week's goal lines over 10 (Easy 50%, Normal 25%,
+  Hard/Extreme 0; floor 10, round down), reverted at the next week, a re-pick and the month start; donated
+  lines stay done. In game on Normal and Hard: apply, save+reload (stored engine board), week revert,
+  re-pick revert, donated lines kept, month rollover. 0.18.97: the hub preview (and tly_goals) shows the
+  discounted counts before the pick (Jeff, 2026-09-29: yes).
+- **RELEASED 0.18.98 (2026-09-29): shrine restart runs its menus before the night** (Jeff 2026-09-29, Ben reset on day 5 and
+  saw payout, level-up, "Spring 6", then the bundle question). Yes -> hold -> upgrade menu -> books -> sleep
+  (shipping and level-up screens skipped, HUD hidden) -> reset at first clear morning tick
+  (RunState.RestartMenusDone). In game: day 5 + a farming level, restart -> reshuffle -> shrine closed -> night
+  skipped 1 level-up screen -> Spring 1 hub. Not seen: a full shipping bin (code clears it), the look of the
+  fade (headless). Jeff playtested it 2026-09-29: worked well.
+- **RELEASED 0.18.98 (2026-09-29):** rolls up 0.18.85-0.18.98 (Dye, Qi Bean, artifacts week 3, pet, Year 1
+  tooltip, Keep Lost Books, theme discount, shrine restart). DONE 2026-09-29: told tanky24u (Nexus posts) Keep Lost Books shipped.
+- **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
+  not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
+  with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
+- **RELEASED 0.18.98: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
+  visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
+  (the visit needs the naming prompt clicked); unit-tested.
+- **RELEASED 0.18.98: Year 1 checkbox tooltip** (Jeff 2026-09-29): appends "Does not affect TLY Custom bundles."
+  (placeholder, Jeff may reword). Not seen in game (needs the Advanced Options screen clicked).
+- **RELEASED 0.18.84 (2026-09-29): quality goals held to week 3** (Jeff 2026-09-29). A silver-or-better line is not a
+  weekly goal before week 3 of the year (SlotPoolBuilder.QualityGoalFirstWeek). Ben's week-1 Mixed goals
+  asked for gold Carrots. His pepper and morel mentions were caption noise; dropped (Jeff).
+- **BUILT 0.18.85-86: Dye bundle limited** (Jeff 2026-09-29): six vanilla Dye items + the six common gems +
+  coloured crops, fruit, flowers, forage, beach finds (the game's isForage test); colours use the game's dye-pot
+  shade groups. 60-board check: 22 Dye bundles, all picks allowed, gems land. Dye now has no hard item for the
+  Hard/Extreme hard-item swap.
+- **BUILT 0.18.87: Qi Bean no longer year-1.** Cause: Default artifact spot row gated on
+  PLAYER_SPECIAL_ORDER_RULE_ACTIVE DROP_QI_BEANS, read without its condition. YearOneCondition now closes
+  rules only Qi orders grant (from Data/SpecialOrders). Also unplaces Son of Crimsonfish (LEGENDARY_FAMILY).
+- **BUILT 0.18.87: Dye adds Quartz, Fire Quartz, Frozen Tear, Earth Crystal** (Jeff). Model weeks: Quartz and
+  Earth Crystal wk 1, Frozen Tear and Fire Quartz wk 2. Earth Crystal is color_copper (orange group) and Dye
+  has no orange slot; Jeff 2026-09-29: remove it (0.18.88).
+- Reply to Nijah POSTED 2026-09-29 (0.18.84 fixes, randomizer ideas noted).
+- **BUILT 0.18.89: artifacts floored at week 3** (Jeff 2026-09-29), every route (EffortComposer). 60 boards: no
+  impossible gates. Sea Jelly checked: no fishing level (Beach row MinFishingLevel 0), week 1 stays.
+- Keep Lost Books: Jeff chose Lost Books only (0.18.92, see the tanky24u item).
+- Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
+  pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
+
+### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
+Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
+- **RELEASED 0.18.81 (2026-09-28).** Reachability now reads machine rules and farm animals. In-game check with
+  the mod: kept-off list went from 2 items to 4 (+ Ostrich Egg, + Ostrich Mayo), nothing else.
+- NOT changed: the week model still rates Ostrich Egg as a Spring barn product (AnimalProductAvailability
+  gives an unbuyable animal a fixed step, not "unplaced"). Harmless now that reachability drops it.
+- Follow-up reply POSTED on Nexus 2026-09-29.
+
+### BUG (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind
+"I was playing with normal bundles, but when I reset the year, I got random custom bundles instead." No log.
+- **RELEASED 0.18.81 (2026-09-28).** Cause: the new-game pick was mirrored into config.json and every reset read
+  config.json, so any later TLY Custom new game flipped older Normal saves. Fix: MetaState.ChosenBundleSource
+  per save; GMCM edits the loaded save's choice; config is only the new-game default.
+- Her save is already on custom bundles. The fix does not undo that: she sets Bundle source to Normal in
+  the in-game mod settings, and her next rewind is Normal again. Say so in the reply.
+- Other possible cause, NOT fixed: TLY added to a save made without it (or a save with a donation before
+  day-1 load) reads the vanilla board for loop 1 but defaults to Engine at the rewind. Ask her if the
+  save started with TLY installed.
+- Reply POSTED on Nexus 2026-09-29: fix explained, asked about other saves and whether the farm started with TLY. Waiting on the answer.
+
 ### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
 Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
-- **BUG, fix approved (Jeff, 2026-09-28): reroll shows the same pair.** Cause: a reroll shuffles only the
+- **RELEASED 0.18.79 (2026-09-28, with Keep Fish Pond): reroll shows the same pair.** Cause: a reroll shuffles only the
   themes that qualify (not picked this month, 2+ askable goals). A week with exactly 2 qualifiers (late
   month, thin activity themes) can only ever show that one pair. Fix, reroll path only: keep the
   not-picked-this-month rule, lower the goal floor from 2 to 1 (never 0: a 0-goal theme lifts the
@@ -21,6 +256,9 @@ Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply 
   or something else.
 
 #### RANDOMIZER settings section (Jeff, 2026-09-28): all off by default, trade balance for variety
+SPEC WRITTEN on branch `randomizer`: `docs/superpowers/specs/2026-09-28-randomizer-design.md`. NOT
+scheduled: target 1.1, after the story release, while players wait for Year 2 (2.0). The notes below
+are the brainstorm; the spec is the source of truth.
 - **Random theme items**: drop the gate-first ordering and effort weighting. Keep the "obtainable by this
   week" rule so no goal is impossible.
 - **Random buff/debuff pairings**: never pair a theme with a drawback that blocks its own goals
@@ -61,7 +299,7 @@ Sarahwinchester97's "more than one pet?" answered the same day (Keep Pet brings 
   empty pond in 0.18.77 is exactly her ask; the release hold on her answer is lifted.
   CREDIT at release (Jeff, 2026-09-28): the README + Nexus What's New line for Keep Fish Pond ends
   "Suggested by elaineofshalott." (CHANGELOG already credits her.)
-- BUILT 0.18.77 on master, unreleased: Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
+- RELEASED 0.18.79 (2026-09-28, live rewind check passed headless): Keep Fish Pond (750 JP, Buildings) brings one pond back EMPTY in the
   same spot. Needs a live rewind check. A stocked pond / keep-a-fish power is still undecided by Jeff.
 
 ### RELEASED 0.18.76 (2026-09-27): ozzy2540, seasons failing under Challenging CC Bundles
@@ -128,6 +366,7 @@ Jeff's answers (2026-09-24):
 Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
 Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
+### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). tanky24u told 2026-09-29.
 ### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
 Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
 10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great

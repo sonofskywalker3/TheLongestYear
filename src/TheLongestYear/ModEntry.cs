@@ -292,7 +292,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_sweepforage", "Take every spawned forage item on every map and put it in the sweep chest on the Farm (a real harvest, for measuring what a season actually yields). Run 'clear' first, then once a day, then 'report'. Usage: tly_sweepforage [clear|report]", this.CmdSweepForage);
             helper.ConsoleCommands.Add("tly_forageyield", "Simulate how much of each forage item a player could gather by a cutoff day if every reachable map were cleared every day, and print the 20-80% band a requirement should sit in. Forage only. Read-only. Usage: tly_forageyield [spring|summer|fall|winter|<day>] [itemId]", this.CmdForageYield);
             helper.ConsoleCommands.Add("tly_playseason", "Debug: simulate a minimal compliant player for the current season (donate exactly what every gate demands by day 28, pay the vault; 'goals' also deposits this week's goal slots; 'goalsonly' deposits only the goal slots; 'quarter <k>' donates only the first k/4 of the season's share, cumulative across k=1..4, and pays the vault on k=4). Real CC slot flips. Follow with tly_setday 28 and a sleep. Usage: tly_playseason [goals|goalsonly|quarter <1-4>]", this.CmdPlaySeason);
-            helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample the planning hub shows). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
+            helper.ConsoleCommands.Add("tly_goals", "Log the weekly goals every theme would offer on the LIVE board for a season (the same sample and counts the planning hub shows, theme week discount included). Read-only. Usage: tly_goals [spring|summer|fall|winter] [weekOfYear]", this.CmdGoals);
             helper.ConsoleCommands.Add("tly_themepool", "Print each theme's askable weekly-goal count for the current week (rule C's number), or, with a theme, every candidate line with due/filler, effort, tier and weight. Read-only. Usage: tly_themepool [theme]", this.CmdThemePool);
             helper.ConsoleCommands.Add("tly_dumpbundles", "Write a Markdown catalogue of every bundle the engine can produce, with every item each one can ask for and how its quantity is decided. Reads LIVE game data, so it covers whatever content mods are installed. Usage: tly_dumpbundles [fileName]", this.CmdDumpBundles);
             helper.ConsoleCommands.Add(
@@ -309,10 +309,11 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
+            helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen]", this.CmdReroll);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
             helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
             helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
-            helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the config's BundleSource so the next reset honours it.", this.CmdBundleSource);
+            helper.ConsoleCommands.Add("tly_bundlesource", "Diagnostics: show or set the loaded save's bundle source / vanilla type in memory (persists on the next save). Usage: tly_bundlesource [Engine|Vanilla] [Default|Remixed] — also sets the save's chosen source so the next reset honours it.", this.CmdBundleSource);
             helper.ConsoleCommands.Add("tly_jpbudget", "Diagnostics only: log the maximum JP the CURRENT loop's board can pay out, per season + total (earliest-obtainable-season model) and a hoard-for-Winter ceiling. Baseline economy, no jp_boost. Usage: tly_jpbudget [verbose]", this.CmdJpBudget);
             helper.ConsoleCommands.Add("tly_openshop", "Open the Junimo Shrine upgrade shop (debug).", this.CmdOpenShop);
             helper.ConsoleCommands.Add("tly_listupgrades", "List the upgrade catalog grouped by category.", this.CmdListUpgrades);
@@ -326,6 +327,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
+            helper.ConsoleCommands.Add("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
@@ -384,6 +387,15 @@ namespace TheLongestYear
                 "Junimo Stash chest, or print every stashed tool's slots + enchantments. " +
                 "Usage: tly_stashrod | tly_stashrod check",
                 this.CmdStashRod);
+            helper.ConsoleCommands.Add("tly_stashnest",
+                "Debug: exercise the stash nesting rule and item identity. Usage: tly_stashnest <hats|ring|gear|legacy|fill|wear|worn|check>",
+                (cmd, a) => { if (Context.IsWorldReady) StashNestingDebug.Run(a, this.Monitor, _stashService); });
+            helper.ConsoleCommands.Add("tly_decor",
+                "Debug: set up and inspect Keep Farm Decor cases. Usage: tly_decor <clumps|path x y|fence x y|check x y>",
+                (cmd, a) => { if (Context.IsWorldReady) FarmDecorDebug.Run(a, this.Monitor); });
+            helper.ConsoleCommands.Add("tly_housefurn",
+                "Debug: set up and inspect Keep Farmhouse Furniture cases. Usage: tly_housefurn <list|place id x y [rotations]|fill x y|check>",
+                (cmd, a) => { if (Context.IsWorldReady) FarmhouseFurnitureDebug.Run(a, _meta.State, this.Monitor); });
             helper.ConsoleCommands.Add("tly_giftbox",
                 "Debug: report or open a vanilla one-time gift box. Usage: tly_giftbox <Location> <x> <y> [warp|open]",
                 this.CmdGiftBox);
@@ -489,15 +501,10 @@ namespace TheLongestYear
                     ? BundleSourceNames.LegacyVanilla : BundleSourceNames.Engine;
                 _meta.State.VanillaBundleType =
                     BundleSourceNames.VanillaTypeFor(chosenSource) ?? Game1.BundleType.Default.ToString();
-
-                // Mirror the Advanced Options pick into the config, which is the ONE setting that
-                // owns this from now on. Without this the first reset would re-stamp from a config
-                // the player never touched and silently undo the choice he just made.
-                if (!string.Equals(_config.BundleSource, chosenSource, StringComparison.OrdinalIgnoreCase))
-                {
-                    _config.BundleSource = chosenSource;
-                    this.Helper.WriteConfig(_config);
-                }
+                // Kept on the save, not mirrored into the config: the config is shared by every
+                // save, and mirroring it here is how a new TLY Custom game flipped an older Normal
+                // save to custom bundles at its next reset (victoriatauanem, Nexus 2026-09-28).
+                _meta.State.ChosenBundleSource = chosenSource;
 
                 this.Monitor.Log(
                     $"New game: bundle source={chosenSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
@@ -679,6 +686,10 @@ namespace TheLongestYear
                 new GoalGroupCap(GoalGroupCap.JellyIds, 1),
             };
             _runController.Availability = _availability;
+            // The theme week discount rewrites stacks on the board; that is our own write, not
+            // another mod's, so the vanilla-mode fingerprint follows it.
+            _runController.AfterBoardWrite = () =>
+                _boardFingerprint = BoardInspection.Fingerprint(Game1.netWorldState.Value.BundleData);
             _runController.ItemKindOf = id =>
             {
                 string bare = BundleParsing.StripQualifier(id);
@@ -2238,17 +2249,27 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.resend-better-start.tooltip"));
 
             gmcm.AddTextOption(this.ModManifest,
-                // One setting, three choices. A config written before this change says the legacy
-                // "Vanilla", which names no layout, so show it as whichever layout the loaded save
-                // is actually on rather than defaulting a remixed save to Normal.
+                // One setting, three choices. With a save loaded it reads and writes THAT save's
+                // choice; the config is shared by every save and only holds the default the new-game
+                // dropdown starts on. An older config may say the legacy "Vanilla",
+                // which names no layout, so show it as Normal.
                 getValue: () =>
                 {
+                    if (Context.IsWorldReady && _metaLoaded)
+                    {
+                        MetaState state = _meta.State;
+                        return BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType);
+                    }
                     string stored = BundleSourceNames.Normalize(_config.BundleSource);
-                    return stored == BundleSourceNames.LegacyVanilla
-                        ? BundleSourceNames.ForVanillaType(_meta?.State?.VanillaBundleType)
-                        : stored;
+                    return stored == BundleSourceNames.LegacyVanilla ? BundleSourceNames.Normal : stored;
                 },
-                setValue: v => _config.BundleSource = BundleSourceNames.Normalize(v),
+                setValue: v =>
+                {
+                    if (Context.IsWorldReady && _metaLoaded)
+                        _meta.State.ChosenBundleSource = BundleSourceNames.Normalize(v);
+                    else
+                        _config.BundleSource = BundleSourceNames.Normalize(v);
+                },
                 name: () => Strings.Get("gmcm.bundle-source.name"),
                 tooltip: () => Strings.Get("gmcm.bundle-source.tooltip"),
                 allowedValues: BundleSourceNames.All,
@@ -2529,6 +2550,9 @@ namespace TheLongestYear
                 case "tly_addjp": this.AddJp(command, args); break;
                 case "tly_addmoney": this.AddMoney(command, args); break;
                 case "tly_additem": this.CmdAddItem(command, args); break;
+                case "tly_stashnest": if (Context.IsWorldReady) StashNestingDebug.Run(args, this.Monitor, _stashService); break;
+                case "tly_decor": if (Context.IsWorldReady) FarmDecorDebug.Run(args, this.Monitor); break;
+                case "tly_housefurn": if (Context.IsWorldReady) FarmhouseFurnitureDebug.Run(args, _meta.State, this.Monitor); break;
                 case "tly_removehorse": this.CmdRemoveHorse(command, args); break;
                 case "tly_reset": this.ForceReset(command, args); break;
                 case "tly_win":
@@ -2560,6 +2584,7 @@ namespace TheLongestYear
                 case "tly_trophytest": this.CmdTrophyTest(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
+                case "tly_reroll": this.CmdReroll(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
                 case "tly_driedprobe": this.CmdDriedProbe(command, args); break;
@@ -2575,6 +2600,7 @@ namespace TheLongestYear
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
+                case "tly_ordersboard": TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, args); break;
                 case "tly_cropprobe": TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, args); break;
                 case "tly_spawnprobe": TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, args); break;
                 case "tly_minesweep": TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, args); break;
@@ -2600,6 +2626,15 @@ namespace TheLongestYear
                 case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
                 case "tly_herdbook": TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
+                case TheLongestYear.DebugCommands.RarityStepCommand.Name:
+                    TheLongestYear.DebugCommands.RarityStepCommand.Run(this.Monitor, _config, _meta?.State,
+                        BuildAvailabilityModelFor, _enginePools, _catalog.Select(c => c.Id), DisplayName,
+                        this.Helper.DirectoryPath, args);
+                    break;
+                case TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name:
+                    TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,
+                        () => _launcher?.OpenCookbook(), () => _launcher?.OpenCraftbook(), args);
+                    break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
@@ -3679,7 +3714,7 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_goals: {season} week {week} (run season {run.Season} day {run.DayOfMonth}, loop seed {run.Seed}).", LogLevel.Info);
             foreach (TheLongestYear.Core.Theme theme in Enum.GetValues(typeof(TheLongestYear.Core.Theme)))
             {
-                IReadOnlyList<BonusSlot> slots = _runController.SampleSlotsForTheme(theme, season, week);
+                IReadOnlyList<BonusSlot> slots = _runController.PreviewSlotsForTheme(theme, season, week);
                 this.Monitor.Log($"  {theme}: {slots.Count} goal(s)", LogLevel.Info);
                 foreach (BonusSlot slot in slots)
                 {
@@ -4011,7 +4046,10 @@ namespace TheLongestYear
                             string rule = match.Domain == PoolDomain.Fish
                                 ? (TheLongestYear.Core.FishBundleCandidates.IsNightFishingBundle(c)
                                     ? " Only fish that cannot be caught before 6pm, plus at most one Night Market fish."
-                                    : " Only fish sharing a spawn location with the bundle's vanilla fish.")
+                                    : TheLongestYear.Core.FishBundleCandidates.IsSpecialtyFishBundle(c)
+                                        ? " Only hard-to-reach fish: legendaries, fish caught only in gated places (Secret Woods, desert, mines, Sewer, Night Market), or hard fish (difficulty 80+) that bite 8 hours a day or less, with at most one Night Market fish."
+                                        : " Only fish from the water most of the bundle's vanilla fish share.")
+                                    + " Never a jelly."
                                 : " Any item in that pool can appear.";
                             body = $"  - Re-rolls from the **{match.Domain}** pool{season}.{rule} No item is asked for twice across the board; see the pool tables below.";
                         }
@@ -4166,7 +4204,7 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"    asks: stack x{live.StackFactor}, quality x{live.QualityFactor}, " +
                 $"required slots {(live.RequireAllSlots ? "ALL shown" : live.RequiredSlotsDelta.ToString("+0;-0;0"))}, " +
-                $"rarity bias {live.RarityBias}",
+                $"rarity bias {live.RarityBias}, theme week discount {live.EffectiveWeeklyGoalStackDiscount():P0}",
                 LogLevel.Info);
             this.Monitor.Log(
                 $"    economy: JP x{live.JpEarnedFactor}, shrine prices x{live.ShrinePriceFactor}, " +
@@ -4745,6 +4783,27 @@ namespace TheLongestYear
             _launcher?.OpenWeeklyHub();
         }
 
+        /// <summary>Headless re-roll check: presses the hub's re-roll button, or closes and reopens
+        /// the hub so a run can see the re-rolled pair restored.</summary>
+        private void CmdReroll(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.activeClickableMenu is not TheLongestYear.UI.WeeklyHubMenu hub)
+            {
+                this.Monitor.Log("tly_reroll: the planning hub is not open.", LogLevel.Warn);
+                return;
+            }
+            if (args.Length > 0 && args[0].Equals("reopen", StringComparison.OrdinalIgnoreCase))
+            {
+                Game1.activeClickableMenu = null;
+                _launcher?.OpenWeeklyHub();
+                return;
+            }
+            int count = args.Length > 0 && int.TryParse(args[0], out int n) && n > 0 ? n : 1;
+            for (int i = 0; i < count; i++)
+                hub.RerollForDebug();
+        }
+
         private void CmdSeasonGoals(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
@@ -4845,22 +4904,22 @@ namespace TheLongestYear
         }
 
         /// <summary>Diagnostics: read/set MetaState.BundleSource + VanillaBundleType and the
-        /// config's BundleSource in memory so an unattended smoke can reset in each mode.</summary>
+        /// save's chosen source in memory so an unattended smoke can reset in each mode.</summary>
         private void CmdBundleSource(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length >= 1)
-            {
-                string source = BundleSourceNames.Normalize(args[0]);
-                _config.BundleSource = source;
-                _meta.State.BundleSource = source;
-            }
+                _meta.State.BundleSource = BundleSourceNames.Normalize(args[0]);
             if (args.Length >= 2)
                 _meta.State.VanillaBundleType = string.Equals(args[1], "Remixed", StringComparison.OrdinalIgnoreCase)
                     ? Game1.BundleType.Remixed.ToString() : Game1.BundleType.Default.ToString();
+            if (args.Length >= 1)
+                _meta.State.ChosenBundleSource = BundleSourceNames.IsVanilla(_meta.State.BundleSource)
+                    ? BundleSourceNames.ForVanillaType(_meta.State.VanillaBundleType)
+                    : BundleSourceNames.Engine;
             this.Monitor.Log(
                 $"tly_bundlesource: save BundleSource={_meta.State.BundleSource}, VanillaBundleType={_meta.State.VanillaBundleType ?? "(unknown)"}, " +
-                $"config BundleSource={_config.BundleSource}, marker={_meta.State.BundlesGeneratedForReset}, loop={_meta.State.CompletedResets}.",
+                $"chosen={_meta.State.ChosenBundleSource ?? "(none)"}, config default={_config.BundleSource}, marker={_meta.State.BundlesGeneratedForReset}, loop={_meta.State.CompletedResets}.",
                 LogLevel.Info);
         }
 

@@ -23,7 +23,7 @@ namespace TheLongestYear.UI
     /// On dismiss, <c>MetaState.DismissedIndicators</c> gets "tly.cookbook" so the one-time
     /// cookbook intro quest doesn't re-fire on subsequent loop resets.
     /// </summary>
-    internal sealed class CookbookMenu : IClickableMenu
+    internal sealed class CookbookMenu : IClickableMenu, IRecipeBookMenu
     {
         private const int PanelWidth  = 900;
         private const int PanelHeight = 640;
@@ -136,6 +136,13 @@ namespace TheLongestYear.UI
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
+            // In the picker, the close button steps back to the slot list instead of closing the
+            // book, which would start the run (gmastern1, Nexus posts, 2026-10-02).
+            if (_pickerList != null && upperRightCloseButton != null && upperRightCloseButton.containsPoint(x, y))
+            {
+                ClosePicker();
+                return;
+            }
             base.receiveLeftClick(x, y, playSound);
 
             if (_scrollUp.containsPoint(x, y))   { Scroll(-1); return; }
@@ -192,6 +199,38 @@ namespace TheLongestYear.UI
                 return;
             }
             base.receiveGamePadButton(b);
+        }
+
+        /// <summary>Escape, the menu key and controller B step back from the picker the same way
+        /// the close button does; on the slot list they close the book as before.</summary>
+        public override void receiveKeyPress(Microsoft.Xna.Framework.Input.Keys key)
+        {
+            if (_pickerList != null && key != Microsoft.Xna.Framework.Input.Keys.None
+                && (key == Microsoft.Xna.Framework.Input.Keys.Escape
+                    || Game1.options.doesInputListContain(Game1.options.menuButton, key)))
+            {
+                ClosePicker();
+                return;
+            }
+            base.receiveKeyPress(key);
+        }
+
+        public bool PickerOpen => _pickerList != null;
+
+        public Rectangle? FirstEmptySlotBounds()
+        {
+            if (_pickerList != null) return null;
+            int row = _meta.CookbookRecipes.Count - _scroll;
+            if (_meta.CookbookRecipes.Count >= _slotCount || row < 0 || row >= _rowSlots.Count) return null;
+            return _rowSlots[row].bounds;
+        }
+
+        private void ClosePicker()
+        {
+            _pickerList   = null;
+            _pickerScroll = 0;
+            _pendingSlot  = -1;
+            Game1.playSound("bigDeSelect");
         }
 
         private void OpenPicker(int slotIndex)

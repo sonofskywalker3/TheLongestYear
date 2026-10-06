@@ -116,7 +116,7 @@ namespace TheLongestYear.Integration
                 // arrived after it would run the normal day-start flow (planning hub, day sync)
                 // in the middle of the chain.
                 if (!rc.DayStartedWhileBranchPending) return;
-                _monitor.Log("Voluntary restart: no Junimo scene; starting hold -> upgrade menu -> banking -> reset.", LogLevel.Info);
+                _monitor.Log("Voluntary restart: morning is clear; continuing the restart.", LogLevel.Info);
                 rc.OnCutsceneEnded();
                 return;
             }

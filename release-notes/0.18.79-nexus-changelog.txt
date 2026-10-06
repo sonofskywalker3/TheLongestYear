@@ -1,0 +1,9 @@
+0.18.79 - Keep your Fish Pond through a rewind, and re-rolling the weekly themes stops showing the same pair.
+
+Added
+- Keep Fish Pond. A new upgrade in Junimo Upgrades (Buildings, 750 JP), unlocked once you build a Fish Pond. After a rewind your pond is back in the same spot, finished and empty, so you skip the rebuild and the seaweed. The fish don't come with it; carry one in the Junimo Stash if you want to restock. With several ponds, the one with the most fish is the one kept. Suggested by elaineofshalott.
+
+Fixed
+- Re-rolling the themes shows something new. With the re-roll setting on, a week where only two themes could ask for two goals re-rolled the same pair forever. A re-roll now offers any theme you haven't picked this month that has at least one goal, and never shows a pair twice until every pair has come up. Reported by Nijah.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

@@ -27,6 +27,12 @@ public sealed class RunState
     /// 2026-09-12). Cleared when the scene ends.</summary>
     public Day28.Day28Branch PendingDay28 { get; set; } = Day28.Day28Branch.None;
 
+    /// <summary>A voluntary restart already ran its menus (bundle hold, upgrade menu, books)
+    /// before the night, so the morning only runs the reset (Jeff, 2026-09-29: Ben saw the payout,
+    /// a level-up and "Spring 6" before being asked about his bundles). Persisted with
+    /// <see cref="PendingDay28"/> so a quit after the night save still resets without re-asking.</summary>
+    public bool RestartMenusDone { get; set; }
+
     /// <summary>True when a load should run the month rollover itself: the calendar moved on
     /// since the run-state was saved AND no day-28 outcome is waiting to decide what happens
     /// instead. A pending Fail rewinds rather than advances, so it must never roll over.</summary>
@@ -62,6 +68,12 @@ public sealed class RunState
     /// </summary>
     public List<BonusSlot> CurrentWeekBonusSlots { get; set; } = new();
 
+    /// <summary>The week-of-year whose goal lines the theme week discount lowered on the board
+    /// (-1 = none). <see cref="CurrentSelection"/> outlives its week, so this is what tells the
+    /// day start, after a save and reload too, that last week's lines are owed their full ask
+    /// back. Spec 2026-09-29-theme-week-discount.</summary>
+    public int DiscountWeek { get; set; } = -1;
+
     /// <summary>Themes already selected this month (cleared each month): four picks from the
     /// eight themes, so at least four are never selected in a given month.</summary>
     public List<Theme> SelectedThemesThisMonth { get; set; } = new();
@@ -80,6 +92,50 @@ public sealed class RunState
     /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
     /// Used so a re-trigger mid-week is a no-op — the hub only opens once per target week.</summary>
     public int OfferPresentedWeek { get; set; } = -1;
+
+    /// <summary>The offer week the hub's re-roll state below belongs to (-1 = none). For the
+    /// day-28 pre-pick hub this is next month's week 1. State for any other week is stale and
+    /// ignored (Nijah, Nexus 2026-09-28: a re-roll is kept for the week when the hub closes).</summary>
+    public int RerollWeek { get; set; } = -1;
+
+    /// <summary>Pair keys (<see cref="RerollCycle.PairKey"/>) shown on the hub during
+    /// <see cref="RerollWeek"/>, the first offer included.</summary>
+    public List<string> RerollSeenPairs { get; set; } = new();
+
+    /// <summary>The re-rolled offer on the hub for <see cref="RerollWeek"/>, shown again when the
+    /// hub reopens that week.</summary>
+    public List<Theme> RerolledOffer { get; set; } = new();
+
+    /// <summary>How many re-rolls were made during <see cref="RerollWeek"/> (seeds the next one).</summary>
+    public int RerollCount { get; set; }
+
+    /// <summary>Store a re-rolled offer for <paramref name="week"/>. Seen pairs are kept by the caller.</summary>
+    public void RecordReroll(int week, IEnumerable<Theme> offer, int count)
+    {
+        RerollWeek = week;
+        RerolledOffer = new List<Theme>(offer ?? System.Array.Empty<Theme>());
+        RerollCount = count;
+    }
+
+    /// <summary>The stored re-rolled offer for <paramref name="week"/>, or null when there is none,
+    /// it belongs to another week, or it holds a theme in <paramref name="excluded"/> (picked since).</summary>
+    public IReadOnlyList<Theme>? RerolledOfferFor(int week, IEnumerable<Theme>? excluded = null)
+    {
+        if (RerollWeek != week || RerolledOffer == null || RerolledOffer.Count == 0) return null;
+        if (excluded != null)
+            foreach (Theme t in excluded)
+                if (RerolledOffer.Contains(t)) return null;
+        return RerolledOffer;
+    }
+
+    /// <summary>Drop the hub's re-roll state (a pick, a new month, a new loop).</summary>
+    public void ClearReroll()
+    {
+        RerollWeek = -1;
+        (RerollSeenPairs ??= new()).Clear();
+        (RerolledOffer ??= new()).Clear();
+        RerollCount = 0;
+    }
 
     /// <summary>Bundle indices whose completion JP bonus has already been awarded this run.</summary>
     public List<int> AwardedBundleCompletions { get; set; } = new();
@@ -263,6 +319,8 @@ public sealed class RunState
         LiabilitySuppressedThisWeek = false;
         // A fresh pick must start from zero goals — the previous week's sampled slots don't carry over.
         CurrentWeekBonusSlots.Clear();
+        // The pick consumes the week's offer, re-rolled or not.
+        ClearReroll();
     }
 
     /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
@@ -277,6 +335,7 @@ public sealed class RunState
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
+        ClearReroll();
 
         // Consume the day-28 pre-pick (if any). The controller still needs to call
         // PopulateBonusSlotsForCurrentSelection AFTER this so the new month's goal slots
@@ -305,7 +364,11 @@ public sealed class RunState
         VaultBundlesPaid.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
+        // The rewind rewrites the whole board, so no discounted line is left to put back.
+        DiscountWeek = -1;
+        RestartMenusDone = false;
         OfferPresentedWeek = -1;
+        ClearReroll();
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back

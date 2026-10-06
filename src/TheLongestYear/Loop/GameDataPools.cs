@@ -40,6 +40,7 @@ namespace TheLongestYear.Loop
         /// excluded ids (YearTwoCrops.ExcludedFor on the current MetaState); null = none.</param>
         public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null)
         {
+            IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
             var crops = new List<RawCropEntry>();
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
             var forage = new List<RawSpawnEntry>();
@@ -50,6 +51,9 @@ namespace TheLongestYear.Loop
             var fruitTrees = new List<RawFruitTreeEntry>();
             var geodeDrops = new List<RawGeodeDropEntry>();
             var festivalSeasons = new Dictionary<string, Core.Season>(StringComparer.OrdinalIgnoreCase);
+            // Fish caught in an excluded place (Ginger Island, Fable Reef...): never pooled, but
+            // handed to the reachability rule so a board that already asks for one is repaired.
+            var excludedCatch = new HashSet<string>(StringComparer.Ordinal);
 
             try
             {
@@ -91,14 +95,22 @@ namespace TheLongestYear.Loop
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, tuning.ExcludedLocationMarkers))
+                    {
+                        // Non-habitat keys (Default, Temp, fishingGame) are not places at all, so
+                        // they say nothing about where a fish can or cannot be caught.
+                        if (!ItemPoolBuilder.BuiltInNonHabitatLocationKeys.Contains(kv.Key))
+                            foreach (SpawnFishData f in (kv.Value?.Fish ?? new List<SpawnFishData>()).Where(r => r != null))
+                                foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
+                                    excludedCatch.Add(BundleParsing.NormalizeItemId(id));
                         continue;
+                    }
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     // A row gated to year 2 or later never spawns in a loop (YearOneCondition).
-                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition)))
+                    foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition, closedRules)))
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
-                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition)))
+                    foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition, closedRules)))
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             fish.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
                 }
@@ -162,7 +174,7 @@ namespace TheLongestYear.Loop
                         if (entry == null || string.IsNullOrEmpty(entry.ItemId)) continue;
                         // Read the line the way the game does (item queries, RandomItemId,
                         // PerItemCondition), and keep a year-2 line as a known but closed route.
-                        bool locked = !YearOneCondition.Allows(entry.Condition);
+                        bool locked = !YearOneCondition.Allows(entry.Condition, closedRules);
                         foreach (string id in OfferedObjectIds(entry.ItemId, entry.RandomItemId, entry.PerItemCondition))
                         {
                             bool lockedHere = locked
@@ -283,12 +295,77 @@ namespace TheLongestYear.Loop
                 // a source rule).
                 foreach (string output in craftingOutputs)
                     MarkSpawn(output);
+                // Artifact spots, both the Data/Locations rows and each object's own
+                // ArtifactSpotChances. The Dinosaur Egg's only traceable proof: the animal route
+                // below would otherwise condemn it (Dinosaurs are not sold and hatch only from it).
+                foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                    foreach (ArtifactSpotDropData spot in (kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                                 .Where(s => YearOneCondition.Allows(s?.Condition, closedRules)))
+                    {
+                        foreach (string id in ItemQueryIds.Expand(spot?.ItemId)) MarkSpawn(id);
+                        foreach (string raw in spot?.RandomItemId ?? new List<string>())
+                            foreach (string id in ItemQueryIds.Expand(raw)) MarkSpawn(id);
+                    }
+                foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
+                    if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0)
+                        MarkSpawn(kv.Key);
+
+                // Machine goods and animal produce as routes (Ninjamaid, Nexus 2026-09-28: Blue Eggs
+                // and Golden Mayo's Ostrich Mayo is made only from an Ostrich Egg, which a loop never
+                // reaches, and with no route read at all it stayed allowed).
+                var machineRules = new List<RawMachineRule>();
+                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.Machines.MachineData>>("Data/Machines"))
+                {
+                    foreach (var rule in kv.Value?.OutputRules ?? new List<StardewValley.GameData.Machines.MachineOutputRule>())
+                    {
+                        var outputs = new List<string>();
+                        foreach (var output in rule?.OutputItem ?? new List<StardewValley.GameData.Machines.MachineItemOutput>())
+                        {
+                            outputs.AddRange(ItemQueryIds.Expand(output?.ItemId));
+                            foreach (string raw in output?.RandomItemId ?? new List<string>())
+                                outputs.AddRange(ItemQueryIds.Expand(raw));
+                        }
+                        if (outputs.Count == 0) continue;
+                        var triggers = rule.Triggers ?? new List<StardewValley.GameData.Machines.MachineOutputTriggerRule>();
+                        if (triggers.Count == 0) triggers = new List<StardewValley.GameData.Machines.MachineOutputTriggerRule> { new() };
+                        foreach (var trigger in triggers)
+                            machineRules.Add(new RawMachineRule(
+                                kv.Key, trigger?.RequiredItemId,
+                                (IReadOnlyList<string>)(trigger?.RequiredTags ?? new List<string>()),
+                                outputs, rule.MinutesUntilReady, rule.DaysUntilReady));
+                    }
+                }
+
+                var animalData = Game1.content.Load<Dictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData>>("Data/FarmAnimals");
+                var boughtAsAlternate = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var kv in animalData)
+                {
+                    if (kv.Value == null || kv.Value.PurchasePrice < 0) continue;
+                    foreach (var alternate in kv.Value.AlternatePurchaseTypes ?? new List<StardewValley.GameData.FarmAnimals.AlternatePurchaseAnimals>())
+                        foreach (string name in alternate?.AnimalIds ?? new List<string>())
+                            if (!string.IsNullOrEmpty(name)) boughtAsAlternate.Add(name);
+                }
+                var animals = new List<RawAnimalSource>();
+                foreach (var kv in animalData)
+                {
+                    var a = kv.Value;
+                    if (a == null) continue;
+                    var produce = (a.ProduceItemIds ?? new List<StardewValley.GameData.FarmAnimals.FarmAnimalProduce>())
+                        .Concat(a.DeluxeProduceItemIds ?? new List<StardewValley.GameData.FarmAnimals.FarmAnimalProduce>())
+                        .Where(p => !string.IsNullOrEmpty(p?.ItemId))
+                        .Select(p => p.ItemId)
+                        .ToList();
+                    animals.Add(new RawAnimalSource(
+                        kv.Key, a.PurchasePrice >= 0 || boughtAsAlternate.Contains(kv.Key),
+                        a.EggItemIds ?? new List<string>(), produce));
+                }
 
                 IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                     links, allLocations,
                     name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
                 reachability = new SourceReachability(
-                    unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds);
+                    unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
+                    machineRules, animals, excludedCatch);
                 _monitor?.Log(
                     $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
                     LogLevel.Trace);

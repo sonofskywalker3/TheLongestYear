@@ -96,7 +96,17 @@ public static class BundlePoolRecipes
     /// 2026-08-29).</summary>
     private static readonly string[] ChefStaples = { "(O)245", "(O)246", "(O)247", "(O)419", "(O)423" };
 
-    private static readonly string[] Berries = { "(O)296", "(O)410" };
+    /// <summary>Sticky: things that are actually sticky (Jeff, 2026-09-30). It used to re-roll from
+    /// every resource plus the tapper extras, so it could ask for one Acorn or some Stone
+    /// (elaineofshalott). Sap, the three tapper syrups, Honey, Jelly, Sugar, Slime, Ice Cream,
+    /// Maple Bar, Cranberry Sauce and Miner's Treat. The model check keeps it to year-1 items.</summary>
+    private static readonly string[] StickyThings =
+    {
+        "(O)92", "(O)724", "(O)725", "(O)726", "(O)340", "(O)344",
+        "(O)245", "(O)766", "(O)233", "(O)731", "(O)238", "(O)243",
+    };
+
+    private static readonly string[] Berries ={ "(O)296", "(O)410" };
     private static readonly string[] Dolls = { "(O)103", "(O)126", "(O)127" };
 
     /// <summary>Solar and Void Essence. Both are monster loot by category, so the ByKind walk
@@ -118,6 +128,19 @@ public static class BundlePoolRecipes
     private static readonly string[] DyeColourTags =
     {
         "color_red", "color_purple", "color_yellow", "color_white", "color_blue", "color_green",
+    };
+
+    /// <summary>Every shade a Dye colour accepts: the game's own dye-pot groups
+    /// (DyeMenu.validPotColors), so Topaz (gold), Jade and Aquamarine count. White has no pot group
+    /// and stays itself.</summary>
+    private static readonly IReadOnlyDictionary<string, string[]> DyeShades = new Dictionary<string, string[]>
+    {
+        ["color_red"] = new[] { "color_red", "color_salmon", "color_dark_red", "color_pink" },
+        ["color_yellow"] = new[] { "color_yellow", "color_dark_yellow", "color_gold", "color_sand" },
+        ["color_green"] = new[] { "color_green", "color_dark_green", "color_lime", "color_yellow_green", "color_jade" },
+        ["color_blue"] = new[] { "color_blue", "color_dark_blue", "color_dark_cyan", "color_light_cyan", "color_cyan", "color_aquamarine" },
+        ["color_purple"] = new[] { "color_purple", "color_dark_purple", "color_dark_pink", "color_pale_violet_red", "color_poppyseed", "color_iridium" },
+        ["color_white"] = new[] { "color_white" },
     };
 
     /// <summary>Bundles with no pool of their own: they re-roll from their own vanilla items, so
@@ -178,7 +201,7 @@ public static class BundlePoolRecipes
             ["Crab Pot"] = _ => One(CrabPotSource, "Crab pot"),
             ["Exotic Foraging"] = _ => One((p, _) => Union(p.Forage, p.TapperGoods), "Forage or tapper"),
             ["Rare Crops"] = _ => One(RareCropSource, "Rare crop"),
-            ["Sticky"] = _ => One((p, m) => Union(Bucket(p, ItemKind.Resource, m), p.TapperGoods), "Sap or resource"),
+            ["Sticky"] = _ => One((p, m) => Placeable(Fixed(p, StickyThings), m), "Something sticky"),
         };
 
     /// <summary>The recipe this bundle re-rolls from. Named recipe first, else the majority
@@ -270,9 +293,12 @@ public static class BundlePoolRecipes
     /// whatever class it is (Jeff, 2026-09-17: "fix ALL classes the same way").</summary>
     private static IReadOnlyList<PoolPart> DyeParts()
         => DyeColourTags.Select(tag => new PoolPart(
-            (p, m) => p.ColourTags.TryGetValue(tag, out IReadOnlyList<PoolItem>? list)
-                ? Placeable(list.Where(i => !LegendaryFishRules.IsLegendary(i.ItemId)).ToList(), m)
-                : Array.Empty<PoolItem>(),
+            (p, m) => Placeable(DyeShades[tag]
+                .SelectMany(shade => p.ColourTags.TryGetValue(shade, out IReadOnlyList<PoolItem>? list)
+                    ? list : Array.Empty<PoolItem>())
+                .Where(i => !LegendaryFishRules.IsLegendary(i.ItemId))
+                .GroupBy(i => i.ItemId, StringComparer.Ordinal).Select(g => g.First())
+                .ToList(), m),
             1, tag)).ToList();
 
     /// <summary>A by-kind bucket, model-gated like Dye: the buckets come from the same walk of

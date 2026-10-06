@@ -137,6 +137,18 @@ namespace TheLongestYear.UI
             _offerSeason = offerSeason ?? run.Season;
             _isPreSelectForNextMonth = isPreSelectForNextMonth;
             _weatherSageSlots = weatherSageSlots;
+
+            // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
+            // stored re-rolled pair, and the restored count keeps the pick on the re-roll path.
+            IReadOnlyList<Theme> rerolled = _run.RerolledOfferFor(OfferWeek, SelectionsForOffer);
+            if (rerolled != null)
+            {
+                _offer = rerolled.ToList();
+                _rerollCounter = System.Math.Max(1, _run.RerollCount);
+                _monitor.Log(
+                    $"WeeklyHubMenu: restored re-rolled offer for week {OfferWeek} = [{string.Join(", ", _offer)}] (reroll #{_rerollCounter}).",
+                    LogLevel.Info);
+            }
             _cartPreviewSlots = cartPreviewSlots;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
@@ -273,7 +285,7 @@ namespace TheLongestYear.UI
 
             // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
             int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
-            var sample = _runController.SampleSlotsForTheme(theme.Value, _offerSeason, week);
+            var sample = _runController.PreviewSlotsForTheme(theme.Value, _offerSeason, week);
 
             foreach (BonusSlot slot in sample)
             {
@@ -525,37 +537,53 @@ namespace TheLongestYear.UI
                 ConfirmSelection(_offer[1]);
         }
 
+        /// <summary>The week whose offer this hub shows: next month's week 1 on the day-28 pre-pick hub.</summary>
+        private int OfferWeek => _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+
+        /// <summary>The picks the offer excludes. The day-28 pre-pick is for next month, so none
+        /// (the same rule <see cref="MenuLauncher.OpenWeeklyHub"/> uses for the first offer).</summary>
+        private IReadOnlyCollection<Theme> SelectionsForOffer => _isPreSelectForNextMonth
+            ? System.Array.Empty<Theme>()
+            : _run.SelectedThemesThisMonth;
+
         /// <summary>
-        /// Debug-only: regenerate the offer pool with fresh randomness so the playtester can
-        /// cycle through theme combinations without resetting the run. Salt the underlying seed
-        /// with an incrementing counter — keeps the offer deterministic-for-debug (same counter
-        /// produces same offer) but moves the picker off the originally-rolled pair. Does NOT
-        /// change <c>_run.Seed</c> or any persisted state; closing the menu without picking
-        /// loses the rerolled offer (next open shows whatever <see cref="SelectionService"/>
-        /// would have produced).
+        /// Regenerate the offer (config EnableThemeReroll). Salt the underlying seed with the
+        /// week's re-roll count so the offer stays deterministic. Candidates are every theme not
+        /// picked this month that can ask for at least one goal, and <see cref="RerollCycle"/>
+        /// never repeats a pair shown this week until every pair has been shown (Nijah, Nexus
+        /// 2026-09-28). The re-rolled offer, seen pairs and count are kept on the RunState for the
+        /// offer week, so reopening the hub that week shows the same pair.
         /// </summary>
         private void RerollOffer()
         {
-            _rerollCounter++;
-            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
-            // Rule C: shuffle among the themes that can actually ask for goals this week.
-            List<Theme> candidates = _runController
-                .OfferCandidates(week, _offerSeason, _run.SelectedThemesThisMonth)
-                .ToList();
-            var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
-            for (int i = candidates.Count - 1; i > 0; i--)
+            int week = OfferWeek;
+            if (_run.RerollWeek != week)
             {
-                int j = rng.Next(i + 1);
-                (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+                // Stale state from another week (or none): start this week's cycle.
+                _run.ClearReroll();
+                _rerollCounter = 0;
             }
+            // The offer on screen counts as shown (the first offer, on the first re-roll).
+            string onScreen = RerollCycle.PairKey(_offer);
+            if (_offer.Count > 0 && !_run.RerollSeenPairs.Contains(onScreen))
+                _run.RerollSeenPairs.Add(onScreen);
 
-            _offer = candidates.Take(SelectionService.OfferSize).ToList();
+            _rerollCounter++;
+            IReadOnlyList<Theme> candidates = _runController
+                .OfferCandidates(week, _offerSeason, SelectionsForOffer);
+            var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
+            _offer = RerollCycle.Next(candidates, _run.RerollSeenPairs, _offer, rng).ToList();
+            _run.RecordReroll(week, _offer, _rerollCounter);
             ResolvePerCardData();
             RecomputeBoundsAndLayout();
             _monitor.Log(
                 $"WeeklyHubMenu reroll #{_rerollCounter}: offer = [{string.Join(", ", _offer)}].",
                 LogLevel.Info);
         }
+
+        /// <summary>The re-roll button, for the tly_reroll console command (works whether or not the
+        /// button is enabled, so a headless run can press it).</summary>
+        public void RerollForDebug() => RerollOffer();
 
         /// <summary>The card click, by theme name, for the tly_select console command: the same
         /// commit path as the mouse (current-week pick or day-28 pre-pick), then the menu closes.
@@ -639,7 +667,7 @@ namespace TheLongestYear.UI
             base.draw(b);
 
             if (!string.IsNullOrEmpty(_hoverText))
-                IClickableMenu.drawHoverText(b, _hoverText, Game1.smallFont);
+                HoverText.Draw(b, _hoverText);
 
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);

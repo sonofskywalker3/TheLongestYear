@@ -10,11 +10,12 @@ namespace TheLongestYear.DebugCommands
     /// 2026-09-23). <c>plant &lt;seedId&gt; &lt;count&gt;</c> hoes, plants and waters free tiles
     /// (the player must be standing on the Farm); <c>water</c> waters every planted tile; no args
     /// reports the crops. A wild seed crop that is ready to pick while still a crop is the bug:
-    /// vanilla turns it into forage the night it finishes, so a correct morning shows zero.</summary>
+    /// vanilla turns it into forage the night it finishes, so a correct morning shows zero.
+    /// <c>fairy</c> runs the crop fairy's growCompletely on every Farm crop (sigyn2002, 2026-10-03).</summary>
     internal static class CropProbeCommand
     {
         public const string Usage =
-            "Debug: probe Farm crops. Usage: tly_cropprobe [plant <seedId> <count> | water]. No args reports.";
+            "Debug: probe Farm crops. Usage: tly_cropprobe [plant <seedId> <count> | water | fairy]. No args reports.";
 
         private const int Watered = 1;
         private const int SpawnedForageMarker = 724519;
@@ -28,6 +29,7 @@ namespace TheLongestYear.DebugCommands
             {
                 case "plant": Plant(monitor, farm, args); break;
                 case "water": monitor.Log($"tly_cropprobe: watered {Water(farm)} tiles.", LogLevel.Info); break;
+                case "fairy": Fairy(monitor, farm); break;
                 default: Report(monitor, farm); break;
             }
         }
@@ -74,6 +76,16 @@ namespace TheLongestYear.DebugCommands
                 watered++;
             }
             return watered;
+        }
+
+        /// <summary>The crop fairy's own call (FairyEvent.cs:202), on every crop instead of a 5x5 area.</summary>
+        private static void Fairy(IMonitor monitor, Farm farm)
+        {
+            var crops = farm.terrainFeatures.Values.OfType<HoeDirt>().Select(d => d.crop).Where(c => c != null).ToList();
+            foreach (Crop crop in crops)
+                crop.growCompletely();
+            monitor.Log($"tly_cropprobe: fairy grew {crops.Count} crops.", LogLevel.Info);
+            Report(monitor, farm);
         }
 
         private static void Report(IMonitor monitor, Farm farm)

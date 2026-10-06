@@ -803,7 +803,7 @@ namespace TheLongestYear.UI
 
             base.draw(b);
             if (!string.IsNullOrEmpty(_hoverText))
-                IClickableMenu.drawHoverText(b, _hoverText, Game1.smallFont);
+                HoverText.Draw(b, _hoverText);
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
         }

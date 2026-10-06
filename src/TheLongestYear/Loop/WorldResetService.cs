@@ -140,7 +140,7 @@ namespace TheLongestYear.Loop
             // (user playtest 2026-05-27: "I've still got 2 saves"). Compute the new folder name
             // ourselves from the old path: keep everything before the last underscore (the player
             // name component), append the new uniqueID.
-            // BundleSource (spec 2026-08-21): a config flip takes effect HERE, at the reset. Stamp
+            // BundleSource (spec 2026-08-21): the save's chosen source takes effect HERE, at the reset. Stamp
             // the save with the mode this loop runs under, and in Vanilla mode hand vanilla the
             // player's Standard/Remixed choice BEFORE loadForNewGame — Game1.bundleType is a
             // non-persisted static (Nexus bug 1108030), so without this every reset wrote the
@@ -173,17 +173,20 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"Availability model rebuilt for {step} ({mode}).", LogLevel.Info);
             }
 
-            bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(_config.BundleSource);
+            // The SAVE's own choice, never the config: the config is shared by every save, so a
+            // newer TLY Custom game used to flip an older Normal save to custom bundles here
+            // (victoriatauanem, Nexus 2026-09-28).
+            string boardSource = TheLongestYear.Core.BundleSourceNames.ForSave(
+                _meta.ChosenBundleSource, _meta.BundleSource, _meta.VanillaBundleType);
+            _meta.ChosenBundleSource = boardSource;
+            bool vanillaBoard = TheLongestYear.Core.BundleSourceNames.IsVanilla(boardSource);
             _meta.BundleSource = vanillaBoard
                 ? TheLongestYear.Core.BundleSourceNames.LegacyVanilla : TheLongestYear.Core.BundleSourceNames.Engine;
             if (vanillaBoard)
             {
                 // One setting, three choices (Jeff 2026-08-27): Normal and Remixed each name a
-                // Game1.BundleType outright, so the config now owns the layout and a player can
-                // move between the two on an existing save. The legacy "Vanilla" value names no
-                // layout and returns null here, which deliberately leaves whatever the save
-                // already recorded in place rather than guessing and flipping a remixed save.
-                string configuredType = TheLongestYear.Core.BundleSourceNames.VanillaTypeFor(_config.BundleSource);
+                // Game1.BundleType outright, so a player can move between the two on an existing save.
+                string configuredType = TheLongestYear.Core.BundleSourceNames.VanillaTypeFor(boardSource);
                 if (configuredType != null)
                     _meta.VanillaBundleType = configuredType;
 
@@ -191,7 +194,7 @@ namespace TheLongestYear.Loop
                 Game1.bundleType = remixed ? Game1.BundleType.Remixed : Game1.BundleType.Default;
                 if (string.IsNullOrEmpty(_meta.VanillaBundleType))
                     _meta.VanillaBundleType = Game1.bundleType.ToString();
-                _monitor.Log($"Reset: bundle source {_config.BundleSource} — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
+                _monitor.Log($"Reset: bundle source {boardSource} — vanilla will generate a {Game1.bundleType} board.", LogLevel.Info);
             }
             else
             {
@@ -283,6 +286,28 @@ namespace TheLongestYear.Loop
             // each registered animal comes back with this loop's hearts (spec 2026-09-25). An entry
             // whose animal is gone keeps its last snapshot.
             HerdBookService.RefreshBeforeReset(_meta, _monitor);
+
+            // 0g. Keep Farm Decor: lift paths, fences, lights, signs and decorations off the
+            // farm before loadForNewGame discards it; they go back at step 13a. Held in memory like
+            // the display options above: the reset is one call.
+            FarmDecorSnapshot keptDecor = _meta.HasUpgrade(FarmDecorKeep.UpgradeId)
+                ? FarmDecorSnapshot.Capture(Game1.getFarm(), _monitor)
+                : null;
+
+            // 0h. Keep Farmhouse Furniture: lift the house's and cellar's furniture (non-cosmetic
+            // contents wiped) before loadForNewGame builds a new house; it goes back at step 14b.
+            FarmhouseFurnitureCarryover.Snapshot keptHouseFurniture = null;
+            if (_meta.HasUpgrade(FarmhouseFurnitureKeep.UpgradeId))
+            {
+                try
+                {
+                    keptHouseFurniture = FarmhouseFurnitureCarryover.Capture(_monitor);
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Reset: Keep Farmhouse Furniture capture failed; continuing the reset.\n{ex}", LogLevel.Error);
+                }
+            }
 
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
             Game1.game1.loadForNewGame(loadedGame: false);
@@ -399,7 +424,9 @@ namespace TheLongestYear.Loop
             // library shelf rewinds with the museum (user ruling 2026-07-10: full reset for
             // consistency; books scatter again each loop).
             int lostBooks = Game1.netWorldState.Value.LostBooksFound;
-            if (lostBooks > 0)
+            if (lostBooks > 0 && _meta.HasUpgrade(TheLongestYear.Core.LostBookKeep.UpgradeId))
+                _monitor.Log($"In-place reset: Keep Lost Books owned; {lostBooks} lost book(s) stay found.", LogLevel.Info);
+            else if (lostBooks > 0)
             {
                 Game1.netWorldState.Value.LostBooksFound = 0;
                 _monitor.Log(
@@ -480,6 +507,12 @@ namespace TheLongestYear.Loop
             //     while DaysPlayed <= 1. Re-run vanilla's refresh now that DaysPlayed is back to 1.
             Game1.RefreshQuestOfTheDay();
 
+            // 2e. Special orders. They live on player.team, which loadForNewGame never rebuilds, so a
+            //     town order, the board's offer and the completed list all rode into the next loop.
+            //     Drop town orders, clear the board so it re-rolls, forget completed town orders.
+            //     Qi's orders are left alone. Every player, with or without Keep Special Orders Board.
+            SpecialOrderReset.Apply(_monitor);
+
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
             //    _farmerReset.Apply, so peak-reading has to land here.
@@ -491,11 +524,17 @@ namespace TheLongestYear.Loop
             // from config: the step scales config.StartingMoney, so a hand-tuned baseline is
             // still honoured and a GMCM change only lands on the next loop.
             RunBaseline baseline = RunBaselineBuilder.Build(_meta, _run, peaks, _meta.Difficulty.StartingGold);
+            // Keep Lost Books: FarmerReset clears all mail, so lift the books' read markers first.
+            IReadOnlyList<string> keptBookMail = _meta.HasUpgrade(TheLongestYear.Core.LostBookKeep.UpgradeId)
+                ? TheLongestYear.Core.LostBookKeep.MailToKeep(Game1.player.mailReceived)
+                : Array.Empty<string>();
             _farmerReset.Apply(Game1.player, baseline,
                 _meta.CookbookRecipes,
                 _meta.CraftbookRecipes,
                 _meta.SeenEventsEver,
                 CatchLimitedFishIds);
+            foreach (string flag in keptBookMail)
+                Game1.player.mailReceived.Add(flag);
 
             // 5. Profession picker re-trigger queue. Enqueued here; the actual menus
             //    surface on the next DayStarted (RunController drains after reset).
@@ -577,6 +616,11 @@ namespace TheLongestYear.Loop
             //      bought), re-open vanilla adoption route at Marnie counter: the rewind
             //      otherwise shuts every door to a new pet. See EnableAdoptionIfPetless.
             PetCarryoverService.EnableAdoptionIfPetless(_monitor);
+            // 10c. A petless farm gets Marnie's pet visit back too, not just the paid Adopt option.
+            int reopened = TheLongestYear.Core.PetCarryover.ReopenArrivalScenes(
+                Game1.player.eventsSeen, farmHasPet: Utility.getAllPets().Any());
+            if (reopened > 0)
+                _monitor.Log($"PetCarryover: no pet after the rewind; Marnie's pet visit can play again ({reopened} scene ids cleared).", LogLevel.Info);
 
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
@@ -685,6 +729,18 @@ namespace TheLongestYear.Loop
             _stashService?.PopulateFromMeta();
             _planningShrine?.Place(_stashService?.LastPlacedTile);
 
+            // 13a. Keep Farm Decor back on its tiles, after kept buildings, the stash chest and the
+            // planning shrine, so each of them wins its tile and displaced decor can go to the stash.
+            // Restore guards each piece; this catch only keeps a bug in it from stopping the reset.
+            try
+            {
+                FarmDecorCarryoverService.Restore(keptDecor, baseline.ToolTiers, _stashService, _monitor);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Reset: Keep Farm Decor restore failed; continuing the reset.\n{ex}", LogLevel.Error);
+            }
+
             // 14. Place the player home, awake, in the rebuilt FarmHouse. resetForPlayerEntry
             //     also rebuilds the FarmHouse layout to match HouseUpgradeLevel — picking up
             //     the kitchen if the baseline set it.
@@ -700,6 +756,17 @@ namespace TheLongestYear.Loop
             //      AddStarterFurniture so the FULL default set (bed, fireplace, rug, table+bowl, …) is
             //      laid down at the correct positions for the current HouseUpgradeLevel.
             RestoreFarmHouseFurniture(home);
+
+            // 14b. Keep Farmhouse Furniture: the kept set replaces the starter set just laid down, on
+            //      the house and cellar this loop has (kitchen and cellar exist since step 14).
+            try
+            {
+                FarmhouseFurnitureCarryover.Restore(keptHouseFurniture, home, _monitor);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Reset: Keep Farmhouse Furniture restore failed; continuing the reset.\n{ex}", LogLevel.Error);
+            }
 
             // Undo vanilla's one-way map edits. Fixing the beach bridge (Beach.fixBridge) and
             // Robin's community shortcuts (showCommunityUpgradeShortcuts / ApplyMapOverride) edit
@@ -1305,8 +1372,9 @@ namespace TheLongestYear.Loop
         /// stack size, quality asks, and required slots. Never changes which item a slot asks for,
         /// so a Standard or Remixed board keeps its identity and only its numbers move.
         ///
-        /// Skipped entirely when those three are all Normal, which keeps the default Vanilla path
-        /// exactly as it was: zero writes, and no extra log line.
+        /// When those three are all Normal the dials are skipped, and only a capped ask above one
+        /// (Prismatic Shard, Mystery Box: Remixed's Helper's "5 Mystery Box") is lowered to one.
+        /// A board without one gets zero writes and no extra log line, as before.
         ///
         /// Seeded from the same basis as the Engine path, so a replayed reset reproduces the same
         /// board and the anti-save-scum guarantee still holds.</summary>
@@ -1314,7 +1382,10 @@ namespace TheLongestYear.Loop
         {
             TheLongestYear.Core.DifficultyProfile difficulty = _meta.Difficulty;
             if (difficulty == null || difficulty.Steps.AsksAllNormal())
+            {
+                ClampVanillaCappedAsks();
                 return;
+            }
 
             Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
             if (live == null || live.Count == 0)
@@ -1362,6 +1433,33 @@ namespace TheLongestYear.Loop
                 $"stacks {difficulty.Steps.StackSize}, quality {difficulty.Steps.QualityAsks}, " +
                 $"required slots {difficulty.Steps.RequiredSlots}; seed {seed}). " +
                 "Item ids are unchanged.",
+                LogLevel.Info);
+        }
+
+        /// <summary>The all-Normal half of <see cref="ApplyVanillaBoardDifficulty"/>: writes only
+        /// the bundles holding a capped ask above one, lowered to one. On a vanilla board the stack
+        /// clamp is the whole capped rule; the per-board count is held on engine boards only, since
+        /// this path never changes an item or removes a bundle.</summary>
+        private void ClampVanillaCappedAsks()
+        {
+            Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
+            if (live == null || live.Count == 0)
+                return;
+
+            var updates = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string key in live.Keys.OrderBy(k => k, StringComparer.Ordinal))
+            {
+                string clamped = TheLongestYear.Core.CappedAsks.RepairBundleValue(live[key]);
+                if (clamped != null)
+                    updates[key] = clamped;
+            }
+            if (updates.Count == 0)
+                return;
+
+            Game1.netWorldState.Value.SetBundleData(updates);
+            _monitor.Log(
+                $"Reset: Vanilla board asks for one of each capped item per slot; lowered {updates.Count} bundle(s): " +
+                string.Join(", ", updates.Keys) + ".",
                 LogLevel.Info);
         }
 

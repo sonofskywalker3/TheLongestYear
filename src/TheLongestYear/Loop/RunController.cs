@@ -146,6 +146,7 @@ namespace TheLongestYear.Loop
                     "raced the month rollover. Running BeginNewMonth now (clears last month's theme " +
                     "selections; consumes any day-28 pre-pick).",
                     LogLevel.Info);
+                RevertWeekDiscount("month rollover on load");
                 Run.BeginNewMonth(calendarSeason);
                 if (Run.CurrentSelection.HasValue)
                 {
@@ -305,6 +306,10 @@ namespace TheLongestYear.Loop
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
                 // Releases the driver's Restart branch (DayStartedWhileBranchPending).
                 _dayStartedWhileBranchPending = true;
+                // A voluntary restart resets as soon as the morning is clear; keep the new day's
+                // date off the screen until the world is back on Spring 1.
+                if (_pendingCutscene == Day28Branch.Restart)
+                    Game1.displayHUD = false;
                 _monitor.Log($"Day start: the {_pendingCutscene} branch is pending; the day-start flow waits for it.", LogLevel.Trace);
                 return;
             }
@@ -496,6 +501,7 @@ namespace TheLongestYear.Loop
         public void TickShrineWatchdog()
         {
             TickRestartDeclined();
+            TickVoluntaryRestart();
             if (_holdReaskPending && Game1.activeClickableMenu == null)
             {
                 _holdReaskPending = false;
@@ -541,7 +547,18 @@ namespace TheLongestYear.Loop
                     // loop that can be won again. FinalizeReset's _store.Save() persists the clear.
                     if (VoluntaryRestart.ClearWonRun(_store.State))
                         _monitor.Log("Voluntary restart after Keep playing: the won-run flag is cleared, so the next loop can be won again.", LogLevel.Info);
-                    StartRewindChain();
+                    if (Run.RestartMenusDone)
+                    {
+                        // The hold, upgrade menu and books ran before the night: reset straight away.
+                        Run.RestartMenusDone = false;
+                        Game1.displayHUD = false;
+                        FinalizeReset("voluntary restart");
+                    }
+                    else
+                    {
+                        // A Restart queued by a build before 0.18.98 (loaded mid-night): menus now.
+                        StartRewindChain();
+                    }
                     break;
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
@@ -572,10 +589,11 @@ namespace TheLongestYear.Loop
             Game1.displayHUD = false;
             // Vanilla mode's reset regenerates the board via loadForNewGame and never
             // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
-            // Read _config, not _store.State.BundleSource: PerformReset re-stamps the
-            // save's BundleSource from config at reset time, so config is what this reset
+            // Read the save's chosen source, not its BundleSource stamp: PerformReset
+            // re-stamps from the choice at reset time, so the choice is what this reset
             // will actually run under.
-            if (!BundleHold.IsOfferable(_config.BundleSource))
+            MetaState state = _store.State;
+            if (!BundleHold.IsOfferable(BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType)))
             {
                 _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
                 TryOpenShrineThenContinue(ContinueAfterResetSpend);
@@ -645,7 +663,7 @@ namespace TheLongestYear.Loop
         /// recipe books, then performs the actual world reset and resumes the normal day-start
         /// sync + hub trigger.</summary>
         private void ContinueAfterResetSpend()
-            => OfferRecipeBanking(() => FinalizeReset("shrine closed"));
+            => OfferRecipeBanking(FinishRewindChain);
 
         /// <summary>Nexus post ada113, 2026-09-07: the Cookbook and Craftbook start at 0 slots, the
         /// first tier is bought at the shrine that opens right here, and the reset that follows wipes
@@ -846,6 +864,9 @@ namespace TheLongestYear.Loop
             // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
             // CurrentSelection).
             var season = (CoreSeason)(int)Game1.season;
+            // Last week's discounted goal lines get their full ask back before the month rolls
+            // over and before the hub previews this week's goals (spec 2026-09-29-theme-week-discount).
+            RevertWeekDiscountIfStale(Calendar.WeekOfYear((int)season, Game1.dayOfMonth));
             if (season != Run.Season)
             {
                 Run.BeginNewMonth(season);
@@ -922,6 +943,7 @@ namespace TheLongestYear.Loop
                 // overwrite the queued Restart. A room finished today must not play its restoration
                 // scene just before the rewind undoes it, same as a Fail night.
                 SuppressResetDoomedRoomScenes();
+                QuietRestartNight();
                 _monitor.Log("Voluntary restart night: the day-end gate is skipped; the rewind runs in the morning.", LogLevel.Info);
                 return;
             }
@@ -1031,6 +1053,8 @@ namespace TheLongestYear.Loop
                 }
             }
 
+            // A re-pick or re-roll replaces the goal lines, so the old ones go back to full first.
+            RevertWeekDiscount("re-pick");
             Run.Select(theme);
             // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
             // card, console). Mark the week presented and drop any deferred re-present for it —
@@ -1065,11 +1089,13 @@ namespace TheLongestYear.Loop
         /// RunState. Clears the legacy id list so post-migration saves stop carrying it.</summary>
         private void PopulateBonusSlotsForCurrentSelection()
         {
+            RevertWeekDiscount("goals re-sampled");
             Run.CurrentWeekBonusSlots.Clear();
             Run.CurrentWeekBonusItems.Clear();
             if (!Run.CurrentSelection.HasValue) return;
             var sample = SampleSlotsForTheme(Run.CurrentSelection.Value, Run.Season, Run.WeekOfYear);
             Run.CurrentWeekBonusSlots.AddRange(sample);
+            ApplyWeekDiscount();
         }
 
         /// <summary>Empty goal pool (everything for this theme already donated): no quest this

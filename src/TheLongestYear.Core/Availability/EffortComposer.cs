@@ -20,12 +20,14 @@ public sealed class EffortComposer
     private readonly IReadOnlyList<PoolItem> _artifacts;
     private readonly IReadOnlyList<PoolItem> _books;
     private readonly DifficultyStep _step;
+    private readonly WeekMode _mode;
     private readonly Dictionary<string, ItemEffort?> _memo = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visiting = new(StringComparer.Ordinal);
 
     public EffortComposer(EffortData data, IReadOnlyDictionary<string, ItemAvailability> seasonDerived, bool hasKitchen,
         IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null,
-        IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal)
+        IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal,
+        WeekMode mode = WeekMode.Pacing)
     {
         _artifacts = artifacts ?? Array.Empty<PoolItem>();
         _books = books ?? Array.Empty<PoolItem>();
@@ -34,6 +36,7 @@ public sealed class EffortComposer
         _hasKitchen = hasKitchen;
         _saplings = saplings ?? Array.Empty<PoolItem>();
         _step = step;
+        _mode = mode;
     }
 
     /// <summary>Effort for any id the model can place, or null. This is the resolver the
@@ -85,13 +88,13 @@ public sealed class EffortComposer
         {
             FishingTrashAvailability.Derive(qualifiedId),
             ShopAvailability.Derive(qualifiedId),
-            MineralNodeAvailability.Derive(qualifiedId),
-            GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops),
-            MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops),
-            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots),
+            MineralNodeAvailability.Derive(qualifiedId, _mode),
+            GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops, _mode),
+            MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops, _mode),
+            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots, _mode),
             AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings),
-            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops),
-            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns),
+            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops, _mode),
+            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode),
             CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
             TapperAvailability.Derive(qualifiedId, _data),
             PoolArtifact(qualifiedId),
@@ -107,6 +110,9 @@ public sealed class EffortComposer
                 && (candidate.EarliestWeek ?? 0) < late.Week)
                 candidate = new ItemEffort(candidate.Effort, $"{candidate.Basis}; late floor: {late.Note}, week {late.Week} (for Jeff to confirm)",
                     late.Week, AvailabilityWeeks.SeasonOf(late.Week));
+            if (IsArtifact(qualifiedId) && (candidate.EarliestWeek ?? AvailabilityWeeks.ArtifactWeek) < AvailabilityWeeks.ArtifactWeek)
+                candidate = new ItemEffort(candidate.Effort, $"{candidate.Basis}; artifact floor, week {AvailabilityWeeks.ArtifactWeek}",
+                    AvailabilityWeeks.ArtifactWeek, AvailabilityWeeks.SeasonOf(AvailabilityWeeks.ArtifactWeek));
             bool better = best == null
                 || (candidate.EarliestWeek ?? int.MaxValue) < (best.EarliestWeek ?? int.MaxValue)
                 || (candidate.EarliestWeek == best.EarliestWeek && candidate.Effort < best.Effort);
@@ -116,6 +122,17 @@ public sealed class EffortComposer
     }
 
     private const int PoolArtifactEffort = 4;
+    private const string ObjectQualifier = "(O)";
+
+    /// <summary>Data/Objects Type "Arch": geode drops, dig spots, monster drops and fishing chests
+    /// all yield these, and every route waits for <see cref="AvailabilityWeeks.ArtifactWeek"/>.</summary>
+    private bool IsArtifact(string qualifiedId)
+    {
+        string bare = qualifiedId.StartsWith(ObjectQualifier, StringComparison.Ordinal)
+            ? qualifiedId.Substring(ObjectQualifier.Length) : qualifiedId;
+        return _data.Objects.TryGetValue(bare, out RawObjectEntry? obj)
+               && ItemKindClassifier.From(obj.Category, obj.Type) == ItemKind.Artifact;
+    }
 
     /// <summary>An artifact the catalog's own pool lists but the spot data does not (five on the
     /// 2026-08-28 boards: Ancient Doll, Anchor, Bone Flute, Golden Relic, Prehistoric Handaxe):

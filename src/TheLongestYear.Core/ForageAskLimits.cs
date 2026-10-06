@@ -58,7 +58,8 @@ public static class ForageAskLimits
 
     /// <summary>Forage that only exists in the Calico Desert, which a loop has to UNLOCK - the bus
     /// costs the Vault bundle, and TLY paces that at LocationGating/AvailabilityWeeks.SkullCavernWeek
-    /// (week 9, i.e. Fall 1; DesertHardWeek 6 is the earliest a player who rushes it can be there).
+    /// (week 9, i.e. Fall 1; DesertHardWeek 6 is the earliest a Hard player who rushes it can be
+    /// there, and DesertExtremeWeek 3 the earliest an Extreme one can, Jeff 2026-10-02).
     ///
     /// The measurements were taken on a save that already had the desert open, so the sweep happily
     /// counted Cactus Fruit and Coconut from Spring 1 - about 38 a season in Spring and Summer, which
@@ -79,7 +80,9 @@ public static class ForageAskLimits
     public static bool IsDesertOnly(string itemId)
         => itemId != null && DesertOnly.Contains(itemId);
 
-    /// <summary>First season a desert item can honestly be asked for: week 9 is Fall 1.</summary>
+    /// <summary>First season a desert item can honestly be asked for at the pacing week: week 9 is
+    /// Fall 1. The availability model's hard week (LocationGating.HardWeekFor) is what moves the
+    /// desert earlier on Hard and Extreme.</summary>
     public static Season DesertOpensIn => AvailabilityWeeks.SeasonOf(AvailabilityWeeks.SkullCavernWeek);
 
     /// <summary>True when the season is too early for this item's location to be reachable.</summary>

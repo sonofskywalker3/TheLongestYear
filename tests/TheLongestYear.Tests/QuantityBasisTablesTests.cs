@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
@@ -157,8 +158,13 @@ public class QuantityBasisTablesTests
     {
         Assert.False(QuantityAskPass.Covers(AncientDrum));
         Assert.False(QuantityAskPass.Covers(BookOfStars));
-        Assert.False(QuantityAskPass.Covers("(O)194"));   // Fried Egg
+        Assert.False(QuantityAskPass.Covers("(O)194"));   // Fried Egg, no model: no dish table
         Assert.Equal(1, Roll(AncientDrum, DifficultyStep.Extreme));
+        // Once the model carries a generated dish row, the dish is banded.
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>())
+            { DishBases = new Dictionary<string, double[]> { ["(O)194"] = new double[] { 0, 7, 7, 7 } } };
+        Assert.True(QuantityAskPass.Covers("(O)194", model));
+        Assert.False(QuantityAskPass.Covers(AncientDrum, model));
     }
 
     [Fact]

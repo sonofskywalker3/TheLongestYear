@@ -41,6 +41,7 @@ namespace TheLongestYear.Loop
 
         public EffortData Build(IReadOnlyList<string> excludedLocationMarkers)
         {
+            IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
             var geodeDrops = new List<RawGeodeDrop>();
             var monsterDrops = new List<RawMonsterDrop>();
@@ -93,7 +94,10 @@ namespace TheLongestYear.Loop
                 {
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
-                    foreach (ArtifactSpotDropData spot in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                    // A row only a closed rule switches on is no route: the Default spot's Qi Bean
+                    // row drops only during Qi's DROP_QI_BEANS order (2026-09-29).
+                    foreach (ArtifactSpotDropData spot in (loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
+                                 .Where(s => TheLongestYear.Core.Availability.YearOneCondition.Allows(s?.Condition, closedRules)))
                         foreach (string id in SpawnIds(spot?.ItemId, spot?.RandomItemId))
                             artifactSpots.Add(new RawArtifactSpot(kv.Key, id, spot.Chance));
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, excludedLocationMarkers))
@@ -172,13 +176,17 @@ namespace TheLongestYear.Loop
                     if (fields.Length <= CookingUnlockField) continue;
                     string[] ingredientPairs = fields[RecipeIngredientsField].Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     var ingredients = new List<string>();
+                    var counts = new List<int>();
                     for (int i = 0; i + 1 < ingredientPairs.Length; i += 2)
+                    {
                         ingredients.Add(int.TryParse(ingredientPairs[i], out int n) && n < 0
                             ? ingredientPairs[i]
                             : BundleParsing.NormalizeItemId(ingredientPairs[i]));
+                        counts.Add(int.TryParse(ingredientPairs[i + 1], out int c) ? c : 1);
+                    }
                     string output = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                     if (string.IsNullOrEmpty(output)) continue;
-                    cooking.Add(new RawCookingRecipe(kv.Key, ingredients, BundleParsing.NormalizeItemId(output), fields[CookingUnlockField].Trim()));
+                    cooking.Add(new RawCookingRecipe(kv.Key, ingredients, BundleParsing.NormalizeItemId(output), fields[CookingUnlockField].Trim(), counts));
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals"))

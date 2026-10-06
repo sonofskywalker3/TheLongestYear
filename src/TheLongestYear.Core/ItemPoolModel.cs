@@ -56,6 +56,14 @@ public sealed record ItemPools
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-28).</summary>
     public IReadOnlySet<string> TrapFishIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
 
+    /// <summary>Qualified ids of every jelly the fish pool carries (Jeff, 2026-10-05: "jellies are
+    /// an ingredient, not a fish"). Marked in Data/Objects by carrying BOTH the "fish_nonfish" and
+    /// "counts_as_fish_catch" context tags: Seaweed and the algae carry only the first, real fish
+    /// neither. No fish bundle asks for these (FishBundleCandidates.WithoutJellies);
+    /// they stay in <see cref="Fish"/> for everything else. Empty in hand-built pools, where the
+    /// id-suffix check (<see cref="ItemPoolBuilder.IsJelly"/>) still catches the vanilla three.</summary>
+    public IReadOnlySet<string> JellyIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Qualified ids of every fruit a Data/FruitTrees tree grows. The weekly-goal
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-29).</summary>
     public IReadOnlySet<string> FruitTreeFruitIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
@@ -181,6 +189,13 @@ public sealed record RawShopPlacement(string ShopId, string LocationName);
 public sealed record RawRecipeEntry(
     string OutputItemId, IReadOnlyList<string> IngredientItemIds, string Unlock);
 
+/// <summary>One Data/FarmAnimals entry as a reachability route. <paramref name="Buyable"/>: Marnie
+/// sells it (PurchasePrice 0 or more), or a buyable animal's AlternatePurchaseTypes can hand it
+/// out (Blue Chicken from White Chicken). <paramref name="EggItemIds"/>: what it hatches from in an
+/// incubator. <paramref name="ProduceItemIds"/>: regular and deluxe produce.</summary>
+public sealed record RawAnimalSource(
+    string Name, bool Buyable, IReadOnlyList<string> EggItemIds, IReadOnlyList<string> ProduceItemIds);
+
 /// <summary>One Data/Fish row, reduced to the fields the availability model gates on.
 ///
 /// Field indices verified against the decompiled Android source, GameLocation.
@@ -219,6 +234,32 @@ public sealed record RawFishEntry(
         }
         return anyWindow;
     }
+
+    private const int ClockHundred = 100;
+    private const double MinutesPerHour = 60.0;
+    /// <summary>What <see cref="DailyWindowHours"/> reports for a row with no biting window: open all day.</summary>
+    public const double AllDayHours = 24.0;
+
+    /// <summary>Total hours a day this fish bites: the sum of every Data/Fish time range (game
+    /// clock, so 1800 2600 is 6pm to 2am, 8 hours). A row with no parseable window is open all
+    /// day (<see cref="AllDayHours"/>), the lenient direction.</summary>
+    public double DailyWindowHours()
+    {
+        string[] parts = (RawTimeSpans ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        int minutes = 0;
+        bool anyWindow = false;
+        for (int i = 0; i + 1 < parts.Length; i += 2)
+        {
+            if (!int.TryParse(parts[i], out int start) || !int.TryParse(parts[i + 1], out int end))
+                return AllDayHours;
+            anyWindow = true;
+            minutes += ClockMinutes(end) - ClockMinutes(start);
+        }
+        return anyWindow ? minutes / MinutesPerHour : AllDayHours;
+    }
+
+    private static int ClockMinutes(int clock)
+        => clock / ClockHundred * (int)MinutesPerHour + clock % ClockHundred;
 
     public static RawFishEntry Parse(string itemId, string? row)
     {

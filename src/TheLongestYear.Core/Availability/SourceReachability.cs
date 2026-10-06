@@ -18,19 +18,63 @@ public sealed class SourceReachability
     private readonly Dictionary<string, List<string>> _shopLocations;
     private readonly Dictionary<string, List<string>> _seedByHarvest;
     private readonly IReadOnlySet<string> _reachableSpawnIds;
+    private readonly IReadOnlySet<string> _excludedCatchIds;
     private readonly Dictionary<string, bool> _memo = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _reasons = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<RawRecipeEntry>> _recipesByOutput;
     private readonly HashSet<string> _inProgress = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<RawMachineRule>> _machineRulesByOutput = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<RawAnimalSource>> _animalsByProduce = new(StringComparer.Ordinal);
 
+    /// <param name="machineRules">Data/Machines rules. A machine good is out of reach when every
+    /// rule that makes it needs one specific input that is itself out of reach.</param>
+    /// <param name="animals">Data/FarmAnimals. Produce is out of reach when every animal that
+    /// makes it can neither be bought nor hatched from an egg reachable some OTHER way.</param>
+    /// <param name="excludedCatchIds">Ids with a Data/Locations FISH row in an excluded place
+    /// (ItemPoolBuilder.IsExcludedLocation markers: Ginger Island, Fable Reef...). A known route
+    /// that is closed: such a fish is out of reach unless something else vouches for it (a catch
+    /// row anywhere reachable, which is in <paramref name="reachableSpawnIds"/>, or a reachable
+    /// shop). Fish rows only: forage rows on the island (Purple Mushroom in the island cave) name
+    /// items the game also hands out from code with no data row, so they prove nothing.</param>
     public SourceReachability(
         IReadOnlySet<string> unreachableLocations,
         IReadOnlyList<RawShopListing> shopListings,
         IReadOnlyList<RawShopPlacement> shopPlacements,
         IReadOnlyList<RawCropEntry> crops,
         IReadOnlyList<RawRecipeEntry> recipes,
-        IReadOnlySet<string> reachableSpawnIds)
+        IReadOnlySet<string> reachableSpawnIds,
+        IReadOnlyList<RawMachineRule>? machineRules = null,
+        IReadOnlyList<RawAnimalSource>? animals = null,
+        IReadOnlySet<string>? excludedCatchIds = null)
     {
+        _excludedCatchIds = excludedCatchIds ?? new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (RawMachineRule rule in machineRules ?? Array.Empty<RawMachineRule>())
+        {
+            if (rule?.OutputItemIds == null) continue;
+            foreach (string output in rule.OutputItemIds)
+            {
+                if (string.IsNullOrEmpty(output)) continue;
+                string id = Qualify(output);
+                if (!_machineRulesByOutput.TryGetValue(id, out List<RawMachineRule>? list))
+                    _machineRulesByOutput[id] = list = new List<RawMachineRule>();
+                list.Add(rule);
+            }
+        }
+
+        foreach (RawAnimalSource animal in animals ?? Array.Empty<RawAnimalSource>())
+        {
+            if (animal?.ProduceItemIds == null) continue;
+            foreach (string produce in animal.ProduceItemIds)
+            {
+                if (string.IsNullOrEmpty(produce)) continue;
+                string id = Qualify(produce);
+                if (!_animalsByProduce.TryGetValue(id, out List<RawAnimalSource>? list))
+                    _animalsByProduce[id] = list = new List<RawAnimalSource>();
+                if (!list.Contains(animal)) list.Add(animal);
+            }
+        }
+
         _unreachableLocations = unreachableLocations ?? new HashSet<string>(StringComparer.Ordinal);
         _reachableSpawnIds = reachableSpawnIds ?? new HashSet<string>(StringComparer.Ordinal);
 
@@ -122,6 +166,15 @@ public sealed class SourceReachability
 
         bool anySourceKnown = false;
 
+        // Caught only in excluded places (the positive-proof check above already let through any
+        // fish that also bites somewhere reachable). Player report 2026-10, paigefromabook: a
+        // Stingray (Pirate Cove only, sold nowhere) read as "untraceable, allowed".
+        if (_excludedCatchIds.Contains(id))
+        {
+            anySourceKnown = true;
+            reason = "it is caught only in places this run cannot reach";
+        }
+
         if (BoughtSomewhere(id, out bool shopUnreachable))
         {
             anySourceKnown = true;
@@ -159,7 +212,47 @@ public sealed class SourceReachability
             reason = recipeReason ?? "";
         }
 
+        if (_machineRulesByOutput.TryGetValue(id, out List<RawMachineRule>? machineRules) && machineRules.Count > 0)
+        {
+            anySourceKnown = true;
+            string? blockedInput = null;
+            foreach (RawMachineRule rule in machineRules)
+            {
+                // A rule that takes tags ("any egg") or no input at all has many ways in: treat
+                // it as open, the same way a recipe's category ingredient is.
+                if (string.IsNullOrEmpty(rule.RequiredItemId)) return false;
+                string input = Qualify(rule.RequiredItemId);
+                if (!IsUnreachable(input)) return false;   // one working machine route is enough
+                blockedInput ??= input;
+            }
+            reason = $"its machine input {blockedInput} is out of reach";
+        }
+
+        if (_animalsByProduce.TryGetValue(id, out List<RawAnimalSource>? animals) && animals.Count > 0)
+        {
+            anySourceKnown = true;
+            foreach (RawAnimalSource animal in animals)
+                if (AnimalObtainable(animal, id)) return false;
+            reason = $"{animals[0].Name} cannot be bought and hatches only from an egg out of reach";
+        }
+
         return anySourceKnown;
+    }
+
+    /// <summary>Marnie sells it, or it hatches from an egg reachable some way OTHER than laying
+    /// it. The Ostrich hatches only from the Ostrich Egg it lays, so that egg must be skipped
+    /// here, not answered by the cycle guard, which would call the closed loop reachable.</summary>
+    private bool AnimalObtainable(RawAnimalSource animal, string produceId)
+    {
+        if (animal.Buyable) return true;
+        foreach (string egg in animal.EggItemIds ?? Array.Empty<string>())
+        {
+            if (string.IsNullOrEmpty(egg)) continue;
+            string qualified = Qualify(egg);
+            if (qualified == produceId) continue;
+            if (!IsUnreachable(qualified)) return true;
+        }
+        return false;
     }
 
     private string? FirstUnreachableIngredient(RawRecipeEntry recipe)

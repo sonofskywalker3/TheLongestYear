@@ -3,13 +3,112 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased (0.18.77)
+## 0.18.144 - 2026-10-05
 
-2410 tests.
+2856 tests. Rolls up 0.18.140 to 0.18.144.
+
+### Added
+
+- **Keep Special Orders Board** (Junimo Upgrades, Buildings, 1,500 JP). The Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop. You can buy it once the board has opened in a loop (Fall 2). Suggested by elaineofshalott.
+- **Extreme opens the desert in Spring week 3.** With Item rarity on Extreme, the bus counts as repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items can turn up in Spring. Hard and the other settings are unchanged. Suggested by elaineofshalott.
+
+### Fixed
+
+- **Fish bundles ask for fish from their own water.** Lake Fish could ask for Catfish and Woodskip, and Specialty Fish for Herring. Lake, River and Ocean Fish now pick only fish that live in that water. Specialty Fish picks hard-to-reach fish: Secret Woods, desert, mine and Night Market fish, the legendaries, and the hard short-window catches (Pufferfish, Octopus, Super Cucumber), with at most one Night Market fish. Fish bundles never ask for a jelly. A board you already have keeps its fish until it re-rolls. Reported by Nerlana.
+- **Special orders start fresh every loop.** An order taken in one loop carried into the next with its old due date, the board kept last loop's offers, and one-time orders you had finished never came back. Each rewind now drops orders in progress and puts every town order back on offer.
+- **The recipe book picker steps back instead of closing.** Pressing X, Escape or B on the recipe list now goes back to the slot list. Before, it closed the Cookbook or Craftbook and started the run. Reported by gmastern1.
+- **The crop fairy turns wild seeds into forage.** Wild seeds the fairy grew stayed half-grown and all harvested as Wild Horseradish. They now become seasonal forage on the spot. A stuck crop already in your save fixes itself overnight if you leave it. Reported by sigyn2002.
+
+## 0.18.139 - 2026-10-02
+
+2783 tests. Rolls up 0.18.136 to 0.18.139.
+
+### Fixed
+
+- **Season crop bundles only ask for what the season can grow.** Spring Crops could ask for Rhubarb or Coffee Bean, and Summer Crops for Starfruit, which you can't get in time for that season's deadline. They now pick only crops you can have by then. If your current board already has one, the amount due is lowered to what that season can supply when you load your save, and the rest is due by Winter.
+- **Ginger Island fish stay out of bundles.** Weatherman's could ask for Stingray, and Lionfish or Blue Discus could turn up too, all island-only fish. Ginger Island and its modded counterparts are now always off limits, and a board that already asks for one gets it swapped for a reachable fish when you load your save. Reported by paigefromabook.
+
+## 0.18.135 - 2026-10-02
+
+2761 tests. Rolls up 0.18.119 to 0.18.135.
+
+### Fixed
+
+- **A dresser in the Junimo Stash keeps what's in it.** Hats, shirts, pants, furniture, wallpaper and flooring stay inside through the rewind. Anything else in it (rings, boots, fish, tools) has to come out first: the stash hands the dresser back with a message. A dresser stashed by an older version with other things inside gets them taken out into their own stash slots, or set down beside the stash if it is full. Reported by sarahwinchester97.
+- **Stashed items keep their looks and stats.** Dyed shirts and pants keep their colour, tailored boots keep their stats, a Combined Ring keeps both rings and a trinket keeps its rolled stats. A fishing rod keeps its bait and tackle.
+
+### Added
+
+- **Keep Farm Decor** (Junimo Upgrades, Buildings, 500 JP). Start each loop with your paths, fences, gates, lamp-posts, torches, braziers, signs and decorations where you left them. Furniture is not kept. A stump or hollow log in the way is cleared if your kept axe could break it, and you get its hardwood; a boulder is cleared if your kept pickaxe could. A piece with no room goes to the stash. If the stash is full, it is left where it was blocked, so pick it up on day 1.
+- **Keep Worn Gear** (Junimo Upgrades, Loadout, 1,000 JP). The boots, rings and trinket you're wearing when the year rewinds stay on you.
+- **Keep Farmhouse Furniture** (Junimo Upgrades, Buildings, 250 JP). Your farmhouse furniture stays where you put it, dressers included. Anything inside it that isn't a hat, shirt, pants, furniture, wallpaper or flooring is wiped, so move it to the stash first. If your house is a different size after the rewind, furniture moves with its room. Furniture with no room in the new house is left by the front door. Pick it up on day 1.
+
+## 0.18.118 - 2026-09-30
+
+2576 tests. Rolls up 0.18.99 to 0.18.118.
+
+### Fixed
+
+- **The Sticky bundle asks for sticky things, and more of them.** It picked one item from every resource plus the tapper extras, so it could ask for a single Acorn, some Stone or Fiber. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, Maple Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat, only what a year can reach. Amounts follow the season the bundle is due: Ice Cream asks 5 to 13 on Normal once the Summer stand sells it, and nothing appears before the season it can exist; Sugar asks less in Spring while money is short. Reported by elaineofshalott.
+- **Bundle amounts follow what a year can actually produce.** A Sticky bundle asking for one Acorn started a check of every ask the board had no amount rule for, and most of the gaps are filled. Tree seeds (Acorn, Maple Seed, Pine Cone) and Moss, tree fruit, forage (Cave Carrot, Tea Leaves, Spring Onion, Salmonberry), trash, pantry goods (Sugar, Rice, Vinegar and the like), Hay, Prize Tickets and the rare fish (Goby, Stonefish, Ice Pip, Lava Eel, Slimejack and the three Night Market fish) now ask for amounts a year can reach, and cooked dishes scale where your kitchen, recipes and shops allow more than one (some dishes still ask for one). The Treasure Chest and the Home Cook's egg and milk asks have no rule yet. Thanks to elaineofshalott for the Acorn report that started it.
+- **Mystic Syrup is no longer asked for.** It only comes from a late-game reward, so it could never be a fair year-1 ask.
+- **Prismatic Shard and Mystery Box are rare asks now.** On the boards The Longest Year builds, the bundles you need for the year hold a limited number of them, set by the Stack size setting: at most one on Normal, two on Hard and three on Extreme, none on Easy, and each is asked for one at a time. On the Normal and Remixed bundle sources (the game's own board) each is asked for one at a time, but the number of them is not limited. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard on every board. Prismatic Shard is also no longer counted as a Spring item; it comes from deep Skull Cavern nodes, so it is a Fall-or-later ask.
+- **The Night Market fish wait for Winter 15.** Midnight Squid, Spook Fish and Blobfish were asked for before the market opens. Moss is asked from Summer, when the trees have grown.
+
+## 0.18.98 - 2026-09-29
+
+2497 tests. Rolls up 0.18.85 to 0.18.98.
+
+### Fixed
+
+- **Restarting the year at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, any level-ups and the next day's date before being asked about your bundles and upgrades. Now the bundle question, the upgrade menu and the books come right after you say yes. Then the day fades out and you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the rewind resets your gold anyway. Seen in Dummy Dog Ben's stream.
+- **Qi Beans counted as a year-1 find.** The game's default artifact spot drops Qi Beans only while Mr. Qi's Qi Beans challenge is running, which needs Ginger Island. TLY read the row without its condition. Conditions that need a special-order rule only Mr. Qi's orders grant (read from the game's special orders, so mod orders count too) now close the row, for artifact spots, forage, fish and shop lines alike. Across 60 test boards nothing asks for a Qi Bean.
+
+### Added
+
+- **Keep Lost Books** (Junimo Upgrades, Carryover, 100 JP). Lost Books you have found stay found through a rewind, so artifact spots, fishing chests and the mines stop turning up ones you already have and you can dig for bundle artifacts instead. Suggested by tanky24u (Nexus posts, 2026-09-24).
+
+### Changed
+
+- **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week. With Stack size on Easy it asks for half, on Normal a quarter less, and on Hard or Extreme nothing changes. It rounds down and never goes below 10, so 31 Cauliflower becomes 23 on Normal. The planning hub shows the lowered counts before you pick. Finish a goal that week and it stays finished. A goal you have not finished goes back to its full count when the next week starts or when you pick a different theme. Reported by Nijah (Nexus posts, 2026-09-29): 31 Cauliflower in week 1 was too many.
+- **Marnie brings a pet again after a rewind, and Keep Pet costs 50 JP.** Without Keep Pet, a rewind marked Marnie's pet visit as already seen, so it never came back and the only route was the paid Adopt option at her counter. A farm with no pet after a rewind now gets the visit again. Keep Pet drops from 75 to 50 JP. Seen in Dummy Dog Ben's stream.
+- **The "Guarantee Year 1 Completable" checkbox says it does not affect TLY Custom bundles.** It only arms the Traveling Cart's Red Cabbage Seeds visit for the game's own board. It still works for Normal and Remixed, though TLY's cart-slot limit can hide the seeds that day.
+- **Artifacts wait for week 3.** Every artifact, whatever finds it (dig spots, geodes, monster drops, fishing chests), now counts as available from week 3, giving geodes and dig spots time to turn up. A week-1 board could ask for Elvish Jewelry. Seen in Dummy Dog Ben's stream.
+
+- **The Dye bundle asks for grown and gathered things.** It used to pick any object with the right colour tag, so across 60 test boards it asked for cooked dishes, artifacts, bombs, skill books, Joja Cola, Energy Tonic and a Qi Bean. It now picks only from the six vanilla Dye items (Red Mushroom, Sea Urchin, Sunflower, Duck Feather, Aquamarine, Red Cabbage), the common gems and crystals (Emerald, Aquamarine, Ruby, Amethyst, Topaz, Jade, Quartz, Fire Quartz, Frozen Tear; the deeper crystals still wait for their mine floors), and coloured crops, fruit, flowers, forage and beach finds. Each colour takes the game's own dye-pot shades, so gold counts as yellow, jade as green and aquamarine as blue. The same 60 boards now ask only for those. Seen in Dummy Dog Ben's stream (Elvish Jewelry and a book).
+
+## 0.18.84 - 2026-09-29
+
+2447 tests. Rolls up 0.18.82 to 0.18.84.
+
+### Fixed
+
+- **Weekly goals could ask for items before they could exist.** Seasonal bundles (Spring Crops and the like) skipped the obtainable-by-this-week check the other bundle kinds already had, so in any week of that season a goal could name an item that wasn't reachable yet: Strawberries (seeds go on sale day 13) or Cauliflower (12 days to grow) in Spring week 1, for example. Seasonal lines now wait for their week like everything else. Reported by Nijah (Nexus posts, 2026-09-29); also seen in Dummy Dog Ben's stream.
+- **Week 1 asked for silver and gold quality crops.** A weekly goal could name a silver or gold line from day 1, when a gold Carrot is about a 1% roll. Lines that ask for silver or better are now held until week 3 of the year. Seen in Dummy Dog Ben's stream.
+- **Long upgrade and boost descriptions ran off the screen.** Hover tooltips in the Junimo Upgrades, planning statue, weekly hub and Season Goals menus were one unwrapped line, so a long description (Sneak Peek) ran off the edge at larger UI scales. They now wrap. Seen in Dummy Dog Ben's stream.
+
+## 0.18.81 - 2026-09-28
+
+2442 tests. Rolls up 0.18.80 to 0.18.81.
+
+### Fixed
+
+- **A Normal-bundles save switched to custom bundles at its rewind.** The new-game bundle pick was copied into config.json, and every reset read config.json, so starting a TLY Custom game changed the board of every older save at its next rewind. Each save now keeps its own choice; the settings menu changes the loaded save's choice (the title-screen value is only the new-game default). Saves from before this keep the board they run under. Reported by victoriatauanem (Nexus posts, 2026-09-28).
+- **Ostrich Mayo from Blue Eggs and Golden Mayo reached the board.** The reachability check only read shops, seeds and recipes, and an item with no route it could read stayed allowed. It now reads Data/Machines (a good made only from one out-of-reach input is out of reach) and Data/FarmAnimals (an animal nobody sells, hatched only from the egg it lays, makes that egg out of reach), for every mod's items. Artifact spots count as proof, so the Dinosaur Egg stays. Checked in game with the mod installed: Ostrich Egg and Ostrich Mayo are the only two new exclusions. Reported by Ninjamaid (Nexus posts, 2026-09-28).
+
+## 0.18.79 - 2026-09-28
+
+2422 tests. Rolls up 0.18.77 to 0.18.79.
+
+### Fixed
+
+- **Re-roll Themes could show the same pair again and again.** A re-roll only drew from themes that could ask for two or more goals, so a week where exactly two qualified re-rolled that pair forever. A re-roll now offers any theme not picked this month that has at least one goal, never repeats a pair until every pair has been shown, and the re-rolled pair is kept for the week when the hub is closed. Reported by Nijah (Nexus posts, 2026-09-28).
 
 ### Added
 
 - **Keep Fish Pond** (Junimo Upgrades, Buildings, 750 JP; unlocked once a Fish Pond is built this loop). The rewind puts one Fish Pond back where the player had it, finished and empty: no fish, no output, no population gates, no request, no Golden Animal Cracker. With several ponds, the one with the most fish is the one remembered (the first one on a tie). If that spot is taken on the fresh farm, the pond goes to (46,18) or the nearest free 5x5 around it; it is placed after the other kept buildings, the greenhouse and the stable, and never duplicates a pond the fresh farm already has. Requested by elaineofshalott (Nexus, 2026-09-27).
+
+- `tly_reroll [count|reopen]` presses the planning hub's re-roll button, or closes and reopens the hub, for headless checks. (debug)
 
 ## 0.18.76 - 2026-09-27
 
