@@ -163,8 +163,12 @@ namespace TheLongestYear.UI
                 _offer = rerolled.ToList();
                 _rerollCounter = System.Math.Max(1, _run.RerollCount);
                 _monitor.Log(
-                    $"WeeklyHubMenu: restored re-rolled offer for week {OfferWeek} = [{string.Join(", ", _offer)}] (reroll #{_rerollCounter}).",
+                    $"WeeklyHubMenu: restored re-rolled offer for week {OfferWeek} = " +
+                    $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand))}] (reroll #{_rerollCounter}).",
                     LogLevel.Info);
+                if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand))
+                    _monitor.Log($"WeeklyHubMenu: restored offer with the face-down card = [{string.Join(", ", _offer)}].",
+                        LogLevel.Trace);
             }
             _cartPreviewSlots = cartPreviewSlots;
 
@@ -616,9 +620,14 @@ namespace TheLongestYear.UI
             _run.RecordReroll(week, _offer, _rerollCounter);
             ResolvePerCardData();
             RecomputeBoundsAndLayout();
+            // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
             _monitor.Log(
-                $"WeeklyHubMenu reroll #{_rerollCounter}: offer = [{string.Join(", ", _offer)}].",
+                $"WeeklyHubMenu reroll #{_rerollCounter}: offer = " +
+                $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand))}].",
                 LogLevel.Info);
+            if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand))
+                _monitor.Log($"WeeklyHubMenu reroll #{_rerollCounter}: offer with the face-down card = [{string.Join(", ", _offer)}].",
+                    LogLevel.Trace);
         }
 
         /// <summary>The re-roll button, for the tly_reroll console command (works whether or not the

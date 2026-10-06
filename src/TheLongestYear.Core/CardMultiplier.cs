@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core;
 
@@ -52,6 +54,18 @@ public static class CardMultiplier
         => IsSealed(seed, week, slot, r)
             ? Mystery(seed, week, theme)
             : For(seed, week, theme, r.RandomMultiplier);
+
+    /// <summary>The label a log line may show for the face-down card (final review I2).</summary>
+    public const string SealedLabel = "?";
+
+    /// <summary>The offer in card order for an Info log line, with <see cref="SealedLabel"/> in place
+    /// of the face-down theme so the SMAPI console never gives the mystery card away.</summary>
+    public static IReadOnlyList<string> OfferLabels(IReadOnlyList<Theme> offer, int seed, int week, RandomizerSettings r)
+        => offer.Select((t, slot) => IsSealed(seed, week, slot, r) ? SealedLabel : t.ToString()).ToList();
+
+    /// <summary>True when any of the first <paramref name="cards"/> slots is face down this week.</summary>
+    public static bool AnySealed(int cards, int seed, int week, RandomizerSettings r)
+        => Enumerable.Range(0, cards).Any(slot => IsSealed(seed, week, slot, r));
 
     /// <summary>Display form: "1.25x", "0.5x", "1x".</summary>
     public static string Format(double multiplier)
