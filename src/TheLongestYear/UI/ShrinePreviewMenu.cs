@@ -133,9 +133,10 @@ namespace TheLongestYear.UI
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
-            // Read once at open, like the restart button: the tab shows only on weeks with goals.
+            // Read once at open, like the restart button: the tab shows only on weeks with goals,
+            // and only for the host (shrine goals live in the host's save data, like Boosts).
             _donations = donations;
-            _showDonate = donations != null && donations.Goals.Count > 0;
+            _showDonate = Context.IsMainPlayer && donations != null && donations.Goals.Count > 0;
             _priceFactor = priceFactor;
             _run = run;
             _buyBoost = buyBoost;

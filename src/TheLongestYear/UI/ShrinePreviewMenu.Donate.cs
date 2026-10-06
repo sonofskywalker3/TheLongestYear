@@ -138,7 +138,7 @@ namespace TheLongestYear.UI
         private void DonateClick(int x, int y)
         {
             Item item = _inventory?.getItemAt(x, y);
-            if (item == null || _donations == null) return;
+            if (item == null || _donations == null || !StardewModdingAPI.Context.IsMainPlayer) return;
             int goal = _donations.GoalIndexFor(item);
             if (goal >= 0 && _donations.Donate(goal, item))
             {
