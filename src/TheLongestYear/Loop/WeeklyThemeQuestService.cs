@@ -340,7 +340,7 @@ namespace TheLongestYear.Loop
 
             _monitor.Log(
                 $"WeeklyThemeQuest (second list, {second}) complete: liability " +
-                $"'{RandomPairing.SecondEffectsFor(Run, second).LiabilityId}' suppressed for the rest of the week.",
+                $"'{ThemeModifiers.DisplayNameFor(RandomPairing.SecondEffectsFor(Run, second).LiabilityId)}' suppressed for the rest of the week.",
                 LogLevel.Info);
         }
 
