@@ -171,10 +171,13 @@ namespace TheLongestYear.UI
             bool cartInTown = TravelingCartVisitsToday(Game1.dayOfMonth);
             if (!cartInTown && !catalogAnyDay)
             {
-                _cartHeader = Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
-                {
-                    ["day"] = ShortDayName(NextCartVisitDay(Game1.dayOfMonth)),
-                });
+                int? nextDay = NextCartVisitDay(Game1.dayOfMonth);
+                _cartHeader = nextDay == null
+                    ? Strings.Get("menu.shrine-preview.cart-away-season")
+                    : Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
+                    {
+                        ["day"] = ShortDayName(nextDay.Value),
+                    });
                 _cartEmptyNote = "";
                 return;
             }
@@ -201,20 +204,33 @@ namespace TheLongestYear.UI
                 _cartEmptyNote = Strings.Get("menu.shrine-preview.cart-nothing");
         }
 
-        /// <summary>The Traveling Cart is in town on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
-        private static bool TravelingCartVisitsToday(int dayOfMonth) => dayOfMonth % 7 % 5 == 0;
+        /// <summary>Cart days for the week starting at <paramref name="weekStart"/>: this week's stored
+        /// roll when random, a computed (not stored) roll for later weeks, vanilla when off.</summary>
+        private IReadOnlyList<int> CartDaysForWeek(int weekStart)
+        {
+            if (!CartDaysPatch.RandomOn)
+                return CartSchedule.VanillaDaysInWeek(weekStart);
+            if (weekStart == CartDaysPatch.WeekStart(Game1.dayOfMonth))
+                return CartDaysPatch.ThisWeekDays(Game1.dayOfMonth);
+            int seasonIndex = Game1.seasonIndex;
+            int week = Calendar.WeekOfYear(seasonIndex, weekStart);
+            return CartSchedule.RandomDaysInWeek(_run?.Seed ?? 0, week, weekStart, CartSchedule.BlockedDays(seasonIndex));
+        }
+
+        private bool TravelingCartVisitsToday(int dayOfMonth)
+            => CartDaysForWeek(CartDaysPatch.WeekStart(dayOfMonth)).Contains(dayOfMonth);
 
         private static string ShortDayName(int dayOfMonth) => Game1.shortDayDisplayNameFromDayOfSeason(dayOfMonth);
 
-        private static int NextCartVisitDay(int today)
+        /// <summary>The next day this season the cart is in town, or null when none are left.</summary>
+        private int? NextCartVisitDay(int today)
         {
-            for (int off = 1; off <= WeatherScheduler.DaysPerMonth; off++)
+            for (int weekStart = CartDaysPatch.WeekStart(today); weekStart <= WeatherScheduler.DaysPerMonth; weekStart += 7)
             {
-                int dom = ((today - 1 + off) % WeatherScheduler.DaysPerMonth) + 1;
-                if (dom % 7 % 5 == 0)
-                    return dom;
+                foreach (int d in CartDaysForWeek(weekStart))
+                    if (d > today) return d;
             }
-            return today;
+            return null;
         }
 
         private int ForesightPanelHeight()
