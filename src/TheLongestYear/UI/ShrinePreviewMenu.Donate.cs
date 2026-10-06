@@ -157,14 +157,11 @@ namespace TheLongestYear.UI
             {
                 if (!_goalSlots[i].containsPoint(x, y)) continue;
                 ShrineGoal goal = DonateGoals[i];
-                var tokens = new Dictionary<string, string>
+                _hoverText = Strings.Get(goal.Deposited ? "shrine.donate.goal-done-hover" : "shrine.donate.goal-hover", new Dictionary<string, string>
                 {
                     ["name"] = _goalItems.Count > i && _goalItems[i] != null ? _goalItems[i].DisplayName : goal.ItemId,
                     ["stack"] = goal.Stack.ToString(),
-                };
-                _hoverText = goal.Deposited
-                    ? Strings.Get("shrine.donate.goal-done-hover", tokens)
-                    : Strings.Get("shrine.donate.goal-hover", tokens);
+                });
                 return;
             }
             _hoveredItem = _inventory?.hover(x, y, null);
