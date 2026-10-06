@@ -36,6 +36,10 @@ namespace TheLongestYear.UI
         private static System.Func<bool> _restartOffered;
         private static System.Action _requestRestart;
 
+        /// <summary>The random shrine donation service behind the Donate tab. Same static-hook
+        /// idiom as <see cref="_state"/>. Unattached (or a week without goals), no Donate tab.</summary>
+        private static System.Func<TheLongestYear.Donations.ShrineDonationService> _donations;
+
         public PlanningShrineService(IMonitor monitor, IModHelper helper)
         {
             _monitor = monitor;
@@ -60,6 +64,8 @@ namespace TheLongestYear.UI
             _requestRestart = request;
         }
 
+        public void AttachDonate(System.Func<TheLongestYear.Donations.ShrineDonationService> donations) => _donations = donations;
+
         /// <summary>Open the Junimo Shrine view exactly as acting on the statue does, with the same
         /// attached hooks. Also used to return to it when the player answers No to Restart the
         /// year. Returns false (and opens nothing) when no save state is attached.</summary>
@@ -69,7 +75,7 @@ namespace TheLongestYear.UI
             if (state == null) return false;
             Game1.activeClickableMenu = new ShrinePreviewMenu(
                 state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost,
-                _restartOffered, _requestRestart);
+                _restartOffered, _requestRestart, _donations?.Invoke());
             return true;
         }
 

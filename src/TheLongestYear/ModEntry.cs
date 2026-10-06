@@ -334,7 +334,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_wildcard", "Debug: show this week's wildcard day and twist, or set today's twist (headless twist checks). Usage: tly_wildcard [twistId|clear]", this.CmdWildcard);
             helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
             helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
-            helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan) exactly as the statue does, so every tab's rows build and draw headlessly. Usage: tly_openshrine [active|boosts|plan]", this.CmdOpenShrine);
+            helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan|donate) exactly as the statue does, so every tab's rows build and draw headlessly. Donate shows only on weeks with shrine goals. Usage: tly_openshrine [active|boosts|plan|donate]", this.CmdOpenShrine);
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
@@ -765,6 +765,7 @@ namespace TheLongestYear
             _planningShrine.AttachRestart(
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart());
+            _planningShrine.AttachDonate(() => ShrineDonationService.Active);
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
@@ -1807,15 +1808,20 @@ namespace TheLongestYear
             var tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
             if (args.Length > 0 && !System.Enum.TryParse(args[0], ignoreCase: true, out tab))
             {
-                this.Monitor.Log("Usage: tly_openshrine [active|boosts|plan]", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_openshrine [active|boosts|plan|donate]", LogLevel.Warn);
                 return;
             }
             var menu = new TheLongestYear.UI.ShrinePreviewMenu(
                 _meta.State, _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor, _meta.Run,
                 (id, skill) => _boostPurchases.TryBuy(id, skill),
                 () => _runController?.IsVoluntaryRestartOffered() == true,
-                () => _runController?.AskVoluntaryRestart());
-            menu.ShowTab(tab);
+                () => _runController?.AskVoluntaryRestart(),
+                ShrineDonationService.Active);
+            if (!menu.ShowTab(tab))
+            {
+                this.Monitor.Log($"tly_openshrine: no {tab} tab this week (no shrine goals); opened on Active.", LogLevel.Warn);
+                tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
+            }
             Game1.activeClickableMenu = menu;
             this.Monitor.Log($"tly_openshrine: shrine opened on the {tab} tab.", LogLevel.Info);
             var block = _runController?.VoluntaryRestartBlock() ?? TheLongestYear.Core.Day28.RestartBlock.ResetRunning;
