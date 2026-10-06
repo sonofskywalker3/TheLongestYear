@@ -115,6 +115,18 @@ public sealed class RunState
     /// <summary>The week <see cref="RandomizerSnapshot"/> was taken for; -1 when none.</summary>
     public int RandomizerWeek { get; set; } = -1;
 
+    /// <summary>Wildcard days: the week (of year) whose day is in <see cref="WildcardDay"/>; -1 = none.</summary>
+    public int WildcardWeek { get; set; } = -1;
+
+    /// <summary>Wildcard days: this week's wildcard day-of-month; 0 = none.</summary>
+    public int WildcardDay { get; set; }
+
+    /// <summary>Wildcard days: the twist, set when the day is revealed; null until then.</summary>
+    public string? WildcardTwist { get; set; }
+
+    /// <summary>Wildcard days: the day-of-month the twist was revealed, so a reload re-applies it.</summary>
+    public int WildcardTwistDay { get; set; }
+
     /// <summary>Random Cart Days: the week (of year) whose rolled days are in <see cref="CartDays"/>; -1 = none.</summary>
     public int CartDaysWeek { get; set; } = -1;
 
@@ -470,6 +482,10 @@ public sealed class RunState
         RandomizerSnapshot = null;
         CartDaysWeek = -1;
         (CartDays ??= new()).Clear();
+        WildcardWeek = -1;
+        WildcardDay = 0;
+        WildcardTwist = null;
+        WildcardTwistDay = 0;
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back
