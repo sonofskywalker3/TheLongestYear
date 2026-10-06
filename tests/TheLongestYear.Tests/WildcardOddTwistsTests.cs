@@ -75,6 +75,47 @@ public class WildcardOddTwistsTests
     }
 
     [Fact]
+    public void Reveal_never_rolls_snow_on_a_day_with_paid_weather()
+    {
+        int snowSeeds = 0;
+        for (int seed = 0; seed < 600; seed++)
+        {
+            var free = RunAt(Season.Summer, 8, seed);
+            WildcardDays.PlanWeek(free, enabled: true);
+            free.DayOfMonth = free.WildcardDay;
+            if (WildcardDays.RevealToday(free, () => true, out _) == WildcardSchedule.SnowDay) snowSeeds++;
+
+            foreach (string weather in new[] { BoostPurchase.Rain, BoostPurchase.Storm })
+            {
+                var paid = RunAt(Season.Summer, 8, seed);
+                WildcardDays.PlanWeek(paid, enabled: true);
+                paid.DayOfMonth = paid.WildcardDay;
+                paid.WeatherOverrideDay = Calendar.DayOfYear((int)paid.Season, paid.DayOfMonth);
+                paid.WeatherOverride = weather;
+                Assert.NotEqual(WildcardSchedule.SnowDay, WildcardDays.RevealToday(paid, () => true, out _));
+            }
+        }
+        Assert.True(snowSeeds > 0);
+    }
+
+    [Fact]
+    public void Paid_weather_for_another_day_leaves_the_roll_unchanged()
+    {
+        for (int seed = 0; seed < 300; seed++)
+        {
+            var free = RunAt(Season.Spring, 15, seed);
+            WildcardDays.PlanWeek(free, enabled: true);
+            free.DayOfMonth = free.WildcardDay;
+            var other = RunAt(Season.Spring, 15, seed);
+            WildcardDays.PlanWeek(other, enabled: true);
+            other.DayOfMonth = other.WildcardDay;
+            other.WeatherOverrideDay = Calendar.DayOfYear((int)other.Season, other.DayOfMonth) + 1;
+            other.WeatherOverride = BoostPurchase.Rain;
+            Assert.Equal(WildcardDays.RevealToday(free, () => true, out _), WildcardDays.RevealToday(other, () => true, out _));
+        }
+    }
+
+    [Fact]
     public void Night_twist_only_for_snow_and_night_event()
     {
         var run = RunAt(Season.Spring, 10);
